@@ -66789,7 +66789,7 @@
             ".githooks/pre-push",
             "scripts/ci/run-plan",
             ".ai/repo/rules/project/a-push-runs-what-ci-would-find-first.v1.md",
-            ".ai/repo/rules/project/a-push-runs-what-ci-would-find-first.v2.md",
+            ".ai/repo/rules/project/a-push-runs-what-ci-would-find-first.v3.md",
             ".ai/repo/policy.yaml",
             ".ai/repo/automation/inventory.jsonl",
             ".ai/repo/project/issues/I3830.yaml",
@@ -78432,6 +78432,264 @@
         }
       },
       {
+        "id": "majordomus://knowledge/s-20261031234907-e660-0057bbc2c1df",
+        "kind": "knowledge",
+        "label": "s-20261031234907-e660-0057bbc2c1df",
+        "summary": "weekly account limits stopped agents of three sessions mid-workflow on 2026-10-30/31 and a stale workflow resumed hours later on superseded state; a workflow that resumes re-reads origin/master, the PR heads and the board before acting on anything it decided earlier",
+        "route": "/cockpit/objects/knowledge/s-20261031234907-e660-0057bbc2c1df",
+        "source": ".ai/repo/knowledge/candidates/s-20261031234907-e660-0057bbc2c1df.md",
+        "status": "superseded",
+        "facts": {
+          "about": "docs/INTEGRATION.md",
+          "class": "lesson",
+          "date": "2026-10-31",
+          "epistemics": "observed",
+          "route": "documentation",
+          "tags": [
+            "derived",
+            "observation"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://knowledge/s-20261031234907-e660-012239032ff9",
+        "kind": "knowledge",
+        "label": "s-20261031234907-e660-012239032ff9",
+        "summary": "the pre-push plan on train 13's top (a428913c05d) reported failures in four structure gates (development semantics, the collision check, economics claims, rust quality) and the top was pushed anyway as reported, not refused: CI holds the verdict; every one of them came back red in CI two hours later, so on a train top a reported failure is a blocker the composer resolves before the push",
+        "route": "/cockpit/objects/knowledge/s-20261031234907-e660-012239032ff9",
+        "source": ".ai/repo/knowledge/candidates/s-20261031234907-e660-012239032ff9.md",
+        "status": "superseded",
+        "facts": {
+          "about": "rule:project.a-push-runs-what-ci-would-find-first",
+          "class": "lesson",
+          "date": "2026-10-31",
+          "epistemics": "observed",
+          "route": "enforcement",
+          "tags": [
+            "derived",
+            "observation"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://knowledge/s-20261031234907-e660-1d367279d2d5",
+        "kind": "knowledge",
+        "label": "s-20261031234907-e660-1d367279d2d5",
+        "summary": "the ledger cannot be edited, so a statement is corrected by observing it again, deriving, promoting the new candidate and rejecting the first with a reason that names its replacement; and a correction is checked against a run's jobs, not its conclusion: this run's first correction read train 13's validate run 41187739613 as cancelled, not red, and was wrong, because coverage, structure and the suite and ui shards had failed before the cancel",
+        "route": "/cockpit/objects/knowledge/s-20261031234907-e660-1d367279d2d5",
+        "source": ".ai/repo/knowledge/curated/s-20261031234907-e660-1d367279d2d5.md",
+        "status": "verified",
+        "facts": {
+          "about": ".ai/repo/skills/evolve/SKILL.md",
+          "class": "lesson",
+          "date": "2026-10-31",
+          "epistemics": "observed",
+          "route": "project",
+          "tags": [
+            "derived",
+            "observation"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://knowledge/s-20261031234907-e660-2a430bb77da3",
+        "kind": "knowledge",
+        "label": "s-20261031234907-e660-2a430bb77da3",
+        "summary": "knowledge search \\\"combined top\\\" took 61.4 s wall (13.4 s user, 17.0 s system) in a linked worktree on 2026-10-31 for 29 matches, so a search-first step costs a minute per phrase; a grep of the titles under .ai/repo/knowledge/curated answered the same question in under a second",
+        "route": "/cockpit/objects/knowledge/s-20261031234907-e660-2a430bb77da3",
+        "source": ".ai/repo/knowledge/curated/s-20261031234907-e660-2a430bb77da3.md",
+        "status": "verified",
+        "facts": {
+          "about": "command:knowledge.search",
+          "class": "lesson",
+          "date": "2026-10-31",
+          "epistemics": "observed",
+          "route": "platform",
+          "tags": [
+            "derived",
+            "observation"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://knowledge/s-20261031234907-e660-5d3d6d23d215",
+        "kind": "knowledge",
+        "label": "s-20261031234907-e660-5d3d6d23d215",
+        "summary": "plan drift read the primary checkout at 6c79dcf, 160 commits behind origin/master, and reported 24 issues already DONE on master as open; batch c spent its work on them for 0 closes; the primary was fast-forwarded to 6b30ede2d13 in this run (clause 3 of the cooperation rule)",
+        "route": "/cockpit/objects/knowledge/s-20261031234907-e660-5d3d6d23d215",
+        "source": ".ai/repo/knowledge/candidates/s-20261031234907-e660-5d3d6d23d215.md",
+        "status": "superseded",
+        "facts": {
+          "about": "command:plan.drift",
+          "class": "lesson",
+          "date": "2026-10-31",
+          "epistemics": "observed",
+          "route": "platform",
+          "tags": [
+            "derived",
+            "observation"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://knowledge/s-20261031234907-e660-62ff021124b0",
+        "kind": "knowledge",
+        "label": "s-20261031234907-e660-62ff021124b0",
+        "summary": "trains 13 (#2784, 29 members) and 13b (#2785, 28) each spent over 2 h in hosted CI and came back red on member defects nobody had judged before boarding: 609 uncovered changed lines in coverage-differential (by blame #2638 286, #2746 122, #2689 69, #2637 43, #966 26), 5 integration tests and 6 suite cases; master stood at 6b30ede2d13 from 2026-10-30 18:27Z for more than 29 h",
+        "route": "/cockpit/objects/knowledge/s-20261031234907-e660-62ff021124b0",
+        "source": ".ai/repo/knowledge/candidates/s-20261031234907-e660-62ff021124b0.md",
+        "status": "superseded",
+        "facts": {
+          "about": "gate:coverage-differential",
+          "class": "lesson",
+          "date": "2026-10-31",
+          "epistemics": "observed",
+          "route": "enforcement",
+          "tags": [
+            "derived",
+            "observation"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://knowledge/s-20261031234907-e660-7e11db3374b4",
+        "kind": "knowledge",
+        "label": "s-20261031234907-e660-7e11db3374b4",
+        "summary": "no member of trains 13 and 13b was judged on its own head against master: the members' validate runs had been cancelled as hold members to free hosted runners, and the compose ran fmt, clippy and cargo test --lib only, not --tests, the suite cases or the coverage differential, so the top's one CI run was the first judgment of every member",
+        "route": "/cockpit/objects/knowledge/s-20261031234907-e660-7e11db3374b4",
+        "source": ".ai/repo/knowledge/curated/s-20261031234907-e660-7e11db3374b4.md",
+        "status": "verified",
+        "facts": {
+          "about": "docs/INTEGRATION.md",
+          "class": "lesson",
+          "date": "2026-10-31",
+          "epistemics": "observed",
+          "route": "documentation",
+          "tags": [
+            "derived",
+            "observation"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://knowledge/s-20261031234907-e660-81faa4c60c71",
+        "kind": "knowledge",
+        "label": "s-20261031234907-e660-81faa4c60c71",
+        "summary": "train 13c (#2786) was composed from the per-member blame of 13b's red top: every member that carried an uncovered changed item or a new ui-audit finding moved to the next train, and 16 members boarded with none; the members behind 13b's six suite reds stayed in and were fixed by eight patches folded into the top's compose commit before the owner's decision of 2026-11-01 on clause 2, not in the form it allows, and carrying them to their members' branches is owed; 13c merged at 2026-11-01T03:08:34Z, 3 h 17 min after its pull request opened, so it landed but not within the owner's 30 minutes",
+        "route": "/cockpit/objects/knowledge/s-20261031234907-e660-81faa4c60c71",
+        "source": ".ai/repo/knowledge/curated/s-20261031234907-e660-81faa4c60c71.md",
+        "status": "verified",
+        "facts": {
+          "about": "docs/INTEGRATION.md",
+          "class": "lesson",
+          "date": "2026-10-31",
+          "epistemics": "observed",
+          "route": "documentation",
+          "tags": [
+            "derived",
+            "observation"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://knowledge/s-20261031234907-e660-8da4de76cc1f",
+        "kind": "knowledge",
+        "label": "s-20261031234907-e660-8da4de76cc1f",
+        "summary": "the pre-push plan on train 13's top (a428913c05d) reported failures in four structure gates (development semantics, the collision check, economics claims, rust quality) and the top was pushed anyway, as reported, not refused; CI's run 41187739613 failed the same four by 09:44Z, about 30 minutes after the push, and found shell lint, five integration tests and coverage besides, before the top was closed at 10:48Z and its run cancelled; f3's review traced the four to members (rust-quality 57 #900 and 1 #2620, economics-claims #900, development-semantics #1050, collision #2746) and the top was recomposed as 13b, so four of CI's reds were known before the push",
+        "route": "/cockpit/objects/knowledge/s-20261031234907-e660-8da4de76cc1f",
+        "source": ".ai/repo/knowledge/curated/s-20261031234907-e660-8da4de76cc1f.md",
+        "status": "verified",
+        "facts": {
+          "about": "rule:project.a-push-runs-what-ci-would-find-first",
+          "class": "lesson",
+          "date": "2026-10-31",
+          "epistemics": "observed",
+          "route": "enforcement",
+          "tags": [
+            "derived",
+            "observation"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://knowledge/s-20261031234907-e660-c67cb106340d",
+        "kind": "knowledge",
+        "label": "s-20261031234907-e660-c67cb106340d",
+        "summary": "train 13b's top 3dcfee72983 (#2785, 28 members) took validate run 41194104887 from 10:46Z to 14:32Z on 2026-10-31 and came back red on member defects nobody had judged before boarding: 609 uncovered changed items in coverage (257 lines, 329 regions, 23 functions, the gate's own count; f3's blame attributed the 586 line and region items to members, #2638, #2746, #2689, #2637 and #966 above all), the collision check in structure, three suite shards (cases 430 94 400 93 15 3955), three ui shards and one site-probe shard, while its rust jobs passed; train 13 (#2784) had already failed five integration tests, coverage, structure and its suite and ui shards in run 41187739613 before it was cancelled after 1.6 h and recomposed; master stood at 6b30ede2d13 from 2026-10-30 18:27Z for more than 29 h",
+        "route": "/cockpit/objects/knowledge/s-20261031234907-e660-c67cb106340d",
+        "source": ".ai/repo/knowledge/curated/s-20261031234907-e660-c67cb106340d.md",
+        "status": "verified",
+        "facts": {
+          "about": "gate:coverage-differential",
+          "class": "lesson",
+          "date": "2026-10-31",
+          "epistemics": "observed",
+          "route": "enforcement",
+          "tags": [
+            "derived",
+            "observation"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://knowledge/s-20261031234907-e660-e3184549d2df",
+        "kind": "knowledge",
+        "label": "s-20261031234907-e660-e3184549d2df",
+        "summary": "knowledge promote kept session:s-20261031234907-e660 and task:t-20261031234448-e297 in each promoted record's derived_from; the session record is not committed and the task record lives under .ai/local, so the note resolves only in this checkout and fails knowledge-integrity in a clean clone until I4365 (#2677) lands; the lines were removed by hand before the commit",
+        "route": "/cockpit/objects/knowledge/s-20261031234907-e660-e3184549d2df",
+        "source": ".ai/repo/knowledge/candidates/s-20261031234907-e660-e3184549d2df.md",
+        "status": "superseded",
+        "facts": {
+          "about": ".ai/repo/skills/evolve/SKILL.md",
+          "class": "lesson",
+          "date": "2026-10-31",
+          "epistemics": "observed",
+          "route": "project",
+          "tags": [
+            "derived",
+            "observation"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://knowledge/s-20261031234907-e660-f30c6605adab",
+        "kind": "knowledge",
+        "label": "s-20261031234907-e660-f30c6605adab",
+        "summary": "this run first read the skill in the primary checkout, which stood at 6c79dcf, 160 commits behind origin/master, and got version 1 without steps 4's offload derive and 7; the skill is read in the run's own worktree made from origin/master, since the primary checkout and the server it hosts can lag the trunk",
+        "route": "/cockpit/objects/knowledge/s-20261031234907-e660-f30c6605adab",
+        "source": ".ai/repo/knowledge/curated/s-20261031234907-e660-f30c6605adab.md",
+        "status": "verified",
+        "facts": {
+          "about": ".ai/repo/skills/evolve/SKILL.md",
+          "class": "lesson",
+          "date": "2026-10-31",
+          "epistemics": "observed",
+          "route": "project",
+          "tags": [
+            "derived",
+            "observation"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://knowledge/s-20261031234907-e660-ffa75393fddb",
+        "kind": "knowledge",
+        "label": "s-20261031234907-e660-ffa75393fddb",
+        "summary": "Task t-20261031234448-e297 completed; verified by: bash test/run.sh 3004_evolve_is_a_procedure_of_existing_commands 391_skills_are_proven_capabilities 4337_a_changed_skill_raises_its_version 3150_the_cooperation_model_is_one_record && scripts/ci-plan --inventory (exit 0)",
+        "route": "/cockpit/objects/knowledge/s-20261031234907-e660-ffa75393fddb",
+        "source": ".ai/repo/knowledge/candidates/s-20261031234907-e660-ffa75393fddb.md",
+        "status": "superseded",
+        "facts": {
+          "class": "fact",
+          "date": "2026-11-01",
+          "epistemics": "observed",
+          "tags": [
+            "derived",
+            "task"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/start-here",
         "kind": "knowledge",
         "label": "start-here",
@@ -89366,17 +89624,17 @@
         }
       },
       {
-        "id": "majordomus://rule/project.a-push-runs-what-ci-would-find-first@2",
+        "id": "majordomus://rule/project.a-push-runs-what-ci-would-find-first@3",
         "kind": "rule",
-        "label": "project.a-push-runs-what-ci-would-find-first@2",
+        "label": "project.a-push-runs-what-ci-would-find-first@3",
         "summary": "A push runs what CI would find first, and CI decides",
-        "route": "/cockpit/objects/rule/project-a-push-runs-what-ci-would-find-first-2",
-        "source": ".ai/repo/rules/project/a-push-runs-what-ci-would-find-first.v2.md",
+        "route": "/cockpit/objects/rule/project-a-push-runs-what-ci-would-find-first-3",
+        "source": ".ai/repo/rules/project/a-push-runs-what-ci-would-find-first.v3.md",
         "status": "active",
         "facts": {
           "class": "blocking",
           "depends_on": [
-            "project.the-cooperation-model-is-the-owners-word@2"
+            "project.the-cooperation-model-is-the-owners-word@3"
           ],
           "tags": [
             "ci",
@@ -91299,11 +91557,11 @@
         }
       },
       {
-        "id": "majordomus://rule/project.the-cooperation-model-is-the-owners-word@2",
+        "id": "majordomus://rule/project.the-cooperation-model-is-the-owners-word@3",
         "kind": "rule",
-        "label": "project.the-cooperation-model-is-the-owners-word@2",
+        "label": "project.the-cooperation-model-is-the-owners-word@3",
         "summary": "Work moves through seats held as mesh claims, a worker lands its own green head, and every checkout is kept current",
-        "route": "/cockpit/objects/rule/project-the-cooperation-model-is-the-owners-word-2",
+        "route": "/cockpit/objects/rule/project-the-cooperation-model-is-the-owners-word-3",
         "source": ".ai/repo/rules/project/the-cooperation-model-is-the-owners-word.v2.md",
         "status": "active",
         "facts": {
@@ -97963,6 +98221,46 @@
           "tasks": [],
           "working_tree": "dirty",
           "worktree_id": "8629e773f036bb96"
+        }
+      },
+      {
+        "id": "majordomus://session/s-20261031234907-e660",
+        "kind": "session",
+        "label": "s-20261031234907-e660",
+        "summary": "Session s-20261031234907-e660 on docs/a-train-top-is-judged-before-it-is-pushed",
+        "route": "/cockpit/objects/session/s-20261031234907-e660",
+        "source": ".ai/repo/sessions/20261101T013237Z--s-20261031234907-e660--docs-a-train-top-is-judged-before-it-is-pushed--8b57493--e9067246fa482270.md",
+        "facts": {
+          "branch": "docs/a-train-top-is-judged-before-it-is-pushed",
+          "checkpoints": [],
+          "closed_at": "2026-11-01T01:32:35Z",
+          "commits": [
+            "dc50ee0",
+            "8b57493"
+          ],
+          "created_at": "2026-11-01T01:32:35Z",
+          "decisions": [],
+          "evidence": [],
+          "handovers": [
+            ".ai/local/state/handovers/20261101T011901Z--docs-a-train-top-is-judged-before-it-is-pushed--8b57493--8af625d0e0b5d528.md"
+          ],
+          "head": "8b574934f7c33863b5159f6c622aac8422584311",
+          "issues": [],
+          "milestones": [],
+          "outcome": "closed",
+          "profile": "implementation",
+          "questions": [],
+          "repository_id": "git@github.com:korczis/prismatic-majordomus.git",
+          "session_id": "s-20261031234907-e660",
+          "start_head": "6b30ede2d133e702e0a796e3d83b2257c7174c7a",
+          "start_working_tree": "clean",
+          "started_at": "2026-10-31T23:49:07Z",
+          "task_id": "t-20261031234448-e297",
+          "tasks": [
+            "t-20261031234448-e297"
+          ],
+          "working_tree": "clean",
+          "worktree_id": "ce9da3da8bb2096b"
         }
       },
       {
@@ -114081,7 +114379,7 @@
       },
       {
         "source": "majordomus://adr/adr-0167",
-        "target": "majordomus://rule/project.the-cooperation-model-is-the-owners-word@2",
+        "target": "majordomus://rule/project.the-cooperation-model-is-the-owners-word@3",
         "kind": "put_in_force"
       },
       {
@@ -142165,6 +142463,71 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://knowledge/s-20261031234907-e660-0057bbc2c1df",
+        "target": "kind:knowledge",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://knowledge/s-20261031234907-e660-012239032ff9",
+        "target": "kind:knowledge",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://knowledge/s-20261031234907-e660-1d367279d2d5",
+        "target": "kind:knowledge",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://knowledge/s-20261031234907-e660-2a430bb77da3",
+        "target": "kind:knowledge",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://knowledge/s-20261031234907-e660-5d3d6d23d215",
+        "target": "kind:knowledge",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://knowledge/s-20261031234907-e660-62ff021124b0",
+        "target": "kind:knowledge",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://knowledge/s-20261031234907-e660-7e11db3374b4",
+        "target": "kind:knowledge",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://knowledge/s-20261031234907-e660-81faa4c60c71",
+        "target": "kind:knowledge",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://knowledge/s-20261031234907-e660-8da4de76cc1f",
+        "target": "kind:knowledge",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://knowledge/s-20261031234907-e660-c67cb106340d",
+        "target": "kind:knowledge",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://knowledge/s-20261031234907-e660-e3184549d2df",
+        "target": "kind:knowledge",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://knowledge/s-20261031234907-e660-f30c6605adab",
+        "target": "kind:knowledge",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://knowledge/s-20261031234907-e660-ffa75393fddb",
+        "target": "kind:knowledge",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://knowledge/start-here",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -144215,13 +144578,13 @@
         "kind": "depends_on"
       },
       {
-        "source": "majordomus://rule/project.a-push-runs-what-ci-would-find-first@2",
+        "source": "majordomus://rule/project.a-push-runs-what-ci-would-find-first@3",
         "target": "kind:rule",
         "kind": "is_a"
       },
       {
-        "source": "majordomus://rule/project.a-push-runs-what-ci-would-find-first@2",
-        "target": "majordomus://rule/project.the-cooperation-model-is-the-owners-word@2",
+        "source": "majordomus://rule/project.a-push-runs-what-ci-would-find-first@3",
+        "target": "majordomus://rule/project.the-cooperation-model-is-the-owners-word@3",
         "kind": "depends_on"
       },
       {
@@ -145320,32 +145683,32 @@
         "kind": "depends_on"
       },
       {
-        "source": "majordomus://rule/project.the-cooperation-model-is-the-owners-word@2",
+        "source": "majordomus://rule/project.the-cooperation-model-is-the-owners-word@3",
         "target": "kind:rule",
         "kind": "is_a"
       },
       {
-        "source": "majordomus://rule/project.the-cooperation-model-is-the-owners-word@2",
+        "source": "majordomus://rule/project.the-cooperation-model-is-the-owners-word@3",
         "target": "majordomus://rule/project.an-exclusive-claim-lives-by-its-holders-progress@1",
         "kind": "depends_on"
       },
       {
-        "source": "majordomus://rule/project.the-cooperation-model-is-the-owners-word@2",
+        "source": "majordomus://rule/project.the-cooperation-model-is-the-owners-word@3",
         "target": "majordomus://rule/project.an-expedited-landing-is-the-owners-word@1",
         "kind": "depends_on"
       },
       {
-        "source": "majordomus://rule/project.the-cooperation-model-is-the-owners-word@2",
+        "source": "majordomus://rule/project.the-cooperation-model-is-the-owners-word@3",
         "target": "majordomus://rule/project.integration-follows-the-current-master@3",
         "kind": "depends_on"
       },
       {
-        "source": "majordomus://rule/project.the-cooperation-model-is-the-owners-word@2",
+        "source": "majordomus://rule/project.the-cooperation-model-is-the-owners-word@3",
         "target": "majordomus://rule/project.mesh-cooperation-is-authenticated@1",
         "kind": "depends_on"
       },
       {
-        "source": "majordomus://rule/project.the-cooperation-model-is-the-owners-word@2",
+        "source": "majordomus://rule/project.the-cooperation-model-is-the-owners-word@3",
         "target": "majordomus://rule/project.work-is-claimed-before-it-is-built@1",
         "kind": "depends_on"
       },
@@ -146201,6 +146564,11 @@
       },
       {
         "source": "majordomus://session/s-20261029014409-5302",
+        "target": "kind:session",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://session/s-20261031234907-e660",
         "target": "kind:session",
         "kind": "is_a"
       },
@@ -153676,8 +154044,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4194,
-      "edges": 9636,
+      "nodes": 4208,
+      "edges": 9650,
       "acyclic": false,
       "truncated": false
     }
