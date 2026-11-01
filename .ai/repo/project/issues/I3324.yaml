@@ -1,0 +1,44 @@
+id: I3324
+milestone: a-visitor-understands-and-checks-majordomus
+title: "After every deploy the published homepage's hero choices are probed and found reachable"
+slug: the-published-hero-is-probed
+priority: p2
+profile: verification
+objective: "Extend scripts/pages verify --smoke so that, after a deploy, it reads the hero choices the published homepage offers and requests each one, failing when a choice's page is absent, with no route list kept by hand; no site feature is added."
+why: "Split from I3223 (verification finding: one worker, one issue, one PR); I3223's acceptance line on scripts/pages verify --smoke is carried here. The intent is about a visitor of majordomus.dev, and the critique of a-visitor-understands-and-checks-majordomus found that no issue verified the published site; I1600 did that with scripts/pages verify --smoke for the earlier homepage. Sources: chatgpt-majordomus:c215#8."
+current_state: "Verified on master 707a04c7ce8: scripts/pages verify --url URL --commit SHA --smoke fetches every deploy.smoke route the deployment declaration lists and checks its marker; no hero choice is among them, and the choices do not exist until I3223 lands."
+desired_state: "The smoke verification derives the hero choices from the published page and probes each."
+scope:
+  - "scripts/pages"
+non_scope:
+  - "Changing the homepage"
+  - "Probing pages other than the hero choices' targets"
+depends_on:
+  - "I3223"
+serves:
+  - "a-visitor-understands-and-checks-majordomus#the-published-page-is-probed"
+acceptance_criteria:
+  - "After a deploy, scripts/pages verify --url <site> --commit <sha> --smoke requests every hero choice of the published homepage and reports each"
+  - "A fixture homepage whose hero links a missing page fails the smoke verification"
+  - "The criterion a-visitor-understands-and-checks-majordomus#the-published-page-is-probed is switched to evidence: test, ref the case that holds the fixture, in the change that adds it"
+validation:
+  - "majordomus plan validate"
+  - "bash test/run.sh 333_homepage_narrative"
+evidence_required:
+  - "case_the_published_hero_is_probed"
+created_at: 2026-10-18
+updated_at: 2026-10-22T04:48:04Z
+started_at: 2026-10-22T04:47:05Z
+started_event: sha256:e7b29473d2c6a008c9a34d26009fa0c295adadd24ddea626718cd74640b5c74d
+verified_at: 2026-10-22T04:47:34Z
+verified_event: sha256:9db5d61e6b3c554629c8a80ccff819748b5b7088ff7a2344b01e6eff00b9ce16
+completed_at: 2026-10-22T04:48:04Z
+completed_event: sha256:b6f7fe63f29d668ccf43ec84f1d42c1617cc2a6c51d44f76eb67345f3dbe7844
+evidence:
+  - covers: case_the_published_hero_is_probed
+    type: ci
+    command: "bash test/run.sh 103_obligations"
+    result: "passed in train 3a validate 39712017896 (76c57859663, landed on master 2026-10-22)"
+    artifact: "https://github.com/korczis/prismatic-majordomus/actions/runs/39712017896"
+    commit: 76c578596631b290f9291691b388f359fbce97ae
+    recorded_at: 2026-10-22T04:39:12Z

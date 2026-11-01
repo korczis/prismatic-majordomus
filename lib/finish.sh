@@ -64,6 +64,14 @@ H
   case "$outcome" in completed|partial|blocked|no_match|failed) ;;
     "") mj_die "$MJ_EX_USAGE" "finish: --outcome is required (completed|partial|blocked|no_match|failed)" ;;
     *) mj_die "$MJ_EX_USAGE" "finish: unknown outcome '$outcome'" ;; esac
+  # An outcome is the record that says whether work is done, so it is the caller's task's or
+  # it is refused by name (ADR 0164; lib/evidence.sh). `--check` above asks and writes
+  # nothing, so it judges the checkout's task as it always has.
+  local again="finish --outcome $outcome"
+  [ -n "$verify" ] && again="$again --verify-command \"$verify\""
+  [ -n "$note" ] && again="$again --note $note"
+  mj_task_attribution_or_refuse "$again"
+  local sid="$MJ_RECORD_SESSION"
 
   # The note is read once, here, and every later reader takes the copy. `--note` may be a pipe,
   # /dev/stdin or a process substitution: the doctrine's read used to drain it, and the record's
@@ -76,6 +84,12 @@ H
   fi
   MJ_FINISH_OUTCOME="$outcome"; MJ_FINISH_VERIFY="$verify"; MJ_FINISH_NOTE="$note"
   MJ_FINISH_VEXIT=""; MJ_FINISH_VSECS=""; MJ_FINISH_VTREE=""
+  # A scope that `start` could not claim — no server answered then — is claimed now, before
+  # the contract is judged (I2289): a server that came up since is all the task was missing.
+  if ! grep -q '^mesh_claim: ' "$MJ_CUR" 2>/dev/null && mj_mesh_declared_enabled; then
+    mj_mesh_task_claim "$id" "$(mj_ylist "$MJ_CUR_FLAT" scope | tr '\n' ' ')" "$(mj_cur task)" "$(mj_cur issue)"
+    mj_load_current || true
+  fi
   mj_doctrine_dispatch finish
 
   # The policy may name a requirement the registry does not define. That is a
@@ -99,7 +113,9 @@ H
     # `finish --check` returned above and writes nothing: a check is a question, not a claim.
     local d refused_json=""
     for d in $refused; do refused_json="$refused_json\"$d\","; done
-    mj_ledger_append task.refused "\"task_id\":\"$id\",\"outcome\":\"$outcome\",\"unmet\":$unmet,\"refused\":[${refused_json%,}],\"contract\":$contract"
+    local fields="\"task_id\":\"$id\",\"outcome\":\"$outcome\",\"unmet\":$unmet"
+    fields="$fields,\"refused\":[${refused_json%,}],\"contract\":$contract"
+    mj_ledger_append task.refused "$fields" "$sid"
     if [ "$MJ_JSON" != 1 ]; then
       printf 'finish: refused, %s unmet\n' "$unmet"
       # one doctrine per line: the list used to be joined with its own separators deleted.
@@ -121,8 +137,14 @@ H
   local now; now="$(mj_now)"
   sed -e "s/^outcome: .*/outcome: $outcome/" -e "s/^checkpoint_at: .*/checkpoint_at: $now/" "$MJ_CUR" > "$MJ_CUR.mj-tmp" && mv "$MJ_CUR.mj-tmp" "$MJ_CUR"
   local vj=null; [ -n "$MJ_FINISH_VEXIT" ] && vj="{\"command\":\"$(mj_json_esc "$verify")\",\"exit\":$MJ_FINISH_VEXIT,\"seconds\":$MJ_FINISH_VSECS${MJ_FINISH_VTREE:+,\"tree\":\"$MJ_FINISH_VTREE\"}}"
-  local cps=0; cps="$(find "$MJ_STATE_DIR/checkpoints" -name '*.md' 2>/dev/null | wc -l | tr -d ' ')"
-  mj_ledger_append task.finished "\"task_id\":\"$id\",\"outcome\":\"$outcome\",\"contract\":$contract,\"verify\":$vj,\"checkpoints\":$cps"
+  # This task's checkpoints, not every one in the store: a checkpoint another episode wrote
+  # beside this task names no task (ADR 0164), and one of an earlier task names its own.
+  local cps=0
+  cps="$(find "$MJ_STATE_DIR/checkpoints" -name '*.md' -exec grep -l "^task_id: $id$" {} + \
+    2>/dev/null | wc -l | tr -d ' ')"
+  local fields="\"task_id\":\"$id\",\"outcome\":\"$outcome\",\"contract\":$contract"
+  mj_ledger_append task.finished "$fields,\"verify\":$vj,\"checkpoints\":$cps" "$sid"
+  mj_mesh_task_release "$id"
   [ "$MJ_JSON" = 1 ] || printf 'finish: %s %s\n' "$id" "$outcome"
 }
 

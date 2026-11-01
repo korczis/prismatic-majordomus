@@ -1,0 +1,32 @@
+id: I4340
+milestone: development-runtime
+title: "The reaper bounds the shared build directory although cargo writes no CACHEDIR.TAG into a build-dir"
+slug: the-reaper-bounds-an-untagged-build-dir
+priority: p0
+profile: implementation
+parallel_safe: true
+objective: "scripts/reap-orphans applies the shared build directory's size bound by evicting its stale units, under cargo's lock, whenever the directory is over its bound and either a build is running or it carries no CACHEDIR.TAG; only the removal of the whole directory still asks for the tag."
+why: "On 2026-10-29 at 01:05Z the development machine had 21 GiB free, under the 35 GiB floor every build is refused below, while ~/.asdf/installs/rust/1.90.0/build-shared/majordomus held 43.4GB against its 6144MB bound; 408 of its units, 40.0GB, had been idle 100 to 212 minutes. The bound of I3959 had not applied from the reaper: `scripts/reap-orphans --targets` reported the directory as 'skip — carries no CACHEDIR.TAG of cargo's: not provably the build directory cargo named', because cargo writes that tag into a target-dir and never into a build-dir apart from it (the directory carried .rustc_info.json and no tag), and the tag check stood before the eviction branch as well as before the whole removal. Running lib/rust_bin.sh mj_rust_bound_build_dir on it by hand evicted the 408 units in one pass and brought the volume to 50 GiB free; the eviction itself fails closed on cargo's marks (mj_rust_is_build_dir) and asks each unit again under cargo's lock."
+current_state: "On master 5370ee63d19 scripts/reap-orphans skips the shared build directory whenever it carries no CACHEDIR.TAG, before it asks whether it is over its bound or whether anybody builds, and counts it as an unreadable input; case 3125 pins that skip and every fixture of case 3959 plants a tag the real directory never has."
+desired_state: "Within its bound the directory is kept; over it, with a build running or without the tag, its stale units are evicted oldest first under cargo's lock and the row says which of the two reasons applied; only a tagged directory with nobody building is removed whole. Case 3959 proves the eviction on a directory laid out as cargo leaves a build-dir (no tag, .rustc_info.json) with nobody building, and case 3125 proves an untagged directory is still never removed whole."
+scope:
+  - ".ai/repo/project/issues/I4340.yaml"
+  - "scripts/reap-orphans"
+  - "test/cases/3125_the_reaper_asks_cargo_for_the_build_dir.sh"
+  - "test/cases/3959_the_shared_build_dir_stays_under_its_bound.sh"
+non_scope:
+  - "Running the reaper on a schedule on a development machine; the build path's own pass (mj_cargo_bounded) and the build host's disk guard (I4352) are the scheduled bounds"
+  - "The bound's size, idle age or eviction order (I3959)"
+depends_on: []
+acceptance_criteria:
+  - "Over its bound and without CACHEDIR.TAG, with nobody building, `scripts/reap-orphans --targets --reclaim` evicts the directory's stale units and keeps the directory, its recent, held and Cargo.lock-named units (case 3959)"
+  - "An untagged directory is never removed whole, and the reaper names the missing tag as the reason it evicts units instead (case 3125)"
+  - "With the reaper of 5370ee63d19 restored, cases 3959 and 3125 fail"
+validation:
+  - "bash test/run.sh 3959_the_shared_build_dir_stays_under_its_bound 3125_the_reaper_asks_cargo_for_the_build_dir"
+  - "shellcheck -x scripts/reap-orphans"
+evidence_required:
+  - ci
+risk: "An untagged directory that is not cargo's would now reach the unit eviction; the eviction refuses a directory with none of cargo's marks and removes only units it recognises by cargo's layout, each asked again under cargo's lock, so a foreign directory loses nothing."
+created_at: 2026-10-29
+updated_at: 2026-10-29

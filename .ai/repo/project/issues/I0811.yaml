@@ -13,7 +13,7 @@ scope:
   - lib/knowledge.sh
   - bin/majordomus
   - docs/CLI.md
-  - test/cases/69_knowledge_query.sh
+  - test/cases
 non_scope:
   - Any change to the existing search command's behaviour
   - Embeddings, similarity, or any opaque score
@@ -34,4 +34,25 @@ evidence_required:
   - readonly_proven
 risk: "Two commands now contain the word search with different corpora and different contracts. If the distinction is not stated where a worker reads it, the wrong one gets used and the answer looks like an absence."
 created_at: 2026-09-04
-updated_at: 2026-09-04
+updated_at: 2026-10-14T20:18:28Z
+started_at: 2026-10-14T20:17:07Z
+started_event: sha256:206123f199756074b223279273edf04bcc1f39706649179f8390c51ea2bfb5ce
+verified_at: 2026-10-14T20:18:06Z
+verified_event: sha256:426a9b753236b1baa453d1250cf24140efddae8ec920d7ac6ac131619352a914
+completed_at: 2026-10-14T20:18:28Z
+completed_event: sha256:2ac642e9b5b38cd41d1d1ee356b600f917385c4886d01b8b21917fdeff1d0dc8
+evidence:
+  - covers: query_explainable
+    type: test
+    command: "test/run.sh 3037_a_knowledge_lookup_explains_its_order"
+    result: "ok at feature/a-knowledge-lookup-explains-its-order on master 97c4521f91 (2026-10-14 20:0xZ): knowledge search states its ladder [id, title, title-prefix, path, body] in --json, returns four fixture nodes in that order each with matched and rung, places a query that matches one node at two levels (its exact id, and the body of documents naming it) on the id rung once, and answers the same question twice byte-identically; every result carries id, kind, title, source and matched. Documented in docs/CLI.md under majordomus knowledge."
+    artifact: "test/cases/3037_a_knowledge_lookup_explains_its_order.sh"
+    commit: 97c4521f91a8e096d84eb9e552c9590b512309a5
+    recorded_at: 2026-10-14T20:17:24Z
+  - covers: readonly_proven
+    type: test
+    command: "test/run.sh 3037_a_knowledge_lookup_explains_its_order 24_prompt_search 64_knowledge_discovery 15_command_surface"
+    result: "4 ok at master 97c4521f91 plus this change (2026-10-14 20:0xZ). Case 3037 runs search, show and related and asserts the working tree's porcelain status is the same after them as before; there is no stored index to go stale, since each call compiles from the version-control index as knowledge nodes does, so none of them rebuilds or writes anything. show and related exit 12 for an unknown id and search exits 2 with no query. Case 24 (the existing search command) still passes unchanged; 15 holds the command surface with search/show/related declared read-only in share/commands.yaml."
+    artifact: "test/cases/3037_a_knowledge_lookup_explains_its_order.sh"
+    commit: 97c4521f91a8e096d84eb9e552c9590b512309a5
+    recorded_at: 2026-10-14T20:17:41Z

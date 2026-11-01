@@ -1,0 +1,36 @@
+id: I3398
+milestone: a-newcomer-reaches-a-first-verified-intent
+title: "The T6 protocol says who counts as a newcomer, what each trial records and how many must reach a satisfied verdict unaided, before any trial runs"
+slug: the-t6-protocol-is-registered
+priority: p1
+profile: docs
+objective: "Write .ai/repo/workflows/first-intent-trial.md (who counts as a newcomer: a developer who has not contributed to Majordomus; invitation and consent; the observer's rule of no help; the fields) and register the T6 trials protocol in the proof plan: fields reached_satisfied_verdict, seconds, commands_beyond_page, documents_beyond_page, observer_interventions, tool version, platform, agent; min_trials and min_successes from an owner decision; success requires zero interventions; redaction under I3353's rules. Link the workflow from .ai/repo/workflows/README.md."
+why: "T6 of the owner's report of 2026-10-19. a-stranger-adopts-it-unaided measures a first refusal, not a first verified intent; I3129 plans an outside-run form with overlapping fields, and reusing I3353's record there is that issue's owner's call."
+current_state: "git ls-files .ai/repo/workflows lists five workflows, none for a first intent; I3129 is BLOCKED."
+desired_state: "The T6 protocol validates; T6 reads not_run with reason no counted record."
+scope:
+  - ".ai/repo/workflows"
+  - ".ai/repo/workflows/README.md"
+  - ".ai/repo/benchmarks"
+non_scope:
+  - "Recruiting newcomers"
+  - "The ten-minute refusal bar"
+depends_on:
+  - "I3352"
+  - "I3353"
+  - "I3396"
+serves:
+  - "the-product-proves-it-pays#newcomers-reach-a-first-verified-intent"
+acceptance_criteria:
+  - "The protocol validates with its digest"
+  - "The trial counts cite a recorded owner decision"
+  - "The workflow states that nothing about a trial is simulated or edited"
+validation:
+  - "majordomus economics proof"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test economics"
+  - "majordomus plan validate"
+  - "scripts/ci/english-only-check"
+evidence_required:
+  - "t6_protocol_registered"
+created_at: 2026-10-19
+updated_at: 2026-10-19

@@ -10,10 +10,17 @@
 #                                      policy and the index: docs/generated/**, share/allow/**,
 #                                      the provider bootstraps, site/data/registry/registry.json
 #   scripts/generate-site-data --check site/data/generated/**, docs/SITE_CLAIMS.md,
-#                                      docs/PLAN_STATUS.md (by input hash, which covers
+#                                      docs/PLAN_STATUS.md and its milestone pages under
+#                                      docs/plan-status/ (by input hash, which covers
 #                                      docs/generated/registry.json and openapi.json)
 #   scripts/gitattributes --check      .gitattributes: the merge policy is a projection of
 #                                      what the two generators above actually write
+#   scripts/rules-package check        share/standard/majordomus/manifest.yaml: every rule
+#                                      file's hash, and the release the package is stamped with
+#   scripts/ci/derived-size-check      no derived file the index judges by size is above 75% of
+#                                      .ai/repo/scope.yaml's out.max_bytes: past the limit it
+#                                      leaves the index, and the derive stops being a fixpoint
+#                                      (I4512)
 #
 # Together they prove the chain: a capability edited in Rust makes registry.json stale (the
 # first check), and a registry.json regenerated without the site makes the site's input hash
@@ -65,6 +72,12 @@ printf '==> derive-check: scripts/generate-site-data --check\n'
 # 2026-09-12 and was wrong in both directions at once.
 printf '==> derive-check: scripts/gitattributes --check\n'
 "$ROOT/scripts/gitattributes" --check || rc=10
+printf '==> derive-check: scripts/rules-package check\n'
+"$ROOT/scripts/rules-package" check || rc=10
+# Current is not enough: a derived file a few bytes from out.max_bytes is current today and
+# leaves the index on the branch that grows it, and the derive after that needs a second run.
+printf '==> derive-check: scripts/ci/derived-size-check\n'
+MAJORDOMUS_BIN="$RB" "$ROOT/scripts/ci/derived-size-check" || rc=10
 if [ "$rc" = 0 ]; then printf '==> derive-check: every derived artifact is current\n'
 else printf '==> derive-check: stale derived artifact(s); run scripts/derive (just derive) and commit the result\n' >&2; fi
 exit "$rc"

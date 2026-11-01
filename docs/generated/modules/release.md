@@ -1,11 +1,11 @@
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: the `release` module of the canonical Majordomus capability registry; regenerate with `majordomus generate`
-     Generator: majordomus-cli 0.24.1 -->
+     Generator: majordomus-cli 1.0.0-alpha.10 -->
 # Module `release` — Release
 
 What this project has shipped and what it would ship next, derived rather than maintained: the changelog composes the layer's release records, the decisions dated inside each release's window and the conventional commits in its range; the version report reads the one place the version is authored and the projection the shell tool prints, and says what the public contract requires it to become — or that it cannot be measured, and so decides nothing — with what the commits since the last release imply beside it as evidence.
 
-Stability: implemented. Capabilities: 4.
+Stability: implemented. Capabilities: 5.
 
 ## `release.analysis` — What the public contract did, and the smallest version it allows
 
@@ -51,6 +51,28 @@ Every release the layer records, newest first, with the work that has not been r
 
 Output: `ReleaseChangelog`.
 
+## `release.currency` — Whether the trunk's landed work is released
+
+How much landed work the trunk holds past the last release, since when, and at which version, measured when asked (I3070). The last release is the newer of the release the layer records and the newest version tag the trunk contains: a tag is pushed before its record lands. Landed work is every commit of the trunk past it except merges and release commits. A landing is a commit of the trunk's first-parent history, and the work has waited since the oldest landing that brought anything but release commits. The stance is current when nothing has landed past the release, owed when work has, and overdue once it has waited longer than six hours. The version the public contract requires is decided by the version selection release.version makes, but only from a recorded release and only in a checkout at the trunk; otherwise the answer says which it is not. Ask with next false to leave the version out, as the brief and doctor do. It reads git and the clock, so it is never committed into derived data.
+
+| | |
+|---|---|
+| kind | query |
+| stability | implemented |
+| MCP tool | `majordomus_release_currency` |
+| HTTP | `GET /api/v1/release/currency` |
+| cache | — |
+| benchmark | waived (published_history) |
+| provenance | builtin majordomus_cli::capability::builtin::release |
+| tags | release, version, delivery |
+
+| input | type | required | description |
+|---|---|---|---|
+| `next` | boolean or null | no | Whether to decide the version the public contract requires for the landed work, which
+reads the last release's registry: yes when absent. The brief and doctor say no. |
+
+Output: `ReleaseCurrency`.
+
 ## `release.next` — The version a landing allocates, and why
 
 What the integration executor raises the trunk's version to when it lands a head (ADR 0134): the version the trunk declares, how far the head moves the public contract measured against the trunk's committed registry, what that movement requires under the version's mode, the repository's floor from `release.floor` in the policy, the exemption class that lowered the floor if every changed path falls in one, the larger of the requirement and the floor, and the trunk's version raised by it — with one sentence per step. Everything is read from git at the two refs, so the answer does not depend on which executable runs or on the branch's own version, which is why a retried landing cannot raise twice. It decides and writes nothing; an input that cannot be read is refused rather than guessed.
@@ -68,7 +90,8 @@ What the integration executor raises the trunk's version to when it lands a head
 
 | input | type | required | description |
 |---|---|---|---|
-| `base` | string or null | no | The trunk the landing raises from; `origin/master` when absent. |
+| `base` | string or null | no | The trunk the landing raises from; when absent, the remote-tracking ref of the trunk
+this repository names (its remote's default branch, else its own trunk). |
 | `head` | string or null | no | What lands; `HEAD` when absent. |
 
 Output: `LandingDecision`.

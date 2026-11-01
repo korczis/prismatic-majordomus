@@ -9,13 +9,44 @@
 #                                   second generation for the same answer (scripts/pages does,
 #                                   by fingerprint; the site job of validate.yml does, by the
 #                                   `generate-site-data --check` step that precedes the build).
+#   scripts/site-check --roadmap PAGE DATA_DIR [BUILD_JSON]
+#                                   check 13h alone, over one built /roadmap/ page and the data it
+#                                   was built from (BUILD_JSON defaults to DATA_DIR/../build.json):
+#                                   the scan a case runs on a fixture. Exit 0, 10 findings, 12 missing.
+#   scripts/site-check --nav PUBLIC_DIR CONFIG_TOML
+#                                   check 13d alone, over a built public directory: every
+#                                   navigation and hero link of its homepage resolves, and a link
+#                                   with a #fragment names an element its page carries (I3008).
+#                                   The scan a case runs on a fixture. Exit 0, 10 findings, 12 missing.
+#   scripts/site-check --casefold PUBLIC_DIR|LISTING
+#   scripts/site-check --memory I18N_DIR
+#                                   check 13l alone, over a built public directory with every
+#                                   composed snapshot in it, or a file listing its paths one per
+#                                   line (a case-insensitive disk cannot hold the clash a case
+#                                   needs): no two paths differ only in case (I3447). Exit 0, 10
+#                                   findings, 12 missing.
+#   scripts/site-check --since-deploy REPO   only check 23's half that needs no build: that REPO
+#                                   does not track the build-time since-deploy record (for the cases)
 #   scripts/site-check --prose-figures <dir>
 #                                   check 19 alone, over every *.md and *.toml under <dir>, with
 #                                   no built site: the scan a case runs on a fixture. Exit 0 when
 #                                   no count is typed by hand, 10 naming each one, 12 no <dir>.
+#   scripts/site-check --articles CONTENT_DIR NAV_TOML CONFIG_TOML
+#                                   check 21 alone, over the front matter of every *.md under
+#                                   CONTENT_DIR, with no built site: every article reads in every
+#                                   language the site declares, its counterparts name it back,
+#                                   every translation matches its source's digest, and the articles
+#                                   it names as related name it back in its reader's language. The
+#                                   scan a case runs on a fixture. Exit 0 clean, 10 findings, 12
+#                                   missing.
 set -eu
 SYNC=1
 if [ "${1:-}" = --no-sync ]; then SYNC=0; shift; fi
+SINCE_REPO=""
+if [ "${1:-}" = --since-deploy ]; then
+  [ $# -ge 2 ] || { echo "site-check: --since-deploy REPO" >&2; exit 2; }
+  SINCE_REPO="$2"; shift 2
+fi
 # The scan of check 19, "prose states no count by hand": every line of the given files on which
 # a number of two or more digits stands within three words before a counted noun. A count
 # typed into prose is the author's on the day it was typed, and the site goes on printing it
@@ -58,6 +89,393 @@ prose_counts() { # file... -> findings
       }
     }' "$@"
 }
+# The check of 13h, "/roadmap/ is the whole plan": every milestone id of plan.json is on the
+# built page, once each and in the order roadmap.json derives from the milestone graph; every
+# issue of plan.json is on it; and the page names, as observed, the commit build.json records.
+# It once kept the eight milestones whose hand-typed version was set and dropped the thirty
+# where the work happened: a page that filters the plan by a field a person writes is the
+# parallel universe ADR 0166 removes. Prints OK or FAIL lines; returns 1 on any FAIL.
+roadmap_complete() { # page data-dir build-json
+  local page="$1" data="$2" build="$3" rbad=0 id seen built ms is
+  [ -f "$page" ] || { echo "FAIL roadmap      no roadmap page at $page"; return 1; }
+  ms="$(grep -o 'data-milestone="[^"]*"' "$page" | sed 's/^data-milestone="//; s/"$//')"
+  is="$(grep -o 'data-issue="[^"]*"' "$page" | sed 's/^data-issue="//; s/"$//')"
+  for id in $(jq -r '.milestones[].id' "$data/plan.json"); do
+    printf '%s\n' "$ms" | grep -qxF "$id" || { echo "FAIL roadmap      milestone $id is in plan.json but not on /roadmap/"; rbad=1; }
+  done
+  for id in $(jq -r '.issues[].id' "$data/plan.json"); do
+    printf '%s\n' "$is" | grep -qxF "$id" || { echo "FAIL roadmap      issue $id is in plan.json but not under its milestone on /roadmap/"; rbad=1; }
+  done
+  [ "$(jq -r '.milestones[].id' "$data/roadmap.json")" = "$ms" ] \
+    || { echo "FAIL roadmap      /roadmap/ does not list the milestones once each in the order roadmap.json derives"; rbad=1; }
+  seen="$(grep -o 'data-observed-commit="[^"]*"' "$page" | sed 's/^data-observed-commit="//; s/"$//' | head -n 1)"
+  built="$(jq -r '.commit // empty' "$build" 2>/dev/null || true)"
+  [ -n "$seen" ] && [ "$seen" = "$built" ] \
+    || { echo "FAIL roadmap      /roadmap/ names ${seen:-no commit} as observed, the build records ${built:-none}"; rbad=1; }
+  [ "$rbad" = 0 ] || return 1
+  echo "OK   roadmap      /roadmap/ draws all $(printf '%s\n' "$ms" | grep -c .) milestone(s) of plan.json in the graph's order, every issue under its milestone, observed at ${seen:0:11}"
+}
+# 13l as a function, so a case can hold it on a fixture (--casefold) and the full run calls the
+# same rule: no two paths of the publication are equal once case is folded (I3447). A
+# case-insensitive filesystem, the default on a Mac, cannot hold both, so the archive of a
+# publication that carries them does not extract there and a deploy from such a disk silently
+# keeps one. Every path is read, the composed snapshots included, and each clash names both.
+# Reports through the caller's ok and bad.
+casefold_unique() { # public-dir | listing-file (one path per line, for a case on a Mac)
+  local src="$1" paths clashes n
+  if [ -d "$src" ]; then paths="$(cd "$src" && find . -mindepth 1 | sed 's#^\./##')"
+  else paths="$(sed 's#^\./##; s#^/##' "$src")"; fi
+  n="$(printf '%s\n' "$paths" | grep -c . || true)"
+  clashes="$(printf '%s\n' "$paths" | grep . | LC_ALL=C sort \
+    | awk '{ k = tolower($0)
+             # a clash below one already reported is the same clash: report the topmost only
+             for (p = k; sub(/\/[^\/]*$/, "", p); ) if (p in clashed) next
+             if (k in seen) { print seen[k] "\t" $0; clashed[k] = 1 } else seen[k] = $0 }')"
+  if [ -n "$clashes" ]; then
+    while IFS="$(printf '\t')" read -r a b; do
+      bad casefold "/$a and /$b differ only in case; a case-insensitive filesystem holds one of them"
+    done <<< "$clashes"
+  else
+    ok casefold "$n published path(s), none equal to another once case is folded"
+  fi
+}
+
+# 13d as a function, so a case can hold it on a fixture (--nav) and the full run calls the same
+# rule: every navigation and hero link of the homepage resolves, and a link with a fragment
+# names an element its page carries (I3008). Reports through the caller's ok and bad.
+nav_resolves() { # public-dir config-toml
+  local pub="$1" config="$2" snap_roots nav_snap href frag t page fre
+  snap_roots="$(jq -r '.snapshots[]? | .mount' "$pub/build.json" 2>/dev/null | sed 's#/*$##' || true)"
+  nav_snap=0
+  # The query is cut up to the fragment, never past it: /roadmap/?mode=1#delivery is still judged.
+  for href in $(awk '{ print } /id="hero"/ { h = 1 } h && /<\/section>/ { exit }' "$pub/index.html" | grep -oE 'href="[^"]*"' | sed -E "s#href=\"$(sed -n 's/^base_url = "\(.*\)"/\1/p' "$config" | sed 's#/$##')##; s#\"##g; s#[?][^#]*##" | grep -E '^/' | LC_ALL=C sort -u); do
+    # a fragment names an element of the page, not a file: the page must exist and carry that id
+    frag=""; case "$href" in *'#'*) frag="${href#*#}"; href="${href%%#*}" ;; esac
+    t="$pub$href"
+    if [ -f "$t/index.html" ] || [ -f "$t" ]; then
+      if [ -n "$frag" ]; then
+        page="$t"; [ -f "$t/index.html" ] && page="$t/index.html"
+        # an id attribute equal to the fragment, quoted either way or not at all (I3008): a
+        # data-id is not an id, and the fragment is matched literally, so #a.b is not axb
+        fre="$(printf '%s' "$frag" | sed 's#[][\.*^$+?(){}|/]#\\&#g')"
+        grep -qE "(^|[[:space:]])id=(\"$fre\"|'$fre'|$fre([[:space:]>/]|\$))" "$page" \
+          || bad nav "navigation/hero link $href#$frag names an element its page does not carry"
+      fi
+      continue
+    fi
+    if [ -n "$snap_roots" ] && printf '%s\n' "$snap_roots" | grep -qxF -- "${href%/}"; then nav_snap=$((nav_snap + 1)); continue; fi
+    bad nav "navigation/hero link $href does not resolve"
+  done
+  ok nav "every navigation link on the homepage resolves ($nav_snap of them the root of a snapshot the publication holds and this build does not compose)"
+}
+# The rows of check 21, "every article reads in every language the site declares", over the
+# front matter of every *.md under a content directory, read as the site reads it: an article
+# is a page whose [extra] declares a lang, and a page that declares none is skipped. A page
+# names its counterparts in [extra.translations] (lang = "route/", any number of languages,
+# also written inline or as dotted keys), or in the two-language form [extra] alternate and
+# alternate_lang, which is read as a table of one entry. An article names the articles related
+# to it in [extra] related, an array of the same routes on one line (I3074). Prints, separated
+# by \037:
+#   F <finding>                                        a counterpart or a related article that is not one
+#   D <shown> <source file> <shown source> <digest>    a translation whose digest the caller recomputes
+#   N <articles> <listed> <languages> <language count> <related links>   the summary
+# The languages the site declares are config.toml's default_language and every lang a page
+# declares, so a language is declared once, by the page written in it.
+article_rows() { # content-dir nav-toml config-toml shown file...
+  local dir="$1" nav="$2" config="$3" shown="$4"; shift 4
+  LC_ALL=C awk -v dir="$dir" -v nav="$nav" -v cfg="$config" -v shown="$shown" '
+    BEGIN { US = "\037" }
+    function trim(s) { sub(/^[ \t]+/, "", s); sub(/[ \t\r]+$/, "", s); return s }
+    function unq(s) { s = trim(s); if (s ~ /^".*"$/) s = substr(s, 2, length(s) - 2); return s }
+    function val(s) {
+      s = trim(s)
+      if (s ~ /^"/) { s = substr(s, 2); return substr(s, 1, index(s, "\"") - 1) }
+      sub(/[ \t]*#.*$/, "", s); return s
+    }
+    function route(p) { sub(/^\/+/, "", p); sub(/\/+$/, "", p); return p }
+    function at_route(p,   r) { r = route(p); return (r in at) ? at[r] : "" }
+    function show(f) { return shown "/" substr(f, length(dir) + 2) }
+    function F(msg) { printf "F%s%s\n", US, msg }
+    function sortw(s,   a, n, i, j, t, out) {
+      n = split(s, a, " ")
+      for (i = 2; i <= n; i++) { t = a[i]; for (j = i - 1; j >= 1 && a[j] > t; j--) a[j + 1] = a[j]; a[j + 1] = t }
+      out = ""; for (i = 1; i <= n; i++) if (i == 1 || a[i] != a[i - 1]) out = out (out == "" ? "" : " ") a[i]
+      return out
+    }
+    function setkv(f, t, k, v) {
+      if (t == "extra") {
+        if (k == "lang") lang[f] = v; else if (k == "alternate") alt[f] = v
+        else if (k == "alternate_lang") altl[f] = v
+        else if (k == "translated_from") from[f] = v; else if (k == "source_digest") dig[f] = v
+      } else if (t == "extra.translations") {
+        hastr[f] = 1
+        if ((f SUBSEP k) in tr) dup[f] = dup[f] " " k; else { tr[f, k] = v; trk[f] = trk[f] " " k }
+      }
+    }
+    function addent(f, l, p) { ne[f]++; ek[f, ne[f]] = l; ep[f, ne[f]] = p; keyed[f, l] = 1 }
+    FILENAME == cfg { if ($0 ~ /^default_language[ \t]*=/) { v = $0; sub(/^[^=]*=/, "", v); deflang = val(v) }; next }
+    FILENAME == nav {
+      if ($0 ~ /^[ \t]*#/) next
+      s = $0
+      while (match(s, /href[ \t]*=[ \t]*"[^"]*"/)) {
+        h = substr(s, RSTART, RLENGTH); sub(/^[^"]*"/, "", h); sub(/"$/, "", h); listed[route(h)] = 1
+        s = substr(s, RSTART + RLENGTH)
+      }
+      next
+    }
+    FNR == 1 {
+      f = FILENAME; files[++nf] = f; r = substr(f, length(dir) + 2); sub(/\.md$/, "", r)
+      if (r ~ /(^|\/)_?index$/) sub(/\/?_?index$/, "", r)
+      at[r] = f; rt[f] = r; tbl = ""
+      fm = ($0 ~ /^\+\+\+[ \t\r]*$/) ? 0 : 2
+    }
+    fm < 2 && /^\+\+\+[ \t\r]*$/ { fm++; next }
+    fm != 1 || /^[ \t]*(#|$)/ { next }
+    /^[ \t]*\[[^]]*\][ \t\r]*$/ { t = trim($0); tbl = trim(substr(t, 2, length(t) - 2)); next }
+    {
+      eq = index($0, "="); if (!eq) next
+      k = unq(substr($0, 1, eq - 1)); v = trim(substr($0, eq + 1))
+      if (tbl == "extra" && k == "translations" && v ~ /^[{]/) {
+        sub(/^[{]/, "", v); sub(/[}].*$/, "", v); n = split(v, parts, ",")
+        for (i = 1; i <= n; i++) {
+          e = index(parts[i], "=")
+          if (e) setkv(f, "extra.translations", unq(substr(parts[i], 1, e - 1)), val(substr(parts[i], e + 1)))
+        }
+        next
+      }
+      if (tbl == "extra" && k ~ /^translations\./) { setkv(f, "extra.translations", unq(substr(k, 14)), val(v)); next }
+      if (tbl == "extra" && k == "related") {
+        if (v !~ /^\[[^]]*\][ \t\r]*(#.*)?$/) { F(show(f) " writes [extra] related other than as one array of routes on one line"); next }
+        sub(/^\[/, "", v); sub(/\][ \t\r]*(#.*)?$/, "", v); n = split(v, parts, ",")
+        for (i = 1; i <= n; i++) { p = unq(parts[i]); if (p != "") { nr[f]++; rp[f, nr[f]] = p } }
+        next
+      }
+      setkv(f, tbl, k, val(v))
+    }
+    END {
+      langs = deflang
+      for (i = 1; i <= nf; i++) if (lang[files[i]] != "") { langs = langs " " lang[files[i]]; narts++ }
+      langs = sortw(langs); nl = split(langs, L, " ")
+      # the entries each article names, in one shape whichever form wrote them
+      for (i = 1; i <= nf; i++) {
+        f = files[i]; if (lang[f] == "") continue
+        if (hastr[f]) {
+          n = split(trk[f], ks, " ")
+          for (j = 1; j <= n; j++) addent(f, ks[j], tr[f, ks[j]])
+          if (alt[f] != "" && (!((f SUBSEP altl[f]) in tr) || route(tr[f, altl[f]]) != route(alt[f])))
+            F(show(f) " names " alt[f] " as its alternate, and its [extra.translations] does not list it under " (altl[f] == "" ? "any language" : altl[f]))
+        } else if (alt[f] != "") addent(f, altl[f], alt[f])
+        n = split(dup[f], ks, " ")
+        for (j = 1; j <= n; j++) F(show(f) " lists " ks[j] " twice in [extra.translations]; a group holds one page per language")
+      }
+      # each entry is a page, in the language it is listed under, and not the article own language
+      for (i = 1; i <= nf; i++) {
+        f = files[i]; if (lang[f] == "") continue
+        for (j = 1; j <= ne[f]; j++) {
+          l = ek[f, j]; p = ep[f, j]; t = at_route(p)
+          if (l == "") { F(show(f) " names " p " as its alternate and declares no alternate_lang"); continue }
+          if (l == lang[f]) { F(show(f) " lists its own language, " l ", as a counterpart (" p "); a group holds one page per language"); continue }
+          if (t == "") { F(show(f) " names " p " as its " l " counterpart, and no page under " shown " is at that route"); continue }
+          if (lang[t] == "") { F(show(f) " names " show(t) " as its " l " counterpart, and " show(t) " declares no lang"); continue }
+          if (lang[t] == lang[f]) { F(show(f) " names " show(t) " as its " l " counterpart, and both are written in " lang[f]); continue }
+          if (lang[t] != l) { F(show(f) " names " show(t) " as its " l " counterpart, and " show(t) " is written in " lang[t]); continue }
+          vt[f, l] = t; vl[f] = vl[f] " " l; g[f] = g[f] " " lang[t] ":" rt[t]
+        }
+        g[f] = sortw(lang[f] ":" rt[f] g[f])
+      }
+      # reciprocity over the whole group: every member names every other, and the same set
+      for (i = 1; i <= nf; i++) {
+        f = files[i]; if (lang[f] == "") continue
+        n = split(vl[f], ks, " ")
+        for (j = 1; j <= n; j++) {
+          l = ks[j]; t = vt[f, l]; back = 0
+          for (k = 1; k <= ne[t]; k++) if (at_route(ep[t, k]) == f) back = 1
+          if (!back) F(show(f) " names " show(t) " as its " l " counterpart, and " show(t) " does not name it back")
+          else if (g[f] != g[t] && f < t) F(show(f) " and " show(t) " name each other but not the same group: " show(f) " reads it as [" g[f] "], " show(t) " as [" g[t] "]")
+        }
+      }
+      # an article the navigation lists reads in every language the site declares
+      for (i = 1; i <= nf; i++) {
+        f = files[i]; if (lang[f] == "" || !(rt[f] in listed)) continue
+        nlisted++
+        for (k = 1; k <= nl; k++)
+          if (nl > 1 && L[k] != lang[f] && !((f SUBSEP L[k]) in keyed))
+            F(show(f) " is an article the navigation lists, and it has no counterpart in " L[k])
+      }
+      # a translation names its source, a counterpart that is an original, and the digest it was made from
+      for (i = 1; i <= nf; i++) {
+        f = files[i]
+        if (dig[f] != "" && from[f] == "") { F(show(f) " records a source_digest and names no translated_from; the original carries no digest"); continue }
+        if (from[f] == "") continue
+        s = at_route(from[f])
+        if (s == "") { F(show(f) " is translated from " from[f] ", and no page under " shown " is at that route"); continue }
+        if (s == f) { F(show(f) " names itself as the page it was translated from"); continue }
+        if (index(" " g[f] " ", " " lang[s] ":" rt[s] " ") == 0) { F(show(f) " is translated from " show(s) ", which is not one of its counterparts"); continue }
+        if (from[s] != "" || dig[s] != "") { F(show(f) " is translated from " show(s) ", which is itself a translation; the original carries no digest"); continue }
+        printf "D%s%s%s%s%s%s%s%s\n", US, show(f), US, s, US, show(s), US, dig[f]
+      }
+      # the articles an article names as related (I3074), each one a group of counterparts read
+      # by its first member: a page of another group, in the language of the article where that
+      # group has one, which names the article or one of its counterparts back; every member of a
+      # group relates the same groups; and once the site relates any article, every article the
+      # navigation lists names one
+      for (i = 1; i <= nf; i++) { f = files[i]; if (lang[f] != "") { split(g[f], gw, " "); gid[f] = gw[1] } }
+      for (i = 1; i <= nf; i++) {
+        f = files[i]; if (!nr[f]) continue
+        if (lang[f] == "") { F(show(f) " names related articles and declares no lang; only an article names them"); continue }
+        relating = 1; named = " "
+        for (j = 1; j <= nr[f]; j++) {
+          p = rp[f, j]; t = at_route(p)
+          if (index(named, " " route(p) " ")) { F(show(f) " lists " p " twice as related"); continue }
+          named = named route(p) " "
+          if (t == "") { F(show(f) " names " p " as related, and no page under " shown " is at that route"); continue }
+          if (lang[t] == "") { F(show(f) " names " show(t) " as related, and " show(t) " declares no lang, so it is no article"); continue }
+          if (t == f) { F(show(f) " names itself as related"); continue }
+          if (gid[t] == gid[f]) { F(show(f) " names " show(t) " as related, and " show(t) " is one of its own counterparts"); continue }
+          if (lang[t] != lang[f] && ((t SUBSEP lang[f]) in vt))
+            F(show(f) " names " show(t) " as related, which is written in " lang[t] "; its " lang[f] " counterpart " show(vt[t, lang[f]]) " is the one to name")
+          rg[f] = rg[f] " " gid[t]; nrel++; back = 0
+          for (k = 1; k <= nr[t]; k++) { u = at_route(rp[t, k]); if (u != "" && lang[u] != "" && gid[u] == gid[f]) back = 1 }
+          if (!back) F(show(f) " names " show(t) " as related, and " show(t) " names neither it nor any of its counterparts back")
+        }
+        rg[f] = sortw(rg[f])
+      }
+      for (i = 1; i <= nf; i++) {
+        f = files[i]; if (lang[f] == "") continue
+        n = split(vl[f], ks, " ")
+        for (j = 1; j <= n; j++) {
+          t = vt[f, ks[j]]
+          if (f < t && rg[f] != rg[t]) F(show(f) " and its " ks[j] " counterpart " show(t) " relate different articles: " show(f) " [" rg[f] "], " show(t) " [" rg[t] "]")
+        }
+      }
+      if (relating) for (i = 1; i <= nf; i++) {
+        f = files[i]
+        if (lang[f] != "" && (rt[f] in listed) && !nr[f]) F(show(f) " is an article the navigation lists and names no related article, and the site relates its articles")
+      }
+      printf "N%s%d%s%d%s%s%s%d%s%d\n", US, narts, US, nlisted, US, langs, US, nl, US, nrel
+    }' "$config" "$nav" "$@"
+}
+# The digest a translation records of its source: SHA-256 of the source's bytes after the
+# newline that ends its closing +++ fence, so an edit to the front matter alone (a new
+# description, a translations table) does not make every translation stale.
+source_body_digest() { # file -> hex digest
+  local off
+  off="$(LC_ALL=C awk 'NR == 1 && !/^\+\+\+[ \t\r]*$/ { nofm = 1 }
+    { off += length($0) + 1 }
+    /^\+\+\+[ \t\r]*$/ && !done && ++n == 2 { body = off; done = 1 }
+    END { print (nofm || !done) ? 0 : body }' "$1")"
+  tail -c +"$((off + 1))" "$1" | mj_sha256_hex
+}
+# Check 21 as a function, so a case can hold it on a fixture (--articles) and the full run calls
+# the same rule (I3436, I3437, I3438). Refused, naming the file: a counterpart that is not a page,
+# is in the article's own language or in another language than the one it is listed under; a
+# member of a group that does not name the article back, or names another group; a language
+# listed twice; an article the navigation lists with no counterpart in a language the site
+# declares; and a translation whose source is not a counterpart, is itself a translation, or has
+# changed since the digest it records. A stale digest is never rewritten here: the re-sync is the
+# translator's act, so the finding prints the digest to record once it is done. Of the articles
+# an article names as related (I3074), refused: a route that is no page or no article, the
+# article itself or one of its counterparts, a route listed twice, a page in another language
+# where its group has one in the article's own, a related article that names neither the article
+# nor any of its counterparts back, two counterparts that relate different articles, and, once
+# the site relates any article, an article the navigation lists that names none. Reports through
+# the caller's ok and bad.
+article_counterparts() { # content-dir nav-toml config-toml shown
+  local dir="${1%/}" nav="$2" config="$3" shown="${4%/}" kind a b c d e sum before="$fails"
+  local fresh=0 narts=0 nlisted=0 langs="" nl=0 nrel=0 related="" mds=()
+  while IFS= read -r f; do mds+=("$f"); done < <(find "$dir" -type f -name '*.md' | LC_ALL=C sort)
+  while IFS=$'\037' read -r kind a b c d e; do
+    case "$kind" in
+      F) bad articles "$a" ;;
+      N) narts="$a"; nlisted="$b"; langs="$c"; nl="$d"; nrel="${e:-0}" ;;
+      D)
+        sum="$(source_body_digest "$b")" && [ -n "$sum" ] || { bad articles "$a: no digest of $c could be computed ($MJ_SHA256_MISSING)"; continue; }
+        if [ "$sum" = "$d" ]; then fresh=$((fresh + 1))
+        elif [ -z "$d" ]; then bad articles "$a is translated from $c and records no source_digest; once it reads as its source does, record source_digest = \"$sum\""
+        else bad articles "$a is translated from $c, which has changed since the digest it records ($d); re-sync the translation, then record source_digest = \"$sum\""; fi ;;
+    esac
+  done < <(article_rows "$dir" "$nav" "$config" "$shown" ${mds[@]+"${mds[@]}"})
+  [ "$fails" = "$before" ] || return 0
+  [ "$nrel" -gt 0 ] && related="; $nrel related link(s) are answered back, each in its reader's language"
+  if [ "$nl" -lt 2 ]; then ok articles "the site declares one language ($langs); none of its $narts article(s) owes a counterpart$related"
+  else ok articles "every article the navigation lists ($nlisted of $narts) reads in every language the site declares ($langs), every counterpart names it back, and $fresh translation(s) match their source's digest$related"; fi
+}
+if [ "${1:-}" = --roadmap ]; then
+  [ $# -ge 3 ] || { echo "site-check: --roadmap PAGE DATA_DIR [BUILD_JSON]" >&2; exit 2; }
+  [ -f "$2" ] && [ -f "$3/plan.json" ] && [ -f "$3/roadmap.json" ] \
+    || { echo "site-check: --roadmap needs a built page and a data directory with plan.json and roadmap.json" >&2; exit 12; }
+  roadmap_complete "$2" "$3" "${4:-$(dirname "$3")/build.json}" && exit 0
+  exit 10
+fi
+# Check 22 as a function, so a case can hold it on a fixture (--memory) and the full run calls
+# the same rule. An entry of site/i18n/<lang>/memory whose English still carries a whole-element
+# value inside a <tN>…</tN> pair is keyed the way the build stopped computing (I3758): no page
+# can reach it again, and the sentence falls back to English. scripts/site-translate rekey moves
+# it; this refuses a memory that was not moved, so no train has to remember the step (I3777).
+# The rule is rekeyValues in scripts/lib/site-i18n.mjs, the same one rekey applies.
+memory_keyed() { # i18n-dir
+  local out rc=0
+  command -v node >/dev/null 2>&1 || { bad i18n "node is missing; the translation memory's keys cannot be checked"; return; }
+  out="$(node --input-type=module - "$1" "$(cd "$(dirname "$0")/.." && pwd)/scripts/lib/site-i18n.mjs" <<'NODE'
+import { existsSync, readdirSync } from 'node:fs';
+import { join } from 'node:path';
+const [dir, lib] = process.argv.slice(2);
+const { loadMemory, rekeyValues } = await import(lib);
+let entries = 0;
+for (const lang of existsSync(dir) ? readdirSync(dir).sort() : []) {
+  const mem = join(dir, lang, 'memory');
+  if (!existsSync(mem)) continue;
+  for (const e of loadMemory(mem).values()) {
+    entries += 1;
+    const r = rekeyValues(e, lang);
+    if (!r) continue;
+    console.log(r.refused
+      ? `F\t${lang} entry ${e.k} carries ${r.refused}, and its translation lost that value: fix the entry by hand, then run scripts/site-translate rekey --lang ${lang}`
+      : `F\t${lang} entry ${e.k} carries ${r.moved.join(' ')} inside a placeholder pair, keyed the old way, which no page reaches: run scripts/site-translate rekey --lang ${lang}`);
+  }
+}
+console.log(`N\t${entries}`);
+NODE
+)" || rc=$?
+  [ "$rc" = 0 ] || { bad i18n "the translation memory under $1 could not be read (node exited $rc)"; return; }
+  local found n
+  found="$(printf '%s\n' "$out" | awk -F'\t' '$1 == "F" { print $2 }')"
+  n="$(printf '%s\n' "$out" | awk -F'\t' '$1 == "N" { print $2 }')"
+  if [ -z "$found" ]; then ok i18n "every one of ${n:-0} translation-memory entries is keyed the way the build computes it"; return; fi
+  while IFS= read -r line; do bad i18n "$line"; done <<< "$found"
+}
+
+if [ "${1:-}" = --memory ]; then
+  [ -d "${2:-}" ] || { echo "site-check: --memory needs an i18n directory (site/i18n)" >&2; exit 12; }
+  fails=0; ok() { printf 'OK   %-12s %s\n' "$1" "$2"; }; bad() { printf 'FAIL %-12s %s\n' "$1" "$2"; fails=$((fails + 1)); }
+  memory_keyed "$2"
+  [ "$fails" = 0 ] && exit 0
+  exit 10
+fi
+if [ "${1:-}" = --casefold ]; then
+  [ -d "${2:-}" ] || [ -f "${2:-}" ] || { echo "site-check: --casefold needs a built public directory, or a file listing its paths" >&2; exit 12; }
+  fails=0; ok() { printf 'OK   %-12s %s\n' "$1" "$2"; }; bad() { printf 'FAIL %-12s %s\n' "$1" "$2"; fails=$((fails + 1)); }
+  casefold_unique "$2"
+  [ "$fails" = 0 ] && exit 0
+  exit 10
+fi
+if [ "${1:-}" = --nav ]; then
+  [ -f "${2:-}/index.html" ] && [ -f "${3:-}" ] || { echo "site-check: --nav needs a built public directory with index.html and a config.toml" >&2; exit 12; }
+  fails=0; ok() { printf 'OK   %-12s %s\n' "$1" "$2"; }; bad() { printf 'FAIL %-12s %s\n' "$1" "$2"; fails=$((fails + 1)); }
+  nav_resolves "$2" "$3"
+  [ "$fails" = 0 ] && exit 0
+  exit 10
+fi
+if [ "${1:-}" = --articles ]; then
+  [ -d "${2:-}" ] && [ -f "${3:-}" ] && [ -f "${4:-}" ] \
+    || { echo "site-check: --articles needs a content directory, a nav.toml and a config.toml" >&2; exit 12; }
+  # shellcheck source=../lib/sha256.sh
+  . "$(cd "$(dirname "$0")/.." && pwd)/lib/sha256.sh"
+  fails=0; ok() { printf 'OK   %-12s %s\n' "$1" "$2"; }; bad() { printf 'FAIL %-12s %s\n' "$1" "$2"; fails=$((fails + 1)); }
+  article_counterparts "$2" "$3" "$4" "$2"
+  [ "$fails" = 0 ] && exit 0
+  exit 10
+fi
 if [ "${1:-}" = --prose-figures ]; then
   [ -d "${2:-}" ] || { echo "site-check: --prose-figures needs a directory" >&2; exit 12; }
   pfiles=(); while IFS= read -r f; do pfiles+=("$f"); done < <(find "$2" -type f \( -name '*.md' -o -name '*.toml' \) | LC_ALL=C sort)
@@ -83,6 +501,34 @@ LOCAL="$(mj_rel "$MJ_AI_LOCAL_DIR")"
 SRC_REF="$(jq -r 'if (.commit // "unknown") != "unknown" and (.dirty | not) then .commit else "master" end' \
   "$SITE/data/build.json" 2>/dev/null || echo master)"
 fails=0; ok() { printf 'OK   %-12s %s\n' "$1" "$2"; }; bad() { printf 'FAIL %-12s %s\n' "$1" "$2"; fails=$((fails+1)); }
+# 23. since-deploy (the function; it runs last below). What moved since the previous deployment is a
+# fact of one build — scripts/site-build composes it from the commit that deployment was built from
+# to the one being built — so it lives in an ignored file beside build.json. Tracked, it would be
+# stale at the next commit by construction and every commit would change its bytes; so a tracked
+# or unignored copy is refused, and the built changelog page must say the state the file records
+# (or `absent` without one), with the homepage's trust strip linking it.
+since_deploy_check() {   # <repository> [<built public dir>]
+  local repo="$1" pub="${2:-}" rel=site/data/since-deploy.json sdbad=0 state
+  if git -C "$repo" ls-files --error-unmatch "$rel" >/dev/null 2>&1; then
+    bad since-deploy "$rel is tracked; it is a fact of one build and must never be committed (git rm --cached $rel)"; sdbad=1
+  elif ! git -C "$repo" check-ignore -q "$rel"; then
+    bad since-deploy "$rel is not ignored, so a build would leave it for a commit to pick up"; sdbad=1
+  fi
+  if [ -n "$pub" ]; then
+    state=absent
+    [ -f "$repo/$rel" ] && state="$(jq -r '.state // "unreadable"' "$repo/$rel" 2>/dev/null || echo unreadable)"
+    grep -qF "data-since-deploy=\"$state\"" "$pub/changelog/index.html" 2>/dev/null \
+      || { bad since-deploy "/changelog/ does not show the since-deploy state the build recorded ($state)"; sdbad=1; }
+    grep -qF 'data-since-deploy-link' "$pub/index.html" 2>/dev/null \
+      || { bad since-deploy "the homepage's trust strip does not link what changed since the last deploy"; sdbad=1; }
+  fi
+  [ "$sdbad" = 0 ] && ok since-deploy "$rel is ignored and untracked${pub:+, and /changelog/ shows the state it records ($state)}"
+  return 0
+}
+if [ -n "$SINCE_REPO" ]; then
+  since_deploy_check "$SINCE_REPO"
+  [ "$fails" = 0 ] && exit 0 || exit 10
+fi
 [ -d "$PUB" ] || { echo "site-check: site/public/ missing; run scripts/site-build" >&2; exit 12; }
 PREFIX="$(sed -n 's/^base_url = "\(.*\)"/\1/p' "$SITE/config.toml" | sed -E 's#^[a-z]+://[^/]+##; s#/$##')"
 # The pages this check judges are the site's own. scripts/site-build composes the other
@@ -116,39 +562,57 @@ for f in $gen_files; do
   [ "$(jq -r '.schema' "$SITE/data/generated/$f.json" 2>/dev/null)" = 1 ] || bad schema "$f.json missing or schema != 1"
 done; ok schema "every generated file ($(printf '%s\n' $gen_files | wc -l | tr -d ' ')) carries schema 1"
 # 3. marketing copy: line budget, no numbers, no claim words
-ml="$(mj_lines "$SITE/data/marketing.toml")"; [ "$ml" -le 80 ] && ok promo "marketing.toml is $ml lines, budget 80" || bad promo "marketing.toml is $ml lines, budget 80"
+ml="$(mj_lines "$SITE/data/marketing.toml")"; [ "$ml" -le 90 ] && ok promo "marketing.toml is $ml lines, budget 90" || bad promo "marketing.toml is $ml lines, budget 90"
 if grep -vE '^\s*#' "$SITE/data/marketing.toml" | grep -qE '\b[0-9]+ ?%|\b[0-9]{2,}\b'; then bad promo "marketing.toml contains a number; numbers are computed, never written"; fi
 # 3a. the long-form argument: the same rules, its own budget. It is the other hand-written file
 # on the site, and the one carrying the most assertion. What is mechanised here is what a script
 # can decide: the line budget, the no-numbers rule (digits and the small words that spell one),
-# that every stage of the model carries its own honest mark rather than none, and that the
-# section naming the unbuilt half is on the built page under the title the data gives it.
+# that every stage of the model names the claims that cover it, and that the section listing
+# the intent model's claims is on the built page under the title the data gives it.
 # Whether a sentence is in the conditional is not checked and is not claimed to be; that reading
 # is a person's, and the header of the file is where it is asked for.
 xl="$(mj_lines "$SITE/data/manifesto.toml")"; [ "$xl" -le 240 ] && ok promo "manifesto.toml is $xl lines, budget 240" || bad promo "manifesto.toml is $xl lines, budget 240"
 if grep -vE '^\s*#' "$SITE/data/manifesto.toml" | grep -qE '\b[0-9]+ ?%|\b[0-9]{2,}\b'; then bad promo "manifesto.toml contains a number; numbers are computed, never written"; fi
-# the direction section must keep naming what is not built: it is the one thing standing between
-# the argument and a capability claim the registry cannot answer
+# a count spelt in words is a number typed by hand all the same
 if grep -vE '^\s*#' "$SITE/data/manifesto.toml" | grep -qiE '\b(one|two|three|four|five|six|seven|eight|nine|ten) (stages?|features?|commands?|interfaces?|kinds?|rules?|surfaces?)\b'; then
   bad promo "manifesto.toml spells a count in words; the generator counts, the prose does not"
 fi
-# every stage of the model carries its own mark of how much of it exists, and the marks are not
-# all the same word: a stage with no note, or a file where one note was pasted over every stage,
-# is the drift this section exists to refuse
+# every stage of the model names the claims of docs/CLAIMS.yaml that cover it, each one the
+# matrix holds, and the argument page renders each under the status the matrix declares: how
+# much of a stage exists is the matrix's to say (ADR 0166). A typed note ("partly", "shipped")
+# was the mark here until 2026-10-16, and it was a second account of the repository beside it.
 stages="$(grep -c '^\[\[pipeline.stages\]\]' "$SITE/data/manifesto.toml")"
-notes="$(grep -c '^note = ' "$SITE/data/manifesto.toml")"
-distinct="$(grep '^note = ' "$SITE/data/manifesto.toml" | LC_ALL=C sort -u | wc -l | tr -d ' ')"
-if [ "$stages" -ne "$notes" ]; then bad promo "manifesto.toml has $stages pipeline stage(s) and $notes note(s); every stage says how much of it exists"
-elif [ "$distinct" -lt 3 ]; then bad promo "manifesto.toml gives $distinct distinct stage note(s) over $stages stages; the marks are not being kept honest"
-else ok promo "every one of the $stages stage(s) of the model carries its own mark of what exists"; fi
-# the section that names the unbuilt half is on the built page, found through the data rather
-# than through a literal this check would have to be edited to keep matching
+stage_claims="$(python3 -c '
+import sys, tomllib
+for s in tomllib.load(open(sys.argv[1], "rb")).get("pipeline", {}).get("stages", []):
+    ids = s.get("claims") or []
+    print(s.get("id", "?") + " " + (" ".join(ids) if ids else "-"))
+' "$SITE/data/manifesto.toml" 2>/dev/null)" || stage_claims=""
+known="$(jq -r '.claims[] | "\(.id) \(.status)"' "$SITE/data/generated/capabilities.json")"
+stage_bad=""
+while read -r sid ids; do
+  [ -n "$sid" ] || continue
+  [ "$ids" = - ] && { stage_bad="$stage_bad stage $sid names no claim;"; continue; }
+  for cid in $ids; do
+    st="$(printf '%s\n' "$known" | awk -v i="$cid" '$1 == i { print $2 }')"
+    if [ -z "$st" ]; then stage_bad="$stage_bad stage $sid names claim $cid, which docs/CLAIMS.yaml does not hold;"
+    elif ! { [ -f "$PUB/method/argument/index.html" ] && tr '\n' ' ' < "$PUB/method/argument/index.html"; } | grep -qE "data-stage-claim=\"$cid\"><span[^>]*>$st</span>"; then
+      stage_bad="$stage_bad /method/argument/ does not render $cid under its status $st;"
+    fi
+  done
+done <<EOF
+$stage_claims
+EOF
+if [ -z "$stage_claims" ]; then bad promo "manifesto.toml gives its pipeline stages no claims; how much of each exists would be prose again"
+elif [ -n "$stage_bad" ]; then bad promo "the pipeline's stage claims do not resolve:$stage_bad"
+else ok promo "every one of the $stages stage(s) of the model names the claims covering it, rendered under their declared status"; fi
+# the section that lists the intent model's claims is on the built page, found through the data
+# rather than through a literal this check would have to be edited to keep matching
 pt="$(sed -n 's/^planned_title = "\(.*\)"$/\1/p' "$SITE/data/manifesto.toml")"
 pl="$(sed -n 's/^planned_lead = "\(.*\)"$/\1/p' "$SITE/data/manifesto.toml")"
-if [ -z "$pt" ] || [ -z "$pl" ]; then bad promo "manifesto.toml has no planned_title/planned_lead; the unshipped half of the model would go unnamed"
-elif ! grep -qF "$pt" "$PUB/index.html"; then bad promo "the homepage does not carry the unbuilt-half heading '$pt'"
-elif [ "${#pl}" -lt 200 ]; then bad promo "planned_lead is ${#pl} characters; it names the unbuilt capabilities, not a word"
-else ok promo "the homepage names the unbuilt half of the model: '$pt'"; fi
+if [ -z "$pt" ] || [ -z "$pl" ]; then bad promo "manifesto.toml has no planned_title/planned_lead; the intent model's claims would go unheaded"
+elif ! grep -qF "$pt" "$PUB/index.html"; then bad promo "the homepage does not carry the intent model's heading '$pt'"
+else ok promo "the homepage heads the intent model's claims: '$pt'"; fi
 # what of the model is built and what is not is the claims matrix's to say, not the prose's: the
 # claims whose id carries the prefix manifesto.toml names are listed under that heading, each
 # under the status docs/CLAIMS.yaml declares for it. The prose once denied an intent view the
@@ -223,10 +687,15 @@ if [ -f "$PD" ]; then
     [ "$want" = "$got" ] || { bad product "/features/$id/ links $got of the $want claim(s) the model gives it"; prod_bad=1; }
   done
   # the telemetry the homepage prints is the dataset's, never a number in a template
-  for k in capabilities mcp_tools http_routes objects; do
+  for k in capabilities builtin declarative mcp_tools http_routes objects; do
     n="$(jq -r --arg k "$k" '.telemetry[$k]' "$PD")"
     grep -qF ">$n</dd>" "$PUB/index.html" || { bad product "the homepage does not print the derived $k ($n)"; prod_bad=1; }
   done
+  # the total is its two parts: builtin capabilities plus one generated resource per object
+  [ "$(jq -r '.telemetry.capabilities - .telemetry.builtin - .telemetry.declarative' "$PD")" = 0 ] \
+    || { bad product "telemetry: capabilities is not builtin plus declarative"; prod_bad=1; }
+  [ "$(jq -r '.telemetry.declarative - .telemetry.objects' "$PD")" = 0 ] \
+    || { bad product "telemetry: the generated resources are not one per object"; prod_bad=1; }
   # nothing enumerates the product by hand. A feature's route typed into a template, the
   # generator, its jq programs or the navigation would be the second inventory this whole
   # surface exists to remove; the section route itself is a section things legitimately link to.
@@ -534,9 +1003,9 @@ relay_check link "$ROOT/scripts/ci/link-check" "OK   links        " "FAIL "
 # markup alone. What each spec asserts is exercised in a browser by scripts/interaction-probe.
 relay_check controls "$ROOT/scripts/ci/interaction-check" "OK   controls     " "FAIL control       "
 # 7. assets present
-for a in app.css js/nav.js js/search.js js/alpine.min.js js/theme.js js/mermaid.min.js js/diagrams.js js/graph.js js/cytoscape.min.js images/logo-mark.svg images/logo.svg images/social-card.png favicon.svg giallo-light.css giallo-dark.css; do
+for a in app.css js/nav.js js/search.js js/alpine.min.js js/theme.js js/mermaid.min.js js/diagrams.js js/charts.js js/echarts.min.js js/graph.js js/cytoscape.min.js images/logo-mark.svg images/logo.svg images/social-card.png favicon.svg giallo-light.css giallo-dark.css; do
   [ -f "$PUB/$a" ] || bad asset "$a missing from site/public"
-done; ok asset "css, nav, search, alpine, mermaid, cytoscape, theme, diagrams, graph, images, highlighting present"
+done; ok asset "css, nav, search, alpine, mermaid, echarts, cytoscape, theme, diagrams, charts, graph, images, highlighting present"
 grep -qE '^[[:space:]]*\.dark ' "$PUB/giallo-dark.css" && ok darkcss "giallo-dark.css scoped under .dark" || bad darkcss "giallo-dark.css not scoped under .dark (site-build post-step)"
 # 7b. the status vocabulary: every state word a rendered badge carries is one the design
 # declaration files under a status. A word it does not know renders neutral and says nothing,
@@ -620,8 +1089,25 @@ CREDENTIAL_RE="$(leak_patterns credential)"; NOT_CREDENTIAL_RE="$(leak_patterns 
 case "|$PRIVATE_RE|" in *"||"*) PRIVATE_RE="" ;; esac
 [ -n "$PRIVATE_RE" ] && [ -n "$CREDENTIAL_RE" ] && [ -n "$NOT_CREDENTIAL_RE" ] \
   || { echo "site-check: the leak patterns could not be read from ${LEAKS#"$ROOT"/}" >&2; exit 12; }
-site_files | xargs -0 grep -hoaE "$PRIVATE_RE" 2>/dev/null | head -1 | grep -q . && bad private "local path in output" || ok private "no local paths or internal hosts"
-site_files | xargs -0 grep -hoaE "$CREDENTIAL_RE" 2>/dev/null | grep -vE "$NOT_CREDENTIAL_RE" | head -1 | grep -q . && bad secrets "credential pattern in output" || ok secrets "no credential pattern"
+# A finding names the file it is in and the kind it is, and never the text: the text is the
+# secret, and a check that printed it would publish it into every CI log that ran it.
+# leak_files <regex> [<not-regex>] lists the site's own files carrying a match, one path
+# relative to the site per line; with <not-regex>, a file counts only when a match survives
+# that filter. The findings are read back into this shell, so every one of them is counted.
+leak_files() {
+  site_files | xargs -0 grep -laE "$1" 2>/dev/null | while IFS= read -r f; do
+    [ -z "${2:-}" ] || grep -oaE "$1" "$f" 2>/dev/null | grep -qvE "$2" || continue
+    printf '%s\n' "${f#"$PUB"/}"
+  done
+}
+LEAKED="$(leak_files "$PRIVATE_RE")"
+if [ -n "$LEAKED" ]; then
+  while IFS= read -r f; do bad private "$f: a local path or an internal host"; done <<< "$LEAKED"
+else ok private "no local paths or internal hosts"; fi
+LEAKED="$(leak_files "$CREDENTIAL_RE" "$NOT_CREDENTIAL_RE")"
+if [ -n "$LEAKED" ]; then
+  while IFS= read -r f; do bad secrets "$f: a credential-shaped assignment"; done <<< "$LEAKED"
+else ok secrets "no credential pattern"; fi
 # 13. docs coverage: every rendered docs page has a source, every docs.json entry is rendered
 for d in $(jq -r '.docs[] | select(.route) | .path' "$SITE/data/generated/docs.json"); do
   r="$(jq -r --arg p "$d" '.docs[] | select(.path==$p) | .route' "$SITE/data/generated/docs.json")"
@@ -889,6 +1375,8 @@ if [ -f "$PUB/build.json" ]; then
   grep -qF "$(jq -r .commit "$bj" | cut -c1-12)" "$PUB/index.html" || { bad build "the homepage footer does not carry the built commit"; bbad=1; }
   [ "$bbad" = 0 ] && ok build "/build.json: commit ${head_commit:0:12}$([ "$(jq -r .dirty "$bj")" = true ] && printf ' (dirty tree)'), input hash $(jq -r .source_hash "$bj" | cut -c1-12), registry fingerprint $(jq -r .registry_fingerprint "$bj" | cut -c1-12)"
 else bad build "site/public/build.json missing (site-build writes it)"; fi
+# 13l. no two published paths differ only in case, the composed snapshots included (I3447)
+casefold_unique "$PUB"
 # 13b. every tile has a page: profiles, claims, statuses, responsibilities, commands
 for slug in $(jq -r '.profiles[].slug' "$SITE/data/generated/profiles.json"); do [ -f "$PUB/profiles/$slug/index.html" ] || bad tiles "no page for profile $slug"; done
 for id in $(jq -r '.claims[].id' "$SITE/data/generated/capabilities.json"); do [ -f "$PUB/guarantees/$id/index.html" ] || bad tiles "no page for claim $id"; done
@@ -945,9 +1433,26 @@ PJ="$SITE/data/generated/plan.json"
 for id in $(jq -r '.milestones[].id, .issues[].id' "$PJ"); do
   [ -f "$PUB/plan/$(printf '%s' "$id" | tr 'A-Z' 'a-z')/index.html" ] || bad tiles "no page for plan record $id"
 done
-# the diagram is HTML, so its arrows are escaped; compare against what the browser receives
-jq -r '.edges[] | .from + " --&gt; " + .to' "$PJ" > "$PAGEROWS.found"; while read -r e; do
-  grep -qF -- "$e" "$PUB/plan/dag/index.html" || bad tiles "edge ${e/--&gt;/-->} is in plan.json but not in the rendered graph"
+# Where each edge is drawn (I3841): /plan/dag/ draws the milestone graph, one counted arrow per
+# pair of milestones an issue dependency crosses, and lists the issues behind each arrow; a
+# milestone's page draws the edges between its own issues. Every edge of plan.json is checked on
+# the page that owns it. The diagram is HTML, so its arrows are escaped; compare against what the
+# browser receives.
+jq -r 'def node: "M_" + gsub("[^A-Za-z0-9]"; "_");
+  .milestone_edges[] | (.from | node) + " --&gt;|" + (.count | tostring) + "| " + (.to | node)' "$PJ" > "$PAGEROWS.found"
+while read -r e; do
+  grep -qF -- "$e" "$PUB/plan/dag/index.html" || bad tiles "milestone edge ${e/--&gt;/-->} is in plan.json but not in the graph /plan/dag/ draws"
+done < "$PAGEROWS.found"
+jq -r '(.issues | map({key: .id, value: .milestone}) | from_entries) as $of
+  | .edges[] | [.from, .to, $of[.from], $of[.to]] | @tsv' "$PJ" > "$PAGEROWS.found"
+while IFS="$MJ_TAB" read -r from to mfrom mto; do
+  if [ "$mfrom" = "$mto" ]; then
+    page="$PUB/plan/$(printf '%s' "$mfrom" | tr 'A-Z' 'a-z')/index.html"
+    grep -qF -- "$from --&gt; $to" "$page" || bad tiles "edge $from --> $to is in plan.json but not in the graph milestone $mfrom's page draws"
+  else
+    grep -qE -- ">$from</a> → <a href=\"[^\"]*\" class=\"[^\"]*\">$to</a>" "$PUB/plan/dag/index.html" \
+      || bad tiles "edge $from --> $to crosses $mfrom and $mto and is not listed on /plan/dag/"
+  fi
 done < "$PAGEROWS.found"
 for id in $(jq -r '.issues[] | select(.status=="READY") | .id' "$PJ"); do
   grep -qF "plan/$(printf '%s' "$id" | tr 'A-Z' 'a-z')/" "$PUB/plan/index.html" || bad tiles "READY issue $id is not linked from /plan/"
@@ -961,14 +1466,7 @@ ok tiles "every profile, claim, status, responsibility, command, doctrine, use c
 # decided by that declaration when the snapshot is not in this tree: the deploy places it after
 # this check and refuses a site without it, and section 13m holds the list to the publication
 # model. Anything deeper than the root must be a file here like every other link.
-snap_roots="$(jq -r '.snapshots[]? | .mount' "$PUB/build.json" 2>/dev/null | sed 's#/*$##' || true)"
-nav_snap=0
-for href in $(awk '{ print } /id="hero"/ { h = 1 } h && /<\/section>/ { exit }' "$PUB/index.html" | grep -oE 'href="[^"]*"' | sed -E "s#href=\"$(sed -n 's/^base_url = "\(.*\)"/\1/p' "$SITE/config.toml" | sed 's#/$##')##; s#\"##g; s#[?].*\$##" | grep -E '^/' | LC_ALL=C sort -u); do t="$PUB$href"
-  if [ -f "$t/index.html" ] || [ -f "$t" ]; then continue; fi
-  if [ -n "$snap_roots" ] && printf '%s\n' "$snap_roots" | grep -qxF -- "${href%/}"; then nav_snap=$((nav_snap + 1)); continue; fi
-  bad nav "navigation/hero link $href does not resolve"
-done
-ok nav "every navigation link on the homepage resolves ($nav_snap of them the root of a snapshot the publication holds and this build does not compose)"
+nav_resolves "$PUB" "$SITE/config.toml"
 # 13e. and the other direction: every section the site publishes is reachable from the menu.
 #
 # The half that was missing. Check 13d proves nav -> page, so a menu entry can never point at
@@ -984,6 +1482,12 @@ nav_orphans=0
 nav_exempt=" images js render-test releases "
 for redirect in $(sed -n 's/^from = "\/\([^/"]*\).*/\1/p' "$SITE/data/nav.toml" | LC_ALL=C sort -u); do
   nav_exempt="$nav_exempt$redirect "
+done
+# A language's copy of the whole site (ADR 0218) is not a section: every page reaches it through
+# the language switch in the bar, so each language site/i18n/languages.json declares beside the
+# source is named here, from the declaration rather than a pattern.
+for lang in $(jq -r '.source as $s | .languages[] | select(. != $s)' "$SITE/i18n/languages.json"); do
+  nav_exempt="$nav_exempt$lang "
 done
 for dir in "$PUB"/*/; do
   section="$(basename "$dir")"
@@ -1040,6 +1544,13 @@ for mid in $(jq -r '.milestones[] | select((.claims | length) > 0) | .id' "$SITE
   done
 done
 ok roadmap "every claim a milestone names links back to it"
+
+# 13h. /roadmap/ draws every milestone of the plan, in the order the milestone graph derives,
+# every issue under its milestone, and names the commit its data was observed at (ADR 0166
+# decision 4; roadmap_complete above, which a case also runs alone over a fixture).
+rm_out="$(roadmap_complete "$PUB/roadmap/index.html" "$SITE/data/generated" "$SITE/data/build.json" || true)"
+printf '%s\n' "$rm_out"
+fails=$((fails + $(printf '%s\n' "$rm_out" | grep -c '^FAIL' || true)))
 
 # 13f. the contract demonstration is the policy's own list. The page pairs each key in
 # policy.verification.finish_requires with the check name the transcript prints, by position,
@@ -1164,6 +1675,14 @@ for d in "$PUB"/skills/*/; do
 done
 [ "$sk_n" -gt 0 ] && ok skills "$sk_n skill(s): every page names its URI and file, renders its examples, links its related skills, and the index links each" \
   || ok skills "0 skills in the catalogue and no skill page (an empty section, not a broken one)"
+# every skill Claude Code reads is listed on the skills index, and nothing else is (ADR 0163)
+cl_m="$(jq '[.artifacts[] | select(.document | startswith("editors/")) | select(.path | test("^\\.claude/skills/[^/]+/SKILL\\.md$"))] | length' "$ROOT/docs/generated/artifacts.json")"
+cl_n="$(jq '.claude | length' "$SKJ")"
+[ "$cl_n" = "$cl_m" ] || bad skills "skills.json lists $cl_n Claude Code skill(s); the editors projection writes $cl_m"
+for name in $(jq -r '.claude[].name' "$SKJ"); do
+  grep -qF ">/$name<" "$PUB/skills/index.html" || bad skills "the skills index does not list /$name"
+done
+ok skills "$cl_n Claude Code skill(s), each listed on the skills index by the name it is typed by"
 
 # 13b. graphs: every edge endpoint resolves to a node, and no graph is empty
 for g in architecture claims-graph governance-graph; do
@@ -1417,11 +1936,24 @@ if [ -n "$offered" ]; then
   [ -z "$other_offers" ] \
     || { bad release "the homepage carries data-release ${other_offers% } beside the ${offered} /build.json offers: a badge reads another source"; relbad=1; }
 fi
+# The pre-release beside it (I3449): when /build.json offers one, the homepage names it, every
+# data-prerelease it carries is that one version, and /releases/latest.json, which the
+# installer resolves unasked, still names a stable release: the pages show both channels and
+# the installer's default stays stable (I2829).
+offered_pre="$(jq -r '.release.prerelease.version // empty' "$PUB/build.json" 2>/dev/null || true)"
+home_pres="$(grep -oE 'data-prerelease="[^"]*"' "$PUB/index.html" 2>/dev/null | sed 's/^[^"]*"//; s/"$//' | LC_ALL=C sort -u | tr '\n' ' ' || true)"
+if [ -n "$offered_pre" ]; then
+  [ "${home_pres% }" = "$offered_pre" ] \
+    || { bad release "/build.json offers the pre-release $offered_pre and the homepage names ${home_pres:-none}: a person reading the page is not told it exists, or reads another source"; relbad=1; }
+  case "$pub_latest" in *-*) bad release "/releases/latest.json names the pre-release $pub_latest; the installer's default resolves the stable release only (I2829)"; relbad=1 ;; esac
+elif [ -n "$home_pres" ]; then
+  bad release "the homepage names the pre-release ${home_pres% } and /build.json offers none"; relbad=1
+fi
 dist_latest="$(jq -r '.latest.version // empty' "$DIST" 2>/dev/null || true)"
 static_latest="$(jq -r '.version // empty' "$SITE/static/releases/latest.json" 2>/dev/null || true)"
 [ "$static_latest" = "$dist_latest" ] \
   || { bad release "distribution.json names ${dist_latest:-no release} as the latest and site/static/releases/latest.json names ${static_latest:-none}; regenerate (scripts/derive)"; relbad=1; }
-[ "$relbad" = 0 ] && ok release "one release on every surface: the homepage, /build.json and /releases/latest.json offer ${offered:-none} ($(jq -r '.release.source // "no release"' "$PUB/build.json" 2>/dev/null)), and the committed projections agree on ${dist_latest:-none}"
+[ "$relbad" = 0 ] && ok release "one release on every surface: the homepage, /build.json and /releases/latest.json offer ${offered:-none}${offered_pre:+, and the pages name the pre-release $offered_pre beside it} ($(jq -r '.release.source // "no release"' "$PUB/build.json" 2>/dev/null)), and the committed projections agree on ${dist_latest:-none}"
 
 
 # 18. a publication offers no surface it cannot answer for. Every route the projection
@@ -1473,5 +2005,24 @@ fi
 # template that renders a document to reaching all three through what it extends and includes,
 # so a layout family added without the navbar is refused at its source.
 relay_check search "$ROOT/scripts/lib/search-check.mjs" "OK   search       " "FAIL search       "
+
+# 21. every article reads in every language the site declares, and its counterparts are
+# reciprocal (I3436, I3437, I3438). templates/base.html emits a rel=alternate link per
+# counterpart a page names and scripts/ci/link-check holds each to a built page; what neither
+# can see is the other direction (A names B and B does not name A), a counterpart in the wrong
+# language, an article with no counterpart at all, or a translation its source has moved past.
+# It holds the articles an article names as related the same way (I3074): templates/page.html
+# draws them, and only this check sees one that does not answer back or speaks another language.
+# The rule is article_counterparts, above, read from site/content-src so it needs no build, and
+# `--articles <dir> <nav.toml> <config.toml>` runs it alone.
+article_counterparts "$SITE/content-src" "$SITE/data/nav.toml" "$SITE/config.toml" site/content-src
+
+# 22. every translation-memory entry is keyed the way the build computes its key (I3777): one
+# keyed before a rule changed the key is unreachable, and the sentence it holds reads in English.
+# The rule is memory_keyed, above; `--memory <i18n-dir>` runs it alone.
+memory_keyed "$SITE/i18n"
+
+# 23. since-deploy: the record is never committed, and the pages show what it states (above)
+since_deploy_check "$ROOT" "$PUB"
 
 printf 'site-check: %s failure(s)\n' "$fails"; [ "$fails" = 0 ] && exit 0 || exit 10

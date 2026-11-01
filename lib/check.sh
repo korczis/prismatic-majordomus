@@ -2,8 +2,10 @@
 # shellcheck disable=SC2034  # MJ_LABEL, MJ_TOUCHED_IN, MJ_BLOCKED are read by finish.sh and watch.sh
 # sourced by several commands; guard against re-sourcing
 [ -n "${MJ_LIB_check:-}" ] && return 0 || MJ_LIB_check=1
-# check — is the current task consistent with policy, scope, and state? Read-only,
-# except --checkpoint which updates checkpoint_at (the one documented write).
+# check — is the current task consistent with policy, scope, and state? Read-only, with
+# two documented writes: --checkpoint updates checkpoint_at, and on a repository whose mesh
+# is enabled an active task whose scope was never claimed on it is claimed when a server
+# answers (mesh_claim, the key `start` would have written; I2288).
 #
 # check runs no validator by name. It asks the doctrine dispatcher for everything the
 # effective rule set declares for this command, so a rule added to the package is
@@ -45,12 +47,17 @@ H
   fi
   if [ "$overlap" = 1 ]; then mj_report_overlap_from_current; return 0; fi
 
+  mj_mesh_task_repair_claim
   if [ -n "$only" ]; then mj_doctrine_one "$only" check; else mj_run_task_checks; fi
   if [ "$checkpoint" = 1 ]; then
-    local now; now="$(mj_now)"
-    sed "s/^checkpoint_at: .*/checkpoint_at: $now/" "$MJ_CUR" > "$MJ_CUR.mj-tmp" && mv "$MJ_CUR.mj-tmp" "$MJ_CUR"
-    mj_ledger_append task.checkpoint "\"task_id\":\"$id\""
-    mj_info checkpoint "$id" "recorded at $now"
+    local now fields=""; now="$(mj_now)"
+    mj_record_attribution
+    if [ -n "$MJ_RECORD_TASK" ]; then
+      sed "s/^checkpoint_at: .*/checkpoint_at: $now/" "$MJ_CUR" > "$MJ_CUR.mj-tmp" && mv "$MJ_CUR.mj-tmp" "$MJ_CUR"
+      fields="\"task_id\":\"$MJ_RECORD_TASK\""
+    fi
+    mj_ledger_append task.checkpoint "$fields" "$MJ_RECORD_SESSION"
+    mj_info checkpoint "${MJ_RECORD_TASK:-(no task)}" "recorded at $now"
   fi
   [ "$MJ_JSON" = 1 ] || printf 'check: %s finding(s), %s failing\n' "$MJ_FINDINGS" "$MJ_FAILS"
   [ "$MJ_FAILS" = 0 ] && exit "$MJ_EX_OK" || exit "$MJ_EX_CONTRACT"
@@ -81,6 +88,22 @@ mj_task_is_foreign() {
   local w; w="$(mj_cur worktree)"
   [ -n "$w" ] || return 1
   [ "$w" = "$MJ_ROOT" ] && return 1
+  return 0
+}
+
+# The repair of a task that started off the mesh (I2288): `start` could not claim — no
+# server came up, the runtime was switched off, the executable was stale — and a server that
+# answers now is all the task was missing, so `check` claims what `start` would have, with no
+# finish --outcome partial and second start. Only this checkout's active task, only on an
+# enabled mesh, only when the record carries no claim; silent when no server answers, because
+# the mesh doctrine reports exactly that. `finish --check` stays a question and claims nothing.
+mj_mesh_task_repair_claim() {
+  [ "$(mj_cur outcome)" = active ] || return 0
+  grep -q '^mesh_claim: ' "$MJ_CUR" 2>/dev/null && return 0
+  mj_task_is_foreign && return 0
+  mj_mesh_declared_enabled || return 0
+  mj_mesh_task_claim "$(mj_cur id)" "$(mj_ylist "$MJ_CUR_FLAT" scope | tr '\n' ' ')" "$(mj_cur task)" "$(mj_cur issue)"
+  [ "$MJ_MESH_CLAIMED" = 1 ] && { mj_load_current || true; }
   return 0
 }
 
@@ -161,7 +184,8 @@ mj_validate_scope() {
          "outcome is $(mj_cur outcome); a scope is what an active task claims, and a finished one claims nothing"
        MJ_DOCTRINE_SKIPPED=1; return 0 ;;
   esac
-  local id f inside n_out=0 n_in=0 s allow_gen scope_list scope_words soft=0 repro
+  local id f inside n_out=0 n_in=0 n_derived=0 s allow_gen scope_list scope_words soft=0 repro
+  local touched derived canonical=0
   id="$(mj_cur id)"; allow_gen="$(mj_projection_targets | tr '\n' ' ')"
   # Only a *completed* finish is refused by scope, for the reason the blocker gate below
   # gives and one more that is specific to this gate: `start` will not begin a task while
@@ -176,6 +200,25 @@ mj_validate_scope() {
   # tree with a long diff paid thousands of them for a list that does not change
   scope_list="$(mj_ylist "$MJ_CUR_FLAT" scope)"; scope_words="$(printf '%s\n' "$scope_list" | paste -sd, -)"
   repro="git status --porcelain; git log --first-parent --no-merges --name-only --format= $(mj_cur head)..HEAD"
+  # A derive writes the projections of what a task changed, and they are not the task's to
+  # claim: the worker scoped the canonical file, the generator chose where its projections
+  # go, and a scope that had to name every one of them would be a list of the generator's
+  # outputs kept by hand. So a path the repository itself declares derived — git's own
+  # `merge=derived` attribute, which scripts/gitattributes writes from the generators — is
+  # admitted when the task also changed something canonical: a file of the layer, or a
+  # file inside its scope that is not derived. A branch that carries projections and no
+  # canonical change is judged as before, because nothing it changed could have written
+  # them. Asked of git, so a repository that declares nothing derived admits nothing.
+  touched="$(mktemp "${TMPDIR:-/tmp}/mj.st.XXXXXX")"; derived="$(mktemp "${TMPDIR:-/tmp}/mj.sd.XXXXXX")"
+  mj_git_touched "$(mj_cur head)" > "$touched"
+  mj_scope_derived_paths "$touched" > "$derived"
+  while IFS= read -r f; do
+    [ -n "$f" ] || continue
+    grep -qxF -- "$f" "$derived" && continue
+    if mj_is_ai_path "$f"; then canonical=1; break; fi
+    for s in $scope_list; do mj_path_contains "$s" "$f" && { canonical=1; break; }; done
+    [ "$canonical" = 1 ] && break
+  done < "$touched"
   # read as lines, not words: a path may hold a space, and as words "a b.png" was two
   # paths outside every scope
   while IFS= read -r f; do
@@ -185,13 +228,17 @@ mj_validate_scope() {
     inside=0
     for s in $scope_list; do mj_path_contains "$s" "$f" && { inside=1; break; }; done
     if [ "$inside" = 1 ]; then n_in=$((n_in+1))
+    elif [ "$canonical" = 1 ] && grep -qxF -- "$f" "$derived"; then n_derived=$((n_derived+1))
     else
       n_out=$((n_out+1))
       if [ "$soft" = 1 ]; then mj_warn scope "$f" "outside claimed scope ($scope_words)" "$repro"
       else mj_doctrine_fail scope "$f" "outside claimed scope ($scope_words)" "$repro"; fi
     fi
-  done < <(mj_git_touched "$(mj_cur head)")
-  if [ "$n_out" = 0 ]; then mj_doctrine_ok scope "$id" "$n_in touched file(s), all within scope"
+  done < "$touched"
+  rm -f "$touched" "$derived"
+  if [ "$n_out" = 0 ] && [ "$n_derived" -gt 0 ]; then
+    mj_doctrine_ok scope "$id" "$n_in touched file(s) within scope, and $n_derived derived from them (merge=derived)" "git check-attr merge -- <path>"
+  elif [ "$n_out" = 0 ]; then mj_doctrine_ok scope "$id" "$n_in touched file(s), all within scope"
   elif [ "$soft" = 1 ]; then
     mj_doctrine_skip scope "$id" "$n_out file(s) outside scope; outcome is $MJ_FINISH_OUTCOME, not completed, so scope does not refuse it"
     MJ_DOCTRINE_SKIPPED=1
@@ -200,6 +247,17 @@ mj_validate_scope() {
   return 0
 }
 
+# The paths of FILE (one per line) that the repository declares derived: the ones git gives
+# the attribute `merge=derived`. Asked with -z, so git neither quotes a path that holds a
+# space nor escapes a byte outside ASCII, and the name comes back as it went in.
+mj_scope_derived_paths() {
+  [ -s "$1" ] || return 0
+  tr '\n' '\0' < "$1" | mj_git check-attr -z --stdin merge 2>/dev/null \
+    | tr '\0' '\n' | awk 'NR % 3 == 1 { p = $0 } NR % 3 == 0 && $0 == "derived" { print p }'
+}
+
+# The newest checkpoint is no older than the profile's checkpoint_interval.
+# majordomus-limit: checkpoint_max_age_seconds
 mj_validate_checkpoint() {
   mj_task_gate checkpoint || return 0
   # Freshness is a statement about work in progress. A finished task has no next checkpoint

@@ -1,0 +1,31 @@
+id: I4338
+milestone: ci-critical-path
+title: "A pull request labelled hold gives its validate slot back to its train and never reads green on its own"
+slug: a-held-member-yields-to-its-train
+priority: p0
+profile: implementation
+parallel_safe: true
+objective: "A validate run of a pull request that carries the hold label cancels itself in the plan job's first step, before any job asks for a runner, writes why to the step summary, and fails if the cancel does not take hold, so a train member never holds the one validate slot its train needs and never reaches a green ci that would let it land outside its train."
+why: "The pool runs one validate at a time. On 2026-10-28 twelve validate runs of train members, every one labelled hold and judged by its train's top anyway, queued ahead of trains 10a (#2630) and 10b (#2631), so master stood still while member runs decided nothing; the owner approved cancelling them by hand and asked for the lasting fix. The release path already yields a pull request's run the same way (scripts/ci/release-path yield, case 3027)."
+current_state: "On 81ef931a3e1 every pull request event (opened, synchronize, reopened, labeled) starts a full validate whatever its labels; a held member's run queues behind or ahead of its train's."
+desired_state: "The plan job of .github/workflows/validate.yml opens with the step 'a held member yields to its train': on a pull_request event whose labels include hold it summarises why, cancels its own run, and fails if still running two minutes later; every other event, and a train top (labelled train, never hold), runs as before."
+scope:
+  - ".ai/repo/project/issues/I4338.yaml"
+  - ".github/workflows/validate.yml"
+non_scope:
+  - "Which pull requests carry hold: the train holder and the members' authors decide that"
+  - "Runs of master, the schedule or a dispatch"
+depends_on: []
+acceptance_criteria:
+  - "The plan job's first step cancels the run of a pull request labelled hold and writes the reason to the step summary"
+  - "A held member's run that is not cancelled fails, so its ci never reads green"
+  - "A pull request without hold, and every non-pull_request event, plans and runs exactly as before (case 26_ci_wiring and case 94_ci_plan pass)"
+validation:
+  - "actionlint .github/workflows/validate.yml"
+  - "scripts/ci/step-bound-check"
+  - "bash test/run.sh 26_ci_wiring"
+evidence_required:
+  - ci
+risk: "A hold label left on a pull request that should land alone stops its CI; removing the label and pushing, or labelling it ci:full after removing hold, brings the run back."
+created_at: 2026-10-28
+updated_at: 2026-10-28

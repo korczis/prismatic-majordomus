@@ -32,4 +32,27 @@ evidence_required:
   - property_invariants
 risk: "Route validation needs the capability registry, which makes the deployment model depend on the index. Reading the registry that already exists is correct; building a second route list to avoid the dependency is not."
 created_at: 2026-09-06
-updated_at: 2026-09-10
+updated_at: 2026-10-14T08:01:10Z
+started_at: 2026-10-14T08:00:59Z
+started_event: sha256:0ea2fa48b75d802c323fdaebab8b7af885f9b03f8f2a9f939abef9e626fed733
+completed_at: 2026-10-14T08:01:10Z
+completed_event: sha256:0f809eda721a5d65790bbe1402615e14b965643b7ad44021ce9835917ae6bd9a
+evidence:
+  - covers: typed_parse
+    type: test
+    command: "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --lib deploy::tests"
+    result: "test result: ok. 30 passed; 0 failed (run 2026-10-14 between 07:40Z and 07:58Z on master ce5959db59)"
+    commit: ce5959db59096ff22a45ee65e1464b16df74348a
+    recorded_at: 2026-10-14T08:01:03Z
+  - covers: validation_refuses
+    type: test
+    command: "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --lib deploy::tests"
+    result: "test result: ok. 30 passed; 0 failed (run 2026-10-14 between 07:40Z and 07:58Z on master ce5959db59)"
+    commit: ce5959db59096ff22a45ee65e1464b16df74348a
+    recorded_at: 2026-10-14T08:01:05Z
+  - covers: property_invariants
+    type: test
+    command: "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --lib deploy::tests"
+    result: "test result: ok. 30 passed; 0 failed (run 2026-10-14 between 07:40Z and 07:58Z on master ce5959db59)"
+    commit: ce5959db59096ff22a45ee65e1464b16df74348a
+    recorded_at: 2026-10-14T08:01:08Z

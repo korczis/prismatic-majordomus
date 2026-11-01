@@ -338,10 +338,22 @@ pub struct CheckLine {
     pub delta: f64,
     /// The allowed relative increase.
     pub allowed: f64,
-    /// `PASS`, `FAIL`, `NOISE` (the increase is under the absolute floor), or `SHORT` (the
-    /// run took fewer samples than the metric's `minimum_samples`).
+    /// How many samples the run took of this target and mode.
+    #[serde(default)]
+    pub samples: usize,
+    /// How many of them are certainly at or above the run's value of the metric
+    /// ([`super::Statistics::samples_at_or_above`]): the samples a `FAIL` rests on.
+    #[serde(default)]
+    pub agreeing: usize,
+    /// `PASS`, `FAIL`, `NOISE` (the increase is under the absolute floor), `SHORT` (the
+    /// run took fewer samples than the metric's `minimum_samples`), or `WARN` (over the
+    /// threshold on fewer than two agreeing samples: one cold sample on a loaded runner is
+    /// a reason to re-measure, not a regression, and it does not fail).
     pub verdict: String,
 }
+
+/// The fewest agreeing samples a `FAIL` needs: one sample over a threshold is a `WARN`.
+pub(crate) const AGREEING_SAMPLES: usize = 2;
 
 /// One measurement held against a budget.
 ///
@@ -355,6 +367,7 @@ pub struct CheckLine {
 ///     metric: "p95".into(),
 ///     current_us: 620_000.0,
 ///     budget_us: 100_000.0,
+///     samples: 20,
 ///     verdict: "OVER".into(),
 /// };
 /// // the line says what a reader needs to act: which screen, how slow, against what bound
@@ -372,6 +385,9 @@ pub struct BudgetLine {
     pub current_us: f64,
     /// The bound, microseconds.
     pub budget_us: f64,
+    /// How many samples the run took of this target and mode.
+    #[serde(default)]
+    pub samples: usize,
     /// `PASS`, `OVER` (the value is above the bound), or `SHORT` (the run took fewer
     /// samples than the budget's `minimum_samples`).
     pub verdict: String,
@@ -396,6 +412,12 @@ pub struct Check {
     pub baseline_host: String,
     /// The host this run measured on.
     pub current_host: String,
+    /// The 1-minute load average this run was measured under (empty when unknown).
+    #[serde(default)]
+    pub current_load: String,
+    /// The 1-minute load average the baseline was recorded under (empty when unknown).
+    #[serde(default)]
+    pub baseline_load: String,
     /// Was the baseline recorded on this host? When not, every line is reported and none
     /// fails: wall-clock numbers of two machines are not a regression of either.
     pub comparable: bool,
@@ -424,6 +446,8 @@ impl Check {
                 registry_changed: false,
                 baseline_host: String::new(),
                 current_host: run.provenance.host.clone(),
+                current_load: run.provenance.load.clone(),
+                baseline_load: String::new(),
                 comparable: false,
                 budgets,
             };
@@ -446,10 +470,13 @@ impl Check {
                     continue;
                 };
                 let delta = if bas > 0.0 { cur / bas - 1.0 } else { 0.0 };
+                let agreeing = r.stats.samples_at_or_above(metric).unwrap_or(0);
                 let verdict = if r.stats.samples < threshold.minimum_samples {
                     "SHORT"
                 } else if cur - bas < policy.minimum_absolute_us {
                     "NOISE"
+                } else if delta > threshold.relative && agreeing < AGREEING_SAMPLES {
+                    "WARN"
                 } else if delta > threshold.relative {
                     "FAIL"
                 } else {
@@ -463,6 +490,8 @@ impl Check {
                     current_us: cur,
                     delta,
                     allowed: threshold.relative,
+                    samples: r.stats.samples,
+                    agreeing,
                     verdict: verdict.into(),
                 });
             }
@@ -487,6 +516,8 @@ impl Check {
                 != run.provenance.registry_fingerprint,
             baseline_host: base.provenance.host.clone(),
             current_host: run.provenance.host.clone(),
+            current_load: run.provenance.load.clone(),
+            baseline_load: base.provenance.load.clone(),
             comparable: run.provenance.same_host(&base.provenance),
             budgets,
         }
@@ -516,6 +547,7 @@ impl Check {
                     metric: b.metric.clone(),
                     current_us: current,
                     budget_us: b.microseconds,
+                    samples: r.stats.samples,
                     verdict: verdict.into(),
                 });
             }
@@ -544,6 +576,7 @@ impl Check {
     ///         version: "0".into(),
     ///         registry_fingerprint: "f".into(),
     ///         host: "host/1".into(),
+    ///         load: String::new(),
     ///     },
     ///     results: Vec::new(),
     /// };
@@ -563,25 +596,81 @@ impl Check {
             return s;
         }
         s.push_str(&format!(
-            "{:<52} {:<6} {:>5} {:>12} {:>12}  budget\n",
-            "target", "cache", "metric", "current_us", "budget_us"
+            "{:<52} {:<6} {:>5} {:>12} {:>12} {:>5}  budget\n",
+            "target", "cache", "metric", "current_us", "budget_us", "n"
         ));
         for l in &self.budgets {
             s.push_str(&format!(
-                "{:<52} {:<6} {:>5} {:>12.1} {:>12.1}  {}\n",
+                "{:<52} {:<6} {:>5} {:>12.1} {:>12.1} {:>5}  {}\n",
                 l.key,
                 format!("{:?}", l.cache_mode).to_lowercase(),
                 l.metric,
                 l.current_us,
                 l.budget_us,
+                l.samples,
                 l.verdict
             ));
         }
-        s.push_str(if self.over_budget() {
-            "bench --check: over budget\n"
-        } else {
-            "bench --check: within budget\n"
-        });
+        s.push_str(&format!(
+            "bench --check: {} ({})\n",
+            if self.over_budget() {
+                "over budget"
+            } else {
+                "within budget"
+            },
+            self.measured_under()
+        ));
+        s
+    }
+
+    /// What every verdict of this check was measured under: the runner and its 1-minute
+    /// load average, and the baseline's when there is one. A timing verdict is a statement
+    /// about a machine as much as about a change, so the report never gives one without it.
+    ///
+    /// ```
+    /// use majordomus_cli::bench::baseline::{Check, Policy};
+    /// use majordomus_cli::bench::results::{Provenance, ResultDocument};
+    ///
+    /// let run = ResultDocument {
+    ///     schema: majordomus_cli::bench::RESULT_SCHEMA.into(),
+    ///     finished_at: "2026-10-16T00:00:00Z".into(),
+    ///     profile: "ci".into(),
+    ///     provenance: Provenance {
+    ///         commit: None,
+    ///         dirty: false,
+    ///         build_profile: "debug".into(),
+    ///         os: "os".into(),
+    ///         arch: "arch".into(),
+    ///         version: "0".into(),
+    ///         registry_fingerprint: "f".into(),
+    ///         host: "runner/4".into(),
+    ///         load: "31.70".into(),
+    ///     },
+    ///     results: Vec::new(),
+    /// };
+    /// let check = Check::compare(&run, None, &Policy::default());
+    /// assert_eq!(check.measured_under(), "runner runner/4, load 31.70");
+    /// ```
+    pub fn measured_under(&self) -> String {
+        let or = |v: &str, absent: &str| {
+            if v.is_empty() {
+                absent.to_string()
+            } else {
+                v.to_string()
+            }
+        };
+        let mut s = format!(
+            "runner {}, load {}",
+            or(&self.current_host, "unidentified"),
+            or(&self.current_load, "unknown")
+        );
+        if self.baseline_found {
+            s.push_str(&format!(
+                "; baseline recorded on {}, load {}",
+                or(&self.baseline_host, "an unidentified host"),
+                or(&self.baseline_load, "unknown")
+            ));
+        }
         s
     }
 
@@ -597,18 +686,19 @@ impl Check {
         let mut s = self.render_budgets();
         if !self.baseline_found {
             s.push_str(&format!(
-                "no baseline for {}: nothing compared; `majordomus bench baseline update` records one\n",
-                self.platform
+                "no baseline for {}: nothing compared; `majordomus bench baseline update` records one ({})\n",
+                self.platform,
+                self.measured_under()
             ));
             return s;
         }
         s.push_str(&format!(
-            "{:<52} {:<6} {:>5} {:>12} {:>12} {:>8} {:>8}  verdict\n",
-            "target", "cache", "metric", "baseline_us", "current_us", "delta", "allowed"
+            "{:<52} {:<6} {:>5} {:>12} {:>12} {:>8} {:>8} {:>9}  verdict\n",
+            "target", "cache", "metric", "baseline_us", "current_us", "delta", "allowed", "agree/n"
         ));
         for l in &self.lines {
             s.push_str(&format!(
-                "{:<52} {:<6} {:>5} {:>12.1} {:>12.1} {:>+7.0}% {:>+7.0}%  {}\n",
+                "{:<52} {:<6} {:>5} {:>12.1} {:>12.1} {:>+7.0}% {:>+7.0}% {:>9}  {}\n",
                 l.key,
                 format!("{:?}", l.cache_mode).to_lowercase(),
                 l.metric,
@@ -616,7 +706,14 @@ impl Check {
                 l.current_us,
                 l.delta * 100.0,
                 l.allowed * 100.0,
+                format!("{}/{}", l.agreeing, l.samples),
                 l.verdict
+            ));
+        }
+        let warned = self.lines.iter().filter(|l| l.verdict == "WARN").count();
+        if warned > 0 {
+            s.push_str(&format!(
+                "WARN   {warned} metric(s) over the threshold on fewer than {AGREEING_SAMPLES} agreeing samples: re-measure with more samples; not a regression until they agree\n"
             ));
         }
         for k in &self.new_targets {
@@ -640,14 +737,21 @@ impl Check {
                 "NOTE   baseline recorded on {recorded}; this host is {}; reporting only, nothing fails\n",
                 self.current_host
             ));
-            s.push_str("bench --check: reporting only (the baseline is from another host)\n");
+            s.push_str(&format!(
+                "bench --check: reporting only (the baseline is from another host; {})\n",
+                self.measured_under()
+            ));
             return s;
         }
-        s.push_str(if self.failed() {
-            "bench --check: regression(s) found\n"
-        } else {
-            "bench --check: within policy\n"
-        });
+        s.push_str(&format!(
+            "bench --check: {} ({})\n",
+            if self.failed() {
+                "regression(s) found"
+            } else {
+                "within policy"
+            },
+            self.measured_under()
+        ));
         s
     }
 }

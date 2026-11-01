@@ -1,0 +1,47 @@
+id: merging-and-referencing-are-enforced
+title: "Merging and referencing are enforced: every pull request carries its metadata, every reference resolves, every number is taken once"
+slug: merging-and-referencing-are-enforced
+order: 514
+priority: p0
+problem: "A pull request carries only what its author typed, and the repository labels hold, collision:accepted and ci:yielded are named in code but declared nowhere. plan next offers work that already sits in an open pull request. A milestone dependency holds every issue of the milestone, 26 of them at 355a0cee79a with no unfinished dependency of their own, and nothing names them. Issue ids have no allocator. A GitHub issue created by hand with a record title is adopted by github-sync. A commit need not name its issue. The landing duties of a train member are a table in docs/INTEGRATION.md."
+outcome: "Merging and referencing are projections, typed commands and gates: every pull request carries its metadata from the records, every reference resolves on master, every number is taken once."
+current_state: "scripts/github-sync projects issues, milestones and four label families (majordomus, priority, status, execution) from the trunk only and never touches a pull request; plan.next ranks READY by stamps alone (plan.rs:567-580); the milestone gate blocks every issue of a blocked milestone (plan.rs:1110-1130); scripts/case-numbers and lib/adr.sh each survey tree, worktrees, refs and board for one identifier; commit.validate has no rule about naming an issue; nothing declares the label vocabulary."
+desired_state: "Every criterion of the intent is carried by an issue here and proven by its test."
+scope:
+  - "scripts/github-sync"
+  - "scripts/ci/github-check"
+  - "scripts/ci/collision-gate"
+  - "scripts/case-numbers"
+  - "lib/adr.sh"
+  - "apps/majordomus-cli/src/plan.rs"
+  - "apps/majordomus-cli/src/commit"
+  - "apps/majordomus-cli/src/convergence"
+  - "docs/INTEGRATION.md"
+  - "CONTRIBUTING.md"
+acceptance_criteria:
+  - "Every open pull request carries labels, the GitHub milestone of the issue it serves, an assignee and a managed body region of Refs links, projected from the records, with no closing keyword"
+  - "An issue whose work sits in an open pull request or under a live branch claim is never the answer of plan next or plan ready"
+  - "plan validate names every issue held only by its milestone gate, and an issue may declare that it needs nothing from its milestone dependencies"
+  - "A pull request naming a record id that resolves neither on master nor in itself is refused, and convergence reports stranded records"
+  - "Issue ids, ADR numbers and case numbers come from one survey, and two branches adding one number under different names are refused"
+  - "A GitHub issue is created only by github-sync, an issue nobody projected is reported on GitHub, and an issue without a record marker is never adopted"
+  - "A commit naming no issue or carrying a closing keyword is refused outside the narrow exemptions, judged after a recorded boundary"
+  - "Every served page names only versions of the release model"
+  - "Each train member is judged on its merged tree, and a fix member carries a test and its coverage"
+  - "Every label and convention is declared once, projected and checked"
+validation:
+  - "bin/majordomus plan validate"
+  - "bin/majordomus intent validate"
+evidence_required:
+  - "pr_metadata_projected"
+  - "work_in_review_is_not_next"
+  - "milestone_gate_is_explained"
+  - "references_resolve_on_master"
+  - "one_allocator"
+  - "issues_come_from_the_projection"
+  - "every_commit_names_its_issue"
+  - "one_version_everywhere"
+  - "merged_result_is_judged"
+  - "conventions_declared_once"
+created_at: 2026-10-22
+updated_at: 2026-10-22

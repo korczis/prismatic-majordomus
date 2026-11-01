@@ -86,6 +86,9 @@ mkdir -p "$R"
   git config user.name t
   "$MJ" init >/dev/null
   "$MJ" update >/dev/null
+  # `init` seeds a closed mesh declaration (I2412, ADR 0137); this phase is about a
+  # repository that declares none, so the seed goes before the base commit
+  rm -f .ai/repo/mesh/mesh.yaml
   git add -A && git commit -qm base
 ) || { echo "    the fixture repository could not be made"; exit 1; }
 rc=0; ( cd "$R" && XDG_STATE_HOME="$T/state" "$RB" mesh firewall --format json ) > "$T/none.json" 2> "$T/none.err" || rc=$?
@@ -109,6 +112,8 @@ kind: mesh-declaration
 id: majordomus
 enabled: true
 multicast:
+  enabled: false
+tailscale:
   enabled: false
 broadcast:
   mode: disabled

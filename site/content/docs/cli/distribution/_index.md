@@ -4,7 +4,7 @@ description = "How this project is packaged, published and installed: the platfo
 sort_by = "weight"
 template = "docs-cli-group.html"
 page_template = "docs-cli-command.html"
-weight = 41
+weight = 42
 [extra]
 route = "/docs/cli/distribution/"
 command = "majordomus distribution"

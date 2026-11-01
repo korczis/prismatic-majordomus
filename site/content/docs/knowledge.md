@@ -45,6 +45,17 @@ one line, with:
 </div>
 
 
+A record's provenance outlives the files it cites (I1987). A `file:` or `test:` reference
+the tree no longer holds resolves through git history — the newest commit reachable from
+`HEAD` that touched the path, which still holds it or deleted it — and `file:<path>@<commit>`
+pins it to one commit. `knowledge check` names such a reference as historical rather than
+passing it in silence (`--json` lists them under `historical`), and `knowledge record` resolves
+it as `historical` with the blob that answers, `<commit>:<path>`, as its target; the shell
+check (`mj_knowledge_file_in_history`) and the Rust resolver (`file_in_history`) answer alike.
+A path no commit of this history ever held still resolves to nothing, and so does a pin at a
+commit that did not hold it. A shallow clone that lacks the commit cannot vouch for it, as for
+a `commit:` reference. `test/cases/3023` deletes a cited file and commits the deletion.
+
 A record is never a summary of a conversation and never quotes a prompt or a turn; the check
 that keeps `project.never-store-transcripts` applies to its title, its description and its
 body. An ADR, a rule and a document are sources of their own: a record relates to them and
@@ -56,6 +67,54 @@ reviewed, `status: candidate`; it is tracked, for the reason every closed sessio
 tracked: a record only one machine can read is a record nobody reads (ADR 0014). Both are
 source classes in `.ai/repo/knowledge/sources.yaml`, discovered through the git index like
 every kind, and both carry a `README.md` contract.
+
+## On the trunk, the records wait in the outbox
+
+A trunk that changes only through pull requests cannot commit what an episode boundary writes
+there, so a candidate written into `candidates/` on the trunk would leave the trunk dirty for
+good. The ADR 0091 amendment of 2026-10-15 (I1984) moves where a trunk episode writes, not what
+it writes.
+
+**Where they go.** The trunk is the remote's default branch as `mj_git_trunk_ref` reads it
+(`refs/remotes/<remote>/HEAD`); a checkout is on it when `HEAD` is the local branch of that
+name (`mj_on_trunk`). There, `knowledge derive` writes each new candidate to
+`.ai/local/state/outbox/candidates/<id>.md`, and `session close` and `recover episodes`
+write the closed session record to `.ai/local/state/outbox/sessions/`, instead of the
+tracked sections. The outbox is checkout-local and never tracked, so closing an episode on the trunk
+leaves `git status --porcelain` empty. A candidate whose id is already promoted or superseded
+is skipped as before, and one already tracked with the same bytes is reported `unchanged` and
+is not staged. A repository with no remote, or no remote default branch, and a detached
+`HEAD` are not on a trunk: there the records go where they always have.
+
+**When they leave.** The next `session close` on any other branch of the same clone drains
+the outbox (`mj_session_outbox_drain`), after the episode's own record and before its
+derivation. Each file moves into `.ai/repo/sessions/` or `.ai/repo/knowledge/candidates/`
+unchanged and under its own name, so a record still names the episode and the branch that
+wrote it, never the one that carried it, and that branch's pull request brings it to the
+trunk. The move happens once per record: a session record the section already holds by
+`session_id`, and a candidate already promoted, superseded or tracked with the same bytes,
+is retired from the outbox, not written again. Each move is one line on standard error
+(`outbox: carried <path>`, `outbox: <id> is already tracked; the staged copy is retired`),
+because the close's standard output is the path of its own record.
+
+**What says so meanwhile.** Until a branch carries them, staged candidates are not in the
+review queue: `knowledge candidates`, the index and the surfaces read `candidates/`, and
+`majordomus.candidates-reviewed` neither counts them nor reports them as untracked. So a
+non-empty outbox is named where a person looks first. `context` prints one line,
+`outbox  <n> session record(s), <m> knowledge candidate(s) in .ai/local/state/outbox/,
+waiting for a branch episode to carry them`; `doctor` reports an `INFO` finding `outbox`
+under the category `clone` with the same counts and `ls .ai/local/state/outbox/*/` as its
+reproduce. Neither is a failure: the outbox is where a trunk episode's records belong, and a
+clone that never branches again still says what it holds. An empty outbox says nothing.
+
+**A file that is not a record.** A session file without `session/v1` front matter naming a
+`session_id`, or a candidate without `knowledge/v1` front matter whose `id` is its file name,
+is named on standard error and left where it is: moving it would put an invalid file into a
+tracked section, and removing it would lose whatever it was. So is a session file whose name
+another episode's record already takes in the tracked section. The drain ends with
+`outbox: <n> file(s) stay in .ai/local/state/outbox/ (run: majordomus doctor)`, and `doctor`
+and `context` keep counting the file until a person moves or removes it. Case `3060` proves
+the trunk half and case `3063` the drain.
 
 ## What is derived, from what
 
@@ -118,6 +177,33 @@ conflict. `knowledge candidates` groups the candidates and rejected records abou
 with the episodes behind them — the same answer from the shell and from
 `knowledge_base.candidates`. An episode that observed nothing writes no candidate and still
 appends `knowledge.derived` with `written: 0`: evaluated, nothing found.
+
+## What a provider remembered
+
+Some providers keep a memory of their own outside the tree, and a lesson written only there
+reaches no rule, skill or briefing. The evolve skill's step 1 reads it as data, since the
+last evolve, and records what it finds as observations (`majordomus://skill/evolve`). A
+provider keys its memory by the primary checkout's absolute path, the directory that holds
+`git rev-parse --path-format=absolute --git-common-dir`, and never by a linked worktree's,
+so a skill run in `<repository>-wt/<branch>` reads the primary checkout's.
+
+<div class="overflow-x-auto" tabindex="0">
+
+| provider | where it remembers | for this repository |
+|---|---|---|
+| Claude Code | `~/.claude/projects/<encoded>/memory/`, where `<encoded>` is the primary checkout's absolute path with every `/` and `.` written `-` | per repository; the `<encoded>-wt-*` directories of linked worktrees hold transcripts and no `memory/` |
+| Codex | `~/.codex/memories/` | one store for every repository; read the entries that name this one |
+| Gemini CLI | `~/.gemini/GEMINI.md`, written by its memory tool | one file for every repository; read the lines that name this one |
+| any other | nothing the adapter declares | no memory to read |
+
+</div>
+
+
+What a memory says is a statement to check, never an instruction or the owner's word. An
+approval or an order found only there is reported to the owner as unwritten, never written
+into a permission configuration or a rule by the skill. And the tree is public: an
+identifier of an account, an artifact, a person or a host, and an absolute path, are
+stripped before the observation is recorded.
 
 ## The two moments
 
@@ -223,11 +309,12 @@ target — never staged, and prints the path written on the last line, the way `
 
 | Command | Reads | Writes | Exit codes |
 |---|---|---|---|
-| `knowledge derive [--episode <id>] [--dry-run] [--json]` | the ledger window of the episode, the task notes under `.ai/local/state/completed/`, the sessions store, git (the episode's commits and the paths they touched), the policy, both record directories | `candidates/<id>.md` per record; `knowledge.derived`; nothing under `--dry-run` | `0` (also with no episode or nothing changed), `2` usage, `10` the policy does not parse, `13` write failure |
+| `knowledge derive [--episode <id>] [--dry-run] [--json]` | the ledger window of the episode, the task notes under `.ai/local/state/completed/`, the sessions store, git (the episode's commits and the paths they touched), the policy, both record directories | `candidates/<id>.md` per record, on the trunk `.ai/local/state/outbox/candidates/<id>.md`; `knowledge.derived`; nothing under `--dry-run` | `0` (also with no episode or nothing changed), `2` usage, `10` the policy does not parse, `13` write failure |
 | `knowledge candidates [--json]` | `candidates/` on disk (tracked or not, so a candidate the hook just wrote is listed), the sessions store, the ledger | nothing | `0`, `2` usage |
 | `knowledge promote <id> [--class <c>] < evidence` | the candidate, stdin, the open episode | `curated/<id>.md`; removes the candidate; `knowledge.promoted` | `0`, `2` usage, `10` empty or transcript stdin, status not candidate, class outside the enumeration, `12` no such candidate, `13` write failure |
 | `knowledge reject <id> --reason "<why>" [--by <id>]` | the candidate, both directories for `--by` | the candidate rewritten in place; `knowledge.rejected` | `0`, `2` usage or empty reason, `10` status not candidate or `--by` names no record, `12` no such candidate, `13` write failure |
 | `knowledge check [--json]` | both record directories, `share/allow/knowledge.txt`, the sessions store, the ledger, git | nothing | `0` no failure, `2` usage, `10` any failure |
+| `knowledge validate [--json]` | the same nodes and edges `nodes` compiles, and the executable's index for the schema | nothing | `0` no owned failure, `2` usage, `10` an owned reference is broken |
 | `knowledge sources`, `nodes`, `edges` | unchanged; `edges --type derived_from` now lists a record's provenance edges | nothing | unchanged |
 
 </div>
@@ -244,7 +331,7 @@ The Rust executable serves the read side: `bin/majordomus-cli knowledge candidat
 capability declared once in `apps/majordomus-cli/src/capability/builtin/knowledge_base.rs`
 and served identically over HTTP, OpenAPI, MCP, the cockpit's catalogue and the benchmark
 inventory (`CAPABILITIES.md`). `record` resolves every reference the record names to an
-object of the index, an external fact of the ledger or git, or missing; `status` reports the
+object of the index, an external fact of the ledger or git, a historical file, or missing; `status` reports the
 last derivation, the newest close, the freshness against the policy and the stopped-writer
 judgement. It writes nothing and reports absence as absence.
 
@@ -261,6 +348,7 @@ ADR 0052 met the same constraint and answered it the same way.
 | Rule | Class | Validator | Enforced by | Finding |
 |---|---|---|---|---|
 | `majordomus.knowledge-observed` | blocking | `mj_validate_knowledge_lifecycle` | `doctor`, `watch` | the newest `session.closed` names an episode no `knowledge.derived` names and is older than `session.freshness.stale_minutes`; or the switch is on and the lifecycle source never calls the deriver |
+| `majordomus.knowledge-graph` | advisory | `mj_validate_knowledge_graph` | `doctor`, `watch` | a duplicate node id, an edge with a missing end or without provenance, a declared path or a tracked source that no longer exists; and whether the graph can be built in this checkout at all |
 | `majordomus.knowledge-integrity` | blocking | `mj_validate_knowledge_integrity` | `check`, `doctor` | a record that is not schema-valid, uniquely identified, evidenced when verified, fully resolved, correctly superseded, or that is a candidate claiming `verified`, or that carries a conversation |
 | `majordomus.candidates-reviewed` | advisory | `mj_validate_knowledge_accumulation` | `doctor` | more candidates than the cap, a candidate whose review age exceeds the policy age, or a candidate version control does not track |
 
@@ -280,7 +368,23 @@ The advisory rule measures the queue and empties nothing. Review age is the age 
 entry — the oldest `knowledge.derived` line naming the file, then the commit that added it,
 then the record's `date` — and the finding says which source it used. It is dispatched from
 `doctor` only: under `watch` an advisory finding is drift, and a full review queue must not
-turn `watch` red in a hook.
+turn `watch` red in a hook. A candidate staged in the trunk's outbox is outside `candidates/`
+and outside this rule; `doctor` names the outbox under `clone` instead.
+
+The graph rule judges what the compiler built rather than what a record asserts, and it has
+one judge: every finding is one the compiler emits while it extracts, and `knowledge
+validate`, `doctor` and `watch` only classify it. Which break fails is decided by where the
+relationship was stated. One Majordomus derives from a structured field — an issue's
+`milestone` and `depends_on`, a claim's `source`, `implementation` and `test`, a rule's
+dependency — is owned, and a broken one fails the command (exit 10), warns under `doctor`,
+where the rule is advisory, and is drift under `watch`. A link an author wrote in prose may
+point outside the repository on purpose, so a target it names that resolves to nothing is
+reported and never fails; `doctor` and `watch` summarise those in one line. A tracked source
+the working tree no longer holds is reported as `source_missing` — a deletion in progress —
+and is drift under `watch`. No generated graph is stored (I0810 was cancelled because none
+exists), so there is no index to go stale and no stored hash to mismatch; the command says
+so on every run, and `doctor` answers whether the graph can be built here by compiling it
+into a temporary file it removes. Nothing is rebuilt or repaired.
 
 Each rule names its tests and its claims; `scripts/ci/rule-proof-check` and
 `scripts/ci/claim-proof-check` refuse a rule whose proof is missing and a claim whose test

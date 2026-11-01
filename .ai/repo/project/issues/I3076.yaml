@@ -1,0 +1,32 @@
+id: I3076
+milestone: a-version-follows-the-work
+title: "The landing clock's first source is measured, a fresh clone's wait is a labelled bound, and case 3470 shows a decided version"
+slug: a-landing-is-dated-by-the-forge
+priority: p2
+profile: implementation
+parallel_safe: false
+serves:
+  - a-version-follows-every-session#measured
+objective: "Keep this clone's reflog of the trunk as release.currency's first source, and read no forge record. docs/RELEASE.md states why, with the measurement of 2026-10-21. prs refresh, which the executor runs before every decision, never lists merged pull requests (forge.rs and tests/integration_merged_branches.rs hold it). Reading them would cost 1.11 s on every observation. This clone's reflog saw each of the last four landings 12 to 94 s after the forge's mergedAt, against a six-hour threshold. docs/RELEASE.md also says what a fresh clone reads. git clone writes no reflog for the remote-tracking trunk, so the commit time is the only reading. It is given as landed_at commit and a wait of at most the commit's age, never a zero. Case 3470 gains two steps. In one, a fresh clone of the origin reads that labelled bound, while the clone it came from reads its reflog. In the other, over a recorded release whose commit carries the registry it published, as case 743's fixture does, the version release.currency decides equals what release version answers there."
+why: "The plan critique of a-version-follows-every-session (2026-10-19) found the landing clock wrong, and the release seat (9c) asked for the forge's landing time first. Built as first planned, that read would have broken an invariant a test holds, slowed the executor's every observation and gained about a minute. It was weighed on 2026-10-21 (ADR 0098), and the release seat agreed. The seat asked that a fresh clone's reading, an upper bound, be stated and shown. The critique's finding no-case-shows-a-version-decided was still open."
+current_state: "release.currency dates the oldest landing by this clone's reflog, else by its commit time as an upper bound. docs/RELEASE.md says a forge read is planned. Case 3470 removes the reflog to show the bound, no step reads a fresh clone, and none shows a version decided."
+desired_state: "docs/RELEASE.md says why the reflog is the first source, with the measurement, and what a fresh clone reads. Case 3470 shows a fresh clone's labelled bound beside the reflog's reading, and a version decided over a committed registry equal to release version's."
+scope:
+  - ".ai/repo/project/issues/I3076.yaml"
+  - "docs/RELEASE.md"
+  - "test/cases/3470_the_release_follows_the_work.sh"
+non_scope:
+  - "Reading the forge in release.currency or in prs refresh"
+depends_on:
+  - "I3070"
+acceptance_criteria:
+  - "docs/RELEASE.md states the measured reason the forge is not read, and what a fresh clone's answer is"
+  - "Case 3470 shows a fresh clone of the origin answering landed_at commit with an at-most wait no shorter than the commit's age, while the clone it came from answers by its reflog"
+  - "Case 3470 shows a version decided over a committed registry at the trunk, equal to release version's next"
+validation:
+  - "bin/majordomus plan validate"
+  - "bash test/run.sh 3470_the_release_follows_the_work"
+evidence_required:
+  - "case_the_release_follows_the_work"
+created_at: 2026-10-19
+updated_at: 2026-10-21

@@ -11,7 +11,7 @@ depends_on: [project.integration-follows-the-current-master@3, project.land-and-
 tags: [process, integration, deployment, governance, evidence]
 
 x-majordomus:
-  tests: [test/cases/2999_delivery_is_expedited_only_where_the_rule_says.sh, test/cases/362_a_release_follows_the_ci_verdict.sh, test/cases/720_integration_follows_the_current_master.sh, test/cases/97_pages_fast_path.sh]
+  tests: [test/cases/2999_delivery_is_expedited_only_where_the_rule_says.sh, test/cases/3019_a_failed_branch_run_cancels_itself.sh, test/cases/3020_an_active_skill_is_named_where_the_crate_test_demands.sh, test/cases/362_a_release_follows_the_ci_verdict.sh, test/cases/720_integration_follows_the_current_master.sh, test/cases/97_pages_fast_path.sh]
 ---
 
 # Rationale
@@ -63,10 +63,26 @@ makes it safe and what does not, each measured rather than argued:
    locally, the merge is committed, and only then is the branch derived. The merge is `gh pr
    merge --admin --merge --match-head-commit <head>`, so a head that moved is refused.
 4. **The merged tree is judged before the merge, and the judgement is named.** At least the
-   whole structure job (`scripts/ci/run-plan --job structure`), the library tests, the
-   rustdoc build when the crate changed, and every case the change touches, with skips
-   refused. The lander says which commit each ran on. A gate that did not run is named as
+   whole structure job, which is the two CI jobs `structure` and `structure-b` (`just
+   ci-structure` runs `scripts/ci/run-plan --job structure` and `--job structure-b`), the
+   library tests, the rustdoc build when the crate changed, and every case the change
+   touches, with skips refused. The lander says which commit each ran on. A gate that did not run is named as
    not run. A red is not landed.
+   **What a change owes beyond that is read from what it touches**, and `scripts/ci-plan
+   --files <list>` names the gates it selects:
+   - code of the crate (`apps/majordomus-cli/**`): the crate's tests in all three lanes of the
+     rust job, not the library alone;
+   - a record a crate test reads — a skill, a rule, a claim, a capability, the quality
+     baseline, an intent, milestone or issue: the crate tests that open this repository
+     itself — `tests/skills.rs` (it names every active skill), `tests/quality.rs` (the
+     quality baseline), `tests/mcp_prose.rs`, `tests/mcp_conformance.rs`, `tests/redaction.rs`
+     — and the `intent-check` gate (`majordomus intent validate`) for a plan record; a record
+     change is a crate change for them although no Rust moved, and they run only in the rust
+     lanes, which the structure job is not;
+   - a workflow or a script under `scripts/ci/`: the whole structure job and every case that
+     names the file (`grep -rl <name> test/cases`);
+   - the site, the UI or the Cockpit: the site job's build and probe, and every case that
+     names them.
 5. **The integration executor never passes `--admin`.** `majordomus prs` merges only what
    the branch protection allows. This rule governs a lander's own act and changes nothing in
    that code.
@@ -78,6 +94,8 @@ makes it safe and what does not, each measured rather than argued:
    same workflow already judges the same commit. A lander cancels its own branch's run after
    its merge. These are never cancelled: the trunk's only run of a commit, a deployment in
    flight, a release run, and another session's run on a head that is still current.
+   A branch's run that has failed a job can no longer be green, and the validation workflow
+   cancels it itself from the failed job's last step; the trunk's run is left to finish.
 8. **A red on the trunk has one carrier.** The integrator names it. Everyone else builds
    nothing for that red until the carrier yields or its stated time passes.
 9. **Between a tag and its record nothing else lands.** The release workflow proposes the
@@ -98,6 +116,12 @@ release workflow publishes without asking `scripts/ci/release-verdict`, when tha
 accepts a commit whose check is missing, pending or failed, when a landing on the trunk
 could cancel the trunk's run in flight or a deployment in flight, when the integration code
 names `--admin`, or when the documented merge command loses its pin to the judged head.
+`test/cases/3019_a_failed_branch_run_cancels_itself.sh` fails when a gate job of the
+validation workflow does not end a failed pull request's run as its last step, or could end
+a run of the trunk, the schedule or a dispatch. The omission of 2026-10-13 — an active skill
+that `tests/skills.rs` and case 391 do not name — is refused in the structure job by the
+`skill-naming` gate (`scripts/ci/skill-naming-check`), and
+`test/cases/3020_an_active_skill_is_named_where_the_crate_test_demands.sh` proves it refuses.
 
 Clauses 1, 2, 4, 8 and 9 are acts of a session and are decided by the record: the landing
 claim on the mesh, the gates named in the pull request, and the board. A landing whose pull

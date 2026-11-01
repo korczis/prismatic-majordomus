@@ -27,6 +27,13 @@ READ
   graph                the dependency DAG as Mermaid                          (read-only)
   next                 the one issue a worker should take now                 (read-only)
   body <id>            the provider-neutral projection body for one record    (read-only)
+  delivery [<id>]      how far each issue's work has travelled: none, branch, pr_open,
+                       merged, released, deployed, each with what proved it; answered
+                       by the executable (plan.delivery), --at <rev> for a commit (read-only)
+  drift [<id>]         where the stamps contradict the delivered work: merged_not_recorded,
+                       active_without_work, done_without_trace, each with its proof;
+                       answered by the executable (plan.drift); --gate head|trunk judges
+                       it against .ai/repo/ci/plan.yaml's window (read-only)
 
 WRITE (one lifecycle marker each, into the issue's own file)
   start <id>           record that execution began
@@ -53,6 +60,15 @@ mj_cmd_plan() {
   [ $# -ge 1 ] || { mj_plan_usage; exit "$MJ_EX_USAGE"; }
   case "$1" in
     --help|-h|help) mj_plan_usage; return 0 ;;
+    # Inferred from git, the forge cache and the published release pointer, which is the
+    # executable's work (ADR 0166): no awk derivation of it exists to disagree with. Handed
+    # over with its arguments unchanged, and with the global options this launcher took.
+    delivery|drift)
+      sub="$1"; shift
+      local -a fwd=()
+      [ -z "${MJ_REPO:-}" ] || fwd+=(--repo "$MJ_REPO")
+      [ "${MJ_JSON:-0}" != 1 ] || fwd+=(--format json)
+      exec "$MJ_BIN_DIR/majordomus-cli" plan "$sub" "${fwd[@]+"${fwd[@]}"}" "$@" ;;
     validate|status|list|show|ready|blocked|waves|graph|next|body|start|verify|evidence|roadmap|rgraph|done) sub="$1"; shift ;;
     *) mj_die "$MJ_EX_USAGE" "plan: unknown subcommand '$1' (see: majordomus plan --help)" ;;
   esac
@@ -100,10 +116,15 @@ mj_cmd_plan() {
 # ---------------------------------------------------------------- roadmap
 # The roadmap is a projection over the milestone graph, in derived order. Nothing here is
 # authored: the sequence comes from the dependency ranks, the status from the issues and the
-# gate, and "now" and "next" from the first unblocked milestones in that sequence.
+# gate, and "now" and "next" from the first unblocked milestones in that sequence, and the
+# release each one shipped in from the release records (mj_pj_m_released_in), never typed.
 mj_plan_roadmap() {
   local id st ver ttl now="" nxt="" blk
   if [ "$MJ_JSON" = 1 ]; then
+    # only a DONE milestone can have been released, so only those ask git anything
+    for id in $(awk -F'\t' '$1 == "M" && $3 == "DONE" { print $2 }' "$MJ_PJ/model.tsv"); do
+      printf '%s\t%s\n' "$id" "$(mj_pj_m_released_in "$id")"
+    done > "$MJ_PJ/released.tsv"
     awk -F'\t' '
       function esc(x) { gsub(/\\/, "\\\\", x); gsub(/"/, "\\\"", x); return x }
       function lst(x,   n, a, i, o) {
@@ -125,6 +146,7 @@ mj_plan_roadmap() {
         }
         return "{\"total\":" t ",\"required\":" r ",\"by_status\":{" o "}}"
       }
+      FILENAME ~ /released\.tsv$/ { rel[$1] = $2; next }
       $1 == "M" { r[++n] = $10 + 0 "\t" $4 + 0 "\t" $0 }
       END {
         for (i = 1; i < n; i++) for (j = i + 1; j <= n; j++) {
@@ -134,18 +156,19 @@ mj_plan_roadmap() {
         printf "{\"schema\":1,\"milestones\":["
         for (i = 1; i <= n; i++) {
           sub(/^[^\t]*\t[^\t]*\t/, "", r[i]); split(r[i], f, "\t")
-          printf "%s{\"id\":\"%s\",\"version\":\"%s\",\"title\":\"%s\",\"status\":\"%s\",\"rank\":%d,\"order\":%d,\"issues\":%s,\"depends_on\":%s,\"blocked_by\":%s,\"dependents\":%s,\"claims\":%s}", \
-            (i > 1 ? "," : ""), esc(f[2]), esc(f[9]), esc(f[6]), esc(f[3]), f[10], f[4], \
+          printf "%s{\"id\":\"%s\",\"released_in\":\"%s\",\"title\":\"%s\",\"status\":\"%s\",\"rank\":%d,\"order\":%d,\"issues\":%s,\"depends_on\":%s,\"blocked_by\":%s,\"dependents\":%s,\"claims\":%s}", \
+            (i > 1 ? "," : ""), esc(f[2]), esc((f[2] in rel) ? rel[f[2]] : "unreleased"), esc(f[6]), esc(f[3]), f[10], f[4], \
             counts(f[8]), lst(f[11]), lst(f[12]), lst(f[13]), lst(f[14])
         }
         printf "]}\n"
-      }' "$MJ_PJ/model.tsv"
+      }' "$MJ_PJ/released.tsv" "$MJ_PJ/model.tsv"
     return 0
   fi
-  printf 'VERSION  STATUS      MILESTONE                     TITLE\n'
+  printf 'RELEASED    STATUS      MILESTONE                     TITLE\n'
   for id in $(mj_pj_roadmap); do
-    st="$(mj_pj_m_status "$id")"; ver="$(mj_pj_m_version "$id")"; ttl="$(mj_pj_m_title "$id")"
-    printf '%-8s %-11s %-29s %s\n' "${ver:--}" "$st" "$id" "$ttl"
+    st="$(mj_pj_m_status "$id")"; ver="$(mj_pj_m_released_in "$id")"; ttl="$(mj_pj_m_title "$id")"
+    [ "$ver" = unreleased ] && ver="-"
+    printf '%-11s %-11s %-29s %s\n' "$ver" "$st" "$id" "$ttl"
   done
   for id in $(mj_pj_roadmap); do
     st="$(mj_pj_m_status "$id")"
@@ -169,6 +192,11 @@ mj_plan_validate() {
   unk="$(mj_project_unknown_keys || true)"
   if [ -n "$unk" ]; then
     printf '%s\n' "$unk" | while read -r rec keys; do
+      # a typed milestone version is the one unknown key with a known replacement
+      case " $keys " in
+        *" version "*) mj_pj_is_milestone "$rec" \
+          && keys="$keys (a milestone's release is inferred as released_in from the release records, never typed; ADR 0166)" ;;
+      esac
       mj_fail schema "$rec" "unknown keys: $keys" "majordomus plan validate"
     done
     fails=1
@@ -369,6 +397,9 @@ mj_plan_body_issue() {
   mj_plan_sec Why "$id" why
   mj_plan_sec 'Current State' "$id" current_state
   mj_plan_sec 'Desired State' "$id" desired_state
+  # what the issue answers to outside the layer, as written: a body without traces is
+  # byte-identical to one rendered before the field existed, so no projection drifts
+  mj_plan_seclist Traces "$id" traces
   mj_plan_seclist Scope "$id" scope '- `' '`'
   mj_plan_seclist 'Out of Scope' "$id" non_scope
   printf '## Dependencies\n\n'
@@ -390,7 +421,7 @@ mj_plan_body_issue() {
 }
 
 mj_plan_body_milestone() {
-  local id="$1" row i
+  local id="$1" row i due
   row="$(mj_pj_row M "$id")"
   printf '# %s — %s\n\n' "$id" "$(mj_pj_m_title "$id")"
   printf '| field | value |\n|---|---|\n'
@@ -399,6 +430,9 @@ mj_plan_body_milestone() {
   printf '| ready / blocked / active / verify | %s / %s / %s / %s |\n' \
     "$(printf '%s' "$row" | cut -f10)" "$(printf '%s' "$row" | cut -f11)" \
     "$(printf '%s' "$row" | cut -f12)" "$(printf '%s' "$row" | cut -f13)"
+  # a declared date is shown, never read: the status above is derived from evidence alone
+  due="$(mj_pj_get "$id" due_on 2>/dev/null || true)"
+  [ -z "$due" ] || printf '| due | %s (declared) |\n' "$due"
   printf '| canonical | `%s/milestones/%s.yaml` |\n\n' "$(mj_rel "$MJ_PROJECT_DIR")" "$id"
   mj_plan_sec Problem "$id" problem
   mj_plan_sec Outcome "$id" outcome
@@ -472,10 +506,15 @@ mj_plan_transition() {
     done)
       [ -n "$bb" ] && mj_die "$MJ_EX_REFUSED" "$id cannot be DONE while $bb is not DONE"
       case "$st" in ACTIVE|VERIFY) ;; *) mj_die "$MJ_EX_REFUSED" "$id is $st; only an ACTIVE or VERIFY issue can move to DONE" ;; esac
+      # one token per line, read whole: a token may hold spaces ("anthropic api adapter:
+      # request normalisation, credential, usage"), and a word-split loop asked for each word
       local need missing=""
-      for need in $(mj_pj_list "$id" evidence_required); do
+      while IFS= read -r need; do
+        [ -n "$need" ] || continue
         mj_plan_has_evidence "$id" "$need" || missing="$missing $need"
-      done
+      done <<EOF
+$(mj_pj_list "$id" evidence_required)
+EOF
       [ -n "$missing" ] && mj_die "$MJ_EX_CONTRACT" "$id has no evidence for:$missing (run: majordomus plan evidence $id --covers <token> ...)"
       mj_plan_stamp "$id" completed_at completed_event plan_done "$now"
       printf 'plan: %s DONE\n' "$id" ;;
@@ -540,7 +579,8 @@ mj_plan_evidence() {
   {
     if grep -qE '^evidence:' "$f"; then cat "$f"
     else cat "$f"; printf 'evidence:\n'; fi
-    printf -- '  - covers: %s\n    type: %s\n' "$covers" "$etype"
+    # quoted as the command and the result are: a token holding ": " is no plain YAML scalar
+    printf -- '  - covers: "%s"\n    type: %s\n' "$(printf '%s' "$covers" | sed 's/"/\\"/g')" "$etype"
     [ -n "$ecmd" ] && printf '    command: "%s"\n' "$(printf '%s' "$ecmd" | sed 's/"/\\"/g')"
     [ -n "$eres" ] && printf '    result: "%s"\n' "$(printf '%s' "$eres" | sed 's/"/\\"/g')"
     [ -n "$eart" ] && printf '    artifact: "%s"\n' "$(printf '%s' "$eart" | sed 's/"/\\"/g')"

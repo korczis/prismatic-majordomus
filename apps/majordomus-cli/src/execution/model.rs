@@ -307,7 +307,8 @@ pub enum ActorKind {
     Http,
     /// An MCP client attached to this process.
     Mcp,
-    /// The command line of this process.
+    /// A command line: this process's own, or `majordomus run` in another process of the
+    /// same checkout that reported its execution to this server, with its pid.
     Cli,
     /// This executable's own tests and benchmarks.
     Internal,
@@ -321,12 +322,35 @@ pub struct Actor {
     /// The peer id, for a call that arrived through an MCP session.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub peer: Option<String>,
+    /// The process that ran it, for an execution another process ran and reported to this
+    /// one: the work happened there, and this process holds what it was told about it.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub pid: Option<u32>,
 }
 
 impl Actor {
     /// An actor of a kind, with no peer.
     pub fn of(kind: ActorKind) -> Self {
-        Actor { kind, peer: None }
+        Actor {
+            kind,
+            peer: None,
+            pid: None,
+        }
+    }
+
+    /// `majordomus run` in another process, which ran the execution and reported it here.
+    ///
+    /// ```
+    /// use majordomus_cli::execution::{Actor, ActorKind};
+    /// let a = Actor::reported(4242);
+    /// assert_eq!((a.kind, a.pid), (ActorKind::Cli, Some(4242)));
+    /// ```
+    pub fn reported(pid: u32) -> Self {
+        Actor {
+            kind: ActorKind::Cli,
+            peer: None,
+            pid: Some(pid),
+        }
     }
 }
 

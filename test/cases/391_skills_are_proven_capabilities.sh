@@ -40,7 +40,12 @@ commit "alpha, invoked and named"
 expect_exit 0 "$RB" skills status
 expect_grep '^alpha +active +partial +not_run +no +no +yes$'
 expect_exit 0 "$RB" skills verify
-expect_grep '1 skill\(s\), 0 failure\(s\), 3 warning\(s\): valid'
+expect_grep '1 skill\(s\), 0 failure\(s\), 2 warning\(s\): valid'
+# a page is owed only where the repository publishes skill pages (I4256): none here, then one
+verify; lacks warn:undocumented
+mkdir -p site/content/skills && printf '# Beta\n' > site/content/skills/beta.md && commit "a published skill page"
+verify; has warn:undocumented
+git rm -q -r site && commit "no published skill pages again"
 expect_exit 0 "$RB" skills explain alpha
 expect_grep 'test +test/cases/01_alpha\.sh +not_run +\[reproduce: bash test/run\.sh 01_alpha\]'
 expect_grep 'invoked +\.ai/repo/workflows/uses-alpha\.md:3 +majordomus://skill/alpha'
@@ -160,4 +165,24 @@ for id in $NAMED; do
 done
 for id in $(jq -r '.skills[] | select(.status == "active") | .id' "$S/repo.json"); do
   case " $NAMED " in *" $id "*) ;; *) echo "    active skill $id is not named by this case"; exit 1 ;; esac
+done
+
+# a skill body names commands and files, never a provider or a provider's tool
+# (.ai/repo/skills/README.md): where a provider keeps something is said by a document or the
+# provider's own projection, so a skill read by every provider reads the same for each
+# (review of I4337, whose evolve skill named one provider's private directory)
+for f in "$ROOT"/.ai/repo/skills/*/SKILL.md; do
+  if awk 'n >= 2; /^---$/ { n++ }' "$f" \
+      | grep -nE 'Claude Code|Codex|Gemini|~/\.(claude|codex|gemini)|CLAUDE_CODE_'; then
+    echo "    ${f#"$ROOT"/} names a provider in its body"; exit 1
+  fi
+done
+
+# the implement skill's first phase names the four refusals one session met more than once on
+# 2026-10-28 (I4337), so deleting that checklist is refused here and not only remembered
+IMPL="$(awk '/^## 1\./ { on = 1; next } /^#{1,2} / { on = 0 } on' "$ROOT/.ai/repo/skills/implement/SKILL.md" \
+  | tr -s '[:space:]' ' ')"
+for want in 'apps/majordomus-cli/src/cli.rs' 'EXAMPLES' 'env -u MAJORDOMUS_SHARE' '100 characters'; do
+  printf '%s\n' "$IMPL" | grep -qF -- "$want" \
+    || { echo "    phase 1 of the implement skill no longer says: $want"; exit 1; }
 done

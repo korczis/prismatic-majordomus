@@ -1,30 +1,30 @@
 {
   "schema": "majordomus/benchmark-matrix/v1",
   "generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the benchmark projection of the canonical capability registry; regenerate with `majordomus generate`",
-  "generator": "majordomus-cli 0.24.1",
+  "generator": "majordomus-cli 1.0.0-alpha.10",
   "coverage": [
     {
       "scope": "direct",
-      "required": 197,
-      "covered": 167,
+      "required": 221,
+      "covered": 182,
       "missing": 0,
-      "waived": 30,
+      "waived": 39,
       "inapplicable": 0
     },
     {
       "scope": "http",
-      "required": 192,
-      "covered": 167,
+      "required": 213,
+      "covered": 182,
       "missing": 0,
-      "waived": 25,
+      "waived": 31,
       "inapplicable": 0
     },
     {
       "scope": "mcp",
-      "required": 188,
-      "covered": 163,
+      "required": 207,
+      "covered": 177,
       "missing": 0,
-      "waived": 25,
+      "waived": 30,
       "inapplicable": 0
     },
     {
@@ -37,10 +37,10 @@
     },
     {
       "scope": "total",
-      "required": 591,
-      "covered": 511,
+      "required": 655,
+      "covered": 555,
       "missing": 0,
-      "waived": 80,
+      "waived": 100,
       "inapplicable": 0
     }
   ],
@@ -56,6 +56,19 @@
       "cases": [
         "all",
         "one-encoding"
+      ]
+    },
+    {
+      "id": "blackboard.snapshot",
+      "module": "blackboard",
+      "kind": "query",
+      "cache": "—",
+      "direct": "covered",
+      "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "this-checkout",
+        "addressed"
       ]
     },
     {
@@ -342,6 +355,18 @@
       "cases": []
     },
     {
+      "id": "delivery.trends",
+      "module": "delivery",
+      "kind": "query",
+      "cache": "—",
+      "direct": "covered",
+      "mcp": "none",
+      "http": "covered",
+      "cases": [
+        "default"
+      ]
+    },
+    {
       "id": "deploy.check",
       "module": "deploy",
       "kind": "query",
@@ -388,6 +413,16 @@
       "cases": [
         "default"
       ]
+    },
+    {
+      "id": "deploy.slug",
+      "module": "deploy",
+      "kind": "command",
+      "cache": "—",
+      "direct": "waived",
+      "mcp": "none",
+      "http": "none",
+      "cases": []
     },
     {
       "id": "design.contrast",
@@ -451,7 +486,8 @@
         "no-seed",
         "issue",
         "milestone",
-        "intent"
+        "intent",
+        "source-ranges"
       ]
     },
     {
@@ -627,6 +663,19 @@
       "cases": [
         "default",
         "narrowed"
+      ]
+    },
+    {
+      "id": "economics.tasks",
+      "module": "economics",
+      "kind": "query",
+      "cache": "—",
+      "direct": "covered",
+      "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "all",
+        "window"
       ]
     },
     {
@@ -862,6 +911,16 @@
       ]
     },
     {
+      "id": "executions.report",
+      "module": "executions",
+      "kind": "command",
+      "cache": "—",
+      "direct": "waived",
+      "mcp": "none",
+      "http": "waived",
+      "cases": []
+    },
+    {
       "id": "executions.start",
       "module": "executions",
       "kind": "command",
@@ -901,6 +960,30 @@
       ]
     },
     {
+      "id": "gates.policy",
+      "module": "gates",
+      "kind": "query",
+      "cache": "process, 4 entries, 5s",
+      "direct": "covered",
+      "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "default"
+      ]
+    },
+    {
+      "id": "gates.state",
+      "module": "gates",
+      "kind": "query",
+      "cache": "—",
+      "direct": "covered",
+      "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "default"
+      ]
+    },
+    {
       "id": "graph.get",
       "module": "graph",
       "kind": "query",
@@ -929,6 +1012,19 @@
       "http": "covered",
       "cases": [
         "default"
+      ]
+    },
+    {
+      "id": "guard.edit",
+      "module": "guard",
+      "kind": "query",
+      "cache": "—",
+      "direct": "covered",
+      "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "in-repository",
+        "outside"
       ]
     },
     {
@@ -1193,6 +1289,18 @@
       ]
     },
     {
+      "id": "layout.check",
+      "module": "layout",
+      "kind": "query",
+      "cache": "—",
+      "direct": "covered",
+      "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "default"
+      ]
+    },
+    {
       "id": "lifecycle.closed",
       "module": "lifecycle",
       "kind": "query",
@@ -1266,6 +1374,56 @@
       ]
     },
     {
+      "id": "mesh.beat",
+      "module": "mesh",
+      "kind": "command",
+      "cache": "—",
+      "direct": "waived",
+      "mcp": "waived",
+      "http": "waived",
+      "cases": []
+    },
+    {
+      "id": "mesh.build_cache.ensure",
+      "module": "mesh",
+      "kind": "command",
+      "cache": "—",
+      "direct": "waived",
+      "mcp": "none",
+      "http": "none",
+      "cases": []
+    },
+    {
+      "id": "mesh.build_cache.env",
+      "module": "mesh",
+      "kind": "query",
+      "cache": "—",
+      "direct": "waived",
+      "mcp": "waived",
+      "http": "waived",
+      "cases": []
+    },
+    {
+      "id": "mesh.build_cache.key",
+      "module": "mesh",
+      "kind": "query",
+      "cache": "—",
+      "direct": "waived",
+      "mcp": "waived",
+      "http": "waived",
+      "cases": []
+    },
+    {
+      "id": "mesh.build_cache.provision",
+      "module": "mesh",
+      "kind": "command",
+      "cache": "—",
+      "direct": "waived",
+      "mcp": "none",
+      "http": "none",
+      "cases": []
+    },
+    {
       "id": "mesh.claim",
       "module": "mesh",
       "kind": "command",
@@ -1298,6 +1456,16 @@
       "cases": [
         "default"
       ]
+    },
+    {
+      "id": "mesh.enrol",
+      "module": "mesh",
+      "kind": "command",
+      "cache": "—",
+      "direct": "waived",
+      "mcp": "waived",
+      "http": "waived",
+      "cases": []
     },
     {
       "id": "mesh.events",
@@ -1645,6 +1813,43 @@
       ]
     },
     {
+      "id": "observatory.capture",
+      "module": "observatory",
+      "kind": "query",
+      "cache": "—",
+      "direct": "covered",
+      "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "default"
+      ]
+    },
+    {
+      "id": "observatory.events",
+      "module": "observatory",
+      "kind": "query",
+      "cache": "—",
+      "direct": "covered",
+      "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "newest",
+        "after a cursor"
+      ]
+    },
+    {
+      "id": "observatory.replay",
+      "module": "observatory",
+      "kind": "query",
+      "cache": "—",
+      "direct": "covered",
+      "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "default"
+      ]
+    },
+    {
       "id": "pack.plan",
       "module": "pack",
       "kind": "query",
@@ -1703,6 +1908,45 @@
       "http": "covered",
       "cases": [
         "default"
+      ]
+    },
+    {
+      "id": "plan.delivery",
+      "module": "plan",
+      "kind": "query",
+      "cache": "—",
+      "direct": "covered",
+      "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "every-issue",
+        "one-issue-at-head"
+      ]
+    },
+    {
+      "id": "plan.drift",
+      "module": "plan",
+      "kind": "query",
+      "cache": "—",
+      "direct": "covered",
+      "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "every-issue",
+        "one-issue-at-head-as-trunk-gate"
+      ]
+    },
+    {
+      "id": "plan.flight",
+      "module": "plan",
+      "kind": "query",
+      "cache": "—",
+      "direct": "covered",
+      "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "where-the-work-is",
+        "one-milestone-inspected"
       ]
     },
     {
@@ -2026,6 +2270,16 @@
         "all",
         "one-version"
       ]
+    },
+    {
+      "id": "release.currency",
+      "module": "release",
+      "kind": "query",
+      "cache": "—",
+      "direct": "waived",
+      "mcp": "waived",
+      "http": "waived",
+      "cases": []
     },
     {
       "id": "release.next",
@@ -2416,6 +2670,32 @@
       "cases": [
         "default"
       ]
+    },
+    {
+      "id": "worktree.trunk",
+      "module": "worktree",
+      "kind": "query",
+      "cache": "—",
+      "direct": "covered",
+      "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "default",
+        "primary-checkout"
+      ]
+    },
+    {
+      "id": "worktree.uncommitted",
+      "module": "worktree",
+      "kind": "query",
+      "cache": "—",
+      "direct": "covered",
+      "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "policy-threshold",
+        "one-hour"
+      ]
     }
   ],
   "system_targets": [
@@ -2504,6 +2784,12 @@
       "deferred": false
     },
     {
+      "key": "system.http.ui.idd",
+      "route": "/ui/idd",
+      "view": "pinned",
+      "deferred": false
+    },
+    {
       "key": "system.http.ui.roadmap",
       "route": "/ui/roadmap",
       "view": "pinned",
@@ -2534,8 +2820,20 @@
       "deferred": false
     },
     {
+      "key": "system.http.ui.skills",
+      "route": "/ui/skills",
+      "view": "pinned",
+      "deferred": false
+    },
+    {
       "key": "system.http.ui.mesh",
       "route": "/ui/mesh",
+      "view": "pinned",
+      "deferred": false
+    },
+    {
+      "key": "system.http.ui.peers",
+      "route": "/ui/peers",
       "view": "pinned",
       "deferred": false
     },
@@ -2548,6 +2846,12 @@
     {
       "key": "system.http.ui.deployments",
       "route": "/ui/deployments",
+      "view": "pinned",
+      "deferred": false
+    },
+    {
+      "key": "system.http.ui.trends",
+      "route": "/ui/trends",
       "view": "pinned",
       "deferred": false
     },
@@ -2576,6 +2880,12 @@
       "deferred": false
     },
     {
+      "key": "system.http.ui.observatory",
+      "route": "/ui/observatory",
+      "view": "pinned",
+      "deferred": false
+    },
+    {
       "key": "system.http.live.ui.index",
       "route": "/ui",
       "view": "live",
@@ -2584,6 +2894,12 @@
     {
       "key": "system.http.live.ui.command",
       "route": "/ui/command",
+      "view": "live",
+      "deferred": false
+    },
+    {
+      "key": "system.http.live.ui.idd",
+      "route": "/ui/idd",
       "view": "live",
       "deferred": false
     },
@@ -2618,8 +2934,20 @@
       "deferred": false
     },
     {
+      "key": "system.http.live.ui.skills",
+      "route": "/ui/skills",
+      "view": "live",
+      "deferred": false
+    },
+    {
       "key": "system.http.live.ui.mesh",
       "route": "/ui/mesh",
+      "view": "live",
+      "deferred": false
+    },
+    {
+      "key": "system.http.live.ui.peers",
+      "route": "/ui/peers",
       "view": "live",
       "deferred": false
     },
@@ -2632,6 +2960,12 @@
     {
       "key": "system.http.live.ui.deployments",
       "route": "/ui/deployments",
+      "view": "live",
+      "deferred": false
+    },
+    {
+      "key": "system.http.live.ui.trends",
+      "route": "/ui/trends",
       "view": "live",
       "deferred": false
     },
@@ -2660,6 +2994,12 @@
       "deferred": false
     },
     {
+      "key": "system.http.live.ui.observatory",
+      "route": "/ui/observatory",
+      "view": "live",
+      "deferred": false
+    },
+    {
       "key": "system.http.ui.panels.cluster",
       "route": "/ui/panels/cluster",
       "view": "pinned",
@@ -2680,6 +3020,18 @@
     {
       "key": "system.http.ui.panels.drain",
       "route": "/ui/panels/drain",
+      "view": "pinned",
+      "deferred": true
+    },
+    {
+      "key": "system.http.ui.panels.standing",
+      "route": "/ui/panels/standing",
+      "view": "pinned",
+      "deferred": true
+    },
+    {
+      "key": "system.http.ui.panels.shared_scope",
+      "route": "/ui/panels/shared-scope",
       "view": "pinned",
       "deferred": true
     }

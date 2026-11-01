@@ -1,0 +1,33 @@
+id: I3448
+milestone: M004
+title: "A deploy of master keeps every pre-release's metadata the site already serves"
+slug: a-deploy-keeps-every-pre-release-it-serves
+priority: p0
+profile: implementation
+parallel_safe: true
+objective: "Make an ordinary deploy of master keep each releases/<tag>.json that gh-pages carries and the build lacks, so that a pre-release's metadata, published by the release's own job before its record reaches master, is never removed by the next deploy."
+why: "Found on 2026-10-20 after v1.0.0-alpha.1 was tagged at 9a5a9b77520. release.yml's publish job pushed gh-pages 54b6c8f94f1 ('release: v1.0.0-alpha.1 pre-release metadata, published beside the latest'), and the next master deploys of the same commit (d830fa03091, dd9c60d7445) carried no releases/v1.0.0-alpha.1.json, so https://majordomus.dev/releases/v1.0.0-alpha.1.json answered the site's 404 page while the GitHub release existed. It stays missing until the release record pull request lands on master. It recurred with v1.0.0-alpha.9: release run 40681048692 published gh-pages 733b5405224 at 2026-10-28 12:47Z with releases/v1.0.0-alpha.9.json, and the next ordinary deploy, 2864070e686 from 81ef931, removed it 45 minutes later; every Pages run from 2026-10-29 00:44Z then failed in ui-snapshot (I4380, I3761), so master's own copy never went out either. install.sh --version 1.0.0-alpha.9 refused, and OSCILLA could not take the release (OSCILLA finding 11, 2026-10-29). Two releases in eight days, and it blocks every consumer of a pre-release, hence p0. release.yml's smoke job (I2303) passed because the file was served for those 45 minutes, and scripts/pages release-live reads only latest.json, which never names a pre-release (I2829), so nothing turned red."
+current_state: "scripts/site-deploy keeps, on an ordinary deploy, the releases/latest.json gh-pages carries and the tag file it names when that names a newer version than the build (ADR 0131). A pre-release is never named by latest.json (I2829 refuses that), so its tag file is not kept and is deleted by the copy of site/public over the gh-pages worktree."
+desired_state: "An ordinary deploy keeps every releases/<tag>.json on gh-pages that site/public does not hold, stable or pre-release, and says which it kept; latest.json keeps its present rule. The deploy after a pre-release's metadata publication still serves that file."
+scope:
+  - "scripts/site-deploy"
+  - "docs/RELEASE.md"
+  - "scripts/pages"
+  - "test/cases"
+  - ".ai/repo/project/issues/I3448.yaml"
+non_scope:
+  - "Which release latest.json names, which stays the newest stable release"
+  - "Publishing a pre-release's metadata from master before its record lands"
+  - "Making ui-snapshot degrade (I4380, #2687) and the deploy that downloads an artifact that was not uploaded (I3761)"
+acceptance_criteria:
+  - "A fixture gh-pages carrying releases/v9.9.9-alpha.1.json and a build without it: after an ordinary deploy the file is still there, byte-identical, and the deploy names it as kept"
+  - "Negative: a releases/<tag>.json the build itself holds is replaced by the build's copy, not kept from gh-pages"
+  - "latest.json behaves as before: kept when it names a newer stable release than the build, replaced otherwise"
+  - "After a deploy, scripts/pages release-live also reads releases/<tag>.json for every release record .ai/repo/releases/*.yaml of the build and for the newest pre-release on GitHub; a tag file answering 404 outside deploy.release_window is a FAIL naming the tag (file:// fixture whose gh-pages lacks a pre-release tag file GitHub publishes)"
+  - "Negative: a pre-release GitHub published inside deploy.release_window and not yet served is weather, not a FAIL, as for latest.json today"
+validation:
+  - "bash test/run.sh 3721_a_deploy_keeps_every_pre_release_it_serves"
+  - "majordomus plan validate"
+evidence_required:
+  - "test_a_deploy_keeps_every_pre_release_it_serves"
+depends_on: []

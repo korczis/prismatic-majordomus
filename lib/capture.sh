@@ -297,6 +297,24 @@ MJ_CAPTURE_LIFECYCLE='claude-code .claude/settings.json SessionStart SessionEnd 
 MJ_CAPTURE_MODS='claude-code majordomus-handover .claude/skills/majordomus-handover session.handover_on_fill
 claude-code majordomus-brief .claude/skills/majordomus-brief session.brief_on_interval'
 
+# How long the provider lets each generated hook run, in seconds: one line per provider and
+# event kind (`prompt` for the prompt adapter's event, otherwise the lifecycle kind). The
+# configuration writer gives every handler its `timeout` from here, and the end handler reads
+# the same line as the budget its close must fit, so the two cannot disagree (I3060).
+#
+# Claude Code cancels a command hook that reaches its timeout and discards its output. With no
+# timeout set, a command hook defaults to 600 s and UserPromptSubmit to 30 s, and every
+# SessionEnd hook shares one 1.5-second budget, which a longer per-hook timeout raises to at
+# most 60 s (code.claude.com/docs/en/hooks, "Hook timeouts"). The end event was measured on
+# 2026-10-19 on a loaded adopter at 2.9 to 8.5 s, mostly the closing checkpoint and the
+# continuation, so under the default it was cut short before the episode closed. The start and
+# the compaction are bounded as well, so that a stalled one cannot hold a fresh session for
+# ten minutes.
+MJ_CAPTURE_TIMEOUTS='claude-code prompt 30
+claude-code start 30
+claude-code end 60
+claude-code compact 60'
+
 # ---------------------------------------------------------------- the connection episode
 # A provider whose declared episode source is `connection` has no adapter line above and
 # must not need one: it fires no event, so there is no vendor payload shape to version
@@ -343,9 +361,39 @@ mj_lifecycle_column()    { printf '%s\n' "$MJ_LIFECYCLE_COLUMNS" | awk -v k="$1"
 mj_lifecycle_shim_rel()  { mj_lifecycle_field "$1" "$(mj_lifecycle_column "$2" 3)"; }
 mj_lifecycle_shim()      { printf '%s/%s' "$MJ_ROOT" "$(mj_lifecycle_shim_rel "$1" "$2")"; }
 mj_lifecycle_event()     { mj_lifecycle_field "$1" "$(mj_lifecycle_column "$2" 2)"; }
+# The declared timeout of one event kind for one provider, in seconds; empty when none is.
+mj_capture_timeout() {
+  printf '%s\n' "$MJ_CAPTURE_TIMEOUTS" | awk -v p="$1" -v k="$2" '$1 == p && $2 == k { print $3 }'
+}
+# The kind a provider's own event name stands for: `prompt` for the prompt adapter's event,
+# otherwise the lifecycle kind whose column names it; nothing when neither does.
+mj_capture_event_kind() {
+  local p="$1" event="$2" k
+  [ "$event" = "$(mj_capture_field "$p" 3)" ] && { printf 'prompt\n'; return 0; }
+  mj_lifecycle_adapter "$p" >/dev/null 2>&1 || return 0
+  for k in $(mj_lifecycle_kinds); do
+    [ "$(mj_lifecycle_event "$p" "$k")" = "$event" ] && { printf '%s\n' "$k"; return 0; }
+  done
+  return 0
+}
 # The environment variables in which some provider names the session a command is running
 # inside; `mj_provider_session_env` reads them to answer "which open episode is mine".
 mj_lifecycle_session_vars() { printf '%s\n' "$MJ_CAPTURE_LIFECYCLE" | awk '$13 != "" && $13 != "-" { print $13 }'; }
+
+# The provider whose own variable names the session this process runs inside, in the order
+# `mj_provider_session_env` reads them; nothing when MAJORDOMUS_PROVIDER_SESSION named it,
+# because that variable says whose session it is and not which provider's.
+mj_provider_of_session_env() {
+  [ -n "${MAJORDOMUS_PROVIDER_SESSION:-}" ] && return 0
+  local p n
+  while read -r p n; do
+    # The name comes from the adapter table, never from a payload: indirect expansion, not eval.
+    if [ -n "${!n:-}" ]; then printf '%s' "$p"; return 0; fi
+  done <<EOF_VARS
+$(printf '%s\n' "$MJ_CAPTURE_LIFECYCLE" | awk '$13 != "" && $13 != "-" { print $1, $13 }')
+EOF_VARS
+  return 0
+}
 
 # ------------------------------------------------- the declared capability of a provider
 # What the vendor offers, read from share/providers.yaml, where every cell carries the
@@ -1431,6 +1479,8 @@ mj_capture_prune_one() {
 # the layer may be loaded into a context implicitly. Diagnostics go to stderr.
 mj_capture_session() {
   local provider="" event="" scan payload psession source reason
+  # when this event began, for the end handler's budget
+  MJ_CAPTURE_T0="$(mj_ms)"
   while [ $# -gt 0 ]; do
     case "$1" in
       --provider) provider="${2:-}"; shift 2 ;;
@@ -1591,12 +1641,18 @@ mj_capture_session_start() {
   # an argument rather than as a variable the briefing reaches for: two files sharing a name
   # is a data flow no reader — and no shellcheck — can follow.
   local server; server="$(mj_capture_ensure_server "$provider")"
+  # The session joins the mesh before anything is said to it (I2734): until it does, every
+  # other machine sees at most a nameless board connection, and a worker that never
+  # announces stays that way for its whole life. Whether or not a briefing follows.
+  local joined; joined="$(mj_capture_mesh_join "$provider" "$psession" "$server")"
   [ "$(mj_pol session.briefing_on_start)" = false ] && return 0
   # The mesh, in the block that names the server it lives in: a declaration that says
   # `enabled: true` and a server whose mesh is not active is the drift this repository paid
   # for on 2026-09-12 (ADR 0059), and the briefing is where a worker hears of it before its
   # first tool call. It travels as an argument, like the server line.
   local mesh; mesh="$(mj_capture_mesh_line "$server")"
+  [ -n "$mesh" ] && [ -n "$joined" ] && mesh="$mesh
+Mesh session: $joined — this session is on the mesh under that id; claim the paths you work on under it (majordomus_mesh_claim, session \"$joined\") before you edit them"
   # What happened around the repository since the last hour, under the mesh (ADR 0133): a
   # review asked of this worker or a handover for it is told before its first tool call.
   local monitor=""
@@ -1655,6 +1711,57 @@ mj_capture_ensure_server() {
   line="$("$bin" serve ensure --repo "$MJ_ROOT" 2>>"$MJ_STATE_DIR/mcp/ensure.log")" \
     || mj_session_context_log "$provider start event: the server did not converge: $line"
   printf '%s\n' "${line:-not ensured: serve ensure said nothing}"
+}
+
+# The id a provider session has on the mesh: the provider's own durable name for the
+# sitting, so that a start, a resume, a compaction and the end of one sitting all speak of
+# the same session, and anything holding the provider's payload can name it again.
+mj_capture_mesh_session() { printf '%s-%s' "$1" "$2"; }
+
+# Open, or say again, this provider session on the mesh of the checkout's shared server,
+# and answer its id; nothing when there is no provider session, no ready server, no
+# executable, or the server's mesh refuses. The executable's `mesh session open` asks the
+# server: the mesh lives in its memory, and no request leaves this file. A task is named
+# only while it is active — a handed-over task from last week is not what this session does.
+mj_capture_mesh_join() {
+  local provider="$1" psession="$2" server="$3" bin share id
+  [ -n "$psession" ] || return 0
+  case "$server" in ready\ http://*) ;; *) return 0 ;; esac
+  # shellcheck source=rust_bin.sh
+  . "$MJ_LIB_DIR/rust_bin.sh"
+  bin="$(mj_rust_bin "$MJ_HOME")"; [ -x "$bin" ] || return 0
+  share="$(mj_rust_share "$MJ_ROOT")"
+  [ -n "$share" ] && export MAJORDOMUS_SHARE="$share"
+  id="$(mj_capture_mesh_session "$provider" "$psession")"
+  # --client-pid auto: the client that ran this hook, so that its end closes the session even
+  # when it never fires its end event (I3810)
+  set -- mesh session open --repo "$MJ_ROOT" --session "$id" --client "$provider" \
+    --branch "$(mj_git_branch)" --head "$(mj_git_head)" --client-pid auto --format json
+  # The task is this session's to carry or none (ADR 0164), resolved through
+  # mj_record_attribution as the episode its provider session opened: a second window joins
+  # the mesh without claiming the task the first window's episode opened.
+  MJ_SESSION_KEY="$psession" mj_record_attribution
+  if [ -n "$MJ_RECORD_TASK" ] && [ "$(mj_cur outcome)" = active ]; then
+    set -- "$@" --task "$MJ_RECORD_TASK" --intent "$(mj_cur task)"
+  fi
+  if "$bin" "$@" >/dev/null 2>&1; then printf '%s\n' "$id"
+  else mj_session_context_log "$provider start event: the session did not join the mesh as $id"; fi
+  return 0
+}
+
+# Close this provider session on the mesh at its end, so that its claims end everywhere at
+# once rather than when its runtime stops beating. Best-effort, like the join.
+mj_capture_mesh_leave() {
+  local provider="$1" psession="$2" bin share
+  [ -n "$psession" ] || return 0
+  # shellcheck source=rust_bin.sh
+  . "$MJ_LIB_DIR/rust_bin.sh"
+  bin="$(mj_rust_bin "$MJ_HOME")"; [ -x "$bin" ] || return 0
+  share="$(mj_rust_share "$MJ_ROOT")"
+  [ -n "$share" ] && export MAJORDOMUS_SHARE="$share"
+  "$bin" mesh session close --repo "$MJ_ROOT" --format json \
+    --session "$(mj_capture_mesh_session "$provider" "$psession")" >/dev/null 2>&1 || true
+  return 0
 }
 
 # One line about the mesh for the briefing, whenever the repository tracks a declaration
@@ -1762,6 +1869,15 @@ mj_capture_session_compact() {
 # It is written only when the task is still active. A task already finished or already
 # handed over has said what it had to say, and a second record restating it would be the
 # accumulation this design refuses.
+# Milliseconds since this event began (MJ_CAPTURE_T0, set where the event is read).
+mj_capture_end_spent() { printf '%s' $(( $(mj_ms) - ${MJ_CAPTURE_T0:-$(mj_ms)} )); }
+# Whether an optional step may still run before the close: true with no budget, otherwise
+# while less than half of the budget is spent.
+mj_capture_end_room() {
+  [ -n "${1:-}" ] || return 0
+  [ "$(mj_capture_end_spent)" -lt $(( $1 / 2 )) ]
+}
+
 mj_capture_session_end() {
   local provider="$1" psession="$2" reason="$3" outcome=interrupted out
   case ",$(mj_lifecycle_keys "$provider" 10)," in *",$reason,"*) outcome=closed ;; esac
@@ -1774,6 +1890,16 @@ mj_capture_session_end() {
   . "$MJ_LIB_DIR/checkpoint.sh"
   local policy_ok=1
   mj_load_policy || { policy_ok=0; mj_capture_session_failed "$provider" end "the policy does not parse; the episode is closed without a continuation record"; }
+  # The budget the provider gives this hook, from the timeout the configuration declares for it
+  # (I3060). The close is the one step that must not be lost, so the optional steps before it
+  # run only while more than half of the budget is left, and a step skipped for that is a
+  # typed failure, never silence. MJ_CAPTURE_END_BUDGET_MS stands in for the declared budget,
+  # which is how a test reaches the skip without a slow machine.
+  local budget_ms="${MJ_CAPTURE_END_BUDGET_MS:-}" secs
+  if [ -z "$budget_ms" ]; then
+    secs="$(mj_capture_timeout "$provider" end)"
+    [ -n "$secs" ] && budget_ms=$((secs * 1000))
+  fi
 
   # A final progress record, before the continuation one. An episode that opened and closed
   # without ever being compacted used to write no checkpoint at all, which left the newest
@@ -1783,11 +1909,18 @@ mj_capture_session_end() {
   # reader to skip the report. The close is the other moment at which what the episode knows
   # stops being reachable, so it records the same thing for the same reason.
   if [ "$policy_ok" = 1 ] && [ "$(mj_pol session.checkpoint_on_compact)" != false ]; then
-    out="$( (mj_cmd_checkpoint --derive) 2>&1 )" \
-      || mj_capture_session_failed "$provider" end "the closing checkpoint was not written: $(printf '%s' "$out" | tail -n 1)"
+    if mj_capture_end_room "$budget_ms"; then
+      out="$( (mj_cmd_checkpoint --derive) 2>&1 )" \
+        || mj_capture_session_failed "$provider" end "the closing checkpoint was not written: $(printf '%s' "$out" | tail -n 1)"
+    else
+      mj_capture_session_failed "$provider" end "the closing checkpoint was skipped: $(mj_capture_end_spent) ms of the hook's $budget_ms ms budget were spent, and the rest is the close's"
+    fi
   fi
 
-  if [ "$policy_ok" = 1 ] && [ "$(mj_pol session.handover_on_end)" != false ]; then
+  if [ "$policy_ok" = 1 ] && [ "$(mj_pol session.handover_on_end)" != false ] \
+    && ! mj_capture_end_room "$budget_ms"; then
+    mj_capture_session_failed "$provider" end "the continuation was skipped: $(mj_capture_end_spent) ms of the hook's $budget_ms ms budget were spent, and the rest is the close's"
+  elif [ "$policy_ok" = 1 ] && [ "$(mj_pol session.handover_on_end)" != false ]; then
     # The continuation record is the episode's, and it is written whether or not a task is
     # open and whatever outcome the last one reached. `--close` marks an active task handed
     # over and does nothing when there is none; `--no-task` lets the record exist without
@@ -1805,6 +1938,9 @@ mj_capture_session_end() {
   # checkout, so the second window to be shut ended the first window's episode — and the
   # first window went on writing ledger lines into an episode that had already been closed
   # and published.
+  # Off the mesh before the episode closes: the session's claims end on every machine now,
+  # not when its runtime next misses a beat (I2734).
+  mj_capture_mesh_leave "$provider" "$psession"
   set -- --if-none ignore --outcome "$outcome"
   [ -n "$psession" ] && set -- "$@" --provider-session "$psession"
   out="$( (mj_session_close "$@" < /dev/null) 2>&1 )" || {
@@ -2147,6 +2283,14 @@ mj_capture_install_one() {
     mj_info capture "$(mj_capture_field "$p" 2)" "written with the $(mj_capture_events "$p" | sed 's/=.*//' | paste -sd, - | sed 's/,/, /g') hook(s)"
     return 0
   fi
+  # Exactly the configuration this tool wrote before it declared timeouts: this tool's by its
+  # content, and brought up to date by the command that wrote it.
+  if [ "$(cat "$cfg")" = "$(mj_capture_config "$p" legacy)" ]; then
+    mj_personal_guard "$(mj_capture_field "$p" 2)"
+    mj_capture_config "$p" > "$cfg"
+    mj_info capture "$(mj_capture_field "$p" 2)" "rewritten: every hook now carries its timeout"
+    return 0
+  fi
   # A configuration this tool did not write is not this tool's to rewrite, and one it wrote
   # before this tool knew about the lifecycle events is the same file: what is missing is
   # named, one event at a time, rather than the whole object being replaced.
@@ -2155,6 +2299,7 @@ mj_capture_install_one() {
     grep -qF "$rel" "$cfg" || missing="$missing $event=$rel"
   done
   if [ -z "$missing" ]; then
+    mj_capture_report_timeouts "$p" "$cfg"
     mj_info capture "$(mj_capture_field "$p" 2)" "already names the hooks; left as it is"
     return 0
   fi
@@ -2335,18 +2480,56 @@ mj_capture_shim_body() {
 
 # The configuration this tool writes when there is none: every event it has a shim for, in
 # one hooks object. The event takes no matcher and fires every time, but the shape is the
-# one every event uses — a group, then the handlers inside it.
+# one every event uses — a group, then the handlers inside it. Each handler carries the
+# timeout MJ_CAPTURE_TIMEOUTS declares for its event.
+#
+# `legacy` is the shape this tool wrote before it declared timeouts. It is kept only to be
+# compared with: a configuration identical to it is this tool's by its content and is brought
+# up to date, and one that differs by a byte is somebody's and is not rewritten (I3060).
 mj_capture_config() {
-  local p="$1" one event rel first=1
+  local p="$1" shape="${2:-current}" one event rel secs first=1
   printf '{\n  "hooks": {\n'
   for one in $(mj_capture_events "$p"); do
     event="${one%%=*}"; rel="${one#*=}"
+    secs=""
+    [ "$shape" = legacy ] || secs="$(mj_capture_timeout "$p" "$(mj_capture_event_kind "$p" "$event")")"
     [ "$first" = 1 ] || printf ',\n'; first=0
     printf '    "%s": [\n      {\n        "matcher": "",\n        "hooks": [\n' "$event"
-    printf '          {\n            "type": "command",\n            "command": "${CLAUDE_PROJECT_DIR}/%s"\n          }\n' "$rel"
+    if [ -n "$secs" ]; then
+      printf '          {\n            "type": "command",\n            "command": "${CLAUDE_PROJECT_DIR}/%s",\n            "timeout": %s\n          }\n' "$rel" "$secs"
+    else
+      printf '          {\n            "type": "command",\n            "command": "${CLAUDE_PROJECT_DIR}/%s"\n          }\n' "$rel"
+    fi
     printf '        ]\n      }\n    ]'
   done
   printf '\n  }\n}\n'
+}
+
+# Names every generated hook whose handler in an existing configuration carries no timeout,
+# with the line to add. It reads, and never writes: the configuration is not this tool's. The
+# handler is found by its command, which is the one thing this tool put in it; without jq the
+# file cannot be read as JSON, and that is said rather than guessed (I3060).
+mj_capture_report_timeouts() {
+  local p="$1" cfg="$2" one event rel secs have lacking=0
+  if ! mj_has jq; then
+    mj_info capture "$(mj_capture_field "$p" 2)" "the hooks' timeouts were not checked: jq is not installed"
+    return 0
+  fi
+  for one in $(mj_capture_events "$p"); do
+    event="${one%%=*}"; rel="${one#*=}"
+    secs="$(mj_capture_timeout "$p" "$(mj_capture_event_kind "$p" "$event")")"
+    [ -n "$secs" ] || continue
+    have="$(jq -r --arg c "\${CLAUDE_PROJECT_DIR}/$rel" \
+      '[.hooks[]?[]?.hooks[]? | select(.command == $c) | .timeout // empty] | first // empty' \
+      "$cfg" 2>/dev/null)" || continue
+    [ -n "$have" ] && continue
+    lacking=$((lacking + 1))
+    mj_err "capture install: the $event handler running \${CLAUDE_PROJECT_DIR}/$rel carries no timeout; add \"timeout\": $secs beside its \"command\""
+  done
+  [ "$lacking" = 0 ] || mj_warn capture "$(mj_capture_field "$p" 2)" \
+    "$lacking hook(s) carry no timeout, so the provider's default applies; it is not this tool's to rewrite (listed above)" \
+    "majordomus capture install --provider $p"
+  return 0
 }
 
 # ---------------------------------------------------------------- capture status

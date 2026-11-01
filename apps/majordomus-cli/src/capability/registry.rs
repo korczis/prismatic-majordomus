@@ -468,6 +468,12 @@ impl Builder {
             // be a query in name only, bound to GET and announced to MCP as read-only.
             // Everything else about the policy still follows the kind.
             let mut permitted = vec![policy, policy.stoppable()];
+            // A read may narrow itself to callers on this machine (ADR 0220 decision 4); a
+            // command already admits no remote caller unless its input is signed.
+            if c.kind != CapabilityKind::Command {
+                permitted.push(policy.reads_only_locally());
+                permitted.push(policy.stoppable().reads_only_locally());
+            }
             if c.kind == CapabilityKind::Command {
                 permitted.push(policy.writes_repository());
                 permitted.push(policy.stoppable().writes_repository());
@@ -478,7 +484,7 @@ impl Builder {
                     id: id.clone(),
                     provenance: prov.clone(),
                     reason: format!(
-                        "declares the execution policy {:?}; its kind makes it {policy:?}. A declaration may add cancellation (`.cancellable()`), a command may add writing the repository (`.writes_repository()`) or a signed input (`.authenticates_its_input()`), never both; the effect of a query and the concurrency of anything follow the kind",
+                        "declares the execution policy {:?}; its kind makes it {policy:?}. A declaration may add cancellation (`.cancellable()`), a read may narrow itself to local callers (`.reads_only_locally()`), a command may add writing the repository (`.writes_repository()`) or a signed input (`.authenticates_its_input()`), never both; the effect of a query and the concurrency of anything follow the kind",
                         c.execution
                     ),
                 });

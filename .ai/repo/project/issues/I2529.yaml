@@ -1,0 +1,47 @@
+id: I2529
+milestone: a-derivation-computed-once-is-reused
+title: "A node's outputs are kept under its key and restored only after every digest is verified"
+slug: a-node-output-is-kept-under-its-key
+priority: p2
+profile: implementation
+parallel_safe: false
+objective: "Add a local content-addressed store of node outputs: a typed manifest and the output bytes per key, published atomically, verified on read, restored into the work tree only for paths the node owns, and never able to turn a damaged entry into a success."
+why: "campaigns/majordomus-incremental-derive-prompt-pack/05_05_CAS_STORE.md asks for a persistent store with a typed manifest, atomic publish, read-after-write verification, refusal of traversal and symbolic-link escapes, and the guarantee that losing the cache never produces a false success. After I2525 a node whose key did not move is skipped only in the checkout that ran it; a second worktree on the same commit, or the same worktree after a branch switch and back, regenerates it, because nothing keeps the outputs by key."
+current_state: "No store of derived outputs exists. The crate has per-capability response caching (CachePolicy in the capability registry) for served reads, which holds no files. Cargo's shared build directory is resolved by .cargo/config.toml under the cargo cache home (ADR 0139)."
+desired_state: "derivation::store keeps, under a directory outside every work tree that an ADR names and that is resolved the same way from every worktree, one entry per key: a manifest (key, node, operation version, key schema, output paths relative to the root, digest, size and mode of each, and when and from which commit it was written) and the bytes. An entry is written to a temporary directory and renamed. The planner gains the state restore: on a key with an entry, every digest is checked before any file is replaced, files are replaced by rename, and a path that is absolute, leaves the root, passes through a symbolic link or is not an output of the node is refused. An unreadable, truncated or older-schema entry is a miss, reported with its reason. --no-store disables it. Nothing under .ai/local and no untracked file is ever stored."
+scope:
+  - "apps/majordomus-cli/src/derivation/store.rs"
+  - "apps/majordomus-cli/src/derivation/plan.rs"
+  - "apps/majordomus-cli/src/derivation/run.rs"
+  - "apps/majordomus-cli/src/commands/derive.rs"
+  - "apps/majordomus-cli/src/cli.rs"
+  - "apps/majordomus-cli/tests/derivation_store.rs"
+  - ".ai/repo/adrs"
+  - "docs/DERIVE.md"
+  - ".ai/repo/project/issues/I2529.yaml"
+non_scope:
+  - "Eviction and size limits: I2530, which lands before the store is enabled anywhere by default"
+  - "Two processes computing one key at the same time: I2531"
+  - "A store reached over the network"
+  - "Treating a hit as proof that the committed files are current; scripts/derive-check compares bytes regardless (ADR 0041)"
+depends_on:
+  - "I2525"
+  - "I2527"
+acceptance_criteria:
+  - "The files a restore leaves are byte-identical, modes included, to those a full derive leaves, in the differential case of I2527 run with the store on"
+  - "A truncated manifest, a digest that does not match, an entry of an older schema and an unreadable directory are each a reported miss followed by regeneration, and none exits 0 with a stale file"
+  - "A manifest naming an absolute path, a path containing a parent component, a path through a symbolic link or a path the node does not own is refused and nothing is written"
+  - "A restore does not replace a file that is not an output of the node"
+  - "A write interrupted before the rename leaves no entry a reader can see"
+  - "With --no-store the run neither reads nor writes the store directory"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib derivation::store"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test derivation_store --test derivation_differential"
+  - "MJ_TEST_JOBS=2 bash test/run.sh <the case this issue adds>"
+evidence_required:
+  - "store_restore_equals_full"
+  - "store_corruption_is_a_miss"
+  - "store_path_escape_refused"
+created_at: 2026-10-13
+updated_at: 2026-10-13

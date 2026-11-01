@@ -457,7 +457,7 @@ pub(crate) mod tests {
             source,
             route: None,
             exposure: Default::default(),
-            value,
+            value: value.map(Into::into),
             took: Duration::ZERO,
             standing: crate::ui::source::Standing::NOW,
         }

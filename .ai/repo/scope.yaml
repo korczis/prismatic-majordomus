@@ -51,6 +51,7 @@ in:
   - .githooks/**
   - .codex/**
   - .gemini/**
+  - .agents/**
   - .mcp.json
   - .editorconfig
   - .envrc
@@ -59,6 +60,7 @@ in:
   - README.md
   - AGENTS.md
   - CLAUDE.md
+  - GEMINI.md
   - CONTRIBUTING.md
   - SECURITY.md
   - Cargo.toml
@@ -109,11 +111,15 @@ out:
     names: ['*.dump', '*.dmp', '*.sql.gz', '*.sql.zst', '*.sqlite', '*.sqlite3', '*.db', '*.rdb', '*.bak', '*.pgdump']
 
   # generated assets: what the registry, the site generator and the benchmarks write, and
-  # the npm lock file nobody reads; changed by changing the source and regenerating
+  # the npm lock file nobody reads; changed by changing the source and regenerating.
+  # site/data/registry/ is the registry's dataset for the site, written by stage C of
+  # scripts/derive: out by what it is rather than by its size, so a dataset that grows past
+  # max_bytes cannot change what the next derive's stage C reads (I4512)
   generated:
     paths:
       - docs/generated/
       - site/data/generated/
+      - site/data/registry/
       - site/content/docs/
       - .ai/repo/benchmarks/**/baseline.*
     names: ['*.min.js', '*.min.css', '*.map', '*.bundle.js', '*.generated.*', '*_generated.*', '*.pb.go', '*.pb.rs', '*_pb2.py', '*.pb.cc', '*.pb.h', 'package-lock.json']

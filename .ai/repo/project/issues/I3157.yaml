@@ -1,0 +1,36 @@
+id: I3157
+milestone: repository-automation-is-typed
+title: "A scripted capability declared in an adopting repository's layer reaches its surfaces with no change to the tool, and says where it came from and what it may do"
+slug: an-adopter-scripts-a-capability
+priority: p2
+profile: implementation
+objective: "Prove I1801's kind from outside the tool's tree: a fixture adopter declares a scripted capability, it is discovered and projected, and capabilities explain shows its origin file, declared effect, exposure ceiling and the projections it reaches; a call above the ceiling from MCP or HTTP is refused."
+why: "Owner, 2026-10-13: pluggable, extensible from outside through plugins. ADR 0069 holds the effect and exposure ceilings; I1801 proves them inside this repository only. It extends milestone automation. Sources: chatgpt-majordomus:c110#4, chatgpt-majordomus:c230#2, chatgpt-majordomus:c244#6."
+current_state: "No scripted capability exists yet (I1801 BLOCKED)."
+desired_state: "An adopter fixture case."
+scope:
+  - "apps/majordomus-cli/src/script"
+  - "docs/CAPABILITIES.md"
+  - "apps/majordomus-cli/src/capability/registry.rs"
+  - "apps/majordomus-cli/src/capability/model.rs"
+  - "apps/majordomus-cli/src/capability/executor.rs"
+  - "apps/majordomus-cli/src/capability/module.rs"
+  - "apps/majordomus-cli/src/capability/builtin/capabilities.rs"
+non_scope:
+  - "Native or WASM plugins"
+  - "A plugin marketplace"
+depends_on:
+  - "I1801"
+serves:
+  - "repository-automation-is-typed#scripted-capability-runs"
+acceptance_criteria:
+  - "An adopter-declared scripted capability appears on CLI, MCP and OpenAPI"
+  - "explain names origin, effect and ceiling"
+  - "An over-ceiling call from MCP is refused"
+  - "Each new case named here takes its number from `scripts/case-numbers next` and is announced on the board before the file is written (ADR 0053); a case number written in this record before that is provisional"
+validation:
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib script::"
+evidence_required:
+  - "case_adopter_scripted_capability"
+created_at: 2026-10-18
+updated_at: 2026-10-18

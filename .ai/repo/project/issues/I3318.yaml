@@ -1,0 +1,36 @@
+id: I3318
+milestone: surfaces-never-disagree
+title: "Every decision and curated note is read on /ui, with the records it names and the records that name it"
+slug: decisions-and-knowledge-are-read-on-the-ui
+priority: p2
+profile: implementation
+objective: "Give /ui one screen for decisions (adr kind) and one for curated knowledge, each list and inspector projected from the index the objects API already serves, with an inspector showing the record's related/relations as links and the reverse edges (which issues, milestones, intents and notes name it) derived from the same index."
+why: "A follow-up the promotion of the owner's ChatGPT project (Refs: I3100) produced on 2026-10-18, not a message of that project: the promotion added proposed decisions and curated notes, each linked to the plan records it governs or documents, and a reader of /ui/idd cannot follow a criterion to the decision that governs it. The objects are served by /api/v1/objects and over MCP, and the Cockpit shows each one at /cockpit/objects/<kind>, but /ui routes neither kind: no /ui route names adr or decisions, and /ui/knowledge shows the candidate queue, not the curated notes."
+current_state: "apps/majordomus-cli/src/ui/ has knowledge.rs (route /ui/knowledge: candidates and status) and no decisions screen. `majordomus entity show` does not yet give a curated note the references its record declares: for knowledge:a-commit-stood-behind-a-build-lock the 2026-10-30 P00 audit read 6 references from knowledge record, 3 from knowledge related and 0 from entity show, and the knowledge compiler's path_edge drops a file: reference whose target is tracked but not a node it models, with no edge and no finding (lib/knowledge.awk:452). `majordomus entity kinds` routes adr and knowledge to /cockpit/objects/adr and /cockpit/objects/knowledge (117 adr and 4 knowledge objects on master at 4a4573690f8, by that command)."
+desired_state: "/ui/decisions and /ui/knowledge/curated (names to be settled against the screen list in ui/mod.rs) list every object of the kind from the index, each inspector renders its body through ui::prose and its outgoing and incoming links taken from the entity layer's references and backlinks (not a second derivation), and an object added to the tree appears with no registration."
+scope:
+  - "apps/majordomus-cli/src/ui/knowledge.rs"
+  - "apps/majordomus-cli/src/ui/mod.rs"
+  - "docs/MAJORDOMUS_UI.md"
+  - "apps/majordomus-cli/tests/ui_links.rs"
+  - "lib/knowledge.awk"
+  - "apps/majordomus-cli/src/entity.rs"
+  - "test/cases"
+non_scope:
+  - "Editing a decision or a note from the UI"
+  - "Accepting a decision: that stays the owner's commit"
+acceptance_criteria:
+  - "The P00 slice comes first: entity show, knowledge related and knowledge record agree on the references of knowledge:a-commit-stood-behind-a-build-lock (today 0, 3 and 6), and a tracked file: target that lib/knowledge.awk:452 drops is reported as unresolved instead; case 3318 asserts the agreement and fails on 51b38035a71, for the context-and-existing-work row of milestone a-bounded-task-is-carried-to-accepted-work"
+  - "Every adr object of the index is listed on the decisions screen and its inspector shows its related records as links and the records that cite it"
+  - "Every curated knowledge note is listed with its class, epistemics and status, and its relations are links"
+  - "A decision added to the tree appears with no edit outside its own file"
+  - "The incoming links an inspector shows are the backlinks `majordomus entity show` reports for the same object"
+  - "Every link the two screens draw answers 200 under the ui_links walk"
+validation:
+  - "cargo test -p majordomus-cli --test ui_links"
+  - "cargo test -p majordomus-cli --test ui_surface"
+  - "majordomus plan validate"
+evidence_required:
+  - "ui_decisions"
+created_at: 2026-10-18
+updated_at: 2026-10-30

@@ -1,0 +1,50 @@
+id: I2705
+milestone: runtime-trust
+title: "A node key can be rotated, peers follow the new key, and the old key is refused"
+slug: a-node-key-can-be-rotated
+priority: p0
+profile: implementation
+parallel_safe: false
+objective: "Offer a node key rotation that peers which trusted the old key can follow to the new one, after which the old key's hello is refused, and purge a withdrawn key's events from the running journal without waiting for a restart."
+why: "Split from I2134 on 2026-10-14. I2134 made a key withdrawn from trust.allow lose its links without a restart (Cooperation::retrust), and its desired_state said 'Not done here' of rotating a node key and of purging a withdrawn key's events from the running journal, while its acceptance criteria still required rotation, so it could never close. A compromised key can now be cut off live, but it cannot be replaced: there is no rotate flow (threat T11). Baseline audit of 2026-10-09 at master 1fb8d6be44, mesh gap 6 and the identity row."
+current_state: "The node identity is created once and loaded from its key file (apps/majordomus-cli/src/mesh/identity.rs); nothing replaces it, and no message tells a peer that a key it trusts is succeeded by another. Cooperation::retrust (apps/majordomus-cli/src/mesh/cooperation.rs), called from the live reload (apps/majordomus-cli/src/live.rs) through capability::builtin::mesh::retrust, ends the links of keys no longer trusted; a withdrawn key's events stay in the running journal until the next restart's reload applies the trust in force (I2124). The key file is written at the umask's mode and chmodded to 0600 afterwards (apps/majordomus-cli/src/mesh/identity.rs); session prismatic-majordomus-6e is fixing exactly that on its own branch, and it is not this issue's work."
+desired_state: "A command rotates this node's key: the new identity is signed for by the old one, peers that trusted the old key accept the succession and link to the new key, and the old key's next hello is refused. A key withdrawn from the trust in force has its events dropped from the running journal at the reload that withdrew it. docs/MESH.md describes rotation and what a peer does on it."
+scope:
+  - "apps/majordomus-cli/src/mesh/identity.rs"
+  - "apps/majordomus-cli/src/mesh/trust.rs"
+  - "apps/majordomus-cli/src/mesh/cooperation.rs"
+  - "apps/majordomus-cli/src/mesh/journal.rs"
+  - "apps/majordomus-cli/src/capability/builtin/mesh.rs"
+  - "apps/majordomus-cli/tests/mesh_cooperation.rs"
+  - "docs/MESH.md"
+non_scope:
+  - "Ending a withdrawn key's links without a restart, which I2134 delivered"
+  - "Creating the key file owner-only from its first byte, which session prismatic-majordomus-6e is fixing on its own branch under I2134"
+  - "The journal reload applying the trust in force, which is I2124's"
+depends_on:
+  - I2134
+acceptance_criteria:
+  - "After a rotation, peers that trusted the old key link to the new one, and the old key's next hello is refused"
+  - "A key withdrawn from trust.allow on a running runtime has its events dropped from the running journal at the reload that withdrew it, with no restart"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --test mesh_cooperation"
+  - "cargo test --lib mesh::identity"
+evidence_required:
+  - "key_rotation_test"
+created_at: 2026-10-14
+updated_at: 2026-10-29T00:48:34Z
+started_at: 2026-10-29T00:46:17Z
+started_event: sha256:077aa384c9417be9c4253c64afd4e8cc8544b909f9db1a6f472080d45ea049b7
+verified_at: 2026-10-29T00:46:35Z
+verified_event: sha256:068b2255ec32b971373bf6dad5ae06c6999c7fc045f59c3698c4bf028d020fc6
+completed_at: 2026-10-29T00:48:34Z
+completed_event: sha256:c9a4c2b52f70bc33a771bce26ef1f142850f0f9f3514859674075ab9e2267a92
+evidence:
+  - covers: key_rotation_test
+    type: ci
+    command: "cargo test --lib mesh:: (validate rust (2))"
+    result: "ok in master validate rust (2), 4189 lib tests passed, 0 failed: mesh::identity a_rotation_is_signed_by_the_old_key_and_countersigned_by_the_new, a_rotation_to_the_same_key_is_refused_and_writes_nothing, a_rotation_that_cannot_write_keeps_the_old_key; mesh::trust a_successor_is_trusted_only_while_its_predecessor_is (peers follow the new key; the old key is not trusted once succeeded), a_key_change_under_one_node_id_is_rejected_with_successions_in_hand; mesh::cooperation a_withdrawn_key_loses_its_link_without_a_restart (AC2). Landed by #1225. validate 40676150754 ran at 81ef931a3e1; master 5370ee63d19 differs from it only in plan records (#2653), no code. The run is red only on 103_release_projection (alpha.9 release record, #2626) and pages, neither this issue's"
+    artifact: "https://github.com/korczis/prismatic-majordomus/actions/runs/40676150754/job/122781513657"
+    commit: 5370ee63d19b71b16e9431bb2edd86236338ca42
+    recorded_at: 2026-10-29T00:48:09Z

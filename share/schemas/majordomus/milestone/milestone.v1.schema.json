@@ -29,9 +29,6 @@
     "slug": {
       "type": "string"
     },
-    "version": {
-      "type": "string"
-    },
     "order": {
       "type": "integer"
     },
@@ -49,6 +46,11 @@
     },
     "updated_at": {
       "type": "string"
+    },
+    "due_on": {
+      "description": "The day a client or a calendar expects this milestone, YYYY-MM-DD. Projected to the forge milestone's due date and shown in its body; never read to derive a status, because a date is a promise and the status is what the evidence says.",
+      "type": "string",
+      "format": "date"
     },
     "problem": {
       "type": "string"

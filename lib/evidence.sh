@@ -92,6 +92,65 @@ mj_task_requires() {
   sed -n 's/^requires\.[0-9]*=//p' "$MJ_CUR_FLAT"
 }
 
+# ---------------------------------------------------------------- whose task this is
+# Evidence, a gate run and a finish decide whether work counts as done, so the task they
+# name is resolved the way every durable record resolves it (mj_record_attribution, ADR
+# 0164): the active task is the caller's unless another episode that is still open in this
+# checkout opened it. ADR 0164 lets every other writer drop the task and still write; these
+# three have no record that means anything without one, and filing it under the other
+# episode's task is the misattribution M002 exists to end, so they refuse, by name and with
+# the command that resolves it in the same breath (M002's second risk).
+#
+# $1 is the command a remedy repeats ("finish --outcome completed"). Returns 0 when the
+# active task is the caller's to carry, or when there is none for the caller to judge; the
+# caller's episode is then MJ_RECORD_SESSION, which its ledger line is stamped with.
+MJ_ATTRIBUTION_RULE=adr-0164
+mj_task_attribution_or_refuse() {
+  local cmd="$1" id opened key me
+  mj_record_attribution
+  [ -n "$MJ_RECORD_TASK" ] && return 0
+  mj_load_current || return 0
+  id="$(mj_cur id)"; [ -n "$id" ] || return 0
+  opened="$(mj_task_opening_session "$id")"
+  { [ -n "$opened" ] && [ "$opened" != "$MJ_RECORD_SESSION" ] \
+      && mj_session_is_open "$opened"; } || return 0
+  key="$(mj_episode_key_of "$opened")"
+  me="${MJ_RECORD_SESSION:+episode $MJ_RECORD_SESSION}"
+  [ -n "$me" ] || me="no episode it can name ($(mj_episode_open_count) are open here)"
+  mj_die "$MJ_EX_REFUSED" \
+    "${cmd%% *}: refused by $MJ_ATTRIBUTION_RULE (a record names the session that wrote it):" \
+    "task $id was opened by episode $opened, which is still open in this checkout, and this" \
+    "caller is $me, so the record would be filed under another live episode's task." \
+    "If you are that episode, name it: MJ_SESSION_KEY=$key majordomus $cmd;" \
+    "if you are not, the task is that worker's, and once it has stopped:" \
+    "majordomus session close --provider-session $key"
+}
+
+# The key (the file name under sessions-open/) of the episode open here as session $1.
+mj_episode_key_of() {
+  local f w
+  for f in "$(mj_session_open_dir)"/*.yaml; do
+    [ -f "$f" ] || continue
+    w="$(sed -n 's/^worktree: //p' "$f" | head -n 1)"
+    [ -n "$w" ] && [ "$w" != "$MJ_ROOT" ] && continue
+    [ "$(sed -n 's/^session_id: //p' "$f" | head -n 1)" = "$1" ] \
+      && { basename "$f" .yaml; return 0; }
+  done
+  printf '%s' "$1"
+}
+
+# How many episodes are open in this checkout.
+mj_episode_open_count() {
+  local f w n=0
+  for f in "$(mj_session_open_dir)"/*.yaml; do
+    [ -f "$f" ] || continue
+    w="$(sed -n 's/^worktree: //p' "$f" | head -n 1)"
+    [ -n "$w" ] && [ "$w" != "$MJ_ROOT" ] && continue
+    n=$((n + 1))
+  done
+  printf '%s' "$n"
+}
+
 # The most recent evidence line for a token of the active task, as
 # "<head>\t<inputs_hash>\t<ts>". Nothing older is consulted: evidence is superseded by
 # evidence, and the ledger keeps the history for a reader who wants it.
@@ -122,7 +181,7 @@ mj_obligation_evidence() {
 # state of one checkout and the ledger is what already survives it.
 mj_evidence() {
   local covers="" etype="manual" ecmd="" eart="" eres="" json=0 task ih
-  local gate="" gexit=""
+  local gate="" gexit="" rungates=0 gall=0
   # a bare `evidence` is a question, not a mistake: it prints what it needs, as every
   # other command here does, and exits 2
   [ $# -gt 0 ] || { mj_evidence_usage >&2; return "$MJ_EX_USAGE"; }
@@ -143,6 +202,8 @@ mj_evidence() {
       --result) [ $# -ge 2 ] || mj_die "$MJ_EX_USAGE" "--result needs a value"; eres="$2"; shift 2 ;;
       --result=*) eres="${1#--result=}"; shift ;;
       --json) json=1; shift ;;
+      --run-gates) rungates=1; shift ;;
+      --all) gall=1; shift ;;
       -h|--help) mj_evidence_usage; return 0 ;;
       *) mj_die "$MJ_EX_USAGE" "evidence: unknown option $1" ;;
     esac
@@ -152,6 +213,17 @@ mj_evidence() {
   # differs is what the record is about. The two are never one invocation: a gate is a fact
   # about the validation pipeline and an obligation is a promise a task made, and a line
   # claiming to be both would be readable as neither.
+  # Run the gates and record each (I4268): an adopter that declared a CI model had every
+  # gate "never reported" until it wrote its own loop over `evidence --gate`; the runner that
+  # does it, scripts/ci-plan, ships only in this tool's source.
+  if [ "$rungates" = 1 ]; then
+    [ -z "$gate$covers$gexit" ] || mj_die "$MJ_EX_USAGE" "evidence --run-gates runs the gates itself; it takes no --gate, --exit or --covers"
+    # shellcheck source=gates.sh
+    . "$MJ_LIB_DIR/gates.sh"
+    mj_gate_run "$gall"
+    return $?
+  fi
+  [ "$gall" = 0 ] || mj_die "$MJ_EX_USAGE" "--all belongs to --run-gates"
   if [ -n "$gate" ]; then
     [ -z "$covers" ] || mj_die "$MJ_EX_USAGE" "evidence records a gate or an obligation, not both; drop --covers or --gate"
     [ -n "$gexit" ] || mj_die "$MJ_EX_USAGE" "evidence --gate needs --exit <status>; a gate that reported nothing is not evidence"
@@ -167,6 +239,10 @@ mj_evidence() {
     "no obligation '$covers'; share/obligations.yaml declares: $(mj_obligation_ids | tr '\n' ' ')"
   [ -n "$ecmd" ] || [ -n "$eart" ] || mj_die "$MJ_EX_USAGE" "evidence needs --command or --artifact; narrative is not evidence"
   mj_load_current || mj_die "$MJ_EX_MISSING" "no active task ($(mj_rel "$MJ_STATE_DIR")/current.yaml); run: majordomus start"
+  local again="evidence --covers $covers"
+  [ -n "$ecmd" ] && again="$again --command \"$ecmd\""
+  [ -n "$eart" ] && again="$again --artifact \"$eart\""
+  mj_task_attribution_or_refuse "$again"
   task="$(mj_cur id)"
   # The task must have declared the obligation. Recording evidence for something nobody
   # promised is how a checklist grows entries nobody asked for.
@@ -177,7 +253,7 @@ mj_evidence() {
   [ -n "$ecmd" ] && extra="$extra,\"command\":\"$(mj_json_esc "$ecmd")\""
   [ -n "$eart" ] && extra="$extra,\"artifact\":\"$(mj_json_esc "$eart")\""
   [ -n "$eres" ] && extra="$extra,\"result\":\"$(mj_json_esc "$eres")\""
-  mj_ledger_append task.evidence "$extra"
+  mj_ledger_append task.evidence "$extra" "$MJ_RECORD_SESSION"
   if [ "$json" = 1 ]; then
     printf '{"task":"%s","covers":"%s","kind":"%s","inputs_hash":"%s"}\n' "$task" "$covers" "$etype" "$ih"
   else
@@ -198,6 +274,11 @@ mj_evidence_usage() {
   cat <<USAGE
 usage: majordomus evidence --covers <token> [--type <kind>] (--command <cmd> | --artifact <ref>) [--result <r>] [--json]
        majordomus evidence --gate <id> --exit <status> [--command <cmd>] [--result <r>] [--json]
+       majordomus evidence --run-gates [--all]
+
+  --run-gates runs the gates of .ai/repo/ci/gates.yaml that the active task's change set
+  requires (every gate with --all), each by its \`runs\` command from the repository root, and
+  records each as --gate would; it exits 10 when any gate fails.
 
   Record that one obligation the active task declared has been discharged. The evidence is
   a ledger line carrying the hash of the files the obligation names, so that changing any
@@ -221,6 +302,40 @@ usage: majordomus evidence --covers <token> [--type <kind>] (--command <cmd> | -
   it, such as one with no remote configured or no route to the published site.
 
   exit 0 recorded, 2 on usage, 11 when no task is active or the task did not promise it
+USAGE
+  mj_evidence_usage_executable
+}
+
+# The other half of `majordomus evidence`. Every argument this file understands is an
+# option; a word in the first position is a subcommand of the Rust executable, which holds
+# the ledger of what ran, and bin/majordomus hands it over before this file is sourced.
+# The words are read where the launcher reads them (mj_rust_subcommands) and never listed
+# here, so the help cannot name a subcommand the dispatch does not reach, or miss one it
+# does. Nothing is printed where the launcher is not the caller or the executable is not
+# there: a word would then reach the option parser, and the help must not promise it.
+mj_evidence_usage_executable() {
+  local words name about
+  declare -F mj_rust_subcommands >/dev/null 2>&1 || return 0
+  [ -x "$MJ_BIN_DIR/majordomus-cli" ] || return 0
+  words="$(mj_rust_subcommands evidence)"
+  [ -n "$words" ] || return 0
+  cat <<USAGE
+
+usage: majordomus evidence <$(awk -F '\t' 'NR > 1 { printf "|" } { printf "%s", $1 }' <<<"$words")> [options]
+
+  What actually ran and what it proves: the evidence ledger of the repository, which is
+  another record than the task's obligations above. These are subcommands of the Rust
+  executable; this command hands them to it with every argument unchanged, and its exit
+  codes are then the executable's own.
+
+USAGE
+  while IFS="$(printf '\t')" read -r name about; do
+    [ -n "$name" ] || continue
+    printf '  %-9s %s\n' "$name" "$about"
+  done <<<"$words"
+  cat <<USAGE
+
+  \`majordomus evidence <subcommand> --help\` says what each one takes.
 USAGE
 }
 
