@@ -450,29 +450,49 @@ needs() {
 # what the jobs' uploads carry, one file per job.
 mkdir -p receipts/structure
 jq -r '.gates[] | select(.selected) | "\(.id)\tsuccess\t\(.job)/fixture"' plan.json > receipts/structure/receipts.tsv
-needs "plan=success,structure=success,suite=success,rust=success,coverage=skipped,bench=skipped,site=success,site-probe=success,ui=success,macos=skipped" > n.json
+needs "plan=success,structure=success,structure-b=success,suite=success,rust=success,coverage=skipped,bench=skipped,site=success,site-probe=success,ui=success,macos=skipped" > n.json
 expect_exit 0 "$VERDICT" --plan plan.json --needs n.json --receipts receipts --summary summary.md
 grep -q '^## ci: green' summary.md || { cat summary.md; echo "    a green verdict did not say so"; exit 1; }
 grep -q '| rust-coverage | coverage | skipped' summary.md || { echo "    the summary does not show the skipped gate"; exit 1; }
-needs "plan=success,structure=success,suite=failure,rust=success,coverage=skipped,bench=skipped,site=success,site-probe=success,ui=success,macos=skipped" > n.json
+# structure-b (I4381) is a job of its own, and the verdict asks it for its gates: a run whose
+# structure-b was skipped, cancelled at its bound, or never reported is red for each of them,
+# however green structure is. The gate is read from the plan, never named here.
+sb_gate="$(jq -r '[.gates[] | select(.job == "structure-b" and .selected) | .id][0] // ""' plan.json)"
+[ -n "$sb_gate" ] || { echo "    the plan selects no structure-b gate, so the case proves nothing about the job"; exit 1; }
+for sb in skipped cancelled; do
+  needs "plan=success,structure=success,structure-b=$sb,suite=success,rust=success,coverage=skipped,bench=skipped,site=success,site-probe=success,ui=success,macos=skipped" > n.json
+  expect_exit 1 "$VERDICT" --plan plan.json --needs n.json --receipts receipts --summary summary.md
+  expect_grep "gate $sb_gate was selected and its job structure-b reported $sb"
+done
+needs "plan=success,structure=success,structure-b=success,suite=success,rust=success,coverage=skipped,bench=skipped,site=success,site-probe=success,ui=success,macos=skipped" > n.json
+jq 'del(.["structure-b"])' n.json > n2.json
+expect_exit 1 "$VERDICT" --plan plan.json --needs n2.json --receipts receipts --summary summary.md
+expect_grep "gate $sb_gate was selected and its job structure-b reported absent"
+# and its receipts are asked of it: a green structure-b that left none is red
+grep -v "^$sb_gate	" receipts/structure/receipts.tsv > sb.tsv; mv receipts/structure/receipts.tsv sb-all.tsv; mv sb.tsv receipts/structure/receipts.tsv
+needs "plan=success,structure=success,structure-b=success,suite=success,rust=success,coverage=skipped,bench=skipped,site=success,site-probe=success,ui=success,macos=skipped" > n.json
+expect_exit 1 "$VERDICT" --plan plan.json --needs n.json --receipts receipts --summary summary.md
+expect_grep "gate $sb_gate was selected and its job structure-b succeeded, but no step left a receipt for it"
+mv sb-all.tsv receipts/structure/receipts.tsv
+needs "plan=success,structure=success,structure-b=success,suite=failure,rust=success,coverage=skipped,bench=skipped,site=success,site-probe=success,ui=success,macos=skipped" > n.json
 expect_exit 1 "$VERDICT" --plan plan.json --needs n.json --receipts receipts --summary summary.md
 expect_grep 'gate shell-suite was selected and its job suite reported failure'
-needs "plan=success,structure=success,suite=success,rust=cancelled,coverage=skipped,bench=skipped,site=success,site-probe=success,ui=success,macos=skipped" > n.json
+needs "plan=success,structure=success,structure-b=success,suite=success,rust=cancelled,coverage=skipped,bench=skipped,site=success,site-probe=success,ui=success,macos=skipped" > n.json
 expect_exit 1 "$VERDICT" --plan plan.json --needs n.json --receipts receipts --summary summary.md
-needs "plan=success,structure=success,suite=success,rust=success,coverage=skipped,bench=skipped,site=skipped,site-probe=skipped,ui=skipped,macos=skipped" > n.json
+needs "plan=success,structure=success,structure-b=success,suite=success,rust=success,coverage=skipped,bench=skipped,site=skipped,site-probe=skipped,ui=skipped,macos=skipped" > n.json
 expect_exit 1 "$VERDICT" --plan plan.json --needs n.json --receipts receipts --summary summary.md
 expect_grep 'gate site-build was selected and its job site reported skipped'
-needs "plan=failure,structure=skipped,suite=skipped,rust=skipped,coverage=skipped,bench=skipped,site=skipped,site-probe=skipped,ui=skipped,macos=skipped" > n.json
+needs "plan=failure,structure=skipped,structure-b=skipped,suite=skipped,rust=skipped,coverage=skipped,bench=skipped,site=skipped,site-probe=skipped,ui=skipped,macos=skipped" > n.json
 expect_exit 1 "$VERDICT" --plan plan.json --needs n.json --receipts receipts --summary summary.md
 expect_grep 'planning did not succeed'
 # a job that ran for another gate and failed is a failure even for the gate that did not plan it
-needs "plan=success,structure=success,suite=success,rust=success,coverage=failure,bench=skipped,site=success,site-probe=success,ui=success,macos=skipped" > n.json
+needs "plan=success,structure=success,structure-b=success,suite=success,rust=success,coverage=failure,bench=skipped,site=success,site-probe=success,ui=success,macos=skipped" > n.json
 expect_exit 1 "$VERDICT" --plan plan.json --needs n.json --receipts receipts --summary summary.md
 # --- receipts: a job's `success` says no step failed, not that the gate's step ran. A
 #     selected gate whose job succeeded is red without a receipt, and red when any of its
 #     receipts is not `success` — a step its condition skipped, a step cancelled, a failure
 #     a `continue-on-error` swallowed. A gate the plan left out needs none.
-needs "plan=success,structure=success,suite=success,rust=success,coverage=skipped,bench=skipped,site=success,site-probe=success,ui=success,macos=skipped" > n.json
+needs "plan=success,structure=success,structure-b=success,suite=success,rust=success,coverage=skipped,bench=skipped,site=success,site-probe=success,ui=success,macos=skipped" > n.json
 cp receipts/structure/receipts.tsv all.tsv
 grep -v '^site-probe	' all.tsv > receipts/structure/receipts.tsv
 expect_exit 1 "$VERDICT" --plan plan.json --needs n.json --receipts receipts --summary summary.md
@@ -534,7 +554,7 @@ MJ_CI_RECEIPTS="$T/rp.tsv" "$ROOT/scripts/ci/run-plan" --plan "$T/rp.json" --job
 
 # an empty selection cannot pass
 jq '.gates |= map(.selected = false) | .selected = []' plan.json > empty.json
-needs "plan=success,structure=skipped,suite=skipped,rust=skipped,coverage=skipped,bench=skipped,site=skipped,site-probe=skipped,ui=skipped,macos=skipped" > n.json
+needs "plan=success,structure=skipped,structure-b=skipped,suite=skipped,rust=skipped,coverage=skipped,bench=skipped,site=skipped,site-probe=skipped,ui=skipped,macos=skipped" > n.json
 expect_exit 1 "$VERDICT" --plan empty.json --needs n.json --receipts receipts --summary summary.md
 expect_grep 'selected no gate'
 

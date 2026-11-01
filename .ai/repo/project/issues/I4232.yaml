@@ -1,0 +1,34 @@
+id: I4232
+milestone: development-runtime
+title: "A build of the portable core from the repository's root keeps the executable's rlib of it"
+slug: a-core-build-keeps-its-own-rlib
+priority: p0
+profile: implementation
+parallel_safe: true
+objective: "apps/majordomus-core declares an rlib only, so cargo names that rlib by its hash. `cargo test --manifest-path apps/majordomus-core/Cargo.toml`, run from the root where the shared build-dir applies, can then no longer replace the rlib every executable links. The wasm32 module is the cdylib that scripts/rust-check --portable-core asks for on its command line."
+why: "On 2026-10-24 (train 7) and again on 2026-10-25 between about 20:17Z and 20:23Z (reported by 9f), a standalone build of the core overwrote the shared build-dir's unhashed libmajordomus_core.rlib with one built against the core's own Cargo.lock (serde_json 1.0.154). The next executable build in every worktree then failed with E0308 at canonical_json. Crate types rlib+cdylib make cargo drop the hash from the rlib's name. Cargo reads .cargo/config.toml from the directory it runs in, so the root's shared build-dir applies to any cargo run from the root. 80a7's fix gave only scripts/rust-check --portable-core its own build directory. Given to 39 by 641b at ~20:28Z on 2026-10-25."
+current_state: "Measured at origin/master 2efeacea031 on 2026-10-25: apps/majordomus-core/Cargo.toml declares crate-type = [\"rlib\", \"cdylib\"]."
+desired_state: "apps/majordomus-core/Cargo.toml declares crate-type = [\"rlib\"]. scripts/rust-check --portable-core builds the wasm32 module with `cargo rustc --lib --release --target wasm32-unknown-unknown --crate-type cdylib`, and its parity run reads the same majordomus_core.wasm."
+scope:
+  - "apps/majordomus-core/Cargo.toml"
+  - "scripts/rust-check"
+  - "test/cases/4232_a_core_build_keeps_its_own_rlib.sh"
+  - ".ai/repo/project/issues/I4232.yaml"
+non_scope:
+  - "the shared build-dir itself (.cargo/config.toml, ADR 0139)"
+  - "the core's code, its own Cargo.lock and its tests"
+depends_on: []
+acceptance_criteria:
+  - "In a fixture repository shaped like this one, with the crate types the real manifest declares, `cargo test --manifest-path core/Cargo.toml` run from the root leaves the cli's rlib of the core byte for byte as it was"
+  - "With rlib+cdylib the same replay replaces it, and the case says so if it does not"
+  - "The real manifest declares no cdylib, and the case fails while it does"
+  - "scripts/rust-check --portable-core still builds majordomus_core.wasm and its parity run passes"
+validation:
+  - "MJ_TEST_JOBS=1 bash test/run.sh 4232_a_core_build_keeps_its_own_rlib"
+  - "scripts/rust-check --portable-core"
+  - "bin/majordomus plan validate"
+evidence_required:
+  - suite
+serves: []
+created_at: 2026-10-25
+updated_at: 2026-10-25

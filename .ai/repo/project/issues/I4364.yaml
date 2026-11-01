@@ -1,0 +1,27 @@
+id: I4364
+milestone: development-runtime
+title: "Duplicate of I4365: a promoted knowledge note cites only references a clean clone resolves"
+slug: a-promoted-note-cites-what-a-clone-resolves
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Hold the identity I4364 that commit 5a4942c3a57 named for the promoted-note defect, so that the commit's reference resolves; the work itself is planned and tracked as I4365."
+why: "Commit 5a4942c3a57 on this branch recorded the defect as I4364 while pull request 2677 recorded the same defect as I4365; commit 0067e0f3221 dropped this branch's record as the duplicate. The published commit message cannot be rewritten, so without this record the history names an issue no record holds, and train 12c's commit-policy gate counted the commit as new debt (54 to 56, with I4339)."
+current_state: "No record holds I4364; I4365 on pull request 2677 (chore/a-promoted-record-cites-no-local-episode-is-planned) carries the objective and the criteria."
+desired_state: "I4364 resolves to this cancelled record, which names I4365 as the issue that carries the work; nothing is planned under I4364."
+scope:
+  - ".ai/repo/project/issues/I4364.yaml"
+non_scope:
+  - "Any of I4365's work: knowledge promote's provenance rewrite and its case are I4365's scope"
+depends_on: []
+acceptance_criteria:
+  - "majordomus commit history judges 5a4942c3a57 without commit.unresolved_reference for I4364"
+validation:
+  - "majordomus plan validate"
+  - "scripts/ci/commit-policy"
+evidence_required:
+  - ci
+created_at: 2026-10-29
+updated_at: 2026-10-30
+cancelled: true
+completion: "Cancelled 2026-10-29 as a duplicate of I4365 (a promoted record cites no local episode or task), which pull request 2677 records; commit 0067e0f3221 removed this branch's first record of it. This record exists only so that commit 5a4942c3a57, which named I4364, resolves."

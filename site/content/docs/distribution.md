@@ -612,7 +612,7 @@ not affected, and nothing fetches anything on entering a repository.
 
 **What a node trusts.** Only `releases/latest.json` and `releases/<tag>.json` on the site, and
 only an archive whose digest and size match them. A mesh announcement of a release means
-"check now" and nothing more. A node with no route to the site (jetson) may take the archive
+"check now" and nothing more. A node with no route to the site may take the archive
 from a peer, and verifies it against metadata it can check before unpacking (I2724).
 
 **Forward only, stable only.** No downgrade, no pre-release, no version the metadata does not

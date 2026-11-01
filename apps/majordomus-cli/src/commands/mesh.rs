@@ -791,10 +791,11 @@ fn render_checks(v: &Value, out: &mut String) {
     for c in v["checks"].as_array().into_iter().flatten() {
         out.push_str(&format!(
             "{}  {:<12} {}\n",
-            if c["ok"] == json!(true) {
-                "ok  "
-            } else {
-                "FAIL"
+            // a check that holds and still names a remedy is a warning
+            match (c["ok"] == json!(true), c["remediation"].is_string()) {
+                (true, false) => "ok  ",
+                (true, true) => "WARN",
+                (false, _) => "FAIL",
             },
             c["check"].as_str().unwrap_or("?"),
             c["detail"].as_str().unwrap_or(""),
@@ -2428,6 +2429,27 @@ mod tests {
             bad.ends_with("verdict    a check failed (see above)"),
             "{bad}"
         );
+    }
+
+    /// I4352: a check that holds and still names a remedy (the build host owing provisioning)
+    /// is a warning row with its remedy, and the verdict stays that every check holds.
+    #[test]
+    fn a_check_that_holds_with_a_remedy_is_a_warning() {
+        let warned = render_doctor(&json!({
+            "ok": true,
+            "checks": [{ "check": "build_host", "ok": true,
+                         "detail": "lundra owes 3 provisioning change(s)",
+                         "remediation": "sudo majordomus mesh build-cache provision --apply" }],
+        }));
+        assert!(
+            warned.contains("WARN  build_host   lundra owes 3 provisioning change(s)"),
+            "{warned}"
+        );
+        assert!(
+            warned.contains("      remedy      sudo majordomus mesh build-cache provision --apply"),
+            "{warned}"
+        );
+        assert!(warned.ends_with("verdict    every check holds"), "{warned}");
     }
 
     #[test]

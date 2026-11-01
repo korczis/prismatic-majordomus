@@ -14,6 +14,7 @@ every run writes its own summary.
 ```mermaid
 flowchart LR
   plan["plan"] --> structure["structure<br>(always)"]
+  plan --> structureb["structure-b<br>github-projection,<br>worktree-topology"]
   plan --> shards["suite-shard ×4<br>the suite, dealt by duration"]
   shards --> suite["suite<br>every case exactly once,<br>budget, one verdict"]
   plan --> rust["rust"]
@@ -26,7 +27,7 @@ flowchart LR
   ishards --> interactions["interactions<br>every page exactly once"]
   plan --> ui["ui"]
   plan --> macos["macos"]
-  structure & suite & rust & coverage & bench & site & probe & interactions & ui & macos --> ci["ci<br>the verdict; the one<br>required status"]
+  structure & structureb & suite & rust & coverage & bench & site & probe & interactions & ui & macos --> ci["ci<br>the verdict; the one<br>required status"]
 ```
 
 and beside it, on the same commit, never after it:
@@ -38,8 +39,12 @@ flowchart LR
 
 `plan` reads the model and decides. `structure` runs the cheap, deterministic gates every
 plan has (`scripts/ci/shell-lint`, `scripts/ci/core-check`) and the structural gates the
-change needs. The other jobs run when the plan selected a gate they carry, in parallel, each
-through the script a person runs. `ci` always runs and turns the plan and the jobs' results
+change needs. `structure-b` runs, beside it, the two structure gates that need not share its
+55-minute bound: `github-projection`, which waits on GitHub's API, and `worktree-topology`
+(I4381). With them in one job a full plan summed p50 2720 / p90 3256 s of gates, and run
+40813274272 was killed at the bound with all 59 green, so no receipt reached the verdict. The
+other jobs run when the plan selected a gate they carry, in parallel, each through the script
+a person runs. `ci` always runs and turns the plan and the jobs' results
 into one verdict.
 
 A job does not list its gates. `scripts/ci/run-plan --plan plan.json --job <job>` reads the plan and runs every
