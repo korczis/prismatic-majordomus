@@ -1153,20 +1153,31 @@ mod tests {
         assert_eq!(session_key(&"y".repeat(70)), "y".repeat(64));
     }
 
-    /// A current task whose record names no worktree is not this checkout's.
+    /// A current task is this checkout's when its record names this worktree or none (a
+    /// record written before worktrees were recorded), and another checkout's when it names
+    /// a different one.
     #[test]
-    fn a_current_task_without_a_worktree_is_nobodys() {
+    fn a_current_task_is_this_checkouts_unless_it_names_another() {
         let held = tempdir();
         let state = held.path().join(STATE_DIR);
         fs::create_dir_all(&state).unwrap();
         fs::write(state.join(CURRENT), "id: t-9\n").unwrap();
-        assert_eq!(current_task_here(held.path()), None);
+        assert_eq!(current_task_here(held.path()).as_deref(), Some("t-9"));
         fs::write(
             state.join(CURRENT),
             format!("id: t-9\nworktree: {}\n", held.path().display()),
         )
         .unwrap();
         assert_eq!(current_task_here(held.path()).as_deref(), Some("t-9"));
+        fs::write(
+            state.join(CURRENT),
+            format!(
+                "id: t-9\nworktree: {}\n",
+                held.path().join("elsewhere").display()
+            ),
+        )
+        .unwrap();
+        assert_eq!(current_task_here(held.path()), None);
     }
 
     fn tempdir() -> TempDir {

@@ -795,6 +795,15 @@ mod tests {
             format!("id: t-1\nworktree: {here}\n"),
         )
         .unwrap();
+        // the ledger says A opened the task: it is A's to relate, and A is still open
+        std::fs::write(
+            state.join("ledger.jsonl"),
+            concat!(
+                r#"{"ts":"1","event":"task.started","head":"h","branch":"b","by":"x","session":"s-a","task_id":"t-1"}"#,
+                "\n"
+            ),
+        )
+        .unwrap();
         let ctx = repo
             .context()
             .expect("a context over the synthetic repository");
