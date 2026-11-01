@@ -173,6 +173,12 @@ decision, and a decision is worth reading back.
 Every one is a `Diagnostic` — the same severity, code and message the rest of this executable
 reports with, so a finding reaches a terminal, a JSON consumer and an MCP client the same way.
 
+`commit.unresolved_reference` reads the layer of the tree being committed. An issue another
+open pull request introduces is not held there until that pull request lands, so a message
+that depends on it names the pull request (`#2642`) and leaves the id to the commit that
+follows the landing. An id that only a peer's announcement or a draft mentions is no more held:
+it stops the commit the same way.
+
 ## The scope vocabulary, learned rather than declared
 
 The usual way to answer *"what scope does this change belong to?"* is a table of path

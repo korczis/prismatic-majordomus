@@ -32,4 +32,16 @@ evidence_required:
   - suite
 risk: "A here-string appends one newline, which grep -q, -x and -E read the same as printf '%s\\n'; the two printf '%s' sites only gain a trailing newline that no anchored pattern can see."
 created_at: 2026-10-23
-updated_at: 2026-10-23
+updated_at: 2026-10-26T01:15:30Z
+started_at: 2026-10-26T01:14:55Z
+started_event: sha256:bc66df6e39cbb2b7a001a77437e4c480dc596f1ffe5dcdad3ab6bf44ccb3e9cd
+completed_at: 2026-10-26T01:15:30Z
+completed_event: sha256:ec83d080409782ff25e5ffdcaef33464e8971462b3c38016fb81bed797ea6b33
+evidence:
+  - covers: suite
+    type: test
+    command: "bash test/run.sh 300_a_pipeline_cannot_hide_a_failure; scripts/ci/pipefail-check"
+    result: "case 300 passed 2026-10-26 on master 2efeacea031; pipefail-check exit 0 over the tree"
+    artifact: "2efeacea03158615db2b497117a8da35b264909b"
+    commit: 2efeacea03158615db2b497117a8da35b264909b
+    recorded_at: 2026-10-26T01:15:19Z

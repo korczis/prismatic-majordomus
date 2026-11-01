@@ -11,10 +11,10 @@ ci-plan *args:
 install-check *args:
     scripts/ci/install-check {{args}}
 
-# The structure job's gates the plan selects for this working tree, run by the dispatcher CI uses; which gates those are is the model's (.ai/repo/ci/gates.yaml), not a list here.
+# The structure gates the plan selects for this working tree, run by the dispatcher CI uses: the jobs structure and structure-b, which CI runs side by side (I4381), both run whatever the first one says; which gates those are is the model's (.ai/repo/ci/gates.yaml), not a list here.
 [group('ci')]
 ci-structure:
-    scripts/ci/run-plan --job structure
+    rc=0; for job in structure structure-b; do scripts/ci/run-plan --job "$job" || rc=$?; done; exit "$rc"
 
 # The gates the plan selects for this working tree, with the commands CI runs, in the plan's order.
 [group('ci')]
