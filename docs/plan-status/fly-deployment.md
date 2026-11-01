@@ -9,7 +9,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 
 | milestone | status | done of required | ready | blocked | active | verify | cancelled | outcome |
 |---|---|---|---|---|---|---|---|---|
-| [fly-deployment](https://majordomus.dev/plan/fly-deployment/) | ACTIVE | 5/29 | 9 | 15 | 0 | 0 | 9 | One canonical deployment object under .ai/repo/deployments/ describes the image; a typed Rust model parses and validates it; the Dockerfile, its ignore file, the GHCR image that docker-image.yml and release.yml build, its smoke derived from the route registry, the doctor checks, the documentation and the cockpit view are projections of that object and of the capability registry, each checked for drift. The published image runs as a non-root user, carries no secret and no developer path, answers live and ready in its smoke, and has measured size, cold-start and memory baselines. Re-scoped 2026-10-14 from a Fly.io deployment, which the owner disconnected on 2026-10-12. |
+| [fly-deployment](https://majordomus.dev/plan/fly-deployment/) | ACTIVE | 8/29 | 8 | 13 | 0 | 0 | 9 | One canonical deployment object under .ai/repo/deployments/ describes the image; a typed Rust model parses and validates it; the Dockerfile, its ignore file, the GHCR image that docker-image.yml and release.yml build, its smoke derived from the route registry, the doctor checks, the documentation and the cockpit view are projections of that object and of the capability registry, each checked for drift. The published image runs as a non-root user, carries no secret and no developer path, answers live and ready in its smoke, and has measured size, cold-start and memory baselines. Re-scoped 2026-10-14 from a Fly.io deployment, which the owner disconnected on 2026-10-12. |
 
 ## Issues
 
@@ -50,78 +50,15 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | [I3244](https://majordomus.dev/plan/i3244/) | READY | 0 | — | The generated Dockerfile copies every path crate cargo metadata names, so a new workspace crate needs no edit of the image |
 | [I3245](https://majordomus.dev/plan/i3245/) | READY | 0 | — | The image build's cold and warm durations and its context size are read from docker-image runs, and the deployment records say what is built today |
 | [I3315](https://majordomus.dev/plan/i3315/) | READY | 0 | — | The image smoke completes an MCP initialize on /mcp and a WebSocket upgrade on /events, not only a ready probe |
-| [I3820](https://majordomus.dev/plan/i3820/) | READY | 0 | — | A deployment names the provider that hosts it, and the provider's files are generated from it |
-| [I3821](https://majordomus.dev/plan/i3821/) | BLOCKED | 1 | I3820 | The tree a provider receives is assembled from the deployment object, and master publishes it after green ci |
-| [I3822](https://majordomus.dev/plan/i3822/) | BLOCKED | 2 | I3821 | A deployment that names a provider is observed at its own URL, and is active only while it serves master |
+| [I3820](https://majordomus.dev/plan/i3820/) | DONE | 0 | — | A deployment names the provider that hosts it, and the provider's files are generated from it |
+| [I3821](https://majordomus.dev/plan/i3821/) | DONE | 1 | I3820 | The tree a provider receives is assembled from the deployment object, and master publishes it after green ci |
+| [I3822](https://majordomus.dev/plan/i3822/) | DONE | 2 | I3821 | A deployment that names a provider is observed at its own URL, and is active only while it serves master |
 
 ## Findings
 
 | level | code | subject | message |
 |---|---|---|---|
 | WARN | `scope_conflict` | `I0927` | shares apps/majordomus-cli/src/cockpit/pages.rs with I1010; they may not run concurrently |
-| WARN | `scope_conflict` | `I3244` | shares apps/majordomus-cli/src/deploy/render.rs with I3820; they may not run concurrently |
 | WARN | `scope_conflict` | `I3245` | shares .ai/repo/project/issues/I0911.yaml with I3246; they may not run concurrently |
 | WARN | `scope_conflict` | `I3245` | shares .ai/repo/project/issues/I0911.yaml with I3373; they may not run concurrently |
-| WARN | `scope_conflict` | `I3315` | shares docs/DISTRIBUTION.md with I3820; they may not run concurrently |
 | WARN | `scope_conflict` | `I3315` | shares docs/DISTRIBUTION.md with I4522; they may not run concurrently |
-| WARN | `scope_conflict` | `I3820` | shares docs with I3829; they may not run concurrently |
-| WARN | `scope_conflict` | `I3820` | shares docs with I3835; they may not run concurrently |
-| WARN | `scope_conflict` | `I3820` | shares docs with I3836; they may not run concurrently |
-| WARN | `scope_conflict` | `I3820` | shares docs with I3841; they may not run concurrently |
-| WARN | `scope_conflict` | `I3820` | shares docs with I3910; they may not run concurrently |
-| WARN | `scope_conflict` | `I3820` | shares docs with I3911; they may not run concurrently |
-| WARN | `scope_conflict` | `I3820` | shares docs with I3934; they may not run concurrently |
-| WARN | `scope_conflict` | `I3820` | shares docs with I4000; they may not run concurrently |
-| WARN | `scope_conflict` | `I3820` | shares docs with I4002; they may not run concurrently |
-| WARN | `scope_conflict` | `I3820` | shares docs with I4006; they may not run concurrently |
-| WARN | `scope_conflict` | `I3820` | shares docs with I4007; they may not run concurrently |
-| WARN | `scope_conflict` | `I3820` | shares docs with I4008; they may not run concurrently |
-| WARN | `scope_conflict` | `I3820` | shares docs with I4242; they may not run concurrently |
-| WARN | `scope_conflict` | `I3820` | shares docs with I4261; they may not run concurrently |
-| WARN | `scope_conflict` | `I3820` | shares docs with I4265; they may not run concurrently |
-| WARN | `scope_conflict` | `I3820` | shares docs with I4268; they may not run concurrently |
-| WARN | `scope_conflict` | `I3820` | shares docs with I4290; they may not run concurrently |
-| WARN | `scope_conflict` | `I3820` | shares docs with I4292; they may not run concurrently |
-| WARN | `scope_conflict` | `I3820` | shares site with I4298; they may not run concurrently |
-| WARN | `scope_conflict` | `I3820` | shares docs with I4306; they may not run concurrently |
-| WARN | `scope_conflict` | `I3820` | shares .ai/repo/adrs/0219-a-deployment-names-its-provider-and-every-provider-file-is-derived.md with I4307; they may not run concurrently |
-| WARN | `scope_conflict` | `I3820` | shares .ai/repo/adrs/0219-a-deployment-names-its-provider-and-every-provider-file-is-derived.md with I4315; they may not run concurrently |
-| WARN | `scope_conflict` | `I3820` | shares site with I4317; they may not run concurrently |
-| WARN | `scope_conflict` | `I3820` | shares site with I4318; they may not run concurrently |
-| WARN | `scope_conflict` | `I3820` | shares docs with I4322; they may not run concurrently |
-| WARN | `scope_conflict` | `I3820` | shares docs with I4323; they may not run concurrently |
-| WARN | `scope_conflict` | `I3820` | shares docs with I4325; they may not run concurrently |
-| WARN | `scope_conflict` | `I3820` | shares docs with I4327; they may not run concurrently |
-| WARN | `scope_conflict` | `I3820` | shares docs with I4329; they may not run concurrently |
-| WARN | `scope_conflict` | `I3820` | shares docs with I4330; they may not run concurrently |
-| WARN | `scope_conflict` | `I3820` | shares docs with I4331; they may not run concurrently |
-| WARN | `scope_conflict` | `I3820` | shares docs with I4333; they may not run concurrently |
-| WARN | `scope_conflict` | `I3820` | shares docs with I4337; they may not run concurrently |
-| WARN | `scope_conflict` | `I3820` | shares docs with I4341; they may not run concurrently |
-| WARN | `scope_conflict` | `I3820` | shares docs with I4343; they may not run concurrently |
-| WARN | `scope_conflict` | `I3820` | shares docs with I4346; they may not run concurrently |
-| WARN | `scope_conflict` | `I3820` | shares docs with I4347; they may not run concurrently |
-| WARN | `scope_conflict` | `I3820` | shares docs with I4349; they may not run concurrently |
-| WARN | `scope_conflict` | `I3820` | shares docs with I4352; they may not run concurrently |
-| WARN | `scope_conflict` | `I3820` | shares docs with I4357; they may not run concurrently |
-| WARN | `scope_conflict` | `I3820` | shares site with I4380; they may not run concurrently |
-| WARN | `scope_conflict` | `I3820` | shares docs with I4381; they may not run concurrently |
-| WARN | `scope_conflict` | `I3820` | shares docs with I4400; they may not run concurrently |
-| WARN | `scope_conflict` | `I3820` | shares docs with I4410; they may not run concurrently |
-| WARN | `scope_conflict` | `I3820` | shares docs with I4411; they may not run concurrently |
-| WARN | `scope_conflict` | `I3820` | shares .ai/repo/rules/vendor/majordomus/rules with I4413; they may not run concurrently |
-| WARN | `scope_conflict` | `I3820` | shares .ai/repo/rules/vendor/majordomus/rules with I4415; they may not run concurrently |
-| WARN | `scope_conflict` | `I3820` | shares docs with I4416; they may not run concurrently |
-| WARN | `scope_conflict` | `I3820` | shares docs with I4417; they may not run concurrently |
-| WARN | `scope_conflict` | `I3820` | shares docs with I4418; they may not run concurrently |
-| WARN | `scope_conflict` | `I3820` | shares docs with I4460; they may not run concurrently |
-| WARN | `scope_conflict` | `I3820` | shares docs with I4461; they may not run concurrently |
-| WARN | `scope_conflict` | `I3820` | shares docs with I4462; they may not run concurrently |
-| WARN | `scope_conflict` | `I3820` | shares docs with I4463; they may not run concurrently |
-| WARN | `scope_conflict` | `I3820` | shares docs with I4464; they may not run concurrently |
-| WARN | `scope_conflict` | `I3820` | shares .ai/repo/rules/vendor/majordomus/rules with I4465; they may not run concurrently |
-| WARN | `scope_conflict` | `I3820` | shares docs with I4466; they may not run concurrently |
-| WARN | `scope_conflict` | `I3820` | shares docs with I4467; they may not run concurrently |
-| WARN | `scope_conflict` | `I3820` | shares share/allow/deployment.txt with I4468; they may not run concurrently |
-| WARN | `scope_conflict` | `I3820` | shares .gitattributes with I4512; they may not run concurrently |
-| WARN | `scope_conflict` | `I3820` | shares docs with I4522; they may not run concurrently |
