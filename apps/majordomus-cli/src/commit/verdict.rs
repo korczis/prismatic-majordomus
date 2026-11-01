@@ -676,6 +676,17 @@ mod tests {
     }
 
     #[test]
+    fn a_closing_phrase_may_name_another_repository_and_not_a_bare_word() {
+        // `owner/repo#n` closes an issue elsewhere: what precedes `#` names a repository
+        assert_eq!(
+            closing_keyword("Fixes: org/repo#3.").as_deref(),
+            Some("Fixes: org/repo#3")
+        );
+        // a word glued to `#n` with no slash names no repository, so nothing is closed
+        assert_eq!(closing_keyword("this fixes parser#3"), None);
+    }
+
+    #[test]
     fn a_level_of_off_reports_nothing_at_all() {
         let policy = CommitPolicy {
             reference_unresolved: FindingLevel::Off,
