@@ -40,6 +40,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I0201` | shares lib with I2694; they may not run concurrently |
 | WARN | `scope_conflict` | `I0201` | shares lib with I2714; they may not run concurrently |
 | WARN | `scope_conflict` | `I0201` | shares share with I2720; they may not run concurrently |
+| WARN | `scope_conflict` | `I0201` | shares share with I2730; they may not run concurrently |
 | WARN | `scope_conflict` | `I0201` | shares share with I2747; they may not run concurrently |
 | WARN | `scope_conflict` | `I0201` | shares lib with I2867; they may not run concurrently |
 | WARN | `scope_conflict` | `I0201` | shares share with I2901; they may not run concurrently |

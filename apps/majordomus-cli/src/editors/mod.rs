@@ -376,21 +376,27 @@ pub fn environment(index: &Index, root: &Path) -> EditorEnvironment {
     }
     crate::order::canonical(&mut env.skills);
 
-    match tracked_workflows(root) {
-        Some((sources, workflows, groups)) => {
+    match tracked_workflows(root, workflows::describe_timeout()) {
+        Some(Ok((sources, recipes, groups))) => {
             env.workflows_resolved = Some(true);
             env.inputs.extend(sources);
-            env.tasks = tasks_of(&workflows, &groups, &mut env.diagnostics);
+            env.tasks = tasks_of(&recipes, &groups, &mut env.diagnostics);
         }
-        None if root.join("justfile").is_file() => {
+        Some(Err(why)) => {
             env.workflows_resolved = Some(false);
+            let remedy = match why {
+                workflows::Undescribed::TimedOut { .. } => "the bound is `workflows.describe_timeout_seconds` in .ai/repo/policy.yaml: derive again when this machine is less loaded, or raise the bound; a late answer is never derived from".into(),
+                workflows::Undescribed::Refused { .. } => "install `just` (every CI job that builds the crate has it, through .github/actions/setup-rust) and run `just --dump` to see why it refuses".into(),
+            };
             env.diagnostics.push(EditorDiagnostic {
                 severity: Severity::Error,
                 code: WORKFLOWS_UNREADABLE.into(),
                 adapter: Some("zed".into()),
                 path: Some("justfile".into()),
-                message: "the justfile exists and `just --dump` could not describe it, so the task list cannot be derived here".into(),
-                remedy: "install `just` (every CI job that builds the crate has it, through .github/actions/setup-rust) and run `just --dump` to see why it refuses".into(),
+                message: format!(
+                    "the justfile exists and {why}, so the task list cannot be derived here"
+                ),
+                remedy,
             });
         }
         None => env.workflows_resolved = None,
@@ -479,13 +485,18 @@ pub fn domains(registry: &crate::capability::CapabilityRegistry) -> Vec<DomainRe
 }
 
 /// The recipes of the *tracked* justfile: `justfile` and `.just/*.just`, read through `just`
-/// from a private copy. The root justfile also imports `.ai/local/cache/command-graph/
+/// from a private copy, each question given `budget`. `None` when there is no justfile; an
+/// error when there is one and the runner did not describe it, saying whether it refused or
+/// ran out of time. The root justfile also imports `.ai/local/cache/command-graph/
 /// bridge.just`, which each checkout materialises for itself; read in place, a checkout that
 /// has the bridge would project a different file than one that has not, and a committed
 /// projection would be stale on every machine but the one that wrote it.
+type TrackedWorkflows = (Vec<EditorInput>, Vec<WorkflowDescriptor>, Vec<String>);
+
 fn tracked_workflows(
     root: &Path,
-) -> Option<(Vec<EditorInput>, Vec<WorkflowDescriptor>, Vec<String>)> {
+    budget: std::time::Duration,
+) -> Option<Result<TrackedWorkflows, workflows::Undescribed>> {
     let justfile = root.join("justfile");
     if !justfile.is_file() {
         return None;
@@ -516,7 +527,9 @@ fn tracked_workflows(
         })
         .collect();
     if texts.len() != files.len() {
-        return None;
+        return Some(Err(workflows::Undescribed::Refused {
+            command: workflows::SOURCE.into(),
+        }));
     }
     // A copy that could not be written is not handled here: `just` is then asked about an
     // incomplete justfile and refuses it, and that refusal is the one answer below.
@@ -530,12 +543,10 @@ fn tracked_workflows(
             sha256: sha256_hex(text),
         });
     }
-    let catalogue = workflows::resolve(&scratch.path);
-    if catalogue.state != crate::environment::TierState::Resolved {
-        return None;
-    }
-    let groups = workflows::groups(&scratch.path).unwrap_or_default();
-    Some((inputs, catalogue.workflows, groups))
+    Some(
+        workflows::describe(&scratch.path, budget)
+            .map(|found| (inputs, found.workflows, found.groups)),
+    )
 }
 
 /// A directory of the process's own under the system's temporary directory, removed when
@@ -1588,7 +1599,10 @@ mod tests {
         std::fs::set_permissions(&locked, std::fs::Permissions::from_mode(0o000)).unwrap();
         // root reads anything; where that is so there is nothing to observe
         if std::fs::read_to_string(&locked).is_err() {
-            assert!(tracked_workflows(repo.root()).is_none());
+            assert!(matches!(
+                tracked_workflows(repo.root(), workflows::DESCRIBE_TIMEOUT),
+                Some(Err(workflows::Undescribed::Refused { .. }))
+            ));
         }
         std::fs::set_permissions(&locked, std::fs::Permissions::from_mode(0o644)).unwrap();
     }

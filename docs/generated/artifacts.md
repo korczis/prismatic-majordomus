@@ -212,7 +212,7 @@ Every file `majordomus generate` writes, with the document it projects, the enco
 | `.agents/skills/pack-for-review/SKILL.md` | `editors/skill` | markdown | 983 | `53d822233a7bb91d` |
 | `.agents/skills/repo-review/SKILL.md` | `editors/skill` | markdown | 860 | `539dad28402a1270` |
 | `.agents/skills/report-verification-state/SKILL.md` | `editors/skill` | markdown | 1004 | `2a3a01c9678ba22f` |
-| `.bb/AGENTS.md` | `providers/bb` | markdown | 1442 | `865234e82a6f7bd3` |
+| `.bb/AGENTS.md` | `providers/bb` | markdown | 1442 | `03ccf3f95cf8056f` |
 | `.claude/skills/assess-before-deleting/SKILL.md` | `editors/skill` | markdown | 972 | `303d9789f86d96d7` |
 | `.claude/skills/deploy-site/SKILL.md` | `editors/skill` | markdown | 873 | `5552658e7d9494f7` |
 | `.claude/skills/evolve/SKILL.md` | `editors/skill` | markdown | 872 | `fdd6a4b36dcda419` |
@@ -284,9 +284,9 @@ Every file `majordomus generate` writes, with the document it projects, the enco
 | `.claude/skills/report-verification-state/SKILL.md` | `editors/skill` | markdown | 1004 | `5330101f1b8963b3` |
 | `.dockerignore` | `deployment` | text | 595 | `84919926eadd46cd` |
 | `.zed/tasks.json` | `editors/zed-tasks` | json | 5513 | `1f6f3eb17251853f` |
-| `AGENTS.md` | `providers/agents` | markdown | 8709 | `893dcdb5bd6e0653` |
-| `CLAUDE.md` | `providers/claude-code` | markdown | 7998 | `835562a51a2b7bdb` |
-| `GEMINI.md` | `providers/gemini` | markdown | 8216 | `62b042961512aba6` |
+| `AGENTS.md` | `providers/agents` | markdown | 8709 | `2cd32a41e00cdf11` |
+| `CLAUDE.md` | `providers/claude-code` | markdown | 7998 | `33b7c01b83acbaea` |
+| `GEMINI.md` | `providers/gemini` | markdown | 8216 | `f07a2d2a178f472c` |
 | `apps/majordomus-cli/src/cockpit/logo-mark.svg` | `design-mark` | text | 912 | `d3a39f415f9bd167` |
 | `apps/majordomus-cli/src/design/tokens.yaml` | `design-declaration` | yaml | 21266 | `0e500f1985cfe2ce` |
 | `apps/majordomus-cli/src/ui/icons.toml` | `ui-icons` | text | 9035 | `b5152a07987f0872` |
@@ -317,8 +317,8 @@ Every file `majordomus generate` writes, with the document it projects, the enco
 | `docs/generated/economics.json` | `economics` | json | 56212 | `e92397ee42a4775e` |
 | `docs/generated/economics.md` | `economics` | markdown | 15772 | `ee0520007183625a` |
 | `docs/generated/economics.yaml` | `economics` | yaml | 46605 | `264ece032e8525c8` |
-| `docs/generated/entities.json` | `entities` | json | 725499 | `4d520136a5ac7669` |
-| `docs/generated/graph.json` | `graph` | json | 6126735 | `adc692a92805b808` |
+| `docs/generated/entities.json` | `entities` | json | 725499 | `eaaaa50ff361e665` |
+| `docs/generated/graph.json` | `graph` | json | 6128943 | `dc9ee3482a6b7707` |
 | `docs/generated/graph.schema.json` | `graph-schema` | json | 7634 | `b4c8b25173f9e9c0` |
 | `docs/generated/modules/artifacts.md` | `modules/artifacts` | markdown | 1750 | `b1c0df1e83e28765` |
 | `docs/generated/modules/blackboard.md` | `modules/blackboard` | markdown | 2540 | `f2faf315ceae5835` |
@@ -405,7 +405,7 @@ Every file `majordomus generate` writes, with the document it projects, the enco
 | `share/allow/manifest.txt` | `allow/manifest` | text | 705 | `831b692bcaed6e62` |
 | `share/allow/mesh-declaration.txt` | `allow/mesh-declaration` | text | 820 | `93409b2c0595e931` |
 | `share/allow/milestone.txt` | `allow/milestone` | text | 767 | `83a3c15e950c3fc4` |
-| `share/allow/policy.txt` | `allow/policy` | text | 2713 | `762d5018f509ce2c` |
+| `share/allow/policy.txt` | `allow/policy` | text | 2751 | `162983ece2359db2` |
 | `share/allow/profile.txt` | `allow/profile` | text | 750 | `59e8fd3c7f4742a7` |
 | `share/allow/project.txt` | `allow/project` | text | 253 | `1105e271d0710f02` |
 | `share/allow/prompt.txt` | `allow/prompt` | text | 235 | `34eac0452b406cd2` |
@@ -446,9 +446,9 @@ Every file `majordomus generate` writes, with the document it projects, the enco
 | `site/data/registry/design.json` | `site-design` | json | 11595 | `02f349431cf17cf6` |
 | `site/data/registry/distribution.json` | `site-distribution` | json | 3005 | `1dc59aaebd16174a` |
 | `site/data/registry/evidence-subjects.json` | `site-evidence-subjects` | json | 858898 | `527656f8d5c4cc70` |
-| `site/data/registry/product-graph.json` | `site-product-graph` | json | 111831 | `a8db939518a15c90` |
-| `site/data/registry/product.json` | `site-product` | json | 780583 | `75f73fb2ebd306a8` |
-| `site/data/registry/registry.json` | `site-registry` | json | 8445468 | `0ec75a8f0f0776fd` |
+| `site/data/registry/product-graph.json` | `site-product-graph` | json | 111831 | `3fe9d33da81d4d83` |
+| `site/data/registry/product.json` | `site-product` | json | 780583 | `77fbadb7f191cb16` |
+| `site/data/registry/registry.json` | `site-registry` | json | 8446042 | `01eb067a27b394f0` |
 | `site/data/registry/why-graph.json` | `site-why-graph` | json | 180171 | `c5c85c57475615eb` |
 | `site/data/registry/why.json` | `site-why` | json | 349932 | `f34d973e38325648` |
 | `site/static/favicon.svg` | `design-mark` | text | 912 | `d3a39f415f9bd167` |

@@ -427,6 +427,14 @@ server:
   read_deadline_seconds: 30
   idle_seconds: 900
 
+# How long a derivation waits for the workflow runner. `generate editors` commits what
+# `just --dump` and `just --groups` say about the justfile, so the bound decides whether that
+# projection is a function of the tree or of how loaded the machine was: at 2 s a derive on a
+# loaded build host failed while a retry passed (I2730). Past the bound the derivation refuses,
+# naming the command and this number; it never derives from half an answer.
+workflows:
+  describe_timeout_seconds: 30
+
 projections:
   - provider: agents
     target: AGENTS.md

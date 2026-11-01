@@ -43644,6 +43644,48 @@
         }
       },
       {
+        "id": "majordomus://issue/I2730",
+        "kind": "issue",
+        "label": "I2730",
+        "summary": "A derive does not depend on how loaded the machine is",
+        "route": "/cockpit/objects/issue/i2730",
+        "source": ".ai/repo/project/issues/I2730.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A stand-in runner slower than a configured bound yields a refusal naming `just --dump --dump-format json` and the bound, and one within the bound describes the justfile",
+            "A group listing slower than the bound is a refusal, not an empty group order",
+            "The bound is declared in policy.yaml under workflows: and validated by the policy schema"
+          ],
+          "created_at": "2026-10-15",
+          "evidence_required": [
+            "describe_timeout_refusal_test"
+          ],
+          "milestone": "derived-data-integrity",
+          "non_scope": [
+            "The environment snapshot's own 2 s budget, which serves a shell prompt rather than a committed projection",
+            "Other bounded probes (toolchain versions, evidence provenance), which commit nothing load-dependent"
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/environment/workflows.rs",
+            "apps/majordomus-cli/src/environment/probe.rs",
+            "apps/majordomus-cli/src/editors/mod.rs",
+            "apps/majordomus-cli/src/generate.rs",
+            "apps/majordomus-cli/src/policy.rs",
+            ".ai/repo/policy.yaml",
+            "share/schemas/majordomus/policy"
+          ],
+          "slug": "a-derive-does-not-depend-on-load",
+          "updated_at": "2026-10-15",
+          "validation": [
+            "cargo test -p majordomus-cli environment::workflows",
+            "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
         "id": "majordomus://issue/I2731",
         "kind": "issue",
         "label": "I2731",
@@ -131624,6 +131666,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I2730",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2730",
+        "target": "majordomus://milestone/derived-data-integrity",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://issue/I2731",
         "target": "kind:issue",
         "kind": "is_a"
@@ -153610,8 +153662,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4192,
-      "edges": 9633,
+      "nodes": 4193,
+      "edges": 9635,
       "acyclic": false,
       "truncated": false
     }
