@@ -18,7 +18,9 @@
 #      trusted: the forced refresh leaves the adopter's src/ alone and the effective set
 #      never loads the file a forged rule row names
 #   5  applies_to that does not match installs nothing and says why in one line
-#   6  update with no pack leaves the tree byte for byte as it was
+#   6  MAJORDOMUS_FLEET=off reads as no pack: update says nothing of it and changes nothing, and
+#      the scenario recorder pins it, so recorded evidence is the same with a pack or without
+#   7  update with no pack leaves the tree byte for byte as it was
 . "$ROOT/test/lib.sh"
 
 export XDG_CONFIG_HOME="$T/xdg"
@@ -201,7 +203,19 @@ expect_grep '^fleet: pack v2 does not apply here \(neither the origin https://fo
   || { echo "    a pack that does not apply installed files"; exit 1; }
 rm -rf other
 
-# ---------------------------------------------------------------- 6. no pack: update is byte-identical
+# ---------------------------------------------------------------- 6. MAJORDOMUS_FLEET=off: no pack anywhere
+# a recorder of published evidence pins the pack off, so a machine holding one records what a
+# runner holding none does (I4521): a newer pack that update would install is not seen at all
+pack 3
+h0="$(tree_hash)"
+expect_exit 0 env MAJORDOMUS_FLEET=off "$MJ" update || exit 1
+expect_no_grep 'fleet' || exit 1
+[ "$(tree_hash)" = "$h0" ] || { echo "    update with the pack off changed the tree"; exit 1; }
+expect_grep '^# version: 2$' "$F/MANIFEST" || exit 1
+grep -q 'MAJORDOMUS_FLEET=off; export MAJORDOMUS_FLEET' "$ROOT/lib/usecase.sh" \
+  || { echo "    the scenario recorder does not pin the fleet pack off"; exit 1; }
+
+# ---------------------------------------------------------------- 7. no pack: update is byte-identical
 rm -rf "$XDG_CONFIG_HOME/majordomus"
 "$MJ" update >/dev/null 2>&1 || true
 h1="$(tree_hash)"

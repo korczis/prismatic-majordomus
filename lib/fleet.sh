@@ -6,8 +6,9 @@
 #
 # The pack is a directory on the owner's machine, never in a repository:
 # $MAJORDOMUS_FLEET_PACK, else $XDG_CONFIG_HOME/majordomus/fleet (an absolute XDG_CONFIG_HOME
-# only), else ~/.config/majordomus/fleet. Its manifest.yaml (ai-fleet-pack/v1) says which
-# repositories it applies to and lists every file it delivers; a file the manifest does not
+# only), else ~/.config/majordomus/fleet; MAJORDOMUS_FLEET=off reads as no pack anywhere. Its
+# manifest.yaml (ai-fleet-pack/v1) says which repositories it applies to and lists every
+# file it delivers; a file the manifest does not
 # list is never copied, whatever else the directory holds — the owner's licensed reference
 # material may sit beside the pack and must not travel with it.
 #
@@ -59,7 +60,10 @@ mj_fleet_source() {
   [ -n "${HOME:-}" ] || return 1
   printf '%s/.config/majordomus/fleet' "$HOME"
 }
-mj_fleet_present() { local s; s="$(mj_fleet_source)" && [ -f "$s/manifest.yaml" ]; }
+# whether SRC holds a pack. MAJORDOMUS_FLEET=off says there is none, wherever one sits: a
+# recorder whose output is published evidence must not depend on the owner's machine (I4521)
+mj_fleet_has_pack() { [ "${MAJORDOMUS_FLEET:-}" != off ] && [ -f "$1/manifest.yaml" ]; }
+mj_fleet_present() { local s; s="$(mj_fleet_source)" && mj_fleet_has_pack "$s"; }
 
 # a path as the owner's machine may be printed: under the home directory as ~/...
 mj_fleet_tilde() {
@@ -337,7 +341,7 @@ mj_fleet_install() {
   [ "${2:-}" = --force ] && force=1
   [ -n "$MJ_RULES_DIR" ] || return 0
   src="$(mj_fleet_source)" || return 0
-  if [ ! -f "$src/manifest.yaml" ]; then
+  if ! mj_fleet_has_pack "$src"; then
     [ "$ctx" = rules ] && printf 'fleet: no pack at %s; nothing to install\n' "$(mj_fleet_tilde "$src")"
     return 0
   fi
@@ -492,7 +496,7 @@ mj_fleet_report() {
     else mj_doctrine_ok rules "$(mj_rel "$dir")" "every file matches its stamp (fleet pack v$(mj_fleet_installed_version))"; fi
   fi
   src="$(mj_fleet_source)" || return 0
-  [ -f "$src/manifest.yaml" ] || return 0
+  mj_fleet_has_pack "$src" || return 0
   tmp="$(mktemp -d "${TMPDIR:-/tmp}/mj.fleetr.XXXXXX")"
   if ! mj_fleet_load "$src" "$tmp"; then
     mj_warn rules "fleet pack" "the pack at $(mj_fleet_tilde "$src") is malformed: $MJ_FLEET_ERROR" "majordomus rules vendor update"
