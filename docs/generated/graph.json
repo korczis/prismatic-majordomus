@@ -59031,6 +59031,8 @@
         "route": "/cockpit/objects/issue/i3320",
         "source": ".ai/repo/project/issues/I3320.yaml",
         "facts": {
+          "completed_at": "2026-11-01T04:49:34Z",
+          "completed_event": "sha256:2173d335f2a7fbeb32c6e93e872a394117c402f8bfe582dad1863e0627a60d6d",
           "created_at": "2026-10-18",
           "desired_state": "One resolution with a contract check that every lifecycle command calls first; a missing or stale executable is a typed, visible failure that health reports.",
           "evidence_required": [
@@ -59053,7 +59055,9 @@
             "a-session-record-says-what-it-served#close-has-one-writer"
           ],
           "slug": "a-lifecycle-command-refuses-a-stale-executable",
-          "updated_at": "2026-10-18",
+          "started_at": "2026-11-01T04:48:43Z",
+          "started_event": "sha256:1de9340822dd6b9ec9a9eefeae1f6d86cfec53f7277ed75d92f547242b666769",
+          "updated_at": "2026-11-01T04:49:34Z",
           "validation": [
             "bash test/run.sh --no-skips 54_session_lifecycle_hooks 220_exactly_once_close",
             "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test session_domain"
@@ -66731,6 +66735,8 @@
             "Preflight in a checkout whose .mcp.json is present reports the missing Claude Code native messaging host as a finding naming /chrome, and reports nothing when the host is present",
             "docs/generated/providers.md and majordomus product providers show the browser column from the one declaration"
           ],
+          "completed_at": "2026-11-01T04:52:18Z",
+          "completed_event": "sha256:9bc90587736d60bdcffb3bd65b3e0aac979628968da051b38082f754f1c1a41b",
           "created_at": "2026-10-21",
           "current_state": "share/providers.yaml declares episode and prompts per provider; nothing says which client drives a browser, and no check looks for the Claude in Chrome native host.",
           "depends_on": [],
@@ -66765,7 +66771,9 @@
             "a-provider-carries-the-contract-natively#the-browser-bridge-is-declared"
           ],
           "slug": "the-browser-bridge-is-declared",
-          "updated_at": "2026-10-29",
+          "started_at": "2026-11-01T04:50:44Z",
+          "started_event": "sha256:7416be6aa3b031c1726c6bc9e93018fd1c55179d4622701a541749763dc5354f",
+          "updated_at": "2026-11-01T04:52:18Z",
           "validation": [
             "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test provider_browser",
             "bash test/cases/3829_a_provider_declares_its_browser_bridge.sh"
@@ -69987,6 +69995,8 @@
             "github-sync --apply against a scripted forge creates a declared label that is missing and updates one whose description differs",
             "CONTRIBUTING.md's generated section matches the declaration, and editing the declaration without regenerating fails the check"
           ],
+          "completed_at": "2026-11-01T04:48:12Z",
+          "completed_event": "sha256:74feffd877e6dd0346dd2719872a65b3dd5b87e0a7d1538eeba29424f97a58c8",
           "created_at": "2026-10-22",
           "depends_on": [],
           "desired_state": "The declaration is the one source of labels and conventions; the projection makes GitHub agree; CONTRIBUTING's section is generated; the check fails on any drift.",
@@ -70015,7 +70025,9 @@
             "merging-and-referencing-are-enforced#conventions-declared-once"
           ],
           "slug": "conventions-are-declared-once",
-          "updated_at": "2026-10-22",
+          "started_at": "2026-11-01T04:47:13Z",
+          "started_event": "sha256:0d44d41f838cae4b1d6ecb78109f97afa0ad1e1d78164cf874bbfda5c05d68e9",
+          "updated_at": "2026-11-01T04:48:12Z",
           "validation": [
             "bin/majordomus plan validate",
             "env -u MAJORDOMUS_SHARE cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib -- integration::classify release::model",
@@ -71965,6 +71977,8 @@
         "route": "/cockpit/objects/issue/i4265",
         "source": ".ai/repo/project/issues/I4265.yaml",
         "facts": {
+          "completed_at": "2026-11-01T04:20:54Z",
+          "completed_event": "sha256:fa26846f6140f10b255a06eb807472d7c6260d30611ccc7712d68edfa4ac4e77",
           "created_at": "2026-10-27",
           "current_state": "init prints `majordomus doctor || exit $?`.",
           "depends_on": [],
@@ -71985,7 +71999,9 @@
             "test/cases/4265_the_adopter_hook_runs_doctor_in_commit_context.sh"
           ],
           "slug": "the-commit-hook-runs-doctor-in-commit-context",
-          "updated_at": "2026-10-30",
+          "started_at": "2026-11-01T04:19:48Z",
+          "started_event": "sha256:de06cb8df6e32cb445b04ef7c2073e0a470b03922fa66ee1b25e469f4d750e3d",
+          "updated_at": "2026-11-01T04:20:54Z",
           "validation": [
             "bash test/run.sh 4265_the_adopter_hook_runs_doctor_in_commit_context"
           ]
@@ -72182,6 +72198,8 @@
             "Every fetch-depth: 0 checkout of validate.yml is bounded at 20 minutes and scripts/ci/step-bound-check passes",
             "A validate run of a train head that carries this change completes its checkouts inside their bounds (ci evidence from the train's run)"
           ],
+          "completed_at": "2026-11-01T04:19:12Z",
+          "completed_event": "sha256:a7690609f08ee20cefe00a9925e5e7ff0dc654b3f41cfb6ca0a4f0b33e5c7bd5",
           "created_at": "2026-10-28",
           "evidence_required": [
             "ci"
@@ -72195,7 +72213,9 @@
             ".ai/repo/project/issues/I4296.yaml"
           ],
           "slug": "a-full-history-checkout-fits-its-bound",
-          "updated_at": "2026-10-28",
+          "started_at": "2026-11-01T04:18:18Z",
+          "started_event": "sha256:61a300831939dca707bfd37b6d33e6d2d6cabb33a80389fdd035a12f3675e1b3",
+          "updated_at": "2026-11-01T04:19:12Z",
           "validation": [
             "actionlint .github/workflows/validate.yml",
             "scripts/ci/step-bound-check",
@@ -74033,6 +74053,8 @@
             "A held member's run that is not cancelled fails, so its ci never reads green",
             "A pull request without hold, and every non-pull_request event, plans and runs exactly as before (case 26_ci_wiring and case 94_ci_plan pass)"
           ],
+          "completed_at": "2026-11-01T03:58:10Z",
+          "completed_event": "sha256:f551ed30d12325aa776bfa7ef6b0b29199dfcaf91179190cfabc3edf3e6a026d",
           "created_at": "2026-10-28",
           "current_state": "On 81ef931a3e1 every pull request event (opened, synchronize, reopened, labeled) starts a full validate whatever its labels; a held member's run queues behind or ahead of its train's.",
           "depends_on": [],
@@ -74053,7 +74075,9 @@
             ".github/workflows/validate.yml"
           ],
           "slug": "a-held-member-yields-to-its-train",
-          "updated_at": "2026-10-28",
+          "started_at": "2026-11-01T03:57:30Z",
+          "started_event": "sha256:283a412d823e17c96ca22e133071c3c378cb66bfd4938791bede85e6028613eb",
+          "updated_at": "2026-11-01T03:58:10Z",
           "validation": [
             "actionlint .github/workflows/validate.yml",
             "scripts/ci/step-bound-check",
@@ -74107,6 +74131,8 @@
         "route": "/cockpit/objects/issue/i4340",
         "source": ".ai/repo/project/issues/I4340.yaml",
         "facts": {
+          "completed_at": "2026-11-01T04:22:19Z",
+          "completed_event": "sha256:49aac47aa25ab86c76a8a48be7f5a86957bbfbf69324bcc028b5ef71c3aad61b",
           "created_at": "2026-10-29",
           "depends_on": [],
           "evidence_required": [
@@ -74127,7 +74153,9 @@
             "test/cases/3959_the_shared_build_dir_stays_under_its_bound.sh"
           ],
           "slug": "the-reaper-bounds-an-untagged-build-dir",
-          "updated_at": "2026-10-29",
+          "started_at": "2026-11-01T04:21:31Z",
+          "started_event": "sha256:e82c3582590638b46a85f290c7a874f5e1c1ada83160f6474481d92500397ba4",
+          "updated_at": "2026-11-01T04:22:19Z",
           "validation": [
             "bash test/run.sh 3959_the_shared_build_dir_stays_under_its_bound 3125_the_reaper_asks_cargo_for_the_build_dir",
             "shellcheck -x scripts/reap-orphans"
@@ -74679,6 +74707,8 @@
         "route": "/cockpit/objects/issue/i4352",
         "source": ".ai/repo/project/issues/I4352.yaml",
         "facts": {
+          "completed_at": "2026-11-01T04:31:01Z",
+          "completed_event": "sha256:7361ba95b675926a5ba0785586d4456b836ce6961924e00f1db49d37c8b1d122",
           "created_at": "2026-10-28",
           "depends_on": [],
           "evidence_required": [
@@ -74706,7 +74736,9 @@
           ],
           "serves": [],
           "slug": "the-build-host-provisions-its-ci-runners",
-          "updated_at": "2026-10-29",
+          "started_at": "2026-11-01T04:27:13Z",
+          "started_event": "sha256:c0bf5f96de227b3528eb0ba58ba46e50c4f73af3650a4131836e95223324886b",
+          "updated_at": "2026-11-01T04:31:01Z",
           "validation": [
             "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib mesh::cache_provision",
             "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib commands::mesh::tests::a_check_that_holds_with_a_remedy_is_a_warning",
@@ -75671,6 +75703,8 @@
             "economics::runner::tests::a_harness_that_cannot_start_has_no_version: a missing harness is an error naming it",
             "The first section of a_session_that_failed_or_timed_out_is_not_a_completed_run asserts run()'s failed list is empty before reading the record"
           ],
+          "completed_at": "2026-11-01T04:32:24Z",
+          "completed_event": "sha256:b44f2f37920133a5732cac37a8a8ff7cc64feab6629cda3f7b47b76ecb2863fa",
           "created_at": "2026-10-29",
           "depends_on": [],
           "evidence_required": [
@@ -75691,7 +75725,9 @@
           ],
           "serves": [],
           "slug": "a-freshly-written-harness-is-started-once-it-is-free",
-          "updated_at": "2026-10-29",
+          "started_at": "2026-11-01T04:28:48Z",
+          "started_event": "sha256:1e498d6dca675d4e29b570ddf59444b5697ca27427423379be83a6c9ca5bca8a",
+          "updated_at": "2026-11-01T04:32:24Z",
           "validation": [
             "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib economics",
             "cargo clippy --manifest-path apps/majordomus-cli/Cargo.toml --all-targets -- -D warnings",
@@ -75784,6 +75820,8 @@
         "route": "/cockpit/objects/issue/i4380",
         "source": ".ai/repo/project/issues/I4380.yaml",
         "facts": {
+          "completed_at": "2026-11-01T04:46:23Z",
+          "completed_event": "sha256:fb25c7e7889f967b1311a877163324300e902d949dd54897bc225560449d49f0",
           "created_at": "2026-10-29",
           "depends_on": [],
           "evidence_required": [
@@ -75806,7 +75844,9 @@
           ],
           "serves": [],
           "slug": "a-pages-deploy-is-not-stopped-by-an-optional-step",
-          "updated_at": "2026-10-29"
+          "started_at": "2026-11-01T04:45:10Z",
+          "started_event": "sha256:8b4ba6b5adf5a815c2d95fe4dbed56cb20740c4fc159780febbde6614e6dc9b6",
+          "updated_at": "2026-11-01T04:46:23Z"
         }
       },
       {
@@ -75817,6 +75857,8 @@
         "route": "/cockpit/objects/issue/i4381",
         "source": ".ai/repo/project/issues/I4381.yaml",
         "facts": {
+          "completed_at": "2026-11-01T04:54:43Z",
+          "completed_event": "sha256:b2bdf3bdfd978561c2a60e51739164d939853f191c60c7b2851a3ecdb35c4992",
           "created_at": "2026-10-29",
           "depends_on": [],
           "evidence_required": [
@@ -75861,7 +75903,9 @@
             "a-change-is-judged-in-minutes#a-regression-fails-its-budget"
           ],
           "slug": "the-structure-lane-is-planned-to-fit-its-bound",
-          "updated_at": "2026-10-29",
+          "started_at": "2026-11-01T04:53:00Z",
+          "started_event": "sha256:3cb12284d52e857a04f5ef6a1a2d80e01cf1f1d9788e9882c95f5d37675a7cbd",
+          "updated_at": "2026-11-01T04:54:43Z",
           "validation": [
             "bash test/run.sh 94_ci_plan 4381_the_structure_job_fits_in_half_its_bound 3943_a_second_gate_list_is_found 2999_delivery_is_expedited_only_where_the_rule_says",
             "scripts/ci/shell-lint",

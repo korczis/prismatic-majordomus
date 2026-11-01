@@ -30,7 +30,6 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 |---|---|---|---|
 | WARN | `scope_conflict` | `I3154` | shares .ai/repo/automation/inventory.jsonl with I3155; they may not run concurrently |
 | WARN | `scope_conflict` | `I3154` | shares apps/majordomus-cli/src/command_graph/bridge.rs with I3156; they may not run concurrently |
-| WARN | `scope_conflict` | `I3154` | shares .just with I4381; they may not run concurrently |
 | WARN | `scope_conflict` | `I3154` | shares .ai/repo/automation/inventory.jsonl with I4468; they may not run concurrently |
 | WARN | `scope_conflict` | `I3154` | shares .ai/repo/automation/inventory.jsonl with I4512; they may not run concurrently |
 | WARN | `scope_conflict` | `I3155` | shares test/cases/365_new_shell_is_refused.sh with I3318; they may not run concurrently |
@@ -41,13 +40,11 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I3155` | shares docs/generated/modules/shell.md with I3762; they may not run concurrently |
 | WARN | `scope_conflict` | `I3155` | shares docs/generated/modules/shell.md with I3763; they may not run concurrently |
 | WARN | `scope_conflict` | `I3155` | shares docs/generated/modules/shell.md with I3810; they may not run concurrently |
-| WARN | `scope_conflict` | `I3155` | shares docs/generated/modules/shell.md with I3829; they may not run concurrently |
 | WARN | `scope_conflict` | `I3155` | shares docs/generated/modules/shell.md with I3841; they may not run concurrently |
 | WARN | `scope_conflict` | `I3155` | shares apps/majordomus-cli/src/ui/mod.rs with I3941; they may not run concurrently |
 | WARN | `scope_conflict` | `I3155` | shares apps/majordomus-cli/src/capability/builtin/shell.rs with I4002; they may not run concurrently |
 | WARN | `scope_conflict` | `I3155` | shares apps/majordomus-cli/src/capability/builtin/shell.rs with I4006; they may not run concurrently |
 | WARN | `scope_conflict` | `I3155` | shares apps/majordomus-cli/src/capability/builtin/shell.rs with I4327; they may not run concurrently |
-| WARN | `scope_conflict` | `I3155` | shares docs/generated/modules/shell.md with I4352; they may not run concurrently |
 | WARN | `scope_conflict` | `I3155` | shares docs/generated/modules/shell.md with I4400; they may not run concurrently |
 | WARN | `scope_conflict` | `I3155` | shares docs/generated/modules/shell.md with I4466; they may not run concurrently |
 | WARN | `scope_conflict` | `I3155` | shares apps/majordomus-cli/src/capability/builtin/shell.rs with I4468; they may not run concurrently |
