@@ -68,9 +68,14 @@ Current version: **1.0.0-alpha.10**
 
 ### Decisions
 
+- **ADR-0223** A deployment carries the site built at its own commit, and the hosted server serves it at /docs _(accepted)_
+- **ADR-0224** No ordinary command builds; a missing or stale executable fails fast or answers through a release of the same generation, and only an explicit build builds _(accepted)_
 - **ADR-0220** A hosted server is a rendezvous only over TLS, with its key held as a secret and the mesh read only by those it trusts _(accepted)_
 - **ADR-0219** A deployment names the provider that hosts it, and every provider file is derived from it _(accepted)_
+- **ADR-0176** The peer blackboard is one projection of the board, the journal and the monitor, pushed over one socket _(proposed)_
 - **ADR-0170** A browser computes with the portable core, and the server verifies by recomputing _(proposed)_
+- **ADR-0226** A session joins the cluster before it works — current, announced and useful — and the repository says when it has not _(proposed)_
+- **ADR-0221** Init declares the mesh, closed until a machine is enrolled _(proposed)_
 
 ### Added
 
