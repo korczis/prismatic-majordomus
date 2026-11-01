@@ -128,18 +128,18 @@ mj_validate_policy() {
 # share/profile-limits.yaml against the profiles and lib/ (I0201): every declared axis is set
 # on every profile, every declared adapter is a function that names its limit in a
 # `# majordomus-limit: <limit>` line above it, and no function names a limit the file does
-# not declare. Each profile's limits are then printed as data, one name=value per limit.
+# not declare. Each profile's limits are then printed as data, one name=value per limit, as
+# mj_limits_resolve computes them (I0202).
 mj_profile_limits_reconcile() {
-  local reg="$MJ_BIN_DIR/../share/profile-limits.yaml" rel="share/profile-limits.yaml"
-  local flat tagged i id axis derive adapter ids="" pf n v line vals bad
-  flat="$(mktemp "${TMPDIR:-/tmp}/mj.pl.XXXXXX")"
-  if ! mj_yaml_flatten "$reg" > "$flat" 2>/dev/null; then
-    mj_doctrine_fail profile-limits "$rel" "does not parse" "cat $rel"; rm -f "$flat"; return 0
-  fi
-  if [ "$(mj_yget "$flat" version)" != 1 ]; then
-    mj_doctrine_fail profile-limits "$rel" "unsupported version '$(mj_yget "$flat" version)' (want 1)" "grep -n '^version:' $rel"
-    rm -f "$flat"; return 0
-  fi
+  local rel="share/profile-limits.yaml" flat tagged i id axis derive adapter cap capv ids="" pf n line vals bad raw v st rc=0
+  mj_limits_load || rc=$?
+  case "$rc" in
+    0) ;;
+    1) mj_doctrine_fail profile-limits "$rel" "does not parse" "cat $rel"; return 0 ;;
+    *) mj_doctrine_fail profile-limits "$rel" "unsupported version '$(mj_yget "$MJ_LIM_FLAT" version)' (want 1)" "grep -n '^version:' $rel"
+       return 0 ;;
+  esac
+  flat="$MJ_LIM_FLAT"
   # file, limit, function: each function under lib/ with the marker lines directly above it
   tagged="$(awk '
     FNR == 1 { n = 0 }
@@ -149,12 +149,16 @@ mj_profile_limits_reconcile() {
     { n = 0 }' "$MJ_LIB_DIR"/*.sh)"
   i=0
   while id="$(mj_yget "$flat" "limits.$i.id")" && [ -n "$id" ]; do
-    axis="$(mj_yget "$flat" "limits.$i.axis")"; derive="$(mj_yget "$flat" "limits.$i.derive")"
+    derive="$(mj_yget "$flat" "limits.$i.derive")"; cap="$(mj_yget "$flat" "limits.$i.cap")"
     adapter="$(mj_yget "$flat" "limits.$i.adapter")"; ids="$ids $id"
     case "$derive" in
       count|duration_seconds) ;;
       *) mj_doctrine_fail profile-limits "$id" "derive '$derive' is not count or duration_seconds" "grep -n -A4 'id: $id' $rel" ;;
     esac
+    if [ -n "$cap" ]; then
+      capv="$(mj_pol "$cap")"
+      case "$capv" in ''|*[!0-9]*) mj_doctrine_fail profile-limits "$id" "caps at policy $cap, which is '$capv', not a number" "grep -n '$(printf '%s' "$cap" | sed 's/.*\.//'):' $(mj_rel "$MJ_POLICY_FILE")" ;; esac
+    fi
     printf '%s\n' "$tagged" | awk -v l="$id" -v f="$adapter" '$2 == l && $3 == f { ok = 1 } END { exit ok ? 0 : 1 }' \
       || mj_doctrine_fail profile-limits "$id" "declares adapter $adapter, and no function $adapter under lib/ carries '# majordomus-limit: $id'" \
         "grep -rn -A1 'majordomus-limit: $id' lib/"
@@ -166,32 +170,25 @@ mj_profile_limits_reconcile() {
     case " $ids " in *" $2 "*) ;;
       *) mj_doctrine_fail profile-limits "$2" "$(mj_rel "$1"): $3 applies limit '$2', which $rel does not declare" "grep -n 'majordomus-limit: $2' $(mj_rel "$1")" ;;
     esac
-  done <<EOF
+  done <<EOT
 $tagged
-EOF
+EOT
+  # every profile's limits, as mj_limits_resolve computes them for the enforcement
   for pf in "$MJ_PROFILES_DIR"/*.yaml; do
     [ -f "$pf" ] || continue; n="$(basename "$pf" .yaml)"
     mj_load_profile "$n" 2>/dev/null || continue
-    vals=""; bad=0; i=0
-    while id="$(mj_yget "$flat" "limits.$i.id")" && [ -n "$id" ]; do
-      axis="$(mj_yget "$flat" "limits.$i.axis")"; derive="$(mj_yget "$flat" "limits.$i.derive")"
-      v="$(mj_pro "$axis")"
-      if [ -z "$v" ]; then
-        mj_doctrine_fail profile-limits "$n" "does not set $axis, from which $rel derives $id" "cat $(mj_rel "$pf")"; bad=1
-      else
-        case "$derive" in
-          duration_seconds) v="$(mj_duration_secs "$v")" || v="" ;;
-          count) case "$v" in *[!0-9]*) v="" ;; esac ;;
-        esac
-        if [ -z "$v" ]; then
-          mj_doctrine_fail profile-limits "$n" "$axis: '$(mj_pro "$axis")' is not a $derive value" "grep -n '$(printf '%s' "$axis" | sed 's/.*\.//'):' $(mj_rel "$pf")"; bad=1
-        else vals="$vals $id=$v"; fi
-      fi
-      i=$((i+1))
-    done
+    vals=""; bad=0
+    while IFS="$MJ_TAB" read -r id axis derive line raw v cap st; do
+      case "$st" in
+        ok) vals="$vals $id=$v" ;;
+        unset) mj_doctrine_fail profile-limits "$n" "does not set $axis, from which $rel derives $id" "cat $(mj_rel "$pf")"; bad=1 ;;
+        *) mj_doctrine_fail profile-limits "$n" "$axis: '$raw' is not a $derive value" "grep -n '$(printf '%s' "$axis" | sed 's/.*\.//'):' $(mj_rel "$pf")"; bad=1 ;;
+      esac
+    done <<EOT
+$(mj_limits_resolve)
+EOT
     [ "$bad" = 1 ] || mj_doctrine_ok profile-limits "$n" "limits${vals}"
   done
-  rm -f "$flat"
 }
 
 # A linked worktree runs the hooks of its own tree (I2718). The repository's policy is the

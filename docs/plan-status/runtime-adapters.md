@@ -9,14 +9,14 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 
 | milestone | status | done of required | ready | blocked | active | verify | cancelled | outcome |
 |---|---|---|---|---|---|---|---|---|
-| [runtime-adapters](https://majordomus.dev/plan/runtime-adapters/) | ACTIVE | 0/6 | 0 | 5 | 1 | 0 | 0 | A profile's axes become opt-in runtime clamps a provider actually applies — read size, output condensation, subagent budget — with the limit derived from the profile rather than configured twice. |
+| [runtime-adapters](https://majordomus.dev/plan/runtime-adapters/) | ACTIVE | 1/6 | 0 | 4 | 1 | 0 | 0 | A profile's axes become opt-in runtime clamps a provider actually applies — read size, output condensation, subagent budget — with the limit derived from the profile rather than configured twice. |
 
 ## Issues
 
 | issue | status | wave | depends on | title |
 |---|---|---|---|---|
-| [I0201](https://majordomus.dev/plan/i0201/) | ACTIVE | 0 | — | Declare which profile axis may become which runtime limit |
-| [I0202](https://majordomus.dev/plan/i0202/) | BLOCKED | 1 | I0201 | Resolve a task's effective limits and print them as data |
+| [I0201](https://majordomus.dev/plan/i0201/) | DONE | 0 | — | Declare which profile axis may become which runtime limit |
+| [I0202](https://majordomus.dev/plan/i0202/) | ACTIVE | 1 | I0201 | Resolve a task's effective limits and print them as data |
 | [I0203](https://majordomus.dev/plan/i0203/) | BLOCKED | 2 | I0202 | Make enforcement opt-in, and prove a repository that declines is unaffected |
 | [I0204](https://majordomus.dev/plan/i0204/) | BLOCKED | 3 | I0203 | Apply one derived limit for real and prove it changes what happens |
 | [I0205](https://majordomus.dev/plan/i0205/) | BLOCKED | 4 | I0204 | Declare the clamp as a doctrine so the mapping and the adapter cannot drift |
@@ -26,94 +26,8 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 
 | level | code | subject | message |
 |---|---|---|---|
-| WARN | `scope_conflict` | `I0201` | shares share with I1201; they may not run concurrently |
-| WARN | `scope_conflict` | `I0201` | shares share with I1504; they may not run concurrently |
-| WARN | `scope_conflict` | `I0201` | shares share with I1900; they may not run concurrently |
-| WARN | `scope_conflict` | `I0201` | shares share with I1980; they may not run concurrently |
-| WARN | `scope_conflict` | `I0201` | shares share with I1990; they may not run concurrently |
-| WARN | `scope_conflict` | `I0201` | shares share with I1999; they may not run concurrently |
-| WARN | `scope_conflict` | `I0201` | shares lib with I2059; they may not run concurrently |
-| WARN | `scope_conflict` | `I0201` | shares lib with I2114; they may not run concurrently |
-| WARN | `scope_conflict` | `I0201` | shares share with I2148; they may not run concurrently |
-| WARN | `scope_conflict` | `I0201` | shares lib with I2350; they may not run concurrently |
-| WARN | `scope_conflict` | `I0201` | shares share with I2670; they may not run concurrently |
-| WARN | `scope_conflict` | `I0201` | shares lib with I2694; they may not run concurrently |
-| WARN | `scope_conflict` | `I0201` | shares lib with I2714; they may not run concurrently |
-| WARN | `scope_conflict` | `I0201` | shares share with I2720; they may not run concurrently |
-| WARN | `scope_conflict` | `I0201` | shares share with I2747; they may not run concurrently |
-| WARN | `scope_conflict` | `I0201` | shares lib with I2867; they may not run concurrently |
-| WARN | `scope_conflict` | `I0201` | shares share with I2901; they may not run concurrently |
-| WARN | `scope_conflict` | `I0201` | shares share with I2911; they may not run concurrently |
-| WARN | `scope_conflict` | `I0201` | shares share with I2919; they may not run concurrently |
-| WARN | `scope_conflict` | `I0201` | shares share with I3003; they may not run concurrently |
-| WARN | `scope_conflict` | `I0201` | shares share with I3005; they may not run concurrently |
-| WARN | `scope_conflict` | `I0201` | shares lib with I3061; they may not run concurrently |
-| WARN | `scope_conflict` | `I0201` | shares share with I3079; they may not run concurrently |
-| WARN | `scope_conflict` | `I0201` | shares lib with I3083; they may not run concurrently |
-| WARN | `scope_conflict` | `I0201` | shares share with I3087; they may not run concurrently |
-| WARN | `scope_conflict` | `I0201` | shares lib with I3110; they may not run concurrently |
-| WARN | `scope_conflict` | `I0201` | shares lib with I3115; they may not run concurrently |
-| WARN | `scope_conflict` | `I0201` | shares lib with I3116; they may not run concurrently |
-| WARN | `scope_conflict` | `I0201` | shares share with I3123; they may not run concurrently |
-| WARN | `scope_conflict` | `I0201` | shares share with I3156; they may not run concurrently |
-| WARN | `scope_conflict` | `I0201` | shares share with I3162; they may not run concurrently |
-| WARN | `scope_conflict` | `I0201` | shares share with I3163; they may not run concurrently |
-| WARN | `scope_conflict` | `I0201` | shares share with I3166; they may not run concurrently |
-| WARN | `scope_conflict` | `I0201` | shares share with I3167; they may not run concurrently |
-| WARN | `scope_conflict` | `I0201` | shares share with I3214; they may not run concurrently |
-| WARN | `scope_conflict` | `I0201` | shares share with I3215; they may not run concurrently |
-| WARN | `scope_conflict` | `I0201` | shares share with I3219; they may not run concurrently |
-| WARN | `scope_conflict` | `I0201` | shares share with I3232; they may not run concurrently |
-| WARN | `scope_conflict` | `I0201` | shares share with I3280; they may not run concurrently |
-| WARN | `scope_conflict` | `I0201` | shares lib with I3299; they may not run concurrently |
-| WARN | `scope_conflict` | `I0201` | shares lib with I3304; they may not run concurrently |
-| WARN | `scope_conflict` | `I0201` | shares lib with I3309; they may not run concurrently |
-| WARN | `scope_conflict` | `I0201` | shares lib with I3310; they may not run concurrently |
-| WARN | `scope_conflict` | `I0201` | shares share with I3312; they may not run concurrently |
-| WARN | `scope_conflict` | `I0201` | shares lib with I3318; they may not run concurrently |
-| WARN | `scope_conflict` | `I0201` | shares share with I3320; they may not run concurrently |
-| WARN | `scope_conflict` | `I0201` | shares lib with I3322; they may not run concurrently |
-| WARN | `scope_conflict` | `I0201` | shares lib with I3757; they may not run concurrently |
-| WARN | `scope_conflict` | `I0201` | shares lib with I3762; they may not run concurrently |
-| WARN | `scope_conflict` | `I0201` | shares share with I3763; they may not run concurrently |
-| WARN | `scope_conflict` | `I0201` | shares share with I3765; they may not run concurrently |
-| WARN | `scope_conflict` | `I0201` | shares share with I3793; they may not run concurrently |
-| WARN | `scope_conflict` | `I0201` | shares lib with I3810; they may not run concurrently |
-| WARN | `scope_conflict` | `I0201` | shares share with I3820; they may not run concurrently |
-| WARN | `scope_conflict` | `I0201` | shares share with I3829; they may not run concurrently |
-| WARN | `scope_conflict` | `I0201` | shares lib with I3974; they may not run concurrently |
-| WARN | `scope_conflict` | `I0201` | shares share with I4251; they may not run concurrently |
-| WARN | `scope_conflict` | `I0201` | shares share with I4252; they may not run concurrently |
-| WARN | `scope_conflict` | `I0201` | shares lib with I4253; they may not run concurrently |
-| WARN | `scope_conflict` | `I0201` | shares share with I4256; they may not run concurrently |
-| WARN | `scope_conflict` | `I0201` | shares share with I4257; they may not run concurrently |
-| WARN | `scope_conflict` | `I0201` | shares share with I4258; they may not run concurrently |
-| WARN | `scope_conflict` | `I0201` | shares share with I4261; they may not run concurrently |
-| WARN | `scope_conflict` | `I0201` | shares lib with I4264; they may not run concurrently |
-| WARN | `scope_conflict` | `I0201` | shares lib with I4265; they may not run concurrently |
-| WARN | `scope_conflict` | `I0201` | shares lib with I4268; they may not run concurrently |
-| WARN | `scope_conflict` | `I0201` | shares share with I4292; they may not run concurrently |
-| WARN | `scope_conflict` | `I0201` | shares share with I4306; they may not run concurrently |
-| WARN | `scope_conflict` | `I0201` | shares share with I4309; they may not run concurrently |
-| WARN | `scope_conflict` | `I0201` | shares lib with I4322; they may not run concurrently |
-| WARN | `scope_conflict` | `I0201` | shares lib with I4323; they may not run concurrently |
-| WARN | `scope_conflict` | `I0201` | shares lib with I4329; they may not run concurrently |
-| WARN | `scope_conflict` | `I0201` | shares share with I4333; they may not run concurrently |
-| WARN | `scope_conflict` | `I0201` | shares lib with I4357; they may not run concurrently |
-| WARN | `scope_conflict` | `I0201` | shares lib with I4362; they may not run concurrently |
-| WARN | `scope_conflict` | `I0201` | shares share with I4400; they may not run concurrently |
-| WARN | `scope_conflict` | `I0201` | shares lib with I4410; they may not run concurrently |
-| WARN | `scope_conflict` | `I0201` | shares lib with I4411; they may not run concurrently |
-| WARN | `scope_conflict` | `I0201` | shares share with I4413; they may not run concurrently |
-| WARN | `scope_conflict` | `I0201` | shares share with I4415; they may not run concurrently |
-| WARN | `scope_conflict` | `I0201` | shares share with I4416; they may not run concurrently |
-| WARN | `scope_conflict` | `I0201` | shares share with I4417; they may not run concurrently |
-| WARN | `scope_conflict` | `I0201` | shares share with I4418; they may not run concurrently |
-| WARN | `scope_conflict` | `I0201` | shares lib with I4460; they may not run concurrently |
-| WARN | `scope_conflict` | `I0201` | shares lib with I4461; they may not run concurrently |
-| WARN | `scope_conflict` | `I0201` | shares lib with I4462; they may not run concurrently |
-| WARN | `scope_conflict` | `I0201` | shares share with I4463; they may not run concurrently |
-| WARN | `scope_conflict` | `I0201` | shares share with I4464; they may not run concurrently |
-| WARN | `scope_conflict` | `I0201` | shares share with I4465; they may not run concurrently |
-| WARN | `scope_conflict` | `I0201` | shares lib with I4467; they may not run concurrently |
-| WARN | `scope_conflict` | `I0201` | shares share with I4468; they may not run concurrently |
+| WARN | `scope_conflict` | `I0202` | shares lib with I1988; they may not run concurrently |
+| WARN | `scope_conflict` | `I0202` | shares lib with I3072; they may not run concurrently |
+| WARN | `scope_conflict` | `I0202` | shares lib with I3303; they may not run concurrently |
+| WARN | `scope_conflict` | `I0202` | shares lib with I3378; they may not run concurrently |
+| WARN | `scope_conflict` | `I0202` | shares lib with I3825; they may not run concurrently |

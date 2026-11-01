@@ -1473,6 +1473,57 @@ mj_load_profile() {
 }
 mj_pro() { [ -n "${MJ_PRO_FLAT:-}" ] || return 0; mj_yget "$MJ_PRO_FLAT" "$1"; }
 
+# ---------------------------------------------------------------- profile limits
+# A profile axis becomes a runtime limit here and nowhere else (I0202). share/profile-limits.yaml
+# declares each limit; mj_limits_resolve computes every limit of the loaded profile, and the
+# code that applies one asks mj_limit for it rather than reading the axis itself, so doctor,
+# `majordomus doctrine limits` and the enforcement cannot disagree about a number.
+mj_limits_file() { printf '%s' "$MJ_BIN_DIR/../share/profile-limits.yaml"; }
+
+# The declaration, flattened into MJ_LIM_FLAT once per process: 1 when it does not parse,
+# 2 when its version is not 1 (the flattening is kept, so a caller can name the version).
+mj_limits_load() {
+  if [ -z "${MJ_LIM_FLAT:-}" ] || [ ! -f "$MJ_LIM_FLAT" ]; then
+    MJ_LIM_FLAT="$(mktemp "${TMPDIR:-/tmp}/mj.lim.XXXXXX")"
+    mj_yaml_flatten "$(mj_limits_file)" > "$MJ_LIM_FLAT" 2>/dev/null || { rm -f "$MJ_LIM_FLAT"; MJ_LIM_FLAT=""; return 1; }
+  fi
+  [ "$(mj_yget "$MJ_LIM_FLAT" version)" = 1 ] || return 2
+}
+
+# Every declared limit of the loaded profile, one tab-separated row each:
+#   id  axis  derive  unit  axis-value  limit  cap  status
+# status is ok, unset (the profile does not set the axis) or invalid (the value is not of the
+# derivation's kind); the limit is - unless status is ok, and an empty field is written -, so
+# that a reader splitting on tabs never sees two fields run together. A limit that declares a
+# cap is the smaller of the derived value and that policy key's number.
+mj_limits_resolve() {
+  local i=0 id axis derive unit cap raw v capv st
+  mj_limits_load || return 0
+  while id="$(mj_yget "$MJ_LIM_FLAT" "limits.$i.id")" && [ -n "$id" ]; do
+    axis="$(mj_yget "$MJ_LIM_FLAT" "limits.$i.axis")"; derive="$(mj_yget "$MJ_LIM_FLAT" "limits.$i.derive")"
+    unit="$(mj_yget "$MJ_LIM_FLAT" "limits.$i.unit")"; cap="$(mj_yget "$MJ_LIM_FLAT" "limits.$i.cap")"
+    raw="$(mj_pro "$axis")"; v=""; st=ok
+    if [ -z "$raw" ]; then st=unset
+    else
+      case "$derive" in
+        duration_seconds) v="$(mj_duration_secs "$raw")" || v="" ;;
+        count) case "$raw" in *[!0-9]*) ;; *) v="$raw" ;; esac ;;
+      esac
+      [ -n "$v" ] || st=invalid
+    fi
+    if [ "$st" = ok ] && [ -n "$cap" ]; then
+      capv="$(mj_pol "$cap")"
+      case "$capv" in ''|*[!0-9]*) ;; *) [ "$v" -le "$capv" ] || v="$capv" ;; esac
+    fi
+    printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' "$id" "$axis" "$derive" "$unit" "${raw:--}" "${v:--}" "${cap:--}" "$st"
+    i=$((i+1))
+  done
+}
+
+# One limit of the loaded profile, for the code that applies it; empty when the profile does
+# not yield one, and the caller keeps its own behaviour for that case.
+mj_limit() { mj_limits_resolve | awk -F'\t' -v l="$1" '$1 == l && $8 == "ok" { print $6 }'; }
+
 # ---------------------------------------------------------------- temporary files
 # Every temporary file a command makes lives under one directory of the process's own, and
 # the exit trap removes that directory. Before this, the trap removed the four files it knew

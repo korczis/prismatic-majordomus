@@ -2191,16 +2191,20 @@
       "stage": "inspect",
       "class": "read-only",
       "read_only": true,
-      "requires_task": "none",
+      "requires_task": "optional",
       "requires_repository": true,
       "requires_installed": true,
       "json_output": true,
-      "syntax": "majordomus doctrine [status|list|show <id>] [--json]",
+      "syntax": "majordomus doctrine [status|list|show <id>|limits] [--json]",
       "demo": "doctrine-registry",
-      "note": "The registry ships with the tool rather than with a repository. A doctrine is a statement about how Majordomus behaves; a repository configures the tool without redefining it.",
+      "note": "The registry ships with the tool rather than with a repository. A doctrine is a statement about how Majordomus behaves; a repository configures the tool without redefining it. `limits` prints the runtime limits the active task's profile derives, or the default profile's when no task is active, as the resolver every adapter asks computes them (I0202); it exits 10 when a declared limit cannot be derived.",
       "reads": [
         ".ai/repo/rules/",
-        "lib/"
+        "lib/",
+        "share/profile-limits.yaml",
+        ".ai/repo/profiles/",
+        ".ai/repo/policy.yaml",
+        ".ai/local/state/current.yaml"
       ],
       "writes": [],
       "exit_codes": [
@@ -2214,11 +2218,13 @@
         "behaviour": [
           "1030_a_derive_machine_has_the_pinned_toolchain",
           "18_doctrine_wiring",
-          "19_end_to_end"
+          "19_end_to_end",
+          "4409_a_task_prints_its_effective_limits"
         ],
         "negative": [
           "1030_a_derive_machine_has_the_pinned_toolchain",
-          "18_doctrine_wiring"
+          "18_doctrine_wiring",
+          "4409_a_task_prints_its_effective_limits"
         ]
       },
       "demo_data": {

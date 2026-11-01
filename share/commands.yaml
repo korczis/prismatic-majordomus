@@ -399,14 +399,14 @@ commands:
     class: read-only
     requires_repository: true
     requires_installed: true
-    requires_task: none
+    requires_task: optional
     json: true
-    syntax: majordomus doctrine [status|list|show <id>] [--json]
-    reads: [.ai/repo/rules/, lib/]
+    syntax: majordomus doctrine [status|list|show <id>|limits] [--json]
+    reads: [.ai/repo/rules/, lib/, share/profile-limits.yaml, .ai/repo/profiles/, .ai/repo/policy.yaml, .ai/local/state/current.yaml]
     writes: []
     exit_codes: [0, 2, 10, 12, 13]
     demo: doctrine-registry
-    note: The registry ships with the tool rather than with a repository. A doctrine is a statement about how Majordomus behaves; a repository configures the tool without redefining it.
+    note: The registry ships with the tool rather than with a repository. A doctrine is a statement about how Majordomus behaves; a repository configures the tool without redefining it. `limits` prints the runtime limits the active task's profile derives, or the default profile's when no task is active, as the resolver every adapter asks computes them (I0202); it exits 10 when a declared limit cannot be derived.
 
   - id: plan
     title: plan
