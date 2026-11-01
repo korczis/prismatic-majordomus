@@ -1,0 +1,25 @@
+id: I4266
+milestone: a-second-adopter-is-served
+title: "plan says why an issue with no dependency is BLOCKED by its milestone"
+slug: a-milestone-dependency-is-explained
+priority: p3
+profile: implementation
+parallel_safe: true
+objective: "plan show and plan blocked name the milestone dependency that blocks an issue."
+why: "An adopter's field report (a private Python client repository adopted from the v1.0.0-alpha.8 release on 2026-10-27, with the plan model, project rules, knowledge, skills, Claude Code capture and a GitHub projection all in use) found: a dependency-free issue of a milestone that depends on an unfinished one is BLOCKED; plan show and plan blocked name no reason, and the adopter read it as a bug."
+current_state: "The milestone edge blocks silently."
+desired_state: "plan show and plan blocked name the milestone dependency that blocks an issue."
+scope:
+  - ".ai/repo/project/issues/I4266.yaml"
+  - "lib/plan.sh"
+  - "lib/project.awk"
+  - "test/cases/4266_a_milestone_block_is_named.sh"
+depends_on: []
+acceptance_criteria:
+  - "plan blocked names the blocking milestone for a dependency-free issue"
+validation:
+  - "bash test/run.sh 4266_a_milestone_block_is_named"
+evidence_required:
+  - "case_a_milestone_dependency_is_explained"
+created_at: 2026-10-27
+updated_at: 2026-10-27
