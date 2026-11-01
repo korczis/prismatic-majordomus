@@ -728,6 +728,51 @@ fn a_policy_entry_is_the_mode_of_a_rule_the_project_checks() {
     assert_eq!(with_case.tests.len(), 1, "the cases are still read");
 }
 
+/// A blocking rule checked by a policy entry and naming no case shows the mechanism and
+/// not a verdict: the project's command runs where doctor verifies it, and this repository
+/// keeps no record of what it decided. It is `not_run`, never `unproven` — the rule does
+/// name what checks it — and so it is not a finding, and it is counted as naming proof.
+#[test]
+fn a_rule_checked_by_a_policy_entry_alone_is_not_run_and_not_a_finding() {
+    let repo = crate::synthetic::SyntheticRepository::small().unwrap();
+    let rel = ".ai/repo/rules/project/rule-7.v1.md";
+    let text = std::fs::read_to_string(repo.root().join(rel)).unwrap();
+    std::fs::write(
+        repo.root().join(rel),
+        text.replace(
+            "class: advisory",
+            "class: blocking\n\nx-majordomus:\n  enforcement: links-on-commit",
+        ),
+    )
+    .unwrap();
+
+    let index = repo.index().unwrap();
+    let ledger = Ledger::load(repo.root()).unwrap();
+    let r = report(&index, &ledger);
+    let p = r
+        .rules
+        .iter()
+        .find(|p| p.rule.id == "project.rule-7")
+        .unwrap();
+    assert_eq!(p.rule.enforcement.mode, Mode::Entry);
+    assert_eq!(p.rule.enforcement.entry.as_deref(), Some("links-on-commit"));
+    assert!(p.tests.is_empty());
+    assert_eq!(p.state, RuleState::NotRun);
+    assert!(
+        p.satisfied,
+        "an entry that checks the rule is not a finding"
+    );
+    assert!(r.findings.is_empty());
+    assert_eq!(r.coverage.named_proof, 1);
+    assert_eq!(r.coverage.artifacts_present, 1);
+    assert_eq!(r.coverage.passing, 0);
+    assert_eq!(
+        r.verdict,
+        RulesVerdict::Unproven,
+        "a check with no recorded verdict must not leave the corpus reading as proven"
+    );
+}
+
 /// A blocking rule that declares review is not a finding — and is not counted as proven
 /// either. The number that must be visible is how many rules only a reader enforces, and
 /// it is counted apart from every executable mode so that a summary cannot fold it into a
