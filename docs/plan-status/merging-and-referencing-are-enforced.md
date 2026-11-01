@@ -34,6 +34,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 
 | level | code | subject | message |
 |---|---|---|---|
+| WARN | `scope_conflict` | `I3973` | shares .github/workflows/validate.yml with I4242; they may not run concurrently |
 | WARN | `scope_conflict` | `I3973` | shares .github/workflows/validate.yml with I4296; they may not run concurrently |
 | WARN | `scope_conflict` | `I3973` | shares apps/majordomus-cli/src/convergence with I4333; they may not run concurrently |
 | WARN | `scope_conflict` | `I3973` | shares .github/workflows/validate.yml with I4338; they may not run concurrently |

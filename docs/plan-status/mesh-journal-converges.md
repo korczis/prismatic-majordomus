@@ -92,6 +92,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I3174` | shares apps/majordomus-cli/src/mesh/cooperation.rs with I3810; they may not run concurrently |
 | WARN | `scope_conflict` | `I3174` | shares docs/MESH.md with I3820; they may not run concurrently |
 | WARN | `scope_conflict` | `I3174` | shares apps/majordomus-cli/src/mesh/cooperation.rs with I3835; they may not run concurrently |
+| WARN | `scope_conflict` | `I3174` | shares test/mesh-lab/run with I4242; they may not run concurrently |
 | WARN | `scope_conflict` | `I3174` | shares docs/MESH.md with I4306; they may not run concurrently |
 | WARN | `scope_conflict` | `I3174` | shares apps/majordomus-cli/src/mesh/cooperation.rs with I4327; they may not run concurrently |
 | WARN | `scope_conflict` | `I3174` | shares apps/majordomus-cli/src/mesh/journal.rs with I4343; they may not run concurrently |

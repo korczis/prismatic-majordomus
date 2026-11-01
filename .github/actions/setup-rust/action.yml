@@ -27,8 +27,11 @@ runs:
     - uses: dtolnay/rust-toolchain@stable
       with:
         components: ${{ inputs.components }}
+    # I4242: a self-hosted runner keeps cargo's build-dir on its own disk between jobs, so the
+    # cache would only upload gigabytes over the machine's uplink (24 min on lundra, run
+    # 40398294743) to restore what is already there.
     - id: cache
-      if: inputs.cache == 'true'
+      if: inputs.cache == 'true' && runner.environment != 'self-hosted'
       uses: Swatinem/rust-cache@v2
       with:
         workspaces: apps/majordomus-cli

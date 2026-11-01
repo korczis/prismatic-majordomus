@@ -88,7 +88,9 @@ fail() {
   exit 10
 }
 
-api() { docker exec "$P-$1" curl -fsS "http://127.0.0.1:8741$2"; }
+# Each request is bounded: wait_for only asks its own bound between attempts, so one request
+# that hangs on a loaded node would hold the lab past it.
+api() { docker exec "$P-$1" curl -fsS --max-time 30 "http://127.0.0.1:8741$2"; }
 post() { docker exec "$P-$1" curl -sS -o /tmp/mjlab.body -w '%{http_code}' -H 'Content-Type: application/json' -d "$3" "http://127.0.0.1:8741$2" && docker exec "$P-$1" cat /tmp/mjlab.body >&2 && echo; }
 post_status() { docker exec "$P-$1" curl -sS -o /dev/null -w '%{http_code}' -H 'Content-Type: application/json' -d "$3" "http://127.0.0.1:8741$2"; }
 post_json() { docker exec "$P-$1" curl -sS -H 'Content-Type: application/json' -d "$3" "http://127.0.0.1:8741$2"; }
@@ -166,8 +168,15 @@ start_node c "$REPO"
 # lab node try x (candidates are filtered by repository), so the seed is what puts the
 # handshake's own isolation check under test.
 start_node x "some-other-repository" -e SEEDS="http://$P-a:8741"
+# A node unpacks its repository, commits it and indexes it before it serves: 44 s alone and
+# about 64 s for the first of four started together on lundra at load 7-16, where node a
+# missed the old 60 s (run 40776563391, I4242) with its container running and its log still
+# empty. MESH_LAB_START_WAIT is the bound in seconds; a node that misses it is named with its
+# container's state, not only its log, which is empty while it is still starting.
+START_WAIT="${MESH_LAB_START_WAIT:-240}"
 for n in a b c x; do
-  wait_for 60 "node $n serves" api "$n" /api/v1/mesh/cooperation >/dev/null || die "node $n did not start: $(docker logs --tail 20 "$P-$n" 2>&1)"
+  wait_for "$START_WAIT" "node $n serves" api "$n" /api/v1/mesh/cooperation >/dev/null \
+    || die "node $n did not serve in ${START_WAIT}s: container $(docker inspect -f '{{.State.Status}} exit={{.State.ExitCode}} oom={{.State.OOMKilled}}' "$P-$n" 2>&1); log: $(docker logs --tail 20 "$P-$n" 2>&1)"
 done
 
 # ------------------------------------------------------------------ scenarios
