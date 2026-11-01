@@ -308,7 +308,7 @@ impl Context {
     /// It is what a writer of a durable record hands [`crate::ledger::attribution`], so
     /// that a record written for one connection names that connection's episode and not
     /// whichever episode the serving process was started in (ADR 0164).
-    pub fn episode_key(&self) -> Option<String> {
+    pub(crate) fn episode_key(&self) -> Option<String> {
         self.caller
             .as_ref()
             .and_then(|peer| self.episodes.of_peer(peer))

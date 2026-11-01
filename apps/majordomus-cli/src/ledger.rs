@@ -285,7 +285,7 @@ pub fn append(
 /// ([`open_session_id_with`]). `None` resolves from the environment, which is what the
 /// command line and a plain HTTP request are.
 #[allow(clippy::too_many_arguments)]
-pub fn append_as(
+pub(crate) fn append_as(
     root: &Path,
     vocabulary: &Vocabulary,
     git: &GitState,
@@ -436,7 +436,7 @@ pub struct Attribution {
 }
 
 /// [`attribution_with`], reading the caller's identity from this process's environment.
-pub fn attribution(root: &Path, key: Option<&str>) -> Attribution {
+pub(crate) fn attribution(root: &Path, key: Option<&str>) -> Attribution {
     attribution_with(root, key, env_var)
 }
 
@@ -448,6 +448,19 @@ pub fn attribution(root: &Path, key: Option<&str>) -> Attribution {
 /// else's work. A task whose opener has closed, or whose opening names no episode, has no
 /// live owner, and the caller continuing it carries it on. With no episode at all the
 /// workers cannot be told apart and the task is the caller's (ADR 0164).
+///
+/// ```
+/// use majordomus_cli::ledger::{attribution_with, Attribution};
+/// # let dir = std::env::temp_dir().join(format!("mj-attr-with-doc-{}", std::process::id()));
+/// # let _ = std::fs::remove_dir_all(&dir);
+/// # std::fs::create_dir_all(dir.join(".ai/local/state")).unwrap();
+/// // Nothing open, no task: a record written here belongs to nobody and relates nothing.
+/// assert_eq!(attribution_with(&dir, None, |_| None), Attribution::default());
+/// // A task and no episode at all: the workers cannot be told apart, so it is the caller's.
+/// std::fs::write(dir.join(".ai/local/state/current.yaml"), "id: t-1\n").unwrap();
+/// assert_eq!(attribution_with(&dir, None, |_| None).task.as_deref(), Some("t-1"));
+/// # std::fs::remove_dir_all(&dir).unwrap();
+/// ```
 pub fn attribution_with(
     root: &Path,
     key: Option<&str>,
@@ -464,7 +477,7 @@ pub fn attribution_with(
 }
 
 /// [`open_session_id_with`], reading the caller's identity from this process's environment.
-pub fn open_session_id(root: &Path, key: Option<&str>) -> Option<String> {
+pub(crate) fn open_session_id(root: &Path, key: Option<&str>) -> Option<String> {
     open_session_id_with(root, key, env_var)
 }
 
@@ -526,7 +539,7 @@ pub fn open_session_id_with(
 
 /// The episode that opened task `id`: the session of its unique `task.started` line.
 /// Missing or ambiguous history supplies no identity — `mj_task_opening_session`.
-pub fn task_opening_session(root: &Path, id: &str) -> Option<String> {
+fn task_opening_session(root: &Path, id: &str) -> Option<String> {
     let (entries, _) = read(root);
     let mut starts = entries.iter().filter(|e| {
         e.event == "task.started" && e.payload.get("task_id").and_then(|v| v.as_str()) == Some(id)
@@ -539,7 +552,7 @@ pub fn task_opening_session(root: &Path, id: &str) -> Option<String> {
 }
 
 /// Whether episode `session` is still open in this checkout — `mj_session_is_open`.
-pub fn session_is_open(root: &Path, session: &str) -> bool {
+fn session_is_open(root: &Path, session: &str) -> bool {
     open_records_here(root).iter().any(|s| s == session)
 }
 
@@ -588,21 +601,18 @@ fn env_var(name: &str) -> Option<String> {
     std::env::var(name).ok().filter(|v| !v.is_empty())
 }
 
-/// The session ids of every open record that is this checkout's, in file-name order.
+/// The session ids of every open record that is this checkout's. Unordered: the callers
+/// count them and take the one, or ask whether a given id is among them.
 fn open_records_here(root: &Path) -> Vec<String> {
     let dir = root.join(STATE_DIR).join(OPEN_DIR);
     let Ok(entries) = fs::read_dir(&dir) else {
         return Vec::new();
     };
-    let mut files: Vec<PathBuf> = entries
+    entries
         .filter_map(|e| e.ok())
         .map(|e| e.path())
         .filter(|p| p.extension().is_some_and(|x| x == "yaml"))
-        .collect();
-    files.sort();
-    files
-        .iter()
-        .filter_map(|f| open_record_here(root, f))
+        .filter_map(|f| open_record_here(root, &f))
         .collect()
 }
 
