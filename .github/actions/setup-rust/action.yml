@@ -27,6 +27,13 @@ runs:
     - uses: dtolnay/rust-toolchain@stable
       with:
         components: ${{ inputs.components }}
+    # A self-hosted pool shares one machine between its runners: lundra's three runners each
+    # compiled at cargo's default parallelism and five rustc processes held 13 GiB of its 15,
+    # so the host swapped until it answered neither ssh nor ping (2026-11-01, run
+    # 41351584840). One compile unit per job keeps three concurrent jobs inside its memory.
+    - if: runner.environment == 'self-hosted'
+      shell: bash
+      run: echo "CARGO_BUILD_JOBS=1" >> "$GITHUB_ENV"
     # I4242: a self-hosted runner keeps cargo's build-dir on its own disk between jobs, so the
     # cache would only upload gigabytes over the machine's uplink (24 min on lundra, run
     # 40398294743) to restore what is already there.
