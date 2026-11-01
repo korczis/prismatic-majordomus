@@ -480,7 +480,14 @@ pub fn active_task(root: &Path) -> Option<(String, Vec<String>)> {
     (task.outcome == "active").then_some((task.id, task.scope))
 }
 
-/// The live claims of the checkout's shared server, asked over HTTP from outside it.
+/// The live claims of the checkout's shared server, asked over HTTP from outside it, or of
+/// the primary checkout's when this one has none running.
+///
+/// The claims are the repository's, not the checkout's: a linked worktree is a checkout of
+/// the same repository, and its sessions claim through whichever server of it runs, as
+/// `majordomus mesh` does. A worktree without a server of its own judged every edit
+/// `undecided` and let it through unsaid, so the advisory guard (I3322) recorded nothing in
+/// exactly the checkouts most sessions work in.
 ///
 /// ```
 /// use majordomus_cli::guard::{server_claims, ClaimSource};
@@ -492,10 +499,53 @@ pub fn active_task(root: &Path) -> Option<(String, Vec<String>)> {
 /// assert!(why.contains("no shared server"));
 /// ```
 pub fn server_claims(root: &Path) -> ClaimSource {
-    match crate::integration::exclusive::server_of(root) {
+    let primary = || primary_checkout(root).filter(|p| p != root);
+    match claims_server(root).or_else(|| primary().and_then(|p| claims_server(&p))) {
         Some(server) => claims_of(&server),
-        None => ClaimSource::Unavailable("no shared server answers for this checkout".into()),
+        None => ClaimSource::Unavailable(
+            "no shared server answers for this checkout or the repository's primary".into(),
+        ),
     }
+}
+
+/// The server of the checkout at `root` that can be asked for its claims: a ready one, or an
+/// outdated one. Outdated is older code, not older state — the claims it holds are the live
+/// ones, and an answer this executable cannot parse is still `undecided` — whereas
+/// [`server_of`](crate::integration::exclusive::server_of), which the executor writes its
+/// exclusive claims through, takes a ready server only. The primary's server is outdated
+/// whenever its sources moved since it started, which on a working machine is most of the
+/// time.
+fn claims_server(root: &Path) -> Option<crate::integration::exclusive::ServerMesh> {
+    use crate::capability::builtin::server::{local_half, standing_at, ServerStanding};
+    let (standing, _, lease) = standing_at(root, &local_half(root));
+    let url = lease.document().and_then(|d| d.url.clone());
+    url.filter(|_| matches!(standing, ServerStanding::Ready | ServerStanding::Outdated))
+        .map(crate::integration::exclusive::ServerMesh::at)
+}
+
+/// The primary checkout of the repository `root` belongs to: the directory holding the
+/// common git directory, which every linked worktree shares. `None` outside a repository,
+/// and for a bare one, which has no checkout to serve.
+///
+/// ```
+/// use majordomus_cli::guard::primary_checkout;
+///
+/// let dir = tempfile::tempdir().unwrap();
+/// assert_eq!(primary_checkout(dir.path()), None, "not a repository");
+/// ```
+pub fn primary_checkout(root: &Path) -> Option<PathBuf> {
+    let out = std::process::Command::new("git")
+        .arg("-C")
+        .arg(root)
+        .args(["rev-parse", "--path-format=absolute", "--git-common-dir"])
+        .stderr(std::process::Stdio::null())
+        .output()
+        .ok()
+        .filter(|o| o.status.success())?;
+    let common = PathBuf::from(String::from_utf8(out.stdout).ok()?.trim());
+    (common.file_name()? == ".git")
+        .then(|| common.parent().map(Path::to_path_buf))
+        .flatten()
 }
 
 /// The live claims `mesh` answers with, or why they could not be read. A server that does
@@ -856,6 +906,49 @@ mod tests {
         let v = judge(off.path(), "docs/a.md", None, || unreachable!("off"));
         assert_eq!(v.ground, "off");
         assert!(!v.detail.contains("advisory"), "{}", v.detail);
+    }
+
+    #[test]
+    fn a_linked_worktree_asks_the_primary_checkouts_server() {
+        let dir = tempfile::tempdir().unwrap();
+        let primary = dir.path().join("repo");
+        let linked = dir.path().join("repo-wt");
+        let git = |cwd: &Path, args: &[&str]| {
+            let ok = std::process::Command::new("git")
+                .arg("-C")
+                .arg(cwd)
+                .args(["-c", "user.name=t", "-c", "user.email=t@t"])
+                .args(args)
+                .output()
+                .unwrap()
+                .status
+                .success();
+            assert!(ok, "git {args:?}");
+        };
+        std::fs::create_dir(&primary).unwrap();
+        git(&primary, &["init", "-q"]);
+        git(&primary, &["commit", "-q", "--allow-empty", "-m", "base"]);
+        git(
+            &primary,
+            &["worktree", "add", "-q", linked.to_str().unwrap()],
+        );
+        let canonical = |p: &Path| p.canonicalize().unwrap();
+        let of = |p: &Path| primary_checkout(p).map(|p| canonical(&p));
+        assert_eq!(
+            of(&linked),
+            Some(canonical(&primary)),
+            "the linked worktree's primary"
+        );
+        assert_eq!(
+            of(&primary),
+            Some(canonical(&primary)),
+            "the primary is its own"
+        );
+        // neither runs a server, so the fallback is asked and says so
+        let ClaimSource::Unavailable(why) = server_claims(&linked) else {
+            panic!("no server runs in either checkout");
+        };
+        assert!(why.contains("or the repository's primary"), "{why}");
     }
 
     #[test]
