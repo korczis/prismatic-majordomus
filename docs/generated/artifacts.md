@@ -212,7 +212,7 @@ Every file `majordomus generate` writes, with the document it projects, the enco
 | `.agents/skills/pack-for-review/SKILL.md` | `editors/skill` | markdown | 983 | `53d822233a7bb91d` |
 | `.agents/skills/repo-review/SKILL.md` | `editors/skill` | markdown | 860 | `539dad28402a1270` |
 | `.agents/skills/report-verification-state/SKILL.md` | `editors/skill` | markdown | 1004 | `2a3a01c9678ba22f` |
-| `.bb/AGENTS.md` | `providers/bb` | markdown | 1442 | `13bde1a80850256f` |
+| `.bb/AGENTS.md` | `providers/bb` | markdown | 1442 | `865234e82a6f7bd3` |
 | `.claude/skills/assess-before-deleting/SKILL.md` | `editors/skill` | markdown | 972 | `303d9789f86d96d7` |
 | `.claude/skills/deploy-site/SKILL.md` | `editors/skill` | markdown | 873 | `5552658e7d9494f7` |
 | `.claude/skills/evolve/SKILL.md` | `editors/skill` | markdown | 872 | `fdd6a4b36dcda419` |
@@ -284,9 +284,9 @@ Every file `majordomus generate` writes, with the document it projects, the enco
 | `.claude/skills/report-verification-state/SKILL.md` | `editors/skill` | markdown | 1004 | `5330101f1b8963b3` |
 | `.dockerignore` | `deployment` | text | 595 | `84919926eadd46cd` |
 | `.zed/tasks.json` | `editors/zed-tasks` | json | 5513 | `1f6f3eb17251853f` |
-| `AGENTS.md` | `providers/agents` | markdown | 8709 | `706601a9957d50aa` |
-| `CLAUDE.md` | `providers/claude-code` | markdown | 7998 | `7893a26f27af1ff4` |
-| `GEMINI.md` | `providers/gemini` | markdown | 8216 | `358d0dcdd52ae9d4` |
+| `AGENTS.md` | `providers/agents` | markdown | 8709 | `893dcdb5bd6e0653` |
+| `CLAUDE.md` | `providers/claude-code` | markdown | 7998 | `835562a51a2b7bdb` |
+| `GEMINI.md` | `providers/gemini` | markdown | 8216 | `62b042961512aba6` |
 | `apps/majordomus-cli/src/cockpit/logo-mark.svg` | `design-mark` | text | 912 | `d3a39f415f9bd167` |
 | `apps/majordomus-cli/src/design/tokens.yaml` | `design-declaration` | yaml | 21266 | `0e500f1985cfe2ce` |
 | `apps/majordomus-cli/src/ui/icons.toml` | `ui-icons` | text | 9035 | `b5152a07987f0872` |
@@ -317,8 +317,8 @@ Every file `majordomus generate` writes, with the document it projects, the enco
 | `docs/generated/economics.json` | `economics` | json | 56212 | `e92397ee42a4775e` |
 | `docs/generated/economics.md` | `economics` | markdown | 15772 | `ee0520007183625a` |
 | `docs/generated/economics.yaml` | `economics` | yaml | 46605 | `264ece032e8525c8` |
-| `docs/generated/entities.json` | `entities` | json | 725499 | `5cbfb9f990b429fb` |
-| `docs/generated/graph.json` | `graph` | json | 6126002 | `a296e5381a2fa0f7` |
+| `docs/generated/entities.json` | `entities` | json | 725499 | `4d520136a5ac7669` |
+| `docs/generated/graph.json` | `graph` | json | 6126735 | `adc692a92805b808` |
 | `docs/generated/graph.schema.json` | `graph-schema` | json | 7634 | `b4c8b25173f9e9c0` |
 | `docs/generated/modules/artifacts.md` | `modules/artifacts` | markdown | 1750 | `b1c0df1e83e28765` |
 | `docs/generated/modules/blackboard.md` | `modules/blackboard` | markdown | 2540 | `f2faf315ceae5835` |
@@ -445,10 +445,10 @@ Every file `majordomus generate` writes, with the document it projects, the enco
 | `share/version.txt` | `version` | text | 247 | `032ed0c349181bad` |
 | `site/data/registry/design.json` | `site-design` | json | 11595 | `02f349431cf17cf6` |
 | `site/data/registry/distribution.json` | `site-distribution` | json | 3005 | `1dc59aaebd16174a` |
-| `site/data/registry/evidence-subjects.json` | `site-evidence-subjects` | json | 858429 | `930699e3e96998c0` |
+| `site/data/registry/evidence-subjects.json` | `site-evidence-subjects` | json | 858898 | `527656f8d5c4cc70` |
 | `site/data/registry/product-graph.json` | `site-product-graph` | json | 111831 | `a8db939518a15c90` |
-| `site/data/registry/product.json` | `site-product` | json | 780583 | `a3ca443c129e22d3` |
-| `site/data/registry/registry.json` | `site-registry` | json | 8445112 | `2f5c462be73d8820` |
+| `site/data/registry/product.json` | `site-product` | json | 780583 | `75f73fb2ebd306a8` |
+| `site/data/registry/registry.json` | `site-registry` | json | 8445468 | `0ec75a8f0f0776fd` |
 | `site/data/registry/why-graph.json` | `site-why-graph` | json | 180171 | `c5c85c57475615eb` |
 | `site/data/registry/why.json` | `site-why` | json | 349932 | `f34d973e38325648` |
 | `site/static/favicon.svg` | `design-mark` | text | 912 | `d3a39f415f9bd167` |

@@ -24132,7 +24132,9 @@
             "lib"
           ],
           "slug": "declare-limit-mapping",
-          "updated_at": "2026-09-04",
+          "started_at": "2026-10-29T00:35:40Z",
+          "started_event": "sha256:17a1118061237de07235a366db29da8574a19a7d538a00b0906323c5cbf2ca58",
+          "updated_at": "2026-10-29T00:35:40Z",
           "validation": [
             "bash test/run.sh",
             "bin/majordomus doctor"
@@ -101374,6 +101376,13 @@
         "source": "test/cases/43_plan_command.sh"
       },
       {
+        "id": "majordomus://test/test/cases/4400_a_profile_axis_names_the_limit_it_derives.sh",
+        "kind": "test",
+        "label": "test/cases/4400_a_profile_axis_names_the_limit_it_derives.sh",
+        "route": "/cockpit/objects/test/test-cases-4400-a-profile-axis-names-the-limit-it-derives-sh",
+        "source": "test/cases/4400_a_profile_axis_names_the_limit_it_derives.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/4406_a_chart_is_read_by_pointing_at_it.sh",
         "kind": "test",
         "label": "test/cases/4406_a_chart_is_read_by_pointing_at_it.sh",
@@ -148510,6 +148519,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/4400_a_profile_axis_names_the_limit_it_derives.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/4406_a_chart_is_read_by_pointing_at_it.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -153596,8 +153610,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4191,
-      "edges": 9632,
+      "nodes": 4192,
+      "edges": 9633,
       "acyclic": false,
       "truncated": false
     }

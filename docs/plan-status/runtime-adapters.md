@@ -9,13 +9,13 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 
 | milestone | status | done of required | ready | blocked | active | verify | cancelled | outcome |
 |---|---|---|---|---|---|---|---|---|
-| [runtime-adapters](https://majordomus.dev/plan/runtime-adapters/) | PLANNED | 0/6 | 1 | 5 | 0 | 0 | 0 | A profile's axes become opt-in runtime clamps a provider actually applies — read size, output condensation, subagent budget — with the limit derived from the profile rather than configured twice. |
+| [runtime-adapters](https://majordomus.dev/plan/runtime-adapters/) | ACTIVE | 0/6 | 0 | 5 | 1 | 0 | 0 | A profile's axes become opt-in runtime clamps a provider actually applies — read size, output condensation, subagent budget — with the limit derived from the profile rather than configured twice. |
 
 ## Issues
 
 | issue | status | wave | depends on | title |
 |---|---|---|---|---|
-| [I0201](https://majordomus.dev/plan/i0201/) | READY | 0 | — | Declare which profile axis may become which runtime limit |
+| [I0201](https://majordomus.dev/plan/i0201/) | ACTIVE | 0 | — | Declare which profile axis may become which runtime limit |
 | [I0202](https://majordomus.dev/plan/i0202/) | BLOCKED | 1 | I0201 | Resolve a task's effective limits and print them as data |
 | [I0203](https://majordomus.dev/plan/i0203/) | BLOCKED | 2 | I0202 | Make enforcement opt-in, and prove a repository that declines is unaffected |
 | [I0204](https://majordomus.dev/plan/i0204/) | BLOCKED | 3 | I0203 | Apply one derived limit for real and prove it changes what happens |

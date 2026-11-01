@@ -264,6 +264,33 @@ The four shipped profiles:
 </div>
 
 
+### Which axis becomes which limit — `share/profile-limits.yaml`
+
+An axis is prose until a limit is derived from it. `share/profile-limits.yaml`, shipped with
+the tool beside `share/obligations.yaml`, is the one place that says which axis may become a
+runtime limit, how the value is derived, and which function applies it (I0201). It declares
+only the limits this repository already applies:
+
+<div class="overflow-x-auto" tabindex="0">
+
+| limit | axis | derive | adapter |
+|---|---|---|---|
+| `checkpoint_max_age_seconds` | `checkpoint_interval` | `duration_seconds` | `mj_validate_checkpoint` |
+| `history_events` | `context.recent_history_depth` | `count` | `mj_ctx_history` |
+| `knowledge_pointers` | `context.knowledge_max_items` | `count` | `mj_context_pointers` |
+
+</div>
+
+
+`doctor` reconciles it in both directions and prints each profile's limits as data
+(`OK profile-limits routine — limits checkpoint_max_age_seconds=1800 history_events=0
+knowledge_pointers=0`). It refuses, by name, a declared axis a profile does not set, a value
+the derivation cannot read, a declared adapter that no function under `lib/` carries with a
+`# majordomus-limit: <limit>` line above it, and a function that carries that line for a
+limit the file does not declare. Capability, effort and verbosity are absent on purpose:
+nothing here can observe them being enforced. `test/cases/4400_a_profile_axis_names_the_limit_it_derives.sh`
+holds it.
+
 ---
 
 ## `.ai/repo/rules/**/*.md` — rule objects
