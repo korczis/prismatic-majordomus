@@ -89,7 +89,7 @@ expect_grep '^COUNT	0$' out.txt
 # (a hand-written fixture, a field produced by another tool) must still read as a success,
 # not as a failure because "0" is not the number 0. Rendered by zola itself, the engine the
 # site is built with, against a fixture site holding only the two partials.
-if command -v zola >/dev/null; then
+if mj_zola_ready "$ROOT"; then
   Z="$PWD/zsite"; mkdir -p "$Z/templates/partials" "$Z/data/registry"
   cp "$ROOT/site/templates/partials/terminal-run.html" "$ROOT/site/templates/partials/status-badge.html" "$Z/templates/partials/"
   printf 'base_url = "https://example.invalid"\n' > "$Z/config.toml"
