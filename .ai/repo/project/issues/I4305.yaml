@@ -1,0 +1,49 @@
+id: I4305
+milestone: a-review-is-published-at-its-commit
+title: "The first due-diligence review is a record at the commit it measured, with a scorecard, a remediation roadmap and the facts two surfaces disagree about"
+slug: the-first-due-diligence-review-is-recorded
+priority: p1
+profile: deep-work
+parallel_safe: false
+objective: "Decide, with majordomus decision and within project.optional-complexity, where a review record lives (the critique of an intent proposed for the review, or a section of the quality data), then record the first due-diligence review of the repository at the commit it measured in the critique finding shape that I4309 extends: a scorecard of dimensions (public API conformance, dependencies and licences, code smells, plan truthfulness, delivery and operations, secrets in history, coverage, test stability), each with its source, its verdict and the commit it was read at; a section of surface disagreements, each naming both readings, their sources and commits; the smells the plan observed, each a finding with severity, verification state and resolution issue; and a remediation roadmap ordered from the resolution issues' derived waves. Render it on the /quality/ page that I4299 adds, with every finding linked, and add to scripts/site-check the rule that fails a build whose review omits the scorecard, the roadmap or the disagreement section. No security-class finding is published before I4314's redaction has landed."
+why: "dev-68 asked for a scorecard with a remediation roadmap, as the JOBL atlas's docs/review/README.md has. dev-53 asked that a due-diligence page show where two surfaces disagree about one fact: plan delivery proved deployment for 0 of 1036 issues while the delivery report said 29 of 29 features were deployed. f3 named plan truthfulness, CI and operational risk, secrets in history, coverage and flaky tests as reader gaps. The plan's section 2 lists observed smells to seed it: scripts/site-check numbers two checks 14 (scripts/site-check:1710 and :1791); p5 is copied three times (scripts/cockpit-assets:121 and :128, .github/workflows/pages.yml:326); the handbook loads markdown-it 13.0.2, highlight.js 11.9.0, dompurify 3.1.6, mermaid 10.9.1 and ECharts 5.5.0 from cdnjs (handbook/cs/extras10.js:6-13), of which only the highlighter has an owner (I2747); apps/majordomus-cli/src/cockpit/pages.rs is one 8822-line module; the no-network claim at apps/majordomus-cli/src/capability/builtin/trace.rs:16-17 needs checking against the forge reads in apps/majordomus-cli/src/integration/forge.rs. A critique is one record per intent (.ai/repo/project/critiques/README.md) and the site renders none, which is why the home must be decided before the record is written."
+current_state: "On 81ef931a3e1 no review of the code is recorded anywhere; critique records review plans, one per intent; no site template renders a critique; the leak patterns (apps/majordomus-cli/src/quality/leak-patterns.tsv) are applied to the tracked tree only; coverage is measured by scripts/rust-coverage and scripts/ci/coverage-differential; no instrument records flaky tests."
+desired_state: "A recorded decision names the review record's home; the review record exists at its measured commit with the scorecard, the disagreements (the delivery disagreement first), the findings and the roadmap; secrets in history were scanned once with the one leak-pattern definition and any match is a security finding redacted by I4314; test stability reads not observed; every critical or high finding names its resolution issue, as I4309 requires; the site renders the review with every finding linked through I4298's component, and site-check refuses a review page without its scorecard, roadmap or disagreement section."
+scope:
+  - ".ai/repo/project/issues/I4305.yaml"
+  - "scripts/generate-site-data"
+  - "scripts/site-check"
+  - "site/templates/quality.html"
+  - ".ai/repo/project/critiques"
+  - ".ai/repo/project/intents"
+non_scope:
+  - "Fixing any finding the review records: each becomes or names its own issue"
+  - "A recurring scan of the history for secrets"
+  - "A flaky-test instrument"
+  - "A new record kind, unless the decision shows no existing shape holds the review, in which case this issue stops and asks"
+depends_on:
+  - "I4298"
+  - "I4299"
+  - "I4300"
+  - "I4309"
+  - "I4314"
+serves:
+  - "a-review-is-seen-at-its-commit#a-review-is-a-record-with-a-scorecard"
+acceptance_criteria:
+  - "A majordomus decision record names the review record's home and why the other option was not taken"
+  - "Every scorecard row names its source, its verdict and the commit it was read at, and a row without a source reads not observed"
+  - "The disagreement section lists the delivery disagreement with both readings and their commits, verified as confirmed or left plausible with the refuter's note"
+  - "Every finding carries severity, verification state and, when critical or high, a resolution issue"
+  - "The rendered page links every finding's line, commit and issue, and link-check decides each link"
+  - "site-check fails a planted build whose review omits the scorecard, the roadmap or the disagreement section"
+  - "Every security-class finding of the review reaches the built site with only its title, severity and status"
+validation:
+  - "bin/majordomus intent validate"
+  - "scripts/site-build"
+  - "scripts/ci/link-check --sources"
+  - "bin/majordomus plan validate"
+evidence_required:
+  - "due_diligence_review_is_recorded"
+risk: "High. A review written by the tool's own builders is not independent; the record names who reviewed and which findings an outside advisor confirmed. A secrets match must never be written with its value. The decision may choose a path this scope does not name; the decision step then amends the scope before the record is written."
+created_at: 2026-10-28
+updated_at: 2026-10-28

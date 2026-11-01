@@ -26,10 +26,12 @@ acceptance_criteria:
   - "A request arriving on the loopback listener with a forwarding header is refused remote-only reads' privileges, not granted loopback ones"
   - "No credential appears in output or logs"
   - "An ADR amending ADR 0126 defines how a vendor reader authenticates (OAuth for a ChatGPT or a claude.ai connector) before the vendor listener admits any caller"
+  - "A successful local loopback MCP read or native subscription account probe is not accepted as evidence that a remote vendor connector authenticates or can reach the listener"
+  - "The vendor listener never exposes native-client subscription credentials, local workspace message bodies or a credential-bearing provider proxy"
 validation:
   - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test remote_callers"
   - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test http_host"
 evidence_required:
   - "case_a_vendor_caller_reads_only"
 created_at: 2026-10-18
-updated_at: 2026-10-21
+updated_at: 2026-10-22

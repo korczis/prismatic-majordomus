@@ -23,6 +23,11 @@
 // script, or without the library, reads instead. Colours are the design system's tones, read
 // from the stylesheet, so nothing here names a colour.
 //
+// A command to reproduce (`data-mj-copy`) has a copy button, in a snapshot too (I3002): the
+// page carries it hidden, and it is shown only where a clipboard can be written, so a button
+// that cannot copy is never offered. It copies exactly the text of the command beside it, and
+// says what happened on itself and in the status beside it, which a screen reader announces.
+//
 // An issue's move form is wired by the Cockpit's `moves.js`, and a screen that follows the
 // executions this server runs holds one channel through the Cockpit's `socket.js`: both are
 // loaded only where the screen needs them, from the URLs the page names, never in a snapshot.
@@ -217,9 +222,11 @@ async function drawGraphs() {
 
 // Reading the sources again: while the screen is visible, every minute, the server's
 // rendering of this screen replaces the one on the page, and the time it was read is
-// updated. This is a refresh, said as one. A screen that follows the executions this server
-// runs is also read again when one ends (`followExecutions`, below), and its line says what
-// that channel is doing; nothing claims more than that channel carries.
+// updated. This is a refresh, said as one. A screen that follows the server's live channel
+// (`data-follow`, below) is read again when the server says it changed instead, and the
+// minute's refresh leaves it alone while that channel is open. A screen that follows the
+// executions this server runs is also read again when one ends (`followExecutions`, below),
+// and its line says what that channel is doing; nothing claims more than its channel carries.
 //
 // The server never makes a screen wait for a source. A value it read before the repository
 // last changed, or has not read yet, is shown as that, and its source line carries
@@ -243,7 +250,33 @@ function catchUp() {
     catchUp();
   }, catchUpIn);
 }
+// One reading at a time. A screen asked to be read again while a reading is in flight is read
+// once more after it, so a later answer is never overwritten by an earlier one that arrived
+// last, and a request that came during a failed reading is not lost.
+let reading = null;
+let readAgain = false;
 async function refresh() {
+  if (reading) {
+    readAgain = true;
+    return reading;
+  }
+  reading = (async () => {
+    do {
+      readAgain = false;
+      await readScreen();
+    } while (readAgain);
+  })();
+  try {
+    await reading;
+  } finally {
+    reading = null;
+  }
+  // whoever asked for this reading, a live channel's change frame included: a screen that came
+  // back with a value the server is still reading again is read again until it has caught up,
+  // because no other frame may follow the one that asked
+  catchUp();
+}
+async function readScreen() {
   if (document.visibilityState !== 'visible') return;
   const main = document.getElementById('main');
   if (!main || main.querySelector('[aria-busy="true"]')) return;
@@ -312,6 +345,45 @@ async function drawObservatory() {
   observatory = window.mjObservatory.mount(holder, { snapshot: SNAPSHOT });
   holder.observatory = observatory;
 }
+
+// A screen that follows a live channel (`data-follow`, ADR 0176) is read again when the server
+// says what it shows changed. The module that follows it, `live.js`, is loaded only on such a
+// screen, from the URL the page names (`data-follow-lib`), and opens the channel through the
+// one socket client the Cockpit runs too. The line the screen marks `data-follow-state` says
+// what the module says: live, reconnecting, or read every minute instead. A change that
+// arrives while the page is hidden is read once it is shown again.
+let followed = null;
+let missed = false;
+function sayFollowing() {
+  const line = document.querySelector('#main [data-follow-state]');
+  if (line && followed) line.textContent = followed.said();
+}
+async function followLive() {
+  const holder = document.querySelector('#main [data-follow]');
+  if (!holder || followed || SNAPSHOT) return;
+  const lib = holder.dataset.followLib;
+  if (!lib) return;
+  let module;
+  try {
+    module = await import(lib);
+  } catch (e) {
+    return; // the minute's refresh stands
+  }
+  followed = module.followScreen(holder.dataset.follow, {
+    refresh: () => {
+      if (document.visibilityState === 'visible') refresh();
+      else missed = true;
+    },
+    say: sayFollowing,
+  });
+  sayFollowing();
+}
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible' && missed) {
+    missed = false;
+    refresh();
+  }
+});
 
 // The moves of an issue — start, verify, done — wherever a screen renders the form: the one
 // module the Cockpit's issue page loads too, named by the page (`data-moves-lib`). Never in a
@@ -384,7 +456,37 @@ async function followExecutions() {
   window.addEventListener('pagehide', () => channel.close());
 }
 
+const COPY_SAID_MS = 1600;
+function showCopyButtons() {
+  if (!(navigator.clipboard && window.isSecureContext)) return;
+  for (const button of document.querySelectorAll('button[data-mj-copy][hidden]')) button.hidden = false;
+}
+// one listener for every copy button, so a screen read again keeps its buttons working
+document.addEventListener('click', async (event) => {
+  const button = event.target.closest && event.target.closest('button[data-mj-copy]');
+  const block = button && button.closest('.mj-ui-command');
+  const code = block && block.querySelector('code');
+  if (!code) return;
+  const status = block.querySelector('[role="status"]');
+  const say = (words) => {
+    button.textContent = words;
+    if (status) status.textContent = words;
+  };
+  try {
+    await navigator.clipboard.writeText(code.textContent);
+    say('Copied');
+  } catch (e) {
+    say('Copy failed — select the text');
+  }
+  clearTimeout(button.copySaid);
+  button.copySaid = setTimeout(() => {
+    button.textContent = 'Copy';
+    if (status) status.textContent = '';
+  }, COPY_SAID_MS);
+});
+
 function enhance() {
+  showCopyButtons();
   if (!SNAPSHOT) {
     for (const placeholder of document.querySelectorAll('[data-panel-src]')) {
       fillPanel(placeholder);
@@ -394,6 +496,8 @@ function enhance() {
   }
   drawGraphs();
   drawObservatory();
+  followLive();
+  sayFollowing();
 }
 
 wireBarSearch();
@@ -403,6 +507,8 @@ if (SNAPSHOT) {
   showSnapshotPath();
   window.addEventListener('hashchange', showSnapshotPath);
 } else if (!window.location.pathname.includes('/panels/')) {
-  setInterval(refresh, REFRESH_MS);
+  setInterval(() => {
+    if (!followed || !followed.live()) refresh();
+  }, REFRESH_MS);
   catchUp();
 }

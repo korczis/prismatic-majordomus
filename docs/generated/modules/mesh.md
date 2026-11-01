@@ -1,15 +1,133 @@
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: the `mesh` module of the canonical Majordomus capability registry; regenerate with `majordomus generate`
-     Generator: majordomus-cli 1.0.0-alpha.6 -->
+     Generator: majordomus-cli 1.0.0-alpha.10 -->
 # Module `mesh` — Mesh
 
 The mesh of this process: discovery — authenticated observations of other running Majordomus instances in one registry — and cooperation — authenticated links to trusted runtimes of the same repository, replicating sessions, claims, handovers and reviews through one journal every runtime folds into the same state. Discovery grants nothing; a link is admitted per peer, and nothing a peer sends executes anything here.
 
-Stability: experimental. Capabilities: 24.
+Stability: experimental. Capabilities: 30.
+
+## `mesh.beat` — Say a session is making progress
+
+Record that a session of this runtime is making progress, with the phase it is in (`waiting on CI run 123`) and optionally the running process it speaks for. A session that has beaten lives by its beats: its exclusive claims are suspended — they refuse nobody — once no beat arrives within `cooperation.session_ttl_seconds`, and hold again at the next. A worker's MCP requests other than `ping` beat for it; this is the way for a long-running process that sends none. A beat within a quarter of the ttl with an unchanged phase writes nothing and answers the last one. Writes this runtime's journal only.
+
+| | |
+|---|---|
+| kind | command |
+| stability | experimental |
+| MCP tool | `majordomus_mesh_beat` |
+| HTTP | `POST /api/v1/mesh/beats` |
+| cache | — |
+| benchmark | waived (transient_state) |
+| provenance | builtin majordomus_cli::capability::builtin::mesh |
+| tags | mesh, coordination, cooperation |
+
+| input | type | required | description |
+|---|---|---|---|
+| `session` | string or null | no | The session making progress; the calling MCP session's own when omitted. It must be
+a session this runtime opened (a claim opens one). |
+| `phase` | string or null | no | What the session is doing, one line: `waiting on CI run 123`, `holding the build
+lock`. Redacted before it is signed, and shown beside the session everywhere. |
+| `pid` | integer or null | no | The process the beat speaks for; refused unless it is running on this machine. |
+
+Output: `Written`.
+
+## `mesh.build_cache.ensure` — Restore an install before its command, and save it after
+
+For one lockfile the repository tracks (npm node_modules, mix deps, or the cargo build directory), skip an install whose key is already in place; otherwise restore it from this machine's local archive level (~/.cache/majordomus/build-cache) and then from the store this node declares when its own probe finds it healthy and a credential file is present, each only after the archive's SHA-256 matches the digest recorded when it was saved and every entry is judged safe (no absolute name, no `..`, no link leaving the target). On a miss the command runs, and when it succeeds what it left is archived to the local level and the store. A failure of any level is a miss: the command runs exactly as without the cache. npm's command is not run on a hit; mix's is; a cargo build directory is restored only when cold, under cargo's own lock, without incremental state, and never saved above one PUT. A restore and a save respect the build's free-space floor (MAJORDOMUS_MIN_FREE_MB); the local level is held under the policy's build_cache.local_max_gib, oldest first. MAJORDOMUS_BUILD_CACHE=off bypasses every level. Offered on the command line only: it runs a command (ADR 0157, I3952).
+
+| | |
+|---|---|
+| kind | command |
+| stability | experimental |
+| CLI | `majordomus mesh build-cache ensure` |
+| cache | — |
+| benchmark | waived (destructive) |
+| provenance | builtin majordomus_cli::capability::builtin::mesh |
+| tags | mesh, build, cache |
+
+| input | type | required | description |
+|---|---|---|---|
+| `kind` | Kind | yes | What is cached: `npm-modules`, `mix-deps` or `cargo-build-dir`. |
+| `dir` | string or null | no | The directory holding the lockfile, relative to the repository; absent names the only
+one the repository tracks, or the one the command was started in. |
+| `command` | array | no | The install or build command, run in that directory on a miss; required for npm and
+mix, optional for a cargo build directory. |
+
+Output: `BuildCacheEnsureReport`.
+
+## `mesh.build_cache.env` — The sccache client configuration for the store this node selected
+
+What the process that starts the sccache server should have in its environment on this machine, derived and never typed: the local disk as the first level and the selected store as the second (SCCACHE_MULTILEVEL_CHAIN=disk,s3, the bucket, the endpoint, the region, whether TLS is used, a key prefix of rustc's host triple, the credential FILE path and its profile) only when sccache has the multi-level chain (measured on a throwaway server, not assumed), a credential file of mode 0600 holding the profile exists, and the store answered its readiness route now; otherwise no variable at all, with the one condition that did not hold. sccache fixes its chain at server start and fails the compile when a level is down then, so a store is added only to a server that is starting. No key is ever in the answer, only the credential file's path (ADR 0157, I2673).
+
+| | |
+|---|---|
+| kind | query |
+| stability | experimental |
+| MCP tool | `majordomus_mesh_build_cache_env` |
+| HTTP | `GET /api/v1/mesh/build-cache/env` |
+| CLI | `majordomus mesh build-cache env` |
+| cache | — |
+| benchmark | waived (external_dependency) |
+| provenance | builtin majordomus_cli::capability::builtin::mesh |
+| tags | mesh, build, cache |
+
+| input | type | required | description |
+|---|---|---|---|
+| `sccache` | string or null | no | The sccache executable to ask; `sccache` when absent. |
+| `node_file` | string or null | no | The node file naming the store this node offers or knows. |
+| `credentials` | string or null | no | The AWS-format credential file, mode 0600. |
+
+Output: `BuildCacheEnvReport`.
+
+## `mesh.build_cache.key` — What every dependency install and build directory is cached under
+
+Every lockfile the repository tracks — Cargo.lock, mix.lock, package-lock.json — as the thing it makes cacheable (a cargo build directory, mix dependencies, npm node_modules), each with its key: a schema version, the platform (the toolchain's own host triple, or `any` for platform-independent source), the toolchain as its executables state it, and the digest of every input and environment variable that changes what the install leaves. Where the entry is restored to is a separate field, so two checkouts with one lockfile share one entry. A kind whose toolchain is absent says why and has no key (ADR 0157, I3950).
+
+| | |
+|---|---|
+| kind | query |
+| stability | experimental |
+| MCP tool | `majordomus_mesh_build_cache_key` |
+| HTTP | `GET /api/v1/mesh/build-cache/key` |
+| CLI | `majordomus mesh build-cache key` |
+| cache | — |
+| benchmark | waived (external_dependency) |
+| provenance | builtin majordomus_cli::capability::builtin::mesh |
+| tags | mesh, build, cache |
+
+| input | type | required | description |
+|---|---|---|---|
+| `kind` | object | no | Only this kind; every kind the repository has when absent. |
+
+Output: `BuildCacheKeyReport`.
+
+## `mesh.build_cache.provision` — Provision this node as a mesh build cache provider
+
+The host layer of a cache provider as one declared policy: a disk guard on a timer, services that restart always and are last for the OOM killer, a bounded journal and container log, a private bucket with expiry and a hard quota beside the CI cache's own bound, one least-privilege identity per node whose credential is generated on the host into a mode 0600 file outside any repository, and the rustc wrapper that makes the node's own builds use the cache. Without `apply` it plans only: every file, edit and command still owed, from what the host holds, with no secret named. With `apply` it writes what is missing or drifted and runs the commands, as root, refusing without it before touching anything; a second apply changes nothing. A `root` other than `/` is a staging directory: files only, no privilege, no command. Offered on the command line only: it installs services and writes credentials, which nothing reachable over HTTP or MCP may do.
+
+| | |
+|---|---|
+| kind | command |
+| stability | experimental |
+| CLI | `majordomus mesh build-cache provision` |
+| cache | — |
+| benchmark | waived (destructive) |
+| provenance | builtin majordomus_cli::capability::builtin::mesh |
+| tags | mesh, build-cache, provisioning |
+
+| input | type | required | description |
+|---|---|---|---|
+| `apply` | boolean | no | Carry the plan out. Absent, the capability only plans and changes nothing. Under the
+default root `/` it needs root and refuses without it. |
+| `root` | string or null | no | The directory the host's paths are read from and written under; default `/`. Any other
+root is a staging directory: files only, no privilege, no command. |
+
+Output: `ProvisionReport`.
 
 ## `mesh.claim` — Claim a scope across the mesh
 
-Claim repository paths for a session. An exclusive claim that meets a live exclusive claim of another session — on this runtime or any runtime this one has heard — is refused as `claim_conflict` with the claims it meets; an advisory claim is recorded and its overlaps reported. A claim lives while its session is open and its runtime beats: a crashed holder's claim expires everywhere on its own. Writes this runtime's journal only.
+Claim repository paths for a session. An exclusive claim that meets a live exclusive claim of another session — on this runtime or any runtime this one has heard — is refused as `claim_conflict` with the claims it meets; an advisory claim is recorded and its overlaps reported. A claim lives while its session is open and its runtime beats: a crashed holder's claim expires everywhere on its own; and an exclusive claim of a session that beats is suspended — refusing nobody — while its holder makes no progress within its ttl. Writes this runtime's journal only.
 
 | | |
 |---|---|
@@ -73,9 +191,29 @@ Input: none.
 
 Output: `MeshDoctorReport`.
 
+## `mesh.enrol` — Enrol this machine in the mesh
+
+Add this machine's public key to trust.allow of the repository's mesh declaration, under a comment naming the machine, creating the node identity first when there is none. Idempotent: a listed key changes nothing. The comments and every other line of the declaration stay as they were, and an edit that would not parse back as a declaration is refused before anything is written. Under deny_unknown a machine opens its mesh only once its key is listed, so this is the one step that joins a machine; commit the file and restart the server.
+
+| | |
+|---|---|
+| kind | command |
+| stability | experimental |
+| MCP tool | `majordomus_mesh_enrol` |
+| HTTP | `POST /api/v1/mesh/enrol` |
+| CLI | `majordomus mesh enrol` |
+| cache | — |
+| benchmark | waived (destructive) |
+| provenance | builtin majordomus_cli::capability::builtin::mesh |
+| tags | mesh, identity, trust |
+
+Input: none.
+
+Output: `MeshEnrolment`.
+
 ## `mesh.events` — The cooperation journal
 
-The journal's events above a Lamport stamp, in Lamport order, at most a page: each with its stream, sequence, stamp, repository, signing key, kind and body. The answer's lamport is the next page's `after`.
+The journal's events a page at a time, in Lamport order: each with its stream, sequence, stamp, repository, signing key, kind and body. The answer's cursor is the next page's `cursor`, and a walk resumed from each one returns every event exactly once, a partitioned runtime's late event included; `after` still walks by Lamport stamp.
 
 | | |
 |---|---|
@@ -90,12 +228,24 @@ The journal's events above a Lamport stamp, in Lamport order, at most a page: ea
 
 | input | type | required | description |
 |---|---|---|---|
-| `after` | integer or null | no | Only events whose Lamport stamp is above this. |
+| `after` | integer or null | no | Only events whose Lamport stamp is above this: a walk by stamp, which never returns
+an event a partitioned runtime stamped at or below it and delivered later. Prefer
+`cursor`, which returns those too. |
+| `cursor` | string or null | no | The `cursor` the previous page answered: the next page is what this run of the
+runtime applied after it, every event exactly once across the whole walk, a late one
+from a healed partition included (I2733). A cursor another run issued is refused as
+`stale_cursor`. Without `cursor` and `after` the walk starts at the beginning. |
 | `limit` | integer or null | no | At most this many (default 100, at most 1000). |
 | `newest` | boolean or null | no | The newest `limit` events above `after` instead of the first ones: what a reader who
 wants the journal as it stands now asks for. Still in Lamport order, and `lamport` is
 then the newest stamp the journal holds, so resuming after it reads only what comes
 next. Without it the journal is read forward from `after`, a page at a time. |
+| `beats` | boolean or null | no | Include the `session_beat` events, which are left out by default: a working session's
+runtime writes one every few minutes to keep its claims alive (I3990), and a reader
+of the journal wants what sessions did rather than that they are still doing it.
+A walk by `after` cuts its page before the beats leave it, so its `lamport` resumes
+after them; a walk by `cursor` passes them over without counting them toward `limit`.
+Paging misses nothing either way. |
 
 Output: `EventList`.
 
@@ -497,6 +647,9 @@ Say what a session of this runtime is: its client, worker, intent, task, issue, 
 | `head` | string or null | no | The head. |
 | `dirty` | boolean or null | no | Whether the working tree is dirty. |
 | `context` | string or null | no | The context revision it works from. |
+| `client_pid` | integer or null | no | The client process the session belongs to, on this machine: the runtime closes the
+session once that process has ended (I3810). |
+| `client_started` | string or null | no | When that process started, as this machine's process table reports it. |
 
 Output: `Written`.
 

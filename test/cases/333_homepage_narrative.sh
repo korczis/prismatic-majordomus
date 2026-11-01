@@ -22,7 +22,9 @@
 # draft feature named in the copy; a sentence of the homepage's template that states how the
 # work stands (case 3105 holds every form of that, and the real files); and a product view
 # whose release changes are not the newest release record's, counted by the changelog's groups,
-# or whose delivery stages are not the inferred delivery's (I2851), a count inside a link read.
+# or whose delivery stages are not the inferred delivery's (I2851), a count inside a link read;
+# and a count of the plan's issues back on the hero, linked or not, or a block marked as one,
+# and a /roadmap/ count the plan does not give (I3917, rule v2).
 # Rule: project.homepage-tells-a-declared-story.
 . "$ROOT/test/lib.sh"
 CHECK="$ROOT/scripts/ci/homepage-check"
@@ -72,7 +74,7 @@ fresh() {
   printf '%s\n' '{"scenarios":[{"use_case":"a","route":"/use-cases/a/"}],"walkthrough":[{"label":"init"}]}' > "$F/site/data/generated/terminal.json"
   printf '<html><head><title>a</title></head><body>a</body></html>\n' > "$F/site/public/use-cases/a/index.html"
   cat > "$F/site/public/index.html" <<'HTML'
-<html><head><title>home</title><script defer src="https://x.test/js/app.js"></script></head><body><main>
+<html><head><title>Fixture — Keep the work moving</title><script defer src="https://x.test/js/app.js"></script></head><body><main>
 <section id="hero"><h1>t</h1><a href="/features/good/">good</a>
 <div data-hero-scenarios><a href="/challenge/" data-scenario="challenge">c</a><a href="/use-cases/a/" data-scenario="a">a</a></div>
 <ul data-node-features="step:init"><li><a href="/features/good/" data-feature="good">good</a></li></ul>
@@ -83,7 +85,8 @@ fresh() {
 <div data-trust-key="commit"><dt>commit</dt><dd>abcdef1</dd></div>
 <div data-trust-key="use-cases"><dt>use cases</dt><dd>3</dd><dd>2 areas</dd></div>
 </dl>
-<dl data-claims-proof><div><dt>guaranteed claims, declared</dt><dd data-declared="guaranteed">0</dd><dd data-supported="unknown">unknown</dd></div></dl>
+<dl data-hero-figures><div><dt><a href="/features/good/">good</a></dt><dd>1</dd></div></dl>
+<dl data-claims-proof><div><dt>guaranteed claims, declared</dt><dd data-declared="guaranteed">0</dd><dd data-supported="unmeasured">not yet measured</dd></div></dl>
 <div data-surfaces x-data="{}"><select data-surface-picker><option value="one.show" selected>one.show</option></select>
 <dl><div><dd><a data-surface-id="one.show" href="/r/">one.show</a></dd></div><div><dd data-surface="cli">majordomus one show</dd></div><div><dd><a data-surface="http" href="/docs/api/">GET /api/v1/one</a></dd></div><div><dd data-surface="mcp">majordomus_one</dd></div></dl></div></section>
 <section id="how"><dl><dt>x</dt><dd>7</dd></dl></section>
@@ -113,7 +116,7 @@ expect_finding() { # <exit> <pattern> <what>
 # --- a clean tree passes, every check reporting
 fresh
 expect_finding 0 '^OK   narrative ' "a clean tree"
-for c in substance sentence scenarios nodes honesty map install runtime providers trust surfaces interfaces product evidence declared promises present weight indexing; do grep -q "^OK   $c " out.txt || { echo "    a clean tree did not report $c"; cat out.txt; exit 1; }; done
+for c in substance figures sentence scenarios nodes honesty map install runtime providers trust surfaces interfaces product evidence declared promises present weight indexing; do grep -q "^OK   $c " out.txt || { echo "    a clean tree did not report $c"; cat out.txt; exit 1; }; done
 
 # --- narrative, both directions and the order
 fresh; sed -i.bak 's#<section id="how">#<section id="extra"><a href="/x/">x</a></section><section id="how">#' "$F/site/public/index.html"
@@ -183,7 +186,7 @@ faces() {
   printf '%s\n' '{"surfaces":[{"id":"good","category":"interface","feature":"good","mount":"/good","visibility":"public","availability":"served-only"}]}' > "$F/site/data/generated/web.json"
   sed -i.bak 's#<section id="how">#<section id="how"><ul><li data-interface="good">Good, at <code>/good</code></li><li data-interface="cli">Command line</li></ul>#' "$F/site/public/index.html"
   # and the hero opens the first of them, at the page about it, beside a view of it
-  sed -i.bak 's#<h1>t</h1>#<h1>t</h1><a href="/features/good/" data-cta="product" data-product="good">open</a><figure data-product-view="good"><dl><dd data-issues="READY">2</dd><dd data-issues="DONE">1</dd></dl></figure>#' "$F/site/public/index.html"
+  sed -i.bak 's#<h1>t</h1>#<h1>t</h1><a href="/features/good/" data-cta="product" data-product="good">open</a><figure data-product-view="good"><dl></dl></figure>#' "$F/site/public/index.html"
   printf '%s\n' '{"statuses":{"issue":["READY","BLOCKED","DONE"]},"issues":[{"id":"I1","status":"READY"},{"id":"I2","status":"DONE"},{"id":"I3","status":"READY"}]}' > "$F/site/data/generated/plan.json"
 }
 fresh; faces
@@ -216,8 +219,20 @@ fresh; faces; sed -i.bak 's#<a href="/features/good/" data-cta="product"#<a href
 expect_finding 10 'the hero opens good at /good, and no publication holds it' "a hero that sends a visitor to an address only a process answers"
 fresh; faces; sed -i.bak 's#data-product-view="good"#data-product-view="other"#' "$F/site/public/index.html"
 expect_finding 10 'the hero shows the product view\(s\) \[other\], and the product is good' "a view of something else"
-fresh; faces; sed -i.bak 's#data-issues="READY">2#data-issues="READY">7#' "$F/site/public/index.html"
-expect_finding 10 'counts the issues as \[READY 7, DONE 1\], and the plan gives \[READY 2, DONE 1\]' "a figure the plan does not give"
+# the plan's issues are not the hero's (I3917, rule v2): a count of them returned to the view
+# is refused, linked or not, and so is a block marked as the plan's counts that holds none;
+# /roadmap/, when built, counts every status the plan gives, in the plan's order
+fresh; faces; sed -i.bak 's#<figure data-product-view="good"><dl>#<figure data-product-view="good"><dl data-product-issues><dd data-issues="READY">2</dd><dd data-issues="DONE">1</dd>#' "$F/site/public/index.html"
+expect_finding 10 "the hero counts the plan's issues by status \[READY 2, DONE 1\]: the owner took the plan's counts off the hero" "the plan's counts back on the hero"
+fresh; faces; sed -i.bak 's#<figure data-product-view="good"><dl>#<figure data-product-view="good"><dl><dd data-issues="READY"><a href="/roadmap/">2</a></dd>#' "$F/site/public/index.html"
+expect_finding 10 "the hero counts the plan's issues by status \[READY 2\]" "a linked plan count on the hero"
+fresh; faces; sed -i.bak 's#<figure data-product-view="good"><dl>#<figure data-product-view="good"><dl data-product-issues>#' "$F/site/public/index.html"
+expect_finding 10 "the hero counts the plan's issues by status \[\]" "an empty block of the plan's counts on the hero"
+roadmap() { mkdir -p "$F/site/public/roadmap"; printf '<html><head><title>r</title></head><body><dl data-roadmap-issues><dd><span data-roadmap-issue-status="READY">%s</span> ready <span data-roadmap-issue-status="DONE">1</span> done</dd></dl></body></html>\n' "$1" > "$F/site/public/roadmap/index.html"; sed -i.bak 's#</urlset>#<url><loc>https://x.test/roadmap/</loc></url></urlset>#' "$F/site/public/sitemap.xml"; }
+fresh; faces; roadmap 2
+expect_finding 0 "^OK   product .*and no count of the plan's issues" "/roadmap/ counting what the plan gives"
+fresh; faces; roadmap 7
+expect_finding 10 "/roadmap/ counts the plan's issues as \[READY 7, DONE 1\], and the plan gives \[READY 2, DONE 1\]" "a /roadmap/ count the plan does not give"
 # and the changes it counts are the newest release record's, group by group, in the
 # changelog's order: what landed is read from the records, never said in a sentence
 landings() {
@@ -225,7 +240,7 @@ landings() {
   sed -i.bak 's#</dl></figure>#</dl><dl data-product-landings="2.0.0"><dd data-landings="feat">2</dd><dd data-landings="chore">1</dd></dl></figure>#' "$F/site/public/index.html"
 }
 fresh; faces; landings
-expect_finding 0 '^OK   product .*counts what the plan and the newest release record count' "a view counting what the newest release carried"
+expect_finding 0 "^OK   product .*counts what the newest release record counts, and no count of the plan's issues" "a view counting what the newest release carried"
 fresh; faces; landings; sed -i.bak 's#data-landings="feat">2#data-landings="feat">5#' "$F/site/public/index.html"
 expect_finding 10 "counts v2.0.0's changes as \[feat 5, chore 1\], and the changelog gives \[feat 2, chore 1\]" "a change count the changelog does not give"
 fresh; faces; landings; sed -i.bak 's#data-product-landings="2.0.0"#data-product-landings="1.0.0"#' "$F/site/public/index.html"
@@ -237,18 +252,15 @@ expect_finding 10 'says nothing of what v2.0.0 carried' "a view silent about the
 delivered() {
   printf '%s\n' '{"stages":["none","branch","merged","released"],"tallies":{"none":5,"branch":0,"merged":1,"released":3}}' > "$F/site/data/generated/delivery.json"
   sed -i.bak 's|<figure data-product-view="good"><dl>|<figure data-product-view="good"><dl data-product-delivery><dd data-delivery="merged"><a href="/roadmap/#delivery">1</a></dd><dd data-delivery="released"><a href="/roadmap/#delivery">3</a></dd></dl><dl>|' "$F/site/public/index.html"
-  sed -i.bak 's|data-issues="READY">2|data-issues="READY"><a href="/roadmap/">2</a>|' "$F/site/public/index.html"
 }
 fresh; faces; delivered
-expect_finding 0 '^OK   product .*counts what the plan, the inferred delivery and the newest release record count' "a view counting the inferred delivery, its counts links"
+expect_finding 0 '^OK   product .*counts what the inferred delivery and the newest release record count' "a view counting the inferred delivery, its counts links"
 fresh; faces; delivered; sed -i.bak 's|data-delivery="released"><a href="/roadmap/#delivery">3|data-delivery="released"><a href="/roadmap/#delivery">4|' "$F/site/public/index.html"
 expect_finding 10 'counts the delivery as \[merged 1, released 4\], and the inferred delivery gives \[merged 1, released 3\]' "a stage count the delivery does not give"
 fresh; faces; delivered; sed -i.bak 's|<dl data-product-delivery>.*</dl><dl>|<dl>|' "$F/site/public/index.html"
 expect_finding 10 'counts no delivery stage, and the inferred delivery gives \[merged 1, released 3\]' "a view silent about the delivery the history proves"
 fresh; faces; delivered; sed -i.bak 's|<dl data-product-delivery>|<dl data-product-delivery><dd data-delivery="none">5</dd>|' "$F/site/public/index.html"
 expect_finding 10 'counts the delivery as \[none 5, merged 1, released 3\]' "the absence of a stage drawn as one"
-fresh; faces; delivered; sed -i.bak 's|data-issues="READY"><a href="/roadmap/">2|data-issues="READY"><a href="/roadmap/">7|' "$F/site/public/index.html"
-expect_finding 10 'counts the issues as \[READY 7, DONE 1\]' "a linked figure the plan does not give"
 fresh; sed -i.bak 's#<h1>t</h1>#<h1>t</h1><a href="/x/" data-cta="product" data-product="x">open</a>#' "$F/site/public/index.html"
 expect_finding 10 'the hero opens a product, and the data gives no interface a person opens' "a product where the data gives none"
 # the other way a publication holds a surface: the build names a snapshot of it (ADR 0141),
@@ -347,6 +359,8 @@ promise_finding 10 "site/data/manifesto.toml:2 names feature 'draft' \('Deployme
 # sentence, the hero offers what the recorded refusals derive, a node names what the model derives
 fresh; printf '# m\n\n**Keep the work going**\n' > "$F/README.md"
 expect_finding 10 "README.md's bold line says 'Keep the work going'" "a README saying it in other words"
+fresh; sed -i.bak 's#<title>Fixture — Keep the work moving</title>#<title>Fixture — keep the work moving</title>#' "$F/site/public/index.html"
+expect_finding 10 "the homepage title says 'Fixture — keep the work moving', not the declared sentence" "a title that lowercases the sentence"
 fresh; sed -i.bak 's#<a href="/use-cases/a/" data-scenario="a">a</a>##' "$F/site/public/index.html"
 expect_finding 10 "the hero offers \\[\\], terminal.json's recorded refusals derive \\['a'\\]" "a recorded refusal not offered"
 fresh; sed -i.bak 's#<li><a href="/features/good/" data-feature="good">good</a></li>##' "$F/site/public/index.html"

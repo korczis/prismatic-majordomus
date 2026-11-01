@@ -175,6 +175,14 @@ mod tests {
         assert_eq!(edited, crate_generation(&cli), "the core's tests are not");
     }
 
+    /// A crate directory with no parent has no neighbouring core to read, and no crate files
+    /// either, so it has no generation rather than a panic.
+    #[test]
+    fn a_crate_directory_with_no_parent_reads_no_core_and_has_no_generation() {
+        assert_eq!(std::path::Path::new("/").parent(), None);
+        assert_eq!(crate_generation(std::path::Path::new("/")), None);
+    }
+
     #[test]
     fn a_directory_without_a_crate_has_no_generation() {
         let t = tempfile::tempdir().unwrap();

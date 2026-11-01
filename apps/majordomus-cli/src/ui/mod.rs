@@ -57,6 +57,7 @@ pub(crate) mod mesh;
 pub(crate) mod milestone;
 pub(crate) mod navbar;
 pub(crate) mod observatory;
+pub(crate) mod peers;
 pub(crate) mod prose;
 pub(crate) mod prs;
 pub(crate) mod roadmap;
@@ -65,6 +66,7 @@ pub(crate) mod shell;
 pub(crate) mod skills;
 pub(crate) mod source;
 pub(crate) mod timings;
+pub(crate) mod trends;
 pub(crate) mod view;
 pub(crate) mod work;
 
@@ -204,6 +206,12 @@ pub(crate) const SCREENS: &[Screen] = &[
         answers: "Whether this browser computes what the server computes, and the server's verdict on it.",
     },
     Screen {
+        route: peers::ROUTE,
+        title: "Peers",
+        icon: "users",
+        answers: "Who works on this repository, what each claims, and what waits for whom.",
+    },
+    Screen {
         route: delivery::ROUTE,
         title: "CI/CD & Releases",
         icon: "layers",
@@ -214,6 +222,12 @@ pub(crate) const SCREENS: &[Screen] = &[
         title: "Deployments",
         icon: "server",
         answers: "What is live, and whether it is what was built.",
+    },
+    Screen {
+        route: trends::ROUTE,
+        title: "Trends",
+        icon: "chart",
+        answers: "How coverage and CI time move from run to run, and which jobs are slowest.",
     },
     Screen {
         route: evidence::ROUTE,
@@ -254,6 +268,7 @@ pub(crate) const PANELS: &[&str] = &[
     deployments::DELIVERY_PANEL,
     prs::PANEL,
     idd::STANDING_PANEL,
+    idd::SHARED_SCOPE_PANEL,
 ];
 
 /// The UI over the repository as it is now.
@@ -417,6 +432,7 @@ impl Ui {
                 )
                 .child(screen.main);
         }
+        let status = screen.status;
         let body = if fragment {
             screen.main.render()
         } else {
@@ -441,10 +457,10 @@ impl Ui {
                     assets_present: self.assets.present(),
                     version: self.version,
                 },
-                &screen,
+                screen,
             )
         };
-        let mut response = Response::new(screen.status, "text/html; charset=utf-8", body);
+        let mut response = Response::new(status, "text/html; charset=utf-8", body);
         for (name, value) in [
             ("Cache-Control", "no-cache"),
             ("Content-Security-Policy", crate::cockpit::csp()),
@@ -485,12 +501,14 @@ impl Ui {
                     .and_then(|text| serde_json::from_str(&text).ok());
                 compute::screen(ctx, &files, provenance.as_ref())
             }
+            peers::ROUTE => peers::screen(ctx, &self.assets.url(peers::LIB)),
             delivery::ROUTE => delivery::screen(ctx),
             deployments::ROUTE => deployments::screen(ctx),
             command::ROUTE => command::screen(ctx, query),
             capabilities::ROUTE => capabilities::screen(ctx, query),
             skills::ROUTE => skills::screen(ctx),
             docs::ROUTE => docs::screen(ctx),
+            trends::ROUTE => trends::screen(ctx),
             evidence::ROUTE => evidence::screen(ctx, query),
             knowledge::ROUTE => knowledge::screen(ctx),
             governance::ROUTE => governance::screen(ctx, query),
@@ -506,6 +524,7 @@ impl Ui {
             deployments::DELIVERY_PANEL => deployments::delivery_panel(ctx),
             prs::PANEL => prs::panel_view(ctx, query),
             idd::STANDING_PANEL => idd::standing_panel(ctx, query),
+            idd::SHARED_SCOPE_PANEL => idd::shared_scope_panel(ctx, query),
             other => shell::not_found(other),
         }
     }
@@ -824,6 +843,7 @@ mod tests {
                 mesh::ROUTE,
                 mesh::screen(&ctx, &[("node".into(), "nowhere".into())]),
             ),
+            (peers::ROUTE, peers::screen(&ctx, "/ui/assets/live.js")),
             (delivery::ROUTE, delivery::screen(&ctx)),
             (
                 evidence::ROUTE,
@@ -843,6 +863,7 @@ mod tests {
                 compute::ROUTE,
                 compute::screen(&ctx, &compute::Files::default(), None),
             ),
+            (trends::ROUTE, trends::screen(&ctx)),
             (skills::ROUTE, skills::screen(&ctx)),
             (docs::ROUTE, docs::screen(&ctx)),
             (knowledge::ROUTE, knowledge::screen(&ctx)),

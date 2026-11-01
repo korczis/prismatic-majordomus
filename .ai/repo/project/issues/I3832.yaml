@@ -5,10 +5,10 @@ slug: merged-idle-worktrees-are-swept
 priority: p2
 profile: implementation
 parallel_safe: true
-objective: "Add a typed capability worktree.sweep (CLI `majordomus worktree sweep`, --check and --apply) that lists, and with --apply removes through `git worktree remove` without --force, every linked worktree whose head is an ancestor of origin/master but not its tip, whose status is empty, with no file modified within the idle window, no process cwd or open file inside it, not named in the derive lock's owner, a mesh claim or a CARGO_*_DIR of a running process; branches are kept, and each removal is announced on the mesh."
+objective: "Harden the existing `majordomus worktree cleanup` (its listing is the check, `--remove` the apply) so that it removes, through `git worktree remove` without --force, only a linked worktree whose branch is merged, pushed and not ahead, whose status is empty, not at the remote trunk's tip, with no file modified within the idle window, no process cwd, open file, command line or CARGO_*_DIR inside it, not named in the derive lock's owner or a live mesh claim (by issue slug, scope or intent), and removed while every cargo lock in its build output is held; branches are kept, and each removal is announced on the mesh once a replicated notice exists (I2874)."
 why: "The owner's relaxation of 2026-10-21 (I3824 clause 8): cleanup runs without asking. On 2026-10-20 the machine went from 32 GiB to 115 GiB free by hand, and 106 such worktrees of this repository (18 GiB) were left because the removal had no named capability the owner could allow."
-current_state: "scripts/reap-orphans reclaims build output only; removing a worktree is a hand-written loop."
-desired_state: "One capability, the same on every machine, that the owner can allow by name; --check is read-only."
+current_state: "Slice 1 is a source patch with a3 (2026-10-21): the existing `worktree cleanup` (its listing the check, `--remove` the apply, git worktree remove without --force, branches kept) refuses a worktree at the remote trunk's tip, named by the derive lock, named by a running process's command line or CARGO_*_DIR, or changed within MAJORDOMUS_WORKTREE_SWEEP_IDLE_MIN (a day), and removes under every cargo lock in its build output; case 3832. Slice 2 (with a3): the mesh-claim guard; a declared mesh whose claims cannot be read refuses. Open: the announcement, which waits for I2874."
+desired_state: "One named command, the same on every machine, that the owner can allow by name (`majordomus worktree cleanup --remove`); the listing is read-only. It stays a command-line operation and not a registry capability: builtin/worktree.rs records that removing worktrees is not a thing the shared MCP server takes on, and every_capability_is_a_query pins it; reversing that is an ADR, not this issue (a3, 2026-10-21)."
 scope:
   - "apps/majordomus-cli/src/capability/builtin/worktree.rs"
   - "apps/majordomus-cli/src/worktree"
@@ -17,12 +17,13 @@ scope:
 non_scope:
   - "Changing which checks CI requires"
   - "Claude Code permission settings, which are the owner's to paste"
-depends_on: []
+depends_on:
+  - "I2874"
 acceptance_criteria:
   - "--check lists each candidate with the guard that admitted it and each excluded worktree with the guard that kept it, and writes nothing"
   - "--apply removes exactly the listed candidates with git worktree remove without --force and keeps their branches"
   - "A worktree that is dirty, at master's tip, unmerged, recently modified, occupied by a process, named in the derive lock or a mesh claim is never removed"
-  - "Each removal is one mesh announcement naming the path and branch"
+  - "Each removal run is one mesh notice (I2874), subject worktree-cleanup, naming how many were removed, the first few branches and how many more"
   - "A removal holds the directory's cargo lock, or an flock over it, for the whole rm: a build started on the directory mid-sweep either completes or finds the directory intact (a3 and 0c, 2026-10-21; the same criterion as I2881)"
   - "A worktree or build directory named by a live cargo or rustc, on its command line or in its CARGO_BUILD_BUILD_DIR or CARGO_TARGET_DIR (ps -Eww), or holding a cargo lock file is never removed, even when its mtime and lsof pass: a cargo between start-up and its first write is invisible to both (a3, 2026-10-21, a private build dir deleted under 9c's starting build)"
 validation:

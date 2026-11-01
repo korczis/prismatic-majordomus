@@ -97,6 +97,9 @@ handover:
 ledger:
   retention_max_lines: 5000
 
+cache:
+  flatten_max_entries: 2000              # parsed YAML files kept under .ai/local/cache/flat/; 0 is no cache
+
 benchmark:
   samples: 10            # warm samples per target in `majordomus bench`
   warmup: 2              # unsampled runs before them
@@ -247,6 +250,28 @@ The four shipped profiles:
 | regression test | no | no | required | no |
 | decision record | no | no | no | required |
 | checkpoint | 30m | 15m | 15m | 30m |
+
+### Which axis becomes which limit — `share/profile-limits.yaml`
+
+An axis is prose until a limit is derived from it. `share/profile-limits.yaml`, shipped with
+the tool beside `share/obligations.yaml`, is the one place that says which axis may become a
+runtime limit, how the value is derived, and which function applies it (I0201). It declares
+only the limits this repository already applies:
+
+| limit | axis | derive | adapter |
+|---|---|---|---|
+| `checkpoint_max_age_seconds` | `checkpoint_interval` | `duration_seconds` | `mj_validate_checkpoint` |
+| `history_events` | `context.recent_history_depth` | `count` | `mj_ctx_history` |
+| `knowledge_pointers` | `context.knowledge_max_items` | `count` | `mj_context_pointers` |
+
+`doctor` reconciles it in both directions and prints each profile's limits as data
+(`OK profile-limits routine — limits checkpoint_max_age_seconds=1800 history_events=0
+knowledge_pointers=0`). It refuses, by name, a declared axis a profile does not set, a value
+the derivation cannot read, a declared adapter that no function under `lib/` carries with a
+`# majordomus-limit: <limit>` line above it, and a function that carries that line for a
+limit the file does not declare. Capability, effort and verbosity are absent on purpose:
+nothing here can observe them being enforced. `test/cases/4400_a_profile_axis_names_the_limit_it_derives.sh`
+holds it.
 
 ---
 
@@ -492,6 +517,8 @@ acceptance_criteria: [...]            # what would make the outcome true
 validation: [...]                     # commands that demonstrate it
 evidence_required: [...]              # tokens gating milestone acceptance
 risks: [...]
+due_on: 2026-11-11                    # optional: the day it is expected; projected to the
+                                      # forge's due date, never read to derive a status
 cancelled: false                      # optional
 evidence:                             # appended; each entry covers one required token
   - covers: suite
@@ -530,6 +557,8 @@ desired_state: "…"
 scope: [...]                          # the paths this issue may touch
 non_scope: [...]
 depends_on: [I0005]                   # issue ids; the edges of the DAG
+traces: [PROJ-12, A7]                 # optional: what it answers to outside the layer (tracker
+                                      # keys, requirement ids, URLs), rendered as written
 acceptance_criteria: [...]            # required; an issue without one is a placeholder
 validation: [...]                     # required; the commands that demonstrate it
 evidence_required: [...]              # tokens that gate completion
@@ -607,10 +636,11 @@ record keeps who handed it.
 **This section is ahead of its writer, and says so.** The contract is defined
 (`share/schemas/majordomus/telemetry/telemetry.v1.schema.json`, kind `telemetry` in
 `share/kinds.yaml`, allow-list `share/allow/telemetry.txt`) and a record that breaks it is
-refused wherever a `telemetry` document is validated, but no command writes one yet. The
-command that attaches reported facts to the active task is issue I0302 of the
-`execution-telemetry` milestone; until it lands, the directory does not exist and nothing
-reads it. It is the one format in this document described before something produces it,
+refused wherever a `telemetry` document is validated, but nothing writes one yet. The
+writer is the usage receiver of issue I3288 (`every-sessions-usage-is-observed`), which takes
+a provider's usage from its official seam (ADR 0213, `offers.usage` in `share/providers.yaml`)
+rather than from a command a worker hands numbers to; I0302, which planned that command,
+was cancelled for it. Until I3288 lands, the directory does not exist and nothing reads it. It is the one format in this document described before something produces it,
 because every later statement about what a task consumed rests on this shape and it had to
 be fixed first.
 
@@ -1654,6 +1684,31 @@ layer; never a baseline.
 `status` is `ok`, `setup-failed`, or `exit-<code>` when the command exited with a code its
 scenario does not accept. Percentiles are nearest-rank over the sorted samples. `clock`
 names the source of the milliseconds (`epochrealtime` or `seconds`).
+
+## `.ai/local/cache/flat/<parser>/<slot>` — a parsed YAML file
+
+What the shell tool's YAML reader printed for one file, kept so that the next command on the
+same bytes reads it instead of parsing it again. `<parser>` is the first 16 hex digits of the
+SHA-256 of the parser itself, so an entry is only ever read by the parser that wrote it.
+`<slot>` is where an entry is looked for — the file's length and sixteen of its characters as
+numbers, all computed without starting a process — and never what it is trusted on: hashing
+the file would cost the one process a cached read is there to save. One entry is one file:
+
+```text
+mjflat 1 <source length> <flat length>
+<the source, byte for byte><the flat lines, byte for byte>
+```
+
+An entry is served only when the header adds up to the file's own length and the source it
+holds is exactly the file asked about, compared in full; anything else is a miss, which
+parses the file again and writes the entry back. Two files that land in one slot evict each
+other and neither is ever served the other's lines. A parse that failed is never kept. An
+entry is written beside the others and renamed into place, so a reader never sees half of
+one. After each new entry the directory holds at most the policy's
+`cache.flatten_max_entries`, the oldest written removed first; without the key, or with 0,
+there is no cache. Nothing reads this directory but the reader that wrote it; deleting it
+costs one parse per file. With `MJ_TIMING=1`, `yaml_flatten` still counts every file asked
+for and `flatten_cache_hit` counts the ones served from here.
 
 ## `baseline.json` under `.ai/repo/benchmarks/` — the accepted baseline
 

@@ -1,0 +1,42 @@
+id: I4203
+milestone: ci-critical-path
+title: "The ci verdict judges each gate by the receipt of the attempt that ran it, so a rerun that passes is not judged by the attempt that failed"
+slug: a-rerun-is-judged-by-its-own-receipts
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Make the ci job's verdict read, for every gate, only the receipts of the latest attempt that ran it. Name each receipt artifact with github.run_attempt (ci-receipts-<gate>-a<attempt>); then scripts/ci/verdict reads, of every artifact directory ci-receipts-<job>-a<n>, only its highest attempt n (a directory with no -a<n> is attempt 0). Both halves are needed: a `rerun --failed` carries the untouched jobs' receipts from an earlier attempt, so downloading only the current attempt would leave those gates without a receipt."
+why: "Train 6 (#2417, run 40088179259) attempt 3: the pages job (120969512183) passed every check and no step failed, yet ci (120972566054) went red with 'verdict: gate pages-live was selected and its job pages succeeded, but a step of it reported failure'. The run held three artifacts named ci-receipts-pages (attempt 1 13:15Z, attempt 2 19:33Z red, 19:58Z); validate.yml's ci job downloads `pattern: ci-receipts-*` and received attempt 2's red receipt (12573745759). Every `gh run rerun --failed` of a gate that failed once can therefore stay red however the rerun ends."
+current_state: "validate.yml uploads ci-receipts-<gate> with the same name on every attempt, and the ci job's download-artifact `pattern: ci-receipts-*` takes whichever same-named artifact it receives; scripts/ci/verdict reads the directory without knowing which attempt wrote it."
+desired_state: "A rerun's verdict reads only receipts of the attempt that ran each gate (or the newest per gate); a gate red in attempt N and green in attempt N+1 reads green; case 94 holds a fixture with two receipts of one gate from different attempts."
+scope:
+  - ".ai/repo/project/issues/I4203.yaml"
+  - ".github/workflows/validate.yml"
+  - "scripts/ci/verdict"
+  - "test/cases/94_ci_plan.sh"
+non_scope:
+  - "What any gate checks"
+  - "Deleting artifacts of past runs"
+acceptance_criteria:
+  - "Case 94 fails against master's verdict on a fixture with a stale red and a fresh green receipt of one gate, and passes with the fix"
+  - "A `gh run rerun --failed` whose rerun gate passes yields a green ci verdict"
+validation:
+  - "bash test/run.sh 94_ci_plan"
+evidence_required:
+  - "a_rerun_is_judged_by_its_own_receipts_test"
+depends_on: []
+serves: []
+created_at: 2026-10-24
+updated_at: 2026-10-28T17:22:49Z
+started_at: 2026-10-28T17:21:51Z
+started_event: sha256:6a1aa3e2e35628cf6b7e7d67b4785121423e9d77b0c782f10637d61db784bf5b
+completed_at: 2026-10-28T17:22:49Z
+completed_event: sha256:a3fbbfddaa26f05d1a41329a36354562f28c4a77546ac0603914f4a25a941a6f
+evidence:
+  - covers: a_rerun_is_judged_by_its_own_receipts_test
+    type: ci
+    command: "bash test/run.sh 94_ci_plan (validate.yml suite-shard (2)); gh run view 40573560939 --log --job 122655183734 | grep 94_ci_plan; gh run view 40573560939 --log --job 122699786016 | grep -E 'ci-receipts-suite|verdict:'"
+    result: "Case 94 green on master: '2026-10-27T23:21:49.7479658Z ok   94_ci_plan'. A real rerun --failed (attempt 1: suite-shard (4) and ci red; attempt 2: only the failed jobs and their dependents rerun) read the stale red suite-a1 receipt beside the green suite-a2 one and concluded '2026-10-28T08:04:08.1506011Z verdict: green (80 gates ran and succeeded)'. Also green on 81ef931 run 40676150754 suite-shard (2) job 122783064885: '13:23:38.9784537Z ok   94_ci_plan'. Fails-before replay: verdict at 36b4a07716a^ returns exit 1 'verdict: red' on case 94's stale-red/fresh-green fixture, where the case expects 0. The verdict at 81ef931 returns exit 0. (commit 6c79dcf68cf329f4c21c219720b811381c3433aa) Audited per criterion on 2026-10-28 by 61e1283f; two adversarial verifiers did not refute it."
+    artifact: "https://github.com/korczis/prismatic-majordomus/actions/runs/40573560939 (attempt 2; suite-shard (2) job 122655183734; ci job 122699786016; artifacts ci-receipts-suite-a1 12788490363 [shell-suite failure], ci-receipts-suite-a2 12798968816 [shell-suite success])"
+    commit: 81ef931a3e156907f1784c64c509884f565c17f0
+    recorded_at: 2026-10-28T17:22:27Z

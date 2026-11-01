@@ -1,0 +1,25 @@
+id: I4264
+milestone: a-second-adopter-is-served
+title: "adr check names decisions it did not examine, and adr propose records who authored one"
+slug: adr-check-sees-untracked-decisions
+priority: p3
+profile: implementation
+parallel_safe: true
+objective: "adr check names untracked files under the section; adr propose writes `authored` unless --from names a source."
+why: "An adopter's field report (a private Python client repository adopted from the v1.0.0-alpha.8 release on 2026-10-27, with the plan model, project rules, knowledge, skills, Claude Code capture and a GitHub projection all in use) found: `adr check` printed 'examined 0 decision(s) ... every identity unique' for nine untracked ADR files, and `adr propose` stamped `provenance.origin: extracted` on decisions a person wrote."
+current_state: "Untracked decisions pass silently; provenance is always extracted."
+desired_state: "adr check names untracked files under the section; adr propose writes `authored` unless --from names a source."
+scope:
+  - ".ai/repo/project/issues/I4264.yaml"
+  - "lib/adr.sh"
+  - "test/cases/4264_adr_check_names_what_it_skipped.sh"
+depends_on: []
+acceptance_criteria:
+  - "An untracked ADR is named by adr check"
+  - "propose without --from writes authored"
+validation:
+  - "bash test/run.sh 4264_adr_check_names_what_it_skipped"
+evidence_required:
+  - "case_adr_check_sees_untracked_decisions"
+created_at: 2026-10-27
+updated_at: 2026-10-27

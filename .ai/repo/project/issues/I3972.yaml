@@ -1,0 +1,37 @@
+id: I3972
+milestone: merging-and-referencing-are-enforced
+title: "plan validate names every issue held only by its milestone gate, and an issue may declare it needs nothing from the milestone's dependencies"
+slug: the-milestone-gate-is-explained
+priority: p1
+profile: implementation
+parallel_safe: false
+objective: "The milestone gate (plan.rs:1110-1130) holds every issue of a milestone whose depends_on is not DONE, whatever the issue itself needs. Make it explainable and narrowable: plan validate emits a warning held_only_by_milestone naming every BLOCKED issue whose own depends_on are all DONE and whose blocked_by holds only milestone:<id> entries, with the milestone that holds it; and an issue may declare milestone_gate: own (schema issue.v1, default all), which keeps it out of the gate so it is held only by its own depends_on. The opt-out reaches every consequence of the gate in both engines: the issue-level premature_execution check (plan.rs:1118-1135, project.awk:311) skips an opted-out issue, and the milestone-level milestone_premature check (plan.rs:1080-1086, project.awk:287) does not fail a blocked milestone whose only ACTIVE, VERIFY or DONE issues are opted out; such a milestone keeps the derived status BLOCKED, with the opted-out work reported beside it. Both engines, plan.rs and lib/project.awk, derive the same, held equal by case 99_plan_capabilities. A milestone keeps ordering the roadmap exactly as now. I3757 rewrites the same gate code to name what holds a milestone and lands first."
+why: "The study for this intent counted the issues waiting only on their milestone; measured at 355a0cee79a with plan list --json, 26 BLOCKED issues have every dependency of their own DONE and are held only by milestone:<id>. A worker reading plan blocked sees milestone:x and cannot tell whether the work needs that outcome or merely sits under it, so independent work waits."
+current_state: "Verified at 355a0cee79a: plan.rs:1061-1091 computes mblocked per milestone in rank order and plan.rs:1110-1130 applies it to every issue of the milestone; devtask/readiness.rs names that case TaskReadiness::Waiting; no finding counts it; issue.v1 has no field to opt out."
+desired_state: "plan validate lists the 26 (or however many there are then) with their milestones; an issue declaring milestone_gate: own is READY when its own dependencies are DONE; both engines agree."
+scope:
+  - "apps/majordomus-cli/src/plan.rs"
+  - "lib/project.awk"
+  - "share/schemas/majordomus/issue/issue.v1.schema.json"
+  - "apps/majordomus-cli/src/devtask/readiness.rs"
+  - "test/cases/99_plan_capabilities.sh"
+  - ".ai/repo/project/issues/I3972.yaml"
+non_scope:
+  - "Changing any milestone's depends_on or any existing issue's gate"
+acceptance_criteria:
+  - "A fixture plan with one issue held only by its milestone gets a held_only_by_milestone warning naming it and the milestone (case an_issue_held_only_by_its_milestone_is_named)"
+  - "The same issue declaring milestone_gate: own derives READY; one with an unfinished dependency of its own stays BLOCKED"
+  - "An opted-out issue that is ACTIVE or DONE under a blocked milestone raises neither premature_execution nor milestone_premature in either engine, and the milestone stays BLOCKED"
+  - "plan.rs and lib/project.awk derive identical statuses on the fixture and on the repository"
+validation:
+  - "bin/majordomus plan validate"
+  - "env -u MAJORDOMUS_SHARE cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib -- plan::"
+  - "env -u MAJORDOMUS_SHARE bash test/run.sh 99_plan_capabilities"
+evidence_required:
+  - "milestone_gate_is_explained"
+depends_on:
+  - "I3757"
+serves:
+  - "merging-and-referencing-are-enforced#milestone-gate-is-explained"
+created_at: 2026-10-22
+updated_at: 2026-10-22

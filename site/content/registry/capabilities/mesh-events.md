@@ -1,7 +1,7 @@
 +++
 title = "mesh.events"
-description = "The journal's events above a Lamport stamp, in Lamport order, at most a page: each with its stream, sequence, stamp, repository, signing key, kind and body. The answer's lamport is the next page's `after`."
-weight = 108
+description = "The journal's events a page at a time, in Lamport order: each with its stream, sequence, stamp, repository, signing key, kind and body. The answer's cursor is the next page's `cursor`, and a walk resumed from each one returns every event exactly once, a partitioned runtime's late event included; `after` still walks by Lamport stamp."
+weight = 120
 slug = "mesh-events"
 [extra]
 id = "mesh.events"

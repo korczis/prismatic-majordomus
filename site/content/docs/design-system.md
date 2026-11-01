@@ -1,7 +1,7 @@
 +++
 title = "The design system"
 description = "the design system: the one declaration every surface is rendered from, the pipeline from `share/design/tokens.yaml` to the site, the Cockpit and the executable's own pages, how to add a role, a status word or a type step without touching a consumer, how drift is caught, and how to read a page that looks wrong"
-weight = 68
+weight = 70
 [extra]
 source = "docs/DESIGN_SYSTEM.md"
 +++
@@ -109,6 +109,32 @@ site's alone: the frame of the diagram viewer and of a chart
 ([`DIAGRAMS.md`](@/docs/diagrams.md)), over the same tokens and the pairs the primitives already
 use. It is unlayered on purpose, because the frame is the diagram's own `<pre>` and must
 win over whatever utilities its page gave it.
+
+A chart (`site/charts.js`) takes every colour it draws from the page: the series from
+`--mj-series-<n>` by the column's place, or from the status badge its header carries, so a
+colour belongs to the column and hiding a series repaints none of the others; text in
+`--mj-fg`, `--mj-body` and `--mj-muted`, never in a series colour; the grid and axis in
+`--mj-line`; the tooltip on `--mj-raised` with a `--mj-line` border; the zoom slider's window
+in the one accent. It is read by pointing at it: one tooltip at a category naming every
+visible series in the figure's unit, under a crosshair on a line and a shaded band on bars;
+for two or more series a legend of toggle buttons under the frame (the page's own controls,
+reached by the keyboard and wrapped at any width), each hiding and showing its series, the
+axis rescaling to what is left, and a hidden series struck through with a hollow key and
+`aria-pressed="false"`, never told by a colour alone; the hovered series focused and the rest
+faded. Lines are 2px, straight between measured points and broken where a value is missing,
+over a fill that fades from the series colour at `--chart-area-opacity` (declared on
+`.mj-chart` in `figure.css`) to nothing, with a marked and labelled latest value and a dot on
+any measured value with no measured neighbour; bars round only their data end, and stacked
+segments are parted by the page's own colour. A line chart with more categories than its
+width holds at 24px each is zoomable (the slider, a trackpad pinch or ctrl + wheel, shift +
+wheel, a mouse drag), while a plain wheel always scrolls the page, and its Reset button
+gives the whole range back. The legend's button and the Reset button are `<template>`s in
+`site/templates/partials/charts.html`, so the interaction check counts them. The frame takes
+focus: the arrows, Home and End move the tooltip, + and - zoom, 0 resets, Escape lets go, a
+key held with ctrl, alt or meta is left to the browser, and a live region says what the
+tooltip says. Motion is
+`--mj-motion-fast`, and none under `prefers-reduced-motion`, followed when it changes. Without
+the script the figure is its table; [`DIAGRAMS.md`](@/docs/diagrams.md) is the declaration.
 
 Both Tailwind builds import the generated sheets in the same order, after Flowbite's theme.
 The site keeps Flowbite's vocabulary in its templates — `text-heading`, `border-default`,

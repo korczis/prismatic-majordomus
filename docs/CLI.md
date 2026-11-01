@@ -42,6 +42,13 @@ a check passed, it failed.
   the context's reading of the repository (`generation`), or the checkout's state as well
   (`checkout`: HEAD, the staging index, the refs, and every changed or untracked path).
   The switch also makes a page's reading of a source run its handler and wait for it.
+- `MAJORDOMUS_BUILD_CACHE=off` makes `majordomus mesh build-cache ensure` ask no level of
+  the build cache: neither the key marked in place, nor the local archive level under
+  `~/.cache/majordomus/build-cache`, nor the store; the command after `--` runs, and nothing
+  is saved or marked. A cold, a warm and a bypassed install leave the same files
+  (`project.cache-is-invisible`); the switch settles a doubt by installing without the
+  cache. A restore and a save also respect the build's free-space floor,
+  `MAJORDOMUS_MIN_FREE_MB` (5120 by default, 0 disables it).
 - `MAJORDOMUS_READING_PATIENCE_MS` sets how long a page waits for a source after the
   repository changed before it shows the reading it has, marked stale (50 by default; see
   [`MAJORDOMUS_UI.md`](MAJORDOMUS_UI.md#fast-and-current)). `wait` makes every read wait for
@@ -703,10 +710,16 @@ produced one record between them. So an open episode is a file of its own,
 it. `--if-open keep` keeps *your* episode — which is why it exists: the start event fires
 again on a resume and on a compaction — and gives a different provider session an episode
 of its own. `close --provider-session <id>` closes that episode and no other, which is what
-a provider's end event passes. An episode nobody named is keyed `hand`, and there is at
-most one of those: a provider that sends no session identity is indistinguishable from a
-person at a terminal, and inventing a distinction there would multiply episodes nobody can
-close. A hand-opened episode needs no provider anywhere and behaves exactly as before.
+a provider's end event passes. A `session start` that names no provider session is keyed
+by the one this process runs inside, where one is observable: `MAJORDOMUS_PROVIDER_SESSION`,
+then each provider's own variable (`CLAUDE_CODE_SESSION_ID`). That is the key every shell
+writer resolves the same process to, so the observations and decisions it records next land
+in the episode it opened; the record carries `provider_session` and `provider`, and its
+working context still says `opened_by: hand`. Only where no provider session is observable
+is the episode keyed `hand`, and there is at most one of those: a provider that sends no
+session identity is indistinguishable from a person at a terminal, and inventing a
+distinction there would multiply episodes nobody can close. A hand-opened episode needs no
+provider anywhere.
 
 `state/session-current.yaml` is a relative symlink into that store: the pointer to the
 episode of this checkout, aimed at the one opened here last and re-aimed by a close at the
@@ -861,13 +874,28 @@ branch-breaking defects overnight because they looked identical
 (`project.never-reported-is-not-green`).
 
 The whole judgement — every gate, the plan that selected it, which obligations the change
-implies, and the twenty-two questions of the done invariant with the source that answered
-each — is one document, `gates.completion`, read the same way by the command line, the HTTP
-API, MCP and the Cockpit:
+implies, and the questions of the done invariant with the source that answered each — is
+one document, `gates.completion`, read the same way by the command line, the HTTP API, MCP
+and the Cockpit:
 
 ```
 majordomus-cli run gates.completion --input '{}' --format json | jq '.output.questions'
 ```
+
+The questions are declared once, in `share/completion.yaml`, which the tool ships: the
+stages of the work in order (implementation, validation, documentation, commit, gates,
+version, integration, deployment, verification, closing, provenance), every question in the
+stage it belongs to, and the source its answer is taken from — an obligation, a gate, the
+change set, the repository's convergence or a closing reading. `gates.policy`
+(`majordomus_completion_policy`, `GET /api/v1/gates/policy`) serves the file with what it
+resolves to here: a token the vocabulary lacks is a `problem`, and a gate question this
+repository's CI model never answers is listed under `unanswered_gates`. The report asks
+exactly those questions in that order, and folds the answers into `stage` — the first stage
+blocked, else the first with a question still owed, else the last — which is derived on
+every reading and written down by nobody. `complete` is true only when a task is present
+and every question passes or is exempt; `finishable` and `complete` are two different
+words. A distribution whose policy cannot be read is asked one question, `policy`, answered
+`unknown`, and nothing is complete.
 
 ### The closing questions
 
@@ -919,11 +947,19 @@ one that can also say what was true.
 - `--list` lists this worktree's checkpoints, newest first, with each one's git label.
 
 A checkpoint belongs to the **episode**, not to a task. It is written whether or not a task
-is open and whatever outcome the last one reached; the record's `task_id` is the task when
-there is one and `none` otherwise, and the ledger event omits the field entirely rather than
-writing a literal `none` that every reader of that event would collect as a task by that
-name. Only the task's own `checkpoint_at` is left alone when the task is over, because that
-field is the task's.
+is open and whatever outcome the last one reached. It relates the active task unless a
+different, still-open episode opened that task (ADR 0164); then its Markdown `task_id` is
+`none`, its ledger event omits `task_id`, and it leaves the task's `checkpoint_at` alone.
+`check --checkpoint` uses the same rule. A derived checkpoint uses that same prepared
+relation for its body; it cannot describe another episode's task as its own.
+
+The records that decide whether work is done follow the same rule and refuse instead of
+filing under another worker's task (I4292): `evidence --covers`, `evidence --gate` and a
+real `finish` exit `15` with `refused by adr-0164` when a different, still-open episode
+opened the active task, write nothing, and print the command to rerun under the opener's
+`MJ_SESSION_KEY` or the `session close --provider-session` that releases it. A hand-run
+`session close` with more than one episode open and none named exits `15` the same way and
+lists the keys to pass. `finish` counts only the checkpoints whose `task_id` is its task.
 
 This refused with `12` (no active task) and `15` (the task is no longer active) until ADR
 0052. Those two refusals are the 2026-09-05 outage: a task marked `handed_over` and never
@@ -973,7 +1009,7 @@ $ majordomus history --task t-20260903193012-a4f1
 
 Record or read durable decisions. One append-only file: `state/decisions.md`.
 
-`decision add "<what>" --why "<why>"` appends an entry with the task id and git head
+`decision add "<what>" --why "<why>"` appends an entry with the task relation and git head
 computed. `--why` is required: a decision with no recorded reason cannot be reviewed later,
 only re-argued. `--rejected` and `--evidence` are optional and default to `-`.
 
@@ -985,6 +1021,16 @@ decision. `decision list` marks a replaced entry with `Superseded by: <title>`.
 
 `decision list [--task <id>] [--limit <n>]` prints entries newest first; `decision show
 "<text>"` prints the first entry whose title contains that text, or exits `12`.
+
+Decisions, questions, checkpoints, handovers and `knowledge observe` prepare attribution
+once. An explicit caller identity resolves its own open episode or none; an unknown identity
+never borrows the checkout's pointer. With no supplied identity, exactly one local open
+episode is unambiguous; zero or several produce an event with no `session`, and status may
+still show the pointer as a guess. A record relates the active task unless a different
+episode that is still open opened it (its `task.started` event names that episode); a task
+whose opener closed, or that opened outside an episode, is carried on by whoever continues
+it, and a handover never closes another live episode's task. Markdown uses `none` for an
+absent task; the event omits `task_id`. The record is still written.
 
 The `deep-work` profile sets `verification.decision_record_required: true`; `finish` then
 refuses `completed` unless an entry names the task.
@@ -1003,12 +1049,15 @@ Open, resolve and list the questions that block acceptance. One mutable index:
 `state/open-questions.md`.
 
 Unresolved questions are explicit state, not prose inside a handover, because
-`finish --outcome completed` refuses while any entry names the active task. That gate is
+`finish --outcome completed` refuses while any unresolved entry exists here, including an
+entry without a task relation. That gate is
 the reason the file has a machine-written line format, and the reason `check`, `doctor` and
 `watch` fail on an entry that does not parse: a gate that cannot read an entry is a gate
 that can be bypassed by mistyping one.
 
 - `question add "<question>"` appends `- [unresolved] <task id> — <question> (<date>)`.
+  The task is `none` when a different, still-open episode opened the active task; a
+  question does not require an active task.
 - `question resolve <n|"<text>"> --answer "<answer>"` rewrites that one line to
   `[resolved <date>]` and appends the answer. `n` is the number `question list` printed.
   `--answer` is required, and an ambiguous selector is refused rather than guessed.
@@ -1020,6 +1069,8 @@ that can be bypassed by mistyping one.
 
 Resolving edits the index because an index of what is still open must not accumulate. The
 append-only record of every opening and resolution, with its answer, is the ledger.
+Resolution preserves the index entry's original task token. Its ledger event describes
+the resolving caller and relates that caller's active task only when attributable.
 
 ```
 $ majordomus question add "Does the legacy mobile callback still require the old URI form?"
@@ -2028,9 +2079,9 @@ majordomus adr affected [--base <ref>|--staged|--worktree] [--json]   the decisi
   merging. The verdict always states its subject — how many identities were added and what
   they were measured against — and when the base does not resolve it says the other refs were
   **not** surveyed rather than exiting clean with nothing said. `doctor` runs the same
-  examination, and `doctor` is the pre-commit hook, so a collision is refused on the branch
-  rather than at the merge where `generate --strict` would exclude every claimant and name
-  only the identity. `ADR 0053` is the reasoning.
+  examination: the pre-commit hook prints it on the branch, and CI's core-check refuses it
+  there, rather than at the merge where `generate --strict` would exclude every claimant and
+  name only the identity. `ADR 0053` is the reasoning.
 
 - `affected` reads a change set — the working tree against `HEAD` by default, `--staged`
   for the index, `--base <ref>` for `<ref>..HEAD` plus the working tree — and names every

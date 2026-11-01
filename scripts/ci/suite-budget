@@ -30,6 +30,10 @@
 #   --durations FILE  the recorded cost of every case, <case> TAB <seconds>, the file the shards
 #                     are dealt from (default: suite-durations.tsv beside the model); absent,
 #                     only this run's costs are held to the margin
+#   --write-durations FILE
+#                     write the record this run measured to FILE: its cases at this run's
+#                     cost (passed cases only), every other case as --durations records it
+#                     (CI uploads it as ci-suite-durations)
 #
 # exit 0   within budget (NEAR lines included)
 # exit 10  over budget — the total, the slowest case, or both
@@ -47,11 +51,13 @@ set -o pipefail
 REPORT="suite.tsv"
 MODEL=".ai/repo/ci/suite.yaml"
 DURATIONS=""
+WRITE_DURATIONS=""
 while [ $# -gt 0 ]; do
   case "$1" in
     --report) REPORT="$2"; shift 2 ;;
     --model) MODEL="$2"; shift 2 ;;
     --durations) DURATIONS="$2"; shift 2 ;;
+    --write-durations) WRITE_DURATIONS="$2"; shift 2 ;;
     *) echo "suite-budget: unknown option $1" >&2; exit 2 ;;
   esac
 done
@@ -150,6 +156,40 @@ if [ "$total" -ge "$near_total" ] && [ "$total" -le "$budget_total" ]; then
 fi
 if [ "$near" -gt 0 ]; then
   printf '        a NEAR line is not a failure: make that case cheaper, or split it, before a slow runner crosses the budget\n'
+fi
+
+# ---------------------------------------------------------------- the deal's record
+# The shards are dealt from DURATIONS, so a record that falls behind the suite costs wall
+# clock without failing anything: on 2026-10-22 it held 410 of 602 cases, the rest were
+# dealt at a guessed 300 s against a median of 9, and one shard ran 87 minutes beside one of
+# 43 (run 39762797718). This names what the record lacks and what grew past it, and with
+# --write-durations FILE writes the record this run measured: every case it ran at this run's
+# cost, every other case as recorded. Never a verdict: the file is refreshed, not policed.
+if [ -f "$DURATIONS" ]; then
+  unrecorded="$(LC_ALL=C awk -F'\t' 'NR == FNR { if ($2 ~ /^[0-9]+$/) d[$1] = 1; next }
+    NF >= 3 && $3 ~ /^[0-9]+$/ && !($1 in d) { print $1 }' "$DURATIONS" "$REPORT" | LC_ALL=C sort)"
+  if [ -n "$unrecorded" ]; then
+    printf 'STALE   %s case(s) of this run are not in %s, so they were dealt at its median:\n' \
+      "$(printf '%s\n' "$unrecorded" | grep -c .)" "$DURATIONS"
+    printf '%s\n' "$unrecorded" | awk 'NR <= 10 { printf "          %s\n", $0 } END { if (NR > 10) printf "          and %d more\n", NR - 10 }'
+    [ -n "$WRITE_DURATIONS" ] \
+      || printf '        refresh the record from this run: scripts/ci/suite-budget --report %s --write-durations %s\n' "$REPORT" "$DURATIONS"
+  fi
+  LC_ALL=C awk -F'\t' 'NR == FNR { if ($2 ~ /^[0-9]+$/) d[$1] = $2; next }
+    NF >= 3 && $3 ~ /^[0-9]+$/ && ($1 in d) && $3 + 0 > 2 * d[$1] && $3 + 0 > 120 { print $3, d[$1], $1 }' \
+    "$DURATIONS" "$REPORT" | LC_ALL=C sort -k1,1rn -k3,3 |
+    awk '{ printf "DRIFT   %s cost %s s in this run, recorded at %s s: the deal under-weighs it\n", $3, $1, $2 }'
+fi
+if [ -n "$WRITE_DURATIONS" ]; then
+  # Only a case that passed sets its seconds: a skipped or failed case stops early, and its few
+  # seconds would deal it as nearly free on the next run.
+  LC_ALL=C awk -F'\t' -v OFS='\t' 'NR == FNR { if (NF >= 3 && $2 == "ok" && $3 ~ /^[0-9]+$/) m[$1] = $3; next }
+    $2 ~ /^[0-9]+$/ { d[$1] = $2 }
+    END { for (k in d) if (!(k in m)) m[k] = d[k]; for (k in m) print k, m[k] }' \
+    "$REPORT" "$( [ -f "$DURATIONS" ] && printf '%s' "$DURATIONS" || printf /dev/null)" |
+    LC_ALL=C sort > "$WRITE_DURATIONS.tmp"
+  mv "$WRITE_DURATIONS.tmp" "$WRITE_DURATIONS"
+  printf 'suite-budget: wrote %s case durations to %s\n' "$(awk 'END { print NR }' "$WRITE_DURATIONS")" "$WRITE_DURATIONS"
 fi
 
 [ "$status" = 0 ] && echo "suite-budget: within budget"
