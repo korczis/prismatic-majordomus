@@ -79,7 +79,7 @@ rm -f "$P/fixture-cat.v1.md"
 # cannot, is enforcement nobody can reproduce.
 prule fixture-untested.v1.md project.fixture-untested blocking 'claims: [fixture]'
 expect_exit 10 "$MJ" rules list
-expect_grep 'x-majordomus names no test and gives no reviewed_because'
+expect_grep 'x-majordomus names no test, no enforcement entry and gives no reviewed_because'
 rm -f "$P/fixture-untested.v1.md"
 
 # ---------------------------------------------------------------- the third mode: review

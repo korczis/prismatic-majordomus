@@ -36,7 +36,6 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | level | code | subject | message |
 |---|---|---|---|
 | WARN | `scope_conflict` | `I4290` | shares docs/PLANNING.md with I4306; they may not run concurrently |
-| WARN | `scope_conflict` | `I4290` | shares docs/PLANNING.md with I4315; they may not run concurrently |
 | WARN | `scope_conflict` | `I4290` | shares docs/PLANNING.md with I4322; they may not run concurrently |
 | WARN | `scope_conflict` | `I4290` | shares docs/PLANNING.md with I4330; they may not run concurrently |
 | WARN | `scope_conflict` | `I4290` | shares docs/PLANNING.md with I4410; they may not run concurrently |

@@ -68,10 +68,13 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I3373` | shares .ai/repo/project/issues with I4251; they may not run concurrently |
 | WARN | `scope_conflict` | `I3373` | shares .ai/repo/project/issues with I4252; they may not run concurrently |
 | WARN | `scope_conflict` | `I3373` | shares .ai/repo/project/issues with I4253; they may not run concurrently |
+| WARN | `scope_conflict` | `I3373` | shares .ai/repo/project/issues with I4255; they may not run concurrently |
 | WARN | `scope_conflict` | `I3373` | shares .ai/repo/project/issues with I4256; they may not run concurrently |
 | WARN | `scope_conflict` | `I3373` | shares .ai/repo/project/issues with I4257; they may not run concurrently |
 | WARN | `scope_conflict` | `I3373` | shares .ai/repo/project/issues with I4258; they may not run concurrently |
+| WARN | `scope_conflict` | `I3373` | shares .ai/repo/project/issues with I4259; they may not run concurrently |
 | WARN | `scope_conflict` | `I3373` | shares .ai/repo/project/issues with I4261; they may not run concurrently |
+| WARN | `scope_conflict` | `I3373` | shares .ai/repo/project/issues with I4262; they may not run concurrently |
 | WARN | `scope_conflict` | `I3373` | shares .ai/repo/project/issues with I4264; they may not run concurrently |
 | WARN | `scope_conflict` | `I3373` | shares .ai/repo/project/issues with I4265; they may not run concurrently |
 | WARN | `scope_conflict` | `I3373` | shares .ai/repo/project/issues with I4268; they may not run concurrently |
@@ -85,7 +88,6 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I3373` | shares .ai/repo/project/issues with I4306; they may not run concurrently |
 | WARN | `scope_conflict` | `I3373` | shares .ai/repo/project/issues with I4307; they may not run concurrently |
 | WARN | `scope_conflict` | `I3373` | shares .ai/repo/project/issues with I4309; they may not run concurrently |
-| WARN | `scope_conflict` | `I3373` | shares .ai/repo/project/issues with I4315; they may not run concurrently |
 | WARN | `scope_conflict` | `I3373` | shares .ai/repo/project/issues with I4316; they may not run concurrently |
 | WARN | `scope_conflict` | `I3373` | shares .ai/repo/project/issues with I4317; they may not run concurrently |
 | WARN | `scope_conflict` | `I3373` | shares .ai/repo/project/issues with I4318; they may not run concurrently |

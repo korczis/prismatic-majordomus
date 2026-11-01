@@ -1256,6 +1256,26 @@ mj_validate_rule_package() {
   else
     mj_doctrine_ok rules "blocking" "all $blocking blocking rule(s) carry a validator"
   fi
+  # A rule backed by the project's own command names the policy's enforcement entry that
+  # runs it. The name must resolve: an entry the policy does not declare is enforcement
+  # nothing performs. Whether the entry is wired is the wiring check's verdict, not this one.
+  local declared="" i=0 rule entry backed=0
+  while [ -n "$(mj_pol "enforcement.$i.name")" ]; do
+    declared="$declared|$(mj_pol "enforcement.$i.name")|"; i=$((i + 1))
+  done
+  while IFS="$MJ_TAB" read -r rule entry; do
+    [ -n "$entry" ] || continue
+    case "$declared" in
+      *"|$entry|"*) backed=$((backed + 1)) ;;
+      *) mj_doctrine_fail rules "$rule" "names enforcement entry '$entry', which $(mj_rel "$MJ_POLICY_FILE") does not declare" \
+           "grep -n 'name:' $(mj_rel "$MJ_POLICY_FILE")" ;;
+    esac
+  done < <(awk -F= '
+      { k = $1; v = substr($0, length(k) + 2); np = split(k, p, ".") }
+      np == 3 && p[3] == "id" { id[p[2]] = v }
+      np == 3 && p[3] == "enforcement" { ent[p[2]] = v }
+      END { for (n in ent) printf "%s\t%s\n", id[n], ent[n] }' "$MJ_RULES_FLAT" | LC_ALL=C sort)
+  [ "$backed" = 0 ] || mj_doctrine_ok rules "enforcement entries" "$backed rule(s) enforced by a policy entry the policy declares"
   return 0
 }
 

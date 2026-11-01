@@ -1582,7 +1582,7 @@ mod tests {
             "{html}"
         );
         assert!(
-            html.contains("<li>the scope drifted past <code class=\"mj-ui-code\">src/a.rs</code> (<a class=\"mj-ui-link mj-ui-mono\" href=\"/ui/prs?issue=I7#issue\">I7</a>), not I99</li>"),
+            html.contains("<li>the scope drifted past <code class=\"mj-md-code\">src/a.rs</code> (<a class=\"mj-md-ref\" href=\"/ui/prs?issue=I7#issue\">I7</a>), not I99</li>"),
             "a drift message is prose: its path is code, the issue the plan holds a link, one it does not hold text (I3000): {html}"
         );
         assert!(

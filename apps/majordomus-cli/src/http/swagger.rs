@@ -66,6 +66,7 @@ static PAGE: LazyLock<String> = LazyLock::new(|| {
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Majordomus API</title>
+<link rel="icon" type="image/svg+xml" href="{icon}">
 <link rel="stylesheet" href="https://unpkg.com/swagger-ui-dist@{v}/swagger-ui.css" integrity="{css_sri}" crossorigin="anonymous">
 <style>
 {tokens}
@@ -108,9 +109,24 @@ body {{ margin: 0; background: var(--mj-bg); color: var(--mj-fg); font-family: v
         bundle_sri = SWAGGER_BUNDLE_SRI,
         boot = BOOT,
         checkout = CHECKOUT_MARKER,
-        tokens = crate::web::html::TOKENS
+        tokens = crate::web::html::TOKENS,
+        icon = icon()
     )
 });
+
+/// The page's icon: the canonical mark the executable compiles in, as a `data:` address.
+///
+/// A page that names no icon makes the browser ask for `/favicon.ico`, which no surface of
+/// this server owns: the UI audit recorded that 404 as a console error on visits of this
+/// page. The mark travels inside the page instead of being linked from another surface's
+/// assets, so it cannot miss whatever is mounted or shipped beside the executable, and
+/// `img-src data:` in [`csp`] already admits it.
+fn icon() -> String {
+    format!(
+        "data:image/svg+xml;base64,{}",
+        crate::cockpit::base64(crate::ui::shell::MARK.as_bytes())
+    )
+}
 
 /// The page, rendered once.
 ///
@@ -207,6 +223,19 @@ mod tests {
         }
         // and it is rendered once: two calls hand back the same allocation, not two
         assert!(std::ptr::eq(shell.as_ptr(), page().as_ptr()));
+    }
+
+    #[test]
+    fn the_page_names_its_icon_so_the_browser_asks_for_no_favicon_ico() {
+        // a page without an icon link is a request for /favicon.ico, which nothing serves
+        let shell = page();
+        assert_eq!(shell.matches("rel=\"icon\"").count(), 1, "{shell}");
+        assert!(shell.contains(&icon()), "the icon is the compiled-in mark");
+        assert!(!shell.contains("favicon.ico"));
+        assert!(
+            csp().contains("img-src 'self' data:"),
+            "the page's own policy admits the icon"
+        );
     }
 
     #[test]

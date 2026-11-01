@@ -86,7 +86,6 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I2867` | shares .github/workflows/validate.yml with I3936; they may not run concurrently |
 | WARN | `scope_conflict` | `I2867` | shares .github/workflows/validate.yml with I3973; they may not run concurrently |
 | WARN | `scope_conflict` | `I2867` | shares .github/workflows/validate.yml with I4296; they may not run concurrently |
-| WARN | `scope_conflict` | `I2867` | shares .github/workflows/pages.yml with I4315; they may not run concurrently |
 | WARN | `scope_conflict` | `I2867` | shares .github/workflows/validate.yml with I4338; they may not run concurrently |
 | WARN | `scope_conflict` | `I2867` | shares .github/workflows/validate.yml with I4347; they may not run concurrently |
 | WARN | `scope_conflict` | `I2867` | shares .github/workflows/validate.yml with I4349; they may not run concurrently |

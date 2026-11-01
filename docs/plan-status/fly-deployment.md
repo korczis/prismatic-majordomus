@@ -76,7 +76,9 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I3820` | shares docs with I4006; they may not run concurrently |
 | WARN | `scope_conflict` | `I3820` | shares docs with I4007; they may not run concurrently |
 | WARN | `scope_conflict` | `I3820` | shares docs with I4008; they may not run concurrently |
+| WARN | `scope_conflict` | `I3820` | shares docs with I4255; they may not run concurrently |
 | WARN | `scope_conflict` | `I3820` | shares docs with I4261; they may not run concurrently |
+| WARN | `scope_conflict` | `I3820` | shares docs with I4262; they may not run concurrently |
 | WARN | `scope_conflict` | `I3820` | shares docs with I4265; they may not run concurrently |
 | WARN | `scope_conflict` | `I3820` | shares docs with I4268; they may not run concurrently |
 | WARN | `scope_conflict` | `I3820` | shares docs with I4290; they may not run concurrently |
@@ -84,7 +86,6 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I3820` | shares site with I4298; they may not run concurrently |
 | WARN | `scope_conflict` | `I3820` | shares docs with I4306; they may not run concurrently |
 | WARN | `scope_conflict` | `I3820` | shares .ai/repo/adrs/0219-a-deployment-names-its-provider-and-every-provider-file-is-derived.md with I4307; they may not run concurrently |
-| WARN | `scope_conflict` | `I3820` | shares .ai/repo/adrs/0219-a-deployment-names-its-provider-and-every-provider-file-is-derived.md with I4315; they may not run concurrently |
 | WARN | `scope_conflict` | `I3820` | shares site with I4317; they may not run concurrently |
 | WARN | `scope_conflict` | `I3820` | shares site with I4318; they may not run concurrently |
 | WARN | `scope_conflict` | `I3820` | shares docs with I4322; they may not run concurrently |
