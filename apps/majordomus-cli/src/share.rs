@@ -182,7 +182,12 @@ impl Share {
     /// [`ProviderDeclaration`] per id that has either, sorted by id. A distribution without
     /// the file declares nothing and every template is a provider named by its file; a
     /// file that does not parse is an error naming it, because a declaration half-read is
-    /// worse than none.
+    /// worse than none. So is an `offers:` block that leaves out `browser` or gives no
+    /// `browser_evidence` (I3829): the browser answer is read as a word with its citation or
+    /// not at all, never as a silent `none` or an empty citation. An entry with no `offers:`
+    /// block at all declares nothing on any axis, which reads as the undeclared state
+    /// [`ProviderOffers`] describes and the evidence gate (`scripts/provider-evidence-check`)
+    /// names, not as a read failure: a template-only provider has no entry either.
     pub fn providers(&self) -> Result<ProviderDeclarations> {
         let path = self.providers_path();
         let file: ProvidersFile = match std::fs::read_to_string(&path) {
@@ -194,6 +199,28 @@ impl Share {
             Err(e) if e.kind() == std::io::ErrorKind::NotFound => ProvidersFile::default(),
             Err(e) => return Err(Error::io(&path, e)),
         };
+        for (id, entry) in &file.providers {
+            let Some(offers) = &entry.offers else {
+                continue;
+            };
+            let missing = if offers.browser.is_none() {
+                "browser"
+            } else if offers
+                .browser_evidence
+                .as_deref()
+                .is_none_or(|e| e.trim().is_empty())
+            {
+                "browser_evidence"
+            } else {
+                continue;
+            };
+            return Err(Error::KindSchema {
+                reason: format!(
+                    "{}: provider '{id}' declares offers without {missing}",
+                    path.display()
+                ),
+            });
+        }
         let templates = self.provider_templates();
         let mut ids: Vec<String> = templates.clone();
         ids.extend(file.providers.keys().cloned());

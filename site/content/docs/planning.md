@@ -567,6 +567,9 @@ Deployments are observed only by `majordomus served forge`, not by `prs refresh`
 reason. The Pages workflow's `ui-snapshot` job runs it and then fails when `plan delivery`
 still reads no publication for any reason other than "no successful deployment", so a reader
 that stops matching the deploy turns that run red instead of publishing `released` forever.
+The red is for a forge that answered: when `served forge` itself could not read the
+deployments in time (an outage, I4380), the step reports the deployed stage unknown with a
+warning and the publication goes on, because an outage says nothing about the reader.
 
 Committed derived data is a function of the commit alone, or every tag, push, pull request
 and deployment would turn `scripts/generate-site-data --check` red on every open branch. So
