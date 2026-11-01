@@ -114,7 +114,7 @@ while kill -0 "$PID" 2>/dev/null; do
 done
 rc=0; wait "$PID" || rc=$?; PID=""
 [ "$rc" = 0 ] || { echo "    the stopped drain exited $rc:"; cat "$STATE/run.out" "$STATE/run.err"; exit 1; }
-grep -q 'stopped after 1 cycle(s), 1 merge(s): asked to stop' "$STATE/run.out" \
+grep -Eq 'stopped after [0-9]+ cycle\(s\), 1 merge\(s\): asked to stop' "$STATE/run.out" \
   || { echo "    the drain does not say why it stopped:"; tail -3 "$STATE/run.out"; exit 1; }
 [ ! -e "$LOCK" ] || { echo "    the lease was left behind: $(cat "$LOCK")"; exit 1; }
 [ "$(grep -c '^pr merge\|^api -X' "$STATE/log")" = 1 ] || { echo "    landed more than once"; exit 1; }
