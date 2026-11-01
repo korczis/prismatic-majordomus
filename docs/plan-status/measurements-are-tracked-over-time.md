@@ -29,10 +29,10 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 |---|---|---|---|
 | WARN | `no_evidence_required` | `I3934` | requires no evidence; nothing gates its completion |
 | WARN | `scope_conflict` | `I3932` | shares .github/workflows/validate.yml with I3940; they may not run concurrently |
+| WARN | `scope_conflict` | `I3932` | shares .github/workflows/validate.yml with I3970; they may not run concurrently |
 | WARN | `scope_conflict` | `I3934` | shares docs/CI.md with I4268; they may not run concurrently |
 | WARN | `scope_conflict` | `I3934` | shares docs/CI.md with I4347; they may not run concurrently |
 | WARN | `scope_conflict` | `I3934` | shares docs/CI.md with I4349; they may not run concurrently |
-| WARN | `scope_conflict` | `I3934` | shares docs/CI.md with I4381; they may not run concurrently |
 | WARN | `scope_conflict` | `I3934` | shares docs/CI.md with I4460; they may not run concurrently |
 | WARN | `scope_conflict` | `I3934` | shares .ai/repo/ci/telemetry.yaml with I4468; they may not run concurrently |
 | WARN | `scope_conflict` | `I3941` | shares apps/majordomus-cli/src/capability/builtin/delivery.rs with I4002; they may not run concurrently |

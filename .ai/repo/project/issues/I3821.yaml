@@ -30,4 +30,25 @@ depends_on:
   - "I3820"
 serves: []
 created_at: 2026-10-21
-updated_at: 2026-10-21
+updated_at: 2026-10-29T18:02:52Z
+started_at: 2026-10-29T18:00:36Z
+started_event: sha256:45cbc407d3c1664cee0cf6b50814da05c1a4c086763560097aeef9d614113d26
+verified_at: 2026-10-29T18:01:21Z
+verified_event: sha256:7f4fb4c8b47599b91a8a8b14aca749a6feae835897ec597f5469972a31fa4ecb
+completed_at: 2026-10-29T18:02:52Z
+completed_event: sha256:9c7eceb0d191218db52294806a8f4d6c4806b0492ce68c87c0a03997c4bc6fd8
+evidence:
+  - covers: slug_assembled_from_object
+    type: ci
+    command: "bash test/run.sh 3821_a_providers_tree_is_assembled_from_the_object (validate suite-shard (4))"
+    result: "ok in master validate 40796031054 at 5370ee63d19, suite-shard (4) job 123213269249: case 3821 ok; it asserts the slug's exact top-level list (build.inputs, .buildpacks, .majordomus, Procfile, bin), bin/* mode 755, the single pinned buildpack line, SOURCE.json recording the commit, an uncommitted edit kept out (C1), and an out directory inside the checkout refused with nothing written (C2). Landed by #2566 (9215178a53b). master 51b38035a71 differs from 5370ee63d19 in no file of src/deploy/slug.rs, capability/builtin/deploy.rs or the case. The run is red only on rust (3) intent-check and interaction-probe-shard (5), neither this issue's"
+    artifact: "https://github.com/korczis/prismatic-majordomus/actions/runs/40796031054/job/123213269249"
+    commit: 51b38035a7162332304aef58fed25b98761f412b
+    recorded_at: 2026-10-29T18:02:04Z
+  - covers: master_publishes_after_green_ci
+    type: ci
+    command: ".github/workflows/provider.yml on workflow_run of master's validate"
+    result: "provider run 40654194067 (event workflow_run, head master 6c79dcf68cf, whose validate 40573560939 concluded success), job publish 122701159430 success: 'the commit, and whether it may be published', 'the executable, built at that commit', 'the slug, assembled from the deployment object', 'the slug, pushed to the provider' and 'the deployment answers master's commit': https://prismatic-majordomus.gigalixirapp.com/api/v1/live answers 6c79dcf68cf329f4c21c219720b811381c3433aa (C3, C4). GIGALIXIR_EMAIL and GIGALIXIR_API_KEY appear in the log only as *** and reach git through a credential helper (C3). Every provider run after a red validate (40695960512, 40697380264, 40826109124, 40902978494) is skipped: nothing is published unverified. On 2026-10-29 the endpoint still answers 6c79dcf68cf, the newest master commit with a green validate. provider.yml and src/deploy/slug.rs are unchanged from 6c79dcf68cf to 51b38035a71"
+    artifact: "https://github.com/korczis/prismatic-majordomus/actions/runs/40654194067/job/122701159430"
+    commit: 51b38035a7162332304aef58fed25b98761f412b
+    recorded_at: 2026-10-29T18:02:35Z
