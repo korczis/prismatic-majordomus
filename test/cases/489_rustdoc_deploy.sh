@@ -19,7 +19,7 @@
 # of another commit, fails the case; anywhere else the case says what it did not measure and
 # ends (skip_case).
 . "$ROOT/test/lib.sh"
-command -v zola >/dev/null || skip_case "zola is absent, so no site was built or deployed"
+mj_zola_ready "$ROOT" || skip_case "$(mj_zola_why "$ROOT"), so no site was built or deployed"
 [ -d "$ROOT/node_modules/tailwindcss" ] || skip_case "node_modules is absent, so no site was built or deployed"
 command -v jq >/dev/null 2>&1 || skip_case "no jq, so no site was built or deployed"
 [ -f "$ROOT/target/web/rustdoc/surface.json" ] \

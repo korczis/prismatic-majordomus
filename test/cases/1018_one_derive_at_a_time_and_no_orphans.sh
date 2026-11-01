@@ -9,7 +9,8 @@
 # reclaim of a dead owner's lock (announced, never silent), the wait for a live owner and for a
 # priority marker that names another branch, re-entry under a wrapper that already holds the
 # lock, a TERM that takes the command's whole tree down and releases the lock, and waiters
-# served in the order they arrived, with a dead waiter's ticket reaped (I3098).
+# served in the order they arrived, with a dead waiter's ticket reaped (I3098), and a lock path
+# that cannot be made named and given up on, never waited out as a holder.
 . "$ROOT/test/lib.sh"
 
 D="$ROOT/scripts/derive"
@@ -71,6 +72,33 @@ expect_grep 'gave up after'
 grep -qx "other-session $live" "$MAJORDOMUS_DERIVE_LOCK/owner" || fail 'a waiting derive touched a live owner'"'"'s lock'
 kill "$live" 2>/dev/null || true; wait "$live" 2>/dev/null || true
 rm -rf "$MAJORDOMUS_DERIVE_LOCK"
+
+# ---------------------------------------------------------------- a lock that cannot be made
+# No lock directory is there, yet mkdir fails: nobody holds it, so it is never "an owner still
+# writing its name" (an offload derive on lundra waited 1h12m on that line for a lock that no
+# longer existed). The reason is named, and a path that stays unmakeable is given up on after
+# MAJORDOMUS_DERIVE_UNMADE_MAX seconds rather than waited out for MAJORDOMUS_DERIVE_WAIT_MAX.
+ln -s "$T/machine/nowhere/gone" "$MAJORDOMUS_DERIVE_LOCK"
+MAJORDOMUS_DERIVE_UNMADE_MAX=1 expect_exit 75 "$D" --locked -- true
+expect_grep "is a symbolic link to $T/machine/nowhere/gone that leads to no directory"
+expect_no_grep 'still writing its name'
+rm -f "$MAJORDOMUS_DERIVE_LOCK"
+printf 'not a lock\n' > "$MAJORDOMUS_DERIVE_LOCK"
+MAJORDOMUS_DERIVE_UNMADE_MAX=1 expect_exit 75 "$D" --locked -- true
+expect_grep 'is a file, not a lock directory'
+expect_no_grep 'still writing its name'
+rm -f "$MAJORDOMUS_DERIVE_LOCK"
+mkdir -p "$T/machine/sealed"; chmod 555 "$T/machine/sealed"
+if ! mkdir "$T/machine/sealed/probe" 2>/dev/null; then # a root runner writes anywhere
+  MAJORDOMUS_DERIVE_LOCK="$T/machine/sealed/.derive.lock" MAJORDOMUS_DERIVE_UNMADE_MAX=1 \
+    expect_exit 75 "$D" --locked -- true
+  expect_grep 'sealed/\.derive\.lock cannot be created \(.+\), so no derive can take it'
+  expect_no_grep 'still writing its name'
+fi
+chmod 755 "$T/machine/sealed"; rm -rf "$T/machine/sealed"
+# once the path can be made again, the lock is taken as ever
+expect_exit 0 "$D" --locked -- true
+lock_free
 
 # ---------------------------------------------------------------- the priority marker
 printf 'd1: #825 then #831, repair for another branch\n' > "$MAJORDOMUS_DERIVE_PRIORITY"
