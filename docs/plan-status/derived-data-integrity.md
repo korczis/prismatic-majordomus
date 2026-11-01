@@ -44,6 +44,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I2863` | shares .ai/repo/project/issues/I2863.yaml with I3246; they may not run concurrently |
 | WARN | `scope_conflict` | `I2863` | shares .ai/repo/project/issues/I2863.yaml with I3373; they may not run concurrently |
 | WARN | `scope_conflict` | `I2863` | shares scripts/derive with I4512; they may not run concurrently |
+| WARN | `scope_conflict` | `I2863` | shares scripts/derive with I4513; they may not run concurrently |
 | WARN | `scope_conflict` | `I3775` | shares .gitattributes with I3820; they may not run concurrently |
 | WARN | `scope_conflict` | `I3775` | shares site/content/roadmap.md with I3829; they may not run concurrently |
 | WARN | `scope_conflict` | `I3775` | shares site/content/roadmap.md with I3841; they may not run concurrently |
@@ -51,3 +52,4 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I3775` | shares site/content/roadmap.md with I4400; they may not run concurrently |
 | WARN | `scope_conflict` | `I3775` | shares scripts/ci/derived-attributes-check with I4468; they may not run concurrently |
 | WARN | `scope_conflict` | `I3775` | shares .gitattributes with I4512; they may not run concurrently |
+| WARN | `scope_conflict` | `I4512` | shares scripts/derive with I4513; they may not run concurrently |
