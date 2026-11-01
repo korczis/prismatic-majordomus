@@ -1753,6 +1753,15 @@
         "status": "query"
       },
       {
+        "id": "capability:release.site",
+        "kind": "capability",
+        "label": "release.site",
+        "summary": "Whether a release leaves the site better than it found it",
+        "route": "/cockpit/capabilities/release.site",
+        "source": "apps/majordomus-cli/src/capability/builtin/release.rs",
+        "status": "query"
+      },
+      {
         "id": "capability:release.version",
         "kind": "capability",
         "label": "release.version",
@@ -89341,6 +89350,32 @@
         }
       },
       {
+        "id": "majordomus://rule/project.a-release-leaves-the-site-better@1",
+        "kind": "rule",
+        "label": "project.a-release-leaves-the-site-better@1",
+        "summary": "A release leaves the site better than it found it",
+        "route": "/cockpit/objects/rule/project-a-release-leaves-the-site-better-1",
+        "source": ".ai/repo/rules/project/a-release-leaves-the-site-better.v1.md",
+        "status": "active",
+        "facts": {
+          "class": "blocking",
+          "depends_on": [
+            "project.release-is-a-projection@2",
+            "project.the-site-offers-the-release-it-published@1",
+            "project.homepage-tells-a-declared-story@2",
+            "project.derived-files-regenerated@1",
+            "project.design-tokens-declared-once@2"
+          ],
+          "tags": [
+            "release",
+            "web",
+            "publication",
+            "design",
+            "projections"
+          ]
+        }
+      },
+      {
         "id": "majordomus://rule/project.a-session-joins-the-cluster-before-it-works@1",
         "kind": "rule",
         "label": "project.a-session-joins-the-cluster-before-it-works@1",
@@ -100060,6 +100095,13 @@
         "source": "test/cases/3160_a_scope_entry_is_one_path.sh"
       },
       {
+        "id": "majordomus://test/test/cases/3170_a_release_leaves_the_site_better.sh",
+        "kind": "test",
+        "label": "test/cases/3170_a_release_leaves_the_site_better.sh",
+        "route": "/cockpit/objects/test/test-cases-3170-a-release-leaves-the-site-better-sh",
+        "source": "test/cases/3170_a_release_leaves_the_site_better.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/3176_a_checkout_serves_the_current_trunk.sh",
         "kind": "test",
         "label": "test/cases/3176_a_checkout_serves_the_current_trunk.sh",
@@ -108635,6 +108677,21 @@
       },
       {
         "source": "capability:release.next",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:release.site",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:release.site",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:release.site",
         "target": "projection:mcp",
         "kind": "projects"
       },
@@ -144164,6 +144221,36 @@
         "kind": "depends_on"
       },
       {
+        "source": "majordomus://rule/project.a-release-leaves-the-site-better@1",
+        "target": "kind:rule",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://rule/project.a-release-leaves-the-site-better@1",
+        "target": "majordomus://rule/project.derived-files-regenerated@1",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.a-release-leaves-the-site-better@1",
+        "target": "majordomus://rule/project.design-tokens-declared-once@2",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.a-release-leaves-the-site-better@1",
+        "target": "majordomus://rule/project.homepage-tells-a-declared-story@2",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.a-release-leaves-the-site-better@1",
+        "target": "majordomus://rule/project.release-is-a-projection@2",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.a-release-leaves-the-site-better@1",
+        "target": "majordomus://rule/project.the-site-offers-the-release-it-published@1",
+        "kind": "depends_on"
+      },
+      {
         "source": "majordomus://rule/project.a-session-joins-the-cluster-before-it-works@1",
         "target": "kind:rule",
         "kind": "is_a"
@@ -147575,6 +147662,11 @@
       },
       {
         "source": "majordomus://test/test/cases/3160_a_scope_entry_is_one_path.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/3170_a_release_leaves_the_site_better.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -153445,6 +153537,11 @@
       },
       {
         "source": "module:release",
+        "target": "capability:release.site",
+        "kind": "composes"
+      },
+      {
+        "source": "module:release",
         "target": "capability:release.version",
         "kind": "composes"
       },
@@ -153610,8 +153707,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4192,
-      "edges": 9633,
+      "nodes": 4195,
+      "edges": 9644,
       "acyclic": false,
       "truncated": false
     }

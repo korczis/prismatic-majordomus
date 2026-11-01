@@ -181,6 +181,7 @@
     "op-release-changelog": "docs/api/release/",
     "op-release-currency": "docs/api/release/",
     "op-release-next": "docs/api/release/",
+    "op-release-site": "docs/api/release/",
     "op-release-version": "docs/api/release/",
     "op-repository-info": "docs/api/repository/",
     "op-repository-scope": "docs/api/repository/",
@@ -1038,6 +1039,14 @@
     "schema-ReleaseReference": "docs/api/release/",
     "schema-ReleaseSection": "docs/api/release/",
     "schema-ReleaseSeverity": "docs/api/release/",
+    "schema-ReleaseSiteBaseline": "docs/api/release/",
+    "schema-ReleaseSiteBetter": "docs/api/release/",
+    "schema-ReleaseSiteChange": "docs/api/release/",
+    "schema-ReleaseSiteFinding": "docs/api/release/",
+    "schema-ReleaseSiteMeasure": "docs/api/release/",
+    "schema-ReleaseSiteMeasureVerdict": "docs/api/release/",
+    "schema-ReleaseSiteSubject": "docs/api/release/",
+    "schema-ReleaseSiteVerdict": "docs/api/release/",
     "schema-ReleaseStatus": "docs/api/release/",
     "schema-ReleaseSurfaceChange": "docs/api/release/",
     "schema-ReleaseSurfaceKind": "docs/api/release/",
@@ -1357,8 +1366,8 @@
   },
   "binding": "GET binds every top-level input property as a query parameter; POST binds the input as the JSON body",
   "counts": {
-    "operations": 212,
-    "schemas": 1082,
+    "operations": 213,
+    "schemas": 1090,
     "tags": 60
   },
   "dialect": "https://spec.openapis.org/oas/3.1/dialect/base",
@@ -1631,6 +1640,7 @@
     "release.changelog": "release",
     "release.currency": "release",
     "release.next": "release",
+    "release.site": "release",
     "release.version": "release",
     "repository.info": "repository",
     "repository.scope": "repository",
@@ -2492,6 +2502,14 @@
     "ReleaseReference": "release",
     "ReleaseSection": "release",
     "ReleaseSeverity": "release",
+    "ReleaseSiteBaseline": "release",
+    "ReleaseSiteBetter": "release",
+    "ReleaseSiteChange": "release",
+    "ReleaseSiteFinding": "release",
+    "ReleaseSiteMeasure": "release",
+    "ReleaseSiteMeasureVerdict": "release",
+    "ReleaseSiteSubject": "release",
+    "ReleaseSiteVerdict": "release",
     "ReleaseStatus": "release",
     "ReleaseSurfaceChange": "release",
     "ReleaseSurfaceKind": "release",
@@ -21934,6 +21952,7 @@
         "release.analysis",
         "release.currency",
         "release.next",
+        "release.site",
         "release.version",
         "repository.info",
         "rules.report",
@@ -49197,6 +49216,378 @@
       "variants": []
     },
     {
+      "description": "The release the verdict compares with.\n\n```\nuse majordomus_cli::release::site::SiteBaseline;\nlet b = SiteBaseline { tag: Some(\"v0.27.0\".into()), commit: \"c1a430dcf\".into() };\nassert_eq!(b.tag.as_deref(), Some(\"v0.27.0\"));\n```",
+      "home": "release",
+      "is_enum": false,
+      "name": "ReleaseSiteBaseline",
+      "properties": [
+        {
+          "description": "The previous release's tag, when the baseline is a recorded release.",
+          "name": "tag",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The commit the previous release was built from.",
+          "name": "commit",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "ReleaseSiteVerdict"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "Which way a measure improves, which is what decides whether a movement between two\nreleases is a regression that refuses the later one: a ratio must not fall, a count of\nfailures or of hand-written pages must not grow, and a difference below rounding is none.\n\n```\nuse majordomus_cli::release::site::Better;\nassert!(Better::Higher.regressed(4.5, 4.4));\nassert!(!Better::Higher.regressed(4.5, 4.6));\nassert!(Better::Lower.regressed(3.0, 4.0));\nassert!(!Better::Lower.regressed(3.0, 3.0));\n```",
+      "home": "release",
+      "is_enum": true,
+      "name": "ReleaseSiteBetter",
+      "properties": [],
+      "type": "\"higher\" | \"lower\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "ReleaseSiteMeasure"
+      ],
+      "values": [
+        {
+          "description": "A larger value is better: a contrast ratio.",
+          "value": "higher"
+        },
+        {
+          "description": "A smaller value is better: a count of failures, of pages written by hand.",
+          "value": "lower"
+        }
+      ],
+      "variants": []
+    },
+    {
+      "description": "One commit of the window that touched the site or named it as its subject.\n\n```\nuse majordomus_cli::release::site::SiteChange;\nlet c = SiteChange {\n    commit: \"3024cbcc0\".into(),\n    subject: \"fix(site): a diagram's node text is readable in both themes\".into(),\n    authored: vec![\"lib/mermaid.awk\".into()],\n    generated: vec![],\n    counts: true,\n    why: \"names the site as its subject and changes a source\".into(),\n};\nassert!(c.counts);\n```",
+      "home": "release",
+      "is_enum": false,
+      "name": "ReleaseSiteChange",
+      "properties": [
+        {
+          "description": "The commit, abbreviated.",
+          "name": "commit",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Its subject line, as written.",
+          "name": "subject",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The files it changed that are not generated output and that make it a site change.",
+          "name": "authored",
+          "refs": [],
+          "required": false,
+          "type": "array of string"
+        },
+        {
+          "description": "The site's generated files it changed.",
+          "name": "generated",
+          "refs": [],
+          "required": false,
+          "type": "array of string"
+        },
+        {
+          "description": "Whether it counts as the release's improvement of the site.",
+          "name": "counts",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "Why it counts, or why it does not.",
+          "name": "why",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "ReleaseSiteVerdict"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "A reason the release is refused.\n\n```\nuse majordomus_cli::release::site::SiteFinding;\nlet f = SiteFinding { code: \"site-not-improved\".into(), message: \"nothing\".into() };\nassert_eq!(f.code, \"site-not-improved\");\n```",
+      "home": "release",
+      "is_enum": false,
+      "name": "ReleaseSiteFinding",
+      "properties": [
+        {
+          "description": "`site-measure-regressed`, `site-measure-unreadable` or `site-not-improved`.",
+          "name": "code",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "What was found, naming the measure and the delta or the commits.",
+          "name": "message",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "ReleaseSiteVerdict"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "One measure, at the previous release and at this one.\n\n```\nuse majordomus_cli::release::site::{Better, MeasureDelta, MeasureVerdict};\nlet d = MeasureDelta {\n    id: \"contrast.dark.weakest\".into(),\n    title: \"the weakest text contrast in the dark theme\".into(),\n    better: Better::Higher,\n    previous: Some(4.8),\n    current: Some(4.6),\n    delta: Some(-0.2),\n    verdict: MeasureVerdict::Regressed,\n    note: None,\n};\nassert!(d.verdict.refuses());\n```",
+      "home": "release",
+      "is_enum": false,
+      "name": "ReleaseSiteMeasure",
+      "properties": [
+        {
+          "description": "The measure's identity: `contrast.light.failing`, `site.pages-by-hand`.",
+          "name": "id",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "What it measures, in a sentence fragment.",
+          "name": "title",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Which way it improves.",
+          "name": "better",
+          "refs": [
+            "ReleaseSiteBetter"
+          ],
+          "required": true,
+          "type": "ReleaseSiteBetter"
+        },
+        {
+          "description": "Its value in the previous release's tree, when that tree could be measured.",
+          "name": "previous",
+          "refs": [],
+          "required": false,
+          "type": "number | null"
+        },
+        {
+          "description": "Its value in the released tree, when that tree could be measured.",
+          "name": "current",
+          "refs": [],
+          "required": false,
+          "type": "number | null"
+        },
+        {
+          "description": "`current - previous`, when both were measured.",
+          "name": "delta",
+          "refs": [],
+          "required": false,
+          "type": "number | null"
+        },
+        {
+          "description": "How it moved.",
+          "name": "verdict",
+          "refs": [
+            "ReleaseSiteMeasureVerdict"
+          ],
+          "required": true,
+          "type": "ReleaseSiteMeasureVerdict"
+        },
+        {
+          "description": "Why a side could not be measured.",
+          "name": "note",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "ReleaseSiteVerdict"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "How one measure moved between the two releases.\n\n```\nuse majordomus_cli::release::site::MeasureVerdict;\nassert!(MeasureVerdict::Regressed.refuses());\nassert!(MeasureVerdict::Unreadable.refuses());\nassert!(!MeasureVerdict::Held.refuses());\nassert!(!MeasureVerdict::Unmeasured.refuses(), \"a baseline that cannot be read is said, not failed\");\n```",
+      "home": "release",
+      "is_enum": true,
+      "name": "ReleaseSiteMeasureVerdict",
+      "properties": [],
+      "type": "\"held\" | \"improved\" | \"regressed\" | \"unmeasured\" | \"unreadable\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "ReleaseSiteMeasure"
+      ],
+      "values": [
+        {
+          "description": "The same value at both releases.",
+          "value": "held"
+        },
+        {
+          "description": "Better at this release.",
+          "value": "improved"
+        },
+        {
+          "description": "Worse at this release: the release is refused.",
+          "value": "regressed"
+        },
+        {
+          "description": "The previous release's tree cannot be measured this way (it predates what the measure\nreads), so there is nothing to compare with; stated, and not a refusal.",
+          "value": "unmeasured"
+        },
+        {
+          "description": "The released tree itself cannot be measured: the release is refused, because a\nmeasure that could not be taken is never a pass.",
+          "value": "unreadable"
+        }
+      ],
+      "variants": []
+    },
+    {
+      "description": "What has the site as its subject, as the publication model declares it.\n\n```\nuse majordomus_cli::release::site::SiteSubject;\nlet s = SiteSubject { classes: vec![\"site\".into()], scopes: vec![\"site\".into()], kinds: vec![\"fix\".into()] };\nassert!(s.names_scope(Some(\"site,ui\")));\nassert!(!s.names_scope(Some(\"ci\")));\n```",
+      "home": "release",
+      "is_enum": false,
+      "name": "ReleaseSiteSubject",
+      "properties": [
+        {
+          "description": "The gates.yaml classes whose paths are the site's own sources.",
+          "name": "classes",
+          "refs": [],
+          "required": false,
+          "type": "array of string"
+        },
+        {
+          "description": "The conventional scopes that name the site as a change's subject.",
+          "name": "scopes",
+          "refs": [],
+          "required": false,
+          "type": "array of string"
+        },
+        {
+          "description": "The conventional types a change must carry to count.",
+          "name": "kinds",
+          "refs": [],
+          "required": false,
+          "type": "array of string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "ReleaseSiteVerdict"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "The verdict on one release: its site measured against the previous release's, and the\nchanges in its window that have the site as their subject.\n\n```\nuse majordomus_cli::release::site::{judge, SiteVerdict};\nlet repo = majordomus_cli::synthetic::SyntheticRepository::small().expect(\"a synthetic repository\");\n// a repository that has released nothing has no baseline, and says so rather than passing\nlet refused: Result<SiteVerdict, String> = judge(repo.root(), None, None);\nassert!(refused.is_err());\n```",
+      "home": "release",
+      "is_enum": false,
+      "name": "ReleaseSiteVerdict",
+      "properties": [
+        {
+          "description": "The rule the verdict is taken under.",
+          "name": "rule",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The previous release.",
+          "name": "previous",
+          "refs": [
+            "ReleaseSiteBaseline"
+          ],
+          "required": true,
+          "type": "ReleaseSiteBaseline"
+        },
+        {
+          "description": "The commit being released.",
+          "name": "head",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Every measure, at both releases.",
+          "name": "measures",
+          "refs": [
+            "ReleaseSiteMeasure"
+          ],
+          "required": true,
+          "type": "array of ReleaseSiteMeasure"
+        },
+        {
+          "description": "The declaration that decided which change has the site as its subject.",
+          "name": "subject",
+          "refs": [
+            "ReleaseSiteSubject"
+          ],
+          "required": true,
+          "type": "ReleaseSiteSubject"
+        },
+        {
+          "description": "Every commit of the window that touched the site or named it, and whether it counts.",
+          "name": "changes",
+          "refs": [
+            "ReleaseSiteChange"
+          ],
+          "required": true,
+          "type": "array of ReleaseSiteChange"
+        },
+        {
+          "description": "How many of `Self::changes` count as an improvement of the site.",
+          "name": "improvements",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "Every reason the release is refused; empty when it passes.",
+          "name": "findings",
+          "refs": [
+            "ReleaseSiteFinding"
+          ],
+          "required": true,
+          "type": "array of ReleaseSiteFinding"
+        },
+        {
+          "description": "Whether the release leaves the site better than it found it.",
+          "name": "passes",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "release.site"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "Whether the tree may land or ship as it stands.\n\n```\nuse majordomus_cli::release::compat::Status;\nassert_ne!(Status::Ok, Status::Blocked);\n```",
       "home": "release",
       "is_enum": true,
@@ -75907,6 +76298,75 @@
           "result_schema": "LandingDecision",
           "stability": "implemented",
           "summary": "The version a landing allocates, and why"
+        },
+        {
+          "benchmark": "waived",
+          "benchmark_reason": "published_history",
+          "body_examples": [],
+          "body_schema": "",
+          "cache": "disabled",
+          "cache_detail": "",
+          "cli": "",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/release/site\"",
+          "description": "The verdict of `project.a-release-leaves-the-site-better` on one release: every measure of the site this executable computes from a tree — the text pairs below WCAG AA and the weakest text contrast in each theme, from the design declaration and the stylesheets that consume it, and how many of the site's page files are written by hand rather than generated — at the previous release's recorded commit and at the commit being released, each named with its delta and whether it held, improved or regressed; then every commit of the window between them that touched the site or named it as its subject, with whether it counts as an improvement and why. A change counts when its type is one the publication model's `release` section counts and it changes, outside every file `.gitattributes` marks `merge=derived`, a source of the site's gate classes, or any source while its scope names the site; a change whose every file is generated output counts for nothing. The release passes when no measure regressed or could not be taken and at least one change counts; otherwise each finding names the measure and its delta, or the commits that touched the site and why none counts. A repository with no recorded release that is an ancestor of the commit has nothing to compare with, and is refused rather than passed.",
+          "home": "release",
+          "id": "release.site",
+          "kind": "query",
+          "mcp_resource": "",
+          "mcp_tool": "majordomus_release_site",
+          "method": "GET",
+          "parameters": [
+            {
+              "description": "The previous release: a recorded tag or version, or any commit; the newest recorded\nstable release that is an ancestor of `head` when absent.",
+              "examples": [],
+              "name": "since",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "description": "The commit being released; `HEAD` when absent.",
+              "examples": [],
+              "name": "head",
+              "required": false,
+              "type": "string"
+            }
+          ],
+          "path": "/api/v1/release/site",
+          "primary": true,
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::release",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "Whether a release leaves the site better than it found it: the result.",
+              "schema": "ReleaseSiteVerdict",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "ReleaseSiteVerdict",
+          "stability": "implemented",
+          "summary": "Whether a release leaves the site better than it found it"
         },
         {
           "benchmark": "required",

@@ -979,6 +979,11 @@
     },
     {
       "kind": "capability",
+      "subject": "capability:release.site",
+      "path": "/evidence/capabilities/release-site/"
+    },
+    {
+      "kind": "capability",
       "subject": "capability:release.version",
       "path": "/evidence/capabilities/release-version/"
     },
@@ -3311,6 +3316,11 @@
       "kind": "command",
       "subject": "command:release next",
       "path": "/evidence/commands/release-next/"
+    },
+    {
+      "kind": "command",
+      "subject": "command:release site",
+      "path": "/evidence/commands/release-site/"
     },
     {
       "kind": "command",
@@ -6234,6 +6244,16 @@
       "kind": "capability",
       "id": "release.next",
       "page": "/evidence/capabilities/release-next/",
+      "programs": [],
+      "members": [],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "capability:release.site": {
+      "kind": "capability",
+      "id": "release.site",
+      "page": "/evidence/capabilities/release-site/",
       "programs": [],
       "members": [],
       "routes": [],
@@ -17759,6 +17779,25 @@
       "mechanisms": [],
       "findings": []
     },
+    "command:release site": {
+      "kind": "command",
+      "id": "release site",
+      "page": "/evidence/commands/release-site/",
+      "programs": [
+        "native"
+      ],
+      "members": [],
+      "routes": [
+        {
+          "via": "example",
+          "test": "crate:cli_examples",
+          "path": "apps/majordomus-cli/tests/cli_examples.rs",
+          "category": "integration"
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
     "command:release version": {
       "kind": "command",
       "id": "release version",
@@ -22426,6 +22465,18 @@
       "mechanisms": [],
       "findings": []
     },
+    "mcp:majordomus_release_site": {
+      "kind": "mcp",
+      "id": "majordomus_release_site",
+      "alias_of": "capability:release.site",
+      "programs": [],
+      "members": [
+        "capability:release.site"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
     "mcp:majordomus_release_version": {
       "kind": "mcp",
       "id": "majordomus_release_version",
@@ -24567,6 +24618,29 @@
         }
       ],
       "mechanisms": [],
+      "findings": []
+    },
+    "rule:project.a-release-leaves-the-site-better": {
+      "kind": "rule",
+      "id": "project.a-release-leaves-the-site-better",
+      "status": "active",
+      "programs": [],
+      "members": [],
+      "routes": [
+        {
+          "via": "rule",
+          "test": "suite:3170_a_release_leaves_the_site_better",
+          "path": "test/cases/3170_a_release_leaves_the_site_better.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/3170_a_release_leaves_the_site_better.sh",
+            ".ai/repo/rules/project/a-release-leaves-the-site-better.v1.md"
+          ]
+        }
+      ],
+      "mechanisms": [
+        "apps/majordomus-cli/src/release/site.rs"
+      ],
       "findings": []
     },
     "rule:project.a-session-joins-the-cluster-before-it-works": {
@@ -29601,6 +29675,7 @@
     "crate:providers_projection",
     "crate:reasoning_mesh",
     "crate:redaction",
+    "crate:release_site",
     "crate:remote_callers",
     "crate:repository_discovery",
     "crate:response_schema",
