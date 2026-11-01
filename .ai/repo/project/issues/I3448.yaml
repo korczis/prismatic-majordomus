@@ -11,7 +11,8 @@ current_state: "scripts/site-deploy keeps, on an ordinary deploy, the releases/l
 desired_state: "An ordinary deploy keeps every releases/<tag>.json on gh-pages that site/public does not hold, stable or pre-release, and says which it kept; latest.json keeps its present rule. The deploy after a pre-release's metadata publication still serves that file."
 scope:
   - "scripts/site-deploy"
-  - "docs/RELEASE.md"
+  - "docs/DISTRIBUTION.md"
+  - "test/cases/3721_a_deploy_keeps_every_pre_release_it_serves.sh"
 non_scope:
   - "Which release latest.json names, which stays the newest stable release"
   - "Publishing a pre-release's metadata from master before its record lands"
@@ -25,3 +26,18 @@ validation:
 evidence_required:
   - "test_a_deploy_keeps_every_pre_release_it_serves"
 depends_on: []
+updated_at: 2026-11-01T01:05:43Z
+started_at: 2026-11-01T01:04:17Z
+started_event: sha256:e42e9ee81b63b8326e17e283af7b6ee907feb7cdddc0c186926a4bb975f0dfd9
+verified_at: 2026-11-01T01:05:07Z
+verified_event: sha256:c9c5a09adafbb3d73d3e9e9d754428b5cb6870bff3494b98c0f4cbbcdb302438
+completed_at: 2026-11-01T01:05:43Z
+completed_event: sha256:cae61bfec8af02af7bd2d6c3a513d9e9a1677e712d5eebcb9809c42c58af6e21
+evidence:
+  - covers: test_a_deploy_keeps_every_pre_release_it_serves
+    type: test
+    command: "bash test/run.sh 3721_a_deploy_keeps_every_pre_release_it_serves 1041_a_release_publishes_its_metadata"
+    result: "Both cases ok at b3124102bbf. Case 3721: a fixture gh-pages carrying releases/v9.9.9-alpha.1.json (published by --release-metadata) and a build without it: after an ordinary deploy the file's blob is unchanged and the deploy prints 'kept releases/v9.9.9-alpha.1.json' and its gh-pages commit names 'release files kept: v9.9.9-alpha.1.json'; once the build holds a different copy, the build's blob is served and nothing is said kept; latest.json kept at v9.10.0 while newer than the build's 9.9.8 and replaced by 9.10.1. Fails before: with origin/master 54c317f11ad's scripts/site-deploy the case fails ('expected /kept releases/v9.9.9-alpha.1.json: gh-pages serves it and the build does not hold it/'; that deploy pushed 'deploy: site from ..., 1 routes' without the file). Mutants: dropping the restore fails on 'a deploy of master removed or changed releases/v9.9.9-alpha.1.json (served blob: none)'; dropping the build-holds-it skip fails on the commit naming v9.9.8.json as kept. Case 1041 (ADR 0131) unchanged and green."
+    artifact: "test/cases/3721_a_deploy_keeps_every_pre_release_it_serves.sh"
+    commit: b3124102bbfce91b381db978d3b43a4c541fcf78
+    recorded_at: 2026-11-01T01:03:39Z
