@@ -2,6 +2,13 @@
   <a href="https://majordomus.dev"><img src="share/design/brand/logo.svg" alt="Prismatic Majordomus" width="420"></a>
 </p>
 
+<p align="center">
+  <a href="https://github.com/korczis/prismatic-majordomus/actions/workflows/validate.yml"><img alt="validate on master" src="https://github.com/korczis/prismatic-majordomus/actions/workflows/validate.yml/badge.svg?branch=master"></a>
+  <a href="https://github.com/korczis/prismatic-majordomus/releases">releases</a> ·
+  <a href="https://majordomus.dev/changelog/">changelog</a> ·
+  <a href="https://majordomus.dev/roadmap/">roadmap</a>
+</p>
+
 # Prismatic Majordomus
 
 **Your AI agents say the work is done. Majordomus makes them prove it.**
@@ -17,14 +24,16 @@ AI coding agents do the work. Majordomus decides whether it is done. It holds on
 canonical policy for how AI workers operate in a repository and generates the instruction
 file each tool reads from it; it keeps the task, the paths it may touch and its handover in
 the repository instead of a conversation; it reports when two workers are about to collide;
-and it refuses to call work finished until a contract is met. It runs entirely locally, in
-portable shell, and never invokes a model.
+and it refuses to call work finished until a contract is met. It runs entirely on your own
+machines: a small, portable shell tool answers the task cycle, and the Rust executable it ships
+answers everything else — the server, MCP, the Cockpit, the mesh, the plan and the integration
+queue. It never invokes a model.
 
 A recorded run from [the challenge](https://majordomus.dev/challenge/), redacted and
 otherwise untouched: the scope is clean now, but the repository's own test still fails, so a
 worker's claim that it is done is refused.
 
-```
+```console
 $ majordomus finish --outcome completed --verify-command 'sh test/parse.sh'
 OK   blockers    t-<id> — none open
 OK   note        t-<id> — <time>--main--<head>--<hash>.md
@@ -37,6 +46,64 @@ finish: refused, 1 unmet
 ```bash
 curl -fsSL https://majordomus.dev/install.sh | sh
 ```
+
+## See it
+
+One task, held to its contract. The worker never decides that it is done; the repository
+does, from git and from the contract the policy declares:
+
+```mermaid
+sequenceDiagram
+  autonumber
+  actor P as Person
+  participant W as AI worker
+  participant M as Majordomus
+  participant G as Git and the repository
+  P->>M: majordomus start "task" --scope paths --profile
+  M->>G: task record, scope claim, branch and head computed from git
+  M-->>W: generated instructions: the policy, the rules, the profile
+  W->>G: edits inside the scope
+  W->>M: majordomus check
+  M->>G: scope, state, drift, overlap with other workers
+  M-->>W: OK, or findings each with the command that reproduces it
+  W->>M: majordomus finish --outcome completed --verify-command
+  M->>G: every line of the finish contract, verification run for real
+  alt a line fails
+    M-->>W: refused, naming the unmet line; nothing is written
+  else every line holds
+    M->>G: outcome, handover and evidence recorded
+    M-->>P: accepted, with the evidence
+  end
+```
+
+Everything the repository knows is also drawn, live, on [majordomus.dev](https://majordomus.dev),
+generated from this repository at every publication:
+
+| View | What it shows | Drawn with |
+|---|---|---|
+| [Evidence graph](https://majordomus.dev/evidence/) | every claim this project makes, wired to the document that defines it, the file that implements it and the test that proves it | Cytoscape.js |
+| [Features](https://majordomus.dev/features/) | every capability as one object: what it is made of, the interfaces it is exposed through, the rules and guarantees behind it | Cytoscape.js |
+| [Program map](https://majordomus.dev/map/) | every module of the CLI and every file it reads and writes, scanned from the sources rather than drawn by hand | Cytoscape.js |
+| [The method](https://majordomus.dev/method/) | doctrine → policy → rule → enforcement, this repository's own governance | Cytoscape.js, Mermaid |
+| [The plan](https://majordomus.dev/plan/) and [roadmap](https://majordomus.dev/roadmap/) | milestones as outcome specifications, issues as execution contracts, and the dependency graph that decides what may run next | Apache ECharts, Mermaid, Cytoscape.js |
+| [Token economics](https://majordomus.dev/economics/) | what a session consumes with Majordomus and without it, from matched runs judged by the same hidden tests | Apache ECharts |
+| [Coverage and CI cost](https://majordomus.dev/trends/) | the coverage each master run measured and what each run cost, read from the runs themselves | Apache ECharts |
+| [How the site is derived](https://majordomus.dev/architecture/) | the website as a projection of the repository | Mermaid |
+| [Why you need this](https://majordomus.dev/why/) | the operational failure modes AI-heavy teams meet, and what Majordomus does and does not do about each | Cytoscape.js |
+| [The challenge](https://majordomus.dev/challenge/) | an agent strays, claims it is done and comes back; watch it being refused | recorded run |
+
+On your own machine, `majordomus ui` serves how the delivery stands, every tile naming the
+capability it read ([below](#interfaces)), and the server's Cockpit adds live views of the
+same model: the graphs the layer implies and the trains of stacked pull requests
+(Cytoscape.js), and the runtime activity plot sampled while the page is open (p5.js):
+
+<p align="center">
+  <img src="site/static/images/ui/ui-dashboard-1440.png" alt="majordomus ui: health, releases, the plan and the mesh, each citing its source" width="860">
+</p>
+<p align="center">
+  <img src="site/static/images/ui/ui-mesh-inspector-1440.png" alt="majordomus ui: the mesh inspector, machines, runtimes, sessions and claims" width="420">
+  <img src="site/static/images/ui/ui-dashboard-375.png" alt="majordomus ui on a phone" width="180">
+</p>
 
 ## The problem
 
@@ -138,24 +205,25 @@ layout and names it.
 
 ## Mental model
 
+```mermaid
+flowchart TD
+    H[Human / Organisation]
+    M["Majordomus<br/><small>policy · state · verification</small>"]
+    W1[Claude Code]
+    W2[Codex]
+    W3[Gemini · Cursor · local]
+    V[Verified, accepted outcomes]
+    H --> M
+    M --> W1
+    M --> W2
+    M --> W3
+    W1 --> V
+    W2 --> V
+    W3 --> V
 ```
-            Human / Organisation
-                    |
-                    v
-               MAJORDOMUS
-        policy · state · verification
-                    |
-      +-------------+-------------+
-      v             v             v
-   Worker A      Worker B      Worker C
-  (Claude Code)  (Codex)       (Gemini, Cursor, local ...)
-      |             |             |
-      +-------------+-------------+
-        an orchestrator (bb) runs any of them; the agent stays the worker
-                    |
-                    v
-          Verified, accepted outcomes
-```
+
+An orchestrator runs any of the workers; the agent stays the worker, and Majordomus stays
+the one that decides whether its work is done.
 
 Two principles run through everything. **Git is the authority; everything else is an
 aid.** Identity fields on any record are computed from git, and a body that tries to
@@ -282,12 +350,17 @@ A walk-through with real output is in [`examples/minimal/`](examples/minimal/).
 
 ## Provider adapters
 
-```
-.ai/repo/policy.yaml + profiles/          .ai/repo/rules/  (the rules themselves)
-         |                                        ^
-         |  majordomus update                     |  read by the worker, never copied
-         v                                        |
-CLAUDE.md   AGENTS.md   GEMINI.md   <any target named in the policy>  --+
+```mermaid
+flowchart LR
+    P[".ai/repo/policy.yaml<br/>+ profiles/"] -->|majordomus update| C[CLAUDE.md]
+    P -->|majordomus update| A[AGENTS.md]
+    P -->|majordomus update| G[GEMINI.md]
+    P -->|majordomus update| T["any target the policy names"]
+    R[".ai/repo/rules/<br/>the rules themselves"]
+    C -.->|read by the worker, never copied| R
+    A -.-> R
+    G -.-> R
+    T -.-> R
 ```
 
 Adapters are thin bootstraps. Each generated file tells the worker where the
@@ -343,6 +416,22 @@ machines: there is no fencing yet, and an expired claim can return when its runt
 again (milestone `mesh-journal-converges`). The whole subsystem is **off until the
 repository commits an enabled `mesh` declaration** with the keys to trust, so the default
 posture — nothing leaves the machine — holds until a person decides otherwise.
+
+```mermaid
+flowchart LR
+  subgraph A["Machine A · one Ed25519 node identity"]
+    RA["runtime: this checkout's server"]
+    SA["sessions · claims · handovers · reviews"]
+    SA --- RA
+  end
+  subgraph B["Machine B · one Ed25519 node identity"]
+    RB["runtime: its checkout's server"]
+    SB["sessions · claims · handovers · reviews"]
+    SB --- RB
+  end
+  RA <-->|"signed handshake: trusted key, same repository, compatible protocol"| RB
+  RA <-->|"one journal of signed events, replicated every heartbeat"| RB
+```
 
 ```sh
 majordomus mesh doctor      # every prerequisite on this machine, with impact and remedy
@@ -405,6 +494,30 @@ worktree somewhere else is a typed diagnostic on every surface — the command l
 uncommitted work, fingerprinted before and after. The pre-commit hook refuses a feature
 branch committed from anywhere but its canonical worktree. Details:
 [`docs/WORKTREES.md`](docs/WORKTREES.md); the decision: ADR 21.
+
+## From a pull request to master
+
+Implemented is not delivered. One engine, `majordomus prs` (ADR 0101), takes every open pull
+request from the forge to master, and every surface reads its one assessment:
+
+```mermaid
+flowchart LR
+  F["Forge observation<br/>prs refresh"] --> R["Relation to master<br/>git merge-tree, with the derived-merge driver"]
+  R --> C["One disposition per pull request<br/>ready · needs_refresh · conflicting · waiting · held"]
+  C --> Q["Ranked queue<br/>prs status · prs explain · prs plan"]
+  Q --> D{"prs drain<br/>under the integration lease"}
+  D -->|"observe again, decide again,<br/>land by a non-forced fast-forward"| M["master"]
+  D -->|"master moved since the decision"| F
+  C -->|"behind, conflicts only on derived files"| P["prs repair: master merged in,<br/>derived, pushed as a fast-forward"]
+  P --> F
+  M --> V["master's own verdict, then release and deploy"]
+```
+
+A merge is never forced and never decided on a master nobody judged: the drain re-observes
+before it acts and lands by a compare-and-swap the forge enforces. Related pull requests travel
+as one train whose top is validated once, and only one session at a time holds the landing seat.
+[`docs/INTEGRATION.md`](docs/INTEGRATION.md) is the manual; `majordomus prs status` and
+`majordomus prs explain <number>` say where each pull request stands and why.
 
 ## Customisation
 
@@ -481,6 +594,21 @@ one capability registry: a capability is defined once, in a typed descriptor or 
 declarative file with its JSON Schema, and MCP, HTTP, OpenAPI, Swagger UI, the Cockpit, the
 command line and the generated reference are projections of it, so nothing is maintained
 twice.
+
+```mermaid
+flowchart TD
+  D["One declaration<br/>capability! descriptor or declarative file + JSON Schema"] --> X["One executor: Context::execute"]
+  X --> CLI["Command line"]
+  X --> MCP["MCP tools and resources"]
+  X --> HTTP["HTTP under /api/v1"]
+  HTTP --> OA["OpenAPI 3.1 → Swagger UI"]
+  X --> CK["Cockpit and majordomus ui"]
+  X --> GEN["docs/generated and the site's data"]
+  GEN --> SITE["majordomus.dev"]
+```
+
+The whole picture, with discovery, the object index and how drift is refused, is in
+[`docs/HOW_IT_WORKS.md`](docs/HOW_IT_WORKS.md).
 
 Every generated file in the repository comes out of the same executable: `majordomus
 generate` writes `docs/generated/`, `share/allow/`, the provider bootstraps `AGENTS.md`
