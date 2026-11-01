@@ -117,6 +117,10 @@ mj_gate_run() {
     "this repository declares no CI model at .ai/repo/ci/gates.yaml, so there is no gate to run"
   mj_load_current || mj_die "$MJ_EX_MISSING" \
     "no active task ($(mj_rel "$MJ_STATE_DIR")/current.yaml); a gate run is evidence for a task: run majordomus start"
+  # Whose task this is is settled before the first gate runs: mj_gate_record refuses a task
+  # another open episode opened (ADR 0164), and a refusal there would come after a gate's
+  # command had already run, with nothing recorded for it.
+  mj_task_attribution_or_refuse "evidence --run-gates$([ "$all" = 1 ] && printf ' --all')"
   if [ "$all" = 1 ]; then
     ids="$(mj_gate_ids)"
   else

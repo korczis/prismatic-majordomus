@@ -88,8 +88,9 @@ BODY
 fixture "$T/two-episodes"
 # one gate over lib/, so a gate verdict has something to be about
 mkdir -p .ai/repo/ci
-printf 'version: 1\ngates:\n  - id: unit\n    job: suite\n    runs: "true"\n    summary: unit\n' \
-  > .ai/repo/ci/gates.yaml
+# its command leaves a mark outside the checkout, so a run that should not have happened shows
+printf 'version: 1\ngates:\n  - id: unit\n    job: suite\n    runs: "touch %s/gate-ran"\n    summary: unit\n' \
+  "$T" > .ai/repo/ci/gates.yaml
 printf 'classes:\n  - id: src\n    paths: [lib/**]\n    gates: [unit]\n' >> .ai/repo/ci/gates.yaml
 git add -A; git commit -qm gates
 MAJORDOMUS_NOW=2026-09-01T12:00:00Z; export MAJORDOMUS_NOW
@@ -251,6 +252,9 @@ refused_by_name "an anonymous caller's evidence" "$MJ" evidence --covers tests -
 expect_grep 'caller is no episode it can name \(2 are open here\)'
 refused_by_name "B's gate verdict" b "$MJ" evidence --gate unit --exit 0 --command true
 expect_grep 'majordomus evidence --gate unit --exit 0'
+refused_by_name "B's run of the gates" b "$MJ" evidence --run-gates --all
+expect_grep 'majordomus evidence --run-gates --all'
+must "B's refused run of the gates ran a gate first" test ! -e "$T/gate-ran"
 refused_by_name "B's finish" b "$MJ" finish --outcome blocked
 expect_grep 'majordomus finish --outcome blocked'
 refused_by_name "an anonymous caller's finish" "$MJ" finish --outcome blocked
