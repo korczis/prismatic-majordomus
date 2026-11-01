@@ -78530,6 +78530,126 @@
         }
       },
       {
+        "id": "majordomus://knowledge/s-20261101044146-a241-2e54137a1f42",
+        "kind": "knowledge",
+        "label": "s-20261101044146-a241-2e54137a1f42",
+        "summary": "A pre-push of train 13d (2026-11-01) printed 'scripts/ci-plan: line 457: printf: write error: Broken pipe' and the push exited 141; a retry pushed. ci-plan sets -eu without pipefail, so that pipeline cannot fail on its own and scripts/ci/pipefail-check does not examine it; what returned 141 is not established. Undecided: recorded so a second occurrence can be correlated.",
+        "route": "/cockpit/objects/knowledge/s-20261101044146-a241-2e54137a1f42",
+        "source": ".ai/repo/knowledge/candidates/s-20261101044146-a241-2e54137a1f42.md",
+        "status": "candidate",
+        "facts": {
+          "about": "scripts/ci-plan",
+          "class": "lesson",
+          "date": "2026-11-01",
+          "epistemics": "observed",
+          "route": "project",
+          "tags": [
+            "derived",
+            "observation"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://knowledge/s-20261101044146-a241-5af28ee69f14",
+        "kind": "knowledge",
+        "label": "s-20261101044146-a241-5af28ee69f14",
+        "summary": "collision-check --added examines only paths a head adds, so two branches rewriting the same existing file (pull request 2741 and I4400, both on site/charts.js and share/design/figure.css, two days apart) and two branches declaring the same flag (pull request 2748 and I4268, evidence --run-gates) passed it; each was found only when a train was composed. Being fixed under I3974 on feature/one-number-and-one-flag-are-claimed-once.",
+        "route": "/cockpit/objects/knowledge/s-20261101044146-a241-5af28ee69f14",
+        "source": ".ai/repo/knowledge/curated/s-20261101044146-a241-5af28ee69f14.md",
+        "status": "verified",
+        "facts": {
+          "about": "scripts/collision-check",
+          "class": "lesson",
+          "date": "2026-11-01",
+          "epistemics": "observed",
+          "route": "project",
+          "tags": [
+            "derived",
+            "observation"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://knowledge/s-20261101044146-a241-5ed739361aee",
+        "kind": "knowledge",
+        "label": "s-20261101044146-a241-5ed739361aee",
+        "summary": "the_socket_says_where_a_request_came_from failed with WouldBlock in two full runs on a build host at load average 12 (cargo test --tests and llvm-cov, train 13d, 2026-11-01) and passed 3 of 3 runs alone; cases 1086 and 3861, which also call over a non-loopback address, failed in the same host's pre-push. A test that posts to the host's own LAN address with a 10 s timeout measures the host's load and network, and its failure kept the train's coverage unmeasured.",
+        "route": "/cockpit/objects/knowledge/s-20261101044146-a241-5ed739361aee",
+        "source": ".ai/repo/knowledge/candidates/s-20261101044146-a241-5ed739361aee.md",
+        "status": "candidate",
+        "facts": {
+          "about": "apps/majordomus-cli/tests/remote_callers.rs",
+          "class": "lesson",
+          "date": "2026-11-01",
+          "epistemics": "observed",
+          "route": "project",
+          "tags": [
+            "derived",
+            "observation"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://knowledge/s-20261101044146-a241-66280d0db827",
+        "kind": "knowledge",
+        "label": "s-20261101044146-a241-66280d0db827",
+        "summary": "A merge of master into a pull request branch is refused by the commit hook in two alternating ways: scripts/derive's merge-aware stage A writes a changelog that generate --check, judging from the old head's history, calls stale; and majordomus generate alone leaves site/data stale. What committed it (#2414, 2026-11-01): majordomus generate, then scripts/generate-site-data, then majordomus generate again, commit, then scripts/derive on the committed merge and a second commit. Owned by I4513 (pull request 2759).",
+        "route": "/cockpit/objects/knowledge/s-20261101044146-a241-66280d0db827",
+        "source": ".ai/repo/knowledge/curated/s-20261101044146-a241-66280d0db827.md",
+        "status": "verified",
+        "facts": {
+          "about": "gate:pages",
+          "class": "lesson",
+          "date": "2026-11-01",
+          "epistemics": "observed",
+          "route": "enforcement",
+          "tags": [
+            "derived",
+            "observation"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://knowledge/s-20261101044146-a241-662a9b4f0fc9",
+        "kind": "knowledge",
+        "label": "s-20261101044146-a241-662a9b4f0fc9",
+        "summary": "Step 1 says to pass the key that ls .ai/local/state/sessions-open/ lists as MJ_SESSION_KEY; it lists a file name ending in .yaml, and observe refuses that key (adr-0118, no episode open for provider session <key>.yaml) until the suffix is dropped (2026-11-01). The step should say the key is the file name without .yaml.",
+        "route": "/cockpit/objects/knowledge/s-20261101044146-a241-662a9b4f0fc9",
+        "source": ".ai/repo/knowledge/curated/s-20261101044146-a241-662a9b4f0fc9.md",
+        "status": "verified",
+        "facts": {
+          "about": ".ai/repo/skills/evolve/SKILL.md",
+          "class": "lesson",
+          "date": "2026-11-01",
+          "epistemics": "observed",
+          "route": "project",
+          "tags": [
+            "derived",
+            "observation"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://knowledge/s-20261101044146-a241-7d519c68a210",
+        "kind": "knowledge",
+        "label": "s-20261101044146-a241-7d519c68a210",
+        "summary": "A dry run of 'majordomus prs repair <n>' on one pull request ran over 10 minutes with no output on 2026-11-01 (972 unmerged branches), so the repair lane fell back to git merge-tree, which classified 20 pull requests in about a minute. The decision of 2026-11-01 makes prs repair (I3903) the owner of drift repair only after it answers within seconds.",
+        "route": "/cockpit/objects/knowledge/s-20261101044146-a241-7d519c68a210",
+        "source": ".ai/repo/knowledge/curated/s-20261101044146-a241-7d519c68a210.md",
+        "status": "verified",
+        "facts": {
+          "about": "command:prs.repair",
+          "class": "lesson",
+          "date": "2026-11-01",
+          "epistemics": "observed",
+          "route": "platform",
+          "tags": [
+            "derived",
+            "observation"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/start-here",
         "kind": "knowledge",
         "label": "start-here",
@@ -142266,6 +142386,36 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://knowledge/s-20261101044146-a241-2e54137a1f42",
+        "target": "kind:knowledge",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://knowledge/s-20261101044146-a241-5af28ee69f14",
+        "target": "kind:knowledge",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://knowledge/s-20261101044146-a241-5ed739361aee",
+        "target": "kind:knowledge",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://knowledge/s-20261101044146-a241-66280d0db827",
+        "target": "kind:knowledge",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://knowledge/s-20261101044146-a241-662a9b4f0fc9",
+        "target": "kind:knowledge",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://knowledge/s-20261101044146-a241-7d519c68a210",
+        "target": "kind:knowledge",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://knowledge/start-here",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -153772,8 +153922,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4196,
-      "edges": 9637,
+      "nodes": 4202,
+      "edges": 9643,
       "acyclic": false,
       "truncated": false
     }

@@ -6,23 +6,23 @@
     "version": "1.0.0-alpha.10"
   },
   "registry": {
-    "fingerprint": "a023263da23f657082857c306cf256e30880c16d7d0d7c92c5a2a3c333893fac",
+    "fingerprint": "d5ed9fab2d88efa786feedea21f0b76dd3866bd3de8b387d12688139d3d59048",
     "summary": {
-      "total": 3732,
+      "total": 3738,
       "builtin": 220,
-      "declarative": 3512,
+      "declarative": 3518,
       "by_kind": {
         "command": 36,
         "query": 184,
-        "resource": 3512
+        "resource": 3518
       },
       "by_stability": {
         "behaviorally_verified": 147,
         "experimental": 63,
-        "implemented": 3522
+        "implemented": 3528
       },
       "mcp_tools": 206,
-      "mcp_resources": 3569,
+      "mcp_resources": 3575,
       "http_routes": 212,
       "cli_commands": 120,
       "modules": 94,
@@ -91415,7 +91415,7 @@
         "title": "knowledge",
         "description": "Declarative objects of kind 'knowledge' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 90,
+        "capabilities": 96,
         "capability_ids": []
       },
       {
@@ -92097,7 +92097,7 @@
     ]
   },
   "index": {
-    "fingerprint": "f4e80a4c1809ccdcd3241cfd7f6f7ec516d66a600e926013ee5ed47171281bd3",
+    "fingerprint": "cafc4f47509cfcec7bad9415119129e6785bb8b66c681648945fd844be664eca",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -92138,7 +92138,7 @@
       "implementation": 52,
       "intent": 44,
       "issue": 1156,
-      "knowledge": 90,
+      "knowledge": 96,
       "mesh-declaration": 1,
       "milestone": 114,
       "moment": 38,
@@ -117489,6 +117489,96 @@
         ]
       },
       {
+        "uri": "majordomus://knowledge/s-20261101044146-a241-2e54137a1f42",
+        "kind": "knowledge",
+        "identity": "s-20261101044146-a241-2e54137a1f42",
+        "title": "A pre-push of train 13d (2026-11-01) printed 'scripts/ci-plan: line 457: printf: write error: Broken pipe' and the push exited 141; a retry pushed. ci-plan sets -eu without pipefail, so that pipeline cannot fail on its own and scripts/ci/pipefail-check does not examine it; what returned 141 is not established. Undecided: recorded so a second occurrence can be correlated.",
+        "description": "Observed as friction about scripts/ci-plan in episode s-20261101044146-a241.",
+        "path": ".ai/repo/knowledge/candidates/s-20261101044146-a241-2e54137a1f42.md",
+        "section": "knowledge",
+        "source_class": "candidates",
+        "bytes": 1394,
+        "tags": [
+          "derived",
+          "observation"
+        ]
+      },
+      {
+        "uri": "majordomus://knowledge/s-20261101044146-a241-5af28ee69f14",
+        "kind": "knowledge",
+        "identity": "s-20261101044146-a241-5af28ee69f14",
+        "title": "collision-check --added examines only paths a head adds, so two branches rewriting the same existing file (pull request 2741 and I4400, both on site/charts.js and share/design/figure.css, two days apart) and two branches declaring the same flag (pull request 2748 and I4268, evidence --run-gates) passed it; each was found only when a train was composed. Being fixed under I3974 on feature/one-number-and-one-flag-are-claimed-once.",
+        "description": "Observed as defect about scripts/collision-check in episode s-20261101044146-a241.",
+        "path": ".ai/repo/knowledge/curated/s-20261101044146-a241-5af28ee69f14.md",
+        "section": "knowledge",
+        "source_class": "curated",
+        "bytes": 2122,
+        "tags": [
+          "derived",
+          "observation"
+        ]
+      },
+      {
+        "uri": "majordomus://knowledge/s-20261101044146-a241-5ed739361aee",
+        "kind": "knowledge",
+        "identity": "s-20261101044146-a241-5ed739361aee",
+        "title": "the_socket_says_where_a_request_came_from failed with WouldBlock in two full runs on a build host at load average 12 (cargo test --tests and llvm-cov, train 13d, 2026-11-01) and passed 3 of 3 runs alone; cases 1086 and 3861, which also call over a non-loopback address, failed in the same host's pre-push. A test that posts to the host's own LAN address with a 10 s timeout measures the host's load and network, and its failure kept the train's coverage unmeasured.",
+        "description": "Observed as friction about apps/majordomus-cli/tests/remote_callers.rs in episode s-20261101044146-a241.",
+        "path": ".ai/repo/knowledge/candidates/s-20261101044146-a241-5ed739361aee.md",
+        "section": "knowledge",
+        "source_class": "candidates",
+        "bytes": 1718,
+        "tags": [
+          "derived",
+          "observation"
+        ]
+      },
+      {
+        "uri": "majordomus://knowledge/s-20261101044146-a241-66280d0db827",
+        "kind": "knowledge",
+        "identity": "s-20261101044146-a241-66280d0db827",
+        "title": "A merge of master into a pull request branch is refused by the commit hook in two alternating ways: scripts/derive's merge-aware stage A writes a changelog that generate --check, judging from the old head's history, calls stale; and majordomus generate alone leaves site/data stale. What committed it (#2414, 2026-11-01): majordomus generate, then scripts/generate-site-data, then majordomus generate again, commit, then scripts/derive on the committed merge and a second commit. Owned by I4513 (pull request 2759).",
+        "description": "Observed as workaround about gate:pages in episode s-20261101044146-a241.",
+        "path": ".ai/repo/knowledge/curated/s-20261101044146-a241-66280d0db827.md",
+        "section": "knowledge",
+        "source_class": "curated",
+        "bytes": 2197,
+        "tags": [
+          "derived",
+          "observation"
+        ]
+      },
+      {
+        "uri": "majordomus://knowledge/s-20261101044146-a241-662a9b4f0fc9",
+        "kind": "knowledge",
+        "identity": "s-20261101044146-a241-662a9b4f0fc9",
+        "title": "Step 1 says to pass the key that ls .ai/local/state/sessions-open/ lists as MJ_SESSION_KEY; it lists a file name ending in .yaml, and observe refuses that key (adr-0118, no episode open for provider session <key>.yaml) until the suffix is dropped (2026-11-01). The step should say the key is the file name without .yaml.",
+        "description": "Observed as friction about .ai/repo/skills/evolve/SKILL.md in episode s-20261101044146-a241.",
+        "path": ".ai/repo/knowledge/curated/s-20261101044146-a241-662a9b4f0fc9.md",
+        "section": "knowledge",
+        "source_class": "curated",
+        "bytes": 1699,
+        "tags": [
+          "derived",
+          "observation"
+        ]
+      },
+      {
+        "uri": "majordomus://knowledge/s-20261101044146-a241-7d519c68a210",
+        "kind": "knowledge",
+        "identity": "s-20261101044146-a241-7d519c68a210",
+        "title": "A dry run of 'majordomus prs repair <n>' on one pull request ran over 10 minutes with no output on 2026-11-01 (972 unmerged branches), so the repair lane fell back to git merge-tree, which classified 20 pull requests in about a minute. The decision of 2026-11-01 makes prs repair (I3903) the owner of drift repair only after it answers within seconds.",
+        "description": "Observed as defect about command:prs.repair in episode s-20261101044146-a241.",
+        "path": ".ai/repo/knowledge/curated/s-20261101044146-a241-7d519c68a210.md",
+        "section": "knowledge",
+        "source_class": "curated",
+        "bytes": 1864,
+        "tags": [
+          "derived",
+          "observation"
+        ]
+      },
+      {
         "uri": "majordomus://knowledge/start-here",
         "kind": "knowledge",
         "identity": "start-here",
@@ -124162,7 +124252,7 @@
         "path": ".ai/repo/skills/evolve/SKILL.md",
         "section": "skills",
         "source_class": "skill",
-        "bytes": 13255,
+        "bytes": 13360,
         "tags": [
           "knowledge",
           "review",
@@ -128329,7 +128419,7 @@
         "identity": "test/cases/566_the_collision_guard_has_a_caller.sh",
         "path": "test/cases/566_the_collision_guard_has_a_caller.sh",
         "source_class": "case",
-        "bytes": 12902
+        "bytes": 34061
       },
       {
         "uri": "majordomus://test/test/cases/569_independent_of_prismatic.sh",
@@ -130472,7 +130562,7 @@
       "identity": [
         "id"
       ],
-      "objects": 90
+      "objects": 96
     },
     {
       "name": "mesh-declaration",
