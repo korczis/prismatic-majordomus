@@ -148,6 +148,41 @@ fn observe_deployment(f: &Fixture, sha: &str, state: &str) {
     );
 }
 
+/// Publish the way `scripts/site-deploy` does (I4315): a gh-pages commit outside the trunk's
+/// history whose tree is the built site, the pointer at `releases/latest.json`, its root.
+fn publish_gh_pages(f: &Fixture, latest_json: &str) -> String {
+    let git = |args: &[&str], stdin: Option<&str>| -> String {
+        let mut child = std::process::Command::new("git")
+            .arg("-C")
+            .arg(f.root())
+            .args(args)
+            .env("GIT_INDEX_FILE", f.root().join(".git/gh-pages-index"))
+            .stdin(Stdio::piped())
+            .stdout(Stdio::piped())
+            .spawn()
+            .expect("git runs");
+        child
+            .stdin
+            .take()
+            .unwrap()
+            .write_all(stdin.unwrap_or_default().as_bytes())
+            .unwrap();
+        let out = child.wait_with_output().unwrap();
+        assert!(out.status.success(), "git {args:?}");
+        String::from_utf8_lossy(&out.stdout).trim().to_string()
+    };
+    let blob = git(&["hash-object", "-w", "--stdin"], Some(latest_json));
+    let info = format!("100644 {blob}\treleases/latest.json\n");
+    git(&["update-index", "--add", "--index-info"], Some(&info));
+    let tree = git(&["write-tree"], None);
+    let sha = git(
+        &["commit-tree", &tree, "-m", "deploy: site from the trunk"],
+        None,
+    );
+    git(&["update-ref", "refs/heads/gh-pages", &sha], None);
+    sha
+}
+
 #[test]
 fn plan_delivery_reads_each_stage_with_the_object_that_proved_it() {
     let (f, merge) = fixture();
@@ -229,11 +264,37 @@ fn plan_delivery_reads_each_stage_with_the_object_that_proved_it() {
         .unwrap()
         .contains("served forge"));
 
-    // ---- a Pages deployment observed: its commit's latest.json names 0.2.0, so v0.1.0 is out
-    f.write(
-        "site/static/releases/latest.json",
-        "{\"schema\":\"release/v1\",\"version\":\"0.2.0\",\"tag\":\"v0.2.0\"}\n",
+    // ---- a Pages deployment of a gh-pages commit, the built site, as scripts/site-deploy
+    // pushes it: its releases/latest.json names 0.2.0, so v0.1.0 is out (I4315)
+    let pointer = "{\"schema\":\"release/v1\",\"version\":\"0.2.0\",\"tag\":\"v0.2.0\"}\n";
+    let pages = publish_gh_pages(&f, pointer);
+    observe_deployment(&f, &pages, "success");
+    let (_, v, _) = cli(&f, &["I0001"]);
+    assert_eq!(source(&v, "publication")["state"], "read", "{v}");
+    let i1 = by_id(&v, "I0001");
+    assert_eq!(i1["stage"], "deployed", "{i1}");
+    assert_eq!(i1["deployed"]["version"], "0.2.0");
+    assert_eq!(
+        i1["deployed"]["latest_json"],
+        format!("{pages}:releases/latest.json").as_str()
     );
+
+    // ---- a deployed commit that carries neither path names both
+    let trunk = f.git(&["rev-parse", "HEAD"]).trim().to_string();
+    observe_deployment(&f, &trunk, "success");
+    let (_, v, _) = cli(&f, &["I0001"]);
+    assert_eq!(by_id(&v, "I0001")["stage"], "released");
+    let why = source(&v, "publication")["detail"]
+        .as_str()
+        .unwrap()
+        .to_string();
+    assert!(
+        why.contains("releases/latest.json") && why.contains("site/static/releases/latest.json"),
+        "{why}"
+    );
+
+    // ---- a Pages deployment of a source commit still reads at the source path
+    f.write("site/static/releases/latest.json", pointer);
     f.commit("release: publish the pointer");
     let deployed = f.git(&["rev-parse", "HEAD"]).trim().to_string();
     observe_deployment(&f, &deployed, "success");

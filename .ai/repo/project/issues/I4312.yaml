@@ -1,0 +1,40 @@
+id: I4312
+milestone: a-finding-is-tracked-to-its-issue
+title: "The trace from issue to commit, pull request and finding is published and drawn with Cytoscape over its table"
+slug: the-trace-is-drawn-over-its-table
+priority: p3
+profile: implementation
+parallel_safe: false
+objective: "Write the answer of trace.report into the site's data at the build commit and publish a /trace/ page whose tables list, per issue, its commits, its pull requests and the findings that name it, each linked through the forge-link component, with the same relation drawn by the existing site/graph.js (Cytoscape, loaded lazily) over those tables."
+why: "trace.issue, trace.commit and trace.report exist (apps/majordomus-cli/src/capability/builtin/trace.rs:253, :269 and :285) but have no CLI surface, no /ui screen and no site page, and scripts/traceability has no caller (plan section 2, gap 8). ADR 0135:69-71 gives relations to Cytoscape, and site/graph.js already draws Cytoscape graphs on the site. This extends I1014 (the relation view reads the graph and holds no data) and I2919 (the graph responds to a hand and a keyboard) and does not repeat them."
+current_state: "On 81ef931a3e1 scripts/generate-site-data writes no trace data and no site template renders a trace."
+desired_state: "The site data holds the trace at the build commit; /trace/ renders its tables complete without JavaScript and draws the graph over them; each node and row links through the forge-link component; the pull request half, which needs gh, is read from the delivery data the build already holds or shown as not observed."
+scope:
+  - ".ai/repo/project/issues/I4312.yaml"
+  - "scripts/generate-site-data"
+  - "site/graph.js"
+  - "site/templates/trace.html"
+  - "site/content-src/trace.md"
+non_scope:
+  - "A network read during the site build"
+  - "A /ui trace screen"
+  - "Changing trace.* answers"
+depends_on:
+  - "I4298"
+  - "I4316"
+serves:
+  - "a-review-is-seen-at-its-commit#relations-and-status-are-drawn-from-tables"
+acceptance_criteria:
+  - "/trace/ lists, for a fixture issue, its commits and the findings that name it, every link pinned and decided by link-check"
+  - "The graph is drawn from the tables on the page and the page reads the same with JavaScript off"
+  - "A pull request the build's data does not hold reads not observed"
+validation:
+  - "scripts/site-build"
+  - "scripts/site-check"
+  - "scripts/ci/link-check --sources"
+  - "bin/majordomus plan validate"
+evidence_required:
+  - "trace_is_drawn_over_its_table"
+risk: "Low. The trace of every issue may be large; the page groups by milestone and the graph draws one issue at a time."
+created_at: 2026-10-28
+updated_at: 2026-10-28

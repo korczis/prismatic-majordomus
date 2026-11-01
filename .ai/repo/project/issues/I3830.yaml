@@ -39,4 +39,16 @@ validation:
 evidence_required:
   - "a_local_gate_reports_and_ci_decides_test"
 created_at: 2026-10-21
-updated_at: 2026-10-23
+updated_at: 2026-10-28T17:19:49Z
+started_at: 2026-10-28T17:18:42Z
+started_event: sha256:b99f6da2efeb9aada5f1df93fd27cb2239f261ef252ba90fa436fc6c60b3a8e5
+completed_at: 2026-10-28T17:19:49Z
+completed_event: sha256:9c3b29fbc5cd6648a5281d89873a5bfb7ee8cc183134602e8ced59e5c94407c2
+evidence:
+  - covers: a_local_gate_reports_and_ci_decides_test
+    type: ci
+    command: "bash test/run.sh 3948_a_local_gate_reports_and_ci_decides 1021_a_push_runs_what_ci_would_find_first 4008_a_push_that_only_deletes_plans_nothing 26_ci_wiring 3025_abandoned_work_in_a_worktree_is_named 56_derived_current_gate (run by the validate workflow suite shards); bin/majordomus plan validate (structure job)"
+    result: "pass. Log lines: '2026-10-27T23:21:49.5732581Z ok   3948_a_local_gate_reports_and_ci_decides'; '2026-10-28T07:38:50.7723714Z ok   1021_a_push_runs_what_ci_would_find_first'; '2026-10-28T00:13:35.4826093Z ok   4008_a_push_that_only_deletes_plans_nothing'; '2026-10-27T23:21:49.3965918Z ok   26_ci_wiring'; '2026-10-27T23:21:49.4302339Z ok   3025_abandoned_work_in_a_worktree_is_named'; '2026-10-28T07:38:51.0917836Z ok   56_derived_current_gate'; 'plan validate: 111 milestone(s), 1035 issue(s), 0 failure(s), 6552 warning(s)'; and the doctor lines 'OK   wiring      <name> — wired via .githooks/pre-commit|pre-push' for all six hook enforcements. (commit 6c79dcf68cf329f4c21c219720b811381c3433aa) Audited per criterion on 2026-10-28 by 61e1283f; two adversarial verifiers did not refute it."
+    artifact: "https://github.com/korczis/prismatic-majordomus/actions/runs/40573560939 (validate on master 6c79dcf, conclusion success). Job suite-shard (2) 122655183734 ran 3948, 26 and 3025; suite-shard (4) 122655181829 ran 1021 and 56; suite-shard (3) 122655183349 ran 4008; structure 122655238421 ran plan validate and the doctor wiring. Confirmed on master 81ef931 by run 40676150754: the same six cases ok, and the hooks, run-plan, these cases and lib/doctor.sh are unchanged between 6c79dcf and 81ef931 (empty git diff). That run failed only on case 103_release_projection."
+    commit: 81ef931a3e156907f1784c64c509884f565c17f0
+    recorded_at: 2026-10-28T17:19:21Z

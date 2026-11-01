@@ -1,0 +1,44 @@
+id: I4357
+milestone: merging-and-referencing-are-enforced
+title: "Issue, ADR and case numbers are reserved atomically at origin and checked at landing"
+slug: numbers-are-reserved-atomically-at-origin
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "`next --kind issue|adr|case --reserve` reserves a number by creating refs/ids/<kind>/<n> on the forge (`gh api repos/{owner}/{repo}/git/refs -f ref=refs/ids/<kind>/<n> -f sha=<commit>`), which fails atomically with 422 when the ref exists and runs no local hook, and takes the next number on that refusal; .githooks/pre-push skips refs/ids/* as it skips refs/majordomus/*, so a reservation that does reach origin through git does no hook work; a required landing check refuses an id that is already on master or reserved under different content; the identifier gates (collision-check, adr-collision, case-numbers) run in a job that needs only plan, is exempt from the first-red cancel and checks out blobless."
+why: "Incident 6 of 2026-10-28: I4251 was taken by both #2601 and #2605, and I4296 by both #2633 and the deployed-stage worker. Ids come from one global sequence and nothing reserves a number atomically: the mechanisms are advisory (the board; `--advisory` claims followed by `|| true`), eventually consistent (one admission mutex per runtime), or detect too late (the collision gate runs behind the build and is lost when the run cancels itself). I3974 plans a survey allocator, and ADR 0168 collided even with a survey; on 2026-10-29 the block I4340-I4359 claimed on the mesh was found already used by I4340, I4350 and I4352 in uncommitted work of three other worktrees."
+current_state: "Measured at 81ef931a3e1: lib/adr.sh and scripts/case-numbers survey this tree, the sibling worktrees, the refs and the board; nothing pushes a reservation to origin; scripts/ci/collision-gate runs inside the validate jobs that build; .githooks/pre-push skips only refs/majordomus/* and delete-only pushes, so any other ref push runs `finish --check`, case-numbers and run-plan (its own comment records a rescue-ref push spending 3490 s in run-plan)."
+desired_state: "Two concurrent reservations of one number give one success and one next number; a pull request adding an id already on master or reserved under other content is refused without a build; the identifier half of rule project.work-is-claimed-before-it-is-built is blocking. Enforced by cases 560, 566 and 4357, the landing check and the rule."
+scope:
+  - ".ai/repo/project/issues/I4357.yaml"
+  - "lib/adr.sh"
+  - "scripts/case-numbers"
+  - "scripts/ci/collision-gate"
+  - ".github/workflows/validate.yml"
+  - ".githooks/pre-push"
+  - ".ai/repo/ci/gates.yaml"
+  - "test/cases/560_a_case_number_names_one_case.sh"
+  - "test/cases/566_the_collision_guard_has_a_caller.sh"
+  - "test/cases/4357_a_number_is_reserved_at_origin.sh"
+  - ".ai/repo/project/issues/I3974.yaml"
+  - ".ai/repo/rules/project/work-is-claimed-before-it-is-built.v1.md"
+non_scope:
+  - "Renumbering ids that already collided"
+acceptance_criteria:
+  - "Case 4357 against a stub forge answering 201 once and 422 after: two concurrent reservations of n give one success and one n+1"
+  - "Case 4357: a reservation runs no hook work: no `finish --check`, case-numbers or run-plan is invoked, and a push of only refs/ids/* through .githooks/pre-push exits 0 without them"
+  - "Case 4357: a replay of #2605 (a second I4251.yaml) exits 11 from the identifier job, with no build job run"
+  - "Case 566: the identifier job's needs are a subset of {plan} and it carries no first-red self-cancel"
+  - "Case 560 passes, and the rule's identifier half is class blocking"
+  - "I3974 records that its survey approach is superseded by this reservation"
+validation:
+  - "bash test/run.sh 4357_a_number_is_reserved_at_origin 560_a_case_number_names_one_case 566_the_collision_guard_has_a_caller"
+  - "actionlint .github/workflows/validate.yml"
+  - "bin/majordomus plan validate"
+evidence_required:
+  - "test"
+depends_on: []
+serves:
+  - merging-and-referencing-are-enforced#one-allocator
+created_at: 2026-10-29
+updated_at: 2026-10-29

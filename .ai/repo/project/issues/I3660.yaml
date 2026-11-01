@@ -34,4 +34,15 @@ validation:
 evidence_required:
   - "test_a_funding_source_without_evidence_is_refused"
 created_at: 2026-10-20
-updated_at: 2026-10-21
+updated_at: 2026-10-25T20:40:25Z
+started_at: 2026-10-25T20:39:02Z
+started_event: sha256:3fcf3e8e7db965716a0c4b9e9d522fb3f9a1b8386a89fc86a4180f1e5e2f04ec
+completed_at: 2026-10-25T20:40:25Z
+completed_event: sha256:517628e739bcdc1e4925d1d1240cffff7b8b13346a4fbea952424131a96b70aa
+evidence:
+  - covers: test_a_funding_source_without_evidence_is_refused
+    type: test
+    command: "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --lib -- integration::retry integration::forge::tests::the_forge_is_asked_exactly_this plan:: models::; majordomus generate --check"
+    result: "at master 2efeacea031: models::tests::test_a_funding_source_without_evidence_is_refused and a_funding_source_of_an_unknown_kind_is_set_aside_by_name (C3), no_field_of_the_catalogue_can_hold_an_amount (C4), a_remote_source_without_a_credential_variable_is_reported and every_credential_variable_is_named_once (C5), the_shipped_catalogue_declares_its_funding_soundly; lib 125 passed 0 failed. generate --check: in sync (C6). C1: share/models.yaml declares anthropic subscription, credit_grant and metered (vendor pages code.claude.com and claude.ai), openai metered, ollama and lmstudio local; openai's evidence page is the catalogue's own verification note (share/models.yaml), not a vendor page. C2: the credit grant's url is claude.ai/settings/billing?action=link_org, where clau.de/api-credits redirects. Landed 28da69d37c3 through #1756"
+    commit: 2efeacea03158615db2b497117a8da35b264909b
+    recorded_at: 2026-10-25T20:37:34Z

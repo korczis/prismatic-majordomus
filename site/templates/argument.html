@@ -157,11 +157,14 @@
     {#- the route of a rule is the doctrine dataset's, joined by id: this page does not know
         how a rule id becomes a slug -#}
     {%- set doctrines = load_data(path="data/generated/doctrines.json") -%}
+    {#- these are this repository's resolved rules (project.* among them), not the rule
+        package's blocking doctrines the homepage and /doctrines/ count, so the label names the
+        set: the two figures never read as one count with two values (I4318) -#}
     {%- set blocking = [r for r in model.rules if r.class == "blocking"] -%}
     {%- set advisory = [r for r in model.rules if r.class == "advisory"] -%}
     <dl class="grid gap-3 sm:grid-cols-3">
       <div class="rounded-base border border-brand-subtle bg-brand-softer p-5">
-        <dt class="text-sm text-heading">rules that stop the command</dt>
+        <dt class="text-sm text-heading">of this repository's resolved rules, stop the command</dt>
         <dd class="mt-1 font-mono text-4xl font-bold text-fg-brand-strong">{{ blocking | length }}</dd>
       </div>
       <div class="rounded-base border border-default bg-neutral-primary p-5">
