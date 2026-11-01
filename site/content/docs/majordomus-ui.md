@@ -1,7 +1,7 @@
 +++
 title = "`majordomus ui`"
 description = "`majordomus ui`, the primary surface: how it differs from the Cockpit, where every value on it comes from and how a missing one reads, how the first screen stays fast with slow panels on routes of their own, the page without JavaScript, the assets and gates that hold it, and how a screen is added"
-weight = 51
+weight = 52
 [extra]
 source = "docs/MAJORDOMUS_UI.md"
 +++
@@ -23,6 +23,23 @@ wrong and changes in the same commit as the fix.
   `apps/majordomus-cli/tests/ui_surface.rs`.
 - The owner's brief, with its reference screens, is
   `campaigns/majordomus-ui-complete-opus-fable-v3-20261011/`.
+
+## Opening it
+
+`majordomus ui` opens the dashboard and `majordomus ui <screen>` opens one screen, named by
+the last word of its route (`majordomus ui roadmap` is `/ui/roadmap`). The command does
+three things:
+- it converges on this checkout's shared server exactly as `serve ensure` does, so a server
+  that already answers is used and no second one is started;
+- it prints the address alone on standard output;
+- it opens that address with the platform's opener.
+
+`--no-open` prints the address and opens nothing. When no browser can be launched, the
+command says so on standard error and still prints the address. An unknown screen is
+refused with exit 2 before anything is started, and the refusal lists every screen there
+is. The command has no `status` and no `stop` of its own: `serve status` and `serve stop`
+answer for the server it ensured. `test/cases/2484_majordomus_ui_opens_the_dashboard.sh`
+holds this behaviour.
 
 ## The product and its technical reference
 
@@ -68,8 +85,10 @@ lists it), declared beside the Cockpit in `apps/majordomus-cli/src/web/discover.
 | PR Drain | `/ui/prs` | `plan.issues` (one issue, `?issue=`); `integration.queue` (one count per lane it counted) and `integration.events` on its own route (`/ui/panels/drain`), narrowed by `?disposition=`, `?lane=` and `?q=`, one pull request (`?pr=`) in the inspector with what the executor did to it, the lane's recent activity, and its merges per day over the fortnight the trail ends on |
 | Capabilities | `/ui/capabilities` | `repository.info`, `capabilities.list` by kind; one capability (`?id=`) from `capabilities.describe` |
 | Mesh | `/ui/mesh` | `mesh.peers`, `mesh.events`, `mesh.state` (live claims); one machine (`?node=`) in the inspector, and who holds each seat of [rule `project.the-cooperation-model-is-the-owners-word`](https://github.com/korczis/prismatic-majordomus/blob/@source-ref@/.ai/repo/rules/project/the-cooperation-model-is-the-owners-word.v2.md) read from the claims |
-| CI/CD & Releases | `/ui/delivery` | `distribution.releases`, `release.version`, `deploy.list`, `gates.model`, `integration.timings` (each check's median, 90th percentile and longest run, and the open heads that waited longest, each leading to its pull request) |
+| Peers | `/ui/peers` | `blackboard.snapshot`, read through the live channel's shared read: every worker of every board and linked machine with its intent and claims, the claims that meet, the reviews and handovers that wait, the typed relations and every source; read again when the channel says the blackboard changed ([Followed live](#followed-live)) |
+| CI/CD & Releases | `/ui/delivery` | `distribution.releases`, `release.version`, `release.currency` (whether the work landed since the last release is released: current, owed or overdue, how many commits wait and since when, the release it is measured from and the version required next), `deploy.list`, `gates.model`, `integration.timings` (each check's median, 90th percentile and longest run, and the open heads that waited longest, each leading to its pull request) |
 | Deployments | `/ui/deployments` | `deploy.list` (what the layer declares); `deploy.observed` (what the forge recorded: where each environment stands, every deployment to every environment — GitHub Pages among them — and every release, each commit, ref, environment, run and release a link); `delivery.report` on its own route |
+| Trends | `/ui/trends` | `delivery.trends`: the series `scripts/pages trends` wrote to `site/data/trends.json` (schema `trends/v1`, never committed, never derived), read from the checkout when the screen is asked. Coverage as percentage lines (lines, functions, regions: covered over total) and wall and queued minutes per run as inline SVG, the slowest job medians in a table and every run's figures as text. A run that measured no coverage is a gap in the line, never zero. A checkout with no such file, or a file of another schema, answers `no trends recorded in this checkout: the series is written by the pages publication`; the screen writes nothing |
 | Evidence | `/ui/evidence` | `evidence.report`; one claim (`?claim=`) in its inspector from `evidence.claim`: what settles it, its last run, what changed since, how to reproduce it, and the claims its test also proves |
 | Knowledge | `/ui/knowledge` | `knowledge_base.status`, `knowledge_base.candidates`: the candidates awaiting review, newest first and bounded with what is left out counted, the subjects they are about, and whether the deriver is still writing. The review's commands are named as text; the screen promotes and rejects nothing |
 | Documentation | `/ui/docs` | `objects.list` (features, documents), `web.surfaces` |
@@ -173,7 +192,10 @@ What the forge recorded is read from one observation, taken by `majordomus serve
 kept beside the pull-request observation, which `majordomus prs refresh` takes. A checkout
 that has never asked says so, with that command, instead of drawing empty tables; the
 published snapshot's job asks before it reads, so the public Deployments and PR Drain are not
-empty.
+empty. It then asks `plan delivery` and fails when the publication is still unread for any
+reason but "no successful deployment" (I4315, ADR 0227): the roadmap and delivery screens
+were published reading `deployed` for no issue, because the reader looked for the release
+pointer at its authored path in a gh-pages commit that carries it at `releases/latest.json`.
 
 A list a screen cuts short says so: "The first 8 of 31; 23 more not shown here", with a link
 to the screen that shows them all when there is one. Case 1091 and
@@ -257,7 +279,10 @@ saw.
 A reading says how it stands on its source line. A current one older than five seconds says
 its age ("read 12 s ago"). A stale one says "read 12 s ago, before the repository changed;
 reading again", and its line carries `data-catching-up`. `ui.js` reads a screen with such a
-line again after 0.4 s, then after twice that, up to 6.4 s, until none is left. A stale value
+line again after 0.4 s, then after twice that, up to 6.4 s, until none is left, after every
+reading that brought one: the page's first, the minute's, and the one a live channel's change
+frame asked for. A change frame is often the only one, and its reading comes back stale whenever
+the blackboard takes longer than the 50 ms to read again, which it does under load. A stale value
 is never drawn as current.
 
 The first reader of the UI starts one pass over every screen and panel in the background, so
@@ -320,6 +345,23 @@ A regression threshold could not do this: a screen that was always slow never re
 a platform with no baseline compares nothing. The first run of the check found `/ui/command`
 at 400-660 ms, where every other screen read 1-21 ms. The first request after the repository
 moved is not measured by the bench yet (I2485).
+
+## Followed live
+
+A screen that shows what changes faster than a minute follows the server's live channel instead
+of waiting for the minute's refresh (ADR 0176). Its markup names the channel (`data-follow`)
+and the module that follows it (`data-follow-lib`, `share/ui/live.js`), which opens it through
+`share/ui/socket.js`, a byte copy of the Cockpit's one socket client that
+`scripts/cockpit-assets` keeps. The module draws nothing: on every snapshot frame, a
+connection's first one included, it asks `ui.js` to read the screen again, and `ui.js` reads one
+screen at a time, asking once more after a reading that a frame arrived during. The screen is
+rendered by the server, and its reading follows the blackboard's own change generation as well
+as the repository's (`crate::change::generation_of`), so a screen read after a change frame
+shows that change or says it is catching up with it. The line marked `data-follow-state` says
+whether the channel is live, reconnecting or closed, and while it is not live the minute's
+refresh runs as on every other screen.
+`/ui/peers` is the first such screen. The published snapshot withholds it (I2984): it names
+every worker's intent, worktree and machine as they are now.
 
 ## Relationship graphs
 
@@ -464,8 +506,8 @@ time, naming the event. A recording is a moment; it is replaced by capturing aga
 
 Every screen is complete HTML, and the menu of a narrow screen opens with a checkbox and its
 label. `share/ui/ui.js` is the only script of the UI's own: it pulls in slow panels, refreshes
-the screen, draws graphs, reveals the bar's search button and keeps the sidebar beneath the
-bar. The bar's menus and theme toggle run on the site's own two scripts. The one inline script is the theme
+the screen, draws graphs, loads `live.js` on a screen that follows the live channel, reveals
+the bar's search button and keeps the sidebar beneath the bar. The bar's menus and theme toggle run on the site's own two scripts. The one inline script is the theme
 statement the policy allows by its digest, the same one the Cockpit ships. A served test
 asserts that the UI and the Cockpit carry one identical policy.
 
@@ -599,8 +641,6 @@ probe refuses a published first screen with an undecided figure, and
 
 ## What it does not do yet
 
-- `majordomus ui` as a command, which ensures the shared server and opens this surface, is
-  I2484. Until it lands, open `/ui` on the address `majordomus serve status` prints.
 - Nothing on the UI starts work yet: launching a capability, an issue or a milestone through
   the executor and following its run live is the execution control plane of the V4 pack.
   An action on a mesh node is the same, behind the executor (V5); the inspector says so.

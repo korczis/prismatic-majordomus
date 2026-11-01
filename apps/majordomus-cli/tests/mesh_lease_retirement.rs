@@ -30,7 +30,7 @@ impl Node {
 
     fn declare(&self, other: &Node, seed: Option<&Served>) {
         let mut yaml = format!(
-            "schema: mesh/v1\nkind: mesh-declaration\nid: majordomus\nenabled: true\nmulticast:\n  enabled: false\ntrust:\n  policy: deny_unknown\n  allow:\n    - {}\n    - {}\ncooperation:\n  repository: lease-retirement\n  heartbeat_seconds: 1\n  expiry_seconds: 4\n",
+            "schema: mesh/v1\nkind: mesh-declaration\nid: majordomus\nenabled: true\nmulticast:\n  enabled: false\ntailscale:\n  enabled: false\ntrust:\n  policy: deny_unknown\n  allow:\n    - {}\n    - {}\ncooperation:\n  repository: lease-retirement\n  heartbeat_seconds: 1\n  expiry_seconds: 4\n",
             self.key, other.key
         );
         if let Some(seed) = seed {

@@ -1,11 +1,353 @@
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: the layer's release records, the decisions dated in each release's window, and the commits in its range; regenerate with `majordomus generate`
-     Generator: majordomus-cli 1.0.0-alpha.5 -->
+     Generator: majordomus-cli 1.0.0-alpha.10 -->
 # Changelog
 
 Every entry below is derived: a section per release the layer records, its decisions the ADRs dated inside that release's window, its changes the conventional commits in its range, its artifacts the record's own evidence. Nothing here is written by hand, and `majordomus generate changelog --check` fails when it stops matching the tree.
 
-Current version: **1.0.0-alpha.5**
+Current version: **1.0.0-alpha.10**
+
+## v1.0.0-alpha.9 — 2026-10-28
+
+### Added
+
+- **ui**: majordomus ui ensures the shared server and opens the dashboard (I2484) (`2273179f5`)
+- **mesh**: a claim lives by its holder session's progress (`62e4e0ea4`)
+
+### Fixed
+
+- **follow**: a follower's shared read is keyed by its own server (I4241) (`e2fb35e04`)
+- **train**: train 8 owes alpha.9, its ui coverage and its roadmap width (`b63ff0c87`)
+- **ui**: ui takes its repository from serve's one discovery (I2484) (`a31215b95`)
+- **launcher**: a MAJORDOMUS_BIN naming a launcher is refused, not looped (I3320) (`fe6bf1153`)
+- **plan**: a commit that only plans an issue is not its delivery (I2749) (`71674847a`)
+- **ci**: a rerun is judged by its own receipts (`36b4a0771`)
+- **ui**: the ui command's summary quotes its route placeholder (I2484) (`81f2c1a70`)
+- **ci**: only a trends/v1 series decides a run link (`59bcaa4f9`)
+- **ui**: the ui case bounds its requests and UiArgs' example names it (I2484) (`656bb6a02`)
+- **peers**: a client that re-attaches keeps one departed row, not one per reconnect (I4227) (`8c480144a`)
+- **mesh**: a node's provisioning secret is read on mc's standard input (I3996) (`7a71401f8`)
+- **ci**: install-check names a launcher that closed its pipe instead of dying on it (`3da5911d2`)
+- **mesh**: the tailscale CLI is started through the busy retry (ETXTBSY) (`8ad00b161`)
+- **ci**: the Rust cache carries the shared build directory (I4221) (`e9e7ba923`)
+- **mesh**: the items with doc examples stay public, each with its own (`a380305aa`)
+- **mesh**: claim liveness is a rule of its own, and every new surface is proven (`c2b1d4a94`)
+
+### Tests
+
+- **ui**: case 3383 lets the peers screen say it is catching up (I4244) (`6c79dcf68`)
+- cases 3075 and 51 are handed this tree's executable (ADR 0224) (`4c7d86e19`)
+- **plan**: a git that cannot answer is an error, not an empty answer (I2749) (`e610dfe28`)
+- **deploy**: the image's build stage carries every file the crate embeds (`8402db60e`)
+- **mesh**: case 3990 turns the tailnet off with multicast (I3990) (`38b6d05ec`)
+- **mesh**: an overtaken release logs its outcome, and mesh.beat's refusals are tested (`2703e7929`)
+- **mesh**: every beat path I3990 added is covered, the unreachable ones removed (`d0f68f0e7`)
+- **mesh**: cover the progress rule's bounds, readers and surfaces (I3990) (`596e3b2ae`)
+
+### Housekeeping
+
+- **derive**: delivery observes the committed I4241 fix (`e2e4d3eac`)
+- **release**: record v1.0.0-alpha.8 and the metadata it publishes (`f219fc9c8`)
+- **derive**: train 8's derived data observes its committed merge (`91a9570d0`)
+- **plan**: I3171 is done; the source-range test passes on master after train 7 (`e75d3c393`)
+- **derive**: delivery observes the committed merge of train 7 (`e43a17ee7`)
+- **derive**: delivery observes the committed fix (`70a15d8cc`)
+- **derive**: delivery observes the committed merge of master (`c3a6920cc`)
+
+### Published
+
+- `macos-aarch64` — majordomus-v1.0.0-alpha.9-aarch64-apple-darwin.tar.gz (`29b669559190`)
+- `macos-x86_64` — majordomus-v1.0.0-alpha.9-x86_64-apple-darwin.tar.gz (`774141b6da42`)
+- `linux-x86_64-gnu` — majordomus-v1.0.0-alpha.9-x86_64-unknown-linux-gnu.tar.gz (`a73710f2e52b`)
+- `linux-x86_64-musl` — majordomus-v1.0.0-alpha.9-x86_64-unknown-linux-musl.tar.gz (`492e842bee68`)
+- `linux-aarch64-gnu` — majordomus-v1.0.0-alpha.9-aarch64-unknown-linux-gnu.tar.gz (`da9918ab3c1d`)
+- `linux-aarch64-musl` — majordomus-v1.0.0-alpha.9-aarch64-unknown-linux-musl.tar.gz (`f78cbb2261e7`)
+
+
+## v1.0.0-alpha.8 — 2026-10-25
+
+### Added
+
+- **build**: every local build path goes through the mesh cache, and a gate refuses a bypass (`f134eb5d0`)
+- **mesh**: a node is provisioned as a cache provider, idempotently (`68990e194`)
+- **mcp**: a board row names the address that reaches its worker (`ae584cbab`)
+- **mesh**: a store is offered in a signed, expiring mesh record (`14cfb0ab4`)
+- **mesh**: the sccache client is derived from the selected store (`bfe990b78`)
+- **deploy**: a deployment's slug carries the site built at its own commit (I0912, ADR 0223) (`9c9b11578`)
+- **mesh**: a dependency install is restored before and saved after (`7d4e23d3c`)
+- **github**: a pull request carries its metadata, projected from the records (I3970) (`9f231f212`)
+- **mesh**: a cache key is a derived triplet and the store is spoken natively (`2656a9905`)
+- **integration**: the executor fast-forwards master to every green head (I3910) (`92946d3e0`)
+- **devcontext**: the compiled context names Rust source ranges with their reason and cost (I3171) (`c453f536a`)
+- **providers**: a provider declares how it reports usage, and the telemetry plan unblocks (I3287) (`8b28ca31f`)
+- **mesh**: a hosted hub is trusted and closed to strangers (I3826) (`38afe12a3`)
+- **mesh**: the mesh client speaks TLS and refuses cleartext to a public address (I3823) (`dd334ac00`)
+- **deploy**: the provider's tree is assembled from the object, and master publishes it (I3821) (`85427255b`)
+- **mesh**: the tailnet is a discovery provider, so a machine joining it is found unaided (I2410) (`35253fcf8`)
+- **deploy**: a deployment names its provider and its provider files are derived (I3820) (`27d017ea1`)
+- **reasoning**: an Anthropic API advisor is declared, so API credits can pay for review (I3663) (`f57147f13`)
+- **models**: a vendor declares its funding sources with vendor evidence (I3660) (`28da69d37`)
+- **release**: release.currency measures the landed work that waits past the last release (`6d9b6d445`)
+- **core**: one portable core runs on the host and as wasm32, held by one executed fixture (I2784) (`03318debc`)
+- **yaml**: a flatten is cached by its content under .ai/local/cache/flat (I0821) (`aafa0179f`)
+- **gates**: gate state is something the runtime can answer (I1512) (`e46cb5d11`)
+- **mesh**: a node key's succession is signed and confers trust only through its predecessor (`5cc6804b0`)
+- **intent**: the CLI and the Cockpit show the three counts of unlinked work (`c8f72354a`)
+- **gates**: done is one declared policy and a derived stage (`9d3b033b9`)
+- **intent**: realize() classifies unlinked work as empty, before_intents or orphan (`c4ec0b183`)
+- **mesh**: a node file holds the store it serves and the providers it was told about (`34949bd86`)
+- **mesh**: a node reads what it offers from a local declaration and a bounded probe (`39d709d0a`)
+- **mesh**: a build-cache offer is a typed model and selection is a pure function (`e5c94aece`)
+- **telemetry**: the telemetry record names who reported each fact (I0301) (`4e6e7d765`)
+- **mesh**: the tailnet is a discovery provider, so a machine joining it is found unaided (`febf05332`)
+
+### Fixed
+
+- **pages**: only an ISO 8601 time is a build's start time (`a44676d18`)
+- **top**: a milestone takes a free order, and case 730 counts the advisors it declares (`b144038d8`)
+- **ci**: install-check names a launcher that closed its pipe instead of dying on it (`f49a73994`)
+- **top**: train 7's decision takes ADR 0226, and a probe starts a busy program again (`d55a5af86`)
+- **plan**: the scope-conflict scan allocates nothing, and a failed case's reason is kept (I4223) (`a296782bc`)
+- **mesh**: the cache provider's payloads live in the package the image compiles (`7da45a51f`)
+- **integration**: keep the declarations page at fifty (`288ff37ab`)
+- **top**: the pre-push gates train 7's own changes met, each at its source (`0a961cf30`)
+- **integration**: a forge reply cut off on its way is asked again (`e6c43203e`)
+- **site**: a run that /trends/ draws is decided by provenance (I4220) (`8337fde02`)
+- **top**: the warm UI screens borrow the plan instead of copying it (I4200) (`43f1acecb`)
+- **top**: the timed economics cases run alone (I4199) (`4b9aa6eb9`)
+- **top**: the portable core builds in its own build directory (`2389d4b13`)
+- **top**: a case that compiles never starves its neighbours (I4199) (`1bf59a9cf`)
+- **top**: train 6's new case rules meet two members, each fixed at its source (`e6949e691`)
+- **top**: train 6's site and structure jobs take the build job's executable (`96de70c88`)
+- **top**: train 7's test reds, a doc example and a table header at their sources (`6eaf3613d`)
+- **top**: train 7's gate-model reds, a member gate laned and a member case planned (`eb1baf7e4`)
+- **top**: train 5's suite and Cockpit reds, fixed at their sources and derived once (`d078fb230`)
+- **top**: train 5's UI bar is the bar its site renders (`9c17a4b25`)
+- **top**: train 7's receipt reds, fixed at their sources and derived once (`b747ce88c`)
+- **top**: train 6's pipefail and inventory reds, fixed at their sources (`00df03719`)
+- **top**: train 6's quality red, Lane::as_str carries its example (`f11849aa0`)
+- **test**: a fixture holds the skills the site generator reads (I3999) (`33c194867`)
+- **build**: the shared build dir stays under its bound while builds run (I3959) (`b3ace7b45`)
+- **top**: train 5's site red, a doc example in a schema description scrolls (`3c26d6a6e`)
+- **mesh**: the build-cache ensure asks the context for its repository (`91d6681ef`)
+- **top**: case 3002 holds the explicit build to the bound, not the launcher (`e34d028af`)
+- **top**: case 3248 runs its fixture without the suite's MAJORDOMUS_BIN_COMMIT (`329906b54`)
+- **top**: case 3032 reads the rust-quality gate's bin/majordomus-cli line (`fb8272978`)
+- **top**: the blackboard's test peer names #2398's address field (`afc122670`)
+- **top**: mesh.build_cache.env joins the mesh module's projection and query test lists (`e62b2789d`)
+- **build**: the cache start lives in the sccache wrapper, not in lib/ (`61a50ef65`)
+- **mesh**: the cache provider names no Prismatic path and its case hashes without shasum (`474370f78`)
+- **top**: train 5's pre-push reds, I3939's scope names its case and rustfmt (`643f9e269`)
+- **top**: train 5's case 94 red, case 3970 runs in plan-record-cases (`22cecde11`)
+- **mcp**: the address docs name the _meta key, not a private constant (`f42a4bcd4`)
+- **mesh**: the env module's intra-doc links name no redundant target (`691a70126`)
+- **mesh**: a server bound to every interface advertises the addresses it has now (`22f02f456`)
+- **serve**: an idle server leaves by itself; machine traffic is not use (`8fdebcaeb`)
+- **build**: no entry path or gate builds; a stale executable is a same-generation release or exit 12 (`8c8a331fc`)
+- **mesh**: a remote node's loopback runtimes are not dialed (`cb6494220`)
+- **lifecycle**: a task started before the first commit is not diverged (I3995) (`39f371117`)
+- **plan**: the intent's proofs are planned commands and every criterion is served (`8f672d83a`)
+- **ci**: the provider checks out one commit, within five minutes (`d16cbee9f`)
+- **hooks**: a push that only deletes refs plans nothing (`68cf7bebb`)
+- **devcontext**: source ranges free their spans, keep one-line definitions, and rank below objects (`174b97284`)
+- **top**: train 4's site and suite reds, fixed at their sources and derived once (`e173188a3`)
+- **ci**: the provider push sends its slug in one request, and case 3821 holds the push to it (`6d37d0cb5`)
+- **ci**: a push is planned from the commits it sends, not the working tree (`a56a5e079`)
+- **devcontext**: every exported source-range item has an example; sorts are canonical (I3171) (`f48de8a90`)
+- **pages**: a hung Pages build is replaced by a declared bound (I3902) (`9daede484`)
+- **peers**: the peer board fits one answer, and initialize tells the caller about itself first (`ab4985cb2`)
+- **deploy**: a path crate is in the build context and the dependency stage (I2784) (`70afed8c2`)
+- **deploy**: a path crate is in the build context and the dependency stage (I2784) (`059e010bb`)
+- **derive**: a merge of master derives in one go, both parents as history (`1a8d55357`)
+- **health**: a deployed build without a checkout names its commit from its build identity (I3822) (`e2c9675d6`)
+- **ci**: the provider push authenticates from its secrets through a credential helper (`16a28e3b7`)
+- **advisors**: the codex advisor answers to the answer schema, and only its file is an answer (`d888a790b`)
+- **plan**: I3829 names the provider rule at its new version (I3287) (`dc514006f`)
+- **site**: the homepage counts what was proven and shows no backlog (I3916, I3917) (`3071f0f8c`)
+- **top**: train 4's last reds, and the GitHub projection reads every issue (`516459918`)
+- **ci**: the coverage gate reads multi-line and raw strings to the end of a test module (I3919) (`caee9bbaf`)
+- **plan**: the new issues' scopes name only files that exist (`daaf4e367`)
+- **top**: train 4's coverage, owed by its members, paid with tests and fixed at the source (`96556f1e8`)
+- **top**: train 4 suite reds: marketing.toml within its budget, case 3480 not its own unit (`b364af4e9`)
+- **top**: train 4's CI reds, fixed at their sources and derived once (`a6489f162`)
+- **top**: train 3b's CI reds, fixed at their sources and derived once (`2034d4a3f`)
+- **top**: train 3b's pre-push reds, fixed at their sources and derived once (`a01a4280c`)
+- **ci**: the provider workflow skips with a notice until its secrets are set (I3821) (`47d0dfca8`)
+- **ui**: the intent workspace folds its shared-scope pairs to the first 25 (I3840) (`d621aee64`)
+- **release**: a landing waits from when it reached the trunk, and a bound alone is never overdue (`04a4cdc9e`)
+- **editors**: a personal command that hides a projected skill is named, in editors.status and doctor (`3e687b162`)
+- **ui**: a wake lock is asked for once, and one granted unwanted is given back (`6e402dcf1`)
+- **adr**: a branch that renumbered its decision away claims nothing at the old number (`ace037903`)
+- **ui**: the kiosk keeps the screen awake while it is shown (`85c4ccd26`)
+- **runtime**: a rebuild never replaces the executable a live lease names (`2b9dc2d98`)
+- **mesh**: a dialer reads no reply beyond its bound and no more candidates than the bound (`b862b8cda`)
+- **mesh**: a hello older than the one that made a link cannot displace it (`2dbf9a0f9`)
+- **mesh**: a host-scoped build-cache offer is usable only by its own node (`fac63421b`)
+- **mesh**: build-cache model owes examples and one order (order-check, rust-quality) (`e68029076`)
+- **doctor**: judge only the generated region of a region projection as a bootstrap (I2588) (`4cc8811be`)
+- **monitor**: a cancelled run is news, a deployed Pages run needs help, the cursor is kept (`03222902a`)
+- **mesh**: the tailnet's peers are a set, not a sort site (`9c47d6d94`)
+
+### Performance
+
+- **site-data**: refuse the manifest before deriving; case 95 runs three generations (I2115) (`1cb762146`)
+
+### Documentation
+
+- **serve**: the idle module shows its lifecycle and every method an example (`3f9483bd0`)
+- **mesh**: the followed endpoints carry their examples (I4013) (`25db77504`)
+- **adr**: no ordinary command builds is ADR 0224 (`9d38456bb`)
+- **campaigns**: the Mission Control pack is in the manifest and the index (`3b19fb9e3`)
+- **campaigns**: the one-click Mission Control prompt pack is recorded for every peer (`840efde32`)
+- **adr**: no ordinary command builds — ADR 0222 supersedes ADR 0172, I3180 is cancelled (`6d4e35012`)
+- **ai**: reconcile ChatGPT capture coverage and native-client evidence (`a64709651`)
+- **plan**: I3287 is recorded done with its case as evidence (I3287) (`7801f7e3d`)
+- **plan**: merging and referencing are enforced (I3970-I3979) (`e6deaf9e9`)
+- **plan**: the telemetry record is done, and its writer is I3288 (I0301) (`7e7b4c218`)
+- **plan**: the GitHub projection reads every issue (I3920) (`080a40af4`)
+- the tool's size and its registry figures are said truthfully (I3918) (`0cb26dda0`)
+- **plan**: the homepage tells a stranger the truth (I3916-I3919, I3449 to p0) (`784a3727a`)
+- **plan**: landing green work survives any session, restart and machine (I3910-I3915) (`b52038cfc`)
+- **deploy**: every exported provider item carries an example (I3826) (`75c02225f`)
+- **plan**: I3663's scope names the model catalogue it adds claude-opus-5-5 to (`7b64c2a08`)
+- **adr**: a hosted server is a rendezvous only over TLS, its key a secret (ADR 0220, I3821-I3827) (`9b6bc4376`)
+- **models**: every funding item of the catalogue carries an executable example (I3660) (`e9f596482`)
+- **plan**: the funding plan is cut to what vendor evidence carries (`c64a74dcc`)
+- **plan**: every model call is paid from a declared funding source (`e0b088281`)
+- **mcp**: ReplyRefused::of carries an example of its own (`a9df9d908`)
+- **plan**: the client launch configurations have a carrier (I2148) (`5e3cc2d99`)
+- **mcp**: the MCP reference repeats no registry entry (I2732) (`5b2c2813c`)
+- **adr**: the join case is 3010, 3004 is another's (ADR 0156) (`4caf2546c`)
+- **adr**: a session joins the cluster before it works — current, announced and useful (ADR 0156) (`40eb57657`)
+- **mesh**: the tailnet provider and its constructor carry an example (`d8f32cf14`)
+
+### Tests
+
+- **deploy**: the dependency stage admits exactly the declared path crates (`cff7ee629`)
+- **top**: the changed items train 7's coverage run found unreached, reached (`3d5ea522d`)
+- **top**: train 7's members owe their coverage, and the train pays it (`5b39028ba`)
+- **top**: every closed-port test of the build cache asks one source of refusing ports (`4864d4057`)
+- **top**: the closed-port probe test asks fresh ports, not one another test can take (`37dac4c82`)
+- **top**: train 6's 9 uncovered lane and tier items, each proved (`7f722caaf`)
+- **mesh**: close the train-6 block's last 39 uncovered build-cache items (`376493cd4`)
+- **mesh**: read the machine's environment through a seam, not set_var (`8c84a5c87`)
+- **mesh**: cover the train-6 block's build-cache env, ensure, key and address branches (`0e7ec629f`)
+- **mesh**: cover the build-cache archive, ensure and offer error arms (`efaf0ae88`)
+- **mesh**: cover the train-6 block's uncovered cache provision, S3, key, journal and monitor items (`4ca410a9c`)
+- **top**: train 5's changed code is covered, and one run's chart is captioned once (`cca0100be`)
+- **mesh**: case 3952 hashes with the repository's own SHA-256 helper (`9e417b517`)
+- **derive**: case 3963 pins the sort in its stub executable (`e4c32fb3b`)
+- **mesh**: the mesh module's declaration tests name mesh.build_cache.key (`cbc54b94c`)
+- **ui**: the shared-scope route lists every pair and names what it needs (I3840) (`b83c6a0fd`)
+- **release**: case 3470 asks release.currency over MCP, as a client does (`1d7940d5e`)
+- **deploy**: every changed line of the slug assembler is covered (I3821) (`fdeee1ac3`)
+- **release**: the reflog's malformed lines and the currency's benchmark cases are proved (`15a4aef13`)
+- **mcp**: a bounded reply is covered to the last changed line (`cc0ca44f1`)
+- **intent**: unlinked work is classed end to end (case 3057) (`817670473`)
+- **mesh**: a lost append is said end to end (I2706, case 3052) (`40f3b6829`)
+- **mesh**: the last uncovered branches of the build-cache model (coverage gate) (`4c059c962`)
+- **mesh**: every branch of the build-cache model is covered by a test (coverage gate) (`742cdb13f`)
+- **monitor**: the monitor cases wait for a server that answers, as long as the load needs (`042ebedee`)
+
+### Housekeeping
+
+- **derive**: train 7's derived data observes its merge of train 6 (`be4daac15`)
+- **derive**: I4223's derived data observes its merge of master (`f6d61ebea`)
+- **derive**: train 6's derived data observes its merge of master (`6b2a37bc9`)
+- **derive**: delivery observes the committed merge of master (`a8334b035`)
+- **derive**: delivery observes the pushed head, not the offload's snapshot (`d9207285b`)
+- **plan**: the merged work is recorded (10 issues), with its evidence (`cc4aa2672`)
+- **plan**: I0905 is done; its evidence is bound to the tests that already prove it (`e714307d6`)
+- **derive**: the pages and registry observe the two case fixes (`b1ef7641b`)
+- **derive**: delivery observes the committed block, not its throwaway twin (`b395eeb66`)
+- **derive**: delivery observes the committed merge, not its throwaway twin (`439ea6019`)
+- **plan**: plan the intent a-session-proceeds-through-the-mesh and file I4000-I4009 (`315af95a8`)
+- **site**: delivery.json observes the merge commit, not the offload's input (`b223c73d2`)
+- **economics**: the context selection is measured at f48de8a9090, and the default is unchanged (`55bab024b`)
+- **site**: delivery.json observes the merge commit, not the offload's input (`d9d9313a7`)
+- **generated**: re-derive after bringing master in (`3876124c6`)
+- **economics**: the context selection is measured again at the compiler that names ranges (`461f0e2f0`)
+- **generated**: re-derive after bringing master in (`80b3c3310`)
+- **derive**: the derived data follows I3287's fix, derived once (I0301) (`2760d637c`)
+- **generated**: re-derive after bringing master in (`20ee1133d`)
+- **generated**: re-derive after bringing master in (`20e8f939c`)
+- **generated**: re-derive after bringing master in (`a0eecfcf5`)
+- **generated**: re-derive after bringing master in (`780b05368`)
+- **generated**: re-derive after bringing master in (`86151175c`)
+- **top**: train 4, its members applied on train 3b and the alpha.5 record, derived once (`35f852d9e`)
+- **release**: record v1.0.0-alpha.5 and the metadata it publishes (`675af4c06`)
+- **top**: train 3b, its members applied on train 3a and derived once, bump to 1.0.0-alpha.6 (`a57482183`)
+- **plan**: I3823 serves the relay criterion of its intent (`c6eda5742`)
+- **plan**: I3840 verified, its fold test recorded; the budget awaits CI (`d9c2330a8`)
+- **plan**: I3060 closed, I3061 recorded (`8bf9978f8`)
+- **generated**: re-derive after bringing master in (`266d26d48`)
+- **generated**: re-derive after bringing master in (`d20e3f7e5`)
+- **plan**: I2115's lane criteria move to I2350, verbatim (I2115, I2350) (`2937c955d`)
+- **derive**: the derived data follows the committed merge of master 9a5a9b7752 (`3138c873a`)
+- **derive**: the derived data follows the committed merge of master 9904000d2d (`3f6591416`)
+- **derive**: the changelog, artifacts and site data read the committed merge (`6e480086d`)
+- **derive**: regenerate after merging top integration/70-top-20261016 (`dcdf834ca`)
+- **plan**: I2132 is done, both of its replays proven refused (`e5d2a83b0`)
+- **derive**: the derived data follows the committed merge of master c0e3585dc8 (`ec174ee62`)
+- **derive**: the derived data follows the merge of master (`f123c80b7`)
+- **plan**: record I2588 as verified (I2588) (`80bc2035e`)
+
+### Formatting
+
+- **top**: rustfmt the provider browser table assertions train 7's fix widened (`15a60d4fc`)
+- **peers**: the board that fits one answer is rustfmt-clean (`b379214d0`)
+
+### Published
+
+- `macos-aarch64` — majordomus-v1.0.0-alpha.8-aarch64-apple-darwin.tar.gz (`8a94f198f4c2`)
+- `macos-x86_64` — majordomus-v1.0.0-alpha.8-x86_64-apple-darwin.tar.gz (`d4654a0e9e11`)
+- `linux-x86_64-gnu` — majordomus-v1.0.0-alpha.8-x86_64-unknown-linux-gnu.tar.gz (`40036f83748a`)
+- `linux-x86_64-musl` — majordomus-v1.0.0-alpha.8-x86_64-unknown-linux-musl.tar.gz (`1b24d28382ce`)
+- `linux-aarch64-gnu` — majordomus-v1.0.0-alpha.8-aarch64-unknown-linux-gnu.tar.gz (`08cc36a1185f`)
+- `linux-aarch64-musl` — majordomus-v1.0.0-alpha.8-aarch64-unknown-linux-musl.tar.gz (`464d467bad13`)
+
+
+## v1.0.0-alpha.5 — 2026-10-22
+
+### Added
+
+- **site**: a memory edit names the pages each key reaches (I3092) (`37205d4a1`)
+- **site**: a count inside a translated sentence is a slot (I3095) (`d296bf2ac`)
+- **site**: a translated bar keeps its English headroom (I3091), and the lessons are decided (`0ada9533f`)
+- **site**: translate the 8362 segments the alpha.1 build added to the Czech copy (`40d2a5875`)
+- **handbook**: the handbook carries the outlook, derived from the tree (`6b762a886`)
+- **site**: every article ends with the articles related to it, in its reader's language (`bf14f79f2`)
+
+### Fixed
+
+- **top**: #1789's reds, fixed at their sources and derived once (`76c578596`)
+- **top**: train 3a's pre-push reds, fixed at their source and derived once (`8e06eb3be`)
+- **handbook**: the outlook reads only the intent keys it shows (`f34dd4acb`)
+
+### Documentation
+
+- **site**: an article explains derivation, in English and in Czech (`a2d233d13`)
+- **site**: an article explains the plan critique, in English and in Czech (`6de68f89d`)
+- **site**: an article explains the cooperation model, in English and in Czech (`455304b1f`)
+
+### Housekeeping
+
+- **top**: train 3a, its members applied on the alpha.4 record and derived once (`c471d374c`)
+- **release**: record v1.0.0-alpha.4 and the metadata it publishes (`7dd644289`)
+- **release**: train 3a, site and docs members applied, bump to 1.0.0-alpha.5 (`3f32825b1`)
+- **derive**: the derived data follows the committed merge of master 9a5a9b7752 (`d10ea0aff`)
+- **plan**: I3094 is done by the alpha.1 top's pages.yml bounds, and master is derived once (`eef2f1cb5`)
+- **site**: derive the master merge once (`5e604fffc`)
+
+### Published
+
+- `macos-aarch64` — majordomus-v1.0.0-alpha.5-aarch64-apple-darwin.tar.gz (`6204966024c0`)
+- `macos-x86_64` — majordomus-v1.0.0-alpha.5-x86_64-apple-darwin.tar.gz (`e854ee236363`)
+- `linux-x86_64-gnu` — majordomus-v1.0.0-alpha.5-x86_64-unknown-linux-gnu.tar.gz (`2106367929ab`)
+- `linux-x86_64-musl` — majordomus-v1.0.0-alpha.5-x86_64-unknown-linux-musl.tar.gz (`6cdb68bffb32`)
+- `linux-aarch64-gnu` — majordomus-v1.0.0-alpha.5-aarch64-unknown-linux-gnu.tar.gz (`ec943cc2672d`)
+- `linux-aarch64-musl` — majordomus-v1.0.0-alpha.5-aarch64-unknown-linux-musl.tar.gz (`b1c8dfd1285f`)
+
 
 ## v1.0.0-alpha.4 — 2026-10-21
 
@@ -276,8 +618,8 @@ Current version: **1.0.0-alpha.5**
 
 ### Decisions
 
+- **ADR-0172** A client always gets a server, and a session that is opened starts by joining the cluster _(superseded)_
 - **ADR-0175** v1.0.0-alpha.1 declares what it can do and its limits, and every line of the declaration names its proof _(proposed)_
-- **ADR-0172** A client always gets a server, and a session that is opened starts by joining the cluster _(proposed)_
 
 ### Added
 
@@ -486,7 +828,7 @@ Current version: **1.0.0-alpha.5**
 
 - **ADR-0166** The plan's surfaces are inferred from delivery, and nothing the plan shows is typed beside it _(proposed)_
 - **ADR-0165** A skill is derived for every domain of the registry and shown wherever skills are _(accepted)_
-- **ADR-0164** A durable record names the session that wrote it, and relates a task only when the task is that session's _(proposed)_
+- **ADR-0164** A durable record names the session that wrote it, and relates a task only when the task is that session's _(accepted)_
 - **ADR-0163** A server serves only a share of its own version, with the surfaces it offers _(proposed)_
 - **ADR-0157** A mesh node may offer a shared build cache, peers discover and select it, and compilation never depends on it _(proposed)_
 - **ADR-0124** An uploaded prompt pack is a provenance-tracked input artifact, not a second intent model _(proposed)_
@@ -1908,7 +2250,7 @@ Current version: **1.0.0-alpha.5**
 - **ADR-0075** Which work realises an intent is a join over the records the lifecycle already keeps, and closed work does not outrank evidence _(proposed)_
 - **ADR-0073** An issue names the intent criterion it serves, and the coverage of every criterion is derived from the plan _(proposed)_
 - **ADR-0070** An intent is a typed record, and its stage and satisfaction are derived from the plan and the evidence _(proposed)_
-- **ADR-0091** Knowledge is derived at the episode boundary, from the ledger and git, and a person promotes it _(proposed)_
+- **ADR-0091** Knowledge is derived at the episode boundary, from the ledger and git, and a person promotes it _(accepted)_
 - **ADR-0046** A working context is derived and a closed record is composed; neither is a document somebody must remember to write _(proposed)_
 
 ### Added

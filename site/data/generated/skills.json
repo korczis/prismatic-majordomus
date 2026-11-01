@@ -58,7 +58,7 @@
       ],
       "inputs": [
         "the commit to publish, checked out with a clean tree and contained in origin/master",
-        "zola, node_modules (npm ci) and, for the full gate, cargo",
+        "zola, node_modules (npm ci) and, for the full gate, cargo; or, without cargo, the rustdoc, ui-snapshot and cockpit-snapshot artifacts of the same commit's Pages run",
         "the operator's word, in this session, that the site is to go live now"
       ],
       "outputs": [
@@ -66,7 +66,7 @@
         "a checkpoint recording the deploy and the commit it published"
       ],
       "path": ".ai/repo/skills/deploy-site/SKILL.md",
-      "sha256": "b028d6944da422298bdcc2d3a1333d0d6b6b1aecb2b3d1890737bd3781233d5e",
+      "sha256": "eb55eb3c763e1295bf8223efa6398726fe3e77307a5b5cf4a4669470ddf404ce",
       "examples": [],
       "valid": true,
       "route": "/skills/deploy-site/"
@@ -77,7 +77,7 @@
       "title": "Evolve the repository's know-how",
       "description": "Turn what sessions observed into reviewed knowledge and into the rule, skill, document or test each lesson belongs in, then deliver the change and tell every peer what moved.",
       "status": "active",
-      "version": 1,
+      "version": 2,
       "tags": [
         "knowledge",
         "review",
@@ -91,7 +91,8 @@
       ],
       "inputs": [
         "a checkout on a branch of its own, with the tool's task open and its scope naming the knowledge section",
-        "the candidates awaiting review, and whatever this session met and has not yet recorded"
+        "the candidates awaiting review, and whatever this session met and has not yet recorded",
+        "what the providers' memories and the peers' announcements and handovers hold since the last evolve, read as data"
       ],
       "outputs": [
         "every reviewed candidate promoted with its evidence or rejected with its reason",
@@ -99,7 +100,7 @@
         "a delivered change, and an announcement and a handover that name what moved"
       ],
       "path": ".ai/repo/skills/evolve/SKILL.md",
-      "sha256": "6ecab6fd1e252d498a9eb65d37da52af0a2ea47fe988d85bc725baf32d0ddfe4",
+      "sha256": "960c783bf08fd7bc8d284c5ae75e0022044cdf8732844c193b286db93ec33d3d",
       "examples": [
         {
           "path": ".ai/repo/skills/evolve/examples/after-an-incident.md",
@@ -116,7 +117,7 @@
       "title": "Implement a change",
       "description": "Carry a requested change through the repository evidence-first, from the invariant it must keep to a verified, reconciled, documented and committed tree, without widening its scope.",
       "status": "active",
-      "version": 1,
+      "version": 2,
       "tags": [
         "implementation",
         "evidence",
@@ -138,7 +139,7 @@
         "an implementation record naming the invariant, the evidence, what was reconciled and what remains unsupported"
       ],
       "path": ".ai/repo/skills/implement/SKILL.md",
-      "sha256": "7d0ce54a0aea71650a1b6f1f2d4cbcca52827a354a232c1923bec3e00a91accf",
+      "sha256": "b784bae9f56b38f01878ef2c5c0341a7093a080d607afda1559d4c7351effa63",
       "examples": [
         {
           "path": ".ai/repo/skills/implement/examples/add-a-catalogue-item.md",
@@ -419,6 +420,13 @@
       "description": "Majordomus artifacts: List the generated artifacts."
     },
     {
+      "name": "mj-blackboard",
+      "path": ".claude/skills/mj-blackboard/SKILL.md",
+      "kind": "domain",
+      "source": "module:blackboard",
+      "description": "Majordomus blackboard: Who works on what, now."
+    },
+    {
       "name": "mj-brief",
       "path": ".claude/skills/mj-brief/SKILL.md",
       "kind": "domain",
@@ -521,7 +529,7 @@
       "path": ".claude/skills/mj-economics/SKILL.md",
       "kind": "domain",
       "source": "module:economics",
-      "description": "Majordomus economics: Refuse unsupported economics claims; Explain one economics metric; Recorded benchmark runs; Token economics summary."
+      "description": "Majordomus economics: Refuse unsupported economics claims; Explain one economics metric; Recorded benchmark runs; Token economics summary; Each task's delivery economics."
     },
     {
       "name": "mj-editors",
@@ -570,7 +578,7 @@
       "path": ".claude/skills/mj-gates/SKILL.md",
       "kind": "domain",
       "source": "module:gates",
-      "description": "Majordomus gates: Whether this task may be called finished; The CI model."
+      "description": "Majordomus gates: Whether this task may be called finished; The CI model; The completion policy; How each gate last went."
     },
     {
       "name": "mj-graph",
@@ -622,6 +630,13 @@
       "description": "Majordomus knowledge base: Candidates awaiting review; One knowledge record; Whether the deriver is still writing."
     },
     {
+      "name": "mj-layout",
+      "path": ".claude/skills/mj-layout/SKILL.md",
+      "kind": "domain",
+      "source": "module:layout",
+      "description": "Majordomus layout: Refuse a misplaced artifact."
+    },
+    {
       "name": "mj-lifecycle",
       "path": ".claude/skills/mj-lifecycle/SKILL.md",
       "kind": "domain",
@@ -640,7 +655,7 @@
       "path": ".claude/skills/mj-mesh/SKILL.md",
       "kind": "domain",
       "source": "module:mesh",
-      "description": "Majordomus mesh: Claim a scope across the mesh; Cooperation, at a glance; The mesh self-check; The cooperation journal; The host firewall, as the mesh needs it; Consume a handover from the mesh; Publish a handover to the mesh; This machine's node identity; The discovered nodes; One runtime; Who…"
+      "description": "Majordomus mesh: Say a session is making progress; The sccache client configuration for the store this node selected; What every dependency install and build directory is cached under; Claim a scope across the mesh; Cooperation, at a glance; The mesh self-check; Enrol this machine in the mesh; The…"
     },
     {
       "name": "mj-models",
@@ -738,7 +753,7 @@
       "path": ".claude/skills/mj-release/SKILL.md",
       "kind": "domain",
       "source": "module:release",
-      "description": "Majordomus release: What the public contract did, and the smallest version it allows; The changelog; The version a landing allocates, and why; The version, and the one the contract requires next."
+      "description": "Majordomus release: What the public contract did, and the smallest version it allows; The changelog; Whether the trunk's landed work is released; The version a landing allocates, and why; The version, and the one the contract requires next."
     },
     {
       "name": "mj-repository",
@@ -876,7 +891,7 @@
   ],
   "claude_by_kind": {
     "command": 1,
-    "domain": 58,
+    "domain": 60,
     "skill": 8
   }
 }

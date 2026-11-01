@@ -14,6 +14,7 @@ every run writes its own summary.
 ```mermaid
 flowchart LR
   plan["plan"] --> structure["structure<br>(always)"]
+  plan --> structureb["structure-b<br>github-projection,<br>worktree-topology"]
   plan --> shards["suite-shard ×4<br>the suite, dealt by duration"]
   shards --> suite["suite<br>every case exactly once,<br>budget, one verdict"]
   plan --> rust["rust"]
@@ -26,7 +27,7 @@ flowchart LR
   ishards --> interactions["interactions<br>every page exactly once"]
   plan --> ui["ui"]
   plan --> macos["macos"]
-  structure & suite & rust & coverage & bench & site & probe & interactions & ui & macos --> ci["ci<br>the verdict; the one<br>required status"]
+  structure & structureb & suite & rust & coverage & bench & site & probe & interactions & ui & macos --> ci["ci<br>the verdict; the one<br>required status"]
 ```
 
 and beside it, on the same commit, never after it:
@@ -38,8 +39,12 @@ flowchart LR
 
 `plan` reads the model and decides. `structure` runs the cheap, deterministic gates every
 plan has (`scripts/ci/shell-lint`, `scripts/ci/core-check`) and the structural gates the
-change needs. The other jobs run when the plan selected a gate they carry, in parallel, each
-through the script a person runs. `ci` always runs and turns the plan and the jobs' results
+change needs. `structure-b` runs, beside it, the two structure gates that need not share its
+55-minute bound: `github-projection`, which waits on GitHub's API, and `worktree-topology`
+(I4381). With them in one job a full plan summed p50 2720 / p90 3256 s of gates, and run
+40813274272 was killed at the bound with all 59 green, so no receipt reached the verdict. The
+other jobs run when the plan selected a gate they carry, in parallel, each through the script
+a person runs. `ci` always runs and turns the plan and the jobs' results
 into one verdict.
 
 A job does not list its gates. `scripts/ci/run-plan --plan plan.json --job <job>` reads the plan and runs every
@@ -68,6 +73,22 @@ refuses to run without `MAJORDOMUS_BIN`. Its model is `.ai/repo/ci/github.yaml`,
 `test/cases/1097_the_projection_is_applied_at_landing.sh` holds the workflow to the model and
 runs its steps against a scripted adapter. The gate in validate stays what it was: it bounds
 how late the trunk may be when that workflow fails, and names the manual apply as the remedy.
+
+A fourth keeps each pull request's metadata current. `.github/workflows/pr-meta.yml` runs on
+every `pull_request_target` event that can change what a pull request serves or carries
+(opened, edited, synchronize, labeled) and applies `scripts/github-sync --prs --pr <number>`
+to that one pull request, and once a day (or on a dispatch) to every open one. What it
+writes: the type, priority, `train` and `records` labels, the milestone, the author as
+assignee when nobody is, and the `Refs #<n>` region of the body (`docs/PLANNING.md`, "Pull
+requests"). Its token's writes start no other workflow, so the labels it adds start no
+validate run. It checks out the default branch and never the head, whose commits and records
+it reads with git as data, so `pull_request_target`'s writing token never runs a head's
+code; it holds `pull-requests: write`, `issues: read` and `contents: read`, runs one at a
+time per pull request (and one sweep at a time) and is never cancelled. It is the one run a
+pull request may start (`project.the-projection-is-applied-at-landing@2`). Its model is
+`.ai/repo/ci/pr-meta.yaml`; `test/cases/1097_the_projection_is_applied_at_landing.sh` holds
+it to the rule and `test/cases/3970_a_pull_request_carries_its_metadata.sh` to its model,
+and drives the adapter against a scripted forge.
 
 ## The model: what can affect what
 
@@ -369,6 +390,14 @@ and a dispatch are never cancelled this way: the trunk's remaining jobs are the 
 its other lanes. Read a failed job's log through the jobs API (`gh run view --job <id> --log`)
 rather than waiting for the run. Case 3019 holds every job to it (I2664).
 
+A cancel GitHub accepted is a request, not an end. On 2026-10-19 a cancelled run's `suite` job
+went on running and held its slot in the pool; only
+`gh api -X POST repos/<owner>/<repo>/actions/runs/<id>/force-cancel` freed it. So after a cancel,
+read the run again (`gh run view <id> --json status,jobs`): one that has not completed a minute
+later, a job of it still `in_progress`, is force-cancelled. `scripts/ci/release-path preempt`
+does this by itself for the runs it cancels, after the model's `cancel_wait_seconds`; case 3027
+holds it.
+
 The release path goes first (I2710). Every workflow of this repository draws on one pool of
 job slots, first come, first served, and on 2026-10-14 v0.26.0 was published while its record's
 verdict and the Pages deploy that publishes it sat queued behind two pull requests' validates
@@ -384,7 +413,7 @@ release's token dispatched. While any of them is queued or running:
   to, and cancels itself;
 - a tag push preempts: `.github/workflows/release-path.yml` starts on the same push as the
   release and cancels every pull-request validate already queued or running, labelling and
-  telling each the same way;
+  telling each the same way, and force-cancels any of them that still runs after the wait;
 - once the path is clear, `scripts/ci/release-path resume` re-runs the newest validate run of
   each labelled pull request's head when that run is the cancelled one, and removes the label.
   It is asked at the end of every validate run that is not a pull request's (the record's
@@ -558,6 +587,23 @@ back through the GitHub API and writes `.ai/repo/ci/baseline.json`: per run, per
 per step, with the commit, the runner, the event and whether the caches hit, so a later
 regression has a table to be compared with. The budgets are those measurements; a budget
 written here would be stale the day after.
+
+## Telemetry
+
+When the repository configures an OTLP endpoint, `.github/workflows/telemetry.yml` exports every
+completed `validate` run as one OpenTelemetry trace: a span per job and per step, with its
+queued time, its run time and its conclusion (service name `majordomus-ci`). It exists because
+queueing across overlapping runs cost up to 774 summed job-minutes on master run 39784979979
+and nothing measured it continuously.
+
+The owner sets two repository secrets: `OTEL_EXPORTER_OTLP_ENDPOINT` (the OTLP/HTTP base URL)
+and `OTEL_EXPORTER_OTLP_HEADERS` (the authentication headers, for example `Authorization=Bearer
+...`). Without the endpoint nothing is sent: the workflow notices, skips the export and
+succeeds. The export step is `continue-on-error`, so a backend outage changes no verdict.
+
+To view the traces, point any OTLP backend at the endpoint (Grafana Tempo, Honeycomb, Jaeger)
+and search for service `majordomus-ci`. The action is pinned by commit SHA
+(dash0hq/otel-cicd-action v4.2.0).
 
 ## The critical path, measured on 2026-10-10
 

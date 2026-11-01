@@ -49,8 +49,9 @@ mj_decision_add() {
   # the store is checkout-local and absent on a fresh clone; the first decision seeds it
   [ -f "$file" ] || { mkdir -p "$MJ_STATE_DIR"; cp "$MJ_SKELETON_DIR/templates/decisions.md" "$file"; }
 
-  local task_id=none
-  mj_load_current && task_id="$(mj_cur id)"
+  mj_record_attribution
+  local task_id="${MJ_RECORD_TASK:-none}" fields=""
+  [ -z "$MJ_RECORD_TASK" ] || fields="\"task_id\":\"$MJ_RECORD_TASK\","
 
   # A supersession names one decision, by its title. The text used to be searched for
   # anywhere in the file, so a field label (`--supersedes Why`) or a word of some rationale
@@ -70,7 +71,7 @@ mj_decision_add() {
 
   printf '\n## %s — %s\nTask: %s\nHead: %s\nWhy: %s\nRejected: %s\nEvidence: %s\nSupersedes: %s\n' \
     "$(date -u +%Y-%m-%d)" "$title" "$task_id" "$(mj_git_head)" "$why" "$rejected" "$evidence" "$supersedes" >> "$file"
-  mj_ledger_append decision.recorded "\"task_id\":\"$task_id\",\"decision\":\"$(mj_json_esc "$title")\""
+  mj_ledger_append decision.recorded "${fields}\"decision\":\"$(mj_json_esc "$title")\"" "$MJ_RECORD_SESSION"
   printf 'recorded: %s\n' "$title"
 }
 

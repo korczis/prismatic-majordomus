@@ -219,14 +219,29 @@ pub fn input_commit(worktree: &Path) -> Result<String, Refusal> {
 /// Prepare the host's worktree from the uploaded bundle, or — when the input is already in
 /// the base, so there was nothing to bundle — from the commit itself, which the host has
 /// once it has fetched origin. Arguments: checkout, worktrees directory, spool, tag, input.
+///
+/// This runs before the queue's lock is taken, and every offload to the host fetches into
+/// the same checkout: two arriving together race on git's ref locks, and git refuses the
+/// loser ("cannot lock ref", "Another git process seems to be running"), which failed a
+/// whole derive on 2026-10-29 (I4375). A fetch is therefore asked again, bounded:
+/// `MJ_OFFLOAD_FETCH_TRIES` attempts (default 5), `MJ_OFFLOAD_FETCH_BACKOFF` seconds times
+/// the attempt between them (default 3), and the last refusal is what the caller reports.
 const PREPARE: &str = r#"set -e
 c=$1; w=$2; spool=$3; tag=$4; input=$5
 case $c in /*) ;; *) c=$HOME/$c ;; esac
 case $w in /*) ;; *) w=$HOME/$w ;; esac
+fetch() {
+  n=1
+  until git fetch -q "$@"; do
+    [ "$n" -lt "${MJ_OFFLOAD_FETCH_TRIES:-5}" ] || return 1
+    sleep $(( n * ${MJ_OFFLOAD_FETCH_BACKOFF:-3} ))
+    n=$((n + 1))
+  done
+}
 cd "$c"
-git fetch -q origin
+fetch origin
 if [ -f "$spool/offload-$tag.bundle" ]; then
-  git fetch -q "$spool/offload-$tag.bundle" "refs/offload/in-$tag:refs/offload/$tag"
+  fetch "$spool/offload-$tag.bundle" "refs/offload/in-$tag:refs/offload/$tag"
 else
   git update-ref "refs/offload/$tag" "$input"
 fi
@@ -246,9 +261,10 @@ git clean -fdq"#;
 /// directory held 87 GB on lundra and the volume reached 0 bytes. The build directory is
 /// pinned to the run directory too. Arguments: lock, worktrees
 /// directory, tag, shared build directory, derive command, spool, PATH prefix
-/// (colon-separated), then the files to touch. Prints `target <dir>`, then `nothing` or
+/// (colon-separated), the commit the derived files may observe (exported to the derive as
+/// `MJ_DERIVE_OBSERVE`; empty leaves it unset), then the files to touch. Prints `target <dir>`, then `nothing` or
 /// `derived <sha>`; exit 10 when the derive fails, 13 when the lock is not there.
-const DERIVE: &str = r#"l=$1; w=$2; tag=$3; shared=$4; derive=$5; spool=$6; prefix=$7; shift 7
+const DERIVE: &str = r#"l=$1; w=$2; tag=$3; shared=$4; derive=$5; spool=$6; prefix=$7; observe=$8; shift 8
 [ -d "$l" ] || { echo "the lock $l is not held" >&2; exit 13; }
 echo "pid $$"
 : > "$l/$$"
@@ -267,6 +283,7 @@ trap 'rm -rf "$private"; exit 130' INT
 trap 'rm -rf "$private"; exit 143' TERM
 export CARGO_TARGET_DIR="$private"
 export CARGO_BUILD_BUILD_DIR="$private"
+[ -n "$observe" ] && { MJ_DERIVE_OBSERVE=$observe; export MJ_DERIVE_OBSERVE; }
 echo "target $private"
 for f in "$@"; do [ -e "$f" ] && touch "$f"; done
 if ! env -u MAJORDOMUS_SHARE -u MAJORDOMUS_BIN "$derive" > "$log" 2>&1; then
@@ -385,6 +402,22 @@ pub fn offload(
     let top = git(&worktree, &["rev-parse", "--show-toplevel"])?;
     let worktree = PathBuf::from(top.trim());
 
+    // The commit the derived files may observe: the worktree's HEAD, never the input. The
+    // input of a dirty tree is a `git stash create` snapshot and that of a merge in progress
+    // a `commit-tree` commit; neither reaches origin, so a derived file that named one
+    // (delivery.json's observed.commit) could not be checked anywhere else, and CI's
+    // `generate-site-data --check` called it stale (#1759, I3836). Read before the input, so
+    // a branch with no commit yet is refused here, by what it lacks, before anything is
+    // snapshot.
+    let observe = git(&worktree, &["rev-parse", "--verify", "HEAD"])
+        .map_err(|_| {
+            refuse(
+                EXIT_PRECONDITION,
+                "the worktree's branch has no commit yet: a derive observes HEAD, so commit first",
+            )
+        })?
+        .trim()
+        .to_string();
     let input = input_commit(&worktree)?;
     let (host, probe_reports) = pick_host(d, request.host.as_deref(), log)?;
     let remote = remote_of(&host);
@@ -491,6 +524,7 @@ pub fn offload(
         &d.remote.derive,
         spool,
         &prefix,
+        &observe,
     ];
     args.extend(d.remote.touch.iter().map(String::as_str));
     let out = remote
@@ -825,6 +859,7 @@ mod tests {
                 derive.to_str().unwrap(),
                 spool.to_str().unwrap(),
                 "",
+                "",
             ];
             let out = std::process::Command::new("sh")
                 .arg("-c")
@@ -856,6 +891,80 @@ mod tests {
                 assert_eq!(code, Some(0), "{out:?}");
             } else {
                 assert_eq!(code, Some(i32::from(EXIT_DERIVE_FAILED)), "{out:?}");
+            }
+        }
+    }
+
+    /// The host's prepare, run here as a host runs it, against a `git` whose fetch is refused
+    /// the way a concurrent offload's ref lock refuses it: a fetch that loses the race is
+    /// asked again and the worktree is prepared; one that never wins fails the prepare after
+    /// its declared tries, with git's refusal on stderr for the caller to report (I4375).
+    #[test]
+    fn a_fetch_that_loses_a_ref_lock_race_is_asked_again_and_bounded() {
+        use std::os::unix::fs::PermissionsExt;
+        for (refusals, tries, prepared) in [(2, 5, true), (9, 3, false)] {
+            let root = tempfile::tempdir().expect("a temporary directory");
+            let at = |p: &str| root.path().join(p);
+            let (checkout, worktrees, spool, bin) = (at("c"), at("wt"), at("spool"), at("bin"));
+            for dir in [&checkout, &worktrees.join("offload-t"), &spool, &bin] {
+                std::fs::create_dir_all(dir).unwrap();
+            }
+            let count = at("fetches");
+            // every git subcommand succeeds but fetch, which is refused until it has been
+            // asked more than `refusals` times
+            std::fs::write(
+                bin.join("git"),
+                format!(
+                    "#!/bin/sh\n[ \"$1\" = fetch ] || exit 0\n\
+                     n=$(( $(cat {count} 2>/dev/null || echo 0) + 1 )); echo $n > {count}\n\
+                     [ $n -gt {refusals} ] && exit 0\n\
+                     echo \"error: cannot lock ref 'refs/remotes/origin/x': is at a but expected b\" >&2\n\
+                     exit 1\n",
+                    count = count.display()
+                ),
+            )
+            .unwrap();
+            std::fs::set_permissions(bin.join("git"), std::fs::Permissions::from_mode(0o755))
+                .unwrap();
+            let path = format!(
+                "{}:{}",
+                bin.display(),
+                std::env::var("PATH").unwrap_or_default()
+            );
+            let out = std::process::Command::new("sh")
+                .arg("-c")
+                .arg(PREPARE)
+                .arg("sh")
+                .args([
+                    checkout.to_str().unwrap(),
+                    worktrees.to_str().unwrap(),
+                    spool.to_str().unwrap(),
+                    "t",
+                    "HEAD",
+                ])
+                .env("PATH", path)
+                .env("MJ_OFFLOAD_FETCH_TRIES", tries.to_string())
+                .env("MJ_OFFLOAD_FETCH_BACKOFF", "0")
+                .output()
+                .expect("sh runs");
+            let asked: u32 = std::fs::read_to_string(&count)
+                .unwrap()
+                .trim()
+                .parse()
+                .unwrap();
+            if prepared {
+                assert!(out.status.success(), "a lost race is asked again: {out:?}");
+                assert_eq!(asked, refusals + 1, "asked until it won, and no more");
+            } else {
+                assert!(
+                    !out.status.success(),
+                    "a fetch that never wins fails: {out:?}"
+                );
+                assert_eq!(asked, tries, "asked exactly its declared tries");
+                assert!(
+                    String::from_utf8_lossy(&out.stderr).contains("cannot lock ref"),
+                    "git's refusal reaches the caller: {out:?}"
+                );
             }
         }
     }

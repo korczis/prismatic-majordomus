@@ -6,6 +6,9 @@
 #                                          with who holds each, and what could not be reached
 #   scripts/case-numbers collisions        every identity that more than one distinct file has
 #                                          ever carried, and where each of those files is now
+#   scripts/case-numbers block A-B         before a seat announces a block of identities: refuse
+#                                          it when an announced block or any surveyed identity
+#                                          falls inside it, naming the holder of each
 #   scripts/case-numbers check [--strict]  the gate: refuse a file in this tree that shares its
 #                                          identity with another and is not on the baseline
 #   scripts/case-numbers list              every identity in this tree held by more than one file
@@ -17,7 +20,8 @@
 #   MJ_CASE_NO_BOARD=1   do not ask the peer board, and say that it was not asked
 #   MJ_CASE_BOARD_FILE=F read the board document from F instead of the server (the case does)
 #
-# Exit: 0 answered · 10 check refused a collision · 12 no test/cases/ here · 2 usage.
+# Exit: 0 answered · 10 check refused a collision, or block an overlap · 12 no test/cases/ here
+# · 2 usage.
 #
 # `bash test/run.sh 96_worktree_topology` runs a case by its identity, `test/cases/96_*` is how
 # a gate selects one, and "case 96" is how every rule, claim and commit message here names one.
@@ -64,24 +68,37 @@ cd "$ROOT"
 CASES="test/cases"
 BASELINE=".ai/repo/ci/case-numbers-baseline.txt"
 TAB="$(printf '\t')"
+EN_DASH="$(printf '\342\200\223')"   # U+2013, which people write between the two ends of a block
 
-usage() { sed -n '2,18p' "$0" | sed 's/^# \{0,1\}//'; }
+usage() { sed -n '2,21p' "$0" | sed 's/^# \{0,1\}//'; }
 
 sub="${1:-}"; [ $# -gt 0 ] && shift
-STRICT=0; JSON=0
+STRICT=0; JSON=0; RANGE=""
 while [ $# -gt 0 ]; do
   case "$1" in
+    [0-9]*) [ "$sub" = block ] && [ -z "$RANGE" ] || { echo "case-numbers: unexpected argument $1" >&2; exit 2; }
+            RANGE="$1"; shift ;;
     --strict) [ "$sub" = check ] || { echo "case-numbers: --strict belongs to check" >&2; exit 2; }; STRICT=1; shift ;;
     --json) [ "$sub" = next ] || { echo "case-numbers: --json belongs to next" >&2; exit 2; }; JSON=1; shift ;;
     *) echo "case-numbers: unknown option $1" >&2; exit 2 ;;
   esac
 done
 case "$sub" in
-  next|collisions|check|list|write-baseline) ;;
+  next|collisions|check|list|write-baseline|block) ;;
   -h|--help|help) usage; exit 0 ;;
   '') usage >&2; exit 2 ;;
-  *) echo "case-numbers: unknown subcommand $sub (next, collisions, check, list, write-baseline)" >&2; exit 2 ;;
+  *) echo "case-numbers: unknown subcommand $sub (next, collisions, check, list, write-baseline, block)" >&2; exit 2 ;;
 esac
+# A block is two identities and a hyphen (an en dash is read as one), low first.
+if [ "$sub" = block ]; then
+  B_LO="$(printf '%s' "$RANGE" | LC_ALL=C sed "s/$EN_DASH/-/" | sed -n 's/^\([0-9][0-9]*\)-\([0-9][0-9]*\)$/\1/p')"
+  B_HI="$(printf '%s' "$RANGE" | LC_ALL=C sed "s/$EN_DASH/-/" | sed -n 's/^\([0-9][0-9]*\)-\([0-9][0-9]*\)$/\2/p')"
+  if [ -z "$B_LO" ] || [ -z "$B_HI" ] || [ $((10#$B_LO)) -gt $((10#$B_HI)) ]; then
+    echo "case-numbers: block needs a range of identities, low first: scripts/case-numbers block 3600-3649" >&2
+    exit 2
+  fi
+  B_LO=$((10#$B_LO)); B_HI=$((10#$B_HI))
+fi
 
 [ -d "$CASES" ] || { echo "case-numbers: no $CASES/ in $ROOT" >&2; exit 12; }
 
@@ -256,6 +273,13 @@ fi
 # Every token of what a peer announced — its scope paths and its intent — with punctuation
 # turned into space, so `case 291`, `case-291` and `test/cases/291_x.sh` all read as the word
 # `case` or `cases` followed by the identity.
+#
+# A seat takes its numbers as a block and announces the block: `cases 3500-3599`, `case block
+# 3500–3599`. Read as single identities, that announcement was the one number 3500, so a second
+# seat's 3501-3549 was announced inside it and only a person reading both noticed. A block is
+# kept whole, in $WORK/blocks as <low> TAB <high> TAB <holder>: `next` allocates above it and
+# counts nothing inside it as a hole, and `block` refuses a proposed block that meets it.
+: > "$WORK/blocks"
 BOARD="unasked"
 if [ "${MJ_CASE_NO_BOARD:-0}" = 1 ]; then
   BOARD="unasked"
@@ -288,11 +312,24 @@ if [ "$BOARD" = read ]; then
       "$WORK/board" > "$WORK/board.rows" 2>/dev/null || : > "$WORK/board.rows"
     while IFS="$TAB" read -r pid name text; do
       [ -n "$pid" ] || continue
-      printf '%s\n' "$text" | tr 'A-Z' 'a-z' | sed 's/[^a-z0-9]\{1,\}/ /g' \
-        | awk '{ for (i = 1; i < NF; i++) if (($i == "case" || $i == "cases") && $(i+1) ~ /^[0-9]+[a-z]?$/) print $(i+1) }' \
+      # an en dash becomes a hyphen, a hyphen between two digits becomes `~` so that the range
+      # survives the punctuation that is turned into space; `block` or `numbers` after the word
+      # `case` is skipped
+      printf '%s\n' "$text" | LC_ALL=C tr 'A-Z' 'a-z' | LC_ALL=C sed "s/$EN_DASH/-/g" \
+        | LC_ALL=C sed -e 's/\([0-9]\) *- *\([0-9]\)/\1~\2/g' -e 's/[^a-z0-9~]\{1,\}/ /g' \
+        | awk -v OFS="$TAB" -v who="$pid ($name)" -v blocks="$WORK/blocks" '{
+            for (i = 1; i < NF; i++) {
+              if ($i != "case" && $i != "cases") continue
+              j = i + 1
+              if ($j == "block" || $j == "blocks" || $j == "number" || $j == "numbers") j++
+              if ($j ~ /^[0-9]+~[0-9]+$/) {
+                split($j, r, "~"); if (r[1] + 0 <= r[2] + 0) print r[1] + 0, r[2] + 0, who >> blocks
+              } else if ($j ~ /^[0-9]+[a-z]?$/) print $j
+            } }' \
         | LC_ALL=C sort -u \
         | awk -v OFS="$TAB" -v who="$pid ($name)" '{ print $1, "peer", who, "" }' >> "$WORK/claims"
     done < "$WORK/board.rows"
+    LC_ALL=C sort -u -t "$TAB" -k1,1n -k2,2n -k3 "$WORK/blocks" -o "$WORK/blocks"
 fi
 
 # ---------------------------------------------------------------- the base
@@ -314,6 +351,46 @@ if [ -n "$BASE" ]; then
   # the base has since renamed or deleted is not a new allocation, and must not read as one
   git -C "$ROOT" log "$BASE" --no-renames --pretty=format: --name-only --diff-filter=A -- "$CASES/" 2>/dev/null \
     | sed -n "s|^$CASES/||p" | LC_ALL=C sort -u > "$WORK/base.history" || true
+fi
+
+# ================================================================ block
+# A proposed block of identities against everything surveyed: a block another seat announced
+# that meets it, and every identity a tree, a worktree, a ref or a single announcement already
+# holds inside it. Asked before the block is announced, because an announcement is what makes
+# the block visible to the next seat, and two seats that each read only their own reach
+# announced overlapping blocks within the hour.
+if [ "$sub" = block ]; then
+  awk -F"$TAB" -v lo="$B_LO" -v hi="$B_HI" '$1 + 0 <= hi && $2 + 0 >= lo { printf "  block %s-%s  announced on the board %s\n", $1, $2, $3 }' \
+    "$WORK/blocks" > "$WORK/block.over"
+  awk -F"$TAB" -v lo="$B_LO" -v hi="$B_HI" '
+    $1 ~ /^[0-9]+[a-z]?$/ && $1 + 0 >= lo && $1 + 0 <= hi {
+      w = ($4 != "") ? $2 ": " $4 : "board " $3
+      if (!s[$1 FS w]++) held[$1] = held[$1] (held[$1] == "" ? "" : ", ") w; ids[$1] = 1 }
+    END { for (i in ids) printf "%s\t  %-6s %s\n", i + 0, i, held[i] }' "$WORK/claims" \
+    | LC_ALL=C sort -t "$TAB" -k1,1n | cut -f2- > "$WORK/block.ids"
+  n_blocks="$(count_lines < "$WORK/block.over")"; n_ids="$(count_lines < "$WORK/block.ids")"
+  case "$BOARD" in
+    read) board_said="the board was read" ;;
+    unasked) board_said="the board was NOT asked (MJ_CASE_NO_BOARD=1), so no announced block was seen" ;;
+    *) board_said="the board was NOT reachable, so no announced block was seen" ;;
+  esac
+  if [ "$n_blocks" -gt 0 ] || [ "$n_ids" -gt 0 ]; then
+    printf 'REFUSE case block %s-%s meets %s announced block(s) and %s identit(ies) already claimed:\n\n' \
+      "$B_LO" "$B_HI" "$n_blocks" "$n_ids"
+    cat "$WORK/block.over"
+    head -20 "$WORK/block.ids"
+    [ "$n_ids" -le 20 ] || printf '  ... and %s more\n' "$((n_ids - 20))"
+    printf '\n  a block on the board may be your own announcement; any other is another seat'"'"'s, and\n'
+    printf '  overlapping it gives two cases one number. Take a block above the highest claim:\n'
+    printf '    scripts/case-numbers next\n'
+    exit 10
+  fi
+  printf 'ok  case block %s-%s: no announced block meets it and no identity in it is claimed by\n' "$B_LO" "$B_HI"
+  printf '    this tree, a sibling worktree, any ref or a single announcement; %s\n' "$board_said"
+  printf '\nnot surveyed, and not surveyable: a block a seat has decided on and not announced.\n'
+  printf 'announce it now, in these words, so the next survey reads it whole:\n'
+  printf '  majordomus_announce, intent "case block %s-%s"\n' "$B_LO" "$B_HI"
+  exit 0
 fi
 
 # ================================================================ collisions
@@ -367,10 +444,19 @@ fi
 
 # ================================================================ next
 MAX="$(awk -F"$TAB" '{ n = $1 + 0; if (n > m) m = n } END { print m + 0 }' "$WORK/claims")"
-NEXT=$((MAX + 1))
 HOLDER="$(awk -F"$TAB" -v m="$MAX" '($1 + 0) == m + 0 { if ($4 != "") printf "%s: %s", $2, $4; else printf "%s: %s", $2, $3; exit }' "$WORK/claims")"
-# the holes below the high-water mark, as ranges: spent, never free
-HOLES="$(awk -F"$TAB" -v m="$MAX" '{ seen[$1 + 0] = 1 }
+# an announced block reaches its high end: the next identity is above it, held by its seat
+BTOP="$(awk -F"$TAB" '$2 + 0 > m { m = $2 + 0; l = $0 } END { if (l != "") print l }' "$WORK/blocks")"
+if [ -n "$BTOP" ] && [ "$(printf '%s' "$BTOP" | cut -f2)" -gt "$MAX" ]; then
+  MAX="$(printf '%s' "$BTOP" | cut -f2)"
+  HOLDER="peer: block $(printf '%s' "$BTOP" | cut -f1)-$MAX, $(printf '%s' "$BTOP" | cut -f3)"
+fi
+NEXT=$((MAX + 1))
+# the holes below the high-water mark, as ranges: spent, never free; an announced block is
+# claimed whole, so nothing inside one is a hole
+HOLES="$(awk -F"$TAB" -v m="$MAX" -v bf="$WORK/blocks" '
+  BEGIN { while ((getline l < bf) > 0) { split(l, b, "\t"); for (k = b[1] + 0; k <= b[2] + 0; k++) seen[k] = 1 } }
+  { seen[$1 + 0] = 1 }
   END { c = 0; out = ""; i = 0
     while (i < m) { if (!(i in seen)) { j = i; while (j + 1 < m && !((j + 1) in seen)) j++
         c += j - i + 1; out = out (out == "" ? "" : " ") (i == j ? i : i "-" j); i = j + 1 } else i++ }
@@ -447,6 +533,13 @@ if [ "$JSON" = 1 ]; then
     [ "$first" = 1 ] || printf ','; first=0
     printf '{"id":"%s","held_by":"%s"}' "$oid" "$(printf '%s' "$oline" | esc)"
   done < "$WORK/outstanding"
+  printf '],"blocks":['
+  first=1
+  while IFS="$TAB" read -r blo bhi bwho; do
+    [ -n "$blo" ] || continue
+    [ "$first" = 1 ] || printf ','; first=0
+    printf '{"from":%s,"to":%s,"held_by":"%s"}' "$blo" "$bhi" "$(printf '%s' "$bwho" | esc)"
+  done < "$WORK/blocks"
   printf '],"contested_on_base":%s}\n' "$CONTESTED"
   exit 0
 fi
@@ -474,7 +567,10 @@ while IFS="$TAB" read -r src ni nf; do
       fi ;;
     peer)
       case "$BOARD" in
-        read) printf '  %-52s %s identities announced\n' "the peer board of the shared server" "$ni" ;;
+        read) printf '  %-52s %s identities announced' "the peer board of the shared server" "$ni"
+              [ ! -s "$WORK/blocks" ] || printf ', and %s block(s): %s' "$(count_lines < "$WORK/blocks")" \
+                "$(awk -F"$TAB" '{ printf "%s%s-%s", (NR > 1 ? ", " : ""), $1, $2 }' "$WORK/blocks")"
+              printf '\n' ;;
         unasked) printf '  %-52s not asked (MJ_CASE_NO_BOARD=1)\n' "the peer board of the shared server" ;;
         *) printf '  %-52s not reachable: no server answering, or no jq/curl\n' "the peer board of the shared server" ;;
       esac ;;
@@ -512,6 +608,12 @@ else
     printf '\n%s identit(ies) that %s carries are also carried, under a different file, by a ref or\n' "$CONTESTED" "$BASE"
     printf 'worktree that has not landed: each collides the day it lands. scripts/case-numbers collisions\n'
   fi
+fi
+
+if [ -s "$WORK/blocks" ]; then
+  printf '\nblocks announced on the board, claimed whole: a new block must not meet one\n'
+  awk -F"$TAB" '{ printf "  %s-%s  %s\n", $1, $2, $3 }' "$WORK/blocks"
+  printf 'check a block before announcing it: scripts/case-numbers block <low>-<high>\n'
 fi
 
 printf '\nnot surveyed, and not surveyable: an identity a session has taken but neither pushed nor\n'

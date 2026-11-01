@@ -31,6 +31,10 @@ acceptance_criteria:
   - "majordomus workspaces (I1308) reports chatgpt-majordomus as synced with checkpoint age, conversation and message counts and I1305's support level from .ai/local/workspaces/chatgpt-majordomus/"
   - "I1306's resume-and-repeat case runs green against the imported store"
   - "The store records the 2026-10-18 acquisition as made through an unverified local transport, so no record claims an integrity check it did not have"
+  - "A later acquisition is reconciled as a dated delta against the existing source inventory; historical and current coverage counts are not added as though they were disjoint conversations"
+  - "Coverage distinguishes indexed, fetched and readable message bodies; unresolved content references are reported as gaps, never empty messages or proof of full reading"
+  - "No upstream message, parent or branch identifier is invented for a flattened capture; ambiguous positional citations remain unresolved until I3284 can pin them"
+  - "The 297 indexed / 234 stored / 63 not fetched baseline is reconciled explicitly before any summary claims all 297 conversations were read in full"
 validation:
   - "bin/majordomus doctor"
   - "bash test/run.sh 93_workspace_kind"
@@ -38,4 +42,4 @@ validation:
 evidence_required:
   - "case_the_import_is_the_first_sync"
 created_at: 2026-10-18
-updated_at: 2026-10-18
+updated_at: 2026-10-22

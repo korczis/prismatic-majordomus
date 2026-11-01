@@ -596,10 +596,12 @@ impl Skills {
                 }
             }
 
-            // documented
+            // documented — owed only where the repository publishes skill pages (I4256): an
+            // adopter with no site/content/skills/ was warned about a page and a generator
+            // (scripts/generate-site-data) that exist only in this tool's own tree.
             let page = format!("{SKILL_PAGES_DIR}/{id}.md");
             let documented = tracked_set.contains(page.as_str());
-            if active && !documented {
+            if active && !documented && publishes_skill_pages(&tracked_set) {
                 own.push(SkillFinding {
                     level: SkillFindingLevel::Warn,
                     code: "undocumented".into(),
@@ -914,6 +916,22 @@ pub fn marker_ids(line: &str) -> Vec<String> {
         .filter(|w| is_skill_id(w))
         .map(str::to_string)
         .collect()
+}
+
+/// Whether the repository publishes skill pages: any tracked file under [`SKILL_PAGES_DIR`].
+/// The "undocumented" warning is owed only there (I4256).
+///
+/// ```
+/// use std::collections::BTreeSet;
+/// use majordomus_cli::skill::publishes_skill_pages;
+/// let adopter: BTreeSet<&str> = ["src/a.py", "tests/test_a.py"].into_iter().collect();
+/// assert!(!publishes_skill_pages(&adopter));
+/// let home: BTreeSet<&str> = ["site/content/skills/implement.md"].into_iter().collect();
+/// assert!(publishes_skill_pages(&home));
+/// ```
+pub fn publishes_skill_pages(tracked: &BTreeSet<&str>) -> bool {
+    let prefix = format!("{SKILL_PAGES_DIR}/");
+    tracked.iter().any(|p| p.starts_with(&prefix))
 }
 
 /// Every tracked test a runner owns that carries a marker, with the ids it names.

@@ -571,6 +571,15 @@ impl Router {
         if let Some(refusal) = Self::rebound(req) {
             return Some(Err(refusal));
         }
+        // the live channel carries every execution of this process, and those are not the
+        // repository: a caller on another host never follows them (ADR 0220 decision 4, I3842)
+        if req.is_remote() {
+            return Some(Err(Response::error(
+                403,
+                "forbidden",
+                "the live channel answers only a caller on this machine",
+            )));
+        }
         // a process whose topology does not resolve serves nothing, the live channel
         // included: the same answer every other path gets
         let resolution = self.resolution();
@@ -578,6 +587,16 @@ impl Router {
             Ok(resolution) => &resolution.ctx,
             Err(reason) => return Some(Err(Response::error(500, "internal", reason))),
         };
+        // the blackboard on the same channel: a read of `blackboard.snapshot`, followed only
+        // where that capability is served (a remote caller was refused above, I3842)
+        if let Some(follow) = events::accept_follow(ctx, req) {
+            let admitted = ctx.registry.get("blackboard.snapshot").is_some();
+            if !admitted {
+                let e = CapabilityError::remote("blackboard.snapshot");
+                return Some(Err(error_response(403, e.code(), &e.to_string())));
+            }
+            return Some(follow);
+        }
         Some(events::accept(
             ctx.executions.store(),
             req,
@@ -609,6 +628,9 @@ impl Router {
     /// browser sends no `Origin` and is unaffected.
     pub fn handle(&self, req: &Request) -> Response {
         if let Some(refusal) = Self::rebound(req) {
+            return refusal;
+        }
+        if let Some(refusal) = Self::local_only_page(req) {
             return refusal;
         }
         if req.method != "GET" && req.method != "HEAD" {
@@ -896,6 +918,55 @@ impl Router {
             &format!(
                 "a {} from origin '{origin}' is refused: this server accepts a state-changing request from a browser only from its own origin",
                 req.method
+            ),
+        ))
+    }
+
+    /// The pages that draw the mesh's working state — its sessions, claims, handovers, peers
+    /// and live signals — or this process's executions, and so answer a caller on this
+    /// machine only (ADR 0220 decision 4; the executions since I3842).
+    /// The capabilities behind them say the same through `local_only`; a page reads them
+    /// in-process, so the page says it here.
+    pub const LOCAL_ONLY_PAGES: [&'static str; 5] = [
+        crate::ui::mesh::ROUTE,
+        "/cockpit/mesh",
+        "/cockpit/peers",
+        "/cockpit/monitor",
+        "/cockpit/executions",
+    ];
+
+    /// The refusal for a remote caller asking for one of [`Router::LOCAL_ONLY_PAGES`], when
+    /// this is one.
+    ///
+    /// ```
+    /// use majordomus_cli::http::{Request, Router};
+    /// let remote = |path: &str| Request::parse_target("GET", path, vec![])
+    ///     .with_remote(Some("203.0.113.9".parse().unwrap()));
+    /// assert!(Router::local_only_page(&remote("/ui/mesh")).is_some());
+    /// assert!(Router::local_only_page(&remote("/cockpit/monitor/stream")).is_some());
+    /// assert!(Router::local_only_page(&remote("/cockpit/executions/e-1")).is_some());
+    /// assert!(Router::local_only_page(&remote("/ui/meshes")).is_none());
+    /// assert!(Router::local_only_page(&remote("/ui/")).is_none());
+    /// let local = Request::parse_target("GET", "/ui/mesh", vec![])
+    ///     .with_remote(Some("127.0.0.1".parse().unwrap()));
+    /// assert!(Router::local_only_page(&local).is_none());
+    /// ```
+    pub fn local_only_page(req: &Request) -> Option<Response> {
+        if !req.is_remote() {
+            return None;
+        }
+        let page = Self::LOCAL_ONLY_PAGES.iter().find(|p| {
+            req.path == **p
+                || req
+                    .path
+                    .strip_prefix(**p)
+                    .is_some_and(|rest| rest.starts_with('/'))
+        })?;
+        Some(error_response(
+            403,
+            "forbidden",
+            &format!(
+                "{page} shows the mesh's working state, which this server answers to a caller on this machine only (ADR 0220): read the mesh through your own trusted node, whose journal this hub keeps current"
             ),
         ))
     }
@@ -1317,6 +1388,126 @@ mod tests {
         );
     }
 
+    /// The blackboard rides the same upgrade: a page of this server is handed its follower,
+    /// which is served until the client hangs up; a server whose registry does not declare
+    /// the blackboard refuses it to a caller beyond loopback, as it would refuse the read.
+    #[test]
+    fn the_blackboard_is_followed_on_the_live_channel_as_it_is_read() {
+        let repo = crate::synthetic::SyntheticRepository::small().expect("a synthetic repository");
+        let upgrade = |query: &str, host: &str, remote: &str, key: bool| {
+            let mut headers = vec![
+                ("Upgrade".into(), "websocket".into()),
+                ("Connection".into(), "Upgrade".into()),
+                ("Sec-WebSocket-Version".into(), "13".into()),
+                ("Host".into(), host.into()),
+            ];
+            if key {
+                headers.push((
+                    "Sec-WebSocket-Key".into(),
+                    "dGhlIHNhbXBsZSBub25jZQ==".into(),
+                ));
+            }
+            Request::parse_target("GET", &format!("{}?{query}", events::PATH), Vec::new())
+                .with_headers(headers)
+                .with_remote(Some(remote.parse().unwrap()))
+        };
+        let router = Router::new(repo.context().expect("a context"), "test").with_ui(None);
+        let here = |query: &str, key: bool| upgrade(query, "127.0.0.1:8741", "127.0.0.1", key);
+        match router.websocket(&here("follow=blackboard", true)) {
+            Some(Ok(accepted)) => {
+                let socket: Box<dyn std::io::Write + Send> = Box::new(Vec::new());
+                accepted.serve_until(socket, || true);
+            }
+            Some(Err(r)) => panic!("refused: {}", r.body.text()),
+            None => panic!("an upgrade that follows the blackboard was not recognised"),
+        }
+        // a query the channel does not take, and an upgrade that is not a WebSocket one
+        for (query, key) in [
+            ("follow=blackboard&execution=e1", true),
+            ("follow=blackboard", false),
+        ] {
+            match router.websocket(&here(query, key)) {
+                Some(Err(r)) => assert!(r.status >= 400, "{query}: {}", r.body.text()),
+                _ => panic!("{query} (key: {key}) was followed"),
+            }
+        }
+        // a caller beyond loopback may follow what it may read
+        assert!(router
+            .websocket(&upgrade(
+                "follow=blackboard",
+                "192.168.1.20:8741",
+                "192.168.1.5",
+                true
+            ))
+            .is_some());
+
+        let modules = crate::capability::builtin::modules()
+            .into_iter()
+            .filter(|m| m.id.as_str() != "blackboard")
+            .collect();
+        let registry = crate::capability::CapabilityRegistry::builder()
+            .with_modules(modules)
+            .build()
+            .unwrap();
+        let ctx = Context::new(Arc::new(repo.index().unwrap()), Arc::new(registry));
+        let router = Router::new(Arc::new(ctx), "test").with_ui(None);
+        match router.websocket(&upgrade(
+            "follow=blackboard",
+            "192.168.1.20:8741",
+            "192.168.1.5",
+            true,
+        )) {
+            Some(Err(r)) => assert_eq!(r.status, 403, "{}", r.body.text()),
+            Some(Ok(_)) => panic!("a caller beyond loopback followed what it may not read"),
+            None => panic!("an upgrade that follows the blackboard was not recognised"),
+        }
+    }
+
+    /// A server whose registry does not declare the blackboard has nothing to follow: even
+    /// a page of its own, on loopback, is refused it and told which read is missing.
+    #[test]
+    fn a_registry_without_the_blackboard_refuses_to_follow_it_on_loopback() {
+        let repo = crate::synthetic::SyntheticRepository::small().expect("a synthetic repository");
+        let modules = crate::capability::builtin::modules()
+            .into_iter()
+            .filter(|m| m.id.as_str() != "blackboard")
+            .collect();
+        let registry = crate::capability::CapabilityRegistry::builder()
+            .with_modules(modules)
+            .build()
+            .unwrap();
+        let ctx = Context::new(Arc::new(repo.index().unwrap()), Arc::new(registry));
+        let router = Router::new(Arc::new(ctx), "test").with_ui(None);
+        let upgrade = Request::parse_target(
+            "GET",
+            &format!("{}?follow=blackboard", events::PATH),
+            Vec::new(),
+        )
+        .with_headers(vec![
+            ("Upgrade".into(), "websocket".into()),
+            ("Connection".into(), "Upgrade".into()),
+            ("Sec-WebSocket-Version".into(), "13".into()),
+            ("Host".into(), "127.0.0.1:8741".into()),
+            (
+                "Sec-WebSocket-Key".into(),
+                "dGhlIHNhbXBsZSBub25jZQ==".into(),
+            ),
+        ])
+        .with_remote(Some("127.0.0.1".parse().unwrap()));
+        match router.websocket(&upgrade) {
+            Some(Err(r)) => {
+                assert_eq!(r.status, 403, "{}", r.body.text());
+                assert!(
+                    r.body.text().contains("blackboard.snapshot"),
+                    "{}",
+                    r.body.text()
+                );
+            }
+            Some(Ok(_)) => panic!("a blackboard nobody declared was followed"),
+            None => panic!("an upgrade that follows the blackboard was not recognised"),
+        }
+    }
+
     #[test]
     fn only_an_address_or_localhost_is_a_host_no_rebinding_domain_can_name() {
         for host in [
@@ -1465,5 +1656,138 @@ mod tests {
         );
         assert_eq!(percent_decode("a+b%41%"), "a bA%");
         assert_eq!(Request::parse_target("GET", "/", vec![]).query, vec![]);
+    }
+
+    /// I3842: the live channel carries every execution of this process, so its upgrade is
+    /// refused to a caller on another host and still opens for this machine.
+    #[test]
+    fn the_live_channel_never_opens_for_a_remote_caller() {
+        let repo = crate::synthetic::SyntheticRepository::new(crate::synthetic::Shape::default())
+            .expect("a synthetic repository");
+        let router = Router::new(repo.context().expect("a context"), "test").with_ui(None);
+        let upgrade = |from: &str| {
+            let mut req = Request::parse_target("GET", super::events::PATH, Vec::new())
+                .with_remote(Some(from.parse().unwrap()));
+            req.headers = vec![
+                ("host".into(), "127.0.0.1:8741".into()),
+                ("connection".into(), "Upgrade".into()),
+                ("upgrade".into(), "websocket".into()),
+                ("sec-websocket-version".into(), "13".into()),
+                (
+                    "sec-websocket-key".into(),
+                    "dGhlIHNhbXBsZSBub25jZQ==".into(),
+                ),
+            ];
+            req
+        };
+        match router.websocket(&upgrade("203.0.113.9")) {
+            Some(Err(r)) => assert_eq!(r.status, 403, "{}", r.body.text()),
+            Some(Ok(_)) => panic!("a remote caller opened the live channel"),
+            None => panic!("the upgrade was not recognised as one"),
+        }
+        assert!(
+            matches!(router.websocket(&upgrade("127.0.0.1")), Some(Ok(_))),
+            "this machine still opens the live channel"
+        );
+    }
+
+    /// ADR 0220 decision 4: a caller on another host reads the repository and liveness, and
+    /// none of the mesh's working state — not through its capabilities, not through its pages.
+    #[test]
+    fn a_remote_caller_reads_the_repository_and_never_the_mesh() {
+        let repo = crate::synthetic::SyntheticRepository::new(crate::synthetic::Shape::default())
+            .expect("a synthetic repository");
+        let ctx = repo.context().expect("a context");
+        let route = |id: &str| {
+            ctx.registry
+                .get(id)
+                .and_then(|c| c.exposure.http.as_ref())
+                .map(|h| h.path.clone())
+                .unwrap_or_else(|| panic!("{id} has an HTTP route"))
+        };
+        let executions = route("executions.list");
+        let (state, peers, live) = (
+            route("mesh.state"),
+            route("peers.list"),
+            route("health.live"),
+        );
+        let router = Router::new(ctx, "test").with_ui(None);
+        let ask = |path: &str, from: &str| {
+            router.handle(
+                &Request::parse_target("GET", path, Vec::new())
+                    .with_remote(Some(from.parse().unwrap())),
+            )
+        };
+        for path in [
+            state.as_str(),
+            peers.as_str(),
+            executions.as_str(),
+            "/ui/mesh",
+            "/cockpit/peers",
+            "/cockpit/executions",
+        ] {
+            let r = ask(path, "203.0.113.9");
+            assert_eq!(
+                r.status,
+                403,
+                "{path} answered a remote caller: {}",
+                r.body.text()
+            );
+        }
+        assert_eq!(
+            ask(&live, "203.0.113.9").status,
+            200,
+            "liveness answers anyone"
+        );
+        let local = ask(&state, "127.0.0.1");
+        assert_ne!(
+            local.status,
+            403,
+            "this machine reads the mesh: {}",
+            local.body.text()
+        );
+        let current = router.live.current();
+        let local_only: Vec<&str> = current
+            .registry
+            .iter()
+            .filter(|c| c.execution.local_only)
+            .map(|c| c.id.as_str())
+            .collect();
+        for id in [
+            "mesh.state",
+            "mesh.peers",
+            "mesh.events",
+            "mesh.nodes",
+            "peers.list",
+            "monitor.stream",
+            "executions.list",
+            "executions.get",
+            "executions.events",
+            "executions.demonstrate",
+        ] {
+            assert!(
+                local_only.contains(&id),
+                "{id} is not local-only: {local_only:?}"
+            );
+        }
+        assert!(
+            !local_only.contains(&"mesh.identity"),
+            "a public key is meant to be read"
+        );
+    }
+
+    /// A local-only page is refused to a remote caller below its route as well, a route that
+    /// only begins with its name is not one of its pages, and a caller on this machine is
+    /// answered.
+    #[test]
+    fn a_local_only_page_covers_what_is_below_it_and_nothing_beside_it() {
+        let from = |path: &str, address: &str| {
+            crate::http::Request::parse_target("GET", path, vec![])
+                .with_remote(Some(address.parse().unwrap()))
+        };
+        assert!(Router::local_only_page(&from("/cockpit/executions/e-1", "203.0.113.9")).is_some());
+        assert!(Router::local_only_page(&from("/cockpit/mesh", "203.0.113.9")).is_some());
+        assert!(Router::local_only_page(&from("/cockpit/meshes", "203.0.113.9")).is_none());
+        assert!(Router::local_only_page(&from("/cockpit/mesh/x", "127.0.0.1")).is_none());
     }
 }

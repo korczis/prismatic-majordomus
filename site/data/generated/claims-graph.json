@@ -1097,20 +1097,20 @@
     {
       "id": "claim:mcp-client-autostart",
       "kind": "claim",
-      "label": "An MCP client opened in the repository starts the server itself, building the executable when it must, through the client configurations at the root and bin/majordomus-mcp",
+      "label": "An MCP client opened in the repository starts the server itself, through the client configurations at the root and bin/majordomus-mcp, without ever building the executable",
       "status": "guaranteed",
       "route": "/guarantees/mcp-client-autostart/",
       "external": false,
-      "note": ".mcp.json (Claude Code), .gemini/settings.json (Gemini CLI) and .codex/config.toml (Codex) name the same launcher, which writes nothing to stdout and passes every argument to majordomus mcp; MAJORDOMUS_BIN, MAJORDOMUS_BUILD_PROFILE and MAJORDOMUS_NO_BUILD control the build."
+      "note": ".mcp.json (Claude Code), .gemini/settings.json (Gemini CLI) and .codex/config.toml (Codex) name the same launcher, which writes nothing to stdout and passes every argument to majordomus mcp; MAJORDOMUS_BIN and MAJORDOMUS_BUILD_PROFILE say which executable runs, and none is built (ADR 0224): `just build` is the build."
     },
     {
       "id": "claim:mcp-client-always-served",
       "kind": "claim",
-      "label": "A client that starts the MCP server from a checkout with no executable to run, or none it can build, is served by the installed release and told so, instead of being turned away",
+      "label": "A client that starts the MCP server from a checkout whose executable is missing or stale is served by the installed release when it is of this tree's generation and told so, and is otherwise refused with exit 12 naming the explicit build; nothing is built",
       "status": "guaranteed",
       "route": "/guarantees/mcp-client-always-served/",
       "external": false,
-      "note": "Only `mcp` falls back; every other command still exits 12. The fallback runs after a build that could succeed was tried, or without one when there is no cargo or less free space than the floor, and it names the release and the reason on stderr. A file inside the repository, and one that does not answer --version, is never taken for the installed release. MAJORDOMUS_MCP_BUILD=1 restores the build for a contributor. The 2026-10-16 session that began as the only worker of a repository (ADR 0156) began here, with exit 12 on 4.5GB free against a 5120MB floor."
+      "note": "The generation is the commit the release's RELEASE.json names, which must carry every crate input of the working tree unchanged (mj_rust_same_generation); a version string is not one (ADR 0224, superseding ADR 0172). Every command of the launcher gets the same answer, not mcp alone. A file inside the repository, and one that does not answer --version, is never taken for the installed release. The 2026-10-16 session that began as the only worker of a repository (ADR 0226) began with exit 12 on 4.5GB free; the 2026-10-22 pre-push that timed out at ninety minutes behind the build lock is why the launcher no longer builds at all."
     },
     {
       "id": "claim:session-start-prompt",
@@ -1484,7 +1484,7 @@
     {
       "id": "claim:provider-capability-evidence",
       "kind": "claim",
-      "label": "What each provider can do about the session lifecycle, prompt capture and driving a browser beside this server is one declaration with a citation per cell, every surface projects it, and no provider the declaration names goes unreported",
+      "label": "What each provider can do about the session lifecycle, prompt capture, driving a browser beside this server and reporting what a session consumed is one declaration with a citation per cell, every surface projects it, and no provider the declaration names goes unreported",
       "status": "guaranteed",
       "route": "/guarantees/provider-capability-evidence/",
       "external": false,
@@ -1700,7 +1700,7 @@
     {
       "id": "claim:deployment-contract-refuses-by-name",
       "kind": "claim",
-      "label": "A deployment object that breaks its closed contract, whether by a key the contract does not have, another schema version, a missing field, an interface, port, machine count or health route that could not work, a value that reads as a credential or an identity two files claim, is refused by doctor with the reason named",
+      "label": "A deployment object that breaks its closed contract, whether by a key the contract does not have, another schema version, a missing field, an interface, port, machine count or health route that could not work, a provider the contract does not know or a provider address that is not https, a value that reads as a credential or an identity two files claim, is refused by doctor with the reason named",
       "status": "guaranteed",
       "route": "/guarantees/deployment-contract-refuses-by-name/",
       "external": false,
@@ -3273,9 +3273,9 @@
       "external": false
     },
     {
-      "id": "source:.ai/repo/rules/vendor/majordomus/rules/deployment-contract.v1.md",
+      "id": "source:.ai/repo/rules/vendor/majordomus/rules/deployment-contract.v2.md",
       "kind": "source",
-      "label": ".ai/repo/rules/vendor/majordomus/rules/deployment-contract.v1.md",
+      "label": ".ai/repo/rules/vendor/majordomus/rules/deployment-contract.v2.md",
       "route": null,
       "external": false
     },
@@ -5555,7 +5555,7 @@
     },
     {
       "source": "claim:deployment-contract-refuses-by-name",
-      "target": "source:.ai/repo/rules/vendor/majordomus/rules/deployment-contract.v1.md",
+      "target": "source:.ai/repo/rules/vendor/majordomus/rules/deployment-contract.v2.md",
       "kind": "specified_by"
     },
     {

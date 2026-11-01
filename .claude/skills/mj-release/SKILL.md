@@ -1,11 +1,11 @@
 ---
 name: mj-release
-description: "Majordomus release: What the public contract did, and the smallest version it allows; The changelog; The version a landing allocates, and why; The version, and the one the contract requires next."
+description: "Majordomus release: What the public contract did, and the smallest version it allows; The changelog; Whether the trunk's landed work is released; The version a landing allocates, and why; The version, and the one the contract requires next."
 argument-hint: "[request]"
 ---
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: module:release; regenerate with `majordomus generate`
-     Generator: majordomus-cli 1.0.0-alpha.5 -->
+     Generator: majordomus-cli 1.0.0-alpha.10 -->
 
 # Majordomus `release`
 
@@ -17,6 +17,7 @@ $ARGUMENTS
 |---|---|---|---|---|
 | `release.analysis` | What the public contract did, and the smallest version it allows | `majordomus_release_analysis` | — | reads |
 | `release.changelog` | The changelog | `majordomus_changelog` | — | reads |
+| `release.currency` | Whether the trunk's landed work is released | `majordomus_release_currency` | — | reads |
 | `release.next` | The version a landing allocates, and why | `majordomus_release_next` | — | reads |
 | `release.version` | The version, and the one the contract requires next | `majordomus_release_version` | — | reads |
 

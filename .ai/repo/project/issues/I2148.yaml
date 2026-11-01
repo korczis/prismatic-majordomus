@@ -1,0 +1,45 @@
+id: I2148
+milestone: mcp-transports-are-reliable
+title: "Every provider's MCP launch configuration is a projection of one declaration, and a drifted one fails a gate"
+slug: client-configs-are-generated-and-parsed
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "Render .mcp.json, .gemini/settings.json and .codex/config.toml from the provider declaration in share/providers.yaml, write them on init, diagnose them by parsing the server entry rather than searching the text, and fail a gate when a committed configuration differs from its projection."
+why: "The milestone's fourth acceptance criterion ('The three client launch configurations are generated and their diagnosis parses them') had no issue on master: I2148 was drafted on 2026-10-09 on chore/the-runtime-pack-is-planned and chore/the-owner-packs-are-planned (PR #863, closed unmerged) and never landed, which the convergence pack of 2026-10-14 found as a milestone without a carrier. The three files were written by hand in one commit (d1f1efbfbe, 2026-09-05); nothing in lib/, bin/ or apps/majordomus-cli/src/ writes them, so a downstream init produces none. The diagnosis is text.contains(LAUNCHER) (apps/majordomus-cli/src/capability/builtin/mcp.rs, fn standing), and .codex/config.toml names the launcher in its header comment, so deleting its [mcp_servers.majordomus] table would still read wired; a wrong command, args or env reads wired too. The only consequence of a foreign file is a WARN mcp_client_config_foreign (case 940), never a failure. Pack M06 asks that declared integrations be discovered from canonical provider metadata, installed where supported and diagnosed if absent. Baseline audit of 2026-10-09 at master 1fb8d6be44, lifecycle gap 13 and the provider-config row."
+current_state: "Three hand-written client configurations at master c0e3585dc8, already drifted from each other with nothing to say which is right: .mcp.json starts bin/majordomus-mcp with type stdio and no timeout, .gemini/settings.json and .codex/config.toml start ./bin/majordomus-mcp; Gemini sets cwd '.', trust false and a 120000 ms request timeout, Codex a 120 s startup timeout, against the bridge's 60 s REQUEST_TIMEOUT (apps/majordomus-cli/src/mcp/bridge.rs). share/providers.yaml declares only each provider's client_config path, not the server entry. scripts/ci/providers-check projects one other section into .gemini/settings.json (tools.allowed, from the SSH rule), so the file has two writers and no owner of the whole. An adopter's init writes none of the three."
+desired_state: "One declaration of the launch entry (server name, command, args, env, per-client keys such as Gemini's cwd, trust and timeout and Codex's startup_timeout_sec) lives beside each provider in share/providers.yaml, and majordomus update renders each provider's client_config from it, merging into a file that carries other sections (Gemini's tools.allowed) rather than overwriting them. init writes the three in an adopter repository. The diagnosis parses JSON and TOML and reads mcpServers.majordomus or mcp_servers.majordomus. A projection check run in CI (majordomus generate --check, or the providers-check gate) fails when a committed configuration's server entry differs from its projection, naming the file and the field; a timeout shorter than the bridge's request timeout is reported with both values."
+scope:
+  - "apps/majordomus-cli/src/capability/builtin/mcp.rs"
+  - "share/providers.yaml"
+  - "lib/update.sh"
+  - "lib/init.sh"
+  - "share/skeleton"
+  - "scripts/ci/providers-check"
+  - ".mcp.json"
+  - ".gemini/settings.json"
+  - ".codex/config.toml"
+  - "apps/majordomus-cli/tests/providers_projection.rs"
+  - "test/cases"
+  - "docs/MCP.md"
+  - ".ai/repo/project/issues/I2148.yaml"
+non_scope:
+  - "A user-scope client configuration (~/.claude.json, ~/.gemini/settings.json, ~/.codex/config.toml): only the project-scoped files the repository commits"
+  - "The SSH permission projection into .gemini/settings.json and .claude/settings.json, which providers-check already owns; it is preserved, not moved"
+depends_on: []
+acceptance_criteria:
+  - "The three committed configurations are byte-identical to what majordomus update renders from share/providers.yaml"
+  - "A test case edits one generated configuration (the command of .mcp.json's majordomus server) and the projection gate exits non-zero naming the file and the field; restoring it makes the gate pass"
+  - "A .codex/config.toml whose server table is removed but whose comment names the launcher is reported not wired"
+  - "init in a fresh repository writes the three configurations, and majordomus update regenerates them from share/providers.yaml without losing .gemini/settings.json's tools.allowed"
+  - "A configuration whose timeout is shorter than the bridge's request timeout is reported with both values"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --test providers_projection"
+  - "MJ_TEST_JOBS=4 bash test/run.sh 940_mcp_says_nothing_its_capability_does_not <the case this issue adds>"
+evidence_required:
+  - "drifted_client_config_fails_gate_case"
+  - "parsed_provider_diagnosis_test"
+  - "init_writes_client_configs_case"
+created_at: 2026-10-09
+updated_at: 2026-10-15

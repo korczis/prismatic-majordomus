@@ -26,3 +26,5 @@ evidence_required:
   - "no_stage_reads_a_later_output_case"
 created_at: 2026-10-21
 updated_at: 2026-10-21
+cancelled: true
+completion: "Cancelled 2026-10-21 before any code was written: the premise is wrong. scripts/derive runs the same `majordomus generate --repo <root> --strict` (every target) in stage A and in stage C, so docs/generated/artifacts.json is written by stage A, before scripts/generate-site-data runs, and only rewritten by stage C. The rows stage B reads from it are the editors projection's skill files (.claude/skills/*/SKILL.md, their kind and source), stage A's output and a function of .ai/repo/skills/*/SKILL.md, which the generator already declares as inputs. So stage B reads current data. What was real is that the whole file's hash changes when stage C rewrites it, which is why I2847 keeps the file out of the input fingerprint; case 3246's exemption now says so."

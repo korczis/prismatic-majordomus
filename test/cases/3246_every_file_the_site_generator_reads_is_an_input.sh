@@ -19,10 +19,11 @@
 
 GEN="$ROOT/scripts/generate-site-data"
 # outputs and scratch the script writes, never reads as inputs; and docs/generated/artifacts.json,
-# which derive's stage C rewrites AFTER this script ran, so hashing it makes the fingerprint
-# move on every derive and never read as current. That the script reads a later stage's output
-# at all is its own ordering defect, I2864.
-EXEMPT=" site/data/generated site/content docs/SITE_CLAIMS.md docs/PLAN_STATUS.md docs/PAGES_STATUS.md bin docs/generated/artifacts.json "
+# which derive's stage A writes before this script and stage C rewrites after it, so hashing it
+# makes the fingerprint move on every derive and never read as current. The rows the script
+# reads from it (the editors projection's skill files) are stage A's, a function of
+# .ai/repo/skills/*/SKILL.md, which is an input (I2864, cancelled on that finding).
+EXEMPT=" site/data/generated site/content docs/SITE_CLAIMS.md docs/PLAN_STATUS.md docs/plan-status docs/PAGES_STATUS.md bin docs/generated/artifacts.json "
 
 judge() {   # judge <generator> — prints one line per uncovered read, exit 0 when none
   local gen="$1" inputs bad=0 p f

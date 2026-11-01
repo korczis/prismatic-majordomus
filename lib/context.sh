@@ -142,6 +142,20 @@ mj_ctx_outbox() {
     "$s" "$c" "$(mj_rel "$(mj_outbox_dir)")"
 }
 
+# The last events of the ledger, as many as the profile's context.recent_history_depth asks
+# for; none when it asks for none, or when there is no ledger yet.
+# majordomus-limit: history_events
+mj_ctx_history() {
+  local profile="$1" depth
+  depth="$(mj_pro context.recent_history_depth)"; [ -n "$depth" ] || depth=0
+  if [ "$depth" -gt 0 ] && [ -f "$MJ_STATE_DIR/ledger.jsonl" ]; then
+    { printf '## RECENT HISTORY (last %s events)\n' "$depth"
+      ( export MJ_JSON=0; mj_cmd_history --limit "$depth" 2>/dev/null | sed '/^(/d' ); } > "$MJ_CTX_TMP/90.history"
+  else
+    mj_ctx_excl "history" "profile $profile sets context.recent_history_depth: $depth"
+  fi
+}
+
 mj_context_sections() {
   local prompt_name="$1" no_prompt="$2"
   : > "$MJ_CTX_TMP/excluded"
@@ -376,15 +390,7 @@ mj_context_sections() {
   fi
 
   # 9. recent history
-  if [ -n "$profile" ]; then
-    local depth; depth="$(mj_pro context.recent_history_depth)"; [ -n "$depth" ] || depth=0
-    if [ "$depth" -gt 0 ] && [ -f "$MJ_STATE_DIR/ledger.jsonl" ]; then
-      { printf '## RECENT HISTORY (last %s events)\n' "$depth"
-        ( export MJ_JSON=0; mj_cmd_history --limit "$depth" 2>/dev/null | sed '/^(/d' ); } > "$MJ_CTX_TMP/90.history"
-    else
-      mj_ctx_excl "history" "profile $profile sets context.recent_history_depth: $depth"
-    fi
-  fi
+  [ -n "$profile" ] && mj_ctx_history "$profile"
 
   # 10. prompt asset. An asset whose body asks for {{CONTEXT}} is excluded rather than
   #     rendered: the result would be this same context nested inside itself, which is
@@ -430,6 +436,7 @@ mj_ctx_verification() {
 # and paths the selection can reach are compiled (mj_knowledge_nodes' keep list). When the
 # issue the task names is not a node — a record the index does not hold yet, or one the
 # schema refused — the section says the graph is stale and why, instead of vanishing.
+# majordomus-limit: knowledge_pointers
 mj_context_pointers() {
   local have_task="$1" profile="$2" issue on max maxi f p
   # no task, no profile to ask: silent, as every task-bound section is without a task

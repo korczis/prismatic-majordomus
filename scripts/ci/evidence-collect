@@ -10,7 +10,9 @@
 # checkout it runs in (`report_tree`) and derives `report.txt` and `report.json` through
 # `majordomus evidence show`. With the downloaded reports and the output outside the checkout,
 # that is the tracked ledger's verdict at the run's commit, the answer a clean checkout of that
-# commit gives (ADR 0087 decision 1, amending ADR 68). The run decides no verdict in it.
+# commit gives (ADR 0087 decision 1, amending ADR 68). The run decides no verdict in it. Once
+# the run's rows are recorded, the verdict over them is kept apart as `run-report.json`: the
+# count of supported guarantees the site publishes (I3916), never a change to the report.
 #
 # Then the run. The jobs of validate.yml leave raw reports: the suite's TSV (MJ_TEST_REPORT),
 # cargo test's output (MJ_CARGO_TEST_OUTPUT of scripts/rust-check) and the llvm-cov export
@@ -265,6 +267,12 @@ if [ "$rc" != 0 ]; then
   exit 10
 fi
 rm -f "$OUT/record.err"
+# The verdict over the run's own executions, now in the working ledger, judged at this commit:
+# kept as `run-report.json` beside the report, never replacing it. The publication counts the
+# guaranteed claims it supports for the homepage and the evidence page (I3916, scripts/pages
+# evidence `claims`), so the figure a visitor reads is what this run recorded, not what the
+# committed ledger last held.
+( cd "$ROOT" && "$BIN" evidence show --format json ) > "$OUT/run-report.json" 2>/dev/null || true
 # A recording that wrote nothing into a repository with no ledger leaves no ledger to keep.
 ledger=/dev/null
 if [ -f "$ROOT/.ai/repo/evidence/ledger.json" ]; then
