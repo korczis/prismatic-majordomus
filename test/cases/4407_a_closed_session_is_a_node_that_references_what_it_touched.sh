@@ -45,6 +45,8 @@ acceptance_criteria:
   - Done
 validation:
   - "true"
+evidence_required:
+  - proof
 EOF
 
 cat > .ai/repo/sessions/20260101T000000Z--s-20260101000000-aaaa--master--abc1234--fixture0001.md <<'EOF'

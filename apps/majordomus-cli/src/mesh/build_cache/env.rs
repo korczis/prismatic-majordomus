@@ -436,8 +436,44 @@ fn host_triple_in(dir: std::io::Result<PathBuf>) -> String {
     }
 }
 
-/// The variables for the second level, given the store, the credential file and the triple.
-fn variables_for(store: &Store, credentials: &Path, triple: &str) -> Vec<EnvVar> {
+/// The directory of the disk level: `SCCACHE_DIR` when it is set, else the one sccache uses
+/// by itself, so that turning the chain on keeps what the local cache already holds.
+fn disk_dir() -> Option<PathBuf> {
+    disk_dir_from(
+        std::env::var_os("SCCACHE_DIR"),
+        std::env::var_os("XDG_CACHE_HOME"),
+        std::env::var_os("HOME"),
+        cfg!(target_os = "macos"),
+    )
+}
+
+/// The disk level these values name. sccache refuses to start a chain whose `disk` level has
+/// no `SCCACHE_DIR` (measured with 0.17.0 and 0.18.0: "Disk cache specified in levels but not
+/// configured"), although a server without a chain takes its platform directory unasked; that
+/// directory is `~/Library/Caches/Mozilla.sccache` on macOS and
+/// `${XDG_CACHE_HOME:-$HOME/.cache}/sccache` elsewhere.
+fn disk_dir_from(
+    sccache_dir: Option<std::ffi::OsString>,
+    xdg_cache: Option<std::ffi::OsString>,
+    home: Option<std::ffi::OsString>,
+    macos: bool,
+) -> Option<PathBuf> {
+    if let Some(d) = sccache_dir.filter(|v| !v.is_empty()) {
+        return Some(PathBuf::from(d));
+    }
+    let home = home.filter(|v| !v.is_empty()).map(PathBuf::from);
+    if macos {
+        return home.map(|h| h.join("Library/Caches/Mozilla.sccache"));
+    }
+    if let Some(x) = xdg_cache.filter(|v| !v.is_empty()) {
+        return Some(PathBuf::from(x).join("sccache"));
+    }
+    home.map(|h| h.join(".cache/sccache"))
+}
+
+/// The variables for the second level, given the store, the credential file, the triple and
+/// the directory of the first level.
+fn variables_for(store: &Store, credentials: &Path, triple: &str, disk: &Path) -> Vec<EnvVar> {
     let v = |n: &str, value: String| EnvVar {
         name: n.into(),
         value,
@@ -463,6 +499,7 @@ fn variables_for(store: &Store, credentials: &Path, triple: &str) -> Vec<EnvVar>
             credentials.display().to_string(),
         ),
         v("AWS_PROFILE", PROFILE.into()),
+        v("SCCACHE_DIR", disk.display().to_string()),
     ]
 }
 
@@ -487,6 +524,17 @@ pub fn report(opts: &EnvOptions) -> EnvReport {
 /// is no configuration directory, and `health` for the store's readiness answer: the command
 /// waits [`HEALTH_BUDGET`], a test as long as an answer takes on a loaded runner.
 fn report_under(opts: &EnvOptions, config: Option<&Path>, health: Duration) -> EnvReport {
+    report_with_disk(opts, config, health, disk_dir())
+}
+
+/// [`report_under`], with `disk` for the directory of the disk level, or none when this
+/// process has no home to keep it in.
+fn report_with_disk(
+    opts: &EnvOptions,
+    config: Option<&Path>,
+    health: Duration,
+    disk: Option<PathBuf>,
+) -> EnvReport {
     let Some(version) = sccache_version(&opts.sccache) else {
         return local_only(
             format!(
@@ -576,7 +624,17 @@ fn report_under(opts: &EnvOptions, config: Option<&Path>, health: Duration) -> E
         return r;
     }
 
-    let variables = variables_for(&store, &credentials, &host_triple());
+    let Some(disk) = disk else {
+        let mut r = local_only(
+            "this process has no home to keep the disk level in: the build uses its local level alone"
+                .into(),
+            sccache,
+        );
+        r.store = Some(store);
+        r.passed_over = selection.passed_over;
+        return r;
+    };
+    let variables = variables_for(&store, &credentials, &host_triple(), &disk);
     EnvReport {
         mode: Mode::Mesh,
         reason: format!(
@@ -755,6 +813,10 @@ mod tests {
         assert_eq!(r.mode, Mode::Mesh, "{}", r.reason);
         assert_eq!(r.sccache.multilevel, Some(true));
         assert_eq!(value(&r, "SCCACHE_MULTILEVEL_CHAIN"), Some("disk,s3"));
+        assert!(
+            value(&r, "SCCACHE_DIR").is_some_and(|d| !d.is_empty()),
+            "a chain with a disk level names its directory, or sccache refuses to start"
+        );
         assert_eq!(value(&r, "SCCACHE_BUCKET"), Some("the-bucket"));
         assert_eq!(
             value(&r, "SCCACHE_ENDPOINT"),
@@ -965,6 +1027,36 @@ mod tests {
     }
 
     #[test]
+    fn the_disk_level_is_sccache_dir_else_the_directory_sccache_takes_by_itself() {
+        let os = |s: &str| Some(std::ffi::OsString::from(s));
+        let at = |d: &str, x: Option<std::ffi::OsString>, h: Option<std::ffi::OsString>, m| {
+            disk_dir_from(os(d).filter(|_| !d.is_empty()), x, h, m)
+        };
+        assert_eq!(
+            at("/s", os("/x"), os("/h"), true),
+            Some(PathBuf::from("/s"))
+        );
+        assert_eq!(
+            at("", os("/x"), os("/h"), true),
+            Some(PathBuf::from("/h/Library/Caches/Mozilla.sccache"))
+        );
+        assert_eq!(
+            at("", os("/x"), os("/h"), false),
+            Some(PathBuf::from("/x/sccache"))
+        );
+        assert_eq!(
+            at("", None, os("/h"), false),
+            Some(PathBuf::from("/h/.cache/sccache"))
+        );
+        assert_eq!(
+            at("", os(""), os("/h"), false),
+            Some(PathBuf::from("/h/.cache/sccache"))
+        );
+        assert_eq!(disk_dir_from(os(""), None, os(""), false), None);
+        assert_eq!(disk_dir_from(None, None, None, true), None);
+    }
+
+    #[test]
     fn tls_follows_the_scheme_of_the_endpoint() {
         let store = |endpoint: &str| Store {
             node: "n".into(),
@@ -973,8 +1065,9 @@ mod tests {
             bucket: "b".into(),
         };
         let creds = Path::new("/c");
-        let plain = variables_for(&store("http://10.0.0.1:9000"), creds, "x-y");
-        let tls = variables_for(&store("https://s3.example:9000"), creds, "x-y");
+        let disk = Path::new("/d");
+        let plain = variables_for(&store("http://10.0.0.1:9000"), creds, "x-y", disk);
+        let tls = variables_for(&store("https://s3.example:9000"), creds, "x-y", disk);
         let ssl = |v: &[EnvVar]| {
             v.iter()
                 .find(|e| e.name == "SCCACHE_S3_USE_SSL")
@@ -1053,6 +1146,35 @@ mod tests {
             "an empty HOME is no home"
         );
         assert_eq!(config_dir_from(None, None), None);
+    }
+
+    #[test]
+    fn without_a_home_for_the_disk_level_a_chosen_store_is_left_out() {
+        let d = tempfile::tempdir().unwrap();
+        let port = store_up();
+        let r = report_with_disk(
+            &opts(
+                capable(d.path()),
+                Some(node_file(d.path(), port)),
+                Some(good_credentials(d.path())),
+            ),
+            None,
+            PATIENT,
+            None,
+        );
+        assert_eq!(r.mode, Mode::LocalOnly);
+        assert!(
+            r.reason.contains("no home to keep the disk level in"),
+            "{}",
+            r.reason
+        );
+        assert_eq!(r.store.as_ref().unwrap().bucket, "the-bucket");
+        assert_eq!(
+            r.sccache.multilevel,
+            Some(true),
+            "the chain was measured before the disk level was asked for"
+        );
+        assert!(r.variables.is_empty() && r.credentials_file.is_none());
     }
 
     #[test]

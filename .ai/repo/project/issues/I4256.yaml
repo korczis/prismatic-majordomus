@@ -1,0 +1,28 @@
+id: I4256
+milestone: a-second-adopter-is-served
+title: "A skill is proved by the adopter's own tests, and its findings name nothing of the tool's tree"
+slug: skill-proof-reads-the-adopters-layout
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Test markers are read from the repository's declared test paths (scope or policy, with tests/ and test/ as defaults); the page and gate warnings apply only where the repository declares a site and a CI model; `skills check` reports what doctor will fail on."
+why: "An adopter's field report (a private Python client repository adopted from the v1.0.0-alpha.8 release on 2026-10-27, with the plan model, project rules, knowledge, skills, Claude Code capture and a GitHub projection all in use) found: doctor failed every skill as untested although tests/test_skills.py named each one: skill/mod.rs reads markers only from test/cases and apps/majordomus-cli/tests, so the adopter added a test/cases shim. Its warnings also named site/content/skills/<id>.md, scripts/generate-site-data and scripts/ci-plan, which exist only in the tool's source, while `skills check` reported every skill valid."
+current_state: "TEST_DIRS and SKILL_PAGES_DIR are the tool's own layout; skills check and doctor disagree."
+desired_state: "Test markers are read from the repository's declared test paths (scope or policy, with tests/ and test/ as defaults); the page and gate warnings apply only where the repository declares a site and a CI model; `skills check` reports what doctor will fail on."
+scope:
+  - ".ai/repo/project/issues/I4256.yaml"
+  - "apps/majordomus-cli/src/skill/mod.rs"
+  - "lib/skills.sh"
+  - "share/skeleton/ai/repo/scope.yaml"
+  - "test/cases/4256_a_skill_is_proved_where_the_adopter_tests.sh"
+depends_on: []
+acceptance_criteria:
+  - "A marker in tests/test_x.py proves a skill in a repository with no test/cases"
+  - "A repository with no site/ gets no undocumented warning"
+  - "skills check and doctor report the same orphans"
+validation:
+  - "bash test/run.sh 4256_a_skill_is_proved_where_the_adopter_tests"
+evidence_required:
+  - "case_skill_proof_reads_the_adopters_layout"
+created_at: 2026-10-27
+updated_at: 2026-10-27

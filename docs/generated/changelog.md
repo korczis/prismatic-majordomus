@@ -1,11 +1,11 @@
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: the layer's release records, the decisions dated in each release's window, and the commits in its range; regenerate with `majordomus generate`
-     Generator: majordomus-cli 1.0.0-alpha.9 -->
+     Generator: majordomus-cli 1.0.0-alpha.10 -->
 # Changelog
 
 Every entry below is derived: a section per release the layer records, its decisions the ADRs dated inside that release's window, its changes the conventional commits in its range, its artifacts the record's own evidence. Nothing here is written by hand, and `majordomus generate changelog --check` fails when it stops matching the tree.
 
-Current version: **1.0.0-alpha.9**
+Current version: **1.0.0-alpha.10**
 
 ## v1.0.0-alpha.9 — 2026-10-28
 
@@ -2261,7 +2261,7 @@ Current version: **1.0.0-alpha.9**
 - **ADR-0075** Which work realises an intent is a join over the records the lifecycle already keeps, and closed work does not outrank evidence _(proposed)_
 - **ADR-0073** An issue names the intent criterion it serves, and the coverage of every criterion is derived from the plan _(proposed)_
 - **ADR-0070** An intent is a typed record, and its stage and satisfaction are derived from the plan and the evidence _(proposed)_
-- **ADR-0091** Knowledge is derived at the episode boundary, from the ledger and git, and a person promotes it _(proposed)_
+- **ADR-0091** Knowledge is derived at the episode boundary, from the ledger and git, and a person promotes it _(accepted)_
 - **ADR-0046** A working context is derived and a closed record is composed; neither is a document somebody must remember to write _(proposed)_
 
 ### Added

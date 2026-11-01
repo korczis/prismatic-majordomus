@@ -77,7 +77,16 @@ cat > "$G/scripts/rules-package" <<'SH'
 set -eu
 printf 'rules-package %s\n' "$1" >> "$STUB_LOG"
 SH
-chmod +x "$TOOL/majordomus" "$G/scripts/generate-site-data" "$G/scripts/gitattributes" "$G/scripts/rules-package"
+# the check's last stage: scripts/ci/derived-size-check, no derived file near its size limit
+# (I4512); derive-check runs it and derive does not
+mkdir -p "$G/scripts/ci"
+cat > "$G/scripts/ci/derived-size-check" <<'SH'
+#!/usr/bin/env bash
+set -eu
+printf 'derived-size-check\n' >> "$STUB_LOG"
+SH
+chmod +x "$TOOL/majordomus" "$G/scripts/generate-site-data" "$G/scripts/gitattributes" "$G/scripts/rules-package" \
+  "$G/scripts/ci/derived-size-check"
 STUB_LOG="$LOG"; export STUB_LOG
 ( cd "$G" && git init -q . && git config user.email t@example.com && git config user.name t \
   && git add -A && git commit -qm sources )
@@ -132,7 +141,8 @@ expect_grep 'run scripts/derive'
 want='generate --check
 site-data --check
 gitattributes --check
-rules-package check'
+rules-package check
+derived-size-check'
 [ "$(cat "$LOG")" = "$want" ] \
   || { printf '    scripts/derive-check did not run every check in the order derive runs the generators\n    want:\n%s\n    got:\n%s\n' "$want" "$(cat "$LOG")"; exit 1; }
 [ "$(tree_state)" = "$before" ] || { echo "    scripts/derive-check wrote to a stale tree"; exit 1; }
@@ -234,7 +244,7 @@ done
 # repeated here so the claim's one named test asserts the whole claim.
 cur="$(git -C "$ROOT" rev-parse HEAD 2>/dev/null || true)"
 if [ -n "$cur" ]; then
-  for f in "$ROOT"/site/data/generated/*.json "$ROOT/docs/SITE_CLAIMS.md" "$ROOT/docs/PLAN_STATUS.md"; do
+  for f in "$ROOT"/site/data/generated/*.json "$ROOT/docs/SITE_CLAIMS.md" "$ROOT/docs/PLAN_STATUS.md" "$ROOT"/docs/plan-status/*.md; do
     [ -f "$f" ] || continue
     if grep -qF -- "${cur:0:7}" "$f"; then
       printf '    %s embeds the current commit; it will be stale the moment it is committed\n' "${f#"$ROOT"/}"

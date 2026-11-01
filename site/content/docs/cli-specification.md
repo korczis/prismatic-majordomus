@@ -738,10 +738,16 @@ produced one record between them. So an open episode is a file of its own,
 it. `--if-open keep` keeps *your* episode — which is why it exists: the start event fires
 again on a resume and on a compaction — and gives a different provider session an episode
 of its own. `close --provider-session <id>` closes that episode and no other, which is what
-a provider's end event passes. An episode nobody named is keyed `hand`, and there is at
-most one of those: a provider that sends no session identity is indistinguishable from a
-person at a terminal, and inventing a distinction there would multiply episodes nobody can
-close. A hand-opened episode needs no provider anywhere and behaves exactly as before.
+a provider's end event passes. A `session start` that names no provider session is keyed
+by the one this process runs inside, where one is observable: `MAJORDOMUS_PROVIDER_SESSION`,
+then each provider's own variable (`CLAUDE_CODE_SESSION_ID`). That is the key every shell
+writer resolves the same process to, so the observations and decisions it records next land
+in the episode it opened; the record carries `provider_session` and `provider`, and its
+working context still says `opened_by: hand`. Only where no provider session is observable
+is the episode keyed `hand`, and there is at most one of those: a provider that sends no
+session identity is indistinguishable from a person at a terminal, and inventing a
+distinction there would multiply episodes nobody can close. A hand-opened episode needs no
+provider anywhere.
 
 `state/session-current.yaml` is a relative symlink into that store: the pointer to the
 episode of this checkout, aimed at the one opened here last and re-aimed by a close at the
@@ -984,6 +990,14 @@ different, still-open episode opened that task (ADR 0164); then its Markdown `ta
 `none`, its ledger event omits `task_id`, and it leaves the task's `checkpoint_at` alone.
 `check --checkpoint` uses the same rule. A derived checkpoint uses that same prepared
 relation for its body; it cannot describe another episode's task as its own.
+
+The records that decide whether work is done follow the same rule and refuse instead of
+filing under another worker's task (I4292): `evidence --covers`, `evidence --gate` and a
+real `finish` exit `15` with `refused by adr-0164` when a different, still-open episode
+opened the active task, write nothing, and print the command to rerun under the opener's
+`MJ_SESSION_KEY` or the `session close --provider-session` that releases it. A hand-run
+`session close` with more than one episode open and none named exits `15` the same way and
+lists the keys to pass. `finish` counts only the checkpoints whose `task_id` is its task.
 
 This refused with `12` (no active task) and `15` (the task is no longer active) until ADR
 0052. Those two refusals are the 2026-09-05 outage: a task marked `handed_over` and never
