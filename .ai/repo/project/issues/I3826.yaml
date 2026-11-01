@@ -32,4 +32,19 @@ depends_on:
 serves:
   - "an-authorised-node-connects-from-anywhere#relay-when-no-direct-path"
 created_at: 2026-10-21
-updated_at: 2026-10-21
+updated_at: 2026-10-31T23:59:26Z
+evidence:
+  - covers: seed_from_secret
+    type: ci
+    command: "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 3826_a_hosted_hub_is_trusted_and_closed_to_strangers (job suite-shard (2))"
+    result: "The log has 'ok   3826_a_hosted_hub_is_trusted_and_closed_to_strangers'. The case asserts that one seed variable gives one node id and key across restarts with no key on disk, that an unset variable closes the mesh and names it, that the hub advertises exactly https://hub.example, and that the seed is in no log or answer."
+    artifact: "https://github.com/korczis/prismatic-majordomus/actions/runs/41107049778/job/124495539203"
+    commit: 54c317f11add0c6e7c7c8cd6f1a1591ee1942f1b
+    recorded_at: 2026-10-31T23:58:28Z
+  - covers: mesh_reads_gated
+    type: ci
+    command: "cargo test --lib http::router::tests::a_remote_caller_reads_the_repository_and_never_the_mesh and mesh::manager::tests::a_stranger_learns_this_hub_and_never_who_trusts_it (job rust (2))"
+    result: "Both tests are ok in the log. A remote caller gets 403 on mesh.state, peers, executions and the mesh pages but 200 on health.live. An untrusted registration's candidates are the hub alone, with no trusted node."
+    artifact: "https://github.com/korczis/prismatic-majordomus/actions/runs/41107049778/job/124495538595"
+    commit: 54c317f11add0c6e7c7c8cd6f1a1591ee1942f1b
+    recorded_at: 2026-10-31T23:59:26Z

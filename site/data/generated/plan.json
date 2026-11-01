@@ -62326,7 +62326,26 @@
         "seed_from_secret",
         "mesh_reads_gated"
       ],
-      "evidence": [],
+      "evidence": [
+        {
+          "covers": "seed_from_secret",
+          "type": "ci",
+          "command": "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 3826_a_hosted_hub_is_trusted_and_closed_to_strangers (job suite-shard (2))",
+          "result": "The log has 'ok   3826_a_hosted_hub_is_trusted_and_closed_to_strangers'. The case asserts that one seed variable gives one node id and key across restarts with no key on disk, that an unset variable closes the mesh and names it, that the hub advertises exactly https://hub.example, and that the seed is in no log or answer.",
+          "artifact": "https://github.com/korczis/prismatic-majordomus/actions/runs/41107049778/job/124495539203",
+          "commit": "54c317f11add0c6e7c7c8cd6f1a1591ee1942f1b",
+          "recorded_at": "2026-10-31T23:58:28Z"
+        },
+        {
+          "covers": "mesh_reads_gated",
+          "type": "ci",
+          "command": "cargo test --lib http::router::tests::a_remote_caller_reads_the_repository_and_never_the_mesh and mesh::manager::tests::a_stranger_learns_this_hub_and_never_who_trusts_it (job rust (2))",
+          "result": "Both tests are ok in the log. A remote caller gets 403 on mesh.state, peers, executions and the mesh pages but 200 on health.live. An untrusted registration's candidates are the hub alone, with no trusted node.",
+          "artifact": "https://github.com/korczis/prismatic-majordomus/actions/runs/41107049778/job/124495538595",
+          "commit": "54c317f11add0c6e7c7c8cd6f1a1591ee1942f1b",
+          "recorded_at": "2026-10-31T23:59:26Z"
+        }
+      ],
       "risk": "",
       "completion": "",
       "started_at": "",
@@ -63419,7 +63438,17 @@
       "evidence_required": [
         "case_625"
       ],
-      "evidence": [],
+      "evidence": [
+        {
+          "covers": "case_625",
+          "type": "ci",
+          "command": "bash test/run.sh 625_a_rebuild_is_asked_only_when_it_helps (validate job suite-shard (2))",
+          "result": "Case 625_a_rebuild_is_asked_only_when_it_helps passed ('ok 625_a_rebuild_is_asked_only_when_it_helps', 5s) on 6b30ede2d13. It asserts that a hung build of this commit or another commit is replaced and that the output says hung. It asserts that a young build or a build with no start time is waited on with exit 13 and no request. It asserts that the lifted scheduled remedy step rebuilds an errored or in-flight build of the trunk tree and deploys a stale tree.",
+          "artifact": "https://github.com/korczis/prismatic-majordomus/actions/runs/41107049778/job/124495539203",
+          "commit": "54c317f11add0c6e7c7c8cd6f1a1591ee1942f1b",
+          "recorded_at": "2026-10-31T23:52:02Z"
+        }
+      ],
       "risk": "",
       "completion": "",
       "started_at": "",
@@ -67137,7 +67166,17 @@
       "evidence_required": [
         "another_node_s_loopback_runtimes_are_not_dialed_and_its_hub_is"
       ],
-      "evidence": [],
+      "evidence": [
+        {
+          "covers": "another_node_s_loopback_runtimes_are_not_dialed_and_its_hub_is",
+          "type": "ci",
+          "command": "cargo test --lib mesh::cooperation::tests::another_node_s_loopback_runtimes_are_not_dialed_and_its_hub_is (job rust (2))",
+          "result": "The log has 'test mesh::cooperation::tests::another_node_s_loopback_runtimes_are_not_dialed_and_its_hub_is ... ok'. With 12 loopback records of another node, the dial selection is exactly this node's loopback sibling plus the other node's hub.",
+          "artifact": "https://github.com/korczis/prismatic-majordomus/actions/runs/41107049778/job/124495538595",
+          "commit": "54c317f11add0c6e7c7c8cd6f1a1591ee1942f1b",
+          "recorded_at": "2026-10-31T23:55:19Z"
+        }
+      ],
       "risk": "",
       "completion": "",
       "started_at": "",
@@ -67182,7 +67221,17 @@
       "evidence_required": [
         "only_a_server_bound_to_every_interface_follows_them"
       ],
-      "evidence": [],
+      "evidence": [
+        {
+          "covers": "only_a_server_bound_to_every_interface_follows_them",
+          "type": "ci",
+          "command": "cargo test --lib shared::tests::only_a_server_bound_to_every_interface_follows_them (job rust (2))",
+          "result": "The log has 'test shared::tests::only_a_server_bound_to_every_interface_follows_them ... ok'. Only 0.0.0.0 follows its interfaces; loopback, a specific IP and a hostname bind do not.",
+          "artifact": "https://github.com/korczis/prismatic-majordomus/actions/runs/41107049778/job/124495538595",
+          "commit": "54c317f11add0c6e7c7c8cd6f1a1591ee1942f1b",
+          "recorded_at": "2026-10-31T23:57:06Z"
+        }
+      ],
       "risk": "",
       "completion": "",
       "started_at": "",

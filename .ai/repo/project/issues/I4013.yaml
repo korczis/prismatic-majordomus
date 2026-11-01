@@ -27,4 +27,12 @@ depends_on: []
 serves:
   - "an-authorised-node-connects-from-anywhere#path-is-explained"
 created_at: 2026-10-23
-updated_at: 2026-10-23
+updated_at: 2026-10-31T23:57:06Z
+evidence:
+  - covers: only_a_server_bound_to_every_interface_follows_them
+    type: ci
+    command: "cargo test --lib shared::tests::only_a_server_bound_to_every_interface_follows_them (job rust (2))"
+    result: "The log has 'test shared::tests::only_a_server_bound_to_every_interface_follows_them ... ok'. Only 0.0.0.0 follows its interfaces; loopback, a specific IP and a hostname bind do not."
+    artifact: "https://github.com/korczis/prismatic-majordomus/actions/runs/41107049778/job/124495538595"
+    commit: 54c317f11add0c6e7c7c8cd6f1a1591ee1942f1b
+    recorded_at: 2026-10-31T23:57:06Z
