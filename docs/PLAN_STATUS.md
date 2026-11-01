@@ -8,7 +8,7 @@ This page is the index. Each milestone's issues, and the findings about them, ar
 its own under [`plan-status/`](plan-status/), named by the milestone, so the plan grows by pages
 and no one page grows with it.
 
-Generated from canonical inputs `b44367e79ca0`.
+Generated from canonical inputs `8721375734c3`.
 
 ## Milestones
 
@@ -36,7 +36,7 @@ Generated from canonical inputs `b44367e79ca0`.
 | [a-registered-corpus-judges-majordomus](https://majordomus.dev/plan/a-registered-corpus-judges-majordomus/) | PLANNED | 0/4 | 2 | 2 | 0 | 0 | 0 | The blocking chain is cut or re-scoped by recorded decisions; the calculator decides the primary outcome by an exact task-level test and reports secondary outcomes without a verdict word; the corpus is run in both arms and the verdict, losses included, is published on the T2 row. | [`plan-status/a-registered-corpus-judges-majordomus.md`](plan-status/a-registered-corpus-judges-majordomus.md) |
 | [a-release-is-proven-end-to-end](https://majordomus.dev/plan/a-release-is-proven-end-to-end/) | BLOCKED | 0/3 | 0 | 3 | 0 | 0 | 0 | release.readiness answers before a tag from the functions the workflow runs; site-deploy never goes back a commit; one case walks a fresh clone to published evidence; the first record commit after I2717 lands is observed with a green evidence job. | [`plan-status/a-release-is-proven-end-to-end.md`](plan-status/a-release-is-proven-end-to-end.md) |
 | [a-review-is-published-at-its-commit](https://majordomus.dev/plan/a-review-is-published-at-its-commit/) | PLANNED | 0/13 | 6 | 7 | 0 | 0 | 0 | A reader opens majordomus.dev, finds the public API conformance report and the dependency evidence of the deployed commit, and clicks from any finding to its line at that commit, to the commit that introduced the line and to its rule; the first due-diligence review sits beside them with a scorecard, a remediation roadmap and the facts on which two surfaces disagree. | [`plan-status/a-review-is-published-at-its-commit.md`](plan-status/a-review-is-published-at-its-commit.md) |
-| [a-second-adopter-is-served](https://majordomus.dev/plan/a-second-adopter-is-served/) | ACTIVE | 5/26 | 19 | 2 | 0 | 0 | 0 | Each finding is fixed generically, with no test of whether the repository is this one: by a declaration, a derivation or a default that an adopter can state. Each fix carries a case that fails without it, its derived files regenerated and its page of the documentation corrected. | [`plan-status/a-second-adopter-is-served.md`](plan-status/a-second-adopter-is-served.md) |
+| [a-second-adopter-is-served](https://majordomus.dev/plan/a-second-adopter-is-served/) | ACTIVE | 5/27 | 20 | 2 | 0 | 0 | 0 | Each finding is fixed generically, with no test of whether the repository is this one: by a declaration, a derivation or a default that an adopter can state. Each fix carries a case that fails without it, its derived files regenerated and its page of the documentation corrected. | [`plan-status/a-second-adopter-is-served.md`](plan-status/a-second-adopter-is-served.md) |
 | [a-session-leaves-what-it-observed](https://majordomus.dev/plan/a-session-leaves-what-it-observed/) | DONE | 3/3 | 0 | 0 | 0 | 0 | 0 | Any worker records an observation in one command; the episode boundary derives a candidate that says what it is about and who should look; reading groups recurrence by subject; an episode with nothing to say records that it found nothing. | [`plan-status/a-session-leaves-what-it-observed.md`](plan-status/a-session-leaves-what-it-observed.md) |
 | [a-session-proceeds-through-the-mesh](https://majordomus.dev/plan/a-session-proceeds-through-the-mesh/) | PLANNED | 0/10 | 5 | 5 | 0 | 0 | 0 | A session asks /proceed what to do, receives one idempotent work order derived from intent_realization and the claim-aware plan, takes it under a mesh claim held by the run, starts it once, reports it and schedules its own next step until the intent is met; /watchdog wakes, hands over and reaps a stalled loop from deadlines; heavy work shares the machine through one slot. | [`plan-status/a-session-proceeds-through-the-mesh.md`](plan-status/a-session-proceeds-through-the-mesh.md) |
 | [a-stranger-adopts-it-unaided](https://majordomus.dev/plan/a-stranger-adopts-it-unaided/) | BLOCKED | 0/5 | 0 | 5 | 0 | 0 | 0 | The stranger's first ten minutes are one measured gate, init tells an adopter something true about their own repository, and each real outside run is recorded unedited and turned into cases. | [`plan-status/a-stranger-adopts-it-unaided.md`](plan-status/a-stranger-adopts-it-unaided.md) |
@@ -131,7 +131,7 @@ Generated from canonical inputs `b44367e79ca0`.
 
 ## Execution waves
 
-- **wave 0** — I0001, I0101, I0201, I0301, I0401, I0501, I0601, I0701, I0801, I0802, I0817, I0829, I0901, I1001, I1031, I1101, I1201, I1301, I1401, I1406, I1409, I1501, I1502, I1503, I1504, I1508, I1509, I1510, I1511, I1512, I1516, I1520, I1600, I1800, I1802, I1803, I1900, I1945, I1946, I1947, I1948, I1949, I1950, I1966, I1967, I1980, I1981, I1984, I1986, I1987, I1989, I1990, I1991, I1992, I1995, I1996, I1997, I1998, I1999, I2000, I2054, I2059, I2068, I2073, I2114, I2115, I2123, I2124, I2126, I2127, I2128, I2129, I2131, I2132, I2133, I2134, I2135, I2137, I2139, I2140, I2145, I2147, I2148, I2151, I2156, I2157, I2161, I2162, I2165, I2282, I2296, I2298, I2300, I2301, I2303, I2350, I2374, I2396, I2398, I2399, I2400, I2410, I2411, I2412, I2413, I2414, I2415, I2416, I2417, I2460, I2461, I2463, I2464, I2491, I2521, I2588, I2601, I2653, I2660, I2661, I2662, I2664, I2670, I2678, I2679, I2680, I2690, I2694, I2695, I2696, I2697, I2698, I2710, I2711, I2713, I2714, I2715, I2716, I2717, I2718, I2720, I2723, I2731, I2732, I2734, I2735, I2740, I2742, I2745, I2746, I2747, I2760, I2761, I2770, I2780, I2784, I2786, I2795, I2813, I2825, I2826, I2827, I2829, I2840, I2841, I2842, I2844, I2845, I2846, I2847, I2848, I2849, I2850, I2852, I2853, I2863, I2864, I2867, I2874, I2882, I2901, I2902, I2903, I2904, I2908, I2909, I2910, I2911, I2912, I2913, I2914, I2915, I2916, I2917, I2918, I2919, I2941, I2942, I2943, I2962, I2963, I2964, I2965, I2966, I2967, I2980, I2987, I2993, I2995, I3000, I3001, I3002, I3003, I3004, I3005, I3007, I3008, I3009, I3010, I3013, I3014, I3018, I3020, I3021, I3022, I3023, I3024, I3025, I3060, I3061, I3070, I3079, I3083, I3087, I3089, I3090, I3091, I3092, I3094, I3095, I3097, I3098, I3099, I3100, I3110, I3113, I3115, I3116, I3118, I3120, I3121, I3123, I3126, I3134, I3136, I3137, I3147, I3152, I3153, I3154, I3155, I3156, I3160, I3162, I3163, I3166, I3167, I3171, I3172, I3174, I3175, I3179, I3182, I3184, I3196, I3201, I3202, I3204, I3205, I3207, I3208, I3214, I3215, I3218, I3219, I3222, I3226, I3232, I3241, I3244, I3245, I3246, I3251, I3255, I3258, I3267, I3280, I3287, I3298, I3299, I3304, I3307, I3308, I3309, I3310, I3312, I3314, I3315, I3316, I3317, I3318, I3319, I3320, I3322, I3350, I3351, I3359, I3366, I3373, I3376, I3395, I3400, I3406, I3416, I3424, I3426, I3427, I3432, I3434, I3436, I3440, I3441, I3442, I3443, I3444, I3447, I3448, I3449, I3606, I3607, I3608, I3609, I3660, I3663, I3750, I3751, I3752, I3753, I3756, I3757, I3759, I3760, I3762, I3763, I3764, I3765, I3766, I3767, I3769, I3770, I3771, I3772, I3774, I3775, I3793, I3795, I3799, I3810, I3820, I3823, I3824, I3829, I3830, I3831, I3834, I3835, I3836, I3838, I3839, I3840, I3841, I3861, I3862, I3902, I3910, I3911, I3916, I3917, I3918, I3919, I3920, I3930, I3931, I3934, I3936, I3937, I3938, I3939, I3941, I3942, I3943, I3945, I3949, I3955, I3956, I3957, I3960, I3961, I3962, I3963, I3973, I3974, I3979, I3990, I3995, I3999, I4000, I4002, I4006, I4007, I4008, I4012, I4013, I4154, I4199, I4200, I4203, I4207, I4220, I4221, I4222, I4223, I4227, I4229, I4231, I4232, I4235, I4241, I4244, I4245, I4251, I4252, I4253, I4256, I4257, I4258, I4261, I4264, I4265, I4268, I4290, I4291, I4292, I4296, I4297, I4298, I4302, I4306, I4307, I4309, I4315, I4316, I4317, I4318, I4321, I4322, I4323, I4325, I4326, I4327, I4329, I4330, I4331, I4333, I4337, I4338, I4339, I4340, I4341, I4343, I4346, I4347, I4349, I4350, I4352, I4357, I4362, I4363, I4364, I4373, I4374, I4375, I4380, I4381, I4400, I4410, I4411, I4413, I4415, I4416, I4417, I4418, I4460, I4461, I4462, I4463, I4464, I4465, I4466, I4467, I4468, I4512, I4522
+- **wave 0** — I0001, I0101, I0201, I0301, I0401, I0501, I0601, I0701, I0801, I0802, I0817, I0829, I0901, I1001, I1031, I1101, I1201, I1301, I1401, I1406, I1409, I1501, I1502, I1503, I1504, I1508, I1509, I1510, I1511, I1512, I1516, I1520, I1600, I1800, I1802, I1803, I1900, I1945, I1946, I1947, I1948, I1949, I1950, I1966, I1967, I1980, I1981, I1984, I1986, I1987, I1989, I1990, I1991, I1992, I1995, I1996, I1997, I1998, I1999, I2000, I2054, I2059, I2068, I2073, I2114, I2115, I2123, I2124, I2126, I2127, I2128, I2129, I2131, I2132, I2133, I2134, I2135, I2137, I2139, I2140, I2145, I2147, I2148, I2151, I2156, I2157, I2161, I2162, I2165, I2282, I2296, I2298, I2300, I2301, I2303, I2350, I2374, I2396, I2398, I2399, I2400, I2410, I2411, I2412, I2413, I2414, I2415, I2416, I2417, I2460, I2461, I2463, I2464, I2491, I2521, I2588, I2601, I2653, I2660, I2661, I2662, I2664, I2670, I2678, I2679, I2680, I2690, I2694, I2695, I2696, I2697, I2698, I2710, I2711, I2713, I2714, I2715, I2716, I2717, I2718, I2720, I2723, I2731, I2732, I2734, I2735, I2740, I2742, I2745, I2746, I2747, I2760, I2761, I2770, I2780, I2784, I2786, I2795, I2813, I2825, I2826, I2827, I2829, I2840, I2841, I2842, I2844, I2845, I2846, I2847, I2848, I2849, I2850, I2852, I2853, I2863, I2864, I2867, I2874, I2882, I2901, I2902, I2903, I2904, I2908, I2909, I2910, I2911, I2912, I2913, I2914, I2915, I2916, I2917, I2918, I2919, I2941, I2942, I2943, I2962, I2963, I2964, I2965, I2966, I2967, I2980, I2987, I2993, I2995, I3000, I3001, I3002, I3003, I3004, I3005, I3007, I3008, I3009, I3010, I3013, I3014, I3018, I3020, I3021, I3022, I3023, I3024, I3025, I3060, I3061, I3070, I3079, I3083, I3087, I3089, I3090, I3091, I3092, I3094, I3095, I3097, I3098, I3099, I3100, I3110, I3113, I3115, I3116, I3118, I3120, I3121, I3123, I3126, I3134, I3136, I3137, I3147, I3152, I3153, I3154, I3155, I3156, I3160, I3162, I3163, I3166, I3167, I3171, I3172, I3174, I3175, I3179, I3182, I3184, I3196, I3201, I3202, I3204, I3205, I3207, I3208, I3214, I3215, I3218, I3219, I3222, I3226, I3232, I3241, I3244, I3245, I3246, I3251, I3255, I3258, I3267, I3280, I3287, I3298, I3299, I3304, I3307, I3308, I3309, I3310, I3312, I3314, I3315, I3316, I3317, I3318, I3319, I3320, I3322, I3350, I3351, I3359, I3366, I3373, I3376, I3395, I3400, I3406, I3416, I3424, I3426, I3427, I3432, I3434, I3436, I3440, I3441, I3442, I3443, I3444, I3447, I3448, I3449, I3606, I3607, I3608, I3609, I3660, I3663, I3750, I3751, I3752, I3753, I3756, I3757, I3759, I3760, I3762, I3763, I3764, I3765, I3766, I3767, I3769, I3770, I3771, I3772, I3774, I3775, I3793, I3795, I3799, I3810, I3820, I3823, I3824, I3829, I3830, I3831, I3834, I3835, I3836, I3838, I3839, I3840, I3841, I3861, I3862, I3902, I3910, I3911, I3916, I3917, I3918, I3919, I3920, I3930, I3931, I3934, I3936, I3937, I3938, I3939, I3941, I3942, I3943, I3945, I3949, I3955, I3956, I3957, I3960, I3961, I3962, I3963, I3973, I3974, I3979, I3990, I3995, I3999, I4000, I4002, I4006, I4007, I4008, I4012, I4013, I4154, I4199, I4200, I4203, I4207, I4220, I4221, I4222, I4223, I4227, I4229, I4231, I4232, I4235, I4241, I4244, I4245, I4251, I4252, I4253, I4256, I4257, I4258, I4261, I4264, I4265, I4266, I4268, I4290, I4291, I4292, I4296, I4297, I4298, I4302, I4306, I4307, I4309, I4315, I4316, I4317, I4318, I4321, I4322, I4323, I4325, I4326, I4327, I4329, I4330, I4331, I4333, I4337, I4338, I4339, I4340, I4341, I4343, I4346, I4347, I4349, I4350, I4352, I4357, I4362, I4363, I4364, I4373, I4374, I4375, I4380, I4381, I4400, I4410, I4411, I4413, I4415, I4416, I4417, I4418, I4460, I4461, I4462, I4463, I4464, I4465, I4466, I4467, I4468, I4512, I4522
 - **wave 1** — I0002, I0102, I0202, I0302, I0402, I0502, I0602, I0702, I0803, I0807, I0818, I0819, I0821, I0823, I0833, I0837, I0902, I0924, I1002, I1003, I1004, I1025, I1202, I1302, I1402, I1405, I1505, I1801, I1901, I1903, I1951, I1952, I1965, I1982, I1983, I1985, I1988, I2001, I2004, I2074, I2163, I2288, I2348, I2401, I2403, I2462, I2484, I2486, I2522, I2654, I2655, I2656, I2671, I2672, I2674, I2691, I2692, I2693, I2700, I2701, I2702, I2703, I2704, I2705, I2706, I2707, I2708, I2709, I2712, I2721, I2722, I2724, I2733, I2741, I2743, I2744, I2781, I2787, I2851, I2865, I2866, I2870, I2981, I3015, I3016, I3071, I3072, I3076, I3111, I3112, I3114, I3117, I3119, I3122, I3124, I3127, I3128, I3130, I3133, I3135, I3138, I3141, I3151, I3161, I3164, I3165, I3168, I3169, I3176, I3177, I3180, I3183, I3187, I3198, I3203, I3212, I3217, I3221, I3223, I3224, I3227, I3228, I3229, I3231, I3233, I3247, I3250, I3254, I3256, I3259, I3268, I3269, I3270, I3281, I3285, I3288, I3292, I3300, I3301, I3303, I3323, I3352, I3353, I3367, I3377, I3378, I3379, I3381, I3382, I3390, I3396, I3401, I3407, I3408, I3411, I3418, I3428, I3433, I3437, I3438, I3439, I3602, I3661, I3758, I3761, I3773, I3790, I3791, I3794, I3796, I3798, I3821, I3825, I3826, I3832, I3833, I3837, I3843, I3903, I3914, I3915, I3932, I3935, I3940, I3944, I3950, I3951, I3970, I3972, I3977, I4001, I4004, I4155, I4299, I4303, I4310, I4311, I4312, I4313, I4320, I4324, I4328, I4332, I4342, I4344, I4345, I4351, I4353, I4356, I4366, I4369, I4414, I4419, I4469
 - **wave 2** — I0003, I0103, I0203, I0303, I0403, I0503, I0603, I0703, I0804, I0808, I0820, I0824, I0827, I0832, I0836, I0841, I0903, I0904, I0905, I0907, I0908, I0918, I1005, I1011, I1015, I1203, I1303, I1304, I1404, I1506, I1804, I1902, I1953, I1954, I2002, I2003, I2075, I2289, I2402, I2404, I2405, I2470, I2477, I2478, I2483, I2487, I2488, I2489, I2523, I2652, I2673, I2675, I2677, I2749, I2750, I2783, I2871, I2872, I2873, I2982, I3017, I3074, I3125, I3129, I3131, I3132, I3140, I3142, I3157, I3170, I3178, I3181, I3185, I3188, I3189, I3191, I3195, I3199, I3200, I3206, I3225, I3230, I3237, I3248, I3249, I3252, I3257, I3261, I3271, I3272, I3286, I3289, I3291, I3293, I3296, I3302, I3321, I3324, I3354, I3360, I3374, I3383, I3387, I3391, I3398, I3402, I3403, I3404, I3410, I3412, I3413, I3419, I3420, I3429, I3435, I3662, I3664, I3665, I3666, I3755, I3777, I3792, I3797, I3822, I3842, I3912, I3913, I3933, I3946, I3952, I3959, I3975, I3976, I3978, I3996, I4003, I4225, I4226, I4300, I4301, I4304, I4314, I4348, I4355, I4359, I4360, I4367, I4368, I4370
 - **wave 3** — I0004, I0104, I0204, I0304, I0404, I0504, I0604, I0704, I0805, I0809, I0822, I0825, I0828, I0840, I0842, I0906, I0909, I0913, I0927, I1006, I1007, I1009, I1010, I1012, I1018, I1023, I1102, I1105, I1204, I1305, I1308, I1403, I1407, I1408, I1507, I1955, I1956, I2406, I2471, I2473, I2481, I2485, I2495, I2524, I2663, I2676, I2748, I2789, I2983, I3075, I3143, I3144, I3146, I3148, I3150, I3159, I3190, I3220, I3235, I3253, I3260, I3276, I3290, I3295, I3297, I3305, I3311, I3355, I3358, I3361, I3362, I3368, I3369, I3375, I3380, I3392, I3393, I3399, I3405, I3414, I3423, I3754, I3768, I3827, I3947, I3953, I4005, I4230, I4305, I4308, I4354, I4358, I4371, I4372
@@ -408,6 +408,7 @@ Generated from canonical inputs `b44367e79ca0`.
 - `I4261` (a-second-adopter-is-served, wave 0) — An issue names the external requirement it serves, and a milestone its due date
 - `I4264` (a-second-adopter-is-served, wave 0) — adr check names decisions it did not examine, and adr propose records who authored one
 - `I4265` (a-second-adopter-is-served, wave 0) — The hook line init prints runs doctor in its commit context
+- `I4266` (a-second-adopter-is-served, wave 0) — plan says why an issue with no dependency is BLOCKED by its milestone
 - `I4268` (a-second-adopter-is-served, wave 0) — An adopter runs every gate of its CI model and records it with one command
 - `I4290` (work-graph-github, wave 0) — The reconciliation names a record never created on GitHub apart from one deleted there
 - `I4291` (M002, wave 0) — The executable's record writers attribute a record as the shell's do  **← `majordomus plan next` returns this one**
@@ -471,13 +472,13 @@ Generated from canonical inputs `b44367e79ca0`.
 
 ## Findings
 
-8481 finding(s), each on the page of the milestone its subject is or belongs to:
+8531 finding(s), each on the page of the milestone its subject is or belongs to:
 
 | milestone | findings |
 |---|---|
 | [`M002`](plan-status/M002.md) | 33 |
 | [`M003`](plan-status/M003.md) | 10 |
-| [`M004`](plan-status/M004.md) | 389 |
+| [`M004`](plan-status/M004.md) | 391 |
 | [`a-bounded-task-is-carried-to-accepted-work`](plan-status/a-bounded-task-is-carried-to-accepted-work.md) | 25 |
 | [`a-change-is-judged-in-minutes`](plan-status/a-change-is-judged-in-minutes.md) | 72 |
 | [`a-claim-stands-only-on-its-evidence`](plan-status/a-claim-stands-only-on-its-evidence.md) | 191 |
@@ -487,38 +488,38 @@ Generated from canonical inputs `b44367e79ca0`.
 | [`a-paste-is-decomposed-by-a-skill`](plan-status/a-paste-is-decomposed-by-a-skill.md) | 17 |
 | [`a-promoted-record-opens-its-message`](plan-status/a-promoted-record-opens-its-message.md) | 17 |
 | [`a-provider-carries-the-contract-natively`](plan-status/a-provider-carries-the-contract-natively.md) | 65 |
-| [`a-registered-corpus-judges-majordomus`](plan-status/a-registered-corpus-judges-majordomus.md) | 100 |
+| [`a-registered-corpus-judges-majordomus`](plan-status/a-registered-corpus-judges-majordomus.md) | 101 |
 | [`a-review-is-published-at-its-commit`](plan-status/a-review-is-published-at-its-commit.md) | 29 |
-| [`a-second-adopter-is-served`](plan-status/a-second-adopter-is-served.md) | 105 |
+| [`a-second-adopter-is-served`](plan-status/a-second-adopter-is-served.md) | 113 |
 | [`a-session-proceeds-through-the-mesh`](plan-status/a-session-proceeds-through-the-mesh.md) | 40 |
 | [`a-test-fails-when-the-code-is-wrong`](plan-status/a-test-fails-when-the-code-is-wrong.md) | 41 |
 | [`a-version-follows-the-work`](plan-status/a-version-follows-the-work.md) | 17 |
-| [`adopter-upgrades`](plan-status/adopter-upgrades.md) | 530 |
+| [`adopter-upgrades`](plan-status/adopter-upgrades.md) | 533 |
 | [`an-authorised-node-connects-from-anywhere`](plan-status/an-authorised-node-connects-from-anywhere.md) | 3 |
 | [`an-outcome-becomes-a-reviewed-plan`](plan-status/an-outcome-becomes-a-reviewed-plan.md) | 11 |
-| [`an-unmet-criterion-is-drafted-into-work`](plan-status/an-unmet-criterion-is-drafted-into-work.md) | 111 |
+| [`an-unmet-criterion-is-drafted-into-work`](plan-status/an-unmet-criterion-is-drafted-into-work.md) | 112 |
 | [`architecture-is-enforced`](plan-status/architecture-is-enforced.md) | 2 |
 | [`automation`](plan-status/automation.md) | 48 |
 | [`campaigns-are-read-as-provenance`](plan-status/campaigns-are-read-as-provenance.md) | 17 |
 | [`capability-graph`](plan-status/capability-graph.md) | 11 |
-| [`ci-critical-path`](plan-status/ci-critical-path.md) | 319 |
+| [`ci-critical-path`](plan-status/ci-critical-path.md) | 321 |
 | [`command-and-deployment-criteria-are-judged`](plan-status/command-and-deployment-criteria-are-judged.md) | 5 |
 | [`delivery-economics-are-measured-over-declared-windows`](plan-status/delivery-economics-are-measured-over-declared-windows.md) | 1 |
 | [`derived-data-integrity`](plan-status/derived-data-integrity.md) | 25 |
-| [`development-runtime`](plan-status/development-runtime.md) | 879 |
+| [`development-runtime`](plan-status/development-runtime.md) | 884 |
 | [`every-session-joins-the-mesh`](plan-status/every-session-joins-the-mesh.md) | 13 |
-| [`every-sessions-usage-is-observed`](plan-status/every-sessions-usage-is-observed.md) | 53 |
+| [`every-sessions-usage-is-observed`](plan-status/every-sessions-usage-is-observed.md) | 54 |
 | [`every-surface-follows-what-changed`](plan-status/every-surface-follows-what-changed.md) | 15 |
 | [`every-task-states-its-delivery-economics`](plan-status/every-task-states-its-delivery-economics.md) | 7 |
 | [`everything-is-followed-in-one-stream`](plan-status/everything-is-followed-in-one-stream.md) | 6 |
 | [`external-workspaces`](plan-status/external-workspaces.md) | 27 |
 | [`failure-is-visible`](plan-status/failure-is-visible.md) | 30 |
 | [`fly-deployment`](plan-status/fly-deployment.md) | 66 |
-| [`idd-reads-at-a-glance`](plan-status/idd-reads-at-a-glance.md) | 2963 |
+| [`idd-reads-at-a-glance`](plan-status/idd-reads-at-a-glance.md) | 2979 |
 | [`intent-lifecycle`](plan-status/intent-lifecycle.md) | 60 |
 | [`knowledge-acts-on-what-it-learns`](plan-status/knowledge-acts-on-what-it-learns.md) | 76 |
 | [`landing-survives-any-session`](plan-status/landing-survives-any-session.md) | 9 |
-| [`mcp-transports-are-reliable`](plan-status/mcp-transports-are-reliable.md) | 172 |
+| [`mcp-transports-are-reliable`](plan-status/mcp-transports-are-reliable.md) | 173 |
 | [`measurements-are-tracked-over-time`](plan-status/measurements-are-tracked-over-time.md) | 11 |
 | [`merging-and-referencing-are-enforced`](plan-status/merging-and-referencing-are-enforced.md) | 34 |
 | [`mesh-journal-converges`](plan-status/mesh-journal-converges.md) | 129 |
@@ -527,21 +528,21 @@ Generated from canonical inputs `b44367e79ca0`.
 | [`prismatic-lumen`](plan-status/prismatic-lumen.md) | 8 |
 | [`public-proof`](plan-status/public-proof.md) | 134 |
 | [`repository-automation-is-typed`](plan-status/repository-automation-is-typed.md) | 30 |
-| [`runtime-adapters`](plan-status/runtime-adapters.md) | 91 |
+| [`runtime-adapters`](plan-status/runtime-adapters.md) | 92 |
 | [`runtime-lifecycle`](plan-status/runtime-lifecycle.md) | 43 |
 | [`runtime-trust`](plan-status/runtime-trust.md) | 26 |
-| [`safe-self-update`](plan-status/safe-self-update.md) | 431 |
-| [`surfaces-never-disagree`](plan-status/surfaces-never-disagree.md) | 285 |
+| [`safe-self-update`](plan-status/safe-self-update.md) | 434 |
+| [`surfaces-never-disagree`](plan-status/surfaces-never-disagree.md) | 287 |
 | [`test-evidence`](plan-status/test-evidence.md) | 15 |
 | [`the-corpus-is-registered-before-it-runs`](plan-status/the-corpus-is-registered-before-it-runs.md) | 4 |
-| [`the-mesh-works-out-of-the-box`](plan-status/the-mesh-works-out-of-the-box.md) | 181 |
+| [`the-mesh-works-out-of-the-box`](plan-status/the-mesh-works-out-of-the-box.md) | 182 |
 | [`the-plan-says-what-a-fix-unblocks`](plan-status/the-plan-says-what-a-fix-unblocks.md) | 23 |
 | [`the-proof-scorecard-is-published`](plan-status/the-proof-scorecard-is-published.md) | 3 |
 | [`the-proof-tests-are-registered-before-they-run`](plan-status/the-proof-tests-are-registered-before-they-run.md) | 11 |
 | [`the-session-domain-is-written-once`](plan-status/the-session-domain-is-written-once.md) | 11 |
 | [`the-ui-runs-and-explains`](plan-status/the-ui-runs-and-explains.md) | 9 |
 | [`the-ui-works-on-a-phone`](plan-status/the-ui-works-on-a-phone.md) | 13 |
-| [`truthful-plan-surfaces`](plan-status/truthful-plan-surfaces.md) | 240 |
+| [`truthful-plan-surfaces`](plan-status/truthful-plan-surfaces.md) | 243 |
 | [`two-folder-integration`](plan-status/two-folder-integration.md) | 7 |
 | [`web-sign-in`](plan-status/web-sign-in.md) | 32 |
 | [`work-graph-github`](plan-status/work-graph-github.md) | 5 |
