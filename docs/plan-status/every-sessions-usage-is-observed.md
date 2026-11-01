@@ -48,6 +48,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I3292` | shares apps/majordomus-cli/src/economics with I3378; they may not run concurrently |
 | WARN | `scope_conflict` | `I3292` | shares apps/majordomus-cli/src/economics with I3382; they may not run concurrently |
 | WARN | `scope_conflict` | `I3292` | shares apps/majordomus-cli/src/economics with I3390; they may not run concurrently |
+| WARN | `scope_conflict` | `I3292` | shares docs/generated/economics.json with I3668; they may not run concurrently |
 | WARN | `scope_conflict` | `I3298` | shares apps/majordomus-cli/src/economics with I3366; they may not run concurrently |
 | WARN | `scope_conflict` | `I3298` | shares docs/generated/economics.json with I3757; they may not run concurrently |
 | WARN | `scope_conflict` | `I3298` | shares docs/generated/economics.json with I3762; they may not run concurrently |

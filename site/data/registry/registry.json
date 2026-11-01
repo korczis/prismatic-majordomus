@@ -6,23 +6,23 @@
     "version": "1.0.0-alpha.10"
   },
   "registry": {
-    "fingerprint": "cc9dfc7440e849f7ae318d91aa14dbb563ddb53691110d8224b774189334c1f5",
+    "fingerprint": "d5e8b41eb5eeced7761f9c2661318301b5e57ced8354f254abc8f1a66a8b54de",
     "summary": {
-      "total": 3728,
+      "total": 3729,
       "builtin": 220,
-      "declarative": 3508,
+      "declarative": 3509,
       "by_kind": {
         "command": 36,
         "query": 184,
-        "resource": 3508
+        "resource": 3509
       },
       "by_stability": {
         "behaviorally_verified": 147,
         "experimental": 63,
-        "implemented": 3518
+        "implemented": 3519
       },
       "mcp_tools": 206,
-      "mcp_resources": 3565,
+      "mcp_resources": 3566,
       "http_routes": 212,
       "cli_commands": 120,
       "modules": 94,
@@ -91407,7 +91407,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 1156,
+        "capabilities": 1157,
         "capability_ids": []
       },
       {
@@ -92097,7 +92097,7 @@
     ]
   },
   "index": {
-    "fingerprint": "3090325deb7958157829ab237390785703428ed455f9d7510c30d9104dfe66b4",
+    "fingerprint": "8b8de7317ed03c03d03dd8d09642b525593c32400462f3af5ebceab1ab9b06f3",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -92137,7 +92137,7 @@
       "gap": 5,
       "implementation": 52,
       "intent": 44,
-      "issue": 1156,
+      "issue": 1157,
       "knowledge": 86,
       "mesh-declaration": 1,
       "milestone": 114,
@@ -99609,7 +99609,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 126535
+        "bytes": 126842
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -109442,7 +109442,7 @@
         "path": ".ai/repo/project/issues/I3013.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 3743
+        "bytes": 3737
       },
       {
         "uri": "majordomus://issue/I3014",
@@ -113326,6 +113326,17 @@
         "section": "project",
         "source_class": "issue",
         "bytes": 2454
+      },
+      {
+        "uri": "majordomus://issue/I3668",
+        "kind": "issue",
+        "identity": "I3668",
+        "title": "The evidence receipt names what the plan owed each producer, so an absence is not_required, missing, interrupted or refused, never guessed from the disk",
+        "description": "Tell scripts/ci/evidence-collect what the plan owed (`--obligation suite|crate|coverage=REQUIRED:RESULT`, `--planner`) and have it write receipt.json on every gather: each producer recorded, not_required (with the reason and the planner), missing, interrupted or refused. A required suite or crate that is missing, refused or left by a cancelled job fails the gather after the receipt names which; coverage is receipted and fails nothing. validate.yml's evidence job runs on every decided, uncancelled plan, passes each producer's obligation from the plan output that selects it with its own job's result, builds the executable and downloads reports only when a test report is owed, keeps the receipt as the artifact evidence-receipt on every run, and keeps the artifact evidence and the publication refresh for a run that recorded something.",
+        "path": ".ai/repo/project/issues/I3668.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 4482
       },
       {
         "uri": "majordomus://issue/I3750",
@@ -126800,12 +126811,12 @@
         "bytes": 4296
       },
       {
-        "uri": "majordomus://test/test/cases/3402_a_records_only_plan_skips_the_evidence_job.sh",
+        "uri": "majordomus://test/test/cases/3402_a_records_only_plan_owes_no_test_report.sh",
         "kind": "test",
-        "identity": "test/cases/3402_a_records_only_plan_skips_the_evidence_job.sh",
-        "path": "test/cases/3402_a_records_only_plan_skips_the_evidence_job.sh",
+        "identity": "test/cases/3402_a_records_only_plan_owes_no_test_report.sh",
+        "path": "test/cases/3402_a_records_only_plan_owes_no_test_report.sh",
         "source_class": "case",
-        "bytes": 4263
+        "bytes": 5699
       },
       {
         "uri": "majordomus://test/test/cases/3405_a_misplaced_artifact_is_refused.sh",
@@ -126965,7 +126976,7 @@
         "identity": "test/cases/357_ci_records_evidence.sh",
         "path": "test/cases/357_ci_records_evidence.sh",
         "source_class": "case",
-        "bytes": 36577
+        "bytes": 40883
       },
       {
         "uri": "majordomus://test/test/cases/358_entry_reports_only_evidence.sh",
@@ -130402,7 +130413,7 @@
       "identity": [
         "id"
       ],
-      "objects": 1156
+      "objects": 1157
     },
     {
       "name": "knowledge",

@@ -48467,7 +48467,7 @@
           "profile": "implementation",
           "scope": [
             ".github/workflows/validate.yml",
-            "test/cases/3402_a_records_only_plan_skips_the_evidence_job.sh",
+            "test/cases/3402_a_records_only_plan_owes_no_test_report.sh",
             ".ai/repo/project/issues/I3013.yaml",
             "site"
           ],
@@ -48476,7 +48476,7 @@
           "started_event": "sha256:f10024b6b4e6e42483cfdb1c2c6eba3ef3071d27b564fc12d2cc319143a248a3",
           "updated_at": "2026-10-23T16:36:36Z",
           "validation": [
-            "bash test/run.sh 3402_a_records_only_plan_skips_the_evidence_job",
+            "bash test/run.sh 3402_a_records_only_plan_owes_no_test_report",
             "bash test/run.sh 26_ci_wiring",
             "majordomus plan validate",
             "scripts/derive-check"
@@ -64676,6 +64676,49 @@
           "updated_at": "2026-10-21",
           "validation": [
             "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test economics"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I3668",
+        "kind": "issue",
+        "label": "I3668",
+        "summary": "The evidence receipt names what the plan owed each producer, so an absence is not_required, missing, interrupted or refused, never guessed from the disk",
+        "route": "/cockpit/objects/issue/i3668",
+        "source": ".ai/repo/project/issues/I3668.yaml",
+        "facts": {
+          "created_at": "2026-10-22",
+          "depends_on": [
+            "I3013"
+          ],
+          "evidence_required": [
+            "records_only_plan_receipt"
+          ],
+          "milestone": "test-evidence",
+          "non_scope": [
+            "Reusing an earlier run's evidence for an equivalent tree: a later increment, which needs the provenance of inputs, toolchain and policy",
+            "Run-attempt identity of a report: a re-run that downloads an earlier attempt's artifact is not yet told apart",
+            "The gate receipts of scripts/ci/verdict and step-bound-check (MJ_CI_RECEIPTS), which already require a receipt per gate"
+          ],
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "scripts/ci/evidence-collect",
+            ".github/workflows/validate.yml",
+            "test/cases/357_ci_records_evidence.sh",
+            "test/cases/3402_a_records_only_plan_owes_no_test_report.sh",
+            ".ai/repo/project/issues/I3668.yaml",
+            ".ai/repo/project/issues/I3013.yaml",
+            "docs/generated",
+            "site"
+          ],
+          "slug": "the-evidence-receipt-names-each-producers-obligation",
+          "updated_at": "2026-10-22",
+          "validation": [
+            "bash test/run.sh 357_ci_records_evidence",
+            "bash test/run.sh 3402_a_records_only_plan_owes_no_test_report",
+            "scripts/ci/step-bound-check --gates .ai/repo/ci/gates.yaml .github/workflows/validate.yml",
+            "majordomus plan validate"
           ]
         }
       },
@@ -100459,11 +100502,11 @@
         "source": "test/cases/3401_a_hero_link_with_a_fragment_resolves_to_its_id.sh"
       },
       {
-        "id": "majordomus://test/test/cases/3402_a_records_only_plan_skips_the_evidence_job.sh",
+        "id": "majordomus://test/test/cases/3402_a_records_only_plan_owes_no_test_report.sh",
         "kind": "test",
-        "label": "test/cases/3402_a_records_only_plan_skips_the_evidence_job.sh",
-        "route": "/cockpit/objects/test/test-cases-3402-a-records-only-plan-skips-the-evidence-job-sh",
-        "source": "test/cases/3402_a_records_only_plan_skips_the_evidence_job.sh"
+        "label": "test/cases/3402_a_records_only_plan_owes_no_test_report.sh",
+        "route": "/cockpit/objects/test/test-cases-3402-a-records-only-plan-owes-no-test-report-sh",
+        "source": "test/cases/3402_a_records_only_plan_owes_no_test_report.sh"
       },
       {
         "id": "majordomus://test/test/cases/3405_a_misplaced_artifact_is_refused.sh",
@@ -138294,6 +138337,21 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I3668",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I3668",
+        "target": "majordomus://issue/I3013",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I3668",
+        "target": "majordomus://milestone/test-evidence",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://issue/I3750",
         "target": "kind:issue",
         "kind": "is_a"
@@ -147864,7 +147922,7 @@
         "kind": "is_a"
       },
       {
-        "source": "majordomus://test/test/cases/3402_a_records_only_plan_skips_the_evidence_job.sh",
+        "source": "majordomus://test/test/cases/3402_a_records_only_plan_owes_no_test_report.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -153610,8 +153668,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4192,
-      "edges": 9633,
+      "nodes": 4193,
+      "edges": 9636,
       "acyclic": false,
       "truncated": false
     }

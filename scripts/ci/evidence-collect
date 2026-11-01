@@ -3,6 +3,7 @@
 #
 #   scripts/ci/evidence-collect --out DIR [--suite TSV] [--suite-tree JSON]
 #                               [--crate-output FILE] [--crate-tree JSON] [--coverage EXPORT]
+#                               [--obligation PRODUCER=REQUIRED:RESULT ...] [--planner TEXT]
 #   scripts/ci/evidence-collect --refresh-publication
 #
 # --out gathers, and the report comes first. Before anything is recorded, this measures the
@@ -36,9 +37,28 @@
 #
 # Every input is optional, because a job the plan skipped, or one that died before writing its
 # report, leaves nothing; what is absent is named in the manifest and never read as a pass, and
-# so is a report that yielded no execution at all. MAJORDOMUS_BIN names the executable. Exit 0
-# gathered, 10 the recording was refused, 12 nothing to gather (no report, or every report
-# refused) or no executable, 2 usage.
+# so is a report that yielded no execution at all. MAJORDOMUS_BIN names the executable.
+#
+# What the plan owed decides what an absence means (I3668). `--obligation suite=true:success`
+# says the plan selected the suite and its job concluded `success`; `crate` and `coverage` are
+# the other producers, REQUIRED is `true` or `false`, RESULT is the job's result. `--planner`
+# names the plan that decided it (validate.yml passes its mode). Each producer given an
+# obligation gets one state in `receipt.json`, written on every gather:
+#
+#   recorded      its report was recorded
+#   not_required  the plan selected no lane of it; the reason and the planner are kept
+#   missing       the plan required it, its job concluded, and it left no report
+#   interrupted   the plan required it and its job was cancelled; never a pass
+#   refused       its report was measured on another commit, or not measured at all
+#
+# A required suite or crate that is missing, interrupted or refused fails the gather, after the
+# receipt is written; coverage is receipted and never fails it. With nothing required and no
+# report, the receipt is the whole result: no manifest, no executable needed, exit 0. Without
+# any --obligation the collector behaves as before and an empty gather is exit 12.
+#
+# Exit 0 gathered (or nothing was owed), 10 the recording was refused, 12 nothing to gather
+# without obligations, a required report missing or refused, or no executable, 13 a required
+# producer was interrupted, 2 usage.
 #
 # --refresh-publication dispatches the pages workflow when this run's commit is still the tip of
 # master, so the site republishes with the evidence of the commit it shows. When master has
@@ -51,8 +71,11 @@ set -eu
 set -o pipefail
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 OUT="" SUITE="" SUITE_TREE="" CRATE_OUT="" CRATE_TREE="" COVERAGE="" REFRESH=0
+OBLIGATIONS="" PLANNER=""
 while [ $# -gt 0 ]; do
   case "$1" in
+    --obligation) OBLIGATIONS="$OBLIGATIONS $2"; shift 2 ;;
+    --planner) PLANNER="$2"; shift 2 ;;
     --out) OUT="$2"; shift 2 ;;
     --suite) SUITE="$2"; shift 2 ;;
     --suite-tree) SUITE_TREE="$2"; shift 2 ;;
@@ -60,7 +83,7 @@ while [ $# -gt 0 ]; do
     --crate-tree) CRATE_TREE="$2"; shift 2 ;;
     --coverage) COVERAGE="$2"; shift 2 ;;
     --refresh-publication) REFRESH=1; shift ;;
-    -h|--help) sed -n '2,44p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+    -h|--help) sed -n '2,66p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
     *) echo "evidence-collect: unknown option $1" >&2; exit 2 ;;
   esac
 done
@@ -86,11 +109,83 @@ fi
 # ---------------------------------------------------------------- gather
 [ -n "$OUT" ] || { echo "evidence-collect: --out is required" >&2; exit 2; }
 BIN="${MAJORDOMUS_BIN:-}"
-[ -n "$BIN" ] && [ -x "$BIN" ] || { echo "evidence-collect: MAJORDOMUS_BIN names no executable" >&2; exit 12; }
 abs() { case "$1" in /*) printf '%s' "$1" ;; *) printf '%s/%s' "$PWD" "$1" ;; esac; }
 present() { [ -n "$1" ] && [ -s "$1" ]; }
+
+# What the plan owed, one PRODUCER=REQUIRED:RESULT per --obligation, checked before anything is
+# read: a malformed obligation is a usage error, never an obligation quietly dropped.
+for o in $OBLIGATIONS; do
+  p="${o%%=*}" rest="${o#*=}"
+  req="${rest%%:*}" res="${rest#*:}"
+  case "$p" in suite|crate|coverage) ;; *) echo "evidence-collect: --obligation names no producer: $o" >&2; exit 2 ;; esac
+  case "$req" in true|false) ;; *) echo "evidence-collect: --obligation's REQUIRED is true or false: $o" >&2; exit 2 ;; esac
+  case "$res" in success|failure|cancelled|skipped|"") ;; *) echo "evidence-collect: --obligation's RESULT is not a job result: $o" >&2; exit 2 ;; esac
+  [ "$rest" != "$o" ] && [ "${rest#*:}" != "$rest" ] || { echo "evidence-collect: --obligation is PRODUCER=REQUIRED:RESULT: $o" >&2; exit 2; }
+done
+obligation_of() { # obligation_of <producer> — its REQUIRED:RESULT, or nothing when none was given
+  local o; for o in $OBLIGATIONS; do [ "${o%%=*}" = "$1" ] && { printf '%s' "${o#*=}"; return 0; }; done; return 0
+}
 mkdir -p "$OUT"; OUT="$(cd "$OUT" && pwd)"
 commit="$(git -C "$ROOT" rev-parse HEAD)"
+
+# The state of one producer that was given an obligation (I3668). A refusal and a cancellation
+# outrank a report's presence: a report measured elsewhere, or left by a job that was stopped,
+# is never this commit's evidence.
+state_of() {
+  local ob req res rep
+  ob="$(obligation_of "$1")"; req="${ob%%:*}" res="${ob#*:}"
+  case "$1" in suite) rep="$SUITE" ;; crate) rep="$CRATE_OUT" ;; coverage) rep="$COVERAGE" ;; esac
+  if jq -e --arg r "$1" 'any(.[]; .runner == $r)' <<<"$refused" >/dev/null; then echo refused; return; fi
+  if [ "$req" = true ] && [ "$res" = cancelled ]; then echo interrupted; return; fi
+  if present "$rep"; then echo recorded; return; fi
+  if [ "$req" = true ]; then echo missing; else echo not_required; fi
+}
+# receipt.json: what the plan owed and what each producer did about it, written on every gather
+# that was given obligations, before the gather's verdict.
+write_receipt() {
+  local entries="[]" p ob st reason
+  for p in suite crate coverage; do
+    ob="$(obligation_of "$p")"; [ -n "$ob" ] || continue
+    st="$(state_of "$p")"
+    case "$st" in
+      recorded) reason="" ;;
+      not_required) reason="the plan selected no lane that produces the $p report" ;;
+      missing) reason="the plan required the $p report and its job concluded ${ob#*:} without leaving one" ;;
+      interrupted) reason="the plan required the $p report and its job was cancelled" ;;
+      refused) reason="$(jq -r --arg r "$p" 'map(select(.runner == $r))[0].reason' <<<"$refused")" ;;
+    esac
+    entries="$(jq -c --arg p "$p" --arg req "${ob%%:*}" --arg res "${ob#*:}" --arg st "$st" --arg why "$reason" \
+      '. + [{producer: $p, required: ($req == "true"), job: (if $res == "" then null else $res end),
+             state: $st, reason: (if $why == "" then null else $why end)}]' <<<"$entries")"
+  done
+  jq -n --arg commit "$commit" --arg head "${MJ_RUN_HEAD_SHA:-}" --arg event "${GITHUB_EVENT_NAME:-}" \
+    --arg planner "$PLANNER" --arg at "$(date -u +%Y-%m-%dT%H:%M:%SZ)" --argjson obligations "$entries" '{
+      schema: 1,
+      commit: $commit,
+      head_sha: (if $head != "" then $head else $commit end),
+      event: (if $event != "" then $event else null end),
+      produced_at: $at,
+      planner: (if $planner != "" then $planner else null end),
+      obligations: $obligations
+    }' > "$OUT/receipt.json"
+}
+# The gather's verdict on what was owed: 13 when a required suite or crate was interrupted, 12
+# when one is missing or refused, 0 otherwise. Coverage is receipted and decides nothing here.
+obligation_exit() {
+  local code=0 p
+  for p in suite crate; do
+    [ "$(obligation_of "$p" | cut -d: -f1)" = true ] || continue
+    case "$(state_of "$p")" in
+      interrupted) code=13 ;;
+      missing|refused) [ "$code" = 13 ] || code=12 ;;
+    esac
+  done
+  printf '%s' "$code"
+}
+receipt_line() {
+  jq -r '"evidence-collect: owed at \(.commit[0:12]): "
+    + (.obligations | map("\(.producer) \(.state)") | join(", "))' "$OUT/receipt.json"
+}
 
 # What a producing job measured of the tree it ran in, as JSON, or `null`. A file that is not a
 # measurement is no measurement: that tree is unknown, never clean.
@@ -128,11 +223,25 @@ for runner in suite crate; do
   fi
   set -- "$@" "$option" "$(abs "$report")" --provenance "$runner=$(abs "$tree_file")"
 done
-[ -n "$given" ] || { echo "evidence-collect: no report to record: the suite and the crate both left none" >&2; exit 12; }
-[ $# -gt 0 ] || {
-  echo "evidence-collect: no report to record: every report was refused: $(jq -r 'map("\(.runner) (\(.reason))") | join("; ")' <<<"$refused")" >&2
+if [ -z "$given" ] || [ $# -eq 0 ]; then
+  # Nothing to record. Given obligations, that is an answer when nothing was owed, and a named
+  # failure when something was: the receipt says which.
+  if [ -n "$OBLIGATIONS" ]; then
+    write_receipt
+    code="$(obligation_exit)"
+    receipt_line
+    [ "$code" = 0 ] || jq -r '.obligations[] | select(.state != "recorded" and .state != "not_required")
+      | "evidence-collect: \(.producer): \(.reason)"' "$OUT/receipt.json" >&2
+    exit "$code"
+  fi
+  if [ -z "$given" ]; then
+    echo "evidence-collect: no report to record: the suite and the crate both left none" >&2
+  else
+    echo "evidence-collect: no report to record: every report was refused: $(jq -r 'map("\(.runner) (\(.reason))") | join("; ")' <<<"$refused")" >&2
+  fi
   exit 12
-}
+fi
+[ -n "$BIN" ] && [ -x "$BIN" ] || { echo "evidence-collect: MAJORDOMUS_BIN names no executable" >&2; exit 12; }
 
 # The report, before this run's rows exist: the tracked ledger's verdict, on the checkout
 # measured first. A dirty checkout is said, with what made it dirty, and the publication reads
@@ -226,3 +335,14 @@ echo "evidence-collect: $(jq -r '
   + (if (.absent | length) > 0 then ", absent: " + (.absent | join(", ")) else "" end)
   + (if (.refused | length) > 0 then "; refused: " + (.refused | map("\(.runner) (\(.reason))") | join("; ")) else "" end)
   + "; the trees its jobs ran in: \(.working_tree); the checkout the report was derived in: \(.report_tree)"' "$OUT/manifest.json")"
+
+# What was owed, after what was recorded: a run that recorded the suite but owed the crate's
+# tests and got none is gathered and still fails, with the receipt saying why.
+if [ -n "$OBLIGATIONS" ]; then
+  write_receipt
+  receipt_line
+  code="$(obligation_exit)"
+  [ "$code" = 0 ] || jq -r '.obligations[] | select(.state != "recorded" and .state != "not_required")
+    | "evidence-collect: \(.producer): \(.reason)"' "$OUT/receipt.json" >&2
+  exit "$code"
+fi

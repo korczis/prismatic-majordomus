@@ -41,6 +41,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I2700` | shares apps/majordomus-cli/src/http/router.rs with I3176; they may not run concurrently |
 | WARN | `scope_conflict` | `I2700` | shares apps/majordomus-cli/src/http/router.rs with I3288; they may not run concurrently |
 | WARN | `scope_conflict` | `I2700` | shares test/cases with I3378; they may not run concurrently |
+| WARN | `scope_conflict` | `I2700` | shares test/cases with I3668; they may not run concurrently |
 | WARN | `scope_conflict` | `I2700` | shares test/cases with I3825; they may not run concurrently |
 | WARN | `scope_conflict` | `I2700` | shares test/cases with I3837; they may not run concurrently |
 | WARN | `scope_conflict` | `I2700` | shares test/cases with I3843; they may not run concurrently |
