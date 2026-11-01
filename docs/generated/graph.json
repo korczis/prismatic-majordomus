@@ -8261,34 +8261,6 @@
         }
       },
       {
-        "id": "majordomus://adr/adr-0173",
-        "kind": "adr",
-        "label": "adr-0173",
-        "summary": "A screen behind the repository says why it is behind, and a page follows the repository by a pulse instead of by the minute",
-        "route": "/cockpit/objects/adr/adr-0173",
-        "source": ".ai/repo/adrs/0173-a-screen-behind-the-repository-says-why.md",
-        "status": "proposed",
-        "facts": {
-          "date": "2026-10-17",
-          "related": [
-            "file:.ai/repo/adrs/0142-no-screen-waits-for-a-source.md",
-            "file:.ai/repo/adrs/0158-the-observatory-draws-only-what-was-observed.md",
-            "file:.ai/repo/adrs/0135-majordomus-ui-is-the-primary-surface.md",
-            "file:.ai/repo/rules/project/ui-derived-state.v1.md",
-            "test:test/cases/3095_a_display_behind_the_repository_says_why.sh",
-            "file:apps/majordomus-cli/src/live.rs",
-            "file:apps/majordomus-cli/src/ui/mod.rs",
-            "file:share/ui/ui.js",
-            "file:share/ui/observatory.js"
-          ],
-          "tags": [
-            "ui",
-            "observatory",
-            "freshness"
-          ]
-        }
-      },
-      {
         "id": "majordomus://adr/adr-0175",
         "kind": "adr",
         "label": "adr-0175",
@@ -9653,6 +9625,34 @@
             "delivery",
             "pages",
             "plan"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://adr/adr-0231",
+        "kind": "adr",
+        "label": "adr-0231",
+        "summary": "A screen behind the repository says why it is behind, and a page follows the repository by a pulse instead of by the minute",
+        "route": "/cockpit/objects/adr/adr-0231",
+        "source": ".ai/repo/adrs/0231-a-screen-behind-the-repository-says-why.md",
+        "status": "proposed",
+        "facts": {
+          "date": "2026-10-17",
+          "related": [
+            "file:.ai/repo/adrs/0142-no-screen-waits-for-a-source.md",
+            "file:.ai/repo/adrs/0158-the-observatory-draws-only-what-was-observed.md",
+            "file:.ai/repo/adrs/0135-majordomus-ui-is-the-primary-surface.md",
+            "file:.ai/repo/rules/project/ui-derived-state.v1.md",
+            "test:test/cases/3095_a_display_behind_the_repository_says_why.sh",
+            "file:apps/majordomus-cli/src/live.rs",
+            "file:apps/majordomus-cli/src/ui/mod.rs",
+            "file:share/ui/ui.js",
+            "file:share/ui/observatory.js"
+          ],
+          "tags": [
+            "ui",
+            "observatory",
+            "freshness"
           ]
         }
       },
@@ -114245,56 +114245,6 @@
         "kind": "put_in_force"
       },
       {
-        "source": "majordomus://adr/adr-0173",
-        "target": "file:apps/majordomus-cli/src/live.rs",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0173",
-        "target": "file:apps/majordomus-cli/src/ui/mod.rs",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0173",
-        "target": "file:share/ui/observatory.js",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0173",
-        "target": "file:share/ui/ui.js",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0173",
-        "target": "kind:adr",
-        "kind": "is_a"
-      },
-      {
-        "source": "majordomus://adr/adr-0173",
-        "target": "majordomus://adr/adr-0135",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0173",
-        "target": "majordomus://adr/adr-0142",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0173",
-        "target": "majordomus://adr/adr-0158",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0173",
-        "target": "majordomus://rule/project.ui-derived-state@1",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0173",
-        "target": "majordomus://test/test/cases/3095_a_display_behind_the_repository_says_why.sh",
-        "kind": "put_in_force"
-      },
-      {
         "source": "majordomus://adr/adr-0175",
         "target": "kind:adr",
         "kind": "is_a"
@@ -116983,6 +116933,56 @@
         "source": "majordomus://adr/adr-0227",
         "target": "kind:adr",
         "kind": "is_a"
+      },
+      {
+        "source": "majordomus://adr/adr-0231",
+        "target": "file:apps/majordomus-cli/src/live.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0231",
+        "target": "file:apps/majordomus-cli/src/ui/mod.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0231",
+        "target": "file:share/ui/observatory.js",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0231",
+        "target": "file:share/ui/ui.js",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0231",
+        "target": "kind:adr",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://adr/adr-0231",
+        "target": "majordomus://adr/adr-0135",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0231",
+        "target": "majordomus://adr/adr-0142",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0231",
+        "target": "majordomus://adr/adr-0158",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0231",
+        "target": "majordomus://rule/project.ui-derived-state@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0231",
+        "target": "majordomus://test/test/cases/3095_a_display_behind_the_repository_says_why.sh",
+        "kind": "put_in_force"
       },
       {
         "source": "majordomus://application/ci-gated-project",

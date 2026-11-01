@@ -275,7 +275,7 @@ screen is drawn from the generation the server has, opens with "The repository c
 screen shows it as it was, and is being read again", and the next generation loads behind it.
 When that reload **fails**, the screen says that instead, with the first line of what the load
 said, the generation it shows and the seconds to the next attempt (`data-reload-failed`;
-[ADR 0173](https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/adrs/0173-a-screen-behind-the-repository-says-why.md)).
+[ADR 0231](https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/adrs/0231-a-screen-behind-the-repository-says-why.md)).
 An answer over the API, MCP or the command line still waits for the generation its caller
 saw.
 

@@ -1,6 +1,6 @@
 ---
 schema: adr/v1
-id: adr-0173
+id: adr-0231
 kind: adr
 title: A screen behind the repository says why it is behind, and a page follows the repository by a pulse instead of by the minute
 status: proposed
