@@ -9,7 +9,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 
 | milestone | status | done of required | ready | blocked | active | verify | cancelled | outcome |
 |---|---|---|---|---|---|---|---|---|
-| [truthful-plan-surfaces](https://majordomus.dev/plan/truthful-plan-surfaces/) | ACTIVE | 21/46 | 20 | 5 | 0 | 0 | 0 | Every plan surface draws every milestone in the graph's order, each issue with its declared status beside the delivery stage inferred from branches, pull requests, merges, tags and the published site; a merged but unrecorded issue turns the trunk red past a window; no milestone carries a typed version; every relationship is a drawn, clickable diagram; every code block is highlighted by one engine with one token-derived palette. |
+| [truthful-plan-surfaces](https://majordomus.dev/plan/truthful-plan-surfaces/) | ACTIVE | 21/47 | 21 | 5 | 0 | 0 | 0 | Every plan surface draws every milestone in the graph's order, each issue with its declared status beside the delivery stage inferred from branches, pull requests, merges, tags and the published site; a merged but unrecorded issue turns the trunk red past a window; no milestone carries a typed version; every relationship is a drawn, clickable diagram; every code block is highlighted by one engine with one token-derived palette. |
 
 ## Issues
 
@@ -61,6 +61,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | [I3918](https://majordomus.dev/plan/i3918/) | DONE | 0 | — | README, CONTRIBUTING and the homepage say truthfully how big the tool is and what its registry counts are |
 | [I4315](https://majordomus.dev/plan/i4315/) | DONE | 0 | — | The deployed stage reads the release pointer where the Pages deployment published it, and a deploy whose pointer it cannot read is red |
 | [I4525](https://majordomus.dev/plan/i4525/) | READY | 1 | I4315 | The deployed stage reads unknown, not 0, while the forge's deployment record is absent or older than the pointer majordomus.dev serves |
+| [I4526](https://majordomus.dev/plan/i4526/) | READY | 3 | I2749 | An ADR edited in place only plans; a commit that adds or removes one still delivers |
 
 ## Findings
 
@@ -208,6 +209,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I3751` | shares site/content/roadmap.md with I3841; they may not run concurrently |
 | WARN | `scope_conflict` | `I3751` | shares site/templates/roadmap.html with I4298; they may not run concurrently |
 | WARN | `scope_conflict` | `I3751` | shares site/templates/roadmap.html with I4400; they may not run concurrently |
+| WARN | `scope_conflict` | `I3754` | shares apps/majordomus-cli/src/plan/delivery.rs with I4526; they may not run concurrently |
 | WARN | `scope_conflict` | `I3756` | shares apps/majordomus-cli/src/ui/mod.rs with I3941; they may not run concurrently |
 | WARN | `scope_conflict` | `I3756` | shares apps/majordomus-cli/src/ui/roadmap.rs with I4327; they may not run concurrently |
 | WARN | `scope_conflict` | `I3757` | shares apps/majordomus-cli/src/plan.rs with I3762; they may not run concurrently |

@@ -77350,6 +77350,43 @@
         }
       },
       {
+        "id": "majordomus://issue/I4526",
+        "kind": "issue",
+        "label": "I4526",
+        "summary": "An ADR edited in place only plans; a commit that adds or removes one still delivers",
+        "route": "/cockpit/objects/issue/i4526",
+        "source": ".ai/repo/project/issues/I4526.yaml",
+        "facts": {
+          "created_at": "2026-10-31",
+          "depends_on": [
+            "I2749"
+          ],
+          "evidence_required": [
+            "decision_record_edit_is_not_delivery"
+          ],
+          "milestone": "truthful-plan-surfaces",
+          "non_scope": [
+            "Reading what an ADR edit changed (a status line, a paragraph): an in-place edit of a record is planning whatever it says.",
+            "Writing or correcting a lifecycle stamp of I4468, I4469, I2673 or I2674 from inference: a merge is not acceptance (ADR 0166, alternatives).",
+            "Decision records outside .ai/repo/adrs/, or a renamed record: a rename reaches diff-tree as a delete and an add and stays delivery."
+          ],
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/plan/delivery.rs",
+            "docs/PLANNING.md",
+            ".ai/repo/project/issues/I4526.yaml"
+          ],
+          "slug": "an-adr-edited-in-place-only-plans",
+          "updated_at": "2026-10-31",
+          "validation": [
+            "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --lib plan::delivery",
+            "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "label": "a-brief-is-reconciled-not-transcribed",
@@ -142479,6 +142516,21 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I4526",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4526",
+        "target": "majordomus://issue/I2749",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I4526",
+        "target": "majordomus://milestone/truthful-plan-surfaces",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -154465,8 +154517,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4218,
-      "edges": 9698,
+      "nodes": 4219,
+      "edges": 9701,
       "acyclic": false,
       "truncated": false
     }
