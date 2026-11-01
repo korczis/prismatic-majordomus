@@ -27,18 +27,18 @@ validation:
 evidence_required:
   - "anthropic api adapter: request normalisation, credential, usage"
 created_at: 2026-10-20
-updated_at: 2026-10-29T17:56:19Z
-started_at: 2026-10-29T17:51:06Z
-started_event: sha256:1be2e6932a5716fe8a72b505699469e864317fd1b807f9b57b852ce385ee1ec9
-verified_at: 2026-10-29T17:51:38Z
-verified_event: sha256:551a2f97eff04dff966768debf67c89c708cd4bc6d0f34fc1273326d8192ed6e
-completed_at: 2026-10-29T17:56:19Z
-completed_event: sha256:f6a45ed7cd6ce8a7dd62011fa5b1a926292eaf22d7f910c6501b6a3258079dc5
+updated_at: 2026-10-26T11:07:33Z
+started_at: 2026-10-26T11:06:53Z
+started_event: sha256:c7b95f7fdf97c36e0be6c0a17c7dfd08372dba0b15939bef79f292fb7bb83b28
+verified_at: 2026-10-26T11:07:17Z
+verified_event: sha256:286a469f5e49ed053a0f6b89a9a44b18f2ed054f443591ed623802ffd70c5ac7
+completed_at: 2026-10-26T11:07:33Z
+completed_event: sha256:883d6a6453cc5f06b1dc74f5707b5216dfcae5ae89b14f32f8a0d14cd71dbdeb
 evidence:
   - covers: "anthropic api adapter: request normalisation, credential, usage"
-    type: ci
-    command: "node --test scripts/lib/advisors/contract.test.mjs (case 731_advisor_transport_contract, validate suite-shard (4)); env -u ANTHROPIC_API_KEY majordomus reasoning advisors"
-    result: "ok in master validate 40796031054 at 5370ee63d19, suite-shard (4) job 123213269249: case 731 ok, the contract suite with no network, including 'anthropic api adapter: request normalisation, credential, usage' (model from the catalogue, x-api-key from the credential variable, usage input 21 output 9, the credential in no result) and 'absent credential, refusal, 401, 429 and an empty answer are typed' (C1, C3); the adapter has no log, console or file write and returns only text and usage (C3). C2: env -u ANTHROPIC_API_KEY reasoning advisors on this tree reads 'claude-api not_configured api credential_absent' (executable 10791511bdc, whose reasoning sources and share/advisors.yaml equal master's); case 730 ok in suite-shard (2) job 123213269262 lists claude-api with 0 available. C4: share/advisors.yaml's claude-api note says it shares a Claude author's model family. Landed by #1758 (77ee6c30e03). master 51b38035a71 differs from 5370ee63d19 in no file under scripts/lib/advisors, share/advisors.yaml or src/reasoning. The run is red only on rust (3) intent-check and interaction-probe-shard (5), neither this issue's"
-    artifact: "https://github.com/korczis/prismatic-majordomus/actions/runs/40796031054/job/123213269249"
-    commit: 51b38035a7162332304aef58fed25b98761f412b
-    recorded_at: 2026-10-29T17:52:16Z
+    type: test
+    command: "node --test scripts/lib/advisors/contract.test.mjs; env -u ANTHROPIC_API_KEY majordomus reasoning advisors; majordomus reasoning check"
+    result: "at master 6259dac47af: contract suite 21/21 pass with no network (scrub keeps a token and key out of the prompt); with ANTHROPIC_API_KEY unset claude-api is not_configured, credential_absent; reasoning check: no finding; share/advisors.yaml:65 says it shares a Claude author's model family"
+    artifact: "6259dac47af"
+    commit: 6259dac47afb5b01008725c6040f366feb458578
+    recorded_at: 2026-10-26T11:07:09Z
