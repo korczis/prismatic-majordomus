@@ -270,7 +270,7 @@ mj_validate_checkpoint() {
        MJ_DOCTRINE_SKIPPED=1; return 0 ;;
   esac
   local id cp interval now_e cp_e age; id="$(mj_cur id)"
-  cp="$(mj_cur checkpoint_at)"; interval="$(mj_duration_secs "$(mj_pro checkpoint_interval)")" || interval=900
+  cp="$(mj_cur checkpoint_at)"; interval="$(mj_limit checkpoint_max_age_seconds)"; [ -n "$interval" ] || interval=900
   now_e="$(mj_epoch "$(mj_now)")"; cp_e="$(mj_epoch "$cp")"
   if [ -z "$cp_e" ]; then
     mj_doctrine_fail checkpoint "$id" "checkpoint_at '$cp' is missing or is not a timestamp this platform can read" "grep -n checkpoint_at $(mj_rel "$MJ_STATE_DIR")/current.yaml"

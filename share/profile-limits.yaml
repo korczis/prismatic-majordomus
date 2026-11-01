@@ -24,7 +24,12 @@
 #   derive   how the value is computed from the axis: `count` (a whole number, as written)
 #            or `duration_seconds` (a duration such as 15m, in seconds)
 #   unit     what the derived number counts
+#   cap      optional: a numeric policy key the limit never exceeds
 #   adapter  the lib function that applies the limit
+#
+# The values are computed in one place, mj_limits_resolve in lib/common.sh (I0202): an
+# adapter asks it for its limit, and `majordomus doctrine limits [--json]` prints what it
+# answers for the active task's profile, or for the default profile when no task is active.
 
 version: 1
 
@@ -43,4 +48,5 @@ limits:
     axis: context.knowledge_max_items
     derive: count
     unit: knowledge records
+    cap: context.max_list_items
     adapter: mj_context_pointers
