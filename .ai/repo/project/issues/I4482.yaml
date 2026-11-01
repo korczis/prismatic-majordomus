@@ -1,0 +1,45 @@
+id: I4482
+milestone: the-intent-loop-is-proved-end-to-end
+title: "The sentence-to-verdict case continues to a deployment: satisfied only after a successful observation, never after a failed one, and across a restart"
+slug: one-intent-travels-to-its-deployment
+priority: p1
+profile: implementation
+parallel_safe: false
+objective: "Write one test case that, in a fresh disposable repository, carries an intent with a deployment criterion through its plan and its evidence, restarts the server in the middle, feeds a fixture served observation, and asserts at each step what every surface reads, ending satisfied only after the successful deployment is observed."
+why: "campaigns/majordomus-autonomous-idd-maximal/08_E2E_ROLLOUT.md asks for one small golden intent proved first against fixtures with a deterministic fake forge, with a forced restart, and campaigns/majordomus-autonomous-idd-maximal/14_TESTING_CHAOS_PERFORMANCE.md names the scenarios S01, S13 (a release was created and the deploy failed, so the intent stays unsatisfied) and S30; campaigns/majordomus-autonomous-idd-maximal/19_ACCEPTANCE_TRACEABILITY_MATRIX.md (AC-029) asks that a disposable repository proves the path end to end. I3260 plans the case from a sentence to a derived verdict and stops where the evidence is a test. The segment after it, from merged work to an observed deployment and through a restart, has no case, so a change that breaks the seam passes every existing one."
+current_state: "Measured at 51b38035a71. test/cases holds 367_an_intent_is_satisfied_only_by_evidence, 890_an_intent_criterion_is_met_only_by_current_evidence, 895_a_finished_task_does_not_satisfy_an_intent, 386_a_plan_is_held_to_its_intent, 388_an_intent_is_realised_across_providers_and_held_to_reality, 1081_an_intent_opens_what_serves_it, 2978_an_intent_is_proposed_by_a_capability, 19_end_to_end, 384_a_deployment_is_evidence and 3470_the_release_follows_the_work, and none carries one intent to an observed deployment or across a server restart. I3260 (planned) is the sentence-to-verdict case in a disposable repository across two providers and a handover, and names no deployment or restart. A deployment criterion is judged against a deployment object, and I3256 makes it read served observations (.ai/local/state/served/observations.jsonl); I3257 continues intent explain to the release and the deployment."
+desired_state: "One case builds a repository from nothing, plans an intent with one test criterion and one deployment criterion continuing case I3260, and compares the stage and each criterion's state over the command line, HTTP and MCP after every step. The server is stopped and started once in the middle. A second pass with a failed deployment in the fixture never reads satisfied. The case prints which effects were fixtures. A use case under .ai/repo/use-cases names the case as its proof."
+scope:
+  - "test/cases"
+  - "test/fixtures"
+  - "apps/majordomus-cli/tests/common"
+  - ".ai/repo/use-cases"
+  - "docs/DOGFOODING.md"
+  - "docs/USE_CASES.md"
+  - ".ai/repo/project/issues/I4482.yaml"
+non_scope:
+  - "A live run against GitHub or a real deployment: the case proves the join with a fixture observation and says so"
+  - "Launching an agent to do the work: the case makes the code change itself"
+  - "Chaos beyond one restart: partitions and stale claims are tested under mesh-journal-converges"
+  - "Changing any capability: a defect the case finds is its own issue"
+depends_on:
+  - I4480
+  - I3256
+  - I3257
+  - I3260
+acceptance_criteria:
+  - "The case passes in a repository created inside the case, with no path of this repository's project model read"
+  - "After the test evidence is recorded and before any observation, the deployment criterion reads not derivable and the intent does not read satisfied"
+  - "The server is stopped and started between the start of the issue and its evidence, and the execution accepted before is listed afterwards as UnknownOutcome (I4001) or final, never absent"
+  - "With the successful fixture observation the intent reads satisfied and intent explain names the merge, the release and the deployment; with the failed one it reads unsatisfied and names the deployment criterion"
+  - "At every step the stage and criterion states are equal over the command line, HTTP and MCP"
+  - "The output of the case states that the served observation was a fixture"
+validation:
+  - "bin/majordomus plan validate"
+  - "MJ_TEST_JOBS=2 bash test/run.sh 19_end_to_end 2978_an_intent_is_proposed_by_a_capability 384_a_deployment_is_evidence"
+  - "majordomus intent validate"
+evidence_required:
+  - "intent_to_deployment_case"
+  - "failed_deployment_never_satisfies"
+created_at: 2026-10-30
+updated_at: 2026-10-30

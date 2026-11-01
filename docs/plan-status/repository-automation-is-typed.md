@@ -9,7 +9,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 
 | milestone | status | done of required | ready | blocked | active | verify | cancelled | outcome |
 |---|---|---|---|---|---|---|---|---|
-| [repository-automation-is-typed](https://majordomus.dev/plan/repository-automation-is-typed/) | PLANNED | 0/8 | 3 | 5 | 0 | 0 | 0 | A person, CI and an agent run the same repository automation through one executable with an embedded Rhai engine and typed Rust capabilities; just recipes are derived from the command graph and the commit hook is one call of the executable; shell remains only at declared OS, bootstrap and provider boundaries, and the domain logic left in shell only shrinks; and every migrated unit proved it behaves as its predecessor before the predecessor was deleted. |
+| [repository-automation-is-typed](https://majordomus.dev/plan/repository-automation-is-typed/) | PLANNED | 0/12 | 3 | 9 | 0 | 0 | 0 | A person, CI and an agent run the same repository automation through one executable with an embedded Rhai engine and typed Rust capabilities; just recipes are derived from the command graph and the commit hook is one call of the executable; shell remains only at declared OS, bootstrap and provider boundaries, and the domain logic left in shell only shrinks; and every migrated unit proved it behaves as its predecessor before the predecessor was deleted. |
 
 ## Issues
 
@@ -23,6 +23,10 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | [I3161](https://majordomus.dev/plan/i3161/) | BLOCKED | 1 | I3156 | The commit hook is one call of the executable that runs the commit subset of doctor, the worktree guard and pages current under a declared budget |
 | [I3305](https://majordomus.dev/plan/i3305/) | BLOCKED | 3 | I1801, I3157 | A scripted capability installed from outside the repository registers like one inside it |
 | [I3306](https://majordomus.dev/plan/i3306/) | BLOCKED | 4 | I3305, I3157, I1800 | An external scripted capability runs under default-deny grants, bounded, and leaves an audit record |
+| [I4487](https://majordomus.dev/plan/i4487/) | BLOCKED | 1 | I3154 | A hand-written recipe is one call: the eight recipe bodies the inventory describes as shell leave .just, and a recipe that grows a second line fails a gate |
+| [I4490](https://majordomus.dev/plan/i4490/) | BLOCKED | 5 | I1506, I3141, I3142, I3144, I3145, I3159, I3320 | The lifecycle units leave lib: start, checkpoint, handover, evidence, finish and session are routed to their capabilities and their shell is deleted |
+| [I4491](https://majordomus.dev/plan/i4491/) | BLOCKED | 1 | I3155 | Embedded shell is judged, not described: a sh -c spawn in Rust, a multi-line workflow step and a record whose anchor is gone are findings of shell check |
+| [I4492](https://majordomus.dev/plan/i4492/) | BLOCKED | 1 | I3155 | An exemption for shell that is to be migrated names the issue that removes it, and the number that name none does not rise |
 
 ## Findings
 
@@ -32,6 +36,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I3154` | shares apps/majordomus-cli/src/command_graph/bridge.rs with I3156; they may not run concurrently |
 | WARN | `scope_conflict` | `I3154` | shares .just with I4381; they may not run concurrently |
 | WARN | `scope_conflict` | `I3154` | shares .ai/repo/automation/inventory.jsonl with I4468; they may not run concurrently |
+| WARN | `scope_conflict` | `I3154` | shares .ai/repo/automation/inventory.jsonl with I4488; they may not run concurrently |
 | WARN | `scope_conflict` | `I3154` | shares .ai/repo/automation/inventory.jsonl with I4512; they may not run concurrently |
 | WARN | `scope_conflict` | `I3155` | shares test/cases/365_new_shell_is_refused.sh with I3318; they may not run concurrently |
 | WARN | `scope_conflict` | `I3155` | shares test/cases/365_new_shell_is_refused.sh with I3448; they may not run concurrently |
@@ -52,9 +57,15 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I3155` | shares docs/generated/modules/shell.md with I4400; they may not run concurrently |
 | WARN | `scope_conflict` | `I3155` | shares docs/generated/modules/shell.md with I4466; they may not run concurrently |
 | WARN | `scope_conflict` | `I3155` | shares apps/majordomus-cli/src/capability/builtin/shell.rs with I4468; they may not run concurrently |
+| WARN | `scope_conflict` | `I3155` | shares apps/majordomus-cli/src/ui/mod.rs with I4483; they may not run concurrently |
+| WARN | `scope_conflict` | `I3155` | shares apps/majordomus-cli/src/ui/mod.rs with I4485; they may not run concurrently |
+| WARN | `scope_conflict` | `I3155` | shares apps/majordomus-cli/src/capability/builtin/shell.rs with I4486; they may not run concurrently |
+| WARN | `scope_conflict` | `I3155` | shares .ai/repo/automation with I4488; they may not run concurrently |
 | WARN | `scope_conflict` | `I3155` | shares .ai/repo/automation with I4512; they may not run concurrently |
 | WARN | `scope_conflict` | `I3156` | shares docs/COMMANDS.md with I3820; they may not run concurrently |
 | WARN | `scope_conflict` | `I3156` | shares bin/majordomus with I4253; they may not run concurrently |
+| WARN | `scope_conflict` | `I3156` | shares bin/majordomus with I4254; they may not run concurrently |
+| WARN | `scope_conflict` | `I3156` | shares bin/majordomus with I4260; they may not run concurrently |
 | WARN | `scope_conflict` | `I3156` | shares bin/majordomus with I4268; they may not run concurrently |
 | WARN | `scope_conflict` | `I3156` | shares bin/majordomus with I4322; they may not run concurrently |
 | WARN | `scope_conflict` | `I3156` | shares bin/majordomus with I4329; they may not run concurrently |

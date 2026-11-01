@@ -1,0 +1,40 @@
+id: I4524
+milestone: a-change-is-judged-in-minutes
+title: "Telemetry does not run for a validate run that was cancelled"
+slug: telemetry-does-not-run-for-a-cancelled-validate-run
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "The export job of .github/workflows/telemetry.yml carries `if: github.event.workflow_run.conclusion != 'cancelled'`. A validate run that was cancelled then starts no telemetry job and takes no hosted runner slot: the workflow run is recorded as skipped and no runner is assigned. The model .ai/repo/ci/telemetry.yaml declares the same condition (trigger.skip_conclusions: [cancelled]), and the workflow stays its adapter. Case 4524 reads the workflow and the model and fails when the job has no such condition or when the two disagree. docs/CI.md, section Telemetry, says a cancelled run is not exported, and why."
+why: "On 2026-10-30, from 13:30Z to 15:00Z, the landing seat cancelled superseded and hold-member validate runs (38 by its count) so that train 12c's validate could take the hosted runners. Every cancel completed a validate run, and telemetry.yml triggers on workflow_run of validate types [completed] with no conclusion filter, so each one started an export job on ubuntu-latest. 36 telemetry runs took hosted slots while 12c's validate waited. Re-read later through `gh run list`: 34 validate runs completed in that window, 33 of them cancelled; 35 telemetry runs were created in it, and all 96 telemetry runs of the day concluded success. So a cancel freed one runner and took one back for the telemetry job. That run only decides whether an endpoint exists and, when one does, traces a run whose jobs mostly never started. The queue wait this milestone reports apart from the verdict (a-change-is-judged-in-minutes#pr-verdict-within-five-minutes) grew with it. A job-level `if` is evaluated before a runner is requested, so a skipped job costs no runner."
+current_state: "Measured at 6b30ede2d13: .github/workflows/telemetry.yml has on.workflow_run {workflows: [validate], types: [completed]}, and its one job, export (runs-on: ubuntu-latest, timeout-minutes: 10), has no `if`. Its first step writes whether OTEL_EXPORTER_OTLP_ENDPOINT is set, and its second exports when one is. .ai/repo/ci/telemetry.yaml declares the trigger and the concurrency and no conclusion that is skipped. docs/CI.md (section Telemetry) says every completed validate run is exported. No case reads telemetry.yml; I3934 validated it with actionlint only."
+desired_state: "A cancelled validate run starts no telemetry job. A run that concluded success, failure or timed_out is exported as before. The model, the workflow and docs/CI.md say the same, and case 4524 judges that they do."
+scope:
+  - ".ai/repo/project/issues/I4524.yaml"
+  - ".github/workflows/telemetry.yml"
+  - ".ai/repo/ci/telemetry.yaml"
+  - "test/cases/4524_telemetry_does_not_run_for_a_cancelled_validate_run.sh"
+  - "docs/CI.md"
+  - "site/content/plan/I4524.md"
+non_scope:
+  - "Cancelling superseded or hold-member validate runs (I3903, prs supervise): this issue only makes a cancel cost no second runner"
+  - "Which runner validate itself runs on (I4242, MJ_RUNNER)"
+  - "Exporting the queue time of a cancelled run by other means: the traces of the runs that completed still show the queue those runs waited in"
+  - "The export itself, its action pin and its secrets (I3934)"
+acceptance_criteria:
+  - "Case 4524 reads .github/workflows/telemetry.yml and passes only when the export job's `if` excludes github.event.workflow_run.conclusion == 'cancelled'; it fails on the workflow of 6b30ede2d13 (no `if`), and on a copy whose condition names another conclusion"
+  - "Case 4524: .ai/repo/ci/telemetry.yaml declares trigger.skip_conclusions [cancelled] and the case fails when the model and the workflow disagree"
+  - "actionlint .github/workflows/telemetry.yml passes"
+  - "On GitHub after landing: a cancelled validate run's telemetry run concludes skipped with no runner assigned, and a completed one's export job runs (evidence names both run ids)"
+  - "docs/CI.md, section Telemetry, says a cancelled validate run is not exported and that a cancel costs no runner"
+validation:
+  - "bash test/run.sh 4524_telemetry_does_not_run_for_a_cancelled_validate_run"
+  - "actionlint .github/workflows/telemetry.yml"
+  - "bin/majordomus plan validate"
+evidence_required:
+  - "test"
+depends_on: []
+serves:
+  - "a-change-is-judged-in-minutes#pr-verdict-within-five-minutes"
+created_at: 2026-10-30
+updated_at: 2026-10-30

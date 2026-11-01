@@ -1,0 +1,47 @@
+id: I4505
+milestone: a-profile-is-resolved-once-and-enforced
+title: "A profile says which effects it grants, and one preset, review, grants reading only"
+slug: a-profile-says-which-effects-it-grants
+priority: p1
+profile: implementation
+parallel_safe: false
+objective: "Add one optional axis to the profile, the capability effects a task under it may cause, with absence meaning everything that is granted today, and ship one new profile, review, that grants reading only."
+why: "campaigns/majordomus-profile-system-v2-prompt-pack/MAJORDOMUS_PROFILE_SYSTEM_V2_PROMPT_PACK.md, PROMPT 02, asks for a small orthogonal vocabulary over the existing profiles, added only where a consumer exists, with the legacy four preserved, no Cartesian product of named profiles and custom profiles left alone by update; PROMPT 03 item 5 asks that review default to read-only. The capability model already classifies every capability by effect (capability/model.rs Effect: read, process state, repository mutation), and no profile can speak about it, so there is nothing for an enforcement to read."
+current_state: "Measured at 51b38035a71, where no commit since 3491f35cab has touched the profile schema, share/allow/profile.txt, .ai/repo/profiles, share/skeleton/profiles or the claim pages. profile.v1 has no effect or permission key (share/allow/profile.txt). capability/model.rs declares Effect as Read, ProcessState and RepositoryMutation, and no profile can name one. .ai/repo/profiles and share/skeleton/profiles hold the same four files (debugging, deep-work, implementation, routine); lib/init.sh seeds them and --extend overwrites nothing. I3123 plans verification.verify_commands into the same schema and allow-list, so the two must agree on whether optional keys stay under majordomus.profile/v1."
+desired_state: "The schema, the allowlist generated from it and the typed Profile gain grants.effects, a list drawn from the Effect vocabulary the capability model declares, read from that enum and not repeated. A profile without the key grants every effect, so the four shipped profiles are unchanged in file and in meaning. share/skeleton/profiles/review.yaml and .ai/repo/profiles/review.yaml grant read only and require no verify command. The resolver carries the axis with its provenance. Whether the key stays under majordomus.profile/v1 as an optional addition or needs v2 follows the decision record of I4500. init seeds review into a new layer; update and init --extend leave an existing profile file byte-identical and do not add review to a layer that has profiles."
+scope:
+  - "share/schemas/majordomus/profile/profile.v1.schema.json"
+  - "share/allow/profile.txt"
+  - "share/skeleton/profiles"
+  - ".ai/repo/profiles"
+  - "apps/majordomus-cli/src/profile"
+  - "apps/majordomus-cli/src/capability/model.rs"
+  - "lib/init.sh"
+  - "test/cases/16_profiles.sh"
+  - "test/cases/01_init.sh"
+  - "docs/PROFILES.md"
+  - "docs/SCHEMAS.md"
+  - ".ai/repo/project/issues/I4505.yaml"
+non_scope:
+  - "Refusing anything: I4506 enforces what this declares"
+  - "The brief's other dimensions (work mode, autonomy grant, resource class, routing preference): none has a consumer in the repository, and each is added with the consumer that needs it"
+  - "Tool permissions of a provider's client: the tool does not hold them"
+depends_on:
+  - I4502
+acceptance_criteria:
+  - "The four shipped profile files are byte-identical before and after, and each resolves to every effect granted with the source default"
+  - "review resolves to read only, and case 16_profiles runs its lifecycle like every other shipped profile"
+  - "An effect name the capability model does not declare is refused by name by profile.validate and by doctor"
+  - "The effect vocabulary appears once: the schema's enum is generated from or tested against the Effect type"
+  - "update on a layer with an edited custom profile leaves that file byte-identical"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib profile::"
+  - "MJ_TEST_JOBS=2 bash test/run.sh 16_profiles 01_init"
+  - "bin/majordomus generate --check"
+evidence_required:
+  - "grants_axis_unit_tests"
+  - "shipped_profiles_unchanged"
+  - "case_16_profiles"
+created_at: 2026-10-30
+updated_at: 2026-10-30

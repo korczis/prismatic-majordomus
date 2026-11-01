@@ -1,0 +1,37 @@
+id: I4496
+milestone: a-screen-is-fast-bounded-and-says-why
+title: "perf.readings lists every remembered reading with its age, standing, cost and the reason it was last read"
+slug: a-reading-explains-itself
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Make the readings store answerable: one read capability lists every remembered reading with its age, standing, cost and why it was last read again. The Server-Timing half of the brief is I3226's."
+why: "campaigns/majordomus-ui-speed-pack/00-MASTER.md step 8 asks for Server-Timing, cache diagnostics and stale and fresh indicators, and 03-CACHE.md asks for hit, miss and invalidation reasons with explain diagnostics. A page shows each reading's standing on its source line, and nothing else does: perf.counters counts executor hits and misses for the whole process, no capability lists the readings, and a slow screen cannot be traced to a source without reading the page's HTML."
+current_state: "Measured at 51b38035a71, after the readings (I2486) and the UI budgets (I2489) landed and I4200 made warm screens borrow instead of copy. capability/builtin/perf.rs declares one capability, perf.counters. The readings store is the crate-private Readings of capability/readings.rs; its only public view is CapabilityExecutor::readings_remembered, a count. Per slot it keeps the input and an Outcome (value, world, at, wall, took), whether a worker is reading it and when it was last asked, and it keeps no read count and no reason for the last read. No capability lists the readings. Server-Timing is planned by I3226 and appears nowhere in apps/ yet."
+desired_state: "perf.readings (CachePolicy Disabled, effect read) answers one row per remembered reading: source id, a digest of the input, age, freshness, whether a worker is reading it, the duration of the last read, how many times it was read, and the reason of the last read (first, revalidate, moved, switch). It carries no value of a reading and no input, so nothing a source answered leaves through it."
+scope:
+  - "apps/majordomus-cli/src/capability/readings.rs"
+  - "apps/majordomus-cli/src/capability/builtin/perf.rs"
+  - "apps/majordomus-cli/tests/executor.rs"
+  - "docs/MAJORDOMUS_UI.md"
+  - "docs/PERFORMANCE.md"
+  - ".ai/repo/project/issues/I4496.yaml"
+non_scope:
+  - "A metrics exporter or a tracing backend"
+  - "The value or the input of a reading in any diagnostic"
+  - "A Cockpit page for it beyond what the registry derives for every capability"
+depends_on:
+  - I2486
+acceptance_criteria:
+  - "After a screen was read, perf.readings lists each of its sources with an age and a duration, and after a move of the repository the reason of the next read is moved"
+  - "perf.readings answers the same over the command line, HTTP and MCP, declared once with capability!"
+  - "No row of perf.readings and no Server-Timing entry holds a reading's value or input"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test executor"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib ui::"
+  - "bin/majordomus generate --check"
+evidence_required:
+  - "perf_readings_capability_tests"
+created_at: 2026-10-30
+updated_at: 2026-10-30

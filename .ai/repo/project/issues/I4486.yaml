@@ -1,0 +1,45 @@
+id: I4486
+milestone: automation
+title: "A program is run by one typed capability: an executable and an argument list, a bound and a process group, and never a command string"
+slug: a-program-is-run-by-one-typed-capability
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Add one capability that runs an external program from a typed specification (the executable by name, an argument list, a working directory inside the repository, an environment delta, what standard input is, and a deadline), kills the whole process group when the deadline passes or the execution is cancelled, and reports exit status and bounded, redacted output as execution events."
+why: "campaigns/majordomus-shellfall/01-canonical-workflow-contract.md asks that external programs be reached through an explicitly governed process specification with an argv vector, a working directory, an environment delta, a stdin policy and a timeout, with no implicit shell interpolation, and lists the arguments that must arrive literally: whitespace, quotes, a leading dash, a dollar-parenthesis, unicode, a newline and a semicolon. ADR 0069 states the same rule (no function takes a shell command string; a program is run by name with an argument list, a working directory, an environment delta and a bound) and no such capability exists. Without it a scripted capability can call only what is already a capability, and the 21 orchestration units of the inventory mostly run cargo, git, node and gh."
+current_state: "Measured at 51b38035a71. No typed process specification exists: apps/majordomus-cli/src/process.rs (110 lines) holds only retrying_busy, an ETXTBSY retry, and capability/builtin has no process or exec module. Production code passes a string to sh -c in two places, economics/runner.rs verify and offload/remote.rs command; the spawns in environment/shell.rs and offload/run.rs are inside #[cfg(test)]. ADR 0069 (on master since fbb9aaf4763, status proposed) requires that a program be run by name with an argument list, a working directory, an environment delta and a bound, and allows it only as a separately named, highest-effect, CLI-only capability. The Rhai engine of I1800 is delivered (script/mod.rs); the scripted kind (I1801) and the ratchet capability (I1804) are planned. No master issue plans a typed process runner."
+desired_state: "One module owns spawning for capabilities: it resolves the executable without a shell, passes arguments as OsString values, refuses a working directory outside the repository and an environment delta that sets a name on the redaction list, enforces the deadline from outside the child, kills the process group, and emits started, output and finished events through the execution plane. Its declared effect is the highest of what it may run, and the registry does not project it onto HTTP or MCP above the exposure ceiling. Its dry run returns the resolved specification and starts nothing."
+scope:
+  - "apps/majordomus-cli/src/capability/builtin"
+  - "apps/majordomus-cli/src/execution"
+  - "apps/majordomus-cli/src/capability/registry.rs"
+  - "apps/majordomus-cli/tests/executions.rs"
+  - "apps/majordomus-cli/tests/properties.rs"
+  - "docs/CAPABILITIES.md"
+  - ".ai/repo/project/issues/I4486.yaml"
+non_scope:
+  - "A capability that accepts a command line as one string, under any name"
+  - "Rewriting the two production sh -c call sites: I4491 makes them declared and judged, and each is replaced with the feature it belongs to"
+  - "Native process semantics on Windows: the capability is written against std::process and its process-group handling is behind one function, and no Windows target is claimed"
+  - "A workflow type with steps, dependencies and a planner: composition is a scripted capability calling capabilities"
+depends_on: []
+acceptance_criteria:
+  - "A property test passes arbitrary argument lists, including a space, both quote characters, a leading dash, a dollar-parenthesis, a semicolon, a newline and non-ASCII text, to a helper program that prints its arguments, and the lists are equal"
+  - "A program that outlives its deadline is ended, its children are gone, and the execution finishes with a timeout state and not a failure of the caller"
+  - "Cancelling the execution ends the process group and leaves a cancelled event"
+  - "The dry run starts no process, which the test asserts with a program that would create a file"
+  - "A value matching the redaction rules in the program's output does not appear in the stored events"
+  - "The capability is absent from the MCP tool list and the OpenAPI document and present on the command line"
+  - "The capability is the argument-list, CLI-only form ADR 0069 allows (a program run by name with an argument list, a working directory, an environment delta and a bound, declared at the highest effect), not the generic shell or exec capability the milestone's non_scope refuses"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test executions"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test properties"
+  - "bin/majordomus-cli capabilities validate"
+  - "bin/majordomus-cli generate --check"
+evidence_required:
+  - "argv_reaches_program_literally"
+  - "deadline_kills_process_group"
+  - "dry_run_starts_nothing"
+created_at: 2026-10-30
+updated_at: 2026-10-30

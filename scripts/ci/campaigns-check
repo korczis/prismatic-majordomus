@@ -7,7 +7,7 @@
 # did still reads like the brief that drove the work, and a half-copied pack still reads like a
 # pack. A record nobody can prove is not evidence.
 #
-# Three things are decided here, and nothing about what a pack says:
+# Four things are decided here, and nothing about what a pack says:
 #
 #   1. `campaigns/MANIFEST.sha256` covers exactly the files present, with their bytes — declared
 #      and present, in both directions. A checker that walks only the manifest passes a tree
@@ -17,6 +17,13 @@
 #      name at any depth would hide every such file, and any new one planted below the top.
 #   2. Every pack directory has a row in `campaigns/README.md`.
 #   3. Every row names a directory that exists.
+#   4. Every pack is planned, or says why it is not. A brief is kept so that the work it asked
+#      for can be found, and the plan is the repository's: a record under `.ai/repo/project/`
+#      cites the pack it came from as `campaigns/<pack>`. A citation of a pack that is not kept
+#      is a citation nobody can open; a pack no record cites is a brief nobody planned, unless
+#      `.ai/repo/ci/campaigns-unplanned.txt` names it with the reason. A line of that list
+#      whose pack a record does cite is stale and fails, so the list can only shrink. A tree
+#      with no project model owes no plan and is not asked.
 #
 # SHA-256 is taken without Perl, which this repository does not run (`shasum` is a Perl
 # script on macOS): `sha256sum` where present (GNU coreutils on the runner, /sbin on recent
@@ -186,6 +193,36 @@ LC_ALL=C comm -23 "$tmp/packs" "$tmp/rows" \
   | sed "s|.*|FAIL campaigns  $DIR/& — a pack the index does not list  [reproduce: grep -F '\`&\`' $INDEX]|" >> "$tmp/findings" || true
 LC_ALL=C comm -13 "$tmp/packs" "$tmp/rows" \
   | sed "s|.*|FAIL campaigns  $INDEX — lists \`&\`, which is not a pack of this tree  [reproduce: ls '$DIR/&']|" >> "$tmp/findings" || true
+
+# The plan and the packs, in both directions. `campaigns/README.md` and the manifest are files
+# of the directory and not packs; a citation at the end of a sentence carries its full stop.
+PROJECT=.ai/repo/project
+UNPLANNED=.ai/repo/ci/campaigns-unplanned.txt
+if [ -d "$PROJECT" ]; then
+  grc=0
+  grep -rhoE "$DIR/[A-Za-z0-9._-]+" "$PROJECT" > "$tmp/citations" 2> "$tmp/cite.err" || grc=$?
+  if [ "$grc" -gt 1 ]; then
+    echo "campaigns-check: $PROJECT/ could not be read for the packs its records cite (exit $grc)" >&2
+    sed 's/^/  /' "$tmp/cite.err" >&2
+    echo "  [reproduce: grep -rhoE '$DIR/[A-Za-z0-9._-]+' $PROJECT]" >&2
+    exit 12
+  fi
+  sed -e "s|^$DIR/||" -e 's/[.]*$//' -e '/^$/d' -e '/^README[.]md$/d' -e '/^MANIFEST[.]sha256$/d' "$tmp/citations" \
+    | LC_ALL=C sort -u > "$tmp/cited"
+  : > "$tmp/unplanned"
+  if [ -f "$UNPLANNED" ]; then
+    sed -e 's/[[:space:]]*#.*$//' "$UNPLANNED" | awk 'NF { print $1 }' | LC_ALL=C sort -u > "$tmp/unplanned"
+  fi
+  LC_ALL=C comm -23 "$tmp/cited" "$tmp/packs" \
+    | sed "s|.*|FAIL campaigns  $PROJECT — a record cites $DIR/&, which is not a pack of this tree  [reproduce: grep -rlF '$DIR/&' $PROJECT]|" >> "$tmp/findings" || true
+  LC_ALL=C sort -u "$tmp/cited" "$tmp/unplanned" > "$tmp/accounted"
+  LC_ALL=C comm -23 "$tmp/packs" "$tmp/accounted" \
+    | sed "s|.*|FAIL campaigns  $DIR/& — a pack no record under $PROJECT cites and $UNPLANNED does not name  [reproduce: grep -rlF '$DIR/&' $PROJECT]|" >> "$tmp/findings" || true
+  LC_ALL=C comm -12 "$tmp/cited" "$tmp/unplanned" \
+    | sed "s|.*|FAIL campaigns  $UNPLANNED — names \`&\` as unplanned, and a record cites it: remove the line  [reproduce: grep -rlF '$DIR/&' $PROJECT]|" >> "$tmp/findings" || true
+  LC_ALL=C comm -23 "$tmp/unplanned" "$tmp/packs" \
+    | sed "s|.*|FAIL campaigns  $UNPLANNED — names \`&\`, which is not a pack of this tree  [reproduce: ls '$DIR/&']|" >> "$tmp/findings" || true
+fi
 
 findings="$(awk 'END { print NR }' "$tmp/findings")"
 packs="$(awk 'END { print NR }' "$tmp/packs")"
