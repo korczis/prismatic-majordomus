@@ -204,6 +204,27 @@ pub struct Context {
 static READINGS: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(1);
 
 impl Context {
+    /// The repository this context's index was built from, answered from the process's
+    /// one discovery (I3014): a capability asks its context rather than opening the
+    /// repository again from the index's root, so a served call reads no manifest (I3016).
+    ///
+    /// It is an error, not a panic, when the root no longer holds a layer: a served
+    /// process outlives the checkout it was started in.
+    ///
+    /// ```
+    /// use majordomus_cli::synthetic::SyntheticRepository;
+    /// let repo = SyntheticRepository::small().unwrap();
+    /// let ctx = repo.context().unwrap();
+    /// let repository = ctx.repository().unwrap();
+    /// assert_eq!(repository.root(), repo.root().canonicalize().unwrap());
+    /// assert_eq!(repository.manifest().local.path, "local");
+    /// std::fs::remove_file(repo.root().join(".ai/manifest.yaml")).unwrap();
+    /// assert!(ctx.repository().is_err(), "the layer is gone from under the context");
+    /// ```
+    pub fn repository(&self) -> crate::error::Result<crate::repository::Repository> {
+        crate::repository::Repository::open(std::path::Path::new(&self.index.repository.root))
+    }
+
     /// A context over an index and a registry, with an empty board, a fresh executor and
     /// no caller.
     pub fn new(index: Arc<Index>, registry: Arc<CapabilityRegistry>) -> Self {
@@ -558,6 +579,31 @@ impl Executable {
     /// ```
     pub fn authenticates_its_input(mut self) -> Self {
         self.capability.execution = self.capability.execution.authenticates_its_input();
+        self
+    }
+
+    /// The declaration, answering only a caller on this machine: a read that shows the
+    /// mesh's working state (ADR 0220 decision 4). See
+    /// [`crate::capability::ExecutionPolicy::reads_only_locally`].
+    ///
+    /// ```
+    /// use majordomus_cli::capability;
+    /// use majordomus_cli::capability::{CapabilityKind, Context, CapabilityError, Effect, Exposure, Stability};
+    /// use majordomus_cli::capability::builtin::Empty;
+    /// #[derive(serde::Serialize, schemars::JsonSchema)]
+    /// struct Board { peers: usize }
+    /// fn board(_: &Context, _: Empty) -> Result<Board, CapabilityError> { Ok(Board { peers: 0 }) }
+    /// let e = capability! {
+    ///     id: "demo.board", kind: CapabilityKind::Query, title: "Board", description: "Who works here.",
+    ///     input: Empty, output: Board, stability: Stability::Experimental,
+    ///     exposure: Exposure::default(), tags: [], handler: board,
+    /// }.reads_only_locally();
+    /// let policy = e.capability.execution;
+    /// assert!(policy.local_only && !policy.admits_remote(), "a caller beyond loopback is refused");
+    /// assert_eq!(policy.effect, Effect::Read, "it is still a read");
+    /// ```
+    pub fn reads_only_locally(mut self) -> Self {
+        self.capability.execution = self.capability.execution.reads_only_locally();
         self
     }
 }

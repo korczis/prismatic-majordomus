@@ -1,0 +1,27 @@
+id: I2863
+milestone: derived-data-integrity
+title: "A derive does not run while a merge is uncommitted"
+slug: a-derive-does-not-run-mid-merge
+priority: p1
+profile: implementation
+parallel_safe: true
+depends_on: []
+objective: "scripts/derive refuses to run while the worktree holds an uncommitted merge (MERGE_HEAD present), and names the commit to make first, so no derived file is computed from the history of a HEAD the commit is about to leave."
+why: "On 2026-10-21, #1753 (I2845) merged master 573df967bb5 and was derived before the merge was committed. Several derived values read history from HEAD. The released_in rule (lib/project.sh mj_pj_m_released_in, and released_in in apps/majordomus-cli/src/plan.rs) runs `git log -S <completed_at>` and `git log --merges --grep`. HEAD was still the branch's old base 05e17a5c4a8, so idd-workspace's completion commit c2b6d98cd8c was outside it, and the fallback matched an older merge. The milestone was committed as released in v0.30.0, where master and CI compute unreleased. CI's site job reported roadmap.json and roadmap-graph.json STALE, and its fail-fast cancelled the other eight jobs of validate run 39534292871 after 40 minutes. The same trap is recorded from an earlier session, so a habit does not prevent it; the tool must."
+current_state: "scripts/derive runs with MERGE_HEAD present and writes derived data computed from the pre-merge HEAD's history. The pre-commit gate then accepts that data, because it compares it with a derive run in the same state."
+desired_state: "scripts/derive exits non-zero before any stage when the git directory holds MERGE_HEAD (also CHERRY_PICK_HEAD or REVERT_HEAD), saying to commit the merge and derive again. The message names that HEAD and the commit it would merge."
+scope:
+  - "scripts/derive"
+  - ".ai/repo/project/issues/I2863.yaml"
+non_scope:
+  - "Making the released_in rule independent of HEAD's history; it reads the commit, which is correct once the commit exists"
+  - "Refusing a derive during a rebase, which has no such ambiguity once each commit is applied"
+acceptance_criteria:
+  - "scripts/derive in a worktree with MERGE_HEAD present exits non-zero before stage A and names MERGE_HEAD"
+  - "The same derive after the merge is committed runs as before"
+validation:
+  - "bin/majordomus plan validate"
+evidence_required:
+  - "a_derive_refuses_mid_merge_case"
+created_at: 2026-10-21
+updated_at: 2026-10-21

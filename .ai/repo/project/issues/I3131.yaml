@@ -1,0 +1,50 @@
+id: I3131
+milestone: the-product-shows-what-it-caught
+title: "A refusal answered by no change to the tree is not counted as a caught false done"
+slug: an-unanswered-refusal-is-not-caught
+priority: p2
+profile: implementation
+objective: "Record on task.refused and task.finished an answer digest over every input a refusing doctrine reads (the tree id from mj_worktree_tree_id, already written as verify.tree, the completion note's content, the verify command and the obligation evidence), and have the aggregate classify a refusal as unanswered only when none of the inputs its own doctrine reads changed before acceptance, and as downgraded when the accepted outcome is lower than the refused one."
+why: "The 2026-10-14 assessment named false refusal a critical bug class, because a governance tool that refuses correct work gets bypassed; counting such refusals as value would inflate the very metric meant to be honest. On 2026-10-18 the ledgers of every checkout `git worktree list` reported held 129 task.refused lines, 95 of them refused by majordomus.note-integrity alone (recount: `git worktree list --porcelain | awk '/^worktree /{print $2}' | while read w; do cat \"$w/.ai/local/state/ledger.jsonl\" 2>/dev/null; done | grep -c '\"event\":\"task.refused\"'`); a note-integrity refusal is answered in the gitignored completion note, which a tree-only digest never sees. The tree id is reused at the cost of one temporary-index `git add -A` per refusal. Proposed in ADR 0208 (The product's value is stated as the false dones its finish caught, beside the friction it cost) (proposed; it carries no authority until the owner accepts it). Sources: chatgpt-majordomus:c262#10."
+current_state: "task.refused carries task_id, outcome, unmet, refused and contract, and no input state (share/events.yaml:56); task.finished already records verify.tree from mj_worktree_tree_id (lib/common.sh); the completion note lives under the gitignored $MJ_STATE_DIR."
+desired_state: "Both events carry the answer digest; the aggregate separates caught, unanswered, downgraded and digest unknown by the doctrine-to-input map derived from the doctrine declarations; a case holds it."
+scope:
+  - "share/events.yaml"
+  - "lib/finish.sh"
+  - "apps/majordomus-cli/src/capability/builtin/gates.rs"
+  - "lib/common.sh"
+  - "docs/SCHEMAS.md"
+  - "docs/DYNAMICITY.md"
+  - ".ai/repo/project/intents"
+  - "share/standard/majordomus/rules/note-integrity.v1.md"
+  - "share/standard/majordomus/rules/obligation-closure.v1.md"
+  - "share/standard/majordomus/rules/principle-08-verify-outcomes.v1.md"
+  - ".ai/repo/rules/vendor/majordomus/rules/note-integrity.v1.md"
+  - ".ai/repo/rules/vendor/majordomus/rules/obligation-closure.v1.md"
+  - ".ai/repo/rules/vendor/majordomus/rules/principle-08-verify-outcomes.v1.md"
+  - ".ai/repo/adrs/0208-the-product-s-value-is-stated-as-the-false-dones-its-finish-caug.md"
+  - "test/cases/32_refusal_lifecycle.sh"
+non_scope:
+  - "Deciding why a refusal was wrong"
+depends_on:
+  - "I3130"
+serves:
+  - "the-product-shows-what-it-caught#unanswered-refusals-are-separated"
+acceptance_criteria:
+  - "A task refused and then accepted with no input its refusing doctrine reads changed is reported unanswered, not caught"
+  - "A task refused, edited and accepted is reported caught"
+  - "Ledgers written before the digest existed read 'digest unknown', never caught"
+  - "task.refused and task.finished carry an answer digest over the inputs the doctrines read: the tree id from mj_worktree_tree_id (the same value as verify.tree), the completion note's content, the verify command and the recorded obligation evidence"
+  - "A refusal is unanswered only when none of the inputs its own refusing doctrine reads changed before acceptance; the doctrine-to-input map is derived from the doctrine declarations, not typed by hand"
+  - "A note-integrity refusal answered by rewriting the gitignored completion note, and an obligation-closure refusal answered by recording evidence at the same HEAD, are both reported caught"
+  - "A task refused as completed and then accepted at a lower outcome is reported downgraded, apart from caught and unanswered"
+  - "The intent's invariant and the criterion unanswered-refusals-are-separated read 'no change to any input the refusing doctrine reads' instead of 'same tree digest'"
+  - "The case is numbered by `scripts/case-numbers next` and announced on the board at start, and the intent criterion carries evidence: test with that case as its ref"
+  - "docs/SCHEMAS.md lists the new fields, and docs/DYNAMICITY.md no longer calls a refused finish an absent event"
+validation:
+  - "bash test/run.sh 32_refusal_lifecycle"
+  - "majordomus plan validate"
+evidence_required:
+  - "case_unanswered_refusal"
+created_at: 2026-10-18
+updated_at: 2026-10-18

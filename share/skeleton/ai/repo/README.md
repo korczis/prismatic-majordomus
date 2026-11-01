@@ -10,6 +10,9 @@ providers: ["*"]
 audience: [human, agent]
 composition: extend
 order: 20
+layout:
+  lifecycle: canonical
+  excludes: [cache, runtime]
 ---
 
 # Tracked repository context

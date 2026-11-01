@@ -1,0 +1,32 @@
+id: a-version-follows-every-session
+title: Every session's and every milestone's landed work reaches a measured, released version
+statement: "The owner's order of 2026-10-19: from now on, and enforced, a new measured version of majordomus.dev after every session and every milestone, as often as possible. Measured means the Elm-like rule of ADR 0051. Landed work does not wait for a release in silence. How much of it lies past the last release, since when, and at which version is a measured answer that every session sees. The release seat cannot end its session while that work is overdue."
+invariants:
+  - How much landed work waits for a release is measured once, by release.currency, and every surface that shows it reads that answer
+  - A version is the public contract's measurement (ADR 0051), never a word chosen by hand
+  - The release seat does not finish completed while landed work has waited past the threshold, and no other task is refused by it
+  - The measurement is a runtime read of git and the layer's release records and is never committed into derived data
+milestones:
+  - a-version-follows-the-work
+satisfaction:
+  - id: measured
+    criterion: release.currency answers the last release, the landed commits past it, when the oldest of them landed and the version the contract requires, and the brief and doctor say whether the trunk is current, owed or overdue
+    evidence: test
+    ref: test/cases/3470_the_release_follows_the_work.sh
+  - id: shown
+    criterion: /ui/delivery shows the same answer, linked to the capability's route
+    evidence: test
+    ref: test/cases/3471_the_delivery_screen_shows_what_waits_for_a_release.sh
+  - id: the-seat-releases
+    criterion: A task holding the release seat is refused completed while landed work has waited past the threshold, and a pushed tag whose release run is in progress counts as released
+    evidence: test
+    ref: test/cases/3470_the_release_follows_the_work.sh
+governance:
+  - rule:project.land-and-publish
+  - rule:project.the-cooperation-model-is-the-owners-word
+  - adr:adr-0051
+non_goals:
+  - Cutting a release from anywhere but the release seat's pipeline
+  - A second version authority beside the measured one
+created_at: 2026-10-19
+updated_at: 2026-10-19

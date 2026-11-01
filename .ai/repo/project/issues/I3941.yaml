@@ -1,0 +1,34 @@
+id: I3941
+milestone: measurements-are-tracked-over-time
+title: "The UI draws the trends the pages publication records: coverage and CI time per run, and the slowest jobs"
+slug: the-cockpit-draws-the-trends
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "The UI served by the executable has a Trends screen at /ui/trends. It reads site/data/trends.json (schema trends/v1, written only by the pages publication) from the checkout when the screen is asked, through the capability delivery.trends, and draws coverage as percentage lines for lines, functions and regions, wall and queued minutes per run, and the slowest job medians, as inline SVG with the figures beside them as text."
+why: "The series exists only on the published site (/trends/); a person working in a checkout cannot see whether coverage or CI time is moving without leaving the tool that already shows the plan, the evidence and the queue. Drawing it from the same file must not turn the series into a derived or committed record."
+current_state: "scripts/pages trends writes site/data/trends.json at publish time from the forge; it is gitignored and nothing committed depends on it. No screen of the UI reads it."
+desired_state: "/ui/trends draws the series from the checkout's file at request time. A coverage figure is covered over total in percent; a run that measured none is a gap in the line, never zero; a figure the file does not give reads unknown. When the file is absent, is not JSON or is not trends/v1, the screen answers 200 and says that no trends are recorded in this checkout and that the series is written by the pages publication. Nothing is written and no committed file is generated from it."
+scope:
+  - "apps/majordomus-cli/src/delivery/mod.rs"
+  - "apps/majordomus-cli/src/delivery/trends.rs"
+  - "apps/majordomus-cli/src/capability/builtin/delivery.rs"
+  - "apps/majordomus-cli/src/ui/mod.rs"
+  - "apps/majordomus-cli/src/ui/trends.rs"
+  - "test/fixtures/trends/trends.json"
+  - ".ai/repo/project/issues/I3941.yaml"
+acceptance_criteria:
+  - "The screen draws coverage percentages computed from covered over total, and a run without coverage leaves a gap in the line"
+  - "The screen draws wall and queued minutes per run and the job medians, slowest first"
+  - "An absent file, a file that is not JSON and a file of another schema each answer 200 with the plain notice and no chart"
+  - "Nothing is written, and no committed file depends on site/data/trends.json"
+validation:
+  - "cd apps/majordomus-cli && cargo test --lib trends"
+  - "bin/majordomus plan validate"
+evidence_required:
+  - "trends_screen_draws_series"
+  - "trends_screen_absent_file_says_so"
+depends_on: []
+serves: []
+created_at: 2026-10-22
+updated_at: 2026-10-22

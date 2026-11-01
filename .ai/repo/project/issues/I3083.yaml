@@ -1,0 +1,36 @@
+id: I3083
+milestone: a-claim-stands-only-on-its-evidence
+title: "Six records say something the code or another record no longer says"
+slug: the-records-say-what-the-code-does
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "Bring six statements into agreement with what the repository does, each by editing its canonical source: an amendment for a decision, the provider templates for a generated bootstrap, never the generated text. (1) ADR 0021 and docs/WORKTREES.md (the Reclaiming lead-in at its lines 321-331) say worktree cleanup deletes nothing and that nothing in the topology reclaims anything; cleanup --remove does, since commit 1b6a7f5c360 of 2026-09-30, as docs/WORKTREES.md's own Reclaiming section describes. (2) ADR 0021 counts fifty-three worktrees in four shapes whose breakdown sums to fifty. (3) ADR 0053 says the path half of project.work-is-claimed-before-it-is-built must not be gated; the rule and the collision-check gate of .ai/repo/ci/gates.yaml gate it, with the collision:accepted label as the override. (4) .ai/repo/providers/claude-code.tmpl, agents.tmpl and gemini.tmpl still render one shared server per repository with every attached client visible to the others, which ADR 0044 narrowed. (5) The comments of lib/capture.sh above the compaction and end adapters say a checkpoint or a handover is skipped when no task is active; the code under them dropped that guard under ADR 0052. (6) The heading of ADR 0052's file reads 41."
+why: "On 2026-10-20 a fact-check of three site articles (I3080, I3081, I3082) against their sources found these six places. The articles follow the current behaviour, but a reader who follows their links to ADR 0021 or ADR 0053 reads the opposite. The bootstrap every session is handed states a topology the repository no longer has."
+current_state: "Each of the six statements is in the tree at master 9a5a9b77520, as the objective quotes."
+desired_state: "Each statement either says what the code and the other records do, or is amended by a later record that says so, and the generated bootstraps are regenerated from their templates."
+scope:
+  - ".ai/repo/project/issues/I3083.yaml"
+  - ".ai/repo/adrs/0021-the-branch-to-worktree-topology-is-derived-from-git-identity-and-enfor.md"
+  - ".ai/repo/adrs/0052-the-session-lifecycle-is-the-episodes-not-the-tasks.md"
+  - ".ai/repo/adrs/0053-an-identity-is-allocated-above-the-high-water-mark-and-a-collision-is-refused-on-the-branch.md"
+  - "docs/WORKTREES.md"
+  - ".ai/repo/providers"
+  - "lib/capture.sh"
+  - "CLAUDE.md"
+  - "AGENTS.md"
+  - "GEMINI.md"
+depends_on: []
+acceptance_criteria:
+  - "No record of the six says what the code or another record contradicts, and each changed decision says what changed it"
+  - "The generated bootstraps change only through their templates and majordomus update"
+validation:
+  - "majordomus plan validate"
+  - "majordomus adr check"
+  - "majordomus update --dry-run"
+  - "scripts/ci/providers-check"
+evidence_required: []
+serves:
+  - "a-claim-stands-only-on-its-evidence#public-text-true"
+created_at: 2026-10-20
+updated_at: 2026-10-21

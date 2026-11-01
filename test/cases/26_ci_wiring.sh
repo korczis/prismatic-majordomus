@@ -145,8 +145,9 @@ grep -q 'majordomus watch' "$CORE" || { echo "    core-check does not run watch"
 grep -q 'majordomus doctor' "$ROOT/.githooks/pre-commit" || { echo "    pre-commit does not run doctor"; exit 1; }
 grep -q 'majordomus finish --check' "$ROOT/.githooks/pre-push" || { echo "    pre-push does not run finish --check"; exit 1; }
 # and a push that changes the crate builds its rustdoc with warnings denied first: the one
-# gate of the crate nothing else stands in for, and the job the Pages deploy starts with
-grep -q 'scripts/rust-check --doc ||' "$ROOT/.githooks/pre-push" \
+# gate of the crate nothing else stands in for, and the job the Pages deploy starts with. It
+# reports and CI's rustdoc job refuses (I3830, case 3948 drives both verdicts)
+grep -qE '^[[:space:]]+scripts/rust-check --doc$' "$ROOT/.githooks/pre-push" \
   || { echo "    pre-push does not build the crate's rustdoc before a push that changes the crate"; exit 1; }
 grep -q 'scripts/case-numbers check' "$ROOT/.githooks/pre-push" \
   || { echo "    pre-push does not check that no two cases share a number"; exit 1; }

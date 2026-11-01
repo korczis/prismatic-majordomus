@@ -16,7 +16,7 @@ use crate::cockpit::html::{el, El};
 
 use super::shell::View;
 use super::source::{ask_all, Answer, Source};
-use super::view::{hero, kpi, list, meter, panel, state, table, text, unanswered, wide};
+use super::view::{hero, items, kpi, list, meter, panel, state, table, text, unanswered, wide};
 
 /// The route of the screen.
 pub const ROUTE: &str = "/ui/issues";
@@ -194,7 +194,7 @@ pub fn screen(ctx: &Context, query: &[(String, String)]) -> View {
 /// The browser: the status tabs, the filters, the issues the pick admits.
 pub fn browser(issues: &Answer, roadmap: &Answer, pick: &Pick) -> El {
     let body = unanswered(issues).unwrap_or_else(|| {
-        let all = list(issues, "/issues");
+        let all = items(issues, "/issues");
         let shown: Vec<&Value> = all.iter().filter(|i| pick.admits(i)).collect();
         let tab = |label: String, href: String, current: bool| {
             el("a")
@@ -211,7 +211,7 @@ pub fn browser(issues: &Answer, roadmap: &Answer, pick: &Pick) -> El {
                 pick.href("status", None),
                 pick.status.is_none(),
             ))
-            .children(tally(&all, "status").into_iter().map(|(s, n)| {
+            .children(tally(all, "status").into_iter().map(|(s, n)| {
                 let current = pick
                     .status
                     .as_deref()
@@ -254,7 +254,7 @@ pub fn browser(issues: &Answer, roadmap: &Answer, pick: &Pick) -> El {
             .attr("action", ROUTE)
             .child(
                 el("label")
-                    .class("mj-ui-sr-only")
+                    .class("mj-sr-only")
                     .attr("for", "mj-ui-issues-q")
                     .text("Search issues"),
             )
@@ -284,7 +284,7 @@ pub fn browser(issues: &Answer, roadmap: &Answer, pick: &Pick) -> El {
             .child(select(
                 "priority",
                 "Priority",
-                tally(&all, "priority")
+                tally(all, "priority")
                     .into_iter()
                     .map(|(p, n)| (p.clone(), format!("{p} ({n})")))
                     .collect(),

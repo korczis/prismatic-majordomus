@@ -42,6 +42,7 @@ is what a forwarded request says, and a person never needs it.
 | `peers` | `peers.list` | attached workers across the boards read, every board that could not be read with its reason, overlapping claims, and up to eight workers by name with what they announced |
 | `mesh` | the mesh runtime | links connected and failing, claims held and this runtime's share, and what the journal addresses to this runtime: open reviews naming it, handovers nobody consumed, overlaps with its claims |
 | `integration` | `majordomus prs brief` | the queue as the last observation of the forge left it, or that this checkout never observed it |
+| `release` | `release.currency` | whether the trunk's landed work is released: current, owed with the count and the age of the oldest landing, overdue past six hours, or unread with why (I3070) |
 | `derive` | the derive lock | its holder, whether that process runs, how long it has held the lock, and the priority marker; `undeclared` in a repository that ships no lock |
 
 Each section carries a state: `read`, `partial` (part of what it covers could not be asked;

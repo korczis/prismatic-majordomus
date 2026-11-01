@@ -1,0 +1,57 @@
+id: I3355
+milestone: the-proof-scorecard-is-published
+title: "majordomus economics proof serves the scorecard on the command line, HTTP and MCP from one capability declaration"
+slug: the-scorecard-is-a-capability
+priority: p1
+profile: implementation
+objective: "Declare capability economics.proof in apps/majordomus-cli/src/capability/builtin/economics.rs (CLI economics proof, HTTP GET /api/v1/economics/proof, MCP majordomus_economics_proof) answering I3354's scorecard, add the CLI text rendering, name it in the projection test at builtin/economics.rs:235-258, and run majordomus generate for every projection it writes."
+why: "The owner's report of 2026-10-19 asks for the verdicts to be public. Every surface reads one capability, which is how this repository adds an operation (capability! declarations, ADR 0004). It depends on I3376 because both add declarations and projection-test entries to the same region of builtin/economics.rs."
+current_state: "apps/majordomus-cli/src/capability/builtin/economics.rs:141-202 declares economics.summary, explain, runs and check; the projection test is at :235-258."
+desired_state: "majordomus economics proof prints six rows and the totals; --format json, /api/v1/economics/proof and majordomus_economics_proof return the same data."
+scope:
+  - "apps/majordomus-cli/src/capability/builtin/economics.rs"
+  - "apps/majordomus-cli/src/commands/economics.rs"
+  - "apps/majordomus-cli/tests/economics.rs"
+  - ".claude/skills/mj-economics/SKILL.md"
+  - ".ai/repo/mcp-tool-run-baseline.txt"
+  - "docs/generated/capabilities.md"
+  - "docs/generated/cli.json"
+  - "docs/generated/cli.md"
+  - "docs/generated/cli.yaml"
+  - "docs/generated/openapi.json"
+  - "docs/generated/openapi.yaml"
+  - "docs/generated/registry.json"
+  - "docs/generated/registry.yaml"
+  - "docs/generated/graph.json"
+  - "docs/generated/modules/economics.md"
+  - "site/content/docs/cli/economics"
+  - "site/content/docs/cli/economics/_index.md"
+  - "site/content/registry/capabilities"
+  - "site/data/generated/catalogue.json"
+  - "site/data/generated/cli.json"
+  - "site/data/generated/executable.json"
+  - "site/data/generated/openapi.json"
+  - "site/data/registry/registry.json"
+  - "site/data/registry/product.json"
+  - "handbook/shape/explorer-data.json"
+non_scope:
+  - "Rendering on /ui or the site (I3356, I3357)"
+  - "Refusing claims (I3358)"
+depends_on:
+  - "I3354"
+  - "I3376"
+serves:
+  - "the-product-proves-it-pays#scorecard-is-published"
+acceptance_criteria:
+  - "The capability is served on CLI, HTTP and MCP, and the projection test names it"
+  - "CLI JSON, HTTP and MCP return the same reading for the same fixture"
+  - "majordomus generate --check is clean"
+validation:
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib capability::builtin::economics"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test economics"
+  - "majordomus economics proof"
+  - "majordomus generate --check"
+evidence_required:
+  - "test_proof_capability_projected"
+created_at: 2026-10-19
+updated_at: 2026-10-19
