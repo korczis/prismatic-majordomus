@@ -773,6 +773,28 @@ mod tests {
             .contains("'x.a' is given twice"));
     }
 
+    #[test]
+    fn a_wrapped_value_names_the_key_it_continues() {
+        assert_eq!(
+            parse_mapping("title: web overview (the\n  UI stack)\nnext: 1\n").unwrap_err(),
+            "line 2 continues the value of 'title' from the line above: a value is one line \
+             in this subset (a folded or wrapped scalar is not read); join it onto that line, \
+             quoted if it holds ': '"
+        );
+        assert!(parse_mapping("x:\n  title: a\n    b\n")
+            .unwrap_err()
+            .starts_with("line 3 continues the value of 'x.title' from the line above"));
+        // a line that continues nothing, or sits no deeper than the value, keeps the plain refusal
+        assert_eq!(
+            parse_mapping("a:\n  b\n").unwrap_err(),
+            "cannot parse line 2: b"
+        );
+        assert_eq!(
+            parse_mapping("a: 1\nb\n").unwrap_err(),
+            "cannot parse line 2: b"
+        );
+    }
+
     // ------------------------------------------------------------ rendering
 
     /// Anything the writer emits from a value inside the subset must read back identical:
