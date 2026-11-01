@@ -234,6 +234,11 @@
     },
     {
       "kind": "capability",
+      "subject": "capability:devtask.implement",
+      "path": "/evidence/capabilities/devtask-implement/"
+    },
+    {
+      "kind": "capability",
       "subject": "capability:devtask.issue",
       "path": "/evidence/capabilities/devtask-issue/"
     },
@@ -241,6 +246,11 @@
       "kind": "capability",
       "subject": "capability:devtask.milestone",
       "path": "/evidence/capabilities/devtask-milestone/"
+    },
+    {
+      "kind": "capability",
+      "subject": "capability:devtask.run",
+      "path": "/evidence/capabilities/devtask-run/"
     },
     {
       "kind": "capability",
@@ -1111,6 +1121,11 @@
       "kind": "capability",
       "subject": "capability:why.validate",
       "path": "/evidence/capabilities/why-validate/"
+    },
+    {
+      "kind": "capability",
+      "subject": "capability:worktree.create",
+      "path": "/evidence/capabilities/worktree-create/"
     },
     {
       "kind": "capability",
@@ -4464,6 +4479,23 @@
       "mechanisms": [],
       "findings": []
     },
+    "capability:devtask.implement": {
+      "kind": "capability",
+      "id": "devtask.implement",
+      "page": "/evidence/capabilities/devtask-implement/",
+      "programs": [],
+      "members": [],
+      "routes": [
+        {
+          "via": "behaviour",
+          "test": "suite:4003_devtask_implement_claims_creates_and_starts_once",
+          "path": "test/cases/4003_devtask_implement_claims_creates_and_starts_once.sh",
+          "category": "e2e"
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
     "capability:devtask.issue": {
       "kind": "capability",
       "id": "devtask.issue",
@@ -4484,6 +4516,16 @@
       "members": [
         "command:devtask milestone"
       ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "capability:devtask.run": {
+      "kind": "capability",
+      "id": "devtask.run",
+      "page": "/evidence/capabilities/devtask-run/",
+      "programs": [],
+      "members": [],
       "routes": [],
       "mechanisms": [],
       "findings": []
@@ -4871,7 +4913,14 @@
       "members": [
         "command:executions protocol"
       ],
-      "routes": [],
+      "routes": [
+        {
+          "via": "behaviour",
+          "test": "suite:4001_the_execution_state_machine_names_authorizing_to_unknown_outcome",
+          "path": "test/cases/4001_the_execution_state_machine_names_authorizing_to_unknown_outcome.sh",
+          "category": "e2e"
+        }
+      ],
       "mechanisms": [],
       "findings": []
     },
@@ -4893,7 +4942,20 @@
       "members": [
         "command:run"
       ],
-      "routes": [],
+      "routes": [
+        {
+          "via": "behaviour",
+          "test": "suite:4000_a_repeated_start_is_one_execution",
+          "path": "test/cases/4000_a_repeated_start_is_one_execution.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "behaviour",
+          "test": "suite:4004_an_execution_holds_its_issue_claim",
+          "path": "test/cases/4004_an_execution_holds_its_issue_claim.sh",
+          "category": "e2e"
+        }
+      ],
       "mechanisms": [],
       "findings": []
     },
@@ -6555,6 +6617,18 @@
       "programs": [],
       "members": [
         "command:why validate"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "capability:worktree.create": {
+      "kind": "capability",
+      "id": "worktree.create",
+      "page": "/evidence/capabilities/worktree-create/",
+      "programs": [],
+      "members": [
+        "command:worktree ensure"
       ],
       "routes": [],
       "mechanisms": [],
@@ -20914,6 +20988,18 @@
       "mechanisms": [],
       "findings": []
     },
+    "mcp:majordomus_devtask_implement": {
+      "kind": "mcp",
+      "id": "majordomus_devtask_implement",
+      "alias_of": "capability:devtask.implement",
+      "programs": [],
+      "members": [
+        "capability:devtask.implement"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
     "mcp:majordomus_devtask_milestone": {
       "kind": "mcp",
       "id": "majordomus_devtask_milestone",
@@ -22781,6 +22867,18 @@
       "programs": [],
       "members": [
         "capability:why.validate"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "mcp:majordomus_worktree_create": {
+      "kind": "mcp",
+      "id": "majordomus_worktree_create",
+      "alias_of": "capability:worktree.create",
+      "programs": [],
+      "members": [
+        "capability:worktree.create"
       ],
       "routes": [],
       "mechanisms": [],
@@ -29817,6 +29915,7 @@
     "suite:3959_the_shared_build_dir_stays_under_its_bound",
     "suite:3963_a_merge_of_master_derives_in_one_go",
     "suite:3999_a_fixture_holds_the_skills_the_generator_reads",
+    "suite:4002_a_worktree_is_created_by_one_capability",
     "suite:4007_an_idle_server_leaves_by_itself",
     "suite:402_argv_limit",
     "suite:404_refused_files_are_named",

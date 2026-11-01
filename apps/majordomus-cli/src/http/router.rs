@@ -1170,12 +1170,14 @@ fn failed(e: &CapabilityError) -> Response {
         CapabilityError::Refused(_) => 422,
         CapabilityError::Internal(_) => 500,
         CapabilityError::Forbidden(_) => 403,
+        CapabilityError::Conflict(_) => 409,
     };
     let (CapabilityError::InvalidInput(m)
     | CapabilityError::NotFound(m)
     | CapabilityError::Refused(m)
     | CapabilityError::Internal(m)
-    | CapabilityError::Forbidden(m)) = e;
+    | CapabilityError::Forbidden(m)
+    | CapabilityError::Conflict(m)) = e;
     error_response(status, e.code(), m)
 }
 
@@ -1332,6 +1334,7 @@ mod tests {
             (CapabilityError::Refused("m".into()), 422, "refused"),
             (CapabilityError::Internal("m".into()), 500, "internal"),
             (CapabilityError::remote("plan.transition"), 403, "forbidden"),
+            (CapabilityError::Conflict("m".into()), 409, "conflict"),
         ] {
             let r = failed(&e);
             assert_eq!(r.status, status, "{e:?}");

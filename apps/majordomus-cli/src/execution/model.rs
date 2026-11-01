@@ -80,6 +80,219 @@ impl std::fmt::Display for ExecutionId {
     }
 }
 
+/// The longest idempotency key a start accepts, in characters.
+pub const MAX_IDEMPOTENCY_KEY: usize = 128;
+
+/// The key a client sends with a start so that sending it again — a double click, a retry
+/// after a timeout whose answer never arrived — answers the execution the first send
+/// started instead of starting a second one (I4000).
+///
+/// One to [`MAX_IDEMPOTENCY_KEY`] characters of `A-Z a-z 0-9 . _ : -`: enough for a UUID,
+/// a ULID or `issue:I4000:implement`, and nothing a log line, a URL or a shell has to
+/// escape. A key names a request, not a secret, and is shown in the snapshot it started.
+///
+/// ```
+/// use majordomus_cli::execution::IdempotencyKey;
+/// assert_eq!(IdempotencyKey::parse("issue:I4000:implement").unwrap().as_str(), "issue:I4000:implement");
+/// assert!(IdempotencyKey::parse("").is_err(), "empty");
+/// assert!(IdempotencyKey::parse("two words").is_err(), "a space");
+/// assert!(IdempotencyKey::parse(&"k".repeat(129)).is_err(), "too long");
+/// assert!(IdempotencyKey::parse(&"k".repeat(128)).is_ok());
+/// ```
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct IdempotencyKey(String);
+
+impl IdempotencyKey {
+    /// Parse a key a client sent, or say why it is not one. Nothing is trimmed or folded:
+    /// a key is compared byte for byte, so `Click-1` and `click-1` are two requests.
+    ///
+    /// ```
+    /// use majordomus_cli::execution::IdempotencyKey;
+    /// assert_ne!(IdempotencyKey::parse("Click-1"), IdempotencyKey::parse("click-1"));
+    /// let refused = IdempotencyKey::parse("a/b").unwrap_err();
+    /// assert!(refused.contains("'/'"), "the refusal names the character: {refused}");
+    /// ```
+    pub fn parse(text: &str) -> Result<Self, String> {
+        let length = text.chars().count();
+        if length == 0 || length > MAX_IDEMPOTENCY_KEY {
+            return Err(format!(
+                "an idempotency key is 1 to {MAX_IDEMPOTENCY_KEY} characters; this one has {length}"
+            ));
+        }
+        if let Some(bad) = text
+            .chars()
+            .find(|c| !(c.is_ascii_alphanumeric() || matches!(c, '.' | '_' | ':' | '-')))
+        {
+            return Err(format!(
+                "an idempotency key is made of A-Z a-z 0-9 . _ : - only, and {bad:?} is not"
+            ));
+        }
+        Ok(IdempotencyKey(text.to_string()))
+    }
+
+    /// The key exactly as the client sent it, for the snapshot and for a refusal that
+    /// quotes it back.
+    ///
+    /// ```
+    /// use majordomus_cli::execution::IdempotencyKey;
+    /// assert_eq!(IdempotencyKey::parse("retry.7").unwrap().as_str(), "retry.7");
+    /// ```
+    pub fn as_str(&self) -> &str {
+        &self.0
+    }
+}
+
+impl std::fmt::Display for IdempotencyKey {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(&self.0)
+    }
+}
+
+/// The longest issue id a start accepts, in characters.
+pub const MAX_ISSUE_ID: usize = 64;
+
+/// Parse the issue a start names (I4004): `I4004`, `#184`. One to [`MAX_ISSUE_ID`]
+/// characters of `A-Z a-z 0-9 # . _ -`, compared byte for byte; anything else is refused
+/// with the character named, because the id becomes part of a mesh scope (`issue/<id>`)
+/// and a `/` or a space would make that scope mean something else.
+///
+/// ```
+/// use majordomus_cli::execution::model::parse_issue;
+/// assert_eq!(parse_issue("I4004").unwrap(), "I4004");
+/// assert_eq!(parse_issue("#184").unwrap(), "#184");
+/// assert!(parse_issue("").is_err());
+/// assert!(parse_issue("I1/../x").unwrap_err().contains("'/'"));
+/// ```
+pub fn parse_issue(text: &str) -> Result<String, String> {
+    let length = text.chars().count();
+    if length == 0 || length > MAX_ISSUE_ID {
+        return Err(format!(
+            "an issue id is 1 to {MAX_ISSUE_ID} characters; this one has {length}"
+        ));
+    }
+    if let Some(bad) = text
+        .chars()
+        .find(|c| !(c.is_ascii_alphanumeric() || matches!(c, '#' | '.' | '_' | '-')))
+    {
+        return Err(format!(
+            "an issue id is made of A-Z a-z 0-9 # . _ - only, and {bad:?} is not"
+        ));
+    }
+    Ok(text.to_string())
+}
+
+/// Where the mesh claim of an execution started for an issue stands (I4004).
+///
+/// ```text
+///   wanted ──► held ──► released            the run reached a final state
+///                  └──► kept                its outcome is not known: the claim stays
+///          ──► unclaimed                    no mesh runs here: it ran without a claim
+///          ──► refused                      another session holds the scope: nothing ran
+/// ```
+///
+/// ```
+/// use majordomus_cli::execution::ClaimStanding;
+/// let word = serde_json::to_value(ClaimStanding::Kept).unwrap();
+/// assert_eq!(word, "kept");
+/// let back: ClaimStanding = serde_json::from_value("unclaimed".into()).unwrap();
+/// assert_eq!(back, ClaimStanding::Unclaimed);
+/// ```
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+pub enum ClaimStanding {
+    /// Started for an issue; the claim is taken when a worker picks it up.
+    Wanted,
+    /// The exclusive claim is held, and the handler runs under it.
+    Held,
+    /// The claim was given back when the execution reached its final state.
+    Released,
+    /// The outcome is not known, so the claim is kept: whether the work happened is still
+    /// to be read, and the scope is not free until it has been.
+    Kept,
+    /// No mesh cooperation runs in this process, so it ran without a claim. Said, never a
+    /// failure.
+    Unclaimed,
+    /// Another session holds an exclusive claim on the scope; the execution was refused and
+    /// nothing ran.
+    Refused,
+}
+
+impl ClaimStanding {
+    /// The word serde writes for it, for a line a terminal prints without serialising: the
+    /// same word on the wire, in the snapshot and in `majordomus run --follow`.
+    ///
+    /// ```
+    /// use majordomus_cli::execution::ClaimStanding;
+    /// assert_eq!(ClaimStanding::Unclaimed.as_str(), "unclaimed");
+    /// assert_eq!(serde_json::to_value(ClaimStanding::Held).unwrap(), ClaimStanding::Held.as_str());
+    /// ```
+    pub fn as_str(self) -> &'static str {
+        match self {
+            ClaimStanding::Wanted => "wanted",
+            ClaimStanding::Held => "held",
+            ClaimStanding::Released => "released",
+            ClaimStanding::Kept => "kept",
+            ClaimStanding::Unclaimed => "unclaimed",
+            ClaimStanding::Refused => "refused",
+        }
+    }
+}
+
+/// The issue an execution works for and the mesh claim it holds for it (I4004): the issue,
+/// the scope claimed, the claim's key while there is one, and where it stands.
+///
+/// ```
+/// use majordomus_cli::execution::{ClaimStanding, IssueClaim};
+/// let wanted = IssueClaim::wanted("I4004");
+/// assert_eq!(wanted.standing, ClaimStanding::Wanted);
+/// assert!(wanted.scope.is_empty() && wanted.key.is_none());
+/// let json = serde_json::to_value(&wanted).unwrap();
+/// assert_eq!(json, serde_json::json!({ "issue": "I4004", "standing": "wanted" }));
+/// ```
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+pub struct IssueClaim {
+    /// The issue, as the start named it.
+    pub issue: String,
+    /// Where the claim stands.
+    pub standing: ClaimStanding,
+    /// The repository paths claimed: the issue record's `scope`, or `issue/<id>` when the
+    /// record declares none or is not in this checkout.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub scope: Vec<String>,
+    /// The mesh claim's key, `<stream>/<claim>`, once one was taken.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub key: Option<String>,
+    /// The mesh session the claim belongs to, once one was opened: `execution-<id>`.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub session: Option<String>,
+    /// What there is to say: why it ran unclaimed, who holds the scope it was refused, why
+    /// the claim is kept, or that a release did not go through.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub detail: Option<String>,
+}
+
+impl IssueClaim {
+    /// The claim of an execution just started for `issue`, before a worker has taken it:
+    /// no scope, key or session yet.
+    ///
+    /// ```
+    /// use majordomus_cli::execution::{ClaimStanding, IssueClaim};
+    /// let c = IssueClaim::wanted("#184");
+    /// assert_eq!((c.issue.as_str(), c.standing), ("#184", ClaimStanding::Wanted));
+    /// assert!(c.session.is_none() && c.detail.is_none());
+    /// ```
+    pub fn wanted(issue: &str) -> Self {
+        IssueClaim {
+            issue: issue.to_string(),
+            standing: ClaimStanding::Wanted,
+            scope: Vec::new(),
+            key: None,
+            session: None,
+            detail: None,
+        }
+    }
+}
+
 /// `YYYYMMDDTHHMMSSZ` in UTC from a Unix second, the compact form of the layer's own
 /// timestamps.
 ///
@@ -95,50 +308,152 @@ pub fn compact_utc(secs: u64) -> String {
 
 /// Where an execution is in its life.
 ///
-/// The transitions are the whole contract, and [`ExecutionState::may_move_to`] is the one
-/// place they are written down: the engine asks before every change, the store refuses a
-/// move it did not allow, and a client that reads a final state never sees it move again.
+/// The transitions are the whole contract, and [`ExecutionState::EDGES`] is the one place
+/// they are written down: [`ExecutionState::may_move_to`] reads it, the engine asks before
+/// every change, the store refuses a move it does not allow, and a client that reads a
+/// final state never sees it move again.
 ///
 /// ```text
-///   queued ──► running ──┬──► succeeded
-///      │                 ├──► failed
-///      │                 └──► cancelling ──┬──► cancelled
-///      │                                   ├──► succeeded
-///      └──► cancelled                      └──► failed
+///   authorizing     ──► queued | refused | failed | cancelled
+///   queued          ──► running | claimed | refused | failed | cancelled
+///   claimed         ──► running | queued | refused | failed | cancelling | unknown_outcome
+///   running         ──► verifying | succeeded | failed | cancelling | unknown_outcome
+///   verifying       ──► succeeded | failed | cancelling | unknown_outcome
+///   cancelling      ──► cancelled | succeeded | failed | unknown_outcome
+///   unknown_outcome ──► verifying | succeeded | failed | cancelled        (never running)
+///   succeeded, failed, cancelled, refused: final
 /// ```
 ///
-/// There is no `starting`. An in-process engine claims an execution and enters its handler
-/// in the same instant, so a state between the two would be one no client could ever
-/// observe and every client would have to handle.
+/// The in-process engine moves `queued ──► running` directly: it claims an execution and
+/// enters its handler in the same instant, so `claimed` would be a state no client could
+/// observe. `authorizing`, `claimed`, `verifying`, `refused` and `unknown_outcome` are
+/// entered by a worker that decides, holds, checks or loses an execution in its own time
+/// (Mission Control B3): a policy decision before the queue, a lease on a queued ticket, a
+/// check of what the handler produced, a refusal, and a run whose outcome cannot be read.
+///
+/// `unknown_outcome` is the one state a retry may not leave by running again. Whether the
+/// work happened is not known, so the next move is a reconciliation that reads evidence
+/// — to `verifying`, or straight to the outcome it found — and never `running`.
 #[derive(
     Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize, JsonSchema,
 )]
 #[serde(rename_all = "snake_case")]
 pub enum ExecutionState {
+    /// Accepted, and a policy decision on whether it may run has not been taken yet.
+    Authorizing,
     /// Accepted, and no worker has picked it up.
     Queued,
+    /// A worker holds it and has not entered the handler yet.
+    Claimed,
     /// The handler is running.
     Running,
+    /// The handler returned, and what it produced is being checked.
+    Verifying,
     /// Cancellation was asked for and the handler has not stopped yet.
     Cancelling,
+    /// Whether the work happened is not known: the worker that ran it went silent or its
+    /// answer could not be read. Only a reconciliation moves it on, never a rerun.
+    UnknownOutcome,
     /// The handler returned an output.
     Succeeded,
     /// The handler returned an error, or the worker could not run it.
     Failed,
     /// It stopped because it was asked to.
     Cancelled,
+    /// A policy refused it before it ran, at the request or when a worker claimed it.
+    Refused,
 }
 
 impl ExecutionState {
+    /// Every state, in the order of an execution's life.
+    ///
+    /// ```
+    /// use majordomus_cli::execution::ExecutionState;
+    /// assert_eq!(ExecutionState::ALL.len(), 11);
+    /// assert_eq!(ExecutionState::ALL[0], ExecutionState::Authorizing);
+    /// ```
+    pub const ALL: [ExecutionState; 11] = [
+        ExecutionState::Authorizing,
+        ExecutionState::Queued,
+        ExecutionState::Claimed,
+        ExecutionState::Running,
+        ExecutionState::Verifying,
+        ExecutionState::Cancelling,
+        ExecutionState::UnknownOutcome,
+        ExecutionState::Succeeded,
+        ExecutionState::Failed,
+        ExecutionState::Cancelled,
+        ExecutionState::Refused,
+    ];
+
+    /// The transition table: every move an execution may make, and no other. A pair that
+    /// is not here is refused.
+    ///
+    /// ```
+    /// use majordomus_cli::execution::ExecutionState::{self, *};
+    /// assert!(ExecutionState::EDGES.contains(&(Queued, Running)));
+    /// assert!(!ExecutionState::EDGES.contains(&(UnknownOutcome, Running)));
+    /// ```
+    pub const EDGES: &'static [(ExecutionState, ExecutionState)] = {
+        use ExecutionState::*;
+        &[
+            // a policy decision before the queue
+            (Authorizing, Queued),
+            (Authorizing, Refused),
+            (Authorizing, Failed),
+            (Authorizing, Cancelled),
+            // the queue: the in-process engine enters the handler at once; a worker claims
+            (Queued, Running),
+            (Queued, Claimed),
+            (Queued, Refused),
+            (Queued, Failed),
+            (Queued, Cancelled),
+            // a claim: entered, released before anything ran, refused when the worker
+            // authorises the ticket it consumes, or lost with its holder
+            (Claimed, Running),
+            (Claimed, Queued),
+            (Claimed, Refused),
+            (Claimed, Failed),
+            (Claimed, Cancelling),
+            (Claimed, UnknownOutcome),
+            // the handler
+            (Running, Verifying),
+            (Running, Succeeded),
+            (Running, Failed),
+            (Running, Cancelling),
+            (Running, UnknownOutcome),
+            // the check of what it produced
+            (Verifying, Succeeded),
+            (Verifying, Failed),
+            (Verifying, Cancelling),
+            (Verifying, UnknownOutcome),
+            // a stop asked for
+            (Cancelling, Cancelled),
+            (Cancelling, Succeeded),
+            (Cancelling, Failed),
+            (Cancelling, UnknownOutcome),
+            // a reconciliation, which reads evidence and never runs the work again
+            (UnknownOutcome, Verifying),
+            (UnknownOutcome, Succeeded),
+            (UnknownOutcome, Failed),
+            (UnknownOutcome, Cancelled),
+        ]
+    };
+
     /// The word as serialised.
     pub fn as_str(self) -> &'static str {
         match self {
+            ExecutionState::Authorizing => "authorizing",
             ExecutionState::Queued => "queued",
+            ExecutionState::Claimed => "claimed",
             ExecutionState::Running => "running",
+            ExecutionState::Verifying => "verifying",
             ExecutionState::Cancelling => "cancelling",
+            ExecutionState::UnknownOutcome => "unknown_outcome",
             ExecutionState::Succeeded => "succeeded",
             ExecutionState::Failed => "failed",
             ExecutionState::Cancelled => "cancelled",
+            ExecutionState::Refused => "refused",
         }
     }
 
@@ -147,21 +462,27 @@ impl ExecutionState {
     /// ```
     /// use majordomus_cli::execution::ExecutionState;
     /// assert!(ExecutionState::Succeeded.is_final());
+    /// assert!(ExecutionState::Refused.is_final());
     /// assert!(!ExecutionState::Cancelling.is_final());
+    /// assert!(!ExecutionState::UnknownOutcome.is_final(), "it waits for a reconciliation");
     /// ```
     pub fn is_final(self) -> bool {
         matches!(
             self,
-            ExecutionState::Succeeded | ExecutionState::Failed | ExecutionState::Cancelled
+            ExecutionState::Succeeded
+                | ExecutionState::Failed
+                | ExecutionState::Cancelled
+                | ExecutionState::Refused
         )
     }
 
-    /// Is the execution doing work, or about to?
+    /// Is the execution not final yet: doing work, about to, or waiting to be reconciled?
     pub fn is_active(self) -> bool {
         !self.is_final()
     }
 
-    /// May the execution move from here to `next`?
+    /// May the execution move from here to `next`? Exactly the pairs of
+    /// [`ExecutionState::EDGES`].
     ///
     /// ```
     /// use majordomus_cli::execution::ExecutionState::*;
@@ -169,22 +490,26 @@ impl ExecutionState {
     /// assert!(Running.may_move_to(Cancelling));
     /// assert!(Queued.may_move_to(Cancelled), "a queued execution is cancelled without running");
     /// assert!(!Succeeded.may_move_to(Running), "a final state is final");
-    /// assert!(!Running.may_move_to(Queued), "nothing goes back");
+    /// assert!(!Running.may_move_to(Queued), "nothing that ran goes back");
+    /// assert!(Authorizing.may_move_to(Refused));
+    /// assert!(!UnknownOutcome.may_move_to(Running), "reconciled first, never rerun");
     /// ```
     pub fn may_move_to(self, next: ExecutionState) -> bool {
-        use ExecutionState::*;
-        matches!(
-            (self, next),
-            (Queued, Running)
-                | (Queued, Cancelled)
-                | (Queued, Failed)
-                | (Running, Succeeded)
-                | (Running, Failed)
-                | (Running, Cancelling)
-                | (Cancelling, Cancelled)
-                | (Cancelling, Succeeded)
-                | (Cancelling, Failed)
-        )
+        Self::EDGES.contains(&(self, next))
+    }
+
+    /// The states this one may move to, in the order of [`ExecutionState::ALL`].
+    ///
+    /// ```
+    /// use majordomus_cli::execution::ExecutionState::*;
+    /// assert_eq!(UnknownOutcome.successors(), vec![Verifying, Succeeded, Failed, Cancelled]);
+    /// assert!(Refused.successors().is_empty());
+    /// ```
+    pub fn successors(self) -> Vec<ExecutionState> {
+        Self::ALL
+            .into_iter()
+            .filter(|next| self.may_move_to(*next))
+            .collect()
     }
 }
 
@@ -258,7 +583,8 @@ impl ProgressView {
 /// on the process's own error stream, where the operator running the server can read it.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct ExecutionError {
-    /// `invalid_input`, `not_found`, `refused`, `forbidden`, `internal`, `cancelled`, `unavailable`.
+    /// `invalid_input`, `not_found`, `refused`, `forbidden`, `conflict`, `internal`, `cancelled`,
+    /// `unavailable`.
     pub code: String,
     /// What went wrong, for a person.
     pub message: String,
@@ -403,7 +729,8 @@ pub struct Execution {
     /// What the handler returned, for a succeeded execution and never before.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub output: Option<Value>,
-    /// Why it failed, for a failed execution and never before.
+    /// Why it failed, for a failed execution and never before; why it was refused, for a
+    /// refused one; and why its outcome is not known, for one whose outcome is not.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub error: Option<ExecutionError>,
     /// The last progress the handler reported.
@@ -430,6 +757,14 @@ pub struct Execution {
     /// The id used in this process's logs and tracing spans for this execution; the
     /// execution id itself, carried under the name a reader of a log expects.
     pub correlation_id: String,
+    /// The idempotency key the start was sent with, when it was sent with one: a repeated
+    /// start with this key answers this execution instead of starting another (I4000).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub idempotency_key: Option<String>,
+    /// The issue it was started for, and the mesh claim it takes for it, when it was
+    /// started for one (I4004).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub issue_claim: Option<IssueClaim>,
 }
 
 impl Execution {
@@ -468,10 +803,120 @@ mod tests {
         assert_eq!(ids.len(), 2000);
     }
 
+    /// The table, written out pair by pair as the contract states it: a change to
+    /// [`ExecutionState::EDGES`] that is not also made here fails, in both directions.
+    const DECLARED: &[(&str, &[&str])] = &[
+        ("authorizing", &["queued", "failed", "cancelled", "refused"]),
+        (
+            "queued",
+            &["claimed", "running", "failed", "cancelled", "refused"],
+        ),
+        (
+            "claimed",
+            &[
+                "queued",
+                "running",
+                "cancelling",
+                "unknown_outcome",
+                "failed",
+                "refused",
+            ],
+        ),
+        (
+            "running",
+            &[
+                "verifying",
+                "cancelling",
+                "unknown_outcome",
+                "succeeded",
+                "failed",
+            ],
+        ),
+        (
+            "verifying",
+            &["cancelling", "unknown_outcome", "succeeded", "failed"],
+        ),
+        (
+            "cancelling",
+            &["unknown_outcome", "succeeded", "failed", "cancelled"],
+        ),
+        (
+            "unknown_outcome",
+            &["verifying", "succeeded", "failed", "cancelled"],
+        ),
+        ("succeeded", &[]),
+        ("failed", &[]),
+        ("cancelled", &[]),
+        ("refused", &[]),
+    ];
+
+    #[test]
+    fn may_move_to_admits_exactly_the_declared_edges_and_refuses_every_other_pair() {
+        use ExecutionState::*;
+        assert_eq!(
+            DECLARED.len(),
+            ExecutionState::ALL.len(),
+            "every state is declared"
+        );
+        let mut admitted = 0;
+        for from in ExecutionState::ALL {
+            let (_, allowed) = DECLARED
+                .iter()
+                .find(|(name, _)| *name == from.as_str())
+                .unwrap_or_else(|| panic!("{from:?} is not declared"));
+            for to in ExecutionState::ALL {
+                let declared = allowed.contains(&to.as_str());
+                assert_eq!(
+                    from.may_move_to(to),
+                    declared,
+                    "{} -> {}: the table says {}, the contract says {}",
+                    from.as_str(),
+                    to.as_str(),
+                    from.may_move_to(to),
+                    declared
+                );
+                admitted += usize::from(declared);
+            }
+        }
+        assert_eq!(
+            admitted,
+            ExecutionState::EDGES.len(),
+            "no edge is listed twice"
+        );
+        // the contract's own sentences, as assertions of their own
+        for to in ExecutionState::ALL {
+            assert!(!to.may_move_to(to), "{to:?} -> itself is not a move");
+            assert!(
+                !to.may_move_to(Authorizing),
+                "nothing enters authorizing: it is a start"
+            );
+        }
+        for from in [Running, Verifying, Cancelling, UnknownOutcome] {
+            assert!(
+                !from.may_move_to(Queued),
+                "{from:?}: what may have run is not requeued"
+            );
+            assert!(!from.may_move_to(Claimed), "{from:?}: nor claimed again");
+        }
+        assert!(
+            !UnknownOutcome.may_move_to(Running),
+            "reconcile first, never rerun"
+        );
+        for state in ExecutionState::ALL {
+            assert_eq!(
+                state.successors(),
+                ExecutionState::ALL
+                    .into_iter()
+                    .filter(|n| state.may_move_to(*n))
+                    .collect::<Vec<_>>()
+            );
+        }
+    }
+
     #[test]
     fn every_state_is_reachable_and_no_final_state_moves() {
         use ExecutionState::*;
-        let all = [Queued, Running, Cancelling, Succeeded, Failed, Cancelled];
+        let all = ExecutionState::ALL;
         for state in all {
             if state.is_final() {
                 assert!(
@@ -484,24 +929,90 @@ mod tests {
                     "{state:?} is a dead end"
                 );
             }
-            // every state is reachable from queued by some path
             assert_eq!(state.is_active(), !state.is_final());
         }
+        // every state is reachable from a start: authorizing, or queued for a start that
+        // needs no decision
+        let mut reached = std::collections::BTreeSet::from([Authorizing, Queued]);
+        loop {
+            let before = reached.len();
+            let next: Vec<_> = reached.iter().flat_map(|s| s.successors()).collect();
+            reached.extend(next);
+            if reached.len() == before {
+                break;
+            }
+        }
+        assert_eq!(reached.len(), all.len(), "unreachable: {:?}", {
+            all.iter()
+                .filter(|s| !reached.contains(s))
+                .collect::<Vec<_>>()
+        });
         // the words are the wire format and are asserted rather than assumed
         assert_eq!(
             all.map(|s| s.as_str()),
             [
+                "authorizing",
                 "queued",
+                "claimed",
                 "running",
+                "verifying",
                 "cancelling",
+                "unknown_outcome",
                 "succeeded",
                 "failed",
-                "cancelled"
+                "cancelled",
+                "refused"
             ]
         );
         for state in all {
             let text = serde_json::to_string(&state).unwrap();
             assert_eq!(text, format!("\"{}\"", state.as_str()));
+        }
+    }
+
+    #[test]
+    fn the_flows_that_existed_before_the_new_states_are_unchanged() {
+        use ExecutionState::*;
+        // the six states and nine moves of the engine as it was, every one still allowed
+        for (from, to) in [
+            (Queued, Running),
+            (Queued, Cancelled),
+            (Queued, Failed),
+            (Running, Succeeded),
+            (Running, Failed),
+            (Running, Cancelling),
+            (Cancelling, Cancelled),
+            (Cancelling, Succeeded),
+            (Cancelling, Failed),
+        ] {
+            assert!(
+                from.may_move_to(to),
+                "{from:?} -> {to:?} was allowed and still is"
+            );
+        }
+        // and every move among those six that was refused still is
+        let old = [Queued, Running, Cancelling, Succeeded, Failed, Cancelled];
+        for from in old {
+            for to in old {
+                let was = matches!(
+                    (from, to),
+                    (Queued, Running)
+                        | (Queued, Cancelled)
+                        | (Queued, Failed)
+                        | (Running, Succeeded)
+                        | (Running, Failed)
+                        | (Running, Cancelling)
+                        | (Cancelling, Cancelled)
+                        | (Cancelling, Succeeded)
+                        | (Cancelling, Failed)
+                );
+                assert_eq!(from.may_move_to(to), was, "{from:?} -> {to:?}");
+            }
+            assert_eq!(
+                from.is_final(),
+                matches!(from, Succeeded | Failed | Cancelled),
+                "{from:?}"
+            );
         }
     }
 

@@ -21022,6 +21022,18 @@
           "value_name": "JSON"
         },
         {
+          "defaults": [],
+          "global": false,
+          "help": "The execution's idempotency key (executions.start's `idempotency_key`): a repeated start with it is the execution it started. A run executes in its own process, so the key is held there; a server's start is where repeated sends meet (I4000)",
+          "long": "idempotency-key",
+          "name": "idempotency_key",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "KEY"
+        },
+        {
           "defaults": [
             "false"
           ],
@@ -40038,7 +40050,7 @@
     }
   ],
   "counts": {
-    "arguments": 1735,
+    "arguments": 1736,
     "commands": 252,
     "examples": 253,
     "runnable": 220

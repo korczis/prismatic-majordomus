@@ -412,6 +412,15 @@
         "status": "query"
       },
       {
+        "id": "capability:devtask.implement",
+        "kind": "capability",
+        "label": "devtask.implement",
+        "summary": "Implement an issue: readiness, preflight, claim, worktree and one run",
+        "route": "/cockpit/capabilities/devtask.implement",
+        "source": "apps/majordomus-cli/src/capability/builtin/devtask.rs",
+        "status": "command"
+      },
+      {
         "id": "capability:devtask.issue",
         "kind": "capability",
         "label": "devtask.issue",
@@ -428,6 +437,15 @@
         "route": "/cockpit/capabilities/devtask.milestone",
         "source": "apps/majordomus-cli/src/capability/builtin/devtask.rs",
         "status": "query"
+      },
+      {
+        "id": "capability:devtask.run",
+        "kind": "capability",
+        "label": "devtask.run",
+        "summary": "A worker's run on an issue's worktree",
+        "route": "/cockpit/capabilities/devtask.run",
+        "source": "apps/majordomus-cli/src/capability/builtin/devtask.rs",
+        "status": "command"
       },
       {
         "id": "capability:directories.list",
@@ -1994,6 +2012,15 @@
         "route": "/cockpit/capabilities/why.validate",
         "source": "apps/majordomus-cli/src/capability/builtin/why.rs",
         "status": "query"
+      },
+      {
+        "id": "capability:worktree.create",
+        "kind": "capability",
+        "label": "worktree.create",
+        "summary": "The canonical worktree of a branch, made or found",
+        "route": "/cockpit/capabilities/worktree.create",
+        "source": "apps/majordomus-cli/src/capability/builtin/worktree.rs",
+        "status": "command"
       },
       {
         "id": "capability:worktree.inspect",
@@ -101124,6 +101151,41 @@
         "source": "test/cases/3999_a_fixture_holds_the_skills_the_generator_reads.sh"
       },
       {
+        "id": "majordomus://test/test/cases/4000_a_repeated_start_is_one_execution.sh",
+        "kind": "test",
+        "label": "test/cases/4000_a_repeated_start_is_one_execution.sh",
+        "route": "/cockpit/objects/test/test-cases-4000-a-repeated-start-is-one-execution-sh",
+        "source": "test/cases/4000_a_repeated_start_is_one_execution.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/4001_the_execution_state_machine_names_authorizing_to_unknown_outcome.sh",
+        "kind": "test",
+        "label": "test/cases/4001_the_execution_state_machine_names_authorizing_to_unknown_outcome.sh",
+        "route": "/cockpit/objects/test/test-cases-4001-the-execution-state-machine-names-authorizing-to-unknown-outcome-sh",
+        "source": "test/cases/4001_the_execution_state_machine_names_authorizing_to_unknown_outcome.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/4002_a_worktree_is_created_by_one_capability.sh",
+        "kind": "test",
+        "label": "test/cases/4002_a_worktree_is_created_by_one_capability.sh",
+        "route": "/cockpit/objects/test/test-cases-4002-a-worktree-is-created-by-one-capability-sh",
+        "source": "test/cases/4002_a_worktree_is_created_by_one_capability.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/4003_devtask_implement_claims_creates_and_starts_once.sh",
+        "kind": "test",
+        "label": "test/cases/4003_devtask_implement_claims_creates_and_starts_once.sh",
+        "route": "/cockpit/objects/test/test-cases-4003-devtask-implement-claims-creates-and-starts-once-sh",
+        "source": "test/cases/4003_devtask_implement_claims_creates_and_starts_once.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/4004_an_execution_holds_its_issue_claim.sh",
+        "kind": "test",
+        "label": "test/cases/4004_an_execution_holds_its_issue_claim.sh",
+        "route": "/cockpit/objects/test/test-cases-4004-an-execution-holds-its-issue-claim-sh",
+        "source": "test/cases/4004_an_execution_holds_its_issue_claim.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/4007_an_idle_server_leaves_by_itself.sh",
         "kind": "test",
         "label": "test/cases/4007_an_idle_server_leaves_by_itself.sh",
@@ -106119,6 +106181,21 @@
         "kind": "projects"
       },
       {
+        "source": "capability:devtask.implement",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:devtask.implement",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:devtask.implement",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
         "source": "capability:devtask.issue",
         "target": "projection:cli",
         "kind": "projects"
@@ -106156,6 +106233,11 @@
       {
         "source": "capability:devtask.milestone",
         "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:devtask.run",
+        "target": "projection:cockpit",
         "kind": "projects"
       },
       {
@@ -109110,6 +109192,26 @@
       },
       {
         "source": "capability:why.validate",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:worktree.create",
+        "target": "projection:cli",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:worktree.create",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:worktree.create",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:worktree.create",
         "target": "projection:mcp",
         "kind": "projects"
       },
@@ -148339,6 +148441,31 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/4000_a_repeated_start_is_one_execution.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/4001_the_execution_state_machine_names_authorizing_to_unknown_outcome.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/4002_a_worktree_is_created_by_one_capability.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/4003_devtask_implement_claims_creates_and_starts_once.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/4004_an_execution_holds_its_issue_claim.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/4007_an_idle_server_leaves_by_itself.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -152700,12 +152827,22 @@
       },
       {
         "source": "module:devtask",
+        "target": "capability:devtask.implement",
+        "kind": "composes"
+      },
+      {
+        "source": "module:devtask",
         "target": "capability:devtask.issue",
         "kind": "composes"
       },
       {
         "source": "module:devtask",
         "target": "capability:devtask.milestone",
+        "kind": "composes"
+      },
+      {
+        "source": "module:devtask",
+        "target": "capability:devtask.run",
         "kind": "composes"
       },
       {
@@ -153580,6 +153717,11 @@
       },
       {
         "source": "module:worktree",
+        "target": "capability:worktree.create",
+        "kind": "composes"
+      },
+      {
+        "source": "module:worktree",
         "target": "capability:worktree.inspect",
         "kind": "composes"
       },
@@ -153610,8 +153752,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4192,
-      "edges": 9633,
+      "nodes": 4200,
+      "edges": 9649,
       "acyclic": false,
       "truncated": false
     }

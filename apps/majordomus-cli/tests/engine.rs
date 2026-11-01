@@ -14,7 +14,7 @@ use majordomus_cli::capability::{
     Context, Exposure, NamedCase, Stability,
 };
 use majordomus_cli::execution::{
-    Actor, ActorKind, Execution, ExecutionId, ExecutionState, SubmitError,
+    Actor, ActorKind, Execution, ExecutionId, ExecutionState, IdempotencyKey, SubmitError,
 };
 use majordomus_cli::{capability, module};
 use schemars::JsonSchema;
@@ -342,4 +342,70 @@ fn shutting_down_refuses_new_work_and_leaves_nothing_running() {
     );
     assert_eq!(ctx.executions.queued(), 0);
     assert!(format!("{:?}", ctx.executions).starts_with("ExecutionEngine("));
+}
+
+#[test]
+fn a_repeated_start_with_one_key_is_one_execution_and_another_input_is_a_conflict() {
+    // I4000: what a double click and a retry after a lost answer send
+    let f = common::Fixture::new();
+    let ctx = context(&f);
+    let actor = Actor::of(ActorKind::Internal);
+    let key = || Some(IdempotencyKey::parse("click-1").unwrap());
+    let first = ctx
+        .executions
+        .submit_once(&ctx, "fixture.wait", Value::Null, actor.clone(), key())
+        .expect("accepted");
+    assert!(!first.deduplicated, "the first start began it");
+    assert_eq!(first.execution.idempotency_key.as_deref(), Some("click-1"));
+    settle(&ctx, &first.execution.id, ExecutionState::Succeeded);
+
+    // the same input — an absent one is the empty object either way — after it finished
+    let again = ctx
+        .executions
+        .submit_once(
+            &ctx,
+            "fixture.wait",
+            serde_json::json!({}),
+            actor.clone(),
+            key(),
+        )
+        .expect("answered");
+    assert!(again.deduplicated);
+    assert_eq!(again.execution.id, first.execution.id);
+    assert_eq!(
+        again.execution.state,
+        ExecutionState::Succeeded,
+        "as it stands now"
+    );
+
+    let conflict = ctx
+        .executions
+        .submit_once(
+            &ctx,
+            "fixture.wait",
+            serde_json::json!({ "tenths": 1 }),
+            actor.clone(),
+            key(),
+        )
+        .unwrap_err();
+    assert_eq!(conflict.code(), "conflict");
+    assert!(
+        conflict.to_string().contains(first.execution.id.as_str()),
+        "it names what the key started: {conflict}"
+    );
+
+    // no key: every start starts one, as before
+    for _ in 0..2 {
+        let unkeyed = ctx
+            .executions
+            .submit_once(&ctx, "fixture.wait", Value::Null, actor.clone(), None)
+            .expect("accepted");
+        assert!(!unkeyed.deduplicated);
+        assert_eq!(unkeyed.execution.idempotency_key, None);
+    }
+    assert_eq!(
+        ctx.executions.store().len(),
+        3,
+        "one keyed execution and two without a key"
+    );
 }

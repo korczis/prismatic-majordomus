@@ -26,7 +26,8 @@ use crate::capability::CanonicalSchema;
 use crate::execution::engine::repository_of;
 use crate::execution::{
     redact, Actor, ActorKind, CancelOutcome, Execution, ExecutionEvent, ExecutionId,
-    ExecutionState, Seed, SubmitError, PROTOCOL_VERSION, REPORT_SILENCE,
+    ExecutionState, IdempotencyKey, Seed, StartOptions, SubmitError, PROTOCOL_VERSION,
+    REPORT_SILENCE,
 };
 use crate::{capability, module};
 
@@ -134,6 +135,25 @@ pub struct StartInput {
     /// Its input, as its own input schema describes it; an empty object when it takes none.
     #[serde(default)]
     pub input: Option<Value>,
+    /// A key that makes a repeated start one execution (I4000): sent again with the same
+    /// capability and input, it is answered the execution it started, `deduplicated`, and
+    /// nothing new runs; sent again with another input, it is refused 409 `conflict`,
+    /// naming that execution. 1 to 128 characters of `A-Z a-z 0-9 . _ : -`, scoped to this
+    /// repository and the capability, and held for as long as the server holds the
+    /// execution it started. Without one, every start starts an execution.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[schemars(length(min = 1, max = 128), regex(pattern = r"^[A-Za-z0-9._:-]+$"))]
+    pub idempotency_key: Option<String>,
+    /// The issue the execution works for (I4004): `I4004`, `#184`. Before the handler is
+    /// entered the execution takes the issue's exclusive mesh claim — the issue record's
+    /// `scope`, or `issue/<id>` when it declares none — as the mesh session
+    /// `execution-<id>`, and moves `queued -> claimed -> running`; a claim another session
+    /// holds refuses it (`refused`, the holder named) and nothing runs. The claim is given
+    /// back at the final state and kept for an outcome that is not known. With no mesh in
+    /// the serving process it runs unclaimed and its `execution.issue_claim` event says so.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[schemars(length(min = 1, max = 64), regex(pattern = r"^[A-Za-z0-9#._-]+$"))]
+    pub issue: Option<String>,
 }
 
 impl BenchmarkCases for StartInput {
@@ -143,18 +163,68 @@ impl BenchmarkCases for StartInput {
             StartInput {
                 capability: "executions.demonstrate".into(),
                 input: Some(serde_json::json!({ "steps": 1, "delay_ms": 0 })),
+                idempotency_key: None,
+                issue: None,
             },
         )]
     }
 }
 
-fn executions_start(ctx: &Context, input: StartInput) -> Result<ExecutionView, CapabilityError> {
+/// The answer of `executions.start`: the execution, flattened as every other execution
+/// answer is, and whether this start began it or was answered one its idempotency key had
+/// already started.
+///
+/// ```
+/// use majordomus_cli::capability::builtin::StartedExecution;
+/// use majordomus_cli::synthetic::SyntheticRepository;
+/// let repo = SyntheticRepository::small().unwrap();
+/// let ctx = repo.context().unwrap();
+/// let input = serde_json::json!({
+///     "capability": "executions.demonstrate",
+///     "input": { "steps": 1, "delay_ms": 0 },
+///     "idempotency_key": "click-1",
+/// });
+/// let start = || -> StartedExecution {
+///     serde_json::from_value(ctx.execute("executions.start", input.clone()).unwrap()).unwrap()
+/// };
+/// let (first, again) = (start(), start());
+/// assert!(!first.deduplicated && again.deduplicated);
+/// assert_eq!(first.view.execution.id, again.view.execution.id);
+/// ```
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+pub struct StartedExecution {
+    /// The execution, with the links to follow it.
+    #[serde(flatten)]
+    pub view: ExecutionView,
+    /// `true` when this start began nothing: its idempotency key had already started this
+    /// execution with the same input, and the answer is that execution as it stands now.
+    /// `false` for an execution this start began.
+    pub deduplicated: bool,
+}
+
+fn executions_start(ctx: &Context, input: StartInput) -> Result<StartedExecution, CapabilityError> {
+    let key = input
+        .idempotency_key
+        .as_deref()
+        .map(IdempotencyKey::parse)
+        .transpose()
+        .map_err(CapabilityError::InvalidInput)?;
     let payload = input.input.unwrap_or_else(|| serde_json::json!({}));
+    let options = StartOptions {
+        idempotency_key: key,
+        issue: input.issue,
+    };
     match ctx
         .executions
-        .submit(ctx, &input.capability, payload, actor(ctx))
+        .submit_with(ctx, &input.capability, payload, actor(ctx), options)
     {
-        Ok(execution) => Ok(ExecutionView::of(ctx, execution)),
+        Ok(started) => Ok(StartedExecution {
+            view: ExecutionView::of(ctx, started.execution),
+            deduplicated: started.deduplicated,
+        }),
+        Err(SubmitError::Conflict(conflict)) => {
+            Err(CapabilityError::Conflict(conflict.to_string()))
+        }
         Err(SubmitError::UnknownCapability(id)) => Err(CapabilityError::NotFound(format!(
             "no capability '{id}'; the executable ones are listed by capabilities.list"
         ))),
@@ -342,7 +412,9 @@ impl BenchmarkCases for CancelInput {
 #[derive(Debug, Serialize, Deserialize, JsonSchema)]
 /// The answer of `executions.cancel`.
 pub struct CancelReport {
-    /// What asking achieved: `requested`, `already_requested` or `already_finished`.
+    /// What asking achieved: `requested`, `already_requested`, `already_finished`, or
+    /// `outcome_unknown` for an execution whose outcome waits for a reconciliation, which a
+    /// stop cannot change.
     pub outcome: String,
     /// Whether the capability declares that it looks at its cancellation flag. When it
     /// does not, the request is recorded and the execution runs to completion.
@@ -361,6 +433,7 @@ fn executions_cancel(ctx: &Context, input: CancelInput) -> Result<CancelReport, 
         CancelOutcome::Requested => "requested",
         CancelOutcome::AlreadyRequested => "already_requested",
         CancelOutcome::AlreadyFinished(_) => "already_finished",
+        CancelOutcome::OutcomeUnknown => "outcome_unknown",
         CancelOutcome::Unknown => {
             return Err(CapabilityError::NotFound(format!(
                 "no execution {id} in this process"
@@ -501,6 +574,9 @@ pub struct ProtocolReport {
     pub max_replay: usize,
     /// The event types a client may receive, from the one enum that defines them.
     pub event_types: Vec<String>,
+    /// Every state an execution may be in and the states it may move to: the transition
+    /// table the store holds every event to, so a client never has to restate it.
+    pub states: Vec<ExecutionStateView>,
     /// The stream's own control messages.
     pub stream_types: Vec<String>,
     /// The JSON Schema of an event, derived from the Rust type.
@@ -509,6 +585,18 @@ pub struct ProtocolReport {
     pub stream_schema: Value,
     /// What the store keeps, so a client knows what it may ask for.
     pub limits: LimitsView,
+}
+
+#[derive(Debug, Serialize, Deserialize, JsonSchema)]
+/// One state of an execution, with the moves it allows.
+pub struct ExecutionStateView {
+    /// The state, as the snapshot and the list filter spell it.
+    pub state: ExecutionState,
+    /// Whether nothing more will be said about an execution in it.
+    #[serde(rename = "final")]
+    pub is_final: bool,
+    /// The states it may move to; every other move is refused.
+    pub may_move_to: Vec<ExecutionState>,
 }
 
 #[derive(Debug, Serialize, Deserialize, JsonSchema)]
@@ -576,6 +664,14 @@ fn executions_protocol(ctx: &Context, _: Empty) -> Result<ProtocolReport, Capabi
         max_connections: crate::http::events::MAX_CONNECTIONS,
         max_replay: crate::http::events::MAX_REPLAY,
         event_types: variants_of(&event_schema),
+        states: ExecutionState::ALL
+            .into_iter()
+            .map(|state| ExecutionStateView {
+                state,
+                is_final: state.is_final(),
+                may_move_to: state.successors(),
+            })
+            .collect(),
         stream_types: variants_of(&stream_schema),
         event_schema,
         stream_schema,
@@ -700,9 +796,9 @@ pub fn module() -> ModuleDescriptor {
                 id: "executions.start",
                 kind: CapabilityKind::Command,
                 title: "Start a capability as an execution",
-                description: "Run any executable capability of this registry as an execution: the input is checked against that capability's own input schema, the work is queued, and this answers at once with the execution's id and the links to follow it. Nothing waits for the handler. The capability runs through the same executor every other interface calls, so there is no second implementation of anything. On the command line (`majordomus run`) it runs in that process and is reported to the server serving the checkout, when one is, through executions.report; a run never starts a server.",
+                description: "Run any executable capability of this registry as an execution: the input is checked against that capability's own input schema, the work is queued, and this answers at once with the execution's id and the links to follow it. Nothing waits for the handler. With an idempotency_key, a repeated start is one execution: the same key with the same capability and input is answered the execution it started (deduplicated) and nothing new runs, and the same key with another input is refused as a conflict naming that execution. With an issue, the execution holds that issue's exclusive mesh claim while it runs: taken before the handler is entered (queued, claimed, running), refused with the holder named when another session holds the scope so that nothing runs, given back at the final state, and kept for an outcome that is not known; with no mesh in the serving process it runs unclaimed and says so. The capability runs through the same executor every other interface calls, so there is no second implementation of anything. On the command line (`majordomus run`) it runs in that process and is reported to the server serving the checkout, when one is, through executions.report; a run never starts a server.",
                 input: StartInput,
-                output: ExecutionView,
+                output: StartedExecution,
                 stability: Stability::BehaviorallyVerified,
                 exposure: Exposure { mcp: mcp("majordomus_execution_start"), http: post("/api/v1/executions/start"), cli: Some(crate::capability::CliExposure { path: vec!["run".into()] }) },
                 tags: ["executions", "control-plane"],
@@ -778,7 +874,7 @@ pub fn module() -> ModuleDescriptor {
                 id: "executions.report",
                 kind: CapabilityKind::Command,
                 title: "Report an execution another process runs",
-                description: "What `majordomus run` posts while it runs a capability in its own process and a server already serves the checkout: the execution's description and its events after the last sequence this server took. The server holds it as an execution started by the command line, with the pid, in the same store, listing, Cockpit pages and live channel as its own; applies each event once and in order, answering where the next report starts; tells the reporter when somebody asked it to stop; and fails it with `unavailable` once the reporter has been silent for 30 s. Nothing runs here. Changes this process's memory only.",
+                description: "What `majordomus run` posts while it runs a capability in its own process and a server already serves the checkout: the execution's description and its events after the last sequence this server took. The server holds it as an execution started by the command line, with the pid, in the same store, listing, Cockpit pages and live channel as its own; applies each event once and in order, answering where the next report starts; tells the reporter when somebody asked it to stop; and, once the reporter has been silent for 30 s, says its outcome is unknown (`unknown_outcome`, code `unavailable`) — never completed — until the reporter's own outcome reconciles it; a `started` after that is passed over, since nothing runs again before the outcome is known. Every event is held to the state machine `executions.protocol` lists, and an event of a newer schema version is refused by name. Nothing runs here. Changes this process's memory only.",
                 input: ReportInput,
                 output: ReportAnswer,
                 stability: Stability::BehaviorallyVerified,
@@ -790,7 +886,7 @@ pub fn module() -> ModuleDescriptor {
             capability! {
                 id: "executions.protocol",
                 title: "The live channel's contract",
-                description: "Where the WebSocket is, how a subscription and a reconnect are expressed, what the server writes, and the JSON Schema of every message — derived from the Rust types that implement it, so a client validating against this is validating against the implementation. OpenAPI cannot describe a socket; this is where that contract lives.",
+                description: "Where the WebSocket is, how a subscription and a reconnect are expressed, what the server writes, every state an execution may be in with the states it may move to (the transition table the store holds every event to), and the JSON Schema of every message — derived from the Rust types that implement it, so a client validating against this is validating against the implementation. OpenAPI cannot describe a socket; this is where that contract lives.",
                 input: Empty,
                 output: ProtocolReport,
                 stability: Stability::BehaviorallyVerified,
@@ -968,9 +1064,19 @@ mod tests {
         assert!(events.contains(&"execution.progress".to_string()));
         assert_eq!(
             events.len(),
-            12,
+            18,
             "every payload variant is described: {events:?}"
         );
+        for new in [
+            "execution.authorizing",
+            "execution.claimed",
+            "execution.verifying",
+            "execution.refused",
+            "execution.unknown_outcome",
+            "execution.issue_claim",
+        ] {
+            assert!(events.contains(&new.to_string()), "{new}: {events:?}");
+        }
         let stream =
             variants_of(&CanonicalSchema::of::<crate::http::events::StreamMessage>().schema);
         assert_eq!(
@@ -1055,6 +1161,78 @@ mod tests {
         assert!(matches!(e, CapabilityError::Refused(_)), "{e}");
     }
 
+    /// The protocol answers the whole transition table, and a report through the capability
+    /// every transport calls is held to it: a legal move is applied, an illegal one is
+    /// passed over, and a report whose events are of a newer schema is refused by name
+    /// before anything is read.
+    #[test]
+    fn the_protocol_answers_the_table_and_a_report_is_held_to_it() {
+        let repo = crate::synthetic::SyntheticRepository::small().expect("a repository");
+        let ctx = repo.context().expect("a context");
+        let protocol = executions_protocol(&ctx, Empty::default()).expect("the protocol");
+        assert_eq!(protocol.states.len(), ExecutionState::ALL.len());
+        for view in &protocol.states {
+            assert_eq!(view.may_move_to, view.state.successors());
+            assert_eq!(view.is_final, view.state.is_final());
+        }
+        let unknown = protocol
+            .states
+            .iter()
+            .find(|v| v.state == ExecutionState::UnknownOutcome)
+            .expect("unknown_outcome is listed");
+        assert!(!unknown.may_move_to.contains(&ExecutionState::Running));
+        let v = serde_json::to_value(&protocol).unwrap();
+        assert_eq!(v["states"][0]["state"], "authorizing");
+        assert_eq!(v["states"][0]["final"], false);
+
+        let id = ExecutionId::fresh();
+        let event = |sequence, payload| ExecutionEvent::new(id.clone(), sequence, payload);
+        let lost = crate::execution::EventPayload::UnknownOutcome {
+            error: crate::execution::ExecutionError {
+                code: "unavailable".into(),
+                message: "the worker stopped answering".into(),
+                suggestion: None,
+                correlation_id: id.to_string(),
+            },
+        };
+        let answer = executions_report(
+            &ctx,
+            report_of(
+                id.as_str(),
+                "executions.demonstrate",
+                vec![
+                    event(2, crate::execution::EventPayload::Started),
+                    event(3, crate::execution::EventPayload::Verifying),
+                    event(4, lost),
+                    event(5, crate::execution::EventPayload::Started),
+                ],
+            ),
+        )
+        .expect("held");
+        assert_eq!(
+            (answer.applied, answer.through),
+            (3, 5),
+            "the rerun is passed over"
+        );
+        assert_eq!(
+            answer.execution.execution.state,
+            ExecutionState::UnknownOutcome
+        );
+
+        let mut newer = serde_json::to_value(report_of(
+            ExecutionId::fresh().as_str(),
+            "executions.demonstrate",
+            vec![started(&id, 2)],
+        ))
+        .unwrap();
+        newer["events"][0]["schema_version"] = "2".into();
+        let refused = serde_json::from_value::<ReportInput>(newer).unwrap_err();
+        assert!(
+            refused.to_string().contains("schema version 2"),
+            "{refused}"
+        );
+    }
+
     /// A report about a capability this registry does not know is still held, its input as
     /// the reporter stored it; one this registry knows is held too, and answers how far the
     /// server holds it.
@@ -1087,6 +1265,54 @@ mod tests {
         .expect("held");
         assert_eq!((answer.applied, answer.through), (0, 1));
         assert_eq!(answer.execution.execution.state, ExecutionState::Queued);
+    }
+
+    /// I4000 through the capability every transport calls: the key on the answer, the flag
+    /// that says whether this start began anything, the conflict's own error, and a key
+    /// that is not one refused before anything is created.
+    #[test]
+    fn a_start_with_a_key_is_answered_once_and_a_bad_key_is_refused() {
+        let repo = crate::synthetic::SyntheticRepository::small().expect("a repository");
+        let ctx = repo.context().expect("a context");
+        let start = |key: &str, steps: u64| {
+            executions_start(
+                &ctx,
+                StartInput {
+                    capability: "executions.demonstrate".into(),
+                    input: Some(serde_json::json!({ "steps": steps, "delay_ms": 0 })),
+                    idempotency_key: Some(key.into()),
+                    issue: None,
+                },
+            )
+        };
+        let first = start("implement-I4000", 1).expect("started");
+        assert!(!first.deduplicated);
+        let again = start("implement-I4000", 1).expect("answered");
+        assert!(again.deduplicated);
+        assert_eq!(again.view.execution.id, first.view.execution.id);
+        let answer = serde_json::to_value(&again).unwrap();
+        assert_eq!(answer["deduplicated"], true, "{answer}");
+        assert_eq!(answer["idempotency_key"], "implement-I4000", "{answer}");
+        assert_eq!(
+            answer["id"],
+            first.view.execution.id.as_str(),
+            "flattened: {answer}"
+        );
+
+        let conflict = start("implement-I4000", 2).unwrap_err();
+        assert_eq!(conflict.code(), "conflict");
+        assert!(conflict
+            .to_string()
+            .contains(first.view.execution.id.as_str()));
+        for bad in ["", "two words", "../x", &"k".repeat(129)] {
+            let refused = start(bad, 1).unwrap_err();
+            assert_eq!(refused.code(), "invalid_input", "{bad:?}: {refused}");
+        }
+        assert_eq!(
+            ctx.executions.store().len(),
+            1,
+            "one execution, whatever was sent"
+        );
     }
 
     /// The Cockpit's page about one execution names the process that runs a reported one and

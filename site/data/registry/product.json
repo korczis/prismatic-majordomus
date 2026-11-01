@@ -5,7 +5,7 @@
     "id": "majordomus-cli",
     "version": "1.0.0-alpha.10"
   },
-  "fingerprint": "c3ab777db475b0f8ea092a855e6e4ef9fdb8bc8990d16f30904b2988cc061670",
+  "fingerprint": "b827d77bc3a2c0d14fa7225330e75c277cba0cb432ffeead2aec022d24ae1ed5",
   "route": "/features/",
   "domain_route": "/domains/",
   "counts": {
@@ -1162,7 +1162,7 @@
         "use_cases": 6,
         "rules": 13,
         "enforced_rules": 11,
-        "capabilities": 83,
+        "capabilities": 86,
         "moments": 17
       },
       "evidence": {
@@ -4774,6 +4774,15 @@
           "source_path": "apps/majordomus-cli/src/capability/builtin/worktree.rs",
           "capabilities": [
             {
+              "id": "worktree.create",
+              "title": "The canonical worktree of a branch, made or found",
+              "kind": "command",
+              "stability": "behaviorally_verified",
+              "tool": "majordomus_worktree_create",
+              "route": "POST /api/v1/worktrees/create",
+              "cli": "majordomus worktree ensure"
+            },
+            {
               "id": "worktree.inspect",
               "title": "One branch: where its worktree belongs and what is there",
               "kind": "query",
@@ -5193,11 +5202,11 @@
         "worktrees"
       ],
       "counts": {
-        "capabilities": 18,
-        "mcp_tools": 18,
+        "capabilities": 19,
+        "mcp_tools": 19,
         "mcp_resources": 2,
-        "http_routes": 18,
-        "cli_paths": 12,
+        "http_routes": 19,
+        "cli_paths": 13,
         "commands": 3,
         "objects": 0,
         "rules": 5,
@@ -5292,6 +5301,15 @@
           "stability": "behaviorally_verified",
           "source_path": "apps/majordomus-cli/src/capability/builtin/worktree.rs",
           "capabilities": [
+            {
+              "id": "worktree.create",
+              "title": "The canonical worktree of a branch, made or found",
+              "kind": "command",
+              "stability": "behaviorally_verified",
+              "tool": "majordomus_worktree_create",
+              "route": "POST /api/v1/worktrees/create",
+              "cli": "majordomus worktree ensure"
+            },
             {
               "id": "worktree.inspect",
               "title": "One branch: where its worktree belongs and what is there",
@@ -5468,11 +5486,11 @@
         "planning"
       ],
       "counts": {
-        "capabilities": 7,
-        "mcp_tools": 7,
+        "capabilities": 8,
+        "mcp_tools": 8,
         "mcp_resources": 2,
-        "http_routes": 7,
-        "cli_paths": 7,
+        "http_routes": 8,
+        "cli_paths": 8,
         "commands": 0,
         "objects": 0,
         "rules": 2,
@@ -13345,10 +13363,18 @@
         {
           "id": "devtask",
           "title": "Executable development scopes",
-          "description": "An issue and a milestone read as work to be done rather than as metadata: what a person authored, where the plan graph puts it, what happened to it locally, where its external projection stands, and whether a worker may start it — with the origin of every value on the value. Nothing here is a second project model: the records are the canonical ones, the status and the graph are `plan`'s, the branches and commits are `trace`'s, the readiness vocabulary refines three canonical statuses without replacing any, and the projection onto GitHub stays `scripts/github-sync`'s. Nothing here writes anything, which is what makes a user-authored GitHub value safe from it.",
+          "description": "An issue and a milestone read as work to be done rather than as metadata: what a person authored, where the plan graph puts it, what happened to it locally, where its external projection stands, and whether a worker may start it — with the origin of every value on the value. Nothing here is a second project model: the records are the canonical ones, the status and the graph are `plan`'s, the branches and commits are `trace`'s, the readiness vocabulary refines three canonical statuses without replacing any, and the projection onto GitHub stays `scripts/github-sync`'s. The two readers write nothing, which is what makes a user-authored GitHub value safe from them; `devtask.implement` writes only through the capabilities it composes (`worktree.create`, `executions.start`), and `devtask.run` is the run it starts.",
           "stability": "behaviorally_verified",
           "source_path": "apps/majordomus-cli/src/capability/builtin/devtask.rs",
           "capabilities": [
+            {
+              "id": "devtask.implement",
+              "title": "Implement an issue: readiness, preflight, claim, worktree and one run",
+              "kind": "command",
+              "stability": "experimental",
+              "tool": "majordomus_devtask_implement",
+              "route": "POST /api/v1/devtask/implement"
+            },
             {
               "id": "devtask.issue",
               "title": "One issue as an executable development task",
@@ -13366,6 +13392,12 @@
               "tool": "majordomus_devtask_milestone",
               "route": "GET /api/v1/devtask/milestone",
               "cli": "majordomus devtask milestone"
+            },
+            {
+              "id": "devtask.run",
+              "title": "A worker's run on an issue's worktree",
+              "kind": "command",
+              "stability": "experimental"
             }
           ]
         },
@@ -13693,10 +13725,10 @@
       ],
       "backlinks": [],
       "counts": {
-        "capabilities": 26,
-        "mcp_tools": 26,
+        "capabilities": 28,
+        "mcp_tools": 27,
         "mcp_resources": 1360,
-        "http_routes": 26,
+        "http_routes": 27,
         "cli_paths": 13,
         "commands": 1,
         "objects": 1357,
@@ -18692,17 +18724,17 @@
     }
   ],
   "telemetry": {
-    "capabilities": 3728,
-    "builtin": 220,
-    "declarative": 3508,
+    "capabilities": 3736,
+    "builtin": 223,
+    "declarative": 3513,
     "modules": 60,
-    "mcp_tools": 206,
-    "mcp_resources": 3565,
-    "http_routes": 212,
+    "mcp_tools": 208,
+    "mcp_resources": 3570,
+    "http_routes": 214,
     "cli_commands": 220,
     "shell_commands": 30,
     "kinds": 34,
-    "objects": 3508,
+    "objects": 3513,
     "by_kind": {
       "adr": 167,
       "application": 5,
@@ -18735,7 +18767,7 @@
       "session": 93,
       "skill": 8,
       "taxonomy": 10,
-      "test": 672,
+      "test": 677,
       "use-case": 49,
       "workspace": 1
     },

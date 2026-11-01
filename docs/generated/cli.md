@@ -4070,6 +4070,7 @@ majordomus run [OPTIONS] <CAPABILITY>
 | `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
 | `<CAPABILITY>` | `<CAPABILITY>` | required | The capability to run, by its canonical id (`health.report`, `objects.verify`) |
 | `--input` | `<JSON>` | — | Its input, as one JSON object; the capability's input schema is what validates it |
+| `--idempotency-key` | `<KEY>` | — | The execution's idempotency key (executions.start's `idempotency_key`): a repeated start with it is the execution it started. A run executes in its own process, so the key is held there; a server's start is where repeated sends meet (I4000) |
 | `--follow` | flag | — | Print the events as they arrive on stderr; on by default when stderr is a terminal |
 | `--quiet` | flag | — | Print nothing but the final output |
 | `--format` | `text` \| `json` | `text` | Output shape — `text`: Lines for a person; `json`: One JSON document, deterministic |
