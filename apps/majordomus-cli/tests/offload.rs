@@ -103,6 +103,11 @@ printf 'derived from: %s\n' "$(cat a.txt)" > generated.txt
 git rev-list --parents -n 1 HEAD | wc -w | tr -d ' ' > parents.txt
 # the commit the derived files may observe (I3836): the worktree's HEAD, not this input
 printf '%s\n' "${MJ_DERIVE_OBSERVE:-}" > observed.txt
+# who the run belongs to (I3956): written only when the test names an owner
+if [ "${OFFLOAD_SHOW_OWNER:-}" = 1 ]; then
+  printf '%s %s %s %s\n' "$MAJORDOMUS_OWNER_SESSION" "$MAJORDOMUS_OWNER_ISSUE" "$MAJORDOMUS_OWNER_PEER" \
+    "$MAJORDOMUS_OWNER_RUN" > owner.txt
+fi
 if [ -f DELETE ]; then rm -f a.txt; fi
 if [ -f FAIL ]; then echo "error: the derive broke"; exit 1; fi
 echo "==> derive: done"
@@ -990,6 +995,144 @@ fn a_named_host_derives_and_a_current_tree_stages_nothing() {
             .join(format!("offload-{tag}"))
             .exists(),
         "--keep did not keep the host's worktree"
+    );
+}
+
+/// A derive runs for its owner (I3956): the owner this session names is exported into every
+/// process the derive starts on the host, and the report says whose run it was; the run
+/// record the host kept beside its queue while the derive ran is gone once it ends.
+#[test]
+fn a_derive_runs_for_its_owner_and_leaves_no_run_record() {
+    let c = Cluster::new(&[("u@lundra", 50)]);
+    let d = c.declaration(&["u@lundra"]);
+    let s = c.session();
+    std::fs::write(s.join("a.txt"), "owned\n").unwrap();
+    let owner = [
+        ("OFFLOAD_SHOW_OWNER", "1".to_string()),
+        ("MAJORDOMUS_OWNER_SESSION", "claude-code-owner".to_string()),
+        ("MAJORDOMUS_OWNER_ISSUE", "I3956".to_string()),
+        ("MAJORDOMUS_OWNER_PEER", "p3".to_string()),
+    ];
+    let out = c.derive(&d, &["--format", "json"], &owner);
+    assert!(out.status.success(), "{}", text(&out.stderr));
+    let report: serde_json::Value = serde_json::from_slice(&out.stdout).unwrap();
+    assert_eq!(report["owner"]["session"], "claude-code-owner", "{report}");
+    assert_eq!(report["owner"]["issue"], "I3956", "{report}");
+    assert_eq!(report["owner"]["peer"], "p3", "{report}");
+    let tag = report["tag"].as_str().unwrap();
+    assert_eq!(
+        std::fs::read_to_string(s.join("owner.txt")).unwrap(),
+        format!("claude-code-owner I3956 p3 {tag}\n"),
+        "the derive did not see its owner"
+    );
+    assert!(
+        text(&out.stderr).contains("runs for session claude-code-owner, peer p3, issue I3956"),
+        "{}",
+        text(&out.stderr)
+    );
+    let runs = c.root.join("queue.runs");
+    assert!(runs.is_dir(), "the run records live beside the queue");
+    assert_eq!(
+        std::fs::read_dir(&runs).unwrap().count(),
+        0,
+        "a run record outlived its run"
+    );
+}
+
+/// A running derive is stopped by its owner as a process group, through `offload stop`
+/// (I3956): another session is refused and nothing is signalled; the owner's stop ends the
+/// derive, whose own command then says it was stopped (14), and leaves no run record.
+#[test]
+fn a_running_derive_is_stopped_by_its_owner_and_only_by_it() {
+    let c = Cluster::new(&[("u@lundra", 50)]);
+    let d = c.declaration(&["u@lundra"]);
+    let s = c.session();
+    std::fs::write(s.join("a.txt"), "stopped\n").unwrap();
+    let signal = c.root.join("signal");
+    std::fs::create_dir_all(&signal).unwrap();
+    let mut cmd = common::majordomus();
+    cmd.args(["offload", "derive", ".", "--declaration"])
+        .arg(&d)
+        .current_dir(&s)
+        .stdout(std::process::Stdio::piped())
+        .stderr(std::process::Stdio::piped());
+    c.env(&mut cmd);
+    cmd.env("OFFLOAD_SIGNAL", &signal)
+        .env("MAJORDOMUS_OWNER_SESSION", "claude-code-owner");
+    let derive = cmd.spawn().unwrap();
+    let runs = c.root.join("queue.runs");
+    let deadline = Instant::now() + Duration::from_secs(60);
+    let record = loop {
+        let found = std::fs::read_dir(&runs).ok().and_then(|mut d| {
+            d.find_map(|e| {
+                e.ok()
+                    .map(|e| e.path())
+                    .filter(|p| p.extension().is_some_and(|x| x == "run"))
+            })
+        });
+        if let (Some(r), true) = (found, signal.join("started").exists()) {
+            break r;
+        }
+        assert!(
+            Instant::now() < deadline,
+            "the derive never recorded its run"
+        );
+        std::thread::sleep(Duration::from_millis(50));
+    };
+    let tag = record.file_stem().unwrap().to_str().unwrap().to_string();
+    let text_of = std::fs::read_to_string(&record).unwrap();
+    assert!(
+        text_of.contains("owner_session claude-code-owner"),
+        "{text_of}"
+    );
+    let stop = |session: &str| {
+        let mut cmd = common::majordomus();
+        cmd.args([
+            "offload",
+            "stop",
+            &tag,
+            "--grace",
+            "5",
+            "--format",
+            "json",
+            "--declaration",
+        ])
+        .arg(&d)
+        .current_dir(&s);
+        c.env(&mut cmd);
+        cmd.env("MAJORDOMUS_OWNER_SESSION", session);
+        cmd.output().unwrap()
+    };
+    let refused = stop("claude-code-other");
+    assert_eq!(refused.status.code(), Some(13), "{}", text(&refused.stderr));
+    assert!(
+        text(&refused.stderr).contains("belongs to session claude-code-owner"),
+        "{}",
+        text(&refused.stderr)
+    );
+    assert!(record.exists(), "a refused stop touched the run");
+    let stopped = stop("claude-code-owner");
+    assert!(stopped.status.success(), "{}", text(&stopped.stderr));
+    let report: serde_json::Value = serde_json::from_slice(&stopped.stdout).unwrap();
+    assert_eq!(report["signals"][0], "TERM", "{report}");
+    assert_eq!(
+        report["record"]["owner"]["session"], "claude-code-owner",
+        "{report}"
+    );
+    let out = derive.wait_with_output().unwrap();
+    assert_eq!(out.status.code(), Some(14), "{}", text(&out.stderr));
+    assert!(
+        text(&out.stderr).contains("the derive was stopped on h0 with `offload stop`"),
+        "{}",
+        text(&out.stderr)
+    );
+    assert!(!record.exists(), "the stopped run left its record");
+    let gone = stop("claude-code-owner");
+    assert_eq!(gone.status.code(), Some(12), "{}", text(&gone.stderr));
+    assert!(
+        text(&gone.stderr).contains("holds no run record"),
+        "{}",
+        text(&gone.stderr)
     );
 }
 

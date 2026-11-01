@@ -739,6 +739,11 @@
     },
     {
       "kind": "capability",
+      "subject": "capability:mesh.who",
+      "path": "/evidence/capabilities/mesh-who/"
+    },
+    {
+      "kind": "capability",
       "subject": "capability:models.list",
       "path": "/evidence/capabilities/models-list/"
     },
@@ -3079,6 +3084,11 @@
     },
     {
       "kind": "command",
+      "subject": "command:mesh who",
+      "path": "/evidence/commands/mesh-who/"
+    },
+    {
+      "kind": "command",
       "subject": "command:migrate",
       "path": "/evidence/commands/migrate/"
     },
@@ -3111,6 +3121,11 @@
       "kind": "command",
       "subject": "command:offload probe",
       "path": "/evidence/commands/offload-probe/"
+    },
+    {
+      "kind": "command",
+      "subject": "command:offload stop",
+      "path": "/evidence/commands/offload-stop/"
     },
     {
       "kind": "command",
@@ -5676,6 +5691,25 @@
       "programs": [],
       "members": [],
       "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "capability:mesh.who": {
+      "kind": "capability",
+      "id": "mesh.who",
+      "page": "/evidence/capabilities/mesh-who/",
+      "programs": [],
+      "members": [
+        "command:mesh who"
+      ],
+      "routes": [
+        {
+          "via": "behaviour",
+          "test": "suite:3957_every_process_is_traced_to_its_session",
+          "path": "test/cases/3957_every_process_is_traced_to_its_session.sh",
+          "category": "e2e"
+        }
+      ],
       "mechanisms": [],
       "findings": []
     },
@@ -9708,7 +9742,7 @@
           "path": "apps/majordomus-cli/tests/mesh_cooperation.rs",
           "category": "integration",
           "inputs": [
-            ".ai/repo/rules/project/mesh-cooperation-is-authenticated.v1.md",
+            ".ai/repo/rules/project/mesh-cooperation-is-authenticated.v2.md",
             "apps/majordomus-cli/src/mesh/state.rs",
             "apps/majordomus-cli/tests/mesh_cooperation.rs"
           ]
@@ -9754,7 +9788,7 @@
           "path": "apps/majordomus-cli/tests/mesh_cooperation.rs",
           "category": "integration",
           "inputs": [
-            ".ai/repo/rules/project/mesh-cooperation-is-authenticated.v1.md",
+            ".ai/repo/rules/project/mesh-cooperation-is-authenticated.v2.md",
             "apps/majordomus-cli/src/mesh/cooperation.rs",
             "apps/majordomus-cli/tests/mesh_cooperation.rs"
           ]
@@ -9938,7 +9972,7 @@
           "path": "apps/majordomus-cli/tests/mesh_cooperation.rs",
           "category": "integration",
           "inputs": [
-            ".ai/repo/rules/project/mesh-cooperation-is-authenticated.v1.md",
+            ".ai/repo/rules/project/mesh-cooperation-is-authenticated.v2.md",
             "apps/majordomus-cli/src/mesh/repository.rs",
             "apps/majordomus-cli/tests/mesh_cooperation.rs"
           ]
@@ -16613,6 +16647,25 @@
       "mechanisms": [],
       "findings": []
     },
+    "command:mesh who": {
+      "kind": "command",
+      "id": "mesh who",
+      "page": "/evidence/commands/mesh-who/",
+      "programs": [
+        "native"
+      ],
+      "members": [],
+      "routes": [
+        {
+          "via": "example",
+          "test": "crate:cli_examples",
+          "path": "apps/majordomus-cli/tests/cli_examples.rs",
+          "category": "integration"
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
     "command:migrate": {
       "kind": "command",
       "id": "migrate",
@@ -16737,6 +16790,25 @@
       "kind": "command",
       "id": "offload probe",
       "page": "/evidence/commands/offload-probe/",
+      "programs": [
+        "native"
+      ],
+      "members": [],
+      "routes": [
+        {
+          "via": "example",
+          "test": "crate:cli_examples",
+          "path": "apps/majordomus-cli/tests/cli_examples.rs",
+          "category": "integration"
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
+    "command:offload stop": {
+      "kind": "command",
+      "id": "offload stop",
+      "page": "/evidence/commands/offload-stop/",
       "programs": [
         "native"
       ],
@@ -21862,6 +21934,18 @@
       "mechanisms": [],
       "findings": []
     },
+    "mcp:majordomus_mesh_who": {
+      "kind": "mcp",
+      "id": "majordomus_mesh_who",
+      "alias_of": "capability:mesh.who",
+      "programs": [],
+      "members": [
+        "capability:mesh.who"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
     "mcp:majordomus_models": {
       "kind": "mcp",
       "id": "majordomus_models",
@@ -26289,7 +26373,7 @@
           "category": "integration",
           "inputs": [
             "apps/majordomus-cli/tests/mesh_cooperation.rs",
-            ".ai/repo/rules/project/mesh-cooperation-is-authenticated.v1.md"
+            ".ai/repo/rules/project/mesh-cooperation-is-authenticated.v2.md"
           ]
         }
       ],
@@ -29816,6 +29900,8 @@
     "suite:3958_no_entry_path_or_gate_builds",
     "suite:3959_the_shared_build_dir_stays_under_its_bound",
     "suite:3963_a_merge_of_master_derives_in_one_go",
+    "suite:3991_the_integration_lease_lives_by_queue_progress",
+    "suite:3992_a_session_waiting_on_a_person_says_so",
     "suite:3999_a_fixture_holds_the_skills_the_generator_reads",
     "suite:4007_an_idle_server_leaves_by_itself",
     "suite:402_argv_limit",

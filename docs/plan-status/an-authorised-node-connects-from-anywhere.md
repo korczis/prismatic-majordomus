@@ -28,3 +28,6 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I3176` | shares apps/majordomus-cli/src/http/router.rs with I3288; they may not run concurrently |
 | WARN | `scope_conflict` | `I3176` | shares test/cases/491_the_mesh_is_on_here.sh with I3825; they may not run concurrently |
 | WARN | `scope_conflict` | `I3176` | shares test/cases/491_the_mesh_is_on_here.sh with I3837; they may not run concurrently |
+| WARN | `scope_conflict` | `I3176` | shares docs/MESH.md with I3992; they may not run concurrently |
+| WARN | `scope_conflict` | `I3176` | shares docs/MESH.md with I3993; they may not run concurrently |
+| WARN | `scope_conflict` | `I3176` | shares docs/MESH.md with I3994; they may not run concurrently |

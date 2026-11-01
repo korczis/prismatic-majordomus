@@ -10808,6 +10808,139 @@ cli:
               setup: []
               expectation: exits 12
           subcommands: []
+        - path:
+            - majordomus
+            - offload
+            - stop
+          route: /docs/cli/offload/stop/
+          executable: true
+          usage: "majordomus offload stop [OPTIONS] <TAG>"
+          about: "Stop an offloaded run as a process group on its host: read its run record, refuse unless the record names this session (or --force), then TERM the group and KILL what is left after the grace period. Exit 2 on a tag that is not one or an ambiguous host, 12 when the host holds no record or the group is not the run's, 13 when the run belongs to another session"
+          args:
+            - name: tag
+              positional: true
+              help: "The run's tag, as `offload derive` printed it"
+              value_name: TAG
+              takes_value: true
+              required: true
+              global: false
+              possible_values: []
+              defaults: []
+            - name: host
+              long: host
+              positional: false
+              help: "A declared host, by id or address; the declaration's only host when absent"
+              value_name: HOST
+              takes_value: true
+              required: false
+              global: false
+              possible_values: []
+              defaults: []
+            - name: force
+              long: force
+              positional: false
+              help: "Stop it although its record names another session, or none"
+              value_name: FORCE
+              takes_value: false
+              required: false
+              global: false
+              possible_values: []
+              defaults:
+                - "false"
+            - name: grace
+              long: grace
+              positional: false
+              help: Seconds between TERM and KILL
+              value_name: SECONDS
+              takes_value: true
+              required: false
+              global: false
+              possible_values: []
+              defaults:
+                - "10"
+            - name: repo
+              long: repo
+              positional: false
+              help: "Start the search for the repository root here (default: the current directory)"
+              value_name: PATH
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: discovery
+              long: discovery
+              positional: false
+              help: How declarative files are enumerated
+              value_name: DISCOVERY
+              takes_value: true
+              required: false
+              global: true
+              possible_values:
+                - name: vcs
+                  help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
+                - name: filesystem
+                  help: A walk of the work tree with the same glob semantics; untracked files included
+              defaults:
+                - vcs
+            - name: strict
+              long: strict
+              positional: false
+              help: Refuse to proceed when any file of the layer carries an error diagnostic
+              value_name: STRICT
+              takes_value: false
+              required: false
+              global: true
+              possible_values: []
+              defaults:
+                - "false"
+            - name: share
+              long: share
+              positional: false
+              help: "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable"
+              value_name: DIR
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: declaration
+              long: declaration
+              positional: false
+              help: "Read this derive-offload declaration file instead of the repository's"
+              value_name: FILE
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: format
+              long: format
+              positional: false
+              help: Output shape
+              value_name: FORMAT
+              takes_value: true
+              required: false
+              global: true
+              possible_values:
+                - name: text
+                  help: Lines for a person
+                - name: json
+                  help: "One JSON document, deterministic"
+              defaults:
+                - text
+          examples:
+            - id: offload-stop-undeclared
+              title: A stop with no declared host signals nothing
+              description: "Reads the run record `offload derive` left beside the host's queue, refuses unless it names this session (or --force), and stops the run's whole process group — TERM, then KILL after the grace period — so no compiler under it outlives the run. With no host declared there is no run to stop, and it refuses with 12 before it contacts anything."
+              argv:
+                - offload
+                - stop
+                - "0123456789"
+              command: majordomus offload stop 0123456789
+              setup: []
+              expectation: exits 12
+          subcommands: []
     - path:
         - majordomus
         - convergence
@@ -14605,7 +14738,7 @@ cli:
           route: /docs/cli/guard/hook/
           executable: true
           usage: "majordomus guard hook [OPTIONS]"
-          about: "Judge the edit a provider's pre-tool payload (on stdin) is about to make; exit 2 with the reason and the remedy when no claim covers it, 0 otherwise"
+          about: "Judge the tool call a provider's pre-tool payload (on stdin) is about to make; exit 2 with the reason and the remedy when no claim covers the file it edits, or when its shell command starts a build (cargo, rustc, scripts/derive, scripts/rust-*) over ssh on a declared offload host outside `majordomus offload`; 0 otherwise"
           args:
             - name: provider
               long: provider
@@ -14631,7 +14764,7 @@ cli:
           examples:
             - id: guard-hook
               title: "Judge the edit a provider's pre-tool payload names"
-              description: "What a provider's pre-tool hook runs before an edit: the payload arrives on stdin, and the command exits 2 with the reason and the remedy when no claim covers the path it names, 0 otherwise. Here stdin is empty, so it names no path, and the command lets the tool run."
+              description: "What a provider's pre-tool hook runs before an edit or a shell command: the payload arrives on stdin, and the command exits 2 with the reason and the remedy when no claim covers the path it names, or when its command starts a build over ssh on a host the offload declaration names (the way is `majordomus offload derive`), 0 otherwise. Here stdin is empty, so it names no path, and the command lets the tool run."
               argv:
                 - guard
                 - hook
@@ -16160,14 +16293,14 @@ cli:
               help: "The session making progress, as it was claimed under"
               value_name: SESSION
               takes_value: true
-              required: true
+              required: false
               global: false
               possible_values: []
               defaults: []
             - name: phase
               long: phase
               positional: false
-              help: "What it is doing, one line: `waiting on CI run 123`"
+              help: "What it is doing, one line: `waiting on CI run 123`; `blocked: <why>` says it waits on a person"
               value_name: PHASE
               takes_value: true
               required: false
@@ -16179,6 +16312,16 @@ cli:
               positional: false
               help: The running process of this machine the beat speaks for
               value_name: PID
+              takes_value: true
+              required: false
+              global: false
+              possible_values: []
+              defaults: []
+            - name: hook
+              long: hook
+              positional: false
+              help: "Read the session and the phase from this provider's hook payload on stdin (`claude-code`); prints nothing, exits 0"
+              value_name: PROVIDER
               takes_value: true
               required: false
               global: false
@@ -17620,6 +17763,97 @@ cli:
                   setup: []
                   expectation: "exits 0; prints disk-guard, plan"
               subcommands: []
+        - path:
+            - majordomus
+            - mesh
+            - who
+          route: /docs/cli/mesh/who/
+          executable: true
+          usage: "majordomus mesh who [OPTIONS] <SUBJECT>"
+          about: "Who runs this: the session, board peer, issue and address behind a pid, host:pid, run tag, issue or path; exits 10 when no evidence names one"
+          args:
+            - name: subject
+              positional: true
+              help: "A pid, host:pid, run tag, host:tag, issue (I3956) or path"
+              value_name: SUBJECT
+              takes_value: true
+              required: true
+              global: false
+              possible_values: []
+              defaults: []
+            - name: repo
+              long: repo
+              positional: false
+              help: "Start the search for the repository root here (default: the current directory)"
+              value_name: PATH
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: discovery
+              long: discovery
+              positional: false
+              help: How declarative files are enumerated
+              value_name: DISCOVERY
+              takes_value: true
+              required: false
+              global: true
+              possible_values:
+                - name: vcs
+                  help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
+                - name: filesystem
+                  help: A walk of the work tree with the same glob semantics; untracked files included
+              defaults:
+                - vcs
+            - name: strict
+              long: strict
+              positional: false
+              help: Refuse to proceed when any file of the layer carries an error diagnostic
+              value_name: STRICT
+              takes_value: false
+              required: false
+              global: true
+              possible_values: []
+              defaults:
+                - "false"
+            - name: share
+              long: share
+              positional: false
+              help: "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable"
+              value_name: DIR
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: format
+              long: format
+              positional: false
+              help: "`text` for a person, `json` for a machine; both render the same answer"
+              value_name: FORMAT
+              takes_value: true
+              required: false
+              global: false
+              possible_values:
+                - name: text
+                  help: Lines for a person
+                - name: json
+                  help: "One JSON document, deterministic"
+              defaults:
+                - text
+          examples:
+            - id: mesh-who-issue
+              title: "Who works on an issue, and what says so"
+              description: "Every live mesh claim, board announcement and run record that names the issue, each owner with its board peer, issue and address and the facts that named it. A pid is read where it runs — its parent chain up to the provider's process and socket, its directory and the owner variables of its environment — and `host:pid` reads a declared offload host through its ssh path. Here nobody names the issue, so the answer is unknown, lists the evidence it lacked, and exits 10."
+              argv:
+                - mesh
+                - who
+                - I1
+              command: majordomus mesh who I1
+              setup: []
+              expectation: exits 10
+          subcommands: []
     - path:
         - majordomus
         - monitor

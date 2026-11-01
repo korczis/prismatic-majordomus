@@ -9,7 +9,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 
 | milestone | status | done of required | ready | blocked | active | verify | cancelled | outcome |
 |---|---|---|---|---|---|---|---|---|
-| [mcp-transports-are-reliable](https://majordomus.dev/plan/mcp-transports-are-reliable/) | ACTIVE | 5/10 | 4 | 1 | 0 | 0 | 0 | A client gets each answer once or is told the outcome is unknown, can cancel what it started, cannot exhaust the server with one message, and finds its launch configuration generated from the provider declaration and diagnosed by parsing it. |
+| [mcp-transports-are-reliable](https://majordomus.dev/plan/mcp-transports-are-reliable/) | ACTIVE | 5/14 | 8 | 1 | 0 | 0 | 0 | A client gets each answer once or is told the outcome is unknown, can cancel what it started, cannot exhaust the server with one message, and finds its launch configuration generated from the provider declaration and diagnosed by parsing it. |
 
 ## Issues
 
@@ -23,6 +23,10 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | [I3961](https://majordomus.dev/plan/i3961/) | READY | 0 | — | peers.list answers a summary by default: checkouts that hold no board are counted, not listed |
 | [I3962](https://majordomus.dev/plan/i3962/) | DONE | 0 | — | The codex advisor's final message is held to the answer schema and read from its file alone |
 | [I3990](https://majordomus.dev/plan/i3990/) | DONE | 0 | — | An exclusive mesh claim lives by its holder's progress: a session stuck on a dialog, hung or crashed stops refusing others while its server beats on |
+| [I3991](https://majordomus.dev/plan/i3991/) | READY | 1 | I3990 | The integration lease lives by its executor's progress through the queue, not by its process existing |
+| [I3992](https://majordomus.dev/plan/i3992/) | READY | 1 | I3990 | A session that waits on a person says so: the Notification and Stop hooks mark it blocked on the mesh |
+| [I3993](https://majordomus.dev/plan/i3993/) | READY | 1 | I3990 | Every wait on a peer is bounded and says what it waited for when the bound is reached |
+| [I3994](https://majordomus.dev/plan/i3994/) | READY | 1 | I3990 | Superseded session beats are compacted, so liveness never spends a node's event quota |
 | [I4227](https://majordomus.dev/plan/i4227/) | DONE | 0 | — | A client that re-attaches and repeats its named claim keeps one departed row, not one per reconnect |
 | [I4356](https://majordomus.dev/plan/i4356/) | BLOCKED | 1 | I3810 | An exclusive claim is bound to a known session and its holder's process, and a claim is answered Written only when it is Held |
 
@@ -202,3 +206,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I3961` | shares apps/majordomus-cli/src/capability/builtin/peers.rs with I4327; they may not run concurrently |
 | WARN | `scope_conflict` | `I3961` | shares apps/majordomus-cli/src/cockpit/pages.rs with I4416; they may not run concurrently |
 | WARN | `scope_conflict` | `I3961` | shares apps/majordomus-cli/src/capability/builtin/peers.rs with I4468; they may not run concurrently |
+| WARN | `scope_conflict` | `I3991` | shares apps/majordomus-cli/src/integration/exclusive.rs with I3993; they may not run concurrently |
+| WARN | `scope_conflict` | `I3992` | shares apps/majordomus-cli/src/mesh/cooperation.rs with I3993; they may not run concurrently |
+| WARN | `scope_conflict` | `I3992` | shares apps/majordomus-cli/src/mesh/journal.rs with I3994; they may not run concurrently |
+| WARN | `scope_conflict` | `I3993` | shares docs/MESH.md with I3994; they may not run concurrently |

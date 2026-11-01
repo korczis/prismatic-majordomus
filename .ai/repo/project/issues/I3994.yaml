@@ -1,0 +1,30 @@
+id: I3994
+milestone: mcp-transports-are-reliable
+title: "Superseded session beats are compacted, so liveness never spends a node's event quota"
+slug: superseded-session-beats-are-compacted
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "Compact a session's superseded session_beat events in the journal (only the newest beat of a session decides its liveness), so a long-lived runtime's beats do not accumulate toward the per-node event quota that I2825 showed can deadlock a node, while keeping the (stream, seq) order every consumer relies on."
+why: "I3990 bounds beats to at most 8 x ceil(3600 / (ttl / 4)) a rolling hour per runtime and has mesh doctor fail past it, but every beat written is still an event kept forever; at the default ttl a busy runtime writes up to about 200 beats an hour, against a node quota of 20,000 events."
+current_state: "session_beat events are stored like every other event and are never removed; only the newest one is read by Journal::session_progress."
+desired_state: "A superseded session_beat is dropped at compaction on every runtime without breaking replay, replication or the digest, and the number of beats a journal holds is bounded by the number of sessions, not by time."
+scope:
+  - "apps/majordomus-cli/src/mesh/journal.rs"
+  - "apps/majordomus-cli/src/mesh/state.rs"
+  - "docs/MESH.md"
+  - ".ai/repo/project/issues/I3994.yaml"
+non_scope:
+  - "Compacting other event kinds"
+acceptance_criteria:
+  - "A journal holds at most one session_beat per session after compaction, and session_progress reads the same as before it"
+  - "Replay and replication across runtimes are unchanged by a compacted beat"
+validation:
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib -- mesh::journal mesh::state"
+  - "bin/majordomus plan validate"
+evidence_required:
+  - "superseded_session_beats_are_compacted"
+depends_on:
+  - "I3990"
+created_at: 2026-10-23
+updated_at: 2026-10-23

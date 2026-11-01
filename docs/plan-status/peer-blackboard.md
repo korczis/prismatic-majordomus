@@ -35,3 +35,5 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I2981` | shares apps/majordomus-cli/src/http/events.rs with I3288; they may not run concurrently |
 | WARN | `scope_conflict` | `I2981` | shares test/cases/3381_the_blackboard_is_pushed.sh with I3825; they may not run concurrently |
 | WARN | `scope_conflict` | `I2981` | shares test/cases/3381_the_blackboard_is_pushed.sh with I3837; they may not run concurrently |
+| WARN | `scope_conflict` | `I2981` | shares apps/majordomus-cli/src/peers.rs with I3992; they may not run concurrently |
+| WARN | `scope_conflict` | `I2981` | shares apps/majordomus-cli/src/mesh/journal.rs with I3994; they may not run concurrently |

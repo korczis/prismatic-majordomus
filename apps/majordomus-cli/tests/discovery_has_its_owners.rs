@@ -74,6 +74,11 @@ const OWNERS: &[(&str, usize, &str)] = &[
         "the guard's policy, read for a hook process",
     ),
     (
+        "src/guard/remote_build.rs",
+        1,
+        "the Bash guard finds the checkout a hook payload's cwd lies in",
+    ),
+    (
         "src/integration/allocate.rs",
         1,
         "allocation for a checkout given by its path",

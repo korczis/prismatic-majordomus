@@ -197,6 +197,8 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I3835` | shares apps/majordomus-cli/src/mesh with I4466; they may not run concurrently |
 | WARN | `scope_conflict` | `I3837` | shares test/cases with I3843; they may not run concurrently |
 | WARN | `scope_conflict` | `I3837` | shares test/cases with I3932; they may not run concurrently |
+| WARN | `scope_conflict` | `I3837` | shares test/cases with I3991; they may not run concurrently |
+| WARN | `scope_conflict` | `I3837` | shares test/cases with I3992; they may not run concurrently |
 | WARN | `scope_conflict` | `I3837` | shares test/cases with I4332; they may not run concurrently |
 | WARN | `scope_conflict` | `I4327` | shares apps/majordomus-cli/src/capability/builtin with I4329; they may not run concurrently |
 | WARN | `scope_conflict` | `I4327` | shares apps/majordomus-cli/src/capability/builtin with I4330; they may not run concurrently |
