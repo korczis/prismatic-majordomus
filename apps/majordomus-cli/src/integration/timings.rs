@@ -107,8 +107,15 @@ fn rank(sorted: &[u64], p: u64) -> u64 {
 /// assert_eq!((t.measured_runs, t.unmeasured_runs), (1, 1));
 /// assert_eq!(t.checks[0].median_seconds, 600);
 /// ```
+///
+/// A skipped or neutral run that started and completed is a measured run, but it ran nothing,
+/// so its duration is not a sample of how long the check takes and it is never a head's slowest
+/// check (I3202): a check whose runs were all skipped has no duration and is not listed, and
+/// its runs still count in `measured_runs`. Before, the instant of a skip entered the sample as
+/// 0 s and pulled the median of bench, install, macos and rust to 0.
 pub fn timings(obs: &ForgeObservation) -> CiTimings {
-    let mut by_check: BTreeMap<String, (Vec<u64>, u64, u64)> = BTreeMap::new();
+    // per check: the durations of the runs that ran, the measured runs, passed, failed
+    let mut by_check: BTreeMap<String, (Vec<u64>, u64, u64, u64)> = BTreeMap::new();
     let mut heads = Vec::new();
     let mut unmeasured = 0u64;
     for pr in &obs.pull_requests {
@@ -124,11 +131,15 @@ pub fn timings(obs: &ForgeObservation) -> CiTimings {
             };
             let took = end - start;
             let entry = by_check.entry(c.name.clone()).or_default();
-            entry.0.push(took);
+            entry.1 += 1;
+            let ran = c.state != CheckRunState::Skipped;
+            if ran {
+                entry.0.push(took);
+            }
             match c.state {
-                CheckRunState::Passed => entry.1 += 1,
+                CheckRunState::Passed => entry.2 += 1,
                 CheckRunState::Failed => {
-                    entry.2 += 1;
+                    entry.3 += 1;
                     failed = true;
                 }
                 _ => {}
@@ -139,7 +150,7 @@ pub fn timings(obs: &ForgeObservation) -> CiTimings {
             if last.is_none_or(|(e, _)| end > e) {
                 last = Some((end, c.completed_at.as_str()));
             }
-            if slowest.is_none_or(|(t, _)| took > t) {
+            if ran && slowest.is_none_or(|(t, _)| took > t) {
                 slowest = Some((took, c.name.as_str()));
             }
         }
@@ -158,15 +169,17 @@ pub fn timings(obs: &ForgeObservation) -> CiTimings {
             });
         }
     }
+    let measured_runs: u64 = by_check.values().map(|(_, runs, _, _)| runs).sum();
     let mut checks: Vec<CheckTiming> = by_check
         .into_iter()
-        .map(|(name, (took, passed, failed))| {
+        .filter(|(_, (took, _, _, _))| !took.is_empty())
+        .map(|(name, (took, runs, passed, failed))| {
             // a sample has one order, `order::numeric`'s; whole seconds are exact in an f64
             let mut sample: Vec<f64> = took.iter().map(|&t| t as f64).collect();
             numeric(&mut sample);
             let took: Vec<u64> = sample.into_iter().map(|t| t as u64).collect();
             CheckTiming {
-                runs: took.len() as u64,
+                runs,
                 passed,
                 failed,
                 median_seconds: rank(&took, 50),
@@ -180,7 +193,7 @@ pub fn timings(obs: &ForgeObservation) -> CiTimings {
     canonical(&mut heads);
     CiTimings {
         observed_at: obs.observed_at.clone(),
-        measured_runs: checks.iter().map(|c| c.runs).sum(),
+        measured_runs,
         unmeasured_runs: unmeasured,
         checks,
         heads,
@@ -339,17 +352,75 @@ mod tests {
     }
 
     /// A skipped run that started and completed is measured, and counted neither as passed
-    /// nor as failed.
+    /// nor as failed; it ran nothing, so it adds no duration to its check's sample (I3202).
     #[test]
     fn a_skipped_run_is_measured_and_neither_passed_nor_failed() {
         let o = observation(vec![pr(
             11,
-            vec![check("lint", CheckRunState::Skipped, &at(0), &at(1))],
+            vec![
+                check("lint", CheckRunState::Skipped, &at(0), &at(1)),
+                check("lint", CheckRunState::Passed, &at(0), &at(9)),
+            ],
         )]);
         let t = timings(&o);
         let lint = &t.checks[0];
-        assert_eq!((lint.runs, lint.passed, lint.failed), (1, 0, 0));
+        assert_eq!((lint.runs, lint.passed, lint.failed), (2, 1, 0));
+        assert_eq!(
+            (lint.median_seconds, lint.p90_seconds, lint.slowest_seconds),
+            (9 * 60, 9 * 60, 9 * 60),
+            "the skip is no sample"
+        );
         assert!(!t.heads[0].failed);
+    }
+
+    /// A check skipped on every head has no duration to report: it is not listed with a
+    /// median of 0 s, its runs still count as measured, and it is never a head's slowest check.
+    /// On master before I3202 bench, install, macos and rust read a median of 0 s this way.
+    #[test]
+    fn a_check_skipped_everywhere_reads_no_zero_median_and_is_never_the_slowest() {
+        let o = observation(vec![
+            pr(
+                12,
+                vec![
+                    check("bench", CheckRunState::Skipped, &at(0), &at(0)),
+                    check("rust", CheckRunState::Passed, &at(0), &at(20)),
+                ],
+            ),
+            pr(
+                13,
+                vec![
+                    check("bench", CheckRunState::Skipped, &at(30), &at(45)),
+                    check("rust", CheckRunState::Passed, &at(30), &at(40)),
+                ],
+            ),
+            pr(
+                14,
+                vec![check("bench", CheckRunState::Skipped, &at(0), &at(0))],
+            ),
+        ]);
+        let t = timings(&o);
+        assert_eq!(t.measured_runs, 5, "every run that started and completed");
+        let names: Vec<&str> = t.checks.iter().map(|c| c.name.as_str()).collect();
+        assert_eq!(
+            names,
+            ["rust"],
+            "a skipped-only check has no median to show"
+        );
+        let heads: Vec<(u64, &str)> = t
+            .heads
+            .iter()
+            .map(|h| (h.number, h.slowest_check.as_str()))
+            .collect();
+        assert_eq!(
+            heads,
+            [(12, "rust"), (13, "rust")],
+            "the 15 min skip on 13 is not its slowest check, and 14 ran nothing"
+        );
+        assert_eq!(
+            t.heads[1].wall_seconds,
+            15 * 60,
+            "13 waited until its last completion"
+        );
     }
 
     #[test]
