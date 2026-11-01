@@ -172,12 +172,9 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
 </div>
 <div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
   <div class="min-w-0">
-  <p class="flex flex-wrap items-center gap-3"><span class="mj-badge mj-badge--blocked relative" data-status="blocked"><span aria-hidden="true">✕</span>BLOKOVÁNO</span>
+  <p class="flex flex-wrap items-center gap-3"><span class="mj-badge mj-badge--done relative" data-status="done"><span aria-hidden="true">✓</span>HOTOVO</span>
 <span class="text-sm text-body">vlna 1 · p1 · profil implementation · běží samostatně</span></p>
   <p class="mt-3 text-sm text-body">Součást <a href="https://majordomus.dev/cs/plan/fly-deployment/" class="text-fg-brand underline">fly-deployment — Image kontejneru je projekcí modelu repozitáře a jeho smoke test je jeho důkazem</a>.</p>
-  <div class="mt-6 rounded-base border border-danger-subtle bg-danger-soft p-4">
-    <p class="text-sm text-fg-danger-strong">Blocked. This issue cannot start until <a href="https://majordomus.dev/cs/plan/i3820/" class="font-mono underline">I3820</a> is done. The status is derived from that, not declared.</p>
-  </div>
 
   <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Cíl</h2>
   <p class="mt-2 max-w-3xl break-words text-base leading-relaxed text-body">A typed capability deploy.slug assembles, outside the checkout, the tree a provider receives: the deployment object&#39;s build.inputs read at one commit, the generated provider files of that commit made executable, the inline buildpack line, and the executable built at that same commit; a workflow builds the musl executable at master&#39;s commit after master&#39;s ci succeeds, assembles the slug and pushes it to the provider with a workflow secret, and nothing else ever pushes to the provider. ADR 0219 decisions 3 and 5.</p><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Proč</h2><p class="mt-2 max-w-3xl break-words text-base leading-relaxed text-body">The live Gigalixir application was published from a slug assembled by hand, which is the parallel universe the owner refused on 2026-10-21, and it answers the release binary&#39;s commit rather than the tree it serves.</p><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Aktuální stav</h2><p class="mt-2 max-w-3xl break-words text-base leading-relaxed text-body">Measured on 27d017ea16a: deploy/gigalixir/{Procfile,bin/*} are generated from the object; no capability assembles a slug and no workflow publishes to the provider; the application runs a hand-assembled slug of 573df967bb5 with the v1.0.0-alpha.1 binary.</p><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Cílový stav</h2><p class="mt-2 max-w-3xl break-words text-base leading-relaxed text-body">majordomus deploy slug --deployment majordomus --commit &lt;sha&gt; --executable &lt;path&gt; --out &lt;dir&gt; writes exactly build.inputs, the provider files (mode 755 for bin/*), .buildpacks and the executable, refuses an out directory inside the checkout, and records the commit; .github/workflows/provider.yml runs on a successful master ci, builds the executable with MAJORDOMUS_BUILD_COMMIT set, assembles the slug and pushes it with GIGALIXIR_EMAIL/GIGALIXIR_API_KEY secrets; case 3821 assembles a fixture slug and proves its file list, modes and recorded commit.</p>
@@ -188,11 +185,11 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
   
 
   <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Závislosti</h2>
-  <ul class="mt-3 grid gap-2 sm:grid-cols-2"><li class="min-w-0"><a href="https://majordomus.dev/cs/plan/i3820/" class="flex min-w-0 items-start gap-2 rounded-base border border-default bg-neutral-primary-soft px-3 py-2 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I3820</span><span class="mj-badge mj-badge--ready relative" data-status="ready"><span aria-hidden="true">○</span>READY</span>
+  <ul class="mt-3 grid gap-2 sm:grid-cols-2"><li class="min-w-0"><a href="https://majordomus.dev/cs/plan/i3820/" class="flex min-w-0 items-start gap-2 rounded-base border border-default bg-neutral-primary-soft px-3 py-2 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I3820</span><span class="mj-badge mj-badge--done relative" data-status="done"><span aria-hidden="true">✓</span>DONE</span>
 <span class="min-w-0 break-words text-sm text-heading">A deployment names the provider that hosts it, and the provider&#39;s files are generated from it</span></a></li>
   </ul>
   <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Co na tom čeká</h2>
-  <ul class="mt-3 grid gap-2 sm:grid-cols-2"><li class="min-w-0"><a href="https://majordomus.dev/cs/plan/i3822/" class="flex min-w-0 items-start gap-2 rounded-base border border-default bg-neutral-primary-soft px-3 py-2 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I3822</span><span class="mj-badge mj-badge--blocked relative" data-status="blocked"><span aria-hidden="true">✕</span>BLOCKED</span>
+  <ul class="mt-3 grid gap-2 sm:grid-cols-2"><li class="min-w-0"><a href="https://majordomus.dev/cs/plan/i3822/" class="flex min-w-0 items-start gap-2 rounded-base border border-default bg-neutral-primary-soft px-3 py-2 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I3822</span><span class="mj-badge mj-badge--done relative" data-status="done"><span aria-hidden="true">✓</span>DONE</span>
 <span class="min-w-0 break-words text-sm text-heading">A deployment that names a provider is observed at its own URL, and is active only while it serves master</span></a></li>
   </ul>
 
@@ -207,17 +204,22 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
 <ul class="mt-3 list-disc space-y-1 break-words ps-5 text-sm text-body"><li class="font-mono text-heading break-words">slug_assembled_from_object</li><li class="font-mono text-heading break-words">master_publishes_after_green_ci</li></ul>
 
   <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Důkazy</h2>
-  <p class="mt-2 text-sm text-body">Nic nezaznamenáno. Za každým tokenem výše musí stát příkaz nebo artefakt, než lze tento úkol dokončit; vyprávění se odmítá.</p>
+  <div class="mt-4 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[34rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-soft text-xs uppercase tracking-wide text-body-subtle"><tr><th scope="col" class="px-4 py-2">pokrývá</th><th scope="col" class="px-4 py-2">typ</th><th scope="col" class="px-4 py-2">command</th><th scope="col" class="px-4 py-2">výsledek</th><th scope="col" class="px-4 py-2">u commitu</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top"><td class="px-4 py-2 font-mono text-xs text-heading">slug_assembled_from_object</td><td class="px-4 py-2 font-mono text-xs text-body">ci</td><td class="px-4 py-2 font-mono text-xs text-body break-words">bash test/run.sh 3821_a_providers_tree_is_assembled_from_the_object (validate suite-shard (4))</td><td class="px-4 py-2 text-body">ok in master validate 40796031054 at 5370ee63d19, suite-shard (4) job 123213269249: case 3821 ok; it asserts the slug&#39;s exact top-level list (build.inputs, .buildpacks, .majordomus, Procfile, bin), bin/* mode 755, the single pinned buildpack line, SOURCE.json recording the commit, an uncommitted edit kept out (C1), and an out directory inside the checkout refused with nothing written (C2). Landed by #2566 (9215178a53b). master 51b38035a71 differs from 5370ee63d19 in no file of src/deploy/slug.rs, capability/builtin/deploy.rs or the case. The run is red only on rust (3) intent-check and interaction-probe-shard (5), neither this issue&#39;s</td><td class="px-4 py-2 font-mono text-xs text-body-subtle">51b3803</td></tr><tr class="border-t border-default align-top"><td class="px-4 py-2 font-mono text-xs text-heading">master_publishes_after_green_ci</td><td class="px-4 py-2 font-mono text-xs text-body">ci</td><td class="px-4 py-2 font-mono text-xs text-body break-words">.github/workflows/provider.yml on workflow_run of master&#39;s validate</td><td class="px-4 py-2 text-body">provider run 40654194067 (event workflow_run, head master 6c79dcf68cf, whose validate 40573560939 concluded success), job publish 122701159430 success: &#39;the commit, and whether it may be published&#39;, &#39;the executable, built at that commit&#39;, &#39;the slug, assembled from the deployment object&#39;, &#39;the slug, pushed to the provider&#39; and &#39;the deployment answers master&#39;s commit&#39;: https://prismatic-majordomus.gigalixirapp.com/api/v1/live answers 6c79dcf68cf329f4c21c219720b811381c3433aa (C3, C4). GIGALIXIR_EMAIL and GIGALIXIR_API_KEY appear in the log only as *** and reach git through a credential helper (C3). Every provider run after a red validate (40695960512, 40697380264, 40826109124, 40902978494) is skipped: nothing is published unverified. On 2026-10-29 the endpoint still answers 6c79dcf68cf, the newest master commit with a green validate. provider.yml and src/deploy/slug.rs are unchanged from 6c79dcf68cf to 51b38035a71</td><td class="px-4 py-2 font-mono text-xs text-body-subtle">51b3803</td></tr></tbody>
+    </table>
+  </div>
 
   <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Časová osa</h2>
   <dl class="mt-3 grid max-w-3xl grid-cols-1 gap-3 sm:grid-cols-3">
-    <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">zahájeno</dt><dd class="mt-1 font-mono text-sm text-heading break-words">—</dd></div>
-    <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">ověřeno</dt><dd class="mt-1 font-mono text-sm text-heading break-words">—</dd></div>
-    <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">dokončeno</dt><dd class="mt-1 font-mono text-sm text-heading break-words">—</dd></div>
+    <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">zahájeno</dt><dd class="mt-1 font-mono text-sm text-heading break-words">2026-10-29T18:00:36Z</dd></div>
+    <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">ověřeno</dt><dd class="mt-1 font-mono text-sm text-heading break-words">2026-10-29T18:01:21Z</dd></div>
+    <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">dokončeno</dt><dd class="mt-1 font-mono text-sm text-heading break-words">2026-10-29T18:02:52Z</dd></div>
   </dl>
   <p class="mt-3 max-w-3xl text-sm text-body">Tato tři pole, důkazy výše a stav závislostí jsou vše, z čeho se stav skládá. Neexistuje žádné pole stavu, které by s nimi mohlo být v rozporu.</p>
 
-  <p class="mt-8 text-sm text-body">Canonical record: <a href="https://github.com/korczis/prismatic-majordomus/blob/aca6f182b4175a0da20878211103eff3801132f1/.ai/repo/project/issues/I3821.yaml" class="break-all font-mono text-fg-brand underline inline-block py-1">.ai/repo/project/issues/I3821.yaml</a>. Read it back with <code class="font-mono text-heading">majordomus plan show I3821</code>.</p>
+  <p class="mt-8 text-sm text-body">Canonical record: <a href="https://github.com/korczis/prismatic-majordomus/blob/af41ab4fec1b2cb5c83fa83dd3c80bb91a152345/.ai/repo/project/issues/I3821.yaml" class="break-all font-mono text-fg-brand underline inline-block py-1">.ai/repo/project/issues/I3821.yaml</a>. Read it back with <code class="font-mono text-heading">majordomus plan show I3821</code>.</p>
 </div>
 
 </div>
@@ -267,9 +269,9 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
       <div class="min-w-0">
         <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">Projekt</h2><ul class="space-y-2 text-sm font-medium text-body">
           <li><a href="https://github.com/korczis/prismatic-majordomus" class="hover:text-heading hover:underline">GitHub</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/aca6f182b4175a0da20878211103eff3801132f1/LICENSE" class="hover:text-heading hover:underline">Licence MIT</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/aca6f182b4175a0da20878211103eff3801132f1/SECURITY.md" class="hover:text-heading hover:underline">Bezpečnostní politika</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/aca6f182b4175a0da20878211103eff3801132f1/CONTRIBUTING.md" class="hover:text-heading hover:underline">Průvodce pro přispěvatele</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/af41ab4fec1b2cb5c83fa83dd3c80bb91a152345/LICENSE" class="hover:text-heading hover:underline">Licence MIT</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/af41ab4fec1b2cb5c83fa83dd3c80bb91a152345/SECURITY.md" class="hover:text-heading hover:underline">Bezpečnostní politika</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/af41ab4fec1b2cb5c83fa83dd3c80bb91a152345/CONTRIBUTING.md" class="hover:text-heading hover:underline">Průvodce pro přispěvatele</a></li>
         </ul>
       </div>
     </div>
@@ -277,7 +279,7 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/cs/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.10</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/aca6f182b4175a0da20878211103eff3801132f1" class="font-mono underline">aca6f18</a> · inputs <span class="font-mono">cf9dabf45ec5</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/cs/architecture/" class="underline">how this site is derived</a> names them.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.10</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/af41ab4fec1b2cb5c83fa83dd3c80bb91a152345" class="font-mono underline">af41ab4</a> · inputs <span class="font-mono">ca14b585387b</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/cs/architecture/" class="underline">how this site is derived</a> names them.</p>
     </div>
   </div>
 </footer>

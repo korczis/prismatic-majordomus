@@ -172,12 +172,9 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
 </div>
 <div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
   <div class="min-w-0">
-  <p class="flex flex-wrap items-center gap-3"><span class="mj-badge mj-badge--blocked relative" data-status="blocked"><span aria-hidden="true">✕</span>BLOKOVÁNO</span>
+  <p class="flex flex-wrap items-center gap-3"><span class="mj-badge mj-badge--done relative" data-status="done"><span aria-hidden="true">✓</span>HOTOVO</span>
 <span class="text-sm text-body">vlna 2 · p1 · profil implementation · běží samostatně</span></p>
   <p class="mt-3 text-sm text-body">Součást <a href="https://majordomus.dev/cs/plan/fly-deployment/" class="text-fg-brand underline">fly-deployment — Image kontejneru je projekcí modelu repozitáře a jeho smoke test je jeho důkazem</a>.</p>
-  <div class="mt-6 rounded-base border border-danger-subtle bg-danger-soft p-4">
-    <p class="text-sm text-fg-danger-strong">Blocked. This issue cannot start until <a href="https://majordomus.dev/cs/plan/i3821/" class="font-mono underline">I3821</a> is done. The status is derived from that, not declared.</p>
-  </div>
 
   <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Cíl</h2>
   <p class="mt-2 max-w-3xl break-words text-base leading-relaxed text-body">served.observe defaults its url to the deployment object&#39;s provider.url and its identity to the object&#39;s health.liveness route when --deployment names an object with a provider; the publishing workflow observes after every push; the object&#39;s status moves from declared to active only on an observation that judged it serving master, and a stale or unreachable observation is a finding. ADR 0219 decision 5.</p><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Proč</h2><p class="mt-2 max-w-3xl break-words text-base leading-relaxed text-body">Today served.observe defaults to the Pages site and build.json; nothing ties an observation to the deployment object, so the hosted application&#39;s currency cannot be judged and its status is a hand-set word.</p><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Aktuální stav</h2><p class="mt-2 max-w-3xl break-words text-base leading-relaxed text-body">served.observe takes --url or falls back to site/config.toml&#39;s base_url with identity build.json; /api/v1/live already answers commit and dirty; the object&#39;s status is declared.</p><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Cílový stav</h2><p class="mt-2 max-w-3xl break-words text-base leading-relaxed text-body">majordomus served observe --deployment majordomus reads provider.url and health.liveness, judges the answer against master by containment and records it; case 3822 serves a fixture liveness answer and proves served, stale and unreachable verdicts; the status is set to active by a recorded observation, not by hand.</p>
@@ -188,7 +185,7 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
   
 
   <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Závislosti</h2>
-  <ul class="mt-3 grid gap-2 sm:grid-cols-2"><li class="min-w-0"><a href="https://majordomus.dev/cs/plan/i3821/" class="flex min-w-0 items-start gap-2 rounded-base border border-default bg-neutral-primary-soft px-3 py-2 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I3821</span><span class="mj-badge mj-badge--blocked relative" data-status="blocked"><span aria-hidden="true">✕</span>BLOCKED</span>
+  <ul class="mt-3 grid gap-2 sm:grid-cols-2"><li class="min-w-0"><a href="https://majordomus.dev/cs/plan/i3821/" class="flex min-w-0 items-start gap-2 rounded-base border border-default bg-neutral-primary-soft px-3 py-2 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I3821</span><span class="mj-badge mj-badge--done relative" data-status="done"><span aria-hidden="true">✓</span>DONE</span>
 <span class="min-w-0 break-words text-sm text-heading">The tree a provider receives is assembled from the deployment object, and master publishes it after green ci</span></a></li>
   </ul>
   <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Co na tom čeká</h2>
@@ -207,17 +204,22 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
 <ul class="mt-3 list-disc space-y-1 break-words ps-5 text-sm text-body"><li class="font-mono text-heading break-words">observed_at_provider_url</li></ul>
 
   <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Důkazy</h2>
-  <p class="mt-2 text-sm text-body">Nic nezaznamenáno. Za každým tokenem výše musí stát příkaz nebo artefakt, než lze tento úkol dokončit; vyprávění se odmítá.</p>
+  <div class="mt-4 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[34rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-soft text-xs uppercase tracking-wide text-body-subtle"><tr><th scope="col" class="px-4 py-2">pokrývá</th><th scope="col" class="px-4 py-2">typ</th><th scope="col" class="px-4 py-2">command</th><th scope="col" class="px-4 py-2">výsledek</th><th scope="col" class="px-4 py-2">u commitu</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top"><td class="px-4 py-2 font-mono text-xs text-heading">observed_at_provider_url</td><td class="px-4 py-2 font-mono text-xs text-body">ci</td><td class="px-4 py-2 font-mono text-xs text-body break-words">bash test/run.sh 3822_a_provider_deployment_is_observed_at_its_url (validate suite-shard (2))</td><td class="px-4 py-2 text-body">ok in master validate 40796031054 at 5370ee63d19, suite-shard (2) job 123213269262: case 3822 ok; served observe --deployment judges a fixture liveness answer serving B as served (0) with served show deriving status active, A as stale (10) with status declared, back to served and active, dirty null as malformed (12) and nothing as unreachable (12), each with status declared (C2, C3), and with no --url the probe goes to the object&#39;s provider url and health.liveness route and changes no tracked file (C1). Landed through #2368 (7cfc66626ff). src/served.rs, capability/builtin/served.rs and the case are unchanged from 7cfc66626ff to master 51b38035a71. The run is red only on rust (3) intent-check and interaction-probe-shard (5), neither this issue&#39;s</td><td class="px-4 py-2 font-mono text-xs text-body-subtle">51b3803</td></tr></tbody>
+    </table>
+  </div>
 
   <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Časová osa</h2>
   <dl class="mt-3 grid max-w-3xl grid-cols-1 gap-3 sm:grid-cols-3">
-    <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">zahájeno</dt><dd class="mt-1 font-mono text-sm text-heading break-words">—</dd></div>
-    <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">ověřeno</dt><dd class="mt-1 font-mono text-sm text-heading break-words">—</dd></div>
-    <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">dokončeno</dt><dd class="mt-1 font-mono text-sm text-heading break-words">—</dd></div>
+    <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">zahájeno</dt><dd class="mt-1 font-mono text-sm text-heading break-words">2026-10-29T18:03:29Z</dd></div>
+    <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">ověřeno</dt><dd class="mt-1 font-mono text-sm text-heading break-words">2026-10-29T18:04:03Z</dd></div>
+    <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">dokončeno</dt><dd class="mt-1 font-mono text-sm text-heading break-words">2026-10-29T18:05:15Z</dd></div>
   </dl>
   <p class="mt-3 max-w-3xl text-sm text-body">Tato tři pole, důkazy výše a stav závislostí jsou vše, z čeho se stav skládá. Neexistuje žádné pole stavu, které by s nimi mohlo být v rozporu.</p>
 
-  <p class="mt-8 text-sm text-body">Canonical record: <a href="https://github.com/korczis/prismatic-majordomus/blob/aca6f182b4175a0da20878211103eff3801132f1/.ai/repo/project/issues/I3822.yaml" class="break-all font-mono text-fg-brand underline inline-block py-1">.ai/repo/project/issues/I3822.yaml</a>. Read it back with <code class="font-mono text-heading">majordomus plan show I3822</code>.</p>
+  <p class="mt-8 text-sm text-body">Canonical record: <a href="https://github.com/korczis/prismatic-majordomus/blob/af41ab4fec1b2cb5c83fa83dd3c80bb91a152345/.ai/repo/project/issues/I3822.yaml" class="break-all font-mono text-fg-brand underline inline-block py-1">.ai/repo/project/issues/I3822.yaml</a>. Read it back with <code class="font-mono text-heading">majordomus plan show I3822</code>.</p>
 </div>
 
 </div>
@@ -267,9 +269,9 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
       <div class="min-w-0">
         <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">Projekt</h2><ul class="space-y-2 text-sm font-medium text-body">
           <li><a href="https://github.com/korczis/prismatic-majordomus" class="hover:text-heading hover:underline">GitHub</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/aca6f182b4175a0da20878211103eff3801132f1/LICENSE" class="hover:text-heading hover:underline">Licence MIT</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/aca6f182b4175a0da20878211103eff3801132f1/SECURITY.md" class="hover:text-heading hover:underline">Bezpečnostní politika</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/aca6f182b4175a0da20878211103eff3801132f1/CONTRIBUTING.md" class="hover:text-heading hover:underline">Průvodce pro přispěvatele</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/af41ab4fec1b2cb5c83fa83dd3c80bb91a152345/LICENSE" class="hover:text-heading hover:underline">Licence MIT</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/af41ab4fec1b2cb5c83fa83dd3c80bb91a152345/SECURITY.md" class="hover:text-heading hover:underline">Bezpečnostní politika</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/af41ab4fec1b2cb5c83fa83dd3c80bb91a152345/CONTRIBUTING.md" class="hover:text-heading hover:underline">Průvodce pro přispěvatele</a></li>
         </ul>
       </div>
     </div>
@@ -277,7 +279,7 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/cs/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.10</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/aca6f182b4175a0da20878211103eff3801132f1" class="font-mono underline">aca6f18</a> · inputs <span class="font-mono">cf9dabf45ec5</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/cs/architecture/" class="underline">how this site is derived</a> names them.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.10</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/af41ab4fec1b2cb5c83fa83dd3c80bb91a152345" class="font-mono underline">af41ab4</a> · inputs <span class="font-mono">ca14b585387b</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/cs/architecture/" class="underline">how this site is derived</a> names them.</p>
     </div>
   </div>
 </footer>

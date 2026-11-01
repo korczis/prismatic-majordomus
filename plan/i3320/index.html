@@ -183,12 +183,9 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
 </div>
 <div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
   <div class="min-w-0">
-  <p class="flex flex-wrap items-center gap-3"><span class="mj-badge mj-badge--ready relative" data-status="ready"><span aria-hidden="true">○</span>READY</span>
+  <p class="flex flex-wrap items-center gap-3"><span class="mj-badge mj-badge--done relative" data-status="done"><span aria-hidden="true">✓</span>DONE</span>
 <span class="text-sm text-body">wave 0 · p1 · implementation profile · parallel safe</span></p>
   <p class="mt-3 text-sm text-body">Part of <a href="https://majordomus.dev/plan/the-session-domain-is-written-once/" class="text-fg-brand underline">the-session-domain-is-written-once — The session lifecycle is written by the typed domain, and the shell only parses and renders</a>.</p>
-  <div class="mt-6 rounded-base border border-default bg-neutral-primary-soft p-4">
-    <p class="text-sm text-body">Ready. Every dependency is done, so <code class="font-mono text-heading">majordomus plan start I3320</code> will be accepted.</p>
-  </div>
 
   <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Objective</h2>
   <p class="mt-2 max-w-3xl break-words text-base leading-relaxed text-body">Give the lifecycle commands (session open and close, the provider event shims, checkpoint and handover) one resolution of the Rust executable with a declared lifecycle contract version: with no resolvable executable, or one older than the tree&#39;s contract, the command writes a typed provider.event.failed naming the cause, leaves the episode open, exits non-zero (the hook shims stay fail-open for the provider), and nothing falls back to a shell writer.</p><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Why</h2><p class="mt-2 max-w-3xl break-words text-base leading-relaxed text-body">Split out of I3141 on 2026-10-18 (verification: I3141 was several pieces of work). The critique of a-session-record-says-what-it-served found that after the cutover the closer, the opener and the hooks need the executable, that lib/rust_bin.sh documents Rust-backed features that degraded in silence when it was missing, and that an old binary would close with old semantics. A fallback to shell would be a second writer, so this is part of close-has-one-writer. Sources: chatgpt-majordomus:c109#3.</p><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Current state</h2><p class="mt-2 max-w-3xl break-words text-base leading-relaxed text-body">lib/rust_bin.sh resolves MAJORDOMUS_BIN, then libexec/, then target/debug, with no contract version; test/lib.sh rust_bin returns 3 and a case skips without an executable; bash test/run.sh --no-skips already fails a declining case.</p><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Desired state</h2><p class="mt-2 max-w-3xl break-words text-base leading-relaxed text-body">One resolution with a contract check that every lifecycle command calls first; a missing or stale executable is a typed, visible failure that health reports.</p>
@@ -203,7 +200,7 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
   <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Dependencies</h2>
   <p class="mt-2 text-sm text-body">None. This issue is a root of the graph.</p>
   <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">What waits on this</h2>
-  <ul class="mt-3 grid gap-2 sm:grid-cols-2"><li class="min-w-0"><a href="https://majordomus.dev/plan/i3141/" class="flex min-w-0 items-start gap-2 rounded-base border border-default bg-neutral-primary-soft px-3 py-2 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I3141</span><span class="mj-badge mj-badge--blocked relative" data-status="blocked"><span aria-hidden="true">✕</span>BLOCKED</span>
+  <ul class="mt-3 grid gap-2 sm:grid-cols-2"><li class="min-w-0"><a href="https://majordomus.dev/plan/i3141/" class="flex min-w-0 items-start gap-2 rounded-base border border-default bg-neutral-primary-soft px-3 py-2 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I3141</span><span class="mj-badge mj-badge--ready relative" data-status="ready"><span aria-hidden="true">○</span>READY</span>
 <span class="min-w-0 break-words text-sm text-heading">majordomus session close writes its record through the typed domain&#39;s closer, and the shell closer is deleted</span></a></li><li class="min-w-0"><a href="https://majordomus.dev/plan/i3142/" class="flex min-w-0 items-start gap-2 rounded-base border border-default bg-neutral-primary-soft px-3 py-2 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I3142</span><span class="mj-badge mj-badge--blocked relative" data-status="blocked"><span aria-hidden="true">✕</span>BLOCKED</span>
 <span class="min-w-0 break-words text-sm text-heading">An episode opens through the typed domain and records the task and issue it began on</span></a></li><li class="min-w-0"><a href="https://majordomus.dev/plan/i3143/" class="flex min-w-0 items-start gap-2 rounded-base border border-default bg-neutral-primary-soft px-3 py-2 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I3143</span><span class="mj-badge mj-badge--blocked relative" data-status="blocked"><span aria-hidden="true">✕</span>BLOCKED</span>
 <span class="min-w-0 break-words text-sm text-heading">Each provider lifecycle event leaves a typed receipt written by the domain before any guard can return early</span></a></li>
@@ -220,17 +217,22 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
 <ul class="mt-3 list-disc space-y-1 break-words ps-5 text-sm text-body"><li class="font-mono text-heading break-words">case_a_lifecycle_command_refuses_a_stale_executable</li></ul>
 
   <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Evidence</h2>
-  <p class="mt-2 text-sm text-body">None recorded. Every token above needs a command or an artifact behind it before this issue can be completed; narrative is refused.</p>
+  <div class="mt-4 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[34rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-soft text-xs uppercase tracking-wide text-body-subtle"><tr><th scope="col" class="px-4 py-2">covers</th><th scope="col" class="px-4 py-2">type</th><th scope="col" class="px-4 py-2">command</th><th scope="col" class="px-4 py-2">result</th><th scope="col" class="px-4 py-2">at commit</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top"><td class="px-4 py-2 font-mono text-xs text-heading">case_a_lifecycle_command_refuses_a_stale_executable</td><td class="px-4 py-2 font-mono text-xs text-body">test</td><td class="px-4 py-2 font-mono text-xs text-body break-words">bash test/run.sh --no-skips 54_session_lifecycle_hooks 220_exactly_once_close &amp;&amp; cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test session_domain</td><td class="px-4 py-2 text-body">delivered by 7ddc32da8d4 on master: cases 54 and 220 ok 2 passed with no skips, session_domain 2 passed (imac), at master aca6f182b41</td><td class="px-4 py-2 font-mono text-xs text-body-subtle">aca6f18</td></tr></tbody>
+    </table>
+  </div>
 
   <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Timeline</h2>
   <dl class="mt-3 grid max-w-3xl grid-cols-1 gap-3 sm:grid-cols-3">
-    <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">started</dt><dd class="mt-1 font-mono text-sm text-heading break-words">—</dd></div>
+    <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">started</dt><dd class="mt-1 font-mono text-sm text-heading break-words">2026-11-01T04:48:43Z</dd></div>
     <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">verified</dt><dd class="mt-1 font-mono text-sm text-heading break-words">—</dd></div>
-    <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">completed</dt><dd class="mt-1 font-mono text-sm text-heading break-words">—</dd></div>
+    <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">completed</dt><dd class="mt-1 font-mono text-sm text-heading break-words">2026-11-01T04:49:34Z</dd></div>
   </dl>
   <p class="mt-3 max-w-3xl text-sm text-body">Those three fields, the evidence above and the state of the dependencies are all the status is made of. There is no status field to disagree with them.</p>
 
-  <p class="mt-8 text-sm text-body">Canonical record: <a href="https://github.com/korczis/prismatic-majordomus/blob/aca6f182b4175a0da20878211103eff3801132f1/.ai/repo/project/issues/I3320.yaml" class="break-all font-mono text-fg-brand underline inline-block py-1">.ai/repo/project/issues/I3320.yaml</a>. Read it back with <code class="font-mono text-heading">majordomus plan show I3320</code>.</p>
+  <p class="mt-8 text-sm text-body">Canonical record: <a href="https://github.com/korczis/prismatic-majordomus/blob/af41ab4fec1b2cb5c83fa83dd3c80bb91a152345/.ai/repo/project/issues/I3320.yaml" class="break-all font-mono text-fg-brand underline inline-block py-1">.ai/repo/project/issues/I3320.yaml</a>. Read it back with <code class="font-mono text-heading">majordomus plan show I3320</code>.</p>
 </div>
 
 </div>
@@ -280,9 +282,9 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
       <div class="min-w-0">
         <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">Project</h2><ul class="space-y-2 text-sm font-medium text-body">
           <li><a href="https://github.com/korczis/prismatic-majordomus" class="hover:text-heading hover:underline">GitHub</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/aca6f182b4175a0da20878211103eff3801132f1/LICENSE" class="hover:text-heading hover:underline">MIT licence</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/aca6f182b4175a0da20878211103eff3801132f1/SECURITY.md" class="hover:text-heading hover:underline">Security policy</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/aca6f182b4175a0da20878211103eff3801132f1/CONTRIBUTING.md" class="hover:text-heading hover:underline">Contributing guide</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/af41ab4fec1b2cb5c83fa83dd3c80bb91a152345/LICENSE" class="hover:text-heading hover:underline">MIT licence</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/af41ab4fec1b2cb5c83fa83dd3c80bb91a152345/SECURITY.md" class="hover:text-heading hover:underline">Security policy</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/af41ab4fec1b2cb5c83fa83dd3c80bb91a152345/CONTRIBUTING.md" class="hover:text-heading hover:underline">Contributing guide</a></li>
         </ul>
       </div>
     </div>
@@ -290,7 +292,7 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.10</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/aca6f182b4175a0da20878211103eff3801132f1" class="font-mono underline">aca6f18</a> · inputs <span class="font-mono">cf9dabf45ec5</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/architecture/" class="underline">how this site is derived</a> names them.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.10</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/af41ab4fec1b2cb5c83fa83dd3c80bb91a152345" class="font-mono underline">af41ab4</a> · inputs <span class="font-mono">ca14b585387b</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/architecture/" class="underline">how this site is derived</a> names them.</p>
     </div>
   </div>
 </footer>
