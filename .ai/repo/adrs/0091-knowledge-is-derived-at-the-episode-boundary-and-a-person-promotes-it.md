@@ -3,7 +3,7 @@ schema: adr/v1
 id: adr-0091
 kind: adr
 title: Knowledge is derived at the episode boundary, from the ledger and git, and a person promotes it
-status: proposed
+status: accepted
 date: 2026-09-12
 tags:
   - knowledge
@@ -405,3 +405,9 @@ The work is three slices, one pull request each:
 3. **The words follow.** `docs/KNOWLEDGE.md`, the `candidates-reviewed` rule text in
    `share/standard/majordomus/rules/` and the sessions README say where a trunk episode's records
    wait. Documentation and rule text only.
+
+## Status
+
+Proposed on 2026-09-12. Accepted by the owner on 2026-10-30, answering question Q-ADR0091 of
+the P00 audit of master 51b38035a71, which found this record `proposed` while
+`majordomus.knowledge-integrity`, a rule it declares, is active and blocking.

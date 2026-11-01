@@ -1279,6 +1279,8 @@ pub struct SessionBeatTally {
 struct BuildCachePublisher {
     file: Option<PathBuf>,
     published: Option<super::journal::BuildCacheOffer>,
+    /// The reason of the withdrawal this runtime wrote last, while it offers nothing.
+    withdrawn: Option<String>,
 }
 
 /// The most refusals the table lists: a stream of hellos from invented keys must not grow
@@ -3660,7 +3662,8 @@ impl Cooperation {
             self.expiry(),
             super::build_cache::PROBE_BUDGET,
         );
-        let body = offer::next_event(publisher.published.as_ref(), now)?;
+        let body = offer::next_event(publisher.published.as_ref(), now.clone())
+            .or_else(|| offer::refined_withdrawal(publisher.withdrawn.as_deref(), &now))?;
         self.write_build_cache_record(&mut publisher, body)
     }
 
@@ -3671,13 +3674,15 @@ impl Cooperation {
         publisher: &mut BuildCachePublisher,
         body: EventBody,
     ) -> Option<MeshEvent> {
-        let offered = match &body {
-            EventBody::BuildCacheOffered { offer } => Some(offer.clone()),
-            _ => None,
+        let (offered, withdrawn) = match &body {
+            EventBody::BuildCacheOffered { offer } => (Some(offer.clone()), None),
+            EventBody::BuildCacheWithdrawn { reason } => (None, Some(reason.clone())),
+            _ => (None, None),
         };
         match self.journal.append_own(body) {
             Ok(event) => {
                 publisher.published = offered;
+                publisher.withdrawn = withdrawn;
                 Some(event)
             }
             Err(e) => {
@@ -6965,6 +6970,22 @@ mod tests {
         assert!(
             publisher.published.is_none(),
             "a withdrawal forgets the offer"
+        );
+        assert_eq!(
+            publisher.withdrawn.as_deref(),
+            Some("its own probe says unhealthy"),
+            "and remembers why, so an uncertain reason can be refined"
+        );
+        let other = a.write_build_cache_record(
+            &mut publisher,
+            EventBody::SessionClosed {
+                session: "s".into(),
+            },
+        );
+        assert!(other.is_some());
+        assert!(
+            publisher.published.is_none() && publisher.withdrawn.is_none(),
+            "a record that is neither an offer nor a withdrawal leaves nothing to refine"
         );
     }
 }

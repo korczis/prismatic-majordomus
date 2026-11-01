@@ -23,7 +23,7 @@ GEN="$ROOT/scripts/generate-site-data"
 # makes the fingerprint move on every derive and never read as current. The rows the script
 # reads from it (the editors projection's skill files) are stage A's, a function of
 # .ai/repo/skills/*/SKILL.md, which is an input (I2864, cancelled on that finding).
-EXEMPT=" site/data/generated site/content docs/SITE_CLAIMS.md docs/PLAN_STATUS.md docs/PAGES_STATUS.md bin docs/generated/artifacts.json "
+EXEMPT=" site/data/generated site/content docs/SITE_CLAIMS.md docs/PLAN_STATUS.md docs/plan-status docs/PAGES_STATUS.md bin docs/generated/artifacts.json "
 
 judge() {   # judge <generator> — prints one line per uncovered read, exit 0 when none
   local gen="$1" inputs bad=0 p f
