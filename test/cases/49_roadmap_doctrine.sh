@@ -25,7 +25,7 @@ outcome: "The outcome once it is solved."
 acceptance_criteria:
   - The outcome is reached
 validation:
-  - true
+  - "true"
 evidence_required:
   - proof
 Y

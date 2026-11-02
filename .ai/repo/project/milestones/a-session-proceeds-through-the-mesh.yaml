@@ -9,7 +9,9 @@ current_state: "Planned only. Records I4000 to I4009 and cases 4000 to 4009 exis
 desired_state: "Every satisfaction criterion of the intent is proved by its case; no new store, scheduler, journal kind or registry exists; every projection is generated."
 scope:
   - "apps/majordomus-cli/src"
-  - "share/skills"
+  - ".ai/repo/skills"
+  - ".ai/repo/adrs"
+  - "lib"
   - "share/schemas"
   - "docs"
   - ".githooks"
@@ -35,6 +37,8 @@ evidence_required: []
 depends_on: []
 risks:
   - "The liveness substrate I3990-I3994 and the fencing epoch I3174 are other sessions' work; I4004 and I4009 name them and write none of them."
-  - "The /proceed stack I2972-I2976 and I3040 is unpushed or unmerged; I4005 must build on it, and waits for it to land if it has not."
+  - "The /proceed stack I2972-I2977 and I3040 is unpushed or unmerged; I4005 must build on it, and waits for it to land if it has not."
+  - "Proceeding without a person's word is not decided: ADR 0177 leaves it to a later ADR and ADR 0200 is proposed. I4005 writes that ADR; until the owner accepts it nothing schedules a step by itself, and I4009 does not start."
+  - "Two take paths would exist when the stack and devtask.implement both land; I4005 makes them one."
 created_at: 2026-10-23
 updated_at: 2026-10-23
