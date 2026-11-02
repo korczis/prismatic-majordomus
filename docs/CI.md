@@ -561,6 +561,31 @@ milestone fits, the milestone is the missing part; do not park the issue under t
 least-wrong parent, because status here is derived from the graph and a false parent
 propagates into the roadmap and the waves.
 
+### A self-hosted host's capacity, as the landing seat reported it on 2026-11-02
+
+On master every Linux job of `validate.yml` runs on a hosted runner; routing them to a
+self-hosted host is pull request 2596, open and not on master. Its trial on 2026-11-01/02
+reported what such a host holds, and the figures decide how it may be used:
+
+- One `rustc` of the CLI crate peaks around 5.3 GB of memory, so a 15 GB host fits two
+  concurrent Rust jobs. Three swapped it until it answered neither ssh nor ping.
+- A cold `cargo llvm-cov --all-targets` build needed more than the host's 78 GB free and
+  failed with `ENOSPC` (os error 28); the linker `SIGBUS` of an earlier attempt was the same
+  out-of-space failure. Until a host has that disk, the `coverage` job of a hosted run is the
+  judge ([INTEGRATION.md](INTEGRATION.md)).
+- A force-cancelled run's job processes keep running on a self-hosted runner until they exit
+  on their own: a cancelled coverage job kept `cargo-llvm-cov` and `rustc` alive for about two
+  hours after its runner process was gone.
+
+On any host, not only a self-hosted one: the repository's `.cargo/config.toml` sets a shared
+`build-dir` (ADR 0139), so a private `CARGO_TARGET_DIR` keeps only the finished artifacts
+private and the intermediates still land in the shared directory. A run that must not touch
+that directory goes through `mj_cargo_bounded` and its private build directory
+([WORKTREES.md](WORKTREES.md), *Private build directories*), which the reaper reclaims; a
+directory chosen by hand escapes it. A coverage run also sets `RUSTC_WRAPPER=`: its
+instrumentation flags change every cache key, so a caching wrapper adds its own disk and
+reuses nothing.
+
 ## Platforms
 
 Linux is the blocking path for everything that does not depend on the platform: lints,
@@ -576,6 +601,7 @@ this repository waits hours for and a gate queued behind one reports nothing at 
 change that is likely to be platform-dependent — the shell tool, the distribution, the
 crate's process and file handling — should carry the `ci:full` label rather than wait for
 the night, and that is a judgement a reviewer makes, not one the model can.
+
 
 ## Telemetry and budgets
 
