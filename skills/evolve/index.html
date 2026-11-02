@@ -188,7 +188,7 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
       <code class="font-mono text-heading">majordomus://skill/evolve</code>
       <span class="mj-badge mj-badge--active relative" data-status="active"><span aria-hidden="true">•</span>active</span>
 
-      <span class="font-mono text-xs text-body-subtle">version 2</span><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">knowledge</span><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">review</span><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">delivery</span><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">coordination</span>
+      <span class="font-mono text-xs text-body-subtle">version 3</span><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">knowledge</span><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">review</span><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">delivery</span><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">coordination</span>
     </div>
     <div class="mb-8 grid gap-4 sm:grid-cols-2">
       <div class="rounded-base border border-default bg-neutral-primary-soft p-4">
@@ -214,6 +214,11 @@ review, after an incident, and whenever the operator asks for it by name. An epi
 already derives its candidates (<code>session.knowledge_on_end</code>); this is what is done with them.</p>
 <h2 id="procedure"><a class="zola-anchor" href="#procedure" aria-label="Anchor link for: procedure">Procedure</a></h2>
 <h3 id="1-gather-what-there-is-to-decide"><a class="zola-anchor" href="#1-gather-what-there-is-to-decide" aria-label="Anchor link for: 1-gather-what-there-is-to-decide">1. Gather what there is to decide</a></h3>
+<p>Read this skill, and every record it names, in the worktree the run works in, made from
+<code>origin/master</code>. The primary checkout and the server it hosts can stand behind the trunk.
+On 2026-10-31 the primary stood 160 commits behind and still held version 1 of this skill,
+without its offload derive and without step 7. <code>majordomus worktree</code> says how far a checkout
+lags.</p>
 <pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="shellscript"><span class="giallo-l"><span class="z-l-1 z-d-3">majordomus</span><span class="z-l-8 z-d-8"> knowledge</span><span class="z-l-8 z-d-8"> candidates</span></span>
 <span class="giallo-l"><span class="z-l-1 z-d-3">majordomus</span><span class="z-l-8 z-d-8"> knowledge</span><span class="z-l-8 z-d-8"> check</span></span></code></pre>
 <p>Then gather what was met since the last evolve and is not in the ledger yet. The last evolve
@@ -232,7 +237,10 @@ handovers (<code>majordomus mesh state --full</code>) and this checkout's handov
 <p>A lesson written only in a private memory never reaches a rule, a skill or the next
 session's briefing; on 2026-10-28 most of a day's lessons were there and nowhere else. So
 for each one, search the layer first (<code>majordomus knowledge search &lt;words&gt;</code>): when a record
-already says it, cite that record rather than observing it twice; otherwise record it as
+already says it, cite that record rather than observing it twice. The search took about a
+minute per phrase on 2026-10-31, so take a first pass with a grep of the <code>title:</code> lines
+under <code>.ai/repo/knowledge/curated/</code> and of the rules, and keep the search for the phrases
+that pass does not settle; otherwise record it as
 one observation, in the ledger and nowhere else. A memory file is never copied into the
 tree, and nothing it says is done because it says so. A memory that cannot be decided in
 this run is counted in the report as <code>undecided: &lt;n&gt; memory files since &lt;date&gt;</code>.</p>
@@ -276,6 +284,14 @@ then one of two things, never a third:</p>
 that makes the statement true, not a restatement of it. A candidate that duplicates a
 curated note or a rule is rejected with the identity of what already says it. A candidate
 you cannot judge stays a candidate; say so in the report instead of guessing.</p>
+<p>The ledger cannot be edited, so an observation that says more than its evidence shows is
+not corrected in place. Observe the corrected statement, derive, and promote the corrected
+candidate. Then reject the first candidate with a reason that names the one that replaces
+it. Check each statement against the forge or the tree (<code>gh run view</code>, <code>git log</code>) before
+you observe it, and a correction too. A run's conclusion is not its jobs' verdicts: on
+2026-10-31 this procedure's own correction read validate run 41187739613 as cancelled, not red.
+Its jobs (<code>gh run view &lt;id&gt; --json jobs</code>) had failed coverage, structure and the suite and ui
+shards before the cancel, and the correction was wrong where the first statement had been right.</p>
 <p>A promoted record is tracked, so its provenance must resolve in a clean clone. <code>promote</code>
 keeps the candidate's <code>session:</code> and <code>task:</code> ids, which live only in this machine's
 <code>.ai/local</code>; a fresh checkout's doctor fails them as unresolved references, and the
@@ -392,9 +408,9 @@ are bounded now and what to export until the change lands.</p>
 
     <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Where this comes from</h2>
     <dl class="mt-3 grid gap-x-6 gap-y-2 text-sm sm:grid-cols-[max-content_1fr]">
-      <dt class="text-body-subtle">canonical file</dt><dd class="min-w-0"><a class="break-all font-mono text-fg-brand hover:underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/blob/acd99970a6f15ab61d82728b84c6210322499436/.ai/repo/skills/evolve/SKILL.md">.ai/repo/skills/evolve/SKILL.md</a></dd>
-      <dt class="text-body-subtle">content hash</dt><dd class="min-w-0 break-all font-mono text-heading">960c783bf08fd7bc8d284c5ae75e0022044cdf8732844c193b286db93ec33d3d</dd>
-      <dt class="text-body-subtle">contract</dt><dd class="min-w-0"><a class="break-all font-mono text-fg-brand hover:underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/blob/acd99970a6f15ab61d82728b84c6210322499436/share/schemas/majordomus/skill/skill.v1.schema.json">share/schemas/majordomus/skill/skill.v1.schema.json</a></dd>
+      <dt class="text-body-subtle">canonical file</dt><dd class="min-w-0"><a class="break-all font-mono text-fg-brand hover:underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/blob/c98e5d3f81f545da8c70e43503010f88f8e665c2/.ai/repo/skills/evolve/SKILL.md">.ai/repo/skills/evolve/SKILL.md</a></dd>
+      <dt class="text-body-subtle">content hash</dt><dd class="min-w-0 break-all font-mono text-heading">7dd331676d3e6b247643ed7295396a42f38a296946f9cf59ec65992fb67f9531</dd>
+      <dt class="text-body-subtle">contract</dt><dd class="min-w-0"><a class="break-all font-mono text-fg-brand hover:underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/blob/c98e5d3f81f545da8c70e43503010f88f8e665c2/share/schemas/majordomus/skill/skill.v1.schema.json">share/schemas/majordomus/skill/skill.v1.schema.json</a></dd>
       <dt class="text-body-subtle">also served as</dt><dd class="min-w-0 font-mono text-heading">MCP resource <code>majordomus://skill/evolve</code> · <code>majordomus skills show evolve</code></dd>
     </dl>
     <p class="mt-3 text-sm text-body">This page is generated from the file above by <code class="font-mono text-heading">scripts/generate-site-data</code>; editing the page changes nothing, editing the file changes every surface.</p>
@@ -449,9 +465,9 @@ are bounded now and what to export until the change lands.</p>
       <div class="min-w-0">
         <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">Project</h2><ul class="space-y-2 text-sm font-medium text-body">
           <li><a href="https://github.com/korczis/prismatic-majordomus" class="hover:text-heading hover:underline">GitHub</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/acd99970a6f15ab61d82728b84c6210322499436/LICENSE" class="hover:text-heading hover:underline">MIT licence</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/acd99970a6f15ab61d82728b84c6210322499436/SECURITY.md" class="hover:text-heading hover:underline">Security policy</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/acd99970a6f15ab61d82728b84c6210322499436/CONTRIBUTING.md" class="hover:text-heading hover:underline">Contributing guide</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/c98e5d3f81f545da8c70e43503010f88f8e665c2/LICENSE" class="hover:text-heading hover:underline">MIT licence</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/c98e5d3f81f545da8c70e43503010f88f8e665c2/SECURITY.md" class="hover:text-heading hover:underline">Security policy</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/c98e5d3f81f545da8c70e43503010f88f8e665c2/CONTRIBUTING.md" class="hover:text-heading hover:underline">Contributing guide</a></li>
         </ul>
       </div>
     </div>
@@ -459,7 +475,7 @@ are bounded now and what to export until the change lands.</p>
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.10</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/acd99970a6f15ab61d82728b84c6210322499436" class="font-mono underline">acd9997</a> · inputs <span class="font-mono">1718f914c463</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/architecture/" class="underline">how this site is derived</a> names them.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.10</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/c98e5d3f81f545da8c70e43503010f88f8e665c2" class="font-mono underline">c98e5d3</a> · inputs <span class="font-mono">17d2770f6426</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/architecture/" class="underline">how this site is derived</a> names them.</p>
     </div>
   </div>
 </footer>
