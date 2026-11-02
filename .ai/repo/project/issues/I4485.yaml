@@ -1,0 +1,44 @@
+id: I4485
+milestone: idd-reads-at-a-glance
+title: "An issue opens what realised it: its branches and their commits, from the trace"
+slug: an-issue-opens-what-realised-it
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "Show on the UI's issue inspector the branches that name the issue and the commits each holds, read from trace.issue, so that the chain a reader follows from an intent to a criterion to an issue continues to the work in git."
+why: "campaigns/majordomus-intent-ui-pack/06-GITHUB-DELIVERY.md asks for derived links from criteria to milestones, issues, branches, commits, pull requests and checks, by stable identifiers and not by title, with the source and the time of observation of each fact, and campaigns/majordomus-intent-ui-pack/00-ORCHESTRATOR.md asks that the links between intent, issue, execution, pull request and evidence be navigable. The derivation exists and no screen of the UI reads it: trace.issue answers one issue with the branches that name it and the commits each holds beyond the trunk (apps/majordomus-cli/src/capability/builtin/trace.rs, served at /api/v1/trace/issue). The inspector that I2475 built ends at the issue's own record."
+current_state: "Measured at 51b38035a71. The issue inspector is /ui/prs?issue=<id>, drawn by issue_panel in apps/majordomus-cli/src/ui/prs.rs: it reads plan.issues and shows objective, depends_on, blocked_by, dependents and serves, with a link that filters the drain by title or branch. No module under apps/majordomus-cli/src/ui reads trace.*. trace.issue (capability/builtin/trace.rs, /api/v1/trace/issue, CachePolicy Disabled) answers the branches, the remote-only branches and the commits beyond the trunk. I4312 publishes the trace on the site and leaves a /ui trace screen out of its scope; plan.delivery (I2740) is not read by the inspector either."
+desired_state: "The inspector of one issue on /ui/prs?issue=<id> has a panel, on a route of its own listed in PANELS, that draws trace.issue for that issue: each branch, whether only the remote still has it, its head, how it stands against the trunk in the trace's own word, and the commits the trace lists for it. A commit is a link to the forge only where a capability the panel reads states the forge's address, and text otherwise. A branch whose name matches a pull request of the recorded queue leads to that pull request's inspector on the PR Drain. An issue no branch names says so in the trace's own words."
+scope:
+  - "apps/majordomus-cli/src/ui/mod.rs"
+  - "apps/majordomus-cli/src/ui/view.rs"
+  - "apps/majordomus-cli/tests/ui_surface.rs"
+  - "apps/majordomus-cli/tests/ui_links.rs"
+  - "test/cases/1080_the_issues_are_browsed.sh"
+  - "docs/MAJORDOMUS_UI.md"
+  - ".ai/repo/project/issues/I4485.yaml"
+  - "apps/majordomus-cli/src/ui/prs.rs"
+non_scope:
+  - "Checks, reviews, releases and deployments of the issue's pull request: the PR Drain and Deployments screens show them, and the panel links there"
+  - "Attributing a commit by its message or a pull request by its title: the trace's rule is the branch name, and the panel adds none"
+  - "Asking the forge: only majordomus prs refresh does"
+depends_on: []
+acceptance_criteria:
+  - "The panel's route answers the trace of one issue as a page and, with the fragment parameter, as the panel alone, and it is one of PANELS so the bench derives a target for it"
+  - "In a fixture repository with a branch named for an issue and two commits beyond the trunk, the panel lists that branch and both commits"
+  - "An issue no branch names shows the trace's statement of that and no empty table"
+  - "A commit is drawn as a link only when the forge's address is at a pointer the panel's source line names"
+  - "The first paint of /ui/prs?issue=<id> does not wait for git: case 1096 passes with the panel present"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib ui::prs"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test ui_surface"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test ui_links"
+  - "MJ_TEST_JOBS=2 bash test/run.sh 1080_the_issues_are_browsed 1091_no_link_on_the_ui_is_dead 1096_no_screen_waits_for_a_source"
+evidence_required:
+  - "issue_trace_on_the_inspector"
+  - "trace_panel_is_off_the_first_paint"
+serves:
+  - the-owner-directs-work-from-the-ui#the-workspace-reads-at-a-glance
+created_at: 2026-10-30
+updated_at: 2026-10-30

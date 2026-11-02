@@ -1,0 +1,47 @@
+id: I4504
+milestone: a-profile-is-resolved-once-and-enforced
+title: "A task carries the fingerprint it was started with, and check says when the profile under it has moved"
+slug: a-task-carries-its-profile-fingerprint
+priority: p1
+profile: implementation
+parallel_safe: false
+objective: "Record the effective profile's fingerprint and definition digest on the task when it starts, carry them into the ledger, the handover and the closed session, and have check report a task whose resolution today differs from the one it started with."
+why: "campaigns/majordomus-profile-system-v2-prompt-pack/MAJORDOMUS_PROFILE_SYSTEM_V2_PROMPT_PACK.md, PROMPT 03 items 1 and 8: attach the effective profile's identity and fingerprint to the existing task, session and execution records rather than a new store, freeze it at a lifecycle boundary, treat a later change of policy as a versioned re-resolution and never a silent mutation, and keep old sessions readable. A task today stores a name. Editing the profile file or the policy while the task runs changes what finish requires of it, and nothing records that it did."
+current_state: "Measured at 51b38035a71, where no commit since 3491f35cab has touched the profile schema, share/allow/profile.txt, .ai/repo/profiles, share/skeleton/profiles or the claim pages. lib/start.sh writes profile: <name> into current.yaml and into task.started (share/events.yaml requires task_id, profile, owner and scope). lib/common.sh mj_record_front_matter writes profile: into checkpoint and handover front matter (callers lib/checkpoint.sh and lib/handover.sh). continuity/record.rs carries profile as an optional name and mesh/handover.rs writes profile: none. No record carries a digest or a fingerprint of the profile it ran under."
+desired_state: "start asks the resolver and writes profile_fingerprint and profile_definition beside profile in the task record and in task.started. Handover and checkpoint front matter and the continuity record carry the fingerprint as an optional field; a record without it reads as it does today. check resolves again and, when the fingerprint differs, reports a finding that names the fields that changed and the command that accepts the new resolution; finish refuses a completed outcome until it is accepted or the change is reverted. Accepting is one command that rewrites the two fields and appends a ledger event with both fingerprints."
+scope:
+  - "lib/start.sh"
+  - "lib/check.sh"
+  - "lib/finish.sh"
+  - "lib/common.sh"
+  - "share/events.yaml"
+  - "share/commands.yaml"
+  - "share/schemas/majordomus"
+  - "apps/majordomus-cli/src/continuity/record.rs"
+  - "apps/majordomus-cli/src/mesh/handover.rs"
+  - "apps/majordomus-cli/src/profile"
+  - "test/cases/16_profiles.sh"
+  - "docs/PROFILES.md"
+  - ".ai/repo/project/issues/I4504.yaml"
+  - "lib/checkpoint.sh"
+  - "lib/handover.sh"
+non_scope:
+  - "Executions of capabilities (execution/model.rs): an execution is one capability call and its refusal under a profile is I4506"
+  - "Replicating the fingerprint over the mesh beyond the handover record that already travels"
+depends_on:
+  - I4503
+acceptance_criteria:
+  - "A started task's record and its task.started event hold the fingerprint profile.resolve answers for it"
+  - "A task record, a handover and a continuity record written before this change are read without error and report no fingerprint"
+  - "Changing a key of the task's profile file after start makes check report the changed field by name and makes finish --outcome completed refuse with the accepting command in its message"
+  - "After the accepting command, check is clean and the ledger holds one event with the old and the new fingerprint"
+  - "A change to a profile the task does not use changes nothing for the task"
+validation:
+  - "bin/majordomus plan validate"
+  - "MJ_TEST_JOBS=2 bash test/run.sh 16_profiles"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib continuity::"
+evidence_required:
+  - "task_fingerprint_case"
+  - "old_records_still_read_test"
+created_at: 2026-10-30
+updated_at: 2026-10-30

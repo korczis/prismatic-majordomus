@@ -32,6 +32,8 @@ use crate::metadata::yaml;
 use crate::policy::sha256_hex;
 
 pub(crate) mod contrast;
+pub(crate) mod kit;
+pub mod licence;
 pub mod render;
 
 /// The format version this module reads.

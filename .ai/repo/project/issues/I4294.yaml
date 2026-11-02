@@ -1,0 +1,42 @@
+id: I4294
+milestone: truthful-plan-surfaces
+title: "The delivery board's documents are derived by one capability, and every open milestone has a lane"
+slug: the-board-is-derived-by-one-capability
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "board.snapshot composes the documents the delivery board reads (meta, milestones, intents, prs and issues-<lane>) from the plan, the roadmap, the intents, the recorded pull request queue and the release currency, with the lanes declared once in share/board.yaml. It answers a digest over the documents that leaves out meta.syncedAt and meta.syncedBy, keeps every document under 250000 bytes by splitting a lane into issues-<lane>-2 and onwards, refuses an open milestone that is in no lane, and is projected as the MCP tool majordomus_board_snapshot, GET /api/v1/board/snapshot and majordomus board snapshot."
+why: "The owner's delivery board was composed by a throwaway script with its lanes typed into it and an 'other' bucket that hid every milestone nobody had placed. A board the owner dispatches from must be derived by the repository, from the records CI checks, and a milestone with no lane must fail before it reaches the board."
+current_state: "A Python script outside the repository composes the board's documents from JSON answers of several commands; its lane map is code in the script, an unmapped milestone falls into 'other', and nothing checks either."
+desired_state: "One read capability answers every document of the board with a stable digest; share/board.yaml is the one lane declaration; a unit test over this repository's own plan names every open milestone without a lane, and every lane entry the plan no longer declares."
+scope:
+  - "share/board.yaml"
+  - "apps/majordomus-cli/src/board.rs"
+  - "apps/majordomus-cli/src/lib.rs"
+  - "apps/majordomus-cli/src/capability/builtin/board.rs"
+  - "apps/majordomus-cli/src/capability/builtin/mod.rs"
+  - "apps/majordomus-cli/src/commands/board.rs"
+  - "apps/majordomus-cli/src/commands/mod.rs"
+  - "apps/majordomus-cli/src/cli.rs"
+  - "apps/majordomus-cli/tests/board_snapshot.rs"
+  - ".ai/repo/features/planning.md"
+  - "docs/generated"
+  - "site"
+  - ".ai/repo/project/issues/I4294.yaml"
+acceptance_criteria:
+  - "Every open milestone of this repository's plan is in a lane of share/board.yaml, and every milestone a lane names exists (board::tests::every_open_milestone_has_a_lane)"
+  - "An open milestone in no lane is refused by name and a DONE one may stay unlaned (board::tests::a_milestone_in_no_lane_is_an_error_unless_it_is_done, capability::builtin::board::tests::an_open_milestone_in_no_lane_is_refused)"
+  - "The same input gives the same digest, a change gives a different one, and syncedAt, syncedBy and key order do not count (board::tests::the_digest_is_stable_moves_with_the_state_and_ignores_the_sync)"
+  - "A lane is split into issues-<lane>-2 and onwards under the bound with every item kept in order, and this repository's documents are each under 250000 bytes (board::tests::a_lane_is_split_under_the_bound_and_keeps_every_item_in_order, board::tests::this_repositorys_documents_are_under_the_bound)"
+  - "An unobserved pull request queue is said in prs.unavailable and the diagnostics, never refused (board::tests::an_absent_queue_is_said_rather_than_refused)"
+  - "The capability is projected over MCP, HTTP and the command line from its one declaration (tests/board_snapshot.rs)"
+validation:
+  - "bin/majordomus plan validate"
+  - "env -u MAJORDOMUS_SHARE cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib -- board"
+  - "env -u MAJORDOMUS_SHARE cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test board_snapshot"
+  - "majordomus generate --check"
+evidence_required:
+  - "board_snapshot_tests"
+depends_on: []
+created_at: 2026-10-28
+updated_at: 2026-10-28
