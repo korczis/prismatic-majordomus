@@ -9,7 +9,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 
 | milestone | status | done of required | ready | blocked | active | verify | cancelled | outcome |
 |---|---|---|---|---|---|---|---|---|
-| [a-provider-carries-the-contract-natively](https://majordomus.dev/plan/a-provider-carries-the-contract-natively/) | PLANNED | 0/11 | 6 | 5 | 0 | 0 | 0 | One generated Claude plugin, the edit guard wired and then refusing, a Stop-time owed report, extension provenance in doctor, bounded hooks and MCP listing, Codex hook parity where Codex offers the hook, Zed schema associations. |
+| [a-provider-carries-the-contract-natively](https://majordomus.dev/plan/a-provider-carries-the-contract-natively/) | ACTIVE | 1/11 | 5 | 5 | 0 | 0 | 0 | One generated Claude plugin, the edit guard wired and then refusing, a Stop-time owed report, extension provenance in doctor, bounded hooks and MCP listing, Codex hook parity where Codex offers the hook, Zed schema associations. |
 
 ## Issues
 
@@ -25,7 +25,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | [I3322](https://majordomus.dev/plan/i3322/) | READY | 0 | — | capture install wires the edit guard into Claude Code's PreToolUse, first in an advisory mode, and doctor reports it unwired |
 | [I3323](https://majordomus.dev/plan/i3323/) | BLOCKED | 1 | I3322 | An unclaimed edit is refused in Claude Code once no live peer edits without a claim |
 | [I3410](https://majordomus.dev/plan/i3410/) | BLOCKED | 2 | I3303, I3406 | A Codex prompt is captured through Codex's own UserPromptSubmit hook, and capture status stops calling Codex prompts unadapted |
-| [I3829](https://majordomus.dev/plan/i3829/) | READY | 0 | — | A provider declares whether its client drives a browser beside the server, and preflight says when this machine's bridge is missing |
+| [I3829](https://majordomus.dev/plan/i3829/) | DONE | 0 | — | A provider declares whether its client drives a browser beside the server, and preflight says when this machine's bridge is missing |
 
 ## Findings
 
@@ -50,8 +50,6 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I3307` | shares test/cases/940_mcp_says_nothing_its_capability_does_not.sh with I3448; they may not run concurrently |
 | WARN | `scope_conflict` | `I3307` | shares apps/majordomus-cli/src/capability/builtin/mcp.rs with I3607; they may not run concurrently |
 | WARN | `scope_conflict` | `I3307` | shares apps/majordomus-cli/src/mcp with I3609; they may not run concurrently |
-| WARN | `scope_conflict` | `I3307` | shares docs/MCP.md with I3820; they may not run concurrently |
-| WARN | `scope_conflict` | `I3307` | shares docs/MCP.md with I3829; they may not run concurrently |
 | WARN | `scope_conflict` | `I3307` | shares apps/majordomus-cli/src/mcp with I3960; they may not run concurrently |
 | WARN | `scope_conflict` | `I3307` | shares apps/majordomus-cli/src/capability/builtin/mcp.rs with I4002; they may not run concurrently |
 | WARN | `scope_conflict` | `I3307` | shares apps/majordomus-cli/src/capability/builtin/mcp.rs with I4006; they may not run concurrently |
@@ -69,9 +67,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I3322` | shares docs/MESH.md with I3772; they may not run concurrently |
 | WARN | `scope_conflict` | `I3322` | shares docs/MESH.md with I3774; they may not run concurrently |
 | WARN | `scope_conflict` | `I3322` | shares lib/capture.sh with I3810; they may not run concurrently |
-| WARN | `scope_conflict` | `I3322` | shares docs/MESH.md with I3820; they may not run concurrently |
 | WARN | `scope_conflict` | `I3322` | shares docs/MESH.md with I3835; they may not run concurrently |
-| WARN | `scope_conflict` | `I3322` | shares lib/doctor.sh with I4265; they may not run concurrently |
 | WARN | `scope_conflict` | `I3322` | shares lib/capture.sh with I4292; they may not run concurrently |
 | WARN | `scope_conflict` | `I3322` | shares docs/MESH.md with I4306; they may not run concurrently |
 | WARN | `scope_conflict` | `I3322` | shares lib/doctor.sh with I4323; they may not run concurrently |
@@ -83,17 +79,3 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I3322` | shares docs/MESH.md with I4466; they may not run concurrently |
 | WARN | `scope_conflict` | `I3322` | shares lib/capture.sh with I4468; they may not run concurrently |
 | WARN | `scope_conflict` | `I3322` | shares .ai/repo/policy.yaml with I4512; they may not run concurrently |
-| WARN | `scope_conflict` | `I3829` | shares docs/generated with I3841; they may not run concurrently |
-| WARN | `scope_conflict` | `I3829` | shares site with I4298; they may not run concurrently |
-| WARN | `scope_conflict` | `I3829` | shares docs/MCP.md with I4306; they may not run concurrently |
-| WARN | `scope_conflict` | `I3829` | shares site with I4317; they may not run concurrently |
-| WARN | `scope_conflict` | `I3829` | shares site with I4318; they may not run concurrently |
-| WARN | `scope_conflict` | `I3829` | shares docs/MCP.md with I4323; they may not run concurrently |
-| WARN | `scope_conflict` | `I3829` | shares docs/generated with I4352; they may not run concurrently |
-| WARN | `scope_conflict` | `I3829` | shares site with I4380; they may not run concurrently |
-| WARN | `scope_conflict` | `I3829` | shares docs/CLAIMS.yaml with I4400; they may not run concurrently |
-| WARN | `scope_conflict` | `I3829` | shares docs/claims with I4411; they may not run concurrently |
-| WARN | `scope_conflict` | `I3829` | shares docs/generated with I4418; they may not run concurrently |
-| WARN | `scope_conflict` | `I3829` | shares docs/generated with I4466; they may not run concurrently |
-| WARN | `scope_conflict` | `I3829` | shares docs/CLAIMS.yaml with I4468; they may not run concurrently |
-| WARN | `scope_conflict` | `I3829` | shares site with I4527; they may not run concurrently |

@@ -9,51 +9,12 @@ Every file `majordomus generate` writes, with the document it projects, the enco
 
 | document | encodings | schema | source |
 |---|---|---|---|
-| `allow/adr` | `text` | — | the document schema `share/schemas/majordomus/adr/adr.v1.proto` |
-| `allow/application` | `text` | — | the document schema `share/schemas/majordomus/application/application.v1.proto` |
-| `allow/context` | `text` | — | the document schema `share/schemas/majordomus/context/context.v1.proto` |
-| `allow/critique` | `text` | — | the JSON Schema `majordomus.critique/v1` of the kind it validates |
-| `allow/current` | `text` | — | the JSON Schema `majordomus.current/v1` of the kind it validates |
-| `allow/deployment` | `text` | — | the JSON Schema `majordomus.deployment/v1` of the kind it validates |
-| `allow/derive-offload` | `text` | — | the JSON Schema `majordomus.derive-offload/v1` of the kind it validates |
-| `allow/distribution` | `text` | — | the JSON Schema `majordomus.distribution/v1` of the kind it validates |
-| `allow/document` | `text` | — | the JSON Schema `majordomus.document/v1` of the kind it validates |
-| `allow/gap` | `text` | — | the JSON Schema `majordomus.gap/v1` of the kind it validates |
-| `allow/intent` | `text` | — | the JSON Schema `majordomus.intent/v1` of the kind it validates |
-| `allow/issue` | `text` | — | the JSON Schema `majordomus.issue/v1` of the kind it validates |
-| `allow/knowledge` | `text` | — | the document schema `share/schemas/majordomus/knowledge/knowledge.v1.proto` |
-| `allow/manifest` | `text` | — | the JSON Schema `majordomus.manifest/v1` of the kind it validates |
-| `allow/mesh-declaration` | `text` | — | the JSON Schema `majordomus.mesh-declaration/v1` of the kind it validates |
-| `allow/milestone` | `text` | — | the JSON Schema `majordomus.milestone/v1` of the kind it validates |
-| `allow/policy` | `text` | — | the JSON Schema `majordomus.policy/v1` of the kind it validates |
-| `allow/profile` | `text` | — | the JSON Schema `majordomus.profile/v1` of the kind it validates |
-| `allow/project` | `text` | — | the JSON Schema `majordomus.project/v1` of the kind it validates |
-| `allow/prompt` | `text` | — | the document schema `share/schemas/majordomus/prompt/prompt.v1.proto` |
-| `allow/release` | `text` | — | the JSON Schema `majordomus.release/v1` of the kind it validates |
-| `allow/rule` | `text` | — | the document schema `share/schemas/majordomus/rule/rule.v1.proto` |
-| `allow/scope` | `text` | — | the JSON Schema `majordomus.scope/v1` of the kind it validates |
-| `allow/session` | `text` | — | the JSON Schema `majordomus.session/v1` of the kind it validates |
-| `allow/session-context` | `text` | — | the JSON Schema `majordomus.session-context/v1` of the kind it validates |
-| `allow/session-record` | `text` | — | the JSON Schema `majordomus.session-record/v1` of the kind it validates |
-| `allow/skill` | `text` | — | the document schema `share/schemas/majordomus/skill/skill.v1.proto` |
-| `allow/taxonomy` | `text` | — | the JSON Schema `majordomus.taxonomy/v1` of the kind it validates |
-| `allow/telemetry` | `text` | — | the JSON Schema `majordomus.telemetry/v1` of the kind it validates |
-| `allow/use-case` | `text` | — | the document schema `share/schemas/majordomus/use-case/use-case.v1.proto` |
-| `allow/workspace` | `text` | — | the JSON Schema `majordomus.workspace/v1` of the kind it validates |
 | `artifacts` | `json`, `markdown`, `yaml` | `majordomus/generated-artifacts/v1` | the generation plan itself, over every other target |
 | `benchmarks` | `json`, `markdown`, `yaml` | `majordomus/benchmark-matrix/v1` | the benchmark projection of the canonical capability registry |
 | `capabilities` | `markdown` | — | the canonical Majordomus capability registry |
 | `changelog` | `json`, `markdown`, `yaml` | `majordomus/changelog/v1` | the layer's release records, the decisions dated in each release's window, and the commits in its range |
 | `cli` | `json`, `markdown`, `yaml` | `majordomus/cli/v1` | the clap declaration in apps/majordomus-cli/src/cli.rs and the examples beside it |
 | `deployment` | `text` | — | .ai/repo/deployments/majordomus.yaml |
-| `design` | `json`, `markdown`, `yaml` | `majordomus/design-system/v1` | share/design/tokens.yaml, the one declaration of the design |
-| `design-declaration` | `yaml` | — | share/design/tokens.yaml, the one declaration of the design |
-| `design-logo` | `text` | — | share/design/brand/logo.svg, the canonical logo |
-| `design-mark` | `text` | — | share/design/brand/logo-mark.svg, the canonical mark |
-| `design-status` | `text` | — | share/design/tokens.yaml, the one declaration of the design |
-| `design-surface` | `text` | — | share/design/tokens.yaml, the one declaration of the design |
-| `design-theme` | `text` | — | share/design/tokens.yaml, the one declaration of the design |
-| `design-tokens` | `text` | — | share/design/tokens.yaml, the one declaration of the design |
 | `distribution-matrix` | `json` | — | share/distribution.yaml and the release records |
 | `economics` | `json`, `markdown`, `yaml` | `majordomus/economics-summary/v1` | the token-economics methodology and every benchmark run committed under .ai/repo/benchmarks/economics |
 | `editors/command` | `markdown` | — | apps/majordomus-cli/src/capability/builtin/intents.rs |
@@ -171,24 +132,6 @@ Every file `majordomus generate` writes, with the document it projects, the enco
 | `release/v1.0.0-alpha.5` | `json` | — | the release record v1.0.0-alpha.5 |
 | `release/v1.0.0-alpha.8` | `json` | — | the release record v1.0.0-alpha.8 |
 | `release/v1.0.0-alpha.9` | `json` | — | the release record v1.0.0-alpha.9 |
-| `schemas/majordomus.adr/v1` | `json` | — | the document schema `share/schemas/majordomus/adr/adr.v1.proto` |
-| `schemas/majordomus.application/v1` | `json` | — | the document schema `share/schemas/majordomus/application/application.v1.proto` |
-| `schemas/majordomus.capture/v1` | `json` | — | the document schema `share/schemas/majordomus/capture/capture.v1.proto` |
-| `schemas/majordomus.context/v1` | `json` | — | the document schema `share/schemas/majordomus/context/context.v1.proto` |
-| `schemas/majordomus.knowledge/v1` | `json` | — | the document schema `share/schemas/majordomus/knowledge/knowledge.v1.proto` |
-| `schemas/majordomus.prompt/v1` | `json` | — | the document schema `share/schemas/majordomus/prompt/prompt.v1.proto` |
-| `schemas/majordomus.rule/v1` | `json` | — | the document schema `share/schemas/majordomus/rule/rule.v1.proto` |
-| `schemas/majordomus.skill/v1` | `json` | — | the document schema `share/schemas/majordomus/skill/skill.v1.proto` |
-| `schemas/majordomus.use-case/v1` | `json` | — | the document schema `share/schemas/majordomus/use-case/use-case.v1.proto` |
-| `sections/adr` | `text` | — | the document schema `share/schemas/majordomus/adr/adr.v1.proto` |
-| `sections/application` | `text` | — | the document schema `share/schemas/majordomus/application/application.v1.proto` |
-| `sections/context` | `text` | — | the document schema `share/schemas/majordomus/context/context.v1.proto` |
-| `sections/knowledge` | `text` | — | the document schema `share/schemas/majordomus/knowledge/knowledge.v1.proto` |
-| `sections/prompt` | `text` | — | the document schema `share/schemas/majordomus/prompt/prompt.v1.proto` |
-| `sections/rule` | `text` | — | the document schema `share/schemas/majordomus/rule/rule.v1.proto` |
-| `sections/skill` | `text` | — | the document schema `share/schemas/majordomus/skill/skill.v1.proto` |
-| `sections/use-case` | `text` | — | the document schema `share/schemas/majordomus/use-case/use-case.v1.proto` |
-| `site-design` | `json` | `majordomus-site-design/v1` | share/design/tokens.yaml, the one declaration of the design |
 | `site-distribution` | `json` | — | share/distribution.yaml and the release records |
 | `site-evidence-subjects` | `json` | `majordomus-site-evidence-subjects/v1` | the claims, rules, features, use cases, commands, documented command-line examples and builtin capabilities this repository declares, and the first coverage and negative headers of its test cases |
 | `site-product` | `json` | `majordomus-site-product/v1` | the product features of this repository's layer, resolved against the registry, the index, the catalogue and the topology |
@@ -196,8 +139,6 @@ Every file `majordomus generate` writes, with the document it projects, the enco
 | `site-registry` | `json` | `majordomus-site-registry/v2` | the capability registry and the index of this repository's layer |
 | `site-why` | `json` | `majordomus-site-why/v1` | the operational moments, audiences and areas of this repository's layer |
 | `site-why-graph` | `json` | — | the moments and what answers them, as the derived `why` graph |
-| `ui-icons` | `text` | — | site/data/kit/icons.toml, the kit's icons |
-| `version` | `text` | — | apps/majordomus-cli/Cargo.toml ([package] version), the one place the version is authored |
 | `web` | `json`, `yaml` | `majordomus/web-topology/v1` | the resolved web topology of this repository |
 
 ## Files
@@ -287,10 +228,6 @@ Every file `majordomus generate` writes, with the document it projects, the enco
 | `AGENTS.md` | `providers/agents` | markdown | 8709 | `893dcdb5bd6e0653` |
 | `CLAUDE.md` | `providers/claude-code` | markdown | 7998 | `835562a51a2b7bdb` |
 | `GEMINI.md` | `providers/gemini` | markdown | 8216 | `62b042961512aba6` |
-| `apps/majordomus-cli/src/cockpit/logo-mark.svg` | `design-mark` | text | 912 | `d3a39f415f9bd167` |
-| `apps/majordomus-cli/src/design/tokens.yaml` | `design-declaration` | yaml | 21266 | `0e500f1985cfe2ce` |
-| `apps/majordomus-cli/src/ui/icons.toml` | `ui-icons` | text | 9035 | `b5152a07987f0872` |
-| `apps/majordomus-cli/src/web/tokens.css` | `design-tokens` | text | 9328 | `437d58ede1af8e65` |
 | `deploy/Dockerfile` | `deployment` | text | 4608 | `b0cc326e4f5b85ae` |
 | `deploy/gigalixir/Procfile` | `deployment` | text | 522 | `5dbc7258766f2753` |
 | `deploy/gigalixir/bin/compile` | `deployment` | text | 432 | `ec41143398e3794a` |
@@ -310,15 +247,12 @@ Every file `majordomus generate` writes, with the document it projects, the enco
 | `docs/generated/cli.json` | `cli` | json | 1326628 | `de7145cdcab543e7` |
 | `docs/generated/cli.md` | `cli` | markdown | 580736 | `2a2452e6cf683289` |
 | `docs/generated/cli.yaml` | `cli` | yaml | 1039503 | `1e1a38ba37d542ec` |
-| `docs/generated/design.json` | `design` | json | 155558 | `39f9813f16e5b8a5` |
-| `docs/generated/design.md` | `design` | markdown | 11799 | `af057f33aa46287c` |
-| `docs/generated/design.yaml` | `design` | yaml | 126217 | `cc293b626bb83238` |
 | `docs/generated/distribution-matrix.json` | `distribution-matrix` | json | 2672 | `babb306155a4fc7c` |
 | `docs/generated/economics.json` | `economics` | json | 56212 | `e92397ee42a4775e` |
 | `docs/generated/economics.md` | `economics` | markdown | 15772 | `ee0520007183625a` |
 | `docs/generated/economics.yaml` | `economics` | yaml | 46605 | `264ece032e8525c8` |
-| `docs/generated/entities.json` | `entities` | json | 725499 | `eaaaa50ff361e665` |
-| `docs/generated/graph.json` | `graph` | json | 6128767 | `fcfefe92ad70cded` |
+| `docs/generated/entities.json` | `entities` | json | 725499 | `72b0a2573b06838e` |
+| `docs/generated/graph.json` | `graph` | json | 6138211 | `50976800c723a7d4` |
 | `docs/generated/graph.schema.json` | `graph-schema` | json | 7634 | `b4c8b25173f9e9c0` |
 | `docs/generated/modules/artifacts.md` | `modules/artifacts` | markdown | 1750 | `b1c0df1e83e28765` |
 | `docs/generated/modules/blackboard.md` | `modules/blackboard` | markdown | 2540 | `f2faf315ceae5835` |
@@ -389,71 +323,13 @@ Every file `majordomus generate` writes, with the document it projects, the enco
 | `docs/generated/registry.yaml` | `registry` | yaml | 3330870 | `e03466dd5c97a142` |
 | `docs/generated/web.json` | `web` | json | 5563 | `414f088c27f8e398` |
 | `docs/generated/web.yaml` | `web` | yaml | 4235 | `f22a4ea39169d9c7` |
-| `share/allow/adr.txt` | `allow/adr` | text | 381 | `16a0bc2c726e7791` |
-| `share/allow/application.txt` | `allow/application` | text | 392 | `5782ac5e01f7be9d` |
-| `share/allow/context.txt` | `allow/context` | text | 532 | `baa44b5f3f1a95e7` |
-| `share/allow/critique.txt` | `allow/critique` | text | 487 | `5f2766dac4b50aaa` |
-| `share/allow/current.txt` | `allow/current` | text | 475 | `39b592bbff82edee` |
-| `share/allow/deployment.txt` | `allow/deployment` | text | 975 | `2978b7f729608850` |
-| `share/allow/derive-offload.txt` | `allow/derive-offload` | text | 621 | `5f46e083bcdb8f59` |
-| `share/allow/distribution.txt` | `allow/distribution` | text | 1005 | `e2a0ce9fefed5d11` |
-| `share/allow/document.txt` | `allow/document` | text | 282 | `86290bde1d7f2f0b` |
-| `share/allow/gap.txt` | `allow/gap` | text | 635 | `7d3a0ab7c5bfccb4` |
-| `share/allow/intent.txt` | `allow/intent` | text | 494 | `f9bfe19ebfd0506b` |
-| `share/allow/issue.txt` | `allow/issue` | text | 917 | `efd331ffeeb14835` |
-| `share/allow/knowledge.txt` | `allow/knowledge` | text | 453 | `786112cc637ebd1b` |
-| `share/allow/manifest.txt` | `allow/manifest` | text | 705 | `831b692bcaed6e62` |
-| `share/allow/mesh-declaration.txt` | `allow/mesh-declaration` | text | 820 | `93409b2c0595e931` |
-| `share/allow/milestone.txt` | `allow/milestone` | text | 767 | `83a3c15e950c3fc4` |
-| `share/allow/policy.txt` | `allow/policy` | text | 2713 | `762d5018f509ce2c` |
-| `share/allow/profile.txt` | `allow/profile` | text | 750 | `59e8fd3c7f4742a7` |
-| `share/allow/project.txt` | `allow/project` | text | 253 | `1105e271d0710f02` |
-| `share/allow/prompt.txt` | `allow/prompt` | text | 235 | `34eac0452b406cd2` |
-| `share/allow/release.txt` | `allow/release` | text | 442 | `78c80408e35c1c2b` |
-| `share/allow/rule.txt` | `allow/rule` | text | 558 | `4c563bfd5c2d2023` |
-| `share/allow/scope.txt` | `allow/scope` | text | 833 | `faab6364ed2b90f6` |
-| `share/allow/session-context.txt` | `allow/session-context` | text | 335 | `712cd133d17a1ec7` |
-| `share/allow/session-record.txt` | `allow/session-record` | text | 659 | `e89c22a9155ddc72` |
-| `share/allow/session.txt` | `allow/session` | text | 342 | `ec7518308e7f1dfe` |
-| `share/allow/skill.txt` | `allow/skill` | text | 402 | `f9990ac17414923e` |
-| `share/allow/taxonomy.txt` | `allow/taxonomy` | text | 321 | `ca183625b99037cd` |
-| `share/allow/telemetry.txt` | `allow/telemetry` | text | 1090 | `ac83ebab3d9de4df` |
-| `share/allow/use-case.txt` | `allow/use-case` | text | 555 | `ce3ae7037b74995a` |
-| `share/allow/workspace.txt` | `allow/workspace` | text | 576 | `423576686bca632b` |
-| `share/cockpit/favicon.svg` | `design-mark` | text | 912 | `d3a39f415f9bd167` |
-| `share/design/status.css` | `design-status` | text | 13335 | `b62d589d0a41b1b0` |
-| `share/design/surface.css` | `design-surface` | text | 6070 | `b0b4a7670841a027` |
-| `share/design/theme.css` | `design-theme` | text | 2416 | `f1a8f7d99a4a3070` |
-| `share/schemas/majordomus/adr/adr.v1.schema.json` | `schemas/majordomus.adr/v1` | json | 6115 | `6b34115cb9d6c29f` |
-| `share/schemas/majordomus/application/application.v1.schema.json` | `schemas/majordomus.application/v1` | json | 3969 | `02e739c591d91e8a` |
-| `share/schemas/majordomus/capture/capture.v1.schema.json` | `schemas/majordomus.capture/v1` | json | 6783 | `b0f893a337f7709b` |
-| `share/schemas/majordomus/context/context.v1.schema.json` | `schemas/majordomus.context/v1` | json | 8141 | `54b9ef487ddd8d48` |
-| `share/schemas/majordomus/knowledge/knowledge.v1.schema.json` | `schemas/majordomus.knowledge/v1` | json | 7458 | `d1c728125e61f6ea` |
-| `share/schemas/majordomus/prompt/prompt.v1.schema.json` | `schemas/majordomus.prompt/v1` | json | 2419 | `85986c3071ee61a0` |
-| `share/schemas/majordomus/rule/rule.v1.schema.json` | `schemas/majordomus.rule/v1` | json | 5794 | `7ad7846238265834` |
-| `share/schemas/majordomus/skill/skill.v1.schema.json` | `schemas/majordomus.skill/v1` | json | 5196 | `b398579f8a38a864` |
-| `share/schemas/majordomus/use-case/use-case.v1.schema.json` | `schemas/majordomus.use-case/v1` | json | 11178 | `85bc7b15ef8114ac` |
-| `share/sections/adr.txt` | `sections/adr` | text | 328 | `3bd5c49e67bc680b` |
-| `share/sections/application.txt` | `sections/application` | text | 243 | `bb8d0af8025be01d` |
-| `share/sections/context.txt` | `sections/context` | text | 306 | `70faa219957dc311` |
-| `share/sections/knowledge.txt` | `sections/knowledge` | text | 210 | `6b669340bbfb925a` |
-| `share/sections/prompt.txt` | `sections/prompt` | text | 204 | `38f5a5eaa7fb5045` |
-| `share/sections/rule.txt` | `sections/rule` | text | 344 | `f50ef67737d65e0c` |
-| `share/sections/skill.txt` | `sections/skill` | text | 290 | `30cd7ea9c1b4cb03` |
-| `share/sections/use-case.txt` | `sections/use-case` | text | 298 | `9ea1598905972d91` |
-| `share/ui/favicon.svg` | `design-mark` | text | 912 | `d3a39f415f9bd167` |
-| `share/version.txt` | `version` | text | 247 | `032ed0c349181bad` |
-| `site/data/registry/design.json` | `site-design` | json | 11595 | `02f349431cf17cf6` |
 | `site/data/registry/distribution.json` | `site-distribution` | json | 3005 | `1dc59aaebd16174a` |
 | `site/data/registry/evidence-subjects.json` | `site-evidence-subjects` | json | 858898 | `527656f8d5c4cc70` |
-| `site/data/registry/product-graph.json` | `site-product-graph` | json | 111831 | `3fe9d33da81d4d83` |
-| `site/data/registry/product.json` | `site-product` | json | 780583 | `77fbadb7f191cb16` |
-| `site/data/registry/registry.json` | `site-registry` | json | 8446136 | `f46a555d9513e0f0` |
+| `site/data/registry/product-graph.json` | `site-product-graph` | json | 111831 | `9163a787056e15e8` |
+| `site/data/registry/product.json` | `site-product` | json | 780583 | `33d1ecc3f67c2c0c` |
+| `site/data/registry/registry.json` | `site-registry` | json | 8449621 | `f36906d4587f6f47` |
 | `site/data/registry/why-graph.json` | `site-why-graph` | json | 180171 | `c5c85c57475615eb` |
 | `site/data/registry/why.json` | `site-why` | json | 349932 | `f34d973e38325648` |
-| `site/static/favicon.svg` | `design-mark` | text | 912 | `d3a39f415f9bd167` |
-| `site/static/images/logo-mark.svg` | `design-mark` | text | 912 | `d3a39f415f9bd167` |
-| `site/static/images/logo.svg` | `design-logo` | text | 1067 | `a552155c2d360d82` |
 | `site/static/install.sh` | `installer` | text | 37694 | `ab92544291fdbe9c` |
 | `site/static/releases/latest.json` | `release/latest` | json | 2397 | `6b987fb14ec59a93` |
 | `site/static/releases/v0.10.0.json` | `release/v0.10.0` | json | 2397 | `d5d062b81a621263` |
