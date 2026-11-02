@@ -178,6 +178,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I2720` | shares apps/majordomus-cli/src/capability/builtin with I4468; they may not run concurrently |
 | WARN | `scope_conflict` | `I2720` | shares test/cases with I4512; they may not run concurrently |
 | WARN | `scope_conflict` | `I2720` | shares apps/majordomus-cli/src/capability/builtin with I4522; they may not run concurrently |
+| WARN | `scope_conflict` | `I2720` | shares test/cases with I4528; they may not run concurrently |
 | WARN | `scope_conflict` | `I2723` | shares apps/majordomus-cli/src/ui with I2747; they may not run concurrently |
 | WARN | `scope_conflict` | `I2723` | shares test/cases with I2826; they may not run concurrently |
 | WARN | `scope_conflict` | `I2723` | shares apps/majordomus-cli/src/mesh with I2874; they may not run concurrently |
@@ -321,6 +322,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I2723` | shares test/cases with I4468; they may not run concurrently |
 | WARN | `scope_conflict` | `I2723` | shares test/cases with I4512; they may not run concurrently |
 | WARN | `scope_conflict` | `I2723` | shares test/cases with I4522; they may not run concurrently |
+| WARN | `scope_conflict` | `I2723` | shares test/cases with I4528; they may not run concurrently |
 | WARN | `scope_conflict` | `I2826` | shares docs/RELEASE.md with I2901; they may not run concurrently |
 | WARN | `scope_conflict` | `I2826` | shares docs/RELEASE.md with I2902; they may not run concurrently |
 | WARN | `scope_conflict` | `I2826` | shares docs/RELEASE.md with I2903; they may not run concurrently |
@@ -440,3 +442,4 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I2826` | shares apps/majordomus-cli/src/capability/builtin/release.rs with I4468; they may not run concurrently |
 | WARN | `scope_conflict` | `I2826` | shares test/cases with I4512; they may not run concurrently |
 | WARN | `scope_conflict` | `I2826` | shares docs/RELEASE.md with I4522; they may not run concurrently |
+| WARN | `scope_conflict` | `I2826` | shares test/cases with I4528; they may not run concurrently |

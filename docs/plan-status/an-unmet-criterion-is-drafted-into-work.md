@@ -126,3 +126,4 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I3246` | shares apps/majordomus-cli/src/capability/builtin/intents.rs with I4468; they may not run concurrently |
 | WARN | `scope_conflict` | `I3246` | shares .ai/repo/project/issues with I4512; they may not run concurrently |
 | WARN | `scope_conflict` | `I3246` | shares .ai/repo/project/issues with I4522; they may not run concurrently |
+| WARN | `scope_conflict` | `I3246` | shares .ai/repo/project/issues with I4528; they may not run concurrently |
