@@ -21883,6 +21883,13 @@
         "source": "lib/rules.sh"
       },
       {
+        "id": "majordomus://implementation/lib/runnable.sh",
+        "kind": "implementation",
+        "label": "lib/runnable.sh",
+        "route": "/cockpit/objects/implementation/lib-runnable-sh",
+        "source": "lib/runnable.sh"
+      },
+      {
         "id": "majordomus://implementation/lib/rust_bin.sh",
         "kind": "implementation",
         "label": "lib/rust_bin.sh",
@@ -100230,6 +100237,13 @@
         "source": "test/cases/3179_a_prerelease_is_never_published_as_stable.sh"
       },
       {
+        "id": "majordomus://test/test/cases/3180_a_shim_that_cannot_run_is_not_a_tool.sh",
+        "kind": "test",
+        "label": "test/cases/3180_a_shim_that_cannot_run_is_not_a_tool.sh",
+        "route": "/cockpit/objects/test/test-cases-3180-a-shim-that-cannot-run-is-not-a-tool-sh",
+        "source": "test/cases/3180_a_shim_that_cannot_run_is_not_a_tool.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/318_a_partial_sweep_says_so.sh",
         "kind": "test",
         "label": "test/cases/318_a_partial_sweep_says_so.sh",
@@ -125106,6 +125120,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://implementation/lib/runnable.sh",
+        "target": "kind:implementation",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://implementation/lib/rust_bin.sh",
         "target": "kind:implementation",
         "kind": "is_a"
@@ -147761,6 +147780,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/3180_a_shim_that_cannot_run_is_not_a_tool.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/318_a_partial_sweep_says_so.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -153772,8 +153796,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4196,
-      "edges": 9637,
+      "nodes": 4198,
+      "edges": 9639,
       "acyclic": false,
       "truncated": false
     }

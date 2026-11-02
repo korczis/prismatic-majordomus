@@ -57,7 +57,7 @@ pinned() {
   return 0
 }
 
-if command -v zola >/dev/null 2>&1; then
+if mj_zola_ready "$ROOT"; then
   pinned "$SRC" || { echo "    a converted page's source link does not name the built commit"; exit 1; }
 
   # ------------------------------------------------------------ 3. the mutation

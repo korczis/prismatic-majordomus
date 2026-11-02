@@ -55,6 +55,9 @@
 # producer, because a site that silently lost a surface is the stale deployment nobody sees.
 set -eu
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"; SITE="$ROOT/site"; NOCSS=0; NODATA=0; BASE=""; OUT=""; SERVE=0
+# shellcheck source=../lib/runnable.sh
+. "$(cd "$(dirname "$0")/.." && pwd)/lib/runnable.sh" 2>/dev/null || { mj_runs() { command -v "$1" >/dev/null 2>&1; }; mj_runs_why() { printf '%s is not available' "$1"; }; mj_zola_ready() { command -v zola >/dev/null 2>&1; }; mj_zola_why() { printf 'zola is not available'; }; mj_node_env() { :; }; }
+mj_node_env "$(cd "$(dirname "$0")/.." && pwd)" || true
 MJ_VERSION="site-build"; MJ_BIN_DIR="$ROOT/bin"; MJ_LIB_DIR="$ROOT/lib"; export MJ_VERSION MJ_BIN_DIR MJ_LIB_DIR
 # for mj_web_composed, the one reading of which surfaces are composed into the site
 # shellcheck source=../lib/common.sh
@@ -370,7 +373,7 @@ if [ "$SERVE" = 1 ]; then
   [ -n "$BASE" ] || BASE="$SERVE_MOUNT"
   [ -n "$OUT" ] || OUT="$SERVE_OUT"
 fi
-command -v zola >/dev/null || { echo "site-build: zola is required (brew install zola / see docs/GITHUB_PAGES_ARCHITECTURE.md)" >&2; exit 12; }
+mj_zola_ready "$ROOT" || { echo "site-build: $(mj_zola_why "$ROOT") (brew install zola / see docs/GITHUB_PAGES_ARCHITECTURE.md)" >&2; exit 12; }
 # The surfaces this build composes, and whether each one's artifact exists — asked before any
 # generation or rendering is spent, because a build that cannot carry every published surface
 # is refused whatever else it would have produced.

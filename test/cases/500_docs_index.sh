@@ -16,7 +16,7 @@
 #      the hub's numbers are the index's numbers.
 . "$ROOT/test/lib.sh"
 
-command -v node >/dev/null 2>&1 || { echo "    node is required by the site build"; exit 1; }
+mj_runs node || { echo "    node is required by the site build"; exit 1; }
 command -v jq >/dev/null 2>&1 || { echo "    jq is required"; exit 1; }
 GEN="$ROOT/scripts/lib/docs-index.mjs"
 [ -f "$GEN" ] || { echo "    $GEN is missing"; exit 1; }
@@ -80,7 +80,7 @@ fi
 # the same public probe the Pages workflow runs after deploying, against the fixture served
 # over HTTP: it passes on the commit the index names, and refuses another commit and a
 # published entity page that answers 404
-if command -v python3 >/dev/null 2>&1; then
+if mj_runs python3; then
   sed -i.bak 's|<body>|<body><div data-docs-search></div>|' "$S/public/docs/index.html" && rm -f "$S/public/docs/index.html.bak"
   printf '{}\n' > "$S/public/openapi.json"
   PORT=$(( 20000 + $$ % 20000 ))

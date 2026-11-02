@@ -20,7 +20,7 @@
 # holds, and a name that is not declared fails the build naming it.
 . "$ROOT/test/lib.sh"
 command -v jq >/dev/null 2>&1 || skip "jq absent"
-command -v python3 >/dev/null 2>&1 || skip "python3 absent"
+mj_runs python3 || skip "$(mj_runs_why python3)"
 python3 -c 'import tomllib' 2>/dev/null || skip "python3 has no tomllib"
 CHECK="$ROOT/scripts/site-check"
 FIG="$ROOT/site/data/figures.toml"
@@ -127,7 +127,7 @@ mkdir -p data-toml; cp "$ROOT"/site/data/*.toml data-toml/
 expect_exit 0 "$CHECK" --prose-figures "$PWD/data-toml"
 
 # ---------------------------------------------------------------- the shortcode, rendered
-if command -v zola >/dev/null; then
+if mj_zola_ready "$ROOT"; then
   Z="$PWD/zsite"; mkdir -p "$Z/templates/shortcodes" "$Z/content" "$Z/data"
   cp "$SC" "$Z/templates/shortcodes/"; cp "$FIG" "$Z/data/"
   for s in $(python3 -c 'import sys, tomllib; print("\n".join(sorted({f["source"] for f in tomllib.load(open(sys.argv[1], "rb"))["figure"]})))' "$FIG"); do
