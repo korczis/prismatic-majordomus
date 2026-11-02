@@ -72008,6 +72008,42 @@
         }
       },
       {
+        "id": "majordomus://issue/I4266",
+        "kind": "issue",
+        "label": "I4266",
+        "summary": "plan says why an issue with no dependency is BLOCKED by its milestone",
+        "route": "/cockpit/objects/issue/i4266",
+        "source": ".ai/repo/project/issues/I4266.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "plan blocked names the blocking milestone for a dependency-free issue"
+          ],
+          "created_at": "2026-10-27",
+          "current_state": "The milestone edge blocks silently.",
+          "depends_on": [],
+          "desired_state": "plan show and plan blocked name the milestone dependency that blocks an issue.",
+          "evidence_required": [
+            "case_a_milestone_dependency_is_explained"
+          ],
+          "milestone": "a-second-adopter-is-served",
+          "objective": "plan show and plan blocked name the milestone dependency that blocks an issue.",
+          "parallel_safe": true,
+          "priority": "p3",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I4266.yaml",
+            "lib/plan.sh",
+            "lib/project.awk",
+            "test/cases/4266_a_milestone_block_is_named.sh"
+          ],
+          "slug": "a-milestone-dependency-is-explained",
+          "updated_at": "2026-10-27",
+          "validation": [
+            "bash test/run.sh 4266_a_milestone_block_is_named"
+          ]
+        }
+      },
+      {
         "id": "majordomus://issue/I4268",
         "kind": "issue",
         "label": "I4268",
@@ -101453,6 +101489,13 @@
         "label": "test/cases/4265_the_adopter_hook_runs_doctor_in_commit_context.sh",
         "route": "/cockpit/objects/test/test-cases-4265-the-adopter-hook-runs-doctor-in-commit-context-sh",
         "source": "test/cases/4265_the_adopter_hook_runs_doctor_in_commit_context.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/4266_a_milestone_block_is_named.sh",
+        "kind": "test",
+        "label": "test/cases/4266_a_milestone_block_is_named.sh",
+        "route": "/cockpit/objects/test/test-cases-4266-a-milestone-block-is-named-sh",
+        "source": "test/cases/4266_a_milestone_block_is_named.sh"
       },
       {
         "id": "majordomus://test/test/cases/4268_an_adopter_runs_and_records_its_gates.sh",
@@ -140461,6 +140504,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I4266",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4266",
+        "target": "majordomus://milestone/a-second-adopter-is-served",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://issue/I4268",
         "target": "kind:issue",
         "kind": "is_a"
@@ -148636,6 +148689,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/4266_a_milestone_block_is_named.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/4268_an_adopter_runs_and_records_its_gates.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -153772,8 +153830,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4196,
-      "edges": 9637,
+      "nodes": 4198,
+      "edges": 9640,
       "acyclic": false,
       "truncated": false
     }

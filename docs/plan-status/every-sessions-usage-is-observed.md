@@ -70,6 +70,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I3299` | shares docs/generated/benchmarks.json with I3810; they may not run concurrently |
 | WARN | `scope_conflict` | `I3299` | shares docs/generated/benchmarks.json with I3841; they may not run concurrently |
 | WARN | `scope_conflict` | `I3299` | shares lib/plan.sh with I4261; they may not run concurrently |
+| WARN | `scope_conflict` | `I3299` | shares lib/plan.sh with I4266; they may not run concurrently |
 | WARN | `scope_conflict` | `I3299` | shares lib/plan.sh with I4322; they may not run concurrently |
 | WARN | `scope_conflict` | `I3299` | shares lib/plan.sh with I4329; they may not run concurrently |
 | WARN | `scope_conflict` | `I3299` | shares lib/plan.sh with I4357; they may not run concurrently |
