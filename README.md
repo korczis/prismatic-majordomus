@@ -106,7 +106,10 @@ Two of them as they stand at the last publication, each a link to the live chart
 On your own machine, `majordomus ui` serves how the delivery stands, every tile naming the
 capability it read ([below](#interfaces)), and the server's Cockpit adds live views of the
 same model: the graphs the layer implies and the trains of stacked pull requests
-(Cytoscape.js), and the runtime activity plot sampled while the page is open (p5.js):
+(Cytoscape.js), and the runtime activity plot sampled while the page is open (p5.js). The
+Cockpit's stylesheet is compiled from Tailwind CSS and Flowbite components, and its controls run
+on Alpine.js (the CSP build), all served from the executable's own files in
+[`share/cockpit/`](share/cockpit/) ([the Cockpit](docs/COCKPIT.md)):
 
 <p align="center">
   <img src="site/static/images/ui/ui-dashboard-1440.png" alt="majordomus ui: health, releases, the plan and the mesh, each citing its source" width="860">
