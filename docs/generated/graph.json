@@ -7550,7 +7550,10 @@
             "file:share/mods/claude-code/majordomus-brief/hooks/register.ts",
             "file:lib/capture.sh",
             "file:docs/BRIEF.md",
-            "test:test/cases/1065_a_session_briefs_itself.sh"
+            "file:.ai/repo/adrs/0207-a-new-mechanism-is-admitted-only-with-the-measured-problem-it-re.md",
+            "file:.ai/repo/project/issues/I4250.yaml",
+            "test:test/cases/1065_a_session_briefs_itself.sh",
+            "test:test/cases/4250_the_brief_reports_only_what_changed.sh"
           ],
           "tags": [
             "session",
@@ -13114,6 +13117,22 @@
           "responsibility": "none",
           "source": "docs/REASONING.md",
           "test": "test/cases/730_reasoning_works_with_no_advisor.sh"
+        }
+      },
+      {
+        "id": "majordomus://claim/record-attribution",
+        "kind": "claim",
+        "label": "record-attribution",
+        "summary": "A durable record names the session that wrote it, and is filed under the active task only when no other open episode opened that task",
+        "route": "/cockpit/objects/claim/record-attribution",
+        "source": "docs/CLAIMS.yaml",
+        "status": "guaranteed",
+        "facts": {
+          "claim": "A durable record names the session that wrote it, and is filed under the active task only when no other open episode opened that task",
+          "implementation": "lib/common.sh",
+          "responsibility": "state",
+          "source": "docs/CLI.md",
+          "test": "test/cases/3049_a_second_workers_record_lands_on_the_first_workers_task.sh"
         }
       },
       {
@@ -19007,6 +19026,14 @@
         "summary": "Majordomus reasons, decides, implements and validates with no advisor at all: absent advisors are reported as ordinary state, material uncertainty gets a structured local review, and the conclusion claims no independent review",
         "route": "/cockpit/objects/document/docs-claims-reasoning-works-with-no-advisor-md",
         "source": "docs/claims/reasoning-works-with-no-advisor.md"
+      },
+      {
+        "id": "majordomus://document/docs/claims/record-attribution.md",
+        "kind": "document",
+        "label": "docs/claims/record-attribution.md",
+        "summary": "A durable record names the session that wrote it",
+        "route": "/cockpit/objects/document/docs-claims-record-attribution-md",
+        "source": "docs/claims/record-attribution.md"
       },
       {
         "id": "majordomus://document/docs/claims/record-resolution.md",
@@ -45813,6 +45840,7 @@
             "scripts/derive in a worktree with MERGE_HEAD present exits non-zero before stage A and names MERGE_HEAD",
             "The same derive after the merge is committed runs as before"
           ],
+          "cancelled": true,
           "created_at": "2026-10-21",
           "depends_on": [],
           "evidence_required": [
@@ -45831,7 +45859,7 @@
             ".ai/repo/project/issues/I2863.yaml"
           ],
           "slug": "a-derive-does-not-run-mid-merge",
-          "updated_at": "2026-10-21",
+          "updated_at": "2026-10-30",
           "validation": [
             "bin/majordomus plan validate"
           ]
@@ -58631,6 +58659,8 @@
             "A quote, a backslash and a non-ASCII letter in the task are stored and read back unchanged by check",
             "A case drives each refusal and each round trip in a disposable repository"
           ],
+          "completed_at": "2026-10-26T11:23:20Z",
+          "completed_event": "sha256:98ff87ed1a5cb0c59d2cd281c29a8b6c156722440bd651cd14c2488dfd589ba4",
           "created_at": "2026-10-18",
           "desired_state": "One shared predicate judges every scalar a task command writes, start applies it to task, owner and because, and a refused start leaves no state behind.",
           "evidence_required": [
@@ -58649,10 +58679,14 @@
             "docs/CLI.md"
           ],
           "slug": "start-refuses-unsafe-scalars",
-          "updated_at": "2026-10-18",
+          "started_at": "2026-10-26T11:21:53Z",
+          "started_event": "sha256:6626a716a459b6fde9b1fafe0de2fff06c76a16868b235c146dc5dc5493b9b5d",
+          "updated_at": "2026-10-26T11:23:20Z",
           "validation": [
             "bash test/run.sh 04_start_check"
-          ]
+          ],
+          "verified_at": "2026-10-26T11:22:12Z",
+          "verified_event": "sha256:b8e53bdeb1adcdf36fb45062ab62dc4a51673e40bffe206d72e237962e067174"
         }
       },
       {
@@ -67374,6 +67408,8 @@
             "homepage-check fails when the built title lowercases or rewords the sentence",
             "The Czech homepage's title, description and og:description are Czech, and site-translate reach names the page each new key reaches"
           ],
+          "completed_at": "2026-10-30T11:08:14Z",
+          "completed_event": "sha256:ed33d0eedcad57a1d4dd69e17b8eb1de6fd098d0f747423378c452c418e3fd40",
           "created_at": "2026-10-22",
           "depends_on": [
             "I3134"
@@ -67396,7 +67432,9 @@
             "a-visitor-understands-and-checks-majordomus#the-copy-says-only-what-is-proved"
           ],
           "slug": "the-homepage-title-says-the-sentence-in-every-language",
-          "updated_at": "2026-10-22T05:42:22Z",
+          "started_at": "2026-10-30T11:07:29Z",
+          "started_event": "sha256:8852f869f6455267e5fb284ab702bfdb2441726d8181fe90154928e2ba41dcdc",
+          "updated_at": "2026-10-30T11:08:14Z",
           "validation": [
             "scripts/ci/homepage-check",
             "bash test/run.sh 333_homepage_narrative",
@@ -68197,6 +68235,8 @@
             "On a branch the audit is skipped after a failed earlier step; on integration/* it runs unless the job was cancelled",
             "Every case that reads .github/workflows/validate.yml passes"
           ],
+          "completed_at": "2026-10-30T19:05:17Z",
+          "completed_event": "sha256:dee6b0ff1e4d79ed97754d26b4b91ea8e2f3f7afc26a693e465f9e96e0303546",
           "created_at": "2026-10-22",
           "current_state": "The ui job runs the warm-screen budget, then `scripts/ui audit --report`, which checks the bar, audits every page, and fails at the end when the bar is stale.",
           "depends_on": [],
@@ -68217,7 +68257,9 @@
             ".ai/repo/project/issues/I3931.yaml"
           ],
           "slug": "the-ui-bar-is-judged-before-the-audit",
-          "updated_at": "2026-10-22",
+          "started_at": "2026-10-30T19:04:38Z",
+          "started_event": "sha256:43d41922b310a80b5af36d4b838c96d6f9f083524b5a3c3b3eb3cd462330e6fd",
+          "updated_at": "2026-10-30T19:05:17Z",
           "validation": [
             "bash test/run.sh $(grep -lE 'validate\\\\.yml' test/cases/*.sh | sed 's#test/cases/##; s/\\\\.sh$//')",
             "actionlint .github/workflows/validate.yml"
@@ -68411,6 +68453,8 @@
             "Every case that reads .github/workflows/validate.yml passes, and actionlint is clean",
             "The next master run's pages-live passes without a rerun, or names a deploy that is slower than the heavy jobs"
           ],
+          "completed_at": "2026-10-30T19:06:30Z",
+          "completed_event": "sha256:da8ec428ee3ddd1ed1b3a5bdb6d4e9991fe2675c8be3d0804b7fcfb5fc6c3391",
           "created_at": "2026-10-22",
           "current_state": "The pages job needs only plan, so it starts in the first wave beside about nineteen jobs and its wait expires while the deploy is still queued behind them.",
           "depends_on": [],
@@ -68432,7 +68476,9 @@
             ".ai/repo/project/issues/I3936.yaml"
           ],
           "slug": "the-pages-gate-waits-behind-the-heavy-jobs",
-          "updated_at": "2026-10-22",
+          "started_at": "2026-10-30T19:05:43Z",
+          "started_event": "sha256:79e6d53ebeb92e5f0409dbe15f3690a621ff432d497d8a9d0978fce092c2d5d1",
+          "updated_at": "2026-10-30T19:06:30Z",
           "validation": [
             "actionlint .github/workflows/validate.yml"
           ]
@@ -71246,6 +71292,8 @@
             "test/cases/1096_no_screen_waits_for_a_source.sh has no printf piped into grep",
             "Case 1096 passes, with the same checks and messages as before"
           ],
+          "completed_at": "2026-10-30T10:21:44Z",
+          "completed_event": "sha256:c6454630408f17597f042f133c60ad90a5ddc10129aadd21fea0fab06b74f3fd",
           "created_at": "2026-10-25",
           "depends_on": [
             "I2486"
@@ -71269,7 +71317,9 @@
           ],
           "serves": [],
           "slug": "case-1096-matches-without-a-pipe",
-          "updated_at": "2026-10-25",
+          "started_at": "2026-10-30T10:19:58Z",
+          "started_event": "sha256:bbdc9a2290c7750f5d1e82d9ef03ce8d997e41bf3de8fc511c34a9cd36c125f1",
+          "updated_at": "2026-10-30T10:21:44Z",
           "validation": [
             "MJ_TEST_JOBS=2 bash test/run.sh 1096_no_screen_waits_for_a_source",
             "bin/majordomus plan validate"
@@ -71380,6 +71430,8 @@
             "A pressure age of 0 keeps the hour, and an idle age of 0 evicts nothing, under the mark too",
             "Without the change, case 3959's pressure section fails"
           ],
+          "completed_at": "2026-10-30T10:24:47Z",
+          "completed_event": "sha256:bd67a4452ea2314d67699866a1d7cfd17c716ad9c59805a452686429b2958bf3",
           "created_at": "2026-10-25",
           "depends_on": [
             "I3959"
@@ -71403,7 +71455,9 @@
           ],
           "serves": [],
           "slug": "the-bound-evicts-under-pressure",
-          "updated_at": "2026-10-25",
+          "started_at": "2026-10-30T10:22:43Z",
+          "started_event": "sha256:0c874d3d3ca5d98e56dd45877408e1757dcfaeb5631d1682f0383ffb6e7544f4",
+          "updated_at": "2026-10-30T10:24:47Z",
           "validation": [
             "MJ_TEST_JOBS=1 bash test/run.sh 3959_the_shared_build_dir_stays_under_its_bound",
             "bin/majordomus plan validate"
@@ -71460,6 +71514,8 @@
         "route": "/cockpit/objects/issue/i4232",
         "source": ".ai/repo/project/issues/I4232.yaml",
         "facts": {
+          "completed_at": "2026-10-30T10:27:35Z",
+          "completed_event": "sha256:08009f0cf81a1c159734e6a4105b98ecc0edaeeba5963d730469dd974cebc122",
           "created_at": "2026-10-25",
           "current_state": "Measured at origin/master 2efeacea031 on 2026-10-25: apps/majordomus-core/Cargo.toml declares crate-type = [\\\"rlib\\\", \\\"cdylib\\\"].",
           "depends_on": [],
@@ -71482,7 +71538,9 @@
           ],
           "serves": [],
           "slug": "a-core-build-keeps-its-own-rlib",
-          "updated_at": "2026-10-25",
+          "started_at": "2026-10-30T10:25:45Z",
+          "started_event": "sha256:ab6d3f727bfcc3174d98f16176a4e1d47e528b07bdf80f5341720d046b0701e0",
+          "updated_at": "2026-10-30T10:27:35Z",
           "validation": [
             "MJ_TEST_JOBS=1 bash test/run.sh 4232_a_core_build_keeps_its_own_rlib",
             "scripts/rust-check --portable-core",
@@ -71542,6 +71600,61 @@
         }
       },
       {
+        "id": "majordomus://issue/I4236",
+        "kind": "issue",
+        "label": "I4236",
+        "summary": "The Blackboard is the board of the work: every issue at its delivery stage, with who carries it, live",
+        "route": "/cockpit/objects/issue/i4236",
+        "source": ".ai/repo/project/issues/I4236.yaml",
+        "facts": {
+          "created_at": "2026-10-26",
+          "depends_on": [],
+          "evidence_required": [
+            "case_board_is_derived",
+            "case_board_is_live"
+          ],
+          "milestone": "peer-blackboard",
+          "non_scope": [
+            "A second derivation of stage, presence or claims: the screen draws what the capabilities answered and computes no stage, rank or join of its own",
+            "Moving, assigning or closing work from the board; it reads",
+            "A new third-party library in the UI bundle"
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/ui/board.rs",
+            "apps/majordomus-cli/src/ui/mod.rs",
+            "apps/majordomus-cli/src/ui/shell.rs",
+            "apps/majordomus-cli/src/ui/view.rs",
+            "apps/majordomus-cli/src/ui/idd.rs",
+            "share/ui/src/ui.css",
+            "share/ui/ui.css",
+            "share/ui/ui.js",
+            "docs/UI.md",
+            "docs/BLACKBOARD.md",
+            "scripts/lib/ui-routes.mjs",
+            "scripts/lib/interaction-specs",
+            "test/cases/4236_the_blackboard_is_live_in_a_browser.sh"
+          ],
+          "serves": [
+            "the-peer-blackboard-is-one-reality#published-safely",
+            "the-peer-blackboard-is-one-reality#every-surface-reads-it"
+          ],
+          "slug": "the-blackboard-is-the-board-of-the-work",
+          "started_at": "2026-10-26T11:48:42Z",
+          "started_event": "sha256:07583a65132f266feee4093c82ed8738cb3e1324c66b828a3d82cec3f3ed2f50",
+          "updated_at": "2026-10-26T11:56:40Z",
+          "validation": [
+            "majordomus plan validate",
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib ui::board",
+            "scripts/ui check"
+          ],
+          "verified_at": "2026-10-26T11:56:40Z",
+          "verified_event": "sha256:5307b14768116d9cf23b4f853094eeae70a4c4479461890a0b1b1fa5f02213e3"
+        }
+      },
+      {
         "id": "majordomus://issue/I4241",
         "kind": "issue",
         "label": "I4241",
@@ -71584,6 +71697,51 @@
           ],
           "verified_at": "2026-10-26T17:35:02Z",
           "verified_event": "sha256:45b4b57b8d7bcf04ae96b54a5e2113e86378ac784f87cf1e025d521dfc8fba9f"
+        }
+      },
+      {
+        "id": "majordomus://issue/I4243",
+        "kind": "issue",
+        "label": "I4243",
+        "summary": "continuity.state asks git the ancestry of the record it resolves, not of every record of the branch",
+        "route": "/cockpit/objects/issue/i4243",
+        "source": ".ai/repo/project/issues/I4243.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Resolving a store of many records of this branch asks git the ancestry once",
+            "The chosen record, its tier, divergence, freshness and Next Action are unchanged",
+            "continuity.state on the primary checkout answers in seconds, not a minute"
+          ],
+          "completed_at": "2026-10-27T12:43:54Z",
+          "completed_event": "sha256:e41b91080e74968b4dd1015d32e61911f3d7bc8a5b076e4258d96701e16f432e",
+          "created_at": "2026-10-27",
+          "current_state": "Measured at origin/master 7ddc32da8d4 on 2026-10-27: resolve() calls divergence() and section() inside the walk for each same-branch record, before choosing.",
+          "depends_on": [],
+          "evidence_required": [
+            "rust"
+          ],
+          "milestone": "development-runtime",
+          "non_scope": [
+            "The number of records the local store keeps (pruning old handovers and checkpoints)",
+            "Other slow sources of brief.session and environment.preflight"
+          ],
+          "parallel_safe": true,
+          "priority": "p0",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/capability/builtin/continuity.rs",
+            ".ai/repo/project/issues/I4243.yaml"
+          ],
+          "serves": [],
+          "slug": "continuity-judges-only-the-record-it-resolves",
+          "started_at": "2026-10-27T12:42:48Z",
+          "started_event": "sha256:cb26ecf29a68d19ccd0f9755b013ca19cf3a896dc82b71c353f5e099235d7a09",
+          "updated_at": "2026-10-27T12:43:54Z",
+          "validation": [
+            "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --lib capability::builtin::continuity::"
+          ],
+          "verified_at": "2026-10-27T12:43:15Z",
+          "verified_event": "sha256:987d53790450bb68bbaeaf55aa3c9fedd1a5638cc0dd1e82eb29a8b6c2c9b986"
         }
       },
       {
@@ -71671,6 +71829,54 @@
           ],
           "verified_at": "2026-10-27T14:55:29Z",
           "verified_event": "sha256:e071290183e741f4265703f19beb6c2a18ca8e5239433262c2dc7b778d387b5a"
+        }
+      },
+      {
+        "id": "majordomus://issue/I4250",
+        "kind": "issue",
+        "label": "I4250",
+        "summary": "A session is briefed only when a fact around it changed, in words its person reads",
+        "route": "/cockpit/objects/issue/i4250",
+        "source": ".ai/repo/project/issues/I4250.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "claude plugin test share/mods/claude-code/majordomus-brief passes",
+            "Replacing the fingerprint comparison with `true` fails four of its tests",
+            "test/cases/1065_a_session_briefs_itself.sh passes, and asserts the installed module and the keep-awake text carry the rule",
+            "test/cases/4250_the_brief_reports_only_what_changed.sh runs the mod's test and two mutations of it where `claude` is installed",
+            "cargo test --lib capability::builtin::brief passes with the new keep-awake assertions"
+          ],
+          "created_at": "2026-10-27",
+          "depends_on": [],
+          "evidence_required": [
+            "the_brief_reports_only_what_changed"
+          ],
+          "milestone": "development-runtime",
+          "non_scope": [
+            "A policy key forcing a report after a long unchanged stretch: rejected in the amendment of ADR 0136, since the status line already shows the session alive every minute (ADR 0207)",
+            "Claude Code's own framing sentence after a plugin's prompt, which the mod cannot change",
+            "The handover mod (ADR 0123)"
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I4250.yaml",
+            "share/mods/claude-code/majordomus-brief/",
+            "apps/majordomus-cli/src/capability/builtin/brief.rs",
+            ".ai/repo/adrs/0136-every-session-briefs-itself-on-an-interval.md",
+            "docs/BRIEF.md",
+            "test/cases/1065_a_session_briefs_itself.sh",
+            "test/cases/4250_the_brief_reports_only_what_changed.sh"
+          ],
+          "serves": [],
+          "slug": "the-brief-reports-only-what-changed",
+          "updated_at": "2026-10-27",
+          "validation": [
+            "env -u MAJORDOMUS_SHARE claude plugin test share/mods/claude-code/majordomus-brief",
+            "env -u MAJORDOMUS_SHARE bash test/run.sh 1065_a_session_briefs_itself 4250_the_brief_reports_only_what_changed",
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib capability::builtin::brief"
+          ]
         }
       },
       {
@@ -73304,6 +73510,8 @@
         "route": "/cockpit/objects/issue/i4317",
         "source": ".ai/repo/project/issues/I4317.yaml",
         "facts": {
+          "completed_at": "2026-10-30T10:30:17Z",
+          "completed_event": "sha256:5215d54c6b864d8e8c954db3edf702daa17b770b9a61e505835b1d5eeca610a7",
           "created_at": "2026-10-28",
           "evidence_required": [
             "test",
@@ -73329,7 +73537,9 @@
             "test/cases/12_site_build.sh"
           ],
           "slug": "the-homepage-supported-figure-follows-the-runs-state",
-          "updated_at": "2026-10-28",
+          "started_at": "2026-10-30T10:28:31Z",
+          "started_event": "sha256:4140840f214187eb95d2cb0f731db36a38063d94811881eb12cb4a1e4f4433ec",
+          "updated_at": "2026-10-30T10:30:17Z",
           "validation": [
             "bash test/run.sh 544_the_homepage_counts_declared_apart_from_supported",
             "bash test/run.sh 333_homepage_narrative 3105_the_homepage_states_no_present_it_does_not_read",
@@ -73512,6 +73722,8 @@
         "route": "/cockpit/objects/issue/i4323",
         "source": ".ai/repo/project/issues/I4323.yaml",
         "facts": {
+          "completed_at": "2026-10-30T11:57:47Z",
+          "completed_event": "sha256:f2d91c18aeaa18e82d3b68ee2cb98a9d4ef8b38ea0b07aa9650e45e307207410",
           "created_at": "2026-10-28",
           "depends_on": [],
           "evidence_required": [
@@ -73537,7 +73749,9 @@
           ],
           "serves": [],
           "slug": "a-full-disk-is-one-finding",
-          "updated_at": "2026-10-29",
+          "started_at": "2026-10-30T11:56:03Z",
+          "started_event": "sha256:afd211cb36f4ef24a0e7c5d4dbc34859d1104138fe209ec80491819e6e2ba234",
+          "updated_at": "2026-10-30T11:57:47Z",
           "validation": [
             "bin/majordomus doctor",
             "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
@@ -76940,6 +77154,90 @@
           "validation": [
             "scripts/derive-check",
             "majordomus plan validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4520",
+        "kind": "issue",
+        "label": "I4520",
+        "summary": "finish runs its verify command in the caller's environment, not with the launcher's own MJ_* exported",
+        "route": "/cockpit/objects/issue/i4520",
+        "source": ".ai/repo/project/issues/I4520.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Case 4520: a verify command that fails while MJ_ROOT, MJ_STATE_DIR, MJ_AI_DIR, MJ_LIB_DIR, MJ_SELF or MAJORDOMUS_LAUNCHER is set lets finish complete, and refuses it on the base",
+            "Case 4520: an MJ_* variable the caller exported reaches the verify command with the caller's value, and MJ_FINISH_OUTCOME does not",
+            "Case 4520: under a launcher that exports MAJORDOMUS_LAUNCHER, as the installed one does, the verify command does not see it"
+          ],
+          "created_at": "2026-10-30",
+          "depends_on": [],
+          "desired_state": "A verify command sees no MJ_* variable and no MAJORDOMUS_LAUNCHER that its caller did not have, and keeps every MJ_* variable its caller did have, with the caller's value. Enforced by case 4520.",
+          "evidence_required": [
+            "test"
+          ],
+          "milestone": "ci-critical-path",
+          "non_scope": [
+            "Pinning the fleet pack off while a use-case scenario is recorded (I4521)",
+            "The environment of other commands a caller hands to majordomus to run"
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I4520.yaml",
+            "bin/majordomus",
+            "lib/finish.sh",
+            "test/cases/4520_a_verify_command_runs_in_the_callers_environment.sh"
+          ],
+          "serves": [],
+          "slug": "finish-verify-does-not-inherit-the-launcher-env",
+          "updated_at": "2026-10-30",
+          "validation": [
+            "env -u TMPDIR bash test/run.sh 4520_a_verify_command_runs_in_the_callers_environment 572_verification_records_the_tree_it_proved 06_finish",
+            "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4521",
+        "kind": "issue",
+        "label": "I4521",
+        "summary": "A use-case scenario is recorded with the fleet pack off, so its evidence is the same on every machine",
+        "route": "/cockpit/objects/issue/i4521",
+        "source": ".ai/repo/project/issues/I4521.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Case 4521: a scenario recorded with a fake pack under XDG_CONFIG_HOME, and again with MAJORDOMUS_FLEET_PACK naming it, records evidence byte-identical to the same scenario recorded with no pack",
+            "Case 4521: with MAJORDOMUS_FLEET=off, mj_fleet_install writes nothing and the doctor names the default pack path it would read",
+            "site/data/generated/catalogue.json derived on a machine with a pack equals the committed one"
+          ],
+          "created_at": "2026-10-30",
+          "depends_on": [],
+          "desired_state": "The evidence a scenario records is the same with and without a fleet pack on the recording machine, and catalogue.json derived on the owner's workstation equals the runner's. Enforced by case 4521.",
+          "evidence_required": [
+            "test"
+          ],
+          "milestone": "derived-data-integrity",
+          "non_scope": [
+            "What the fleet pack installs and where it is looked for (I4336)",
+            "The environment finish hands its verify command (I4520)"
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I4521.yaml",
+            "lib/usecase.sh",
+            "lib/fleet.sh",
+            "test/cases/4521_a_scenario_is_recorded_without_the_fleet_pack.sh"
+          ],
+          "serves": [],
+          "slug": "a-scenario-is-recorded-without-the-fleet-pack",
+          "updated_at": "2026-10-30",
+          "validation": [
+            "env -u TMPDIR bash test/run.sh 4521_a_scenario_is_recorded_without_the_fleet_pack 94_use_cases",
+            "bin/majordomus plan validate"
           ]
         }
       },
@@ -81562,7 +81860,7 @@
             "docs/MCP.md"
           ],
           "slug": "failure-is-visible",
-          "updated_at": "2026-10-15T02:04:24Z",
+          "updated_at": "2026-10-26T11:24:17Z",
           "validation": [
             "bin/majordomus plan validate",
             "cargo test --test health_server --test http_serve --test mcp_shared --test lease_busy",
@@ -101399,11 +101697,32 @@
         "source": "test/cases/4232_a_core_build_keeps_its_own_rlib.sh"
       },
       {
+        "id": "majordomus://test/test/cases/4233_start_refuses_unsafe_scalars.sh",
+        "kind": "test",
+        "label": "test/cases/4233_start_refuses_unsafe_scalars.sh",
+        "route": "/cockpit/objects/test/test-cases-4233-start-refuses-unsafe-scalars-sh",
+        "source": "test/cases/4233_start_refuses_unsafe_scalars.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/4235_an_evidence_token_is_matched_whole.sh",
         "kind": "test",
         "label": "test/cases/4235_an_evidence_token_is_matched_whole.sh",
         "route": "/cockpit/objects/test/test-cases-4235-an-evidence-token-is-matched-whole-sh",
         "source": "test/cases/4235_an_evidence_token_is_matched_whole.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/4236_the_blackboard_is_live_in_a_browser.sh",
+        "kind": "test",
+        "label": "test/cases/4236_the_blackboard_is_live_in_a_browser.sh",
+        "route": "/cockpit/objects/test/test-cases-4236-the-blackboard-is-live-in-a-browser-sh",
+        "source": "test/cases/4236_the_blackboard_is_live_in_a_browser.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/4250_the_brief_reports_only_what_changed.sh",
+        "kind": "test",
+        "label": "test/cases/4250_the_brief_reports_only_what_changed.sh",
+        "route": "/cockpit/objects/test/test-cases-4250-the-brief-reports-only-what-changed-sh",
+        "source": "test/cases/4250_the_brief_reports_only_what_changed.sh"
       },
       {
         "id": "majordomus://test/test/cases/4251_a_mod_links_nothing_outside_the_repository.sh",
@@ -101490,6 +101809,13 @@
         "source": "test/cases/431_economics_claims_gated.sh"
       },
       {
+        "id": "majordomus://test/test/cases/4323_a_full_disk_is_one_finding.sh",
+        "kind": "test",
+        "label": "test/cases/4323_a_full_disk_is_one_finding.sh",
+        "route": "/cockpit/objects/test/test-cases-4323-a-full-disk-is-one-finding-sh",
+        "source": "test/cases/4323_a_full_disk_is_one_finding.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/4337_a_changed_skill_raises_its_version.sh",
         "kind": "test",
         "label": "test/cases/4337_a_changed_skill_raises_its_version.sh",
@@ -101544,6 +101870,13 @@
         "label": "test/cases/4512_no_derived_page_outgrows_the_index.sh",
         "route": "/cockpit/objects/test/test-cases-4512-no-derived-page-outgrows-the-index-sh",
         "source": "test/cases/4512_no_derived_page_outgrows_the_index.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/4520_a_verify_command_runs_in_the_callers_environment.sh",
+        "kind": "test",
+        "label": "test/cases/4520_a_verify_command_runs_in_the_callers_environment.sh",
+        "route": "/cockpit/objects/test/test-cases-4520-a-verify-command-runs-in-the-callers-environment-sh",
+        "source": "test/cases/4520_a_verify_command_runs_in_the_callers_environment.sh"
       },
       {
         "id": "majordomus://test/test/cases/45_github_projection.sh",
@@ -113167,6 +113500,11 @@
       },
       {
         "source": "majordomus://adr/adr-0136",
+        "target": "majordomus://adr/adr-0207",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0136",
         "target": "majordomus://document/docs/BRIEF.md",
         "kind": "put_in_force"
       },
@@ -113177,7 +113515,17 @@
       },
       {
         "source": "majordomus://adr/adr-0136",
+        "target": "majordomus://issue/I4250",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0136",
         "target": "majordomus://test/test/cases/1065_a_session_briefs_itself.sh",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0136",
+        "target": "majordomus://test/test/cases/4250_the_brief_reports_only_what_changed.sh",
         "kind": "put_in_force"
       },
       {
@@ -120871,6 +121219,26 @@
         "kind": "tested_by"
       },
       {
+        "source": "majordomus://claim/record-attribution",
+        "target": "kind:claim",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://claim/record-attribution",
+        "target": "majordomus://document/docs/CLI.md",
+        "kind": "defined_in"
+      },
+      {
+        "source": "majordomus://claim/record-attribution",
+        "target": "majordomus://implementation/lib/common.sh",
+        "kind": "implemented_by"
+      },
+      {
+        "source": "majordomus://claim/record-attribution",
+        "target": "majordomus://test/test/cases/3049_a_second_workers_record_lands_on_the_first_workers_task.sh",
+        "kind": "tested_by"
+      },
+      {
         "source": "majordomus://claim/record-resolution",
         "target": "kind:claim",
         "kind": "is_a"
@@ -124367,6 +124735,11 @@
       },
       {
         "source": "majordomus://document/docs/claims/reasoning-works-with-no-advisor.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://document/docs/claims/record-attribution.md",
         "target": "kind:document",
         "kind": "is_a"
       },
@@ -140341,12 +140714,32 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I4236",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4236",
+        "target": "majordomus://milestone/peer-blackboard",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://issue/I4241",
         "target": "kind:issue",
         "kind": "is_a"
       },
       {
         "source": "majordomus://issue/I4241",
+        "target": "majordomus://milestone/development-runtime",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4243",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4243",
         "target": "majordomus://milestone/development-runtime",
         "kind": "belongs_to"
       },
@@ -140367,6 +140760,16 @@
       },
       {
         "source": "majordomus://issue/I4245",
+        "target": "majordomus://milestone/development-runtime",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4250",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4250",
         "target": "majordomus://milestone/development-runtime",
         "kind": "belongs_to"
       },
@@ -141847,6 +142250,26 @@
       },
       {
         "source": "majordomus://issue/I4512",
+        "target": "majordomus://milestone/derived-data-integrity",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4520",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4520",
+        "target": "majordomus://milestone/ci-critical-path",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4521",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4521",
         "target": "majordomus://milestone/derived-data-integrity",
         "kind": "belongs_to"
       },
@@ -148596,7 +149019,22 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/4233_start_refuses_unsafe_scalars.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/4235_an_evidence_token_is_matched_whole.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/4236_the_blackboard_is_live_in_a_browser.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/4250_the_brief_reports_only_what_changed.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -148661,6 +149099,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/4323_a_full_disk_is_one_finding.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/4337_a_changed_skill_raises_its_version.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -148697,6 +149140,11 @@
       },
       {
         "source": "majordomus://test/test/cases/4512_no_derived_page_outgrows_the_index.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/4520_a_verify_command_runs_in_the_callers_environment.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -153772,8 +154220,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4196,
-      "edges": 9637,
+      "nodes": 4208,
+      "edges": 9660,
       "acyclic": false,
       "truncated": false
     }

@@ -26,4 +26,16 @@ evidence_required:
   - suite
 risk: "The pages verdict of a master run arrives at its end instead of its first half hour; the ci verdict waited for every job already, so the run ends no later."
 created_at: 2026-10-22
-updated_at: 2026-10-22
+updated_at: 2026-10-30T19:06:30Z
+started_at: 2026-10-30T19:05:43Z
+started_event: sha256:79e6d53ebeb92e5f0409dbe15f3690a621ff432d497d8a9d0978fce092c2d5d1
+completed_at: 2026-10-30T19:06:30Z
+completed_event: sha256:da8ec428ee3ddd1ed1b3a5bdb6d4e9991fe2675c8be3d0804b7fcfb5fc6c3391
+evidence:
+  - covers: suite
+    type: ci
+    command: "validate on master 51b38035a71"
+    result: "validate.yml pages needs [plan, evidence] and runs unless the run or evidence was cancelled or pages_live is off; in run 40922124895 (attempt 1) evidence and pages both succeeded with no rerun, and every case that reads validate.yml passed"
+    artifact: "https://github.com/korczis/prismatic-majordomus/actions/runs/40922124895"
+    commit: 323e09e6fdb5be5320b96308fca4139378402885
+    recorded_at: 2026-10-30T19:06:10Z

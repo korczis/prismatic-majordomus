@@ -9,41 +9,23 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 
 | milestone | status | done of required | ready | blocked | active | verify | cancelled | outcome |
 |---|---|---|---|---|---|---|---|---|
-| [derived-data-integrity](https://majordomus.dev/plan/derived-data-integrity/) | ACTIVE | 1/4 | 3 | 0 | 0 | 0 | 1 | A committed derived artifact is a projection of inputs the commit owns. Landing an unrelated change on the trunk does not invalidate it, a fixture whose object database has no history can still evaluate it, and the staleness refusal exists on the path merges actually take - so the first thing that says no is a check rather than the published site. |
+| [derived-data-integrity](https://majordomus.dev/plan/derived-data-integrity/) | ACTIVE | 1/4 | 3 | 0 | 0 | 0 | 2 | A committed derived artifact is a projection of inputs the commit owns. Landing an unrelated change on the trunk does not invalidate it, a fixture whose object database has no history can still evaluate it, and the staleness refusal exists on the path merges actually take - so the first thing that says no is a check rather than the published site. |
 
 ## Issues
 
 | issue | status | wave | depends on | title |
 |---|---|---|---|---|
 | [I1409](https://majordomus.dev/plan/i1409/) | DONE | 0 | — | Derived data stops hashing inputs it cannot control |
-| [I2863](https://majordomus.dev/plan/i2863/) | READY | 0 | — | A derive does not run while a merge is uncommitted |
+| [I2863](https://majordomus.dev/plan/i2863/) | CANCELLED | 0 | — | A derive does not run while a merge is uncommitted |
 | [I2864](https://majordomus.dev/plan/i2864/) | CANCELLED | 0 | — | The site generator reads no output of a later derive stage |
 | [I3775](https://majordomus.dev/plan/i3775/) | READY | 0 | — | A page written by hand is never resolved as derived: the merge=derived globs name only what a generator writes |
 | [I4512](https://majordomus.dev/plan/i4512/) | READY | 0 | — | No derived page grows past the scope's size limit, so one derive is a fixpoint |
+| [I4521](https://majordomus.dev/plan/i4521/) | READY | 0 | — | A use-case scenario is recorded with the fleet pack off, so its evidence is the same on every machine |
 
 ## Findings
 
 | level | code | subject | message |
 |---|---|---|---|
-| WARN | `scope_conflict` | `I2863` | shares .ai/repo/project/issues/I2863.yaml with I2901; they may not run concurrently |
-| WARN | `scope_conflict` | `I2863` | shares .ai/repo/project/issues/I2863.yaml with I2902; they may not run concurrently |
-| WARN | `scope_conflict` | `I2863` | shares .ai/repo/project/issues/I2863.yaml with I2903; they may not run concurrently |
-| WARN | `scope_conflict` | `I2863` | shares .ai/repo/project/issues/I2863.yaml with I2904; they may not run concurrently |
-| WARN | `scope_conflict` | `I2863` | shares .ai/repo/project/issues/I2863.yaml with I2908; they may not run concurrently |
-| WARN | `scope_conflict` | `I2863` | shares .ai/repo/project/issues/I2863.yaml with I2909; they may not run concurrently |
-| WARN | `scope_conflict` | `I2863` | shares .ai/repo/project/issues/I2863.yaml with I2910; they may not run concurrently |
-| WARN | `scope_conflict` | `I2863` | shares .ai/repo/project/issues/I2863.yaml with I2911; they may not run concurrently |
-| WARN | `scope_conflict` | `I2863` | shares .ai/repo/project/issues/I2863.yaml with I2912; they may not run concurrently |
-| WARN | `scope_conflict` | `I2863` | shares .ai/repo/project/issues/I2863.yaml with I2913; they may not run concurrently |
-| WARN | `scope_conflict` | `I2863` | shares .ai/repo/project/issues/I2863.yaml with I2914; they may not run concurrently |
-| WARN | `scope_conflict` | `I2863` | shares .ai/repo/project/issues/I2863.yaml with I2918; they may not run concurrently |
-| WARN | `scope_conflict` | `I2863` | shares .ai/repo/project/issues/I2863.yaml with I2919; they may not run concurrently |
-| WARN | `scope_conflict` | `I2863` | shares .ai/repo/project/issues/I2863.yaml with I3003; they may not run concurrently |
-| WARN | `scope_conflict` | `I2863` | shares .ai/repo/project/issues/I2863.yaml with I3004; they may not run concurrently |
-| WARN | `scope_conflict` | `I2863` | shares .ai/repo/project/issues/I2863.yaml with I3005; they may not run concurrently |
-| WARN | `scope_conflict` | `I2863` | shares .ai/repo/project/issues/I2863.yaml with I3246; they may not run concurrently |
-| WARN | `scope_conflict` | `I2863` | shares .ai/repo/project/issues/I2863.yaml with I3373; they may not run concurrently |
-| WARN | `scope_conflict` | `I2863` | shares scripts/derive with I4512; they may not run concurrently |
 | WARN | `scope_conflict` | `I3775` | shares site/content/roadmap.md with I3841; they may not run concurrently |
 | WARN | `scope_conflict` | `I3775` | shares site/content/roadmap.md with I4400; they may not run concurrently |
 | WARN | `scope_conflict` | `I3775` | shares scripts/ci/derived-attributes-check with I4468; they may not run concurrently |

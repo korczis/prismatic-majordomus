@@ -1,0 +1,32 @@
+id: I4521
+milestone: derived-data-integrity
+title: "A use-case scenario is recorded with the fleet pack off, so its evidence is the same on every machine"
+slug: a-scenario-is-recorded-without-the-fleet-pack
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "lib/usecase.sh mj_uc_run_one pins the fleet pack off for the scenario it records (MAJORDOMUS_FLEET=off, exported beside MAJORDOMUS_REASONING_MODE=ci), and lib/fleet.sh reads it: mj_fleet_present and mj_fleet_install see no pack while it is set, and the doctor still prints the default path it would look under, so a scenario's output does not depend on whether the recording machine keeps a pack. A case records a scenario with a fake pack present under XDG_CONFIG_HOME and MAJORDOMUS_FLEET_PACK and gets byte-identical evidence to the same recording with none."
+why: "PR #2683 (I4336) adds lib/fleet.sh, whose mj_fleet_source reads MAJORDOMUS_FLEET_PACK, then $XDG_CONFIG_HOME/majordomus/fleet, then ~/.config/majordomus/fleet. A use-case scenario recorded by scripts/generate-site-data on a machine that keeps a pack (the owner's workstation) prints `fleet: pack v1 does not apply here (...)`, so site/data/generated/catalogue.json differs from the one a runner derives: a committed derived artifact whose content depends on who generated it. lib/usecase.sh already pins reasoning (ADR 0098) and the knowledge schema check (#713) for the same reason. The fix waits for #2683 to land, because it changes lib/fleet.sh, which is not on master."
+current_state: "Measured at 51b38035a71: lib/fleet.sh is not on master; it is on feature/the-fleet-pack-keeps-licensed-sources-private (PR #2683, train 13), where mj_fleet_source has no switch that turns the pack off, and lib/usecase.sh mj_uc_run_one pins MAJORDOMUS_REASONING_MODE and MAJORDOMUS_KNOWLEDGE_SCHEMA but nothing of the fleet."
+desired_state: "The evidence a scenario records is the same with and without a fleet pack on the recording machine, and catalogue.json derived on the owner's workstation equals the runner's. Enforced by case 4521."
+scope:
+  - ".ai/repo/project/issues/I4521.yaml"
+  - "lib/usecase.sh"
+  - "lib/fleet.sh"
+  - "test/cases/4521_a_scenario_is_recorded_without_the_fleet_pack.sh"
+non_scope:
+  - "What the fleet pack installs and where it is looked for (I4336)"
+  - "The environment finish hands its verify command (I4520)"
+acceptance_criteria:
+  - "Case 4521: a scenario recorded with a fake pack under XDG_CONFIG_HOME, and again with MAJORDOMUS_FLEET_PACK naming it, records evidence byte-identical to the same scenario recorded with no pack"
+  - "Case 4521: with MAJORDOMUS_FLEET=off, mj_fleet_install writes nothing and the doctor names the default pack path it would read"
+  - "site/data/generated/catalogue.json derived on a machine with a pack equals the committed one"
+validation:
+  - "env -u TMPDIR bash test/run.sh 4521_a_scenario_is_recorded_without_the_fleet_pack 94_use_cases"
+  - "bin/majordomus plan validate"
+evidence_required:
+  - "test"
+depends_on: []
+serves: []
+created_at: 2026-10-30
+updated_at: 2026-10-30

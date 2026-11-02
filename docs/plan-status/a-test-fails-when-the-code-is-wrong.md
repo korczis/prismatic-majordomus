@@ -32,9 +32,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I3120` | shares .github/workflows with I3245; they may not run concurrently |
 | WARN | `scope_conflict` | `I3120` | shares .ai/repo/ci/gates.yaml with I3319; they may not run concurrently |
 | WARN | `scope_conflict` | `I3120` | shares .github/workflows with I3930; they may not run concurrently |
-| WARN | `scope_conflict` | `I3120` | shares .github/workflows with I3931; they may not run concurrently |
 | WARN | `scope_conflict` | `I3120` | shares .github/workflows with I3934; they may not run concurrently |
-| WARN | `scope_conflict` | `I3120` | shares .github/workflows with I3936; they may not run concurrently |
 | WARN | `scope_conflict` | `I3120` | shares .ai/repo/ci/gates.yaml with I3937; they may not run concurrently |
 | WARN | `scope_conflict` | `I3120` | shares .ai/repo/ci/gates.yaml with I3973; they may not run concurrently |
 | WARN | `scope_conflict` | `I3120` | shares docs/COVERAGE.md with I4306; they may not run concurrently |
@@ -56,3 +54,4 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I3309` | shares apps/majordomus-cli/src/gates with I4460; they may not run concurrently |
 | WARN | `scope_conflict` | `I3309` | shares .ai/repo/rules/vendor/majordomus/rules/profile-requirements.v1.md with I4465; they may not run concurrently |
 | WARN | `scope_conflict` | `I3309` | shares lib/finish.sh with I4468; they may not run concurrently |
+| WARN | `scope_conflict` | `I3309` | shares lib/finish.sh with I4520; they may not run concurrently |

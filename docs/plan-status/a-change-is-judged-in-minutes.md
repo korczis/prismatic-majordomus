@@ -72,9 +72,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I3241` | shares test/cases/3749_a_full_history_checkout_is_bounded.sh with I3607; they may not run concurrently |
 | WARN | `scope_conflict` | `I3241` | shares docs/CI.md with I3799; they may not run concurrently |
 | WARN | `scope_conflict` | `I3241` | shares .github/workflows/validate.yml with I3930; they may not run concurrently |
-| WARN | `scope_conflict` | `I3241` | shares .github/workflows/validate.yml with I3931; they may not run concurrently |
 | WARN | `scope_conflict` | `I3241` | shares docs/CI.md with I3934; they may not run concurrently |
-| WARN | `scope_conflict` | `I3241` | shares .github/workflows/validate.yml with I3936; they may not run concurrently |
 | WARN | `scope_conflict` | `I3241` | shares .ai/repo/ci/gates.yaml with I3937; they may not run concurrently |
 | WARN | `scope_conflict` | `I3241` | shares .github/workflows/validate.yml with I3973; they may not run concurrently |
 | WARN | `scope_conflict` | `I3241` | shares scripts/ci-plan with I4268; they may not run concurrently |
