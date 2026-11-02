@@ -94,6 +94,15 @@ generated from this repository at every publication:
 | [Why you need this](https://majordomus.dev/why/) | the operational failure modes AI-heavy teams meet, and what Majordomus does and does not do about each | Cytoscape.js |
 | [The challenge](https://majordomus.dev/challenge/) | an agent strays, claims it is done and comes back; watch it being refused | recorded run |
 
+Two of them as they stand at the last publication, each a link to the live chart:
+
+<p align="center">
+  <a href="https://majordomus.dev/trends/"><img src="site/static/images/readme/trends-coverage.png" alt="Coverage of master over time (lines, functions, regions), drawn with Apache ECharts on majordomus.dev/trends" width="860"></a>
+</p>
+<p align="center">
+  <a href="https://majordomus.dev/economics/"><img src="site/static/images/readme/economics-context-selection.png" alt="Context selection at each recorded run, drawn with Apache ECharts on majordomus.dev/economics" width="860"></a>
+</p>
+
 On your own machine, `majordomus ui` serves how the delivery stands, every tile naming the
 capability it read ([below](#interfaces)), and the server's Cockpit adds live views of the
 same model: the graphs the layer implies and the trains of stacked pull requests
