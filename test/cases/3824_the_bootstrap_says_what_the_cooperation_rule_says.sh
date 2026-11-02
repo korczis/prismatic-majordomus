@@ -6,7 +6,8 @@
 # the machine (five builders, 35 GiB). A bootstrap still saying "never merges" would tell every
 # new session the opposite of the owner's word, so this case holds:
 #
-#   1  the rule is version 2 and states the queue, the two limits and the cleanup clause;
+#   1  the rule is version 2 or later (version 3, of 2026-11-01, amends only clause 2) and
+#      states the queue, the two limits and the cleanup clause;
 #   2  the three provider templates carry one identical paragraph, and each bootstrap generated
 #      from them carries it too;
 #   3  that paragraph says a worker lands its own green head through the guarded queue, names
@@ -22,7 +23,7 @@ RULE="$ROOT/.ai/repo/rules/project/the-cooperation-model-is-the-owners-word.v2.m
 [ -f "$RULE" ] || { echo "    ${RULE#"$ROOT"/} is missing"; exit 1; }
 
 # ---------------------------------------------------------------- 1. the rule
-grep -q '^version: 2$' "$RULE" || note "the rule does not say version: 2"
+grep -qE '^version: ([2-9]|[1-9][0-9]+)$' "$RULE" || note "the rule is not at version 2 or later"
 for phrase in "guarded lander's queue" "five builders" "35 GiB" "without asking" "2026-10-20"; do
   grep -qF "$phrase" "$RULE" || note "the rule does not state \"$phrase\""
 done
@@ -78,4 +79,4 @@ stale="$(cd "$ROOT" && git grep -l 'the-cooperation-model-is-the-owners-word\.v1
 [ -z "$stale" ] || note "these files still link the version 1 rule: $(echo $stale)"
 
 [ "$fail" -eq 0 ] || exit 1
-echo "    the rule is version 2, and every bootstrap says a worker lands its own green head"
+echo "    the rule is version 2 or later, and every bootstrap says a worker lands its own green head"
