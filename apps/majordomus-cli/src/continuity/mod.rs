@@ -561,6 +561,10 @@ pub struct PublishRequest {
     pub issue: Option<String>,
     /// The milestone.
     pub milestone: Option<String>,
+    /// The provider session whose episode the publishing caller runs inside, when the
+    /// caller knows it in-process (an MCP connection's episode); `None` resolves it from
+    /// the environment, as the command line does (ADR 0164).
+    pub session_key: Option<String>,
 }
 
 /// The answer of `continuity publish`.
@@ -685,7 +689,7 @@ pub fn publish(machine: &Machine<'_>, request: &PublishRequest) -> Result<Publis
         .as_deref()
         .map(|id| local::decisions(root, id))
         .unwrap_or_default();
-    let (session, episode) = local::episode_at_publish(root);
+    let (session, episode) = local::episode_at_publish(root, request.session_key.as_deref());
     let record = Record {
         schema: record::SCHEMA.into(),
         repository: machine.repository.clone(),

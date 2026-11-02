@@ -120,6 +120,7 @@ pub fn publish(
             handover: input.handover,
             issue: input.issue,
             milestone: input.milestone,
+            session_key: ctx.episode_key(),
         },
     )
     .map_err(CapabilityError::Refused)
