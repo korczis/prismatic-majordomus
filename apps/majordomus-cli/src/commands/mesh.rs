@@ -537,23 +537,27 @@ fn ask_at(
 /// timeout — because a hook that fails or writes to stdout (which `UserPromptSubmit` hands
 /// the model) is felt by the person, and a mark on the mesh is not worth that.
 ///
-/// It runs on every tool call, so it builds no index: the checkout is discovered from
-/// `--repo` (the hook passes its project) and its own ready server is read from the lease,
-/// as `guard hook` reads it — the server the provider's start event opened the session on.
+/// It runs on every tool call, so it builds no index and discovers nothing: the checkout is
+/// the one its caller names with `--repo` (the hook passes its checkout's root), and that
+/// checkout's own ready server is read from its lease ([`server_of`]) — the server the
+/// provider's start event opened the session on. Discovering the repository is for its
+/// owners alone (tests/discovery_has_its_owners.rs).
+///
+/// [`server_of`]: crate::integration::exclusive::server_of
 fn hook_beat(provider: &str, query: &MeshQueryArgs, stdin: &mut dyn Read) -> u8 {
     let Some(body) = hook_body(provider, stdin) else {
         return 0;
     };
-    let start = query
+    let root = query
         .repo
         .repo
         .clone()
         .or_else(|| std::env::current_dir().ok())
         .unwrap_or_default();
-    let Ok(repository) = crate::repository::Repository::discover(&start) else {
-        return 0;
-    };
-    if let Some(server) = crate::integration::exclusive::server_of(repository.root()) {
+    // the path as the lease records it: a hook names its checkout through a symlinked
+    // directory as readily as not (macOS's /var is /private/var)
+    let root = std::fs::canonicalize(&root).unwrap_or(root);
+    if let Some(server) = crate::integration::exclusive::server_of(&root) {
         use crate::integration::exclusive::Mesh;
         let _ = server.ask("POST", "/api/v1/mesh/beats", Some(body));
     }
