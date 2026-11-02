@@ -653,45 +653,50 @@ success; `scripts/ci/release-verdict` refuses anything else, the release workflo
 before it builds, and no gate is disabled, skipped or edited to get there. A merge is
 corrected by the next merge. A tag publishes executables that people install.
 
-### What the landing seat does, measured on 2026-11-01/02
+### How the landing seat works with many trains open, as the seat reported it on 2026-11-02
 
-The rule of [*The model in force*](#the-model-in-force) says who holds the seat. These are how
-the seat works with many trains open at once, each with the reason it was adopted.
+The rule of [*The model in force*](#the-model-in-force) says who holds the seat. The points
+below say how the seat works with many trains open at once, each with its reason. Points 1, 2
+and 4 are the seat's practice: no gate or case decides them yet, and the two owner decisions
+in them are the owner's word to the seat on 2026-11-02, not yet recorded as a rule or an ADR.
+Point 3 is decided by I3903 and I4348 once they land.
 
-- **At most two train tops validate at once**, by the owner's decision of 2026-11-02. A top's
-  validate is some 35 to 38 jobs (run 41431509332 of train P listed 38), and the hosted pool
-  is about twenty slots ([CI.md](CI.md), *Pages*), so a third top only queues and slows the
-  two already running: with seven tops validating, train 16b (#2850) took seven and three
-  quarter hours from its opening to its landing. The seat pushes a new top only while fewer
-  than two validate, and composes, derives and commits the others locally meanwhile. A fix
-  pushed to a top already validating is a new head of a counted top, not a new top.
-  Cancelling a top's current run to enforce the bound stays the owner's act.
-- **A superseded top is closed once its successor is open** and `git merge-base
-  --is-ancestor` shows every member's head in the successor or in a named repair lane, by the
-  owner's standing rule of 2026-11-02 (first applied to #2846, #2851 and #2852). The closing
-  comment names the successor and the repair lane, and the branch is kept.
-- **Every push of a new head force-cancels the superseded head's runs and reads the cancel
-  back.** A pull request's validate group (`validate-<number>`, `cancel-in-progress: false` in
-  `.github/workflows/validate.yml`) never cancels a run in progress, so the old head's run
-  holds the group and the new head's run waits behind it; and a plain cancel is a request,
-  not an end ([CI.md](CI.md), *Pages*). This is the seat's hand step until I3903 and I4348
-  make it a capability and a rule.
-- **A seat never blocks its turn on a synchronous question to the owner.** On 2026-11-02 two
-  such questions held the landing seat's turn for about three and about four hours while
-  peers waited on it. The question goes in the seat's report, and the seat keeps working on
-  whatever does not depend on the answer.
-- **When no host has the disk a cold instrumented coverage build needs, CI's `coverage` job
-  is the judge.** On 2026-11-02 a cold `cargo llvm-cov --all-targets` build needed more than
-  the self-hosted host had free ([CI.md](CI.md), *Platforms*). A member with a large new Rust
-  surface rides in a train of its own, as #2522 does in train P (#2855), so the job's list of
-  changed lines without a test names only that member's lines.
-- **When every train is red on `github-projection` in `structure-b` at once, read the
-  trunk's `github-projection` run first.** A failed or timed-out run of
-  `.github/workflows/github.yml` leaves GitHub's records behind the trunk, and once the
-  landing is older than `apply.window` `scripts/ci/github-check` fails every head that holds
-  it; rerunning the trunk's run clears every train. Run 41349646328 of master `af41ab4fec1`
-  failed on 2026-11-01 when its `apply` job's checkout ran out its five minutes, held
-  train 18's `structure-b` red, and was green on its second attempt at 00:28Z on 11-02.
+1. **At most two train tops validate at once** (the owner's decision of 2026-11-02, not yet
+   recorded). A top's validate is 38 jobs (run 41431509332 of train P) and the hosted pool
+   is about twenty slots ([CI.md](CI.md), *Pages*), so a third top only queues and slows the
+   two already running; train 16b (#2850) took 7 h 45 m from its opening (01:15Z) to its
+   landing (09:00Z on 2026-11-02) with several tops validating beside it. The seat pushes a
+   new top only while fewer than two validate, and composes, derives and commits the others
+   locally meanwhile. A fix pushed to a top already validating is a new head of a counted
+   top, not a new top. Cancelling a top's current run to enforce the bound stays the owner's
+   act.
+2. **A superseded top is closed once its successor is open** and `git merge-base
+   --is-ancestor` shows every member's head in the successor or in a named repair lane (the
+   owner's standing rule of 2026-11-02, not yet recorded; first applied to #2846, #2851 and
+   #2852). The closing comment names the successor and the repair lane, and the branch is
+   kept.
+3. **Every push of a new head cancels the superseded head's runs** (stale, as above) and
+   reads each one back; one still `in_progress` a minute later is force-cancelled
+   ([CI.md](CI.md), *Pages*). A pull request's validate group (`validate-<number>`,
+   `cancel-in-progress: false` in `.github/workflows/validate.yml`) never cancels a run in
+   progress, so until the old head's run ends the new head's run waits behind it.
+4. **The seat reports a question for the owner and keeps working.** A question it waits on
+   synchronously holds every lane it serves: on 2026-11-02 two such waits held the landing
+   seat for hours while peers waited on it. The question goes in the seat's report and the
+   seat goes on with whatever does not depend on the answer.
+5. **When no host has the disk a cold instrumented coverage build needs, CI's `coverage` job
+   is the judge** ([CI.md](CI.md), *A self-hosted host's capacity*). A member with a large new
+   Rust surface rides in a train of its own, as #2522 does in train P (#2855), so the job's
+   list of changed lines without a test names only that member's lines.
+6. **When every train is red on `github-projection` in `structure-b` at once, read the
+   trunk's `github-projection` run first.** A failed or timed-out run of
+   `.github/workflows/github.yml` leaves GitHub's records behind the trunk. A pull request's
+   `github-check` judges against its merge base with no window, so every head whose merge
+   base holds that landing is refused at once (`apply.window` bounds only the trunk's own
+   run). Rerun the trunk's `github-projection` run (or `scripts/github-sync --apply`, the
+   fallback), then rerun each train's `structure-b`. Run 41349646328 of master `af41ab4fec1`
+   failed on 2026-11-01 when its `apply` job's checkout ran out its five minutes, and was
+   green on its second attempt.
 
 ## Repair
 
