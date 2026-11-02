@@ -4,6 +4,8 @@
 
 <p align="center">
   <a href="https://github.com/korczis/prismatic-majordomus/actions/workflows/validate.yml"><img alt="validate on master" src="https://github.com/korczis/prismatic-majordomus/actions/workflows/validate.yml/badge.svg?branch=master"></a>
+  <a href="https://github.com/korczis/prismatic-majordomus/releases"><img alt="newest release, pre-releases included" src="https://img.shields.io/github/v/release/korczis/prismatic-majordomus?include_prereleases&amp;sort=semver&amp;label=newest%20release"></a>
+  <br>
   <a href="https://github.com/korczis/prismatic-majordomus/releases">releases</a> ·
   <a href="https://majordomus.dev/changelog/">changelog</a> ·
   <a href="https://majordomus.dev/roadmap/">roadmap</a>
