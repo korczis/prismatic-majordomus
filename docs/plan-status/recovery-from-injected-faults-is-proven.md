@@ -23,4 +23,6 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 
 ## Findings
 
-None about this milestone or its issues.
+| level | code | subject | message |
+|---|---|---|---|
+| WARN | `scope_conflict` | `I3390` | shares docs/generated/openapi.json with I4523; they may not run concurrently |

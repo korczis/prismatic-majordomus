@@ -17,6 +17,12 @@ modules:
     stability: experimental
     source: builtin
     capabilities: 1
+  - id: board
+    title: The delivery board
+    description: "The documents the delivery board reads, derived from the plan, the roadmap, the intents, the recorded pull request queue and the release currency, with the lanes share/board.yaml declares once. Every open milestone is in a lane or the snapshot refuses, naming it."
+    stability: experimental
+    source: builtin
+    capabilities: 1
   - id: brief
     title: The session brief
     description: "What surrounds one working session, in one line and in a few: its episode and task, the peers of every board, the mesh, the integration queue and the derive queue, each section asked of its owner once and saying whether it could be read. The answer a session reports on itself from without being asked, and the one a provider mod shows as its status line (ADR 0136). Writes nothing."
@@ -76,7 +82,7 @@ modules:
     description: "The one declaration of how every surface of this tool looks — the semantic roles, the status vocabulary, the type scale, the theme contract — as this executable carries it: its fingerprint, its tokens, what any one of them means, and whether the colours it pairs are readable on one another. The stylesheets the site and the Cockpit load, the tokens the executable's own pages compile in, and the dataset the site's templates read are all projections of it; a page compares its `--mj-design` with this fingerprint to know whether it is wearing the design this executable was built with."
     stability: behaviorally_verified
     source: builtin
-    capabilities: 4
+    capabilities: 7
   - id: devcontext
     title: Development context
     description: "The context a development session should be given, derived from the repository rather than composed by hand: given an issue, a milestone, an intent or a set of paths, the canonical objects that bear on the work, why each one is in the answer, what was left out and why, what collapsed into what, and the whole cost against a budget. The selection is structured — every entry keeps its identifier, its provenance, the selector that reached it and its confidence — because rendering a prompt is a projection of the selection and not the selection itself."
@@ -319,7 +325,7 @@ modules:
     capabilities: 3
   - id: server
     title: Server
-    description: "The shared server of this checkout and of every other checkout of the same git repository: what each lease says, whether the server it names answers, whether what answers is the code on disk at this executable's version, and how many peers each one holds."
+    description: "The shared server of this checkout and of every other checkout of the same git repository: what each lease says, whether the server it names answers, whether what answers is the code on disk at this executable's version, where each runtime stands and how it got there, and how many peers each one holds."
     stability: behaviorally_verified
     source: builtin
     capabilities: 1
@@ -889,7 +895,28 @@ capabilities:
               - type: string
                 const: stale
                 description: "The lease names a server that does not answer, or is not a lease at all."
-            description: "Where a checkout's server stands, decided from its lease, whether the server the lease\nnames answers for that checkout, and whether what answers is this executable's code.\n\n```\nuse majordomus_cli::capability::builtin::server::ServerStanding;\nlet all = [ServerStanding::Absent, ServerStanding::Starting, ServerStanding::Ready,\n           ServerStanding::Outdated, ServerStanding::Stale];\nlet words: Vec<&str> = all.iter().map(|s| s.as_str()).collect();\nassert_eq!(words, [\"absent\", \"starting\", \"ready\", \"outdated\", \"stale\"]);\nassert_eq!(serde_json::from_str::<ServerStanding>(\"\\\"stale\\\"\").unwrap(), ServerStanding::Stale);\n```"
+              - type: string
+                const: building
+                description: "No lease yet, and the executable a server would run is being built: recorded by the\nbuilder (I3180), and believed only while the process that recorded it is alive."
+              - type: string
+                const: mesh_attaching
+                description: "The server is ready, the repository declares its mesh enabled, and the server has not\nyet decided whether the mesh runs."
+              - type: string
+                const: operational
+                description: "The server is ready, says so itself, and its mesh runs or is not declared."
+              - type: string
+                const: degraded
+                description: "The server answers, current, but its own readiness report or its mesh says it is not\nwhole: it lost the lease, serves replaced code, read a degraded layer, or its declared\nmesh is not running."
+              - type: string
+                const: stopping
+                description: "The process that holds the lease recorded that it is stopping, and it is still alive."
+              - type: string
+                const: stopped
+                description: The server is gone after it recorded that it was stopping.
+              - type: string
+                const: failed
+                description: "The server is gone without having recorded that it was stopping: its lease names a\nprocess that no longer exists."
+            description: "Where a checkout's server stands, decided from its lease, whether the server the lease\nnames answers for that checkout, and whether what answers is this executable's code —\nand, refined by the readiness report, the mesh runtime and the last recorded transition,\nwhere its runtime stands (I3179).\n\nThe first five words are the lease's standing, decided by `standing_of`, and they are\nwhat `standing` carries on every surface: shells compare them, so they never change. The\nother seven are the runtime's refinements, decided by `runtime_of` and carried by\n`runtime.state` alone; `ServerStanding::refines` names the lease word each refines.\n\n```\nuse majordomus_cli::capability::builtin::server::ServerStanding;\nlet all = [ServerStanding::Absent, ServerStanding::Starting, ServerStanding::Ready,\n           ServerStanding::Outdated, ServerStanding::Stale];\nlet words: Vec<&str> = all.iter().map(|s| s.as_str()).collect();\nassert_eq!(words, [\"absent\", \"starting\", \"ready\", \"outdated\", \"stale\"]);\nassert_eq!(serde_json::from_str::<ServerStanding>(\"\\\"stale\\\"\").unwrap(), ServerStanding::Stale);\n// the runtime's words, in the same snake case the JSON carries\nassert_eq!(serde_json::to_value(ServerStanding::MeshAttaching).unwrap(), \"mesh_attaching\");\nassert_eq!(ServerStanding::MeshAttaching.as_str(), \"mesh_attaching\");\n```"
           BlackboardWorker:
             type: object
             properties:
@@ -1361,6 +1388,102 @@ capabilities:
       cancellable: false
       concurrency: unrestricted
     source_path: apps/majordomus-cli/src/capability/builtin/blackboard.rs
+  - id: board.snapshot
+    module: board
+    kind: query
+    title: "The delivery board's documents"
+    description: "Every document of the delivery board by id: meta (the commit, the lanes, the issue counts, the release), milestones in roadmap order, intents, the pull request queue from the last recorded observation, and the open issues of each lane as issues-<lane>, split into issues-<lane>-2 and onwards so that no document serializes past 250000 bytes. The digest is a SHA-256 over the canonical JSON of the documents with meta.syncedAt and meta.syncedBy left out, so equal state is an equal digest. A milestone that is not DONE and is in no lane of share/board.yaml is refused by name, never filed under other. An unobserved queue is said in prs.unavailable and the diagnostics, never refused. Mesh seats, live work, CI runners and blockers are the sync step's and are not here. Reads only; nothing is cached."
+    input:
+      name: BoardSnapshotInput
+      schema:
+        type: object
+        additionalProperties: false
+        properties:
+          by:
+            type:
+              - string
+              - "null"
+            description: "Who takes the snapshot, as `meta.syncedBy` names it; `board.snapshot` when absent.\nLeft out of the digest."
+        description: "The input of `board.snapshot`."
+        title: BoardSnapshotInput
+    output:
+      name: BoardSnapshot
+      schema:
+        type: object
+        properties:
+          digest:
+            type: string
+            description: "`sha256:<hex>` over the canonical JSON of the documents, `meta.syncedAt` and\n`meta.syncedBy` left out: equal state, equal digest."
+          master_sha:
+            type: string
+            description: "The commit described, empty when the checkout has none."
+          master_committed_at:
+            type: string
+            description: "Its committer time, RFC 3339."
+          master_ref:
+            type: string
+            description: "The ref it was read from: `refs/remotes/origin/master`, else `HEAD`."
+          document_limit:
+            type: integer
+            format: uint
+            minimum: 0
+            description: "The bound every document is under, in bytes of compact JSON."
+          sizes:
+            type: object
+            additionalProperties:
+              type: integer
+              format: uint
+              minimum: 0
+            description: "Each document's compact size, in bytes, by id."
+          documents:
+            type: object
+            additionalProperties: true
+            description: "The documents, by id: `meta`, `milestones`, `intents`, `prs`, and `issues-<lane>`\n(then `issues-<lane>-2`, ...) for each lane with open work."
+          diagnostics:
+            type: array
+            items:
+              type: string
+            description: "What could not be read, in words: an unobserved pull request queue, a lane naming a\nmilestone the plan lacks. Empty is the ordinary case."
+        required:
+          - digest
+          - master_sha
+          - master_committed_at
+          - master_ref
+          - document_limit
+          - sizes
+          - documents
+        description: "The answer of `board.snapshot`: every document of the board by id, and the digest that\nsays whether two snapshots describe the same state."
+        title: BoardSnapshot
+    provenance:
+      source: builtin
+      module: majordomus_cli::capability::builtin::board
+    exposure:
+      mcp:
+        tool: majordomus_board_snapshot
+      http:
+        method: GET
+        path: /api/v1/board/snapshot
+      cli:
+        path:
+          - board
+          - snapshot
+    availability: runtime
+    visibility: public
+    stability: experimental
+    tags:
+      - board
+      - plan
+      - delivery
+    benchmark:
+      policy: waived
+      reason: repository_declaration
+    cache:
+      policy: disabled
+    execution:
+      effect: read
+      cancellable: false
+      concurrency: unrestricted
+    source_path: apps/majordomus-cli/src/capability/builtin/board.rs
   - id: brief.session
     module: brief
     kind: query
@@ -1445,6 +1568,11 @@ capabilities:
           derive:
             "$ref": "#/$defs/BriefDeriveSection"
             description: The derive queue.
+          runtime:
+            anyOf:
+              - "$ref": "#/$defs/RuntimeState"
+              - type: "null"
+            description: "Where this checkout's runtime stands, and its last recorded transition, as\n`server.status` derives it (I3179). Absent from the answer of a server older than the\nfield."
         required:
           - at
           - line
@@ -1751,6 +1879,116 @@ capabilities:
               - state
               - summary
             description: "The machine's derive queue: its lock and its priority marker (`lib/machine_lock.sh`)."
+          RuntimeState:
+            type: object
+            properties:
+              state:
+                "$ref": "#/$defs/ServerStanding"
+                description: "The state, derived on this reading from the lease, the server's readiness report (its\nmesh verdict included) and the last recorded transition."
+              reason:
+                type:
+                  - string
+                  - "null"
+                description: "Why, when the state is not `operational`."
+              transition:
+                anyOf:
+                  - "$ref": "#/$defs/RuntimeTransition"
+                  - type: "null"
+                description: "The last transition recorded under `RUNTIME_PATH`, when one ever was. The derived\nstate may be newer than it: only the writers named on `RuntimeWriter` record."
+            required:
+              - state
+            description: "Where a checkout's runtime stands now, and the last transition recorded for it.\n\n```\nuse majordomus_cli::capability::builtin::server::{RuntimeState, ServerStanding};\nlet r = RuntimeState { state: ServerStanding::Operational, reason: None, transition: None };\nassert_eq!(serde_json::to_value(&r).unwrap(), serde_json::json!({ \"state\": \"operational\" }));\n```"
+          ServerStanding:
+            oneOf:
+              - type: string
+                const: absent
+                description: "No lease: nothing serves this checkout."
+              - type: string
+                const: starting
+                description: "A lease without an address, young enough that its owner is still binding."
+              - type: string
+                const: ready
+                description: "The server the lease names answers for this checkout, from the code on disk, at\nthis executable's version."
+              - type: string
+                const: outdated
+                description: "The server answers, but from older code than this executable, or from a file that\nhas been replaced since it started: everything it says is yesterday's."
+              - type: string
+                const: stale
+                description: "The lease names a server that does not answer, or is not a lease at all."
+              - type: string
+                const: building
+                description: "No lease yet, and the executable a server would run is being built: recorded by the\nbuilder (I3180), and believed only while the process that recorded it is alive."
+              - type: string
+                const: mesh_attaching
+                description: "The server is ready, the repository declares its mesh enabled, and the server has not\nyet decided whether the mesh runs."
+              - type: string
+                const: operational
+                description: "The server is ready, says so itself, and its mesh runs or is not declared."
+              - type: string
+                const: degraded
+                description: "The server answers, current, but its own readiness report or its mesh says it is not\nwhole: it lost the lease, serves replaced code, read a degraded layer, or its declared\nmesh is not running."
+              - type: string
+                const: stopping
+                description: "The process that holds the lease recorded that it is stopping, and it is still alive."
+              - type: string
+                const: stopped
+                description: The server is gone after it recorded that it was stopping.
+              - type: string
+                const: failed
+                description: "The server is gone without having recorded that it was stopping: its lease names a\nprocess that no longer exists."
+            description: "Where a checkout's server stands, decided from its lease, whether the server the lease\nnames answers for that checkout, and whether what answers is this executable's code —\nand, refined by the readiness report, the mesh runtime and the last recorded transition,\nwhere its runtime stands (I3179).\n\nThe first five words are the lease's standing, decided by `standing_of`, and they are\nwhat `standing` carries on every surface: shells compare them, so they never change. The\nother seven are the runtime's refinements, decided by `runtime_of` and carried by\n`runtime.state` alone; `ServerStanding::refines` names the lease word each refines.\n\n```\nuse majordomus_cli::capability::builtin::server::ServerStanding;\nlet all = [ServerStanding::Absent, ServerStanding::Starting, ServerStanding::Ready,\n           ServerStanding::Outdated, ServerStanding::Stale];\nlet words: Vec<&str> = all.iter().map(|s| s.as_str()).collect();\nassert_eq!(words, [\"absent\", \"starting\", \"ready\", \"outdated\", \"stale\"]);\nassert_eq!(serde_json::from_str::<ServerStanding>(\"\\\"stale\\\"\").unwrap(), ServerStanding::Stale);\n// the runtime's words, in the same snake case the JSON carries\nassert_eq!(serde_json::to_value(ServerStanding::MeshAttaching).unwrap(), \"mesh_attaching\");\nassert_eq!(ServerStanding::MeshAttaching.as_str(), \"mesh_attaching\");\n```"
+          RuntimeTransition:
+            type: object
+            properties:
+              schema:
+                type: string
+                description: "`RUNTIME_SCHEMA`."
+              state:
+                "$ref": "#/$defs/ServerStanding"
+                description: What the runtime became.
+              from:
+                anyOf:
+                  - "$ref": "#/$defs/ServerStanding"
+                  - type: "null"
+                description: "What it was, by the previous record; absent for the first."
+              at:
+                type: string
+                description: "When, RFC 3339."
+              reason:
+                type: string
+                description: "Why, in the recorder's words."
+              by:
+                "$ref": "#/$defs/RuntimeWriter"
+                description: Who recorded it.
+              pid:
+                type:
+                  - integer
+                  - "null"
+                format: uint32
+                minimum: 0
+                description: "The server process the transition is about, when there is one."
+            required:
+              - schema
+              - state
+              - at
+              - reason
+              - by
+            description: "The last transition of a checkout's runtime: what it became, from what, when, why, who\nrecorded it and which process it is about. The record under `RUNTIME_PATH`.\n\n```\nuse majordomus_cli::capability::builtin::server::{RuntimeTransition, RuntimeWriter, ServerStanding};\nlet t = RuntimeTransition::new(ServerStanding::Ready, None, \"published\", RuntimeWriter::Server, Some(7));\nlet v = serde_json::to_value(&t).unwrap();\nassert_eq!(v[\"state\"], \"ready\");\nassert_eq!(v[\"by\"], \"server\");\nassert!(v.get(\"from\").is_none(), \"a first record came from nothing it can name\");\n```"
+          RuntimeWriter:
+            oneOf:
+              - type: string
+                const: server
+                description: "The serving process, about itself."
+              - type: string
+                const: serve_ensure
+                description: "`serve ensure`, which found the lease stale."
+              - type: string
+                const: reap_orphans
+                description: "`scripts/reap-orphans`, through `serve status` after its sweep."
+              - type: string
+                const: server_status
+                description: "`server.status`, on any surface."
+            description: "Who recorded a transition. Each state has its one kind of writer: the serving process\nrecords its own `starting`, `ready` and `stopping`, because only it knows them; a reader\nthat finds the server gone records `stopped` or `failed`, because a dead process records\nnothing.\n\n```\nuse majordomus_cli::capability::builtin::server::RuntimeWriter;\nassert_eq!(serde_json::to_value(RuntimeWriter::ServeEnsure).unwrap(), \"serve_ensure\");\nassert_eq!(RuntimeWriter::reader_named(Some(\"reap_orphans\")), RuntimeWriter::ReapOrphans);\nassert_eq!(RuntimeWriter::reader_named(Some(\"server\")), RuntimeWriter::ServerStatus);\nassert_eq!(RuntimeWriter::reader_named(None), RuntimeWriter::ServerStatus);\n```"
     provenance:
       source: builtin
       module: majordomus_cli::capability::builtin::brief
@@ -2139,6 +2377,9 @@ capabilities:
               - type: string
                 const: published_history
                 description: "The capability answers about what this repository has *published*, so its input is a\nrelease: a version tag, the commit it points at, and the projection committed there.\nA benchmark fixture is a repository that has published nothing, and the honest answer\nin one is a refusal — so the case would time an error path and call it coverage.\nDistinct from `WaiverReason::ExternalDependency`: nothing outside this process is\nconsulted, and distinct from `WaiverReason::TransientState`: the history is durable,\nit simply does not exist yet where the benchmark runs."
+              - type: string
+                const: repository_declaration
+                description: "The capability answers from a declaration this repository keeps about its own records\n(the delivery board's lanes over this repository's milestones, share/board.yaml), and\nrefuses a record the declaration does not place. A benchmark fixture's records are in\nno such declaration, so its honest answer there is a refusal, and timing it would time\nan error path. The answer is proved over this repository by the capability's own tests."
             description: "Why an executable capability is not benchmarked. Typed, so that a waiver is a\nreviewable statement and never a convenience; `not_executable` is the registry's own\nreason for resources and is never written by hand."
           CachePolicy:
             oneOf:
@@ -2694,6 +2935,9 @@ capabilities:
               - type: string
                 const: published_history
                 description: "The capability answers about what this repository has *published*, so its input is a\nrelease: a version tag, the commit it points at, and the projection committed there.\nA benchmark fixture is a repository that has published nothing, and the honest answer\nin one is a refusal — so the case would time an error path and call it coverage.\nDistinct from `WaiverReason::ExternalDependency`: nothing outside this process is\nconsulted, and distinct from `WaiverReason::TransientState`: the history is durable,\nit simply does not exist yet where the benchmark runs."
+              - type: string
+                const: repository_declaration
+                description: "The capability answers from a declaration this repository keeps about its own records\n(the delivery board's lanes over this repository's milestones, share/board.yaml), and\nrefuses a record the declaration does not place. A benchmark fixture's records are in\nno such declaration, so its honest answer there is a refusal, and timing it would time\nan error path. The answer is proved over this repository by the capability's own tests."
             description: "Why an executable capability is not benchmarked. Typed, so that a waiver is a\nreviewable statement and never a convenience; `not_executable` is the registry's own\nreason for resources and is never written by hand."
           CachePolicy:
             oneOf:
@@ -10363,6 +10607,616 @@ capabilities:
       - ui
       - provenance
       - introspection
+    benchmark:
+      policy: required
+    cache:
+      policy: disabled
+    execution:
+      effect: read
+      cancellable: false
+      concurrency: unrestricted
+    source_path: apps/majordomus-cli/src/capability/builtin/design.rs
+  - id: design.kit
+    module: design
+    kind: query
+    title: Whether the interface is built on the kit
+    description: "The supervised repository's user interface judged against the kit profile its policy's `ui.kit` names (flowbite-pro when it names none), from markers in the tree and never the kit's own source: S0 whether there is an interface at all and its surfaces (the root's manifest or the one in assets/, every workspace the root manifest or pnpm-workspace.yaml declares, every nested app manifest with markup in its own subtree outside examples, fixtures, tests, vendor, docs, deps and priv; Phoenix LiveView in mix.exs, HEEx or HTML templates, a Next.js root layout; published pages: a root index.html, pages under site/, www/, public/, under a directory a Pages workflow or a deploy or build script publishes, and under docs/ when it is published), any other manifest with UI packages being a notice and never a finding; S1 the kit's package in each surface, its React binding for React and Next.js, and the kit in use in the surface's own files (an attribute the kit's JavaScript drives, a flowbite-react component, a call of the kit's API), because wiring alone passes nothing; S2 the Tailwind plugin and source (Tailwind 4's @plugin and @source, Tailwind 3's config), a Play CDN or a CDN-only kit being a finding; S3 the kit's JavaScript behind every data-drawer, dropdown, modal, tabs, collapse and tooltip attribute, a script that reads them itself being a re-implementation; S4 no other kit (daisyUI, Bootstrap, Preline, TW Elements, shadcn/ui and Radix, Petal Components, Material UI, Ant Design, Bulma, Chakra UI, Foundation, Materialize), Alpine.js reported and not refused; S5 the shell on every root layout: a fixed top navbar, an aside labelled Sidebar that both drawer attributes name, a breadcrumb, and the page, surface and border roles, a published site's layout being judged by a navbar and a footer instead; the layouts, the roles and the marketing layouts are the profile's alone. Each finding names its signal, path, evidence and remedy; each exemption the policy declares under `ui.exempt`, exactly `{path, because}`, moves every finding at its path and names its reason and how many findings it covered. A licensed kit's profile declares its licensed markers (a distribution directory, a manifest named after a Pro product, a dependency on a Pro package), and where the tree carries one the design licence decides it: active passes, while inactive, refused or not judged is a finding no exemption moves, since a variant the judge cannot decide is never a pass. The licence evidence is the kit-evidence/v1 file the input names (in CI the file the launcher decoded: `majordomus design kit` run where a `MAJORDOMUS_KIT_EVIDENCE_<KIT>` variable is exported goes through the shell's `mj_fleet_design_judge`, which decodes the kit's variable into a private file, passes it and removes it; this capability reads a file and never the environment), else the policy's `~`-relative `ui.evidence` entries; a file whose first line `# kit: <id>` names another kit is not judged, and `licence.reason` says why the licence answered as it did, naming a file and a line at most and never what the evidence holds. A repository without an interface passes vacuously; a policy that cannot be read is `bad_policy` and judges nothing; a policy that still carries the retired top-level `design_kit:` block earns a notice naming `ui.kit` as its replacement. Reads the repository's files (in a Git work tree the tracked ones and the untracked ones Git does not ignore; a submodule or a nested repository is named in a notice and judged in its own repository), skipping dependencies and build output and listing vendored directories by path only; no build and no network. It has no HTTP route, as the design licence has none: the evidence input names a file this process opens, which is a local caller's act, so it is taken on the command line and over MCP only."
+    input:
+      name: KitInput
+      schema:
+        type: object
+        additionalProperties: false
+        properties:
+          evidence:
+            type:
+              - string
+              - "null"
+            description: "A kit-evidence/v1 file, as the caller names it: in CI the file the launcher decoded\n`MAJORDOMUS_KIT_EVIDENCE_<KIT>` into, through the shell's `mj_fleet_design_judge`.\nAbsent reads the policy's `ui.evidence` entries under `$HOME`. Taken on the command\nline and over MCP only: a file this process opens is never named over HTTP.\nA file whose first line `# kit: <id>` names another kit than the profile judges\nnothing."
+        description: "The input of `design.kit`: the licence evidence a licensed marker is judged by, or none\nto read the policy's."
+        title: KitInput
+    output:
+      name: KitReport
+      schema:
+        type: object
+        properties:
+          profile:
+            type: string
+            description: The profile judged.
+          title:
+            type: string
+            description: "What the profile is, for a person."
+          profile_source:
+            type: string
+            description: Where the profile lives in the distribution.
+          rule:
+            type: string
+            description: The rule the profile enforces.
+          policy_declared:
+            type: boolean
+            description: "Whether the repository's policy declares the kit's block."
+          policy_errors:
+            type: array
+            items:
+              type: string
+            description: "Why the policy cannot be read; non-empty only for `bad_policy`."
+          ui:
+            type: boolean
+            description: Whether the repository has a user interface (S0).
+          ui_evidence:
+            type: array
+            items:
+              type: string
+            description: What showed it.
+          surfaces:
+            type: array
+            items:
+              "$ref": "#/$defs/KitSurface"
+            description: "The surfaces S1 to S3 judged, each with the usage markers its own files carry."
+          stacks:
+            type: array
+            items:
+              type: string
+            description: "The stacks recognised: `tailwind-4`, `tailwind-3`, `react`, `phoenix`."
+          layouts:
+            type: array
+            items:
+              type: string
+            description: The root layouts S5 judged.
+          findings:
+            type: array
+            items:
+              "$ref": "#/$defs/KitFinding"
+            description: Every finding that stands.
+          exempted:
+            type: array
+            items:
+              "$ref": "#/$defs/KitExempted"
+            description: Every finding an exemption covers.
+          reported:
+            type: array
+            items:
+              type: string
+            description: "What is reported and never refused, such as Alpine.js."
+          notices:
+            type: array
+            items:
+              type: string
+            description: "What S0 left out and a reader should know: a manifest with UI packages that is no\nsurface, pages that are no interface. Never a finding."
+          licence:
+            anyOf:
+              - "$ref": "#/$defs/KitLicence"
+              - type: "null"
+            description: "How the tree stands against a licensed kit's licence; absent for a free kit."
+          exemptions:
+            type: array
+            items:
+              "$ref": "#/$defs/KitExemption"
+            description: "The policy's exemptions, each with how many findings it covered."
+          verdict:
+            "$ref": "#/$defs/KitVerdict"
+            description: The verdict.
+          passes:
+            type: boolean
+            description: "Whether the rule holds: `no_ui` or `clean`."
+        required:
+          - profile
+          - title
+          - profile_source
+          - rule
+          - policy_declared
+          - policy_errors
+          - ui
+          - ui_evidence
+          - surfaces
+          - stacks
+          - layouts
+          - findings
+          - exempted
+          - reported
+          - notices
+          - exemptions
+          - verdict
+          - passes
+        description: "What `design.kit` answers."
+        title: KitReport
+        "$defs":
+          KitSurface:
+            type: object
+            properties:
+              dir:
+                type: string
+                description: "Its directory, repository-relative; empty for the root."
+              kind:
+                "$ref": "#/$defs/KitSurfaceKind"
+                description: How it was found.
+              manifests:
+                type: array
+                items:
+                  type: string
+                description: Its manifests.
+              usage:
+                type: array
+                items:
+                  type: string
+                description: The first usage markers its own files carry; empty is a finding.
+            required:
+              - dir
+              - kind
+              - manifests
+              - usage
+            description: One surface S1 to S3 judged.
+          KitSurfaceKind:
+            oneOf:
+              - type: string
+                const: root
+                description: "The root's manifests and every file no other surface owns."
+              - type: string
+                const: workspace
+                description: A workspace the root manifest or the pnpm workspace file declares.
+              - type: string
+                const: app
+                description: A nested manifest with markup in its own subtree.
+            description: How a surface was found.
+          KitFinding:
+            type: object
+            properties:
+              signal:
+                "$ref": "#/$defs/KitSignal"
+                description: The signal.
+              path:
+                type: string
+                description: "The path, repository-relative; empty for the repository as a whole."
+              evidence:
+                type: string
+                description: "What was seen, with the line where there is one."
+              remedy:
+                type: string
+                description: What to do.
+            required:
+              - signal
+              - path
+              - evidence
+              - remedy
+            description: "One finding: the signal, the path it is about, what was seen and what to do."
+          KitSignal:
+            oneOf:
+              - type: string
+                const: S0
+                description: The user interface exists.
+              - type: string
+                const: S1
+                description: "The dependency, and the kit in use."
+              - type: string
+                const: S2
+                description: The plugin and the source.
+              - type: string
+                const: S3
+                description: "The kit's JavaScript."
+              - type: string
+                const: S4
+                description: No other kit.
+              - type: string
+                const: S5
+                description: The shell on each root layout.
+            description: A signal of the profile.
+          KitExempted:
+            type: object
+            properties:
+              finding:
+                "$ref": "#/$defs/KitFinding"
+                description: The finding.
+              exemption:
+                type: string
+                description: "The exemption's path."
+              because:
+                type: string
+                description: "The exemption's reason."
+            required:
+              - finding
+              - exemption
+              - because
+            description: "A finding a policy exemption covers, with the reason."
+          KitLicence:
+            type: object
+            properties:
+              evidence:
+                type: string
+                description: The evidence format the profile names.
+              state:
+                "$ref": "#/$defs/LicenceState"
+                description: What the licence evidence said.
+              variant:
+                "$ref": "#/$defs/KitVariant"
+                description: What the judge decided.
+              markers:
+                type: array
+                items:
+                  type: string
+                description: "Where each licensed marker was seen, with its name."
+              reason:
+                type:
+                  - string
+                  - "null"
+                description: "Why the design licence answered as it did, when it says: the reason of an inactive\nor unjudged licence, or what stopped it. It names a file and a line at most, never\nwhat the evidence holds."
+            required:
+              - evidence
+              - state
+              - variant
+              - markers
+            description: "How the tree stands against a licensed kit's licence."
+          LicenceState:
+            oneOf:
+              - type: string
+                const: active
+                description: "The design licence judged the tree with the evidence held and found it clean, or the\ntree is private: the licence holds."
+              - type: string
+                const: inactive
+                description: "The design licence judged nothing and needed to judge nothing: no kit is declared, a\nprivate tree without evidence, or no UI file. Licensed markers there are unlicensed."
+              - type: string
+                const: not_judged
+                description: "The design licence owed a judgement and could not give one, or could not be asked:\nno evidence where a public tree owes it, a `ui:` block it cannot use, a tree it\ncannot list."
+              - type: string
+                const: refused
+                description: "The design licence refused the tree: a public tree holds a licensed file's bytes."
+            description: "What the design licence (I4336, `crate::design::licence`) says about a repository,\nas the judge of a licensed kit's markers reads it. `licence_answer` maps its verdict."
+          KitVariant:
+            oneOf:
+              - type: string
+                const: not_used
+                description: "The tree carries no licensed marker: nothing the licence covers is used."
+              - type: string
+                const: licensed
+                description: "Licensed markers, and the licence is active."
+              - type: string
+                const: unlicensed
+                description: "Licensed markers, and the licence is inactive or the design licence refused the\ntree: a finding."
+              - type: string
+                const: undecided
+                description: "Licensed markers, and a licence nobody could judge: the judge cannot decide, and that\nis a finding, never a pass."
+            description: "Which variant of a licensed kit the tree is, as the judge decides it."
+          KitExemption:
+            type: object
+            properties:
+              path:
+                type: string
+                description: "The path or glob a finding's path matches."
+              because:
+                type: string
+                description: Why the path is not held to the kit.
+              matched:
+                type: integer
+                format: uint
+                minimum: 0
+                description: How many findings it moved to the exempted list.
+                default: 0
+            required:
+              - path
+              - because
+            description: "One exemption of the policy: `ui.exempt[n]`, exactly `{path, because}`."
+          KitVerdict:
+            oneOf:
+              - type: string
+                const: no_ui
+                description: "No user interface: the rule holds vacuously."
+              - type: string
+                const: clean
+                description: "A user interface, and no finding stands."
+              - type: string
+                const: findings
+                description: At least one finding stands.
+              - type: string
+                const: bad_policy
+                description: The policy cannot be read; nothing was judged.
+            description: How the tree stands against the profile.
+    provenance:
+      source: builtin
+      module: majordomus_cli::capability::builtin::design
+    exposure:
+      mcp:
+        tool: majordomus_design_kit
+      cli:
+        path:
+          - design
+          - kit
+    availability: runtime
+    visibility: public
+    stability: behaviorally_verified
+    tags:
+      - design
+      - ui
+      - governance
+    benchmark:
+      policy: required
+    cache:
+      policy: disabled
+    execution:
+      effect: read
+      cancellable: false
+      concurrency: unrestricted
+    source_path: apps/majordomus-cli/src/capability/builtin/design.rs
+  - id: design.kit.adopt
+    module: design
+    kind: command
+    title: Declare the kit in the repository
+    description: "Writes what makes `design.kit` the repository's gate, and nothing that is there already: the profile's rule (project.ui-uses-flowbite-pro for flowbite-pro) into .ai/repo/rules/project/ from the distribution's template, `ui.kit` naming the profile in .ai/repo/policy.yaml (set in the `ui:` block when it names no kit, the block appended when there is none; exemptions under `ui.exempt` are the repository's to declare), and two enforcement entries running `majordomus design kit --check`, design-kit-on-push wired by the pre-push hook and design-kit wired by the repository's CI workflow when it has one. Idempotent: a second adoption reports every file unchanged. The rule's last section, 'In this repository', is the repository's own: a later adoption brings the rest of the rule up to the template and never overwrites that section, and a rule that differs from the template and has no such section is kept and named, a `ui.kit` naming another profile is refused, and a policy that would not read back is never written. `dry_run` reports the same and writes nothing. Wiring the hook and the workflow step is left to the repository, and `majordomus doctor` names each entry until it is wired."
+    input:
+      name: KitAdoptInput
+      schema:
+        type: object
+        additionalProperties: false
+        properties:
+          profile:
+            type: string
+            description: "A kit profile of the distribution, `share/design/kits/<profile>.yaml`."
+          dry_run:
+            type: boolean
+            description: "Report what would be written, and write nothing."
+            default: false
+        required:
+          - profile
+        description: "The input of `design.kit.adopt`: which kit profile to declare in the repository."
+        title: KitAdoptInput
+    output:
+      name: AdoptReport
+      schema:
+        type: object
+        properties:
+          profile:
+            type: string
+            description: The profile adopted.
+          rule:
+            type: string
+            description: The rule it enforces.
+          dry_run:
+            type: boolean
+            description: Whether nothing was written.
+          writes:
+            type: array
+            items:
+              "$ref": "#/$defs/AdoptWrite"
+            description: "Every file adoption touches, in the order they are written."
+          ci_workflow:
+            type:
+              - string
+              - "null"
+            description: "The CI workflow the `design-kit` entry names, when the repository has one."
+          notes:
+            type: array
+            items:
+              type: string
+            description: "What is left for a person: the hook and workflow steps doctor will ask for."
+        required:
+          - profile
+          - rule
+          - dry_run
+          - writes
+          - notes
+        description: "What `design.kit.adopt` answers."
+        title: AdoptReport
+        "$defs":
+          AdoptWrite:
+            type: object
+            properties:
+              path:
+                type: string
+                description: Repository-relative.
+              action:
+                "$ref": "#/$defs/AdoptAction"
+                description: What happened to it.
+              detail:
+                type: string
+                description: What was written or found.
+            required:
+              - path
+              - action
+              - detail
+            description: One file adoption touches.
+          AdoptAction:
+            oneOf:
+              - type: string
+                const: created
+                description: The file did not exist and is written.
+              - type: string
+                const: updated
+                description: The file is changed.
+              - type: string
+                const: unchanged
+                description: The file already says what adoption would write.
+              - type: string
+                const: kept
+                description: The file differs from what adoption would write and is left as it is.
+            description: "What adoption did, or would do, to one file."
+    provenance:
+      source: builtin
+      module: majordomus_cli::capability::builtin::design
+    exposure:
+      cli:
+        path:
+          - design
+          - kit
+          - adopt
+    availability: runtime
+    visibility: developer
+    stability: experimental
+    tags:
+      - design
+      - ui
+      - governance
+    benchmark:
+      policy: waived
+      reason: destructive
+    cache:
+      policy: disabled
+    execution:
+      effect: repository_mutation
+      cancellable: false
+      concurrency: serial
+    source_path: apps/majordomus-cli/src/capability/builtin/design.rs
+  - id: design.licence
+    module: design
+    kind: query
+    title: "Whether a public tree holds a licensed kit's files"
+    description: "The never-publish gate: the raw bytes of every tracked file, committed bundles included (staged, committed where that differs, and the working copy where it differs), and of every untracked file under each `ui.publish` directory, read through symbolic links and into nested repositories as a deploy archives it, compared whole, exactly and with every run of whitespace made one space, against the kit-evidence/v1 fingerprints of the declared kit's licensed files. `refused` names each file and, where the evidence says, the licensed source; `not_judged` is a public tree that declares a kit, tracks a UI file and has no evidence here, and fails like `refused`; a `ui:` block that cannot be used as written (an absolute `ui.publish` or `ui.evidence` entry) is `not_judged` too, naming the entry; `inactive` is no kit declared, a private tree without evidence, or no UI file; `active` is judged and clean, or private. The evidence is the file the input names, else the policy's `~`-relative `ui.evidence` entries; an error names the file and the line, never its content. Near-copies and fragments inlined in a larger file are not judged: the evidence holds whole-file fingerprints only."
+    input:
+      name: LicenceInput
+      schema:
+        type: object
+        additionalProperties: false
+        properties:
+          evidence:
+            type:
+              - string
+              - "null"
+            description: "A kit-evidence/v1 file, as the caller names it (CI points this at the file it decoded\n`MAJORDOMUS_KIT_EVIDENCE_<KIT>` into). Absent reads the policy's `ui.evidence`\nentries under `$HOME`."
+        description: "The input of `design.licence`: the evidence file, or none to read the policy's."
+        title: LicenceInput
+    output:
+      name: LicenceReport
+      schema:
+        type: object
+        properties:
+          verdict:
+            "$ref": "#/$defs/Verdict"
+            description: "`active`, `inactive`, `not_judged` or `refused`."
+          fails:
+            type: boolean
+            description: "Whether the verdict fails the gate (`refused`, `not_judged`)."
+          kit:
+            type: string
+            description: The declared kit id; empty when none is.
+          visibility:
+            "$ref": "#/$defs/Visibility"
+            description: "The visibility judged, after `MAJORDOMUS_VISIBILITY` tightened it."
+          has_ui:
+            type: boolean
+            description: Whether the tree tracks a UI file.
+          reason:
+            type:
+              - string
+              - "null"
+            description: Why the verdict is inactive or not judged.
+          evidence:
+            type: array
+            items:
+              type: string
+            description: "Where the evidence was read from, as it was named: the `--evidence` file, or each\n`ui.evidence` entry found on this machine. Empty when none was."
+          fingerprints:
+            type: integer
+            format: uint
+            minimum: 0
+            description: How many distinct licensed contents the evidence names.
+          files:
+            type: integer
+            format: uint
+            minimum: 0
+            description: "How many contents were compared: staged, committed, working and published bytes,\neach distinct one of a path once."
+          matches:
+            type: array
+            items:
+              "$ref": "#/$defs/Match"
+            description: "Every file that holds a licensed file's bytes."
+        required:
+          - verdict
+          - fails
+          - kit
+          - visibility
+          - has_ui
+          - evidence
+          - fingerprints
+          - files
+          - matches
+        description: The answer as every projection carries it.
+        title: LicenceReport
+        "$defs":
+          Verdict:
+            oneOf:
+              - type: string
+                const: active
+                description: "Judged, and nothing licensed is where it may not be."
+              - type: string
+                const: inactive
+                description: "Not judged, and nothing needs to be."
+              - type: string
+                const: not_judged
+                description: "Owed a judgement and not given one: a failure."
+              - type: string
+                const: refused
+                description: "A licensed file is in a public tree: a failure."
+            description: "The answer's word."
+          Visibility:
+            oneOf:
+              - type: string
+                const: public
+                description: "Anyone may read it: no licensed byte may be in it."
+              - type: string
+                const: private
+                description: "Only the owner reads it: it may hold the licensed sources."
+            description: "Whether a tree may be published. Declared by the policy (`ui.visibility`), never read\nfrom a forge; `MAJORDOMUS_VISIBILITY` may tighten it and never loosen it."
+          Match:
+            type: object
+            properties:
+              path:
+                type: string
+                description: Repository-relative path of the file.
+              source:
+                type:
+                  - string
+                  - "null"
+                description: "The licensed source it is a copy of, when the evidence names one; the CI form never\ndoes."
+              kind:
+                "$ref": "#/$defs/MatchKind"
+                description: Whether the copy is exact or reformatted.
+            required:
+              - path
+              - kind
+            description: "One judged file that holds a licensed file's bytes."
+          MatchKind:
+            oneOf:
+              - type: string
+                const: exact
+                description: The same bytes.
+              - type: string
+                const: normalised
+                description: "The same bytes once every run of whitespace is one space: a reformatted copy."
+            description: How a file matched a licensed one.
+    provenance:
+      source: builtin
+      module: majordomus_cli::capability::builtin::design
+    exposure:
+      mcp:
+        tool: majordomus_design_licence
+      cli:
+        path:
+          - design
+          - licence
+    availability: runtime
+    visibility: public
+    stability: behaviorally_verified
+    tags:
+      - design
+      - ui
+      - licence
+      - governance
     benchmark:
       policy: required
     cache:
@@ -25252,6 +26106,11 @@ capabilities:
             items:
               type: string
             description: "Every reason this answer is not a plain yes, as `code: words`. `lease_lost` and\n`stale` make `ready` false: another process holds this checkout's lease, or this one\nserves code that is gone. `layer_degraded` does not: the layer is served with its\ndiagnostics, and a client decides whether that is enough."
+          mesh:
+            anyOf:
+              - "$ref": "#/$defs/MeshReadiness"
+              - type: "null"
+            description: "The mesh, as this process decided it: present only in a process that holds a lease,\nbecause only a shared server runs a mesh. It never makes `ready` false — a server\nwhose mesh is not running still answers every request — but it is what\n`server.status` refines `ready` into `mesh_attaching`, `operational` or `degraded`\nwith (I3179)."
         required:
           - ready
           - version
@@ -25277,6 +26136,27 @@ capabilities:
                 const: unknown
                 description: "This process cannot decide it, and says so rather than reporting `ok`."
             description: "Where one dimension of the system stands. Ordered by severity, so the worst check\ndecides the whole."
+          MeshReadiness:
+            type: object
+            properties:
+              enabled:
+                type: boolean
+                description: Whether the repository declares its mesh enabled.
+              attaching:
+                type: boolean
+                description: Whether the declaration is enabled and this server has not decided the mesh yet.
+              ok:
+                type: boolean
+                description: "Whether the mesh stands as declared: off when it is not declared, running when it is."
+              detail:
+                type: string
+                description: "The verdict's words."
+            required:
+              - enabled
+              - attaching
+              - ok
+              - detail
+            description: "The mesh in a readiness report: whether the repository declares it enabled, whether this\nserver has decided it yet, and the verdict `mesh doctor`'s runtime check gives.\n\n```\nuse majordomus_cli::capability::builtin::health::MeshReadiness;\nlet m = MeshReadiness { enabled: true, attaching: true, ok: true, detail: \"deciding\".into() };\nassert_eq!(serde_json::to_value(&m).unwrap()[\"attaching\"], true);\n```"
     provenance:
       source: builtin
       module: majordomus_cli::capability::builtin::health
@@ -44668,7 +45548,28 @@ capabilities:
               - type: string
                 const: stale
                 description: "The lease names a server that does not answer, or is not a lease at all."
-            description: "Where a checkout's server stands, decided from its lease, whether the server the lease\nnames answers for that checkout, and whether what answers is this executable's code.\n\n```\nuse majordomus_cli::capability::builtin::server::ServerStanding;\nlet all = [ServerStanding::Absent, ServerStanding::Starting, ServerStanding::Ready,\n           ServerStanding::Outdated, ServerStanding::Stale];\nlet words: Vec<&str> = all.iter().map(|s| s.as_str()).collect();\nassert_eq!(words, [\"absent\", \"starting\", \"ready\", \"outdated\", \"stale\"]);\nassert_eq!(serde_json::from_str::<ServerStanding>(\"\\\"stale\\\"\").unwrap(), ServerStanding::Stale);\n```"
+              - type: string
+                const: building
+                description: "No lease yet, and the executable a server would run is being built: recorded by the\nbuilder (I3180), and believed only while the process that recorded it is alive."
+              - type: string
+                const: mesh_attaching
+                description: "The server is ready, the repository declares its mesh enabled, and the server has not\nyet decided whether the mesh runs."
+              - type: string
+                const: operational
+                description: "The server is ready, says so itself, and its mesh runs or is not declared."
+              - type: string
+                const: degraded
+                description: "The server answers, current, but its own readiness report or its mesh says it is not\nwhole: it lost the lease, serves replaced code, read a degraded layer, or its declared\nmesh is not running."
+              - type: string
+                const: stopping
+                description: "The process that holds the lease recorded that it is stopping, and it is still alive."
+              - type: string
+                const: stopped
+                description: The server is gone after it recorded that it was stopping.
+              - type: string
+                const: failed
+                description: "The server is gone without having recorded that it was stopping: its lease names a\nprocess that no longer exists."
+            description: "Where a checkout's server stands, decided from its lease, whether the server the lease\nnames answers for that checkout, and whether what answers is this executable's code —\nand, refined by the readiness report, the mesh runtime and the last recorded transition,\nwhere its runtime stands (I3179).\n\nThe first five words are the lease's standing, decided by `standing_of`, and they are\nwhat `standing` carries on every surface: shells compare them, so they never change. The\nother seven are the runtime's refinements, decided by `runtime_of` and carried by\n`runtime.state` alone; `ServerStanding::refines` names the lease word each refines.\n\n```\nuse majordomus_cli::capability::builtin::server::ServerStanding;\nlet all = [ServerStanding::Absent, ServerStanding::Starting, ServerStanding::Ready,\n           ServerStanding::Outdated, ServerStanding::Stale];\nlet words: Vec<&str> = all.iter().map(|s| s.as_str()).collect();\nassert_eq!(words, [\"absent\", \"starting\", \"ready\", \"outdated\", \"stale\"]);\nassert_eq!(serde_json::from_str::<ServerStanding>(\"\\\"stale\\\"\").unwrap(), ServerStanding::Stale);\n// the runtime's words, in the same snake case the JSON carries\nassert_eq!(serde_json::to_value(ServerStanding::MeshAttaching).unwrap(), \"mesh_attaching\");\nassert_eq!(ServerStanding::MeshAttaching.as_str(), \"mesh_attaching\");\n```"
     provenance:
       source: builtin
       module: majordomus_cli::capability::builtin::peers
@@ -58408,7 +59309,7 @@ capabilities:
     module: server
     kind: query
     title: "The shared server, and every server of the repository"
-    description: "Where this checkout's server stands — absent, starting, ready, outdated or stale — measured against what this executable would serve; how far the tree it serves is from the remote trunk (`trunk`: current, lagging, stale, unjudged or unmeasured against the policy's `checkout.trunk_distance`, as of the last fetch); the lease this process holds when it is the server; and, unless `checkouts` narrows it to this one, every checkout git registers for the repository, the primary first, each with its lease, its standing and the reason, and the peers its server reports. `checkouts: this` reads one lease and probes one server and enumerates no other checkout, which is what a caller asking only about the checkout it is in should pay. Read from the lease files and the servers on every call; nothing is cached, because the leases are written by other processes."
+    description: "Where this checkout's server stands — absent, starting, ready, outdated or stale — measured against what this executable would serve; where its runtime stands (`runtime`: that word refined by the server's readiness report, its mesh verdict and the last recorded transition into building, mesh_attaching, operational, degraded, stopping, stopped or failed, with the time, reason and recorder of that transition, kept under `.ai/local/state/runtime/` and written only when the state changes — this reader records `stopped` or `failed` for a server it finds gone); how far the tree it serves is from the remote trunk (`trunk`: current, lagging, stale, unjudged or unmeasured against the policy's `checkout.trunk_distance`, as of the last fetch); the lease this process holds when it is the server; and, unless `checkouts` narrows it to this one, every checkout git registers for the repository, the primary first, each with its lease, its standing and the reason, its runtime, and the peers its server reports. `checkouts: this` reads one lease and probes one server and enumerates no other checkout, which is what a caller asking only about the checkout it is in should pay. Read from the lease files and the servers on every call; nothing is cached, because the leases are written by other processes."
     input:
       name: ServerStatusInput
       schema:
@@ -58470,12 +59371,17 @@ capabilities:
               - "$ref": "#/$defs/TrunkDistance"
               - type: "null"
             description: "How far the tree this checkout serves is from the remote trunk, judged against the\npolicy's `checkout.trunk_distance`: a server of a checkout 779 commits behind answers\nevery session from a tree that no longer exists, and this is where that is said.\nAbsent only from an answer that predates the field."
+          runtime:
+            anyOf:
+              - "$ref": "#/$defs/RuntimeState"
+              - type: "null"
+            description: "Where this checkout's runtime stands — the lease's word refined by the server's\nreadiness report and mesh verdict and by the last recorded transition — with that\ntransition: when, why and who recorded it (I3179). `standing` keeps the lease's five\nwords; this is where the other seven appear. Absent only from an answer that predates\nthe field."
         required:
           - checkout_id
           - desired
           - standing
           - servers
-        description: "The shared server of this checkout and of every other checkout of the repository.\n\n```\nuse majordomus_cli::capability::builtin::server::{Desired, ServerStanding, ServerStatus};\nlet status = ServerStatus { checkout_id: \"c\".into(), git: None,\n    desired: Desired { host: \"127.0.0.1\".into(), port: 8741, version: \"1.0.0\".into(), executable: None },\n    this_process: None, standing: ServerStanding::Absent, servers: Vec::new(),\n    connections: None, trunk: None };\nlet text = serde_json::to_string(&status).unwrap();\nassert_eq!(serde_json::from_str::<ServerStatus>(&text).unwrap(), status);\n```"
+        description: "The shared server of this checkout and of every other checkout of the repository.\n\n```\nuse majordomus_cli::capability::builtin::server::{Desired, ServerStanding, ServerStatus};\nlet status = ServerStatus { checkout_id: \"c\".into(), git: None,\n    desired: Desired { host: \"127.0.0.1\".into(), port: 8741, version: \"1.0.0\".into(), executable: None },\n    this_process: None, standing: ServerStanding::Absent, servers: Vec::new(),\n    connections: None, trunk: None, runtime: None };\nlet text = serde_json::to_string(&status).unwrap();\nassert_eq!(serde_json::from_str::<ServerStatus>(&text).unwrap(), status);\n```"
         title: ServerStatus
         "$defs":
           GitIdentity:
@@ -58588,7 +59494,28 @@ capabilities:
               - type: string
                 const: stale
                 description: "The lease names a server that does not answer, or is not a lease at all."
-            description: "Where a checkout's server stands, decided from its lease, whether the server the lease\nnames answers for that checkout, and whether what answers is this executable's code.\n\n```\nuse majordomus_cli::capability::builtin::server::ServerStanding;\nlet all = [ServerStanding::Absent, ServerStanding::Starting, ServerStanding::Ready,\n           ServerStanding::Outdated, ServerStanding::Stale];\nlet words: Vec<&str> = all.iter().map(|s| s.as_str()).collect();\nassert_eq!(words, [\"absent\", \"starting\", \"ready\", \"outdated\", \"stale\"]);\nassert_eq!(serde_json::from_str::<ServerStanding>(\"\\\"stale\\\"\").unwrap(), ServerStanding::Stale);\n```"
+              - type: string
+                const: building
+                description: "No lease yet, and the executable a server would run is being built: recorded by the\nbuilder (I3180), and believed only while the process that recorded it is alive."
+              - type: string
+                const: mesh_attaching
+                description: "The server is ready, the repository declares its mesh enabled, and the server has not\nyet decided whether the mesh runs."
+              - type: string
+                const: operational
+                description: "The server is ready, says so itself, and its mesh runs or is not declared."
+              - type: string
+                const: degraded
+                description: "The server answers, current, but its own readiness report or its mesh says it is not\nwhole: it lost the lease, serves replaced code, read a degraded layer, or its declared\nmesh is not running."
+              - type: string
+                const: stopping
+                description: "The process that holds the lease recorded that it is stopping, and it is still alive."
+              - type: string
+                const: stopped
+                description: The server is gone after it recorded that it was stopping.
+              - type: string
+                const: failed
+                description: "The server is gone without having recorded that it was stopping: its lease names a\nprocess that no longer exists."
+            description: "Where a checkout's server stands, decided from its lease, whether the server the lease\nnames answers for that checkout, and whether what answers is this executable's code —\nand, refined by the readiness report, the mesh runtime and the last recorded transition,\nwhere its runtime stands (I3179).\n\nThe first five words are the lease's standing, decided by `standing_of`, and they are\nwhat `standing` carries on every surface: shells compare them, so they never change. The\nother seven are the runtime's refinements, decided by `runtime_of` and carried by\n`runtime.state` alone; `ServerStanding::refines` names the lease word each refines.\n\n```\nuse majordomus_cli::capability::builtin::server::ServerStanding;\nlet all = [ServerStanding::Absent, ServerStanding::Starting, ServerStanding::Ready,\n           ServerStanding::Outdated, ServerStanding::Stale];\nlet words: Vec<&str> = all.iter().map(|s| s.as_str()).collect();\nassert_eq!(words, [\"absent\", \"starting\", \"ready\", \"outdated\", \"stale\"]);\nassert_eq!(serde_json::from_str::<ServerStanding>(\"\\\"stale\\\"\").unwrap(), ServerStanding::Stale);\n// the runtime's words, in the same snake case the JSON carries\nassert_eq!(serde_json::to_value(ServerStanding::MeshAttaching).unwrap(), \"mesh_attaching\");\nassert_eq!(ServerStanding::MeshAttaching.as_str(), \"mesh_attaching\");\n```"
           ServerView:
             type: object
             properties:
@@ -58629,13 +59556,89 @@ capabilities:
                 format: uint
                 minimum: 0
                 description: "How many peers the server reports attached, when it answers."
+              runtime:
+                anyOf:
+                  - "$ref": "#/$defs/RuntimeState"
+                  - type: "null"
+                description: "Where its runtime stands, and the last transition recorded for it (I3179). Absent\nonly from an answer that predates the field."
             required:
               - worktree
               - checkout_id
               - primary
               - this_checkout
               - standing
-            description: "One checkout of the repository, and the server its lease names.\n\n```\nuse majordomus_cli::capability::builtin::server::{ServerStanding, ServerView};\nlet view = ServerView { worktree: \"/r\".into(), branch: Some(\"master\".into()), checkout_id: \"c\".into(),\n    primary: true, this_checkout: true, standing: ServerStanding::Absent, reason: None, lease: None, peers: None };\nlet v = serde_json::to_value(&view).unwrap();\nassert_eq!(v[\"standing\"], \"absent\");\nassert!(v.get(\"lease\").is_none() && v.get(\"peers\").is_none(), \"what there is not is not written\");\n```"
+            description: "One checkout of the repository, and the server its lease names.\n\n```\nuse majordomus_cli::capability::builtin::server::{ServerStanding, ServerView};\nlet view = ServerView { worktree: \"/r\".into(), branch: Some(\"master\".into()), checkout_id: \"c\".into(),\n    primary: true, this_checkout: true, standing: ServerStanding::Absent, reason: None, lease: None, peers: None,\n    runtime: None };\nlet v = serde_json::to_value(&view).unwrap();\nassert_eq!(v[\"standing\"], \"absent\");\nassert!(v.get(\"lease\").is_none() && v.get(\"peers\").is_none(), \"what there is not is not written\");\n```"
+          RuntimeState:
+            type: object
+            properties:
+              state:
+                "$ref": "#/$defs/ServerStanding"
+                description: "The state, derived on this reading from the lease, the server's readiness report (its\nmesh verdict included) and the last recorded transition."
+              reason:
+                type:
+                  - string
+                  - "null"
+                description: "Why, when the state is not `operational`."
+              transition:
+                anyOf:
+                  - "$ref": "#/$defs/RuntimeTransition"
+                  - type: "null"
+                description: "The last transition recorded under `RUNTIME_PATH`, when one ever was. The derived\nstate may be newer than it: only the writers named on `RuntimeWriter` record."
+            required:
+              - state
+            description: "Where a checkout's runtime stands now, and the last transition recorded for it.\n\n```\nuse majordomus_cli::capability::builtin::server::{RuntimeState, ServerStanding};\nlet r = RuntimeState { state: ServerStanding::Operational, reason: None, transition: None };\nassert_eq!(serde_json::to_value(&r).unwrap(), serde_json::json!({ \"state\": \"operational\" }));\n```"
+          RuntimeTransition:
+            type: object
+            properties:
+              schema:
+                type: string
+                description: "`RUNTIME_SCHEMA`."
+              state:
+                "$ref": "#/$defs/ServerStanding"
+                description: What the runtime became.
+              from:
+                anyOf:
+                  - "$ref": "#/$defs/ServerStanding"
+                  - type: "null"
+                description: "What it was, by the previous record; absent for the first."
+              at:
+                type: string
+                description: "When, RFC 3339."
+              reason:
+                type: string
+                description: "Why, in the recorder's words."
+              by:
+                "$ref": "#/$defs/RuntimeWriter"
+                description: Who recorded it.
+              pid:
+                type:
+                  - integer
+                  - "null"
+                format: uint32
+                minimum: 0
+                description: "The server process the transition is about, when there is one."
+            required:
+              - schema
+              - state
+              - at
+              - reason
+              - by
+            description: "The last transition of a checkout's runtime: what it became, from what, when, why, who\nrecorded it and which process it is about. The record under `RUNTIME_PATH`.\n\n```\nuse majordomus_cli::capability::builtin::server::{RuntimeTransition, RuntimeWriter, ServerStanding};\nlet t = RuntimeTransition::new(ServerStanding::Ready, None, \"published\", RuntimeWriter::Server, Some(7));\nlet v = serde_json::to_value(&t).unwrap();\nassert_eq!(v[\"state\"], \"ready\");\nassert_eq!(v[\"by\"], \"server\");\nassert!(v.get(\"from\").is_none(), \"a first record came from nothing it can name\");\n```"
+          RuntimeWriter:
+            oneOf:
+              - type: string
+                const: server
+                description: "The serving process, about itself."
+              - type: string
+                const: serve_ensure
+                description: "`serve ensure`, which found the lease stale."
+              - type: string
+                const: reap_orphans
+                description: "`scripts/reap-orphans`, through `serve status` after its sweep."
+              - type: string
+                const: server_status
+                description: "`server.status`, on any surface."
+            description: "Who recorded a transition. Each state has its one kind of writer: the serving process\nrecords its own `starting`, `ready` and `stopping`, because only it knows them; a reader\nthat finds the server gone records `stopped` or `failed`, because a dead process records\nnothing.\n\n```\nuse majordomus_cli::capability::builtin::server::RuntimeWriter;\nassert_eq!(serde_json::to_value(RuntimeWriter::ServeEnsure).unwrap(), \"serve_ensure\");\nassert_eq!(RuntimeWriter::reader_named(Some(\"reap_orphans\")), RuntimeWriter::ReapOrphans);\nassert_eq!(RuntimeWriter::reader_named(Some(\"server\")), RuntimeWriter::ServerStatus);\nassert_eq!(RuntimeWriter::reader_named(None), RuntimeWriter::ServerStatus);\n```"
           ConnectionCounts:
             type: object
             properties:

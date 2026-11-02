@@ -1,0 +1,51 @@
+id: I4523
+milestone: landing-survives-any-session
+title: "The lander judges the candidate it would merge even when the forge cannot list every open pull request"
+slug: the-lander-judges-its-candidate-when-the-open-list-fails
+priority: p1
+profile: implementation
+parallel_safe: false
+objective: "When the forge cannot answer the whole open list with its rollups, `majordomus prs drain` still judges the one candidate it would land: a pull request named by a new `--pr N`, or else the newest open `integration/train-*` head found by an open list that asks no rollup (number, head, labels, draft). That candidate is read by number, alone, with its whole rollup and its own cross-references (DECLARATIONS_OF_QUERY). It is decided by the same rules, observed again and landed by the same fast-forward as on a whole observation. The queue view it leaves behind says it is partial, with the read that failed, instead of the drain refusing everything. When even the candidate cannot be read, the refusal names each read that failed (the full list, the paged list, the candidate) with the forge's own words."
+why: "On 2026-10-30 the landing seat could not decide train 12c's top #2743 for half an hour while the forge answered small reads at once. From 17:55Z to 18:01Z `majordomus prs drain --dry-run` failed with alpha.9 (\"gh pr list --state open --limit 500 --json ...statusCheckRollup... failed: HTTP 504: 504 Gateway Timeout (https://api.github.com/graphql) (after 4 attempts)\"). It also failed with the 12c build, which carries #2687's paged open list (I4380): \"gh api graphql ... failed: gh: HTTP 502 (after 4 attempts)\" after 1:44. At the same moment `gh pr list --state open --limit 30` answered in 0.6 s. The second attempt, at 18:22Z, decided \"would merge #2743\", and the real drain landed it at 18:27Z (master 51b38035a71 to 6b30ede2d13). The cost of the open list is the rollups of about 124 open pull requests, while a landing needs one pull request's rollup. I4380 made the list cheaper (pages of 25 when a page times out) but kept a page that fails failing the whole list, so the one executor (landing-survives-any-session#one-executor) still lands nothing while the forge is slow for the big read and healthy for the small one. This is a row of f3's integration map, milestone a-bounded-task-is-carried-to-accepted-work (the integration mission of 2026-10-30, a step of integration/deploy). That milestone is not on master at 6b30ede2d13; it is on chore/the-integration-map-is-planned at 1cdb07c7e1d, so this issue is filed under the landing milestone and the map can name it as the owner of that row once the map lands."
+current_state: "Measured at 6b30ede2d13: GhForge::observe (apps/majordomus-cli/src/integration/forge.rs:1670) reads the repository, its settings, the base, the protection and the rulesets, then `gh pr list --state open --limit 500` with every rollup (forge.rs:1775). On a 504, GraphQL's timeout or a cut-off body, open_list (forge.rs:1322) reads it again in pages of 25 through open_pull_requests (forge.rs:1289); a page that fails after its four attempts (a 502) fails the whole list, and with it the observation. ForgeIntegrator::observe (drain.rs:2281) is refresh and queue_and_record, so drain::step (drain.rs:1131) returns the error at its first observe and decides nothing, and the error names only the last read. `prs drain` takes --max, --dry-run, --refresh, --continuous, --interval and --resume-after-failure (cli.rs:4147) and no pull request number. No read of one pull request with its rollup exists in forge.rs. The recorded observation has no notion of partial, so a queue built from fewer pull requests than are open would read as whole."
+desired_state: "A drain whose open list fails reads the light list, or takes --pr N, and judges that one candidate on its own reads. A ready candidate lands by fast-forward and is verified exactly as on a whole observation, and anything not ready is reported with its reason. The observation and the queue carry partial (serde default false, so older observations read as whole) with the read that failed, and `prs status`, `prs plan` and the drain's report say the queue is partial. On a partial observation the drain refreshes nothing, reopens nothing and cleans up nothing, because those choose among all open pull requests. If any read the candidate's decision needs fails (its rollup, its writers, its cross-references), the candidate is not decided; the refusal names each failed read with the forge's words, and the exit is 12 as for every outage. docs/INTEGRATION.md says when the drain judges one candidate and what a partial queue leaves out."
+scope:
+  - ".ai/repo/project/issues/I4523.yaml"
+  - "apps/majordomus-cli/src/integration/forge.rs"
+  - "apps/majordomus-cli/src/integration/drain.rs"
+  - "apps/majordomus-cli/src/integration/mod.rs"
+  - "apps/majordomus-cli/src/integration/model.rs"
+  - "apps/majordomus-cli/src/integration/tests.rs"
+  - "apps/majordomus-cli/src/cli.rs"
+  - "apps/majordomus-cli/src/commands/prs.rs"
+  - "test/cases/4523_the_lander_judges_its_candidate_when_the_open_list_fails.sh"
+  - "docs/INTEGRATION.md"
+  - "docs/generated"
+  - "site/content/plan/I4523.md"
+non_scope:
+  - "Page size, retry count and retry backoff of the open list (I4380 and retry.rs): this issue adds a read when they are exhausted, and does not tune them"
+  - "Landing without a verdict: a candidate whose rollup, writers or cross-references could not be read is still not decided, as case 934 requires of a failed declarations read"
+  - "Refresh, reopen and cleanup on a partial observation: each of them chooses among every open pull request and stays a whole-observation act"
+  - "A tracked train manifest that names the next top without asking the forge (I3915)"
+  - "The Pages workflow's forge observation (`prs refresh` in pages.yml): it degrades already (I4380)"
+acceptance_criteria:
+  - "Unit test in integration::tests with a scripted forge: the whole open list fails (a 504 on `gh pr list` and a 502 on every page of 25), the light list names a ready integration/train-* head, and the drain decides WouldMerge for that number; the observation is partial and names the failed read"
+  - "Unit test: with --pr N and every open-list read failing, the drain reads only N (its rollup and its cross-references) and decides on it, and a hold label, a red required check or an unread writer still refuses it exactly as on a whole observation"
+  - "Unit test: when the candidate's own read fails too, step returns an error that names the full list, the paged list and the candidate read with each forge message, and nothing is recorded as decided"
+  - "Unit test: a partial observation never chooses a refresh, a reopen or a cleanup, and a partial observation written then read back keeps partial, while one written before this change reads as whole"
+  - "Case 4523, through the real command line against a scripted gh: `prs drain --dry-run` with the open list answering 504 and its pages 502 prints the would-merge of the train top and says the queue is partial; `prs drain --dry-run --pr N` decides N; with the candidate read failing too, exit 12 and the refusal names every failed read"
+  - "Cases 742, 850 and 934 pass unchanged: a whole observation decides as before"
+  - "docs/INTEGRATION.md, section One merge at a time, says when the drain judges one candidate, which reads it makes and what a partial queue leaves out"
+validation:
+  - "env -u MAJORDOMUS_SHARE cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib -- integration::"
+  - "bash test/run.sh 4523_the_lander_judges_its_candidate_when_the_open_list_fails 742_only_an_outage_is_asked_again 850_integration_drains_cycle_by_cycle 934_a_failed_declarations_read_decides_nothing"
+  - "bin/majordomus plan validate"
+evidence_required:
+  - "test"
+  - "rust"
+depends_on:
+  - "I4380"
+serves:
+  - "landing-survives-any-session#one-executor"
+created_at: 2026-10-30
+updated_at: 2026-10-30

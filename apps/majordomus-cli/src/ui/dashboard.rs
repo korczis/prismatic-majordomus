@@ -33,9 +33,13 @@ const PLAN: Source = Source::of("plan.status");
 const ROADMAP: Source = Source::of("plan.roadmap");
 const MESH: Source = Source::of("mesh.peers");
 const QUEUE: Source = Source::of("integration.queue");
+/// This checkout's server alone: one lease read and one probe, never every worktree's (I3179).
+const SERVER: Source = Source::with("server.status", r#"{"checkouts":"this"}"#);
 
 /// The sources the first paint asks, together.
-pub const FIRST_PAINT: &[Source] = &[REPOSITORY, HEALTH, VERSION, RELEASES, PLAN, ROADMAP, MESH];
+pub const FIRST_PAINT: &[Source] = &[
+    REPOSITORY, HEALTH, VERSION, RELEASES, PLAN, ROADMAP, MESH, SERVER,
+];
 
 /// How many rows a panel shows before it says how many there are in all.
 pub const ROWS: usize = 8;
@@ -88,6 +92,12 @@ pub fn screen(ctx: &Context) -> View {
                 super::roadmap::ROUTE,
             ),
             kpi_to(mesh_kpi(a(MESH)), super::mesh::ROUTE),
+            // the runtime's one state, as `server.status` derives it: the lease's word refined
+            // by the server's readiness report, its mesh and its last recorded transition
+            kpi_to(
+                kpi_state("Runtime", &a(SERVER).read("/runtime/state")),
+                "#health",
+            ),
         ],
     );
 

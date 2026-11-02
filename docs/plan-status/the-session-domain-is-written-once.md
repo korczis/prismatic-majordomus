@@ -32,3 +32,4 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I3141` | shares .ai/repo/automation/inventory.jsonl with I3378; they may not run concurrently |
 | WARN | `scope_conflict` | `I3141` | shares test/cases/220_exactly_once_close.sh with I3825; they may not run concurrently |
 | WARN | `scope_conflict` | `I3141` | shares test/cases/220_exactly_once_close.sh with I3837; they may not run concurrently |
+| WARN | `scope_conflict` | `I3141` | shares apps/majordomus-cli/src/cli.rs with I4523; they may not run concurrently |

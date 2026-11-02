@@ -6,28 +6,28 @@
     "version": "1.0.0-alpha.10"
   },
   "registry": {
-    "fingerprint": "a023263da23f657082857c306cf256e30880c16d7d0d7c92c5a2a3c333893fac",
+    "fingerprint": "4fa2e68fed88b92ce25c158bc17f7b4d48b16e671fafdc6537e4b2bd53a0accf",
     "summary": {
-      "total": 3732,
-      "builtin": 220,
-      "declarative": 3512,
+      "total": 3792,
+      "builtin": 224,
+      "declarative": 3568,
       "by_kind": {
-        "command": 36,
-        "query": 184,
-        "resource": 3512
+        "command": 37,
+        "query": 187,
+        "resource": 3568
       },
       "by_stability": {
-        "behaviorally_verified": 147,
-        "experimental": 63,
-        "implemented": 3522
+        "behaviorally_verified": 149,
+        "experimental": 65,
+        "implemented": 3578
       },
-      "mcp_tools": 206,
-      "mcp_resources": 3569,
-      "http_routes": 212,
-      "cli_commands": 120,
-      "modules": 94,
-      "benchmark_required": 181,
-      "benchmark_waived": 39,
+      "mcp_tools": 209,
+      "mcp_resources": 3625,
+      "http_routes": 213,
+      "cli_commands": 124,
+      "modules": 95,
+      "benchmark_required": 183,
+      "benchmark_waived": 41,
       "cached": 55
     },
     "builtin": [
@@ -757,9 +757,44 @@
                     "type": "string",
                     "const": "stale",
                     "description": "The lease names a server that does not answer, or is not a lease at all."
+                  },
+                  {
+                    "type": "string",
+                    "const": "building",
+                    "description": "No lease yet, and the executable a server would run is being built: recorded by the\nbuilder (I3180), and believed only while the process that recorded it is alive."
+                  },
+                  {
+                    "type": "string",
+                    "const": "mesh_attaching",
+                    "description": "The server is ready, the repository declares its mesh enabled, and the server has not\nyet decided whether the mesh runs."
+                  },
+                  {
+                    "type": "string",
+                    "const": "operational",
+                    "description": "The server is ready, says so itself, and its mesh runs or is not declared."
+                  },
+                  {
+                    "type": "string",
+                    "const": "degraded",
+                    "description": "The server answers, current, but its own readiness report or its mesh says it is not\nwhole: it lost the lease, serves replaced code, read a degraded layer, or its declared\nmesh is not running."
+                  },
+                  {
+                    "type": "string",
+                    "const": "stopping",
+                    "description": "The process that holds the lease recorded that it is stopping, and it is still alive."
+                  },
+                  {
+                    "type": "string",
+                    "const": "stopped",
+                    "description": "The server is gone after it recorded that it was stopping."
+                  },
+                  {
+                    "type": "string",
+                    "const": "failed",
+                    "description": "The server is gone without having recorded that it was stopping: its lease names a\nprocess that no longer exists."
                   }
                 ],
-                "description": "Where a checkout's server stands, decided from its lease, whether the server the lease\nnames answers for that checkout, and whether what answers is this executable's code.\n\n```\nuse majordomus_cli::capability::builtin::server::ServerStanding;\nlet all = [ServerStanding::Absent, ServerStanding::Starting, ServerStanding::Ready,\n           ServerStanding::Outdated, ServerStanding::Stale];\nlet words: Vec<&str> = all.iter().map(|s| s.as_str()).collect();\nassert_eq!(words, [\"absent\", \"starting\", \"ready\", \"outdated\", \"stale\"]);\nassert_eq!(serde_json::from_str::<ServerStanding>(\"\\\"stale\\\"\").unwrap(), ServerStanding::Stale);\n```"
+                "description": "Where a checkout's server stands, decided from its lease, whether the server the lease\nnames answers for that checkout, and whether what answers is this executable's code —\nand, refined by the readiness report, the mesh runtime and the last recorded transition,\nwhere its runtime stands (I3179).\n\nThe first five words are the lease's standing, decided by `standing_of`, and they are\nwhat `standing` carries on every surface: shells compare them, so they never change. The\nother seven are the runtime's refinements, decided by `runtime_of` and carried by\n`runtime.state` alone; `ServerStanding::refines` names the lease word each refines.\n\n```\nuse majordomus_cli::capability::builtin::server::ServerStanding;\nlet all = [ServerStanding::Absent, ServerStanding::Starting, ServerStanding::Ready,\n           ServerStanding::Outdated, ServerStanding::Stale];\nlet words: Vec<&str> = all.iter().map(|s| s.as_str()).collect();\nassert_eq!(words, [\"absent\", \"starting\", \"ready\", \"outdated\", \"stale\"]);\nassert_eq!(serde_json::from_str::<ServerStanding>(\"\\\"stale\\\"\").unwrap(), ServerStanding::Stale);\n// the runtime's words, in the same snake case the JSON carries\nassert_eq!(serde_json::to_value(ServerStanding::MeshAttaching).unwrap(), \"mesh_attaching\");\nassert_eq!(ServerStanding::MeshAttaching.as_str(), \"mesh_attaching\");\n```"
               },
               "BlackboardWorker": {
                 "type": "object",
@@ -1434,6 +1469,133 @@
         "source_path": "apps/majordomus-cli/src/capability/builtin/blackboard.rs"
       },
       {
+        "id": "board.snapshot",
+        "module": "board",
+        "kind": "query",
+        "title": "The delivery board's documents",
+        "description": "Every document of the delivery board by id: meta (the commit, the lanes, the issue counts, the release), milestones in roadmap order, intents, the pull request queue from the last recorded observation, and the open issues of each lane as issues-<lane>, split into issues-<lane>-2 and onwards so that no document serializes past 250000 bytes. The digest is a SHA-256 over the canonical JSON of the documents with meta.syncedAt and meta.syncedBy left out, so equal state is an equal digest. A milestone that is not DONE and is in no lane of share/board.yaml is refused by name, never filed under other. An unobserved queue is said in prs.unavailable and the diagnostics, never refused. Mesh seats, live work, CI runners and blockers are the sync step's and are not here. Reads only; nothing is cached.",
+        "input": {
+          "name": "BoardSnapshotInput",
+          "schema": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "by": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "Who takes the snapshot, as `meta.syncedBy` names it; `board.snapshot` when absent.\nLeft out of the digest."
+              }
+            },
+            "description": "The input of `board.snapshot`.",
+            "title": "BoardSnapshotInput"
+          }
+        },
+        "output": {
+          "name": "BoardSnapshot",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "digest": {
+                "type": "string",
+                "description": "`sha256:<hex>` over the canonical JSON of the documents, `meta.syncedAt` and\n`meta.syncedBy` left out: equal state, equal digest."
+              },
+              "master_sha": {
+                "type": "string",
+                "description": "The commit described, empty when the checkout has none."
+              },
+              "master_committed_at": {
+                "type": "string",
+                "description": "Its committer time, RFC 3339."
+              },
+              "master_ref": {
+                "type": "string",
+                "description": "The ref it was read from: `refs/remotes/origin/master`, else `HEAD`."
+              },
+              "document_limit": {
+                "type": "integer",
+                "format": "uint",
+                "minimum": 0,
+                "description": "The bound every document is under, in bytes of compact JSON."
+              },
+              "sizes": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "integer",
+                  "format": "uint",
+                  "minimum": 0
+                },
+                "description": "Each document's compact size, in bytes, by id."
+              },
+              "documents": {
+                "type": "object",
+                "additionalProperties": true,
+                "description": "The documents, by id: `meta`, `milestones`, `intents`, `prs`, and `issues-<lane>`\n(then `issues-<lane>-2`, ...) for each lane with open work."
+              },
+              "diagnostics": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "What could not be read, in words: an unobserved pull request queue, a lane naming a\nmilestone the plan lacks. Empty is the ordinary case."
+              }
+            },
+            "required": [
+              "digest",
+              "master_sha",
+              "master_committed_at",
+              "master_ref",
+              "document_limit",
+              "sizes",
+              "documents"
+            ],
+            "description": "The answer of `board.snapshot`: every document of the board by id, and the digest that\nsays whether two snapshots describe the same state.",
+            "title": "BoardSnapshot"
+          }
+        },
+        "provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::board"
+        },
+        "exposure": {
+          "mcp": {
+            "tool": "majordomus_board_snapshot"
+          },
+          "http": {
+            "method": "GET",
+            "path": "/api/v1/board/snapshot"
+          },
+          "cli": {
+            "path": [
+              "board",
+              "snapshot"
+            ]
+          }
+        },
+        "availability": "runtime",
+        "visibility": "public",
+        "stability": "experimental",
+        "tags": [
+          "board",
+          "plan",
+          "delivery"
+        ],
+        "benchmark": {
+          "policy": "waived",
+          "reason": "repository_declaration"
+        },
+        "cache": {
+          "policy": "disabled"
+        },
+        "execution": {
+          "effect": "read",
+          "cancellable": false,
+          "concurrency": "unrestricted"
+        },
+        "source_path": "apps/majordomus-cli/src/capability/builtin/board.rs"
+      },
+      {
         "id": "brief.session",
         "module": "brief",
         "kind": "query",
@@ -1545,6 +1707,17 @@
               "derive": {
                 "$ref": "#/$defs/BriefDeriveSection",
                 "description": "The derive queue."
+              },
+              "runtime": {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/RuntimeState"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Where this checkout's runtime stands, and its last recorded transition, as\n`server.status` derives it (I3179). Absent from the answer of a server older than the\nfield."
               }
             },
             "required": [
@@ -1960,6 +2133,180 @@
                   "summary"
                 ],
                 "description": "The machine's derive queue: its lock and its priority marker (`lib/machine_lock.sh`)."
+              },
+              "RuntimeState": {
+                "type": "object",
+                "properties": {
+                  "state": {
+                    "$ref": "#/$defs/ServerStanding",
+                    "description": "The state, derived on this reading from the lease, the server's readiness report (its\nmesh verdict included) and the last recorded transition."
+                  },
+                  "reason": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "Why, when the state is not `operational`."
+                  },
+                  "transition": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/RuntimeTransition"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "The last transition recorded under `RUNTIME_PATH`, when one ever was. The derived\nstate may be newer than it: only the writers named on `RuntimeWriter` record."
+                  }
+                },
+                "required": [
+                  "state"
+                ],
+                "description": "Where a checkout's runtime stands now, and the last transition recorded for it.\n\n```\nuse majordomus_cli::capability::builtin::server::{RuntimeState, ServerStanding};\nlet r = RuntimeState { state: ServerStanding::Operational, reason: None, transition: None };\nassert_eq!(serde_json::to_value(&r).unwrap(), serde_json::json!({ \"state\": \"operational\" }));\n```"
+              },
+              "ServerStanding": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "absent",
+                    "description": "No lease: nothing serves this checkout."
+                  },
+                  {
+                    "type": "string",
+                    "const": "starting",
+                    "description": "A lease without an address, young enough that its owner is still binding."
+                  },
+                  {
+                    "type": "string",
+                    "const": "ready",
+                    "description": "The server the lease names answers for this checkout, from the code on disk, at\nthis executable's version."
+                  },
+                  {
+                    "type": "string",
+                    "const": "outdated",
+                    "description": "The server answers, but from older code than this executable, or from a file that\nhas been replaced since it started: everything it says is yesterday's."
+                  },
+                  {
+                    "type": "string",
+                    "const": "stale",
+                    "description": "The lease names a server that does not answer, or is not a lease at all."
+                  },
+                  {
+                    "type": "string",
+                    "const": "building",
+                    "description": "No lease yet, and the executable a server would run is being built: recorded by the\nbuilder (I3180), and believed only while the process that recorded it is alive."
+                  },
+                  {
+                    "type": "string",
+                    "const": "mesh_attaching",
+                    "description": "The server is ready, the repository declares its mesh enabled, and the server has not\nyet decided whether the mesh runs."
+                  },
+                  {
+                    "type": "string",
+                    "const": "operational",
+                    "description": "The server is ready, says so itself, and its mesh runs or is not declared."
+                  },
+                  {
+                    "type": "string",
+                    "const": "degraded",
+                    "description": "The server answers, current, but its own readiness report or its mesh says it is not\nwhole: it lost the lease, serves replaced code, read a degraded layer, or its declared\nmesh is not running."
+                  },
+                  {
+                    "type": "string",
+                    "const": "stopping",
+                    "description": "The process that holds the lease recorded that it is stopping, and it is still alive."
+                  },
+                  {
+                    "type": "string",
+                    "const": "stopped",
+                    "description": "The server is gone after it recorded that it was stopping."
+                  },
+                  {
+                    "type": "string",
+                    "const": "failed",
+                    "description": "The server is gone without having recorded that it was stopping: its lease names a\nprocess that no longer exists."
+                  }
+                ],
+                "description": "Where a checkout's server stands, decided from its lease, whether the server the lease\nnames answers for that checkout, and whether what answers is this executable's code —\nand, refined by the readiness report, the mesh runtime and the last recorded transition,\nwhere its runtime stands (I3179).\n\nThe first five words are the lease's standing, decided by `standing_of`, and they are\nwhat `standing` carries on every surface: shells compare them, so they never change. The\nother seven are the runtime's refinements, decided by `runtime_of` and carried by\n`runtime.state` alone; `ServerStanding::refines` names the lease word each refines.\n\n```\nuse majordomus_cli::capability::builtin::server::ServerStanding;\nlet all = [ServerStanding::Absent, ServerStanding::Starting, ServerStanding::Ready,\n           ServerStanding::Outdated, ServerStanding::Stale];\nlet words: Vec<&str> = all.iter().map(|s| s.as_str()).collect();\nassert_eq!(words, [\"absent\", \"starting\", \"ready\", \"outdated\", \"stale\"]);\nassert_eq!(serde_json::from_str::<ServerStanding>(\"\\\"stale\\\"\").unwrap(), ServerStanding::Stale);\n// the runtime's words, in the same snake case the JSON carries\nassert_eq!(serde_json::to_value(ServerStanding::MeshAttaching).unwrap(), \"mesh_attaching\");\nassert_eq!(ServerStanding::MeshAttaching.as_str(), \"mesh_attaching\");\n```"
+              },
+              "RuntimeTransition": {
+                "type": "object",
+                "properties": {
+                  "schema": {
+                    "type": "string",
+                    "description": "`RUNTIME_SCHEMA`."
+                  },
+                  "state": {
+                    "$ref": "#/$defs/ServerStanding",
+                    "description": "What the runtime became."
+                  },
+                  "from": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/ServerStanding"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "What it was, by the previous record; absent for the first."
+                  },
+                  "at": {
+                    "type": "string",
+                    "description": "When, RFC 3339."
+                  },
+                  "reason": {
+                    "type": "string",
+                    "description": "Why, in the recorder's words."
+                  },
+                  "by": {
+                    "$ref": "#/$defs/RuntimeWriter",
+                    "description": "Who recorded it."
+                  },
+                  "pid": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "format": "uint32",
+                    "minimum": 0,
+                    "description": "The server process the transition is about, when there is one."
+                  }
+                },
+                "required": [
+                  "schema",
+                  "state",
+                  "at",
+                  "reason",
+                  "by"
+                ],
+                "description": "The last transition of a checkout's runtime: what it became, from what, when, why, who\nrecorded it and which process it is about. The record under `RUNTIME_PATH`.\n\n```\nuse majordomus_cli::capability::builtin::server::{RuntimeTransition, RuntimeWriter, ServerStanding};\nlet t = RuntimeTransition::new(ServerStanding::Ready, None, \"published\", RuntimeWriter::Server, Some(7));\nlet v = serde_json::to_value(&t).unwrap();\nassert_eq!(v[\"state\"], \"ready\");\nassert_eq!(v[\"by\"], \"server\");\nassert!(v.get(\"from\").is_none(), \"a first record came from nothing it can name\");\n```"
+              },
+              "RuntimeWriter": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "server",
+                    "description": "The serving process, about itself."
+                  },
+                  {
+                    "type": "string",
+                    "const": "serve_ensure",
+                    "description": "`serve ensure`, which found the lease stale."
+                  },
+                  {
+                    "type": "string",
+                    "const": "reap_orphans",
+                    "description": "`scripts/reap-orphans`, through `serve status` after its sweep."
+                  },
+                  {
+                    "type": "string",
+                    "const": "server_status",
+                    "description": "`server.status`, on any surface."
+                  }
+                ],
+                "description": "Who recorded a transition. Each state has its one kind of writer: the serving process\nrecords its own `starting`, `ready` and `stopping`, because only it knows them; a reader\nthat finds the server gone records `stopped` or `failed`, because a dead process records\nnothing.\n\n```\nuse majordomus_cli::capability::builtin::server::RuntimeWriter;\nassert_eq!(serde_json::to_value(RuntimeWriter::ServeEnsure).unwrap(), \"serve_ensure\");\nassert_eq!(RuntimeWriter::reader_named(Some(\"reap_orphans\")), RuntimeWriter::ReapOrphans);\nassert_eq!(RuntimeWriter::reader_named(Some(\"server\")), RuntimeWriter::ServerStatus);\nassert_eq!(RuntimeWriter::reader_named(None), RuntimeWriter::ServerStatus);\n```"
               }
             }
           }
@@ -2544,6 +2891,11 @@
                     "type": "string",
                     "const": "published_history",
                     "description": "The capability answers about what this repository has *published*, so its input is a\nrelease: a version tag, the commit it points at, and the projection committed there.\nA benchmark fixture is a repository that has published nothing, and the honest answer\nin one is a refusal — so the case would time an error path and call it coverage.\nDistinct from `WaiverReason::ExternalDependency`: nothing outside this process is\nconsulted, and distinct from `WaiverReason::TransientState`: the history is durable,\nit simply does not exist yet where the benchmark runs."
+                  },
+                  {
+                    "type": "string",
+                    "const": "repository_declaration",
+                    "description": "The capability answers from a declaration this repository keeps about its own records\n(the delivery board's lanes over this repository's milestones, share/board.yaml), and\nrefuses a record the declaration does not place. A benchmark fixture's records are in\nno such declaration, so its honest answer there is a refusal, and timing it would time\nan error path. The answer is proved over this repository by the capability's own tests."
                   }
                 ],
                 "description": "Why an executable capability is not benchmarked. Typed, so that a waiver is a\nreviewable statement and never a convenience; `not_executable` is the registry's own\nreason for resources and is never written by hand."
@@ -3343,6 +3695,11 @@
                     "type": "string",
                     "const": "published_history",
                     "description": "The capability answers about what this repository has *published*, so its input is a\nrelease: a version tag, the commit it points at, and the projection committed there.\nA benchmark fixture is a repository that has published nothing, and the honest answer\nin one is a refusal — so the case would time an error path and call it coverage.\nDistinct from `WaiverReason::ExternalDependency`: nothing outside this process is\nconsulted, and distinct from `WaiverReason::TransientState`: the history is durable,\nit simply does not exist yet where the benchmark runs."
+                  },
+                  {
+                    "type": "string",
+                    "const": "repository_declaration",
+                    "description": "The capability answers from a declaration this repository keeps about its own records\n(the delivery board's lanes over this repository's milestones, share/board.yaml), and\nrefuses a record the declaration does not place. A benchmark fixture's records are in\nno such declaration, so its honest answer there is a refusal, and timing it would time\nan error path. The answer is proved over this repository by the capability's own tests."
                   }
                 ],
                 "description": "Why an executable capability is not benchmarked. Typed, so that a waiver is a\nreviewable statement and never a convenience; `not_executable` is the registry's own\nreason for resources and is never written by hand."
@@ -14349,6 +14706,870 @@
           "ui",
           "provenance",
           "introspection"
+        ],
+        "benchmark": {
+          "policy": "required"
+        },
+        "cache": {
+          "policy": "disabled"
+        },
+        "execution": {
+          "effect": "read",
+          "cancellable": false,
+          "concurrency": "unrestricted"
+        },
+        "source_path": "apps/majordomus-cli/src/capability/builtin/design.rs"
+      },
+      {
+        "id": "design.kit",
+        "module": "design",
+        "kind": "query",
+        "title": "Whether the interface is built on the kit",
+        "description": "The supervised repository's user interface judged against the kit profile its policy's `ui.kit` names (flowbite-pro when it names none), from markers in the tree and never the kit's own source: S0 whether there is an interface at all and its surfaces (the root's manifest or the one in assets/, every workspace the root manifest or pnpm-workspace.yaml declares, every nested app manifest with markup in its own subtree outside examples, fixtures, tests, vendor, docs, deps and priv; Phoenix LiveView in mix.exs, HEEx or HTML templates, a Next.js root layout; published pages: a root index.html, pages under site/, www/, public/, under a directory a Pages workflow or a deploy or build script publishes, and under docs/ when it is published), any other manifest with UI packages being a notice and never a finding; S1 the kit's package in each surface, its React binding for React and Next.js, and the kit in use in the surface's own files (an attribute the kit's JavaScript drives, a flowbite-react component, a call of the kit's API), because wiring alone passes nothing; S2 the Tailwind plugin and source (Tailwind 4's @plugin and @source, Tailwind 3's config), a Play CDN or a CDN-only kit being a finding; S3 the kit's JavaScript behind every data-drawer, dropdown, modal, tabs, collapse and tooltip attribute, a script that reads them itself being a re-implementation; S4 no other kit (daisyUI, Bootstrap, Preline, TW Elements, shadcn/ui and Radix, Petal Components, Material UI, Ant Design, Bulma, Chakra UI, Foundation, Materialize), Alpine.js reported and not refused; S5 the shell on every root layout: a fixed top navbar, an aside labelled Sidebar that both drawer attributes name, a breadcrumb, and the page, surface and border roles, a published site's layout being judged by a navbar and a footer instead; the layouts, the roles and the marketing layouts are the profile's alone. Each finding names its signal, path, evidence and remedy; each exemption the policy declares under `ui.exempt`, exactly `{path, because}`, moves every finding at its path and names its reason and how many findings it covered. A licensed kit's profile declares its licensed markers (a distribution directory, a manifest named after a Pro product, a dependency on a Pro package), and where the tree carries one the design licence decides it: active passes, while inactive, refused or not judged is a finding no exemption moves, since a variant the judge cannot decide is never a pass. The licence evidence is the kit-evidence/v1 file the input names (in CI the file the launcher decoded: `majordomus design kit` run where a `MAJORDOMUS_KIT_EVIDENCE_<KIT>` variable is exported goes through the shell's `mj_fleet_design_judge`, which decodes the kit's variable into a private file, passes it and removes it; this capability reads a file and never the environment), else the policy's `~`-relative `ui.evidence` entries; a file whose first line `# kit: <id>` names another kit is not judged, and `licence.reason` says why the licence answered as it did, naming a file and a line at most and never what the evidence holds. A repository without an interface passes vacuously; a policy that cannot be read is `bad_policy` and judges nothing; a policy that still carries the retired top-level `design_kit:` block earns a notice naming `ui.kit` as its replacement. Reads the repository's files (in a Git work tree the tracked ones and the untracked ones Git does not ignore; a submodule or a nested repository is named in a notice and judged in its own repository), skipping dependencies and build output and listing vendored directories by path only; no build and no network. It has no HTTP route, as the design licence has none: the evidence input names a file this process opens, which is a local caller's act, so it is taken on the command line and over MCP only.",
+        "input": {
+          "name": "KitInput",
+          "schema": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "evidence": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "A kit-evidence/v1 file, as the caller names it: in CI the file the launcher decoded\n`MAJORDOMUS_KIT_EVIDENCE_<KIT>` into, through the shell's `mj_fleet_design_judge`.\nAbsent reads the policy's `ui.evidence` entries under `$HOME`. Taken on the command\nline and over MCP only: a file this process opens is never named over HTTP.\nA file whose first line `# kit: <id>` names another kit than the profile judges\nnothing."
+              }
+            },
+            "description": "The input of `design.kit`: the licence evidence a licensed marker is judged by, or none\nto read the policy's.",
+            "title": "KitInput"
+          }
+        },
+        "output": {
+          "name": "KitReport",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "profile": {
+                "type": "string",
+                "description": "The profile judged."
+              },
+              "title": {
+                "type": "string",
+                "description": "What the profile is, for a person."
+              },
+              "profile_source": {
+                "type": "string",
+                "description": "Where the profile lives in the distribution."
+              },
+              "rule": {
+                "type": "string",
+                "description": "The rule the profile enforces."
+              },
+              "policy_declared": {
+                "type": "boolean",
+                "description": "Whether the repository's policy declares the kit's block."
+              },
+              "policy_errors": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "Why the policy cannot be read; non-empty only for `bad_policy`."
+              },
+              "ui": {
+                "type": "boolean",
+                "description": "Whether the repository has a user interface (S0)."
+              },
+              "ui_evidence": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "What showed it."
+              },
+              "surfaces": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/KitSurface"
+                },
+                "description": "The surfaces S1 to S3 judged, each with the usage markers its own files carry."
+              },
+              "stacks": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "The stacks recognised: `tailwind-4`, `tailwind-3`, `react`, `phoenix`."
+              },
+              "layouts": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "The root layouts S5 judged."
+              },
+              "findings": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/KitFinding"
+                },
+                "description": "Every finding that stands."
+              },
+              "exempted": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/KitExempted"
+                },
+                "description": "Every finding an exemption covers."
+              },
+              "reported": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "What is reported and never refused, such as Alpine.js."
+              },
+              "notices": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "What S0 left out and a reader should know: a manifest with UI packages that is no\nsurface, pages that are no interface. Never a finding."
+              },
+              "licence": {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/KitLicence"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "How the tree stands against a licensed kit's licence; absent for a free kit."
+              },
+              "exemptions": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/KitExemption"
+                },
+                "description": "The policy's exemptions, each with how many findings it covered."
+              },
+              "verdict": {
+                "$ref": "#/$defs/KitVerdict",
+                "description": "The verdict."
+              },
+              "passes": {
+                "type": "boolean",
+                "description": "Whether the rule holds: `no_ui` or `clean`."
+              }
+            },
+            "required": [
+              "profile",
+              "title",
+              "profile_source",
+              "rule",
+              "policy_declared",
+              "policy_errors",
+              "ui",
+              "ui_evidence",
+              "surfaces",
+              "stacks",
+              "layouts",
+              "findings",
+              "exempted",
+              "reported",
+              "notices",
+              "exemptions",
+              "verdict",
+              "passes"
+            ],
+            "description": "What `design.kit` answers.",
+            "title": "KitReport",
+            "$defs": {
+              "KitSurface": {
+                "type": "object",
+                "properties": {
+                  "dir": {
+                    "type": "string",
+                    "description": "Its directory, repository-relative; empty for the root."
+                  },
+                  "kind": {
+                    "$ref": "#/$defs/KitSurfaceKind",
+                    "description": "How it was found."
+                  },
+                  "manifests": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "Its manifests."
+                  },
+                  "usage": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "The first usage markers its own files carry; empty is a finding."
+                  }
+                },
+                "required": [
+                  "dir",
+                  "kind",
+                  "manifests",
+                  "usage"
+                ],
+                "description": "One surface S1 to S3 judged."
+              },
+              "KitSurfaceKind": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "root",
+                    "description": "The root's manifests and every file no other surface owns."
+                  },
+                  {
+                    "type": "string",
+                    "const": "workspace",
+                    "description": "A workspace the root manifest or the pnpm workspace file declares."
+                  },
+                  {
+                    "type": "string",
+                    "const": "app",
+                    "description": "A nested manifest with markup in its own subtree."
+                  }
+                ],
+                "description": "How a surface was found."
+              },
+              "KitFinding": {
+                "type": "object",
+                "properties": {
+                  "signal": {
+                    "$ref": "#/$defs/KitSignal",
+                    "description": "The signal."
+                  },
+                  "path": {
+                    "type": "string",
+                    "description": "The path, repository-relative; empty for the repository as a whole."
+                  },
+                  "evidence": {
+                    "type": "string",
+                    "description": "What was seen, with the line where there is one."
+                  },
+                  "remedy": {
+                    "type": "string",
+                    "description": "What to do."
+                  }
+                },
+                "required": [
+                  "signal",
+                  "path",
+                  "evidence",
+                  "remedy"
+                ],
+                "description": "One finding: the signal, the path it is about, what was seen and what to do."
+              },
+              "KitSignal": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "S0",
+                    "description": "The user interface exists."
+                  },
+                  {
+                    "type": "string",
+                    "const": "S1",
+                    "description": "The dependency, and the kit in use."
+                  },
+                  {
+                    "type": "string",
+                    "const": "S2",
+                    "description": "The plugin and the source."
+                  },
+                  {
+                    "type": "string",
+                    "const": "S3",
+                    "description": "The kit's JavaScript."
+                  },
+                  {
+                    "type": "string",
+                    "const": "S4",
+                    "description": "No other kit."
+                  },
+                  {
+                    "type": "string",
+                    "const": "S5",
+                    "description": "The shell on each root layout."
+                  }
+                ],
+                "description": "A signal of the profile."
+              },
+              "KitExempted": {
+                "type": "object",
+                "properties": {
+                  "finding": {
+                    "$ref": "#/$defs/KitFinding",
+                    "description": "The finding."
+                  },
+                  "exemption": {
+                    "type": "string",
+                    "description": "The exemption's path."
+                  },
+                  "because": {
+                    "type": "string",
+                    "description": "The exemption's reason."
+                  }
+                },
+                "required": [
+                  "finding",
+                  "exemption",
+                  "because"
+                ],
+                "description": "A finding a policy exemption covers, with the reason."
+              },
+              "KitLicence": {
+                "type": "object",
+                "properties": {
+                  "evidence": {
+                    "type": "string",
+                    "description": "The evidence format the profile names."
+                  },
+                  "state": {
+                    "$ref": "#/$defs/LicenceState",
+                    "description": "What the licence evidence said."
+                  },
+                  "variant": {
+                    "$ref": "#/$defs/KitVariant",
+                    "description": "What the judge decided."
+                  },
+                  "markers": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "Where each licensed marker was seen, with its name."
+                  },
+                  "reason": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "Why the design licence answered as it did, when it says: the reason of an inactive\nor unjudged licence, or what stopped it. It names a file and a line at most, never\nwhat the evidence holds."
+                  }
+                },
+                "required": [
+                  "evidence",
+                  "state",
+                  "variant",
+                  "markers"
+                ],
+                "description": "How the tree stands against a licensed kit's licence."
+              },
+              "LicenceState": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "active",
+                    "description": "The design licence judged the tree with the evidence held and found it clean, or the\ntree is private: the licence holds."
+                  },
+                  {
+                    "type": "string",
+                    "const": "inactive",
+                    "description": "The design licence judged nothing and needed to judge nothing: no kit is declared, a\nprivate tree without evidence, or no UI file. Licensed markers there are unlicensed."
+                  },
+                  {
+                    "type": "string",
+                    "const": "not_judged",
+                    "description": "The design licence owed a judgement and could not give one, or could not be asked:\nno evidence where a public tree owes it, a `ui:` block it cannot use, a tree it\ncannot list."
+                  },
+                  {
+                    "type": "string",
+                    "const": "refused",
+                    "description": "The design licence refused the tree: a public tree holds a licensed file's bytes."
+                  }
+                ],
+                "description": "What the design licence (I4336, `crate::design::licence`) says about a repository,\nas the judge of a licensed kit's markers reads it. `licence_answer` maps its verdict."
+              },
+              "KitVariant": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "not_used",
+                    "description": "The tree carries no licensed marker: nothing the licence covers is used."
+                  },
+                  {
+                    "type": "string",
+                    "const": "licensed",
+                    "description": "Licensed markers, and the licence is active."
+                  },
+                  {
+                    "type": "string",
+                    "const": "unlicensed",
+                    "description": "Licensed markers, and the licence is inactive or the design licence refused the\ntree: a finding."
+                  },
+                  {
+                    "type": "string",
+                    "const": "undecided",
+                    "description": "Licensed markers, and a licence nobody could judge: the judge cannot decide, and that\nis a finding, never a pass."
+                  }
+                ],
+                "description": "Which variant of a licensed kit the tree is, as the judge decides it."
+              },
+              "KitExemption": {
+                "type": "object",
+                "properties": {
+                  "path": {
+                    "type": "string",
+                    "description": "The path or glob a finding's path matches."
+                  },
+                  "because": {
+                    "type": "string",
+                    "description": "Why the path is not held to the kit."
+                  },
+                  "matched": {
+                    "type": "integer",
+                    "format": "uint",
+                    "minimum": 0,
+                    "description": "How many findings it moved to the exempted list.",
+                    "default": 0
+                  }
+                },
+                "required": [
+                  "path",
+                  "because"
+                ],
+                "description": "One exemption of the policy: `ui.exempt[n]`, exactly `{path, because}`."
+              },
+              "KitVerdict": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "no_ui",
+                    "description": "No user interface: the rule holds vacuously."
+                  },
+                  {
+                    "type": "string",
+                    "const": "clean",
+                    "description": "A user interface, and no finding stands."
+                  },
+                  {
+                    "type": "string",
+                    "const": "findings",
+                    "description": "At least one finding stands."
+                  },
+                  {
+                    "type": "string",
+                    "const": "bad_policy",
+                    "description": "The policy cannot be read; nothing was judged."
+                  }
+                ],
+                "description": "How the tree stands against the profile."
+              }
+            }
+          }
+        },
+        "provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::design"
+        },
+        "exposure": {
+          "mcp": {
+            "tool": "majordomus_design_kit"
+          },
+          "cli": {
+            "path": [
+              "design",
+              "kit"
+            ]
+          }
+        },
+        "availability": "runtime",
+        "visibility": "public",
+        "stability": "behaviorally_verified",
+        "tags": [
+          "design",
+          "ui",
+          "governance"
+        ],
+        "benchmark": {
+          "policy": "required"
+        },
+        "cache": {
+          "policy": "disabled"
+        },
+        "execution": {
+          "effect": "read",
+          "cancellable": false,
+          "concurrency": "unrestricted"
+        },
+        "source_path": "apps/majordomus-cli/src/capability/builtin/design.rs"
+      },
+      {
+        "id": "design.kit.adopt",
+        "module": "design",
+        "kind": "command",
+        "title": "Declare the kit in the repository",
+        "description": "Writes what makes `design.kit` the repository's gate, and nothing that is there already: the profile's rule (project.ui-uses-flowbite-pro for flowbite-pro) into .ai/repo/rules/project/ from the distribution's template, `ui.kit` naming the profile in .ai/repo/policy.yaml (set in the `ui:` block when it names no kit, the block appended when there is none; exemptions under `ui.exempt` are the repository's to declare), and two enforcement entries running `majordomus design kit --check`, design-kit-on-push wired by the pre-push hook and design-kit wired by the repository's CI workflow when it has one. Idempotent: a second adoption reports every file unchanged. The rule's last section, 'In this repository', is the repository's own: a later adoption brings the rest of the rule up to the template and never overwrites that section, and a rule that differs from the template and has no such section is kept and named, a `ui.kit` naming another profile is refused, and a policy that would not read back is never written. `dry_run` reports the same and writes nothing. Wiring the hook and the workflow step is left to the repository, and `majordomus doctor` names each entry until it is wired.",
+        "input": {
+          "name": "KitAdoptInput",
+          "schema": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "profile": {
+                "type": "string",
+                "description": "A kit profile of the distribution, `share/design/kits/<profile>.yaml`."
+              },
+              "dry_run": {
+                "type": "boolean",
+                "description": "Report what would be written, and write nothing.",
+                "default": false
+              }
+            },
+            "required": [
+              "profile"
+            ],
+            "description": "The input of `design.kit.adopt`: which kit profile to declare in the repository.",
+            "title": "KitAdoptInput"
+          }
+        },
+        "output": {
+          "name": "AdoptReport",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "profile": {
+                "type": "string",
+                "description": "The profile adopted."
+              },
+              "rule": {
+                "type": "string",
+                "description": "The rule it enforces."
+              },
+              "dry_run": {
+                "type": "boolean",
+                "description": "Whether nothing was written."
+              },
+              "writes": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/AdoptWrite"
+                },
+                "description": "Every file adoption touches, in the order they are written."
+              },
+              "ci_workflow": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "The CI workflow the `design-kit` entry names, when the repository has one."
+              },
+              "notes": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "What is left for a person: the hook and workflow steps doctor will ask for."
+              }
+            },
+            "required": [
+              "profile",
+              "rule",
+              "dry_run",
+              "writes",
+              "notes"
+            ],
+            "description": "What `design.kit.adopt` answers.",
+            "title": "AdoptReport",
+            "$defs": {
+              "AdoptWrite": {
+                "type": "object",
+                "properties": {
+                  "path": {
+                    "type": "string",
+                    "description": "Repository-relative."
+                  },
+                  "action": {
+                    "$ref": "#/$defs/AdoptAction",
+                    "description": "What happened to it."
+                  },
+                  "detail": {
+                    "type": "string",
+                    "description": "What was written or found."
+                  }
+                },
+                "required": [
+                  "path",
+                  "action",
+                  "detail"
+                ],
+                "description": "One file adoption touches."
+              },
+              "AdoptAction": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "created",
+                    "description": "The file did not exist and is written."
+                  },
+                  {
+                    "type": "string",
+                    "const": "updated",
+                    "description": "The file is changed."
+                  },
+                  {
+                    "type": "string",
+                    "const": "unchanged",
+                    "description": "The file already says what adoption would write."
+                  },
+                  {
+                    "type": "string",
+                    "const": "kept",
+                    "description": "The file differs from what adoption would write and is left as it is."
+                  }
+                ],
+                "description": "What adoption did, or would do, to one file."
+              }
+            }
+          }
+        },
+        "provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::design"
+        },
+        "exposure": {
+          "cli": {
+            "path": [
+              "design",
+              "kit",
+              "adopt"
+            ]
+          }
+        },
+        "availability": "runtime",
+        "visibility": "developer",
+        "stability": "experimental",
+        "tags": [
+          "design",
+          "ui",
+          "governance"
+        ],
+        "benchmark": {
+          "policy": "waived",
+          "reason": "destructive"
+        },
+        "cache": {
+          "policy": "disabled"
+        },
+        "execution": {
+          "effect": "repository_mutation",
+          "cancellable": false,
+          "concurrency": "serial"
+        },
+        "source_path": "apps/majordomus-cli/src/capability/builtin/design.rs"
+      },
+      {
+        "id": "design.licence",
+        "module": "design",
+        "kind": "query",
+        "title": "Whether a public tree holds a licensed kit's files",
+        "description": "The never-publish gate: the raw bytes of every tracked file, committed bundles included (staged, committed where that differs, and the working copy where it differs), and of every untracked file under each `ui.publish` directory, read through symbolic links and into nested repositories as a deploy archives it, compared whole, exactly and with every run of whitespace made one space, against the kit-evidence/v1 fingerprints of the declared kit's licensed files. `refused` names each file and, where the evidence says, the licensed source; `not_judged` is a public tree that declares a kit, tracks a UI file and has no evidence here, and fails like `refused`; a `ui:` block that cannot be used as written (an absolute `ui.publish` or `ui.evidence` entry) is `not_judged` too, naming the entry; `inactive` is no kit declared, a private tree without evidence, or no UI file; `active` is judged and clean, or private. The evidence is the file the input names, else the policy's `~`-relative `ui.evidence` entries; an error names the file and the line, never its content. Near-copies and fragments inlined in a larger file are not judged: the evidence holds whole-file fingerprints only.",
+        "input": {
+          "name": "LicenceInput",
+          "schema": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "evidence": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "A kit-evidence/v1 file, as the caller names it (CI points this at the file it decoded\n`MAJORDOMUS_KIT_EVIDENCE_<KIT>` into). Absent reads the policy's `ui.evidence`\nentries under `$HOME`."
+              }
+            },
+            "description": "The input of `design.licence`: the evidence file, or none to read the policy's.",
+            "title": "LicenceInput"
+          }
+        },
+        "output": {
+          "name": "LicenceReport",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "verdict": {
+                "$ref": "#/$defs/Verdict",
+                "description": "`active`, `inactive`, `not_judged` or `refused`."
+              },
+              "fails": {
+                "type": "boolean",
+                "description": "Whether the verdict fails the gate (`refused`, `not_judged`)."
+              },
+              "kit": {
+                "type": "string",
+                "description": "The declared kit id; empty when none is."
+              },
+              "visibility": {
+                "$ref": "#/$defs/Visibility",
+                "description": "The visibility judged, after `MAJORDOMUS_VISIBILITY` tightened it."
+              },
+              "has_ui": {
+                "type": "boolean",
+                "description": "Whether the tree tracks a UI file."
+              },
+              "reason": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "Why the verdict is inactive or not judged."
+              },
+              "evidence": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "Where the evidence was read from, as it was named: the `--evidence` file, or each\n`ui.evidence` entry found on this machine. Empty when none was."
+              },
+              "fingerprints": {
+                "type": "integer",
+                "format": "uint",
+                "minimum": 0,
+                "description": "How many distinct licensed contents the evidence names."
+              },
+              "files": {
+                "type": "integer",
+                "format": "uint",
+                "minimum": 0,
+                "description": "How many contents were compared: staged, committed, working and published bytes,\neach distinct one of a path once."
+              },
+              "matches": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/Match"
+                },
+                "description": "Every file that holds a licensed file's bytes."
+              }
+            },
+            "required": [
+              "verdict",
+              "fails",
+              "kit",
+              "visibility",
+              "has_ui",
+              "evidence",
+              "fingerprints",
+              "files",
+              "matches"
+            ],
+            "description": "The answer as every projection carries it.",
+            "title": "LicenceReport",
+            "$defs": {
+              "Verdict": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "active",
+                    "description": "Judged, and nothing licensed is where it may not be."
+                  },
+                  {
+                    "type": "string",
+                    "const": "inactive",
+                    "description": "Not judged, and nothing needs to be."
+                  },
+                  {
+                    "type": "string",
+                    "const": "not_judged",
+                    "description": "Owed a judgement and not given one: a failure."
+                  },
+                  {
+                    "type": "string",
+                    "const": "refused",
+                    "description": "A licensed file is in a public tree: a failure."
+                  }
+                ],
+                "description": "The answer's word."
+              },
+              "Visibility": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "public",
+                    "description": "Anyone may read it: no licensed byte may be in it."
+                  },
+                  {
+                    "type": "string",
+                    "const": "private",
+                    "description": "Only the owner reads it: it may hold the licensed sources."
+                  }
+                ],
+                "description": "Whether a tree may be published. Declared by the policy (`ui.visibility`), never read\nfrom a forge; `MAJORDOMUS_VISIBILITY` may tighten it and never loosen it."
+              },
+              "Match": {
+                "type": "object",
+                "properties": {
+                  "path": {
+                    "type": "string",
+                    "description": "Repository-relative path of the file."
+                  },
+                  "source": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The licensed source it is a copy of, when the evidence names one; the CI form never\ndoes."
+                  },
+                  "kind": {
+                    "$ref": "#/$defs/MatchKind",
+                    "description": "Whether the copy is exact or reformatted."
+                  }
+                },
+                "required": [
+                  "path",
+                  "kind"
+                ],
+                "description": "One judged file that holds a licensed file's bytes."
+              },
+              "MatchKind": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "exact",
+                    "description": "The same bytes."
+                  },
+                  {
+                    "type": "string",
+                    "const": "normalised",
+                    "description": "The same bytes once every run of whitespace is one space: a reformatted copy."
+                  }
+                ],
+                "description": "How a file matched a licensed one."
+              }
+            }
+          }
+        },
+        "provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::design"
+        },
+        "exposure": {
+          "mcp": {
+            "tool": "majordomus_design_licence"
+          },
+          "cli": {
+            "path": [
+              "design",
+              "licence"
+            ]
+          }
+        },
+        "availability": "runtime",
+        "visibility": "public",
+        "stability": "behaviorally_verified",
+        "tags": [
+          "design",
+          "ui",
+          "licence",
+          "governance"
         ],
         "benchmark": {
           "policy": "required"
@@ -35088,6 +36309,17 @@
                   "type": "string"
                 },
                 "description": "Every reason this answer is not a plain yes, as `code: words`. `lease_lost` and\n`stale` make `ready` false: another process holds this checkout's lease, or this one\nserves code that is gone. `layer_degraded` does not: the layer is served with its\ndiagnostics, and a client decides whether that is enough."
+              },
+              "mesh": {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/MeshReadiness"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "The mesh, as this process decided it: present only in a process that holds a lease,\nbecause only a shared server runs a mesh. It never makes `ready` false — a server\nwhose mesh is not running still answers every request — but it is what\n`server.status` refines `ready` into `mesh_attaching`, `operational` or `degraded`\nwith (I3179)."
               }
             },
             "required": [
@@ -35125,6 +36357,34 @@
                   }
                 ],
                 "description": "Where one dimension of the system stands. Ordered by severity, so the worst check\ndecides the whole."
+              },
+              "MeshReadiness": {
+                "type": "object",
+                "properties": {
+                  "enabled": {
+                    "type": "boolean",
+                    "description": "Whether the repository declares its mesh enabled."
+                  },
+                  "attaching": {
+                    "type": "boolean",
+                    "description": "Whether the declaration is enabled and this server has not decided the mesh yet."
+                  },
+                  "ok": {
+                    "type": "boolean",
+                    "description": "Whether the mesh stands as declared: off when it is not declared, running when it is."
+                  },
+                  "detail": {
+                    "type": "string",
+                    "description": "The verdict's words."
+                  }
+                },
+                "required": [
+                  "enabled",
+                  "attaching",
+                  "ok",
+                  "detail"
+                ],
+                "description": "The mesh in a readiness report: whether the repository declares it enabled, whether this\nserver has decided it yet, and the verdict `mesh doctor`'s runtime check gives.\n\n```\nuse majordomus_cli::capability::builtin::health::MeshReadiness;\nlet m = MeshReadiness { enabled: true, attaching: true, ok: true, detail: \"deciding\".into() };\nassert_eq!(serde_json::to_value(&m).unwrap()[\"attaching\"], true);\n```"
               }
             }
           }
@@ -62587,9 +63847,44 @@
                     "type": "string",
                     "const": "stale",
                     "description": "The lease names a server that does not answer, or is not a lease at all."
+                  },
+                  {
+                    "type": "string",
+                    "const": "building",
+                    "description": "No lease yet, and the executable a server would run is being built: recorded by the\nbuilder (I3180), and believed only while the process that recorded it is alive."
+                  },
+                  {
+                    "type": "string",
+                    "const": "mesh_attaching",
+                    "description": "The server is ready, the repository declares its mesh enabled, and the server has not\nyet decided whether the mesh runs."
+                  },
+                  {
+                    "type": "string",
+                    "const": "operational",
+                    "description": "The server is ready, says so itself, and its mesh runs or is not declared."
+                  },
+                  {
+                    "type": "string",
+                    "const": "degraded",
+                    "description": "The server answers, current, but its own readiness report or its mesh says it is not\nwhole: it lost the lease, serves replaced code, read a degraded layer, or its declared\nmesh is not running."
+                  },
+                  {
+                    "type": "string",
+                    "const": "stopping",
+                    "description": "The process that holds the lease recorded that it is stopping, and it is still alive."
+                  },
+                  {
+                    "type": "string",
+                    "const": "stopped",
+                    "description": "The server is gone after it recorded that it was stopping."
+                  },
+                  {
+                    "type": "string",
+                    "const": "failed",
+                    "description": "The server is gone without having recorded that it was stopping: its lease names a\nprocess that no longer exists."
                   }
                 ],
-                "description": "Where a checkout's server stands, decided from its lease, whether the server the lease\nnames answers for that checkout, and whether what answers is this executable's code.\n\n```\nuse majordomus_cli::capability::builtin::server::ServerStanding;\nlet all = [ServerStanding::Absent, ServerStanding::Starting, ServerStanding::Ready,\n           ServerStanding::Outdated, ServerStanding::Stale];\nlet words: Vec<&str> = all.iter().map(|s| s.as_str()).collect();\nassert_eq!(words, [\"absent\", \"starting\", \"ready\", \"outdated\", \"stale\"]);\nassert_eq!(serde_json::from_str::<ServerStanding>(\"\\\"stale\\\"\").unwrap(), ServerStanding::Stale);\n```"
+                "description": "Where a checkout's server stands, decided from its lease, whether the server the lease\nnames answers for that checkout, and whether what answers is this executable's code —\nand, refined by the readiness report, the mesh runtime and the last recorded transition,\nwhere its runtime stands (I3179).\n\nThe first five words are the lease's standing, decided by `standing_of`, and they are\nwhat `standing` carries on every surface: shells compare them, so they never change. The\nother seven are the runtime's refinements, decided by `runtime_of` and carried by\n`runtime.state` alone; `ServerStanding::refines` names the lease word each refines.\n\n```\nuse majordomus_cli::capability::builtin::server::ServerStanding;\nlet all = [ServerStanding::Absent, ServerStanding::Starting, ServerStanding::Ready,\n           ServerStanding::Outdated, ServerStanding::Stale];\nlet words: Vec<&str> = all.iter().map(|s| s.as_str()).collect();\nassert_eq!(words, [\"absent\", \"starting\", \"ready\", \"outdated\", \"stale\"]);\nassert_eq!(serde_json::from_str::<ServerStanding>(\"\\\"stale\\\"\").unwrap(), ServerStanding::Stale);\n// the runtime's words, in the same snake case the JSON carries\nassert_eq!(serde_json::to_value(ServerStanding::MeshAttaching).unwrap(), \"mesh_attaching\");\nassert_eq!(ServerStanding::MeshAttaching.as_str(), \"mesh_attaching\");\n```"
               }
             }
           }
@@ -81799,7 +83094,7 @@
         "module": "server",
         "kind": "query",
         "title": "The shared server, and every server of the repository",
-        "description": "Where this checkout's server stands — absent, starting, ready, outdated or stale — measured against what this executable would serve; how far the tree it serves is from the remote trunk (`trunk`: current, lagging, stale, unjudged or unmeasured against the policy's `checkout.trunk_distance`, as of the last fetch); the lease this process holds when it is the server; and, unless `checkouts` narrows it to this one, every checkout git registers for the repository, the primary first, each with its lease, its standing and the reason, and the peers its server reports. `checkouts: this` reads one lease and probes one server and enumerates no other checkout, which is what a caller asking only about the checkout it is in should pay. Read from the lease files and the servers on every call; nothing is cached, because the leases are written by other processes.",
+        "description": "Where this checkout's server stands — absent, starting, ready, outdated or stale — measured against what this executable would serve; where its runtime stands (`runtime`: that word refined by the server's readiness report, its mesh verdict and the last recorded transition into building, mesh_attaching, operational, degraded, stopping, stopped or failed, with the time, reason and recorder of that transition, kept under `.ai/local/state/runtime/` and written only when the state changes — this reader records `stopped` or `failed` for a server it finds gone); how far the tree it serves is from the remote trunk (`trunk`: current, lagging, stale, unjudged or unmeasured against the policy's `checkout.trunk_distance`, as of the last fetch); the lease this process holds when it is the server; and, unless `checkouts` narrows it to this one, every checkout git registers for the repository, the primary first, each with its lease, its standing and the reason, its runtime, and the peers its server reports. `checkouts: this` reads one lease and probes one server and enumerates no other checkout, which is what a caller asking only about the checkout it is in should pay. Read from the lease files and the servers on every call; nothing is cached, because the leases are written by other processes.",
         "input": {
           "name": "ServerStatusInput",
           "schema": {
@@ -81900,6 +83195,17 @@
                   }
                 ],
                 "description": "How far the tree this checkout serves is from the remote trunk, judged against the\npolicy's `checkout.trunk_distance`: a server of a checkout 779 commits behind answers\nevery session from a tree that no longer exists, and this is where that is said.\nAbsent only from an answer that predates the field."
+              },
+              "runtime": {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/RuntimeState"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Where this checkout's runtime stands — the lease's word refined by the server's\nreadiness report and mesh verdict and by the last recorded transition — with that\ntransition: when, why and who recorded it (I3179). `standing` keeps the lease's five\nwords; this is where the other seven appear. Absent only from an answer that predates\nthe field."
               }
             },
             "required": [
@@ -81908,7 +83214,7 @@
               "standing",
               "servers"
             ],
-            "description": "The shared server of this checkout and of every other checkout of the repository.\n\n```\nuse majordomus_cli::capability::builtin::server::{Desired, ServerStanding, ServerStatus};\nlet status = ServerStatus { checkout_id: \"c\".into(), git: None,\n    desired: Desired { host: \"127.0.0.1\".into(), port: 8741, version: \"1.0.0\".into(), executable: None },\n    this_process: None, standing: ServerStanding::Absent, servers: Vec::new(),\n    connections: None, trunk: None };\nlet text = serde_json::to_string(&status).unwrap();\nassert_eq!(serde_json::from_str::<ServerStatus>(&text).unwrap(), status);\n```",
+            "description": "The shared server of this checkout and of every other checkout of the repository.\n\n```\nuse majordomus_cli::capability::builtin::server::{Desired, ServerStanding, ServerStatus};\nlet status = ServerStatus { checkout_id: \"c\".into(), git: None,\n    desired: Desired { host: \"127.0.0.1\".into(), port: 8741, version: \"1.0.0\".into(), executable: None },\n    this_process: None, standing: ServerStanding::Absent, servers: Vec::new(),\n    connections: None, trunk: None, runtime: None };\nlet text = serde_json::to_string(&status).unwrap();\nassert_eq!(serde_json::from_str::<ServerStatus>(&text).unwrap(), status);\n```",
             "title": "ServerStatus",
             "$defs": {
               "GitIdentity": {
@@ -82069,9 +83375,44 @@
                     "type": "string",
                     "const": "stale",
                     "description": "The lease names a server that does not answer, or is not a lease at all."
+                  },
+                  {
+                    "type": "string",
+                    "const": "building",
+                    "description": "No lease yet, and the executable a server would run is being built: recorded by the\nbuilder (I3180), and believed only while the process that recorded it is alive."
+                  },
+                  {
+                    "type": "string",
+                    "const": "mesh_attaching",
+                    "description": "The server is ready, the repository declares its mesh enabled, and the server has not\nyet decided whether the mesh runs."
+                  },
+                  {
+                    "type": "string",
+                    "const": "operational",
+                    "description": "The server is ready, says so itself, and its mesh runs or is not declared."
+                  },
+                  {
+                    "type": "string",
+                    "const": "degraded",
+                    "description": "The server answers, current, but its own readiness report or its mesh says it is not\nwhole: it lost the lease, serves replaced code, read a degraded layer, or its declared\nmesh is not running."
+                  },
+                  {
+                    "type": "string",
+                    "const": "stopping",
+                    "description": "The process that holds the lease recorded that it is stopping, and it is still alive."
+                  },
+                  {
+                    "type": "string",
+                    "const": "stopped",
+                    "description": "The server is gone after it recorded that it was stopping."
+                  },
+                  {
+                    "type": "string",
+                    "const": "failed",
+                    "description": "The server is gone without having recorded that it was stopping: its lease names a\nprocess that no longer exists."
                   }
                 ],
-                "description": "Where a checkout's server stands, decided from its lease, whether the server the lease\nnames answers for that checkout, and whether what answers is this executable's code.\n\n```\nuse majordomus_cli::capability::builtin::server::ServerStanding;\nlet all = [ServerStanding::Absent, ServerStanding::Starting, ServerStanding::Ready,\n           ServerStanding::Outdated, ServerStanding::Stale];\nlet words: Vec<&str> = all.iter().map(|s| s.as_str()).collect();\nassert_eq!(words, [\"absent\", \"starting\", \"ready\", \"outdated\", \"stale\"]);\nassert_eq!(serde_json::from_str::<ServerStanding>(\"\\\"stale\\\"\").unwrap(), ServerStanding::Stale);\n```"
+                "description": "Where a checkout's server stands, decided from its lease, whether the server the lease\nnames answers for that checkout, and whether what answers is this executable's code —\nand, refined by the readiness report, the mesh runtime and the last recorded transition,\nwhere its runtime stands (I3179).\n\nThe first five words are the lease's standing, decided by `standing_of`, and they are\nwhat `standing` carries on every surface: shells compare them, so they never change. The\nother seven are the runtime's refinements, decided by `runtime_of` and carried by\n`runtime.state` alone; `ServerStanding::refines` names the lease word each refines.\n\n```\nuse majordomus_cli::capability::builtin::server::ServerStanding;\nlet all = [ServerStanding::Absent, ServerStanding::Starting, ServerStanding::Ready,\n           ServerStanding::Outdated, ServerStanding::Stale];\nlet words: Vec<&str> = all.iter().map(|s| s.as_str()).collect();\nassert_eq!(words, [\"absent\", \"starting\", \"ready\", \"outdated\", \"stale\"]);\nassert_eq!(serde_json::from_str::<ServerStanding>(\"\\\"stale\\\"\").unwrap(), ServerStanding::Stale);\n// the runtime's words, in the same snake case the JSON carries\nassert_eq!(serde_json::to_value(ServerStanding::MeshAttaching).unwrap(), \"mesh_attaching\");\nassert_eq!(ServerStanding::MeshAttaching.as_str(), \"mesh_attaching\");\n```"
               },
               "ServerView": {
                 "type": "object",
@@ -82129,6 +83470,17 @@
                     "format": "uint",
                     "minimum": 0,
                     "description": "How many peers the server reports attached, when it answers."
+                  },
+                  "runtime": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/RuntimeState"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "Where its runtime stands, and the last transition recorded for it (I3179). Absent\nonly from an answer that predates the field."
                   }
                 },
                 "required": [
@@ -82138,7 +83490,116 @@
                   "this_checkout",
                   "standing"
                 ],
-                "description": "One checkout of the repository, and the server its lease names.\n\n```\nuse majordomus_cli::capability::builtin::server::{ServerStanding, ServerView};\nlet view = ServerView { worktree: \"/r\".into(), branch: Some(\"master\".into()), checkout_id: \"c\".into(),\n    primary: true, this_checkout: true, standing: ServerStanding::Absent, reason: None, lease: None, peers: None };\nlet v = serde_json::to_value(&view).unwrap();\nassert_eq!(v[\"standing\"], \"absent\");\nassert!(v.get(\"lease\").is_none() && v.get(\"peers\").is_none(), \"what there is not is not written\");\n```"
+                "description": "One checkout of the repository, and the server its lease names.\n\n```\nuse majordomus_cli::capability::builtin::server::{ServerStanding, ServerView};\nlet view = ServerView { worktree: \"/r\".into(), branch: Some(\"master\".into()), checkout_id: \"c\".into(),\n    primary: true, this_checkout: true, standing: ServerStanding::Absent, reason: None, lease: None, peers: None,\n    runtime: None };\nlet v = serde_json::to_value(&view).unwrap();\nassert_eq!(v[\"standing\"], \"absent\");\nassert!(v.get(\"lease\").is_none() && v.get(\"peers\").is_none(), \"what there is not is not written\");\n```"
+              },
+              "RuntimeState": {
+                "type": "object",
+                "properties": {
+                  "state": {
+                    "$ref": "#/$defs/ServerStanding",
+                    "description": "The state, derived on this reading from the lease, the server's readiness report (its\nmesh verdict included) and the last recorded transition."
+                  },
+                  "reason": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "Why, when the state is not `operational`."
+                  },
+                  "transition": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/RuntimeTransition"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "The last transition recorded under `RUNTIME_PATH`, when one ever was. The derived\nstate may be newer than it: only the writers named on `RuntimeWriter` record."
+                  }
+                },
+                "required": [
+                  "state"
+                ],
+                "description": "Where a checkout's runtime stands now, and the last transition recorded for it.\n\n```\nuse majordomus_cli::capability::builtin::server::{RuntimeState, ServerStanding};\nlet r = RuntimeState { state: ServerStanding::Operational, reason: None, transition: None };\nassert_eq!(serde_json::to_value(&r).unwrap(), serde_json::json!({ \"state\": \"operational\" }));\n```"
+              },
+              "RuntimeTransition": {
+                "type": "object",
+                "properties": {
+                  "schema": {
+                    "type": "string",
+                    "description": "`RUNTIME_SCHEMA`."
+                  },
+                  "state": {
+                    "$ref": "#/$defs/ServerStanding",
+                    "description": "What the runtime became."
+                  },
+                  "from": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/ServerStanding"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "What it was, by the previous record; absent for the first."
+                  },
+                  "at": {
+                    "type": "string",
+                    "description": "When, RFC 3339."
+                  },
+                  "reason": {
+                    "type": "string",
+                    "description": "Why, in the recorder's words."
+                  },
+                  "by": {
+                    "$ref": "#/$defs/RuntimeWriter",
+                    "description": "Who recorded it."
+                  },
+                  "pid": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "format": "uint32",
+                    "minimum": 0,
+                    "description": "The server process the transition is about, when there is one."
+                  }
+                },
+                "required": [
+                  "schema",
+                  "state",
+                  "at",
+                  "reason",
+                  "by"
+                ],
+                "description": "The last transition of a checkout's runtime: what it became, from what, when, why, who\nrecorded it and which process it is about. The record under `RUNTIME_PATH`.\n\n```\nuse majordomus_cli::capability::builtin::server::{RuntimeTransition, RuntimeWriter, ServerStanding};\nlet t = RuntimeTransition::new(ServerStanding::Ready, None, \"published\", RuntimeWriter::Server, Some(7));\nlet v = serde_json::to_value(&t).unwrap();\nassert_eq!(v[\"state\"], \"ready\");\nassert_eq!(v[\"by\"], \"server\");\nassert!(v.get(\"from\").is_none(), \"a first record came from nothing it can name\");\n```"
+              },
+              "RuntimeWriter": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "server",
+                    "description": "The serving process, about itself."
+                  },
+                  {
+                    "type": "string",
+                    "const": "serve_ensure",
+                    "description": "`serve ensure`, which found the lease stale."
+                  },
+                  {
+                    "type": "string",
+                    "const": "reap_orphans",
+                    "description": "`scripts/reap-orphans`, through `serve status` after its sweep."
+                  },
+                  {
+                    "type": "string",
+                    "const": "server_status",
+                    "description": "`server.status`, on any surface."
+                  }
+                ],
+                "description": "Who recorded a transition. Each state has its one kind of writer: the serving process\nrecords its own `starting`, `ready` and `stopping`, because only it knows them; a reader\nthat finds the server gone records `stopped` or `failed`, because a dead process records\nnothing.\n\n```\nuse majordomus_cli::capability::builtin::server::RuntimeWriter;\nassert_eq!(serde_json::to_value(RuntimeWriter::ServeEnsure).unwrap(), \"serve_ensure\");\nassert_eq!(RuntimeWriter::reader_named(Some(\"reap_orphans\")), RuntimeWriter::ReapOrphans);\nassert_eq!(RuntimeWriter::reader_named(Some(\"server\")), RuntimeWriter::ServerStatus);\nassert_eq!(RuntimeWriter::reader_named(None), RuntimeWriter::ServerStatus);\n```"
               },
               "ConnectionCounts": {
                 "type": "object",
@@ -90767,7 +92228,7 @@
         "title": "adr",
         "description": "Declarative objects of kind 'adr' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 167,
+        "capabilities": 168,
         "capability_ids": []
       },
       {
@@ -90822,6 +92283,18 @@
           "blackboard.snapshot"
         ],
         "source_path": "apps/majordomus-cli/src/capability/builtin/blackboard.rs"
+      },
+      {
+        "id": "board",
+        "title": "The delivery board",
+        "description": "The documents the delivery board reads, derived from the plan, the roadmap, the intents, the recorded pull request queue and the release currency, with the lanes share/board.yaml declares once. Every open milestone is in a lane or the snapshot refuses, naming it.",
+        "stability": "experimental",
+        "source": "builtin",
+        "capabilities": 1,
+        "capability_ids": [
+          "board.snapshot"
+        ],
+        "source_path": "apps/majordomus-cli/src/capability/builtin/board.rs"
       },
       {
         "id": "brief",
@@ -91025,10 +92498,13 @@
         "description": "The one declaration of how every surface of this tool looks — the semantic roles, the status vocabulary, the type scale, the theme contract — as this executable carries it: its fingerprint, its tokens, what any one of them means, and whether the colours it pairs are readable on one another. The stylesheets the site and the Cockpit load, the tokens the executable's own pages compile in, and the dataset the site's templates read are all projections of it; a page compares its `--mj-design` with this fingerprint to know whether it is wearing the design this executable was built with.",
         "stability": "behaviorally_verified",
         "source": "builtin",
-        "capabilities": 4,
+        "capabilities": 7,
         "capability_ids": [
           "design.contrast",
           "design.explain",
+          "design.kit",
+          "design.kit.adopt",
+          "design.licence",
           "design.system",
           "design.tokens"
         ],
@@ -91107,7 +92583,7 @@
         "title": "document",
         "description": "Declarative objects of kind 'document' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 353,
+        "capabilities": 354,
         "capability_ids": []
       },
       {
@@ -91332,7 +92808,7 @@
         "title": "implementation",
         "description": "Declarative objects of kind 'implementation' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 52,
+        "capabilities": 53,
         "capability_ids": []
       },
       {
@@ -91407,7 +92883,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 1156,
+        "capabilities": 1202,
         "capability_ids": []
       },
       {
@@ -91546,7 +93022,7 @@
         "title": "milestone",
         "description": "Declarative objects of kind 'milestone' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 114,
+        "capabilities": 116,
         "capability_ids": []
       },
       {
@@ -91913,7 +93389,7 @@
       {
         "id": "server",
         "title": "Server",
-        "description": "The shared server of this checkout and of every other checkout of the same git repository: what each lease says, whether the server it names answers, whether what answers is the code on disk at this executable's version, and how many peers each one holds.",
+        "description": "The shared server of this checkout and of every other checkout of the same git repository: what each lease says, whether the server it names answers, whether what answers is the code on disk at this executable's version, where each runtime stands and how it got there, and how many peers each one holds.",
         "stability": "behaviorally_verified",
         "source": "builtin",
         "capabilities": 1,
@@ -92005,7 +93481,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 672,
+        "capabilities": 677,
         "capability_ids": []
       },
       {
@@ -92097,7 +93573,7 @@
     ]
   },
   "index": {
-    "fingerprint": "f4e80a4c1809ccdcd3241cfd7f6f7ec516d66a600e926013ee5ed47171281bd3",
+    "fingerprint": "97d4d3e7f468caf4f0516187c49950d5d1ace126f963a342f2e03e37c0d8ebb4",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -92120,7 +93596,7 @@
       "workflows": ".ai/repo/workflows"
     },
     "by_kind": {
-      "adr": 167,
+      "adr": 168,
       "application": 5,
       "area": 9,
       "audience": 8,
@@ -92131,16 +93607,16 @@
       "deployment": 1,
       "derive-offload": 1,
       "distribution-model": 1,
-      "document": 353,
+      "document": 354,
       "domain": 6,
       "feature": 29,
       "gap": 5,
-      "implementation": 52,
+      "implementation": 53,
       "intent": 44,
-      "issue": 1156,
+      "issue": 1202,
       "knowledge": 90,
       "mesh-declaration": 1,
-      "milestone": 114,
+      "milestone": 116,
       "moment": 38,
       "policy": 1,
       "profile": 4,
@@ -92151,7 +93627,7 @@
       "session": 93,
       "skill": 8,
       "taxonomy": 10,
-      "test": 672,
+      "test": 677,
       "use-case": 49,
       "workspace": 1
     },
@@ -94864,6 +96340,22 @@
           "delivery",
           "pages",
           "plan"
+        ]
+      },
+      {
+        "uri": "majordomus://adr/adr-0230",
+        "kind": "adr",
+        "identity": "adr-0230",
+        "title": "Flowbite Pro is adapted onto Tailwind 4 and Flowbite 4, a brand's colour is the primary scale, and one capability judges every repository's interface against it",
+        "description": "Flowbite Pro is adapted onto Tailwind 4 and Flowbite 4, a brand's colour is the primary scale, and one capability judges every repository's interface against it",
+        "path": ".ai/repo/adrs/0230-flowbite-pro-is-adapted-onto-tailwind-4.md",
+        "section": "adrs",
+        "source_class": "adr",
+        "bytes": 13129,
+        "tags": [
+          "design",
+          "ui",
+          "enforcement"
         ]
       },
       {
@@ -99294,7 +100786,7 @@
         "title": "The design system — one declaration, every surface",
         "path": "docs/DESIGN_SYSTEM.md",
         "source_class": "document",
-        "bytes": 24816
+        "bytes": 32480
       },
       {
         "uri": "majordomus://document/docs/DEVELOPMENT_RUNTIME.md",
@@ -99528,7 +101020,7 @@
         "title": "MCP surface — `majordomus mcp`",
         "path": "docs/MCP.md",
         "source_class": "document",
-        "bytes": 81438
+        "bytes": 84095
       },
       {
         "uri": "majordomus://document/docs/MESH.md",
@@ -99565,6 +101057,15 @@
         "path": "docs/OFFLOAD.md",
         "source_class": "document",
         "bytes": 11917
+      },
+      {
+        "uri": "majordomus://document/docs/OWNER_PACKS.md",
+        "kind": "document",
+        "identity": "docs/OWNER_PACKS.md",
+        "title": "Working from the owner's packs",
+        "path": "docs/OWNER_PACKS.md",
+        "source_class": "document",
+        "bytes": 14839
       },
       {
         "uri": "majordomus://document/docs/PAGES_STATUS.md",
@@ -99609,7 +101110,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 125242
+        "bytes": 131178
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -99645,7 +101146,7 @@
         "title": "Documentation index",
         "path": "docs/README.md",
         "source_class": "document",
-        "bytes": 26348
+        "bytes": 26738
       },
       {
         "uri": "majordomus://document/docs/REASONING.md",
@@ -102380,7 +103881,7 @@
         "path": ".ai/repo/features/interfaces.md",
         "section": "features",
         "source_class": "feature",
-        "bytes": 3745,
+        "bytes": 3765,
         "tags": [
           "mcp",
           "http",
@@ -102464,7 +103965,7 @@
         "path": ".ai/repo/features/planning.md",
         "section": "features",
         "source_class": "feature",
-        "bytes": 3245,
+        "bytes": 3252,
         "tags": [
           "plan",
           "milestones",
@@ -102654,7 +104155,7 @@
         "identity": "bin/majordomus",
         "path": "bin/majordomus",
         "source_class": "entrypoint",
-        "bytes": 14344
+        "bytes": 15588
       },
       {
         "uri": "majordomus://implementation/bin/majordomus-cli",
@@ -102798,7 +104299,7 @@
         "identity": "lib/doctor.sh",
         "path": "lib/doctor.sh",
         "source_class": "library",
-        "bytes": 112757
+        "bytes": 112991
       },
       {
         "uri": "majordomus://implementation/lib/doctrine.sh",
@@ -102823,6 +104324,14 @@
         "path": "lib/finish.sh",
         "source_class": "library",
         "bytes": 17015
+      },
+      {
+        "uri": "majordomus://implementation/lib/fleet.sh",
+        "kind": "implementation",
+        "identity": "lib/fleet.sh",
+        "path": "lib/fleet.sh",
+        "source_class": "library",
+        "bytes": 32700
       },
       {
         "uri": "majordomus://implementation/lib/gates.sh",
@@ -102854,7 +104363,7 @@
         "identity": "lib/init.sh",
         "path": "lib/init.sh",
         "source_class": "library",
-        "bytes": 25501
+        "bytes": 25854
       },
       {
         "uri": "majordomus://implementation/lib/intent_binding.sh",
@@ -102918,7 +104427,7 @@
         "identity": "lib/migrate.sh",
         "path": "lib/migrate.sh",
         "source_class": "library",
-        "bytes": 17647
+        "bytes": 17915
       },
       {
         "uri": "majordomus://implementation/lib/plan.sh",
@@ -102982,7 +104491,7 @@
         "identity": "lib/rules.sh",
         "path": "lib/rules.sh",
         "source_class": "library",
-        "bytes": 32201
+        "bytes": 33842
       },
       {
         "uri": "majordomus://implementation/lib/rust_bin.sh",
@@ -103030,7 +104539,7 @@
         "identity": "lib/skills.sh",
         "path": "lib/skills.sh",
         "source_class": "library",
-        "bytes": 24136
+        "bytes": 27959
       },
       {
         "uri": "majordomus://implementation/lib/start.sh",
@@ -103046,7 +104555,7 @@
         "identity": "lib/update.sh",
         "path": "lib/update.sh",
         "source_class": "library",
-        "bytes": 13581
+        "bytes": 14547
       },
       {
         "uri": "majordomus://implementation/lib/usecase.sh",
@@ -103054,7 +104563,7 @@
         "identity": "lib/usecase.sh",
         "path": "lib/usecase.sh",
         "source_class": "library",
-        "bytes": 75068
+        "bytes": 75361
       },
       {
         "uri": "majordomus://implementation/lib/watch.sh",
@@ -105966,7 +107475,7 @@
         "path": ".ai/repo/project/issues/I1801.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2339
+        "bytes": 3136
       },
       {
         "uri": "majordomus://issue/I1802",
@@ -105999,7 +107508,7 @@
         "path": ".ai/repo/project/issues/I1804.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 1328
+        "bytes": 1840
       },
       {
         "uri": "majordomus://issue/I1900",
@@ -108925,7 +110434,7 @@
         "path": ".ai/repo/project/issues/I2902.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 1342
+        "bytes": 1713
       },
       {
         "uri": "majordomus://issue/I2903",
@@ -110410,7 +111919,7 @@
         "path": ".ai/repo/project/issues/I3155.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2345
+        "bytes": 2952
       },
       {
         "uri": "majordomus://issue/I3156",
@@ -110883,7 +112392,7 @@
         "path": ".ai/repo/project/issues/I3203.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 4116
+        "bytes": 4684
       },
       {
         "uri": "majordomus://issue/I3204",
@@ -111092,7 +112601,7 @@
         "path": ".ai/repo/project/issues/I3225.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 5400
+        "bytes": 5965
       },
       {
         "uri": "majordomus://issue/I3226",
@@ -111103,7 +112612,7 @@
         "path": ".ai/repo/project/issues/I3226.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 3809
+        "bytes": 4238
       },
       {
         "uri": "majordomus://issue/I3227",
@@ -111114,7 +112623,7 @@
         "path": ".ai/repo/project/issues/I3227.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2951
+        "bytes": 3726
       },
       {
         "uri": "majordomus://issue/I3228",
@@ -111378,7 +112887,7 @@
         "path": ".ai/repo/project/issues/I3252.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2322
+        "bytes": 3355
       },
       {
         "uri": "majordomus://issue/I3253",
@@ -111422,7 +112931,7 @@
         "path": ".ai/repo/project/issues/I3256.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 1742
+        "bytes": 2198
       },
       {
         "uri": "majordomus://issue/I3257",
@@ -111433,7 +112942,7 @@
         "path": ".ai/repo/project/issues/I3257.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 1525
+        "bytes": 2063
       },
       {
         "uri": "majordomus://issue/I3258",
@@ -111466,7 +112975,7 @@
         "path": ".ai/repo/project/issues/I3260.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2129
+        "bytes": 2565
       },
       {
         "uri": "majordomus://issue/I3261",
@@ -111884,7 +113393,7 @@
         "path": ".ai/repo/project/issues/I3304.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2320
+        "bytes": 2764
       },
       {
         "uri": "majordomus://issue/I3305",
@@ -114535,7 +116044,7 @@
         "path": ".ai/repo/project/issues/I3971.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 4105
+        "bytes": 5044
       },
       {
         "uri": "majordomus://issue/I3972",
@@ -114557,7 +116066,7 @@
         "path": ".ai/repo/project/issues/I3973.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 4152
+        "bytes": 4654
       },
       {
         "uri": "majordomus://issue/I3974",
@@ -115066,6 +116575,28 @@
         "bytes": 1645
       },
       {
+        "uri": "majordomus://issue/I4254",
+        "kind": "issue",
+        "identity": "I4254",
+        "title": "An adopter projects its plan to GitHub with the installed tool, not a clone of its source",
+        "description": "The release carries the projection as a command (for example `majordomus github plan|check|apply`), its network calls still outside lib/, and apply sets or derives the remote's default branch when refs/remotes/<remote>/HEAD is absent.",
+        "path": ".ai/repo/project/issues/I4254.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2007
+      },
+      {
+        "uri": "majordomus://issue/I4255",
+        "kind": "issue",
+        "identity": "I4255",
+        "title": "A project rule can be enforced by a command the repository names",
+        "description": "A project rule may declare a command (repository-relative, with arguments) as its validator; doctor runs or reconciles it like a dispatched doctrine, and `rules list` reports it enforced.",
+        "path": ".ai/repo/project/issues/I4255.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2138
+      },
+      {
         "uri": "majordomus://issue/I4256",
         "kind": "issue",
         "identity": "I4256",
@@ -115099,6 +116630,28 @@
         "bytes": 1391
       },
       {
+        "uri": "majordomus://issue/I4259",
+        "kind": "issue",
+        "identity": "I4259",
+        "title": "A document's own metadata and a folded YAML scalar are diagnosed, not just refused",
+        "description": "document/v1 accepts an `x-` namespace for adopter keys; a folded or multi-line scalar is refused with a message that says so and shows the one-line form.",
+        "path": ".ai/repo/project/issues/I4259.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1860
+      },
+      {
+        "uri": "majordomus://issue/I4260",
+        "kind": "issue",
+        "identity": "I4260",
+        "title": "A task's scope can be widened, with the widening recorded",
+        "description": "`majordomus scope add <path>...` widens the active task's scope and appends a ledger line naming who widened it and why.",
+        "path": ".ai/repo/project/issues/I4260.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1408
+      },
+      {
         "uri": "majordomus://issue/I4261",
         "kind": "issue",
         "identity": "I4261",
@@ -115108,6 +116661,28 @@
         "section": "project",
         "source_class": "issue",
         "bytes": 1925
+      },
+      {
+        "uri": "majordomus://issue/I4262",
+        "kind": "issue",
+        "identity": "I4262",
+        "title": "An adopter gets the commit-message guard the projection's rules assume",
+        "description": "init offers a commit-msg line whose policy (issue id required, tracker key pattern, closing keywords refused, branch naming) is declared in the adopter's policy.",
+        "path": ".ai/repo/project/issues/I4262.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1767
+      },
+      {
+        "uri": "majordomus://issue/I4263",
+        "kind": "issue",
+        "identity": "I4263",
+        "title": "An adopter's README and wiki show the plan, rules and knowledge from the layer, regenerated",
+        "description": "A projection may target any Markdown file in mode region with a named generator (plan-status, rules, knowledge, adrs, skills), checked by doctor like the provider projections.",
+        "path": ".ai/repo/project/issues/I4263.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1607
       },
       {
         "uri": "majordomus://issue/I4264",
@@ -115130,6 +116705,28 @@
         "section": "project",
         "source_class": "issue",
         "bytes": 2312
+      },
+      {
+        "uri": "majordomus://issue/I4266",
+        "kind": "issue",
+        "identity": "I4266",
+        "title": "plan says why an issue with no dependency is BLOCKED by its milestone",
+        "description": "plan show and plan blocked name the milestone dependency that blocks an issue.",
+        "path": ".ai/repo/project/issues/I4266.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1302
+      },
+      {
+        "uri": "majordomus://issue/I4267",
+        "kind": "issue",
+        "identity": "I4267",
+        "title": "A repository's static site is a deployment the layer can state",
+        "description": "deployment/v1 accepts a static kind (build command, output directory, publish target, visibility) that doctor validates and the site pipeline reads.",
+        "path": ".ai/repo/project/issues/I4267.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1714
       },
       {
         "uri": "majordomus://issue/I4268",
@@ -115174,6 +116771,17 @@
         "section": "project",
         "source_class": "issue",
         "bytes": 3369
+      },
+      {
+        "uri": "majordomus://issue/I4294",
+        "kind": "issue",
+        "identity": "I4294",
+        "title": "The delivery board's documents are derived by one capability, and every open milestone has a lane",
+        "description": "board.snapshot composes the documents the delivery board reads (meta, milestones, intents, prs and issues-<lane>) from the plan, the roadmap, the intents, the recorded pull request queue and the release currency, with the lanes declared once in share/board.yaml. It answers a digest over the documents that leaves out meta.syncedAt and meta.syncedBy, keeps every document under 250000 bytes by splitting a lane into issues-<lane>-2 and onwards, refuses an open milestone that is in no lane, and is projected as the MCP tool majordomus_board_snapshot, GET /api/v1/board/snapshot and majordomus board snapshot.",
+        "path": ".ai/repo/project/issues/I4294.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3840
       },
       {
         "uri": "majordomus://issue/I4296",
@@ -115581,6 +117189,28 @@
         "section": "project",
         "source_class": "issue",
         "bytes": 7434
+      },
+      {
+        "uri": "majordomus://issue/I4334",
+        "kind": "issue",
+        "identity": "I4334",
+        "title": "The UI kit is checked by one capability: design kit judges a repository's interface against the Flowbite Pro profile, and design kit adopt declares it",
+        "description": "A typed, read-only capability design.kit (CLI majordomus design kit [--check] [--repo PATH], MCP majordomus_design_kit; no HTTP route, as its evidence input names a file the process opens) judges a repository's tree against the kit profile share/design/kits/flowbite-pro.yaml, which holds markers only and no Pro source: S0 has a UI, S1 the flowbite (or flowbite-react) dependency, S2 the Tailwind 4 @plugin and @source or the Tailwind 3 config with no Play CDN or CDN-only Flowbite, S3 Flowbite JS behind every data-drawer, dropdown, modal, tabs, collapse and tooltip attribute with no re-implementation, S4 no other kit with Alpine reported, S5 the Pro shell on every root layout. Each finding is {signal, path, evidence, remedy}; the policy side is the ui block I4336 declares, ui.kit naming the profile and ui.exempt holding exemptions of exactly {path, because}, and the exit is 0 when clean or without a UI, 10 for a finding under --check and 2 for a bad policy. design kit adopt flowbite-pro writes the rule project.ui-uses-flowbite-pro from share/design/kits/flowbite-pro.rule.md, ui.kit and the design-kit and design-kit-on-push enforcement entries, idempotently.",
+        "path": ".ai/repo/project/issues/I4334.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 7230
+      },
+      {
+        "uri": "majordomus://issue/I4336",
+        "kind": "issue",
+        "identity": "I4336",
+        "title": "Every adopter the owner's fleet pack applies to receives its kit, rules and skills, and no licensed source reaches a public tree",
+        "description": "Where the owner holds a kit licence, every repository Majordomus supervises that the owner's fleet pack applies to receives the pack's kit profile, rules and skills through init, migrate, rules vendor update and update, kept current; a never-publish gate refuses a licensed source file in a public tree or a committed bundle; public CI judges both never-publish and kit use from a licence-evidence secret and fails closed without it. The product names no real kit.",
+        "path": ".ai/repo/project/issues/I4336.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 6421
       },
       {
         "uri": "majordomus://issue/I4337",
@@ -116243,6 +117873,358 @@
         "bytes": 4742
       },
       {
+        "uri": "majordomus://issue/I4480",
+        "kind": "issue",
+        "identity": "I4480",
+        "title": "An execution accepted before a restart is answered after it as an unknown outcome, never as absent",
+        "description": "Put a bounded journal behind the execution store so that the executions a server accepted, with their events, are still answered after the server stops and starts, and one that had not finished reads the final UnknownOutcome state I4001 adds.",
+        "path": ".ai/repo/project/issues/I4480.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 5132
+      },
+      {
+        "uri": "majordomus://issue/I4481",
+        "kind": "issue",
+        "identity": "I4481",
+        "title": "The policy names the highest effect each transport may cause, and a capability above it is refused the same way everywhere",
+        "description": "Add one policy key that states, per transport, the highest declared effect a call may cause, and enforce it in the one dispatcher every transport already goes through, so that a capability above the ceiling is refused with one typed error before its handler runs.",
+        "path": ".ai/repo/project/issues/I4481.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 4932
+      },
+      {
+        "uri": "majordomus://issue/I4482",
+        "kind": "issue",
+        "identity": "I4482",
+        "title": "The sentence-to-verdict case continues to a deployment: satisfied only after a successful observation, never after a failed one, and across a restart",
+        "description": "Write one test case that, in a fresh disposable repository, carries an intent with a deployment criterion through its plan and its evidence, restarts the server in the middle, feeds a fixture served observation, and asserts at each step what every surface reads, ending satisfied only after the successful deployment is observed.",
+        "path": ".ai/repo/project/issues/I4482.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 4719
+      },
+      {
+        "uri": "majordomus://issue/I4483",
+        "kind": "issue",
+        "identity": "I4483",
+        "title": "An execution opens on the UI: its state, steps, log and outcome at an address of its own",
+        "description": "Give one execution a page on the primary surface: the Command screen's execution rows lead to an inspector that shows what the execution engine holds about that execution, read from executions.get and executions.events, so that a person follows work on /ui without leaving for the Cockpit.",
+        "path": ".ai/repo/project/issues/I4483.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 4953
+      },
+      {
+        "uri": "majordomus://issue/I4484",
+        "kind": "issue",
+        "identity": "I4484",
+        "title": "An intent opens its gap and its critique where it is read",
+        "description": "Complete the UI's intent inspector with the two things the intent model holds and no screen shows: the recorded gap with its observations and the recorded critique with its findings, each read from a capability's answer. The realisation is shown already (I2789).",
+        "path": ".ai/repo/project/issues/I4484.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 5095
+      },
+      {
+        "uri": "majordomus://issue/I4485",
+        "kind": "issue",
+        "identity": "I4485",
+        "title": "An issue opens what realised it: its branches and their commits, from the trace",
+        "description": "Show on the UI's issue inspector the branches that name the issue and the commits each holds, read from trace.issue, so that the chain a reader follows from an intent to a criterion to an issue continues to the work in git.",
+        "path": ".ai/repo/project/issues/I4485.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 4456
+      },
+      {
+        "uri": "majordomus://issue/I4486",
+        "kind": "issue",
+        "identity": "I4486",
+        "title": "A program is run by one typed capability: an executable and an argument list, a bound and a process group, and never a command string",
+        "description": "Add one capability that runs an external program from a typed specification (the executable by name, an argument list, a working directory inside the repository, an environment delta, what standard input is, and a deadline), kills the whole process group when the deadline passes or the execution is cancelled, and reports exit status and bounded, redacted output as execution events.",
+        "path": ".ai/repo/project/issues/I4486.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 5365
+      },
+      {
+        "uri": "majordomus://issue/I4487",
+        "kind": "issue",
+        "identity": "I4487",
+        "title": "A hand-written recipe is one call: the eight recipe bodies the inventory describes as shell leave .just, and a recipe that grows a second line fails a gate",
+        "description": "Reduce every recipe written by hand in justfile and .just/*.just to a single invocation of a program with its arguments forwarded positionally, move the logic of the eight recipes that carry more into the command or script they belong to, and hold the property with a check over just's own JSON dump.",
+        "path": ".ai/repo/project/issues/I4487.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 4944
+      },
+      {
+        "uri": "majordomus://issue/I4488",
+        "kind": "issue",
+        "identity": "I4488",
+        "title": "A behavioural case may be a Rust test: it counts in the suite report, a removed shell case names what replaced it, and the number of shell cases does not rise",
+        "description": "Give the suite a second kind of case, a Rust integration test declared as a behavioural case, that appears in the report test/run.sh writes; add a tracked mapping from each removed shell case to the tests that carry its assertions; and refuse a head whose count of shell cases is above its base.",
+        "path": ".ai/repo/project/issues/I4488.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 4656
+      },
+      {
+        "uri": "majordomus://issue/I4489",
+        "kind": "issue",
+        "identity": "I4489",
+        "title": "Ten cases whose subject is the Rust executable alone are Rust tests, each removed with its mapping row",
+        "description": "Port ten shell cases that drive only the Rust executable to Rust integration tests declared as cases, run old and new side by side once, and delete each shell file with a mapping row that lists the assertions that moved.",
+        "path": ".ai/repo/project/issues/I4489.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 4144
+      },
+      {
+        "uri": "majordomus://issue/I4490",
+        "kind": "issue",
+        "identity": "I4490",
+        "title": "The lifecycle units leave lib: start, checkpoint, handover, evidence, finish and session are routed to their capabilities and their shell is deleted",
+        "description": "Once the lifecycle transitions are capabilities, route bin/majordomus start, checkpoint, handover, evidence, finish and session to the executable with the same names, arguments, output and exit codes, and delete lib/start.sh, lib/checkpoint.sh, lib/handover.sh, lib/evidence.sh, lib/finish.sh and lib/session.sh together with their inventory records.",
+        "path": ".ai/repo/project/issues/I4490.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 4775
+      },
+      {
+        "uri": "majordomus://issue/I4491",
+        "kind": "issue",
+        "identity": "I4491",
+        "title": "Embedded shell is judged, not described: a sh -c spawn in Rust, a multi-line workflow step and a record whose anchor is gone are findings of shell check",
+        "description": "Extend shell check from shell files to shell embedded in other files: find every spawn of sh, bash or zsh with -c in the crate's Rust sources and every run step of a GitHub workflow that is more than one command, require an inventory record with an anchor for each, and refuse a record whose anchor the file no longer contains.",
+        "path": ".ai/repo/project/issues/I4491.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 4710
+      },
+      {
+        "uri": "majordomus://issue/I4492",
+        "kind": "issue",
+        "identity": "I4492",
+        "title": "An exemption for shell that is to be migrated names the issue that removes it, and the number that name none does not rise",
+        "description": "Add an optional issue field to an exemption, have shell check verify that it names an issue of the plan, report how many exemptions of disposition A, B and D carry none, and refuse a head with more of them than its base.",
+        "path": ".ai/repo/project/issues/I4492.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 4110
+      },
+      {
+        "uri": "majordomus://issue/I4493",
+        "kind": "issue",
+        "identity": "I4493",
+        "title": "A screen answers a conditional request: its validator is derived from its readings, and an unchanged screen is a 304 that renders nothing",
+        "description": "Give every screen and panel of majordomus ui an ETag derived from the readings it was drawn from, and answer a request whose If-None-Match names it with 304 Not Modified before the screen is rendered.",
+        "path": ".ai/repo/project/issues/I4493.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 4333
+      },
+      {
+        "uri": "majordomus://issue/I4494",
+        "kind": "issue",
+        "identity": "I4494",
+        "title": "A graph draws a bounded neighbourhood: no page hands the browser more nodes than a stated bound, and the rest is reached through the URL",
+        "description": "Bound what every relationship graph of the UI hands the browser, say how much it left out, and let a reader move the neighbourhood with the URL instead of receiving the whole graph.",
+        "path": ".ai/repo/project/issues/I4494.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3353
+      },
+      {
+        "uri": "majordomus://issue/I4495",
+        "kind": "issue",
+        "identity": "I4495",
+        "title": "The issue list is read a page at a time, and the page is in the URL",
+        "description": "Draw the issues screen a bounded page at a time, with the page in the query string beside the filters, so the size of the response does not grow with the plan.",
+        "path": ".ai/repo/project/issues/I4495.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2894
+      },
+      {
+        "uri": "majordomus://issue/I4496",
+        "kind": "issue",
+        "identity": "I4496",
+        "title": "perf.readings lists every remembered reading with its age, standing, cost and the reason it was last read",
+        "description": "Make the readings store answerable: one read capability lists every remembered reading with its age, standing, cost and why it was last read again. The Server-Timing half of the brief is I3226's.",
+        "path": ".ai/repo/project/issues/I4496.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3242
+      },
+      {
+        "uri": "majordomus://issue/I4497",
+        "kind": "issue",
+        "identity": "I4497",
+        "title": "A move of the repository reads again only the sources that read what moved",
+        "description": "Measure how many handler runs a move of the repository causes in the readings store and how many of them answer what they answered before, then let a source that reads nothing that moved keep its reading as current.",
+        "path": ".ai/repo/project/issues/I4497.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 4237
+      },
+      {
+        "uri": "majordomus://issue/I4498",
+        "kind": "issue",
+        "identity": "I4498",
+        "title": "The bench reads a screen from 1, 20 and 100 readers at once, and a hundred readers of an unread source run its handler once",
+        "description": "Give the bench a concurrency dimension for the UI's targets and record the result as a tracked baseline, and prove that a hundred simultaneous readers of a source never read before cause one handler run.",
+        "path": ".ai/repo/project/issues/I4498.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3708
+      },
+      {
+        "uri": "majordomus://issue/I4499",
+        "kind": "issue",
+        "identity": "I4499",
+        "title": "The Cockpit's pages ask for readings: no page of the technical layer computes on the request",
+        "description": "Move the Cockpit's pages from ctx.execute to the readings the UI already uses, so that a Cockpit page shows the latest reading with its standing and no handler runs on the path of a page request.",
+        "path": ".ai/repo/project/issues/I4499.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3922
+      },
+      {
+        "uri": "majordomus://issue/I4500",
+        "kind": "issue",
+        "identity": "I4500",
+        "title": "A profile is traced from its file to finish: every link marked proven, advisory, duplicated or missing, and the resolver's owner decided in a record",
+        "description": "Write the audit the rest of the milestone is built on: one table that follows a profile from its YAML file through validation, the task record, the context, check, finish and every Rust reader, marking each link; a baseline of what reading and resolving a profile costs today; and a decision record that names the owner of the resolver, what an effective profile is, how its schema changes and where a profile's word ends and enforcement begins.",
+        "path": ".ai/repo/project/issues/I4500.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 5040
+      },
+      {
+        "uri": "majordomus://issue/I4501",
+        "kind": "issue",
+        "identity": "I4501",
+        "title": "A profile is a typed object: one Rust definition parses, validates and lists the profiles, and profile.list, profile.show and profile.validate answer everywhere",
+        "description": "Add the typed definition of a profile to the Rust executable and declare the three capabilities that read definitions, so that the command line, HTTP, OpenAPI and MCP list, show and validate profiles from one type.",
+        "path": ".ai/repo/project/issues/I4501.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 4312
+      },
+      {
+        "uri": "majordomus://issue/I4502",
+        "kind": "issue",
+        "identity": "I4502",
+        "title": "An effective profile is resolved by one function: every field with its source and reason, one fingerprint, the same answer in any order",
+        "description": "Add the resolver: one pure function from the policy, the definitions and what is asked about (a named profile, the active task, an issue) to an effective profile whose every field carries where it came from and why, with a fingerprint over its inputs, and declare profile.resolve and profile.explain over it.",
+        "path": ".ai/repo/project/issues/I4502.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 5307
+      },
+      {
+        "uri": "majordomus://issue/I4503",
+        "kind": "issue",
+        "identity": "I4503",
+        "title": "The lifecycle reads the resolver: start, check --explain, context, finish and doctor take a profile from one answer, and no shell function reads a profile's keys",
+        "description": "Make the shell lifecycle a consumer of the resolver: each command that reads a profile today asks profile.resolve and acts on its answer, mj_load_profile is removed, and the regression-test predicate exists once.",
+        "path": ".ai/repo/project/issues/I4503.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 4325
+      },
+      {
+        "uri": "majordomus://issue/I4504",
+        "kind": "issue",
+        "identity": "I4504",
+        "title": "A task carries the fingerprint it was started with, and check says when the profile under it has moved",
+        "description": "Record the effective profile's fingerprint and definition digest on the task when it starts, carry them into the ledger, the handover and the closed session, and have check report a task whose resolution today differs from the one it started with.",
+        "path": ".ai/repo/project/issues/I4504.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 4071
+      },
+      {
+        "uri": "majordomus://issue/I4505",
+        "kind": "issue",
+        "identity": "I4505",
+        "title": "A profile says which effects it grants, and one preset, review, grants reading only",
+        "description": "Add one optional axis to the profile, the capability effects a task under it may cause, with absence meaning everything that is granted today, and ship one new profile, review, that grants reading only.",
+        "path": ".ai/repo/project/issues/I4505.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 4284
+      },
+      {
+        "uri": "majordomus://issue/I4506",
+        "kind": "issue",
+        "identity": "I4506",
+        "title": "The executor refuses what the task's profile does not grant: a typed refusal on every transport, and an event in the ledger",
+        "description": "Enforce the granted effects at the one place every transport passes: before a capability's handler runs, the executor compares its declared effect with the effects the active task's effective profile grants, and refuses with a typed error and a ledger event when it is not among them.",
+        "path": ".ai/repo/project/issues/I4506.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 5038
+      },
+      {
+        "uri": "majordomus://issue/I4507",
+        "kind": "issue",
+        "identity": "I4507",
+        "title": "Every axis says how far it is enforced: enforced, observed, requested or unobservable, declared once and shown wherever a profile is",
+        "description": "Declare, beside each axis of the typed profile, how far the tool enforces it, show that standing in every answer of the resolver, and hold each stronger standing to a test that proves it.",
+        "path": ".ai/repo/project/issues/I4507.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3894
+      },
+      {
+        "uri": "majordomus://issue/I4508",
+        "kind": "issue",
+        "identity": "I4508",
+        "title": "Governance shows the profiles: each one's axes and standing, the effective profile of the active task with where every field came from, and what another profile would change",
+        "description": "Give majordomus ui a view of the profile system drawn from the resolver: the list of profiles, an inspector for one, the effective profile of the active task with its provenance and standing, and the structured difference a candidate profile would make.",
+        "path": ".ai/repo/project/issues/I4508.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 4679
+      },
+      {
+        "uri": "majordomus://issue/I4509",
+        "kind": "issue",
+        "identity": "I4509",
+        "title": "A task's profile is changed by one declared command that names the fingerprint it expects",
+        "description": "Declare the one operation that changes the profile of the active task: it takes the new profile and the fingerprint the caller last saw, refuses when the task has moved on, rewrites the task record and appends a ledger event, and is the same operation that accepts a re-resolution in I4504.",
+        "path": ".ai/repo/project/issues/I4509.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 4114
+      },
+      {
+        "uri": "majordomus://issue/I4510",
+        "kind": "issue",
+        "identity": "I4510",
+        "title": "One profile, one answer everywhere: a gate adds a profile to a fixture and reads the same fingerprint from the command line, HTTP, MCP and the UI",
+        "description": "Hold the milestone's central property with a gate rather than with each issue's own tests: a case that adds a profile to a fixture and changes no other file, then reads its definition and its resolution from every surface and compares them, and a rule that names the case as its proof.",
+        "path": ".ai/repo/project/issues/I4510.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3939
+      },
+      {
+        "uri": "majordomus://issue/I4511",
+        "kind": "issue",
+        "identity": "I4511",
+        "title": "The profile system is documented where a reader looks, its claims say what is now enforced, and one real task is delivered under it",
+        "description": "Close the milestone in the open: the guide, the concepts page, the profiles directory's own README and the claims state the system as built, the profile table of docs/PROFILES.md shows the granted effects, and one bounded task of this repository is run under review and under implementation with the recorded difference as evidence.",
+        "path": ".ai/repo/project/issues/I4511.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 4299
+      },
+      {
         "uri": "majordomus://issue/I4512",
         "kind": "issue",
         "identity": "I4512",
@@ -116254,6 +118236,17 @@
         "bytes": 4563
       },
       {
+        "uri": "majordomus://issue/I4513",
+        "kind": "issue",
+        "identity": "I4513",
+        "title": "The pre-commit pages gate judges a staged merge as scripts/derive writes it, with both parents",
+        "description": "Make scripts/pages current and majordomus generate --check, as the pre-commit hook runs them, compute a staged merge's derived data from the same history scripts/derive uses since I3963 (a scratch commit with both parents), so a merge derived once commits in one go.",
+        "path": ".ai/repo/project/issues/I4513.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3296
+      },
+      {
         "uri": "majordomus://issue/I4522",
         "kind": "issue",
         "identity": "I4522",
@@ -116263,6 +118256,28 @@
         "section": "project",
         "source_class": "issue",
         "bytes": 10629
+      },
+      {
+        "uri": "majordomus://issue/I4523",
+        "kind": "issue",
+        "identity": "I4523",
+        "title": "The lander judges the candidate it would merge even when the forge cannot list every open pull request",
+        "description": "When the forge cannot answer the whole open list with its rollups, `majordomus prs drain` still judges the one candidate it would land: a pull request named by a new `--pr N`, or else the newest open `integration/train-*` head found by an open list that asks no rollup (number, head, labels, draft). That candidate is read by number, alone, with its whole rollup and its own cross-references (DECLARATIONS_OF_QUERY). It is decided by the same rules, observed again and landed by the same fast-forward as on a whole observation. The queue view it leaves behind says it is partial, with the read that failed, instead of the drain refusing everything. When even the candidate cannot be read, the refusal names each read that failed (the full list, the paged list, the candidate) with the forge's own words.",
+        "path": ".ai/repo/project/issues/I4523.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 7959
+      },
+      {
+        "uri": "majordomus://issue/I4524",
+        "kind": "issue",
+        "identity": "I4524",
+        "title": "Telemetry does not run for a validate run that was cancelled",
+        "description": "The export job of .github/workflows/telemetry.yml carries `if: github.event.workflow_run.conclusion != 'cancelled'`. A validate run that was cancelled then starts no telemetry job and takes no hosted runner slot: the workflow run is recorded as skipped and no runner is assigned. The model .ai/repo/ci/telemetry.yaml declares the same condition (trigger.skip_conclusions: [cancelled]), and the workflow stays its adapter. Case 4524 reads the workflow and the model and fails when the job has no such condition or when the two disagree. docs/CI.md, section Telemetry, says a cancelled run is not exported, and why.",
+        "path": ".ai/repo/project/issues/I4524.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 4525
       },
       {
         "uri": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
@@ -117811,6 +119826,17 @@
         "bytes": 7597
       },
       {
+        "uri": "majordomus://milestone/a-profile-is-resolved-once-and-enforced",
+        "kind": "milestone",
+        "identity": "a-profile-is-resolved-once-and-enforced",
+        "title": "A profile is resolved once, explains every field, and refuses at the executor what it does not grant",
+        "description": "One typed resolver in the Rust executable turns the policy, a profile definition and the task, issue and intent it is asked about into an effective profile with a source and a reason for every field and a fingerprint. The command line, HTTP, MCP and a screen of majordomus ui read that one answer; the shell lifecycle reads it too; a task record carries its fingerprint; every axis says how far it is enforced; and a capability that changes the repository is refused at the executor under a profile that does not grant it.",
+        "path": ".ai/repo/project/milestones/a-profile-is-resolved-once-and-enforced.yaml",
+        "section": "project",
+        "source_class": "milestone",
+        "bytes": 7445
+      },
+      {
         "uri": "majordomus://milestone/a-promoted-record-opens-its-message",
         "kind": "milestone",
         "identity": "a-promoted-record-opens-its-message",
@@ -117875,6 +119901,17 @@
         "section": "project",
         "source_class": "milestone",
         "bytes": 7327
+      },
+      {
+        "uri": "majordomus://milestone/a-screen-is-fast-bounded-and-says-why",
+        "kind": "milestone",
+        "identity": "a-screen-is-fast-bounded-and-says-why",
+        "title": "A screen is fast, bounded and able to say why: what the UI speed brief still asks for after the readings",
+        "description": "Every screen of majordomus ui answers a conditional request without rendering, draws no more rows or nodes than a stated bound, and explains each of its readings over a capability. A move of the repository reads again only the sources that read what moved, the bench measures 1, 20 and 100 readers at once, and the Cockpit's pages are drawn from readings as the UI's are.",
+        "path": ".ai/repo/project/milestones/a-screen-is-fast-bounded-and-says-why.yaml",
+        "section": "project",
+        "source_class": "milestone",
+        "bytes": 5987
       },
       {
         "uri": "majordomus://milestone/a-second-adopter-is-served",
@@ -126905,7 +128942,7 @@
         "identity": "test/cases/340_a_brief_is_kept_as_received.sh",
         "path": "test/cases/340_a_brief_is_kept_as_received.sh",
         "source_class": "case",
-        "bytes": 19622
+        "bytes": 23377
       },
       {
         "uri": "majordomus://test/test/cases/341_a_claim_shows_the_test_that_settles_it.sh",
@@ -127764,6 +129801,38 @@
         "bytes": 3613
       },
       {
+        "uri": "majordomus://test/test/cases/4224_a_licensed_source_never_reaches_a_public_tree.sh",
+        "kind": "test",
+        "identity": "test/cases/4224_a_licensed_source_never_reaches_a_public_tree.sh",
+        "path": "test/cases/4224_a_licensed_source_never_reaches_a_public_tree.sh",
+        "source_class": "case",
+        "bytes": 13119
+      },
+      {
+        "uri": "majordomus://test/test/cases/4225_the_fleet_pack_installs_only_what_it_lists.sh",
+        "kind": "test",
+        "identity": "test/cases/4225_the_fleet_pack_installs_only_what_it_lists.sh",
+        "path": "test/cases/4225_the_fleet_pack_installs_only_what_it_lists.sh",
+        "source_class": "case",
+        "bytes": 12554
+      },
+      {
+        "uri": "majordomus://test/test/cases/4226_ci_judges_from_the_kit_evidence_secret.sh",
+        "kind": "test",
+        "identity": "test/cases/4226_ci_judges_from_the_kit_evidence_secret.sh",
+        "path": "test/cases/4226_ci_judges_from_the_kit_evidence_secret.sh",
+        "source_class": "case",
+        "bytes": 10097
+      },
+      {
+        "uri": "majordomus://test/test/cases/4227_a_fleet_skill_is_proved_by_its_pack.sh",
+        "kind": "test",
+        "identity": "test/cases/4227_a_fleet_skill_is_proved_by_its_pack.sh",
+        "path": "test/cases/4227_a_fleet_skill_is_proved_by_its_pack.sh",
+        "source_class": "case",
+        "bytes": 10082
+      },
+      {
         "uri": "majordomus://test/test/cases/4232_a_core_build_keeps_its_own_rlib.sh",
         "kind": "test",
         "identity": "test/cases/4232_a_core_build_keeps_its_own_rlib.sh",
@@ -127874,6 +129943,14 @@
         "path": "test/cases/431_economics_claims_gated.sh",
         "source_class": "case",
         "bytes": 7105
+      },
+      {
+        "uri": "majordomus://test/test/cases/4334_the_ui_kit_is_checked_by_one_capability.sh",
+        "kind": "test",
+        "identity": "test/cases/4334_the_ui_kit_is_checked_by_one_capability.sh",
+        "path": "test/cases/4334_the_ui_kit_is_checked_by_one_capability.sh",
+        "source_class": "case",
+        "bytes": 27912
       },
       {
         "uri": "majordomus://test/test/cases/4337_a_changed_skill_raises_its_version.sh",
@@ -130299,7 +132376,7 @@
       "identity": [
         "id"
       ],
-      "objects": 167
+      "objects": 168
     },
     {
       "name": "application",
@@ -130405,7 +132482,7 @@
       "front_matter": "optional",
       "schema": "majordomus.document/v1",
       "identity": [],
-      "objects": 353
+      "objects": 354
     },
     {
       "name": "domain",
@@ -130442,7 +132519,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 52
+      "objects": 53
     },
     {
       "name": "intent",
@@ -130462,7 +132539,7 @@
       "identity": [
         "id"
       ],
-      "objects": 1156
+      "objects": 1202
     },
     {
       "name": "knowledge",
@@ -130492,7 +132569,7 @@
       "identity": [
         "id"
       ],
-      "objects": 114
+      "objects": 116
     },
     {
       "name": "moment",
@@ -130624,7 +132701,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 672
+      "objects": 677
     },
     {
       "name": "use-case",
@@ -162170,6 +164247,552 @@
       {
         "path": [
           "majordomus",
+          "design"
+        ],
+        "route": "/docs/cli/design/",
+        "executable": false,
+        "usage": "majordomus design [OPTIONS] <COMMAND>",
+        "about": "The repository's user interface against its UI kit: `kit` judges it against a kit profile of the distribution signal by signal (dependency, Tailwind plugin and source, the kit's JavaScript, no other kit, the shell on every root layout) and `kit adopt` declares the profile; `licence` judges whether a public tree holds a licensed kit's files, from kit-evidence/v1 fingerprints",
+        "args": [
+          {
+            "name": "repo",
+            "long": "repo",
+            "positional": false,
+            "help": "Start the search for the repository root here (default: the current directory)",
+            "value_name": "PATH",
+            "takes_value": true,
+            "required": false,
+            "global": true,
+            "possible_values": [],
+            "defaults": []
+          },
+          {
+            "name": "discovery",
+            "long": "discovery",
+            "positional": false,
+            "help": "How declarative files are enumerated",
+            "value_name": "DISCOVERY",
+            "takes_value": true,
+            "required": false,
+            "global": true,
+            "possible_values": [
+              {
+                "name": "vcs",
+                "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
+              },
+              {
+                "name": "filesystem",
+                "help": "A walk of the work tree with the same glob semantics; untracked files included"
+              }
+            ],
+            "defaults": [
+              "vcs"
+            ]
+          },
+          {
+            "name": "strict",
+            "long": "strict",
+            "positional": false,
+            "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+            "value_name": "STRICT",
+            "takes_value": false,
+            "required": false,
+            "global": true,
+            "possible_values": [],
+            "defaults": [
+              "false"
+            ]
+          },
+          {
+            "name": "share",
+            "long": "share",
+            "positional": false,
+            "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+            "value_name": "DIR",
+            "takes_value": true,
+            "required": false,
+            "global": true,
+            "possible_values": [],
+            "defaults": []
+          },
+          {
+            "name": "format",
+            "long": "format",
+            "positional": false,
+            "help": "Output shape",
+            "value_name": "FORMAT",
+            "takes_value": true,
+            "required": false,
+            "global": true,
+            "possible_values": [
+              {
+                "name": "text",
+                "help": "Lines for a person"
+              },
+              {
+                "name": "json",
+                "help": "One JSON document, deterministic"
+              }
+            ],
+            "defaults": [
+              "text"
+            ]
+          }
+        ],
+        "examples": [],
+        "subcommands": [
+          {
+            "path": [
+              "majordomus",
+              "design",
+              "kit"
+            ],
+            "route": "/docs/cli/design/kit/",
+            "executable": true,
+            "usage": "majordomus design kit [OPTIONS] [COMMAND]",
+            "about": "Whether the interface is built on the kit: every finding with its signal, path, evidence and remedy; exit 0 when clean or when there is no interface, 10 on a finding under --check, 2 for a policy that cannot be read",
+            "args": [
+              {
+                "name": "check",
+                "long": "check",
+                "positional": false,
+                "help": "Exit 10 when a finding stands, so CI and the pre-push hook refuse it",
+                "value_name": "CHECK",
+                "takes_value": false,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": [
+                  "false"
+                ]
+              },
+              {
+                "name": "evidence",
+                "long": "evidence",
+                "positional": false,
+                "help": "The kit-evidence/v1 file the design licence judges a licensed marker by (in CI the launcher decodes an exported `MAJORDOMUS_KIT_EVIDENCE_<KIT>` into a private file and passes it here); absent reads the policy's ui.evidence entries under $HOME",
+                "value_name": "FILE",
+                "takes_value": true,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "repo",
+                "long": "repo",
+                "positional": false,
+                "help": "Start the search for the repository root here (default: the current directory)",
+                "value_name": "PATH",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "discovery",
+                "long": "discovery",
+                "positional": false,
+                "help": "How declarative files are enumerated",
+                "value_name": "DISCOVERY",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "vcs",
+                    "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
+                  },
+                  {
+                    "name": "filesystem",
+                    "help": "A walk of the work tree with the same glob semantics; untracked files included"
+                  }
+                ],
+                "defaults": [
+                  "vcs"
+                ]
+              },
+              {
+                "name": "strict",
+                "long": "strict",
+                "positional": false,
+                "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+                "value_name": "STRICT",
+                "takes_value": false,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": [
+                  "false"
+                ]
+              },
+              {
+                "name": "share",
+                "long": "share",
+                "positional": false,
+                "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+                "value_name": "DIR",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "format",
+                "long": "format",
+                "positional": false,
+                "help": "Output shape",
+                "value_name": "FORMAT",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "text",
+                    "help": "Lines for a person"
+                  },
+                  {
+                    "name": "json",
+                    "help": "One JSON document, deterministic"
+                  }
+                ],
+                "defaults": [
+                  "text"
+                ]
+              }
+            ],
+            "examples": [
+              {
+                "id": "design-kit-json",
+                "title": "The interface against the kit profile",
+                "description": "The same answer the MCP tool `majordomus_design_kit` returns (there is no HTTP route: the input names a file this process opens): the profile judged, whether the repository has a user interface and what showed it under `/ui` and `/ui_evidence`, every finding with its signal, path, evidence and remedy under `/findings`, every exemption the policy declares under `/exemptions`, and `/verdict`. This repository has no user interface, so the rule holds vacuously: the verdict is `no_ui` and the exit is 0, as it is for `--check`. A finding under `--check` exits 10, and a policy that cannot be read exits 2.",
+                "argv": [
+                  "design",
+                  "kit",
+                  "--check",
+                  "--format",
+                  "json"
+                ],
+                "command": "majordomus design kit --check --format json",
+                "setup": [],
+                "expectation": "exits 0; prints one JSON document carrying /ui, /findings, /exemptions, /verdict, /passes"
+              },
+              {
+                "id": "design-kit-evidence",
+                "title": "The kit judged with the licence evidence CI decoded",
+                "description": "`--evidence` names the kit-evidence/v1 file the design licence judges a licensed marker by, as `design licence --evidence` does; the executable reads that file and never the environment. In CI the launcher does it: `majordomus design kit` or `design licence` run where a `MAJORDOMUS_KIT_EVIDENCE_<KIT>` variable is exported goes through the shell's `mj_fleet_design_judge` (lib/fleet.sh), which decodes the variable of the kit `ui.kit` names into a private temporary file, passes its path and removes it afterwards; a value that is not base64(gzip(kit-evidence/v1)) exits 2 naming the variable, never its value. Without evidence, a public tree that adopts a licensed kit and carries a licensed marker is undecided and exits 10 under `--check`: it fails closed. A file whose first line says `# kit: <id>` for another kit judges nothing. `/licence/state` and `/licence/reason` say what the design licence answered and why; this repository adopts no kit, so the licence is `inactive` and the file is never opened.",
+                "argv": [
+                  "design",
+                  "kit",
+                  "--check",
+                  "--evidence",
+                  "kit-evidence.tsv",
+                  "--format",
+                  "json"
+                ],
+                "command": "majordomus design kit --check --evidence kit-evidence.tsv --format json",
+                "setup": [],
+                "expectation": "exits 0; prints one JSON document carrying /licence/state, /licence/reason, /verdict, /passes"
+              }
+            ],
+            "subcommands": [
+              {
+                "path": [
+                  "majordomus",
+                  "design",
+                  "kit",
+                  "adopt"
+                ],
+                "route": "/docs/cli/design/kit/adopt/",
+                "executable": true,
+                "usage": "majordomus design kit adopt [OPTIONS] <PROFILE>",
+                "about": "Declare a kit profile in this repository: its rule under .ai/repo/rules/project/, the enforcement entries that run `design kit --check` in CI and before every push, and ui.kit in the policy's ui: block; idempotent, and --dry-run writes nothing",
+                "args": [
+                  {
+                    "name": "profile",
+                    "positional": true,
+                    "help": "The kit profile, from share/design/kits/",
+                    "value_name": "PROFILE",
+                    "takes_value": true,
+                    "required": true,
+                    "global": false,
+                    "possible_values": [
+                      {
+                        "name": "flowbite-pro",
+                        "help": "The owner's licensed Flowbite Pro on Tailwind 4 and Flowbite 4 (ADR 0230)"
+                      }
+                    ],
+                    "defaults": []
+                  },
+                  {
+                    "name": "dry_run",
+                    "long": "dry-run",
+                    "positional": false,
+                    "help": "Report what would be written, and write nothing",
+                    "value_name": "DRY_RUN",
+                    "takes_value": false,
+                    "required": false,
+                    "global": false,
+                    "possible_values": [],
+                    "defaults": [
+                      "false"
+                    ]
+                  },
+                  {
+                    "name": "repo",
+                    "long": "repo",
+                    "positional": false,
+                    "help": "Start the search for the repository root here (default: the current directory)",
+                    "value_name": "PATH",
+                    "takes_value": true,
+                    "required": false,
+                    "global": true,
+                    "possible_values": [],
+                    "defaults": []
+                  },
+                  {
+                    "name": "discovery",
+                    "long": "discovery",
+                    "positional": false,
+                    "help": "How declarative files are enumerated",
+                    "value_name": "DISCOVERY",
+                    "takes_value": true,
+                    "required": false,
+                    "global": true,
+                    "possible_values": [
+                      {
+                        "name": "vcs",
+                        "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
+                      },
+                      {
+                        "name": "filesystem",
+                        "help": "A walk of the work tree with the same glob semantics; untracked files included"
+                      }
+                    ],
+                    "defaults": [
+                      "vcs"
+                    ]
+                  },
+                  {
+                    "name": "strict",
+                    "long": "strict",
+                    "positional": false,
+                    "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+                    "value_name": "STRICT",
+                    "takes_value": false,
+                    "required": false,
+                    "global": true,
+                    "possible_values": [],
+                    "defaults": [
+                      "false"
+                    ]
+                  },
+                  {
+                    "name": "share",
+                    "long": "share",
+                    "positional": false,
+                    "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+                    "value_name": "DIR",
+                    "takes_value": true,
+                    "required": false,
+                    "global": true,
+                    "possible_values": [],
+                    "defaults": []
+                  },
+                  {
+                    "name": "format",
+                    "long": "format",
+                    "positional": false,
+                    "help": "Output shape",
+                    "value_name": "FORMAT",
+                    "takes_value": true,
+                    "required": false,
+                    "global": true,
+                    "possible_values": [
+                      {
+                        "name": "text",
+                        "help": "Lines for a person"
+                      },
+                      {
+                        "name": "json",
+                        "help": "One JSON document, deterministic"
+                      }
+                    ],
+                    "defaults": [
+                      "text"
+                    ]
+                  }
+                ],
+                "examples": [
+                  {
+                    "id": "design-kit-adopt-dry-run",
+                    "title": "What adopting Flowbite Pro would write, before anything is written",
+                    "description": "Every file adoption touches with what it would do to it: the rule .ai/repo/rules/project/ui-uses-flowbite-pro.v1.md created from the distribution's template, and .ai/repo/policy.yaml updated with `ui.kit: flowbite-pro` (set in its `ui:` block, or the block appended when there is none) and the `design-kit-on-push` enforcement entry (this repository has no CI workflow, so the note says the `design-kit` entry waits for one). Exemptions under `ui.exempt` are the repository's to declare, and adoption writes none. `--dry-run` writes nothing; without it the same plan is written, and a second adoption reports every file unchanged.",
+                    "argv": [
+                      "design",
+                      "kit",
+                      "adopt",
+                      "flowbite-pro",
+                      "--dry-run",
+                      "--format",
+                      "json"
+                    ],
+                    "command": "majordomus design kit adopt flowbite-pro --dry-run --format json",
+                    "setup": [],
+                    "expectation": "exits 0; prints one JSON document carrying /writes, /notes, /dry_run"
+                  }
+                ],
+                "subcommands": []
+              }
+            ]
+          },
+          {
+            "path": [
+              "majordomus",
+              "design",
+              "licence"
+            ],
+            "route": "/docs/cli/design/licence/",
+            "executable": true,
+            "usage": "majordomus design licence [OPTIONS]",
+            "about": "Whether a public tree holds a licensed kit's files: active, inactive, not_judged or refused, each match with its file, licensed source and kind; exit 0 for active and inactive, 10 when refused, 12 when not judged (no evidence here, or a ui: block that cannot be used), 2 for evidence that cannot be read, 13 when the tree cannot be listed",
+            "args": [
+              {
+                "name": "evidence",
+                "long": "evidence",
+                "positional": false,
+                "help": "A kit-evidence/v1 file; absent reads the policy's ui.evidence entries under $HOME",
+                "value_name": "FILE",
+                "takes_value": true,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "json",
+                "long": "json",
+                "positional": false,
+                "help": "The same as --format json",
+                "value_name": "JSON",
+                "takes_value": false,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": [
+                  "false"
+                ]
+              },
+              {
+                "name": "repo",
+                "long": "repo",
+                "positional": false,
+                "help": "Start the search for the repository root here (default: the current directory)",
+                "value_name": "PATH",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "discovery",
+                "long": "discovery",
+                "positional": false,
+                "help": "How declarative files are enumerated",
+                "value_name": "DISCOVERY",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "vcs",
+                    "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
+                  },
+                  {
+                    "name": "filesystem",
+                    "help": "A walk of the work tree with the same glob semantics; untracked files included"
+                  }
+                ],
+                "defaults": [
+                  "vcs"
+                ]
+              },
+              {
+                "name": "strict",
+                "long": "strict",
+                "positional": false,
+                "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+                "value_name": "STRICT",
+                "takes_value": false,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": [
+                  "false"
+                ]
+              },
+              {
+                "name": "share",
+                "long": "share",
+                "positional": false,
+                "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+                "value_name": "DIR",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "format",
+                "long": "format",
+                "positional": false,
+                "help": "Output shape",
+                "value_name": "FORMAT",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "text",
+                    "help": "Lines for a person"
+                  },
+                  {
+                    "name": "json",
+                    "help": "One JSON document, deterministic"
+                  }
+                ],
+                "defaults": [
+                  "text"
+                ]
+              }
+            ],
+            "examples": [
+              {
+                "id": "design-licence-json",
+                "title": "Whether a public tree holds a licensed kit's files",
+                "description": "The same answer the MCP tool `majordomus_design_licence` returns: `/verdict` (`active`, `inactive`, `not_judged` or `refused`), `/fails`, the declared `/kit` and `/visibility`, why under `/reason`, and every file that holds a licensed file's bytes under `/matches`. This repository's policy declares no kit (`ui.kit` is empty), so the gate is skipped: the verdict is `inactive` and the exit is 0. A refusal exits 10, a public tree with a declared kit and no evidence exits 12, and an evidence file that cannot be read exits 2 naming the file and the line, never its content.",
+                "argv": [
+                  "design",
+                  "licence",
+                  "--format",
+                  "json"
+                ],
+                "command": "majordomus design licence --format json",
+                "setup": [],
+                "expectation": "exits 0; prints one JSON document carrying /verdict, /fails, /kit, /visibility, /matches"
+              }
+            ],
+            "subcommands": []
+          }
+        ]
+      },
+      {
+        "path": [
+          "majordomus",
           "pack"
         ],
         "route": "/docs/cli/pack/",
@@ -163195,6 +165818,231 @@
           }
         ],
         "subcommands": []
+      },
+      {
+        "path": [
+          "majordomus",
+          "board"
+        ],
+        "route": "/docs/cli/board/",
+        "executable": false,
+        "usage": "majordomus board [OPTIONS] <COMMAND>",
+        "about": "The delivery board's documents, derived: meta, milestones, intents, the pull request queue and the open issues of each lane share/board.yaml declares, with a digest that is equal for equal state; an open milestone in no lane is refused by name",
+        "args": [
+          {
+            "name": "repo",
+            "long": "repo",
+            "positional": false,
+            "help": "Start the search for the repository root here (default: the current directory)",
+            "value_name": "PATH",
+            "takes_value": true,
+            "required": false,
+            "global": true,
+            "possible_values": [],
+            "defaults": []
+          },
+          {
+            "name": "discovery",
+            "long": "discovery",
+            "positional": false,
+            "help": "How declarative files are enumerated",
+            "value_name": "DISCOVERY",
+            "takes_value": true,
+            "required": false,
+            "global": true,
+            "possible_values": [
+              {
+                "name": "vcs",
+                "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
+              },
+              {
+                "name": "filesystem",
+                "help": "A walk of the work tree with the same glob semantics; untracked files included"
+              }
+            ],
+            "defaults": [
+              "vcs"
+            ]
+          },
+          {
+            "name": "strict",
+            "long": "strict",
+            "positional": false,
+            "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+            "value_name": "STRICT",
+            "takes_value": false,
+            "required": false,
+            "global": true,
+            "possible_values": [],
+            "defaults": [
+              "false"
+            ]
+          },
+          {
+            "name": "share",
+            "long": "share",
+            "positional": false,
+            "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+            "value_name": "DIR",
+            "takes_value": true,
+            "required": false,
+            "global": true,
+            "possible_values": [],
+            "defaults": []
+          },
+          {
+            "name": "format",
+            "long": "format",
+            "positional": false,
+            "help": "Output shape",
+            "value_name": "FORMAT",
+            "takes_value": true,
+            "required": false,
+            "global": true,
+            "possible_values": [
+              {
+                "name": "text",
+                "help": "Lines for a person"
+              },
+              {
+                "name": "json",
+                "help": "One JSON document, deterministic"
+              }
+            ],
+            "defaults": [
+              "text"
+            ]
+          }
+        ],
+        "examples": [],
+        "subcommands": [
+          {
+            "path": [
+              "majordomus",
+              "board",
+              "snapshot"
+            ],
+            "route": "/docs/cli/board/snapshot/",
+            "executable": true,
+            "usage": "majordomus board snapshot [OPTIONS]",
+            "about": "Every document of the delivery board by id, each under 250000 bytes, and the digest over them without meta.syncedAt and meta.syncedBy; refused, naming it, when an open milestone is in no lane",
+            "args": [
+              {
+                "name": "by",
+                "long": "by",
+                "positional": false,
+                "help": "Who takes the snapshot, as meta.syncedBy names it (default: board.snapshot)",
+                "value_name": "BY",
+                "takes_value": true,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "repo",
+                "long": "repo",
+                "positional": false,
+                "help": "Start the search for the repository root here (default: the current directory)",
+                "value_name": "PATH",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "discovery",
+                "long": "discovery",
+                "positional": false,
+                "help": "How declarative files are enumerated",
+                "value_name": "DISCOVERY",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "vcs",
+                    "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
+                  },
+                  {
+                    "name": "filesystem",
+                    "help": "A walk of the work tree with the same glob semantics; untracked files included"
+                  }
+                ],
+                "defaults": [
+                  "vcs"
+                ]
+              },
+              {
+                "name": "strict",
+                "long": "strict",
+                "positional": false,
+                "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+                "value_name": "STRICT",
+                "takes_value": false,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": [
+                  "false"
+                ]
+              },
+              {
+                "name": "share",
+                "long": "share",
+                "positional": false,
+                "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+                "value_name": "DIR",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "format",
+                "long": "format",
+                "positional": false,
+                "help": "Output shape",
+                "value_name": "FORMAT",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "text",
+                    "help": "Lines for a person"
+                  },
+                  {
+                    "name": "json",
+                    "help": "One JSON document, deterministic"
+                  }
+                ],
+                "defaults": [
+                  "text"
+                ]
+              }
+            ],
+            "examples": [
+              {
+                "id": "board-snapshot-refused",
+                "title": "An open milestone in no lane is refused by name",
+                "description": "The same answer `GET /api/v1/board/snapshot` and the MCP tool `majordomus_board_snapshot` return: the delivery board's documents by id (`meta`, `milestones`, `intents`, `prs`, and `issues-<lane>` for each lane with open work), each document's size under the 250000-byte bound, and a digest over them that leaves out `meta.syncedAt` and `meta.syncedBy`. The lanes are declared once, in share/board.yaml, and a milestone that is not DONE and is in no lane is refused rather than filed under other. This fixture's milestone is in no lane of the distribution's declaration, so the snapshot is refused, naming it, and the exit code is 10: a verdict not satisfied.",
+                "argv": [
+                  "board",
+                  "snapshot",
+                  "--format",
+                  "json"
+                ],
+                "command": "majordomus board snapshot --format json",
+                "setup": [],
+                "expectation": "exits 10"
+              }
+            ],
+            "subcommands": []
+          }
+        ]
       },
       {
         "path": [
@@ -165130,6 +167978,23 @@
         "output": "Blackboard"
       },
       {
+        "name": "majordomus_board_snapshot",
+        "id": "board.snapshot",
+        "title": "The delivery board's documents",
+        "description": "Every document of the delivery board by id: meta (the commit, the lanes, the issue counts, the release), milestones in roadmap order, intents, the pull request queue from the last recorded observation, and the open issues of each lane as issues-<lane>, split into issues-<lane>-2 and onwards so that no document serializes past 250000 bytes. The digest is a SHA-256 over the canonical JSON of the documents with meta.syncedAt and meta.syncedBy left out, so equal state is an equal digest. A milestone that is not DONE and is in no lane of share/board.yaml is refused by name, never filed under other. An unobserved queue is said in prs.unavailable and the diagnostics, never refused. Mesh seats, live work, CI runners and blockers are the sync step's and are not here. Reads only; nothing is cached.",
+        "kind": "query",
+        "read_only": true,
+        "effect": "read",
+        "hints": {
+          "read_only": true,
+          "destructive": false,
+          "idempotent": true,
+          "open_world": false
+        },
+        "input": "BoardSnapshotInput",
+        "output": "BoardSnapshot"
+      },
+      {
         "name": "majordomus_brief",
         "id": "brief.session",
         "title": "The session brief",
@@ -165621,6 +168486,40 @@
         },
         "input": "ExplainTokenInput",
         "output": "Token"
+      },
+      {
+        "name": "majordomus_design_kit",
+        "id": "design.kit",
+        "title": "Whether the interface is built on the kit",
+        "description": "The supervised repository's user interface judged against the kit profile its policy's `ui.kit` names (flowbite-pro when it names none), from markers in the tree and never the kit's own source: S0 whether there is an interface at all and its surfaces (the root's manifest or the one in assets/, every workspace the root manifest or pnpm-workspace.yaml declares, every nested app manifest with markup in its own subtree outside examples, fixtures, tests, vendor, docs, deps and priv; Phoenix LiveView in mix.exs, HEEx or HTML templates, a Next.js root layout; published pages: a root index.html, pages under site/, www/, public/, under a directory a Pages workflow or a deploy or build script publishes, and under docs/ when it is published), any other manifest with UI packages being a notice and never a finding; S1 the kit's package in each surface, its React binding for React and Next.js, and the kit in use in the surface's own files (an attribute the kit's JavaScript drives, a flowbite-react component, a call of the kit's API), because wiring alone passes nothing; S2 the Tailwind plugin and source (Tailwind 4's @plugin and @source, Tailwind 3's config), a Play CDN or a CDN-only kit being a finding; S3 the kit's JavaScript behind every data-drawer, dropdown, modal, tabs, collapse and tooltip attribute, a script that reads them itself being a re-implementation; S4 no other kit (daisyUI, Bootstrap, Preline, TW Elements, shadcn/ui and Radix, Petal Components, Material UI, Ant Design, Bulma, Chakra UI, Foundation, Materialize), Alpine.js reported and not refused; S5 the shell on every root layout: a fixed top navbar, an aside labelled Sidebar that both drawer attributes name, a breadcrumb, and the page, surface and border roles, a published site's layout being judged by a navbar and a footer instead; the layouts, the roles and the marketing layouts are the profile's alone. Each finding names its signal, path, evidence and remedy; each exemption the policy declares under `ui.exempt`, exactly `{path, because}`, moves every finding at its path and names its reason and how many findings it covered. A licensed kit's profile declares its licensed markers (a distribution directory, a manifest named after a Pro product, a dependency on a Pro package), and where the tree carries one the design licence decides it: active passes, while inactive, refused or not judged is a finding no exemption moves, since a variant the judge cannot decide is never a pass. The licence evidence is the kit-evidence/v1 file the input names (in CI the file the launcher decoded: `majordomus design kit` run where a `MAJORDOMUS_KIT_EVIDENCE_<KIT>` variable is exported goes through the shell's `mj_fleet_design_judge`, which decodes the kit's variable into a private file, passes it and removes it; this capability reads a file and never the environment), else the policy's `~`-relative `ui.evidence` entries; a file whose first line `# kit: <id>` names another kit is not judged, and `licence.reason` says why the licence answered as it did, naming a file and a line at most and never what the evidence holds. A repository without an interface passes vacuously; a policy that cannot be read is `bad_policy` and judges nothing; a policy that still carries the retired top-level `design_kit:` block earns a notice naming `ui.kit` as its replacement. Reads the repository's files (in a Git work tree the tracked ones and the untracked ones Git does not ignore; a submodule or a nested repository is named in a notice and judged in its own repository), skipping dependencies and build output and listing vendored directories by path only; no build and no network. It has no HTTP route, as the design licence has none: the evidence input names a file this process opens, which is a local caller's act, so it is taken on the command line and over MCP only.",
+        "kind": "query",
+        "read_only": true,
+        "effect": "read",
+        "hints": {
+          "read_only": true,
+          "destructive": false,
+          "idempotent": true,
+          "open_world": false
+        },
+        "input": "KitInput",
+        "output": "KitReport"
+      },
+      {
+        "name": "majordomus_design_licence",
+        "id": "design.licence",
+        "title": "Whether a public tree holds a licensed kit's files",
+        "description": "The never-publish gate: the raw bytes of every tracked file, committed bundles included (staged, committed where that differs, and the working copy where it differs), and of every untracked file under each `ui.publish` directory, read through symbolic links and into nested repositories as a deploy archives it, compared whole, exactly and with every run of whitespace made one space, against the kit-evidence/v1 fingerprints of the declared kit's licensed files. `refused` names each file and, where the evidence says, the licensed source; `not_judged` is a public tree that declares a kit, tracks a UI file and has no evidence here, and fails like `refused`; a `ui:` block that cannot be used as written (an absolute `ui.publish` or `ui.evidence` entry) is `not_judged` too, naming the entry; `inactive` is no kit declared, a private tree without evidence, or no UI file; `active` is judged and clean, or private. The evidence is the file the input names, else the policy's `~`-relative `ui.evidence` entries; an error names the file and the line, never its content. Near-copies and fragments inlined in a larger file are not judged: the evidence holds whole-file fingerprints only.",
+        "kind": "query",
+        "read_only": true,
+        "effect": "read",
+        "hints": {
+          "read_only": true,
+          "destructive": false,
+          "idempotent": true,
+          "open_world": false
+        },
+        "input": "LicenceInput",
+        "output": "LicenceReport"
       },
       {
         "name": "majordomus_design",
@@ -168210,7 +171109,7 @@
         "name": "majordomus_server",
         "id": "server.status",
         "title": "The shared server, and every server of the repository",
-        "description": "Where this checkout's server stands — absent, starting, ready, outdated or stale — measured against what this executable would serve; how far the tree it serves is from the remote trunk (`trunk`: current, lagging, stale, unjudged or unmeasured against the policy's `checkout.trunk_distance`, as of the last fetch); the lease this process holds when it is the server; and, unless `checkouts` narrows it to this one, every checkout git registers for the repository, the primary first, each with its lease, its standing and the reason, and the peers its server reports. `checkouts: this` reads one lease and probes one server and enumerates no other checkout, which is what a caller asking only about the checkout it is in should pay. Read from the lease files and the servers on every call; nothing is cached, because the leases are written by other processes.",
+        "description": "Where this checkout's server stands — absent, starting, ready, outdated or stale — measured against what this executable would serve; where its runtime stands (`runtime`: that word refined by the server's readiness report, its mesh verdict and the last recorded transition into building, mesh_attaching, operational, degraded, stopping, stopped or failed, with the time, reason and recorder of that transition, kept under `.ai/local/state/runtime/` and written only when the state changes — this reader records `stopped` or `failed` for a server it finds gone); how far the tree it serves is from the remote trunk (`trunk`: current, lagging, stale, unjudged or unmeasured against the policy's `checkout.trunk_distance`, as of the last fetch); the lease this process holds when it is the server; and, unless `checkouts` narrows it to this one, every checkout git registers for the repository, the primary first, each with its lease, its standing and the reason, its runtime, and the peers its server reports. `checkouts: this` reads one lease and probes one server and enumerates no other checkout, which is what a caller asking only about the checkout it is in should pay. Read from the lease files and the servers on every call; nothing is cached, because the leases are written by other processes.",
         "kind": "query",
         "read_only": true,
         "effect": "read",
@@ -169013,6 +171912,12 @@
         "method": "GET",
         "path": "/api/v1/blackboard",
         "id": "blackboard.snapshot",
+        "kind": "query"
+      },
+      {
+        "method": "GET",
+        "path": "/api/v1/board/snapshot",
+        "id": "board.snapshot",
         "kind": "query"
       },
       {
@@ -171363,6 +174268,63 @@
         "case": "state",
         "cached": false,
         "route": "GET /api/v1/design/explain"
+      },
+      {
+        "key": "design.kit|direct|policy",
+        "kind": "capability",
+        "transport": "direct",
+        "id": "design.kit",
+        "module": "design",
+        "case": "policy",
+        "cached": false
+      },
+      {
+        "key": "design.kit|direct|evidence",
+        "kind": "capability",
+        "transport": "direct",
+        "id": "design.kit",
+        "module": "design",
+        "case": "evidence",
+        "cached": false
+      },
+      {
+        "key": "design.kit|mcp|policy",
+        "kind": "capability",
+        "transport": "mcp",
+        "id": "design.kit",
+        "module": "design",
+        "case": "policy",
+        "cached": false,
+        "tool": "majordomus_design_kit"
+      },
+      {
+        "key": "design.kit|mcp|evidence",
+        "kind": "capability",
+        "transport": "mcp",
+        "id": "design.kit",
+        "module": "design",
+        "case": "evidence",
+        "cached": false,
+        "tool": "majordomus_design_kit"
+      },
+      {
+        "key": "design.licence|direct|policy",
+        "kind": "capability",
+        "transport": "direct",
+        "id": "design.licence",
+        "module": "design",
+        "case": "policy",
+        "cached": false
+      },
+      {
+        "key": "design.licence|mcp|policy",
+        "kind": "capability",
+        "transport": "mcp",
+        "id": "design.licence",
+        "module": "design",
+        "case": "policy",
+        "cached": false,
+        "tool": "majordomus_design_licence"
       },
       {
         "key": "design.system|direct|default",
@@ -178280,6 +181242,30 @@
           "cases": 2
         },
         {
+          "subject": "board.snapshot",
+          "module": "board",
+          "transport": "direct",
+          "state": "waived",
+          "cases": 0,
+          "reason": "repository_declaration"
+        },
+        {
+          "subject": "board.snapshot",
+          "module": "board",
+          "transport": "mcp",
+          "state": "waived",
+          "cases": 0,
+          "reason": "repository_declaration"
+        },
+        {
+          "subject": "board.snapshot",
+          "module": "board",
+          "transport": "http",
+          "state": "waived",
+          "cases": 0,
+          "reason": "repository_declaration"
+        },
+        {
           "subject": "brief.session",
           "module": "brief",
           "transport": "direct",
@@ -178927,6 +181913,42 @@
           "transport": "http",
           "state": "covered",
           "cases": 2
+        },
+        {
+          "subject": "design.kit",
+          "module": "design",
+          "transport": "direct",
+          "state": "covered",
+          "cases": 2
+        },
+        {
+          "subject": "design.kit",
+          "module": "design",
+          "transport": "mcp",
+          "state": "covered",
+          "cases": 2
+        },
+        {
+          "subject": "design.kit.adopt",
+          "module": "design",
+          "transport": "direct",
+          "state": "waived",
+          "cases": 0,
+          "reason": "destructive"
+        },
+        {
+          "subject": "design.licence",
+          "module": "design",
+          "transport": "direct",
+          "state": "covered",
+          "cases": 1
+        },
+        {
+          "subject": "design.licence",
+          "module": "design",
+          "transport": "mcp",
+          "state": "covered",
+          "cases": 1
         },
         {
           "subject": "design.system",
@@ -182904,24 +185926,24 @@
       ],
       "tallies": {
         "direct": {
-          "required": 220,
-          "covered": 181,
+          "required": 224,
+          "covered": 183,
           "missing": 0,
-          "waived": 39,
+          "waived": 41,
           "inapplicable": 0
         },
         "http": {
-          "required": 212,
+          "required": 213,
           "covered": 181,
           "missing": 0,
-          "waived": 31,
+          "waived": 32,
           "inapplicable": 0
         },
         "mcp": {
-          "required": 206,
-          "covered": 176,
+          "required": 209,
+          "covered": 178,
           "missing": 0,
-          "waived": 30,
+          "waived": 31,
           "inapplicable": 0
         },
         "system": {
@@ -182932,10 +185954,10 @@
           "inapplicable": 0
         },
         "total": {
-          "required": 652,
-          "covered": 552,
+          "required": 660,
+          "covered": 556,
           "missing": 0,
-          "waived": 100,
+          "waived": 104,
           "inapplicable": 0
         }
       }
