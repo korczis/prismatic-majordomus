@@ -1,7 +1,7 @@
 +++
 title = "A discovered node gains no execution and no authorization from being heard; only signed traffic from a linked node may change mesh state, and trust labels records under an explicit policy that defaults to deny_unknown"
 description = "Discovery creates awareness, not authority. Being heard on the network — even with a"
-weight = 229
+weight = 230
 [extra]
 claim_id = "mesh-observation-not-authority"
 status = "guaranteed"

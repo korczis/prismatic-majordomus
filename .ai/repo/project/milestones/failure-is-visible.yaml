@@ -43,7 +43,7 @@ risks:
   - "Making readiness stricter can make deploy health checks fail where they passed; the fly-deployment health block reads /api/v1/live and must keep doing so."
   - "A deadline on request reads that is too short breaks slow links; it must be declared and measured."
 created_at: 2026-10-09
-updated_at: 2026-10-15T02:04:24Z
+updated_at: 2026-10-26T11:24:17Z
 evidence:
   - covers: readiness_reflects_state
     type: ci
@@ -59,3 +59,10 @@ evidence:
     artifact: "https://github.com/korczis/prismatic-majordomus/actions/runs/38635619021"
     commit: c0e3585dc836201089d6b5dd49f5a79fe8bff798
     recorded_at: 2026-10-15T02:04:24Z
+  - covers: failure_class_table
+    type: test
+    command: "bash test/run.sh 3056_every_failure_class_names_its_proof at branch head 6803a8efa4a (master 6259dac47af plus I3310)"
+    result: "ok 3056_every_failure_class_names_its_proof: every row of the failure table names its test or its stated limitation, and the case refuses a row with neither. Delivered by I2731 (DONE; its CI run 39438896504 ran the same case); with I3310 DONE every issue of the milestone is DONE"
+    artifact: "test/cases/3056_every_failure_class_names_its_proof.sh"
+    commit: 6803a8efa4a446f9a852af20fecdf9926efb0e56
+    recorded_at: 2026-10-26T11:24:17Z

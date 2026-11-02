@@ -9,7 +9,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 
 | milestone | status | done of required | ready | blocked | active | verify | cancelled | outcome |
 |---|---|---|---|---|---|---|---|---|
-| [peer-blackboard](https://majordomus.dev/plan/peer-blackboard/) | ACTIVE | 1/9 | 1 | 7 | 0 | 0 | 0 | One capability computes the blackboard from the records that exist; a change of the board or the journal is pushed over one WebSocket to every page that follows it, with the monitor's cursor for resume; /ui, /cockpit and the home page read the same frames; the published site carries a public-safe snapshot labelled as one. |
+| [peer-blackboard](https://majordomus.dev/plan/peer-blackboard/) | ACTIVE | 1/10 | 1 | 7 | 0 | 1 | 0 | One capability computes the blackboard from the records that exist; a change of the board or the journal is pushed over one WebSocket to every page that follows it, with the monitor's cursor for resume; /ui, /cockpit and the home page read the same frames; the published site carries a public-safe snapshot labelled as one. |
 
 ## Issues
 
@@ -24,6 +24,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | [I2998](https://majordomus.dev/plan/i2998/) | BLOCKED | 4 | I2983 | /cockpit/peers renders the blackboard and follows it live |
 | [I2999](https://majordomus.dev/plan/i2999/) | BLOCKED | 4 | I2983 | From /ui/peers an operator answers a review, takes a handover or releases a claim, through its capability |
 | [I3073](https://majordomus.dev/plan/i3073/) | BLOCKED | 4 | I2983 | The home page and the docs explain the peer blackboard: live on a runtime, a labelled snapshot on the published site |
+| [I4236](https://majordomus.dev/plan/i4236/) | VERIFY | 0 | — | The Blackboard is the board of the work: every issue at its delivery stage, with who carries it, live |
 
 ## Findings
 

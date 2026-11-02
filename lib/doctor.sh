@@ -50,6 +50,54 @@
 . "$MJ_LIB_DIR/update.sh"
 
 MJ_DOCTOR_MISSING=0
+
+# A full disk is one finding (I4323). Doctor's checks read scratch files through mktemp,
+# and on a full or unwritable volume each of them failed on its own with its own remedy:
+# the projection regions, the canonical model, the session front matter and the rules
+# vendor manifest each said FAIL, the projection's remedy was `majordomus update`, which
+# writes, and the pre-commit hook handed the adopter that list as the reason a commit was
+# refused. So the scratch volume and the repository's git directory are asked first: a
+# probe written and removed in each, and the free space df reports for each, against a
+# floor (MAJORDOMUS_DISK_FLOOR_MB, 64 by default: a doctor run writes a few hundred
+# kilobytes of scratch, and a volume below the floor is one git object away from ENOSPC).
+# The floor is a constant of this check and not a policy key: the policy file is itself
+# read through a scratch file, so a policy value could not be read on the volume it
+# judges.
+MJ_DOCTOR_DISK_FLOOR_MB_DEFAULT=64
+# prints "<volume>\t<reason>" for every volume that cannot take doctor's scratch
+mj_doctor_disk_short() {
+  local floor="${MAJORDOMUS_DISK_FLOOR_MB:-$MJ_DOCTOR_DISK_FLOOR_MB_DEFAULT}" v probe free_kb gitdir
+  local mount seen=" "
+  case "$floor" in ''|*[!0-9]*) floor="$MJ_DOCTOR_DISK_FLOOR_MB_DEFAULT" ;; esac
+  gitdir="$(git -C "${MJ_ROOT:-.}" rev-parse --absolute-git-dir 2>/dev/null)" || gitdir=""
+  for v in "${TMPDIR:-/tmp}" ${gitdir:+"$gitdir"}; do
+    v="${v%/}"
+    free_kb="$(df -Pk "$v" 2>/dev/null | awk 'NR == 2 { print $4 }')"
+    probe="$(command mktemp "$v/.mj-disk-probe.XXXXXX" 2>/dev/null)" && rm -f "$probe" || probe=""
+    # one volume is one finding: the scratch directory and the git directory usually share
+    # one, and its free space is the same number however it is reached; a directory that
+    # cannot be written is said for itself, since another on the same volume may be fine
+    mount="$(df -Pk "$v" 2>/dev/null | awk 'NR == 2 { print $NF }')"
+    if [ -n "$probe" ] && [ -n "$mount" ]; then
+      case "$seen" in *" $mount "*) continue ;; esac
+      seen="$seen$mount "
+    fi
+    if [ -z "$probe" ]; then
+      printf '%s\tno space left on device (%s: %s free; a file cannot be written there)\n' \
+        "$v" "$v" "$(mj_doctor_disk_human "$free_kb")"
+    elif [ -n "$free_kb" ] && [ "$free_kb" -lt $((floor * 1024)) ]; then
+      printf '%s\tno space left on device (%s: %s free, under the floor of %s MB)\n' \
+        "$v" "$v" "$(mj_doctor_disk_human "$free_kb")" "$floor"
+    fi
+  done
+}
+mj_doctor_disk_human() {
+  case "${1:-}" in
+    ''|*[!0-9]*) printf 'unknown' ;;
+    *) awk -v k="$1" 'BEGIN { if (k >= 1048576) printf "%.1f GB", k / 1048576; else printf "%.1f MB", k / 1024 }' ;;
+  esac
+}
+
 mj_cmd_doctor() {
   # what doctor reaches comes before its usage, and apart from the option loop (I2707)
   case " $* " in *" --help "*|*" -h "*) mj_doctor_reach ;; esac
@@ -67,6 +115,24 @@ mj_cmd_doctor() {
     ''|commit) ;;
     *) mj_die "$MJ_EX_USAGE" "doctor: MAJORDOMUS_DOCTOR_CONTEXT='$MAJORDOMUS_DOCTOR_CONTEXT' is not a context (commit, or unset)" ;;
   esac
+  # The disk comes before everything, the policy included: every other check reads through
+  # a scratch file, so on a volume that cannot take one, none of them can be judged, and
+  # their failures would only be this one said several times with remedies that write.
+  local short
+  short="$(mj_doctor_disk_short)"
+  if [ -n "$short" ]; then
+    # not `read <<< "$short"`: a here-string may be written to a file in TMPDIR, the very
+    # volume that has no room, and a pipe into the loop would count the FAILs in a subshell
+    local line ifs="$IFS" vol
+    IFS=$'\n'
+    for line in $short; do
+      IFS="$ifs"; vol="${line%%$'\t'*}"
+      mj_fail disk "$vol" "${line#*$'\t'}" "df -Pk $vol"
+    done
+    IFS="$ifs"
+    mj_info disk "doctor" "not judged: disk — the policy, the projection regions, the canonical model, the session front matter, the rules vendor manifest, the context builder and every other check read a scratch file; free space on the volume(s) above, then run majordomus doctor again"
+    mj_finish_doctor; return
+  fi
   mj_require_installed
   MJ_DOCTOR_MISSING=0
   local t_start; t_start="$(mj_ms)"

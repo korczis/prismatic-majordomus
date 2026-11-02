@@ -1,0 +1,43 @@
+id: I4243
+milestone: development-runtime
+title: "continuity.state asks git the ancestry of the record it resolves, not of every record of the branch"
+slug: continuity-judges-only-the-record-it-resolves
+priority: p0
+profile: implementation
+parallel_safe: true
+objective: "Resolving the handover and the checkpoint chooses by tier and asserted time from the front matter, and only the chosen record is asked its ancestry and read for its section, so continuity.state and everything composed from it cost one git process per store, not one per record."
+why: "On 2026-10-27 the Cockpit overview took 113 s on master's primary checkout (load 43 on 18 cores). The overview asks brief.session, which took 199 s; inside it continuity.state took 59 s, environment.preflight 19 s. resolve() in apps/majordomus-cli/src/capability/builtin/continuity.rs built a full Record for every candidate of the branch, and each Record ran divergence(), which spawns `git merge-base --is-ancestor`: 352 handovers and checkpoints on master, 0.17-0.64 s each under that load. Only one record is kept. Found by 39 on 641b."
+current_state: "Measured at origin/master 7ddc32da8d4 on 2026-10-27: resolve() calls divergence() and section() inside the walk for each same-branch record, before choosing."
+desired_state: "resolve() keeps the best candidate's path and front matter during the walk and builds and judges the Record (divergence, freshness, Next Action) once, for that candidate. The chosen record and every field of it are what they were."
+scope:
+  - "apps/majordomus-cli/src/capability/builtin/continuity.rs"
+  - ".ai/repo/project/issues/I4243.yaml"
+non_scope:
+  - "The number of records the local store keeps (pruning old handovers and checkpoints)"
+  - "Other slow sources of brief.session and environment.preflight"
+depends_on: []
+acceptance_criteria:
+  - "Resolving a store of many records of this branch asks git the ancestry once"
+  - "The chosen record, its tier, divergence, freshness and Next Action are unchanged"
+  - "continuity.state on the primary checkout answers in seconds, not a minute"
+validation:
+  - "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --lib capability::builtin::continuity::"
+evidence_required:
+  - rust
+serves: []
+created_at: 2026-10-27
+started_at: 2026-10-27T12:42:48Z
+started_event: sha256:cb26ecf29a68d19ccd0f9755b013ca19cf3a896dc82b71c353f5e099235d7a09
+updated_at: 2026-10-27T12:43:54Z
+verified_at: 2026-10-27T12:43:15Z
+verified_event: sha256:987d53790450bb68bbaeaf55aa3c9fedd1a5638cc0dd1e82eb29a8b6c2c9b986
+completed_at: 2026-10-27T12:43:54Z
+completed_event: sha256:e41b91080e74968b4dd1015d32e61911f3d7bc8a5b076e4258d96701e16f432e
+evidence:
+  - covers: rust
+    type: test
+    command: "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --lib capability::builtin::continuity::"
+    result: "20 passed; the new only_the_chosen_record_is_asked_its_ancestry counts one git ancestry question for nine candidates. Measured on the primary checkout (352 master records, load 27-43): continuity.state 46.8 s on master's binary, 1.2 s with this fix, the same handover, checkpoint and divergence (the answers differ only in their execution ids); brief.session --local 57.7 s to 4.0 s"
+    artifact: "apps/majordomus-cli/src/capability/builtin/continuity.rs"
+    commit: 7ddc32da8d45dc54e0260d8841c70544615863f5
+    recorded_at: 2026-10-27T12:43:42Z

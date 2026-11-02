@@ -2000,6 +2000,20 @@ mj_ledger_bad_lines() {
 mj_is_multiline() { case "$1" in *"$(printf 'x\ny')"*) return 0 ;; esac
   [ "$(printf '%s' "$1" | wc -l | tr -d ' ')" != 0 ]; }
 
+# Can a record hold this text as one scalar and give it back unchanged (I3310)? Both readers
+# of the layer's YAML, MJ_FLATTEN_AWK and the runtime's metadata/yaml.rs, take a scalar from
+# one line and refuse a tab, so a line break, a tab or any other control character (U+0001 to
+# U+001F, U+007F) is refused by the command that accepts the text, never written into a
+# record the next command cannot read. Every other character, a quote, a backslash and a
+# non-ASCII letter among them, is held by mj_yaml_squote. The class is spelled out character
+# by character rather than as [[:cntrl:]] or a range, whose meaning follows the locale.
+MJ_CONTROL_CHARS=$'\001\002\003\004\005\006\007\010\011\012\013\014\015\016\017\020\021\022\023\024\025\026\027\030\031\032\033\034\035\036\037\177'
+mj_scalar_holdable() { case "$1" in *["$MJ_CONTROL_CHARS"]*) return 1 ;; esac; return 0; }
+# A value as a single-quoted YAML scalar. Inside single quotes YAML has one escape, a doubled
+# quote for one quote, and both readers undo exactly that one; neither reads the backslash
+# escapes of a double-quoted scalar, so a `\"` written there came back as `\"`.
+mj_yaml_squote() { local q="'"; printf "'%s'" "${1//$q/$q$q}"; }
+
 # ---------------------------------------------------------------- composed web surfaces
 # mj_web_composed <repository-root> [mounts|rows|trees]
 #

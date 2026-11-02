@@ -1,7 +1,7 @@
 +++
 title = "Every candidate derived from an observation carries a route — platform, enforcement, generator, documentation or project — derived from its subject's structure and never from its wording, and in a repository that adopted the tool its own share/ routes project"
 description = "A candidate derived from an observation says which owner should look first — platform, enforcement, generator, documentation or project — read from its subject's structure and never from its words. In a repository that adopted the tool, the project's own share/ is the project's, and a project's defect is never routed into the tool's governance."
-weight = 243
+weight = 244
 [extra]
 claim_id = "a-candidate-is-routed-by-what-it-is-about"
 status = "guaranteed"

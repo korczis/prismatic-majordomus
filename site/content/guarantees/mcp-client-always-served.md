@@ -1,7 +1,7 @@
 +++
 title = "A client that starts the MCP server from a checkout whose executable is missing or stale is served by the installed release when it is of this tree's generation and told so, and is otherwise refused with exit 12 naming the explicit build; nothing is built"
 description = "A client that spawns the MCP server is waiting on a handshake, and one that does not get it in time reports the server as failed and carries on without it. When this checkout's executable is missing or older than its sources, mcp is served by the installed release only when that release is of this tree's generation, and stderr names the release and the commit it was built from. Otherwise the launcher refuses with exit 12, naming why the release was not used and the explicit build, just build. Nothing is ever built on the way, for mcp or for any other command (ADR 0224)."
-weight = 136
+weight = 137
 [extra]
 claim_id = "mcp-client-always-served"
 status = "guaranteed"

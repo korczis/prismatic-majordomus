@@ -1,7 +1,7 @@
 +++
 title = "A captured prompt names the episode it belongs to or records that none could be resolved; the archive is private, bounded and free of credential material"
 description = "Every record under .ai/local/prompts/ says which execution episode it belongs to, and says how it knows. Where no episode can be established, it says that instead — it is never attached to whichever episode happened to be nearest in time. The archive is readable by its owner alone, directory included; it is bounded by a declared retention policy that takes prompt bodies and never records; and the credential shapes the writer knows are replaced before anything reaches the disk."
-weight = 35
+weight = 36
 [extra]
 claim_id = "prompt-continuity"
 status = "guaranteed"

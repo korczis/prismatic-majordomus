@@ -315,8 +315,8 @@ $ echo $?
 Begin a scoped task.
 
 **Arguments:** `<task>` one line. `--scope <path>[,<path>...]` required. `--profile
-<name>` default from `policy.profiles.default`. `--owner <string>` free-form, default
-`$USER`. `--issue <id>`, `--intent <id>`, or `--exempt <class> --because "<reason>"` name
+<name>` default from `policy.profiles.default`. `--owner <string>` free-form on one line,
+default `$USER`. `--issue <id>`, `--intent <id>`, or `--exempt <class> --because "<reason>"` name
 what the task serves.
 
 **Reads:** policy, profile, git state, and `intents.binding` through the built executable
@@ -327,6 +327,11 @@ when the binding is asked.
 - Refuses (`15`) if `state/current.yaml` exists and its outcome is not terminal. One
   active task per checkout: hand the existing task over (`handover --close`) or finish
   it first. No flag discards an active task.
+- Refuses (`2`) a task, `--owner` or `--because` that holds a line break, a tab or any
+  other control character, before a finished record is archived or anything is written:
+  the record keeps each of them as one scalar on one line, which is all the layer's YAML
+  readers accept. Every other character is kept: the three are written single-quoted, so
+  a quote, a backslash and a non-ASCII letter come back from `check` exactly as given.
 - Normalises each scope path: strips trailing `/`, canonicalises, refuses paths outside
   the repository. Records the normalised form.
 - Reads every other worktree from `git worktree list` and, where one has an active
@@ -695,6 +700,25 @@ repository, two workers were writing to it, and no timestamp separates them, so 
 episode's envelope claimed the other's tasks, checkpoints and handovers. A line with no
 session belongs to no episode — sessions are optional, and work done outside one is
 attributed to nobody rather than to whoever had a session open nearby.
+
+**What attribution guarantees, and what it does not (ADR 0164).** Every durable record
+(a decision, a question opened or resolved, a checkpoint, `check --checkpoint`, a handover,
+`knowledge observe`) carries the session that ran the command. That session is the
+caller's own episode, found by the identity the caller supplies: the provider session a
+hook names, `MAJORDOMUS_PROVIDER_SESSION`, or the session variable the provider's
+lifecycle adapter declares (`CLAUDE_CODE_SESSION_ID` for Claude Code). When the caller supplies no identity, the one open episode of the checkout is used.
+When several are open, the record names none rather than the last one opened. An identity
+that names no open episode also names none. A record relates the active task unless a
+different episode that is still open opened that task; then it is still written, with no
+task. `lib/common.sh` (`mj_record_attribution`) prepares this once per record, and
+`test/cases/3049_a_second_workers_record_lands_on_the_first_workers_task.sh` proves it.
+
+The identity is **supplied, never verified**. Majordomus records the session it was told
+about; it does not authenticate the worker behind it, and nothing here proves who a worker
+was. A process that sets another session's variable is attributed to that session. With no
+episode open at all, two workers cannot be told apart, and the active task is treated as
+the caller's. Read a record's `session` as "the session the tool was told wrote this", not
+as proof of authorship.
 
 `--outcome` takes `closed` or `interrupted`. Both are self-reported and neither is
 verified; `interrupted` exists because "this episode was cut short and its records may be

@@ -235,6 +235,19 @@
       "test_case": "22_history"
     },
     {
+      "id": "record-attribution",
+      "claim": "A durable record names the session that wrote it, and is filed under the active task only when no other open episode opened that task",
+      "source": "docs/CLI.md",
+      "implementation": "lib/common.sh",
+      "test": "test/cases/3049_a_second_workers_record_lands_on_the_first_workers_task.sh",
+      "status": "guaranteed",
+      "note": "ADR 0164. The session is the identity the caller supplies (the provider session a hook names, MAJORDOMUS_PROVIDER_SESSION, or the provider's declared session variable), so it is supplied, never verified. A record proves which session Majordomus was told wrote it, not who the worker was; a process that sets another session's variable is attributed to that session. With several episodes open and no supplied identity, the record names no session rather than a guess. With no episode open at all, workers cannot be told apart and the active task is the caller's.",
+      "responsibility": "state",
+      "source_route": "/docs/cli/",
+      "command": null,
+      "test_case": "3049_a_second_workers_record_lands_on_the_first_workers_task"
+    },
+    {
       "id": "decision-attribution",
       "claim": "A decision record without a task, a head and a reason is reported, and does not block",
       "source": "docs/DOCTRINE.md",

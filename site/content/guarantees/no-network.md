@@ -1,7 +1,7 @@
 +++
 title = "The shell tool performs no network call, evaluates no generated text and deletes nothing recursively; its one declared request is the loopback peer probe"
 description = "Majordomus is local. No shell command opens a network connection except the loopback peer probe (lib/context.sh), no text that came from a worker, a model, a handover body or a policy file is ever passed to eval or a shell, and no command deletes recursively outside a temporary directory it created itself. Writes are confined to .ai/ and the projection targets the policy names."
-weight = 46
+weight = 47
 [extra]
 claim_id = "no-network"
 status = "guaranteed"

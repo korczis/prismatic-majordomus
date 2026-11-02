@@ -9,7 +9,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 
 | milestone | status | done of required | ready | blocked | active | verify | cancelled | outcome |
 |---|---|---|---|---|---|---|---|---|
-| [a-visitor-understands-and-checks-majordomus](https://majordomus.dev/plan/a-visitor-understands-and-checks-majordomus/) | ACTIVE | 6/7 | 1 | 0 | 0 | 0 | 0 | The hero links every recorded refusal and the challenge, every problem and step leads to its derived features and evidence, and the published page is probed after deploy. |
+| [a-visitor-understands-and-checks-majordomus](https://majordomus.dev/plan/a-visitor-understands-and-checks-majordomus/) | DONE | 7/7 | 0 | 0 | 0 | 0 | 0 | The hero links every recorded refusal and the challenge, every problem and step leads to its derived features and evidence, and the published page is probed after deploy. |
 
 ## Issues
 
@@ -21,7 +21,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | [I3223](https://majordomus.dev/plan/i3223/) | DONE | 1 | I2417 | The homepage hero lets a visitor switch between recorded scenarios, each ending in the refusal it proves |
 | [I3224](https://majordomus.dev/plan/i3224/) | DONE | 1 | I2745 | Every problem and every step on the homepage leads to the feature and evidence behind it, with the maturity the product model derives |
 | [I3324](https://majordomus.dev/plan/i3324/) | DONE | 2 | I3223 | After every deploy the published homepage's hero choices are probed and found reachable |
-| [I3843](https://majordomus.dev/plan/i3843/) | READY | 1 | I3134 | The homepage title says the product sentence as declared, and in Czech on the Czech homepage |
+| [I3843](https://majordomus.dev/plan/i3843/) | DONE | 1 | I3134 | The homepage title says the product sentence as declared, and in Czech on the Czech homepage |
 
 ## Findings
 

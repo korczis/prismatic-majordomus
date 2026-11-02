@@ -1,4 +1,5 @@
 # majordomus-covers: decision question checkpoint check session handover knowledge finish evidence capture
+# claims: record-attribution
 # majordomus-negative: decision question checkpoint check handover knowledge finish evidence session
 # I0701's original no-episode counterexample and ADR 0164's two real episodes.
 # A record belongs to its caller. The active task is related unless another episode that is
