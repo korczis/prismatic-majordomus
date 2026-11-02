@@ -9,13 +9,13 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 
 | milestone | status | done of required | ready | blocked | active | verify | cancelled | outcome |
 |---|---|---|---|---|---|---|---|---|
-| [merging-and-referencing-are-enforced](https://majordomus.dev/plan/merging-and-referencing-are-enforced/) | PLANNED | 0/14 | 6 | 8 | 0 | 0 | 0 | Merging and referencing are projections, typed commands and gates: every pull request carries its metadata from the records, every reference resolves on master, every number is taken once. |
+| [merging-and-referencing-are-enforced](https://majordomus.dev/plan/merging-and-referencing-are-enforced/) | ACTIVE | 1/14 | 6 | 7 | 0 | 0 | 0 | Merging and referencing are projections, typed commands and gates: every pull request carries its metadata from the records, every reference resolves on master, every number is taken once. |
 
 ## Issues
 
 | issue | status | wave | depends on | title |
 |---|---|---|---|---|
-| [I3970](https://majordomus.dev/plan/i3970/) | BLOCKED | 1 | I3979 | Every pull request carries its metadata, projected from the trunk's records: labels, milestone, assignee and Refs links, never a closing keyword |
+| [I3970](https://majordomus.dev/plan/i3970/) | READY | 1 | I3979 | Every pull request carries its metadata, projected from the trunk's records: labels, milestone, assignee and Refs links, never a closing keyword |
 | [I3971](https://majordomus.dev/plan/i3971/) | BLOCKED | 4 | I3754 | Work in an open pull request or under a live branch claim is reported taken and is never the next issue |
 | [I3972](https://majordomus.dev/plan/i3972/) | BLOCKED | 1 | I3757 | plan validate names every issue held only by its milestone gate, and an issue may declare it needs nothing from the milestone's dependencies |
 | [I3973](https://majordomus.dev/plan/i3973/) | READY | 0 | — | A record is referenced only once it is on master: a pull request naming an unlanded id is refused, and convergence reports stranded records |
@@ -24,7 +24,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | [I3976](https://majordomus.dev/plan/i3976/) | BLOCKED | 2 | I3973, I3915 | Every commit names the issue it serves, outside narrow machine-verifiable exemptions, with the earlier history as a baseline |
 | [I3977](https://majordomus.dev/plan/i3977/) | BLOCKED | 1 | I3449 | Every page a deployment serves names only versions of the release model, checked after the deploy |
 | [I3978](https://majordomus.dev/plan/i3978/) | BLOCKED | 2 | I3915 | Each train member is judged on its merged tree, and a fix member joins only with a test and its changed-code coverage |
-| [I3979](https://majordomus.dev/plan/i3979/) | READY | 0 | — | Every label, branch prefix and commit type is declared once, projected to GitHub, described in CONTRIBUTING and checked |
+| [I3979](https://majordomus.dev/plan/i3979/) | DONE | 0 | — | Every label, branch prefix and commit type is declared once, projected to GitHub, described in CONTRIBUTING and checked |
 | [I4350](https://majordomus.dev/plan/i4350/) | READY | 0 | — | plan validate refuses a scope that names a directory holding a file another issue plans, so its warnings never publish a path nobody has written |
 | [I4357](https://majordomus.dev/plan/i4357/) | READY | 0 | — | Issue, ADR and case numbers are reserved atomically at origin and checked at landing |
 | [I4362](https://majordomus.dev/plan/i4362/) | READY | 0 | — | adr next and case-numbers next answer within a declared bound in a linked worktree |
@@ -35,13 +35,10 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | level | code | subject | message |
 |---|---|---|---|
 | WARN | `scope_conflict` | `I3973` | shares apps/majordomus-cli/src/commit/verdict.rs with I4262; they may not run concurrently |
-| WARN | `scope_conflict` | `I3973` | shares .github/workflows/validate.yml with I4296; they may not run concurrently |
 | WARN | `scope_conflict` | `I3973` | shares apps/majordomus-cli/src/convergence with I4333; they may not run concurrently |
-| WARN | `scope_conflict` | `I3973` | shares .github/workflows/validate.yml with I4338; they may not run concurrently |
 | WARN | `scope_conflict` | `I3973` | shares .github/workflows/validate.yml with I4347; they may not run concurrently |
 | WARN | `scope_conflict` | `I3973` | shares .github/workflows/validate.yml with I4349; they may not run concurrently |
 | WARN | `scope_conflict` | `I3973` | shares .github/workflows/validate.yml with I4357; they may not run concurrently |
-| WARN | `scope_conflict` | `I3973` | shares .github/workflows/validate.yml with I4381; they may not run concurrently |
 | WARN | `scope_conflict` | `I3973` | shares scripts/ci/reference-check with I4468; they may not run concurrently |
 | WARN | `scope_conflict` | `I3973` | shares .ai/repo/ci/gates.yaml with I4488; they may not run concurrently |
 | WARN | `scope_conflict` | `I3973` | shares .ai/repo/ci/gates.yaml with I4512; they may not run concurrently |
@@ -50,16 +47,9 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I3974` | shares lib/adr.sh with I4357; they may not run concurrently |
 | WARN | `scope_conflict` | `I3974` | shares lib/adr.sh with I4362; they may not run concurrently |
 | WARN | `scope_conflict` | `I3974` | shares lib/adr.sh with I4468; they may not run concurrently |
-| WARN | `scope_conflict` | `I3979` | shares scripts/github-sync with I4254; they may not run concurrently |
-| WARN | `scope_conflict` | `I3979` | shares scripts/github-sync with I4261; they may not run concurrently |
-| WARN | `scope_conflict` | `I3979` | shares apps/majordomus-cli/src/commit/scopes.rs with I4262; they may not run concurrently |
-| WARN | `scope_conflict` | `I3979` | shares scripts/github-sync with I4290; they may not run concurrently |
-| WARN | `scope_conflict` | `I3979` | shares .ai/repo/ci/github.yaml with I4468; they may not run concurrently |
-| WARN | `scope_conflict` | `I3979` | shares .ai/repo/ci/github.yaml with I4488; they may not run concurrently |
 | WARN | `scope_conflict` | `I4350` | shares apps/majordomus-cli/src/plan.rs with I4463; they may not run concurrently |
 | WARN | `scope_conflict` | `I4350` | shares apps/majordomus-cli/src/plan.rs with I4464; they may not run concurrently |
 | WARN | `scope_conflict` | `I4357` | shares lib/adr.sh with I4362; they may not run concurrently |
-| WARN | `scope_conflict` | `I4357` | shares .github/workflows/validate.yml with I4381; they may not run concurrently |
 | WARN | `scope_conflict` | `I4357` | shares lib/plan.sh with I4410; they may not run concurrently |
 | WARN | `scope_conflict` | `I4357` | shares docs/CLI.md with I4413; they may not run concurrently |
 | WARN | `scope_conflict` | `I4357` | shares docs/CLI.md with I4415; they may not run concurrently |
