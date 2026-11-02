@@ -26,7 +26,7 @@
 RB="$(rust_bin)" || rust_bin_exit $?
 command -v jq >/dev/null 2>&1 || skip "no jq"
 command -v curl >/dev/null 2>&1 || skip "no curl"
-command -v python3 >/dev/null 2>&1 || skip "no python3"
+mj_runs python3 || skip "$(mj_runs_why python3)"
 export MAJORDOMUS_SHARE="$ROOT/share"
 
 PIDS=""

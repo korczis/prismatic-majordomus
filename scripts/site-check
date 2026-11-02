@@ -415,7 +415,7 @@ fi
 # The rule is rekeyValues in scripts/lib/site-i18n.mjs, the same one rekey applies.
 memory_keyed() { # i18n-dir
   local out rc=0
-  command -v node >/dev/null 2>&1 || { bad i18n "node is missing; the translation memory's keys cannot be checked"; return; }
+  mj_runs node || { bad i18n "$(mj_runs_why node); the translation memory's keys cannot be checked"; return; }
   out="$(node --input-type=module - "$1" "$(cd "$(dirname "$0")/.." && pwd)/scripts/lib/site-i18n.mjs" <<'NODE'
 import { existsSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';

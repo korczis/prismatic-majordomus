@@ -12,9 +12,9 @@
 # roadmap.json; the issueless DONE milestone read as delivered; the withdrawn sentences absent.
 # The Czech memory carries each new sentence, keyed without a number or a date in it.
 . "$ROOT/test/lib.sh"
-command -v zola >/dev/null || skip "zola absent"
-command -v python3 >/dev/null || skip "python3 absent"
-command -v node >/dev/null || skip "node absent"
+mj_zola_ready "$ROOT" || skip "$(mj_zola_why "$ROOT")"
+mj_runs python3 || skip "$(mj_runs_why python3)"
+mj_runs node || skip "$(mj_runs_why node)"
 
 mkdir -p S
 ( cd "$ROOT/site" && tar cf - --exclude ./public . ) | ( cd S && tar xf - )

@@ -142,7 +142,7 @@ file_mode() { stat -c %a "$1" 2>/dev/null || stat -f %Lp "$1"; }
 # from there: the `../lib/sha256.sh` this said before resolved outside the tree (I4381).
 # shellcheck source=lib/sha256.sh
 . "$ROOT/lib/sha256.sh"
-# shellcheck source=../lib/runnable.sh
+# shellcheck source=lib/runnable.sh
 . "$ROOT/lib/runnable.sh"
 
 # The SHA-256 of a file, for a case that must prove a file did not change rather than that a
