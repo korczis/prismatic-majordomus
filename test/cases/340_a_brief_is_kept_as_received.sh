@@ -298,4 +298,54 @@ chmod 644 "$F/campaigns/beta-pack/README.md"
 run_check
 [ "$rc" = 0 ] || { echo "    restoring the mode did not settle the tree: exit $rc"; printf '%s\n' "$LAST_OUT" | sed 's/^/      /'; exit 1; }
 
+# ---------------------------------------------------------------- 11. the plan and the packs
+# A brief is kept so that the work it asked for can be found. With a project model in the tree,
+# every pack is cited by a record or named as unplanned with its reason — and the list of the
+# unplanned cannot hide a pack that has been planned since, so it can only shrink.
+mkdir -p "$F/.ai/repo/project/issues" "$F/.ai/repo/ci"
+UNP="$F/.ai/repo/ci/campaigns-unplanned.txt"
+# every pack of the fixture but the two this section decides about, named as unplanned
+others() {
+  for d in "$F"/campaigns/*/; do
+    d="${d%/}"; d="${d##*/}"
+    case "$d" in alpha-pack|beta-pack) ;; *) printf '%s  a pack of the earlier sections\n' "$d" ;; esac
+  done
+}
+printf 'id: I0001\nwhy: "campaigns/alpha-pack/phases/01_first.md asks for it. See also campaigns/README.md."\n' \
+  > "$F/.ai/repo/project/issues/I0001.yaml"
+others > "$UNP"
+run_check
+[ "$rc" = 10 ] || { echo "    a pack no record cites exited $rc, not 10"; printf '%s\n' "$LAST_OUT" | sed 's/^/      /'; exit 1; }
+printf '%s\n' "$LAST_OUT" | grep -q '^FAIL campaigns  campaigns/beta-pack — a pack no record under .ai/repo/project cites' \
+  || { echo "    the unplanned pack was not named"; printf '%s\n' "$LAST_OUT" | sed 's/^/      /'; exit 1; }
+printf '%s\n' "$LAST_OUT" | grep -q 'alpha-pack — a pack no record' \
+  && { echo "    a cited pack was reported as unplanned"; printf '%s\n' "$LAST_OUT" | sed 's/^/      /'; exit 1; }
+printf '%s\n' "$LAST_OUT" | grep -q 'README.md, which is not a pack' \
+  && { echo "    the index was read as a pack a record cites"; printf '%s\n' "$LAST_OUT" | sed 's/^/      /'; exit 1; }
+{ printf '# packs no plan record cites, each with the reason\nbeta-pack  executed directly; no separate plan\n'; others; } > "$UNP"
+run_check
+[ "$rc" = 0 ] || { echo "    a pack named as unplanned with its reason exited $rc, not 0"; printf '%s\n' "$LAST_OUT" | sed 's/^/      /'; exit 1; }
+# the list goes stale the moment a record cites the pack, and says so
+printf 'id: I0002\nwhy: "The brief is campaigns/beta-pack."\n' > "$F/.ai/repo/project/issues/I0002.yaml"
+run_check
+[ "$rc" = 10 ] || { echo "    a stale unplanned line exited $rc, not 10"; printf '%s\n' "$LAST_OUT" | sed 's/^/      /'; exit 1; }
+printf '%s\n' "$LAST_OUT" | grep -q 'names `beta-pack` as unplanned, and a record cites it' \
+  || { echo "    the stale line was not named"; printf '%s\n' "$LAST_OUT" | sed 's/^/      /'; exit 1; }
+others > "$UNP"
+run_check
+[ "$rc" = 0 ] || { echo "    two cited packs and a list without them exited $rc, not 0"; printf '%s\n' "$LAST_OUT" | sed 's/^/      /'; exit 1; }
+# a citation nobody can open, and a line for a pack that is not there
+printf 'id: I0003\nwhy: "From campaigns/omega-pack/00.md."\n' > "$F/.ai/repo/project/issues/I0003.yaml"
+{ others; printf 'zeta-pack  never arrived\n'; } > "$UNP"
+run_check
+[ "$rc" = 10 ] || { echo "    a citation of a pack that is not kept exited $rc, not 10"; printf '%s\n' "$LAST_OUT" | sed 's/^/      /'; exit 1; }
+printf '%s\n' "$LAST_OUT" | grep -q 'a record cites campaigns/omega-pack, which is not a pack of this tree' \
+  || { echo "    the unopenable citation was not named"; printf '%s\n' "$LAST_OUT" | sed 's/^/      /'; exit 1; }
+printf '%s\n' "$LAST_OUT" | grep -q 'names `zeta-pack`, which is not a pack of this tree' \
+  || { echo "    the line for an absent pack was not named"; printf '%s\n' "$LAST_OUT" | sed 's/^/      /'; exit 1; }
+rm -rf "$F/.ai"
+run_check
+[ "$rc" = 0 ] || { echo "    a tree with no project model was asked for a plan: exit $rc"; printf '%s\n' "$LAST_OUT" | sed 's/^/      /'; exit 1; }
+echo "    every pack is cited by a plan record or named as unplanned, and the list cannot hide a planned one"
+
 echo "    a brief is kept as received: bytes, both directions of the set, and the index"
