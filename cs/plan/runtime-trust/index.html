@@ -15,7 +15,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://majordomus.dev/images/social-card.png">
 <link rel="icon" href="https://majordomus.dev/images/logo-mark.svg" type="image/svg+xml">
-<link rel="stylesheet" href="https://majordomus.dev/app.css?h=7c93b04581e91c82ac38">
+<link rel="stylesheet" href="https://majordomus.dev/app.css?h=c0fcef9d4bfc0dc18b3a">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-light.css">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-dark.css"><script>try{var t=localStorage.getItem('color-theme');if(t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark')}}catch(e){}</script>
 <script>(function(){try{var K="mj-lang",L=["en","cs"],S="en",B="https://majordomus.dev",d=document.documentElement,k;try{k=localStorage.getItem(K)}catch(e){}
@@ -173,10 +173,10 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
 <div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
   <div class="min-w-0">
   <p class="flex flex-wrap items-center gap-3"><span class="mj-badge mj-badge--active relative" data-status="active"><span aria-hidden="true">•</span>AKTIVNÍ</span>
-<span class="text-sm text-body">7 z 10 úkolů hotovo</span></p>
+<span class="text-sm text-body">7 z 11 úkolů hotovo</span></p>
 
   <dl class="mt-8 grid grid-cols-2 gap-4 border-y border-default py-6 sm:grid-cols-5">
-    <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">připraveno</dt><dd class="mt-1 text-2xl font-semibold text-heading">3</dd></div>
+    <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">připraveno</dt><dd class="mt-1 text-2xl font-semibold text-heading">4</dd></div>
     <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">blokováno</dt><dd class="mt-1 text-2xl font-semibold text-heading">0</dd></div>
     <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">aktivní</dt><dd class="mt-1 text-2xl font-semibold text-heading">0</dd></div>
     <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">verify</dt><dd class="mt-1 text-2xl font-semibold text-heading">0</dd></div>
@@ -294,6 +294,14 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
           <td class="px-4 py-2 font-mono text-xs text-body">—</td>
           <td class="px-4 py-2 text-heading">Dva hostitelé prezentující jeden klíč uzlu se jmenují jako duplikát a nikdy se neslučují do jednoho kolísajícího uzlu</td>
         </tr>
+        <tr class="border-t border-default align-top">
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://majordomus.dev/cs/plan/i4481/" class="text-fg-brand hover:underline">I4481</a></td>
+          <td class="px-4 py-2"><span class="mj-badge mj-badge--ready relative" data-status="ready"><span aria-hidden="true">○</span>PŘIPRAVENO</span>
+</td>
+          <td class="px-4 py-2 font-mono text-xs text-body">0</td>
+          <td class="px-4 py-2 font-mono text-xs text-body">—</td>
+          <td class="px-4 py-2 text-heading">The policy names the highest effect each transport may cause, and a capability above it is refused the same way everywhere</td>
+        </tr>
       </tbody>
     </table>
   </div>
@@ -302,7 +310,7 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
   
 <figure class="not-format my-6 overflow-hidden rounded-base border border-default bg-neutral-primary-soft">
   <figcaption class="flex flex-wrap items-baseline justify-between gap-2 border-b border-default px-4 py-2"><span class="text-sm font-medium text-heading">graf závislostí runtime-trust</span><span class="font-mono text-xs text-body-subtle">z .ai/repo/project</span></figcaption>
-  <div class="overflow-x-auto p-4" tabindex="0"><pre class="mermaid m-0 bg-transparent font-mono text-xs text-heading" tabindex="0" id="diagram-runtime-trust" data-diagram="runtime-trust" data-nodes="I2123 I2124 I2132 I2133 I2134 I2135 I2703 I2704 I2705 I3175">flowchart LR
+  <div class="overflow-x-auto p-4" tabindex="0"><pre class="mermaid m-0 bg-transparent font-mono text-xs text-heading" tabindex="0" id="diagram-runtime-trust" data-diagram="runtime-trust" data-nodes="I2123 I2124 I2132 I2133 I2134 I2135 I2703 I2704 I2705 I3175 I4481">flowchart LR
     I2123[&quot;I2123&lt;br/&gt;A caller beyond loopback reads, and changes nothing it cannot authenticate&quot;]:::done
     I2124[&quot;I2124&lt;br/&gt;An event reloaded from disk meets the trust policy in force, and no stamp outruns the clock&quot;]:::done
     I2132[&quot;I2132&lt;br/&gt;A hello names the runtime it is meant for, and no other runtime accepts it&quot;]:::done
@@ -313,6 +321,7 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
     I2704[&quot;I2704&lt;br/&gt;A dialer reads no reply beyond the link bound and no more candidates than the bound, and a refusing peer is retried at a measured, jittered rate&quot;]:::ready
     I2705[&quot;I2705&lt;br/&gt;A node key can be rotated, peers follow the new key, and the old key is refused&quot;]:::done
     I3175[&quot;I3175&lt;br/&gt;Two hosts presenting one node key are named as a duplicate, never folded into one flapping node&quot;]:::ready
+    I4481[&quot;I4481&lt;br/&gt;The policy names the highest effect each transport may cause, and a capability above it is refused the same way everywhere&quot;]:::ready
     I2132 --&gt; I2703
     I2133 --&gt; I2704
     I2134 --&gt; I2705
@@ -323,11 +332,11 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
     classDef planned stroke:#0891b2,fill:#ecfeff,color:#164e63,stroke-width:2px
     classDef blocked stroke:#b45309,fill:#fffbeb,color:#78350f,stroke-width:2px
     classDef cancelled stroke:#6b7280,fill:#f9fafb,color:#374151,stroke-width:2px
-    classDef superseded stroke:#6b7280,fill:#f9fafb,color:#374151,stroke-width:2px</pre><div class="mj-diagram-bar" role="toolbar" aria-label="Diagram runtime-trust" aria-controls="diagram-runtime-trust" data-diagram-bar="diagram-runtime-trust" hidden><button type="button" class="mj-button mj-button--quiet" data-diagram-action="zoom-out" aria-label="Oddálit" title="Oddálit">−</button><button type="button" class="mj-button mj-button--quiet" data-diagram-action="zoom-in" aria-label="Přiblížit" title="Přiblížit">+</button><button type="button" class="mj-button mj-button--quiet" data-diagram-action="fit" aria-label="Přizpůsobit diagram rámu" title="Přizpůsobit diagram rámu">Přizpůsobit</button><button type="button" class="mj-button mj-button--quiet" data-diagram-action="expand" aria-label="Zobrazit na celou obrazovku" title="Zobrazit na celou obrazovku">Rozbalit</button><button type="button" class="mj-button mj-button--quiet" data-diagram-action="download" aria-label="Stáhnout SVG" title="Stáhnout SVG">SVG</button><button type="button" class="mj-button mj-button--quiet" data-diagram-action="link" aria-label="Odkaz: zkopírovat adresu tohoto diagramu" title="Odkaz: zkopírovat adresu tohoto diagramu">Odkaz</button><span class="mj-diagram-status" role="status"></span></div><details class="mj-diagram-links" data-diagram-links="diagram-runtime-trust"><summary>Odkazuje z tohoto diagramu (10)</summary><ul><li><a href="https://majordomus.dev/cs/plan/i2123/" data-node="I2123" data-kind="issue">I2123 Volající mimo loopback čte a nic nemění, co nedokáže ověřit</a></li><li><a href="https://majordomus.dev/cs/plan/i2124/" data-node="I2124" data-kind="issue">I2124 Událost znovu načtená z disku narazí na politiku důvěry, která platí, a žádné razítko nepředběhne hodiny</a></li><li><a href="https://majordomus.dev/cs/plan/i2132/" data-node="I2132" data-kind="issue">I2132 Hello jmenuje runtime, pro který je určeno, a žádný jiný runtime ho nepřijme</a></li><li><a href="https://majordomus.dev/cs/plan/i2133/" data-node="I2133" data-kind="issue">I2133 Každý vstup i odpověď meshe má mez a odmítnutá registrace se nic nedozví</a></li><li><a href="https://majordomus.dev/cs/plan/i2134/" data-node="I2134" data-kind="issue">I2134 Klíč odebraný ze seznamu důvěry ztratí své linky bez restartu a klíč uzlu lze rotovat</a></li><li><a href="https://majordomus.dev/cs/plan/i2135/" data-node="I2135" data-kind="issue">I2135 Kořen důvěry se čte z výchozí větve, ne z toho, co drží checkout</a></li><li><a href="https://majordomus.dev/cs/plan/i2703/" data-node="I2703" data-kind="issue">I2703 Pravidlo spolupráce na meshi uvádí kontroly hello v pořadí, v jakém je kód spouští, a test toto pořadí jmenuje</a></li><li><a href="https://majordomus.dev/cs/plan/i2704/" data-node="I2704" data-kind="issue">I2704 Dialer nečte žádnou odpověď nad mez linku ani víc kandidátů, než dovoluje mez, a odmítající peer se zkouší znovu v měřeném, rozptýleném tempu</a></li><li><a href="https://majordomus.dev/cs/plan/i2705/" data-node="I2705" data-kind="issue">I2705 Klíč uzlu lze rotovat, peery následují nový klíč a starý klíč se odmítne</a></li><li><a href="https://majordomus.dev/cs/plan/i3175/" data-node="I3175" data-kind="issue">I3175 Dva hostitelé prezentující jeden klíč uzlu se jmenují jako duplikát a nikdy se neslučují do jednoho kolísajícího uzlu</a></li></ul></details></div>
+    classDef superseded stroke:#6b7280,fill:#f9fafb,color:#374151,stroke-width:2px</pre><div class="mj-diagram-bar" role="toolbar" aria-label="Diagram runtime-trust" aria-controls="diagram-runtime-trust" data-diagram-bar="diagram-runtime-trust" hidden><button type="button" class="mj-button mj-button--quiet" data-diagram-action="zoom-out" aria-label="Oddálit" title="Oddálit">−</button><button type="button" class="mj-button mj-button--quiet" data-diagram-action="zoom-in" aria-label="Přiblížit" title="Přiblížit">+</button><button type="button" class="mj-button mj-button--quiet" data-diagram-action="fit" aria-label="Přizpůsobit diagram rámu" title="Přizpůsobit diagram rámu">Přizpůsobit</button><button type="button" class="mj-button mj-button--quiet" data-diagram-action="expand" aria-label="Zobrazit na celou obrazovku" title="Zobrazit na celou obrazovku">Rozbalit</button><button type="button" class="mj-button mj-button--quiet" data-diagram-action="download" aria-label="Stáhnout SVG" title="Stáhnout SVG">SVG</button><button type="button" class="mj-button mj-button--quiet" data-diagram-action="link" aria-label="Odkaz: zkopírovat adresu tohoto diagramu" title="Odkaz: zkopírovat adresu tohoto diagramu">Odkaz</button><span class="mj-diagram-status" role="status"></span></div><details class="mj-diagram-links" data-diagram-links="diagram-runtime-trust"><summary>Odkazuje z tohoto diagramu (11)</summary><ul><li><a href="https://majordomus.dev/cs/plan/i2123/" data-node="I2123" data-kind="issue">I2123 Volající mimo loopback čte a nic nemění, co nedokáže ověřit</a></li><li><a href="https://majordomus.dev/cs/plan/i2124/" data-node="I2124" data-kind="issue">I2124 Událost znovu načtená z disku narazí na politiku důvěry, která platí, a žádné razítko nepředběhne hodiny</a></li><li><a href="https://majordomus.dev/cs/plan/i2132/" data-node="I2132" data-kind="issue">I2132 Hello jmenuje runtime, pro který je určeno, a žádný jiný runtime ho nepřijme</a></li><li><a href="https://majordomus.dev/cs/plan/i2133/" data-node="I2133" data-kind="issue">I2133 Každý vstup i odpověď meshe má mez a odmítnutá registrace se nic nedozví</a></li><li><a href="https://majordomus.dev/cs/plan/i2134/" data-node="I2134" data-kind="issue">I2134 Klíč odebraný ze seznamu důvěry ztratí své linky bez restartu a klíč uzlu lze rotovat</a></li><li><a href="https://majordomus.dev/cs/plan/i2135/" data-node="I2135" data-kind="issue">I2135 Kořen důvěry se čte z výchozí větve, ne z toho, co drží checkout</a></li><li><a href="https://majordomus.dev/cs/plan/i2703/" data-node="I2703" data-kind="issue">I2703 Pravidlo spolupráce na meshi uvádí kontroly hello v pořadí, v jakém je kód spouští, a test toto pořadí jmenuje</a></li><li><a href="https://majordomus.dev/cs/plan/i2704/" data-node="I2704" data-kind="issue">I2704 Dialer nečte žádnou odpověď nad mez linku ani víc kandidátů, než dovoluje mez, a odmítající peer se zkouší znovu v měřeném, rozptýleném tempu</a></li><li><a href="https://majordomus.dev/cs/plan/i2705/" data-node="I2705" data-kind="issue">I2705 Klíč uzlu lze rotovat, peery následují nový klíč a starý klíč se odmítne</a></li><li><a href="https://majordomus.dev/cs/plan/i3175/" data-node="I3175" data-kind="issue">I3175 Dva hostitelé prezentující jeden klíč uzlu se jmenují jako duplikát a nikdy se neslučují do jednoho kolísajícího uzlu</a></li><li><a href="https://majordomus.dev/cs/plan/i4481/" data-node="I4481" data-kind="issue">I4481 The policy names the highest effect each transport may cause, and a capability above it is refused the same way everywhere</a></li></ul></details></div>
 </figure>
 
 
-  <p class="mt-8 text-sm text-body">Kanonický záznam: <a href="https://github.com/korczis/prismatic-majordomus/blob/af41ab4fec1b2cb5c83fa83dd3c80bb91a152345/.ai/repo/project/milestones/runtime-trust.yaml" class="break-all font-mono text-fg-brand underline inline-block py-1">.ai/repo/project/milestones/runtime-trust.yaml</a>. Přečtěte jej zpět pomocí <code class="font-mono text-heading">majordomus plan show runtime-trust</code>.</p>
+  <p class="mt-8 text-sm text-body">Kanonický záznam: <a href="https://github.com/korczis/prismatic-majordomus/blob/acd99970a6f15ab61d82728b84c6210322499436/.ai/repo/project/milestones/runtime-trust.yaml" class="break-all font-mono text-fg-brand underline inline-block py-1">.ai/repo/project/milestones/runtime-trust.yaml</a>. Přečtěte jej zpět pomocí <code class="font-mono text-heading">majordomus plan show runtime-trust</code>.</p>
 </div>
 
 </div>
@@ -377,9 +386,9 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
       <div class="min-w-0">
         <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">Projekt</h2><ul class="space-y-2 text-sm font-medium text-body">
           <li><a href="https://github.com/korczis/prismatic-majordomus" class="hover:text-heading hover:underline">GitHub</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/af41ab4fec1b2cb5c83fa83dd3c80bb91a152345/LICENSE" class="hover:text-heading hover:underline">Licence MIT</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/af41ab4fec1b2cb5c83fa83dd3c80bb91a152345/SECURITY.md" class="hover:text-heading hover:underline">Bezpečnostní politika</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/af41ab4fec1b2cb5c83fa83dd3c80bb91a152345/CONTRIBUTING.md" class="hover:text-heading hover:underline">Průvodce pro přispěvatele</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/acd99970a6f15ab61d82728b84c6210322499436/LICENSE" class="hover:text-heading hover:underline">Licence MIT</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/acd99970a6f15ab61d82728b84c6210322499436/SECURITY.md" class="hover:text-heading hover:underline">Bezpečnostní politika</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/acd99970a6f15ab61d82728b84c6210322499436/CONTRIBUTING.md" class="hover:text-heading hover:underline">Průvodce pro přispěvatele</a></li>
         </ul>
       </div>
     </div>
@@ -387,7 +396,7 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/cs/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.10</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/af41ab4fec1b2cb5c83fa83dd3c80bb91a152345" class="font-mono underline">af41ab4</a> · inputs <span class="font-mono">ca14b585387b</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/cs/architecture/" class="underline">how this site is derived</a> names them.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.10</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/acd99970a6f15ab61d82728b84c6210322499436" class="font-mono underline">acd9997</a> · inputs <span class="font-mono">1718f914c463</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/cs/architecture/" class="underline">how this site is derived</a> names them.</p>
     </div>
   </div>
 </footer>

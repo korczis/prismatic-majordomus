@@ -4,18 +4,18 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>HTTP API: server — Prismatic Majordomus</title>
-<meta name="description" content="Sdílený server tohoto checkoutu a každého jiného checkoutu téhož git repozitáře: co říká každý lease, zda server, který pojmenovává, odpovídá, zda to, co odpovídá, je kód na disku ve verzi tohoto executable, a kolik peerů každý drží.">
+<meta name="description" content="The shared server of this checkout and of every other checkout of the same git repository: what each lease says, whether the server it names answers, whether what answers is the code on disk at this executable&#39;s version, where each runtime stands and how it got there, and how many peers each one holds.">
 <link rel="canonical" href="https://majordomus.dev/cs/docs/api/server/">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Prismatic Majordomus">
 <meta property="og:title" content="HTTP API: server — Prismatic Majordomus">
-<meta property="og:description" content="Sdílený server tohoto checkoutu a každého jiného checkoutu téhož git repozitáře: co říká každý lease, zda server, který pojmenovává, odpovídá, zda to, co odpovídá, je kód na disku ve verzi tohoto executable, a kolik peerů každý drží.">
+<meta property="og:description" content="The shared server of this checkout and of every other checkout of the same git repository: what each lease says, whether the server it names answers, whether what answers is the code on disk at this executable&#39;s version, where each runtime stands and how it got there, and how many peers each one holds.">
 <meta property="og:url" content="https://majordomus.dev/cs/docs/api/server/">
 <meta property="og:image" content="https://majordomus.dev/images/social-card.png">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://majordomus.dev/images/social-card.png">
 <link rel="icon" href="https://majordomus.dev/images/logo-mark.svg" type="image/svg+xml">
-<link rel="stylesheet" href="https://majordomus.dev/app.css?h=7c93b04581e91c82ac38">
+<link rel="stylesheet" href="https://majordomus.dev/app.css?h=c0fcef9d4bfc0dc18b3a">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-light.css">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-dark.css"><script>try{var t=localStorage.getItem('color-theme');if(t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark')}}catch(e){}</script>
 <script>(function(){try{var K="mj-lang",L=["en","cs"],S="en",B="https://majordomus.dev",d=document.documentElement,k;try{k=localStorage.getItem(K)}catch(e){}
@@ -167,7 +167,7 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
 </nav>
 
     <h1 class="mt-4 break-words text-3xl font-bold tracking-tight text-heading sm:text-4xl">HTTP API: server</h1>
-    <p class="mt-3 max-w-3xl break-words text-lg text-body">Sdílený server tohoto checkoutu i každého dalšího checkoutu téhož git repozitáře: co říká každý lease, zda server, který pojmenovává, odpovídá, zda to, co odpovídá, je kód na disku ve verzi tohoto spustitelného souboru, a kolik peerů každý drží.</p>
+    <p class="mt-3 max-w-3xl break-words text-lg text-body">The shared server of this checkout and of every other checkout of the same git repository: what each lease says, whether the server it names answers, whether what answers is the code on disk at this executable&#39;s version, where each runtime stands and how it got there, and how many peers each one holds.</p>
   </div>
 </div>
 <div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
@@ -179,16 +179,16 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
     </ul>
   </nav>
   <div class="min-w-0">
-    <p class="mb-6 text-sm text-body-subtle">Vykresleno z <a href="https://github.com/korczis/prismatic-majordomus/blob/af41ab4fec1b2cb5c83fa83dd3c80bb91a152345/docs/generated/openapi.json" class="font-mono underline">docs/generated/openapi.json</a>, který spustitelný soubor generuje ze svého registru schopností a CI jej odmítne, je-li zastaralý. Surový dokument je na <a href="https://majordomus.dev/openapi.json" class="font-mono text-fg-brand underline">/openapi.json</a>; běžící server servíruje stejný dokument na vlastní <code class="font-mono">/openapi.json</code> a Swagger UI na <code class="font-mono">/swagger</code>.</p><section id="tag-server" class="scroll-mt-24">
+    <p class="mb-6 text-sm text-body-subtle">Vykresleno z <a href="https://github.com/korczis/prismatic-majordomus/blob/acd99970a6f15ab61d82728b84c6210322499436/docs/generated/openapi.json" class="font-mono underline">docs/generated/openapi.json</a>, který spustitelný soubor generuje ze svého registru schopností a CI jej odmítne, je-li zastaralý. Surový dokument je na <a href="https://majordomus.dev/openapi.json" class="font-mono text-fg-brand underline">/openapi.json</a>; běžící server servíruje stejný dokument na vlastní <code class="font-mono">/openapi.json</code> a Swagger UI na <code class="font-mono">/swagger</code>.</p><section id="tag-server" class="scroll-mt-24">
       <h2 class="font-mono text-xl font-semibold tracking-tight text-heading">server</h2>
-      <p class="mt-2 max-w-3xl text-sm text-body">Sdílený server tohoto checkoutu i každého dalšího checkoutu téhož git repozitáře: co říká každý lease, zda server, který pojmenovává, odpovídá, zda to, co odpovídá, je kód na disku ve verzi tohoto spustitelného souboru, a kolik peerů každý drží.</p><article id="op-server-status" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+      <p class="mt-2 max-w-3xl text-sm text-body">The shared server of this checkout and of every other checkout of the same git repository: what each lease says, whether the server it names answers, whether what answers is the code on disk at this executable&#39;s version, where each runtime stands and how it got there, and how many peers each one holds.</p><article id="op-server-status" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
   <div class="flex flex-wrap items-center gap-2">
     <span class="rounded px-2 py-0.5 font-mono text-xs font-bold bg-success-soft text-fg-success-strong border border-success-subtle">GET</span>
     <code class="break-all font-mono text-base font-semibold text-heading">/api/v1/server</code>
     <a href="#op-server-status" class="font-mono text-xs text-body-subtle hover:underline">server.status</a>
   </div>
   <h3 class="mt-3 text-lg font-semibold tracking-tight text-heading">Sdílený server a každý server repozitáře</h3>
-  <p class="mt-1 break-words text-sm text-body">Kde stojí server tohoto checkoutu — absent, starting, ready, outdated nebo stale — měřeno proti tomu, co by poskytoval tento spustitelný soubor; jak daleko je strom, který poskytuje, od vzdáleného trunku (`trunk`: current, lagging, stale, unjudged nebo unmeasured proti `checkout.trunk_distance` politiky, k poslednímu fetchi); lease, který tento proces drží, když je serverem; a, pokud `checkouts` nezúží výběr jen na tento, každý checkout, který git pro repozitář eviduje, primární první, každý se svým lease, postavením a důvodem a s peery, které hlásí jeho server. `checkouts: this` přečte jeden lease, otestuje jeden server a nevyjmenuje žádný jiný checkout, což je cena, kterou má platit volající, který se ptá jen na checkout, ve kterém je. Čte se z lease souborů a ze serverů při každém volání; nic se necachuje, protože lease zapisují jiné procesy.</p>
+  <p class="mt-1 break-words text-sm text-body">Where this checkout&#39;s server stands — absent, starting, ready, outdated or stale — measured against what this executable would serve; where its runtime stands (`runtime`: that word refined by the server&#39;s readiness report, its mesh verdict and the last recorded transition into building, mesh_attaching, operational, degraded, stopping, stopped or failed, with the time, reason and recorder of that transition, kept under `.ai/local/state/runtime/` and written only when the state changes — this reader records `stopped` or `failed` for a server it finds gone); how far the tree it serves is from the remote trunk (`trunk`: current, lagging, stale, unjudged or unmeasured against the policy&#39;s `checkout.trunk_distance`, as of the last fetch); the lease this process holds when it is the server; and, unless `checkouts` narrows it to this one, every checkout git registers for the repository, the primary first, each with its lease, its standing and the reason, its runtime, and the peers its server reports. `checkouts: this` reads one lease and probes one server and enumerates no other checkout, which is what a caller asking only about the checkout it is in should pay. Read from the lease files and the servers on every call; nothing is cached, because the leases are written by other processes.</p>
   <ul class="mt-3 flex flex-wrap gap-2 text-xs">
     <li><span class="rounded border border-default bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-heading">query</span></li>
     <li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body">behaviorally_verified</span></li>
@@ -207,7 +207,7 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
     </table>
   </div><h4 class="mt-5 font-mono text-xs uppercase tracking-wide text-body-subtle">Vyzkoušejte</h4>
   <p class="mt-1 text-xs text-body-subtle">Port je ten, který server zalogoval; 8741 je ten, o který žádá jako první. Hodnoty jsou první příklad operace.</p>
-  <div class="mt-2 overflow-x-auto rounded-base border border-default bg-neutral-secondary-medium" tabindex="0"><pre class="m-0 p-3 font-mono text-xs leading-relaxed text-heading" tabindex="0">curl -s &quot;http://127.0.0.1:8741/api/v1/server?checkouts=repository&quot;</pre></div><p class="mt-1 text-xs text-body-subtle">Testováno v <a href="https://github.com/korczis/prismatic-majordomus/blob/af41ab4fec1b2cb5c83fa83dd3c80bb91a152345/apps/majordomus-cli/tests/http_serve.rs" class="break-all font-mono text-fg-brand underline inline-block py-1">apps/majordomus-cli/tests/http_serve.rs</a>, který přehrává routu s těmito hodnotami proti serveru na skutečném socketu.</p>
+  <div class="mt-2 overflow-x-auto rounded-base border border-default bg-neutral-secondary-medium" tabindex="0"><pre class="m-0 p-3 font-mono text-xs leading-relaxed text-heading" tabindex="0">curl -s &quot;http://127.0.0.1:8741/api/v1/server?checkouts=repository&quot;</pre></div><p class="mt-1 text-xs text-body-subtle">Testováno v <a href="https://github.com/korczis/prismatic-majordomus/blob/acd99970a6f15ab61d82728b84c6210322499436/apps/majordomus-cli/tests/http_serve.rs" class="break-all font-mono text-fg-brand underline inline-block py-1">apps/majordomus-cli/tests/http_serve.rs</a>, který přehrává routu s těmito hodnotami proti serveru na skutečném socketu.</p>
 
   <h4 class="mt-5 font-mono text-xs uppercase tracking-wide text-body-subtle">Odpovědi</h4>
   <div class="mt-2 overflow-x-auto rounded-base border border-default" tabindex="0">
@@ -428,7 +428,7 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
 <span class="giallo-l"><span>let status = ServerStatus { checkout_id: &quot;c&quot;.into(), git: None,</span></span>
 <span class="giallo-l"><span>    desired: Desired { host: &quot;127.0.0.1&quot;.into(), port: 8741, version: &quot;1.0.0&quot;.into(), executable: None },</span></span>
 <span class="giallo-l"><span>    this_process: None, standing: ServerStanding::Absent, servers: Vec::new(),</span></span>
-<span class="giallo-l"><span>    connections: None, trunk: None };</span></span>
+<span class="giallo-l"><span>    connections: None, trunk: None, runtime: None };</span></span>
 <span class="giallo-l"><span>let text = serde_json::to_string(&amp;status).unwrap();</span></span>
 <span class="giallo-l"><span>assert_eq!(serde_json::from_str::&lt;ServerStatus&gt;(&amp;text).unwrap(), status);</span></span></code></pre></div><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
     <table class="w-full min-w-[32rem] text-left text-sm" tabindex="0">
@@ -473,6 +473,15 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
           <td class="px-3 py-2 font-mono text-body">TrunkDistance | null <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/cs/docs/api/shared/#schema-TrunkDistance" class="text-fg-brand underline">TrunkDistance</a></td>
           <td class="px-3 py-2 font-mono text-body">ne</td>
           <td class="px-3 py-2 text-body"><div class="min-w-0 [&_pre]:max-w-full [&_pre]:overflow-x-auto">Jak daleko je strom, který tento checkout obsluhuje, od vzdáleného trunku, posuzováno podle <code>checkout.trunk_distance</code> politiky: server checkoutu o 779 commitů pozadu odpovídá každé relaci ze stromu, který už neexistuje, a tady se to říká. Chybí jen v odpovědi, která předchází tomuto poli.</div></td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">runtime</td>
+          <td class="px-3 py-2 font-mono text-body">RuntimeState | null <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/cs/docs/api/shared/#schema-RuntimeState" class="text-fg-brand underline">RuntimeState</a></td>
+          <td class="px-3 py-2 font-mono text-body">ne</td>
+          <td class="px-3 py-2 text-body"><div class="min-w-0 [&_pre]:max-w-full [&_pre]:overflow-x-auto">Where this checkout's runtime stands — the lease's word refined by the server's
+readiness report and mesh verdict and by the last recorded transition — with that
+transition: when, why and who recorded it (I3179). <code>standing</code> keeps the lease's five
+words; this is where the other seven appear. Absent only from an answer that predates
+the field.</div></td>
         </tr></tbody>
     </table>
   </div><p class="mt-3 text-xs text-body-subtle">Používá <a href="https://majordomus.dev/cs/docs/api/server/#op-server-status" class="font-mono text-fg-brand hover:underline">server.status</a></p></article>
@@ -483,7 +492,8 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
   </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">Jeden checkout repozitáře a server, který jmenuje jeho lease.</p>
 <pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="plain"><span class="giallo-l"><span>use majordomus_cli::capability::builtin::server::{ServerStanding, ServerView};</span></span>
 <span class="giallo-l"><span>let view = ServerView { worktree: &quot;/r&quot;.into(), branch: Some(&quot;master&quot;.into()), checkout_id: &quot;c&quot;.into(),</span></span>
-<span class="giallo-l"><span>    primary: true, this_checkout: true, standing: ServerStanding::Absent, reason: None, lease: None, peers: None };</span></span>
+<span class="giallo-l"><span>    primary: true, this_checkout: true, standing: ServerStanding::Absent, reason: None, lease: None, peers: None,</span></span>
+<span class="giallo-l"><span>    runtime: None };</span></span>
 <span class="giallo-l"><span>let v = serde_json::to_value(&amp;view).unwrap();</span></span>
 <span class="giallo-l"><span>assert_eq!(v[&quot;standing&quot;], &quot;absent&quot;);</span></span>
 <span class="giallo-l"><span>assert!(v.get(&quot;lease&quot;).is_none() &amp;&amp; v.get(&quot;peers&quot;).is_none(), &quot;what there is not is not written&quot;);</span></span></code></pre></div><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
@@ -534,6 +544,12 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
           <td class="px-3 py-2 font-mono text-body">integer | null</td>
           <td class="px-3 py-2 font-mono text-body">ne</td>
           <td class="px-3 py-2 text-body"><div class="min-w-0 [&_pre]:max-w-full [&_pre]:overflow-x-auto">Kolik peerů server hlásí jako připojených, když odpoví.</div></td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">runtime</td>
+          <td class="px-3 py-2 font-mono text-body">RuntimeState | null <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/cs/docs/api/shared/#schema-RuntimeState" class="text-fg-brand underline">RuntimeState</a></td>
+          <td class="px-3 py-2 font-mono text-body">ne</td>
+          <td class="px-3 py-2 text-body"><div class="min-w-0 [&_pre]:max-w-full [&_pre]:overflow-x-auto">Where its runtime stands, and the last transition recorded for it (I3179). Absent
+only from an answer that predates the field.</div></td>
         </tr></tbody>
     </table>
   </div><p class="mt-3 text-xs text-body-subtle">Používá <a href="https://majordomus.dev/cs/docs/api/server/#schema-ServerStatus" class="font-mono text-fg-brand underline">ServerStatus</a></p></article>
@@ -588,9 +604,9 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
       <div class="min-w-0">
         <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">Projekt</h2><ul class="space-y-2 text-sm font-medium text-body">
           <li><a href="https://github.com/korczis/prismatic-majordomus" class="hover:text-heading hover:underline">GitHub</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/af41ab4fec1b2cb5c83fa83dd3c80bb91a152345/LICENSE" class="hover:text-heading hover:underline">Licence MIT</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/af41ab4fec1b2cb5c83fa83dd3c80bb91a152345/SECURITY.md" class="hover:text-heading hover:underline">Bezpečnostní politika</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/af41ab4fec1b2cb5c83fa83dd3c80bb91a152345/CONTRIBUTING.md" class="hover:text-heading hover:underline">Průvodce pro přispěvatele</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/acd99970a6f15ab61d82728b84c6210322499436/LICENSE" class="hover:text-heading hover:underline">Licence MIT</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/acd99970a6f15ab61d82728b84c6210322499436/SECURITY.md" class="hover:text-heading hover:underline">Bezpečnostní politika</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/acd99970a6f15ab61d82728b84c6210322499436/CONTRIBUTING.md" class="hover:text-heading hover:underline">Průvodce pro přispěvatele</a></li>
         </ul>
       </div>
     </div>
@@ -598,7 +614,7 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/cs/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.10</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/af41ab4fec1b2cb5c83fa83dd3c80bb91a152345" class="font-mono underline">af41ab4</a> · inputs <span class="font-mono">ca14b585387b</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/cs/architecture/" class="underline">how this site is derived</a> names them.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.10</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/acd99970a6f15ab61d82728b84c6210322499436" class="font-mono underline">acd9997</a> · inputs <span class="font-mono">1718f914c463</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/cs/architecture/" class="underline">how this site is derived</a> names them.</p>
     </div>
   </div>
 </footer>

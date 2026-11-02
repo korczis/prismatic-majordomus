@@ -15,7 +15,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://majordomus.dev/images/social-card.png">
 <link rel="icon" href="https://majordomus.dev/images/logo-mark.svg" type="image/svg+xml">
-<link rel="stylesheet" href="https://majordomus.dev/app.css?h=7c93b04581e91c82ac38">
+<link rel="stylesheet" href="https://majordomus.dev/app.css?h=c0fcef9d4bfc0dc18b3a">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-light.css">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-dark.css"><script>try{var t=localStorage.getItem('color-theme');if(t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark')}}catch(e){}</script>
 <script>(function(){try{var K="mj-lang",L=["en","cs"],S="en",B="https://majordomus.dev",d=document.documentElement,k;try{k=localStorage.getItem(K)}catch(e){}
@@ -184,11 +184,11 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
 <div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
   <div class="min-w-0">
   <p class="flex flex-wrap items-center gap-3"><span class="mj-badge mj-badge--active relative" data-status="active"><span aria-hidden="true">•</span>ACTIVE</span>
-<span class="text-sm text-body">3 of 6 issues done</span></p>
+<span class="text-sm text-body">3 of 9 issues done</span></p>
 
   <dl class="mt-8 grid grid-cols-2 gap-4 border-y border-default py-6 sm:grid-cols-5">
-    <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">ready</dt><dd class="mt-1 text-2xl font-semibold text-heading">2</dd></div>
-    <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">blocked</dt><dd class="mt-1 text-2xl font-semibold text-heading">1</dd></div>
+    <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">ready</dt><dd class="mt-1 text-2xl font-semibold text-heading">4</dd></div>
+    <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">blocked</dt><dd class="mt-1 text-2xl font-semibold text-heading">2</dd></div>
     <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">active</dt><dd class="mt-1 text-2xl font-semibold text-heading">0</dd></div>
     <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">verify</dt><dd class="mt-1 text-2xl font-semibold text-heading">0</dd></div>
     <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">done</dt><dd class="mt-1 text-2xl font-semibold text-heading">3</dd></div>
@@ -271,6 +271,30 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
           <td class="px-4 py-2 font-mono text-xs text-body">—</td>
           <td class="px-4 py-2 text-heading">A behavioural case can be written as a Rust integration test over a disposable repository, and the continuity cases are the first ported</td>
         </tr>
+        <tr class="border-t border-default align-top">
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://majordomus.dev/plan/i4486/" class="text-fg-brand hover:underline">I4486</a></td>
+          <td class="px-4 py-2"><span class="mj-badge mj-badge--ready relative" data-status="ready"><span aria-hidden="true">○</span>READY</span>
+</td>
+          <td class="px-4 py-2 font-mono text-xs text-body">0</td>
+          <td class="px-4 py-2 font-mono text-xs text-body">—</td>
+          <td class="px-4 py-2 text-heading">A program is run by one typed capability: an executable and an argument list, a bound and a process group, and never a command string</td>
+        </tr>
+        <tr class="border-t border-default align-top">
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://majordomus.dev/plan/i4488/" class="text-fg-brand hover:underline">I4488</a></td>
+          <td class="px-4 py-2"><span class="mj-badge mj-badge--ready relative" data-status="ready"><span aria-hidden="true">○</span>READY</span>
+</td>
+          <td class="px-4 py-2 font-mono text-xs text-body">0</td>
+          <td class="px-4 py-2 font-mono text-xs text-body">—</td>
+          <td class="px-4 py-2 text-heading">A behavioural case may be a Rust test: it counts in the suite report, a removed shell case names what replaced it, and the number of shell cases does not rise</td>
+        </tr>
+        <tr class="border-t border-default align-top">
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://majordomus.dev/plan/i4489/" class="text-fg-brand hover:underline">I4489</a></td>
+          <td class="px-4 py-2"><span class="mj-badge mj-badge--blocked relative" data-status="blocked"><span aria-hidden="true">✕</span>BLOCKED</span>
+</td>
+          <td class="px-4 py-2 font-mono text-xs text-body">1</td>
+          <td class="px-4 py-2 font-mono text-xs text-body"><a href="https://majordomus.dev/plan/i4488/" class="text-fg-brand hover:underline">I4488</a></td>
+          <td class="px-4 py-2 text-heading">Ten cases whose subject is the Rust executable alone are Rust tests, each removed with its mapping row</td>
+        </tr>
       </tbody>
     </table>
   </div>
@@ -279,15 +303,19 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
   
 <figure class="not-format my-6 overflow-hidden rounded-base border border-default bg-neutral-primary-soft">
   <figcaption class="flex flex-wrap items-baseline justify-between gap-2 border-b border-default px-4 py-2"><span class="text-sm font-medium text-heading">automation dependency graph</span><span class="font-mono text-xs text-body-subtle">from .ai/repo/project</span></figcaption>
-  <div class="overflow-x-auto p-4" tabindex="0"><pre class="mermaid m-0 bg-transparent font-mono text-xs text-heading" tabindex="0" id="diagram-automation" data-diagram="automation" data-nodes="I1800 I1801 I1802 I1803 I1804 I3160">flowchart LR
+  <div class="overflow-x-auto p-4" tabindex="0"><pre class="mermaid m-0 bg-transparent font-mono text-xs text-heading" tabindex="0" id="diagram-automation" data-diagram="automation" data-nodes="I1800 I1801 I1802 I1803 I1804 I3160 I4486 I4488 I4489">flowchart LR
     I1800[&quot;I1800&lt;br/&gt;The sandboxed engine a scripted capability runs in&quot;]:::done
     I1801[&quot;I1801&lt;br/&gt;A scripted capability is a kind, discovered and registered, runnable and projected like any capability&quot;]:::ready
     I1802[&quot;I1802&lt;br/&gt;Nothing runs Perl&quot;]:::done
     I1803[&quot;I1803&lt;br/&gt;New shell is refused without a declared exemption, and the migration inventory is tracked&quot;]:::done
     I1804[&quot;I1804&lt;br/&gt;The first shell scripts become scripted capabilities over typed Rust&quot;]:::blocked
     I3160[&quot;I3160&lt;br/&gt;A behavioural case can be written as a Rust integration test over a disposable repository, and the continuity cases are the first ported&quot;]:::ready
+    I4486[&quot;I4486&lt;br/&gt;A program is run by one typed capability: an executable and an argument list, a bound and a process group, and never a command string&quot;]:::ready
+    I4488[&quot;I4488&lt;br/&gt;A behavioural case may be a Rust test: it counts in the suite report, a removed shell case names what replaced it, and the number of shell cases does not rise&quot;]:::ready
+    I4489[&quot;I4489&lt;br/&gt;Ten cases whose subject is the Rust executable alone are Rust tests, each removed with its mapping row&quot;]:::blocked
     I1800 --&gt; I1801
     I1801 --&gt; I1804
+    I4488 --&gt; I4489
     classDef done stroke:#16a34a,fill:#dcfce7,color:#14532d,stroke-width:2px
     classDef active stroke:#2563eb,fill:#eff6ff,color:#1e3a8a,stroke-width:2px
     classDef verify stroke:#7c3aed,fill:#f5f3ff,color:#4c1d95,stroke-width:2px
@@ -295,11 +323,11 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
     classDef planned stroke:#0891b2,fill:#ecfeff,color:#164e63,stroke-width:2px
     classDef blocked stroke:#b45309,fill:#fffbeb,color:#78350f,stroke-width:2px
     classDef cancelled stroke:#6b7280,fill:#f9fafb,color:#374151,stroke-width:2px
-    classDef superseded stroke:#6b7280,fill:#f9fafb,color:#374151,stroke-width:2px</pre><div class="mj-diagram-bar" role="toolbar" aria-label="Diagram automation" aria-controls="diagram-automation" data-diagram-bar="diagram-automation" hidden><button type="button" class="mj-button mj-button--quiet" data-diagram-action="zoom-out" aria-label="Zoom out" title="Zoom out">−</button><button type="button" class="mj-button mj-button--quiet" data-diagram-action="zoom-in" aria-label="Zoom in" title="Zoom in">+</button><button type="button" class="mj-button mj-button--quiet" data-diagram-action="fit" aria-label="Fit the diagram to its frame" title="Fit the diagram to its frame">Fit</button><button type="button" class="mj-button mj-button--quiet" data-diagram-action="expand" aria-label="Expand to full screen" title="Expand to full screen">Expand</button><button type="button" class="mj-button mj-button--quiet" data-diagram-action="download" aria-label="Download SVG" title="Download SVG">SVG</button><button type="button" class="mj-button mj-button--quiet" data-diagram-action="link" aria-label="Link: copy the address of this diagram" title="Link: copy the address of this diagram">Link</button><span class="mj-diagram-status" role="status"></span></div><details class="mj-diagram-links" data-diagram-links="diagram-automation"><summary>Linked from this diagram (6)</summary><ul><li><a href="https://majordomus.dev/plan/i1800/" data-node="I1800" data-kind="issue">I1800 The sandboxed engine a scripted capability runs in</a></li><li><a href="https://majordomus.dev/plan/i1801/" data-node="I1801" data-kind="issue">I1801 A scripted capability is a kind, discovered and registered, runnable and projected like any capability</a></li><li><a href="https://majordomus.dev/plan/i1802/" data-node="I1802" data-kind="issue">I1802 Nothing runs Perl</a></li><li><a href="https://majordomus.dev/plan/i1803/" data-node="I1803" data-kind="issue">I1803 New shell is refused without a declared exemption, and the migration inventory is tracked</a></li><li><a href="https://majordomus.dev/plan/i1804/" data-node="I1804" data-kind="issue">I1804 The first shell scripts become scripted capabilities over typed Rust</a></li><li><a href="https://majordomus.dev/plan/i3160/" data-node="I3160" data-kind="issue">I3160 A behavioural case can be written as a Rust integration test over a disposable repository, and the continuity cases are the first ported</a></li></ul></details></div>
+    classDef superseded stroke:#6b7280,fill:#f9fafb,color:#374151,stroke-width:2px</pre><div class="mj-diagram-bar" role="toolbar" aria-label="Diagram automation" aria-controls="diagram-automation" data-diagram-bar="diagram-automation" hidden><button type="button" class="mj-button mj-button--quiet" data-diagram-action="zoom-out" aria-label="Zoom out" title="Zoom out">−</button><button type="button" class="mj-button mj-button--quiet" data-diagram-action="zoom-in" aria-label="Zoom in" title="Zoom in">+</button><button type="button" class="mj-button mj-button--quiet" data-diagram-action="fit" aria-label="Fit the diagram to its frame" title="Fit the diagram to its frame">Fit</button><button type="button" class="mj-button mj-button--quiet" data-diagram-action="expand" aria-label="Expand to full screen" title="Expand to full screen">Expand</button><button type="button" class="mj-button mj-button--quiet" data-diagram-action="download" aria-label="Download SVG" title="Download SVG">SVG</button><button type="button" class="mj-button mj-button--quiet" data-diagram-action="link" aria-label="Link: copy the address of this diagram" title="Link: copy the address of this diagram">Link</button><span class="mj-diagram-status" role="status"></span></div><details class="mj-diagram-links" data-diagram-links="diagram-automation"><summary>Linked from this diagram (9)</summary><ul><li><a href="https://majordomus.dev/plan/i1800/" data-node="I1800" data-kind="issue">I1800 The sandboxed engine a scripted capability runs in</a></li><li><a href="https://majordomus.dev/plan/i1801/" data-node="I1801" data-kind="issue">I1801 A scripted capability is a kind, discovered and registered, runnable and projected like any capability</a></li><li><a href="https://majordomus.dev/plan/i1802/" data-node="I1802" data-kind="issue">I1802 Nothing runs Perl</a></li><li><a href="https://majordomus.dev/plan/i1803/" data-node="I1803" data-kind="issue">I1803 New shell is refused without a declared exemption, and the migration inventory is tracked</a></li><li><a href="https://majordomus.dev/plan/i1804/" data-node="I1804" data-kind="issue">I1804 The first shell scripts become scripted capabilities over typed Rust</a></li><li><a href="https://majordomus.dev/plan/i3160/" data-node="I3160" data-kind="issue">I3160 A behavioural case can be written as a Rust integration test over a disposable repository, and the continuity cases are the first ported</a></li><li><a href="https://majordomus.dev/plan/i4486/" data-node="I4486" data-kind="issue">I4486 A program is run by one typed capability: an executable and an argument list, a bound and a process group, and never a command string</a></li><li><a href="https://majordomus.dev/plan/i4488/" data-node="I4488" data-kind="issue">I4488 A behavioural case may be a Rust test: it counts in the suite report, a removed shell case names what replaced it, and the number of shell cases does not rise</a></li><li><a href="https://majordomus.dev/plan/i4489/" data-node="I4489" data-kind="issue">I4489 Ten cases whose subject is the Rust executable alone are Rust tests, each removed with its mapping row</a></li></ul></details></div>
 </figure>
 
 
-  <p class="mt-8 text-sm text-body">Canonical record: <a href="https://github.com/korczis/prismatic-majordomus/blob/af41ab4fec1b2cb5c83fa83dd3c80bb91a152345/.ai/repo/project/milestones/automation.yaml" class="break-all font-mono text-fg-brand underline inline-block py-1">.ai/repo/project/milestones/automation.yaml</a>. Read it back with <code class="font-mono text-heading">majordomus plan show automation</code>.</p>
+  <p class="mt-8 text-sm text-body">Canonical record: <a href="https://github.com/korczis/prismatic-majordomus/blob/acd99970a6f15ab61d82728b84c6210322499436/.ai/repo/project/milestones/automation.yaml" class="break-all font-mono text-fg-brand underline inline-block py-1">.ai/repo/project/milestones/automation.yaml</a>. Read it back with <code class="font-mono text-heading">majordomus plan show automation</code>.</p>
 </div>
 
 </div>
@@ -349,9 +377,9 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
       <div class="min-w-0">
         <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">Project</h2><ul class="space-y-2 text-sm font-medium text-body">
           <li><a href="https://github.com/korczis/prismatic-majordomus" class="hover:text-heading hover:underline">GitHub</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/af41ab4fec1b2cb5c83fa83dd3c80bb91a152345/LICENSE" class="hover:text-heading hover:underline">MIT licence</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/af41ab4fec1b2cb5c83fa83dd3c80bb91a152345/SECURITY.md" class="hover:text-heading hover:underline">Security policy</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/af41ab4fec1b2cb5c83fa83dd3c80bb91a152345/CONTRIBUTING.md" class="hover:text-heading hover:underline">Contributing guide</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/acd99970a6f15ab61d82728b84c6210322499436/LICENSE" class="hover:text-heading hover:underline">MIT licence</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/acd99970a6f15ab61d82728b84c6210322499436/SECURITY.md" class="hover:text-heading hover:underline">Security policy</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/acd99970a6f15ab61d82728b84c6210322499436/CONTRIBUTING.md" class="hover:text-heading hover:underline">Contributing guide</a></li>
         </ul>
       </div>
     </div>
@@ -359,7 +387,7 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.10</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/af41ab4fec1b2cb5c83fa83dd3c80bb91a152345" class="font-mono underline">af41ab4</a> · inputs <span class="font-mono">ca14b585387b</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/architecture/" class="underline">how this site is derived</a> names them.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.10</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/acd99970a6f15ab61d82728b84c6210322499436" class="font-mono underline">acd9997</a> · inputs <span class="font-mono">1718f914c463</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/architecture/" class="underline">how this site is derived</a> names them.</p>
     </div>
   </div>
 </footer>
