@@ -34,7 +34,12 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I3934` | shares docs/CI.md with I4349; they may not run concurrently |
 | WARN | `scope_conflict` | `I3934` | shares docs/CI.md with I4460; they may not run concurrently |
 | WARN | `scope_conflict` | `I3934` | shares .ai/repo/ci/telemetry.yaml with I4468; they may not run concurrently |
+| WARN | `scope_conflict` | `I3934` | shares .ai/repo/ci/telemetry.yaml with I4488; they may not run concurrently |
+| WARN | `scope_conflict` | `I3934` | shares .github/workflows/telemetry.yml with I4524; they may not run concurrently |
 | WARN | `scope_conflict` | `I3941` | shares apps/majordomus-cli/src/capability/builtin/delivery.rs with I4002; they may not run concurrently |
 | WARN | `scope_conflict` | `I3941` | shares apps/majordomus-cli/src/capability/builtin/delivery.rs with I4006; they may not run concurrently |
 | WARN | `scope_conflict` | `I3941` | shares apps/majordomus-cli/src/capability/builtin/delivery.rs with I4327; they may not run concurrently |
 | WARN | `scope_conflict` | `I3941` | shares apps/majordomus-cli/src/capability/builtin/delivery.rs with I4468; they may not run concurrently |
+| WARN | `scope_conflict` | `I3941` | shares apps/majordomus-cli/src/ui/mod.rs with I4483; they may not run concurrently |
+| WARN | `scope_conflict` | `I3941` | shares apps/majordomus-cli/src/ui/mod.rs with I4485; they may not run concurrently |
+| WARN | `scope_conflict` | `I3941` | shares apps/majordomus-cli/src/capability/builtin/delivery.rs with I4486; they may not run concurrently |

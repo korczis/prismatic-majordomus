@@ -5,7 +5,7 @@ slug: delivery-lead-time-per-phase
 priority: p1
 profile: implementation
 objective: "Time the phases of the delivery stages plan.delivery derives per issue (I2740: pr_open, merged, released, deployed, each with the object that proved it) and report p50/p95, sample size and observation time per phase, taking a merged pull request's opened and merged times from the forge's pull request record so merges made outside the drain are counted, and writing no join of its own."
-why: "The owner asked for minutes, not hours or days, between a change and its deploy (c204#0) and later for releases as fast as possible (c291#0); every audit since 2026-10-09 reconstructed lead time by hand from run timestamps (c204#2, c238#2, c295#7). No single figure for green pull request to verified deploy exists. Proposed in ADR 0196 (Delivery latency targets are budgets of benchmark policy, measured per phase, and never a correctness gate on runners the repository does not own); ADR 0198 (Delivery is judged by verified outcomes landed per day, with lead time p95 as its control, never by commits, pull requests or sessions) (proposed; it carries no authority until the owner accepts it). Sources: chatgpt-majordomus:c204#2, chatgpt-majordomus:c216#6, chatgpt-majordomus:c238#2, chatgpt-majordomus:c280#2, chatgpt-majordomus:c287#2, chatgpt-majordomus:c295#7."
+why: "The owner asked for minutes, not hours or days, between a change and its deploy (c204#0) and later for releases as fast as possible (c291#0); every audit since 2026-10-09 reconstructed lead time by hand from run timestamps (c204#2, c238#2, c295#7). No single figure for green pull request to verified deploy exists. Proposed in ADR 0196 (Delivery latency targets are budgets of benchmark policy, measured per phase, and never a correctness gate on runners the repository does not own); ADR 0198 (Delivery is judged by verified outcomes landed per day, with lead time p95 as its control, never by commits, pull requests or sessions) (proposed; it carries no authority until the owner accepts it). Sources: chatgpt-majordomus:c204#2, chatgpt-majordomus:c216#6, chatgpt-majordomus:c238#2, chatgpt-majordomus:c280#2, chatgpt-majordomus:c287#2, chatgpt-majordomus:c295#7. The owner's pack asks for the same in campaigns/majordomus-autonomous-idd-maximal/17_OBSERVABILITY_SLOS_COST.md; PR #1058 planned it as I2508, which never landed, and the criteria of that record this one did not hold were folded in on 2026-10-30."
 current_state: "integration.events holds the drain's own trail only: no opened time, and no merge made by a person or an expedited landing. I2474 (DONE) draws merges per day; served.observe records what each deployment served; release records under .ai/repo/releases carry their commits. I2740 (master, READY, p0) plans plan.delivery's stages none, branch, pr_open, merged, released and deployed with their proving objects (ADR 0166). I2946 (on the board on 2026-10-18, not on master) measures throughput from prs and ci-timings. Nothing times the phases."
 desired_state: "A delivery lead-time reading, computed only from recorded sources, with unmeasured phases shown as unmeasured; drawn on the drain screen and served by CLI, HTTP and MCP from the same capability."
 scope:
@@ -34,10 +34,13 @@ acceptance_criteria:
   - "CLI JSON, HTTP and MCP return the same reading for the same inputs"
   - "The stages (pr_open, merged, released, deployed) and the objects that prove them are read from plan.delivery (I2740); this issue adds only per-phase timing over them and writes no join of its own"
   - "The opened and merged times of a merged pull request come from the forge's pull request record (createdAt, mergedAt) and its merge commit, including merges made outside the drain; a merge whose opening cannot be read is counted as unmeasured with its count reported, never dropped silently"
+  - "The merged-to-deployed wait is given per environment that has an observation"
+  - "A failed deployment does not end the wait; only a successful observation that contains the merge does"
+  - "A merge older than the observation window (deploy::observed WINDOW and MERGED_WINDOW) counts as unmeasured, never as a wait"
 validation:
   - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib integration::metrics"
   - "majordomus plan validate"
 evidence_required:
   - "test_delivery_lead_time_phases"
 created_at: 2026-10-18
-updated_at: 2026-10-18
+updated_at: 2026-10-30
