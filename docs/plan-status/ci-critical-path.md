@@ -172,6 +172,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I2115` | shares test/cases with I4416; they may not run concurrently |
 | WARN | `scope_conflict` | `I2115` | shares test/cases with I4417; they may not run concurrently |
 | WARN | `scope_conflict` | `I2115` | shares test/cases with I4418; they may not run concurrently |
+| WARN | `scope_conflict` | `I2115` | shares test/cases with I4434; they may not run concurrently |
 | WARN | `scope_conflict` | `I2115` | shares test/cases with I4460; they may not run concurrently |
 | WARN | `scope_conflict` | `I2115` | shares test/cases with I4461; they may not run concurrently |
 | WARN | `scope_conflict` | `I2115` | shares test/cases with I4462; they may not run concurrently |
@@ -303,6 +304,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I2350` | shares test/cases with I4416; they may not run concurrently |
 | WARN | `scope_conflict` | `I2350` | shares test/cases with I4417; they may not run concurrently |
 | WARN | `scope_conflict` | `I2350` | shares test/cases with I4418; they may not run concurrently |
+| WARN | `scope_conflict` | `I2350` | shares test/cases with I4434; they may not run concurrently |
 | WARN | `scope_conflict` | `I2350` | shares lib/gates.sh with I4460; they may not run concurrently |
 | WARN | `scope_conflict` | `I2350` | shares test/cases with I4461; they may not run concurrently |
 | WARN | `scope_conflict` | `I2350` | shares test/cases with I4462; they may not run concurrently |
