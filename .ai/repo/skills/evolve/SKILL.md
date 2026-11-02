@@ -96,12 +96,8 @@ observation without a subject, and a note kept in a file of your own instead of 
 
 Four things the command refuses, each met by a worker who followed this step:
 - An observation belongs to an episode. In a worktree where none is open, open one first
-  with `majordomus session start`. When `observe` still says no episode is open although
-  `session start` has just opened one, the episode was opened under another key than the
-  one `observe` looks up: run `ls .ai/local/state/sessions-open/` and pass the key it lists
-  as `MJ_SESSION_KEY=<key>` to every `observe` and `derive` of the episode. Pull request
-  2646 (commit af8f52b0273) makes `session start` take the key `observe` reads; this
-  remedy goes when it lands.
+  with `majordomus session start`. Opened by hand inside a provider, the episode is filed
+  under the key `observe` reads (commit af8f52b0273, case 111).
 - `--kind` is one of `friction`, `workaround`, `defect`, `drift`, `repetition`. A lesson is
   what a candidate becomes when it is promoted, not a kind of observation.
 - `--subject` is a repository-relative path, or `capability:`, `rule:`, `command:` or
