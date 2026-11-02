@@ -6,22 +6,22 @@ generated: "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the benchmark proje
 generator: majordomus-cli 1.0.0-alpha.10
 coverage:
   - scope: direct
-    required: 226
-    covered: 184
+    required: 230
+    covered: 186
     missing: 0
-    waived: 42
+    waived: 44
     inapplicable: 0
   - scope: http
-    required: 217
+    required: 218
     covered: 184
     missing: 0
-    waived: 33
+    waived: 34
     inapplicable: 0
   - scope: mcp
-    required: 211
-    covered: 179
+    required: 214
+    covered: 181
     missing: 0
-    waived: 32
+    waived: 33
     inapplicable: 0
   - scope: system
     required: 14
@@ -30,10 +30,10 @@ coverage:
     waived: 0
     inapplicable: 0
   - scope: total
-    required: 668
-    covered: 561
+    required: 676
+    covered: 565
     missing: 0
-    waived: 107
+    waived: 111
     inapplicable: 0
 capabilities:
   - id: artifacts.list
@@ -56,6 +56,14 @@ capabilities:
     cases:
       - this-checkout
       - addressed
+  - id: board.snapshot
+    module: board
+    kind: query
+    cache: "—"
+    direct: waived
+    mcp: waived
+    http: waived
+    cases: []
   - id: brief.session
     module: brief
     kind: query
@@ -336,6 +344,33 @@ capabilities:
     cases:
       - role
       - state
+  - id: design.kit
+    module: design
+    kind: query
+    cache: "—"
+    direct: covered
+    mcp: covered
+    http: none
+    cases:
+      - policy
+      - evidence
+  - id: design.kit.adopt
+    module: design
+    kind: command
+    cache: "—"
+    direct: waived
+    mcp: none
+    http: none
+    cases: []
+  - id: design.licence
+    module: design
+    kind: query
+    cache: "—"
+    direct: covered
+    mcp: covered
+    http: none
+    cases:
+      - policy
   - id: design.system
     module: design
     kind: query

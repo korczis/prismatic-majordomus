@@ -12,20 +12,46 @@
 //! same fingerprint is a question for the page (`--mj-design` against
 //! `design.system.design`), which the Cockpit asks on every load.
 //!
+//! `design.kit` and `design.kit.adopt` are about the supervised repository rather than
+//! this tool's own design (I4334, ADR 0230): the first judges the repository's user
+//! interface against a kit profile the distribution ships (`share/design/kits/`), signal by
+//! signal, and the second declares that profile in the repository — its rule, the
+//! enforcement entries that run the check in CI and before every push, and `ui.kit` in the
+//! policy's `ui:` block, which the design licence declares and both read. The judgement is
+//! [`crate::design::kit`]'s; these declare it once.
+//!
 //! `design.contrast` is the exception, and reads only the distribution's own share
 //! directory: the pair a ratio is computed for is stated by the primitives that consume the
 //! declaration, and those stylesheets ship beside `kinds.yaml` and the obligation
 //! vocabulary. It is located the way every other reader locates it
 //! ([`crate::share::Share`]), never discovered in the supervised repository.
+//!
+//! `design.licence` is the one that reads the supervised repository, and the one file
+//! beyond it the caller names: whether a public tree holds a licensed kit's bytes, judged
+//! from kit-evidence/v1 fingerprints ([`crate::design::licence`]). It has no HTTP route: it
+//! opens a file by the path its input gives, and that is a local caller's act.
+//!
+//! `design.kit` has none for the same reason. Its input `evidence` names a file the process
+//! opens, and a query parameter that names a file on the server would hand any HTTP caller,
+//! a remote one included, an oracle over the server's files. The registry binds one input
+//! type to every transport and cannot withhold one field from one of them, so the judgement
+//! is the command line's and the MCP tool's: the command line for CI and the pre-push hook,
+//! MCP for an agent beside them.
 
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 use crate::capability::benchmark::{BenchmarkCases, CaseContext, NamedCase};
 use crate::capability::handler::{CapabilityError, Context};
-use crate::capability::model::{Exposure, McpExposure, McpResource, Stability};
+use crate::capability::model::{
+    BenchmarkPolicy, CapabilityKind, CliExposure, Exposure, McpExposure, McpResource, Stability,
+    WaiverReason,
+};
 use crate::capability::module::ModuleDescriptor;
+use crate::capability::CachePolicy;
 use crate::design::contrast::{self, ContrastReport};
+use crate::design::kit::{self, AdoptError, AdoptReport, KitReport};
+use crate::design::licence::{self, LicenceError, LicenceReport};
 use crate::design::{render, DesignSystem, Fonts, Identity, Token, TokenKind, SOURCE};
 use crate::{capability, module};
 
@@ -153,6 +179,59 @@ impl BenchmarkCases for ExplainTokenInput {
     }
 }
 
+/// The input of `design.kit`: the licence evidence a licensed marker is judged by, or none
+/// to read the policy's.
+#[derive(Debug, Default, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+pub struct KitInput {
+    /// A kit-evidence/v1 file, as the caller names it: in CI the file the launcher decoded
+    /// `MAJORDOMUS_KIT_EVIDENCE_<KIT>` into, through the shell's `mj_fleet_design_judge`.
+    /// Absent reads the policy's `ui.evidence` entries under `$HOME`. Taken on the command
+    /// line and over MCP only: a file this process opens is never named over HTTP.
+    /// A file whose first line `# kit: <id>` names another kit than the profile judges
+    /// nothing.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub evidence: Option<String>,
+}
+
+impl BenchmarkCases for KitInput {
+    fn benchmark_cases(_: &CaseContext<'_>) -> Vec<NamedCase<Self>> {
+        vec![
+            NamedCase::new("policy", KitInput { evidence: None }),
+            // a file of the caller's: in a tree that adopts no kit it is never opened
+            NamedCase::new(
+                "evidence",
+                KitInput {
+                    evidence: Some("kit-evidence.tsv".into()),
+                },
+            ),
+        ]
+    }
+}
+
+/// The input of `design.kit.adopt`: which kit profile to declare in the repository.
+#[derive(Debug, Default, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+pub struct KitAdoptInput {
+    /// A kit profile of the distribution, `share/design/kits/<profile>.yaml`.
+    pub profile: String,
+    /// Report what would be written, and write nothing.
+    #[serde(default)]
+    pub dry_run: bool,
+}
+
+impl BenchmarkCases for KitAdoptInput {
+    fn benchmark_cases(_: &CaseContext<'_>) -> Vec<NamedCase<Self>> {
+        vec![NamedCase::new(
+            "dry-run",
+            KitAdoptInput {
+                profile: kit::DEFAULT_PROFILE.into(),
+                dry_run: true,
+            },
+        )]
+    }
+}
+
 fn compiled() -> Result<&'static DesignSystem, CapabilityError> {
     DesignSystem::compiled().map_err(|reason| {
         CapabilityError::Internal(format!(
@@ -273,10 +352,90 @@ fn consumers(root: &std::path::Path) -> Result<Vec<(String, String)>, Capability
     Ok(out)
 }
 
+fn kit_share(ctx: &Context, root: &std::path::Path) -> Result<std::path::PathBuf, CapabilityError> {
+    crate::share::Share::locate(ctx.index.share.as_deref(), root)
+        .map(|s| s.dir().to_path_buf())
+        .map_err(|e| {
+            CapabilityError::Internal(format!(
+                "the distribution's share directory, which holds the kit profiles, was not found: {e}"
+            ))
+        })
+}
+
+fn kit_check(ctx: &Context, input: KitInput) -> Result<KitReport, CapabilityError> {
+    let root = std::path::PathBuf::from(&ctx.index.repository.root);
+    let share = kit_share(ctx, &root)?;
+    let evidence = input.evidence.as_deref().map(std::path::Path::new);
+    kit::inspect(&root, &share, evidence).map_err(CapabilityError::Internal)
+}
+
+fn kit_adopt(ctx: &Context, input: KitAdoptInput) -> Result<AdoptReport, CapabilityError> {
+    if input.profile.trim().is_empty() {
+        return Err(CapabilityError::InvalidInput(
+            "name a kit profile of share/design/kits/, such as flowbite-pro".into(),
+        ));
+    }
+    let root = std::path::PathBuf::from(&ctx.index.repository.root);
+    let share = kit_share(ctx, &root)?;
+    kit::adopt(&root, &share, input.profile.trim(), input.dry_run).map_err(adopt_error)
+}
+
+/// An adoption's error in the capability's categories, one for one.
+fn adopt_error(e: AdoptError) -> CapabilityError {
+    match e {
+        AdoptError::NotFound(m) => CapabilityError::NotFound(m),
+        AdoptError::Refused(m) => CapabilityError::Refused(m),
+        AdoptError::Internal(m) => CapabilityError::Internal(m),
+    }
+}
+
 fn readable(ctx: &Context, _: Empty) -> Result<ContrastReport, CapabilityError> {
     let design = compiled()?;
     let root = std::path::PathBuf::from(&ctx.index.repository.root);
     Ok(contrast::measure(design, &consumers(&root)?))
+}
+
+/// The input of `design.licence`: the evidence file, or none to read the policy's.
+#[derive(Debug, Default, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+pub struct LicenceInput {
+    /// A kit-evidence/v1 file, as the caller names it (CI points this at the file it decoded
+    /// `MAJORDOMUS_KIT_EVIDENCE_<KIT>` into). Absent reads the policy's `ui.evidence`
+    /// entries under `$HOME`.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub evidence: Option<String>,
+}
+
+impl BenchmarkCases for LicenceInput {
+    fn benchmark_cases(_: &CaseContext<'_>) -> Vec<NamedCase<Self>> {
+        vec![NamedCase::new("policy", LicenceInput { evidence: None })]
+    }
+}
+
+fn licensed(ctx: &Context, input: LicenceInput) -> Result<LicenceReport, CapabilityError> {
+    let repository = ctx.repository().map_err(|e| {
+        CapabilityError::Internal(format!("the repository could not be re-read: {e}"))
+    })?;
+    let home = std::env::var_os("HOME").map(std::path::PathBuf::from);
+    let tightened = std::env::var(licence::VISIBILITY_ENV).ok();
+    licence::assess(
+        &repository,
+        input.evidence.as_deref(),
+        home.as_deref(),
+        tightened.as_deref(),
+    )
+    .map_err(licence_error)
+}
+
+/// A licence assessment's error in the capability's categories: evidence that cannot be
+/// read is the caller's input, a policy that cannot be used is a refusal, and a tree that
+/// cannot be listed is the handler's own failure.
+fn licence_error(e: LicenceError) -> CapabilityError {
+    match e {
+        LicenceError::Evidence(m) => CapabilityError::InvalidInput(m),
+        LicenceError::Policy(m) => CapabilityError::Refused(m),
+        LicenceError::Tree(m) => CapabilityError::Internal(m),
+    }
 }
 
 /// The module.
@@ -350,6 +509,57 @@ pub fn module() -> ModuleDescriptor {
                 tags: ["design", "ui", "accessibility", "introspection"],
                 handler: readable,
             },
+            capability! {
+                id: "design.licence",
+                title: "Whether a public tree holds a licensed kit's files",
+                description: "The never-publish gate: the raw bytes of every tracked file, committed bundles included (staged, committed where that differs, and the working copy where it differs), and of every untracked file under each `ui.publish` directory, read through symbolic links and into nested repositories as a deploy archives it, compared whole, exactly and with every run of whitespace made one space, against the kit-evidence/v1 fingerprints of the declared kit's licensed files. `refused` names each file and, where the evidence says, the licensed source; `not_judged` is a public tree that declares a kit, tracks a UI file and has no evidence here, and fails like `refused`; a `ui:` block that cannot be used as written (an absolute `ui.publish` or `ui.evidence` entry) is `not_judged` too, naming the entry; `inactive` is no kit declared, a private tree without evidence, or no UI file; `active` is judged and clean, or private. The evidence is the file the input names, else the policy's `~`-relative `ui.evidence` entries; an error names the file and the line, never its content. Near-copies and fragments inlined in a larger file are not judged: the evidence holds whole-file fingerprints only.",
+                input: LicenceInput,
+                output: LicenceReport,
+                stability: Stability::BehaviorallyVerified,
+                exposure: Exposure {
+                    mcp: mcp("majordomus_design_licence"),
+                    http: None,
+                    cli: Some(CliExposure { path: vec!["design".into(), "licence".into()] }),
+                },
+                tags: ["design", "ui", "licence", "governance"],
+                handler: licensed,
+            },
+            capability! {
+                id: "design.kit",
+                title: "Whether the interface is built on the kit",
+                description: "The supervised repository's user interface judged against the kit profile its policy's `ui.kit` names (flowbite-pro when it names none), from markers in the tree and never the kit's own source: S0 whether there is an interface at all and its surfaces (the root's manifest or the one in assets/, every workspace the root manifest or pnpm-workspace.yaml declares, every nested app manifest with markup in its own subtree outside examples, fixtures, tests, vendor, docs, deps and priv; Phoenix LiveView in mix.exs, HEEx or HTML templates, a Next.js root layout; published pages: a root index.html, pages under site/, www/, public/, under a directory a Pages workflow or a deploy or build script publishes, and under docs/ when it is published), any other manifest with UI packages being a notice and never a finding; S1 the kit's package in each surface, its React binding for React and Next.js, and the kit in use in the surface's own files (an attribute the kit's JavaScript drives, a flowbite-react component, a call of the kit's API), because wiring alone passes nothing; S2 the Tailwind plugin and source (Tailwind 4's @plugin and @source, Tailwind 3's config), a Play CDN or a CDN-only kit being a finding; S3 the kit's JavaScript behind every data-drawer, dropdown, modal, tabs, collapse and tooltip attribute, a script that reads them itself being a re-implementation; S4 no other kit (daisyUI, Bootstrap, Preline, TW Elements, shadcn/ui and Radix, Petal Components, Material UI, Ant Design, Bulma, Chakra UI, Foundation, Materialize), Alpine.js reported and not refused; S5 the shell on every root layout: a fixed top navbar, an aside labelled Sidebar that both drawer attributes name, a breadcrumb, and the page, surface and border roles, a published site's layout being judged by a navbar and a footer instead; the layouts, the roles and the marketing layouts are the profile's alone. Each finding names its signal, path, evidence and remedy; each exemption the policy declares under `ui.exempt`, exactly `{path, because}`, moves every finding at its path and names its reason and how many findings it covered. A licensed kit's profile declares its licensed markers (a distribution directory, a manifest named after a Pro product, a dependency on a Pro package), and where the tree carries one the design licence decides it: active passes, while inactive, refused or not judged is a finding no exemption moves, since a variant the judge cannot decide is never a pass. The licence evidence is the kit-evidence/v1 file the input names (in CI the file the launcher decoded: `majordomus design kit` run where a `MAJORDOMUS_KIT_EVIDENCE_<KIT>` variable is exported goes through the shell's `mj_fleet_design_judge`, which decodes the kit's variable into a private file, passes it and removes it; this capability reads a file and never the environment), else the policy's `~`-relative `ui.evidence` entries; a file whose first line `# kit: <id>` names another kit is not judged, and `licence.reason` says why the licence answered as it did, naming a file and a line at most and never what the evidence holds. A repository without an interface passes vacuously; a policy that cannot be read is `bad_policy` and judges nothing; a policy that still carries the retired top-level `design_kit:` block earns a notice naming `ui.kit` as its replacement. Reads the repository's files (in a Git work tree the tracked ones and the untracked ones Git does not ignore; a submodule or a nested repository is named in a notice and judged in its own repository), skipping dependencies and build output and listing vendored directories by path only; no build and no network. It has no HTTP route, as the design licence has none: the evidence input names a file this process opens, which is a local caller's act, so it is taken on the command line and over MCP only.",
+                input: KitInput,
+                output: KitReport,
+                stability: Stability::BehaviorallyVerified,
+                exposure: Exposure {
+                    mcp: mcp("majordomus_design_kit"),
+                    // `evidence` names a file this process opens: a local caller's input,
+                    // never a query parameter (as for design.licence)
+                    http: None,
+                    cli: Some(CliExposure { path: vec!["design".into(), "kit".into()] }),
+                },
+                tags: ["design", "ui", "governance"],
+                handler: kit_check,
+            },
+            capability! {
+                id: "design.kit.adopt",
+                kind: CapabilityKind::Command,
+                title: "Declare the kit in the repository",
+                description: "Writes what makes `design.kit` the repository's gate, and nothing that is there already: the profile's rule (project.ui-uses-flowbite-pro for flowbite-pro) into .ai/repo/rules/project/ from the distribution's template, `ui.kit` naming the profile in .ai/repo/policy.yaml (set in the `ui:` block when it names no kit, the block appended when there is none; exemptions under `ui.exempt` are the repository's to declare), and two enforcement entries running `majordomus design kit --check`, design-kit-on-push wired by the pre-push hook and design-kit wired by the repository's CI workflow when it has one. Idempotent: a second adoption reports every file unchanged. The rule's last section, 'In this repository', is the repository's own: a later adoption brings the rest of the rule up to the template and never overwrites that section, and a rule that differs from the template and has no such section is kept and named, a `ui.kit` naming another profile is refused, and a policy that would not read back is never written. `dry_run` reports the same and writes nothing. Wiring the hook and the workflow step is left to the repository, and `majordomus doctor` names each entry until it is wired.",
+                input: KitAdoptInput,
+                output: AdoptReport,
+                stability: Stability::Experimental,
+                exposure: Exposure {
+                    mcp: None,
+                    http: None,
+                    cli: Some(CliExposure { path: vec!["design".into(), "kit".into(), "adopt".into()] }),
+                },
+                tags: ["design", "ui", "governance"],
+                cache: CachePolicy::Disabled,
+                benchmark: BenchmarkPolicy::Waived { reason: WaiverReason::Destructive },
+                handler: kit_adopt,
+            }
+            .writes_repository(),
         ],
     }
 }
@@ -362,31 +572,59 @@ mod tests {
     fn the_declaration_yields_the_projections_it_claims() {
         let m = module();
         assert_eq!(m.id.as_str(), "design");
-        let expected: &[(&str, &str, &str)] = &[
-            ("design.system", "majordomus_design", "/api/v1/design"),
+        let expected: &[(&str, &str, Option<&str>)] = &[
+            ("design.system", "majordomus_design", Some("/api/v1/design")),
             (
                 "design.tokens",
                 "majordomus_design_tokens",
-                "/api/v1/design/tokens",
+                Some("/api/v1/design/tokens"),
             ),
             (
                 "design.explain",
                 "majordomus_design_explain",
-                "/api/v1/design/explain",
+                Some("/api/v1/design/explain"),
             ),
             (
                 "design.contrast",
                 "majordomus_design_contrast",
-                "/api/v1/design/contrast",
+                Some("/api/v1/design/contrast"),
             ),
+            // each opens the file its input names, so it is a local caller's: no route
+            ("design.licence", "majordomus_design_licence", None),
+            ("design.kit", "majordomus_design_kit", None),
         ];
         let ids: Vec<&str> = m
             .capabilities
             .iter()
             .map(|e| e.capability.id.as_str())
             .collect();
-        let want: Vec<&str> = expected.iter().map(|(id, _, _)| *id).collect();
+        let mut want: Vec<&str> = expected.iter().map(|(id, _, _)| *id).collect();
+        want.push("design.kit.adopt");
         assert_eq!(ids, want);
+        let adopt = &m.capabilities[6].capability;
+        assert_eq!(adopt.kind, CapabilityKind::Command);
+        assert_eq!(
+            adopt.execution.effect,
+            crate::capability::Effect::RepositoryMutation
+        );
+        assert!(
+            adopt.exposure.mcp.is_none() && adopt.exposure.http.is_none(),
+            "writing the repository is the command line's alone"
+        );
+        assert_eq!(
+            adopt.exposure.cli.as_ref().unwrap().path,
+            ["design", "kit", "adopt"]
+        );
+        assert_eq!(
+            m.capabilities[5]
+                .capability
+                .exposure
+                .cli
+                .as_ref()
+                .unwrap()
+                .path,
+            ["design", "kit"]
+        );
         for (executable, (id, tool, path)) in m.capabilities.iter().zip(expected) {
             let exposure = &executable.capability.exposure;
             assert_eq!(
@@ -396,7 +634,7 @@ mod tests {
             );
             assert_eq!(
                 exposure.http.as_ref().map(|h| h.path.as_str()),
-                Some(*path),
+                *path,
                 "{id} lost its HTTP route"
             );
         }
@@ -408,6 +646,46 @@ mod tests {
             .and_then(|m| m.resource.as_ref())
             .expect("the design is readable as a resource");
         assert_eq!(resource.uri, DESIGN_URI);
+    }
+
+    /// `evidence` names a file this process opens, so no HTTP caller names one: the kit
+    /// judge has no route, whatever the query, while the executor the command line and MCP
+    /// call through still takes the input.
+    #[test]
+    fn the_kit_judge_takes_no_evidence_over_http() {
+        use crate::capability::HttpMethod;
+        let repo = crate::synthetic::SyntheticRepository::small().expect("a repository");
+        let ctx = repo.context().expect("a context");
+        for method in [HttpMethod::Get, HttpMethod::Post] {
+            assert!(
+                ctx.registry.by_http(method, "/api/v1/design/kit").is_none(),
+                "design.kit is routed for {}",
+                method.as_str()
+            );
+        }
+        let router = crate::http::Router::new(ctx.clone(), "test").with_ui(None);
+        for target in [
+            "/api/v1/design/kit",
+            "/api/v1/design/kit?evidence=%2Fetc%2Fhosts",
+        ] {
+            let r = router.handle(&crate::http::Request::parse_target(
+                "GET",
+                target,
+                Vec::new(),
+            ));
+            assert_eq!(r.status, 404, "{target}: {}", r.body.text());
+        }
+        // the command line and the MCP tool still take it
+        let kit = ctx
+            .registry
+            .get("design.kit")
+            .expect("design.kit is declared");
+        assert!(kit.exposure.mcp.is_some() && kit.exposure.cli.is_some());
+        let (properties, _) = kit.input.properties();
+        assert!(
+            properties.iter().any(|(name, _)| name == "evidence"),
+            "the input lost its evidence"
+        );
     }
 
     #[test]
@@ -448,6 +726,28 @@ mod tests {
             }
             Err(other) => panic!("unexpected refusal: {other:?}"),
         }
+    }
+
+    #[test]
+    fn the_licence_gate_is_reached_as_design_licence_and_skips_a_tree_without_a_kit() {
+        let m = module();
+        let gate = m
+            .capabilities
+            .iter()
+            .map(|e| &e.capability)
+            .find(|c| c.id.as_str() == "design.licence")
+            .expect("the licence gate is declared");
+        assert_eq!(
+            gate.exposure.cli.as_ref().unwrap().path,
+            ["design", "licence"]
+        );
+        let repo = crate::synthetic::SyntheticRepository::small().expect("a repository");
+        let ctx = repo.context().expect("a context");
+        // the synthetic policy has no ui: block, which declares no kit
+        let report = licensed(&ctx, LicenceInput::default()).expect("an answer");
+        assert_eq!(report.verdict, licence::Verdict::Inactive);
+        assert!(!report.fails);
+        assert!(report.kit.is_empty());
     }
 
     #[test]
@@ -494,5 +794,163 @@ mod tests {
         )
         .expect("a status colour is a token");
         assert_eq!(ok.kind, TokenKind::Status);
+    }
+
+    /// A context over `repo` whose index carries the distribution's share, as a real
+    /// invocation's does, so that the kit's capabilities judge rather than refuse.
+    fn context_with_share(repo: &crate::synthetic::SyntheticRepository) -> std::sync::Arc<Context> {
+        context_over(repo, crate::synthetic::crate_share())
+    }
+
+    /// A context over `repo` whose index names `share` as the distribution's share.
+    fn context_over(
+        repo: &crate::synthetic::SyntheticRepository,
+        share: std::path::PathBuf,
+    ) -> std::sync::Arc<Context> {
+        let mut index = repo.index().expect("an index");
+        index.share = Some(share);
+        let registry = crate::capability::CapabilityRegistry::builder()
+            .with_modules(crate::capability::builtin::modules())
+            .with_index(&index)
+            .build()
+            .expect("a registry");
+        std::sync::Arc::new(Context::new(
+            std::sync::Arc::new(index),
+            std::sync::Arc::new(registry),
+        ))
+    }
+
+    #[test]
+    fn the_kit_is_judged_in_the_repository_the_context_reads() {
+        let repo = crate::synthetic::SyntheticRepository::small().expect("a repository");
+        let ctx = context_with_share(&repo);
+        // a synthetic repository has no interface: the rule holds vacuously
+        let report = kit_check(&ctx, KitInput::default()).expect("a judgement");
+        assert_eq!(report.verdict, kit::KitVerdict::NoUi, "{report:#?}");
+        assert!(!report.ui);
+        assert!(report.passes);
+        assert_eq!(report.profile, kit::DEFAULT_PROFILE);
+        let refused = kit_adopt(
+            &ctx,
+            KitAdoptInput {
+                profile: " ".into(),
+                dry_run: true,
+            },
+        );
+        assert!(matches!(refused, Err(CapabilityError::InvalidInput(_))));
+        let cases = KitAdoptInput::benchmark_cases(&CaseContext { index: &ctx.index });
+        assert!(
+            cases.iter().all(|c| c.input.dry_run),
+            "a benchmark never writes"
+        );
+    }
+
+    #[test]
+    fn adoption_maps_each_refusal_to_its_category() {
+        let repo = crate::synthetic::SyntheticRepository::small().expect("a repository");
+        let ctx = context_with_share(&repo);
+        let unknown = kit_adopt(
+            &ctx,
+            KitAdoptInput {
+                profile: "no-such-kit".into(),
+                dry_run: true,
+            },
+        );
+        assert!(
+            matches!(&unknown, Err(CapabilityError::NotFound(m)) if m.contains("no-such-kit")),
+            "{unknown:?}"
+        );
+        // the synthetic layer carries .ai/repo/policy.yaml, so a dry run plans and writes nothing
+        let policy = repo.root().join(kit::POLICY);
+        let before = std::fs::read_to_string(&policy).expect("the synthetic policy");
+        let report = kit_adopt(
+            &ctx,
+            KitAdoptInput {
+                profile: kit::DEFAULT_PROFILE.into(),
+                dry_run: true,
+            },
+        )
+        .expect("a dry run adoption");
+        assert!(report.dry_run);
+        assert_eq!(report.profile, kit::DEFAULT_PROFILE);
+        assert!(!report.writes.is_empty());
+        assert!(!repo
+            .root()
+            .join(".ai/repo/rules/project/ui-uses-flowbite-pro.v1.md")
+            .exists());
+        assert_eq!(std::fs::read_to_string(&policy).unwrap(), before);
+        // a policy that does not read is the repository's to fix: refused
+        std::fs::write(&policy, "a:\n\tb: 1\n").unwrap();
+        let broken = kit_adopt(
+            &ctx,
+            KitAdoptInput {
+                profile: kit::DEFAULT_PROFILE.into(),
+                dry_run: true,
+            },
+        );
+        assert!(
+            matches!(broken, Err(CapabilityError::Refused(_))),
+            "{broken:?}"
+        );
+    }
+
+    #[test]
+    fn a_missing_share_or_a_tree_that_cannot_be_re_read_is_the_handler_s_failure() {
+        let repo = crate::synthetic::SyntheticRepository::small().expect("a repository");
+        // a share that is not there holds no kit profile: neither judge nor adoption runs
+        let absent = repo.root().join("no-such-share");
+        let ctx = context_over(&repo, absent);
+        let judged = kit_check(&ctx, KitInput::default());
+        assert!(
+            matches!(&judged, Err(CapabilityError::Internal(m)) if m.contains("holds the kit profiles")),
+            "{judged:?}"
+        );
+        let adopted = kit_adopt(
+            &ctx,
+            KitAdoptInput {
+                profile: kit::DEFAULT_PROFILE.into(),
+                dry_run: true,
+            },
+        );
+        assert!(
+            matches!(adopted, Err(CapabilityError::Internal(_))),
+            "{adopted:?}"
+        );
+        // the licence re-reads the repository; one that is no longer there is not judged
+        let ctx = context_with_share(&repo);
+        std::fs::remove_file(repo.root().join(".ai/manifest.yaml")).unwrap();
+        let licence = licensed(&ctx, LicenceInput::default());
+        assert!(
+            matches!(&licence, Err(CapabilityError::Internal(m)) if m.contains("could not be re-read")),
+            "{licence:?}"
+        );
+    }
+
+    #[test]
+    fn each_adoption_and_licence_error_keeps_its_category() {
+        assert!(matches!(
+            adopt_error(AdoptError::NotFound("n".into())),
+            CapabilityError::NotFound(m) if m == "n"
+        ));
+        assert!(matches!(
+            adopt_error(AdoptError::Refused("r".into())),
+            CapabilityError::Refused(m) if m == "r"
+        ));
+        assert!(matches!(
+            adopt_error(AdoptError::Internal("i".into())),
+            CapabilityError::Internal(m) if m == "i"
+        ));
+        assert!(matches!(
+            licence_error(LicenceError::Evidence("e".into())),
+            CapabilityError::InvalidInput(m) if m == "e"
+        ));
+        assert!(matches!(
+            licence_error(LicenceError::Policy("p".into())),
+            CapabilityError::Refused(m) if m == "p"
+        ));
+        assert!(matches!(
+            licence_error(LicenceError::Tree("t".into())),
+            CapabilityError::Internal(m) if m == "t"
+        ));
     }
 }

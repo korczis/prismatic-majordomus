@@ -5,7 +5,7 @@
     "id": "majordomus-cli",
     "version": "1.0.0-alpha.10"
   },
-  "fingerprint": "2231e4a8ece0788adb3a978b372dc74c2111bdc82d271ba7fef29a21acfab738",
+  "fingerprint": "49cb6ae73482632008ada0dc7dbfbda6f8e1e7471019e7a9a74d28da55ca6466",
   "route": "/features/",
   "domain_route": "/domains/",
   "counts": {
@@ -13,8 +13,8 @@
     "features_all": 29,
     "featured": 16,
     "providers": 6,
-    "modules": 61,
-    "modules_covered": 58,
+    "modules": 62,
+    "modules_covered": 59,
     "commands": 30,
     "commands_covered": 30,
     "kinds": 31,
@@ -1162,7 +1162,7 @@
         "use_cases": 6,
         "rules": 13,
         "enforced_rules": 11,
-        "capabilities": 87,
+        "capabilities": 88,
         "moments": 17
       },
       "evidence": {
@@ -3229,7 +3229,7 @@
         "use_cases": 10,
         "rules": 15,
         "enforced_rules": 14,
-        "capabilities": 150,
+        "capabilities": 153,
         "moments": 38
       },
       "evidence": {
@@ -4750,7 +4750,7 @@
         {
           "id": "server",
           "title": "Server",
-          "description": "The shared server of this checkout and of every other checkout of the same git repository: what each lease says, whether the server it names answers, whether what answers is the code on disk at this executable's version, and how many peers each one holds.",
+          "description": "The shared server of this checkout and of every other checkout of the same git repository: what each lease says, whether the server it names answers, whether what answers is the code on disk at this executable's version, where each runtime stands and how it got there, and how many peers each one holds.",
           "stability": "behaviorally_verified",
           "source_path": "apps/majordomus-cli/src/capability/builtin/server.rs",
           "capabilities": [
@@ -7536,7 +7536,7 @@
       "kind_refs": [
         {
           "name": "adr",
-          "objects": 168
+          "objects": 169
         },
         {
           "name": "knowledge",
@@ -7544,7 +7544,7 @@
         },
         {
           "name": "document",
-          "objects": 354
+          "objects": 355
         }
       ],
       "rule_refs": [
@@ -7817,11 +7817,11 @@
       "counts": {
         "capabilities": 5,
         "mcp_tools": 5,
-        "mcp_resources": 615,
+        "mcp_resources": 617,
         "http_routes": 5,
         "cli_paths": 3,
         "commands": 6,
-        "objects": 612,
+        "objects": 614,
         "rules": 4,
         "enforced_rules": 3,
         "docs": 2,
@@ -12118,6 +12118,29 @@
               "route": "GET /api/v1/design/explain"
             },
             {
+              "id": "design.kit",
+              "title": "Whether the interface is built on the kit",
+              "kind": "query",
+              "stability": "behaviorally_verified",
+              "tool": "majordomus_design_kit",
+              "cli": "majordomus design kit"
+            },
+            {
+              "id": "design.kit.adopt",
+              "title": "Declare the kit in the repository",
+              "kind": "command",
+              "stability": "experimental",
+              "cli": "majordomus design kit adopt"
+            },
+            {
+              "id": "design.licence",
+              "title": "Whether a public tree holds a licensed kit's files",
+              "kind": "query",
+              "stability": "behaviorally_verified",
+              "tool": "majordomus_design_licence",
+              "cli": "majordomus design licence"
+            },
+            {
               "id": "design.system",
               "title": "The design system",
               "kind": "query",
@@ -12335,11 +12358,11 @@
         "ui"
       ],
       "counts": {
-        "capabilities": 8,
-        "mcp_tools": 6,
+        "capabilities": 11,
+        "mcp_tools": 8,
         "mcp_resources": 2,
         "http_routes": 8,
-        "cli_paths": 1,
+        "cli_paths": 4,
         "commands": 0,
         "objects": 0,
         "rules": 1,
@@ -13167,7 +13190,8 @@
         "plan",
         "devtask",
         "intents",
-        "intent_realization"
+        "intent_realization",
+        "board"
       ],
       "commands": [
         "plan"
@@ -13524,6 +13548,24 @@
               "cli": "majordomus intent realization"
             }
           ]
+        },
+        {
+          "id": "board",
+          "title": "The delivery board",
+          "description": "The documents the delivery board reads, derived from the plan, the roadmap, the intents, the recorded pull request queue and the release currency, with the lanes share/board.yaml declares once. Every open milestone is in a lane or the snapshot refuses, naming it.",
+          "stability": "experimental",
+          "source_path": "apps/majordomus-cli/src/capability/builtin/board.rs",
+          "capabilities": [
+            {
+              "id": "board.snapshot",
+              "title": "The delivery board's documents",
+              "kind": "query",
+              "stability": "experimental",
+              "tool": "majordomus_board_snapshot",
+              "route": "GET /api/v1/board/snapshot",
+              "cli": "majordomus board snapshot"
+            }
+          ]
         }
       ],
       "command_refs": [
@@ -13537,11 +13579,11 @@
       "kind_refs": [
         {
           "name": "milestone",
-          "objects": 115
+          "objects": 117
         },
         {
           "name": "issue",
-          "objects": 1165
+          "objects": 1211
         },
         {
           "name": "intent",
@@ -13749,13 +13791,13 @@
       ],
       "backlinks": [],
       "counts": {
-        "capabilities": 29,
-        "mcp_tools": 28,
-        "mcp_resources": 1372,
-        "http_routes": 28,
-        "cli_paths": 13,
+        "capabilities": 30,
+        "mcp_tools": 29,
+        "mcp_resources": 1420,
+        "http_routes": 29,
+        "cli_paths": 14,
         "commands": 1,
-        "objects": 1369,
+        "objects": 1417,
         "rules": 3,
         "enforced_rules": 3,
         "docs": 2,
@@ -13770,7 +13812,8 @@
           "rejected": 1
         },
         "modules": {
-          "behaviorally_verified": 5
+          "behaviorally_verified": 5,
+          "experimental": 1
         }
       },
       "domain_ref": {
@@ -16921,6 +16964,13 @@
         "features": []
       },
       {
+        "id": "board",
+        "title": "The delivery board",
+        "features": [
+          "planning"
+        ]
+      },
+      {
         "id": "brief",
         "title": "The session brief",
         "features": [
@@ -17588,7 +17638,7 @@
     "kinds": [
       {
         "id": "adr",
-        "title": "adr (168)",
+        "title": "adr (169)",
         "features": [
           "knowledge"
         ]
@@ -17693,7 +17743,7 @@
       },
       {
         "id": "issue",
-        "title": "issue (1165)",
+        "title": "issue (1211)",
         "features": [
           "planning"
         ]
@@ -17714,7 +17764,7 @@
       },
       {
         "id": "milestone",
-        "title": "milestone (115)",
+        "title": "milestone (117)",
         "features": [
           "planning"
         ]
@@ -18753,19 +18803,19 @@
     }
   ],
   "telemetry": {
-    "capabilities": 3762,
-    "builtin": 226,
-    "declarative": 3536,
-    "modules": 61,
-    "mcp_tools": 211,
-    "mcp_resources": 3593,
-    "http_routes": 217,
-    "cli_commands": 223,
+    "capabilities": 3822,
+    "builtin": 230,
+    "declarative": 3592,
+    "modules": 62,
+    "mcp_tools": 214,
+    "mcp_resources": 3649,
+    "http_routes": 218,
+    "cli_commands": 227,
     "shell_commands": 30,
     "kinds": 34,
-    "objects": 3536,
+    "objects": 3592,
     "by_kind": {
-      "adr": 168,
+      "adr": 169,
       "application": 5,
       "area": 9,
       "audience": 8,
@@ -18776,16 +18826,16 @@
       "deployment": 1,
       "derive-offload": 1,
       "distribution-model": 1,
-      "document": 354,
+      "document": 355,
       "domain": 6,
       "feature": 29,
       "gap": 5,
-      "implementation": 52,
+      "implementation": 53,
       "intent": 45,
-      "issue": 1165,
+      "issue": 1211,
       "knowledge": 90,
       "mesh-declaration": 1,
-      "milestone": 115,
+      "milestone": 117,
       "moment": 38,
       "policy": 1,
       "profile": 4,
@@ -18796,7 +18846,7 @@
       "session": 93,
       "skill": 8,
       "taxonomy": 10,
-      "test": 682,
+      "test": 687,
       "use-case": 49,
       "workspace": 1
     },
