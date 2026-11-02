@@ -1,0 +1,40 @@
+id: I4434
+milestone: a-second-adopter-is-served
+title: "An obligation whose inputs select no tracked file is not judged, so evidence over an empty input set never discharges it"
+slug: an-obligation-without-inputs-proves-nothing
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "When a non-remote obligation declares pathspecs that select no tracked file in the tree, and its evidence was recorded over that empty selection, both judges answer that it is not judged instead of discharged: mj_obligation_judge (lib/evidence.sh, run by check and finish through majordomus.obligation-closure) returns unmet with the message `not judged: its inputs (<specs>) select no tracked file in this tree, so no evidence can be judged fresh over them` and the reproduce `git ls-files -- '<spec>' ...`; obligations.closure returns state owed, staleness null, the evidence attached and the same detail and reproduce, so gates.completion reads it as queued. `finish --outcome completed` therefore refuses it; an outcome that is not completed reports it without refusing, as every other shortfall. As soon as the pathspecs select a file, the existing judgement applies unchanged: evidence over the empty hash is stale, evidence over the selection discharges, and an edit after it makes it stale."
+why: "F11 of the stranger-adopter pass of 2026-10-30 (installed 1.0.0-alpha.8, a python fixture with no use cases). The `tests` obligation is taken over this repository's own directories (share/obligations.yaml: lib/**, bin/majordomus, share/**, apps/majordomus-cli/src/**, test/cases/**), so in an adopter's repository it selects nothing. `majordomus evidence --covers tests` recorded inputs_hash \"\", the tree still hashed to \"\", and `check` printed `OK obligation tests — discharged over inputs ` with nothing after the word: any recorded command discharged it, and editing calc/__init__.py afterwards never made it stale. Stale-evidence protection did not exist for a stranger, and the obligation vocabulary itself says an honest gap must beat a check that always passes."
+current_state: "Measured at origin/master 51b38035a71. lib/evidence.sh:457-459 (mj_obligation_judge) compares `$ih_rec` with `$ih_now` and passes when both are empty; mj_obligation_inputs_hash prints '' when git ls-files selects nothing. apps/majordomus-cli/src/capability/builtin/obligations.rs:683 (judge) compares `hash_now.as_deref().unwrap_or(\"\")` with `ev.inputs_hash` and answers Divergence::Exact, `discharged over inputs ` with an empty short hash; inputs_hash_with returns Some((\"\", 0)) for an empty selection. Both judges discharge an obligation over nothing."
+desired_state: "An empty input set is never a freshness proof, in both judges and with one wording, whether the token's pathspecs select nothing or it declares none: the obligation is not judged (unmet in the shell, owed in obligations.closure), finish --outcome completed refuses it with the git ls-files reproduce, and the ordinary judgement is unchanged wherever the pathspecs select a file. Enforced by case 4408 and the unit test an_empty_input_set_discharges_nothing."
+scope:
+  - "lib/evidence.sh"
+  - "apps/majordomus-cli/src/capability/builtin/obligations.rs"
+  - "docs/claims/obligation-closure.md"
+  - "site/content/guarantees"
+  - "test/cases/4408_an_obligation_without_inputs_proves_nothing.sh"
+non_scope:
+  - "Binding the evidence to the task's scope paths when the token's inputs select nothing: a new hashing rule shared by the recorder and both judges, and a change to what the ledger's inputs_hash means"
+  - "Re-declaring the tests obligation's pathspecs for adopters (share/obligations.yaml names this repository's directories)"
+  - "Gate evidence (gates.state, gate_hashes in capability/builtin/gates.rs), whose gates with no inputs hash to the empty string by the same shape"
+  - "Settling a token that declares no inputs (commit) live in obligations.closure: the Rust judge reads no established_by and establishes nothing, so here it only stops discharging such a token over an empty hash (owed, `not judged: 'commit' declares no inputs`); mj_obligation_judge establishes it live from git, and I4433 (feature/completed-is-earned) teaches obligations.closure the same"
+depends_on: []
+serves: []
+acceptance_criteria:
+  - "Case 4408: in a repository whose tracked files the tests pathspecs do not select, evidence for tests followed by `check` prints `obligation tests — not judged: its inputs (lib/** ...) select no tracked file in this tree` and no `OK obligation tests`; after a code edit and commit, `finish --outcome completed` exits 10 with `FAIL obligation tests — not judged` and the reproduce `git ls-files -- 'lib/**' ...`"
+  - "Case 4408: obligations.closure answers state owed, staleness null, the evidence attached, the detail starting `not judged: its inputs (lib/**` and the reproduce starting `git ls-files -- 'lib/**'`"
+  - "Case 4408: once a tracked file under lib/ exists, the old evidence is stale in both judges, new evidence discharges it in both, and an edit after it makes finish refuse it as stale"
+  - "Case 4408: a task requiring commit with evidence recorded over a dirty tree is owed in obligations.closure (detail `not judged: 'commit' declares no inputs`, reproduce `majordomus check`), never `discharged over inputs `; check does not print `OK obligation commit` and finish --outcome completed refuses it"
+  - "Unit test an_empty_input_set_discharges_nothing in obligations.rs: an empty selection and an unreadable root with evidence over \"\" are owed, a grown selection is stale, evidence over it is discharged and an edit makes it stale, and a token that declares no inputs with evidence over \"\" is owed"
+  - "Restoring the \"\" == \"\" pass in either judge makes case 4408 or the unit test fail"
+  - "Cases 103 and 2998 pass unchanged"
+validation:
+  - "cargo test --locked --lib obligations"
+  - "MJ_TEST_JOBS=4 bash test/run.sh 4408_an_obligation_without_inputs_proves_nothing 103_obligations 2998_evidence_reaches_the_subcommands_the_executable_owns"
+  - "bin/majordomus plan validate"
+evidence_required:
+  - "test"
+created_at: 2026-10-30
+updated_at: 2026-10-30

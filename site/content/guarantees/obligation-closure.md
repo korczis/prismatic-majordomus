@@ -23,7 +23,13 @@ tracked files the obligation names. Four tokens are never recorded: `commit`, `p
 [obligation-establishment](@/guarantees/obligation-establishment.md) is that half of the story. `check` and `finish` evaluate every declared obligation
 on every run through the doctrine `majordomus.obligation-closure`. An obligation with no
 evidence fails. An obligation whose recorded input hash no longer matches the tree fails,
-with both hashes named. An obligation whose fact is remote — a push, an integration, a
+with both hashes named. An obligation whose pathspecs select no tracked file in this tree is
+not judged and fails as owed, naming the `git ls-files` listing that shows the empty
+selection: an empty input set is never a freshness proof, because evidence recorded over it
+and the tree measured now both hash to nothing, and no later edit could make it stale. The
+same holds for a tree-bound token that declares no inputs at all (`commit`): `check`
+establishes it live from git, and recorded evidence for it never discharges it.
+An obligation whose fact is remote — a push, an integration, a
 publication, a deployment — is bound to the commit it was taken at instead, and fails once
 the branch has left it.
 

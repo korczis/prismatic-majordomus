@@ -536,6 +536,27 @@ mj_obligation_judge() {
     esac
   fi
   ih_now="$(mj_obligation_inputs_hash "$tok")"
+  # An empty input set is never a freshness proof (I4434). A token whose pathspecs select no
+  # tracked file here, or that declares none at all, hashes to the empty string, and so did
+  # its evidence when it was taken: "" equalled "", any recorded command discharged it, and
+  # no later edit could make it stale — a check that always passes, which
+  # share/obligations.yaml says an honest gap must beat. It is therefore not judged: unmet,
+  # with the listing that shows the empty selection as its reproduce. A token without inputs
+  # reaches this line only when nothing could establish it above. obligations.closure answers
+  # `owed`, with the same words, over the same selection.
+  if [ -z "$ih_now" ] && [ -z "$ih_rec" ]; then
+    local specs; specs="$(mj_obligation_inputs "$tok")"
+    if [ -z "$specs" ]; then
+      printf 'unmet\t%s\t%s\n' \
+        "not judged: '$tok' declares no inputs, so no recorded evidence can be judged fresh over them; \`majordomus check\` establishes it live where something can" \
+        "majordomus check"
+    else
+      printf 'unmet\t%s\t%s\n' \
+        "not judged: its inputs ($(printf '%s\n' "$specs" | tr '\n' ' ' | sed 's/ $//')) select no tracked file in this tree, so no evidence can be judged fresh over them" \
+        "git ls-files -- $(printf '%s\n' "$specs" | sed "s/.*/'&'/" | tr '\n' ' ' | sed 's/ $//')"
+    fi
+    return 1
+  fi
   if [ "$ih_rec" = "$ih_now" ]; then
     printf 'pass\t%s\t\n' "discharged over inputs $(printf '%s' "$ih_now" | cut -c1-12)"; return 0
   fi

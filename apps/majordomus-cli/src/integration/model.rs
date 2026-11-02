@@ -176,6 +176,14 @@ pub struct CheckObservation {
     /// is how long the run took (`integration::timings`).
     #[serde(default, skip_serializing_if = "String::is_empty")]
     pub started_at: String,
+    /// How a completed check run concluded, in the forge's word, lower case: `failure`,
+    /// `timed_out`, `cancelled`, `action_required`, `success`, `skipped`, ...; empty for a
+    /// status context, for a run that has not completed, and in an observation recorded before
+    /// this was read. `state` folds every conclusion but a pass or a skip into `failed`, which
+    /// is what a merge decision needs; this keeps a cancelled run apart from a failed one where
+    /// CI is measured (`integration::timings`, I3202).
+    #[serde(default, skip_serializing_if = "String::is_empty")]
+    pub conclusion: String,
 }
 
 /// Where one check run stands.

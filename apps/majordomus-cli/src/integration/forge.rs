@@ -578,6 +578,14 @@ pub fn check_of(entry: &Value) -> CheckObservation {
             (CheckKind::StatusContext, _) | (_, "0001-01-01T00:00:00Z") => String::new(),
             (_, t) => t.to_string(),
         },
+        // only a completed run has concluded; a context's state is its whole verdict
+        conclusion: if kind == CheckKind::CheckRun
+            && text("status").eq_ignore_ascii_case("completed")
+        {
+            text("conclusion").to_ascii_lowercase()
+        } else {
+            String::new()
+        },
     }
 }
 
@@ -2455,6 +2463,41 @@ mod tests {
             "checkSuite": {"app": {"databaseId": 15368}}
         }));
         assert_eq!(p.checks[0], alone, "one parser reads both rollups");
+    }
+
+    /// A completed run keeps the forge's conclusion beside the state the merge decision reads:
+    /// a cancelled run and a failed one are both `failed`, and stay told apart (I3202).
+    #[test]
+    fn a_completed_run_keeps_its_conclusion_and_nothing_else_has_one() {
+        let run = |status: &str, conclusion: &str| {
+            check_of(&json!({
+                "__typename": "CheckRun", "name": "suite", "status": status, "conclusion": conclusion
+            }))
+        };
+        let cancelled = run("COMPLETED", "CANCELLED");
+        assert_eq!(
+            (cancelled.state, cancelled.conclusion.as_str()),
+            (CheckRunState::Failed, "cancelled")
+        );
+        let failed = run("completed", "failure");
+        assert_eq!(
+            (failed.state, failed.conclusion.as_str()),
+            (CheckRunState::Failed, "failure")
+        );
+        assert_eq!(run("COMPLETED", "TIMED_OUT").conclusion, "timed_out");
+        assert_eq!(
+            run("IN_PROGRESS", "").conclusion,
+            "",
+            "a running check has not concluded"
+        );
+        let context = check_of(&json!({
+            "__typename": "StatusContext", "context": "deploy", "state": "FAILURE"
+        }));
+        assert_eq!(
+            (context.state, context.conclusion.as_str()),
+            (CheckRunState::Failed, ""),
+            "a context's state is its whole verdict"
+        );
     }
 
     /// Two sources binding one context to two apps require both apps' runs; an unbound entry
