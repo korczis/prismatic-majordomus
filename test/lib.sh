@@ -149,6 +149,18 @@ file_mode() { stat -c %a "$1" 2>/dev/null || stat -f %Lp "$1"; }
 # command said it did not.
 sha256_of_file() { mj_sha256_hex "$1"; }
 
+# A harness for a case that drives the runner on a fixture suite: test/run.sh and this file
+# under <dir>/test, with every lib/ file the two source, read from their own `. "$ROOT/lib/..."`
+# lines, under <dir>/lib. The copies listed their libraries by hand, so when #1358 made this
+# file source lib/runnable.sh, cases 413, 4223 and 829 ran a harness without it (train 21, run
+# 41352959070). Case 3180 holds that no case copies this file any other way.
+mj_harness() { # <dir>
+  mkdir -p "$1/test/cases" "$1/lib"
+  cp "$ROOT/test/run.sh" "$ROOT/test/lib.sh" "$1/test/"
+  sed -n 's|^[[:space:]]*\. "\$ROOT/\(lib/[A-Za-z0-9_.-]*\)".*|\1|p' "$ROOT/test/lib.sh" "$ROOT/test/run.sh" \
+    | sort -u | while IFS= read -r mj_hn_lib; do cp "$ROOT/$mj_hn_lib" "$1/$mj_hn_lib" || exit 1; done
+}
+
 # The Rust executable a case drives. MAJORDOMUS_BIN names a prebuilt one (CI hands the
 # artifact of its rust job to a later job this way, a person points at a release build);
 # without it the tree's own executable, or the installed release of this tree's generation —

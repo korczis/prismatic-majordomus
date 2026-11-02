@@ -121,3 +121,17 @@ if [ -n "$bad" ]; then
   printf '    these still ask only whether node, python3 or zola is on PATH; use mj_runs or mj_zola_ready (lib/runnable.sh):\n%s\n' "$bad"
   exit 1
 fi
+
+# 8. a harness carries what the runner sources: test/lib.sh sourced lib/runnable.sh before the
+# copies of cases 413, 4223 and 829 did, and those cases failed on the train that brought it
+mj_harness "$S/harness"
+for lib in $(sed -n 's|^[[:space:]]*\. "\$ROOT/\(lib/[A-Za-z0-9_.-]*\)".*|\1|p' "$ROOT/test/lib.sh" "$ROOT/test/run.sh" | sort -u); do
+  [ -f "$S/harness/$lib" ] || fail "mj_harness left out $lib, which test/lib.sh or test/run.sh sources"
+done
+[ -f "$S/harness/lib/runnable.sh" ] || fail "mj_harness left out lib/runnable.sh"
+# and no case copies the library by hand (617 links the whole lib/ instead of copying it)
+bad="$(cd "$ROOT" && git grep -n -E 'cp [^#]*test/lib\.sh' -- test/cases ':!test/cases/617_a_case_can_name_what_it_covers.sh' 2>/dev/null || true)"
+if [ -n "$bad" ]; then
+  printf '    these copy test/lib.sh without its libraries; use mj_harness (test/lib.sh):\n%s\n' "$bad"
+  exit 1
+fi
