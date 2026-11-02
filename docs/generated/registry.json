@@ -188,6 +188,14 @@
       "capabilities": 8
     },
     {
+      "id": "fleet",
+      "title": "Fleet",
+      "description": "The machines that run this repository's mesh, as .ai/repo/fleet/ declares them, and the one operation that brings every one of them to the latest stable release the repository records: install it with the published installer, fast-forward each hub's checkout, write and restart each hub's service, and verify that each hub answers at the version and that the hubs see each other (ADR 0132).",
+      "stability": "experimental",
+      "source": "builtin",
+      "capabilities": 3
+    },
+    {
       "id": "gates",
       "title": "Completion gates",
       "description": "Completion as a state the repository decides rather than a claim a worker makes: the validation gates this repository declares in its CI model, which of them a task's own change set selects, what each one last reported, whether that verdict still describes the tree it was taken over, and therefore whether the task may be called finished. A gate that has never reported is `queued` and not `pass`, a run whose files have changed since is `stale` and refuses exactly as a failure does, and a gate the change cannot affect is `exempt` rather than unknown.",
@@ -206,7 +214,7 @@
     {
       "id": "guard",
       "title": "Edit guard",
-      "description": "Whether a write to a file of this checkout is covered by a claim: the active task's scope, or a live mesh claim of the writing session. The judgement a provider's pre-tool hook asks before every edit (majordomus guard hook), switched by session.edits_require_claim.",
+      "description": "Whether a write to a file of this checkout is covered by a claim: the active task's scope, or a live mesh claim of the writing session. The judgement a provider's pre-tool hook asks before every edit (majordomus guard hook), switched by session.edits_require_claim and made to refuse by session.edit_guard_mode.",
       "stability": "experimental",
       "source": "builtin",
       "capabilities": 1
@@ -3136,6 +3144,11 @@
                   "type": "string",
                   "const": "repository_mutation",
                   "description": "The repository changes.\n\nFor most of this executable's life nothing classified to this, because no capability\nof any kind wrote to the repository. That day arrived with [ADR 0040]: development\nsemantics are capabilities of this runtime, and the first of them — `plan.transition`\n— stamps a field into an issue's own tracked record. The variant was put on the model\nin advance so that when one did, it would say so *here*, where a projection already\nreads it and a client already asks before running it, rather than in whichever page\nhappens to render its button.\n\nIt is not classified from the kind, because the kind cannot know it: a command that\nannounces a peer and a command that writes a tracked file are the same kind. A\nhandler that writes the repository says so with\n`ExecutionPolicy::writes_repository`, the way one that stops says so with\n`ExecutionPolicy::stoppable`.\n\n[ADR 0040]: https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/adrs/0040-development-semantics-are-capabilities-of-one-runtime.md"
+                },
+                {
+                  "type": "string",
+                  "const": "remote_mutation",
+                  "description": "Other machines change: the handler reaches, over ssh, machines this process does not\nrun on, and installs, writes or restarts something there ([ADR 0132]). The strongest\neffect a capability can have, and the only one that is open-world: what it changes\noutlives this process, this repository and this machine. A handler says so with\n`ExecutionPolicy::changes_other_machines`.\n\n[ADR 0132]: https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/adrs/0132-the-fleet-is-declared-and-rolled-out-by-a-typed-capability.md"
                 }
               ],
               "description": "What running a capability changes outside the caller.\n\nClassified, never declared: it follows from the kind, which is the field a declaration\nalready carries. A projection reads this to decide whether to ask before running\nsomething — the Cockpit's confirmation is derived from it — instead of naming\ncapabilities it must treat carefully, which is a list that goes stale the day after it\nis written."
@@ -4082,6 +4095,11 @@
                   "type": "string",
                   "const": "repository_mutation",
                   "description": "The repository changes.\n\nFor most of this executable's life nothing classified to this, because no capability\nof any kind wrote to the repository. That day arrived with [ADR 0040]: development\nsemantics are capabilities of this runtime, and the first of them — `plan.transition`\n— stamps a field into an issue's own tracked record. The variant was put on the model\nin advance so that when one did, it would say so *here*, where a projection already\nreads it and a client already asks before running it, rather than in whichever page\nhappens to render its button.\n\nIt is not classified from the kind, because the kind cannot know it: a command that\nannounces a peer and a command that writes a tracked file are the same kind. A\nhandler that writes the repository says so with\n`ExecutionPolicy::writes_repository`, the way one that stops says so with\n`ExecutionPolicy::stoppable`.\n\n[ADR 0040]: https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/adrs/0040-development-semantics-are-capabilities-of-one-runtime.md"
+                },
+                {
+                  "type": "string",
+                  "const": "remote_mutation",
+                  "description": "Other machines change: the handler reaches, over ssh, machines this process does not\nrun on, and installs, writes or restarts something there ([ADR 0132]). The strongest\neffect a capability can have, and the only one that is open-world: what it changes\noutlives this process, this repository and this machine. A handler says so with\n`ExecutionPolicy::changes_other_machines`.\n\n[ADR 0132]: https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/adrs/0132-the-fleet-is-declared-and-rolled-out-by-a-typed-capability.md"
                 }
               ],
               "description": "What running a capability changes outside the caller.\n\nClassified, never declared: it follows from the kind, which is the field a declaration\nalready carries. A projection reads this to decide whether to ask before running\nsomething — the Cockpit's confirmation is derived from it — instead of naming\ncapabilities it must treat carefully, which is a list that goes stale the day after it\nis written."
@@ -33450,6 +33468,801 @@
       "source_path": "apps/majordomus-cli/src/capability/builtin/executions.rs"
     },
     {
+      "id": "fleet.plan",
+      "module": "fleet",
+      "kind": "query",
+      "title": "What a rollout would do on every machine",
+      "description": "Reads the fleet declaration and the distribution model and reaches nothing: the version every machine would be brought to, the installer, this machine's mesh node, and for each machine whether it is this one, the ssh destinations tried in order, the hub it serves and the steps a rollout takes there.",
+      "input": {
+        "name": "RolloutInput",
+        "schema": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "machines": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "The machines to bring, by their names in the fleet; every machine when absent."
+            },
+            "version": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "The release to install (`0.17.0` or `v0.17.0`); the latest stable release the repository\nrecords when absent.\nNamed, it is installed even where a newer one is."
+            },
+            "keep_servers": {
+              "type": "boolean",
+              "description": "Leave running the servers a machine runs from an older installed tree. By default\neach is stopped and started again at the version on the port it had; a session\nattached to one reconnects."
+            }
+          },
+          "description": "The input of `fleet.plan` and `fleet.rollout`.",
+          "title": "RolloutInput"
+        }
+      },
+      "output": {
+        "name": "Plan",
+        "schema": {
+          "type": "object",
+          "properties": {
+            "declaration": {
+              "type": "string",
+              "description": "The declaration read."
+            },
+            "version": {
+              "type": "string",
+              "description": "The version every machine would be brought to."
+            },
+            "installer": {
+              "type": "string",
+              "description": "The installer that would install it."
+            },
+            "local_node": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "This machine's mesh node, when it has one."
+            },
+            "machines": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/MachinePlan"
+              },
+              "description": "Every machine, in the declaration's order."
+            }
+          },
+          "required": [
+            "declaration",
+            "version",
+            "installer",
+            "machines"
+          ],
+          "description": "What `fleet plan` answers.",
+          "title": "Plan",
+          "$defs": {
+            "MachinePlan": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "description": "The machine's name in the fleet."
+                },
+                "title": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "How a person names it."
+                },
+                "node": {
+                  "type": "string",
+                  "description": "Its mesh node id."
+                },
+                "local": {
+                  "type": "boolean",
+                  "description": "Whether it is this machine, reached without ssh."
+                },
+                "destinations": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "The ssh destinations, in the order they are tried."
+                },
+                "hub": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/$defs/HubView"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "description": "The hub it serves."
+                },
+                "steps": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/$defs/Step"
+                  },
+                  "description": "The steps, in order."
+                }
+              },
+              "required": [
+                "id",
+                "node",
+                "local",
+                "destinations",
+                "steps"
+              ],
+              "description": "What a rollout would do on one machine."
+            },
+            "HubView": {
+              "type": "object",
+              "properties": {
+                "checkout": {
+                  "type": "string",
+                  "description": "Its checkout, relative to the machine's home directory."
+                },
+                "port": {
+                  "type": "integer",
+                  "format": "uint16",
+                  "minimum": 0,
+                  "maximum": 65535,
+                  "description": "Its port."
+                }
+              },
+              "required": [
+                "checkout",
+                "port"
+              ],
+              "description": "The hub a machine serves, as every answer shows it."
+            },
+            "Step": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "const": "claims",
+                  "description": "Ask the mesh whether another session holds the machine (`host:` claims)."
+                },
+                {
+                  "type": "string",
+                  "const": "reach",
+                  "description": "Find a destination that answers."
+                },
+                {
+                  "type": "string",
+                  "const": "probe",
+                  "description": "Ask what the machine is and runs."
+                },
+                {
+                  "type": "string",
+                  "const": "install",
+                  "description": "Install the release with the published installer."
+                },
+                {
+                  "type": "string",
+                  "const": "checkout",
+                  "description": "Fast-forward the hub's checkout."
+                },
+                {
+                  "type": "string",
+                  "const": "service",
+                  "description": "Write and (re)start the hub's service."
+                },
+                {
+                  "type": "string",
+                  "const": "verify",
+                  "description": "Wait for the hub, or the launcher, to answer at the version."
+                },
+                {
+                  "type": "string",
+                  "const": "servers",
+                  "description": "Restart every server still running an installed tree of another version."
+                }
+              ],
+              "description": "One step of a rollout on one machine."
+            }
+          }
+        }
+      },
+      "provenance": {
+        "source": "builtin",
+        "module": "majordomus_cli::capability::builtin::fleet"
+      },
+      "exposure": {
+        "cli": {
+          "path": [
+            "fleet",
+            "plan"
+          ]
+        }
+      },
+      "availability": "runtime",
+      "visibility": "developer",
+      "stability": "experimental",
+      "tags": [
+        "fleet",
+        "mesh",
+        "distribution"
+      ],
+      "benchmark": {
+        "policy": "required"
+      },
+      "cache": {
+        "policy": "disabled"
+      },
+      "execution": {
+        "effect": "read",
+        "cancellable": false,
+        "concurrency": "unrestricted"
+      },
+      "source_path": "apps/majordomus-cli/src/capability/builtin/fleet.rs"
+    },
+    {
+      "id": "fleet.rollout",
+      "module": "fleet",
+      "kind": "command",
+      "title": "Bring every machine of the fleet to this release, and form the mesh",
+      "description": "On every machine named (every one by default), in parallel: reach it (this machine directly, the others by the first ssh destination that answers, never prompting); install the release with the published installer, which verifies the archive before touching anything, unless that version, or a newer one when none was named, is already there; for a hub, fast-forward its checkout to its remote's default branch (cloning it when absent, declining a dirty, diverged or off-branch one and leaving it as it is), write its service — a systemd user unit on Linux, a launchd agent on macOS — and restart it when anything changed or it does not answer at the version, then wait for it to answer at the version with its mesh active. Last, asks the converged hubs which nodes they see until every hub is seen by every other. Each machine's steps and verdict are reported; one machine's failure stops only that machine.",
+      "input": {
+        "name": "RolloutInput",
+        "schema": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "machines": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "The machines to bring, by their names in the fleet; every machine when absent."
+            },
+            "version": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "The release to install (`0.17.0` or `v0.17.0`); the latest stable release the repository\nrecords when absent.\nNamed, it is installed even where a newer one is."
+            },
+            "keep_servers": {
+              "type": "boolean",
+              "description": "Leave running the servers a machine runs from an older installed tree. By default\neach is stopped and started again at the version on the port it had; a session\nattached to one reconnects."
+            }
+          },
+          "description": "The input of `fleet.plan` and `fleet.rollout`.",
+          "title": "RolloutInput"
+        }
+      },
+      "output": {
+        "name": "Rollout",
+        "schema": {
+          "type": "object",
+          "properties": {
+            "declaration": {
+              "type": "string",
+              "description": "The declaration read."
+            },
+            "version": {
+              "type": "string",
+              "description": "The version the machines were brought to."
+            },
+            "machines": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/MachineOutcome"
+              },
+              "description": "Every machine asked, in the declaration's order."
+            },
+            "mesh": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/Sighting"
+              },
+              "description": "Every converged hub, as the converged hubs' meshes see it."
+            },
+            "verdict": {
+              "$ref": "#/$defs/FleetVerdict",
+              "description": "Where the fleet ended."
+            }
+          },
+          "required": [
+            "declaration",
+            "version",
+            "machines",
+            "mesh",
+            "verdict"
+          ],
+          "description": "What `fleet rollout` answers.",
+          "title": "Rollout",
+          "$defs": {
+            "MachineOutcome": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "description": "The machine's name in the fleet."
+                },
+                "node": {
+                  "type": "string",
+                  "description": "Its mesh node id."
+                },
+                "local": {
+                  "type": "boolean",
+                  "description": "Whether it is this machine."
+                },
+                "reached_by": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "The destination that answered (`local` for this machine)."
+                },
+                "platform": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "`uname -s` and `-m`."
+                },
+                "before": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "The version installed before."
+                },
+                "after": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "The version installed after."
+                },
+                "steps": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/$defs/StepOutcome"
+                  },
+                  "description": "Every step taken, in order."
+                },
+                "verdict": {
+                  "$ref": "#/$defs/MachineVerdict",
+                  "description": "Where it ended."
+                }
+              },
+              "required": [
+                "id",
+                "node",
+                "local",
+                "steps",
+                "verdict"
+              ],
+              "description": "One machine's rollout."
+            },
+            "StepOutcome": {
+              "type": "object",
+              "properties": {
+                "step": {
+                  "$ref": "#/$defs/Step",
+                  "description": "Which step."
+                },
+                "status": {
+                  "$ref": "#/$defs/StepStatus",
+                  "description": "How it went."
+                },
+                "detail": {
+                  "type": "string",
+                  "description": "What it found or did."
+                }
+              },
+              "required": [
+                "step",
+                "status",
+                "detail"
+              ],
+              "description": "One step's outcome."
+            },
+            "Step": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "const": "claims",
+                  "description": "Ask the mesh whether another session holds the machine (`host:` claims)."
+                },
+                {
+                  "type": "string",
+                  "const": "reach",
+                  "description": "Find a destination that answers."
+                },
+                {
+                  "type": "string",
+                  "const": "probe",
+                  "description": "Ask what the machine is and runs."
+                },
+                {
+                  "type": "string",
+                  "const": "install",
+                  "description": "Install the release with the published installer."
+                },
+                {
+                  "type": "string",
+                  "const": "checkout",
+                  "description": "Fast-forward the hub's checkout."
+                },
+                {
+                  "type": "string",
+                  "const": "service",
+                  "description": "Write and (re)start the hub's service."
+                },
+                {
+                  "type": "string",
+                  "const": "verify",
+                  "description": "Wait for the hub, or the launcher, to answer at the version."
+                },
+                {
+                  "type": "string",
+                  "const": "servers",
+                  "description": "Restart every server still running an installed tree of another version."
+                }
+              ],
+              "description": "One step of a rollout on one machine."
+            },
+            "StepStatus": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "const": "ok",
+                  "description": "It held without changing anything."
+                },
+                {
+                  "type": "string",
+                  "const": "changed",
+                  "description": "It changed the machine."
+                },
+                {
+                  "type": "string",
+                  "const": "skipped",
+                  "description": "It had nothing to do."
+                },
+                {
+                  "type": "string",
+                  "const": "refused",
+                  "description": "It was declined, and the detail says why; the machine was left as the step found it."
+                },
+                {
+                  "type": "string",
+                  "const": "failed",
+                  "description": "It failed."
+                }
+              ],
+              "description": "How a step went."
+            },
+            "MachineVerdict": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "const": "converged",
+                  "description": "It runs the version, and its hub, if it serves one, answers at it."
+                },
+                {
+                  "type": "string",
+                  "const": "unreachable",
+                  "description": "No destination answered."
+                },
+                {
+                  "type": "string",
+                  "const": "claimed",
+                  "description": "Another session holds the machine exclusively on the mesh; nothing was touched."
+                },
+                {
+                  "type": "string",
+                  "const": "failed",
+                  "description": "A step was declined or failed; the steps say which."
+                }
+              ],
+              "description": "Where one machine ended."
+            },
+            "Sighting": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "description": "The machine's name in the fleet."
+                },
+                "node": {
+                  "type": "string",
+                  "description": "Its mesh node id."
+                },
+                "seen_by": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "The machines whose hubs see this node present."
+                },
+                "versions": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "The versions its runtimes advertise, as those hubs see them."
+                }
+              },
+              "required": [
+                "id",
+                "node",
+                "seen_by",
+                "versions"
+              ],
+              "description": "One hub's machine, as the mesh sees it after the rollout."
+            },
+            "FleetVerdict": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "const": "converged",
+                  "description": "Every machine converged, and every hub is seen by every other converged hub."
+                },
+                {
+                  "type": "string",
+                  "const": "partial",
+                  "description": "Some did; the machines say which did not."
+                },
+                {
+                  "type": "string",
+                  "const": "failed",
+                  "description": "None did."
+                }
+              ],
+              "description": "Where the fleet ended."
+            }
+          }
+        }
+      },
+      "provenance": {
+        "source": "builtin",
+        "module": "majordomus_cli::capability::builtin::fleet"
+      },
+      "exposure": {
+        "cli": {
+          "path": [
+            "fleet",
+            "rollout"
+          ]
+        }
+      },
+      "availability": "runtime",
+      "visibility": "developer",
+      "stability": "experimental",
+      "tags": [
+        "fleet",
+        "mesh",
+        "distribution"
+      ],
+      "benchmark": {
+        "policy": "waived",
+        "reason": "destructive"
+      },
+      "cache": {
+        "policy": "disabled"
+      },
+      "execution": {
+        "effect": "remote_mutation",
+        "cancellable": false,
+        "concurrency": "serial"
+      },
+      "source_path": "apps/majordomus-cli/src/capability/builtin/fleet.rs"
+    },
+    {
+      "id": "fleet.status",
+      "module": "fleet",
+      "kind": "query",
+      "title": "What every machine of the fleet runs",
+      "description": "Asks every machine, in parallel and over ssh unless it is this one, what it is and runs: the destination that answered, its platform, the version its launcher runs, every majordomus serve running there, and for a hub its checkout's branch, commit and cleanliness and the version the hub answers at. A machine no destination reaches is reported with every destination's reason. Changes nothing.",
+      "input": {
+        "name": "Empty",
+        "schema": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "No input.",
+          "title": "Empty"
+        }
+      },
+      "output": {
+        "name": "Status",
+        "schema": {
+          "type": "object",
+          "properties": {
+            "declaration": {
+              "type": "string",
+              "description": "The declaration read."
+            },
+            "version": {
+              "type": "string",
+              "description": "The version this executable is."
+            },
+            "machines": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/MachineStatus"
+              },
+              "description": "Every machine, in the declaration's order."
+            }
+          },
+          "required": [
+            "declaration",
+            "version",
+            "machines"
+          ],
+          "description": "What `fleet status` answers.",
+          "title": "Status",
+          "$defs": {
+            "MachineStatus": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "description": "The machine's name in the fleet."
+                },
+                "node": {
+                  "type": "string",
+                  "description": "Its mesh node id."
+                },
+                "local": {
+                  "type": "boolean",
+                  "description": "Whether it is this machine."
+                },
+                "reached_by": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "The destination that answered."
+                },
+                "platform": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "`uname -s` and `-m`."
+                },
+                "installed": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "The version the launcher runs."
+                },
+                "hub": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/$defs/HubStatus"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "description": "Its hub."
+                },
+                "servers": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "Every `majordomus serve` running there, as its command line."
+                },
+                "error": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "Why it could not be asked."
+                }
+              },
+              "required": [
+                "id",
+                "node",
+                "local",
+                "servers"
+              ],
+              "description": "What one machine runs."
+            },
+            "HubStatus": {
+              "type": "object",
+              "properties": {
+                "checkout": {
+                  "type": "string",
+                  "description": "Its checkout, relative to the home directory."
+                },
+                "port": {
+                  "type": "integer",
+                  "format": "uint16",
+                  "minimum": 0,
+                  "maximum": 65535,
+                  "description": "Its port."
+                },
+                "present": {
+                  "type": "boolean",
+                  "description": "Whether the checkout exists."
+                },
+                "branch": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "The checkout's branch."
+                },
+                "head": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "Its commit."
+                },
+                "dirty": {
+                  "type": [
+                    "boolean",
+                    "null"
+                  ],
+                  "description": "Whether it has uncommitted changes to tracked files."
+                },
+                "answering": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "The version the hub answers at on the port, when it answers."
+                }
+              },
+              "required": [
+                "checkout",
+                "port",
+                "present"
+              ],
+              "description": "What one machine's hub is."
+            }
+          }
+        }
+      },
+      "provenance": {
+        "source": "builtin",
+        "module": "majordomus_cli::capability::builtin::fleet"
+      },
+      "exposure": {
+        "cli": {
+          "path": [
+            "fleet",
+            "status"
+          ]
+        }
+      },
+      "availability": "runtime",
+      "visibility": "developer",
+      "stability": "experimental",
+      "tags": [
+        "fleet",
+        "mesh",
+        "distribution"
+      ],
+      "benchmark": {
+        "policy": "waived",
+        "reason": "external_dependency"
+      },
+      "cache": {
+        "policy": "disabled"
+      },
+      "execution": {
+        "effect": "read",
+        "cancellable": false,
+        "concurrency": "unrestricted"
+      },
+      "source_path": "apps/majordomus-cli/src/capability/builtin/fleet.rs"
+    },
+    {
       "id": "gates.completion",
       "module": "gates",
       "kind": "query",
@@ -35296,7 +36109,7 @@
       "module": "guard",
       "kind": "query",
       "title": "Judge one edit",
-      "description": "Whether the given session may write the given path now: allowed when the policy's session.edits_require_claim is off, the path is outside the checkout or its local state, the repository declares no enabled mesh, the active task's scope covers it, or a live mesh claim of the session covers it; refused as unclaimed otherwise, with the remedy. What cannot be read — the policy, the mesh — is let through and named, never refused.",
+      "description": "Whether the given session may write the given path now: allowed when the policy's session.edits_require_claim is off, the path is outside the checkout or its local state, the repository declares no enabled mesh, the active task's scope covers it, or a live mesh claim of the session covers it; otherwise the ground is unclaimed, with the remedy: refused under session.edit_guard_mode: refuse, and let through and still named under advisory, the default (I3322). What cannot be read — the policy, the mesh — is let through and named, never refused.",
       "input": {
         "name": "GuardEditInput",
         "schema": {
@@ -35337,7 +36150,7 @@
             },
             "ground": {
               "type": "string",
-              "description": "Why, as one word: `off`, `outside`, `local`, `no_mesh`, `task`, `claim`,\n`undecided` or `unclaimed`. Only `unclaimed` refuses."
+              "description": "Why, as one word: `off`, `outside`, `local`, `no_mesh`, `task`, `claim`,\n`undecided` or `unclaimed`. Only `unclaimed` refuses, and only under\n`session.edit_guard_mode: refuse`; under `advisory` it is allowed and reported."
             },
             "detail": {
               "type": "string",
@@ -35348,7 +36161,7 @@
                 "string",
                 "null"
               ],
-              "description": "What makes the edit allowed, when it is refused."
+              "description": "What makes the edit claimed, when no claim covers it: refused, or let through only\nbecause the guard is advisory."
             }
           },
           "required": [
@@ -36253,6 +37066,15 @@
                     "null"
                   ],
                   "description": "On `merge_succeeded`: the merge commit, once it is read; the head itself after a\nfast-forward."
+                },
+                "run": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "format": "uint64",
+                  "minimum": 0,
+                  "description": "On the `run_*` events of `prs supervise`: the CI run acted on."
                 }
               },
               "required": [
@@ -36420,6 +37242,41 @@
                   "type": "string",
                   "const": "observe_failed",
                   "description": "A continuous drain's cycle could not observe the forge, and the outage was short\nenough to wait out (`CONTINUOUS_TRANSIENT_LIMIT`)."
+                },
+                {
+                  "type": "string",
+                  "const": "run_cancel_attempted",
+                  "description": "`prs supervise --apply` is about to force-cancel a CI run; the detail names the run\nand the reason it was decided on, read again just now (`super::runs`)."
+                },
+                {
+                  "type": "string",
+                  "const": "run_cancelled",
+                  "description": "The run was force-cancelled."
+                },
+                {
+                  "type": "string",
+                  "const": "run_cancel_failed",
+                  "description": "The forge refused to cancel it."
+                },
+                {
+                  "type": "string",
+                  "const": "run_already_ended",
+                  "description": "The run had ended before the cancel reached it: another supervision, in a lane that\napplied in the same minute, cancelled it, or it completed on its own. Nothing was left\nto do, and nothing failed."
+                },
+                {
+                  "type": "string",
+                  "const": "run_rerun_attempted",
+                  "description": "A run, the newest of its pull request's head, is about to be asked to run again: paired\nwith this supervision's cancel of it, or on a later pass of any lane because the head has\nno run in flight and no verdict (`super::runs`). A record only: GitHub's own\n`run_attempt` bounds the asks (`super::runs::MAX_ATTEMPTS`), never this trail."
+                },
+                {
+                  "type": "string",
+                  "const": "run_rerun_requested",
+                  "description": "The run just force-cancelled was asked to run again: it was the last run of its pull\nrequest's head on its way to a verdict, ended because a job of it ran past its bound\n(`super::supervise::Decision::rerun`)."
+                },
+                {
+                  "type": "string",
+                  "const": "run_rerun_failed",
+                  "description": "The re-run of the run just force-cancelled could not be asked: its pull request's head\nhas no run until somebody re-runs it."
                 }
               ],
               "description": "What one line of the audit trail records. The wire word is the variant's `snake_case`\nname — the same word each was written as while the action was a string — so every line\nwritten before still parses, and a word nobody writes is not an action."
@@ -37921,6 +38778,41 @@
                   "type": "string",
                   "const": "observe_failed",
                   "description": "A continuous drain's cycle could not observe the forge, and the outage was short\nenough to wait out (`CONTINUOUS_TRANSIENT_LIMIT`)."
+                },
+                {
+                  "type": "string",
+                  "const": "run_cancel_attempted",
+                  "description": "`prs supervise --apply` is about to force-cancel a CI run; the detail names the run\nand the reason it was decided on, read again just now (`super::runs`)."
+                },
+                {
+                  "type": "string",
+                  "const": "run_cancelled",
+                  "description": "The run was force-cancelled."
+                },
+                {
+                  "type": "string",
+                  "const": "run_cancel_failed",
+                  "description": "The forge refused to cancel it."
+                },
+                {
+                  "type": "string",
+                  "const": "run_already_ended",
+                  "description": "The run had ended before the cancel reached it: another supervision, in a lane that\napplied in the same minute, cancelled it, or it completed on its own. Nothing was left\nto do, and nothing failed."
+                },
+                {
+                  "type": "string",
+                  "const": "run_rerun_attempted",
+                  "description": "A run, the newest of its pull request's head, is about to be asked to run again: paired\nwith this supervision's cancel of it, or on a later pass of any lane because the head has\nno run in flight and no verdict (`super::runs`). A record only: GitHub's own\n`run_attempt` bounds the asks (`super::runs::MAX_ATTEMPTS`), never this trail."
+                },
+                {
+                  "type": "string",
+                  "const": "run_rerun_requested",
+                  "description": "The run just force-cancelled was asked to run again: it was the last run of its pull\nrequest's head on its way to a verdict, ended because a job of it ran past its bound\n(`super::supervise::Decision::rerun`)."
+                },
+                {
+                  "type": "string",
+                  "const": "run_rerun_failed",
+                  "description": "The re-run of the run just force-cancelled could not be asked: its pull request's head\nhas no run until somebody re-runs it."
                 }
               ],
               "description": "What one line of the audit trail records. The wire word is the variant's `snake_case`\nname — the same word each was written as while the action was a string — so every line\nwritten before still parses, and a word nobody writes is not an action."
@@ -39785,6 +40677,41 @@
                   "type": "string",
                   "const": "observe_failed",
                   "description": "A continuous drain's cycle could not observe the forge, and the outage was short\nenough to wait out (`CONTINUOUS_TRANSIENT_LIMIT`)."
+                },
+                {
+                  "type": "string",
+                  "const": "run_cancel_attempted",
+                  "description": "`prs supervise --apply` is about to force-cancel a CI run; the detail names the run\nand the reason it was decided on, read again just now (`super::runs`)."
+                },
+                {
+                  "type": "string",
+                  "const": "run_cancelled",
+                  "description": "The run was force-cancelled."
+                },
+                {
+                  "type": "string",
+                  "const": "run_cancel_failed",
+                  "description": "The forge refused to cancel it."
+                },
+                {
+                  "type": "string",
+                  "const": "run_already_ended",
+                  "description": "The run had ended before the cancel reached it: another supervision, in a lane that\napplied in the same minute, cancelled it, or it completed on its own. Nothing was left\nto do, and nothing failed."
+                },
+                {
+                  "type": "string",
+                  "const": "run_rerun_attempted",
+                  "description": "A run, the newest of its pull request's head, is about to be asked to run again: paired\nwith this supervision's cancel of it, or on a later pass of any lane because the head has\nno run in flight and no verdict (`super::runs`). A record only: GitHub's own\n`run_attempt` bounds the asks (`super::runs::MAX_ATTEMPTS`), never this trail."
+                },
+                {
+                  "type": "string",
+                  "const": "run_rerun_requested",
+                  "description": "The run just force-cancelled was asked to run again: it was the last run of its pull\nrequest's head on its way to a verdict, ended because a job of it ran past its bound\n(`super::supervise::Decision::rerun`)."
+                },
+                {
+                  "type": "string",
+                  "const": "run_rerun_failed",
+                  "description": "The re-run of the run just force-cancelled could not be asked: its pull request's head\nhas no run until somebody re-runs it."
                 }
               ],
               "description": "What one line of the audit trail records. The wire word is the variant's `snake_case`\nname — the same word each was written as while the action was a string — so every line\nwritten before still parses, and a word nobody writes is not an action."
@@ -40078,6 +41005,15 @@
                     "null"
                   ],
                   "description": "On `merge_succeeded`: the merge commit, once it is read; the head itself after a\nfast-forward."
+                },
+                "run": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "format": "uint64",
+                  "minimum": 0,
+                  "description": "On the `run_*` events of `prs supervise`: the CI run acted on."
                 }
               },
               "required": [
@@ -48169,6 +49105,11 @@
                   "type": "string",
                   "const": "repository_mutation",
                   "description": "The repository changes.\n\nFor most of this executable's life nothing classified to this, because no capability\nof any kind wrote to the repository. That day arrived with [ADR 0040]: development\nsemantics are capabilities of this runtime, and the first of them — `plan.transition`\n— stamps a field into an issue's own tracked record. The variant was put on the model\nin advance so that when one did, it would say so *here*, where a projection already\nreads it and a client already asks before running it, rather than in whichever page\nhappens to render its button.\n\nIt is not classified from the kind, because the kind cannot know it: a command that\nannounces a peer and a command that writes a tracked file are the same kind. A\nhandler that writes the repository says so with\n`ExecutionPolicy::writes_repository`, the way one that stops says so with\n`ExecutionPolicy::stoppable`.\n\n[ADR 0040]: https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/adrs/0040-development-semantics-are-capabilities-of-one-runtime.md"
+                },
+                {
+                  "type": "string",
+                  "const": "remote_mutation",
+                  "description": "Other machines change: the handler reaches, over ssh, machines this process does not\nrun on, and installs, writes or restarts something there ([ADR 0132]). The strongest\neffect a capability can have, and the only one that is open-world: what it changes\noutlives this process, this repository and this machine. A handler says so with\n`ExecutionPolicy::changes_other_machines`.\n\n[ADR 0132]: https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/adrs/0132-the-fleet-is-declared-and-rolled-out-by-a-typed-capability.md"
                 }
               ],
               "description": "What running a capability changes outside the caller.\n\nClassified, never declared: it follows from the kind, which is the field a declaration\nalready carries. A projection reads this to decide whether to ask before running\nsomething — the Cockpit's confirmation is derived from it — instead of naming\ncapabilities it must treat carefully, which is a list that goes stale the day after it\nis written."
@@ -48408,6 +49349,11 @@
                   "type": "string",
                   "const": "repository_mutation",
                   "description": "The repository changes.\n\nFor most of this executable's life nothing classified to this, because no capability\nof any kind wrote to the repository. That day arrived with [ADR 0040]: development\nsemantics are capabilities of this runtime, and the first of them — `plan.transition`\n— stamps a field into an issue's own tracked record. The variant was put on the model\nin advance so that when one did, it would say so *here*, where a projection already\nreads it and a client already asks before running it, rather than in whichever page\nhappens to render its button.\n\nIt is not classified from the kind, because the kind cannot know it: a command that\nannounces a peer and a command that writes a tracked file are the same kind. A\nhandler that writes the repository says so with\n`ExecutionPolicy::writes_repository`, the way one that stops says so with\n`ExecutionPolicy::stoppable`.\n\n[ADR 0040]: https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/adrs/0040-development-semantics-are-capabilities-of-one-runtime.md"
+                },
+                {
+                  "type": "string",
+                  "const": "remote_mutation",
+                  "description": "Other machines change: the handler reaches, over ssh, machines this process does not\nrun on, and installs, writes or restarts something there ([ADR 0132]). The strongest\neffect a capability can have, and the only one that is open-world: what it changes\noutlives this process, this repository and this machine. A handler says so with\n`ExecutionPolicy::changes_other_machines`.\n\n[ADR 0132]: https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/adrs/0132-the-fleet-is-declared-and-rolled-out-by-a-typed-capability.md"
                 }
               ],
               "description": "What running a capability changes outside the caller.\n\nClassified, never declared: it follows from the kind, which is the field a declaration\nalready carries. A projection reads this to decide whether to ask before running\nsomething — the Cockpit's confirmation is derived from it — instead of naming\ncapabilities it must treat carefully, which is a list that goes stale the day after it\nis written."
@@ -48429,7 +49375,7 @@
                 },
                 "open_world": {
                   "type": "boolean",
-                  "description": "The call reaches beyond this machine. No handler of this executable does: observing\nthe forge and talking to an advisor are commands a person runs, not capabilities."
+                  "description": "The call reaches beyond this machine. Only a handler that changes other machines\ndoes (`Effect::RemoteMutation`): observing the forge and talking to an advisor are\ncommands a person runs, not capabilities."
                 }
               },
               "required": [
@@ -60790,7 +61736,7 @@
                       "type": "null"
                     }
                   ],
-                  "description": "How far the evidence is from this checkout, in the repository's one staleness\nvocabulary. `None` when there is no evidence to label.\n\nA remote fact is labelled against the commit it was taken at, because the site that\nserves a commit goes on serving it while the tree moves underneath. A tree-bound\nfact is labelled by re-hashing: equal hashes are `exact`, and a difference takes the\ncommit's label, which is `advanced` when the working tree has merely moved on and\n`diverged` when the history it named is gone. A token that declares neither inputs\nnor a remote fact is bound to nothing and stays `exact` once recorded — that is the\nvalidator's behaviour, and it is reproduced rather than tightened here."
+                  "description": "How far the evidence is from this checkout, in the repository's one staleness\nvocabulary. `None` when there is no evidence to label, and `None` when the evidence\ncannot be judged because the token's pathspecs select no tracked file here: an empty\ninput set is never a freshness proof, so that obligation is `owed` (I4434).\n\nA remote fact is labelled against the commit it was taken at, because the site that\nserves a commit goes on serving it while the tree moves underneath. A tree-bound\nfact is labelled by re-hashing: equal hashes are `exact`, and a difference takes the\ncommit's label, which is `advanced` when the working tree has merely moved on and\n`diverged` when the history it named is gone. A token that declares neither inputs\nnor a remote fact is bound to nothing and stays `exact` once recorded — that is the\nvalidator's behaviour, and it is reproduced rather than tightened here."
                 },
                 "evidence": {
                   "anyOf": [
@@ -91237,6 +92183,7 @@
     "document",
     "domain",
     "feature",
+    "fleet-declaration",
     "gap",
     "implementation",
     "intent",

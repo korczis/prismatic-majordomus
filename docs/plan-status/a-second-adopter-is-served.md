@@ -9,7 +9,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 
 | milestone | status | done of required | ready | blocked | active | verify | cancelled | outcome |
 |---|---|---|---|---|---|---|---|---|
-| [a-second-adopter-is-served](https://majordomus.dev/plan/a-second-adopter-is-served/) | ACTIVE | 6/26 | 18 | 2 | 0 | 0 | 0 | Each finding is fixed generically, with no test of whether the repository is this one: by a declaration, a derivation or a default that an adopter can state. Each fix carries a case that fails without it, its derived files regenerated and its page of the documentation corrected. |
+| [a-second-adopter-is-served](https://majordomus.dev/plan/a-second-adopter-is-served/) | ACTIVE | 6/27 | 19 | 2 | 0 | 0 | 0 | Each finding is fixed generically, with no test of whether the repository is this one: by a declaration, a derivation or a default that an adopter can state. Each fix carries a case that fails without it, its derived files regenerated and its page of the documentation corrected. |
 
 ## Issues
 
@@ -41,6 +41,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | [I4416](https://majordomus.dev/plan/i4416/) | READY | 0 | — | The session briefing says how old the task is and never calls a finished one active, an abandoned task is closed as interrupted only by `recover tasks`, and doctor's stranded-episode FAIL names `recover episodes --check` |
 | [I4417](https://majordomus.dev/plan/i4417/) | READY | 0 | — | A knowledge class a repository script generates declares its generator and inputs, is reported stale when its inputs moved, and the issue, intent and rule ids its records carry are edges |
 | [I4418](https://majordomus.dev/plan/i4418/) | READY | 0 | — | serve ensure fast-forwards a clean trunk checkout that is strictly behind its remote trunk, or offers to, and majordomus init declares checkout.trunk_distance, so a shared server does not answer from an old tree unjudged |
+| [I4434](https://majordomus.dev/plan/i4434/) | READY | 0 | — | An obligation whose inputs select no tracked file is not judged, so evidence over an empty input set never discharges it |
 
 ## Findings
 
@@ -75,6 +76,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I4268` | shares bin/majordomus with I4329; they may not run concurrently |
 | WARN | `scope_conflict` | `I4268` | shares scripts/ci-plan with I4347; they may not run concurrently |
 | WARN | `scope_conflict` | `I4268` | shares docs/CI.md with I4349; they may not run concurrently |
+| WARN | `scope_conflict` | `I4268` | shares lib/evidence.sh with I4434; they may not run concurrently |
 | WARN | `scope_conflict` | `I4268` | shares docs/CI.md with I4460; they may not run concurrently |
 | WARN | `scope_conflict` | `I4268` | shares lib/evidence.sh with I4468; they may not run concurrently |
 | WARN | `scope_conflict` | `I4331` | shares docs/ADOPTION.md with I4417; they may not run concurrently |
@@ -105,6 +107,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I4411` | shares lib/common.sh with I4413; they may not run concurrently |
 | WARN | `scope_conflict` | `I4411` | shares lib/common.sh with I4415; they may not run concurrently |
 | WARN | `scope_conflict` | `I4411` | shares lib/common.sh with I4416; they may not run concurrently |
+| WARN | `scope_conflict` | `I4411` | shares site/content/guarantees with I4434; they may not run concurrently |
 | WARN | `scope_conflict` | `I4411` | shares lib/common.sh with I4461; they may not run concurrently |
 | WARN | `scope_conflict` | `I4411` | shares lib/common.sh with I4467; they may not run concurrently |
 | WARN | `scope_conflict` | `I4411` | shares lib/check.sh with I4468; they may not run concurrently |
@@ -141,3 +144,4 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I4418` | shares docs/generated/cli.md with I4466; they may not run concurrently |
 | WARN | `scope_conflict` | `I4418` | shares share/schemas/majordomus/policy/policy.v1.schema.json with I4468; they may not run concurrently |
 | WARN | `scope_conflict` | `I4418` | shares .ai/repo/policy.yaml with I4512; they may not run concurrently |
+| WARN | `scope_conflict` | `I4434` | shares lib/evidence.sh with I4468; they may not run concurrently |

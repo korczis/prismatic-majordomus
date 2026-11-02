@@ -32,6 +32,7 @@ Every capability this executable ships, as the registry holds it. MCP tools and 
 | `episodes` | Episodes | behaviorally_verified | 3 | [`modules/episodes.md`](modules/episodes.md) |
 | `evidence` | Evidence | behaviorally_verified | 5 | [`modules/evidence.md`](modules/evidence.md) |
 | `executions` | Executions | behaviorally_verified | 8 | [`modules/executions.md`](modules/executions.md) |
+| `fleet` | Fleet | experimental | 3 | [`modules/fleet.md`](modules/fleet.md) |
 | `gates` | Completion gates | behaviorally_verified | 4 | [`modules/gates.md`](modules/gates.md) |
 | `graph` | Graphs | behaviorally_verified | 2 | [`modules/graph.md`](modules/graph.md) |
 | `guard` | Edit guard | experimental | 1 | [`modules/guard.md`](modules/guard.md) |
@@ -147,6 +148,9 @@ Every capability this executable ships, as the registry holds it. MCP tools and 
 | `executions.protocol` | `executions` | query | behaviorally_verified | `majordomus_execution_protocol` | `majordomus://executions/protocol` | `GET /api/v1/executions/protocol` | `majordomus executions protocol` | — | required |
 | `executions.report` | `executions` | command | behaviorally_verified | — | — | `POST /api/v1/executions/report` | — | — | waived (transient_state) |
 | `executions.start` | `executions` | command | behaviorally_verified | `majordomus_execution_start` | — | `POST /api/v1/executions/start` | `majordomus run` | — | required |
+| `fleet.plan` | `fleet` | query | experimental | — | — | — | `majordomus fleet plan` | — | required |
+| `fleet.rollout` | `fleet` | command | experimental | — | — | — | `majordomus fleet rollout` | — | waived (destructive) |
+| `fleet.status` | `fleet` | query | experimental | — | — | — | `majordomus fleet status` | — | waived (external_dependency) |
 | `gates.completion` | `gates` | query | behaviorally_verified | `majordomus_completion` | `majordomus://gates/completion` | `GET /api/v1/gates/completion` | — | — | required |
 | `gates.model` | `gates` | query | behaviorally_verified | `majordomus_gates` | `majordomus://gates` | `GET /api/v1/gates` | — | process, 4 entries, 5s | required |
 | `gates.policy` | `gates` | query | behaviorally_verified | `majordomus_completion_policy` | `majordomus://gates/policy` | `GET /api/v1/gates/policy` | — | process, 4 entries, 5s | required |
@@ -297,7 +301,7 @@ Every capability this executable ships, as the registry holds it. MCP tools and 
 
 ## Declarative resources
 
-Every object of the repository's AI layer is a capability of kind `resource` with the id `<kind>.<identity>` (`rule.majordomus.scope-integrity@1`, `prompt.continue`, `document.docs/CLI.md`), exposed as the MCP resource `majordomus://<kind>/<identity>` and read over HTTP through `objects.get`; its module is its kind. They are not listed here: they are the repository's, not the executable's, and `majordomus capabilities list --kind resource` answers for the repository at hand. Kinds present in this repository at generation: `adr`, `application`, `area`, `audience`, `claim`, `command`, `context`, `critique`, `deployment`, `derive-offload`, `distribution-model`, `document`, `domain`, `feature`, `gap`, `implementation`, `intent`, `issue`, `knowledge`, `mesh-declaration`, `milestone`, `moment`, `policy`, `profile`, `prompt`, `release-record`, `rule`, `scope`, `session`, `skill`, `taxonomy`, `test`, `use-case`, `workspace`.
+Every object of the repository's AI layer is a capability of kind `resource` with the id `<kind>.<identity>` (`rule.majordomus.scope-integrity@1`, `prompt.continue`, `document.docs/CLI.md`), exposed as the MCP resource `majordomus://<kind>/<identity>` and read over HTTP through `objects.get`; its module is its kind. They are not listed here: they are the repository's, not the executable's, and `majordomus capabilities list --kind resource` answers for the repository at hand. Kinds present in this repository at generation: `adr`, `application`, `area`, `audience`, `claim`, `command`, `context`, `critique`, `deployment`, `derive-offload`, `distribution-model`, `document`, `domain`, `feature`, `fleet-declaration`, `gap`, `implementation`, `intent`, `issue`, `knowledge`, `mesh-declaration`, `milestone`, `moment`, `policy`, `profile`, `prompt`, `release-record`, `rule`, `scope`, `session`, `skill`, `taxonomy`, `test`, `use-case`, `workspace`.
 
 ## Infrastructure routes
 

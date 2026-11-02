@@ -153,6 +153,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I3318` | shares test/cases with I4416; they may not run concurrently |
 | WARN | `scope_conflict` | `I3318` | shares apps/majordomus-cli/src/entity.rs with I4417; they may not run concurrently |
 | WARN | `scope_conflict` | `I3318` | shares test/cases with I4418; they may not run concurrently |
+| WARN | `scope_conflict` | `I3318` | shares test/cases with I4434; they may not run concurrently |
 | WARN | `scope_conflict` | `I3318` | shares test/cases with I4460; they may not run concurrently |
 | WARN | `scope_conflict` | `I3318` | shares test/cases with I4461; they may not run concurrently |
 | WARN | `scope_conflict` | `I3318` | shares test/cases with I4462; they may not run concurrently |
@@ -249,6 +250,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I3607` | shares test/cases with I4416; they may not run concurrently |
 | WARN | `scope_conflict` | `I3607` | shares apps/majordomus-cli/src/capability/builtin with I4417; they may not run concurrently |
 | WARN | `scope_conflict` | `I3607` | shares test/cases with I4418; they may not run concurrently |
+| WARN | `scope_conflict` | `I3607` | shares apps/majordomus-cli/src/capability/builtin with I4434; they may not run concurrently |
 | WARN | `scope_conflict` | `I3607` | shares apps/majordomus-cli/src/capability/builtin with I4460; they may not run concurrently |
 | WARN | `scope_conflict` | `I3607` | shares test/cases with I4461; they may not run concurrently |
 | WARN | `scope_conflict` | `I3607` | shares test/cases with I4462; they may not run concurrently |
@@ -306,5 +308,6 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I4329` | shares lib/plan.sh with I4468; they may not run concurrently |
 | WARN | `scope_conflict` | `I4400` | shares docs/claims with I4411; they may not run concurrently |
 | WARN | `scope_conflict` | `I4400` | shares docs/generated with I4418; they may not run concurrently |
+| WARN | `scope_conflict` | `I4400` | shares docs/claims with I4434; they may not run concurrently |
 | WARN | `scope_conflict` | `I4400` | shares docs/generated with I4466; they may not run concurrently |
 | WARN | `scope_conflict` | `I4400` | shares docs/CLAIMS.yaml with I4468; they may not run concurrently |

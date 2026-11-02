@@ -174,6 +174,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I1980` | shares share/schemas with I4416; they may not run concurrently |
 | WARN | `scope_conflict` | `I1980` | shares test/cases with I4417; they may not run concurrently |
 | WARN | `scope_conflict` | `I1980` | shares share/schemas with I4418; they may not run concurrently |
+| WARN | `scope_conflict` | `I1980` | shares test/cases with I4434; they may not run concurrently |
 | WARN | `scope_conflict` | `I1980` | shares test/cases with I4460; they may not run concurrently |
 | WARN | `scope_conflict` | `I1980` | shares test/cases with I4461; they may not run concurrently |
 | WARN | `scope_conflict` | `I1980` | shares test/cases with I4462; they may not run concurrently |
@@ -340,6 +341,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I1990` | shares lib/finish.sh with I4416; they may not run concurrently |
 | WARN | `scope_conflict` | `I1990` | shares test/cases with I4417; they may not run concurrently |
 | WARN | `scope_conflict` | `I1990` | shares share/skeleton with I4418; they may not run concurrently |
+| WARN | `scope_conflict` | `I1990` | shares test/cases with I4434; they may not run concurrently |
 | WARN | `scope_conflict` | `I1990` | shares test/cases with I4460; they may not run concurrently |
 | WARN | `scope_conflict` | `I1990` | shares docs/CLI.md with I4461; they may not run concurrently |
 | WARN | `scope_conflict` | `I1990` | shares docs/CLI.md with I4462; they may not run concurrently |
@@ -541,6 +543,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I1999` | shares lib with I4416; they may not run concurrently |
 | WARN | `scope_conflict` | `I1999` | shares lib with I4417; they may not run concurrently |
 | WARN | `scope_conflict` | `I1999` | shares lib with I4418; they may not run concurrently |
+| WARN | `scope_conflict` | `I1999` | shares lib with I4434; they may not run concurrently |
 | WARN | `scope_conflict` | `I1999` | shares lib with I4460; they may not run concurrently |
 | WARN | `scope_conflict` | `I1999` | shares lib with I4461; they may not run concurrently |
 | WARN | `scope_conflict` | `I1999` | shares lib with I4462; they may not run concurrently |

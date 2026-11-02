@@ -43,6 +43,18 @@
           }
         ]
       }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Edit|Write|MultiEdit|NotebookEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PROJECT_DIR}/.claude/hooks/majordomus-edit-guard",
+            "timeout": 30
+          }
+        ]
+      }
     ]
   },
   "permissions": {

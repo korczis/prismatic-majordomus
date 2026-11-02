@@ -5,7 +5,7 @@
     "id": "majordomus-cli",
     "version": "1.0.0-alpha.10"
   },
-  "fingerprint": "15c2ed6da20be3ba3b52e334dc5a8d0071b0fa9343822f4c7a13ce58bd5ddf82",
+  "fingerprint": "d7479d418c183d49742df0c6344584a345e7c346a3520fde63ac1310a1f7212d",
   "route": "/features/",
   "domain_route": "/domains/",
   "counts": {
@@ -13,11 +13,11 @@
     "features_all": 29,
     "featured": 16,
     "providers": 6,
-    "modules": 60,
+    "modules": 61,
     "modules_covered": 58,
     "commands": 30,
     "commands_covered": 30,
-    "kinds": 31,
+    "kinds": 32,
     "kinds_covered": 31
   },
   "surfaces": [
@@ -4903,7 +4903,7 @@
         {
           "id": "guard",
           "title": "Edit guard",
-          "description": "Whether a write to a file of this checkout is covered by a claim: the active task's scope, or a live mesh claim of the writing session. The judgement a provider's pre-tool hook asks before every edit (majordomus guard hook), switched by session.edits_require_claim.",
+          "description": "Whether a write to a file of this checkout is covered by a claim: the active task's scope, or a live mesh claim of the writing session. The judgement a provider's pre-tool hook asks before every edit (majordomus guard hook), switched by session.edits_require_claim and made to refuse by session.edit_guard_mode.",
           "stability": "experimental",
           "source_path": "apps/majordomus-cli/src/capability/builtin/guard.rs",
           "capabilities": [
@@ -7518,7 +7518,7 @@
       "kind_refs": [
         {
           "name": "adr",
-          "objects": 167
+          "objects": 168
         },
         {
           "name": "knowledge",
@@ -7526,7 +7526,7 @@
         },
         {
           "name": "document",
-          "objects": 353
+          "objects": 354
         }
       ],
       "rule_refs": [
@@ -7799,11 +7799,11 @@
       "counts": {
         "capabilities": 5,
         "mcp_tools": 5,
-        "mcp_resources": 613,
+        "mcp_resources": 615,
         "http_routes": 5,
         "cli_paths": 3,
         "commands": 6,
-        "objects": 610,
+        "objects": 612,
         "rules": 4,
         "enforced_rules": 3,
         "docs": 2,
@@ -13485,7 +13485,7 @@
         },
         {
           "name": "issue",
-          "objects": 1156
+          "objects": 1157
         },
         {
           "name": "intent",
@@ -13695,11 +13695,11 @@
       "counts": {
         "capabilities": 26,
         "mcp_tools": 26,
-        "mcp_resources": 1360,
+        "mcp_resources": 1361,
         "http_routes": 26,
         "cli_paths": 13,
         "commands": 1,
-        "objects": 1357,
+        "objects": 1358,
         "rules": 3,
         "enforced_rules": 3,
         "docs": 2,
@@ -13935,7 +13935,7 @@
       "kind_refs": [
         {
           "name": "context",
-          "objects": 39
+          "objects": 40
         },
         {
           "name": "scope",
@@ -14228,11 +14228,11 @@
       "counts": {
         "capabilities": 9,
         "mcp_tools": 9,
-        "mcp_resources": 45,
+        "mcp_resources": 46,
         "http_routes": 9,
         "cli_paths": 6,
         "commands": 1,
-        "objects": 41,
+        "objects": 42,
         "rules": 6,
         "enforced_rules": 5,
         "docs": 2,
@@ -17019,6 +17019,11 @@
         ]
       },
       {
+        "id": "fleet",
+        "title": "Fleet",
+        "features": []
+      },
+      {
         "id": "gates",
         "title": "Completion gates",
         "features": [
@@ -17527,7 +17532,7 @@
     "kinds": [
       {
         "id": "adr",
-        "title": "adr (167)",
+        "title": "adr (168)",
         "features": [
           "knowledge"
         ]
@@ -17569,7 +17574,7 @@
       },
       {
         "id": "context",
-        "title": "context (39)",
+        "title": "context (40)",
         "features": [
           "context"
         ]
@@ -17617,6 +17622,11 @@
         ]
       },
       {
+        "id": "fleet-declaration",
+        "title": "fleet-declaration (1)",
+        "features": []
+      },
+      {
         "id": "gap",
         "title": "gap (5)",
         "features": [
@@ -17632,7 +17642,7 @@
       },
       {
         "id": "issue",
-        "title": "issue (1156)",
+        "title": "issue (1157)",
         "features": [
           "planning"
         ]
@@ -18692,36 +18702,37 @@
     }
   ],
   "telemetry": {
-    "capabilities": 3732,
-    "builtin": 220,
-    "declarative": 3512,
-    "modules": 60,
+    "capabilities": 3745,
+    "builtin": 223,
+    "declarative": 3522,
+    "modules": 61,
     "mcp_tools": 206,
-    "mcp_resources": 3569,
+    "mcp_resources": 3579,
     "http_routes": 212,
-    "cli_commands": 220,
+    "cli_commands": 224,
     "shell_commands": 30,
-    "kinds": 34,
-    "objects": 3512,
+    "kinds": 35,
+    "objects": 3522,
     "by_kind": {
-      "adr": 167,
+      "adr": 168,
       "application": 5,
       "area": 9,
       "audience": 8,
       "claim": 250,
       "command": 31,
-      "context": 39,
+      "context": 40,
       "critique": 38,
       "deployment": 1,
       "derive-offload": 1,
       "distribution-model": 1,
-      "document": 353,
+      "document": 354,
       "domain": 6,
       "feature": 29,
+      "fleet-declaration": 1,
       "gap": 5,
       "implementation": 52,
       "intent": 44,
-      "issue": 1156,
+      "issue": 1157,
       "knowledge": 90,
       "mesh-declaration": 1,
       "milestone": 114,
@@ -18735,7 +18746,7 @@
       "session": 93,
       "skill": 8,
       "taxonomy": 10,
-      "test": 672,
+      "test": 677,
       "use-case": 49,
       "workspace": 1
     },
