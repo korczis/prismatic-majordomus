@@ -7,22 +7,27 @@ on:
     - cron: '*/30 * * * *'
   workflow_dispatch:
 
+# actions read: the supervisor's liveness is read from its runs' jobs (I3903)
 permissions:
+  actions: read
   contents: read
   pull-requests: read
-
-concurrency:
-  group: queue
-  cancel-in-progress: false
 
 jobs:
   measure:
     runs-on: ubuntu-latest
+    # per job, not per workflow: a liveness lane waiting for a runner must not hold the next
+    # measurement behind it
+    concurrency:
+      group: queue
+      cancel-in-progress: false
     timeout-minutes: 30
     steps:
       # the whole history: `majordomus prs refresh` fetches each pull request's head and asks
-      # git what merging it into master would do, which a shallow clone cannot answer
+      # git what merging it into master would do, which a shallow clone cannot answer. Its
+      # own bound, under the job's: a fetch of every head and tag that stalls fails by name
       - uses: actions/checkout@v4
+        timeout-minutes: 10
         with:
           fetch-depth: 0
 
@@ -62,3 +67,96 @@ jobs:
           # report nobody can trust is worse than none, so that is the one that fails the job.
           [ "$rc" != 12 ] || { echo "queue: the measurement could not be made" >&2; exit 12; }
           [ "$rc" = 0 ] || [ "$rc" = 10 ] || { echo "queue: majordomus prs exited $rc" >&2; exit "$rc"; }
+
+  # I3903: the supervisor cannot say that it stopped, so this clock says it for it. A dry run of
+  # `prs supervise` (no apply: this job never acts) reports the newest success of lundra's lane,
+  # and one older than thirty minutes, or none, is `supervise_stale`, which fails this job. It
+  # names the lane (`--supervised-by lundra`): counting any lane's success, a lundra lane that
+  # failed on every tick was hidden by the hosted lane's, and nothing said so until the hosted
+  # pool filled. While lundra is down the hosted lane covers and this job keeps failing: the
+  # primary lane is down, and that is the news.
+  #
+  # It must not wait where the supervisor waits. On lundra it reports a lundra lane that runs and
+  # fails; GitHub-hosted it reports a lundra that takes no job, whether no runner is online or
+  # validate's first wave fills them (vars.MJ_RUNNER). It compiles nothing, as the supervisor does
+  # not. What no job in Actions can report is lundra taking no job while the hosted pool is
+  # saturated: both lanes then queue. That is read from outside Actions, by `majordomus prs
+  # supervise --format json` on any machine of the mesh (`.liveness.finding`, docs/CI.md).
+  alive:
+    name: the supervisor is alive (${{ matrix.lane }})
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - lane: lundra
+            runner: [self-hosted, lundra]
+          - lane: hosted
+            runner: ubuntu-latest
+    runs-on: ${{ matrix.runner }}
+    concurrency:
+      group: queue-alive-${{ matrix.lane }}
+      cancel-in-progress: false
+    # the sum of its steps' bounds (1 + 2 + 4) and a minute for the runner to set up
+    timeout-minutes: 8
+    steps:
+      # the model is all it reads of the tree
+      - uses: actions/checkout@v4
+        timeout-minutes: 1
+        with:
+          sparse-checkout: .ai
+
+      - name: the executable that reads the supervisor, prebuilt
+        timeout-minutes: 2
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          for tool in gh jq; do
+            command -v "$tool" >/dev/null || { echo "queue: no $tool on this runner" >&2; exit 12; }
+          done
+          dir="$RUNNER_TEMP/mj"
+          mkdir -p "$dir"
+          for id in $(timeout 20 gh run list --repo "$GITHUB_REPOSITORY" --workflow validate.yml \
+              --branch master --event push --limit 10 --json databaseId --jq '.[].databaseId'); do
+            [ "$SECONDS" -lt 60 ] || break
+            if timeout 45 gh run download "$id" --repo "$GITHUB_REPOSITORY" --name majordomus-exe \
+                --dir "$dir" 2>/dev/null \
+                && [ -s "$dir/majordomus" ] && chmod +x "$dir/majordomus" \
+                && "$dir/majordomus" prs supervise --help >/dev/null 2>&1; then
+              break
+            fi
+            rm -rf "$dir" && mkdir -p "$dir"
+          done
+          if [ -x "$dir/majordomus" ]; then
+            echo "MJ=$dir/majordomus" >> "$GITHUB_ENV"
+          else
+            curl -fsSL --max-time 15 -o "$RUNNER_TEMP/install.sh" https://majordomus.dev/install.sh \
+              && timeout 40 sh "$RUNNER_TEMP/install.sh" \
+                --install-dir "$RUNNER_TEMP/bin" --prefix "$RUNNER_TEMP/opt" || true
+            if ! "$RUNNER_TEMP/bin/majordomus" prs supervise --help >/dev/null 2>&1; then
+              echo "::error::queue: no executable here has prs supervise (no master majordomus-exe kept, and the release $("$RUNNER_TEMP/bin/majordomus" --version 2>/dev/null) predates it)" >&2
+              exit 12
+            fi
+            echo "MJ=$RUNNER_TEMP/bin/majordomus" >> "$GITHUB_ENV"
+          fi
+
+      - name: the supervisor is alive
+        timeout-minutes: 4
+        env:
+          GH_TOKEN: ${{ github.token }}
+          LANE: ${{ matrix.lane }}
+        run: |
+          mj="$MJ"
+          rc=0
+          # lundra's success within the thirty minutes is all it needs to read; only without one
+          # does the dry run observe the runs, and its liveness is still lundra's
+          "$mj" prs supervise --format json --unless-supervised-within 30 --supervised-by lundra \
+            > "$RUNNER_TEMP/supervise.json" || rc=$?
+          [ "$rc" != 12 ] || { echo "queue: the supervisor's runs could not be read" >&2; exit 12; }
+          finding="$(jq -r '.liveness.finding // empty' "$RUNNER_TEMP/supervise.json")"
+          detail="$(jq -r '.liveness.detail // empty' "$RUNNER_TEMP/supervise.json")"
+          {
+            printf '## The supervisor, read from %s\n\n' "$LANE"
+            if [ -n "$finding" ]; then printf '%s: %s\n' "$finding" "$detail"; else printf 'alive\n'; fi
+          } >> "$GITHUB_STEP_SUMMARY"
+          [ -z "$finding" ] || { echo "queue: $finding: $detail" >&2; exit 1; }
+          echo "the supervisor is alive: $(jq -r '.liveness.newest_success_at' "$RUNNER_TEMP/supervise.json")"

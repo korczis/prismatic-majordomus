@@ -19,6 +19,12 @@
 //! checkout nobody can serve a checkout nobody can edit, which is worse than the edit it
 //! would have stopped; I2289 still refuses the completion of such work.
 //!
+//! What it does with an edit no claim covers is the policy's second word,
+//! `session.edit_guard_mode` (I3322): `refuse` stops it, `advisory` — the default — lets it
+//! through as allowed on the ground `unclaimed`, with the remedy still said. Wiring the guard
+//! into a provider turns it on for every live session at once, so it is wired advisory first,
+//! and the hook's record of who edited unclaimed is what says when refusal can follow (I3323).
+//!
 //! One edit, from the path a provider names to the verdict it reads:
 //!
 //! ```
@@ -52,6 +58,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::integration::exclusive::Mesh;
 use crate::mesh::state::{ClaimState, ClaimView};
+use crate::policy::{EditGuardMode, SessionPolicy};
 
 /// The answer to one edit: whether it may proceed, the one word it was decided on, the
 /// sentence a person reads and, for a refusal, what would allow it. `guard.edit` returns it
@@ -80,11 +87,13 @@ pub struct EditVerdict {
     /// The path asked about, repository-relative when it is inside the checkout.
     pub path: String,
     /// Why, as one word: `off`, `outside`, `local`, `no_mesh`, `task`, `claim`,
-    /// `undecided` or `unclaimed`. Only `unclaimed` refuses.
+    /// `undecided` or `unclaimed`. Only `unclaimed` refuses, and only under
+    /// `session.edit_guard_mode: refuse`; under `advisory` it is allowed and reported.
     pub ground: String,
     /// The sentence a person reads.
     pub detail: String,
-    /// What makes the edit allowed, when it is refused.
+    /// What makes the edit claimed, when no claim covers it: refused, or let through only
+    /// because the guard is advisory.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub remedy: Option<String>,
 }
@@ -97,6 +106,41 @@ impl EditVerdict {
             ground: ground.to_string(),
             detail: detail.into(),
             remedy: None,
+        }
+    }
+
+    /// The verdict under `mode`: an unclaimed edit refused stays refused under `refuse`, and
+    /// under `advisory` is let through on the same ground, with the same remedy, and with the
+    /// reason it was not refused said in its detail. Every other verdict is already allowed
+    /// and is returned as it is.
+    ///
+    /// ```
+    /// use majordomus_cli::guard::{judge_facts, ClaimSource, EditFacts};
+    /// use majordomus_cli::policy::EditGuardMode;
+    ///
+    /// let facts = || EditFacts {
+    ///     required: Ok(true), mesh_enabled: true, task: None, session: Some("claude-code-s1"),
+    ///     claims: ClaimSource::Claims(vec![]),
+    /// };
+    /// let refused = judge_facts("a.md", Some("a.md"), facts()).under(EditGuardMode::Refuse);
+    /// assert!(!refused.allowed);
+    /// let advised = judge_facts("a.md", Some("a.md"), facts()).under(EditGuardMode::Advisory);
+    /// assert!(advised.allowed);
+    /// assert_eq!(advised.ground, "unclaimed", "the ground is still what was found");
+    /// assert!(advised.remedy.is_some(), "and the remedy is still said");
+    /// assert!(advised.detail.contains("edit_guard_mode is advisory"));
+    /// ```
+    pub fn under(self, mode: EditGuardMode) -> Self {
+        if self.allowed || mode == EditGuardMode::Refuse {
+            return self;
+        }
+        EditVerdict {
+            allowed: true,
+            detail: format!(
+                "{}; let through, because session.edit_guard_mode is advisory",
+                self.detail
+            ),
+            ..self
         }
     }
 }
@@ -394,9 +438,22 @@ fn declares_open_mesh(m: &serde_json::Map<String, serde_json::Value>) -> bool {
 /// assert!(edits_require_claim(dir.path()).is_err(), "no manifest, so no policy");
 /// ```
 pub fn edits_require_claim(root: &Path) -> Result<bool, String> {
+    session_policy(root).map(|s| s.edits_require_claim)
+}
+
+/// The `session:` block of the repository at `root`, or why its policy could not be read.
+/// Read once per edit: the switch and the mode are two keys of one file.
+///
+/// ```
+/// use majordomus_cli::guard::session_policy;
+///
+/// let dir = tempfile::tempdir().unwrap();
+/// assert!(session_policy(dir.path()).is_err(), "no manifest, so no policy");
+/// ```
+pub fn session_policy(root: &Path) -> Result<SessionPolicy, String> {
     let repository = crate::repository::Repository::open(root).map_err(|e| e.to_string())?;
     crate::policy::LoadedPolicy::load(&repository)
-        .map(|p| p.policy.session.edits_require_claim)
+        .map(|p| p.policy.session)
         .map_err(|e| e.to_string())
 }
 
@@ -423,7 +480,14 @@ pub fn active_task(root: &Path) -> Option<(String, Vec<String>)> {
     (task.outcome == "active").then_some((task.id, task.scope))
 }
 
-/// The live claims of the checkout's shared server, asked over HTTP from outside it.
+/// The live claims of the checkout's shared server, asked over HTTP from outside it, or of
+/// the primary checkout's when this one has none running.
+///
+/// The claims are the repository's, not the checkout's: a linked worktree is a checkout of
+/// the same repository, and its sessions claim through whichever server of it runs, as
+/// `majordomus mesh` does. A worktree without a server of its own judged every edit
+/// `undecided` and let it through unsaid, so the advisory guard (I3322) recorded nothing in
+/// exactly the checkouts most sessions work in.
 ///
 /// ```
 /// use majordomus_cli::guard::{server_claims, ClaimSource};
@@ -435,10 +499,53 @@ pub fn active_task(root: &Path) -> Option<(String, Vec<String>)> {
 /// assert!(why.contains("no shared server"));
 /// ```
 pub fn server_claims(root: &Path) -> ClaimSource {
-    match crate::integration::exclusive::server_of(root) {
+    let primary = || primary_checkout(root).filter(|p| p != root);
+    match claims_server(root).or_else(|| primary().and_then(|p| claims_server(&p))) {
         Some(server) => claims_of(&server),
-        None => ClaimSource::Unavailable("no shared server answers for this checkout".into()),
+        None => ClaimSource::Unavailable(
+            "no shared server answers for this checkout or the repository's primary".into(),
+        ),
     }
+}
+
+/// The server of the checkout at `root` that can be asked for its claims: a ready one, or an
+/// outdated one. Outdated is older code, not older state — the claims it holds are the live
+/// ones, and an answer this executable cannot parse is still `undecided` — whereas
+/// [`server_of`](crate::integration::exclusive::server_of), which the executor writes its
+/// exclusive claims through, takes a ready server only. The primary's server is outdated
+/// whenever its sources moved since it started, which on a working machine is most of the
+/// time.
+fn claims_server(root: &Path) -> Option<crate::integration::exclusive::ServerMesh> {
+    use crate::capability::builtin::server::{local_half, standing_at, ServerStanding};
+    let (standing, _, lease) = standing_at(root, &local_half(root));
+    let url = lease.document().and_then(|d| d.url.clone());
+    url.filter(|_| matches!(standing, ServerStanding::Ready | ServerStanding::Outdated))
+        .map(crate::integration::exclusive::ServerMesh::at)
+}
+
+/// The primary checkout of the repository `root` belongs to: the directory holding the
+/// common git directory, which every linked worktree shares. `None` outside a repository,
+/// and for a bare one, which has no checkout to serve.
+///
+/// ```
+/// use majordomus_cli::guard::primary_checkout;
+///
+/// let dir = tempfile::tempdir().unwrap();
+/// assert_eq!(primary_checkout(dir.path()), None, "not a repository");
+/// ```
+pub fn primary_checkout(root: &Path) -> Option<PathBuf> {
+    let out = std::process::Command::new("git")
+        .arg("-C")
+        .arg(root)
+        .args(["rev-parse", "--path-format=absolute", "--git-common-dir"])
+        .stderr(std::process::Stdio::null())
+        .output()
+        .ok()
+        .filter(|o| o.status.success())?;
+    let common = PathBuf::from(String::from_utf8(out.stdout).ok()?.trim());
+    (common.file_name()? == ".git")
+        .then(|| common.parent().map(Path::to_path_buf))
+        .flatten()
 }
 
 /// The live claims `mesh` answers with, or why they could not be read. A server that does
@@ -467,8 +574,10 @@ pub(crate) fn claims_of(mesh: &dyn Mesh) -> ClaimSource {
     }
 }
 
-/// Judge an edit of `path` by `session` in the checkout at `root`, reading every fact.
-/// `claims` is asked only when the cheaper facts have not already decided.
+/// Judge an edit of `path` by `session` in the checkout at `root`, reading every fact, under
+/// the policy's `session.edit_guard_mode` (advisory when the policy cannot be read, which
+/// already enforces nothing). `claims` is asked only when the cheaper facts have not already
+/// decided.
 ///
 /// ```
 /// use majordomus_cli::guard::judge;
@@ -486,7 +595,12 @@ pub fn judge(
     claims: impl FnOnce() -> ClaimSource,
 ) -> EditVerdict {
     let rel = relative_to(root, path);
-    let required = edits_require_claim(root);
+    let policy = session_policy(root);
+    let mode = policy
+        .as_ref()
+        .map(|s| s.edit_guard_mode)
+        .unwrap_or_default();
+    let required = policy.map(|s| s.edits_require_claim);
     let mesh_enabled = mesh_declared_enabled(root);
     let task = active_task(root);
     let needs_claims = rel.is_some()
@@ -514,6 +628,7 @@ pub fn judge(
             claims,
         },
     )
+    .under(mode)
 }
 
 /// The path a provider's pre-tool payload names, and the provider's own session id: the
@@ -692,8 +807,13 @@ mod tests {
     }
 
     /// A repository made of the shipped skeleton's manifest and policy, with the policy
-    /// switch and the mesh declaration as asked.
+    /// switch and the mesh declaration as asked, and the guard refusing.
     fn repository(required: bool, mesh: bool) -> tempfile::TempDir {
+        repository_in("refuse", required, mesh)
+    }
+
+    /// The same, with the guard in the mode asked.
+    fn repository_in(mode: &str, required: bool, mesh: bool) -> tempfile::TempDir {
         let skeleton = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../share/skeleton");
         let dir = tempfile::tempdir().unwrap();
         let ai = dir.path().join(".ai");
@@ -702,7 +822,11 @@ mod tests {
         let policy = std::fs::read_to_string(skeleton.join("policy.yaml")).unwrap();
         let line = "edits_require_claim: false";
         assert!(policy.contains(line), "the skeleton declares the switch");
-        let policy = policy.replace(line, &format!("edits_require_claim: {required}"));
+        let advisory = "edit_guard_mode: advisory";
+        assert!(policy.contains(advisory), "the skeleton declares the mode");
+        let policy = policy
+            .replace(line, &format!("edits_require_claim: {required}"))
+            .replace(advisory, &format!("edit_guard_mode: {mode}"));
         std::fs::write(ai.join("repo/policy.yaml"), policy).unwrap();
         // open when it is on: trust on first use, so it runs a mesh on some machine
         std::fs::write(
@@ -766,6 +890,90 @@ mod tests {
         assert!(asked.get(), "only the claims could decide");
         assert!(!v.allowed);
         assert_eq!(v.ground, "unclaimed");
+    }
+
+    #[test]
+    fn an_advisory_guard_lets_the_unclaimed_edit_through_and_says_so() {
+        let dir = repository_in("advisory", true, true);
+        let v = judge(dir.path(), "docs/a.md", Some("claude-code-s1"), || {
+            ClaimSource::Claims(vec![])
+        });
+        assert!(v.allowed, "{v:?}");
+        assert_eq!(v.ground, "unclaimed");
+        assert!(v.remedy.is_some_and(|r| r.contains("majordomus start")));
+        // the mode decides nothing that was already allowed
+        let off = repository_in("advisory", false, true);
+        let v = judge(off.path(), "docs/a.md", None, || unreachable!("off"));
+        assert_eq!(v.ground, "off");
+        assert!(!v.detail.contains("advisory"), "{}", v.detail);
+    }
+
+    #[test]
+    fn a_linked_worktree_asks_the_primary_checkouts_server() {
+        let dir = tempfile::tempdir().unwrap();
+        let primary = dir.path().join("repo");
+        let linked = dir.path().join("repo-wt");
+        let git = |cwd: &Path, args: &[&str]| {
+            let ok = std::process::Command::new("git")
+                .arg("-C")
+                .arg(cwd)
+                .args(["-c", "user.name=t", "-c", "user.email=t@t"])
+                .args(args)
+                .output()
+                .unwrap()
+                .status
+                .success();
+            assert!(ok, "git {args:?}");
+        };
+        std::fs::create_dir(&primary).unwrap();
+        git(&primary, &["init", "-q"]);
+        git(&primary, &["commit", "-q", "--allow-empty", "-m", "base"]);
+        git(
+            &primary,
+            &["worktree", "add", "-q", linked.to_str().unwrap()],
+        );
+        let canonical = |p: &Path| p.canonicalize().unwrap();
+        let of = |p: &Path| primary_checkout(p).map(|p| canonical(&p));
+        assert_eq!(
+            of(&linked),
+            Some(canonical(&primary)),
+            "the linked worktree's primary"
+        );
+        assert_eq!(
+            of(&primary),
+            Some(canonical(&primary)),
+            "the primary is its own"
+        );
+        // neither runs a server, so the fallback is asked and says so
+        let ClaimSource::Unavailable(why) = server_claims(&linked) else {
+            panic!("no server runs in either checkout");
+        };
+        assert!(why.contains("or the repository's primary"), "{why}");
+    }
+
+    #[test]
+    fn the_mode_is_read_from_the_policy_and_absent_is_advisory() {
+        assert_eq!(
+            session_policy(repository(true, true).path()).map(|s| s.edit_guard_mode),
+            Ok(EditGuardMode::Refuse)
+        );
+        assert_eq!(
+            session_policy(repository_in("advisory", true, true).path()).map(|s| s.edit_guard_mode),
+            Ok(EditGuardMode::Advisory)
+        );
+        let silent = repository(true, true);
+        let policy = silent.path().join(".ai/repo/policy.yaml");
+        let text = std::fs::read_to_string(&policy).unwrap();
+        let text: String = text
+            .lines()
+            .filter(|l| !l.trim_start().starts_with("edit_guard_mode:"))
+            .map(|l| format!("{l}\n"))
+            .collect();
+        std::fs::write(&policy, text).unwrap();
+        assert_eq!(
+            session_policy(silent.path()).map(|s| s.edit_guard_mode),
+            Ok(EditGuardMode::Advisory)
+        );
     }
 
     #[test]

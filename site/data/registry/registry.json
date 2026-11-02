@@ -6,23 +6,23 @@
     "version": "1.0.0-alpha.10"
   },
   "registry": {
-    "fingerprint": "a023263da23f657082857c306cf256e30880c16d7d0d7c92c5a2a3c333893fac",
+    "fingerprint": "6a3f385bbb6dd07dcfa73e9c7e32c7b09ccca53c7bc554e97e71f8b8c26579a8",
     "summary": {
-      "total": 3732,
+      "total": 3737,
       "builtin": 220,
-      "declarative": 3512,
+      "declarative": 3517,
       "by_kind": {
         "command": 36,
         "query": 184,
-        "resource": 3512
+        "resource": 3517
       },
       "by_stability": {
         "behaviorally_verified": 147,
         "experimental": 63,
-        "implemented": 3522
+        "implemented": 3527
       },
       "mcp_tools": 206,
-      "mcp_resources": 3569,
+      "mcp_resources": 3574,
       "http_routes": 212,
       "cli_commands": 120,
       "modules": 94,
@@ -34842,7 +34842,7 @@
         "module": "guard",
         "kind": "query",
         "title": "Judge one edit",
-        "description": "Whether the given session may write the given path now: allowed when the policy's session.edits_require_claim is off, the path is outside the checkout or its local state, the repository declares no enabled mesh, the active task's scope covers it, or a live mesh claim of the session covers it; refused as unclaimed otherwise, with the remedy. What cannot be read — the policy, the mesh — is let through and named, never refused.",
+        "description": "Whether the given session may write the given path now: allowed when the policy's session.edits_require_claim is off, the path is outside the checkout or its local state, the repository declares no enabled mesh, the active task's scope covers it, or a live mesh claim of the session covers it; otherwise the ground is unclaimed, with the remedy: refused under session.edit_guard_mode: refuse, and let through and still named under advisory, the default (I3322). What cannot be read — the policy, the mesh — is let through and named, never refused.",
         "input": {
           "name": "GuardEditInput",
           "schema": {
@@ -34883,7 +34883,7 @@
               },
               "ground": {
                 "type": "string",
-                "description": "Why, as one word: `off`, `outside`, `local`, `no_mesh`, `task`, `claim`,\n`undecided` or `unclaimed`. Only `unclaimed` refuses."
+                "description": "Why, as one word: `off`, `outside`, `local`, `no_mesh`, `task`, `claim`,\n`undecided` or `unclaimed`. Only `unclaimed` refuses, and only under\n`session.edit_guard_mode: refuse`; under `advisory` it is allowed and reported."
               },
               "detail": {
                 "type": "string",
@@ -34894,7 +34894,7 @@
                   "string",
                   "null"
                 ],
-                "description": "What makes the edit allowed, when it is refused."
+                "description": "What makes the edit claimed, when no claim covers it: refused, or let through only\nbecause the guard is advisory."
               }
             },
             "required": [
@@ -35799,6 +35799,15 @@
                       "null"
                     ],
                     "description": "On `merge_succeeded`: the merge commit, once it is read; the head itself after a\nfast-forward."
+                  },
+                  "run": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "format": "uint64",
+                    "minimum": 0,
+                    "description": "On the `run_*` events of `prs supervise`: the CI run acted on."
                   }
                 },
                 "required": [
@@ -35966,6 +35975,41 @@
                     "type": "string",
                     "const": "observe_failed",
                     "description": "A continuous drain's cycle could not observe the forge, and the outage was short\nenough to wait out (`CONTINUOUS_TRANSIENT_LIMIT`)."
+                  },
+                  {
+                    "type": "string",
+                    "const": "run_cancel_attempted",
+                    "description": "`prs supervise --apply` is about to force-cancel a CI run; the detail names the run\nand the reason it was decided on, read again just now (`super::runs`)."
+                  },
+                  {
+                    "type": "string",
+                    "const": "run_cancelled",
+                    "description": "The run was force-cancelled."
+                  },
+                  {
+                    "type": "string",
+                    "const": "run_cancel_failed",
+                    "description": "The forge refused to cancel it."
+                  },
+                  {
+                    "type": "string",
+                    "const": "run_already_ended",
+                    "description": "The run had ended before the cancel reached it: another supervision, in a lane that\napplied in the same minute, cancelled it, or it completed on its own. Nothing was left\nto do, and nothing failed."
+                  },
+                  {
+                    "type": "string",
+                    "const": "run_rerun_attempted",
+                    "description": "A run, the newest of its pull request's head, is about to be asked to run again: paired\nwith this supervision's cancel of it, or on a later pass of any lane because the head has\nno run in flight and no verdict (`super::runs`). A record only: GitHub's own\n`run_attempt` bounds the asks (`super::runs::MAX_ATTEMPTS`), never this trail."
+                  },
+                  {
+                    "type": "string",
+                    "const": "run_rerun_requested",
+                    "description": "The run just force-cancelled was asked to run again: it was the last run of its pull\nrequest's head on its way to a verdict, ended because a job of it ran past its bound\n(`super::supervise::Decision::rerun`)."
+                  },
+                  {
+                    "type": "string",
+                    "const": "run_rerun_failed",
+                    "description": "The re-run of the run just force-cancelled could not be asked: its pull request's head\nhas no run until somebody re-runs it."
                   }
                 ],
                 "description": "What one line of the audit trail records. The wire word is the variant's `snake_case`\nname — the same word each was written as while the action was a string — so every line\nwritten before still parses, and a word nobody writes is not an action."
@@ -37467,6 +37511,41 @@
                     "type": "string",
                     "const": "observe_failed",
                     "description": "A continuous drain's cycle could not observe the forge, and the outage was short\nenough to wait out (`CONTINUOUS_TRANSIENT_LIMIT`)."
+                  },
+                  {
+                    "type": "string",
+                    "const": "run_cancel_attempted",
+                    "description": "`prs supervise --apply` is about to force-cancel a CI run; the detail names the run\nand the reason it was decided on, read again just now (`super::runs`)."
+                  },
+                  {
+                    "type": "string",
+                    "const": "run_cancelled",
+                    "description": "The run was force-cancelled."
+                  },
+                  {
+                    "type": "string",
+                    "const": "run_cancel_failed",
+                    "description": "The forge refused to cancel it."
+                  },
+                  {
+                    "type": "string",
+                    "const": "run_already_ended",
+                    "description": "The run had ended before the cancel reached it: another supervision, in a lane that\napplied in the same minute, cancelled it, or it completed on its own. Nothing was left\nto do, and nothing failed."
+                  },
+                  {
+                    "type": "string",
+                    "const": "run_rerun_attempted",
+                    "description": "A run, the newest of its pull request's head, is about to be asked to run again: paired\nwith this supervision's cancel of it, or on a later pass of any lane because the head has\nno run in flight and no verdict (`super::runs`). A record only: GitHub's own\n`run_attempt` bounds the asks (`super::runs::MAX_ATTEMPTS`), never this trail."
+                  },
+                  {
+                    "type": "string",
+                    "const": "run_rerun_requested",
+                    "description": "The run just force-cancelled was asked to run again: it was the last run of its pull\nrequest's head on its way to a verdict, ended because a job of it ran past its bound\n(`super::supervise::Decision::rerun`)."
+                  },
+                  {
+                    "type": "string",
+                    "const": "run_rerun_failed",
+                    "description": "The re-run of the run just force-cancelled could not be asked: its pull request's head\nhas no run until somebody re-runs it."
                   }
                 ],
                 "description": "What one line of the audit trail records. The wire word is the variant's `snake_case`\nname — the same word each was written as while the action was a string — so every line\nwritten before still parses, and a word nobody writes is not an action."
@@ -39331,6 +39410,41 @@
                     "type": "string",
                     "const": "observe_failed",
                     "description": "A continuous drain's cycle could not observe the forge, and the outage was short\nenough to wait out (`CONTINUOUS_TRANSIENT_LIMIT`)."
+                  },
+                  {
+                    "type": "string",
+                    "const": "run_cancel_attempted",
+                    "description": "`prs supervise --apply` is about to force-cancel a CI run; the detail names the run\nand the reason it was decided on, read again just now (`super::runs`)."
+                  },
+                  {
+                    "type": "string",
+                    "const": "run_cancelled",
+                    "description": "The run was force-cancelled."
+                  },
+                  {
+                    "type": "string",
+                    "const": "run_cancel_failed",
+                    "description": "The forge refused to cancel it."
+                  },
+                  {
+                    "type": "string",
+                    "const": "run_already_ended",
+                    "description": "The run had ended before the cancel reached it: another supervision, in a lane that\napplied in the same minute, cancelled it, or it completed on its own. Nothing was left\nto do, and nothing failed."
+                  },
+                  {
+                    "type": "string",
+                    "const": "run_rerun_attempted",
+                    "description": "A run, the newest of its pull request's head, is about to be asked to run again: paired\nwith this supervision's cancel of it, or on a later pass of any lane because the head has\nno run in flight and no verdict (`super::runs`). A record only: GitHub's own\n`run_attempt` bounds the asks (`super::runs::MAX_ATTEMPTS`), never this trail."
+                  },
+                  {
+                    "type": "string",
+                    "const": "run_rerun_requested",
+                    "description": "The run just force-cancelled was asked to run again: it was the last run of its pull\nrequest's head on its way to a verdict, ended because a job of it ran past its bound\n(`super::supervise::Decision::rerun`)."
+                  },
+                  {
+                    "type": "string",
+                    "const": "run_rerun_failed",
+                    "description": "The re-run of the run just force-cancelled could not be asked: its pull request's head\nhas no run until somebody re-runs it."
                   }
                 ],
                 "description": "What one line of the audit trail records. The wire word is the variant's `snake_case`\nname — the same word each was written as while the action was a string — so every line\nwritten before still parses, and a word nobody writes is not an action."
@@ -39624,6 +39738,15 @@
                       "null"
                     ],
                     "description": "On `merge_succeeded`: the merge commit, once it is read; the head itself after a\nfast-forward."
+                  },
+                  "run": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "format": "uint64",
+                    "minimum": 0,
+                    "description": "On the `run_*` events of `prs supervise`: the CI run acted on."
                   }
                 },
                 "required": [
@@ -39923,6 +40046,13 @@
                     "format": "uint64",
                     "minimum": 0,
                     "description": "Of those, how many failed."
+                  },
+                  "cancelled": {
+                    "type": "integer",
+                    "format": "uint64",
+                    "minimum": 0,
+                    "description": "Of those, how many were cancelled before they gave a verdict: counted as neither\npassed nor failed, and, cut short, no sample of how long the check takes (I3202).",
+                    "default": 0
                   },
                   "median_seconds": {
                     "type": "integer",
@@ -60329,7 +60459,7 @@
                         "type": "null"
                       }
                     ],
-                    "description": "How far the evidence is from this checkout, in the repository's one staleness\nvocabulary. `None` when there is no evidence to label.\n\nA remote fact is labelled against the commit it was taken at, because the site that\nserves a commit goes on serving it while the tree moves underneath. A tree-bound\nfact is labelled by re-hashing: equal hashes are `exact`, and a difference takes the\ncommit's label, which is `advanced` when the working tree has merely moved on and\n`diverged` when the history it named is gone. A token that declares neither inputs\nnor a remote fact is bound to nothing and stays `exact` once recorded — that is the\nvalidator's behaviour, and it is reproduced rather than tightened here."
+                    "description": "How far the evidence is from this checkout, in the repository's one staleness\nvocabulary. `None` when there is no evidence to label, and `None` when the evidence\ncannot be judged because the token's pathspecs select no tracked file here: an empty\ninput set is never a freshness proof, so that obligation is `owed` (I4434).\n\nA remote fact is labelled against the commit it was taken at, because the site that\nserves a commit goes on serving it while the tree moves underneath. A tree-bound\nfact is labelled by re-hashing: equal hashes are `exact`, and a difference takes the\ncommit's label, which is `advanced` when the working tree has merely moved on and\n`diverged` when the history it named is gone. A token that declares neither inputs\nnor a remote fact is bound to nothing and stays `exact` once recorded — that is the\nvalidator's behaviour, and it is reproduced rather than tightened here."
                   },
                   "evidence": {
                     "anyOf": [
@@ -91299,7 +91429,7 @@
       {
         "id": "guard",
         "title": "Edit guard",
-        "description": "Whether a write to a file of this checkout is covered by a claim: the active task's scope, or a live mesh claim of the writing session. The judgement a provider's pre-tool hook asks before every edit (majordomus guard hook), switched by session.edits_require_claim.",
+        "description": "Whether a write to a file of this checkout is covered by a claim: the active task's scope, or a live mesh claim of the writing session. The judgement a provider's pre-tool hook asks before every edit (majordomus guard hook), switched by session.edits_require_claim and made to refuse by session.edit_guard_mode.",
         "stability": "experimental",
         "source": "builtin",
         "capabilities": 1,
@@ -91407,7 +91537,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 1156,
+        "capabilities": 1157,
         "capability_ids": []
       },
       {
@@ -92005,7 +92135,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 672,
+        "capabilities": 676,
         "capability_ids": []
       },
       {
@@ -92097,7 +92227,7 @@
     ]
   },
   "index": {
-    "fingerprint": "f4e80a4c1809ccdcd3241cfd7f6f7ec516d66a600e926013ee5ed47171281bd3",
+    "fingerprint": "64d78f3bad002a608be981148ada3b2b1461953b264829d9764ff2d6f9793cc2",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -92137,7 +92267,7 @@
       "gap": 5,
       "implementation": 52,
       "intent": 44,
-      "issue": 1156,
+      "issue": 1157,
       "knowledge": 90,
       "mesh-declaration": 1,
       "milestone": 114,
@@ -92151,7 +92281,7 @@
       "session": 93,
       "skill": 8,
       "taxonomy": 10,
-      "test": 672,
+      "test": 676,
       "use-case": 49,
       "workspace": 1
     },
@@ -99096,7 +99226,7 @@
         "title": "Security",
         "path": "SECURITY.md",
         "source_class": "readme",
-        "bytes": 9527
+        "bytes": 9858
       },
       {
         "uri": "majordomus://document/docs/ADOPTION.md",
@@ -99186,7 +99316,7 @@
         "title": "Continuous integration",
         "path": "docs/CI.md",
         "source_class": "document",
-        "bytes": 44980
+        "bytes": 70440
       },
       {
         "uri": "majordomus://document/docs/CLI.md",
@@ -99321,7 +99451,7 @@
         "title": "Distribution",
         "path": "docs/DISTRIBUTION.md",
         "source_class": "document",
-        "bytes": 40638
+        "bytes": 41398
       },
       {
         "uri": "majordomus://document/docs/DOCTRINE.md",
@@ -99483,7 +99613,7 @@
         "title": "Pull-request integration",
         "path": "docs/INTEGRATION.md",
         "source_class": "document",
-        "bytes": 75048
+        "bytes": 77024
       },
       {
         "uri": "majordomus://document/docs/INTEGRATION_ROLLOUT.md",
@@ -99537,7 +99667,7 @@
         "title": "Majordomus Mesh",
         "path": "docs/MESH.md",
         "source_class": "document",
-        "bytes": 90757
+        "bytes": 92416
       },
       {
         "uri": "majordomus://document/docs/MODELS.md",
@@ -99609,7 +99739,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 125242
+        "bytes": 125231
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -101193,7 +101323,7 @@
         "title": "A task that declares obligations reaches the outcome completed only when each one has evidence, and evidence taken over files that have since changed no longer discharges anything",
         "path": "docs/claims/obligation-closure.md",
         "source_class": "claim_page",
-        "bytes": 4981
+        "bytes": 5483
       },
       {
         "uri": "majordomus://document/docs/claims/obligation-establishment.md",
@@ -102710,7 +102840,7 @@
         "identity": "lib/capture.sh",
         "path": "lib/capture.sh",
         "source_class": "library",
-        "bytes": 170507
+        "bytes": 177657
       },
       {
         "uri": "majordomus://implementation/lib/changed.sh",
@@ -102798,7 +102928,7 @@
         "identity": "lib/doctor.sh",
         "path": "lib/doctor.sh",
         "source_class": "library",
-        "bytes": 112757
+        "bytes": 116699
       },
       {
         "uri": "majordomus://implementation/lib/doctrine.sh",
@@ -102814,7 +102944,7 @@
         "identity": "lib/evidence.sh",
         "path": "lib/evidence.sh",
         "source_class": "library",
-        "bytes": 33836
+        "bytes": 35226
       },
       {
         "uri": "majordomus://implementation/lib/finish.sh",
@@ -112082,7 +112212,7 @@
         "path": ".ai/repo/project/issues/I3322.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 3365
+        "bytes": 3495
       },
       {
         "uri": "majordomus://issue/I3323",
@@ -114051,7 +114181,7 @@
         "path": ".ai/repo/project/issues/I3903.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2505
+        "bytes": 6288
       },
       {
         "uri": "majordomus://issue/I3910",
@@ -116131,6 +116261,17 @@
         "section": "project",
         "source_class": "issue",
         "bytes": 6329
+      },
+      {
+        "uri": "majordomus://issue/I4434",
+        "kind": "issue",
+        "identity": "I4434",
+        "title": "An obligation whose inputs select no tracked file is not judged, so evidence over an empty input set never discharges it",
+        "description": "When a non-remote obligation declares pathspecs that select no tracked file in the tree, and its evidence was recorded over that empty selection, both judges answer that it is not judged instead of discharged: mj_obligation_judge (lib/evidence.sh, run by check and finish through majordomus.obligation-closure) returns unmet with the message `not judged: its inputs (<specs>) select no tracked file in this tree, so no evidence can be judged fresh over them` and the reproduce `git ls-files -- '<spec>' ...`; obligations.closure returns state owed, staleness null, the evidence attached and the same detail and reproduce, so gates.completion reads it as queued. `finish --outcome completed` therefore refuses it; an outcome that is not completed reports it without refusing, as every other shortfall. As soon as the pathspecs select a file, the existing judgement applies unchanged: evidence over the empty hash is stale, evidence over the selection discharges, and an edit after it makes it stale.",
+        "path": ".ai/repo/project/issues/I4434.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 6180
       },
       {
         "uri": "majordomus://issue/I4460",
@@ -119540,7 +119681,7 @@
         "path": ".ai/repo/policy.yaml",
         "section": "policy",
         "source_class": "policy",
-        "bytes": 26319
+        "bytes": 26909
       },
       {
         "uri": "majordomus://profile/debugging",
@@ -126225,7 +126366,7 @@
         "identity": "test/cases/3069_an_edit_no_claim_covers_is_refused.sh",
         "path": "test/cases/3069_an_edit_no_claim_covers_is_refused.sh",
         "source_class": "case",
-        "bytes": 5718
+        "bytes": 6228
       },
       {
         "uri": "majordomus://test/test/cases/3073_context_knowledge_slice.sh",
@@ -127428,6 +127569,14 @@
         "bytes": 5093
       },
       {
+        "uri": "majordomus://test/test/cases/3903_the_supervisor_is_wired_to_survive_a_burst.sh",
+        "kind": "test",
+        "identity": "test/cases/3903_the_supervisor_is_wired_to_survive_a_burst.sh",
+        "path": "test/cases/3903_the_supervisor_is_wired_to_survive_a_burst.sh",
+        "source_class": "case",
+        "bytes": 11098
+      },
+      {
         "uri": "majordomus://test/test/cases/390_unresolved_relation_refuses_generation.sh",
         "kind": "test",
         "identity": "test/cases/390_unresolved_relation_refuses_generation.sh",
@@ -127924,6 +128073,14 @@
         "bytes": 51277
       },
       {
+        "uri": "majordomus://test/test/cases/4408_an_obligation_without_inputs_proves_nothing.sh",
+        "kind": "test",
+        "identity": "test/cases/4408_an_obligation_without_inputs_proves_nothing.sh",
+        "path": "test/cases/4408_an_obligation_without_inputs_proves_nothing.sh",
+        "source_class": "case",
+        "bytes": 6936
+      },
+      {
         "uri": "majordomus://test/test/cases/44_model_doctrine.sh",
         "kind": "test",
         "identity": "test/cases/44_model_doctrine.sh",
@@ -127938,6 +128095,22 @@
         "path": "test/cases/4512_no_derived_page_outgrows_the_index.sh",
         "source_class": "case",
         "bytes": 6738
+      },
+      {
+        "uri": "majordomus://test/test/cases/4521_the_edit_guard_is_wired_in_the_generated_settings.sh",
+        "kind": "test",
+        "identity": "test/cases/4521_the_edit_guard_is_wired_in_the_generated_settings.sh",
+        "path": "test/cases/4521_the_edit_guard_is_wired_in_the_generated_settings.sh",
+        "source_class": "case",
+        "bytes": 11228
+      },
+      {
+        "uri": "majordomus://test/test/cases/4522_an_unclaimed_edit_is_reported_through_the_generated_settings.sh",
+        "kind": "test",
+        "identity": "test/cases/4522_an_unclaimed_edit_is_reported_through_the_generated_settings.sh",
+        "path": "test/cases/4522_an_unclaimed_edit_is_reported_through_the_generated_settings.sh",
+        "source_class": "case",
+        "bytes": 8402
       },
       {
         "uri": "majordomus://test/test/cases/45_github_projection.sh",
@@ -129145,7 +129318,7 @@
         "identity": "test/cases/87b_release_archive_shape.sh",
         "path": "test/cases/87b_release_archive_shape.sh",
         "source_class": "case",
-        "bytes": 4987
+        "bytes": 7985
       },
       {
         "uri": "majordomus://test/test/cases/884_a_declared_kind_is_a_kind_the_graph_knows.sh",
@@ -130462,7 +130635,7 @@
       "identity": [
         "id"
       ],
-      "objects": 1156
+      "objects": 1157
     },
     {
       "name": "knowledge",
@@ -130624,7 +130797,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 672
+      "objects": 676
     },
     {
       "name": "use-case",
@@ -144292,6 +144465,187 @@
             "path": [
               "majordomus",
               "prs",
+              "supervise"
+            ],
+            "route": "/docs/cli/prs/supervise/",
+            "executable": true,
+            "usage": "majordomus prs supervise [OPTIONS]",
+            "about": "Judge every in-flight CI run against the bounds `.ai/repo/ci/supervise.yaml` declares, and name each one to cancel with its reason: a pull request's first-attempt run waiting with no job created while a run of its branch and commit created within 120 seconds of it is in flight and is not itself to be ended within 30 minutes (never a re-run, an admitted run, nor when the pull request is labelled ci:full), a pull request's run of a head that moved while a newer run of it waits behind it in the same concurrency group, a pull request's run whose attempt queued past its workflow's bound with no job of it started, or one with a job in progress past its bound from that job's start (an integration/* top is never ended for a bound, nor a queued run of the default branch, a tag, the schedule, a dispatch or a release). A run of the default branch, a tag, the schedule, a dispatch or a release, and every pages or release run, is never cancelled for being superseded; the supervising workflow's own run never at all. It also reports supervise_stale when the supervisor's newest success (with `--supervised-by` and a window of 30 minutes or more, that lane's) is older than 30 minutes. A dry run by default, which reaches the forge to read and changes nothing. Exit 0 when nothing needs doing, 10 for decisions a dry run found, 12 when the forge could not be read or an act could not be taken",
+            "args": [
+              {
+                "name": "apply",
+                "long": "apply",
+                "positional": false,
+                "help": "Act: read each run and its pull request's head again, and only if the decision still holds, record the act on the integration trail and force-cancel the run. A trail that cannot be written stops every act",
+                "value_name": "APPLY",
+                "takes_value": false,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": [
+                  "false"
+                ]
+              },
+              {
+                "name": "dry_run",
+                "long": "dry-run",
+                "positional": false,
+                "help": "Decide and change nothing: the default, spelled out",
+                "value_name": "DRY_RUN",
+                "takes_value": false,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": [
+                  "false"
+                ]
+              },
+              {
+                "name": "unless_supervised_within",
+                "long": "unless-supervised-within",
+                "positional": false,
+                "help": "Stand aside when a supervision succeeded at most this many minutes ago: read only the supervisor's newest success, observe nothing, and exit 0. For a lane that covers for another, so that two lanes do not both spend the repository's request budget on every tick",
+                "value_name": "MINUTES",
+                "takes_value": true,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "supervised_by",
+                "long": "supervised-by",
+                "positional": false,
+                "help": "With `--unless-supervised-within`, count only a supervision by this lane's job (one named `<anything> (<LANE>)`): the lane covered for. A job that stood aside succeeded too, so a lane that counted its own would stand aside behind itself once the lane it covers for stopped. With a window of 30 minutes or more the reported liveness is this lane's, which is how the queue workflow holds the lundra lane to account",
+                "value_name": "LANE",
+                "takes_value": true,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "repo",
+                "long": "repo",
+                "positional": false,
+                "help": "Start the search for the repository root here (default: the current directory)",
+                "value_name": "PATH",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "discovery",
+                "long": "discovery",
+                "positional": false,
+                "help": "How declarative files are enumerated",
+                "value_name": "DISCOVERY",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "vcs",
+                    "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
+                  },
+                  {
+                    "name": "filesystem",
+                    "help": "A walk of the work tree with the same glob semantics; untracked files included"
+                  }
+                ],
+                "defaults": [
+                  "vcs"
+                ]
+              },
+              {
+                "name": "strict",
+                "long": "strict",
+                "positional": false,
+                "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+                "value_name": "STRICT",
+                "takes_value": false,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": [
+                  "false"
+                ]
+              },
+              {
+                "name": "share",
+                "long": "share",
+                "positional": false,
+                "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+                "value_name": "DIR",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "format",
+                "long": "format",
+                "positional": false,
+                "help": "Output shape",
+                "value_name": "FORMAT",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "text",
+                    "help": "Lines for a person"
+                  },
+                  {
+                    "name": "json",
+                    "help": "One JSON document, deterministic"
+                  }
+                ],
+                "defaults": [
+                  "text"
+                ]
+              }
+            ],
+            "examples": [
+              {
+                "id": "prs-supervise-dry-run-no-forge",
+                "title": "Supervising the CI runs starts from the forge, or not at all",
+                "description": "`supervise` reads every queued, waiting and running workflow run and every open pull request's head, and decides which runs to cancel and why: superseded while a newer run waits behind it, queued past its bound, or running past it. Without `--apply` it only prints the decisions. A repository that declares no bounds, or has no GitHub remote to read runs from, cannot be supervised: it exits 12 before deciding anything, and nothing is cancelled or recorded.",
+                "argv": [
+                  "prs",
+                  "supervise",
+                  "--dry-run"
+                ],
+                "command": "majordomus prs supervise --dry-run",
+                "setup": [],
+                "expectation": "exits 12"
+              },
+              {
+                "id": "prs-supervise-covering-lane-no-forge",
+                "title": "A covering lane asks the forge before it stands aside",
+                "description": "`--unless-supervised-within 15 --supervised-by lundra` is how the hosted fallback runs (with `--apply`): when lundra's supervise job succeeded at most fifteen minutes ago (the schedule's ten and a margin) it reads nothing else and exits 0 (`stood aside`), so two lanes do not both spend the repository's one request budget on every tick. Only lundra's success counts, because a job that stood aside succeeded too and a lane counting its own would stand aside behind itself for ever. The answer is the forge's, so where there is none, or no bounds are declared, it exits 12 and stands aside from nothing.",
+                "argv": [
+                  "prs",
+                  "supervise",
+                  "--unless-supervised-within",
+                  "15",
+                  "--supervised-by",
+                  "lundra"
+                ],
+                "command": "majordomus prs supervise --unless-supervised-within 15 --supervised-by lundra",
+                "setup": [],
+                "expectation": "exits 12"
+              }
+            ],
+            "subcommands": []
+          },
+          {
+            "path": [
+              "majordomus",
+              "prs",
               "events"
             ],
             "route": "/docs/cli/prs/events/",
@@ -150320,7 +150674,7 @@
             "route": "/docs/cli/guard/hook/",
             "executable": true,
             "usage": "majordomus guard hook [OPTIONS]",
-            "about": "Judge the edit a provider's pre-tool payload (on stdin) is about to make; exit 2 with the reason and the remedy when no claim covers it, 0 otherwise",
+            "about": "Judge the edit a provider's pre-tool payload (on stdin) is about to make; exit 2 with the reason and the remedy when no claim covers it and session.edit_guard_mode is refuse, 0 otherwise; under advisory, the default, an unclaimed edit is said on stderr and recorded, and exits 0",
             "args": [
               {
                 "name": "provider",
@@ -166357,7 +166711,7 @@
         "name": "majordomus_guard_edit",
         "id": "guard.edit",
         "title": "Judge one edit",
-        "description": "Whether the given session may write the given path now: allowed when the policy's session.edits_require_claim is off, the path is outside the checkout or its local state, the repository declares no enabled mesh, the active task's scope covers it, or a live mesh claim of the session covers it; refused as unclaimed otherwise, with the remedy. What cannot be read — the policy, the mesh — is let through and named, never refused.",
+        "description": "Whether the given session may write the given path now: allowed when the policy's session.edits_require_claim is off, the path is outside the checkout or its local state, the repository declares no enabled mesh, the active task's scope covers it, or a live mesh claim of the session covers it; otherwise the ground is unclaimed, with the remedy: refused under session.edit_guard_mode: refuse, and let through and still named under advisory, the default (I3322). What cannot be read — the policy, the mesh — is let through and named, never refused.",
         "kind": "query",
         "read_only": true,
         "effect": "read",

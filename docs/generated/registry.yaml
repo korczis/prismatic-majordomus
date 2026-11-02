@@ -157,7 +157,7 @@ modules:
     capabilities: 2
   - id: guard
     title: Edit guard
-    description: "Whether a write to a file of this checkout is covered by a claim: the active task's scope, or a live mesh claim of the writing session. The judgement a provider's pre-tool hook asks before every edit (majordomus guard hook), switched by session.edits_require_claim."
+    description: "Whether a write to a file of this checkout is covered by a claim: the active task's scope, or a live mesh claim of the writing session. The judgement a provider's pre-tool hook asks before every edit (majordomus guard hook), switched by session.edits_require_claim and made to refuse by session.edit_guard_mode."
     stability: experimental
     source: builtin
     capabilities: 1
@@ -25066,7 +25066,7 @@ capabilities:
     module: guard
     kind: query
     title: Judge one edit
-    description: "Whether the given session may write the given path now: allowed when the policy's session.edits_require_claim is off, the path is outside the checkout or its local state, the repository declares no enabled mesh, the active task's scope covers it, or a live mesh claim of the session covers it; refused as unclaimed otherwise, with the remedy. What cannot be read — the policy, the mesh — is let through and named, never refused."
+    description: "Whether the given session may write the given path now: allowed when the policy's session.edits_require_claim is off, the path is outside the checkout or its local state, the repository declares no enabled mesh, the active task's scope covers it, or a live mesh claim of the session covers it; otherwise the ground is unclaimed, with the remedy: refused under session.edit_guard_mode: refuse, and let through and still named under advisory, the default (I3322). What cannot be read — the policy, the mesh — is let through and named, never refused."
     input:
       name: GuardEditInput
       schema:
@@ -25098,7 +25098,7 @@ capabilities:
             description: "The path asked about, repository-relative when it is inside the checkout."
           ground:
             type: string
-            description: "Why, as one word: `off`, `outside`, `local`, `no_mesh`, `task`, `claim`,\n`undecided` or `unclaimed`. Only `unclaimed` refuses."
+            description: "Why, as one word: `off`, `outside`, `local`, `no_mesh`, `task`, `claim`,\n`undecided` or `unclaimed`. Only `unclaimed` refuses, and only under\n`session.edit_guard_mode: refuse`; under `advisory` it is allowed and reported."
           detail:
             type: string
             description: The sentence a person reads.
@@ -25106,7 +25106,7 @@ capabilities:
             type:
               - string
               - "null"
-            description: "What makes the edit allowed, when it is refused."
+            description: "What makes the edit claimed, when no claim covers it: refused, or let through only\nbecause the guard is advisory."
         required:
           - allowed
           - path
@@ -25756,6 +25756,13 @@ capabilities:
                   - string
                   - "null"
                 description: "On `merge_succeeded`: the merge commit, once it is read; the head itself after a\nfast-forward."
+              run:
+                type:
+                  - integer
+                  - "null"
+                format: uint64
+                minimum: 0
+                description: "On the `run_*` events of `prs supervise`: the CI run acted on."
             required:
               - at
               - actor
@@ -25858,6 +25865,27 @@ capabilities:
               - type: string
                 const: observe_failed
                 description: "A continuous drain's cycle could not observe the forge, and the outage was short\nenough to wait out (`CONTINUOUS_TRANSIENT_LIMIT`)."
+              - type: string
+                const: run_cancel_attempted
+                description: "`prs supervise --apply` is about to force-cancel a CI run; the detail names the run\nand the reason it was decided on, read again just now (`super::runs`)."
+              - type: string
+                const: run_cancelled
+                description: The run was force-cancelled.
+              - type: string
+                const: run_cancel_failed
+                description: The forge refused to cancel it.
+              - type: string
+                const: run_already_ended
+                description: "The run had ended before the cancel reached it: another supervision, in a lane that\napplied in the same minute, cancelled it, or it completed on its own. Nothing was left\nto do, and nothing failed."
+              - type: string
+                const: run_rerun_attempted
+                description: "A run, the newest of its pull request's head, is about to be asked to run again: paired\nwith this supervision's cancel of it, or on a later pass of any lane because the head has\nno run in flight and no verdict (`super::runs`). A record only: GitHub's own\n`run_attempt` bounds the asks (`super::runs::MAX_ATTEMPTS`), never this trail."
+              - type: string
+                const: run_rerun_requested
+                description: "The run just force-cancelled was asked to run again: it was the last run of its pull\nrequest's head on its way to a verdict, ended because a job of it ran past its bound\n(`super::supervise::Decision::rerun`)."
+              - type: string
+                const: run_rerun_failed
+                description: "The re-run of the run just force-cancelled could not be asked: its pull request's head\nhas no run until somebody re-runs it."
             description: "What one line of the audit trail records. The wire word is the variant's `snake_case`\nname — the same word each was written as while the action was a string — so every line\nwritten before still parses, and a word nobody writes is not an action."
           IntegrationEvidence:
             type: object
@@ -26840,6 +26868,27 @@ capabilities:
               - type: string
                 const: observe_failed
                 description: "A continuous drain's cycle could not observe the forge, and the outage was short\nenough to wait out (`CONTINUOUS_TRANSIENT_LIMIT`)."
+              - type: string
+                const: run_cancel_attempted
+                description: "`prs supervise --apply` is about to force-cancel a CI run; the detail names the run\nand the reason it was decided on, read again just now (`super::runs`)."
+              - type: string
+                const: run_cancelled
+                description: The run was force-cancelled.
+              - type: string
+                const: run_cancel_failed
+                description: The forge refused to cancel it.
+              - type: string
+                const: run_already_ended
+                description: "The run had ended before the cancel reached it: another supervision, in a lane that\napplied in the same minute, cancelled it, or it completed on its own. Nothing was left\nto do, and nothing failed."
+              - type: string
+                const: run_rerun_attempted
+                description: "A run, the newest of its pull request's head, is about to be asked to run again: paired\nwith this supervision's cancel of it, or on a later pass of any lane because the head has\nno run in flight and no verdict (`super::runs`). A record only: GitHub's own\n`run_attempt` bounds the asks (`super::runs::MAX_ATTEMPTS`), never this trail."
+              - type: string
+                const: run_rerun_requested
+                description: "The run just force-cancelled was asked to run again: it was the last run of its pull\nrequest's head on its way to a verdict, ended because a job of it ran past its bound\n(`super::supervise::Decision::rerun`)."
+              - type: string
+                const: run_rerun_failed
+                description: "The re-run of the run just force-cancelled could not be asked: its pull request's head\nhas no run until somebody re-runs it."
             description: "What one line of the audit trail records. The wire word is the variant's `snake_case`\nname — the same word each was written as while the action was a string — so every line\nwritten before still parses, and a word nobody writes is not an action."
           RankFactors:
             type: object
@@ -28105,6 +28154,27 @@ capabilities:
               - type: string
                 const: observe_failed
                 description: "A continuous drain's cycle could not observe the forge, and the outage was short\nenough to wait out (`CONTINUOUS_TRANSIENT_LIMIT`)."
+              - type: string
+                const: run_cancel_attempted
+                description: "`prs supervise --apply` is about to force-cancel a CI run; the detail names the run\nand the reason it was decided on, read again just now (`super::runs`)."
+              - type: string
+                const: run_cancelled
+                description: The run was force-cancelled.
+              - type: string
+                const: run_cancel_failed
+                description: The forge refused to cancel it.
+              - type: string
+                const: run_already_ended
+                description: "The run had ended before the cancel reached it: another supervision, in a lane that\napplied in the same minute, cancelled it, or it completed on its own. Nothing was left\nto do, and nothing failed."
+              - type: string
+                const: run_rerun_attempted
+                description: "A run, the newest of its pull request's head, is about to be asked to run again: paired\nwith this supervision's cancel of it, or on a later pass of any lane because the head has\nno run in flight and no verdict (`super::runs`). A record only: GitHub's own\n`run_attempt` bounds the asks (`super::runs::MAX_ATTEMPTS`), never this trail."
+              - type: string
+                const: run_rerun_requested
+                description: "The run just force-cancelled was asked to run again: it was the last run of its pull\nrequest's head on its way to a verdict, ended because a job of it ran past its bound\n(`super::supervise::Decision::rerun`)."
+              - type: string
+                const: run_rerun_failed
+                description: "The re-run of the run just force-cancelled could not be asked: its pull request's head\nhas no run until somebody re-runs it."
             description: "What one line of the audit trail records. The wire word is the variant's `snake_case`\nname — the same word each was written as while the action was a string — so every line\nwritten before still parses, and a word nobody writes is not an action."
           RankFactors:
             type: object
@@ -28320,6 +28390,13 @@ capabilities:
                   - string
                   - "null"
                 description: "On `merge_succeeded`: the merge commit, once it is read; the head itself after a\nfast-forward."
+              run:
+                type:
+                  - integer
+                  - "null"
+                format: uint64
+                minimum: 0
+                description: "On the `run_*` events of `prs supervise`: the CI run acted on."
             required:
               - at
               - actor
@@ -28540,6 +28617,12 @@ capabilities:
                 format: uint64
                 minimum: 0
                 description: "Of those, how many failed."
+              cancelled:
+                type: integer
+                format: uint64
+                minimum: 0
+                description: "Of those, how many were cancelled before they gave a verdict: counted as neither\npassed nor failed, and, cut short, no sample of how long the check takes (I3202)."
+                default: 0
               median_seconds:
                 type: integer
                 format: uint64
@@ -43051,7 +43134,7 @@ capabilities:
                 anyOf:
                   - "$ref": "#/$defs/Divergence"
                   - type: "null"
-                description: "How far the evidence is from this checkout, in the repository's one staleness\nvocabulary. `None` when there is no evidence to label.\n\nA remote fact is labelled against the commit it was taken at, because the site that\nserves a commit goes on serving it while the tree moves underneath. A tree-bound\nfact is labelled by re-hashing: equal hashes are `exact`, and a difference takes the\ncommit's label, which is `advanced` when the working tree has merely moved on and\n`diverged` when the history it named is gone. A token that declares neither inputs\nnor a remote fact is bound to nothing and stays `exact` once recorded — that is the\nvalidator's behaviour, and it is reproduced rather than tightened here."
+                description: "How far the evidence is from this checkout, in the repository's one staleness\nvocabulary. `None` when there is no evidence to label, and `None` when the evidence\ncannot be judged because the token's pathspecs select no tracked file here: an empty\ninput set is never a freshness proof, so that obligation is `owed` (I4434).\n\nA remote fact is labelled against the commit it was taken at, because the site that\nserves a commit goes on serving it while the tree moves underneath. A tree-bound\nfact is labelled by re-hashing: equal hashes are `exact`, and a difference takes the\ncommit's label, which is `advanced` when the working tree has merely moved on and\n`diverged` when the history it named is gone. A token that declares neither inputs\nnor a remote fact is bound to nothing and stays `exact` once recorded — that is the\nvalidator's behaviour, and it is reproduced rather than tightened here."
               evidence:
                 anyOf:
                   - "$ref": "#/$defs/Evidence"
