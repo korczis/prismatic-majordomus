@@ -35,7 +35,6 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I3304` | shares .ai/repo/benchmarks/rust/policy.yaml with I3307; they may not run concurrently |
 | WARN | `scope_conflict` | `I3304` | shares test/cases/29_prompt_capture.sh with I3318; they may not run concurrently |
 | WARN | `scope_conflict` | `I3304` | shares lib/capture.sh with I3322; they may not run concurrently |
-| WARN | `scope_conflict` | `I3304` | shares test/cases/29_prompt_capture.sh with I3448; they may not run concurrently |
 | WARN | `scope_conflict` | `I3304` | shares apps/majordomus-cli/src/capability/builtin/lifecycle.rs with I3607; they may not run concurrently |
 | WARN | `scope_conflict` | `I3304` | shares lib/capture.sh with I3810; they may not run concurrently |
 | WARN | `scope_conflict` | `I3304` | shares apps/majordomus-cli/src/capability/builtin/lifecycle.rs with I4002; they may not run concurrently |
@@ -47,7 +46,6 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I3304` | shares lib/capture.sh with I4468; they may not run concurrently |
 | WARN | `scope_conflict` | `I3304` | shares .ai/repo/policy.yaml with I4512; they may not run concurrently |
 | WARN | `scope_conflict` | `I3307` | shares test/cases/940_mcp_says_nothing_its_capability_does_not.sh with I3318; they may not run concurrently |
-| WARN | `scope_conflict` | `I3307` | shares test/cases/940_mcp_says_nothing_its_capability_does_not.sh with I3448; they may not run concurrently |
 | WARN | `scope_conflict` | `I3307` | shares apps/majordomus-cli/src/capability/builtin/mcp.rs with I3607; they may not run concurrently |
 | WARN | `scope_conflict` | `I3307` | shares apps/majordomus-cli/src/mcp with I3609; they may not run concurrently |
 | WARN | `scope_conflict` | `I3307` | shares apps/majordomus-cli/src/mcp with I3960; they may not run concurrently |
@@ -68,6 +66,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I3322` | shares docs/MESH.md with I3774; they may not run concurrently |
 | WARN | `scope_conflict` | `I3322` | shares lib/capture.sh with I3810; they may not run concurrently |
 | WARN | `scope_conflict` | `I3322` | shares docs/MESH.md with I3835; they may not run concurrently |
+| WARN | `scope_conflict` | `I3322` | shares lib/doctor.sh with I4255; they may not run concurrently |
 | WARN | `scope_conflict` | `I3322` | shares lib/capture.sh with I4292; they may not run concurrently |
 | WARN | `scope_conflict` | `I3322` | shares docs/MESH.md with I4306; they may not run concurrently |
 | WARN | `scope_conflict` | `I3322` | shares lib/doctor.sh with I4323; they may not run concurrently |

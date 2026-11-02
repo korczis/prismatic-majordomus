@@ -6,27 +6,27 @@
     "version": "1.0.0-alpha.10"
   },
   "registry": {
-    "fingerprint": "a023263da23f657082857c306cf256e30880c16d7d0d7c92c5a2a3c333893fac",
+    "fingerprint": "d2e2947b9787b5c0e3d5cf6cea90db4d297d37d0478e7464b01a6d0c899a48f9",
     "summary": {
-      "total": 3732,
-      "builtin": 220,
-      "declarative": 3512,
+      "total": 3754,
+      "builtin": 221,
+      "declarative": 3533,
       "by_kind": {
         "command": 36,
-        "query": 184,
-        "resource": 3512
+        "query": 185,
+        "resource": 3533
       },
       "by_stability": {
-        "behaviorally_verified": 147,
+        "behaviorally_verified": 148,
         "experimental": 63,
-        "implemented": 3522
+        "implemented": 3543
       },
-      "mcp_tools": 206,
-      "mcp_resources": 3569,
-      "http_routes": 212,
-      "cli_commands": 120,
+      "mcp_tools": 207,
+      "mcp_resources": 3590,
+      "http_routes": 213,
+      "cli_commands": 121,
       "modules": 94,
-      "benchmark_required": 181,
+      "benchmark_required": 182,
       "benchmark_waived": 39,
       "cached": 55
     },
@@ -79654,7 +79654,7 @@
                   "path",
                   "enforcement"
                 ],
-                "description": "One rule, as the repository canonically declares it.\n# Example\n\nBuilt by `definitions` from the index rather than by hand. Its ordering is the one\nthe crate has, so a report over the same tree reads the same twice.\n\n```\nuse majordomus_cli::rules::{Class, RuleDefinition};\n# use majordomus_cli::rules::{Enforcement, Mode};\nlet d = RuleDefinition {\n    id: \"project.scope-is-declared\".into(),\n    identity: \"project.scope-is-declared@1\".into(),\n    uri: \"majordomus://rule/project.scope-is-declared@1\".into(),\n    version: 1,\n    title: \"Scope is declared\".into(),\n    description: None,\n    statement: None,\n    status: \"active\".into(),\n    class: Class::Blocking,\n    namespace: \"project\".into(),\n    depends_on: vec![],\n    tags: vec![],\n    path: \".ai/repo/rules/project/scope-is-declared.v1.md\".into(),\n    enforcement: Enforcement {\n        mode: Mode::Declarative, validator: None, category: None, exit_code: None,\n        enforced_by: None, tests: vec![], reviewed_because: None,\n    },\n};\nassert_eq!(d.class, Class::Blocking);\n```"
+                "description": "One rule, as the repository canonically declares it.\n# Example\n\nBuilt by `definitions` from the index rather than by hand. Its ordering is the one\nthe crate has, so a report over the same tree reads the same twice.\n\n```\nuse majordomus_cli::rules::{Class, RuleDefinition};\n# use majordomus_cli::rules::{Enforcement, Mode};\nlet d = RuleDefinition {\n    id: \"project.scope-is-declared\".into(),\n    identity: \"project.scope-is-declared@1\".into(),\n    uri: \"majordomus://rule/project.scope-is-declared@1\".into(),\n    version: 1,\n    title: \"Scope is declared\".into(),\n    description: None,\n    statement: None,\n    status: \"active\".into(),\n    class: Class::Blocking,\n    namespace: \"project\".into(),\n    depends_on: vec![],\n    tags: vec![],\n    path: \".ai/repo/rules/project/scope-is-declared.v1.md\".into(),\n    enforcement: Enforcement {\n        mode: Mode::Declarative, validator: None, category: None, exit_code: None,\n        enforced_by: None, tests: vec![], reviewed_because: None, entry: None,\n    },\n};\nassert_eq!(d.class, Class::Blocking);\n```"
               },
               "RuleClass": {
                 "oneOf": [
@@ -79725,12 +79725,19 @@
                       "null"
                     ],
                     "description": "Why nothing executable can express this rule, when the mode is reviewed. Required\nthere: a declared exemption with no reason is the debt it exists to replace."
+                  },
+                  "entry": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The name of the policy's enforcement entry that checks this rule, when the mode is\nentry. doctor resolves the name against the policy and verifies the entry's wiring."
                   }
                 },
                 "required": [
                   "mode"
                 ],
-                "description": "The enforcement block of a rule, read from `x-majordomus`.\n# Example\n\nRead from front matter rather than built by hand; this is the shape a gated rule\nproduces, and the mode is decided by what the block actually names.\n\n```\nuse majordomus_cli::rules::{Enforcement, Mode};\nlet e = Enforcement {\n    mode: Mode::Gated,\n    validator: None,\n    category: None,\n    exit_code: None,\n    enforced_by: None,\n    tests: vec![\"test/cases/07_scope.sh\".into()],\n    reviewed_because: None,\n};\nassert_eq!(e.mode, Mode::Gated);\n```"
+                "description": "The enforcement block of a rule, read from `x-majordomus`.\n# Example\n\nRead from front matter rather than built by hand; this is the shape a gated rule\nproduces, and the mode is decided by what the block actually names.\n\n```\nuse majordomus_cli::rules::{Enforcement, Mode};\nlet e = Enforcement {\n    mode: Mode::Gated,\n    validator: None,\n    category: None,\n    exit_code: None,\n    enforced_by: None,\n    tests: vec![\"test/cases/07_scope.sh\".into()],\n    reviewed_because: None,\n    entry: None,\n};\nassert_eq!(e.mode, Mode::Gated);\n```"
               },
               "RuleMode": {
                 "oneOf": [
@@ -79748,6 +79755,11 @@
                     "type": "string",
                     "const": "reviewed",
                     "description": "Carries a reason why nothing executable can express it, and so declares that a\nreader enforces it. An honest declaration, not an absence: the reason *is* the\ndeclaration — there is no flag beside it, because a flag can be set and a reason\ncannot be set without writing one — it is counted apart from every executable mode,\nand it separates a rule nobody could automate from a rule nobody got round to."
+                  },
+                  {
+                    "type": "string",
+                    "const": "entry",
+                    "description": "Names the policy's enforcement entry that checks it: the repository's own command,\nwired into a hook or a CI job that doctor verifies. How a project's rule is enforced,\nsince it can name no validator of this tool's source."
                   },
                   {
                     "type": "string",
@@ -80546,7 +80558,7 @@
                   "path",
                   "enforcement"
                 ],
-                "description": "One rule, as the repository canonically declares it.\n# Example\n\nBuilt by `definitions` from the index rather than by hand. Its ordering is the one\nthe crate has, so a report over the same tree reads the same twice.\n\n```\nuse majordomus_cli::rules::{Class, RuleDefinition};\n# use majordomus_cli::rules::{Enforcement, Mode};\nlet d = RuleDefinition {\n    id: \"project.scope-is-declared\".into(),\n    identity: \"project.scope-is-declared@1\".into(),\n    uri: \"majordomus://rule/project.scope-is-declared@1\".into(),\n    version: 1,\n    title: \"Scope is declared\".into(),\n    description: None,\n    statement: None,\n    status: \"active\".into(),\n    class: Class::Blocking,\n    namespace: \"project\".into(),\n    depends_on: vec![],\n    tags: vec![],\n    path: \".ai/repo/rules/project/scope-is-declared.v1.md\".into(),\n    enforcement: Enforcement {\n        mode: Mode::Declarative, validator: None, category: None, exit_code: None,\n        enforced_by: None, tests: vec![], reviewed_because: None,\n    },\n};\nassert_eq!(d.class, Class::Blocking);\n```"
+                "description": "One rule, as the repository canonically declares it.\n# Example\n\nBuilt by `definitions` from the index rather than by hand. Its ordering is the one\nthe crate has, so a report over the same tree reads the same twice.\n\n```\nuse majordomus_cli::rules::{Class, RuleDefinition};\n# use majordomus_cli::rules::{Enforcement, Mode};\nlet d = RuleDefinition {\n    id: \"project.scope-is-declared\".into(),\n    identity: \"project.scope-is-declared@1\".into(),\n    uri: \"majordomus://rule/project.scope-is-declared@1\".into(),\n    version: 1,\n    title: \"Scope is declared\".into(),\n    description: None,\n    statement: None,\n    status: \"active\".into(),\n    class: Class::Blocking,\n    namespace: \"project\".into(),\n    depends_on: vec![],\n    tags: vec![],\n    path: \".ai/repo/rules/project/scope-is-declared.v1.md\".into(),\n    enforcement: Enforcement {\n        mode: Mode::Declarative, validator: None, category: None, exit_code: None,\n        enforced_by: None, tests: vec![], reviewed_because: None, entry: None,\n    },\n};\nassert_eq!(d.class, Class::Blocking);\n```"
               },
               "RuleClass": {
                 "oneOf": [
@@ -80617,12 +80629,19 @@
                       "null"
                     ],
                     "description": "Why nothing executable can express this rule, when the mode is reviewed. Required\nthere: a declared exemption with no reason is the debt it exists to replace."
+                  },
+                  "entry": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The name of the policy's enforcement entry that checks this rule, when the mode is\nentry. doctor resolves the name against the policy and verifies the entry's wiring."
                   }
                 },
                 "required": [
                   "mode"
                 ],
-                "description": "The enforcement block of a rule, read from `x-majordomus`.\n# Example\n\nRead from front matter rather than built by hand; this is the shape a gated rule\nproduces, and the mode is decided by what the block actually names.\n\n```\nuse majordomus_cli::rules::{Enforcement, Mode};\nlet e = Enforcement {\n    mode: Mode::Gated,\n    validator: None,\n    category: None,\n    exit_code: None,\n    enforced_by: None,\n    tests: vec![\"test/cases/07_scope.sh\".into()],\n    reviewed_because: None,\n};\nassert_eq!(e.mode, Mode::Gated);\n```"
+                "description": "The enforcement block of a rule, read from `x-majordomus`.\n# Example\n\nRead from front matter rather than built by hand; this is the shape a gated rule\nproduces, and the mode is decided by what the block actually names.\n\n```\nuse majordomus_cli::rules::{Enforcement, Mode};\nlet e = Enforcement {\n    mode: Mode::Gated,\n    validator: None,\n    category: None,\n    exit_code: None,\n    enforced_by: None,\n    tests: vec![\"test/cases/07_scope.sh\".into()],\n    reviewed_because: None,\n    entry: None,\n};\nassert_eq!(e.mode, Mode::Gated);\n```"
               },
               "RuleMode": {
                 "oneOf": [
@@ -80640,6 +80659,11 @@
                     "type": "string",
                     "const": "reviewed",
                     "description": "Carries a reason why nothing executable can express it, and so declares that a\nreader enforces it. An honest declaration, not an absence: the reason *is* the\ndeclaration — there is no flag beside it, because a flag can be set and a reason\ncannot be set without writing one — it is counted apart from every executable mode,\nand it separates a rule nobody could automate from a rule nobody got round to."
+                  },
+                  {
+                    "type": "string",
+                    "const": "entry",
+                    "description": "Names the policy's enforcement entry that checks it: the repository's own command,\nwired into a hook or a CI job that doctor verifies. How a project's rule is enforced,\nsince it can name no validator of this tool's source."
                   },
                   {
                     "type": "string",
@@ -88515,6 +88539,355 @@
         "source_path": "apps/majordomus-cli/src/capability/builtin/worktree.rs"
       },
       {
+        "id": "worktree.reconciliation",
+        "module": "worktree",
+        "kind": "query",
+        "title": "What becomes of every branch and every worktree",
+        "description": "Every non-trunk branch and every detached worktree with the one state git and the kernel support for it — active (a process works inside), dirty (files no commit carries), unreadable (a reading failed, so nothing is decided), unpublished (a commit no remote holds), orphaned (a detached worktree is its commit's only name), unstarted, merged (the trunk reaches it), equivalent (merging it changes nothing), conflicted, stale, ready — the readings that decided it, the one step it permits, the command a person runs to take that step, and whether it is removable on proof alone. Decided against the remote-tracking branch the trunk follows, never from an age or a name. A read: it removes nothing, and a removal it names is git's own guarded form (`git worktree remove` without `--force`, `git update-ref -d` on the judged commit). Taking the proven steps is the command line's `majordomus worktree reconcile --apply`, which measures each subject again first.",
+        "input": {
+          "name": "Empty",
+          "schema": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "No input.",
+            "title": "Empty"
+          }
+        },
+        "output": {
+          "name": "Reconciliation",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "schema": {
+                "type": "string",
+                "description": "`RECONCILE_SCHEMA`."
+              },
+              "repository": {
+                "type": "string",
+                "description": "The primary checkout this was measured from."
+              },
+              "trunk": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "The trunk, when there is one."
+              },
+              "base": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "The ref every relation was decided against: the remote-tracking branch the trunk\nfollows when it has one, so a primary checkout nobody pulled hides nothing."
+              },
+              "entries": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/ReconcileEntry"
+                },
+                "description": "Every subject: what is removable on proof first, then by state, then by name."
+              },
+              "tallies": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "integer",
+                  "format": "uint",
+                  "minimum": 0
+                },
+                "description": "How many subjects are in each state, by its word."
+              },
+              "automatic": {
+                "type": "integer",
+                "format": "uint",
+                "minimum": 0,
+                "description": "How many subjects are removable on proof."
+              },
+              "settled": {
+                "type": "boolean",
+                "description": "Nothing is removable on proof: a second `--apply` would do nothing."
+              }
+            },
+            "required": [
+              "schema",
+              "repository",
+              "entries",
+              "tallies",
+              "automatic",
+              "settled"
+            ],
+            "description": "Every branch and detached worktree of the repository, decided, with the one verdict over\nthem.\n\n```\nuse majordomus_cli::worktree::reconcile::{Reconciliation, RECONCILE_SCHEMA};\n\nlet none = Reconciliation {\n    schema: RECONCILE_SCHEMA.into(),\n    repository: \"/srv/repo\".into(),\n    trunk: Some(\"master\".into()),\n    base: Some(\"origin/master\".into()),\n    entries: vec![],\n    tallies: Default::default(),\n    automatic: 0,\n    settled: true,\n};\n// a repository with nothing removable on proof reads exactly this\nassert_eq!(none.summary(), \"nothing to reconcile: 0 subject(s), none removable on proof\");\n```",
+            "title": "Reconciliation",
+            "$defs": {
+              "ReconcileEntry": {
+                "type": "object",
+                "properties": {
+                  "branch": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The branch. Absent for a detached worktree."
+                  },
+                  "worktree": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The worktree holding it, when one does."
+                  },
+                  "head": {
+                    "type": "string",
+                    "description": "The commit that was judged. An act names it, so a subject that moved is refused."
+                  },
+                  "state": {
+                    "$ref": "#/$defs/WorkState",
+                    "description": "The state."
+                  },
+                  "step": {
+                    "$ref": "#/$defs/ReconcileStep",
+                    "description": "The step that state permits."
+                  },
+                  "automatic": {
+                    "type": "boolean",
+                    "description": "The step removes something, its proof is complete, and the subject is neither a\nscratch checkout nor where the call came from: removable on proof alone, and so taken\nby `reconcile --apply` on its own."
+                  },
+                  "scratch": {
+                    "type": "boolean",
+                    "description": "A session's scratch checkout or a detached worktree: whoever made it removes it, so it\nis never removable on proof alone, and `--apply` leaves it unless `--include-scratch`\nis given."
+                  },
+                  "here": {
+                    "type": "boolean",
+                    "description": "The call came from inside this worktree. It is never removed from inside, whatever\nelse is true of it."
+                  },
+                  "relation": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/TrunkRelation"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "How the commit stands against the trunk, when git could say."
+                  },
+                  "behind": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "format": "uint64",
+                    "minimum": 0,
+                    "description": "How many trunk commits it lacks, read when it merges cleanly."
+                  },
+                  "reasons": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "Why: the readings that decided it, one per line."
+                  },
+                  "command": {
+                    "type": "string",
+                    "description": "The command that takes the step."
+                  }
+                },
+                "required": [
+                  "head",
+                  "state",
+                  "step",
+                  "automatic",
+                  "scratch",
+                  "here",
+                  "reasons",
+                  "command"
+                ],
+                "description": "One branch or one detached worktree, decided.\n\n```\nuse majordomus_cli::worktree::reconcile::{ReconcileEntry, ReconcileStep, WorkState};\n\nlet entry = ReconcileEntry {\n    branch: Some(\"feature/x\".into()),\n    worktree: None,\n    head: \"0123456789abcdef\".into(),\n    state: WorkState::Merged,\n    step: ReconcileStep::DeleteBranch,\n    automatic: true,\n    scratch: false,\n    here: false,\n    relation: None,\n    behind: None,\n    reasons: vec![\"the trunk reaches the branch, and it was published\".into()],\n    command: \"git update-ref -d refs/heads/feature/x 0123456789abcdef\".into(),\n};\n// a branch is named by its name, a detached worktree by its path\nassert_eq!(entry.subject(), \"feature/x\");\n// and a field nothing was read for is left out of the document\nassert!(!serde_json::to_string(&entry).unwrap().contains(\"behind\"));\n```"
+              },
+              "WorkState": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "active",
+                    "description": "A process has its working directory inside the worktree: somebody is here."
+                  },
+                  {
+                    "type": "string",
+                    "const": "dirty",
+                    "description": "The worktree holds files no commit carries."
+                  },
+                  {
+                    "type": "string",
+                    "const": "unreadable",
+                    "description": "A reading could not be taken, so nothing is decided: not knowing is not permission."
+                  },
+                  {
+                    "type": "string",
+                    "const": "unstarted",
+                    "description": "The trunk reaches the branch and it was never published: a branch somebody cut and\nhas not committed to yet, which reads exactly like one that landed."
+                  },
+                  {
+                    "type": "string",
+                    "const": "merged",
+                    "description": "The trunk reaches it and it was published: its work is in the repository's history."
+                  },
+                  {
+                    "type": "string",
+                    "const": "equivalent",
+                    "description": "Its commits are not the trunk's, and merging them changes nothing."
+                  },
+                  {
+                    "type": "string",
+                    "const": "unpublished",
+                    "description": "It holds a commit no remote-tracking ref reaches."
+                  },
+                  {
+                    "type": "string",
+                    "const": "orphaned",
+                    "description": "A detached worktree whose commit no ref holds: the worktree is its only name."
+                  },
+                  {
+                    "type": "string",
+                    "const": "conflicted",
+                    "description": "Merging it conflicts with the trunk."
+                  },
+                  {
+                    "type": "string",
+                    "const": "stale",
+                    "description": "It merges cleanly and the trunk has moved since it left."
+                  },
+                  {
+                    "type": "string",
+                    "const": "ready",
+                    "description": "It merges cleanly and the trunk has not moved: nothing stands before integration."
+                  }
+                ],
+                "description": "The one state a branch or a detached worktree is in.\n\nDeclared in the order `decide` asks its questions, which is the order of what must not\nbe lost: a process, then files, then commits, then a name.\n\n```\nuse majordomus_cli::worktree::reconcile::WorkState;\n\nassert_eq!(WorkState::Unpublished.as_str(), \"unpublished\");\nassert_eq!(serde_json::to_string(&WorkState::Equivalent).unwrap(), \"\\\"equivalent\\\"\");\n```"
+              },
+              "ReconcileStep": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "keep",
+                    "description": "Nothing to do, or nothing that may be done."
+                  },
+                  {
+                    "type": "string",
+                    "const": "commit",
+                    "description": "Commit what the worktree holds: nothing else can carry it."
+                  },
+                  {
+                    "type": "string",
+                    "const": "publish",
+                    "description": "Push the branch: its commits are on this disk only."
+                  },
+                  {
+                    "type": "string",
+                    "const": "name",
+                    "description": "Give the commit a branch: a detached worktree is its only name."
+                  },
+                  {
+                    "type": "string",
+                    "const": "remove_worktree",
+                    "description": "Remove the worktree and keep the branch."
+                  },
+                  {
+                    "type": "string",
+                    "const": "delete_branch",
+                    "description": "Delete the branch, which has no worktree."
+                  },
+                  {
+                    "type": "string",
+                    "const": "remove_worktree_and_delete_branch",
+                    "description": "Remove the worktree, then delete the branch."
+                  },
+                  {
+                    "type": "string",
+                    "const": "refresh",
+                    "description": "Bring the trunk into the branch before it is integrated."
+                  },
+                  {
+                    "type": "string",
+                    "const": "integrate",
+                    "description": "Integrate it: nothing stands in the way."
+                  },
+                  {
+                    "type": "string",
+                    "const": "resolve",
+                    "description": "Resolve its conflict with the trunk, or decide it is superseded."
+                  }
+                ],
+                "description": "The one step a state permits.\n\n```\nuse majordomus_cli::worktree::reconcile::ReconcileStep;\n\n// only three steps remove anything, and they are the only ones `reconcile --apply` takes\nassert!(ReconcileStep::RemoveWorktree.removes());\nassert!(ReconcileStep::DeleteBranch.removes());\nassert!(!ReconcileStep::Publish.removes() && !ReconcileStep::Keep.removes());\n```"
+              },
+              "TrunkRelation": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "landed",
+                    "description": "The trunk reaches the commit: it is in the repository's own history."
+                  },
+                  {
+                    "type": "string",
+                    "const": "equivalent",
+                    "description": "The trunk does not reach it, and merging it would produce the trunk's own tree: every\nchange it carries arrived by another commit."
+                  },
+                  {
+                    "type": "string",
+                    "const": "mergeable",
+                    "description": "Merging it changes the trunk and conflicts on nothing."
+                  },
+                  {
+                    "type": "string",
+                    "const": "conflicting",
+                    "description": "Merging it conflicts with the trunk."
+                  }
+                ],
+                "description": "How a commit stands against the trunk, read from git and from nothing else.\n\n```\nuse majordomus_cli::worktree::reconcile::TrunkRelation;\n\n// the word a document carries; renaming a variant must not rename it\nassert_eq!(TrunkRelation::Equivalent.as_str(), \"equivalent\");\nassert_eq!(serde_json::to_string(&TrunkRelation::Landed).unwrap(), \"\\\"landed\\\"\");\n```"
+              }
+            }
+          }
+        },
+        "provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::worktree"
+        },
+        "exposure": {
+          "mcp": {
+            "tool": "majordomus_worktree_reconciliation"
+          },
+          "http": {
+            "method": "GET",
+            "path": "/api/v1/worktrees/reconciliation"
+          },
+          "cli": {
+            "path": [
+              "worktree",
+              "reconcile"
+            ]
+          }
+        },
+        "availability": "runtime",
+        "visibility": "public",
+        "stability": "behaviorally_verified",
+        "tags": [
+          "worktree",
+          "git",
+          "topology",
+          "reconciliation"
+        ],
+        "benchmark": {
+          "policy": "required"
+        },
+        "cache": {
+          "policy": "disabled"
+        },
+        "execution": {
+          "effect": "read",
+          "cancellable": false,
+          "concurrency": "unrestricted"
+        },
+        "source_path": "apps/majordomus-cli/src/capability/builtin/worktree.rs"
+      },
+      {
         "id": "worktree.status",
         "module": "worktree",
         "kind": "query",
@@ -90767,7 +91140,7 @@
         "title": "adr",
         "description": "Declarative objects of kind 'adr' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 167,
+        "capabilities": 169,
         "capability_ids": []
       },
       {
@@ -91407,7 +91780,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 1156,
+        "capabilities": 1164,
         "capability_ids": []
       },
       {
@@ -91861,7 +92234,7 @@
         "title": "rule",
         "description": "Declarative objects of kind 'rule' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 192,
+        "capabilities": 194,
         "capability_ids": []
       },
       {
@@ -92005,7 +92378,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 672,
+        "capabilities": 681,
         "capability_ids": []
       },
       {
@@ -92083,10 +92456,11 @@
         "description": "Where every linked git worktree of this repository belongs and where each one is. The container is the primary checkout's sibling named with `-wt`, the path under it is the branch name with its hierarchy kept, and both are derived from git's own identity — the common directory, the registered worktrees, the branches — never from a registry, a configuration or the current directory. A worktree somewhere else is a typed diagnostic with a remedy; the migration that repairs it is a command-line operation of the same service.",
         "stability": "behaviorally_verified",
         "source": "builtin",
-        "capabilities": 6,
+        "capabilities": 7,
         "capability_ids": [
           "worktree.inspect",
           "worktree.migration_plan",
+          "worktree.reconciliation",
           "worktree.status",
           "worktree.topology",
           "worktree.trunk",
@@ -92097,7 +92471,7 @@
     ]
   },
   "index": {
-    "fingerprint": "f4e80a4c1809ccdcd3241cfd7f6f7ec516d66a600e926013ee5ed47171281bd3",
+    "fingerprint": "8b29a5fdcbd74f53b727e09a56c3bd2006d41497eb8b55ef3630c1205f1bf572",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -92120,7 +92494,7 @@
       "workflows": ".ai/repo/workflows"
     },
     "by_kind": {
-      "adr": 167,
+      "adr": 169,
       "application": 5,
       "area": 9,
       "audience": 8,
@@ -92137,7 +92511,7 @@
       "gap": 5,
       "implementation": 52,
       "intent": 44,
-      "issue": 1156,
+      "issue": 1164,
       "knowledge": 90,
       "mesh-declaration": 1,
       "milestone": 114,
@@ -92146,12 +92520,12 @@
       "profile": 4,
       "prompt": 5,
       "release-record": 38,
-      "rule": 192,
+      "rule": 194,
       "scope": 1,
       "session": 93,
       "skill": 8,
       "taxonomy": 10,
-      "test": 672,
+      "test": 681,
       "use-case": 49,
       "workspace": 1
     },
@@ -93626,6 +94000,22 @@
         ]
       },
       {
+        "uri": "majordomus://adr/adr-0127",
+        "kind": "adr",
+        "identity": "adr-0127",
+        "title": "Every branch and every worktree has one state and one next step, and a landed branch is deleted on proof",
+        "description": "Every branch and every worktree has one state and one next step, and a landed branch is deleted on proof",
+        "path": ".ai/repo/adrs/0127-every-branch-and-worktree-has-one-state-and-the-proven-ones-are-removed.md",
+        "section": "adrs",
+        "source_class": "adr",
+        "bytes": 8590,
+        "tags": [
+          "worktrees",
+          "operations",
+          "safety"
+        ]
+      },
+      {
         "uri": "majordomus://adr/adr-0129",
         "kind": "adr",
         "identity": "adr-0129",
@@ -93876,6 +94266,25 @@
           "cockpit",
           "ui",
           "pages"
+        ]
+      },
+      {
+        "uri": "majordomus://adr/adr-0148",
+        "kind": "adr",
+        "identity": "adr-0148",
+        "title": "Markdown is drawn by one renderer in the executable, and every drawing on a served surface can be acted on",
+        "description": "Markdown is drawn by one renderer in the executable, and every drawing on a served surface can be acted on",
+        "path": ".ai/repo/adrs/0148-markdown-is-drawn-by-one-renderer-and-a-drawing-is-acted-on.md",
+        "section": "adrs",
+        "source_class": "adr",
+        "bytes": 7024,
+        "tags": [
+          "architecture",
+          "interface",
+          "ui",
+          "cockpit",
+          "markdown",
+          "visualisation"
         ]
       },
       {
@@ -99204,7 +99613,7 @@
         "title": "The Cockpit — the registry, rendered for a person",
         "path": "docs/COCKPIT.md",
         "source_class": "document",
-        "bytes": 52182
+        "bytes": 55469
       },
       {
         "uri": "majordomus://document/docs/COCKPIT_IDE_AUDIT.md",
@@ -99231,7 +99640,7 @@
         "title": "The commit",
         "path": "docs/COMMIT.md",
         "source_class": "document",
-        "bytes": 15832
+        "bytes": 16965
       },
       {
         "uri": "majordomus://document/docs/CONCEPTS.md",
@@ -99321,7 +99730,7 @@
         "title": "Distribution",
         "path": "docs/DISTRIBUTION.md",
         "source_class": "document",
-        "bytes": 40638
+        "bytes": 41227
       },
       {
         "uri": "majordomus://document/docs/DOCTRINE.md",
@@ -99330,7 +99739,7 @@
         "title": "Doctrine",
         "path": "docs/DOCTRINE.md",
         "source_class": "document",
-        "bytes": 24460
+        "bytes": 25252
       },
       {
         "uri": "majordomus://document/docs/DOGFOODING.md",
@@ -99438,7 +99847,7 @@
         "title": "GitHub Pages performance",
         "path": "docs/GITHUB_PAGES_PERFORMANCE.md",
         "source_class": "document",
-        "bytes": 30392
+        "bytes": 31427
       },
       {
         "uri": "majordomus://document/docs/GUIDE.md",
@@ -99519,7 +99928,7 @@
         "title": "`majordomus ui` — the product",
         "path": "docs/MAJORDOMUS_UI.md",
         "source_class": "document",
-        "bytes": 44548
+        "bytes": 45495
       },
       {
         "uri": "majordomus://document/docs/MCP.md",
@@ -99537,7 +99946,7 @@
         "title": "Majordomus Mesh",
         "path": "docs/MESH.md",
         "source_class": "document",
-        "bytes": 90757
+        "bytes": 91087
       },
       {
         "uri": "majordomus://document/docs/MODELS.md",
@@ -99600,7 +100009,7 @@
         "title": "Planning — milestones, issues, and the graph between them",
         "path": "docs/PLANNING.md",
         "source_class": "document",
-        "bytes": 46647
+        "bytes": 46900
       },
       {
         "uri": "majordomus://document/docs/PLAN_STATUS.md",
@@ -99609,7 +100018,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 125242
+        "bytes": 126008
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -99735,7 +100144,7 @@
         "title": "How Majordomus derives its surfaces — one typed reality, many projections",
         "path": "docs/SURFACES.md",
         "source_class": "document",
-        "bytes": 82736
+        "bytes": 82735
       },
       {
         "uri": "majordomus://document/docs/TWO_FOLDER_CONSOLIDATION.md",
@@ -99753,7 +100162,7 @@
         "title": "UI conformance — `scripts/ui`",
         "path": "docs/UI.md",
         "source_class": "document",
-        "bytes": 22219
+        "bytes": 23528
       },
       {
         "uri": "majordomus://document/docs/USE_CASES.md",
@@ -99789,7 +100198,7 @@
         "title": "Worktrees",
         "path": "docs/WORKTREES.md",
         "source_class": "document",
-        "bytes": 53219
+        "bytes": 58096
       },
       {
         "uri": "majordomus://document/docs/claims/a-candidate-is-routed-by-what-it-is-about.md",
@@ -102750,7 +103159,7 @@
         "identity": "lib/common.sh",
         "path": "lib/common.sh",
         "source_class": "library",
-        "bytes": 120793
+        "bytes": 121308
       },
       {
         "uri": "majordomus://implementation/lib/context.sh",
@@ -102798,7 +103207,7 @@
         "identity": "lib/doctor.sh",
         "path": "lib/doctor.sh",
         "source_class": "library",
-        "bytes": 112757
+        "bytes": 113973
       },
       {
         "uri": "majordomus://implementation/lib/doctrine.sh",
@@ -102830,7 +103239,7 @@
         "identity": "lib/gates.sh",
         "path": "lib/gates.sh",
         "source_class": "library",
-        "bytes": 23967
+        "bytes": 24299
       },
       {
         "uri": "majordomus://implementation/lib/handover.sh",
@@ -102854,7 +103263,7 @@
         "identity": "lib/init.sh",
         "path": "lib/init.sh",
         "source_class": "library",
-        "bytes": 25501
+        "bytes": 25977
       },
       {
         "uri": "majordomus://implementation/lib/intent_binding.sh",
@@ -102982,7 +103391,7 @@
         "identity": "lib/rules.sh",
         "path": "lib/rules.sh",
         "source_class": "library",
-        "bytes": 32201
+        "bytes": 32806
       },
       {
         "uri": "majordomus://implementation/lib/rust_bin.sh",
@@ -106915,6 +107324,17 @@
         "bytes": 7338
       },
       {
+        "uri": "majordomus://issue/I2283",
+        "kind": "issue",
+        "identity": "I2283",
+        "title": "Every branch and every worktree has one state and one next step, and the proven ones are carried out",
+        "description": "Give every non-trunk branch and every detached worktree one typed state and one next step, decided from git and the kernel and read by one command and one capability, and let `--apply` carry out the steps whose proof is complete, so that finished work stops accumulating as worktrees and branches nobody can tell from live ones.",
+        "path": ".ai/repo/project/issues/I2283.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 4907
+      },
+      {
         "uri": "majordomus://issue/I2288",
         "kind": "issue",
         "identity": "I2288",
@@ -107386,6 +107806,28 @@
         "section": "project",
         "source_class": "issue",
         "bytes": 3530
+      },
+      {
+        "uri": "majordomus://issue/I2479",
+        "kind": "issue",
+        "identity": "I2479",
+        "title": "The capabilities are searched and faceted: kind, module, stability, surface and text, each counted",
+        "description": "Let a reader of majordomus ui narrow the queries and commands on /ui/capabilities by kind, module, stability, the surface they are projected on and text, with each facet counting what choosing it would show, every control a link or a GET form, and every row opening its declaration without losing the filters.",
+        "path": ".ai/repo/project/issues/I2479.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2242
+      },
+      {
+        "uri": "majordomus://issue/I2480",
+        "kind": "issue",
+        "identity": "I2480",
+        "title": "The home page is the UI's front door: every screen and every surface one click away, in the UI's design",
+        "description": "Let a person who opens a Majordomus process at / land on a screen of majordomus ui, in its frame and design: the version of this executable, the last release, the revision and the capability count, a card for every screen of the UI with the question it answers, and a card for every surface the process serves, leading to it when it answers and naming what builds it when it does not.",
+        "path": ".ai/repo/project/issues/I2480.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3043
       },
       {
         "uri": "majordomus://issue/I2481",
@@ -113171,7 +113613,7 @@
         "path": ".ai/repo/project/issues/I3448.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 3934
+        "bytes": 6173
       },
       {
         "uri": "majordomus://issue/I3449",
@@ -113820,7 +114262,7 @@
         "path": ".ai/repo/project/issues/I3826.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2621
+        "bytes": 4049
       },
       {
         "uri": "majordomus://issue/I3827",
@@ -114040,7 +114482,7 @@
         "path": ".ai/repo/project/issues/I3902.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2916
+        "bytes": 3748
       },
       {
         "uri": "majordomus://issue/I3903",
@@ -114788,7 +115230,7 @@
         "path": ".ai/repo/project/issues/I4012.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2034
+        "bytes": 2733
       },
       {
         "uri": "majordomus://issue/I4013",
@@ -114799,7 +115241,7 @@
         "path": ".ai/repo/project/issues/I4013.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 1784
+        "bytes": 2389
       },
       {
         "uri": "majordomus://issue/I4154",
@@ -114887,7 +115329,7 @@
         "path": ".ai/repo/project/issues/I4221.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2686
+        "bytes": 4309
       },
       {
         "uri": "majordomus://issue/I4222",
@@ -114997,7 +115439,7 @@
         "path": ".ai/repo/project/issues/I4235.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 3316
+        "bytes": 3345
       },
       {
         "uri": "majordomus://issue/I4241",
@@ -115052,7 +115494,7 @@
         "path": ".ai/repo/project/issues/I4252.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 1691
+        "bytes": 1727
       },
       {
         "uri": "majordomus://issue/I4253",
@@ -115066,6 +115508,17 @@
         "bytes": 1645
       },
       {
+        "uri": "majordomus://issue/I4255",
+        "kind": "issue",
+        "identity": "I4255",
+        "title": "A project rule can be enforced by a command the repository names",
+        "description": "A project rule may declare a command (repository-relative, with arguments) as its validator; doctor runs or reconciles it like a dispatched doctrine, and `rules list` reports it enforced.",
+        "path": ".ai/repo/project/issues/I4255.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2138
+      },
+      {
         "uri": "majordomus://issue/I4256",
         "kind": "issue",
         "identity": "I4256",
@@ -115074,7 +115527,7 @@
         "path": ".ai/repo/project/issues/I4256.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2191
+        "bytes": 2505
       },
       {
         "uri": "majordomus://issue/I4257",
@@ -115085,7 +115538,7 @@
         "path": ".ai/repo/project/issues/I4257.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 1529
+        "bytes": 1579
       },
       {
         "uri": "majordomus://issue/I4258",
@@ -115099,6 +115552,17 @@
         "bytes": 1391
       },
       {
+        "uri": "majordomus://issue/I4259",
+        "kind": "issue",
+        "identity": "I4259",
+        "title": "A document's own metadata and a folded YAML scalar are diagnosed, not just refused",
+        "description": "document/v1 accepts an `x-` namespace for adopter keys; a folded or multi-line scalar is refused with a message that says so and shows the one-line form.",
+        "path": ".ai/repo/project/issues/I4259.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1860
+      },
+      {
         "uri": "majordomus://issue/I4261",
         "kind": "issue",
         "identity": "I4261",
@@ -115107,7 +115571,18 @@
         "path": ".ai/repo/project/issues/I4261.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 1925
+        "bytes": 1961
+      },
+      {
+        "uri": "majordomus://issue/I4262",
+        "kind": "issue",
+        "identity": "I4262",
+        "title": "An adopter gets the commit-message guard the projection's rules assume",
+        "description": "init offers a commit-msg line whose policy (issue id required, tracker key pattern, closing keywords refused, branch naming) is declared in the adopter's policy.",
+        "path": ".ai/repo/project/issues/I4262.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1767
       },
       {
         "uri": "majordomus://issue/I4264",
@@ -115393,7 +115868,7 @@
         "path": ".ai/repo/project/issues/I4315.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 3787
+        "bytes": 4912
       },
       {
         "uri": "majordomus://issue/I4316",
@@ -116263,6 +116738,28 @@
         "section": "project",
         "source_class": "issue",
         "bytes": 10629
+      },
+      {
+        "uri": "majordomus://issue/I4525",
+        "kind": "issue",
+        "identity": "I4525",
+        "title": "The deployed stage reads unknown, not 0, while the forge's deployment record is absent or older than the pointer majordomus.dev serves",
+        "description": "plan delivery reports the deployed stage as unknown, naming why, whenever no `served forge` observation exists or the newest one predates the deployment that published the pointer the site serves; it reports a count only from an observation that covers that deployment.",
+        "path": ".ai/repo/project/issues/I4525.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2929
+      },
+      {
+        "uri": "majordomus://issue/I4526",
+        "kind": "issue",
+        "identity": "I4526",
+        "title": "An ADR edited in place only plans; a commit that adds or removes one still delivers",
+        "description": "plan.delivery reads a commit that changes, outside the plan's records and the merge=derived projections, only decision records edited in place (an existing .ai/repo/adrs/NNNN-*.md, git status M, as when an ADR is accepted or superseded) as planning, so that it is never an issue's merged proof; a commit that adds or deletes a decision record, or changes .ai/repo/adrs/README.md, still delivers.",
+        "path": ".ai/repo/project/issues/I4526.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 4243
       },
       {
         "uri": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
@@ -121239,6 +121736,23 @@
         ]
       },
       {
+        "uri": "majordomus://rule/project.a-visualisation-is-interactive@1",
+        "kind": "rule",
+        "identity": "project.a-visualisation-is-interactive@1",
+        "title": "A graph, a chart or a diagram is something a reader can act on, never a picture",
+        "description": "Every drawing a served surface makes — a relationship graph, a chart, a diagram drawn from a Markdown body, a scene — binds a way from its marks to the records they stand for, is drawn from data the server derived and put on the page, and has a text form a reader without the script reads instead; the drawings that predate the rule are a named debt that may shrink and may not grow.",
+        "path": ".ai/repo/rules/project/a-visualisation-is-interactive.v1.md",
+        "section": "rules",
+        "source_class": "rule",
+        "bytes": 4493,
+        "tags": [
+          "ui",
+          "cockpit",
+          "visualisation",
+          "accessibility"
+        ]
+      },
+      {
         "uri": "majordomus://rule/project.a-worker-that-stops-leaves-its-work-behind@2",
         "kind": "rule",
         "identity": "project.a-worker-that-stops-leaves-its-work-behind@2",
@@ -121972,6 +122486,24 @@
           "integration",
           "deployment",
           "evidence"
+        ]
+      },
+      {
+        "uri": "majordomus://rule/project.markdown-is-rendered-once@1",
+        "kind": "rule",
+        "identity": "project.markdown-is-rendered-once@1",
+        "title": "A Markdown body is drawn by one renderer, wherever it is shown",
+        "description": "Every Markdown body a served surface shows — a rule, a decision record, a skill, a use case, a document, a field of a plan record, a pull request's description — is drawn by the crate's one renderer, which writes nothing a record holds as markup, follows only the links it was told lead somewhere, and draws a diagram as its source until the page's script draws the figure.",
+        "path": ".ai/repo/rules/project/markdown-is-rendered-once.v1.md",
+        "section": "rules",
+        "source_class": "rule",
+        "bytes": 4655,
+        "tags": [
+          "ui",
+          "cockpit",
+          "markdown",
+          "projections",
+          "security"
         ]
       },
       {
@@ -124820,6 +125352,22 @@
         "bytes": 2713
       },
       {
+        "uri": "majordomus://test/test/cases/1084_the_capabilities_are_faceted.sh",
+        "kind": "test",
+        "identity": "test/cases/1084_the_capabilities_are_faceted.sh",
+        "path": "test/cases/1084_the_capabilities_are_faceted.sh",
+        "source_class": "case",
+        "bytes": 4290
+      },
+      {
+        "uri": "majordomus://test/test/cases/1085_the_home_page_is_the_front_door.sh",
+        "kind": "test",
+        "identity": "test/cases/1085_the_home_page_is_the_front_door.sh",
+        "path": "test/cases/1085_the_home_page_is_the_front_door.sh",
+        "source_class": "case",
+        "bytes": 4479
+      },
+      {
         "uri": "majordomus://test/test/cases/1086_a_remote_caller_cannot_write.sh",
         "kind": "test",
         "identity": "test/cases/1086_a_remote_caller_cannot_write.sh",
@@ -124948,6 +125496,22 @@
         "bytes": 9254
       },
       {
+        "uri": "majordomus://test/test/cases/1101_markdown_is_rendered_once.sh",
+        "kind": "test",
+        "identity": "test/cases/1101_markdown_is_rendered_once.sh",
+        "path": "test/cases/1101_markdown_is_rendered_once.sh",
+        "source_class": "case",
+        "bytes": 4879
+      },
+      {
+        "uri": "majordomus://test/test/cases/1102_a_visualisation_is_interactive.sh",
+        "kind": "test",
+        "identity": "test/cases/1102_a_visualisation_is_interactive.sh",
+        "path": "test/cases/1102_a_visualisation_is_interactive.sh",
+        "source_class": "case",
+        "bytes": 6097
+      },
+      {
         "uri": "majordomus://test/test/cases/110_lease_reader.sh",
         "kind": "test",
         "identity": "test/cases/110_lease_reader.sh",
@@ -125065,7 +125629,7 @@
         "identity": "test/cases/125_rule_proof.sh",
         "path": "test/cases/125_rule_proof.sh",
         "source_class": "case",
-        "bytes": 14578
+        "bytes": 14600
       },
       {
         "uri": "majordomus://test/test/cases/127_briefing_freshness.sh",
@@ -126081,7 +126645,7 @@
         "identity": "test/cases/3049_a_second_workers_record_lands_on_the_first_workers_task.sh",
         "path": "test/cases/3049_a_second_workers_record_lands_on_the_first_workers_task.sh",
         "source_class": "case",
-        "bytes": 17631
+        "bytes": 17947
       },
       {
         "uri": "majordomus://test/test/cases/304_a_provider_is_declared_once.sh",
@@ -127140,6 +127704,14 @@
         "bytes": 3010
       },
       {
+        "uri": "majordomus://test/test/cases/3721_a_deploy_keeps_every_pre_release_it_serves.sh",
+        "kind": "test",
+        "identity": "test/cases/3721_a_deploy_keeps_every_pre_release_it_serves.sh",
+        "path": "test/cases/3721_a_deploy_keeps_every_pre_release_it_serves.sh",
+        "source_class": "case",
+        "bytes": 6318
+      },
+      {
         "uri": "majordomus://test/test/cases/3723_the_graph_text_reads_each_edge_its_way.sh",
         "kind": "test",
         "identity": "test/cases/3723_the_graph_text_reads_each_edge_its_way.sh",
@@ -127796,6 +128368,14 @@
         "bytes": 2298
       },
       {
+        "uri": "majordomus://test/test/cases/4255_a_project_rule_runs_its_command.sh",
+        "kind": "test",
+        "identity": "test/cases/4255_a_project_rule_runs_its_command.sh",
+        "path": "test/cases/4255_a_project_rule_runs_its_command.sh",
+        "source_class": "case",
+        "bytes": 3386
+      },
+      {
         "uri": "majordomus://test/test/cases/4257_init_keeps_a_hand_written_provider_file.sh",
         "kind": "test",
         "identity": "test/cases/4257_init_keeps_a_hand_written_provider_file.sh",
@@ -127812,12 +128392,28 @@
         "bytes": 1507
       },
       {
+        "uri": "majordomus://test/test/cases/4259_a_wrapped_value_is_named.sh",
+        "kind": "test",
+        "identity": "test/cases/4259_a_wrapped_value_is_named.sh",
+        "path": "test/cases/4259_a_wrapped_value_is_named.sh",
+        "source_class": "case",
+        "bytes": 3103
+      },
+      {
         "uri": "majordomus://test/test/cases/4261_issues_trace_outward.sh",
         "kind": "test",
         "identity": "test/cases/4261_issues_trace_outward.sh",
         "path": "test/cases/4261_issues_trace_outward.sh",
         "source_class": "case",
         "bytes": 3785
+      },
+      {
+        "uri": "majordomus://test/test/cases/4262_an_adopter_commit_is_judged.sh",
+        "kind": "test",
+        "identity": "test/cases/4262_an_adopter_commit_is_judged.sh",
+        "path": "test/cases/4262_an_adopter_commit_is_judged.sh",
+        "source_class": "case",
+        "bytes": 2381
       },
       {
         "uri": "majordomus://test/test/cases/4264_adr_check_names_what_it_skipped.sh",
@@ -127993,7 +128589,7 @@
         "identity": "test/cases/488_rustdoc_discoverable.sh",
         "path": "test/cases/488_rustdoc_discoverable.sh",
         "source_class": "case",
-        "bytes": 13001
+        "bytes": 13113
       },
       {
         "uri": "majordomus://test/test/cases/489_rustdoc_deploy.sh",
@@ -128458,6 +129054,14 @@
         "path": "test/cases/611_the_reclaim_refuses_what_it_cannot_prove.sh",
         "source_class": "case",
         "bytes": 8188
+      },
+      {
+        "uri": "majordomus://test/test/cases/612_every_worktree_has_a_disposition.sh",
+        "kind": "test",
+        "identity": "test/cases/612_every_worktree_has_a_disposition.sh",
+        "path": "test/cases/612_every_worktree_has_a_disposition.sh",
+        "source_class": "case",
+        "bytes": 11807
       },
       {
         "uri": "majordomus://test/test/cases/617_a_case_can_name_what_it_covers.sh",
@@ -129089,7 +129693,7 @@
         "identity": "test/cases/85_ui_conformance.sh",
         "path": "test/cases/85_ui_conformance.sh",
         "source_class": "case",
-        "bytes": 19525
+        "bytes": 25265
       },
       {
         "uri": "majordomus://test/test/cases/861_a_successor_that_landed_supersedes.sh",
@@ -129233,7 +129837,7 @@
         "identity": "test/cases/89_web_surface.sh",
         "path": "test/cases/89_web_surface.sh",
         "source_class": "case",
-        "bytes": 11344
+        "bytes": 11995
       },
       {
         "uri": "majordomus://test/test/cases/900_prose_states_no_version.sh",
@@ -129593,7 +130197,7 @@
         "identity": "test/cases/97_site_probe_attribution.sh",
         "path": "test/cases/97_site_probe_attribution.sh",
         "source_class": "case",
-        "bytes": 3366
+        "bytes": 5646
       },
       {
         "uri": "majordomus://test/test/cases/97_vendor_evidence.sh",
@@ -130299,7 +130903,7 @@
       "identity": [
         "id"
       ],
-      "objects": 167
+      "objects": 169
     },
     {
       "name": "application",
@@ -130462,7 +131066,7 @@
       "identity": [
         "id"
       ],
-      "objects": 1156
+      "objects": 1164
     },
     {
       "name": "knowledge",
@@ -130559,7 +131163,7 @@
         "id",
         "version"
       ],
-      "objects": 192
+      "objects": 194
     },
     {
       "name": "scope",
@@ -130624,7 +131228,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 672
+      "objects": 681
     },
     {
       "name": "use-case",
@@ -143093,6 +143697,210 @@
                 "command": "majordomus worktree trunk",
                 "setup": [],
                 "expectation": "exits 0; prints unmeasured, no remote-tracking branch"
+              }
+            ],
+            "subcommands": []
+          },
+          {
+            "path": [
+              "majordomus",
+              "worktree",
+              "reconcile"
+            ],
+            "route": "/docs/cli/worktree/reconcile/",
+            "executable": true,
+            "usage": "majordomus worktree reconcile [OPTIONS] [SELECTOR]",
+            "about": "What becomes of every branch and every worktree: one state each (active, dirty, unreadable, unpublished, orphaned, unstarted, merged, equivalent, conflicted, stale, ready) decided from git and the kernel, never from an age, with the readings that decided it, the one step it permits and the command that takes it. With a selector, that one subject and why. Changes nothing without --apply",
+            "args": [
+              {
+                "name": "selector",
+                "positional": true,
+                "help": "One branch, or the path of one detached worktree: print its state and every reason",
+                "value_name": "SELECTOR",
+                "takes_value": true,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "apply",
+                "long": "apply",
+                "positional": false,
+                "help": "Take the steps whose proof is complete, each subject measured again first: remove the clean worktree of a branch the trunk contains, and delete a branch whose every commit a remote holds and whose merge would change nothing. Uncommitted work, a worktree a process works in and an unpublished commit are never touched",
+                "value_name": "APPLY",
+                "takes_value": false,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": [
+                  "false"
+                ]
+              },
+              {
+                "name": "include_scratch",
+                "long": "include-scratch",
+                "positional": false,
+                "help": "With --apply, also remove scratch checkouts and detached worktrees whose proof is complete. Without it they are listed and left to whoever made them",
+                "value_name": "INCLUDE_SCRATCH",
+                "takes_value": false,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": [
+                  "false"
+                ]
+              },
+              {
+                "name": "repo",
+                "long": "repo",
+                "positional": false,
+                "help": "Start the search for the repository root here (default: the current directory)",
+                "value_name": "PATH",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "discovery",
+                "long": "discovery",
+                "positional": false,
+                "help": "How declarative files are enumerated",
+                "value_name": "DISCOVERY",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "vcs",
+                    "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
+                  },
+                  {
+                    "name": "filesystem",
+                    "help": "A walk of the work tree with the same glob semantics; untracked files included"
+                  }
+                ],
+                "defaults": [
+                  "vcs"
+                ]
+              },
+              {
+                "name": "strict",
+                "long": "strict",
+                "positional": false,
+                "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+                "value_name": "STRICT",
+                "takes_value": false,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": [
+                  "false"
+                ]
+              },
+              {
+                "name": "share",
+                "long": "share",
+                "positional": false,
+                "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+                "value_name": "DIR",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "format",
+                "long": "format",
+                "positional": false,
+                "help": "Output shape",
+                "value_name": "FORMAT",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "text",
+                    "help": "Lines for a person"
+                  },
+                  {
+                    "name": "json",
+                    "help": "One JSON document, deterministic"
+                  }
+                ],
+                "defaults": [
+                  "text"
+                ]
+              }
+            ],
+            "examples": [
+              {
+                "id": "worktree-reconcile-plan",
+                "title": "What becomes of every branch and worktree",
+                "description": "Every non-trunk branch and every detached worktree with the one state git supports for it and the one step that state permits. A branch cut from the trunk and never published is `unstarted` and kept: it reads exactly like one that landed, and only having been published tells them apart. The reading removes nothing.",
+                "argv": [
+                  "worktree",
+                  "reconcile"
+                ],
+                "command": "majordomus worktree reconcile",
+                "setup": [
+                  {
+                    "argv": [
+                      "worktree",
+                      "create",
+                      "feature/improve-cli"
+                    ],
+                    "command": "majordomus worktree create feature/improve-cli"
+                  }
+                ],
+                "expectation": "exits 0; prints unstarted, feature/improve-cli, nothing to reconcile"
+              },
+              {
+                "id": "worktree-reconcile-explain",
+                "title": "Why is this worktree still here?",
+                "description": "With a selector the answer is one subject: its state, its step, and every reading that decided it, one per line.",
+                "argv": [
+                  "worktree",
+                  "reconcile",
+                  "feature/improve-cli"
+                ],
+                "command": "majordomus worktree reconcile feature/improve-cli",
+                "setup": [
+                  {
+                    "argv": [
+                      "worktree",
+                      "create",
+                      "feature/improve-cli"
+                    ],
+                    "command": "majordomus worktree create feature/improve-cli"
+                  }
+                ],
+                "expectation": "exits 0; prints unstarted, the trunk reaches the branch"
+              },
+              {
+                "id": "worktree-reconcile-apply",
+                "title": "Carry out what is proven, and nothing else",
+                "description": "`--apply` takes only the steps whose proof is complete, each subject measured again immediately before it goes. Here nothing is removable on proof, so it removes nothing; run twice, the second run reads the same.",
+                "argv": [
+                  "worktree",
+                  "reconcile",
+                  "--apply"
+                ],
+                "command": "majordomus worktree reconcile --apply",
+                "setup": [
+                  {
+                    "argv": [
+                      "worktree",
+                      "create",
+                      "feature/improve-cli"
+                    ],
+                    "command": "majordomus worktree create feature/improve-cli"
+                  }
+                ],
+                "expectation": "exits 0; prints 0 worktree(s) removed, 0 branch(es) deleted, 0 refused"
               }
             ],
             "subcommands": []
@@ -168530,6 +169338,23 @@
         "output": "MigrationPlan"
       },
       {
+        "name": "majordomus_worktree_reconciliation",
+        "id": "worktree.reconciliation",
+        "title": "What becomes of every branch and every worktree",
+        "description": "Every non-trunk branch and every detached worktree with the one state git and the kernel support for it — active (a process works inside), dirty (files no commit carries), unreadable (a reading failed, so nothing is decided), unpublished (a commit no remote holds), orphaned (a detached worktree is its commit's only name), unstarted, merged (the trunk reaches it), equivalent (merging it changes nothing), conflicted, stale, ready — the readings that decided it, the one step it permits, the command a person runs to take that step, and whether it is removable on proof alone. Decided against the remote-tracking branch the trunk follows, never from an age or a name. A read: it removes nothing, and a removal it names is git's own guarded form (`git worktree remove` without `--force`, `git update-ref -d` on the judged commit). Taking the proven steps is the command line's `majordomus worktree reconcile --apply`, which measures each subject again first.",
+        "kind": "query",
+        "read_only": true,
+        "effect": "read",
+        "hints": {
+          "read_only": true,
+          "destructive": false,
+          "idempotent": true,
+          "open_world": false
+        },
+        "input": "Empty",
+        "output": "Reconciliation"
+      },
+      {
         "name": "majordomus_worktree_status",
         "id": "worktree.status",
         "title": "Where this is, and whether that is where it belongs",
@@ -170249,6 +171074,12 @@
         "method": "GET",
         "path": "/api/v1/worktrees/migration",
         "id": "worktree.migration_plan",
+        "kind": "query"
+      },
+      {
+        "method": "GET",
+        "path": "/api/v1/worktrees/reconciliation",
+        "id": "worktree.reconciliation",
         "kind": "query"
       },
       {
@@ -177589,6 +178420,35 @@
         "route": "GET /api/v1/worktrees/migration"
       },
       {
+        "key": "worktree.reconciliation|direct|default",
+        "kind": "capability",
+        "transport": "direct",
+        "id": "worktree.reconciliation",
+        "module": "worktree",
+        "case": "default",
+        "cached": false
+      },
+      {
+        "key": "worktree.reconciliation|mcp|default",
+        "kind": "capability",
+        "transport": "mcp",
+        "id": "worktree.reconciliation",
+        "module": "worktree",
+        "case": "default",
+        "cached": false,
+        "tool": "majordomus_worktree_reconciliation"
+      },
+      {
+        "key": "worktree.reconciliation|http|default",
+        "kind": "capability",
+        "transport": "http",
+        "id": "worktree.reconciliation",
+        "module": "worktree",
+        "case": "default",
+        "cached": false,
+        "route": "GET /api/v1/worktrees/reconciliation"
+      },
+      {
         "key": "worktree.status|direct|default",
         "kind": "capability",
         "transport": "direct",
@@ -182720,6 +183580,27 @@
           "cases": 1
         },
         {
+          "subject": "worktree.reconciliation",
+          "module": "worktree",
+          "transport": "direct",
+          "state": "covered",
+          "cases": 1
+        },
+        {
+          "subject": "worktree.reconciliation",
+          "module": "worktree",
+          "transport": "mcp",
+          "state": "covered",
+          "cases": 1
+        },
+        {
+          "subject": "worktree.reconciliation",
+          "module": "worktree",
+          "transport": "http",
+          "state": "covered",
+          "cases": 1
+        },
+        {
           "subject": "worktree.status",
           "module": "worktree",
           "transport": "direct",
@@ -182904,22 +183785,22 @@
       ],
       "tallies": {
         "direct": {
-          "required": 220,
-          "covered": 181,
+          "required": 221,
+          "covered": 182,
           "missing": 0,
           "waived": 39,
           "inapplicable": 0
         },
         "http": {
-          "required": 212,
-          "covered": 181,
+          "required": 213,
+          "covered": 182,
           "missing": 0,
           "waived": 31,
           "inapplicable": 0
         },
         "mcp": {
-          "required": 206,
-          "covered": 176,
+          "required": 207,
+          "covered": 177,
           "missing": 0,
           "waived": 30,
           "inapplicable": 0
@@ -182932,8 +183813,8 @@
           "inapplicable": 0
         },
         "total": {
-          "required": 652,
-          "covered": 552,
+          "required": 655,
+          "covered": 555,
           "missing": 0,
           "waived": 100,
           "inapplicable": 0

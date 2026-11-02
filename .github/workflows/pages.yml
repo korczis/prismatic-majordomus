@@ -725,6 +725,10 @@ jobs:
       - id: public
         continue-on-error: true
         timeout-minutes: 11
+        # verify reads GitHub's own Pages build through gh to say that it is queued and since
+        # when (I2661); without a token that read fails and only the generic wait is reported
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           t0="$(date -u +%s)"
           MJ_PAGES_WAITED=/dev/null scripts/pages verify --commit "$GITHUB_SHA" --timeout 600 --smoke

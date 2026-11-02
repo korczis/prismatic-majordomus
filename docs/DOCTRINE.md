@@ -205,7 +205,7 @@ Not every doctrine is watchable, and the registry says which by omitting `watch`
 down on purpose, and the opposite of drift. A questions file that no longer *parses* is
 drift, and that is a different doctrine.
 
-## Three enforcement modes
+## Four enforcement modes
 
 A rule says how it is enforced in its own `x-majordomus` block, and the shape of that block
 *is* the mode — there is no word to declare and no word to get wrong:
@@ -213,10 +213,18 @@ A rule says how it is enforced in its own `x-majordomus` block, and the shape of
 | mode | the block names | who runs it | what the repository can show |
 |---|---|---|---|
 | **dispatched** | `validator`, with `category`, `exit_code`, `enforced_by` and at least one test | `mj_doctrine_dispatch`, at the commands `enforced_by` names | the validator ran, and the cases prove it decides correctly |
+| **entry** | `enforcement`, the name of an entry under the policy's `enforcement:`, and no validator | the repository's own command, at the hook or CI job the entry names | doctor resolves the name and verifies the entry is wired; the cases, when named, prove it |
 | **gated** | `tests`, and no validator | a CI gate, or the behavioural suite | the cases exist and a gate runs them |
 | **reviewed** | `reviewed_because`, and neither of the above | a person | nothing executable — and the reason why not |
 
-The third exists because some rules genuinely have no machine expression. *The provenance
+The entry mode is how a project's own rule is enforced. A validator is a function in this
+tool's source, which no adopting repository can add to; what such a repository already has
+is the command that checks the rule, declared in its policy as an enforcement entry with the
+hook or job that runs it. The rule names that entry, `rules list` reports it as enforced by
+it, and doctor refuses a name the policy does not declare — so the rule is held by something
+that exists and is invoked, not by its own front matter.
+
+The reviewed mode exists because some rules genuinely have no machine expression. *The provenance
 of what was written* is one; *whether a mechanism earns its cost* is another. Before it,
 those sat in a debt list called `rule-proof-baseline.txt` alongside rules that merely had
 not been got round to, and the two were indistinguishable — which is the worse failure,

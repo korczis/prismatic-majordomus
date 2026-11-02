@@ -253,6 +253,159 @@
     @apply m-2;
   }
 
+  /* ------------------------------------------------------------------ markdown */
+
+  /* A Markdown body, drawn by the one renderer (apps/majordomus-cli/src/markdown.rs): a
+     rule's rationale, a decision record, a skill, a use case, a document, a pull request's
+     description. One reading measure and one rhythm wherever a body is shown, so the same
+     record looks the same on every page that shows it. */
+  .mj-md {
+    @apply max-w-prose text-dense leading-relaxed;
+    color: var(--mj-body);
+  }
+  .mj-md > * + * {
+    @apply mt-3;
+  }
+  .mj-md-heading {
+    @apply mt-6 font-semibold leading-snug tracking-tight;
+    color: var(--mj-fg);
+  }
+  .mj-md > .mj-md-heading:first-child {
+    @apply mt-0;
+  }
+  h1.mj-md-heading,
+  h2.mj-md-heading {
+    @apply text-xl;
+  }
+  h3.mj-md-heading {
+    @apply text-lg;
+  }
+  h4.mj-md-heading {
+    @apply text-base;
+  }
+  h5.mj-md-heading,
+  h6.mj-md-heading {
+    @apply text-small uppercase tracking-caps;
+    color: var(--mj-muted);
+  }
+  .mj-md ul {
+    @apply list-disc space-y-1 pl-5;
+  }
+  .mj-md ol {
+    @apply list-decimal space-y-1 pl-5;
+  }
+  .mj-md li > ul,
+  .mj-md li > ol {
+    @apply mt-1;
+  }
+  .mj-md li:has(> input[type="checkbox"]) {
+    @apply -ml-5 list-none;
+  }
+  .mj-md li > input[type="checkbox"] {
+    @apply mr-2 align-middle;
+    accent-color: var(--mj-accent);
+  }
+  .mj-md-link,
+  .mj-md-ref,
+  .mj-md-image {
+    @apply underline decoration-1 underline-offset-2;
+    color: var(--mj-accent);
+  }
+  .mj-md-link:hover,
+  .mj-md-ref:hover,
+  .mj-md-image:hover {
+    @apply decoration-2;
+  }
+  .mj-md-ref {
+    @apply font-mono text-small;
+  }
+  /* an address nothing here follows: the label is read, the address is its title */
+  .mj-md-unlinked {
+    @apply underline decoration-dotted underline-offset-2;
+    color: var(--mj-muted);
+  }
+  /* Inline code is most often an identifier with nowhere to break: a rule id such as
+     `majordomus.never-reported-is-not-green` or a case path in a rule's body pushed
+     /cockpit/object 93px past a 320px viewport. Like `.mj-identity`, it breaks anywhere. */
+  .mj-md-code {
+    @apply rounded-sm px-1 py-0.5 font-mono text-[0.9em] [overflow-wrap:anywhere];
+    background: var(--mj-sunken);
+    color: var(--mj-fg);
+  }
+  .mj-md-pre {
+    @apply max-w-none;
+  }
+  .mj-md-quote {
+    @apply rounded-r-md py-1 pl-3;
+    border-left: 3px solid var(--mj-line);
+    color: var(--mj-muted);
+  }
+  .mj-md-quote > * + * {
+    @apply mt-2;
+  }
+  .mj-md-quote--note,
+  .mj-md-quote--tip,
+  .mj-md-quote--important {
+    border-left-color: var(--mj-accent);
+    background: var(--mj-accent-soft);
+    color: var(--mj-body);
+  }
+  .mj-md-quote--warning,
+  .mj-md-quote--caution {
+    border-left-color: var(--mj-status-line, var(--mj-line));
+    background: var(--mj-sunken);
+    color: var(--mj-fg);
+  }
+  .mj-md-rule {
+    @apply my-5 border-0;
+    border-top: 1px solid var(--mj-line);
+  }
+  .mj-md .mj-table-wrap {
+    @apply max-w-none;
+  }
+  .mj-md-left {
+    @apply text-left;
+  }
+  .mj-md-center {
+    @apply text-center;
+  }
+  .mj-md-right {
+    @apply text-right;
+  }
+  /* A diagram: its source until the page's script draws it, then the figure. Either way it
+     scrolls inside itself and never widens the page. */
+  .mj-md-diagram {
+    @apply max-w-none overflow-auto rounded-md p-3 font-mono text-small leading-snug;
+    background: var(--mj-sunken);
+    border: 1px solid var(--mj-line);
+    color: var(--mj-fg);
+  }
+  .mj-md-diagram[data-mj-drawn] {
+    @apply font-sans;
+    background: var(--mj-raised);
+  }
+  .mj-md-diagram svg {
+    @apply mx-auto h-auto max-w-full;
+  }
+  /* a node that names a record is a link to it: it says so to a pointer and to a keyboard */
+  .mj-diagram-link {
+    @apply cursor-pointer;
+  }
+  .mj-diagram-link:hover,
+  .mj-diagram-link:focus-visible {
+    outline: 2px solid var(--mj-accent);
+    outline-offset: 2px;
+  }
+  .mj-diagram-toggle {
+    @apply float-right rounded-sm px-2 py-0.5 font-mono text-label;
+    background: var(--mj-raised);
+    border: 1px solid var(--mj-line);
+    color: var(--mj-muted);
+  }
+  .mj-diagram-toggle:hover {
+    color: var(--mj-fg);
+  }
+
   /* --------------------------------------------------------------------- forms */
 
   .mj-field {
@@ -310,8 +463,17 @@
     @apply px-2 py-1 text-label;
     color: var(--mj-muted);
   }
+  /* A button that cannot be pressed yet says so in token colours, never by fading. The move
+     form renders its buttons disabled and its script enables them once loaded; under reduced
+     motion the base layer makes that change a 0.01ms transition, so for a frame an enabled
+     button still wears its disabled look. Faded, that look was unreadable: the UI audit found
+     the move panel's buttons below contrast at 320px. Every state of a button is a pair the
+     contrast measurement holds (design-check): here faint on sunken, whatever the variant. */
   .mj-button[disabled] {
-    @apply cursor-not-allowed opacity-50;
+    @apply cursor-not-allowed;
+    background: var(--mj-sunken);
+    border-color: var(--mj-line);
+    color: var(--mj-faint);
   }
 
   /* ------------------------------------------------------------------ swatches */

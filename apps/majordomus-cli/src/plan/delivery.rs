@@ -41,13 +41,16 @@
 //! # Planning is not delivery
 //!
 //! A commit or merge that names an issue while changing only the plan's own records
-//! (`.ai/repo/project/`) and what is derived from them (every path `.gitattributes` marks
-//! `merge=derived`) planned the issue, recorded it or moved it; it delivered nothing, and it
-//! is never a merge proof (I2749). Each naming commit is read against its first parent, in
-//! one `git diff-tree --stdin` for all of them; the newest one passed over is reported as
-//! `planned`, so a reader sees why a commit naming the issue did not make it `merged`. A
-//! commit whose parent is unknown, or a read that fails, is never called planning: the
-//! answer can only be less wrong than it was, never newly wrong.
+//! (`.ai/repo/project/`), what is derived from them (every path `.gitattributes` marks
+//! `merge=derived`) and decision records it edits in place (`.ai/repo/adrs/NNNN-*.md`
+//! modified, as when an ADR is accepted) planned the issue, recorded it or moved it; it
+//! delivered nothing, and it is never a merge proof (I2749). A decision record added or
+//! removed is a decision written, which an issue can exist to deliver, so it still delivers.
+//! Each naming commit is read against its first parent, in one `git diff-tree --stdin` for
+//! all of them; the newest one passed over is reported as `planned`, so a reader sees why a
+//! commit naming the issue did not make it `merged`. A commit whose parent is unknown, or a
+//! read that fails, is never called planning: the answer can only be less wrong than it
+//! was, never newly wrong.
 //!
 //! # Two ways to observe
 //!
@@ -661,10 +664,31 @@ const PLANNING_PATHS: [&str; 2] = [
     ":(exclude,attr:merge=derived)",
 ];
 
+/// Where the architecture decision records live. A record edited in place is a decision
+/// that moved — proposed to accepted, superseded, a `## Status` paragraph — which is the
+/// plan's own record of it, as an issue's is; a record added or removed is a decision
+/// written, which an issue can exist to deliver (I4307 proposes ADR 0228).
+const DECISION_RECORDS: &str = ".ai/repo/adrs/";
+
+/// Whether `path` is an architecture decision record, `NNNN-<slug>.md` directly under
+/// [`DECISION_RECORDS`] — not the directory's README nor anything below it.
+fn is_decision_record(path: &str) -> bool {
+    path.strip_prefix(DECISION_RECORDS).is_some_and(|name| {
+        let b = name.as_bytes();
+        b.len() > 4
+            && b[..4].iter().all(u8::is_ascii_digit)
+            && b[4] == b'-'
+            && name.ends_with(".md")
+            && !name.contains('/')
+    })
+}
+
 /// Which of `commits` (each with its first parent) change nothing outside
-/// [`PLANNING_PATHS`]. One `git diff-tree --stdin` reads every pair, and prints a commit's id
-/// only when its change reaches some other path; a commit with no known parent is never
-/// planning.
+/// [`PLANNING_PATHS`] but decision records edited in place ([`DECISION_RECORDS`]). One
+/// `git diff-tree --stdin` reads every pair, and prints a commit's id, then each path its
+/// change reaches outside [`PLANNING_PATHS`] with its status; a commit is planning when no
+/// such path is printed, or each one is a decision record modified (`M`). A commit with no
+/// known parent is never planning.
 fn planning_only(root: &Path, commits: &[(&str, &str)]) -> Result<BTreeSet<String>, String> {
     use std::io::Write;
     use std::process::Stdio;
@@ -672,7 +696,7 @@ fn planning_only(root: &Path, commits: &[(&str, &str)]) -> Result<BTreeSet<Strin
         return Ok(BTreeSet::new());
     }
     let input: String = commits.iter().map(|(c, p)| format!("{c} {p}\n")).collect();
-    let mut args = vec!["diff-tree", "--stdin", "-r", "--name-only", "--", "."];
+    let mut args = vec!["diff-tree", "--stdin", "-r", "--name-status", "--", "."];
     args.extend(PLANNING_PATHS);
     let out = crate::git::read_only(root)
         .args(&args)
@@ -696,13 +720,22 @@ fn planning_only(root: &Path, commits: &[(&str, &str)]) -> Result<BTreeSet<Strin
             String::from_utf8_lossy(&out.stderr).trim()
         ));
     }
-    // diff-tree prints commit ids, which are hex: a lossy reading loses nothing
+    // a commit's line is its hex id, and each path follows as `<status>\t<path>`, quoted
+    // when it is not plain ASCII: a lossy reading only ever makes a path read as delivery
     let stdout = String::from_utf8_lossy(&out.stdout);
-    let printed: BTreeSet<&str> = stdout.lines().collect();
+    let mut delivering: BTreeSet<&str> = BTreeSet::new();
+    let mut commit: Option<&str> = None;
+    for line in stdout.lines() {
+        match line.split_once('\t') {
+            None => commit = Some(line),
+            Some(("M", path)) if is_decision_record(path) => {}
+            Some(_) => delivering.extend(commit),
+        }
+    }
     Ok(commits
         .iter()
         .map(|(c, _)| *c)
-        .filter(|c| !printed.contains(c))
+        .filter(|c| !delivering.contains(c))
         .map(str::to_string)
         .collect())
 }
@@ -1282,6 +1315,70 @@ mod tests {
             planning_only(dir.path(), &[]).unwrap().is_empty(),
             "no commits asks nothing"
         );
+    }
+
+    /// A decision record edited in place moves a decision, as 0c65f3a13d7 accepted ADR 0091
+    /// beside the records of I4468 and I4469: that only plans. A decision record added is a
+    /// decision written (I4307 proposes ADR 0228), and a change beside the records delivers.
+    #[test]
+    fn a_decision_record_edited_in_place_only_plans_and_one_added_delivers() {
+        let dir = tempfile::tempdir().unwrap();
+        let d = dir.path();
+        let write = |path: &str, text: &str| {
+            let path = d.join(path);
+            std::fs::create_dir_all(path.parent().unwrap()).unwrap();
+            std::fs::write(path, text).unwrap();
+        };
+        let commit = |message: &str| {
+            sh_git(d, &["add", "-A"]);
+            sh_git(d, &["commit", "-q", "-m", message]);
+            sh_git(d, &["rev-parse", "HEAD"])
+        };
+        sh_git(d, &["init", "-q", "-b", "trunk"]);
+        write(".ai/repo/adrs/0001-a-decision.md", "status: proposed\n");
+        write(".ai/repo/adrs/README.md", "The decisions.\n");
+        write("lib/piece.sh", "echo one\n");
+        let base = commit("chore: a proposed decision");
+
+        write(
+            ".ai/repo/adrs/0001-a-decision.md",
+            "status: accepted\n\n## Status\n",
+        );
+        write(".ai/repo/project/issues/I0001.yaml", "id: I0001\n");
+        let accepted = commit("chore(plan): I0001 is planned, and ADR 0001 is accepted");
+
+        write(".ai/repo/adrs/0001-a-decision.md", "status: superseded\n");
+        write("lib/piece.sh", "echo two\n");
+        let beside_code = commit("feat: the piece moves (I0001)");
+
+        write(
+            ".ai/repo/adrs/0002-another-decision.md",
+            "status: proposed\n",
+        );
+        write(".ai/repo/project/issues/I0002.yaml", "id: I0002\n");
+        let proposed = commit("docs(adr): ADR 0002 is proposed (I0002)");
+
+        write(".ai/repo/adrs/README.md", "The decisions, indexed.\n");
+        let readme = commit("docs(adr): the index of decisions (I0003)");
+
+        let pairs = [
+            (accepted.as_str(), base.as_str()),
+            (beside_code.as_str(), accepted.as_str()),
+            (proposed.as_str(), beside_code.as_str()),
+            (readme.as_str(), proposed.as_str()),
+        ];
+        assert_eq!(
+            planning_only(d, &pairs).unwrap(),
+            BTreeSet::from([accepted.clone()]),
+            "only the commit that accepts a decision beside the plan's records plans"
+        );
+        assert!(is_decision_record(
+            ".ai/repo/adrs/0091-knowledge-is-derived.md"
+        ));
+        assert!(!is_decision_record(".ai/repo/adrs/README.md"));
+        assert!(!is_decision_record(".ai/repo/adrs/0091-x/notes.md"));
+        assert!(!is_decision_record(".ai/repo/adrs/091-short.md"));
+        assert!(!is_decision_record("docs/adrs/0091-elsewhere.md"));
     }
 
     fn issue(id: &str, slug: &str) -> PlanIssue {

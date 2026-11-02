@@ -529,8 +529,11 @@ furthest stage proved, each with the object that proved it and when it was obser
 
 
 Planning is not delivery (I2749). A commit or merge that names an issue while changing only
-the plan's records (`.ai/repo/project/`) and the projections `.gitattributes` marks
-`merge=derived` planned, rescoped or recorded the issue; it is never its `merged` proof. Each
+the plan's records (`.ai/repo/project/`), the projections `.gitattributes` marks
+`merge=derived` and decision records it edits in place (an existing `.ai/repo/adrs/NNNN-*.md`
+modified, as when an ADR is accepted or superseded) planned, rescoped or recorded the issue;
+it is never its `merged` proof. A decision record added or removed is a decision written,
+which an issue can exist to deliver, so that commit still delivers. Each
 naming commit is read against its first parent (for a merge, the whole pull request), the
 newest one passed over is reported as `planned` with how many there were, and the `planning`
 source says how many commits were set aside. A pull request found only by its head commit,

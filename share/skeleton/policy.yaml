@@ -189,6 +189,21 @@ use_cases:
     claims: advisory
     mcp_tools: advisory
 
+# What a commit message is held to (docs/COMMIT.md). `majordomus commit validate <file>`
+# judges one message; the commit-msg line init prints asks it before git stores the commit.
+# A repository whose plan binds every change to an issue sets reference_required to error;
+# one that projects its plan onto a forge sets closing_keyword to error, because a forge
+# closes an issue the moment a commit saying `Closes #12` lands, and the layer, not a merge,
+# decides when an issue is done. Each judgement is off, info, warning or error.
+commit:
+  subject_max_chars: 72
+  scope_unknown: warning
+  fix_requires_test: warning
+  reference_unresolved: error
+  breaking_unexplained: error
+  reference_required: off
+  closing_keyword: off
+
 # Every entry here is reconciled by `majordomus doctor`: the path must resolve (on PATH,
 # repo-relative, or absolute in the hook line), be executable, and be invoked by the
 # artifact named in wired_by without its exit code being swallowed.

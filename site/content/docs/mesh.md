@@ -480,14 +480,18 @@ runtime stores and relays both kinds without reading them.
 Every server restart is a new stream, so a journal that kept everything would grow without
 bound and a machine would fill its 64-stream quota by running. Compaction drops the streams
 nothing needs any more. Each runtime runs it on its own, every sixty heartbeats (five minutes
-at the defaults), and only when its journal holds more than 20 000 events or 768 streams or
+at the defaults) and at once on the next heartbeat after an event was refused for capacity, and
+only when its journal holds more than 20 000 events or 768 streams or
 when one node holds 48 streams or 15 000 events — then that node's streams alone are due. A
 node's own crowding matters because the journal-wide bound is no larger than one node's quota
 of 20 000 events: a machine alone fills its quota before the journal is over its bound, and past
 the quota every event of that machine is refused, a claim's release among them. A stream can go only
 when it has been silent for longer than the expiry plus 15 minutes, measured on the local
 clock from the last beat heard or, for a stream never heard beating, from when the journal
-learned of it (so the streams a restart reloads are not taken for dead at once). A runtime
+learned of it (so the streams a restart reloads are not taken for dead at once). A stream
+whose runtime has since beaten under a newer instance was replaced by a restart, not lost, and
+goes after the expiry alone — provided that newer instance is itself within its expiry; two
+silent instances of one runtime keep the full 15 minutes. A runtime
 never drops its own stream. Of the streams that could go, one stays while:
 
 - **it published a handover nobody has taken** — for at most a day past those 15 minutes

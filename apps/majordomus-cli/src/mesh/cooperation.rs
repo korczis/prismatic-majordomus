@@ -2007,6 +2007,7 @@ impl Cooperation {
             .spawn(move || {
                 tracing::info!(runtime_id = %me.own_key, repository_id = %me.repository.id, "mesh cooperation started");
                 let mut tick: u64 = 0;
+                let mut refused_seen: u64 = 0;
                 while !me.stop.load(Ordering::SeqCst) {
                     // probed before the beat: a beat is then also the word that the store
                     // this runtime offers answered (I2671)
@@ -2019,7 +2020,11 @@ impl Cooperation {
                     if tick % 12 == 11 {
                         me.close_ended_clients();
                     }
-                    if tick % 60 == 59 {
+                    // on schedule, and at once when a peer's events were refused for capacity
+                    // since the last beat: a full quota refuses a release too (I2825)
+                    let refused = me.journal.capacity_refusals();
+                    if tick % 60 == 59 || refused > refused_seen {
+                        refused_seen = refused;
                         me.journal
                             .compact(me.expiry(), PEER_RETENTION, HANDOVER_RETENTION, false);
                     }
@@ -5331,6 +5336,59 @@ mod tests {
         }
         a.stop();
         assert!(closed(&a), "{:?}", a.state().sessions);
+    }
+
+    /// A peer's events refused for capacity make the supervisor compact on its very next beat,
+    /// not at the sixtieth: a node's quota full of a restart-replaced run is freed at once, and
+    /// the run that replaced it stays (I2825).
+    #[test]
+    fn the_supervisor_compacts_at_once_when_a_peer_was_refused_for_capacity() {
+        use crate::mesh::journal::MAX_STREAMS_PER_NODE;
+
+        let net = Arc::new(InProcess::default());
+        let a = runtime(&net, "a:1", "root", TrustPolicy::Tofu);
+        let dir = tempfile::tempdir().unwrap();
+        let key = dir.path().join("node.json");
+        // one machine, a fresh instance on every load: a restart of the same runtime
+        let machine = || Arc::new(NodeIdentity::load_or_create(&key).unwrap());
+        let repo = a.repository.id.clone();
+        let offer = |runtime: &str| {
+            let peer = Journal::open(machine(), runtime, repo.clone(), None).unwrap();
+            peer.append_own(EventBody::SessionOpened {
+                info: session("s1"),
+            })
+            .unwrap();
+            let missing = peer.missing_for(&a.journal().marks(), usize::MAX);
+            a.journal().ingest(&missing, &|_| Ok(()));
+            missing[0].stream.clone()
+        };
+        let replaced = offer("0000000000000001");
+        std::thread::sleep(Duration::from_millis(3500)); // past the expiry of 3 s
+        let running = offer("0000000000000001");
+        assert_ne!(replaced, running, "the same runtime, restarted");
+        for runtime in 2..=(MAX_STREAMS_PER_NODE as u64) {
+            offer(&format!("{runtime:016x}"));
+        }
+        assert!(
+            a.journal().capacity_refusals() > 0,
+            "the node's quota filled"
+        );
+        let held = |stream: &StreamId| a.journal().events().iter().any(|e| &e.stream == stream);
+        assert!(held(&replaced) && a.journal().tallies().compacted == 0);
+
+        a.start();
+        let deadline = Instant::now() + Duration::from_secs(20);
+        while a.journal().tallies().compacted == 0 && Instant::now() < deadline {
+            std::thread::sleep(Duration::from_millis(50));
+        }
+        a.stop();
+        assert_eq!(
+            a.journal().tallies().compacted,
+            1,
+            "the replaced run's one event"
+        );
+        assert!(!held(&replaced), "the replaced run went at the expiry");
+        assert!(held(&running), "the run that replaced it stays");
     }
 
     #[test]

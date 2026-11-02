@@ -58,6 +58,8 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I1953` | shares apps/majordomus-cli/src/commands/evidence.rs with I2402; they may not run concurrently |
 | WARN | `scope_conflict` | `I1953` | shares test/cases with I2404; they may not run concurrently |
 | WARN | `scope_conflict` | `I1953` | shares apps/majordomus-cli/src/capability/builtin/evidence.rs with I2405; they may not run concurrently |
+| WARN | `scope_conflict` | `I1953` | shares test/cases with I2479; they may not run concurrently |
+| WARN | `scope_conflict` | `I1953` | shares test/cases with I2480; they may not run concurrently |
 | WARN | `scope_conflict` | `I1953` | shares test/cases with I2487; they may not run concurrently |
 | WARN | `scope_conflict` | `I1953` | shares test/cases with I2488; they may not run concurrently |
 | WARN | `scope_conflict` | `I1953` | shares test/cases with I2750; they may not run concurrently |
@@ -65,6 +67,8 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I1954` | shares test/cases with I2402; they may not run concurrently |
 | WARN | `scope_conflict` | `I1954` | shares test/cases with I2404; they may not run concurrently |
 | WARN | `scope_conflict` | `I1954` | shares test/cases with I2405; they may not run concurrently |
+| WARN | `scope_conflict` | `I1954` | shares test/cases with I2479; they may not run concurrently |
+| WARN | `scope_conflict` | `I1954` | shares test/cases with I2480; they may not run concurrently |
 | WARN | `scope_conflict` | `I1954` | shares test/cases/94_ci_plan.sh with I2487; they may not run concurrently |
 | WARN | `scope_conflict` | `I1954` | shares test/cases/94_ci_plan.sh with I2488; they may not run concurrently |
 | WARN | `scope_conflict` | `I1954` | shares .github/workflows/validate.yml with I2750; they may not run concurrently |

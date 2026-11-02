@@ -33,7 +33,6 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I3154` | shares .ai/repo/automation/inventory.jsonl with I4468; they may not run concurrently |
 | WARN | `scope_conflict` | `I3154` | shares .ai/repo/automation/inventory.jsonl with I4512; they may not run concurrently |
 | WARN | `scope_conflict` | `I3155` | shares test/cases/365_new_shell_is_refused.sh with I3318; they may not run concurrently |
-| WARN | `scope_conflict` | `I3155` | shares test/cases/365_new_shell_is_refused.sh with I3448; they may not run concurrently |
 | WARN | `scope_conflict` | `I3155` | shares apps/majordomus-cli/src/capability/builtin/shell.rs with I3607; they may not run concurrently |
 | WARN | `scope_conflict` | `I3155` | shares apps/majordomus-cli/src/ui/mod.rs with I3756; they may not run concurrently |
 | WARN | `scope_conflict` | `I3155` | shares docs/generated/modules/shell.md with I3757; they may not run concurrently |

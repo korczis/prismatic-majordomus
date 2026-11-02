@@ -105,7 +105,6 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I2374` | shares docs/generated with I3442; they may not run concurrently |
 | WARN | `scope_conflict` | `I2374` | shares docs/generated with I3443; they may not run concurrently |
 | WARN | `scope_conflict` | `I2374` | shares scripts/site-check with I3447; they may not run concurrently |
-| WARN | `scope_conflict` | `I2374` | shares scripts/site-deploy with I3448; they may not run concurrently |
 | WARN | `scope_conflict` | `I2374` | shares scripts/site-build with I3449; they may not run concurrently |
 | WARN | `scope_conflict` | `I2374` | shares test/cases/3045_the_site_shows_what_changed_since_it_was_deployed.sh with I3607; they may not run concurrently |
 | WARN | `scope_conflict` | `I2374` | shares docs/generated with I3752; they may not run concurrently |
@@ -122,9 +121,9 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I2374` | shares scripts/site-check with I3841; they may not run concurrently |
 | WARN | `scope_conflict` | `I2374` | shares .ai/repo/ci/gates.yaml with I3937; they may not run concurrently |
 | WARN | `scope_conflict` | `I2374` | shares .ai/repo/ci/gates.yaml with I3973; they may not run concurrently |
+| WARN | `scope_conflict` | `I2374` | shares .ai/repo/ci/gates.yaml with I4261; they may not run concurrently |
 | WARN | `scope_conflict` | `I2374` | shares site/templates/changelog.html with I4298; they may not run concurrently |
 | WARN | `scope_conflict` | `I2374` | shares docs/GITHUB_PAGES_ARCHITECTURE.md with I4306; they may not run concurrently |
-| WARN | `scope_conflict` | `I2374` | shares .github/workflows/pages.yml with I4315; they may not run concurrently |
 | WARN | `scope_conflict` | `I2374` | shares site/templates/index.html with I4317; they may not run concurrently |
 | WARN | `scope_conflict` | `I2374` | shares site/templates/index.html with I4318; they may not run concurrently |
 | WARN | `scope_conflict` | `I2374` | shares .ai/repo/ci/gates.yaml with I4349; they may not run concurrently |

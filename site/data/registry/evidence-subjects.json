@@ -1124,6 +1124,11 @@
     },
     {
       "kind": "capability",
+      "subject": "capability:worktree.reconciliation",
+      "path": "/evidence/capabilities/worktree-reconciliation/"
+    },
+    {
+      "kind": "capability",
       "subject": "capability:worktree.status",
       "path": "/evidence/capabilities/worktree-status/"
     },
@@ -3591,6 +3596,11 @@
       "kind": "command",
       "subject": "command:worktree path",
       "path": "/evidence/commands/worktree-path/"
+    },
+    {
+      "kind": "command",
+      "subject": "command:worktree reconcile",
+      "path": "/evidence/commands/worktree-reconcile/"
     },
     {
       "kind": "command",
@@ -6579,6 +6589,18 @@
       "programs": [],
       "members": [
         "command:worktree migrate"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "capability:worktree.reconciliation": {
+      "kind": "capability",
+      "id": "worktree.reconciliation",
+      "page": "/evidence/capabilities/worktree-reconciliation/",
+      "programs": [],
+      "members": [
+        "command:worktree reconcile"
       ],
       "routes": [],
       "mechanisms": [],
@@ -14212,6 +14234,12 @@
         },
         {
           "via": "behaviour",
+          "test": "suite:4255_a_project_rule_runs_its_command",
+          "path": "test/cases/4255_a_project_rule_runs_its_command.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "behaviour",
           "test": "suite:4265_the_adopter_hook_runs_doctor_in_commit_context",
           "path": "test/cases/4265_the_adopter_hook_runs_doctor_in_commit_context.sh",
           "category": "e2e"
@@ -15616,6 +15644,12 @@
         },
         {
           "via": "behaviour",
+          "test": "suite:4262_an_adopter_commit_is_judged",
+          "path": "test/cases/4262_an_adopter_commit_is_judged.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "behaviour",
           "test": "suite:4265_the_adopter_hook_runs_doctor_in_commit_context",
           "path": "test/cases/4265_the_adopter_hook_runs_doctor_in_commit_context.sh",
           "category": "e2e"
@@ -15874,6 +15908,12 @@
           "via": "behaviour",
           "test": "suite:4258_documents_below_docs_are_discovered",
           "path": "test/cases/4258_documents_below_docs_are_discovered.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "behaviour",
+          "test": "suite:4259_a_wrapped_value_is_named",
+          "path": "test/cases/4259_a_wrapped_value_is_named.sh",
           "category": "e2e"
         },
         {
@@ -16862,6 +16902,12 @@
         },
         {
           "via": "behaviour",
+          "test": "suite:4259_a_wrapped_value_is_named",
+          "path": "test/cases/4259_a_wrapped_value_is_named.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "behaviour",
           "test": "suite:4261_issues_trace_outward",
           "path": "test/cases/4261_issues_trace_outward.sh",
           "category": "e2e"
@@ -17815,6 +17861,12 @@
           "via": "behaviour",
           "test": "suite:3015_an_unsupervised_repository_exits_12_from_both_tools",
           "path": "test/cases/3015_an_unsupervised_repository_exits_12_from_both_tools.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "behaviour",
+          "test": "suite:4255_a_project_rule_runs_its_command",
+          "path": "test/cases/4255_a_project_rule_runs_its_command.sh",
           "category": "e2e"
         },
         {
@@ -19486,6 +19538,25 @@
       "kind": "command",
       "id": "worktree path",
       "page": "/evidence/commands/worktree-path/",
+      "programs": [
+        "native"
+      ],
+      "members": [],
+      "routes": [
+        {
+          "via": "example",
+          "test": "crate:cli_examples",
+          "path": "apps/majordomus-cli/tests/cli_examples.rs",
+          "category": "integration"
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
+    "command:worktree reconcile": {
+      "kind": "command",
+      "id": "worktree reconcile",
+      "page": "/evidence/commands/worktree-reconcile/",
       "programs": [
         "native"
       ],
@@ -22810,6 +22881,18 @@
       "mechanisms": [],
       "findings": []
     },
+    "mcp:majordomus_worktree_reconciliation": {
+      "kind": "mcp",
+      "id": "majordomus_worktree_reconciliation",
+      "alias_of": "capability:worktree.reconciliation",
+      "programs": [],
+      "members": [
+        "capability:worktree.reconciliation"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
     "mcp:majordomus_worktree_status": {
       "kind": "mcp",
       "id": "majordomus_worktree_status",
@@ -24631,6 +24714,29 @@
       "mechanisms": [],
       "findings": []
     },
+    "rule:project.a-visualisation-is-interactive": {
+      "kind": "rule",
+      "id": "project.a-visualisation-is-interactive",
+      "status": "active",
+      "programs": [],
+      "members": [],
+      "routes": [
+        {
+          "via": "rule",
+          "test": "suite:1102_a_visualisation_is_interactive",
+          "path": "test/cases/1102_a_visualisation_is_interactive.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/1102_a_visualisation_is_interactive.sh",
+            ".ai/repo/rules/project/a-visualisation-is-interactive.v1.md"
+          ]
+        }
+      ],
+      "mechanisms": [
+        "scripts/ci/visualisation-check"
+      ],
+      "findings": []
+    },
     "rule:project.a-worker-that-stops-leaves-its-work-behind": {
       "kind": "rule",
       "id": "project.a-worker-that-stops-leaves-its-work-behind",
@@ -26269,6 +26375,37 @@
           "inputs": [
             "test/cases/97_pages_fast_path.sh",
             ".ai/repo/rules/project/land-and-publish.v1.md"
+          ]
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
+    "rule:project.markdown-is-rendered-once": {
+      "kind": "rule",
+      "id": "project.markdown-is-rendered-once",
+      "status": "active",
+      "programs": [],
+      "members": [],
+      "routes": [
+        {
+          "via": "rule",
+          "test": "crate:markdown_bodies",
+          "path": "apps/majordomus-cli/tests/markdown_bodies.rs",
+          "category": "integration",
+          "inputs": [
+            "apps/majordomus-cli/tests/markdown_bodies.rs",
+            ".ai/repo/rules/project/markdown-is-rendered-once.v1.md"
+          ]
+        },
+        {
+          "via": "rule",
+          "test": "suite:1101_markdown_is_rendered_once",
+          "path": "test/cases/1101_markdown_is_rendered_once.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/1101_markdown_is_rendered_once.sh",
+            ".ai/repo/rules/project/markdown-is-rendered-once.v1.md"
           ]
         }
       ],
@@ -29648,6 +29785,8 @@
     "suite:1081_an_intent_opens_what_serves_it",
     "suite:1082_a_claim_opens_its_proof",
     "suite:1083_a_rule_opens_its_proof",
+    "suite:1084_the_capabilities_are_faceted",
+    "suite:1085_the_home_page_is_the_front_door",
     "suite:1086_a_remote_caller_cannot_write",
     "suite:1088_the_command_and_capability_screens_answer",
     "suite:1089_the_work_and_mesh_screens_answer",
@@ -29784,6 +29923,7 @@
     "suite:365_new_shell_is_refused",
     "suite:366_automation_inventory_agrees_with_the_tree",
     "suite:3720_no_two_published_paths_differ_only_in_case",
+    "suite:3721_a_deploy_keeps_every_pre_release_it_serves",
     "suite:3723_the_graph_text_reads_each_edge_its_way",
     "suite:3724_the_roadmap_says_what_the_plan_holds",
     "suite:3726_a_record_holds_no_template_delimiter",
@@ -29857,6 +29997,7 @@
     "suite:599_a_silent_check_is_not_a_pass",
     "suite:59_reference_integrity",
     "suite:611_the_reclaim_refuses_what_it_cannot_prove",
+    "suite:612_every_worktree_has_a_disposition",
     "suite:617_a_case_can_name_what_it_covers",
     "suite:620_mcp_tools_are_invoked_and_answer",
     "suite:623_a_ref_verdict_needs_the_refs",

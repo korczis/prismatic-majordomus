@@ -1,0 +1,33 @@
+id: I4526
+milestone: truthful-plan-surfaces
+title: "An ADR edited in place only plans; a commit that adds or removes one still delivers"
+slug: an-adr-edited-in-place-only-plans
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "plan.delivery reads a commit that changes, outside the plan's records and the merge=derived projections, only decision records edited in place (an existing .ai/repo/adrs/NNNN-*.md, git status M, as when an ADR is accepted or superseded) as planning, so that it is never an issue's merged proof; a commit that adds or deletes a decision record, or changes .ai/repo/adrs/README.md, still delivers."
+why: "Commit 0c65f3a13d7 of train 13 (#2749) planned I4468 and I4469 and, beside their records, edited ADR 0091's status. planning_only() (apps/majordomus-cli/src/plan/delivery.rs) exempts only .ai/repo/project/ and the paths .gitattributes marks merge=derived, so the ADR edit made the commit delivery and plan delivery derived I4468 and I4469 as merged with nothing of either implemented. Accepting or superseding a decision moves the plan's record of it, as an issue's stamp does; it delivers nothing. Writing a decision is different: I4307, I1025 and I0924 are delivered by adding an ADR, so an added or deleted record must stay delivery (I2749, ADR 0166)."
+current_state: "At 6b30ede2d13, planning_only() runs git diff-tree --stdin -r --name-only over every naming commit with PLANNING_PATHS (.ai/repo/project/ and :(exclude,attr:merge=derived)) excluded, and calls a commit planning only when no path is printed for it; any .ai/repo/adrs/ change, an in-place status edit included, makes the commit a merge proof. The fix changes what is derived on purpose, and the change is not a regression: replayed over 6b30ede2d13's history, 19 commits change class from delivery to planning, and the only committed delivery.json entries that move are I2673 and I2674, from stage released (through 7a749356c42, an ADR 0157 edit plus derived files) to none with planned."
+desired_state: "planning_only() reads git diff-tree --name-status and passes over a commit whose every path outside PLANNING_PATHS is a decision record (NNNN-<slug>.md directly under .ai/repo/adrs/) with status M; an added (A) or deleted (D) decision record, .ai/repo/adrs/README.md, anything below .ai/repo/adrs/ that is not a record, and any other path still make the commit delivery. docs/PLANNING.md states the rule beside I2749's. Once train 13 is in history, derived delivery shows I4468 and I4469 not merged by 0c65f3a13d7."
+scope:
+  - "apps/majordomus-cli/src/plan/delivery.rs"
+  - "docs/PLANNING.md"
+  - ".ai/repo/project/issues/I4526.yaml"
+non_scope:
+  - "Reading what an ADR edit changed (a status line, a paragraph): an in-place edit of a record is planning whatever it says."
+  - "Writing or correcting a lifecycle stamp of I4468, I4469, I2673 or I2674 from inference: a merge is not acceptance (ADR 0166, alternatives)."
+  - "Decision records outside .ai/repo/adrs/, or a renamed record: a rename reaches diff-tree as a delete and an add and stays delivery."
+depends_on: [I2749]
+acceptance_criteria:
+  - "The unit test a_decision_record_edited_in_place_only_plans_and_one_added_delivers fails before the change and passes after it"
+  - "The test's four commits: an ADR edited in place beside an issue record is planning; an ADR edited beside a code change delivers; an ADR added beside an issue record delivers; a change to .ai/repo/adrs/README.md delivers"
+  - "The test's is_decision_record cases: .ai/repo/adrs/0091-knowledge-is-derived.md is a record; .ai/repo/adrs/README.md, a path below a record's directory, a three-digit name and an ADR outside .ai/repo/adrs/ are not"
+  - "Once train 13 (#2749) is in history, the derived delivery.json no longer shows I4468 or I4469 as merged through 0c65f3a13d7"
+  - "Replayed over 6b30ede2d13's history, the only committed delivery.json entries that move are I2673 and I2674, from released (7a749356c42) to none with planned"
+validation:
+  - "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --lib plan::delivery"
+  - "bin/majordomus plan validate"
+evidence_required:
+  - "decision_record_edit_is_not_delivery"
+created_at: 2026-10-31
+updated_at: 2026-10-31

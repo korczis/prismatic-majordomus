@@ -25,4 +25,12 @@ depends_on: []
 serves:
   - "an-authorised-node-connects-from-anywhere#path-is-explained"
 created_at: 2026-10-23
-updated_at: 2026-10-23
+updated_at: 2026-10-31T23:55:19Z
+evidence:
+  - covers: another_node_s_loopback_runtimes_are_not_dialed_and_its_hub_is
+    type: ci
+    command: "cargo test --lib mesh::cooperation::tests::another_node_s_loopback_runtimes_are_not_dialed_and_its_hub_is (job rust (2))"
+    result: "The log has 'test mesh::cooperation::tests::another_node_s_loopback_runtimes_are_not_dialed_and_its_hub_is ... ok'. With 12 loopback records of another node, the dial selection is exactly this node's loopback sibling plus the other node's hub."
+    artifact: "https://github.com/korczis/prismatic-majordomus/actions/runs/41107049778/job/124495538595"
+    commit: 54c317f11add0c6e7c7c8cd6f1a1591ee1942f1b
+    recorded_at: 2026-10-31T23:55:19Z

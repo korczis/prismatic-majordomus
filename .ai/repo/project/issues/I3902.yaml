@@ -32,4 +32,12 @@ evidence_required:
 serves:
   - "nothing-in-the-mesh-waits-on-something-dead#repair-is-bounded"
 created_at: 2026-10-22
-updated_at: 2026-10-22
+updated_at: 2026-10-31T23:52:02Z
+evidence:
+  - covers: case_625
+    type: ci
+    command: "bash test/run.sh 625_a_rebuild_is_asked_only_when_it_helps (validate job suite-shard (2))"
+    result: "Case 625_a_rebuild_is_asked_only_when_it_helps passed ('ok 625_a_rebuild_is_asked_only_when_it_helps', 5s) on 6b30ede2d13. It asserts that a hung build of this commit or another commit is replaced and that the output says hung. It asserts that a young build or a build with no start time is waited on with exit 13 and no request. It asserts that the lifted scheduled remedy step rebuilds an errored or in-flight build of the trunk tree and deploys a stale tree."
+    artifact: "https://github.com/korczis/prismatic-majordomus/actions/runs/41107049778/job/124495539203"
+    commit: 54c317f11add0c6e7c7c8cd6f1a1591ee1942f1b
+    recorded_at: 2026-10-31T23:52:02Z

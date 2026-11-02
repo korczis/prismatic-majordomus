@@ -334,6 +334,24 @@
             "warning",
             "error"
           ]
+        },
+        "reference_required": {
+          "description": "A message that names no record id the layer holds (an issue or a milestone). Off by default; a repository whose plan binds every change to an issue sets it to error.",
+          "enum": [
+            "off",
+            "info",
+            "warning",
+            "error"
+          ]
+        },
+        "closing_keyword": {
+          "description": "A closing keyword in the message (Closes #12, fixes #3, resolves #7). Off by default; a repository that projects its plan onto a forge sets it to error, because the layer, not a merged commit, decides when an issue is done.",
+          "enum": [
+            "off",
+            "info",
+            "warning",
+            "error"
+          ]
         }
       }
     },

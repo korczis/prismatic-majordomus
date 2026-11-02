@@ -782,6 +782,28 @@ impl Router {
         let topology = resolution.served.topology();
         let checkout = self.checkout(&resolution.ctx);
         if prefers_html(req) {
+            let ready = |id: &str| {
+                if resolution.served.ready(id) {
+                    home::Availability::Ready
+                } else {
+                    home::Availability::NotBuilt
+                }
+            };
+            // a process that serves the UI answers its door with the UI's own front door, in
+            // the UI's frame; one that does not, with the plain page of the same surfaces
+            if let Some(ui) = &self.ui {
+                let process = crate::ui::front::Process {
+                    version: self.version,
+                    repository: repository_name(&resolution.ctx.index.repository.root),
+                    revision: match &resolution.ctx.index.repository.git {
+                        crate::git::GitState::Available(info) => info.head.as_deref(),
+                        crate::git::GitState::Unavailable { .. } => None,
+                    },
+                    summary: crate::about::SUMMARY,
+                    checkout: checkout.as_home(),
+                };
+                return ui.front_door(&process, &home::entries(topology, &ready));
+            }
             let identity = home::Identity {
                 version: self.version,
                 summary: crate::about::SUMMARY,
@@ -792,13 +814,6 @@ impl Router {
                 },
                 capabilities: resolution.ctx.registry.summary().total,
                 checkout: checkout.as_home(),
-            };
-            let ready = |id: &str| {
-                if resolution.served.ready(id) {
-                    home::Availability::Ready
-                } else {
-                    home::Availability::NotBuilt
-                }
             };
             return Response::new(
                 200,
@@ -1318,6 +1333,68 @@ mod tests {
             "{}",
             r.body.text()
         );
+    }
+
+    /// A browser at `/` meets the UI's front door when the process serves the UI, and the
+    /// plain page of the same surfaces when it does not. In both, a documentation build that
+    /// has not run is drawn with the command that makes it and one that has is a link, and a
+    /// repository version control cannot read is at no revision it could name.
+    #[test]
+    fn a_browser_at_the_door_meets_the_front_door_or_the_plain_page() {
+        use crate::web::discover::{DOCS_ARTIFACT, SITE_CONFIG};
+        let repo = crate::synthetic::SyntheticRepository::new(crate::synthetic::Shape::default())
+            .expect("a synthetic repository");
+        let site = repo.root().join(SITE_CONFIG);
+        std::fs::create_dir_all(site.parent().expect("the site's directory")).expect("mkdir");
+        std::fs::write(&site, "base_url = \"/\"\n").expect("a site");
+        let door = |router: &Router| {
+            let r = router.handle(
+                &Request::parse_target("GET", "/", Vec::new())
+                    .with_headers(vec![("Accept".into(), "text/html".into())]),
+            );
+            assert_eq!(r.status, 200, "{}", r.body.text());
+            assert!(
+                r.content_type.starts_with("text/html"),
+                "{}",
+                r.content_type
+            );
+            r.body.text().to_string()
+        };
+        let with_ui = || Router::new(repo.context().expect("a context"), "test").with_ui(None);
+        let plain = || Router::new(repo.context().expect("a context"), "test");
+        let build_it = "Build it: <code class=\"mj-ui-mono\">scripts/site-build --serve</code>";
+        let card = "<a class=\"mj-ui-card mj-ui-card--link\" href=\"/docs/\">";
+        let run_it = concat!(
+            "<span class=\"fail\">not built</span> — run ",
+            "<code>scripts/site-build --serve</code>",
+        );
+        let link = "<a href=\"/docs/\">docs</a>";
+
+        let html = door(&with_ui());
+        assert!(
+            html.contains("Everything this process serves"),
+            "the UI's front door: {html}"
+        );
+        assert!(html.contains(build_it) && !html.contains(card), "{html}");
+        assert!(
+            html.contains(" at unknown.")
+                && html.contains("<span class=\"mj-ui-kpi-value\">unknown</span>"),
+            "no revision is read from a repository git cannot read: {html}"
+        );
+        let html = door(&plain());
+        assert!(
+            !html.contains("Everything this process serves"),
+            "no UI, no front door: {html}"
+        );
+        assert!(html.contains(run_it) && !html.contains(link), "{html}");
+
+        let docs = repo.root().join(DOCS_ARTIFACT);
+        std::fs::create_dir_all(&docs).expect("mkdir");
+        std::fs::write(docs.join("index.html"), "<h1>docs</h1>").expect("a built page");
+        let html = door(&with_ui());
+        assert!(html.contains(card) && !html.contains(build_it), "{html}");
+        let html = door(&plain());
+        assert!(html.contains(link) && !html.contains(run_it), "{html}");
     }
 
     #[test]

@@ -2014,6 +2014,15 @@
         "status": "query"
       },
       {
+        "id": "capability:worktree.reconciliation",
+        "kind": "capability",
+        "label": "worktree.reconciliation",
+        "summary": "What becomes of every branch and every worktree",
+        "route": "/cockpit/capabilities/worktree.reconciliation",
+        "source": "apps/majordomus-cli/src/capability/builtin/worktree.rs",
+        "status": "query"
+      },
+      {
         "id": "capability:worktree.status",
         "kind": "capability",
         "label": "worktree.status",
@@ -2329,6 +2338,14 @@
         "label": "ui-integrity-baseline.txt",
         "summary": "named by the layer; not an object of this index",
         "source": ".ai/repo/ui-integrity-baseline.txt",
+        "external": true
+      },
+      {
+        "id": "file:.ai/repo/visualisation-baseline.txt",
+        "kind": "file",
+        "label": "visualisation-baseline.txt",
+        "summary": "named by the layer; not an object of this index",
+        "source": ".ai/repo/visualisation-baseline.txt",
         "external": true
       },
       {
@@ -3252,6 +3269,14 @@
         "external": true
       },
       {
+        "id": "file:apps/majordomus-cli/src/markdown.rs",
+        "kind": "file",
+        "label": "markdown.rs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-cli/src/markdown.rs",
+        "external": true
+      },
+      {
         "id": "file:apps/majordomus-cli/src/mcp/bridge.rs",
         "kind": "file",
         "label": "bridge.rs",
@@ -3668,6 +3693,14 @@
         "external": true
       },
       {
+        "id": "file:apps/majordomus-cli/src/ui/prose.rs",
+        "kind": "file",
+        "label": "prose.rs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-cli/src/ui/prose.rs",
+        "external": true
+      },
+      {
         "id": "file:apps/majordomus-cli/src/ui/roadmap.rs",
         "kind": "file",
         "label": "roadmap.rs",
@@ -3761,6 +3794,14 @@
         "label": "path.rs",
         "summary": "named by the layer; not an object of this index",
         "source": "apps/majordomus-cli/src/worktree/path.rs",
+        "external": true
+      },
+      {
+        "id": "file:apps/majordomus-cli/src/worktree/reconcile.rs",
+        "kind": "file",
+        "label": "reconcile.rs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-cli/src/worktree/reconcile.rs",
         "external": true
       },
       {
@@ -4108,6 +4149,14 @@
         "external": true
       },
       {
+        "id": "file:scripts/ci/visualisation-check",
+        "kind": "file",
+        "label": "visualisation-check",
+        "summary": "named by the layer; not an object of this index",
+        "source": "scripts/ci/visualisation-check",
+        "external": true
+      },
+      {
         "id": "file:scripts/cockpit-probe",
         "kind": "file",
         "label": "cockpit-probe",
@@ -4385,6 +4434,14 @@
         "label": "rule.txt",
         "summary": "named by the layer; not an object of this index",
         "source": "share/allow/rule.txt",
+        "external": true
+      },
+      {
+        "id": "file:share/cockpit/cockpit.js",
+        "kind": "file",
+        "label": "cockpit.js",
+        "summary": "named by the layer; not an object of this index",
+        "source": "share/cockpit/cockpit.js",
         "external": true
       },
       {
@@ -7394,6 +7451,33 @@
         }
       },
       {
+        "id": "majordomus://adr/adr-0127",
+        "kind": "adr",
+        "label": "adr-0127",
+        "summary": "Every branch and every worktree has one state and one next step, and a landed branch is deleted on proof",
+        "route": "/cockpit/objects/adr/adr-0127",
+        "source": ".ai/repo/adrs/0127-every-branch-and-worktree-has-one-state-and-the-proven-ones-are-removed.md",
+        "status": "proposed",
+        "facts": {
+          "date": "2026-10-30",
+          "related": [
+            "file:.ai/repo/adrs/0021-the-branch-to-worktree-topology-is-derived-from-git-identity-and-enfor.md",
+            "file:.ai/repo/adrs/0055-disk-is-the-fifth-quantity-reclaimed-by-predicate-and-bounded-before-a-build.md",
+            "rule:project.reclaim-only-what-you-own",
+            "rule:project.worktree-topology",
+            "file:apps/majordomus-cli/src/worktree/reconcile.rs",
+            "file:docs/WORKTREES.md",
+            "test:test/cases/612_every_worktree_has_a_disposition.sh",
+            "test:test/cases/611_the_reclaim_refuses_what_it_cannot_prove.sh"
+          ],
+          "tags": [
+            "worktrees",
+            "operations",
+            "safety"
+          ]
+        }
+      },
+      {
         "id": "majordomus://adr/adr-0129",
         "kind": "adr",
         "label": "adr-0129",
@@ -7792,6 +7876,43 @@
             "cockpit",
             "ui",
             "pages"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://adr/adr-0148",
+        "kind": "adr",
+        "label": "adr-0148",
+        "summary": "Markdown is drawn by one renderer in the executable, and every drawing on a served surface can be acted on",
+        "route": "/cockpit/objects/adr/adr-0148",
+        "source": ".ai/repo/adrs/0148-markdown-is-drawn-by-one-renderer-and-a-drawing-is-acted-on.md",
+        "status": "proposed",
+        "facts": {
+          "date": "2026-10-12",
+          "related": [
+            "file:.ai/repo/adrs/0012-the-cockpit-is-a-projection-not-an-application.md",
+            "file:.ai/repo/adrs/0135-majordomus-ui-is-the-primary-surface.md",
+            "file:.ai/repo/adrs/0141-the-ui-is-published-as-a-snapshot-read-at-one-commit.md",
+            "file:.ai/repo/rules/project/markdown-is-rendered-once.v1.md",
+            "file:.ai/repo/rules/project/a-visualisation-is-interactive.v1.md",
+            "file:.ai/repo/visualisation-baseline.txt",
+            "file:apps/majordomus-cli/src/markdown.rs",
+            "file:apps/majordomus-cli/src/cockpit/pages.rs",
+            "file:apps/majordomus-cli/src/ui/prose.rs",
+            "file:share/cockpit/cockpit.js",
+            "file:share/design/primitives.css",
+            "file:scripts/ci/visualisation-check",
+            "file:test/cases/1101_markdown_is_rendered_once.sh",
+            "file:test/cases/1102_a_visualisation_is_interactive.sh",
+            "file:docs/COCKPIT.md"
+          ],
+          "tags": [
+            "architecture",
+            "interface",
+            "ui",
+            "cockpit",
+            "markdown",
+            "visualisation"
           ]
         }
       },
@@ -37729,6 +37850,45 @@
         }
       },
       {
+        "id": "majordomus://issue/I2283",
+        "kind": "issue",
+        "label": "I2283",
+        "summary": "Every branch and every worktree has one state and one next step, and the proven ones are carried out",
+        "route": "/cockpit/objects/issue/i2283",
+        "source": ".ai/repo/project/issues/I2283.yaml",
+        "facts": {
+          "created_at": "2026-10-10",
+          "evidence_required": [
+            "612_every_worktree_has_a_disposition",
+            "every_subject_is_given_the_state_git_supports",
+            "one_subject_says_why_it_stands_where_it_does",
+            "a_subject_that_changed_after_the_listing_is_refused",
+            "the_act_takes_what_is_proven_and_then_nothing"
+          ],
+          "milestone": "development-runtime",
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/worktree/reconcile.rs",
+            "apps/majordomus-cli/src/worktree/state.rs",
+            "apps/majordomus-cli/src/commands/worktree.rs",
+            "apps/majordomus-cli/src/capability/builtin/worktree.rs",
+            "apps/majordomus-cli/src/cli.rs",
+            "docs/WORKTREES.md",
+            ".ai/repo/adrs",
+            "test/cases"
+          ],
+          "slug": "every-worktree-has-a-disposition",
+          "updated_at": "2026-10-30",
+          "validation": [
+            "bin/majordomus plan validate",
+            "MJ_TEST_JOBS=4 bash test/run.sh 612_every_worktree_has_a_disposition",
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib worktree::reconcile"
+          ]
+        }
+      },
+      {
         "id": "majordomus://issue/I2288",
         "kind": "issue",
         "label": "I2288",
@@ -39801,6 +39961,94 @@
           ],
           "verified_at": "2026-10-12T11:01:39Z",
           "verified_event": "sha256:5b833de8b479047ca8544b9d45652df8471a836574e79af7ead6ec8bff68779d"
+        }
+      },
+      {
+        "id": "majordomus://issue/I2479",
+        "kind": "issue",
+        "label": "I2479",
+        "summary": "The capabilities are searched and faceted: kind, module, stability, surface and text, each counted",
+        "route": "/cockpit/objects/issue/i2479",
+        "source": ".ai/repo/project/issues/I2479.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "kind, module, stability, surface and text narrow the capabilities together, each facet counted among what the other picks admit",
+            "a row opens its declaration and keeps the filters",
+            "a value that is no word of the registry is dropped and never echoed"
+          ],
+          "created_at": "2026-10-11",
+          "current_state": "Two fixed tables of commands and queries; nothing narrows them; a row's link drops whatever the reader was looking at.",
+          "depends_on": [
+            "I2462"
+          ],
+          "evidence_required": [
+            "ui_capabilities_unit_tests",
+            "ui_capabilities_case_1084"
+          ],
+          "milestone": "development-runtime",
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/ui/capabilities.rs",
+            ".ai/repo/project/issues/I2479.yaml",
+            "docs/MAJORDOMUS_UI.md",
+            "test/cases/1084_the_capabilities_are_faceted.sh"
+          ],
+          "slug": "the-capabilities-are-faceted",
+          "updated_at": "2026-10-11",
+          "validation": [
+            "cargo test --lib ui::capabilities",
+            "test/run.sh 1084_the_capabilities_are_faceted"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2480",
+        "kind": "issue",
+        "label": "I2480",
+        "summary": "The home page is the UI's front door: every screen and every surface one click away, in the UI's design",
+        "route": "/cockpit/objects/issue/i2480",
+        "source": ".ai/repo/project/issues/I2480.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "/ answers the UI's front door in the UI's frame, linking every screen of the UI and every public surface that answers",
+            "a surface that is not built is named with what builds it and not linked; the page does not link itself",
+            "every value on it is read from the process, a capability or the web topology; nothing is written into the page"
+          ],
+          "created_at": "2026-10-11",
+          "current_state": "/ answers a plain page of surfaces in tables, outside the UI's frame and design, with no link to any screen of the UI; the UI's top bar links /docs whether or not it is built.",
+          "depends_on": [
+            "I2462"
+          ],
+          "evidence_required": [
+            "ui_front_unit_tests",
+            "ui_front_case_1085"
+          ],
+          "milestone": "development-runtime",
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/ui/front.rs",
+            "apps/majordomus-cli/src/ui/mod.rs",
+            "apps/majordomus-cli/src/ui/shell.rs",
+            "apps/majordomus-cli/src/web/home.rs",
+            "apps/majordomus-cli/src/http/router.rs",
+            "share/ui/src/ui.css",
+            "share/ui/ui.css",
+            ".ai/repo/project/issues/I2480.yaml",
+            "docs/MAJORDOMUS_UI.md",
+            "test/cases/89_web_surface.sh",
+            "test/cases/488_rustdoc_discoverable.sh",
+            "test/cases/1085_the_home_page_is_the_front_door.sh"
+          ],
+          "slug": "the-home-page-is-the-front-door",
+          "updated_at": "2026-10-11",
+          "validation": [
+            "cargo test --lib ui::front",
+            "test/run.sh 1085_the_home_page_is_the_front_door 89_web_surface 488_rustdoc_discoverable"
+          ]
         }
       },
       {
@@ -64055,9 +64303,12 @@
         "route": "/cockpit/objects/issue/i3448",
         "source": ".ai/repo/project/issues/I3448.yaml",
         "facts": {
+          "completed_at": "2026-11-01T01:05:43Z",
+          "completed_event": "sha256:cae61bfec8af02af7bd2d6c3a513d9e9a1677e712d5eebcb9809c42c58af6e21",
           "depends_on": [],
           "evidence_required": [
-            "test_a_deploy_keeps_every_pre_release_it_serves"
+            "test_a_deploy_keeps_every_pre_release_it_serves",
+            "test_release_live_reads_every_release_tag_file"
           ],
           "milestone": "M004",
           "non_scope": [
@@ -64070,16 +64321,21 @@
           "profile": "implementation",
           "scope": [
             "scripts/site-deploy",
-            "docs/RELEASE.md",
+            "docs/DISTRIBUTION.md",
             "scripts/pages",
             "test/cases",
             ".ai/repo/project/issues/I3448.yaml"
           ],
           "slug": "a-deploy-keeps-every-pre-release-it-serves",
+          "started_at": "2026-11-01T01:04:17Z",
+          "started_event": "sha256:e42e9ee81b63b8326e17e283af7b6ee907feb7cdddc0c186926a4bb975f0dfd9",
+          "updated_at": "2026-11-01T01:05:43Z",
           "validation": [
             "bash test/run.sh 3721_a_deploy_keeps_every_pre_release_it_serves",
             "majordomus plan validate"
-          ]
+          ],
+          "verified_at": "2026-11-01T01:05:07Z",
+          "verified_event": "sha256:c9c5a09adafbb3d73d3e9e9d754428b5cb6870bff3494b98c0f4cbbcdb302438"
         }
       },
       {
@@ -66671,7 +66927,7 @@
             "an-authorised-node-connects-from-anywhere#relay-when-no-direct-path"
           ],
           "slug": "a-hosted-hub-is-trusted-and-closed-to-strangers",
-          "updated_at": "2026-10-21",
+          "updated_at": "2026-10-31T23:59:26Z",
           "validation": [
             "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 3826_a_hosted_hub_is_trusted_and_closed_to_strangers"
           ]
@@ -67585,7 +67841,7 @@
             "nothing-in-the-mesh-waits-on-something-dead#repair-is-bounded"
           ],
           "slug": "a-deploy-is-done-when-the-site-serves-it",
-          "updated_at": "2026-10-22",
+          "updated_at": "2026-10-31T23:52:02Z",
           "validation": [
             "bash test/run.sh 625_a_rebuild_is_asked_only_when_it_helps"
           ]
@@ -70705,7 +70961,7 @@
             "an-authorised-node-connects-from-anywhere#path-is-explained"
           ],
           "slug": "a-remote-loopback-runtime-is-not-dialed",
-          "updated_at": "2026-10-23",
+          "updated_at": "2026-10-31T23:55:19Z",
           "validation": [
             "cargo test --lib mesh::cooperation",
             "bash test/run.sh 368_mesh_handover_resolves 924_one_executor_across_machines 3826_a_hosted_hub_is_trusted_and_closed_to_strangers"
@@ -70745,7 +71001,7 @@
             "an-authorised-node-connects-from-anywhere#path-is-explained"
           ],
           "slug": "a-hub-advertises-the-address-it-has-now",
-          "updated_at": "2026-10-23",
+          "updated_at": "2026-10-31T23:57:06Z",
           "validation": [
             "cargo test --doc mesh::provider",
             "cargo test --lib shared::"
@@ -71071,6 +71327,8 @@
             "A second run of a job at the same cache key compiles markedly fewer units than the first, measured by the count of Compiling lines in two runs' logs, quoted in this record",
             "Every job that reported a cache hit still passes"
           ],
+          "completed_at": "2026-10-31T23:42:00Z",
+          "completed_event": "sha256:3737a3d700cc029d17edef16299e5b0ee5e3538a45c5bc2781fcbe26735e4dd9",
           "created_at": "2026-10-24",
           "current_state": "Swatinem/rust-cache caches the registry, git checkouts and apps/majordomus-cli/target (about 50 MB). build-shared, where every dependency is compiled, is rebuilt from nothing in each job.",
           "depends_on": [],
@@ -71091,10 +71349,14 @@
           ],
           "serves": [],
           "slug": "ci-caches-the-shared-build-dir",
-          "updated_at": "2026-10-24",
+          "started_at": "2026-10-31T23:39:37Z",
+          "started_event": "sha256:f263086aa831f2d77b9b716aec8324f4cc3549a21b203beb0852f80e6e8f60de",
+          "updated_at": "2026-10-31T23:42:00Z",
           "validation": [
             "Read the coverage job log of two consecutive runs at one key: Cache Paths, Cache Size and the Compiling count"
-          ]
+          ],
+          "verified_at": "2026-10-31T23:40:49Z",
+          "verified_event": "sha256:b97057aff7030abe7020d5bf8db22d2f4ff9a8c27d87773362ef51500dfe0b0b"
         }
       },
       {
@@ -71526,7 +71788,8 @@
             "test/cases/4235_an_evidence_token_is_matched_whole.sh",
             ".ai/repo/project/issues/I4235.yaml",
             ".ai/repo/project/issues/I3663.yaml",
-            ".ai/repo/project/issues/I3995.yaml"
+            ".ai/repo/project/issues/I3995.yaml",
+            ".ai/repo/ci/gates.yaml"
           ],
           "serves": [],
           "slug": "an-evidence-token-is-matched-whole",
@@ -71737,7 +72000,8 @@
             ".ai/repo/project/issues/I4252.yaml",
             "share/skeleton/ai/repo/scope.yaml",
             "lib/init.sh",
-            "test/cases/3016_init_seeds_the_scope_of_the_stack_it_finds.sh"
+            "test/cases/3016_init_seeds_the_scope_of_the_stack_it_finds.sh",
+            "test/cases/93_scope_policy.sh"
           ],
           "slug": "init-seeds-python-node-and-go-stacks",
           "updated_at": "2026-10-27",
@@ -71784,6 +72048,51 @@
         }
       },
       {
+        "id": "majordomus://issue/I4255",
+        "kind": "issue",
+        "label": "I4255",
+        "summary": "A project rule can be enforced by a command the repository names",
+        "route": "/cockpit/objects/issue/i4255",
+        "source": ".ai/repo/project/issues/I4255.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A project rule naming a declared policy enforcement entry is listed as enforced by it",
+            "A rule naming an entry the policy does not declare fails doctor naming the rule",
+            "A rule naming both a validator and an entry is refused"
+          ],
+          "created_at": "2026-10-27",
+          "current_state": "Only the tool's own validators can back a rule; a project rule is documentation.",
+          "depends_on": [],
+          "desired_state": "A project rule may declare a command (repository-relative, with arguments) as its validator; doctor runs or reconciles it like a dispatched doctrine, and `rules list` reports it enforced.",
+          "evidence_required": [
+            "case_a_project_rule_names_a_command_validator"
+          ],
+          "milestone": "a-second-adopter-is-served",
+          "objective": "A project rule may declare a command (repository-relative, with arguments) as its validator; doctor runs or reconciles it like a dispatched doctrine, and `rules list` reports it enforced.",
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I4255.yaml",
+            "lib/rules.sh",
+            "lib/doctor.sh",
+            "share/allow/rule.txt",
+            "share/schemas/majordomus/rule/rule.v1.proto",
+            "apps/majordomus-cli/src/rules",
+            "apps/majordomus-cli/src/capability/builtin/rules.rs",
+            "test/cases/125_rule_proof.sh",
+            "docs/DOCTRINE.md",
+            "docs/SURFACES.md",
+            "test/cases/4255_a_project_rule_runs_its_command.sh"
+          ],
+          "slug": "a-project-rule-names-a-command-validator",
+          "updated_at": "2026-10-27",
+          "validation": [
+            "bash test/run.sh 4255_a_project_rule_runs_its_command"
+          ]
+        }
+      },
+      {
         "id": "majordomus://issue/I4256",
         "kind": "issue",
         "label": "I4256",
@@ -71797,7 +72106,6 @@
             "skills check and doctor report the same orphans"
           ],
           "created_at": "2026-10-27",
-          "current_state": "TEST_DIRS and SKILL_PAGES_DIR are the tool's own layout; skills check and doctor disagree.",
           "depends_on": [],
           "evidence_required": [
             "case_skill_proof_reads_the_adopters_layout"
@@ -71811,7 +72119,8 @@
             "apps/majordomus-cli/src/skill/mod.rs",
             "lib/skills.sh",
             "share/skeleton/ai/repo/scope.yaml",
-            "test/cases/4256_a_skill_is_proved_where_the_adopter_tests.sh"
+            "test/cases/4256_a_skill_is_proved_where_the_adopter_tests.sh",
+            "apps/majordomus-cli/tests/skills.rs"
           ],
           "slug": "skill-proof-reads-the-adopters-layout",
           "updated_at": "2026-10-27",
@@ -71848,7 +72157,8 @@
             ".ai/repo/project/issues/I4257.yaml",
             "lib/init.sh",
             "share/skeleton/ai/repo/policy.yaml",
-            "test/cases/4257_init_keeps_a_hand_written_provider_file.sh"
+            "test/cases/4257_init_keeps_a_hand_written_provider_file.sh",
+            "apps/majordomus-cli/src/economics/runner.rs"
           ],
           "slug": "init-keeps-a-hand-written-provider-file",
           "updated_at": "2026-10-27",
@@ -71894,6 +72204,46 @@
         }
       },
       {
+        "id": "majordomus://issue/I4259",
+        "kind": "issue",
+        "label": "I4259",
+        "summary": "A document's own metadata and a folded YAML scalar are diagnosed, not just refused",
+        "route": "/cockpit/objects/issue/i4259",
+        "source": ".ai/repo/project/issues/I4259.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A document with x-source front matter is indexed",
+            "Any other unknown key is refused naming the x- namespace as the remedy",
+            "A value wrapped onto the next line is refused naming the key it continues, by both parsers"
+          ],
+          "created_at": "2026-10-27",
+          "current_state": "Unknown keys and folded scalars are refused with no hint of either.",
+          "depends_on": [],
+          "desired_state": "document/v1 accepts an `x-` namespace for adopter keys; a folded or multi-line scalar is refused with a message that says so and shows the one-line form.",
+          "evidence_required": [
+            "case_adopter_front_matter_is_read_not_refused"
+          ],
+          "milestone": "a-second-adopter-is-served",
+          "objective": "document/v1 accepts an `x-` namespace for adopter keys; a folded or multi-line scalar is refused with a message that says so and shows the one-line form.",
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I4259.yaml",
+            "share/schemas/majordomus/document/document.v1.schema.json",
+            "apps/majordomus-cli/src/index.rs",
+            "apps/majordomus-cli/src/metadata/yaml.rs",
+            "lib/common.sh",
+            "test/cases/4259_a_wrapped_value_is_named.sh"
+          ],
+          "slug": "adopter-front-matter-is-read-not-refused",
+          "updated_at": "2026-10-27",
+          "validation": [
+            "bash test/run.sh 4259_a_wrapped_value_is_named"
+          ]
+        }
+      },
+      {
         "id": "majordomus://issue/I4261",
         "kind": "issue",
         "label": "I4261",
@@ -71909,7 +72259,7 @@
           "current_state": "Trace references and dates have no field.",
           "depends_on": [],
           "evidence_required": [
-            "case_issues_trace_outward_and_milestones_carr"
+            "case_issues_trace_outward_and_milestones_carry_dates"
           ],
           "milestone": "a-second-adopter-is-served",
           "parallel_safe": true,
@@ -71924,12 +72274,54 @@
             "lib/plan.sh",
             "scripts/github-sync",
             "docs/SCHEMAS.md",
-            "test/cases/4261_issues_trace_outward.sh"
+            "test/cases/4261_issues_trace_outward.sh",
+            ".ai/repo/ci/gates.yaml"
           ],
           "slug": "issues-trace-outward-and-milestones-carry-dates",
           "updated_at": "2026-10-27",
           "validation": [
             "bash test/run.sh 4261_issues_trace_outward"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4262",
+        "kind": "issue",
+        "label": "I4262",
+        "summary": "An adopter gets the commit-message guard the projection's rules assume",
+        "route": "/cockpit/objects/issue/i4262",
+        "source": ".ai/repo/project/issues/I4262.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A subject without an issue id is refused when the policy requires one",
+            "A closing keyword is refused"
+          ],
+          "created_at": "2026-10-27",
+          "current_state": "commit.validate judges this repository's own policy.",
+          "depends_on": [],
+          "desired_state": "init offers a commit-msg line whose policy (issue id required, tracker key pattern, closing keywords refused, branch naming) is declared in the adopter's policy.",
+          "evidence_required": [
+            "case_a_commit_message_guard_ships_for_adopter"
+          ],
+          "milestone": "a-second-adopter-is-served",
+          "objective": "init offers a commit-msg line whose policy (issue id required, tracker key pattern, closing keywords refused, branch naming) is declared in the adopter's policy.",
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I4262.yaml",
+            "lib/init.sh",
+            "share/skeleton/policy.yaml",
+            "share/schemas/majordomus/policy/policy.v1.schema.json",
+            "share/allow/policy.txt",
+            "apps/majordomus-cli/src/commit",
+            "docs/COMMIT.md",
+            "test/cases/4262_an_adopter_commit_is_judged.sh"
+          ],
+          "slug": "a-commit-message-guard-ships-for-adopters",
+          "updated_at": "2026-10-27",
+          "validation": [
+            "bash test/run.sh 4262_an_adopter_commit_is_judged"
           ]
         }
       },
@@ -73219,6 +73611,8 @@
             "A deployed commit carrying neither names both paths in the unread reason",
             "The ui-snapshot job fails when the publication source is unread after the forge was observed"
           ],
+          "completed_at": "2026-10-30T19:37:46Z",
+          "completed_event": "sha256:10d8feeff460f173131c8c4c0b5f80b2c3aac27a2a75c3409442d24476487141",
           "created_at": "2026-10-28",
           "depends_on": [],
           "evidence_required": [
@@ -73246,11 +73640,16 @@
           ],
           "serves": [],
           "slug": "the-deployed-stage-reads-what-pages-published",
+          "started_at": "2026-10-30T19:36:33Z",
+          "started_event": "sha256:bef41b292e13f15a1a45c9ada9dd2b9b91e32f45af49e59a8a6725a27e630864",
+          "updated_at": "2026-10-30T19:37:46Z",
           "validation": [
             "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test plan_delivery",
             "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib plan::delivery",
             "majordomus served forge && majordomus plan delivery (deployed > 0 at origin/master)"
-          ]
+          ],
+          "verified_at": "2026-10-30T19:37:16Z",
+          "verified_event": "sha256:6b8e0975bc99f8a0b3f18d2d1d2ea41d81e3a2ddade59585d8bdf2c136d8f156"
         }
       },
       {
@@ -76982,6 +77381,87 @@
             "bin/majordomus generate --check",
             "bin/majordomus shell check",
             "bin/majordomus doctor",
+            "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4525",
+        "kind": "issue",
+        "label": "I4525",
+        "summary": "The deployed stage reads unknown, not 0, while the forge's deployment record is absent or older than the pointer majordomus.dev serves",
+        "route": "/cockpit/objects/issue/i4525",
+        "source": ".ai/repo/project/issues/I4525.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "With no forge observation, plan delivery reports the deployed stage unknown with the reason 'forge not observed' and names `majordomus served forge`, and no tally reports deployed 0",
+            "With a forge observation older than the newest successful Pages deployment, the deployed stage is unknown with the reason naming both times",
+            "With an observation that covers the served deployment, the deployed count is reported as today, with the observation's time",
+            "The derived delivery data and the site render unknown as unknown, never as 0"
+          ],
+          "created_at": "2026-10-30",
+          "current_state": "With no forge observation, or one older than the newest Pages deployment, plan delivery counts every issue below deployed and reports deployed 0, with no reason attached to the stage.",
+          "depends_on": [
+            "I4315"
+          ],
+          "evidence_required": [
+            "test"
+          ],
+          "milestone": "truthful-plan-surfaces",
+          "non_scope": [
+            "Observing deployments inside `prs refresh` or `plan delivery` itself (3e8225a4329 separated them on purpose)",
+            "How `served forge` reads the forge"
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/plan/delivery.rs",
+            "apps/majordomus-cli/tests/plan_delivery.rs",
+            "docs/PLANNING.md",
+            ".ai/repo/project/issues/I4525.yaml"
+          ],
+          "serves": [],
+          "slug": "the-deployed-stage-is-unknown-until-the-forge-is-observed",
+          "validation": [
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test plan_delivery",
+            "majordomus plan delivery on a fresh clone (deployed unknown), then after majordomus served forge (deployed > 0)"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4526",
+        "kind": "issue",
+        "label": "I4526",
+        "summary": "An ADR edited in place only plans; a commit that adds or removes one still delivers",
+        "route": "/cockpit/objects/issue/i4526",
+        "source": ".ai/repo/project/issues/I4526.yaml",
+        "facts": {
+          "created_at": "2026-10-31",
+          "depends_on": [
+            "I2749"
+          ],
+          "evidence_required": [
+            "decision_record_edit_is_not_delivery"
+          ],
+          "milestone": "truthful-plan-surfaces",
+          "non_scope": [
+            "Reading what an ADR edit changed (a status line, a paragraph): an in-place edit of a record is planning whatever it says.",
+            "Writing or correcting a lifecycle stamp of I4468, I4469, I2673 or I2674 from inference: a merge is not acceptance (ADR 0166, alternatives).",
+            "Decision records outside .ai/repo/adrs/, or a renamed record: a rename reaches diff-tree as a delete and an add and stays delivery."
+          ],
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/plan/delivery.rs",
+            "docs/PLANNING.md",
+            ".ai/repo/project/issues/I4526.yaml"
+          ],
+          "slug": "an-adr-edited-in-place-only-plans",
+          "updated_at": "2026-10-31",
+          "validation": [
+            "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --lib plan::delivery",
             "bin/majordomus plan validate"
           ]
         }
@@ -89565,6 +90045,30 @@
         }
       },
       {
+        "id": "majordomus://rule/project.a-visualisation-is-interactive@1",
+        "kind": "rule",
+        "label": "project.a-visualisation-is-interactive@1",
+        "summary": "A graph, a chart or a diagram is something a reader can act on, never a picture",
+        "route": "/cockpit/objects/rule/project-a-visualisation-is-interactive-1",
+        "source": ".ai/repo/rules/project/a-visualisation-is-interactive.v1.md",
+        "status": "active",
+        "facts": {
+          "class": "blocking",
+          "depends_on": [
+            "project.ui-derived-state@1",
+            "project.ui-conformance@1",
+            "project.every-link-and-control-is-tested@1",
+            "project.markdown-is-rendered-once@1"
+          ],
+          "tags": [
+            "ui",
+            "cockpit",
+            "visualisation",
+            "accessibility"
+          ]
+        }
+      },
+      {
         "id": "majordomus://rule/project.a-worker-that-stops-leaves-its-work-behind@2",
         "kind": "rule",
         "label": "project.a-worker-that-stops-leaves-its-work-behind@2",
@@ -90514,6 +91018,31 @@
             "integration",
             "deployment",
             "evidence"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://rule/project.markdown-is-rendered-once@1",
+        "kind": "rule",
+        "label": "project.markdown-is-rendered-once@1",
+        "summary": "A Markdown body is drawn by one renderer, wherever it is shown",
+        "route": "/cockpit/objects/rule/project-markdown-is-rendered-once-1",
+        "source": ".ai/repo/rules/project/markdown-is-rendered-once.v1.md",
+        "status": "active",
+        "facts": {
+          "class": "blocking",
+          "depends_on": [
+            "project.interfaces-are-projections@1",
+            "project.ui-conformance@1",
+            "project.ui-derived-state@1",
+            "project.derived-once@1"
+          ],
+          "tags": [
+            "ui",
+            "cockpit",
+            "markdown",
+            "projections",
+            "security"
           ]
         }
       },
@@ -98816,6 +99345,20 @@
         "source": "test/cases/1083_a_rule_opens_its_proof.sh"
       },
       {
+        "id": "majordomus://test/test/cases/1084_the_capabilities_are_faceted.sh",
+        "kind": "test",
+        "label": "test/cases/1084_the_capabilities_are_faceted.sh",
+        "route": "/cockpit/objects/test/test-cases-1084-the-capabilities-are-faceted-sh",
+        "source": "test/cases/1084_the_capabilities_are_faceted.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/1085_the_home_page_is_the_front_door.sh",
+        "kind": "test",
+        "label": "test/cases/1085_the_home_page_is_the_front_door.sh",
+        "route": "/cockpit/objects/test/test-cases-1085-the-home-page-is-the-front-door-sh",
+        "source": "test/cases/1085_the_home_page_is_the_front_door.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/1086_a_remote_caller_cannot_write.sh",
         "kind": "test",
         "label": "test/cases/1086_a_remote_caller_cannot_write.sh",
@@ -98926,6 +99469,20 @@
         "label": "test/cases/10_site_data.sh",
         "route": "/cockpit/objects/test/test-cases-10-site-data-sh",
         "source": "test/cases/10_site_data.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/1101_markdown_is_rendered_once.sh",
+        "kind": "test",
+        "label": "test/cases/1101_markdown_is_rendered_once.sh",
+        "route": "/cockpit/objects/test/test-cases-1101-markdown-is-rendered-once-sh",
+        "source": "test/cases/1101_markdown_is_rendered_once.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/1102_a_visualisation_is_interactive.sh",
+        "kind": "test",
+        "label": "test/cases/1102_a_visualisation_is_interactive.sh",
+        "route": "/cockpit/objects/test/test-cases-1102-a-visualisation-is-interactive-sh",
+        "source": "test/cases/1102_a_visualisation_is_interactive.sh"
       },
       {
         "id": "majordomus://test/test/cases/110_lease_reader.sh",
@@ -100846,6 +101403,13 @@
         "source": "test/cases/3720_no_two_published_paths_differ_only_in_case.sh"
       },
       {
+        "id": "majordomus://test/test/cases/3721_a_deploy_keeps_every_pre_release_it_serves.sh",
+        "kind": "test",
+        "label": "test/cases/3721_a_deploy_keeps_every_pre_release_it_serves.sh",
+        "route": "/cockpit/objects/test/test-cases-3721-a-deploy-keeps-every-pre-release-it-serves-sh",
+        "source": "test/cases/3721_a_deploy_keeps_every_pre_release_it_serves.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/3723_the_graph_text_reads_each_edge_its_way.sh",
         "kind": "test",
         "label": "test/cases/3723_the_graph_text_reads_each_edge_its_way.sh",
@@ -101420,6 +101984,13 @@
         "source": "test/cases/4253_every_skill_remedy_runs.sh"
       },
       {
+        "id": "majordomus://test/test/cases/4255_a_project_rule_runs_its_command.sh",
+        "kind": "test",
+        "label": "test/cases/4255_a_project_rule_runs_its_command.sh",
+        "route": "/cockpit/objects/test/test-cases-4255-a-project-rule-runs-its-command-sh",
+        "source": "test/cases/4255_a_project_rule_runs_its_command.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/4257_init_keeps_a_hand_written_provider_file.sh",
         "kind": "test",
         "label": "test/cases/4257_init_keeps_a_hand_written_provider_file.sh",
@@ -101434,11 +102005,25 @@
         "source": "test/cases/4258_documents_below_docs_are_discovered.sh"
       },
       {
+        "id": "majordomus://test/test/cases/4259_a_wrapped_value_is_named.sh",
+        "kind": "test",
+        "label": "test/cases/4259_a_wrapped_value_is_named.sh",
+        "route": "/cockpit/objects/test/test-cases-4259-a-wrapped-value-is-named-sh",
+        "source": "test/cases/4259_a_wrapped_value_is_named.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/4261_issues_trace_outward.sh",
         "kind": "test",
         "label": "test/cases/4261_issues_trace_outward.sh",
         "route": "/cockpit/objects/test/test-cases-4261-issues-trace-outward-sh",
         "source": "test/cases/4261_issues_trace_outward.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/4262_an_adopter_commit_is_judged.sh",
+        "kind": "test",
+        "label": "test/cases/4262_an_adopter_commit_is_judged.sh",
+        "route": "/cockpit/objects/test/test-cases-4262-an-adopter-commit-is-judged-sh",
+        "source": "test/cases/4262_an_adopter_commit_is_judged.sh"
       },
       {
         "id": "majordomus://test/test/cases/4264_adr_check_names_what_it_skipped.sh",
@@ -101999,6 +102584,13 @@
         "label": "test/cases/611_the_reclaim_refuses_what_it_cannot_prove.sh",
         "route": "/cockpit/objects/test/test-cases-611-the-reclaim-refuses-what-it-cannot-prove-sh",
         "source": "test/cases/611_the_reclaim_refuses_what_it_cannot_prove.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/612_every_worktree_has_a_disposition.sh",
+        "kind": "test",
+        "label": "test/cases/612_every_worktree_has_a_disposition.sh",
+        "route": "/cockpit/objects/test/test-cases-612-every-worktree-has-a-disposition-sh",
+        "source": "test/cases/612_every_worktree_has_a_disposition.sh"
       },
       {
         "id": "majordomus://test/test/cases/617_a_case_can_name_what_it_covers.sh",
@@ -109296,6 +109888,26 @@
         "kind": "projects"
       },
       {
+        "source": "capability:worktree.reconciliation",
+        "target": "projection:cli",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:worktree.reconciliation",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:worktree.reconciliation",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:worktree.reconciliation",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
         "source": "capability:worktree.status",
         "target": "projection:cli",
         "kind": "projects"
@@ -112916,6 +113528,51 @@
         "kind": "put_in_force"
       },
       {
+        "source": "majordomus://adr/adr-0127",
+        "target": "file:apps/majordomus-cli/src/worktree/reconcile.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0127",
+        "target": "kind:adr",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://adr/adr-0127",
+        "target": "majordomus://adr/adr-0021",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0127",
+        "target": "majordomus://adr/adr-0055",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0127",
+        "target": "majordomus://document/docs/WORKTREES.md",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0127",
+        "target": "majordomus://rule/project.reclaim-only-what-you-own@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0127",
+        "target": "majordomus://rule/project.worktree-topology@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0127",
+        "target": "majordomus://test/test/cases/611_the_reclaim_refuses_what_it_cannot_prove.sh",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0127",
+        "target": "majordomus://test/test/cases/612_every_worktree_has_a_disposition.sh",
+        "kind": "put_in_force"
+      },
+      {
         "source": "majordomus://adr/adr-0129",
         "target": "file:apps/majordomus-cli/src/integration/classify.rs",
         "kind": "put_in_force"
@@ -113528,6 +114185,86 @@
       {
         "source": "majordomus://adr/adr-0147",
         "target": "majordomus://test/test/cases/2982_two_snapshots_link_what_the_other_holds.sh",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0148",
+        "target": "file:.ai/repo/visualisation-baseline.txt",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0148",
+        "target": "file:apps/majordomus-cli/src/cockpit/pages.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0148",
+        "target": "file:apps/majordomus-cli/src/markdown.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0148",
+        "target": "file:apps/majordomus-cli/src/ui/prose.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0148",
+        "target": "file:scripts/ci/visualisation-check",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0148",
+        "target": "file:share/cockpit/cockpit.js",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0148",
+        "target": "file:share/design/primitives.css",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0148",
+        "target": "kind:adr",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://adr/adr-0148",
+        "target": "majordomus://adr/adr-0012",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0148",
+        "target": "majordomus://adr/adr-0135",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0148",
+        "target": "majordomus://adr/adr-0141",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0148",
+        "target": "majordomus://document/docs/COCKPIT.md",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0148",
+        "target": "majordomus://rule/project.a-visualisation-is-interactive@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0148",
+        "target": "majordomus://rule/project.markdown-is-rendered-once@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0148",
+        "target": "majordomus://test/test/cases/1101_markdown_is_rendered_once.sh",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0148",
+        "target": "majordomus://test/test/cases/1102_a_visualisation_is_interactive.sh",
         "kind": "put_in_force"
       },
       {
@@ -130116,6 +130853,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I2283",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2283",
+        "target": "majordomus://milestone/development-runtime",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://issue/I2288",
         "target": "kind:issue",
         "kind": "is_a"
@@ -130667,6 +131414,36 @@
       },
       {
         "source": "majordomus://issue/I2478",
+        "target": "majordomus://milestone/development-runtime",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2479",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2479",
+        "target": "majordomus://issue/I2462",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2479",
+        "target": "majordomus://milestone/development-runtime",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2480",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2480",
+        "target": "majordomus://issue/I2462",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2480",
         "target": "majordomus://milestone/development-runtime",
         "kind": "belongs_to"
       },
@@ -140401,6 +141178,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I4255",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4255",
+        "target": "majordomus://milestone/a-second-adopter-is-served",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://issue/I4256",
         "target": "kind:issue",
         "kind": "is_a"
@@ -140431,12 +141218,32 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I4259",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4259",
+        "target": "majordomus://milestone/a-second-adopter-is-served",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://issue/I4261",
         "target": "kind:issue",
         "kind": "is_a"
       },
       {
         "source": "majordomus://issue/I4261",
+        "target": "majordomus://milestone/a-second-adopter-is-served",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4262",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4262",
         "target": "majordomus://milestone/a-second-adopter-is-served",
         "kind": "belongs_to"
       },
@@ -141858,6 +142665,36 @@
       {
         "source": "majordomus://issue/I4522",
         "target": "majordomus://milestone/a-bounded-task-is-carried-to-accepted-work",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4525",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4525",
+        "target": "majordomus://issue/I4315",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I4525",
+        "target": "majordomus://milestone/truthful-plan-surfaces",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4526",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4526",
+        "target": "majordomus://issue/I2749",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I4526",
+        "target": "majordomus://milestone/truthful-plan-surfaces",
         "kind": "belongs_to"
       },
       {
@@ -144371,6 +145208,31 @@
         "kind": "depends_on"
       },
       {
+        "source": "majordomus://rule/project.a-visualisation-is-interactive@1",
+        "target": "kind:rule",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://rule/project.a-visualisation-is-interactive@1",
+        "target": "majordomus://rule/project.every-link-and-control-is-tested@1",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.a-visualisation-is-interactive@1",
+        "target": "majordomus://rule/project.markdown-is-rendered-once@1",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.a-visualisation-is-interactive@1",
+        "target": "majordomus://rule/project.ui-conformance@1",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.a-visualisation-is-interactive@1",
+        "target": "majordomus://rule/project.ui-derived-state@1",
+        "kind": "depends_on"
+      },
+      {
         "source": "majordomus://rule/project.a-worker-that-stops-leaves-its-work-behind@2",
         "target": "kind:rule",
         "kind": "is_a"
@@ -144978,6 +145840,31 @@
       {
         "source": "majordomus://rule/project.land-and-publish@1",
         "target": "majordomus://rule/project.interfaces-are-projections@1",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.markdown-is-rendered-once@1",
+        "target": "kind:rule",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://rule/project.markdown-is-rendered-once@1",
+        "target": "majordomus://rule/project.derived-once@1",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.markdown-is-rendered-once@1",
+        "target": "majordomus://rule/project.interfaces-are-projections@1",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.markdown-is-rendered-once@1",
+        "target": "majordomus://rule/project.ui-conformance@1",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.markdown-is-rendered-once@1",
+        "target": "majordomus://rule/project.ui-derived-state@1",
         "kind": "depends_on"
       },
       {
@@ -146751,6 +147638,16 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/1084_the_capabilities_are_faceted.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/1085_the_home_page_is_the_front_door.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/1086_a_remote_caller_cannot_write.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -146827,6 +147724,16 @@
       },
       {
         "source": "majordomus://test/test/cases/10_site_data.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/1101_markdown_is_rendered_once.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/1102_a_visualisation_is_interactive.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -148201,6 +149108,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/3721_a_deploy_keeps_every_pre_release_it_serves.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/3723_the_graph_text_reads_each_edge_its_way.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -148611,6 +149523,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/4255_a_project_rule_runs_its_command.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/4257_init_keeps_a_hand_written_provider_file.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -148621,7 +149538,17 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/4259_a_wrapped_value_is_named.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/4261_issues_trace_outward.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/4262_an_adopter_commit_is_judged.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -149022,6 +149949,11 @@
       },
       {
         "source": "majordomus://test/test/cases/611_the_reclaim_refuses_what_it_cannot_prove.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/612_every_worktree_has_a_disposition.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -153752,6 +154684,11 @@
       },
       {
         "source": "module:worktree",
+        "target": "capability:worktree.reconciliation",
+        "kind": "composes"
+      },
+      {
+        "source": "module:worktree",
         "target": "capability:worktree.status",
         "kind": "composes"
       },
@@ -153772,8 +154709,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4196,
-      "edges": 9637,
+      "nodes": 4224,
+      "edges": 9706,
       "acyclic": false,
       "truncated": false
     }
