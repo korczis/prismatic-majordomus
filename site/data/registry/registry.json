@@ -6,28 +6,28 @@
     "version": "1.0.0-alpha.10"
   },
   "registry": {
-    "fingerprint": "a023263da23f657082857c306cf256e30880c16d7d0d7c92c5a2a3c333893fac",
+    "fingerprint": "5f6a8e49025a8447baa93291d7c4a76f10168a456967eecf950ffb3d723dc06d",
     "summary": {
-      "total": 3732,
-      "builtin": 220,
-      "declarative": 3512,
+      "total": 3745,
+      "builtin": 223,
+      "declarative": 3522,
       "by_kind": {
-        "command": 36,
-        "query": 184,
-        "resource": 3512
+        "command": 37,
+        "query": 186,
+        "resource": 3522
       },
       "by_stability": {
         "behaviorally_verified": 147,
-        "experimental": 63,
-        "implemented": 3522
+        "experimental": 66,
+        "implemented": 3532
       },
       "mcp_tools": 206,
-      "mcp_resources": 3569,
+      "mcp_resources": 3579,
       "http_routes": 212,
-      "cli_commands": 120,
-      "modules": 94,
-      "benchmark_required": 181,
-      "benchmark_waived": 39,
+      "cli_commands": 123,
+      "modules": 96,
+      "benchmark_required": 182,
+      "benchmark_waived": 41,
       "cached": 55
     },
     "builtin": [
@@ -2682,6 +2682,11 @@
                     "type": "string",
                     "const": "repository_mutation",
                     "description": "The repository changes.\n\nFor most of this executable's life nothing classified to this, because no capability\nof any kind wrote to the repository. That day arrived with [ADR 0040]: development\nsemantics are capabilities of this runtime, and the first of them — `plan.transition`\n— stamps a field into an issue's own tracked record. The variant was put on the model\nin advance so that when one did, it would say so *here*, where a projection already\nreads it and a client already asks before running it, rather than in whichever page\nhappens to render its button.\n\nIt is not classified from the kind, because the kind cannot know it: a command that\nannounces a peer and a command that writes a tracked file are the same kind. A\nhandler that writes the repository says so with\n`ExecutionPolicy::writes_repository`, the way one that stops says so with\n`ExecutionPolicy::stoppable`.\n\n[ADR 0040]: https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/adrs/0040-development-semantics-are-capabilities-of-one-runtime.md"
+                  },
+                  {
+                    "type": "string",
+                    "const": "remote_mutation",
+                    "description": "Other machines change: the handler reaches, over ssh, machines this process does not\nrun on, and installs, writes or restarts something there ([ADR 0132]). The strongest\neffect a capability can have, and the only one that is open-world: what it changes\noutlives this process, this repository and this machine. A handler says so with\n`ExecutionPolicy::changes_other_machines`.\n\n[ADR 0132]: https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/adrs/0132-the-fleet-is-declared-and-rolled-out-by-a-typed-capability.md"
                   }
                 ],
                 "description": "What running a capability changes outside the caller.\n\nClassified, never declared: it follows from the kind, which is the field a declaration\nalready carries. A projection reads this to decide whether to ask before running\nsomething — the Cockpit's confirmation is derived from it — instead of naming\ncapabilities it must treat carefully, which is a list that goes stale the day after it\nis written."
@@ -3628,6 +3633,11 @@
                     "type": "string",
                     "const": "repository_mutation",
                     "description": "The repository changes.\n\nFor most of this executable's life nothing classified to this, because no capability\nof any kind wrote to the repository. That day arrived with [ADR 0040]: development\nsemantics are capabilities of this runtime, and the first of them — `plan.transition`\n— stamps a field into an issue's own tracked record. The variant was put on the model\nin advance so that when one did, it would say so *here*, where a projection already\nreads it and a client already asks before running it, rather than in whichever page\nhappens to render its button.\n\nIt is not classified from the kind, because the kind cannot know it: a command that\nannounces a peer and a command that writes a tracked file are the same kind. A\nhandler that writes the repository says so with\n`ExecutionPolicy::writes_repository`, the way one that stops says so with\n`ExecutionPolicy::stoppable`.\n\n[ADR 0040]: https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/adrs/0040-development-semantics-are-capabilities-of-one-runtime.md"
+                  },
+                  {
+                    "type": "string",
+                    "const": "remote_mutation",
+                    "description": "Other machines change: the handler reaches, over ssh, machines this process does not\nrun on, and installs, writes or restarts something there ([ADR 0132]). The strongest\neffect a capability can have, and the only one that is open-world: what it changes\noutlives this process, this repository and this machine. A handler says so with\n`ExecutionPolicy::changes_other_machines`.\n\n[ADR 0132]: https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/adrs/0132-the-fleet-is-declared-and-rolled-out-by-a-typed-capability.md"
                   }
                 ],
                 "description": "What running a capability changes outside the caller.\n\nClassified, never declared: it follows from the kind, which is the field a declaration\nalready carries. A projection reads this to decide whether to ask before running\nsomething — the Cockpit's confirmation is derived from it — instead of naming\ncapabilities it must treat carefully, which is a list that goes stale the day after it\nis written."
@@ -32996,6 +33006,801 @@
         "source_path": "apps/majordomus-cli/src/capability/builtin/executions.rs"
       },
       {
+        "id": "fleet.plan",
+        "module": "fleet",
+        "kind": "query",
+        "title": "What a rollout would do on every machine",
+        "description": "Reads the fleet declaration and the distribution model and reaches nothing: the version every machine would be brought to, the installer, this machine's mesh node, and for each machine whether it is this one, the ssh destinations tried in order, the hub it serves and the steps a rollout takes there.",
+        "input": {
+          "name": "RolloutInput",
+          "schema": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "machines": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "The machines to bring, by their names in the fleet; every machine when absent."
+              },
+              "version": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "The release to install (`0.17.0` or `v0.17.0`); the latest stable release the repository\nrecords when absent.\nNamed, it is installed even where a newer one is."
+              },
+              "keep_servers": {
+                "type": "boolean",
+                "description": "Leave running the servers a machine runs from an older installed tree. By default\neach is stopped and started again at the version on the port it had; a session\nattached to one reconnects."
+              }
+            },
+            "description": "The input of `fleet.plan` and `fleet.rollout`.",
+            "title": "RolloutInput"
+          }
+        },
+        "output": {
+          "name": "Plan",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "declaration": {
+                "type": "string",
+                "description": "The declaration read."
+              },
+              "version": {
+                "type": "string",
+                "description": "The version every machine would be brought to."
+              },
+              "installer": {
+                "type": "string",
+                "description": "The installer that would install it."
+              },
+              "local_node": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "This machine's mesh node, when it has one."
+              },
+              "machines": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/MachinePlan"
+                },
+                "description": "Every machine, in the declaration's order."
+              }
+            },
+            "required": [
+              "declaration",
+              "version",
+              "installer",
+              "machines"
+            ],
+            "description": "What `fleet plan` answers.",
+            "title": "Plan",
+            "$defs": {
+              "MachinePlan": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "description": "The machine's name in the fleet."
+                  },
+                  "title": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "How a person names it."
+                  },
+                  "node": {
+                    "type": "string",
+                    "description": "Its mesh node id."
+                  },
+                  "local": {
+                    "type": "boolean",
+                    "description": "Whether it is this machine, reached without ssh."
+                  },
+                  "destinations": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "The ssh destinations, in the order they are tried."
+                  },
+                  "hub": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/HubView"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "The hub it serves."
+                  },
+                  "steps": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/$defs/Step"
+                    },
+                    "description": "The steps, in order."
+                  }
+                },
+                "required": [
+                  "id",
+                  "node",
+                  "local",
+                  "destinations",
+                  "steps"
+                ],
+                "description": "What a rollout would do on one machine."
+              },
+              "HubView": {
+                "type": "object",
+                "properties": {
+                  "checkout": {
+                    "type": "string",
+                    "description": "Its checkout, relative to the machine's home directory."
+                  },
+                  "port": {
+                    "type": "integer",
+                    "format": "uint16",
+                    "minimum": 0,
+                    "maximum": 65535,
+                    "description": "Its port."
+                  }
+                },
+                "required": [
+                  "checkout",
+                  "port"
+                ],
+                "description": "The hub a machine serves, as every answer shows it."
+              },
+              "Step": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "claims",
+                    "description": "Ask the mesh whether another session holds the machine (`host:` claims)."
+                  },
+                  {
+                    "type": "string",
+                    "const": "reach",
+                    "description": "Find a destination that answers."
+                  },
+                  {
+                    "type": "string",
+                    "const": "probe",
+                    "description": "Ask what the machine is and runs."
+                  },
+                  {
+                    "type": "string",
+                    "const": "install",
+                    "description": "Install the release with the published installer."
+                  },
+                  {
+                    "type": "string",
+                    "const": "checkout",
+                    "description": "Fast-forward the hub's checkout."
+                  },
+                  {
+                    "type": "string",
+                    "const": "service",
+                    "description": "Write and (re)start the hub's service."
+                  },
+                  {
+                    "type": "string",
+                    "const": "verify",
+                    "description": "Wait for the hub, or the launcher, to answer at the version."
+                  },
+                  {
+                    "type": "string",
+                    "const": "servers",
+                    "description": "Restart every server still running an installed tree of another version."
+                  }
+                ],
+                "description": "One step of a rollout on one machine."
+              }
+            }
+          }
+        },
+        "provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::fleet"
+        },
+        "exposure": {
+          "cli": {
+            "path": [
+              "fleet",
+              "plan"
+            ]
+          }
+        },
+        "availability": "runtime",
+        "visibility": "developer",
+        "stability": "experimental",
+        "tags": [
+          "fleet",
+          "mesh",
+          "distribution"
+        ],
+        "benchmark": {
+          "policy": "required"
+        },
+        "cache": {
+          "policy": "disabled"
+        },
+        "execution": {
+          "effect": "read",
+          "cancellable": false,
+          "concurrency": "unrestricted"
+        },
+        "source_path": "apps/majordomus-cli/src/capability/builtin/fleet.rs"
+      },
+      {
+        "id": "fleet.rollout",
+        "module": "fleet",
+        "kind": "command",
+        "title": "Bring every machine of the fleet to this release, and form the mesh",
+        "description": "On every machine named (every one by default), in parallel: reach it (this machine directly, the others by the first ssh destination that answers, never prompting); install the release with the published installer, which verifies the archive before touching anything, unless that version, or a newer one when none was named, is already there; for a hub, fast-forward its checkout to its remote's default branch (cloning it when absent, declining a dirty, diverged or off-branch one and leaving it as it is), write its service — a systemd user unit on Linux, a launchd agent on macOS — and restart it when anything changed or it does not answer at the version, then wait for it to answer at the version with its mesh active. Last, asks the converged hubs which nodes they see until every hub is seen by every other. Each machine's steps and verdict are reported; one machine's failure stops only that machine.",
+        "input": {
+          "name": "RolloutInput",
+          "schema": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "machines": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "The machines to bring, by their names in the fleet; every machine when absent."
+              },
+              "version": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "The release to install (`0.17.0` or `v0.17.0`); the latest stable release the repository\nrecords when absent.\nNamed, it is installed even where a newer one is."
+              },
+              "keep_servers": {
+                "type": "boolean",
+                "description": "Leave running the servers a machine runs from an older installed tree. By default\neach is stopped and started again at the version on the port it had; a session\nattached to one reconnects."
+              }
+            },
+            "description": "The input of `fleet.plan` and `fleet.rollout`.",
+            "title": "RolloutInput"
+          }
+        },
+        "output": {
+          "name": "Rollout",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "declaration": {
+                "type": "string",
+                "description": "The declaration read."
+              },
+              "version": {
+                "type": "string",
+                "description": "The version the machines were brought to."
+              },
+              "machines": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/MachineOutcome"
+                },
+                "description": "Every machine asked, in the declaration's order."
+              },
+              "mesh": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/Sighting"
+                },
+                "description": "Every converged hub, as the converged hubs' meshes see it."
+              },
+              "verdict": {
+                "$ref": "#/$defs/FleetVerdict",
+                "description": "Where the fleet ended."
+              }
+            },
+            "required": [
+              "declaration",
+              "version",
+              "machines",
+              "mesh",
+              "verdict"
+            ],
+            "description": "What `fleet rollout` answers.",
+            "title": "Rollout",
+            "$defs": {
+              "MachineOutcome": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "description": "The machine's name in the fleet."
+                  },
+                  "node": {
+                    "type": "string",
+                    "description": "Its mesh node id."
+                  },
+                  "local": {
+                    "type": "boolean",
+                    "description": "Whether it is this machine."
+                  },
+                  "reached_by": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The destination that answered (`local` for this machine)."
+                  },
+                  "platform": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "`uname -s` and `-m`."
+                  },
+                  "before": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The version installed before."
+                  },
+                  "after": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The version installed after."
+                  },
+                  "steps": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/$defs/StepOutcome"
+                    },
+                    "description": "Every step taken, in order."
+                  },
+                  "verdict": {
+                    "$ref": "#/$defs/MachineVerdict",
+                    "description": "Where it ended."
+                  }
+                },
+                "required": [
+                  "id",
+                  "node",
+                  "local",
+                  "steps",
+                  "verdict"
+                ],
+                "description": "One machine's rollout."
+              },
+              "StepOutcome": {
+                "type": "object",
+                "properties": {
+                  "step": {
+                    "$ref": "#/$defs/Step",
+                    "description": "Which step."
+                  },
+                  "status": {
+                    "$ref": "#/$defs/StepStatus",
+                    "description": "How it went."
+                  },
+                  "detail": {
+                    "type": "string",
+                    "description": "What it found or did."
+                  }
+                },
+                "required": [
+                  "step",
+                  "status",
+                  "detail"
+                ],
+                "description": "One step's outcome."
+              },
+              "Step": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "claims",
+                    "description": "Ask the mesh whether another session holds the machine (`host:` claims)."
+                  },
+                  {
+                    "type": "string",
+                    "const": "reach",
+                    "description": "Find a destination that answers."
+                  },
+                  {
+                    "type": "string",
+                    "const": "probe",
+                    "description": "Ask what the machine is and runs."
+                  },
+                  {
+                    "type": "string",
+                    "const": "install",
+                    "description": "Install the release with the published installer."
+                  },
+                  {
+                    "type": "string",
+                    "const": "checkout",
+                    "description": "Fast-forward the hub's checkout."
+                  },
+                  {
+                    "type": "string",
+                    "const": "service",
+                    "description": "Write and (re)start the hub's service."
+                  },
+                  {
+                    "type": "string",
+                    "const": "verify",
+                    "description": "Wait for the hub, or the launcher, to answer at the version."
+                  },
+                  {
+                    "type": "string",
+                    "const": "servers",
+                    "description": "Restart every server still running an installed tree of another version."
+                  }
+                ],
+                "description": "One step of a rollout on one machine."
+              },
+              "StepStatus": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "ok",
+                    "description": "It held without changing anything."
+                  },
+                  {
+                    "type": "string",
+                    "const": "changed",
+                    "description": "It changed the machine."
+                  },
+                  {
+                    "type": "string",
+                    "const": "skipped",
+                    "description": "It had nothing to do."
+                  },
+                  {
+                    "type": "string",
+                    "const": "refused",
+                    "description": "It was declined, and the detail says why; the machine was left as the step found it."
+                  },
+                  {
+                    "type": "string",
+                    "const": "failed",
+                    "description": "It failed."
+                  }
+                ],
+                "description": "How a step went."
+              },
+              "MachineVerdict": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "converged",
+                    "description": "It runs the version, and its hub, if it serves one, answers at it."
+                  },
+                  {
+                    "type": "string",
+                    "const": "unreachable",
+                    "description": "No destination answered."
+                  },
+                  {
+                    "type": "string",
+                    "const": "claimed",
+                    "description": "Another session holds the machine exclusively on the mesh; nothing was touched."
+                  },
+                  {
+                    "type": "string",
+                    "const": "failed",
+                    "description": "A step was declined or failed; the steps say which."
+                  }
+                ],
+                "description": "Where one machine ended."
+              },
+              "Sighting": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "description": "The machine's name in the fleet."
+                  },
+                  "node": {
+                    "type": "string",
+                    "description": "Its mesh node id."
+                  },
+                  "seen_by": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "The machines whose hubs see this node present."
+                  },
+                  "versions": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "The versions its runtimes advertise, as those hubs see them."
+                  }
+                },
+                "required": [
+                  "id",
+                  "node",
+                  "seen_by",
+                  "versions"
+                ],
+                "description": "One hub's machine, as the mesh sees it after the rollout."
+              },
+              "FleetVerdict": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "converged",
+                    "description": "Every machine converged, and every hub is seen by every other converged hub."
+                  },
+                  {
+                    "type": "string",
+                    "const": "partial",
+                    "description": "Some did; the machines say which did not."
+                  },
+                  {
+                    "type": "string",
+                    "const": "failed",
+                    "description": "None did."
+                  }
+                ],
+                "description": "Where the fleet ended."
+              }
+            }
+          }
+        },
+        "provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::fleet"
+        },
+        "exposure": {
+          "cli": {
+            "path": [
+              "fleet",
+              "rollout"
+            ]
+          }
+        },
+        "availability": "runtime",
+        "visibility": "developer",
+        "stability": "experimental",
+        "tags": [
+          "fleet",
+          "mesh",
+          "distribution"
+        ],
+        "benchmark": {
+          "policy": "waived",
+          "reason": "destructive"
+        },
+        "cache": {
+          "policy": "disabled"
+        },
+        "execution": {
+          "effect": "remote_mutation",
+          "cancellable": false,
+          "concurrency": "serial"
+        },
+        "source_path": "apps/majordomus-cli/src/capability/builtin/fleet.rs"
+      },
+      {
+        "id": "fleet.status",
+        "module": "fleet",
+        "kind": "query",
+        "title": "What every machine of the fleet runs",
+        "description": "Asks every machine, in parallel and over ssh unless it is this one, what it is and runs: the destination that answered, its platform, the version its launcher runs, every majordomus serve running there, and for a hub its checkout's branch, commit and cleanliness and the version the hub answers at. A machine no destination reaches is reported with every destination's reason. Changes nothing.",
+        "input": {
+          "name": "Empty",
+          "schema": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "No input.",
+            "title": "Empty"
+          }
+        },
+        "output": {
+          "name": "Status",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "declaration": {
+                "type": "string",
+                "description": "The declaration read."
+              },
+              "version": {
+                "type": "string",
+                "description": "The version this executable is."
+              },
+              "machines": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/MachineStatus"
+                },
+                "description": "Every machine, in the declaration's order."
+              }
+            },
+            "required": [
+              "declaration",
+              "version",
+              "machines"
+            ],
+            "description": "What `fleet status` answers.",
+            "title": "Status",
+            "$defs": {
+              "MachineStatus": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "description": "The machine's name in the fleet."
+                  },
+                  "node": {
+                    "type": "string",
+                    "description": "Its mesh node id."
+                  },
+                  "local": {
+                    "type": "boolean",
+                    "description": "Whether it is this machine."
+                  },
+                  "reached_by": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The destination that answered."
+                  },
+                  "platform": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "`uname -s` and `-m`."
+                  },
+                  "installed": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The version the launcher runs."
+                  },
+                  "hub": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/HubStatus"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "Its hub."
+                  },
+                  "servers": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "Every `majordomus serve` running there, as its command line."
+                  },
+                  "error": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "Why it could not be asked."
+                  }
+                },
+                "required": [
+                  "id",
+                  "node",
+                  "local",
+                  "servers"
+                ],
+                "description": "What one machine runs."
+              },
+              "HubStatus": {
+                "type": "object",
+                "properties": {
+                  "checkout": {
+                    "type": "string",
+                    "description": "Its checkout, relative to the home directory."
+                  },
+                  "port": {
+                    "type": "integer",
+                    "format": "uint16",
+                    "minimum": 0,
+                    "maximum": 65535,
+                    "description": "Its port."
+                  },
+                  "present": {
+                    "type": "boolean",
+                    "description": "Whether the checkout exists."
+                  },
+                  "branch": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The checkout's branch."
+                  },
+                  "head": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "Its commit."
+                  },
+                  "dirty": {
+                    "type": [
+                      "boolean",
+                      "null"
+                    ],
+                    "description": "Whether it has uncommitted changes to tracked files."
+                  },
+                  "answering": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The version the hub answers at on the port, when it answers."
+                  }
+                },
+                "required": [
+                  "checkout",
+                  "port",
+                  "present"
+                ],
+                "description": "What one machine's hub is."
+              }
+            }
+          }
+        },
+        "provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::fleet"
+        },
+        "exposure": {
+          "cli": {
+            "path": [
+              "fleet",
+              "status"
+            ]
+          }
+        },
+        "availability": "runtime",
+        "visibility": "developer",
+        "stability": "experimental",
+        "tags": [
+          "fleet",
+          "mesh",
+          "distribution"
+        ],
+        "benchmark": {
+          "policy": "waived",
+          "reason": "external_dependency"
+        },
+        "cache": {
+          "policy": "disabled"
+        },
+        "execution": {
+          "effect": "read",
+          "cancellable": false,
+          "concurrency": "unrestricted"
+        },
+        "source_path": "apps/majordomus-cli/src/capability/builtin/fleet.rs"
+      },
+      {
         "id": "gates.completion",
         "module": "gates",
         "kind": "query",
@@ -34842,7 +35647,7 @@
         "module": "guard",
         "kind": "query",
         "title": "Judge one edit",
-        "description": "Whether the given session may write the given path now: allowed when the policy's session.edits_require_claim is off, the path is outside the checkout or its local state, the repository declares no enabled mesh, the active task's scope covers it, or a live mesh claim of the session covers it; refused as unclaimed otherwise, with the remedy. What cannot be read — the policy, the mesh — is let through and named, never refused.",
+        "description": "Whether the given session may write the given path now: allowed when the policy's session.edits_require_claim is off, the path is outside the checkout or its local state, the repository declares no enabled mesh, the active task's scope covers it, or a live mesh claim of the session covers it; otherwise the ground is unclaimed, with the remedy: refused under session.edit_guard_mode: refuse, and let through and still named under advisory, the default (I3322). What cannot be read — the policy, the mesh — is let through and named, never refused.",
         "input": {
           "name": "GuardEditInput",
           "schema": {
@@ -34883,7 +35688,7 @@
               },
               "ground": {
                 "type": "string",
-                "description": "Why, as one word: `off`, `outside`, `local`, `no_mesh`, `task`, `claim`,\n`undecided` or `unclaimed`. Only `unclaimed` refuses."
+                "description": "Why, as one word: `off`, `outside`, `local`, `no_mesh`, `task`, `claim`,\n`undecided` or `unclaimed`. Only `unclaimed` refuses, and only under\n`session.edit_guard_mode: refuse`; under `advisory` it is allowed and reported."
               },
               "detail": {
                 "type": "string",
@@ -34894,7 +35699,7 @@
                   "string",
                   "null"
                 ],
-                "description": "What makes the edit allowed, when it is refused."
+                "description": "What makes the edit claimed, when no claim covers it: refused, or let through only\nbecause the guard is advisory."
               }
             },
             "required": [
@@ -35799,6 +36604,15 @@
                       "null"
                     ],
                     "description": "On `merge_succeeded`: the merge commit, once it is read; the head itself after a\nfast-forward."
+                  },
+                  "run": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "format": "uint64",
+                    "minimum": 0,
+                    "description": "On the `run_*` events of `prs supervise`: the CI run acted on."
                   }
                 },
                 "required": [
@@ -35966,6 +36780,41 @@
                     "type": "string",
                     "const": "observe_failed",
                     "description": "A continuous drain's cycle could not observe the forge, and the outage was short\nenough to wait out (`CONTINUOUS_TRANSIENT_LIMIT`)."
+                  },
+                  {
+                    "type": "string",
+                    "const": "run_cancel_attempted",
+                    "description": "`prs supervise --apply` is about to force-cancel a CI run; the detail names the run\nand the reason it was decided on, read again just now (`super::runs`)."
+                  },
+                  {
+                    "type": "string",
+                    "const": "run_cancelled",
+                    "description": "The run was force-cancelled."
+                  },
+                  {
+                    "type": "string",
+                    "const": "run_cancel_failed",
+                    "description": "The forge refused to cancel it."
+                  },
+                  {
+                    "type": "string",
+                    "const": "run_already_ended",
+                    "description": "The run had ended before the cancel reached it: another supervision, in a lane that\napplied in the same minute, cancelled it, or it completed on its own. Nothing was left\nto do, and nothing failed."
+                  },
+                  {
+                    "type": "string",
+                    "const": "run_rerun_attempted",
+                    "description": "A run, the newest of its pull request's head, is about to be asked to run again: paired\nwith this supervision's cancel of it, or on a later pass of any lane because the head has\nno run in flight and no verdict (`super::runs`). A record only: GitHub's own\n`run_attempt` bounds the asks (`super::runs::MAX_ATTEMPTS`), never this trail."
+                  },
+                  {
+                    "type": "string",
+                    "const": "run_rerun_requested",
+                    "description": "The run just force-cancelled was asked to run again: it was the last run of its pull\nrequest's head on its way to a verdict, ended because a job of it ran past its bound\n(`super::supervise::Decision::rerun`)."
+                  },
+                  {
+                    "type": "string",
+                    "const": "run_rerun_failed",
+                    "description": "The re-run of the run just force-cancelled could not be asked: its pull request's head\nhas no run until somebody re-runs it."
                   }
                 ],
                 "description": "What one line of the audit trail records. The wire word is the variant's `snake_case`\nname — the same word each was written as while the action was a string — so every line\nwritten before still parses, and a word nobody writes is not an action."
@@ -37467,6 +38316,41 @@
                     "type": "string",
                     "const": "observe_failed",
                     "description": "A continuous drain's cycle could not observe the forge, and the outage was short\nenough to wait out (`CONTINUOUS_TRANSIENT_LIMIT`)."
+                  },
+                  {
+                    "type": "string",
+                    "const": "run_cancel_attempted",
+                    "description": "`prs supervise --apply` is about to force-cancel a CI run; the detail names the run\nand the reason it was decided on, read again just now (`super::runs`)."
+                  },
+                  {
+                    "type": "string",
+                    "const": "run_cancelled",
+                    "description": "The run was force-cancelled."
+                  },
+                  {
+                    "type": "string",
+                    "const": "run_cancel_failed",
+                    "description": "The forge refused to cancel it."
+                  },
+                  {
+                    "type": "string",
+                    "const": "run_already_ended",
+                    "description": "The run had ended before the cancel reached it: another supervision, in a lane that\napplied in the same minute, cancelled it, or it completed on its own. Nothing was left\nto do, and nothing failed."
+                  },
+                  {
+                    "type": "string",
+                    "const": "run_rerun_attempted",
+                    "description": "A run, the newest of its pull request's head, is about to be asked to run again: paired\nwith this supervision's cancel of it, or on a later pass of any lane because the head has\nno run in flight and no verdict (`super::runs`). A record only: GitHub's own\n`run_attempt` bounds the asks (`super::runs::MAX_ATTEMPTS`), never this trail."
+                  },
+                  {
+                    "type": "string",
+                    "const": "run_rerun_requested",
+                    "description": "The run just force-cancelled was asked to run again: it was the last run of its pull\nrequest's head on its way to a verdict, ended because a job of it ran past its bound\n(`super::supervise::Decision::rerun`)."
+                  },
+                  {
+                    "type": "string",
+                    "const": "run_rerun_failed",
+                    "description": "The re-run of the run just force-cancelled could not be asked: its pull request's head\nhas no run until somebody re-runs it."
                   }
                 ],
                 "description": "What one line of the audit trail records. The wire word is the variant's `snake_case`\nname — the same word each was written as while the action was a string — so every line\nwritten before still parses, and a word nobody writes is not an action."
@@ -39331,6 +40215,41 @@
                     "type": "string",
                     "const": "observe_failed",
                     "description": "A continuous drain's cycle could not observe the forge, and the outage was short\nenough to wait out (`CONTINUOUS_TRANSIENT_LIMIT`)."
+                  },
+                  {
+                    "type": "string",
+                    "const": "run_cancel_attempted",
+                    "description": "`prs supervise --apply` is about to force-cancel a CI run; the detail names the run\nand the reason it was decided on, read again just now (`super::runs`)."
+                  },
+                  {
+                    "type": "string",
+                    "const": "run_cancelled",
+                    "description": "The run was force-cancelled."
+                  },
+                  {
+                    "type": "string",
+                    "const": "run_cancel_failed",
+                    "description": "The forge refused to cancel it."
+                  },
+                  {
+                    "type": "string",
+                    "const": "run_already_ended",
+                    "description": "The run had ended before the cancel reached it: another supervision, in a lane that\napplied in the same minute, cancelled it, or it completed on its own. Nothing was left\nto do, and nothing failed."
+                  },
+                  {
+                    "type": "string",
+                    "const": "run_rerun_attempted",
+                    "description": "A run, the newest of its pull request's head, is about to be asked to run again: paired\nwith this supervision's cancel of it, or on a later pass of any lane because the head has\nno run in flight and no verdict (`super::runs`). A record only: GitHub's own\n`run_attempt` bounds the asks (`super::runs::MAX_ATTEMPTS`), never this trail."
+                  },
+                  {
+                    "type": "string",
+                    "const": "run_rerun_requested",
+                    "description": "The run just force-cancelled was asked to run again: it was the last run of its pull\nrequest's head on its way to a verdict, ended because a job of it ran past its bound\n(`super::supervise::Decision::rerun`)."
+                  },
+                  {
+                    "type": "string",
+                    "const": "run_rerun_failed",
+                    "description": "The re-run of the run just force-cancelled could not be asked: its pull request's head\nhas no run until somebody re-runs it."
                   }
                 ],
                 "description": "What one line of the audit trail records. The wire word is the variant's `snake_case`\nname — the same word each was written as while the action was a string — so every line\nwritten before still parses, and a word nobody writes is not an action."
@@ -39624,6 +40543,15 @@
                       "null"
                     ],
                     "description": "On `merge_succeeded`: the merge commit, once it is read; the head itself after a\nfast-forward."
+                  },
+                  "run": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "format": "uint64",
+                    "minimum": 0,
+                    "description": "On the `run_*` events of `prs supervise`: the CI run acted on."
                   }
                 },
                 "required": [
@@ -39923,6 +40851,13 @@
                     "format": "uint64",
                     "minimum": 0,
                     "description": "Of those, how many failed."
+                  },
+                  "cancelled": {
+                    "type": "integer",
+                    "format": "uint64",
+                    "minimum": 0,
+                    "description": "Of those, how many were cancelled before they gave a verdict: counted as neither\npassed nor failed, and, cut short, no sample of how long the check takes (I3202).",
+                    "default": 0
                   },
                   "median_seconds": {
                     "type": "integer",
@@ -47708,6 +48643,11 @@
                     "type": "string",
                     "const": "repository_mutation",
                     "description": "The repository changes.\n\nFor most of this executable's life nothing classified to this, because no capability\nof any kind wrote to the repository. That day arrived with [ADR 0040]: development\nsemantics are capabilities of this runtime, and the first of them — `plan.transition`\n— stamps a field into an issue's own tracked record. The variant was put on the model\nin advance so that when one did, it would say so *here*, where a projection already\nreads it and a client already asks before running it, rather than in whichever page\nhappens to render its button.\n\nIt is not classified from the kind, because the kind cannot know it: a command that\nannounces a peer and a command that writes a tracked file are the same kind. A\nhandler that writes the repository says so with\n`ExecutionPolicy::writes_repository`, the way one that stops says so with\n`ExecutionPolicy::stoppable`.\n\n[ADR 0040]: https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/adrs/0040-development-semantics-are-capabilities-of-one-runtime.md"
+                  },
+                  {
+                    "type": "string",
+                    "const": "remote_mutation",
+                    "description": "Other machines change: the handler reaches, over ssh, machines this process does not\nrun on, and installs, writes or restarts something there ([ADR 0132]). The strongest\neffect a capability can have, and the only one that is open-world: what it changes\noutlives this process, this repository and this machine. A handler says so with\n`ExecutionPolicy::changes_other_machines`.\n\n[ADR 0132]: https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/adrs/0132-the-fleet-is-declared-and-rolled-out-by-a-typed-capability.md"
                   }
                 ],
                 "description": "What running a capability changes outside the caller.\n\nClassified, never declared: it follows from the kind, which is the field a declaration\nalready carries. A projection reads this to decide whether to ask before running\nsomething — the Cockpit's confirmation is derived from it — instead of naming\ncapabilities it must treat carefully, which is a list that goes stale the day after it\nis written."
@@ -47947,6 +48887,11 @@
                     "type": "string",
                     "const": "repository_mutation",
                     "description": "The repository changes.\n\nFor most of this executable's life nothing classified to this, because no capability\nof any kind wrote to the repository. That day arrived with [ADR 0040]: development\nsemantics are capabilities of this runtime, and the first of them — `plan.transition`\n— stamps a field into an issue's own tracked record. The variant was put on the model\nin advance so that when one did, it would say so *here*, where a projection already\nreads it and a client already asks before running it, rather than in whichever page\nhappens to render its button.\n\nIt is not classified from the kind, because the kind cannot know it: a command that\nannounces a peer and a command that writes a tracked file are the same kind. A\nhandler that writes the repository says so with\n`ExecutionPolicy::writes_repository`, the way one that stops says so with\n`ExecutionPolicy::stoppable`.\n\n[ADR 0040]: https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/adrs/0040-development-semantics-are-capabilities-of-one-runtime.md"
+                  },
+                  {
+                    "type": "string",
+                    "const": "remote_mutation",
+                    "description": "Other machines change: the handler reaches, over ssh, machines this process does not\nrun on, and installs, writes or restarts something there ([ADR 0132]). The strongest\neffect a capability can have, and the only one that is open-world: what it changes\noutlives this process, this repository and this machine. A handler says so with\n`ExecutionPolicy::changes_other_machines`.\n\n[ADR 0132]: https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/adrs/0132-the-fleet-is-declared-and-rolled-out-by-a-typed-capability.md"
                   }
                 ],
                 "description": "What running a capability changes outside the caller.\n\nClassified, never declared: it follows from the kind, which is the field a declaration\nalready carries. A projection reads this to decide whether to ask before running\nsomething — the Cockpit's confirmation is derived from it — instead of naming\ncapabilities it must treat carefully, which is a list that goes stale the day after it\nis written."
@@ -47968,7 +48913,7 @@
                   },
                   "open_world": {
                     "type": "boolean",
-                    "description": "The call reaches beyond this machine. No handler of this executable does: observing\nthe forge and talking to an advisor are commands a person runs, not capabilities."
+                    "description": "The call reaches beyond this machine. Only a handler that changes other machines\ndoes (`Effect::RemoteMutation`): observing the forge and talking to an advisor are\ncommands a person runs, not capabilities."
                   }
                 },
                 "required": [
@@ -60329,7 +61274,7 @@
                         "type": "null"
                       }
                     ],
-                    "description": "How far the evidence is from this checkout, in the repository's one staleness\nvocabulary. `None` when there is no evidence to label.\n\nA remote fact is labelled against the commit it was taken at, because the site that\nserves a commit goes on serving it while the tree moves underneath. A tree-bound\nfact is labelled by re-hashing: equal hashes are `exact`, and a difference takes the\ncommit's label, which is `advanced` when the working tree has merely moved on and\n`diverged` when the history it named is gone. A token that declares neither inputs\nnor a remote fact is bound to nothing and stays `exact` once recorded — that is the\nvalidator's behaviour, and it is reproduced rather than tightened here."
+                    "description": "How far the evidence is from this checkout, in the repository's one staleness\nvocabulary. `None` when there is no evidence to label, and `None` when the evidence\ncannot be judged because the token's pathspecs select no tracked file here: an empty\ninput set is never a freshness proof, so that obligation is `owed` (I4434).\n\nA remote fact is labelled against the commit it was taken at, because the site that\nserves a commit goes on serving it while the tree moves underneath. A tree-bound\nfact is labelled by re-hashing: equal hashes are `exact`, and a difference takes the\ncommit's label, which is `advanced` when the working tree has merely moved on and\n`diverged` when the history it named is gone. A token that declares neither inputs\nnor a remote fact is bound to nothing and stays `exact` once recorded — that is the\nvalidator's behaviour, and it is reproduced rather than tightened here."
                   },
                   "evidence": {
                     "anyOf": [
@@ -90767,7 +91712,7 @@
         "title": "adr",
         "description": "Declarative objects of kind 'adr' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 167,
+        "capabilities": 168,
         "capability_ids": []
       },
       {
@@ -90909,7 +91854,7 @@
         "title": "context",
         "description": "Declarative objects of kind 'context' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 39,
+        "capabilities": 40,
         "capability_ids": []
       },
       {
@@ -91107,7 +92052,7 @@
         "title": "document",
         "description": "Declarative objects of kind 'document' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 353,
+        "capabilities": 354,
         "capability_ids": []
       },
       {
@@ -91256,6 +92201,28 @@
         "capability_ids": []
       },
       {
+        "id": "fleet",
+        "title": "Fleet",
+        "description": "The machines that run this repository's mesh, as .ai/repo/fleet/ declares them, and the one operation that brings every one of them to the latest stable release the repository records: install it with the published installer, fast-forward each hub's checkout, write and restart each hub's service, and verify that each hub answers at the version and that the hubs see each other (ADR 0132).",
+        "stability": "experimental",
+        "source": "builtin",
+        "capabilities": 3,
+        "capability_ids": [
+          "fleet.plan",
+          "fleet.rollout",
+          "fleet.status"
+        ],
+        "source_path": "apps/majordomus-cli/src/capability/builtin/fleet.rs"
+      },
+      {
+        "id": "fleet-declaration",
+        "title": "fleet-declaration",
+        "description": "Declarative objects of kind 'fleet-declaration' from the repository's AI layer.",
+        "source": "declarative",
+        "capabilities": 1,
+        "capability_ids": []
+      },
+      {
         "id": "gap",
         "title": "gap",
         "description": "Declarative objects of kind 'gap' from the repository's AI layer.",
@@ -91299,7 +92266,7 @@
       {
         "id": "guard",
         "title": "Edit guard",
-        "description": "Whether a write to a file of this checkout is covered by a claim: the active task's scope, or a live mesh claim of the writing session. The judgement a provider's pre-tool hook asks before every edit (majordomus guard hook), switched by session.edits_require_claim.",
+        "description": "Whether a write to a file of this checkout is covered by a claim: the active task's scope, or a live mesh claim of the writing session. The judgement a provider's pre-tool hook asks before every edit (majordomus guard hook), switched by session.edits_require_claim and made to refuse by session.edit_guard_mode.",
         "stability": "experimental",
         "source": "builtin",
         "capabilities": 1,
@@ -91407,7 +92374,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 1156,
+        "capabilities": 1157,
         "capability_ids": []
       },
       {
@@ -92005,7 +92972,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 672,
+        "capabilities": 677,
         "capability_ids": []
       },
       {
@@ -92097,7 +93064,7 @@
     ]
   },
   "index": {
-    "fingerprint": "f4e80a4c1809ccdcd3241cfd7f6f7ec516d66a600e926013ee5ed47171281bd3",
+    "fingerprint": "4943e5c1de8552546d3813c4393437f0a2c7dd3b397a7696e5398b71986bf3f5",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -92120,24 +93087,25 @@
       "workflows": ".ai/repo/workflows"
     },
     "by_kind": {
-      "adr": 167,
+      "adr": 168,
       "application": 5,
       "area": 9,
       "audience": 8,
       "claim": 250,
       "command": 31,
-      "context": 39,
+      "context": 40,
       "critique": 38,
       "deployment": 1,
       "derive-offload": 1,
       "distribution-model": 1,
-      "document": 353,
+      "document": 354,
       "domain": 6,
       "feature": 29,
+      "fleet-declaration": 1,
       "gap": 5,
       "implementation": 52,
       "intent": 44,
-      "issue": 1156,
+      "issue": 1157,
       "knowledge": 90,
       "mesh-declaration": 1,
       "milestone": 114,
@@ -92151,7 +93119,7 @@
       "session": 93,
       "skill": 8,
       "taxonomy": 10,
-      "test": 672,
+      "test": 677,
       "use-case": 49,
       "workspace": 1
     },
@@ -93658,6 +94626,24 @@
           "distribution",
           "pages",
           "throughput"
+        ]
+      },
+      {
+        "uri": "majordomus://adr/adr-0132",
+        "kind": "adr",
+        "identity": "adr-0132",
+        "title": "The fleet is declared, and rolled out by a typed capability",
+        "description": "The fleet is declared, and rolled out by a typed capability",
+        "path": ".ai/repo/adrs/0132-the-fleet-is-declared-and-rolled-out-by-a-typed-capability.md",
+        "section": "adrs",
+        "source_class": "adr",
+        "bytes": 5304,
+        "tags": [
+          "architecture",
+          "mesh",
+          "distribution",
+          "capabilities",
+          "safety"
         ]
       },
       {
@@ -98140,6 +99126,16 @@
         "bytes": 1893
       },
       {
+        "uri": "majordomus://context/ai.repo.fleet",
+        "kind": "context",
+        "identity": "ai.repo.fleet",
+        "title": "Fleet",
+        "description": "One canonical object that names the machines running this repository's mesh, the ssh destinations that reach them, and the hub each serves, so that one command brings every machine to the repository's release and forms the mesh.",
+        "path": ".ai/repo/fleet/README.md",
+        "source_class": "context",
+        "bytes": 1608
+      },
+      {
         "uri": "majordomus://context/ai.repo.knowledge",
         "kind": "context",
         "identity": "ai.repo.knowledge",
@@ -99096,7 +100092,7 @@
         "title": "Security",
         "path": "SECURITY.md",
         "source_class": "readme",
-        "bytes": 9527
+        "bytes": 9858
       },
       {
         "uri": "majordomus://document/docs/ADOPTION.md",
@@ -99186,7 +100182,7 @@
         "title": "Continuous integration",
         "path": "docs/CI.md",
         "source_class": "document",
-        "bytes": 44980
+        "bytes": 70440
       },
       {
         "uri": "majordomus://document/docs/CLI.md",
@@ -99321,7 +100317,7 @@
         "title": "Distribution",
         "path": "docs/DISTRIBUTION.md",
         "source_class": "document",
-        "bytes": 40638
+        "bytes": 41398
       },
       {
         "uri": "majordomus://document/docs/DOCTRINE.md",
@@ -99423,6 +100419,15 @@
         "bytes": 31729
       },
       {
+        "uri": "majordomus://document/docs/FLEET.md",
+        "kind": "document",
+        "identity": "docs/FLEET.md",
+        "title": "Majordomus Fleet",
+        "path": "docs/FLEET.md",
+        "source_class": "document",
+        "bytes": 7150
+      },
+      {
         "uri": "majordomus://document/docs/GITHUB_PAGES_ARCHITECTURE.md",
         "kind": "document",
         "identity": "docs/GITHUB_PAGES_ARCHITECTURE.md",
@@ -99483,7 +100488,7 @@
         "title": "Pull-request integration",
         "path": "docs/INTEGRATION.md",
         "source_class": "document",
-        "bytes": 75048
+        "bytes": 77024
       },
       {
         "uri": "majordomus://document/docs/INTEGRATION_ROLLOUT.md",
@@ -99537,7 +100542,7 @@
         "title": "Majordomus Mesh",
         "path": "docs/MESH.md",
         "source_class": "document",
-        "bytes": 90757
+        "bytes": 92416
       },
       {
         "uri": "majordomus://document/docs/MODELS.md",
@@ -99609,7 +100614,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 125242
+        "bytes": 125231
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -99645,7 +100650,7 @@
         "title": "Documentation index",
         "path": "docs/README.md",
         "source_class": "document",
-        "bytes": 26348
+        "bytes": 26647
       },
       {
         "uri": "majordomus://document/docs/REASONING.md",
@@ -101193,7 +102198,7 @@
         "title": "A task that declares obligations reaches the outcome completed only when each one has evidence, and evidence taken over files that have since changed no longer discharges anything",
         "path": "docs/claims/obligation-closure.md",
         "source_class": "claim_page",
-        "bytes": 4981
+        "bytes": 5483
       },
       {
         "uri": "majordomus://document/docs/claims/obligation-establishment.md",
@@ -102594,6 +103599,14 @@
         ]
       },
       {
+        "uri": "majordomus://fleet-declaration/majordomus",
+        "kind": "fleet-declaration",
+        "identity": "majordomus",
+        "path": ".ai/repo/fleet/majordomus.yaml",
+        "source_class": "fleet-declaration",
+        "bytes": 2552
+      },
+      {
         "uri": "majordomus://gap/a-browser-computes-what-the-server-verifies",
         "kind": "gap",
         "identity": "a-browser-computes-what-the-server-verifies",
@@ -102710,7 +103723,7 @@
         "identity": "lib/capture.sh",
         "path": "lib/capture.sh",
         "source_class": "library",
-        "bytes": 170507
+        "bytes": 177657
       },
       {
         "uri": "majordomus://implementation/lib/changed.sh",
@@ -102798,7 +103811,7 @@
         "identity": "lib/doctor.sh",
         "path": "lib/doctor.sh",
         "source_class": "library",
-        "bytes": 112757
+        "bytes": 116699
       },
       {
         "uri": "majordomus://implementation/lib/doctrine.sh",
@@ -102814,7 +103827,7 @@
         "identity": "lib/evidence.sh",
         "path": "lib/evidence.sh",
         "source_class": "library",
-        "bytes": 33836
+        "bytes": 35226
       },
       {
         "uri": "majordomus://implementation/lib/finish.sh",
@@ -112082,7 +113095,7 @@
         "path": ".ai/repo/project/issues/I3322.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 3365
+        "bytes": 3495
       },
       {
         "uri": "majordomus://issue/I3323",
@@ -114051,7 +115064,7 @@
         "path": ".ai/repo/project/issues/I3903.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2505
+        "bytes": 6288
       },
       {
         "uri": "majordomus://issue/I3910",
@@ -116131,6 +117144,17 @@
         "section": "project",
         "source_class": "issue",
         "bytes": 6329
+      },
+      {
+        "uri": "majordomus://issue/I4434",
+        "kind": "issue",
+        "identity": "I4434",
+        "title": "An obligation whose inputs select no tracked file is not judged, so evidence over an empty input set never discharges it",
+        "description": "When a non-remote obligation declares pathspecs that select no tracked file in the tree, and its evidence was recorded over that empty selection, both judges answer that it is not judged instead of discharged: mj_obligation_judge (lib/evidence.sh, run by check and finish through majordomus.obligation-closure) returns unmet with the message `not judged: its inputs (<specs>) select no tracked file in this tree, so no evidence can be judged fresh over them` and the reproduce `git ls-files -- '<spec>' ...`; obligations.closure returns state owed, staleness null, the evidence attached and the same detail and reproduce, so gates.completion reads it as queued. `finish --outcome completed` therefore refuses it; an outcome that is not completed reports it without refusing, as every other shortfall. As soon as the pathspecs select a file, the existing judgement applies unchanged: evidence over the empty hash is stale, evidence over the selection discharges, and an edit after it makes it stale.",
+        "path": ".ai/repo/project/issues/I4434.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 6180
       },
       {
         "uri": "majordomus://issue/I4460",
@@ -119540,7 +120564,7 @@
         "path": ".ai/repo/policy.yaml",
         "section": "policy",
         "source_class": "policy",
-        "bytes": 26319
+        "bytes": 26909
       },
       {
         "uri": "majordomus://profile/debugging",
@@ -124444,6 +125468,14 @@
         "bytes": 5655
       },
       {
+        "uri": "majordomus://test/test/cases/1003_the_fleet_is_rolled_out.sh",
+        "kind": "test",
+        "identity": "test/cases/1003_the_fleet_is_rolled_out.sh",
+        "path": "test/cases/1003_the_fleet_is_rolled_out.sh",
+        "source_class": "case",
+        "bytes": 7239
+      },
+      {
         "uri": "majordomus://test/test/cases/100_environment.sh",
         "kind": "test",
         "identity": "test/cases/100_environment.sh",
@@ -126225,7 +127257,7 @@
         "identity": "test/cases/3069_an_edit_no_claim_covers_is_refused.sh",
         "path": "test/cases/3069_an_edit_no_claim_covers_is_refused.sh",
         "source_class": "case",
-        "bytes": 5718
+        "bytes": 6228
       },
       {
         "uri": "majordomus://test/test/cases/3073_context_knowledge_slice.sh",
@@ -127428,6 +128460,14 @@
         "bytes": 5093
       },
       {
+        "uri": "majordomus://test/test/cases/3903_the_supervisor_is_wired_to_survive_a_burst.sh",
+        "kind": "test",
+        "identity": "test/cases/3903_the_supervisor_is_wired_to_survive_a_burst.sh",
+        "path": "test/cases/3903_the_supervisor_is_wired_to_survive_a_burst.sh",
+        "source_class": "case",
+        "bytes": 11098
+      },
+      {
         "uri": "majordomus://test/test/cases/390_unresolved_relation_refuses_generation.sh",
         "kind": "test",
         "identity": "test/cases/390_unresolved_relation_refuses_generation.sh",
@@ -127924,6 +128964,14 @@
         "bytes": 51277
       },
       {
+        "uri": "majordomus://test/test/cases/4408_an_obligation_without_inputs_proves_nothing.sh",
+        "kind": "test",
+        "identity": "test/cases/4408_an_obligation_without_inputs_proves_nothing.sh",
+        "path": "test/cases/4408_an_obligation_without_inputs_proves_nothing.sh",
+        "source_class": "case",
+        "bytes": 6936
+      },
+      {
         "uri": "majordomus://test/test/cases/44_model_doctrine.sh",
         "kind": "test",
         "identity": "test/cases/44_model_doctrine.sh",
@@ -127938,6 +128986,22 @@
         "path": "test/cases/4512_no_derived_page_outgrows_the_index.sh",
         "source_class": "case",
         "bytes": 6738
+      },
+      {
+        "uri": "majordomus://test/test/cases/4521_the_edit_guard_is_wired_in_the_generated_settings.sh",
+        "kind": "test",
+        "identity": "test/cases/4521_the_edit_guard_is_wired_in_the_generated_settings.sh",
+        "path": "test/cases/4521_the_edit_guard_is_wired_in_the_generated_settings.sh",
+        "source_class": "case",
+        "bytes": 11228
+      },
+      {
+        "uri": "majordomus://test/test/cases/4522_an_unclaimed_edit_is_reported_through_the_generated_settings.sh",
+        "kind": "test",
+        "identity": "test/cases/4522_an_unclaimed_edit_is_reported_through_the_generated_settings.sh",
+        "path": "test/cases/4522_an_unclaimed_edit_is_reported_through_the_generated_settings.sh",
+        "source_class": "case",
+        "bytes": 8402
       },
       {
         "uri": "majordomus://test/test/cases/45_github_projection.sh",
@@ -129145,7 +130209,7 @@
         "identity": "test/cases/87b_release_archive_shape.sh",
         "path": "test/cases/87b_release_archive_shape.sh",
         "source_class": "case",
-        "bytes": 4987
+        "bytes": 7985
       },
       {
         "uri": "majordomus://test/test/cases/884_a_declared_kind_is_a_kind_the_graph_knows.sh",
@@ -130299,7 +131363,7 @@
       "identity": [
         "id"
       ],
-      "objects": 167
+      "objects": 168
     },
     {
       "name": "application",
@@ -130359,7 +131423,7 @@
       "identity": [
         "id"
       ],
-      "objects": 39
+      "objects": 40
     },
     {
       "name": "critique",
@@ -130405,7 +131469,7 @@
       "front_matter": "optional",
       "schema": "majordomus.document/v1",
       "identity": [],
-      "objects": 353
+      "objects": 354
     },
     {
       "name": "domain",
@@ -130426,6 +131490,16 @@
         "id"
       ],
       "objects": 29
+    },
+    {
+      "name": "fleet-declaration",
+      "format": "yaml",
+      "front_matter": "none",
+      "schema": "majordomus.fleet-declaration/v1",
+      "identity": [
+        "id"
+      ],
+      "objects": 1
     },
     {
       "name": "gap",
@@ -130462,7 +131536,7 @@
       "identity": [
         "id"
       ],
-      "objects": 1156
+      "objects": 1157
     },
     {
       "name": "knowledge",
@@ -130624,7 +131698,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 672
+      "objects": 677
     },
     {
       "name": "use-case",
@@ -144292,6 +145366,187 @@
             "path": [
               "majordomus",
               "prs",
+              "supervise"
+            ],
+            "route": "/docs/cli/prs/supervise/",
+            "executable": true,
+            "usage": "majordomus prs supervise [OPTIONS]",
+            "about": "Judge every in-flight CI run against the bounds `.ai/repo/ci/supervise.yaml` declares, and name each one to cancel with its reason: a pull request's first-attempt run waiting with no job created while a run of its branch and commit created within 120 seconds of it is in flight and is not itself to be ended within 30 minutes (never a re-run, an admitted run, nor when the pull request is labelled ci:full), a pull request's run of a head that moved while a newer run of it waits behind it in the same concurrency group, a pull request's run whose attempt queued past its workflow's bound with no job of it started, or one with a job in progress past its bound from that job's start (an integration/* top is never ended for a bound, nor a queued run of the default branch, a tag, the schedule, a dispatch or a release). A run of the default branch, a tag, the schedule, a dispatch or a release, and every pages or release run, is never cancelled for being superseded; the supervising workflow's own run never at all. It also reports supervise_stale when the supervisor's newest success (with `--supervised-by` and a window of 30 minutes or more, that lane's) is older than 30 minutes. A dry run by default, which reaches the forge to read and changes nothing. Exit 0 when nothing needs doing, 10 for decisions a dry run found, 12 when the forge could not be read or an act could not be taken",
+            "args": [
+              {
+                "name": "apply",
+                "long": "apply",
+                "positional": false,
+                "help": "Act: read each run and its pull request's head again, and only if the decision still holds, record the act on the integration trail and force-cancel the run. A trail that cannot be written stops every act",
+                "value_name": "APPLY",
+                "takes_value": false,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": [
+                  "false"
+                ]
+              },
+              {
+                "name": "dry_run",
+                "long": "dry-run",
+                "positional": false,
+                "help": "Decide and change nothing: the default, spelled out",
+                "value_name": "DRY_RUN",
+                "takes_value": false,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": [
+                  "false"
+                ]
+              },
+              {
+                "name": "unless_supervised_within",
+                "long": "unless-supervised-within",
+                "positional": false,
+                "help": "Stand aside when a supervision succeeded at most this many minutes ago: read only the supervisor's newest success, observe nothing, and exit 0. For a lane that covers for another, so that two lanes do not both spend the repository's request budget on every tick",
+                "value_name": "MINUTES",
+                "takes_value": true,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "supervised_by",
+                "long": "supervised-by",
+                "positional": false,
+                "help": "With `--unless-supervised-within`, count only a supervision by this lane's job (one named `<anything> (<LANE>)`): the lane covered for. A job that stood aside succeeded too, so a lane that counted its own would stand aside behind itself once the lane it covers for stopped. With a window of 30 minutes or more the reported liveness is this lane's, which is how the queue workflow holds the lundra lane to account",
+                "value_name": "LANE",
+                "takes_value": true,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "repo",
+                "long": "repo",
+                "positional": false,
+                "help": "Start the search for the repository root here (default: the current directory)",
+                "value_name": "PATH",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "discovery",
+                "long": "discovery",
+                "positional": false,
+                "help": "How declarative files are enumerated",
+                "value_name": "DISCOVERY",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "vcs",
+                    "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
+                  },
+                  {
+                    "name": "filesystem",
+                    "help": "A walk of the work tree with the same glob semantics; untracked files included"
+                  }
+                ],
+                "defaults": [
+                  "vcs"
+                ]
+              },
+              {
+                "name": "strict",
+                "long": "strict",
+                "positional": false,
+                "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+                "value_name": "STRICT",
+                "takes_value": false,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": [
+                  "false"
+                ]
+              },
+              {
+                "name": "share",
+                "long": "share",
+                "positional": false,
+                "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+                "value_name": "DIR",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "format",
+                "long": "format",
+                "positional": false,
+                "help": "Output shape",
+                "value_name": "FORMAT",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "text",
+                    "help": "Lines for a person"
+                  },
+                  {
+                    "name": "json",
+                    "help": "One JSON document, deterministic"
+                  }
+                ],
+                "defaults": [
+                  "text"
+                ]
+              }
+            ],
+            "examples": [
+              {
+                "id": "prs-supervise-dry-run-no-forge",
+                "title": "Supervising the CI runs starts from the forge, or not at all",
+                "description": "`supervise` reads every queued, waiting and running workflow run and every open pull request's head, and decides which runs to cancel and why: superseded while a newer run waits behind it, queued past its bound, or running past it. Without `--apply` it only prints the decisions. A repository that declares no bounds, or has no GitHub remote to read runs from, cannot be supervised: it exits 12 before deciding anything, and nothing is cancelled or recorded.",
+                "argv": [
+                  "prs",
+                  "supervise",
+                  "--dry-run"
+                ],
+                "command": "majordomus prs supervise --dry-run",
+                "setup": [],
+                "expectation": "exits 12"
+              },
+              {
+                "id": "prs-supervise-covering-lane-no-forge",
+                "title": "A covering lane asks the forge before it stands aside",
+                "description": "`--unless-supervised-within 15 --supervised-by lundra` is how the hosted fallback runs (with `--apply`): when lundra's supervise job succeeded at most fifteen minutes ago (the schedule's ten and a margin) it reads nothing else and exits 0 (`stood aside`), so two lanes do not both spend the repository's one request budget on every tick. Only lundra's success counts, because a job that stood aside succeeded too and a lane counting its own would stand aside behind itself for ever. The answer is the forge's, so where there is none, or no bounds are declared, it exits 12 and stands aside from nothing.",
+                "argv": [
+                  "prs",
+                  "supervise",
+                  "--unless-supervised-within",
+                  "15",
+                  "--supervised-by",
+                  "lundra"
+                ],
+                "command": "majordomus prs supervise --unless-supervised-within 15 --supervised-by lundra",
+                "setup": [],
+                "expectation": "exits 12"
+              }
+            ],
+            "subcommands": []
+          },
+          {
+            "path": [
+              "majordomus",
+              "prs",
               "events"
             ],
             "route": "/docs/cli/prs/events/",
@@ -150320,7 +151575,7 @@
             "route": "/docs/cli/guard/hook/",
             "executable": true,
             "usage": "majordomus guard hook [OPTIONS]",
-            "about": "Judge the edit a provider's pre-tool payload (on stdin) is about to make; exit 2 with the reason and the remedy when no claim covers it, 0 otherwise",
+            "about": "Judge the edit a provider's pre-tool payload (on stdin) is about to make; exit 2 with the reason and the remedy when no claim covers it and session.edit_guard_mode is refuse, 0 otherwise; under advisory, the default, an unclaimed edit is said on stderr and recorded, and exits 0",
             "args": [
               {
                 "name": "provider",
@@ -165084,6 +166339,479 @@
             "subcommands": []
           }
         ]
+      },
+      {
+        "path": [
+          "majordomus",
+          "fleet"
+        ],
+        "route": "/docs/cli/fleet/",
+        "executable": false,
+        "usage": "majordomus fleet [OPTIONS] <COMMAND>",
+        "about": "The machines that run this repository's mesh, as .ai/repo/fleet/ declares them: what a rollout would do, what every machine runs, and the rollout that installs this release everywhere, restarts each hub's service and verifies that the hubs see each other",
+        "args": [
+          {
+            "name": "repo",
+            "long": "repo",
+            "positional": false,
+            "help": "Start the search for the repository root here (default: the current directory)",
+            "value_name": "PATH",
+            "takes_value": true,
+            "required": false,
+            "global": true,
+            "possible_values": [],
+            "defaults": []
+          },
+          {
+            "name": "discovery",
+            "long": "discovery",
+            "positional": false,
+            "help": "How declarative files are enumerated",
+            "value_name": "DISCOVERY",
+            "takes_value": true,
+            "required": false,
+            "global": true,
+            "possible_values": [
+              {
+                "name": "vcs",
+                "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
+              },
+              {
+                "name": "filesystem",
+                "help": "A walk of the work tree with the same glob semantics; untracked files included"
+              }
+            ],
+            "defaults": [
+              "vcs"
+            ]
+          },
+          {
+            "name": "strict",
+            "long": "strict",
+            "positional": false,
+            "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+            "value_name": "STRICT",
+            "takes_value": false,
+            "required": false,
+            "global": true,
+            "possible_values": [],
+            "defaults": [
+              "false"
+            ]
+          },
+          {
+            "name": "share",
+            "long": "share",
+            "positional": false,
+            "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+            "value_name": "DIR",
+            "takes_value": true,
+            "required": false,
+            "global": true,
+            "possible_values": [],
+            "defaults": []
+          },
+          {
+            "name": "format",
+            "long": "format",
+            "positional": false,
+            "help": "Output shape",
+            "value_name": "FORMAT",
+            "takes_value": true,
+            "required": false,
+            "global": true,
+            "possible_values": [
+              {
+                "name": "text",
+                "help": "Lines for a person"
+              },
+              {
+                "name": "json",
+                "help": "One JSON document, deterministic"
+              }
+            ],
+            "defaults": [
+              "text"
+            ]
+          }
+        ],
+        "examples": [],
+        "subcommands": [
+          {
+            "path": [
+              "majordomus",
+              "fleet",
+              "plan"
+            ],
+            "route": "/docs/cli/fleet/plan/",
+            "executable": true,
+            "usage": "majordomus fleet plan [OPTIONS]",
+            "about": "What a rollout would do on every machine, reaching nothing",
+            "args": [
+              {
+                "name": "machine",
+                "long": "machine",
+                "positional": false,
+                "help": "A machine to plan for, by its name in the fleet; repeat for more, every machine when absent",
+                "value_name": "MACHINE",
+                "takes_value": true,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "repo",
+                "long": "repo",
+                "positional": false,
+                "help": "Start the search for the repository root here (default: the current directory)",
+                "value_name": "PATH",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "discovery",
+                "long": "discovery",
+                "positional": false,
+                "help": "How declarative files are enumerated",
+                "value_name": "DISCOVERY",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "vcs",
+                    "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
+                  },
+                  {
+                    "name": "filesystem",
+                    "help": "A walk of the work tree with the same glob semantics; untracked files included"
+                  }
+                ],
+                "defaults": [
+                  "vcs"
+                ]
+              },
+              {
+                "name": "strict",
+                "long": "strict",
+                "positional": false,
+                "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+                "value_name": "STRICT",
+                "takes_value": false,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": [
+                  "false"
+                ]
+              },
+              {
+                "name": "share",
+                "long": "share",
+                "positional": false,
+                "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+                "value_name": "DIR",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "format",
+                "long": "format",
+                "positional": false,
+                "help": "Output shape",
+                "value_name": "FORMAT",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "text",
+                    "help": "Lines for a person"
+                  },
+                  {
+                    "name": "json",
+                    "help": "One JSON document, deterministic"
+                  }
+                ],
+                "defaults": [
+                  "text"
+                ]
+              }
+            ],
+            "examples": [
+              {
+                "id": "fleet-plan-no-fleet",
+                "title": "A repository that declares no fleet says so",
+                "description": "The plan reads `.ai/repo/fleet/` and reaches nothing. In a repository with no fleet declaration it exits 12 and names where one goes; with one, it lists every machine, the ssh destinations tried in order, the hub it serves and the steps a rollout would take there (docs/FLEET.md).",
+                "argv": [
+                  "fleet",
+                  "plan"
+                ],
+                "command": "majordomus fleet plan",
+                "setup": [],
+                "expectation": "exits 12"
+              }
+            ],
+            "subcommands": []
+          },
+          {
+            "path": [
+              "majordomus",
+              "fleet",
+              "status"
+            ],
+            "route": "/docs/cli/fleet/status/",
+            "executable": true,
+            "usage": "majordomus fleet status [OPTIONS]",
+            "about": "What every machine runs: platform, installed version, servers, and each hub's checkout and answer",
+            "args": [
+              {
+                "name": "repo",
+                "long": "repo",
+                "positional": false,
+                "help": "Start the search for the repository root here (default: the current directory)",
+                "value_name": "PATH",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "discovery",
+                "long": "discovery",
+                "positional": false,
+                "help": "How declarative files are enumerated",
+                "value_name": "DISCOVERY",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "vcs",
+                    "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
+                  },
+                  {
+                    "name": "filesystem",
+                    "help": "A walk of the work tree with the same glob semantics; untracked files included"
+                  }
+                ],
+                "defaults": [
+                  "vcs"
+                ]
+              },
+              {
+                "name": "strict",
+                "long": "strict",
+                "positional": false,
+                "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+                "value_name": "STRICT",
+                "takes_value": false,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": [
+                  "false"
+                ]
+              },
+              {
+                "name": "share",
+                "long": "share",
+                "positional": false,
+                "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+                "value_name": "DIR",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "format",
+                "long": "format",
+                "positional": false,
+                "help": "Output shape",
+                "value_name": "FORMAT",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "text",
+                    "help": "Lines for a person"
+                  },
+                  {
+                    "name": "json",
+                    "help": "One JSON document, deterministic"
+                  }
+                ],
+                "defaults": [
+                  "text"
+                ]
+              }
+            ],
+            "examples": [
+              {
+                "id": "fleet-status-no-fleet",
+                "title": "No fleet, no machine to ask",
+                "description": "Status asks every declared machine over ssh what it runs. With no fleet declared there is nothing to ask, and it exits 12 before opening any connection.",
+                "argv": [
+                  "fleet",
+                  "status"
+                ],
+                "command": "majordomus fleet status",
+                "setup": [],
+                "expectation": "exits 12"
+              }
+            ],
+            "subcommands": []
+          },
+          {
+            "path": [
+              "majordomus",
+              "fleet",
+              "rollout"
+            ],
+            "route": "/docs/cli/fleet/rollout/",
+            "executable": true,
+            "usage": "majordomus fleet rollout [OPTIONS]",
+            "about": "Install the release on every machine, fast-forward and restart each hub, and verify that the hubs see each other; exits 10 unless every machine converged",
+            "args": [
+              {
+                "name": "machine",
+                "long": "machine",
+                "positional": false,
+                "help": "A machine to roll out to, by its name in the fleet; repeat for more, every machine when absent",
+                "value_name": "MACHINE",
+                "takes_value": true,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "keep_servers",
+                "long": "keep-servers",
+                "positional": false,
+                "help": "Leave running the servers a machine runs from an older installed tree, rather than restarting them at the version",
+                "value_name": "KEEP_SERVERS",
+                "takes_value": false,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": [
+                  "false"
+                ]
+              },
+              {
+                "name": "repo",
+                "long": "repo",
+                "positional": false,
+                "help": "Start the search for the repository root here (default: the current directory)",
+                "value_name": "PATH",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "discovery",
+                "long": "discovery",
+                "positional": false,
+                "help": "How declarative files are enumerated",
+                "value_name": "DISCOVERY",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "vcs",
+                    "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
+                  },
+                  {
+                    "name": "filesystem",
+                    "help": "A walk of the work tree with the same glob semantics; untracked files included"
+                  }
+                ],
+                "defaults": [
+                  "vcs"
+                ]
+              },
+              {
+                "name": "strict",
+                "long": "strict",
+                "positional": false,
+                "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+                "value_name": "STRICT",
+                "takes_value": false,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": [
+                  "false"
+                ]
+              },
+              {
+                "name": "share",
+                "long": "share",
+                "positional": false,
+                "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+                "value_name": "DIR",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "format",
+                "long": "format",
+                "positional": false,
+                "help": "Output shape",
+                "value_name": "FORMAT",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "text",
+                    "help": "Lines for a person"
+                  },
+                  {
+                    "name": "json",
+                    "help": "One JSON document, deterministic"
+                  }
+                ],
+                "defaults": [
+                  "text"
+                ]
+              }
+            ],
+            "examples": [
+              {
+                "id": "fleet-rollout-no-fleet",
+                "title": "A rollout needs a fleet to roll out to",
+                "description": "The rollout changes other machines, so it runs only from a terminal and only over what the repository declares. With no fleet declared it exits 12 and touches nothing; with one, it reports every machine's steps and verdict, and exits 10 unless every machine converged.",
+                "argv": [
+                  "fleet",
+                  "rollout"
+                ],
+                "command": "majordomus fleet rollout",
+                "setup": [],
+                "expectation": "exits 12"
+              }
+            ],
+            "subcommands": []
+          }
+        ]
       }
     ]
   },
@@ -166357,7 +168085,7 @@
         "name": "majordomus_guard_edit",
         "id": "guard.edit",
         "title": "Judge one edit",
-        "description": "Whether the given session may write the given path now: allowed when the policy's session.edits_require_claim is off, the path is outside the checkout or its local state, the repository declares no enabled mesh, the active task's scope covers it, or a live mesh claim of the session covers it; refused as unclaimed otherwise, with the remedy. What cannot be read — the policy, the mesh — is let through and named, never refused.",
+        "description": "Whether the given session may write the given path now: allowed when the policy's session.edits_require_claim is off, the path is outside the checkout or its local state, the repository declares no enabled mesh, the active task's scope covers it, or a live mesh claim of the session covers it; otherwise the ground is unclaimed, with the remedy: refused under session.edit_guard_mode: refuse, and let through and still named under advisory, the default (I3322). What cannot be read — the policy, the mesh — is let through and named, never refused.",
         "kind": "query",
         "read_only": true,
         "effect": "read",
@@ -172784,6 +174512,15 @@
         "case": "demonstrate",
         "cached": false,
         "route": "POST /api/v1/executions/start"
+      },
+      {
+        "key": "fleet.plan|direct|default",
+        "kind": "capability",
+        "transport": "direct",
+        "id": "fleet.plan",
+        "module": "fleet",
+        "case": "default",
+        "cached": false
       },
       {
         "key": "gates.completion|direct|this-task",
@@ -179747,6 +181484,29 @@
           "cases": 1
         },
         {
+          "subject": "fleet.plan",
+          "module": "fleet",
+          "transport": "direct",
+          "state": "covered",
+          "cases": 1
+        },
+        {
+          "subject": "fleet.rollout",
+          "module": "fleet",
+          "transport": "direct",
+          "state": "waived",
+          "cases": 0,
+          "reason": "destructive"
+        },
+        {
+          "subject": "fleet.status",
+          "module": "fleet",
+          "transport": "direct",
+          "state": "waived",
+          "cases": 0,
+          "reason": "external_dependency"
+        },
+        {
           "subject": "gates.completion",
           "module": "gates",
           "transport": "direct",
@@ -182904,10 +184664,10 @@
       ],
       "tallies": {
         "direct": {
-          "required": 220,
-          "covered": 181,
+          "required": 223,
+          "covered": 182,
           "missing": 0,
-          "waived": 39,
+          "waived": 41,
           "inapplicable": 0
         },
         "http": {
@@ -182932,10 +184692,10 @@
           "inapplicable": 0
         },
         "total": {
-          "required": 652,
-          "covered": 552,
+          "required": 655,
+          "covered": 553,
           "missing": 0,
-          "waived": 100,
+          "waived": 102,
           "inapplicable": 0
         }
       }

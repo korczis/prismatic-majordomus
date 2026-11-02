@@ -133,6 +133,8 @@ pub enum Command {
     Knowledge(KnowledgeArgs),
     /// Continue work on another machine: publish this checkout's newest handover as a signed record in refs/majordomus/continuity, exchange records with a git remote, and plan and resume a handover another device published — with its source compatibility, lineage and trust decided before anything is written
     Continuity(ContinuityArgs),
+    /// The machines that run this repository's mesh, as .ai/repo/fleet/ declares them: what a rollout would do, what every machine runs, and the rollout that installs this release everywhere, restarts each hub's service and verifies that the hubs see each other
+    Fleet(FleetArgs),
 }
 
 #[derive(Debug, Args)]
@@ -773,7 +775,7 @@ pub struct GuardArgs {
 /// assert!(Cli::try_parse_from(["majordomus", "guard", "docs/a.md"]).is_err());
 /// ```
 pub enum GuardCommand {
-    /// Judge the edit a provider's pre-tool payload (on stdin) is about to make; exit 2 with the reason and the remedy when no claim covers it, 0 otherwise
+    /// Judge the edit a provider's pre-tool payload (on stdin) is about to make; exit 2 with the reason and the remedy when no claim covers it and session.edit_guard_mode is refuse, 0 otherwise; under advisory, the default, an unclaimed edit is said on stderr and recorded, and exits 0
     Hook(GuardHookArgs),
 }
 
@@ -3626,6 +3628,82 @@ pub enum ContinuityCommand {
 }
 
 #[derive(Debug, Args)]
+/// `majordomus fleet`. The output shape is global, so it reads where a person writes it.
+///
+/// ```
+/// use majordomus_cli::cli::{Cli, Command, FleetArgs, FleetCommand, OutputFormat};
+/// use clap::Parser;
+/// let cli = Cli::try_parse_from(["majordomus", "fleet", "status", "--format", "json"]).unwrap();
+/// let Command::Fleet(FleetArgs { command, format, .. }) = cli.command else { panic!("not the fleet command") };
+/// assert!(matches!(command, FleetCommand::Status));
+/// assert!(matches!(format, OutputFormat::Json), "the shape is read after the subcommand");
+/// assert!(Cli::try_parse_from(["majordomus", "fleet"]).is_err(), "a subcommand is required");
+/// ```
+pub struct FleetArgs {
+    #[command(flatten)]
+    /// Where and how the repository is read.
+    pub repo: RepoArgs,
+
+    #[command(subcommand)]
+    /// `plan`, `status` or `rollout`.
+    pub command: FleetCommand,
+
+    #[arg(long, value_enum, default_value_t = OutputFormat::Text, global = true)]
+    /// Output shape
+    pub format: OutputFormat,
+}
+
+#[derive(Debug, Subcommand)]
+/// The subcommands of `majordomus fleet`: the command line of `fleet.plan`, `fleet.status`
+/// and `fleet.rollout`.
+///
+/// A machine is named by repeating `--machine`; none names every machine. A rollout installs
+/// a named `--version` even over a newer one, and restarts older servers unless told to keep
+/// them.
+///
+/// ```
+/// use majordomus_cli::cli::{Cli, Command, FleetCommand};
+/// use clap::Parser;
+/// let parse = |words: &[&str]| -> FleetCommand {
+///     let cli = Cli::try_parse_from(words).unwrap();
+///     let Command::Fleet(args) = cli.command else { panic!("not the fleet command") };
+///     args.command
+/// };
+/// let rollout = parse(&["majordomus", "fleet", "rollout", "--machine", "lundra", "--machine", "imac"]);
+/// assert!(matches!(rollout, FleetCommand::Rollout { ref machine, version: None, keep_servers: false }
+///     if machine == &["lundra".to_string(), "imac".to_string()]));
+/// let pinned = parse(&["majordomus", "fleet", "rollout", "--version", "1.2.3", "--keep-servers"]);
+/// assert!(matches!(pinned, FleetCommand::Rollout { ref machine, version: Some(ref v), keep_servers: true }
+///     if machine.is_empty() && v == "1.2.3"));
+/// assert!(matches!(parse(&["majordomus", "fleet", "plan"]), FleetCommand::Plan { ref machine, version: None } if machine.is_empty()));
+/// ```
+pub enum FleetCommand {
+    /// What a rollout would do on every machine, reaching nothing
+    Plan {
+        /// A machine to plan for, by its name in the fleet; repeat for more, every machine when absent
+        #[arg(long)]
+        machine: Vec<String>,
+        /// The release to install; the latest stable release the repository records when absent
+        #[arg(long)]
+        version: Option<String>,
+    },
+    /// What every machine runs: platform, installed version, servers, and each hub's checkout and answer
+    Status,
+    /// Install the release on every machine, fast-forward and restart each hub, and verify that the hubs see each other; exits 10 unless every machine converged
+    Rollout {
+        /// A machine to roll out to, by its name in the fleet; repeat for more, every machine when absent
+        #[arg(long)]
+        machine: Vec<String>,
+        /// The release to install; the latest stable release the repository records when absent. Named, it is installed even where a newer one is
+        #[arg(long)]
+        version: Option<String>,
+        /// Leave running the servers a machine runs from an older installed tree, rather than restarting them at the version
+        #[arg(long)]
+        keep_servers: bool,
+    },
+}
+
+#[derive(Debug, Args)]
 /// `majordomus why`. The facets and the output shape are global, so they read the way a
 /// person writes them — `why list --audience solo-builder` — and are declared once.
 pub struct WhyArgs {
@@ -4072,7 +4150,7 @@ pub struct RepoArgs {
 }
 
 #[derive(Debug, Args)]
-/// `majordomus prs` (alias `pr`). Every subcommand but `refresh`, `drain` and `cleanup`
+/// `majordomus prs` (alias `pr`). Every subcommand but `refresh`, `drain`, `cleanup` and `supervise`
 /// reads the last recorded forge observation and never reaches the network.
 /// # Example
 ///
@@ -4101,7 +4179,7 @@ pub struct PrsArgs {
 
 #[derive(Debug, Subcommand)]
 /// The subcommands of `majordomus prs`. `status`, `plan`, `explain` and `events` render the
-/// recorded observation offline; `refresh`, `drain` and `cleanup` reach the forge, and a
+/// recorded observation offline; `refresh`, `drain`, `cleanup` and `supervise` reach the forge, and a
 /// drain is bounded by `--max` merges and, without `--dry-run`, holds the base branch's
 /// integration lease while it acts.
 /// # Example
@@ -4126,6 +4204,34 @@ pub struct PrsArgs {
 /// let Command::Prs(args) = cli.command else { panic!() };
 /// assert!(matches!(args.command, Some(PrsCommand::Repair { apply: false, .. })));
 /// assert!(Cli::try_parse_from(["majordomus", "prs", "repair", "137", "--apply", "--dry-run"]).is_err());
+/// // supervising the CI runs is a dry run unless it is applied, and never both
+/// let cli = Cli::try_parse_from(["majordomus", "prs", "supervise"]).unwrap();
+/// let Command::Prs(args) = cli.command else { panic!() };
+/// assert!(matches!(args.command, Some(PrsCommand::Supervise { apply: false, .. })));
+/// let cli = Cli::try_parse_from(["majordomus", "prs", "supervise", "--apply"]).unwrap();
+/// let Command::Prs(args) = cli.command else { panic!() };
+/// assert!(matches!(args.command, Some(PrsCommand::Supervise { apply: true, .. })));
+/// assert!(Cli::try_parse_from(["majordomus", "prs", "supervise", "--apply", "--dry-run"]).is_err());
+/// let cli = Cli::try_parse_from([
+///     "majordomus", "prs", "supervise", "--apply", "--unless-supervised-within", "15",
+///     "--supervised-by", "lundra",
+/// ])
+/// .unwrap();
+/// let Command::Prs(args) = cli.command else { panic!() };
+/// assert!(matches!(
+///     args.command,
+///     Some(PrsCommand::Supervise {
+///         apply: true,
+///         unless_supervised_within: Some(15),
+///         supervised_by: Some(ref lane),
+///         ..
+///     }) if lane == "lundra"
+/// ));
+/// // a lane is named only for a stand-aside
+/// assert!(
+///     Cli::try_parse_from(["majordomus", "prs", "supervise", "--supervised-by", "lundra"])
+///         .is_err()
+/// );
 /// // with no subcommand it is `status`
 /// let cli = Cli::try_parse_from(["majordomus", "prs"]).unwrap();
 /// let Command::Prs(args) = cli.command else { panic!() };
@@ -4183,6 +4289,21 @@ pub enum PrsCommand {
         /// Decide and change nothing: the default, spelled out.
         #[arg(long, conflicts_with = "apply")]
         dry_run: bool,
+    },
+    /// Judge every in-flight CI run against the bounds `.ai/repo/ci/supervise.yaml` declares, and name each one to cancel with its reason: a pull request's first-attempt run waiting with no job created while a run of its branch and commit created within 120 seconds of it is in flight and is not itself to be ended within 30 minutes (never a re-run, an admitted run, nor when the pull request is labelled ci:full), a pull request's run of a head that moved while a newer run of it waits behind it in the same concurrency group, a pull request's run whose attempt queued past its workflow's bound with no job of it started, or one with a job in progress past its bound from that job's start (an integration/* top is never ended for a bound, nor a queued run of the default branch, a tag, the schedule, a dispatch or a release). A run of the default branch, a tag, the schedule, a dispatch or a release, and every pages or release run, is never cancelled for being superseded; the supervising workflow's own run never at all. It also reports supervise_stale when the supervisor's newest success (with `--supervised-by` and a window of 30 minutes or more, that lane's) is older than 30 minutes. A dry run by default, which reaches the forge to read and changes nothing. Exit 0 when nothing needs doing, 10 for decisions a dry run found, 12 when the forge could not be read or an act could not be taken
+    Supervise {
+        /// Act: read each run and its pull request's head again, and only if the decision still holds, record the act on the integration trail and force-cancel the run. A trail that cannot be written stops every act.
+        #[arg(long)]
+        apply: bool,
+        /// Decide and change nothing: the default, spelled out.
+        #[arg(long, conflicts_with = "apply")]
+        dry_run: bool,
+        /// Stand aside when a supervision succeeded at most this many minutes ago: read only the supervisor's newest success, observe nothing, and exit 0. For a lane that covers for another, so that two lanes do not both spend the repository's request budget on every tick.
+        #[arg(long, value_name = "MINUTES")]
+        unless_supervised_within: Option<u64>,
+        /// With `--unless-supervised-within`, count only a supervision by this lane's job (one named `<anything> (<LANE>)`): the lane covered for. A job that stood aside succeeded too, so a lane that counted its own would stand aside behind itself once the lane it covers for stopped. With a window of 30 minutes or more the reported liveness is this lane's, which is how the queue workflow holds the lundra lane to account.
+        #[arg(long, value_name = "LANE", requires = "unless_supervised_within")]
+        supervised_by: Option<String>,
     },
     /// The audit trail: every selection, merge, refusal, stale decision and closure this checkout's executor recorded
     Events,
@@ -6041,6 +6162,39 @@ pub const EXAMPLES: &[CommandExamples] = &[
         }],
     },
     CommandExamples {
+        command: "fleet plan",
+        examples: &[ExampleDoc {
+            id: "fleet-plan-no-fleet",
+            title: "A repository that declares no fleet says so",
+            description: "The plan reads `.ai/repo/fleet/` and reaches nothing. In a repository with no fleet declaration it exits 12 and names where one goes; with one, it lists every machine, the ssh destinations tried in order, the hub it serves and the steps a rollout would take there (docs/FLEET.md).",
+            argv: &["fleet", "plan"],
+            setup: &[],
+            expect: Expect::ExitCode(12),
+        }],
+    },
+    CommandExamples {
+        command: "fleet status",
+        examples: &[ExampleDoc {
+            id: "fleet-status-no-fleet",
+            title: "No fleet, no machine to ask",
+            description: "Status asks every declared machine over ssh what it runs. With no fleet declared there is nothing to ask, and it exits 12 before opening any connection.",
+            argv: &["fleet", "status"],
+            setup: &[],
+            expect: Expect::ExitCode(12),
+        }],
+    },
+    CommandExamples {
+        command: "fleet rollout",
+        examples: &[ExampleDoc {
+            id: "fleet-rollout-no-fleet",
+            title: "A rollout needs a fleet to roll out to",
+            description: "The rollout changes other machines, so it runs only from a terminal and only over what the repository declares. With no fleet declared it exits 12 and touches nothing; with one, it reports every machine's steps and verdict, and exits 10 unless every machine converged.",
+            argv: &["fleet", "rollout"],
+            setup: &[],
+            expect: Expect::ExitCode(12),
+        }],
+    },
+    CommandExamples {
         command: "continuity status",
         examples: &[ExampleDoc {
             id: "continuity-status-json",
@@ -6390,6 +6544,24 @@ pub const EXAMPLES: &[CommandExamples] = &[
             argv: &["prs", "repair", "1"],
             setup: &[],
             expect: Expect::ExitCode(10),
+        }],
+    },
+    CommandExamples {
+        command: "prs supervise",
+        examples: &[ExampleDoc {
+            id: "prs-supervise-dry-run-no-forge",
+            title: "Supervising the CI runs starts from the forge, or not at all",
+            description: "`supervise` reads every queued, waiting and running workflow run and every open pull request's head, and decides which runs to cancel and why: superseded while a newer run waits behind it, queued past its bound, or running past it. Without `--apply` it only prints the decisions. A repository that declares no bounds, or has no GitHub remote to read runs from, cannot be supervised: it exits 12 before deciding anything, and nothing is cancelled or recorded.",
+            argv: &["prs", "supervise", "--dry-run"],
+            setup: &[],
+            expect: Expect::ExitCode(12),
+        }, ExampleDoc {
+            id: "prs-supervise-covering-lane-no-forge",
+            title: "A covering lane asks the forge before it stands aside",
+            description: "`--unless-supervised-within 15 --supervised-by lundra` is how the hosted fallback runs (with `--apply`): when lundra's supervise job succeeded at most fifteen minutes ago (the schedule's ten and a margin) it reads nothing else and exits 0 (`stood aside`), so two lanes do not both spend the repository's one request budget on every tick. Only lundra's success counts, because a job that stood aside succeeded too and a lane counting its own would stand aside behind itself for ever. The answer is the forge's, so where there is none, or no bounds are declared, it exits 12 and stands aside from nothing.",
+            argv: &["prs", "supervise", "--unless-supervised-within", "15", "--supervised-by", "lundra"],
+            setup: &[],
+            expect: Expect::ExitCode(12),
         }],
     },
     CommandExamples {

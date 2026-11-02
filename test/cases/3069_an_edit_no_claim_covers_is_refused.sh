@@ -1,7 +1,8 @@
 # majordomus-timeout: 300
-# An edit no claim covers is refused (I2735). With session.edits_require_claim on and the mesh
-# enabled, `majordomus guard hook` — what the provider's pre-tool hook runs — exits 2 for a
-# write no claim covers, naming the path and the remedy; a live mesh claim of the writing
+# An edit no claim covers is refused (I2735). With session.edits_require_claim on, the guard
+# refusing (session.edit_guard_mode: refuse, I3322) and the mesh enabled, `majordomus guard
+# hook` — what the provider's pre-tool hook runs — exits 2 for a write no claim covers, naming
+# the path and the remedy; a live mesh claim of the writing
 # session, or the active task's scope, lets it through, and another session's claim does not.
 # Local state, a path outside the checkout, the policy switched off and a server that does not
 # answer are let through. The checkout judged is the one the file belongs to, wherever the hook
@@ -24,6 +25,10 @@ git config user.name t
 "$MJ" update >/dev/null
 sed -i.bak 's/^  edits_require_claim: false/  edits_require_claim: true/' .ai/repo/policy.yaml && rm -f .ai/repo/policy.yaml.bak
 grep -q '^  edits_require_claim: true' .ai/repo/policy.yaml || { echo "    the fixture's policy did not turn the guard on"; exit 1; }
+# refusing: the skeleton declares the guard advisory (I3322), which reports an unclaimed edit and
+# lets it through; what advisory does is case 4522's, and this case proves the refusal
+sed -i.bak 's/^  edit_guard_mode: advisory/  edit_guard_mode: refuse/' .ai/repo/policy.yaml && rm -f .ai/repo/policy.yaml.bak
+grep -q '^  edit_guard_mode: refuse' .ai/repo/policy.yaml || { echo "    the fixture's policy did not make the guard refuse"; exit 1; }
 mkdir -p .ai/repo/mesh lib docs
 printf 'schema: mesh/v1\nkind: mesh-declaration\nid: majordomus\nenabled: true\n' > .ai/repo/mesh/majordomus.yaml
 printf 'multicast:\n  enabled: false\ntailscale:\n  enabled: false\ntrust:\n  policy: tofu\n' >> .ai/repo/mesh/majordomus.yaml

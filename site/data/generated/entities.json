@@ -9,7 +9,7 @@
       "title": "Decisions",
       "description": "Every architecture decision this repository has recorded, with what it supersedes, what it put in force, and what has since referred back to it. One page per decision, generated from the decision's own file.",
       "weight": 45,
-      "count": 167,
+      "count": 168,
       "dir": "adrs",
       "statuses": [
         "accepted",
@@ -38,7 +38,7 @@
       "route": "/adrs/",
       "title": "Decisions",
       "reason": null,
-      "count": 167
+      "count": 168
     },
     {
       "kind": "application",
@@ -86,7 +86,7 @@
       "route": "/context/",
       "title": null,
       "reason": null,
-      "count": 39
+      "count": 40
     },
     {
       "kind": "critique",
@@ -126,7 +126,7 @@
       "route": null,
       "title": null,
       "reason": "A document of the layer is prose already published where it belongs — /docs/, /method/, /context/ — and a second address for the same words is the duplication this file exists to prevent.",
-      "count": 353
+      "count": 354
     },
     {
       "kind": "domain",
@@ -143,6 +143,14 @@
       "title": null,
       "reason": null,
       "count": 29
+    },
+    {
+      "kind": "fleet-declaration",
+      "projection": "none",
+      "route": null,
+      "title": null,
+      "reason": "The fleet declaration names the owner's machines and the ssh destinations that reach them. It is the operator's inventory of an installation, not a fact about the product; docs/FLEET.md describes the mechanism.",
+      "count": 1
     },
     {
       "kind": "gap",
@@ -174,7 +182,7 @@
       "route": "/plan/",
       "title": null,
       "reason": null,
-      "count": 1156
+      "count": 1157
     },
     {
       "kind": "knowledge",
@@ -286,7 +294,7 @@
       "route": null,
       "title": null,
       "reason": "A test object is a case file. What it proves is published — on /guarantees/ for the claim and on the rule's own page for the rule — and that is the direction a reader asks in.",
-      "count": 672
+      "count": 677
     },
     {
       "kind": "use-case",
@@ -4241,6 +4249,13 @@
       "referenced_by": [
         {
           "edge": "put_in_force",
+          "label": "adr-0132",
+          "kind": "adr",
+          "route": "/adrs/adr-0132/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
           "label": "adr-0199",
           "kind": "adr",
           "route": "/adrs/adr-0199/",
@@ -7808,6 +7823,96 @@
           "external": false
         }
       ]
+    },
+    {
+      "kind": "adr",
+      "id": "majordomus://adr/adr-0132",
+      "identity": "adr-0132",
+      "slug": "adr-0132",
+      "cockpit": "/cockpit/objects/adr/adr-0132",
+      "title": "The fleet is declared, and rolled out by a typed capability",
+      "status": "proposed",
+      "tags": [
+        "architecture",
+        "mesh",
+        "distribution",
+        "capabilities",
+        "safety"
+      ],
+      "source": ".ai/repo/adrs/0132-the-fleet-is-declared-and-rolled-out-by-a-typed-capability.md",
+      "references": [
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-cli/src/capability/builtin/fleet.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-cli/src/capability/model.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-cli/src/capability/registry.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-cli/src/fleet/mod.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-cli/src/fleet/scripts.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "share/schemas/majordomus/fleet-declaration/fleet-declaration.v1.schema.json",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0059",
+          "kind": "adr",
+          "route": "/adrs/adr-0059/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "docs/FLEET.md",
+          "kind": "document",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "docs/MESH.md",
+          "kind": "document",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "majordomus",
+          "kind": "fleet-declaration",
+          "route": null,
+          "external": false
+        }
+      ],
+      "referenced_by": []
     },
     {
       "kind": "adr",

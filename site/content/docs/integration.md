@@ -893,9 +893,15 @@ json` stays the list of pull requests to close.
   | `reopened`, `reopen_failed` (with its class, saying whether it was left closed) | after it |
   | `idle` | nothing was ready |
   | `observe_failed` | a continuous drain's cycle met an outage short enough to wait out |
+  | `run_cancel_attempted` | `prs supervise --apply` is about to force-cancel a CI run; the detail names the run and its reason, read again just now |
+  | `run_cancelled`, `run_cancel_failed` (with its class) | after it |
+  | `run_already_ended` | after it, when the forge refused the cancel because the run had ended (a 409, or the run read again completed): another lane's cancel of the same burst landed first; a skipped act, not a failure |
+  | `run_rerun_attempted` | before a pull request's head's newest run is asked to run again: after a paired cancel that left the run ended without a verdict (`run_cancelled`, or `run_already_ended` when `gh` reported an error while the cancel landed), or on a later pass of any lane whose head has no run in flight and no verdict and whose newest run was cancelled, by anyone, in the last six hours; never over a verdict in a cancelled run's jobs (a run that went red and cancelled itself, whose `ci` wrote the failure), never for a pull request labelled `ci:yielded` (the release path's `resume` runs it again); a record only, since GitHub's own `run_attempt` bounds the asks (below three, the attempts the release path took aside) |
+  | `run_rerun_requested`, `run_rerun_failed` (with its class) | after it: the run was asked to run again once it had ended, so the head keeps a run, or it could not be, which names the pull request and fails the pass when it was the pair of that pass's own cancel (a later pass's refused ask is a warning) |
 
   An event may also carry `evidence` (the assessment's, on the acts named above as carrying it),
-  `class` (why it failed, once classified) and `merge_commit`. Each is left out when empty,
+  `class` (why it failed, once classified), `merge_commit` and, on the `run_*` events, `run`
+  (the CI run acted on). Each is left out when empty,
   and a line written before they existed reads with them empty.
 - A checkout that kept its own trail under `.ai/local/state/integration/events.jsonl` has
   it appended to the repository's trail the first time the trail is read while the
@@ -965,6 +971,7 @@ json` stays the list of pull requests to close.
 | `majordomus prs cleanup [--apply]` | yes | close what is provably on master, or superseded by an authorised successor that landed; list what is a person's (possibly redundant, obsolete) and the branches merged pull requests left on origin |
 | `majordomus prs repair <n\|branch>` | no | whether master may be brought into that pull request, from the last observation (a dry run) |
 | `majordomus prs repair <n\|branch> --apply` | yes | bring master into it, under the lease, as `drain --refresh` does |
+| `majordomus prs supervise [--apply]` | yes | judge every in-flight CI run against `.ai/repo/ci/supervise.yaml` and name each to cancel with its reason (a same-commit duplicate, a superseded run that blocks its successor, a run queued or running past its bound); `--apply` force-cancels them, each read again and recorded first; it also reports `supervise_stale` when the supervisor has not succeeded for 30 minutes (docs/CI.md) |
 
 </div>
 

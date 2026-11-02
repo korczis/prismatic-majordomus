@@ -522,6 +522,37 @@ impl Executable {
         self
     }
 
+    /// Declare that this command's handler changes other machines (ADR 0132).
+    ///
+    /// Like writing the repository, it is a fact about the handler that its kind cannot
+    /// carry, and only a command may declare it. The registry then asks a person before it
+    /// runs, and refuses a caller on another host, because a rollout started from somewhere
+    /// else would reach machines its caller never chose.
+    ///
+    /// ```
+    /// use majordomus_cli::capability;
+    /// use majordomus_cli::capability::{BenchmarkCases, CapabilityKind, CaseContext, Context, CapabilityError, Effect, Exposure, NamedCase, Stability};
+    /// #[derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema)]
+    /// struct In {}
+    /// impl BenchmarkCases for In {
+    ///     fn benchmark_cases(_: &CaseContext<'_>) -> Vec<NamedCase<Self>> { vec![NamedCase::new("default", In {})] }
+    /// }
+    /// #[derive(serde::Serialize, schemars::JsonSchema)]
+    /// struct Out { ok: bool }
+    /// fn roll(_: &Context, _: In) -> Result<Out, CapabilityError> { Ok(Out { ok: true }) }
+    /// let e = capability! {
+    ///     id: "demo.roll", kind: CapabilityKind::Command, title: "Roll", description: "Rolls out.",
+    ///     input: In, output: Out, stability: Stability::Experimental,
+    ///     exposure: Exposure::default(), tags: [], handler: roll,
+    /// }.changes_other_machines();
+    /// assert_eq!(e.capability.execution.effect, Effect::RemoteMutation);
+    /// assert!(!e.capability.execution.admits_remote(), "no other host starts it");
+    /// ```
+    pub fn changes_other_machines(mut self) -> Self {
+        self.capability.execution = self.capability.execution.changes_other_machines();
+        self
+    }
+
     /// Declare the short name a person invokes this by from an agent's prompt, and the
     /// input field the text typed after it fills. See [`crate::capability::SkillExposure`];
     /// the registry refuses a name that is malformed, reserved or taken, and an argument

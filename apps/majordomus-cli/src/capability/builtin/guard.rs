@@ -67,13 +67,13 @@ pub fn module() -> ModuleDescriptor {
     module! {
         id: "guard",
         title: "Edit guard",
-        description: "Whether a write to a file of this checkout is covered by a claim: the active task's scope, or a live mesh claim of the writing session. The judgement a provider's pre-tool hook asks before every edit (majordomus guard hook), switched by session.edits_require_claim.",
+        description: "Whether a write to a file of this checkout is covered by a claim: the active task's scope, or a live mesh claim of the writing session. The judgement a provider's pre-tool hook asks before every edit (majordomus guard hook), switched by session.edits_require_claim and made to refuse by session.edit_guard_mode.",
         stability: Stability::Experimental,
         capabilities: [
             capability! {
                 id: "guard.edit",
                 title: "Judge one edit",
-                description: "Whether the given session may write the given path now: allowed when the policy's session.edits_require_claim is off, the path is outside the checkout or its local state, the repository declares no enabled mesh, the active task's scope covers it, or a live mesh claim of the session covers it; refused as unclaimed otherwise, with the remedy. What cannot be read — the policy, the mesh — is let through and named, never refused.",
+                description: "Whether the given session may write the given path now: allowed when the policy's session.edits_require_claim is off, the path is outside the checkout or its local state, the repository declares no enabled mesh, the active task's scope covers it, or a live mesh claim of the session covers it; otherwise the ground is unclaimed, with the remedy: refused under session.edit_guard_mode: refuse, and let through and still named under advisory, the default (I3322). What cannot be read — the policy, the mesh — is let through and named, never refused.",
                 input: GuardEditInput,
                 output: EditVerdict,
                 stability: Stability::Experimental,
@@ -116,7 +116,8 @@ mod tests {
             .build()
             .expect("the registry builds");
         let ctx = Context::new(std::sync::Arc::new(index), std::sync::Arc::new(registry));
-        let policy = "version: 1\nsession:\n  edits_require_claim: true\n";
+        let policy =
+            "version: 1\nsession:\n  edits_require_claim: true\n  edit_guard_mode: refuse\n";
         std::fs::write(repo.root().join(".ai/repo/policy.yaml"), policy).unwrap();
         std::fs::create_dir_all(repo.root().join(".ai/repo/mesh")).unwrap();
         std::fs::write(

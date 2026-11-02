@@ -406,6 +406,7 @@ fn effect_counts(all: &[McpToolEntry]) -> Vec<McpEffectCount> {
         Effect::Read,
         Effect::ProcessState,
         Effect::RepositoryMutation,
+        Effect::RemoteMutation,
     ]
     .into_iter()
     .map(|effect| McpEffectCount {

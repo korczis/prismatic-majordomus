@@ -1,0 +1,185 @@
+version: 1
+
+# ---------------------------------------------------------------- what this workflow is for
+# `majordomus prs supervise --apply` (I3903) judges every in-flight GitHub Actions run of this
+# repository against the bounds below and force-cancels the ones past them, or superseded while
+# something waits behind them, each with its reason on the integration audit trail
+# (`run_cancel_attempted`, then `run_cancelled` or `run_cancel_failed`, and for a cancel paired
+# with a re-run `run_rerun_attempted`, then `run_rerun_requested` or `run_rerun_failed`). The decision is
+# apps/majordomus-cli/src/integration/supervise.rs, pure and unit-tested; the forge side is
+# integration/runs.rs; .github/workflows/supervise.yml only runs the command.
+#
+# Why. On 2026-10-28 train 10a's and 10b's new validate runs sat `pending` for hours behind
+# their own superseded runs. Validate's concurrency group is one per pull request and never
+# cancels in progress, deliberately: a started run reaches its verdict, and #576 was once
+# cancelled four times in a row without ever producing one (the comment above `concurrency:`
+# in validate.yml). Nothing ended a run whose head nobody would merge while the verdict that
+# mattered waited behind it; the owner ordered that CI never stay stuck for hours again.
+#
+# What ends a run, and nothing else:
+#   duplicate_run                a first-attempt pull_request run that waits in its group with
+#                                no job created while an older run of the same pull request,
+#                                branch and commit, created within 120 s of it, is in flight.
+#                                Opening a train with `--label train` is `opened` and `labeled`
+#                                at once and starts validate twice (6 of 8 trains on
+#                                2026-10-28; 10b's twin 40713048283 held its group seven
+#                                hours). Never once the group admitted it and its jobs exist: a
+#                                cancel still runs its `if: always()` jobs, and validate's `ci`
+#                                then writes a failure over the twin's pass (#2678, run
+#                                40811621641, 2026-10-29), so a judged run is never the older
+#                                half. Never while the older run is itself to be ended, now or
+#                                within 30 min, or was cancelled and runs only its always()
+#                                jobs (held as earlier_run_ends: it takes that run's place). Outside the burst a second run was asked for (a
+#                                reopen, a label added later, a re-run); a re-run, or a pull
+#                                request labelled `ci:full`, is held.
+#   superseded_blocks_successor  a pull_request run of a workflow declared `superseded:
+#                                per_pull_request`, whose head is no longer its pull
+#                                request's, while a newer run of the same pull request at its
+#                                current head waits in the same group (its own twin is not
+#                                one). With nothing waiting it is left alone: the concurrency
+#                                rationale stands.
+#   queued_past_bound            a pull request's run whose attempt queued longer than
+#                                `queued_minutes` with no job of it started, from its admission
+#                                by its group: its first job's created_at, never before
+#                                run_started_at (a first attempt's run_started_at is its
+#                                creation however long it waited in the group: 40811621641,
+#                                created 03:20:59Z, admitted 05:31:53Z). A run with no job is
+#                                pending in its group and never ends for waiting.
+#                                Never an integration/* top (it waits for a runner, and its
+#                                verdict is the one a landing needs), nor a push, the schedule,
+#                                a dispatch or a release: each waits in a group of its own, so
+#                                ending it frees nothing. Never the last run of its pull
+#                                request's head (held as last_run_of_head, below).
+#   running_past_bound           a job in progress longer than `running_minutes`, from that
+#                                job's start. Each running job, never the run: validate's jobs
+#                                run in a chain with the runner queue between the stages, and
+#                                healthy runs took 579 minutes first job to last (40576851731).
+#                                A completed job, a re-run's carried one among them, is no
+#                                job's time. Never an integration/* top. The last run of its
+#                                pull request's head is run again once it has ended.
+#
+# A head keeps its run (the review of #2645 at eed0b4f8ff4). Every cancel is settled against the
+# others of the pass, and again at its act over a fresh reading: one that would end the last run
+# of an open pull request's current head on its way to a verdict (in flight, no cancel reached
+# it), with no verdict of the head among the runs observed, is not made for a run that waits
+# (queued_past_bound, duplicate_run: held as last_run_of_head, since a waiting run holds no
+# runner and ending it frees nothing) and is paired with a re-run of the same run once ended for
+# running_past_bound (its job holds a runner its own timeout did not free). A force-cancel skips
+# the if: always() jobs, so without this the required `ci` would never be written and nothing
+# would ask for a run again. superseded_blocks_successor never meets it: its run is not at the
+# head. The re-run is asked whenever the run reads completed without a verdict after the act,
+# whatever the forge answered the cancel (a `gh` that timed out or got a 502 while the cancel
+# landed), and never when the head has a verdict: the commit's runs are read whole first, so a
+# hung twin whose older twin passed is ended and not run again (#2678's shape).
+#
+# Recovery is stateless (the review of #2645 at 68fa1c17b6c): lundra's three runners each keep a
+# trail of their own and the hosted lane starts from a fresh checkout, so a head one runner left
+# bare is judged from the forge, by any runner of any lane. Every pass reads the open pull
+# requests' heads with no bounded run in flight (first those with a run cancelled in the last six
+# hours, from one listing, then a rotating few), and asks again a head's newest run when none of
+# its runs is in flight or has a verdict and that run ended `cancelled`, by anyone, within six
+# hours (RECOVERY_WINDOW_MINUTES), at a GitHub `run_attempt` below MAX_ATTEMPTS (3, in
+# integration/runs.rs). At the bound the head is held as head_exhausted: a warning naming the
+# pull request on every pass, never exit 12, since one stuck pull request is not a supervisor
+# that stopped; so is a recovery re-run the forge refused, which the next pass asks again. The
+# trail records every ask and decides none. A run that reads `cancelled` with a verdict in its
+# jobs is a verdict (the review of #2645 at 859039b21de): validate's pull_request run cancels
+# itself at its first red (I2664) and its always() `ci` writes the failure, so before anything is
+# asked or held the jobs of the head's cancelled runs are read, newest first, until one shows a
+# verdict (at most VERDICT_READS, 24, in a pass), and the forge's own last check before a re-run
+# reads them too. A pull request
+# labelled ci:yielded (release-path.yaml) is the release path's: recovery neither re-runs nor
+# holds it and no paired re-run is asked, and the attempts it took, one per note the release path
+# left naming the run, do not count toward MAX_ATTEMPTS. The property test is
+# apps/majordomus-cli/src/integration/supervise_property.rs.
+#
+# What is never cancelled for being superseded is fixed in the code, not declared here: a push
+# to the default branch, any other push (a tag push among them), the schedule, a dispatch, a
+# release, and every run of the pages or release workflows. The supervisor's own runs are never
+# cancelled at all, and a workflow named nowhere below is judged by nothing.
+#
+# Before each cancel the run and its pull request's head are read again, and the run is
+# cancelled only if the same reason still holds (the drain's observe-twice discipline). The
+# act is recorded first; a trail that cannot be written stops every act. The cancel is the
+# forge's force-cancel: `gh run cancel` on a queued run has returned success and done nothing.
+# Where it runs: lundra ("self-hosted","lundra", or vars.MJ_SUPERVISE_RUNNER once a runner is
+# registered for it alone) first, then a GitHub-hosted fallback in the same run that `needs` the
+# lundra lane and runs only when it did not supervise (`if: always()`, no `supervised` output):
+# on a tick lundra supervised, no second apply spends the request budget. Each lane is its own
+# concurrency group with cancel-in-progress false, so a lundra job that waits for a runner (none
+# online, or all busy with validate's first wave once vars.MJ_RUNNER sends it there, #2596) is
+# replaced by the next trigger's but one, and the replaced run's hosted lane applies. A hosted
+# lane still stands aside when lundra's supervision succeeded in the last fifteen minutes in
+# another run (`--unless-supervised-within 15 --supervised-by lundra`: the schedule's ten
+# minutes and five of margin; its own stand-aside is a success that must not count). A cancel
+# the forge refuses because the run ended (409, or completed on the re-read) is
+# run_already_ended, a skipped act: two lanes of one burst decide the same cancels. Both lanes run a downloaded executable that answers `prs
+# supervise --help`; each step is bounded on its own (checkout 1, executable 2, supervise 4
+# minutes, under the job's 8), so the job is never killed in the middle of an act. Its liveness
+# is the queue workflow's to report: no successful supervision by lundra for thirty minutes is
+# `supervise_stale` (.ai/repo/ci/queue.yaml).
+runs_on:
+  lanes: [lundra, hosted]
+  timeout_minutes: 8
+  cancel_in_progress: false
+  stale_minutes: 30
+
+trigger:
+  branch: master
+  schedule: '*/10 * * * *'
+  # event-driven: a new validate run that would wait behind a superseded one is unblocked
+  # within a minute of being requested, not at the next tick
+  workflow_run: validate
+  workflow_run_types: requested
+
+supervisor: supervise
+
+report:
+  command: majordomus prs supervise --apply
+  # 0: nothing needed doing, or every act succeeded or was rightly skipped on a second read.
+  # 12: the forge could not be read or an act could not be taken, and the job fails on it.
+  # 10 is a dry run's finding and never happens under --apply.
+  fails_on: unusable
+
+# ---------------------------------------------------------------- the bounds
+# Generous on purpose: a bound turns a hang into an end, and must never cut a healthy run.
+# `queued_minutes` is at least 240 everywhere. `running_minutes` is the workflow's largest job
+# `timeout-minutes` plus 30, and it bounds one running job, so a job is ended only after its own
+# timeout should already have ended it; raise a job's timeout and the test
+# `the_declared_bounds_hold_to_every_workflows_real_timeouts` asks for this number to follow.
+bounds:
+  docker-image:
+    queued_minutes: 240
+    running_minutes: 75
+  github:
+    queued_minutes: 240
+    running_minutes: 90
+  pages:
+    queued_minutes: 240
+    running_minutes: 110
+  pr-meta:
+    queued_minutes: 240
+    running_minutes: 70
+  provider:
+    queued_minutes: 240
+    running_minutes: 105
+  queue:
+    queued_minutes: 240
+    running_minutes: 60
+  release:
+    queued_minutes: 240
+    running_minutes: 75
+  release-path:
+    queued_minutes: 240
+    running_minutes: 35
+  telemetry:
+    queued_minutes: 240
+    running_minutes: 40
+  validate:
+    queued_minutes: 240
+    running_minutes: 255
+    # `validate-<pull request>` for its pull_request runs, never cancel-in-progress
+    superseded: per_pull_request
+  version:
+    queued_minutes: 240
+    running_minutes: 50
