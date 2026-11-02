@@ -2083,7 +2083,13 @@ jobs:
     needs: [plan, build, rustdoc-surface, structure, structure-b, suite, rust, coverage, bench, site, site-probe, interactions, ui, cockpit, mesh-lab, macos, install, pages]
     if: always()
     timeout-minutes: 15
-    runs-on: ubuntu-latest
+    # The verdict builds nothing: it reads the needs, the receipts and the timings. On
+    # 2026-11-02 a train whose every gate had passed waited 27 minutes for this job to get one
+    # of the account's hosted slots, held by other trains' builds, so it may run where the
+    # owner points vars.MJ_AGGREGATE_RUNNER (a runner label, e.g. lundra). Unset, it is hosted
+    # as before, and a fork's pull request always is: a fork never runs on the repository's own
+    # machines. The remedy for an offline pool is to unset the variable.
+    runs-on: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository && 'ubuntu-latest' || vars.MJ_AGGREGATE_RUNNER || 'ubuntu-latest' }}
     steps:
       - uses: actions/checkout@v4
       # I4347: a run started by a label that changes nothing ran no gate (the plan job's

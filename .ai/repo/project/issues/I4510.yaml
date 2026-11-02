@@ -1,0 +1,41 @@
+id: I4510
+milestone: a-profile-is-resolved-once-and-enforced
+title: "One profile, one answer everywhere: a gate adds a profile to a fixture and reads the same fingerprint from the command line, HTTP, MCP and the UI"
+slug: one-profile-one-answer-everywhere
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Hold the milestone's central property with a gate rather than with each issue's own tests: a case that adds a profile to a fixture and changes no other file, then reads its definition and its resolution from every surface and compares them, and a rule that names the case as its proof."
+why: "campaigns/majordomus-profile-system-v2-prompt-pack/MAJORDOMUS_PROFILE_SYSTEM_V2_PROMPT_PACK.md, PROMPT 04 exit gate (the same profile and the same fingerprint through the command line, REST, MCP and the UI's data, and a new custom profile with no per-surface registration) and PROMPT 06 items 1 and 7 and its exit gate (CI catches a duplicate catalogue, a nondeterministic resolution and inconsistent output across surfaces; no Markdown-only doctrine). Each earlier issue proves its own surface. Nothing proves that the surfaces agree with each other, and nothing refuses a list of profile names written into a consumer."
+current_state: "Measured at 51b38035a71, where no commit since 3491f35cab has touched the profile schema, share/allow/profile.txt, .ai/repo/profiles, share/skeleton/profiles or the claim pages. tests/mcp_conformance.rs, tests/mcp_conformance_http.rs and tests/mcp_conformance_projection.rs hold the projections in general and not for a profile. No rule under .ai/repo/rules/project speaks of a profile as an object; completion-never-decides-satisfaction.v2.md and hot-path-reads-once.v1.md mention one in passing. scripts/ci has no profile scan (the profile hits in scripts/ci/backlog-check are cargo build profiles)."
+desired_state: "A case under test/cases serves a fixture, writes one new profile file, and asserts that profile list, profile show, profile resolve and profile explain answer the same canonical JSON over the command line, HTTP and MCP, that the Governance panel draws the same fingerprint, and that the answers are identical when the server is restarted and when the profile files are created in another order. A scan, added to an existing structure gate under scripts/ci, refuses a shipped profile's name as a literal under apps/majordomus-cli/src and share/ui outside tests and the default the policy declares. A rule under .ai/repo/rules/project states that a profile is defined once and resolved once and names the case and the scan as its proof; the rule's version suffix follows the directory's convention."
+scope:
+  - "test/cases"
+  - "scripts/ci"
+  - ".ai/repo/rules/project"
+  - ".ai/repo/ci"
+  - "apps/majordomus-cli/tests"
+  - "docs/PROFILES.md"
+  - ".ai/repo/project/issues/I4510.yaml"
+non_scope:
+  - "A browser suite: the UI is read as the HTML the server answers"
+  - "Mesh fault injection and crash recovery of dispatch: the mesh dispatches nothing"
+depends_on:
+  - I4506
+  - I4508
+acceptance_criteria:
+  - "The case passes on a fixture where the only change is one added profile file, and fails when any surface answers a different fingerprint"
+  - "A literal list of profile names added under apps/majordomus-cli/src or share/ui fails the scan, which names the file and the line"
+  - "A resolver made to iterate in discovery order instead of sorted order fails the case"
+  - "rules.report shows the new rule as proven by the case and the scan, not as declared only"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test mcp_conformance_projection"
+  - "MJ_TEST_JOBS=2 bash test/run.sh 16_profiles"
+  - "bin/majordomus generate --check"
+evidence_required:
+  - "surface_parity_fingerprint"
+  - "no_profile_catalogue_scan"
+  - "rule_proven_in_rules_report"
+created_at: 2026-10-30
+updated_at: 2026-10-30

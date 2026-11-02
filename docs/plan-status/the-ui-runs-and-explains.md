@@ -9,7 +9,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 
 | milestone | status | done of required | ready | blocked | active | verify | cancelled | outcome |
 |---|---|---|---|---|---|---|---|---|
-| [the-ui-runs-and-explains](https://majordomus.dev/plan/the-ui-runs-and-explains/) | PLANNED | 0/6 | 2 | 4 | 0 | 0 | 0 | I3225, I3226, I3227, I3228, I3229 and I3230 close these gaps on the existing screens. |
+| [the-ui-runs-and-explains](https://majordomus.dev/plan/the-ui-runs-and-explains/) | PLANNED | 0/7 | 3 | 4 | 0 | 0 | 0 | I3225, I3226, I3227, I3228, I3229 and I3230 close these gaps on the existing screens. |
 
 ## Issues
 
@@ -21,6 +21,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | [I3228](https://majordomus.dev/plan/i3228/) | BLOCKED | 1 | I2902 | The UI's search finds any entity the registry addresses and offers the moves its status admits |
 | [I3229](https://majordomus.dev/plan/i3229/) | READY | 1 | I2770 | Every version badge says whose version it is and how it stands to the latest release |
 | [I3230](https://majordomus.dev/plan/i3230/) | BLOCKED | 2 | I3138 | The Dashboard opens on what needs the owner: what runs, what is blocked and why, what was verified, and the next safe move |
+| [I4483](https://majordomus.dev/plan/i4483/) | READY | 0 | — | An execution opens on the UI: its state, steps, log and outcome at an address of its own |
 
 ## Findings
 
@@ -34,3 +35,12 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I3226` | shares docs/MAJORDOMUS_UI.md with I4315; they may not run concurrently |
 | WARN | `scope_conflict` | `I3226` | shares apps/majordomus-cli/src/capability/builtin/perf.rs with I4327; they may not run concurrently |
 | WARN | `scope_conflict` | `I3226` | shares apps/majordomus-cli/src/capability/builtin/perf.rs with I4468; they may not run concurrently |
+| WARN | `scope_conflict` | `I3226` | shares apps/majordomus-cli/src/http/router.rs with I4481; they may not run concurrently |
+| WARN | `scope_conflict` | `I3226` | shares docs/MAJORDOMUS_UI.md with I4483; they may not run concurrently |
+| WARN | `scope_conflict` | `I3226` | shares docs/MAJORDOMUS_UI.md with I4485; they may not run concurrently |
+| WARN | `scope_conflict` | `I3226` | shares apps/majordomus-cli/src/capability/builtin/perf.rs with I4486; they may not run concurrently |
+| WARN | `scope_conflict` | `I3226` | shares docs/MAJORDOMUS_UI.md with I4494; they may not run concurrently |
+| WARN | `scope_conflict` | `I3226` | shares docs/MAJORDOMUS_UI.md with I4495; they may not run concurrently |
+| WARN | `scope_conflict` | `I4483` | shares apps/majordomus-cli/src/ui/mod.rs with I4485; they may not run concurrently |
+| WARN | `scope_conflict` | `I4483` | shares apps/majordomus-cli/src/ui/view.rs with I4494; they may not run concurrently |
+| WARN | `scope_conflict` | `I4483` | shares apps/majordomus-cli/src/ui/view.rs with I4495; they may not run concurrently |

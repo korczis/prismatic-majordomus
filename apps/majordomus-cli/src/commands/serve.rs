@@ -241,6 +241,9 @@ fn serve(args: &ServeArgs, repo: &Repository) -> Result<u8> {
             }
         }
     };
+    // the serving process records its own `stopping`, before it stops (I3179); a process
+    // whose lease was taken over records nothing, because it speaks for nobody
+    lease::record_own(ServerStanding::Stopping, &stopping_reason(asked));
     match asked {
         Some(signal) => {
             tracing::info!(
@@ -256,6 +259,40 @@ fn serve(args: &ServeArgs, repo: &Repository) -> Result<u8> {
         }
     }
     Ok(0)
+}
+
+/// Why the serving loop is stopping, in the words its runtime record carries.
+fn stopping_reason(asked: Option<i32>) -> String {
+    match asked {
+        Some(signal) => format!("asked to stop by signal {signal}; stopping in order"),
+        None => {
+            "its owner's end (stdin closed, idle, or superseded); waiting for the peers to leave"
+                .into()
+        }
+    }
+}
+
+/// The reader's half of the runtime record, as `serve ensure` keeps it: a lease found stale
+/// (or gone) for a process that no longer exists is recorded `stopped` or `failed` before a
+/// new server is started over it, because the process that is gone cannot record its own end
+/// (I3179). Returns the runtime state the reading found.
+fn record_if_gone(
+    root: &std::path::Path,
+    local_half: &str,
+    standing: ServerStanding,
+    file: &LeaseFile,
+) -> Option<ServerStanding> {
+    matches!(standing, ServerStanding::Stale | ServerStanding::Absent).then(|| {
+        crate::capability::builtin::server::runtime_at(
+            root,
+            local_half,
+            standing,
+            file,
+            None,
+            crate::capability::builtin::server::RuntimeWriter::ServeEnsure,
+        )
+        .state
+    })
 }
 
 /// A server whose lease another process took, once its last session has been handed on, has
@@ -651,6 +688,7 @@ pub fn converge_with(
             |url| lease::probe_patiently(url, repo.root(), owner, patience),
             crate::VERSION,
         );
+        record_if_gone(repo.root(), &repo.local_path(), standing, &file);
         let doc = file.document().cloned();
         // A function of `started` rather than a closure over it: the loop assigns to
         // `started` in the arms below, and a closure that borrowed it would make that
@@ -665,7 +703,16 @@ pub fn converge_with(
         };
         match standing {
             ServerStanding::Ready => return Ok(settle(started, false)),
-            ServerStanding::Starting => {}
+            // the runtime's refinements are never what `standing_of` decides: waited on, like
+            // a server still binding, until the deadline
+            ServerStanding::Starting
+            | ServerStanding::Building
+            | ServerStanding::MeshAttaching
+            | ServerStanding::Operational
+            | ServerStanding::Degraded
+            | ServerStanding::Stopping
+            | ServerStanding::Stopped
+            | ServerStanding::Failed => {}
             ServerStanding::Absent | ServerStanding::Stale if !started => {
                 // A stale verdict reached after the whole of the busy grace is a judgement the
                 // started process need not make again: it is told which lease, so that its
@@ -1138,6 +1185,55 @@ mod tests {
     use super::*;
 
     const YOUNG: Duration = Duration::ZERO;
+
+    /// `serve ensure` is a named reader of the runtime (I3179): a lease it finds stale for a
+    /// process that is gone is recorded `failed` as `serve_ensure`; a live standing is not
+    /// its to record, and an absent lease with no history records nothing.
+    #[test]
+    fn ensure_records_a_server_it_finds_gone() {
+        use crate::capability::builtin::server::{read_transition, runtime_file, RuntimeWriter};
+        let dir = tempfile::tempdir().unwrap();
+        let gone = LeaseFile::Document(LeaseDocument {
+            schema: lease::SCHEMA.into(),
+            pid: 9_999_999,
+            token: "t".into(),
+            root: dir.path().to_path_buf(),
+            url: Some("http://127.0.0.1:1".into()),
+            started_at: "2026-10-23T00:00:00Z".into(),
+            executable: None,
+            version: None,
+        });
+        assert_eq!(
+            record_if_gone(dir.path(), ".ai/local", ServerStanding::Ready, &gone),
+            None
+        );
+        assert_eq!(
+            record_if_gone(
+                dir.path(),
+                ".ai/local",
+                ServerStanding::Absent,
+                &LeaseFile::Absent
+            ),
+            Some(ServerStanding::Absent)
+        );
+        assert!(!runtime_file(dir.path(), ".ai/local").exists());
+        assert_eq!(
+            record_if_gone(dir.path(), ".ai/local", ServerStanding::Stale, &gone),
+            Some(ServerStanding::Failed)
+        );
+        let t = read_transition(&runtime_file(dir.path(), ".ai/local")).unwrap();
+        assert_eq!(
+            (t.state, t.by),
+            (ServerStanding::Failed, RuntimeWriter::ServeEnsure)
+        );
+    }
+
+    /// The serving loop says why it stops, in the words its `stopping` record carries.
+    #[test]
+    fn the_stopping_record_says_why() {
+        assert!(stopping_reason(Some(15)).contains("signal 15"));
+        assert!(stopping_reason(None).contains("owner's end"));
+    }
 
     fn argv(cmd: &Command) -> Vec<String> {
         cmd.get_args()
