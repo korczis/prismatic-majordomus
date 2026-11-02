@@ -14826,6 +14826,12 @@
           "route": "/docs/cli/prs/repair/"
         },
         {
+          "about": "Judge every in-flight CI run against the bounds `.ai/repo/ci/supervise.yaml` declares, and name each one to cancel with its reason: a pull request's first-attempt run waiting with no job created while a run of its branch and commit created within 120 seconds of it is in flight and is not itself to be ended within 30 minutes (never a re-run, an admitted run, nor when the pull request is labelled ci:full), a pull request's run of a head that moved while a newer run of it waits behind it in the same concurrency group, a pull request's run whose attempt queued past its workflow's bound with no job of it started, or one with a job in progress past its bound from that job's start (an integration/* top is never ended for a bound, nor a queued run of the default branch, a tag, the schedule, a dispatch or a release). A run of the default branch, a tag, the schedule, a dispatch or a release, and every pages or release run, is never cancelled for being superseded; the supervising workflow's own run never at all. It also reports supervise_stale when the supervisor's newest success (with `--supervised-by` and a window of 30 minutes or more, that lane's) is older than 30 minutes. A dry run by default, which reaches the forge to read and changes nothing. Exit 0 when nothing needs doing, 10 for decisions a dry run found, 12 when the forge could not be read or an act could not be taken",
+          "command": "majordomus prs supervise",
+          "name": "supervise",
+          "route": "/docs/cli/prs/supervise/"
+        },
+        {
           "about": "The audit trail: every selection, merge, refusal, stale decision and closure this checkout's executor recorded",
           "command": "majordomus prs events",
           "name": "events",
@@ -15945,6 +15951,204 @@
       ],
       "route": "/docs/cli/prs/repair/",
       "usage": "majordomus prs repair [OPTIONS] <TARGET>"
+    },
+    {
+      "about": "Judge every in-flight CI run against the bounds `.ai/repo/ci/supervise.yaml` declares, and name each one to cancel with its reason: a pull request's first-attempt run waiting with no job created while a run of its branch and commit created within 120 seconds of it is in flight and is not itself to be ended within 30 minutes (never a re-run, an admitted run, nor when the pull request is labelled ci:full), a pull request's run of a head that moved while a newer run of it waits behind it in the same concurrency group, a pull request's run whose attempt queued past its workflow's bound with no job of it started, or one with a job in progress past its bound from that job's start (an integration/* top is never ended for a bound, nor a queued run of the default branch, a tag, the schedule, a dispatch or a release). A run of the default branch, a tag, the schedule, a dispatch or a release, and every pages or release run, is never cancelled for being superseded; the supervising workflow's own run never at all. It also reports supervise_stale when the supervisor's newest success (with `--supervised-by` and a window of 30 minutes or more, that lane's) is older than 30 minutes. A dry run by default, which reaches the forge to read and changes nothing. Exit 0 when nothing needs doing, 10 for decisions a dry run found, 12 when the forge could not be read or an act could not be taken",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        },
+        {
+          "command": "majordomus prs",
+          "name": "prs",
+          "route": "/docs/cli/prs/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": false,
+          "help": "Act: read each run and its pull request's head again, and only if the decision still holds, record the act on the integration trail and force-cancel the run. A trail that cannot be written stops every act",
+          "long": "apply",
+          "name": "apply",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "APPLY"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": false,
+          "help": "Decide and change nothing: the default, spelled out",
+          "long": "dry-run",
+          "name": "dry_run",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "DRY_RUN"
+        },
+        {
+          "defaults": [],
+          "global": false,
+          "help": "Stand aside when a supervision succeeded at most this many minutes ago: read only the supervisor's newest success, observe nothing, and exit 0. For a lane that covers for another, so that two lanes do not both spend the repository's request budget on every tick",
+          "long": "unless-supervised-within",
+          "name": "unless_supervised_within",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "MINUTES"
+        },
+        {
+          "defaults": [],
+          "global": false,
+          "help": "With `--unless-supervised-within`, count only a supervision by this lane's job (one named `<anything> (<LANE>)`): the lane covered for. A job that stood aside succeeded too, so a lane that counted its own would stand aside behind itself once the lane it covers for stopped. With a window of 30 minutes or more the reported liveness is this lane's, which is how the queue workflow holds the lundra lane to account",
+          "long": "supervised-by",
+          "name": "supervised_by",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "LANE"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Start the search for the repository root here (default: the current directory)",
+          "long": "repo",
+          "name": "repo",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [
+            "vcs"
+          ],
+          "global": true,
+          "help": "How declarative files are enumerated",
+          "long": "discovery",
+          "name": "discovery",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
+              "name": "vcs"
+            },
+            {
+              "help": "A walk of the work tree with the same glob semantics; untracked files included",
+              "name": "filesystem"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DISCOVERY"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+          "long": "strict",
+          "name": "strict",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "STRICT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+          "long": "share",
+          "name": "share",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DIR"
+        },
+        {
+          "defaults": [
+            "text"
+          ],
+          "global": true,
+          "help": "Output shape",
+          "long": "format",
+          "name": "format",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Lines for a person",
+              "name": "text"
+            },
+            {
+              "help": "One JSON document, deterministic",
+              "name": "json"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FORMAT"
+        }
+      ],
+      "children": [],
+      "command": "majordomus prs supervise",
+      "depth": 2,
+      "examples": [
+        {
+          "argv": [
+            "prs",
+            "supervise",
+            "--dry-run"
+          ],
+          "command": "majordomus prs supervise --dry-run",
+          "description": "`supervise` reads every queued, waiting and running workflow run and every open pull request's head, and decides which runs to cancel and why: superseded while a newer run waits behind it, queued past its bound, or running past it. Without `--apply` it only prints the decisions. A repository that declares no bounds, or has no GitHub remote to read runs from, cannot be supervised: it exits 12 before deciding anything, and nothing is cancelled or recorded.",
+          "expectation": "exits 12",
+          "id": "prs-supervise-dry-run-no-forge",
+          "setup": [],
+          "title": "Supervising the CI runs starts from the forge, or not at all"
+        },
+        {
+          "argv": [
+            "prs",
+            "supervise",
+            "--unless-supervised-within",
+            "15",
+            "--supervised-by",
+            "lundra"
+          ],
+          "command": "majordomus prs supervise --unless-supervised-within 15 --supervised-by lundra",
+          "description": "`--unless-supervised-within 15 --supervised-by lundra` is how the hosted fallback runs (with `--apply`): when lundra's supervise job succeeded at most fifteen minutes ago (the schedule's ten and a margin) it reads nothing else and exits 0 (`stood aside`), so two lanes do not both spend the repository's one request budget on every tick. Only lundra's success counts, because a job that stood aside succeeded too and a lane counting its own would stand aside behind itself for ever. The answer is the forge's, so where there is none, or no bounds are declared, it exits 12 and stands aside from nothing.",
+          "expectation": "exits 12",
+          "id": "prs-supervise-covering-lane-no-forge",
+          "setup": [],
+          "title": "A covering lane asks the forge before it stands aside"
+        }
+      ],
+      "executable": true,
+      "long_about": null,
+      "name": "supervise",
+      "parent_route": "/docs/cli/prs/",
+      "path": [
+        "majordomus",
+        "prs",
+        "supervise"
+      ],
+      "route": "/docs/cli/prs/supervise/",
+      "usage": "majordomus prs supervise [OPTIONS]"
     },
     {
       "about": "The audit trail: every selection, merge, refusal, stale decision and closure this checkout's executor recorded",
@@ -22787,7 +22991,7 @@
       "args": [],
       "children": [
         {
-          "about": "Judge the edit a provider's pre-tool payload (on stdin) is about to make; exit 2 with the reason and the remedy when no claim covers it, 0 otherwise",
+          "about": "Judge the edit a provider's pre-tool payload (on stdin) is about to make; exit 2 with the reason and the remedy when no claim covers it and session.edit_guard_mode is refuse, 0 otherwise; under advisory, the default, an unclaimed edit is said on stderr and recorded, and exits 0",
           "command": "majordomus guard hook",
           "name": "hook",
           "route": "/docs/cli/guard/hook/"
@@ -22808,7 +23012,7 @@
       "usage": "majordomus guard <COMMAND>"
     },
     {
-      "about": "Judge the edit a provider's pre-tool payload (on stdin) is about to make; exit 2 with the reason and the remedy when no claim covers it, 0 otherwise",
+      "about": "Judge the edit a provider's pre-tool payload (on stdin) is about to make; exit 2 with the reason and the remedy when no claim covers it and session.edit_guard_mode is refuse, 0 otherwise; under advisory, the default, an unclaimed edit is said on stderr and recorded, and exits 0",
       "ancestors": [
         {
           "command": "majordomus",
@@ -40038,10 +40242,10 @@
     }
   ],
   "counts": {
-    "arguments": 1735,
-    "commands": 252,
-    "examples": 253,
-    "runnable": 220
+    "arguments": 1744,
+    "commands": 253,
+    "examples": 255,
+    "runnable": 221
   },
   "declaration": "apps/majordomus-cli/src/cli.rs",
   "generator_version": "1.0.0-alpha.10",

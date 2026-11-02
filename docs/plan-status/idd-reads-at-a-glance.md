@@ -234,6 +234,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I2901` | shares .ai/repo/project with I4416; they may not run concurrently |
 | WARN | `scope_conflict` | `I2901` | shares .ai/repo/project with I4417; they may not run concurrently |
 | WARN | `scope_conflict` | `I2901` | shares .ai/repo/project with I4418; they may not run concurrently |
+| WARN | `scope_conflict` | `I2901` | shares docs with I4434; they may not run concurrently |
 | WARN | `scope_conflict` | `I2901` | shares .ai/repo/project with I4460; they may not run concurrently |
 | WARN | `scope_conflict` | `I2901` | shares .ai/repo/project with I4461; they may not run concurrently |
 | WARN | `scope_conflict` | `I2901` | shares .ai/repo/project with I4462; they may not run concurrently |
@@ -415,6 +416,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I2902` | shares .ai/repo/project with I4416; they may not run concurrently |
 | WARN | `scope_conflict` | `I2902` | shares .ai/repo/project with I4417; they may not run concurrently |
 | WARN | `scope_conflict` | `I2902` | shares .ai/repo/project with I4418; they may not run concurrently |
+| WARN | `scope_conflict` | `I2902` | shares docs with I4434; they may not run concurrently |
 | WARN | `scope_conflict` | `I2902` | shares .ai/repo/project with I4460; they may not run concurrently |
 | WARN | `scope_conflict` | `I2902` | shares .ai/repo/project with I4461; they may not run concurrently |
 | WARN | `scope_conflict` | `I2902` | shares .ai/repo/project with I4462; they may not run concurrently |
@@ -593,6 +595,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I2903` | shares .ai/repo/project with I4416; they may not run concurrently |
 | WARN | `scope_conflict` | `I2903` | shares .ai/repo/project with I4417; they may not run concurrently |
 | WARN | `scope_conflict` | `I2903` | shares .ai/repo/project with I4418; they may not run concurrently |
+| WARN | `scope_conflict` | `I2903` | shares docs with I4434; they may not run concurrently |
 | WARN | `scope_conflict` | `I2903` | shares .ai/repo/project with I4460; they may not run concurrently |
 | WARN | `scope_conflict` | `I2903` | shares .ai/repo/project with I4461; they may not run concurrently |
 | WARN | `scope_conflict` | `I2903` | shares .ai/repo/project with I4462; they may not run concurrently |
@@ -770,6 +773,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I2904` | shares .ai/repo/project with I4416; they may not run concurrently |
 | WARN | `scope_conflict` | `I2904` | shares .ai/repo/project with I4417; they may not run concurrently |
 | WARN | `scope_conflict` | `I2904` | shares .ai/repo/project with I4418; they may not run concurrently |
+| WARN | `scope_conflict` | `I2904` | shares docs with I4434; they may not run concurrently |
 | WARN | `scope_conflict` | `I2904` | shares .ai/repo/project with I4460; they may not run concurrently |
 | WARN | `scope_conflict` | `I2904` | shares .ai/repo/project with I4461; they may not run concurrently |
 | WARN | `scope_conflict` | `I2904` | shares .ai/repo/project with I4462; they may not run concurrently |
@@ -948,6 +952,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I2908` | shares .ai/repo/project with I4416; they may not run concurrently |
 | WARN | `scope_conflict` | `I2908` | shares .ai/repo/project with I4417; they may not run concurrently |
 | WARN | `scope_conflict` | `I2908` | shares .ai/repo/project with I4418; they may not run concurrently |
+| WARN | `scope_conflict` | `I2908` | shares docs with I4434; they may not run concurrently |
 | WARN | `scope_conflict` | `I2908` | shares .ai/repo/project with I4460; they may not run concurrently |
 | WARN | `scope_conflict` | `I2908` | shares .ai/repo/project with I4461; they may not run concurrently |
 | WARN | `scope_conflict` | `I2908` | shares .ai/repo/project with I4462; they may not run concurrently |
@@ -1123,6 +1128,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I2909` | shares .ai/repo/project with I4416; they may not run concurrently |
 | WARN | `scope_conflict` | `I2909` | shares .ai/repo/project with I4417; they may not run concurrently |
 | WARN | `scope_conflict` | `I2909` | shares .ai/repo/project with I4418; they may not run concurrently |
+| WARN | `scope_conflict` | `I2909` | shares docs with I4434; they may not run concurrently |
 | WARN | `scope_conflict` | `I2909` | shares .ai/repo/project with I4460; they may not run concurrently |
 | WARN | `scope_conflict` | `I2909` | shares .ai/repo/project with I4461; they may not run concurrently |
 | WARN | `scope_conflict` | `I2909` | shares .ai/repo/project with I4462; they may not run concurrently |
@@ -1298,6 +1304,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I2910` | shares .ai/repo/project with I4416; they may not run concurrently |
 | WARN | `scope_conflict` | `I2910` | shares .ai/repo/project with I4417; they may not run concurrently |
 | WARN | `scope_conflict` | `I2910` | shares .ai/repo/project with I4418; they may not run concurrently |
+| WARN | `scope_conflict` | `I2910` | shares docs with I4434; they may not run concurrently |
 | WARN | `scope_conflict` | `I2910` | shares .ai/repo/project with I4460; they may not run concurrently |
 | WARN | `scope_conflict` | `I2910` | shares .ai/repo/project with I4461; they may not run concurrently |
 | WARN | `scope_conflict` | `I2910` | shares .ai/repo/project with I4462; they may not run concurrently |
@@ -1471,6 +1478,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I2911` | shares .ai/repo/project with I4416; they may not run concurrently |
 | WARN | `scope_conflict` | `I2911` | shares .ai/repo/project with I4417; they may not run concurrently |
 | WARN | `scope_conflict` | `I2911` | shares .ai/repo/project with I4418; they may not run concurrently |
+| WARN | `scope_conflict` | `I2911` | shares docs with I4434; they may not run concurrently |
 | WARN | `scope_conflict` | `I2911` | shares .ai/repo/project with I4460; they may not run concurrently |
 | WARN | `scope_conflict` | `I2911` | shares .ai/repo/project with I4461; they may not run concurrently |
 | WARN | `scope_conflict` | `I2911` | shares .ai/repo/project with I4462; they may not run concurrently |
@@ -1645,6 +1653,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I2912` | shares .ai/repo/project with I4416; they may not run concurrently |
 | WARN | `scope_conflict` | `I2912` | shares .ai/repo/project with I4417; they may not run concurrently |
 | WARN | `scope_conflict` | `I2912` | shares .ai/repo/project with I4418; they may not run concurrently |
+| WARN | `scope_conflict` | `I2912` | shares docs with I4434; they may not run concurrently |
 | WARN | `scope_conflict` | `I2912` | shares .ai/repo/project with I4460; they may not run concurrently |
 | WARN | `scope_conflict` | `I2912` | shares .ai/repo/project with I4461; they may not run concurrently |
 | WARN | `scope_conflict` | `I2912` | shares .ai/repo/project with I4462; they may not run concurrently |
@@ -1816,6 +1825,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I2913` | shares .ai/repo/project with I4416; they may not run concurrently |
 | WARN | `scope_conflict` | `I2913` | shares .ai/repo/project with I4417; they may not run concurrently |
 | WARN | `scope_conflict` | `I2913` | shares .ai/repo/project with I4418; they may not run concurrently |
+| WARN | `scope_conflict` | `I2913` | shares docs with I4434; they may not run concurrently |
 | WARN | `scope_conflict` | `I2913` | shares .ai/repo/project with I4460; they may not run concurrently |
 | WARN | `scope_conflict` | `I2913` | shares .ai/repo/project with I4461; they may not run concurrently |
 | WARN | `scope_conflict` | `I2913` | shares .ai/repo/project with I4462; they may not run concurrently |
@@ -1986,6 +1996,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I2914` | shares .ai/repo/project with I4416; they may not run concurrently |
 | WARN | `scope_conflict` | `I2914` | shares .ai/repo/project with I4417; they may not run concurrently |
 | WARN | `scope_conflict` | `I2914` | shares .ai/repo/project with I4418; they may not run concurrently |
+| WARN | `scope_conflict` | `I2914` | shares docs with I4434; they may not run concurrently |
 | WARN | `scope_conflict` | `I2914` | shares .ai/repo/project with I4460; they may not run concurrently |
 | WARN | `scope_conflict` | `I2914` | shares .ai/repo/project with I4461; they may not run concurrently |
 | WARN | `scope_conflict` | `I2914` | shares .ai/repo/project with I4462; they may not run concurrently |
@@ -2155,6 +2166,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I2918` | shares .ai/repo/project with I4416; they may not run concurrently |
 | WARN | `scope_conflict` | `I2918` | shares .ai/repo/project with I4417; they may not run concurrently |
 | WARN | `scope_conflict` | `I2918` | shares .ai/repo/project with I4418; they may not run concurrently |
+| WARN | `scope_conflict` | `I2918` | shares docs with I4434; they may not run concurrently |
 | WARN | `scope_conflict` | `I2918` | shares .ai/repo/project with I4460; they may not run concurrently |
 | WARN | `scope_conflict` | `I2918` | shares .ai/repo/project with I4461; they may not run concurrently |
 | WARN | `scope_conflict` | `I2918` | shares .ai/repo/project with I4462; they may not run concurrently |
@@ -2323,6 +2335,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I2919` | shares .ai/repo/project with I4416; they may not run concurrently |
 | WARN | `scope_conflict` | `I2919` | shares .ai/repo/project with I4417; they may not run concurrently |
 | WARN | `scope_conflict` | `I2919` | shares .ai/repo/project with I4418; they may not run concurrently |
+| WARN | `scope_conflict` | `I2919` | shares docs with I4434; they may not run concurrently |
 | WARN | `scope_conflict` | `I2919` | shares .ai/repo/project with I4460; they may not run concurrently |
 | WARN | `scope_conflict` | `I2919` | shares .ai/repo/project with I4461; they may not run concurrently |
 | WARN | `scope_conflict` | `I2919` | shares .ai/repo/project with I4462; they may not run concurrently |
@@ -2490,6 +2503,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I3003` | shares .ai/repo/project with I4416; they may not run concurrently |
 | WARN | `scope_conflict` | `I3003` | shares .ai/repo/project with I4417; they may not run concurrently |
 | WARN | `scope_conflict` | `I3003` | shares .ai/repo/project with I4418; they may not run concurrently |
+| WARN | `scope_conflict` | `I3003` | shares docs with I4434; they may not run concurrently |
 | WARN | `scope_conflict` | `I3003` | shares .ai/repo/project with I4460; they may not run concurrently |
 | WARN | `scope_conflict` | `I3003` | shares .ai/repo/project with I4461; they may not run concurrently |
 | WARN | `scope_conflict` | `I3003` | shares .ai/repo/project with I4462; they may not run concurrently |
@@ -2656,6 +2670,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I3004` | shares .ai/repo/project with I4416; they may not run concurrently |
 | WARN | `scope_conflict` | `I3004` | shares .ai/repo/project with I4417; they may not run concurrently |
 | WARN | `scope_conflict` | `I3004` | shares .ai/repo/project with I4418; they may not run concurrently |
+| WARN | `scope_conflict` | `I3004` | shares docs with I4434; they may not run concurrently |
 | WARN | `scope_conflict` | `I3004` | shares .ai/repo/project with I4460; they may not run concurrently |
 | WARN | `scope_conflict` | `I3004` | shares .ai/repo/project with I4461; they may not run concurrently |
 | WARN | `scope_conflict` | `I3004` | shares .ai/repo/project with I4462; they may not run concurrently |
@@ -2821,6 +2836,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I3005` | shares .ai/repo/project with I4416; they may not run concurrently |
 | WARN | `scope_conflict` | `I3005` | shares .ai/repo/project with I4417; they may not run concurrently |
 | WARN | `scope_conflict` | `I3005` | shares .ai/repo/project with I4418; they may not run concurrently |
+| WARN | `scope_conflict` | `I3005` | shares docs with I4434; they may not run concurrently |
 | WARN | `scope_conflict` | `I3005` | shares .ai/repo/project with I4460; they may not run concurrently |
 | WARN | `scope_conflict` | `I3005` | shares .ai/repo/project with I4461; they may not run concurrently |
 | WARN | `scope_conflict` | `I3005` | shares .ai/repo/project with I4462; they may not run concurrently |

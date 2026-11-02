@@ -359,7 +359,9 @@ pub struct ObligationClosure {
     /// Where it stands.
     pub state: ObligationState,
     /// How far the evidence is from this checkout, in the repository's one staleness
-    /// vocabulary. `None` when there is no evidence to label.
+    /// vocabulary. `None` when there is no evidence to label, and `None` when the evidence
+    /// cannot be judged because the token's pathspecs select no tracked file here: an empty
+    /// input set is never a freshness proof, so that obligation is `owed` (I4434).
     ///
     /// A remote fact is labelled against the commit it was taken at, because the site that
     /// serves a commit goes on serving it while the tree moves underneath. A tree-bound
@@ -666,7 +668,34 @@ fn judge(
     let commit = label(root, &ev.head, &ev.branch, head, branch);
     let short = |h: &str| h.chars().take(12).collect::<String>();
 
-    let (staleness, detail) = if o.remote {
+    // An empty input set is never a freshness proof (I4434). A token whose pathspecs select
+    // no tracked file here, or that declares no pathspecs at all (`commit`), hashes to
+    // nothing, and so did its evidence when it was taken; comparing the two discharged it
+    // over nothing, and no later edit could ever make it stale. It is not judged: owed, the
+    // word `mj_obligation_judge` spells unmet. For an empty selection the listing that shows
+    // it is how to reproduce the finding; a token without inputs is established live by
+    // `majordomus check` where the vocabulary names something to establish it, which this
+    // judge does not do yet (I4433 settles it live), so it is owed here and never a pass.
+    let unjudgeable =
+        !o.remote && hash_now.as_deref().unwrap_or("").is_empty() && ev.inputs_hash.is_empty();
+
+    let (staleness, detail) = if unjudgeable && o.inputs.is_empty() {
+        (
+            None,
+            format!(
+                "not judged: '{}' declares no inputs, so no recorded evidence can be judged fresh over them; `majordomus check` establishes it live where something can",
+                o.id
+            ),
+        )
+    } else if unjudgeable {
+        (
+            None,
+            format!(
+                "not judged: its inputs ({}) select no tracked file in this tree, so no evidence can be judged fresh over them",
+                o.inputs.join(" ")
+            ),
+        )
+    } else if o.remote {
         let detail = match commit {
             Divergence::Exact => "discharged at this commit".to_string(),
             Divergence::Advanced => format!(
@@ -679,10 +708,10 @@ fn judge(
                 short(&ev.head)
             ),
         };
-        (commit, detail)
+        (Some(commit), detail)
     } else if hash_now.as_deref().unwrap_or("") == ev.inputs_hash {
         (
-            Divergence::Exact,
+            Some(Divergence::Exact),
             format!("discharged over inputs {}", short(&ev.inputs_hash)),
         )
     } else {
@@ -694,7 +723,7 @@ fn judge(
             other => other,
         };
         (
-            moved,
+            Some(moved),
             format!(
                 "the evidence was taken over inputs {} and this tree hashes to {} over {} file(s); it no longer describes what it proved",
                 short(&ev.inputs_hash),
@@ -711,17 +740,24 @@ fn judge(
         discharged_by: o.discharged_by.clone(),
         remote: o.remote,
         inputs: o.inputs.clone(),
-        state: if staleness == Divergence::Exact {
-            ObligationState::Discharged
-        } else {
-            ObligationState::Stale
+        state: match staleness {
+            None => ObligationState::Owed,
+            Some(Divergence::Exact) => ObligationState::Discharged,
+            Some(_) => ObligationState::Stale,
         },
-        staleness: Some(staleness),
+        staleness,
         evidence: Some(ev.clone()),
         inputs_hash_now: hash_now,
         inputs_files: files_now,
         detail,
-        reproduce,
+        reproduce: if unjudgeable && o.inputs.is_empty() {
+            "majordomus check".to_string()
+        } else if unjudgeable {
+            let listing: Vec<String> = o.inputs.iter().map(|s| format!("'{s}'")).collect();
+            format!("git ls-files -- {}", listing.join(" "))
+        } else {
+            reproduce
+        },
     }
 }
 
@@ -1001,7 +1037,7 @@ mod tests {
             summary: String::new(),
             discharged_by: "usecase impact".into(),
             // a pathspec git is never asked about, because the root does not exist: the
-            // hash is `None`, which compares equal to the empty recorded hash
+            // hash is `None`, which never discharges anything (I4434)
             inputs: vec!["lib/**".into()],
             remote: false,
             note: String::new(),
@@ -1157,5 +1193,127 @@ mod tests {
             cache.0
         );
         assert_eq!(cache.0["gone.txt"], None);
+    }
+
+    /// An empty input set is never a freshness proof (I4434). In a repository none of whose
+    /// tracked files a token's pathspecs select — an adopter's, for `tests`, whose inputs are
+    /// this repository's own directories — the evidence was recorded over the empty hash and
+    /// the tree still hashes to it. Equal hashes there prove nothing, so the token is owed
+    /// with the evidence attached and the listing that shows the empty selection; the moment
+    /// the pathspecs select a file the ordinary judgement applies again, in both directions.
+    #[test]
+    fn an_empty_input_set_discharges_nothing() {
+        let dir = tempfile::tempdir().unwrap();
+        let root = dir.path();
+        let git = |args: &[&str]| {
+            let ok = std::process::Command::new("git")
+                .arg("-C")
+                .arg(root)
+                .args(args)
+                .output()
+                .expect("git runs")
+                .status
+                .success();
+            assert!(ok, "git {args:?}");
+        };
+        git(&["init", "-q", "."]);
+        std::fs::create_dir_all(root.join("calc")).unwrap();
+        std::fs::write(root.join("calc/__init__.py"), "def mean(xs): ...\n").unwrap();
+        git(&["add", "-A"]);
+
+        let tests = Obligation {
+            id: "tests".into(),
+            title: "The cases the change obliges were run".into(),
+            summary: String::new(),
+            discharged_by: "usecase impact".into(),
+            inputs: vec!["lib/**".into(), "test/cases/**".into()],
+            remote: false,
+            note: String::new(),
+        };
+        let ev = |hash: &str| Evidence {
+            recorded_at: "2026-10-30T00:00:00Z".into(),
+            head: "aaa".into(),
+            branch: "master".into(),
+            kind: "test".into(),
+            command: "python3 -m unittest -q".into(),
+            artifact: String::new(),
+            result: String::new(),
+            session: String::new(),
+            inputs_hash: hash.into(),
+        };
+        assert_eq!(inputs_hash(root, &tests.inputs), Some((String::new(), 0)));
+
+        // the defect: "" recorded, "" now. Not a discharge, and not a staleness label either
+        let none = judge(root, "tests", Some(&tests), Some(&ev("")), None, "master");
+        assert_eq!(none.state, ObligationState::Owed, "{}", none.detail);
+        assert_eq!(none.staleness, None, "there is no hash to label against");
+        assert!(
+            none.evidence.is_some(),
+            "the evidence is reported, not hidden"
+        );
+        assert!(
+            none.detail.starts_with(
+                "not judged: its inputs (lib/** test/cases/**) select no tracked file"
+            ),
+            "{}",
+            none.detail
+        );
+        assert_eq!(none.reproduce, "git ls-files -- 'lib/**' 'test/cases/**'");
+
+        // git could not be asked at all: the same empty answer, the same verdict
+        let blind = judge(
+            Path::new("/nonexistent-so-git-cannot-answer"),
+            "tests",
+            Some(&tests),
+            Some(&ev("")),
+            None,
+            "master",
+        );
+        assert_eq!(blind.state, ObligationState::Owed);
+
+        // once the pathspecs select a file, the evidence over "" is stale, not owed ...
+        std::fs::create_dir_all(root.join("lib")).unwrap();
+        std::fs::write(root.join("lib/a.sh"), "a\n").unwrap();
+        git(&["add", "-A"]);
+        let grown = judge(root, "tests", Some(&tests), Some(&ev("")), None, "master");
+        assert_eq!(grown.state, ObligationState::Stale, "{}", grown.detail);
+
+        // ... evidence taken over the selection discharges it ...
+        let (now, files) = inputs_hash(root, &tests.inputs).unwrap();
+        assert_eq!(files, 1);
+        let fresh = judge(root, "tests", Some(&tests), Some(&ev(&now)), None, "master");
+        assert_eq!(fresh.state, ObligationState::Discharged, "{}", fresh.detail);
+        assert_eq!(fresh.staleness, Some(Divergence::Exact));
+
+        // ... and an edit after it makes that evidence stale
+        std::fs::write(root.join("lib/a.sh"), "b\n").unwrap();
+        let edited = judge(root, "tests", Some(&tests), Some(&ev(&now)), None, "master");
+        assert_eq!(edited.state, ObligationState::Stale, "{}", edited.detail);
+
+        // a tree-bound token that declares no inputs at all (`commit`) hashes to nothing
+        // whatever the tree holds: evidence recorded for it is owed, never a pass, however
+        // dirty the tree is
+        let commit = Obligation {
+            id: "commit".into(),
+            title: "The work is committed".into(),
+            summary: String::new(),
+            discharged_by: "git".into(),
+            inputs: Vec::new(),
+            remote: false,
+            note: String::new(),
+        };
+        std::fs::write(root.join("lib/a.sh"), "uncommitted\n").unwrap();
+        let bare = judge(root, "commit", Some(&commit), Some(&ev("")), None, "master");
+        assert_eq!(bare.state, ObligationState::Owed, "{}", bare.detail);
+        assert_eq!(bare.staleness, None);
+        assert!(bare.evidence.is_some());
+        assert!(
+            bare.detail
+                .starts_with("not judged: 'commit' declares no inputs"),
+            "{}",
+            bare.detail
+        );
+        assert!(!bare.detail.contains("discharged over inputs"));
+        assert_eq!(bare.reproduce, "majordomus check");
     }
 }
