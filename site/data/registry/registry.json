@@ -6,23 +6,23 @@
     "version": "1.0.0-alpha.10"
   },
   "registry": {
-    "fingerprint": "a023263da23f657082857c306cf256e30880c16d7d0d7c92c5a2a3c333893fac",
+    "fingerprint": "33fc174ccad42e0e9758869cc106dd16286124ab01484a86729680a56bb2d726",
     "summary": {
-      "total": 3732,
+      "total": 3734,
       "builtin": 220,
-      "declarative": 3512,
+      "declarative": 3514,
       "by_kind": {
         "command": 36,
         "query": 184,
-        "resource": 3512
+        "resource": 3514
       },
       "by_stability": {
         "behaviorally_verified": 147,
         "experimental": 63,
-        "implemented": 3522
+        "implemented": 3524
       },
       "mcp_tools": 206,
-      "mcp_resources": 3569,
+      "mcp_resources": 3571,
       "http_routes": 212,
       "cli_commands": 120,
       "modules": 94,
@@ -39924,6 +39924,13 @@
                     "minimum": 0,
                     "description": "Of those, how many failed."
                   },
+                  "cancelled": {
+                    "type": "integer",
+                    "format": "uint64",
+                    "minimum": 0,
+                    "description": "Of those, how many were cancelled before they gave a verdict: counted as neither\npassed nor failed, and, cut short, no sample of how long the check takes (I3202).",
+                    "default": 0
+                  },
                   "median_seconds": {
                     "type": "integer",
                     "format": "uint64",
@@ -60329,7 +60336,7 @@
                         "type": "null"
                       }
                     ],
-                    "description": "How far the evidence is from this checkout, in the repository's one staleness\nvocabulary. `None` when there is no evidence to label.\n\nA remote fact is labelled against the commit it was taken at, because the site that\nserves a commit goes on serving it while the tree moves underneath. A tree-bound\nfact is labelled by re-hashing: equal hashes are `exact`, and a difference takes the\ncommit's label, which is `advanced` when the working tree has merely moved on and\n`diverged` when the history it named is gone. A token that declares neither inputs\nnor a remote fact is bound to nothing and stays `exact` once recorded — that is the\nvalidator's behaviour, and it is reproduced rather than tightened here."
+                    "description": "How far the evidence is from this checkout, in the repository's one staleness\nvocabulary. `None` when there is no evidence to label, and `None` when the evidence\ncannot be judged because the token's pathspecs select no tracked file here: an empty\ninput set is never a freshness proof, so that obligation is `owed` (I4434).\n\nA remote fact is labelled against the commit it was taken at, because the site that\nserves a commit goes on serving it while the tree moves underneath. A tree-bound\nfact is labelled by re-hashing: equal hashes are `exact`, and a difference takes the\ncommit's label, which is `advanced` when the working tree has merely moved on and\n`diverged` when the history it named is gone. A token that declares neither inputs\nnor a remote fact is bound to nothing and stays `exact` once recorded — that is the\nvalidator's behaviour, and it is reproduced rather than tightened here."
                   },
                   "evidence": {
                     "anyOf": [
@@ -91407,7 +91414,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 1156,
+        "capabilities": 1157,
         "capability_ids": []
       },
       {
@@ -92005,7 +92012,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 672,
+        "capabilities": 673,
         "capability_ids": []
       },
       {
@@ -92097,7 +92104,7 @@
     ]
   },
   "index": {
-    "fingerprint": "f4e80a4c1809ccdcd3241cfd7f6f7ec516d66a600e926013ee5ed47171281bd3",
+    "fingerprint": "37f2f382f2ffd6098f1e97c695be23faa62871092e9b40263edd5ef407108c6a",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -92137,7 +92144,7 @@
       "gap": 5,
       "implementation": 52,
       "intent": 44,
-      "issue": 1156,
+      "issue": 1157,
       "knowledge": 90,
       "mesh-declaration": 1,
       "milestone": 114,
@@ -92151,7 +92158,7 @@
       "session": 93,
       "skill": 8,
       "taxonomy": 10,
-      "test": 672,
+      "test": 673,
       "use-case": 49,
       "workspace": 1
     },
@@ -99321,7 +99328,7 @@
         "title": "Distribution",
         "path": "docs/DISTRIBUTION.md",
         "source_class": "document",
-        "bytes": 40638
+        "bytes": 41398
       },
       {
         "uri": "majordomus://document/docs/DOCTRINE.md",
@@ -99609,7 +99616,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 125242
+        "bytes": 125421
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -101193,7 +101200,7 @@
         "title": "A task that declares obligations reaches the outcome completed only when each one has evidence, and evidence taken over files that have since changed no longer discharges anything",
         "path": "docs/claims/obligation-closure.md",
         "source_class": "claim_page",
-        "bytes": 4981
+        "bytes": 5483
       },
       {
         "uri": "majordomus://document/docs/claims/obligation-establishment.md",
@@ -102814,7 +102821,7 @@
         "identity": "lib/evidence.sh",
         "path": "lib/evidence.sh",
         "source_class": "library",
-        "bytes": 33836
+        "bytes": 35226
       },
       {
         "uri": "majordomus://implementation/lib/finish.sh",
@@ -116133,6 +116140,17 @@
         "bytes": 6329
       },
       {
+        "uri": "majordomus://issue/I4434",
+        "kind": "issue",
+        "identity": "I4434",
+        "title": "An obligation whose inputs select no tracked file is not judged, so evidence over an empty input set never discharges it",
+        "description": "When a non-remote obligation declares pathspecs that select no tracked file in the tree, and its evidence was recorded over that empty selection, both judges answer that it is not judged instead of discharged: mj_obligation_judge (lib/evidence.sh, run by check and finish through majordomus.obligation-closure) returns unmet with the message `not judged: its inputs (<specs>) select no tracked file in this tree, so no evidence can be judged fresh over them` and the reproduce `git ls-files -- '<spec>' ...`; obligations.closure returns state owed, staleness null, the evidence attached and the same detail and reproduce, so gates.completion reads it as queued. `finish --outcome completed` therefore refuses it; an outcome that is not completed reports it without refusing, as every other shortfall. As soon as the pathspecs select a file, the existing judgement applies unchanged: evidence over the empty hash is stale, evidence over the selection discharges, and an edit after it makes it stale.",
+        "path": ".ai/repo/project/issues/I4434.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 6180
+      },
+      {
         "uri": "majordomus://issue/I4460",
         "kind": "issue",
         "identity": "I4460",
@@ -127924,6 +127942,14 @@
         "bytes": 51277
       },
       {
+        "uri": "majordomus://test/test/cases/4408_an_obligation_without_inputs_proves_nothing.sh",
+        "kind": "test",
+        "identity": "test/cases/4408_an_obligation_without_inputs_proves_nothing.sh",
+        "path": "test/cases/4408_an_obligation_without_inputs_proves_nothing.sh",
+        "source_class": "case",
+        "bytes": 6936
+      },
+      {
         "uri": "majordomus://test/test/cases/44_model_doctrine.sh",
         "kind": "test",
         "identity": "test/cases/44_model_doctrine.sh",
@@ -129145,7 +129171,7 @@
         "identity": "test/cases/87b_release_archive_shape.sh",
         "path": "test/cases/87b_release_archive_shape.sh",
         "source_class": "case",
-        "bytes": 4987
+        "bytes": 7985
       },
       {
         "uri": "majordomus://test/test/cases/884_a_declared_kind_is_a_kind_the_graph_knows.sh",
@@ -130462,7 +130488,7 @@
       "identity": [
         "id"
       ],
-      "objects": 1156
+      "objects": 1157
     },
     {
       "name": "knowledge",
@@ -130624,7 +130650,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 672
+      "objects": 673
     },
     {
       "name": "use-case",
