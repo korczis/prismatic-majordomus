@@ -114,7 +114,7 @@ expect_exit 0 env MAJORDOMUS_BIN="$S/answers-only" "$MJ" plan "done" I0005 || fa
 # Every other answer keeps the command line's contract, one arm per branch of mj_plan_done,
 # and none of them writes: the shell renders the runtime's answer and owns nothing of the move.
 answer() { # <name> <exit> <text>: an executable that prints <text> and exits <exit>
-  { printf '#!/bin/sh\n'; printf "cat <<'ANSWER'\n%s\nANSWER\n" "$3"; printf 'exit %s\n' "$2"; } > "$S/$1"
+  { printf '#!/bin/sh\n'; printf "cat <<'%s'\n%s\n%s\n" ANSWER "$3" ANSWER; printf 'exit %s\n' "$2"; } > "$S/$1"
   chmod +x "$S/$1"
 }
 # a lookup miss: exit 12, in the command's own words
