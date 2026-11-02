@@ -35,11 +35,8 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I3400` | shares site/data/generated/skills.json with I3763; they may not run concurrently |
 | WARN | `scope_conflict` | `I3400` | shares .gitattributes with I3775; they may not run concurrently |
 | WARN | `scope_conflict` | `I3400` | shares site/data/generated/skills.json with I3810; they may not run concurrently |
-| WARN | `scope_conflict` | `I3400` | shares .gitattributes with I3820; they may not run concurrently |
-| WARN | `scope_conflict` | `I3400` | shares site/content/skills with I3829; they may not run concurrently |
 | WARN | `scope_conflict` | `I3400` | shares site/content/skills with I3841; they may not run concurrently |
 | WARN | `scope_conflict` | `I3400` | shares .ai/repo/skills with I4337; they may not run concurrently |
-| WARN | `scope_conflict` | `I3400` | shares site/data/registry/registry.json with I4352; they may not run concurrently |
 | WARN | `scope_conflict` | `I3400` | shares site/content/skills with I4400; they may not run concurrently |
 | WARN | `scope_conflict` | `I3400` | shares docs/generated/artifacts.json with I4466; they may not run concurrently |
 | WARN | `scope_conflict` | `I3400` | shares .gitattributes with I4512; they may not run concurrently |
