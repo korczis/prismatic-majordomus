@@ -57,6 +57,17 @@ other jobs run when the plan selected a gate they carry, in parallel, each throu
 a person runs. `ci` always runs and turns the plan and the jobs' results
 into one verdict.
 
+The kill no longer comes first. The gate `job-headroom` (`majordomus gates headroom`, the
+`gates.headroom` capability) reads the wall time of every structure job over the committed
+window `.ai/repo/ci/structure-job-durations.tsv` and fails when a job's p90 (nearest rank)
+passes half its `timeout-minutes`, naming the job and its three most expensive gates from
+`.ai/repo/ci/structure-durations.tsv`. The remedy is a split or a cheaper gate, never a larger
+bound. A missing window, a job with no measured run and a job with no bound each fail; none of
+them is a pass. `scripts/ci-baseline --structure-durations` writes both files, and the window
+only from master runs that ran every structure job: a run from before a split measured another
+job under the same name. At 2026-11-01 the window held two such runs, structure at p90 1455 s
+(44% of 3300 s) and structure-b at 930 s (38% of 2400 s).
+
 A job does not list its gates. `scripts/ci/run-plan --plan plan.json --job <job>` reads the plan and runs every
 gate the model assigns to that job, in the model's order, skipping the ones the plan did not
 select; a job that runs one gate in a step of its own — the rust job's `rust-check`, which

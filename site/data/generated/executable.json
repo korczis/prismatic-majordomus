@@ -222,6 +222,23 @@
       "tool": "majordomus_commit_validate"
     },
     {
+      "api_anchor": "/docs/api/compute/#op-compute-verify",
+      "claims": [],
+      "cli": null,
+      "id": "compute.verify",
+      "kind": "query",
+      "module": "compute",
+      "module_route": "/registry/modules/compute/",
+      "resource": null,
+      "route": "/registry/capabilities/compute-verify/",
+      "slug": "compute-verify",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/compute.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/compute.rs",
+      "tests": [],
+      "title": "Whether a browser's result is what the server computes",
+      "tool": "majordomus_compute_verify"
+    },
+    {
       "api_anchor": "/docs/api/continuity/#op-continuity-device",
       "claims": [],
       "cli": "majordomus continuity device",
@@ -1307,6 +1324,23 @@
       "tests": [],
       "title": "Whether this task may be called finished",
       "tool": "majordomus_completion"
+    },
+    {
+      "api_anchor": "/docs/api/gates/#op-gates-headroom",
+      "claims": [],
+      "cli": "majordomus gates headroom",
+      "id": "gates.headroom",
+      "kind": "query",
+      "module": "gates",
+      "module_route": "/registry/modules/gates/",
+      "resource": "majordomus://gates/headroom",
+      "route": "/registry/capabilities/gates-headroom/",
+      "slug": "gates-headroom",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/gates.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/gates.rs",
+      "tests": [],
+      "title": "Whether each structure job fits in half its bound",
+      "tool": "majordomus_gate_headroom"
     },
     {
       "api_anchor": "/docs/api/gates/#op-gates-model",
@@ -3350,6 +3384,23 @@
       "tool": "majordomus_release_next"
     },
     {
+      "api_anchor": "/docs/api/release/#op-release-site",
+      "claims": [],
+      "cli": null,
+      "id": "release.site",
+      "kind": "query",
+      "module": "release",
+      "module_route": "/registry/modules/release/",
+      "resource": null,
+      "route": "/registry/capabilities/release-site/",
+      "slug": "release-site",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/release.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/release.rs",
+      "tests": [],
+      "title": "Whether a release leaves the site better than it found it",
+      "tool": "majordomus_release_site"
+    },
+    {
       "api_anchor": "/docs/api/release/#op-release-version",
       "claims": [],
       "cli": null,
@@ -4547,9 +4598,9 @@
     ]
   },
   "counts": {
-    "capabilities": 220,
+    "capabilities": 223,
     "claims": 93,
-    "modules": 60
+    "modules": 61
   },
   "generator": "majordomus-cli 1.0.0-alpha.10",
   "modules": [
@@ -4683,6 +4734,22 @@
       "source_path": "apps/majordomus-cli/src/capability/builtin/commit.rs",
       "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/commit.rs",
       "title": "Commit"
+    },
+    {
+      "capabilities": [
+        {
+          "id": "compute.verify",
+          "route": "/registry/capabilities/compute-verify/",
+          "slug": "compute-verify"
+        }
+      ],
+      "claims": [],
+      "id": "compute",
+      "route": "/registry/modules/compute/",
+      "slug": "compute",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/compute.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/compute.rs",
+      "title": "Browser compute"
     },
     {
       "capabilities": [
@@ -5185,6 +5252,11 @@
           "id": "gates.completion",
           "route": "/registry/capabilities/gates-completion/",
           "slug": "gates-completion"
+        },
+        {
+          "id": "gates.headroom",
+          "route": "/registry/capabilities/gates-headroom/",
+          "slug": "gates-headroom"
         },
         {
           "id": "gates.model",
@@ -6049,6 +6121,11 @@
           "id": "release.next",
           "route": "/registry/capabilities/release-next/",
           "slug": "release-next"
+        },
+        {
+          "id": "release.site",
+          "route": "/registry/capabilities/release-site/",
+          "slug": "release-site"
         },
         {
           "id": "release.version",

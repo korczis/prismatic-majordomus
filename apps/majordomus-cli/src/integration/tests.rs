@@ -2373,6 +2373,69 @@ fn the_remembered_queue_equals_the_queue_decided_afresh() {
     assert!(!cache.exists(), "a read wrote the relation cache");
 }
 
+/// Relations decided side by side are the relations decided one at a time: over the fixture's
+/// heads, a prefetch with one worker and with four fills the same cache, each entry equal to
+/// what `relation_to_master` and `change_shape` answer for that pair on their own; a head
+/// named twice is decided once, a prefetch over a full cache decides nothing, and a master
+/// that is not a commit id decides nothing at all.
+#[test]
+fn relations_decided_side_by_side_equal_those_decided_one_at_a_time() {
+    use crate::integration::relation::change_shape;
+    use crate::integration::{prefetch_relations, relation_to_master, RelationCache};
+    let w = remembered_world();
+    let RelationFixture { dir, master, heads } = &w.fixture;
+    let mut names: Vec<&str> = REMEMBERED
+        .iter()
+        .copied()
+        .filter(|n| *n != "absent")
+        .collect();
+    names.push("authored"); // named twice
+    let hs: Vec<&str> = names.iter().map(|n| heads[n].as_str()).collect();
+    let distinct: BTreeSet<&str> = hs.iter().copied().collect();
+
+    let mut one = RelationCache::default();
+    let (r1, s1) = prefetch_relations(dir, &mut one, master, &hs, 1);
+    let mut four = RelationCache::default();
+    let (r4, s4) = prefetch_relations(dir, &mut four, master, &hs, 4);
+    assert_eq!((r1, s1), (distinct.len() as u64, distinct.len() as u64));
+    assert_eq!((r4, s4), (r1, s1));
+    assert_eq!(
+        one.entries, four.entries,
+        "the order of deciding changed a relation"
+    );
+    assert_eq!(
+        one.shapes, four.shapes,
+        "the order of deciding changed a shape"
+    );
+    for h in &distinct {
+        let k = format!("{master}..{h}");
+        assert_eq!(
+            one.entries.get(&k),
+            Some(&relation_to_master(dir, master, h)),
+            "{k}"
+        );
+        assert_eq!(
+            one.shapes.get(&k).cloned(),
+            change_shape(dir, master, h),
+            "{k}"
+        );
+    }
+
+    // a full cache asks git nothing more
+    assert_eq!(prefetch_relations(dir, &mut four, master, &hs, 4), (0, 0));
+    // only a pair of commit ids is decided
+    let mut none = RelationCache::default();
+    assert_eq!(prefetch_relations(dir, &mut none, "master", &hs, 4), (0, 0));
+    assert!(none.entries.is_empty() && none.shapes.is_empty());
+    assert_eq!(prefetch_relations(dir, &mut none, master, &[], 4), (0, 0));
+}
+
+/// The worker bound is at least one, whatever the machine says.
+#[test]
+fn the_worker_bound_is_at_least_one() {
+    assert!(crate::integration::relation_workers() >= 1);
+}
+
 /// A pull request that moved is the only one decided again: one relation, one shape, and two
 /// containment questions — its new head against every mirror, its new mirror against every
 /// head — and the answer is the one a fresh read gives.

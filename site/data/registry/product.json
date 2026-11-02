@@ -5,7 +5,7 @@
     "id": "majordomus-cli",
     "version": "1.0.0-alpha.10"
   },
-  "fingerprint": "15c2ed6da20be3ba3b52e334dc5a8d0071b0fa9343822f4c7a13ce58bd5ddf82",
+  "fingerprint": "16bff894baaba809df3d701c7b64d91e957819f8eb1f7e336263c8c4f1906ad4",
   "route": "/features/",
   "domain_route": "/domains/",
   "counts": {
@@ -13,7 +13,7 @@
     "features_all": 29,
     "featured": 16,
     "providers": 6,
-    "modules": 60,
+    "modules": 61,
     "modules_covered": 58,
     "commands": 30,
     "commands_covered": 30,
@@ -25,7 +25,7 @@
       "id": "cli",
       "title": "Command line",
       "route": "/docs/cli/",
-      "features": 27
+      "features": 28
     },
     {
       "id": "api",
@@ -2180,7 +2180,7 @@
           "route": "/features/coverage/",
           "featured": false,
           "surfaces": {
-            "cli": false,
+            "cli": true,
             "api": true,
             "mcp": true,
             "cockpit": true,
@@ -2569,7 +2569,7 @@
         "use_cases": 8,
         "rules": 12,
         "enforced_rules": 10,
-        "capabilities": 6,
+        "capabilities": 7,
         "moments": 31
       },
       "evidence": {
@@ -3229,7 +3229,7 @@
         "use_cases": 10,
         "rules": 15,
         "enforced_rules": 14,
-        "capabilities": 149,
+        "capabilities": 151,
         "moments": 38
       },
       "evidence": {
@@ -8038,7 +8038,7 @@
       "kind_refs": [
         {
           "name": "rule",
-          "objects": 192
+          "objects": 193
         }
       ],
       "rule_refs": [
@@ -8414,11 +8414,11 @@
       "counts": {
         "capabilities": 7,
         "mcp_tools": 5,
-        "mcp_resources": 194,
+        "mcp_resources": 195,
         "http_routes": 7,
         "cli_paths": 4,
         "commands": 5,
-        "objects": 192,
+        "objects": 193,
         "rules": 7,
         "enforced_rules": 7,
         "docs": 2,
@@ -8484,7 +8484,7 @@
       "route": "/features/coverage/",
       "source": ".ai/repo/features/coverage.md",
       "surfaces": {
-        "cli": false,
+        "cli": true,
         "api": true,
         "mcp": true,
         "cockpit": true,
@@ -8506,6 +8506,16 @@
               "tool": "majordomus_completion",
               "resource": "majordomus://gates/completion",
               "route": "GET /api/v1/gates/completion"
+            },
+            {
+              "id": "gates.headroom",
+              "title": "Whether each structure job fits in half its bound",
+              "kind": "query",
+              "stability": "behaviorally_verified",
+              "tool": "majordomus_gate_headroom",
+              "resource": "majordomus://gates/headroom",
+              "route": "GET /api/v1/gates/headroom",
+              "cli": "majordomus gates headroom"
             },
             {
               "id": "gates.model",
@@ -8570,11 +8580,11 @@
       "moments": [],
       "backlinks": [],
       "counts": {
-        "capabilities": 4,
-        "mcp_tools": 4,
-        "mcp_resources": 4,
-        "http_routes": 4,
-        "cli_paths": 0,
+        "capabilities": 5,
+        "mcp_tools": 5,
+        "mcp_resources": 5,
+        "http_routes": 5,
+        "cli_paths": 1,
         "commands": 0,
         "objects": 0,
         "rules": 1,
@@ -8693,6 +8703,16 @@
               "tool": "majordomus_completion",
               "resource": "majordomus://gates/completion",
               "route": "GET /api/v1/gates/completion"
+            },
+            {
+              "id": "gates.headroom",
+              "title": "Whether each structure job fits in half its bound",
+              "kind": "query",
+              "stability": "behaviorally_verified",
+              "tool": "majordomus_gate_headroom",
+              "resource": "majordomus://gates/headroom",
+              "route": "GET /api/v1/gates/headroom",
+              "cli": "majordomus gates headroom"
             },
             {
               "id": "gates.model",
@@ -9069,11 +9089,11 @@
         "planning"
       ],
       "counts": {
-        "capabilities": 6,
-        "mcp_tools": 6,
-        "mcp_resources": 6,
-        "http_routes": 6,
-        "cli_paths": 0,
+        "capabilities": 7,
+        "mcp_tools": 7,
+        "mcp_resources": 7,
+        "http_routes": 7,
+        "cli_paths": 1,
         "commands": 4,
         "objects": 0,
         "rules": 7,
@@ -10101,6 +10121,14 @@
               "route": "GET /api/v1/release/next"
             },
             {
+              "id": "release.site",
+              "title": "Whether a release leaves the site better than it found it",
+              "kind": "query",
+              "stability": "implemented",
+              "tool": "majordomus_release_site",
+              "route": "GET /api/v1/release/site"
+            },
+            {
               "id": "release.version",
               "title": "The version, and the one the contract requires next",
               "kind": "query",
@@ -10448,10 +10476,10 @@
       ],
       "backlinks": [],
       "counts": {
-        "capabilities": 69,
-        "mcp_tools": 60,
+        "capabilities": 70,
+        "mcp_tools": 61,
         "mcp_resources": 9,
-        "http_routes": 64,
+        "http_routes": 65,
         "cli_paths": 25,
         "commands": 0,
         "objects": 1,
@@ -10659,6 +10687,14 @@
               "stability": "implemented",
               "tool": "majordomus_release_next",
               "route": "GET /api/v1/release/next"
+            },
+            {
+              "id": "release.site",
+              "title": "Whether a release leaves the site better than it found it",
+              "kind": "query",
+              "stability": "implemented",
+              "tool": "majordomus_release_site",
+              "route": "GET /api/v1/release/site"
             },
             {
               "id": "release.version",
@@ -11326,6 +11362,16 @@
               "route": "GET /api/v1/gates/completion"
             },
             {
+              "id": "gates.headroom",
+              "title": "Whether each structure job fits in half its bound",
+              "kind": "query",
+              "stability": "behaviorally_verified",
+              "tool": "majordomus_gate_headroom",
+              "resource": "majordomus://gates/headroom",
+              "route": "GET /api/v1/gates/headroom",
+              "cli": "majordomus gates headroom"
+            },
+            {
               "id": "gates.model",
               "title": "The CI model",
               "kind": "query",
@@ -11928,11 +11974,11 @@
         "observatory"
       ],
       "counts": {
-        "capabilities": 111,
-        "mcp_tools": 99,
-        "mcp_resources": 18,
-        "http_routes": 105,
-        "cli_paths": 49,
+        "capabilities": 113,
+        "mcp_tools": 101,
+        "mcp_resources": 19,
+        "http_routes": 107,
+        "cli_paths": 50,
         "commands": 0,
         "objects": 0,
         "rules": 3,
@@ -12875,6 +12921,14 @@
               "route": "GET /api/v1/release/next"
             },
             {
+              "id": "release.site",
+              "title": "Whether a release leaves the site better than it found it",
+              "kind": "query",
+              "stability": "implemented",
+              "tool": "majordomus_release_site",
+              "route": "GET /api/v1/release/site"
+            },
+            {
               "id": "release.version",
               "title": "The version, and the one the contract requires next",
               "kind": "query",
@@ -13084,10 +13138,10 @@
       ],
       "backlinks": [],
       "counts": {
-        "capabilities": 10,
-        "mcp_tools": 10,
+        "capabilities": 11,
+        "mcp_tools": 11,
         "mcp_resources": 40,
-        "http_routes": 10,
+        "http_routes": 11,
         "cli_paths": 5,
         "commands": 4,
         "objects": 39,
@@ -13485,7 +13539,7 @@
         },
         {
           "name": "issue",
-          "objects": 1156
+          "objects": 1159
         },
         {
           "name": "intent",
@@ -13695,11 +13749,11 @@
       "counts": {
         "capabilities": 26,
         "mcp_tools": 26,
-        "mcp_resources": 1360,
+        "mcp_resources": 1363,
         "http_routes": 26,
         "cli_paths": 13,
         "commands": 1,
-        "objects": 1357,
+        "objects": 1360,
         "rules": 3,
         "enforced_rules": 3,
         "docs": 2,
@@ -16468,13 +16522,14 @@
         "route": "/features/coverage/",
         "status": "stable",
         "surfaces": {
-          "cli": false,
+          "cli": true,
           "api": true,
           "mcp": true,
           "cockpit": true,
           "docs": true
         },
         "exposed": [
+          "cli",
           "api",
           "mcp",
           "cockpit",
@@ -16893,6 +16948,11 @@
         "features": [
           "commit"
         ]
+      },
+      {
+        "id": "compute",
+        "title": "Browser compute",
+        "features": []
       },
       {
         "id": "continuity",
@@ -17632,7 +17692,7 @@
       },
       {
         "id": "issue",
-        "title": "issue (1156)",
+        "title": "issue (1159)",
         "features": [
           "planning"
         ]
@@ -17695,7 +17755,7 @@
       },
       {
         "id": "rule",
-        "title": "rule (192)",
+        "title": "rule (193)",
         "features": [
           "doctrine"
         ]
@@ -18692,17 +18752,17 @@
     }
   ],
   "telemetry": {
-    "capabilities": 3732,
-    "builtin": 220,
-    "declarative": 3512,
-    "modules": 60,
-    "mcp_tools": 206,
-    "mcp_resources": 3569,
-    "http_routes": 212,
-    "cli_commands": 220,
+    "capabilities": 3740,
+    "builtin": 223,
+    "declarative": 3517,
+    "modules": 61,
+    "mcp_tools": 209,
+    "mcp_resources": 3575,
+    "http_routes": 215,
+    "cli_commands": 222,
     "shell_commands": 30,
     "kinds": 34,
-    "objects": 3512,
+    "objects": 3517,
     "by_kind": {
       "adr": 167,
       "application": 5,
@@ -18721,7 +18781,7 @@
       "gap": 5,
       "implementation": 52,
       "intent": 44,
-      "issue": 1156,
+      "issue": 1159,
       "knowledge": 90,
       "mesh-declaration": 1,
       "milestone": 114,
@@ -18730,12 +18790,12 @@
       "profile": 4,
       "prompt": 5,
       "release-record": 38,
-      "rule": 192,
+      "rule": 193,
       "scope": 1,
       "session": 93,
       "skill": 8,
       "taxonomy": 10,
-      "test": 672,
+      "test": 673,
       "use-case": 49,
       "workspace": 1
     },

@@ -34,6 +34,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I1201` | shares share/skeleton with I1999; they may not run concurrently |
 | WARN | `scope_conflict` | `I1201` | shares share/skeleton with I2148; they may not run concurrently |
 | WARN | `scope_conflict` | `I1201` | shares share/schemas with I2670; they may not run concurrently |
+| WARN | `scope_conflict` | `I1201` | shares share/schemas with I2730; they may not run concurrently |
 | WARN | `scope_conflict` | `I1201` | shares share/schemas with I2901; they may not run concurrently |
 | WARN | `scope_conflict` | `I1201` | shares share/schemas with I3123; they may not run concurrently |
 | WARN | `scope_conflict` | `I1201` | shares share/schemas with I3162; they may not run concurrently |

@@ -119,6 +119,12 @@ if [ "$MODE" = portable-core ]; then
   node "$CORE/tests/wasm-parity.mjs" \
     "$CORE/target/wasm32-unknown-unknown/release/majordomus_core.wasm" \
     "$CORE/fixtures/canonical-digest.v1.json"
+  # the copy the browser compute page loads is the same build, committed (#1345)
+  if [ -f "$ROOT/share/ui/compute/majordomus_core.wasm" ]; then
+    node "$CORE/tests/wasm-parity.mjs" \
+      "$ROOT/share/ui/compute/majordomus_core.wasm" \
+      "$CORE/fixtures/canonical-digest.v1.json"
+  fi
   exit 0
 fi
 # the timings file is the caller's, named from the caller's directory: the script is about

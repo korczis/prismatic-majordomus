@@ -12,8 +12,22 @@ observations:
   - id: no-caller-authentication
     statement: A caller beyond loopback reads and writes nothing, and the server authenticates no caller; ADR 0126 leaves token or key-based authorization open
     source: file:.ai/repo/adrs/0126-a-caller-beyond-loopback-reads-and-changes-nothing-it-cannot-authenticate.md
+  - id: reports-are-not-recomputed
+    statement: executions.report stores what its reporter says and recomputes nothing; no capability takes a result computed elsewhere and checks it
+    source: file:apps/majordomus-cli/src/capability/builtin/executions.rs
+  - id: no-page-runs-the-module
+    statement: No page runs the wasm32 module; the asset server reads every file as text and serves no application/wasm, and the Cockpit's policy allows no WebAssembly compilation
+    source: file:apps/majordomus-cli/src/cockpit/assets.rs
 conditions:
   - criterion: core-agrees-everywhere
     state: missing
     because: there is no portable core, no fixture and no wasm32 build; the two canonical writers are not held to anything shared
     observations: [one-crate-no-wasm, canonical-json-twice]
+  - criterion: the-server-recomputes-a-claim
+    state: missing
+    because: a result a browser returns has nothing on the server to check it against
+    observations: [reports-are-not-recomputed, no-caller-authentication]
+  - criterion: a-page-computes-and-the-server-agrees
+    state: missing
+    because: the module is executed only by node in a gate; nothing serves it to a browser and nothing ties a served module to the sources it was built from
+    observations: [no-page-runs-the-module]

@@ -41,6 +41,7 @@ pub mod compat;
 pub mod currency;
 pub mod landing;
 pub mod model;
+pub mod site;
 pub mod surface;
 pub mod version;
 

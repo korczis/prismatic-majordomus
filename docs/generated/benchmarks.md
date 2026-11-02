@@ -9,11 +9,11 @@ Every externally callable operation is a benchmark target, derived from the regi
 
 | scope | required | covered | missing | waived |
 |---|---|---|---|---|
-| direct | 220 | 181 | 0 | 39 |
-| http | 212 | 181 | 0 | 31 |
-| mcp | 206 | 176 | 0 | 30 |
+| direct | 223 | 183 | 0 | 40 |
+| http | 215 | 183 | 0 | 32 |
+| mcp | 209 | 178 | 0 | 31 |
 | system | 14 | 14 | 0 | 0 |
-| total | 652 | 552 | 0 | 100 |
+| total | 661 | 558 | 0 | 103 |
 
 ## Capabilities
 
@@ -32,6 +32,7 @@ Every externally callable operation is a benchmark target, derived from the regi
 | `commit.plan` | commit | query | — | covered | covered | covered | `default` |
 | `commit.scopes` | commit | query | — | covered | covered | covered | `default` |
 | `commit.validate` | commit | query | — | covered | covered | covered | `conventional`, `not-conventional`, `merge` |
+| `compute.verify` | compute | query | — | covered | covered | covered | `match`, `mismatch` |
 | `continuity.device` | continuity | command | — | waived | waived | waived | — |
 | `continuity.plan` | continuity | query | — | covered | covered | covered | `default`, `by-prefix` |
 | `continuity.publish` | continuity | command | — | waived | waived | waived | — |
@@ -93,6 +94,7 @@ Every externally callable operation is a benchmark target, derived from the regi
 | `executions.report` | executions | command | — | waived | — | waived | — |
 | `executions.start` | executions | command | — | covered | covered | covered | `demonstrate` |
 | `gates.completion` | gates | query | — | covered | covered | covered | `this-task`, `one-source-file`, `a-document`, `everything-on-demand` |
+| `gates.headroom` | gates | query | — | covered | covered | covered | `default` |
 | `gates.model` | gates | query | process, 4 entries, 5s | covered | covered | covered | `default` |
 | `gates.policy` | gates | query | process, 4 entries, 5s | covered | covered | covered | `default` |
 | `gates.state` | gates | query | — | covered | covered | covered | `default` |
@@ -206,6 +208,7 @@ Every externally callable operation is a benchmark target, derived from the regi
 | `release.changelog` | release | query | — | covered | covered | covered | `all`, `one-version` |
 | `release.currency` | release | query | — | waived | waived | waived | — |
 | `release.next` | release | query | — | waived | waived | waived | — |
+| `release.site` | release | query | — | waived | waived | waived | — |
 | `release.version` | release | query | process, 2 entries, per checkout state | covered | covered | covered | `default` |
 | `repository.info` | repository | query | process, 1 entries, per generation | covered | covered | covered | `default` |
 | `repository.scope` | repository | query | — | covered | covered | covered | `default` |
@@ -275,6 +278,7 @@ Every screen and panel of the UI's own route list, read with `GET` and `Accept: 
 | `system.http.ui.capabilities` | `/ui/capabilities` | pinned | — |
 | `system.http.ui.skills` | `/ui/skills` | pinned | — |
 | `system.http.ui.mesh` | `/ui/mesh` | pinned | — |
+| `system.http.ui.compute` | `/ui/compute` | pinned | — |
 | `system.http.ui.peers` | `/ui/peers` | pinned | — |
 | `system.http.ui.delivery` | `/ui/delivery` | pinned | — |
 | `system.http.ui.deployments` | `/ui/deployments` | pinned | — |
@@ -294,6 +298,7 @@ Every screen and panel of the UI's own route list, read with `GET` and `Accept: 
 | `system.http.live.ui.capabilities` | `/ui/capabilities` | live | — |
 | `system.http.live.ui.skills` | `/ui/skills` | live | — |
 | `system.http.live.ui.mesh` | `/ui/mesh` | live | — |
+| `system.http.live.ui.compute` | `/ui/compute` | live | — |
 | `system.http.live.ui.peers` | `/ui/peers` | live | — |
 | `system.http.live.ui.delivery` | `/ui/delivery` | live | — |
 | `system.http.live.ui.deployments` | `/ui/deployments` | live | — |

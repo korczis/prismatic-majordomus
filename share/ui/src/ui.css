@@ -217,6 +217,19 @@
     @apply flex min-w-0 flex-col gap-6;
   }
 
+  /* Browser compute (/ui/compute): the form a reader fills, the claim it may tamper with,
+     and the verdict beneath them, one column at every width */
+  .mj-ui-compute {
+    @apply flex min-w-0 flex-col gap-4;
+  }
+  .mj-ui-compute-form {
+    @apply grid min-w-0 gap-3 text-sm;
+    color: var(--mj-body);
+  }
+  .mj-ui-compute-tamper {
+    @apply inline-flex items-center gap-2 text-sm;
+  }
+
   /* ---------------------------------------------------------------- the hero */
 
   /* the text on the left, the lit mark on the right, the KPI tiles as one row beneath:

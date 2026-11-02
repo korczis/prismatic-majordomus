@@ -6,28 +6,28 @@
     "version": "1.0.0-alpha.10"
   },
   "registry": {
-    "fingerprint": "a023263da23f657082857c306cf256e30880c16d7d0d7c92c5a2a3c333893fac",
+    "fingerprint": "854eefde288caa6a892ade618125fc528675658a9b29b064b3a68b9714515e34",
     "summary": {
-      "total": 3732,
-      "builtin": 220,
-      "declarative": 3512,
+      "total": 3740,
+      "builtin": 223,
+      "declarative": 3517,
       "by_kind": {
         "command": 36,
-        "query": 184,
-        "resource": 3512
+        "query": 187,
+        "resource": 3517
       },
       "by_stability": {
-        "behaviorally_verified": 147,
-        "experimental": 63,
-        "implemented": 3522
+        "behaviorally_verified": 148,
+        "experimental": 64,
+        "implemented": 3528
       },
-      "mcp_tools": 206,
-      "mcp_resources": 3569,
-      "http_routes": 212,
-      "cli_commands": 120,
-      "modules": 94,
-      "benchmark_required": 181,
-      "benchmark_waived": 39,
+      "mcp_tools": 209,
+      "mcp_resources": 3575,
+      "http_routes": 215,
+      "cli_commands": 121,
+      "modules": 95,
+      "benchmark_required": 183,
+      "benchmark_waived": 40,
       "cached": 55
     },
     "builtin": [
@@ -6777,6 +6777,165 @@
           "concurrency": "unrestricted"
         },
         "source_path": "apps/majordomus-cli/src/capability/builtin/commit.rs"
+      },
+      {
+        "id": "compute.verify",
+        "module": "compute",
+        "kind": "query",
+        "title": "Whether a browser's result is what the server computes",
+        "description": "Recompute a claimed result of a portable-core function (today `canonical_digest`: SHA-256 of a JSON document's canonical bytes) on the input the claim carries, with the same core the browser ran as wasm32, and answer `match`, `mismatch`, or `invalid` with the reason when the input is not JSON, exceeds 1 MiB or the result is not the function's shape. It records nothing: no execution, ledger entry or journal event, and the claim never enters a record.",
+        "input": {
+          "name": "ComputeVerifyInput",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "function": {
+                "$ref": "#/$defs/ComputeFunction",
+                "description": "The function the claim was computed with.",
+                "default": "canonical_digest"
+              },
+              "input": {
+                "type": "string",
+                "description": "The input the browser computed on, as JSON text, at most `MAX_INPUT_BYTES`."
+              },
+              "claimed": {
+                "type": "string",
+                "description": "The result the browser claims: for `canonical_digest`, 64 lowercase hex characters."
+              }
+            },
+            "required": [
+              "input",
+              "claimed"
+            ],
+            "description": "A browser's claim: what it computed, on what, and what it got.\n\n```\nuse majordomus_cli::capability::builtin::compute::{ComputeFunction, ComputeVerifyInput};\nlet claim: ComputeVerifyInput =\n    serde_json::from_str(r#\"{\"input\":\"[1]\",\"claimed\":\"00\"}\"#).unwrap();\nassert_eq!(claim.function, ComputeFunction::CanonicalDigest, \"the function defaults\");\n```",
+            "title": "ComputeVerifyInput",
+            "$defs": {
+              "ComputeFunction": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "canonical_digest",
+                    "description": "SHA-256, as lowercase hex, of a JSON document's canonical bytes: the digest the mesh\nsigns and the executor keys its cache by."
+                  }
+                ],
+                "description": "A function of the portable core whose result a browser may claim.\n\n```\nuse majordomus_cli::capability::builtin::compute::ComputeFunction;\nlet f: ComputeFunction = serde_json::from_str(r#\"\"canonical_digest\"\"#).unwrap();\nassert_eq!(f, ComputeFunction::CanonicalDigest);\n```"
+              }
+            }
+          }
+        },
+        "output": {
+          "name": "ComputeVerification",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "function": {
+                "$ref": "#/$defs/ComputeFunction",
+                "description": "The function the claim named."
+              },
+              "verdict": {
+                "$ref": "#/$defs/ComputeVerdict",
+                "description": "Whether the server's recomputation agrees."
+              },
+              "claimed": {
+                "type": "string",
+                "description": "The result the claim carried, as given."
+              },
+              "recomputed": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "What the server computed, when the input could be read."
+              },
+              "reason": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "Why the claim could not be judged, when the verdict is `invalid`."
+              },
+              "input_bytes": {
+                "type": "integer",
+                "format": "uint",
+                "minimum": 0,
+                "description": "How many bytes of input the claim carried."
+              }
+            },
+            "required": [
+              "function",
+              "verdict",
+              "claimed",
+              "input_bytes"
+            ],
+            "description": "The server's answer to a claim.\n\n```\nuse majordomus_cli::capability::builtin::compute::{\n    verify_claim, ComputeFunction, ComputeVerification,\n};\nlet answer: ComputeVerification = verify_claim(ComputeFunction::CanonicalDigest, \"[1]\", \"00\");\nassert_eq!(answer.reason.as_deref(), Some(\"the claimed result is not 64 lowercase hex characters\"));\nassert_eq!(answer.input_bytes, 3);\nassert!(answer.recomputed.is_some(), \"the input was read, so the server says what it computed\");\n```",
+            "title": "ComputeVerification",
+            "$defs": {
+              "ComputeFunction": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "canonical_digest",
+                    "description": "SHA-256, as lowercase hex, of a JSON document's canonical bytes: the digest the mesh\nsigns and the executor keys its cache by."
+                  }
+                ],
+                "description": "A function of the portable core whose result a browser may claim.\n\n```\nuse majordomus_cli::capability::builtin::compute::ComputeFunction;\nlet f: ComputeFunction = serde_json::from_str(r#\"\"canonical_digest\"\"#).unwrap();\nassert_eq!(f, ComputeFunction::CanonicalDigest);\n```"
+              },
+              "ComputeVerdict": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "match",
+                    "description": "The server computed the same result from the same input."
+                  },
+                  {
+                    "type": "string",
+                    "const": "mismatch",
+                    "description": "The server computed a different result: the claim is wrong, whoever made it."
+                  },
+                  {
+                    "type": "string",
+                    "const": "invalid",
+                    "description": "The claim could not be judged: its input is not what the function takes, or its\nresult is not the shape the function returns. `reason` says which."
+                  }
+                ],
+                "description": "What the server's recomputation says of a claim.\n\n```\nuse majordomus_cli::capability::builtin::compute::ComputeVerdict;\nassert_eq!(serde_json::to_string(&ComputeVerdict::Mismatch).unwrap(), r#\"\"mismatch\"\"#);\n```"
+              }
+            }
+          }
+        },
+        "provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::compute"
+        },
+        "exposure": {
+          "mcp": {
+            "tool": "majordomus_compute_verify"
+          },
+          "http": {
+            "method": "POST",
+            "path": "/api/v1/compute/verify"
+          }
+        },
+        "availability": "runtime",
+        "visibility": "public",
+        "stability": "experimental",
+        "tags": [
+          "compute",
+          "browser",
+          "verification"
+        ],
+        "benchmark": {
+          "policy": "required"
+        },
+        "cache": {
+          "policy": "disabled"
+        },
+        "execution": {
+          "effect": "read",
+          "cancellable": false,
+          "concurrency": "unrestricted"
+        },
+        "source_path": "apps/majordomus-cli/src/capability/builtin/compute.rs"
       },
       {
         "id": "continuity.device",
@@ -33707,6 +33866,227 @@
           "completion",
           "tasks",
           "evidence"
+        ],
+        "benchmark": {
+          "policy": "required"
+        },
+        "cache": {
+          "policy": "disabled"
+        },
+        "execution": {
+          "effect": "read",
+          "cancellable": false,
+          "concurrency": "unrestricted"
+        },
+        "source_path": "apps/majordomus-cli/src/capability/builtin/gates.rs"
+      },
+      {
+        "id": "gates.headroom",
+        "module": "gates",
+        "kind": "query",
+        "title": "Whether each structure job fits in half its bound",
+        "description": "Every structure job the CI model assigns gates to (`structure`, `structure-<x>`), with its `timeout-minutes` from .github/workflows/validate.yml, the 90th percentile (nearest rank) of its wall time over the committed window .ai/repo/ci/structure-job-durations.tsv, and that p90 as a share of the bound. A job past half its bound is `exceeds` and names its three most expensive gates from .ai/repo/ci/structure-durations.tsv, so the remedy is a split or a cheaper gate and never a larger bound (I4381). A missing window, a job with no measured run or no bound is `unmeasured`, never a pass; `ok` is true only when every job fits and every input was read.",
+        "input": {
+          "name": "Empty",
+          "schema": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "No input.",
+            "title": "Empty"
+          }
+        },
+        "output": {
+          "name": "HeadroomReport",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "ok": {
+                "type": "boolean",
+                "description": "True only when every structure job fits and every input was read."
+              },
+              "percent": {
+                "type": "integer",
+                "format": "uint64",
+                "minimum": 0,
+                "description": "The share of a bound a p90 may take."
+              },
+              "window": {
+                "type": "string",
+                "description": "Where the window was read from."
+              },
+              "jobs": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/JobHeadroom"
+                },
+                "description": "One entry per structure job, in name order."
+              },
+              "problems": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "What could not be read, one line each; any line makes `ok` false."
+              }
+            },
+            "required": [
+              "ok",
+              "percent",
+              "window",
+              "jobs",
+              "problems"
+            ],
+            "description": "Every structure job's headroom, and whether all of them fit.\n\n```\nuse majordomus_cli::gates::HeadroomReport;\nlet r: HeadroomReport = serde_json::from_value(serde_json::json!({\n    \"ok\": false, \"percent\": 50, \"window\": \".ai/repo/ci/structure-job-durations.tsv\",\n    \"jobs\": [], \"problems\": [\"the window is missing\"]\n})).unwrap();\n// a report with a problem is never ok\nassert!(!r.ok && !r.problems.is_empty());\n```",
+            "title": "HeadroomReport",
+            "$defs": {
+              "JobHeadroom": {
+                "type": "object",
+                "properties": {
+                  "job": {
+                    "type": "string",
+                    "description": "The job, as the CI model and the workflow name it."
+                  },
+                  "bound_seconds": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "format": "uint64",
+                    "minimum": 0,
+                    "description": "Its `timeout-minutes`, in seconds; absent when the workflow states none."
+                  },
+                  "limit_seconds": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "format": "uint64",
+                    "minimum": 0,
+                    "description": "`HEADROOM_PERCENT` of the bound, in seconds: the most the p90 may be."
+                  },
+                  "runs": {
+                    "type": "integer",
+                    "format": "uint64",
+                    "minimum": 0,
+                    "description": "How many measured runs of the job the window holds."
+                  },
+                  "p90_seconds": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "format": "uint64",
+                    "minimum": 0,
+                    "description": "The 90th percentile (nearest rank) of those runs, in seconds."
+                  },
+                  "used_percent": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "format": "uint64",
+                    "minimum": 0,
+                    "description": "The p90 as a whole percent of the bound, rounded down."
+                  },
+                  "verdict": {
+                    "$ref": "#/$defs/HeadroomVerdict",
+                    "description": "How the job stands."
+                  },
+                  "reason": {
+                    "type": "string",
+                    "description": "The verdict in one sentence."
+                  },
+                  "costliest_gates": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/$defs/GateCost"
+                    },
+                    "description": "The job's most expensive gates, longest first; at most `COSTLIEST`."
+                  }
+                },
+                "required": [
+                  "job",
+                  "runs",
+                  "verdict",
+                  "reason",
+                  "costliest_gates"
+                ],
+                "description": "One structure job's headroom: its bound, the share of it the p90 may take, how many measured\nruns the window holds, the p90 itself and the share it takes, the verdict with its reason in\none sentence, and the gates that cost the job most.\n\n```\nuse majordomus_cli::gates::{HeadroomVerdict, JobHeadroom};\nlet j: JobHeadroom = serde_json::from_value(serde_json::json!({\n    \"job\": \"structure\", \"bound_seconds\": 3300, \"limit_seconds\": 1650, \"runs\": 2,\n    \"p90_seconds\": 1455, \"used_percent\": 44, \"verdict\": \"fits\",\n    \"reason\": \"job structure: p90 1455 s over 2 run(s) is 44% of its 3300 s bound\",\n    \"costliest_gates\": []\n})).unwrap();\n// the p90 is within the limit, so the job fits\nassert!(j.p90_seconds <= j.limit_seconds);\nassert_eq!(j.verdict, HeadroomVerdict::Fits);\n```"
+              },
+              "HeadroomVerdict": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "fits",
+                    "description": "The p90 is at most `HEADROOM_PERCENT` of the bound."
+                  },
+                  {
+                    "type": "string",
+                    "const": "exceeds",
+                    "description": "The p90 is past it."
+                  },
+                  {
+                    "type": "string",
+                    "const": "unmeasured",
+                    "description": "No window, no measured run of the job or no bound: not a pass."
+                  }
+                ],
+                "description": "How one structure job stands against its bound.\n\n```\nuse majordomus_cli::gates::HeadroomVerdict;\n// only a job that fits passes; a job nobody measured is not a pass\nassert_eq!(serde_json::to_string(&HeadroomVerdict::Unmeasured).unwrap(), \"\\\"unmeasured\\\"\");\nassert_ne!(HeadroomVerdict::Unmeasured, HeadroomVerdict::Fits);\n```"
+              },
+              "GateCost": {
+                "type": "object",
+                "properties": {
+                  "gate": {
+                    "type": "string",
+                    "description": "The gate's id in the CI model."
+                  },
+                  "seconds": {
+                    "type": "integer",
+                    "format": "uint64",
+                    "minimum": 0,
+                    "description": "Its longest recorded seconds."
+                  }
+                },
+                "required": [
+                  "gate",
+                  "seconds"
+                ],
+                "description": "One gate and the longest seconds it took in the window its costs were read from: what a\njob past its share names, longest first, so the remedy starts at the gate that costs most.\n\n```\nuse majordomus_cli::gates::GateCost;\nlet c: GateCost = serde_json::from_value(serde_json::json!({\n    \"gate\": \"shell-lint\", \"seconds\": 1388\n})).unwrap();\nassert_eq!((c.gate.as_str(), c.seconds), (\"shell-lint\", 1388));\n```"
+              }
+            }
+          }
+        },
+        "provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::gates"
+        },
+        "exposure": {
+          "mcp": {
+            "tool": "majordomus_gate_headroom",
+            "resource": {
+              "uri": "majordomus://gates/headroom",
+              "name": "gate-headroom"
+            }
+          },
+          "http": {
+            "method": "GET",
+            "path": "/api/v1/gates/headroom"
+          },
+          "cli": {
+            "path": [
+              "gates",
+              "headroom"
+            ]
+          }
+        },
+        "availability": "runtime",
+        "visibility": "public",
+        "stability": "behaviorally_verified",
+        "tags": [
+          "gates",
+          "ci",
+          "performance",
+          "gate"
         ],
         "benchmark": {
           "policy": "required"
@@ -77650,6 +78030,356 @@
         "source_path": "apps/majordomus-cli/src/capability/builtin/release.rs"
       },
       {
+        "id": "release.site",
+        "module": "release",
+        "kind": "query",
+        "title": "Whether a release leaves the site better than it found it",
+        "description": "The verdict of `project.a-release-leaves-the-site-better` on one release: every measure of the site this executable computes from a tree — the text pairs below WCAG AA and the weakest text contrast in each theme, from the design declaration and the stylesheets that consume it, and how many of the site's page files are written by hand rather than generated — at the previous release's recorded commit and at the commit being released, each named with its delta and whether it held, improved or regressed; then every commit of the window between them that touched the site or named it as its subject, with whether it counts as an improvement and why. A change counts when its type is one the publication model's `release` section counts and it changes, outside every file `.gitattributes` marks `merge=derived`, a source of the site's gate classes, or any source while its scope names the site; a change whose every file is generated output counts for nothing. The release passes when no measure regressed or could not be taken and at least one change counts; otherwise each finding names the measure and its delta, or the commits that touched the site and why none counts. A repository with no recorded release that is an ancestor of the commit has nothing to compare with, and is refused rather than passed.",
+        "input": {
+          "name": "ReleaseSiteInput",
+          "schema": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "since": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "The previous release: a recorded tag or version, or any commit; the newest recorded\nstable release that is an ancestor of `head` when absent."
+              },
+              "head": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "The commit being released; `HEAD` when absent."
+              }
+            },
+            "description": "The input of `release.site`: the release judged, and the one it is judged against.\n\n```\nuse majordomus_cli::capability::builtin::release::SiteInput;\n// nothing named is this commit against the newest recorded release that is its ancestor\nlet input = SiteInput::default();\nassert!(input.since.is_none() && input.head.is_none());\n```",
+            "title": "ReleaseSiteInput"
+          }
+        },
+        "output": {
+          "name": "ReleaseSiteVerdict",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "rule": {
+                "type": "string",
+                "description": "The rule the verdict is taken under."
+              },
+              "previous": {
+                "$ref": "#/$defs/ReleaseSiteBaseline",
+                "description": "The previous release."
+              },
+              "head": {
+                "type": "string",
+                "description": "The commit being released."
+              },
+              "measures": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/ReleaseSiteMeasure"
+                },
+                "description": "Every measure, at both releases."
+              },
+              "subject": {
+                "$ref": "#/$defs/ReleaseSiteSubject",
+                "description": "The declaration that decided which change has the site as its subject."
+              },
+              "changes": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/ReleaseSiteChange"
+                },
+                "description": "Every commit of the window that touched the site or named it, and whether it counts."
+              },
+              "improvements": {
+                "type": "integer",
+                "format": "uint",
+                "minimum": 0,
+                "description": "How many of `Self::changes` count as an improvement of the site."
+              },
+              "findings": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/ReleaseSiteFinding"
+                },
+                "description": "Every reason the release is refused; empty when it passes."
+              },
+              "passes": {
+                "type": "boolean",
+                "description": "Whether the release leaves the site better than it found it."
+              }
+            },
+            "required": [
+              "rule",
+              "previous",
+              "head",
+              "measures",
+              "subject",
+              "changes",
+              "improvements",
+              "findings",
+              "passes"
+            ],
+            "description": "The verdict on one release: its site measured against the previous release's, and the\nchanges in its window that have the site as their subject.\n\n```\nuse majordomus_cli::release::site::{judge, SiteVerdict};\nlet repo = majordomus_cli::synthetic::SyntheticRepository::small().expect(\"a synthetic repository\");\n// a repository that has released nothing has no baseline, and says so rather than passing\nlet refused: Result<SiteVerdict, String> = judge(repo.root(), None, None);\nassert!(refused.is_err());\n```",
+            "title": "ReleaseSiteVerdict",
+            "$defs": {
+              "ReleaseSiteBaseline": {
+                "type": "object",
+                "properties": {
+                  "tag": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The previous release's tag, when the baseline is a recorded release."
+                  },
+                  "commit": {
+                    "type": "string",
+                    "description": "The commit the previous release was built from."
+                  }
+                },
+                "required": [
+                  "commit"
+                ],
+                "description": "The release the verdict compares with.\n\n```\nuse majordomus_cli::release::site::SiteBaseline;\nlet b = SiteBaseline { tag: Some(\"v0.27.0\".into()), commit: \"c1a430dcf\".into() };\nassert_eq!(b.tag.as_deref(), Some(\"v0.27.0\"));\n```"
+              },
+              "ReleaseSiteMeasure": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "description": "The measure's identity: `contrast.light.failing`, `site.pages-by-hand`."
+                  },
+                  "title": {
+                    "type": "string",
+                    "description": "What it measures, in a sentence fragment."
+                  },
+                  "better": {
+                    "$ref": "#/$defs/ReleaseSiteBetter",
+                    "description": "Which way it improves."
+                  },
+                  "previous": {
+                    "type": [
+                      "number",
+                      "null"
+                    ],
+                    "format": "double",
+                    "description": "Its value in the previous release's tree, when that tree could be measured."
+                  },
+                  "current": {
+                    "type": [
+                      "number",
+                      "null"
+                    ],
+                    "format": "double",
+                    "description": "Its value in the released tree, when that tree could be measured."
+                  },
+                  "delta": {
+                    "type": [
+                      "number",
+                      "null"
+                    ],
+                    "format": "double",
+                    "description": "`current - previous`, when both were measured."
+                  },
+                  "verdict": {
+                    "$ref": "#/$defs/ReleaseSiteMeasureVerdict",
+                    "description": "How it moved."
+                  },
+                  "note": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "Why a side could not be measured."
+                  }
+                },
+                "required": [
+                  "id",
+                  "title",
+                  "better",
+                  "verdict"
+                ],
+                "description": "One measure, at the previous release and at this one.\n\n```\nuse majordomus_cli::release::site::{Better, MeasureDelta, MeasureVerdict};\nlet d = MeasureDelta {\n    id: \"contrast.dark.weakest\".into(),\n    title: \"the weakest text contrast in the dark theme\".into(),\n    better: Better::Higher,\n    previous: Some(4.8),\n    current: Some(4.6),\n    delta: Some(-0.2),\n    verdict: MeasureVerdict::Regressed,\n    note: None,\n};\nassert!(d.verdict.refuses());\n```"
+              },
+              "ReleaseSiteBetter": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "higher",
+                    "description": "A larger value is better: a contrast ratio."
+                  },
+                  {
+                    "type": "string",
+                    "const": "lower",
+                    "description": "A smaller value is better: a count of failures, of pages written by hand."
+                  }
+                ],
+                "description": "Which way a measure improves, which is what decides whether a movement between two\nreleases is a regression that refuses the later one: a ratio must not fall, a count of\nfailures or of hand-written pages must not grow, and a difference below rounding is none.\n\n```\nuse majordomus_cli::release::site::Better;\nassert!(Better::Higher.regressed(4.5, 4.4));\nassert!(!Better::Higher.regressed(4.5, 4.6));\nassert!(Better::Lower.regressed(3.0, 4.0));\nassert!(!Better::Lower.regressed(3.0, 3.0));\n```"
+              },
+              "ReleaseSiteMeasureVerdict": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "held",
+                    "description": "The same value at both releases."
+                  },
+                  {
+                    "type": "string",
+                    "const": "improved",
+                    "description": "Better at this release."
+                  },
+                  {
+                    "type": "string",
+                    "const": "regressed",
+                    "description": "Worse at this release: the release is refused."
+                  },
+                  {
+                    "type": "string",
+                    "const": "unmeasured",
+                    "description": "The previous release's tree cannot be measured this way (it predates what the measure\nreads), so there is nothing to compare with; stated, and not a refusal."
+                  },
+                  {
+                    "type": "string",
+                    "const": "unreadable",
+                    "description": "The released tree itself cannot be measured: the release is refused, because a\nmeasure that could not be taken is never a pass."
+                  }
+                ],
+                "description": "How one measure moved between the two releases.\n\n```\nuse majordomus_cli::release::site::MeasureVerdict;\nassert!(MeasureVerdict::Regressed.refuses());\nassert!(MeasureVerdict::Unreadable.refuses());\nassert!(!MeasureVerdict::Held.refuses());\nassert!(!MeasureVerdict::Unmeasured.refuses(), \"a baseline that cannot be read is said, not failed\");\n```"
+              },
+              "ReleaseSiteSubject": {
+                "type": "object",
+                "properties": {
+                  "classes": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "The gates.yaml classes whose paths are the site's own sources.",
+                    "default": []
+                  },
+                  "scopes": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "The conventional scopes that name the site as a change's subject.",
+                    "default": []
+                  },
+                  "kinds": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "The conventional types a change must carry to count.",
+                    "default": []
+                  }
+                },
+                "description": "What has the site as its subject, as the publication model declares it.\n\n```\nuse majordomus_cli::release::site::SiteSubject;\nlet s = SiteSubject { classes: vec![\"site\".into()], scopes: vec![\"site\".into()], kinds: vec![\"fix\".into()] };\nassert!(s.names_scope(Some(\"site,ui\")));\nassert!(!s.names_scope(Some(\"ci\")));\n```"
+              },
+              "ReleaseSiteChange": {
+                "type": "object",
+                "properties": {
+                  "commit": {
+                    "type": "string",
+                    "description": "The commit, abbreviated."
+                  },
+                  "subject": {
+                    "type": "string",
+                    "description": "Its subject line, as written."
+                  },
+                  "authored": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "The files it changed that are not generated output and that make it a site change."
+                  },
+                  "generated": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "The site's generated files it changed."
+                  },
+                  "counts": {
+                    "type": "boolean",
+                    "description": "Whether it counts as the release's improvement of the site."
+                  },
+                  "why": {
+                    "type": "string",
+                    "description": "Why it counts, or why it does not."
+                  }
+                },
+                "required": [
+                  "commit",
+                  "subject",
+                  "counts",
+                  "why"
+                ],
+                "description": "One commit of the window that touched the site or named it as its subject.\n\n```\nuse majordomus_cli::release::site::SiteChange;\nlet c = SiteChange {\n    commit: \"3024cbcc0\".into(),\n    subject: \"fix(site): a diagram's node text is readable in both themes\".into(),\n    authored: vec![\"lib/mermaid.awk\".into()],\n    generated: vec![],\n    counts: true,\n    why: \"names the site as its subject and changes a source\".into(),\n};\nassert!(c.counts);\n```"
+              },
+              "ReleaseSiteFinding": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string",
+                    "description": "`site-measure-regressed`, `site-measure-unreadable` or `site-not-improved`."
+                  },
+                  "message": {
+                    "type": "string",
+                    "description": "What was found, naming the measure and the delta or the commits."
+                  }
+                },
+                "required": [
+                  "code",
+                  "message"
+                ],
+                "description": "A reason the release is refused.\n\n```\nuse majordomus_cli::release::site::SiteFinding;\nlet f = SiteFinding { code: \"site-not-improved\".into(), message: \"nothing\".into() };\nassert_eq!(f.code, \"site-not-improved\");\n```"
+              }
+            }
+          }
+        },
+        "provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::release"
+        },
+        "exposure": {
+          "mcp": {
+            "tool": "majordomus_release_site"
+          },
+          "http": {
+            "method": "GET",
+            "path": "/api/v1/release/site"
+          }
+        },
+        "availability": "runtime",
+        "visibility": "public",
+        "stability": "implemented",
+        "tags": [
+          "release",
+          "site",
+          "web"
+        ],
+        "benchmark": {
+          "policy": "waived",
+          "reason": "published_history"
+        },
+        "cache": {
+          "policy": "disabled"
+        },
+        "execution": {
+          "effect": "read",
+          "cancellable": false,
+          "concurrency": "unrestricted"
+        },
+        "source_path": "apps/majordomus-cli/src/capability/builtin/release.rs"
+      },
+      {
         "id": "release.version",
         "module": "release",
         "kind": "query",
@@ -90905,6 +91635,23 @@
         }
       },
       {
+        "id": "compute",
+        "title": "Browser compute",
+        "description": "The server's half of browser compute (ADR 0170): a browser computes with the portable core, the same code this executable links, and returns a claim; the server recomputes it on the same input and says whether they agree. A verification records nothing, so any caller may ask, and agreement among browsers is never proof.",
+        "stability": "experimental",
+        "source": "builtin",
+        "capabilities": 1,
+        "capability_ids": [
+          "compute.verify"
+        ],
+        "source_path": "apps/majordomus-cli/src/capability/builtin/compute.rs",
+        "rustdoc": {
+          "surface": "rustdoc",
+          "module": "majordomus_cli::capability::builtin::compute",
+          "path": "majordomus_cli/capability/builtin/compute/index.html"
+        }
+      },
+      {
         "id": "context",
         "title": "context",
         "description": "Declarative objects of kind 'context' from the repository's AI layer.",
@@ -91269,9 +92016,10 @@
         "description": "Completion as a state the repository decides rather than a claim a worker makes: the validation gates this repository declares in its CI model, which of them a task's own change set selects, what each one last reported, whether that verdict still describes the tree it was taken over, and therefore whether the task may be called finished. A gate that has never reported is `queued` and not `pass`, a run whose files have changed since is `stale` and refuses exactly as a failure does, and a gate the change cannot affect is `exempt` rather than unknown.",
         "stability": "behaviorally_verified",
         "source": "builtin",
-        "capabilities": 4,
+        "capabilities": 5,
         "capability_ids": [
           "gates.completion",
+          "gates.headroom",
           "gates.model",
           "gates.policy",
           "gates.state"
@@ -91407,7 +92155,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 1156,
+        "capabilities": 1159,
         "capability_ids": []
       },
       {
@@ -91814,12 +92562,13 @@
         "description": "What this project has shipped and what it would ship next, derived rather than maintained: the changelog composes the layer's release records, the decisions dated inside each release's window and the conventional commits in its range; the version report reads the one place the version is authored and the projection the shell tool prints, and says what the public contract requires it to become — or that it cannot be measured, and so decides nothing — with what the commits since the last release imply beside it as evidence.",
         "stability": "implemented",
         "source": "builtin",
-        "capabilities": 5,
+        "capabilities": 6,
         "capability_ids": [
           "release.analysis",
           "release.changelog",
           "release.currency",
           "release.next",
+          "release.site",
           "release.version"
         ],
         "source_path": "apps/majordomus-cli/src/capability/builtin/release.rs",
@@ -91861,7 +92610,7 @@
         "title": "rule",
         "description": "Declarative objects of kind 'rule' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 192,
+        "capabilities": 193,
         "capability_ids": []
       },
       {
@@ -92005,7 +92754,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 672,
+        "capabilities": 673,
         "capability_ids": []
       },
       {
@@ -92097,7 +92846,7 @@
     ]
   },
   "index": {
-    "fingerprint": "f4e80a4c1809ccdcd3241cfd7f6f7ec516d66a600e926013ee5ed47171281bd3",
+    "fingerprint": "bb797d4bb21f0ab90120fb9089d090ce26589207c224c3b842a665ac33438980",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -92137,7 +92886,7 @@
       "gap": 5,
       "implementation": 52,
       "intent": 44,
-      "issue": 1156,
+      "issue": 1159,
       "knowledge": 90,
       "mesh-declaration": 1,
       "milestone": 114,
@@ -92146,12 +92895,12 @@
       "profile": 4,
       "prompt": 5,
       "release-record": 38,
-      "rule": 192,
+      "rule": 193,
       "scope": 1,
       "session": 93,
       "skill": 8,
       "taxonomy": 10,
-      "test": 672,
+      "test": 673,
       "use-case": 49,
       "workspace": 1
     },
@@ -99186,7 +99935,7 @@
         "title": "Continuous integration",
         "path": "docs/CI.md",
         "source_class": "document",
-        "bytes": 44980
+        "bytes": 45874
       },
       {
         "uri": "majordomus://document/docs/CLI.md",
@@ -99321,7 +100070,7 @@
         "title": "Distribution",
         "path": "docs/DISTRIBUTION.md",
         "source_class": "document",
-        "bytes": 40638
+        "bytes": 41015
       },
       {
         "uri": "majordomus://document/docs/DOCTRINE.md",
@@ -99483,7 +100232,7 @@
         "title": "Pull-request integration",
         "path": "docs/INTEGRATION.md",
         "source_class": "document",
-        "bytes": 75048
+        "bytes": 75692
       },
       {
         "uri": "majordomus://document/docs/INTEGRATION_ROLLOUT.md",
@@ -99519,7 +100268,7 @@
         "title": "`majordomus ui` — the product",
         "path": "docs/MAJORDOMUS_UI.md",
         "source_class": "document",
-        "bytes": 44548
+        "bytes": 46994
       },
       {
         "uri": "majordomus://document/docs/MCP.md",
@@ -99609,7 +100358,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 125242
+        "bytes": 125539
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -99663,7 +100412,7 @@
         "title": "The release — a changelog nobody writes, and one writer for the version",
         "path": "docs/RELEASE.md",
         "source_class": "document",
-        "bytes": 47884
+        "bytes": 51662
       },
       {
         "uri": "majordomus://document/docs/ROADMAP.md",
@@ -102602,7 +103351,7 @@
         "path": ".ai/repo/project/gaps/a-browser-computes-what-the-server-verifies.yaml",
         "section": "project",
         "source_class": "gap",
-        "bytes": 1376
+        "bytes": 2401
       },
       {
         "uri": "majordomus://gap/a-session-leaves-what-it-observed",
@@ -103084,7 +103833,7 @@
         "path": ".ai/repo/project/intents/a-browser-computes-what-the-server-verifies.yaml",
         "section": "project",
         "source_class": "intent",
-        "bytes": 1774
+        "bytes": 2666
       },
       {
         "uri": "majordomus://intent/a-build-reuses-what-the-mesh-already-built",
@@ -108268,6 +109017,17 @@
         "bytes": 1684
       },
       {
+        "uri": "majordomus://issue/I2730",
+        "kind": "issue",
+        "identity": "I2730",
+        "title": "A derive does not depend on how loaded the machine is",
+        "description": "Give the workflow runner a bound a derivation can rely on, declared in policy.yaml beside the other timings, and make a runner that misses it a refusal naming the command and the bound rather than a different projection.",
+        "path": ".ai/repo/project/issues/I2730.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2861
+      },
+      {
         "uri": "majordomus://issue/I2731",
         "kind": "issue",
         "identity": "I2731",
@@ -108521,6 +109281,17 @@
         "bytes": 3980
       },
       {
+        "uri": "majordomus://issue/I2785",
+        "kind": "issue",
+        "identity": "I2785",
+        "title": "The server recomputes a browser's claimed result with the portable core",
+        "description": "Add capability compute.verify (module compute): given a portable-core function, the input it was computed on and the claimed result, recompute it with majordomus-core and answer match, mismatch or invalid with the reason (not JSON, over 1 MiB, not the result's shape). It is a read: it records nothing, starts no execution and is admitted from any host (ADR 0126), over MCP and HTTP POST.",
+        "path": ".ai/repo/project/issues/I2785.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2023
+      },
+      {
         "uri": "majordomus://issue/I2786",
         "kind": "issue",
         "identity": "I2786",
@@ -108541,6 +109312,17 @@
         "section": "project",
         "source_class": "issue",
         "bytes": 2918
+      },
+      {
+        "uri": "majordomus://issue/I2788",
+        "kind": "issue",
+        "identity": "I2788",
+        "title": "A page computes the canonical digest in a Worker and shows the server's verdict",
+        "description": "Add the UI screen /ui/compute: when the person asks, a same-origin Worker loads the committed wasm32 portable core, computes the canonical digest of the JSON the page holds, and the page asks compute.verify and shows match, mismatch or invalid. The module is committed under share/ui/compute with the digest of the core sources it was built from; a test refuses a module whose sources moved or that carries a host path, and the portable-core gate executes the committed module against the fixture. Only the Worker's response allows WebAssembly compilation; every page keeps the Cockpit's policy.",
+        "path": ".ai/repo/project/issues/I2788.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2507
       },
       {
         "uri": "majordomus://issue/I2789",
@@ -119540,7 +120322,7 @@
         "path": ".ai/repo/policy.yaml",
         "section": "policy",
         "source_class": "policy",
-        "bytes": 26319
+        "bytes": 26809
       },
       {
         "uri": "majordomus://profile/debugging",
@@ -121172,6 +121954,24 @@
         "tags": [
           "ci",
           "process"
+        ]
+      },
+      {
+        "uri": "majordomus://rule/project.a-release-leaves-the-site-better@1",
+        "kind": "rule",
+        "identity": "project.a-release-leaves-the-site-better@1",
+        "title": "A release leaves the site better than it found it",
+        "description": "Every release is held to the site the previous release published. No measure of the site this repository computes is worse at the commit being released than at the previous release's recorded commit, and the window between the two carries at least one change whose subject is the site and which improves it through a source the site is generated from, never through a hand edit of generated output. `majordomus release site` takes the verdict and the release workflow refuses a tag that fails it, naming the measure and its delta or the commits and why none counts.",
+        "path": ".ai/repo/rules/project/a-release-leaves-the-site-better.v1.md",
+        "section": "rules",
+        "source_class": "rule",
+        "bytes": 8619,
+        "tags": [
+          "release",
+          "web",
+          "publication",
+          "design",
+          "projections"
         ]
       },
       {
@@ -126404,6 +127204,14 @@
         "bytes": 2295
       },
       {
+        "uri": "majordomus://test/test/cases/3170_a_release_leaves_the_site_better.sh",
+        "kind": "test",
+        "identity": "test/cases/3170_a_release_leaves_the_site_better.sh",
+        "path": "test/cases/3170_a_release_leaves_the_site_better.sh",
+        "source_class": "case",
+        "bytes": 10140
+      },
+      {
         "uri": "majordomus://test/test/cases/3176_a_checkout_serves_the_current_trunk.sh",
         "kind": "test",
         "identity": "test/cases/3176_a_checkout_serves_the_current_trunk.sh",
@@ -127897,7 +128705,7 @@
         "identity": "test/cases/4381_the_structure_job_fits_in_half_its_bound.sh",
         "path": "test/cases/4381_the_structure_job_fits_in_half_its_bound.sh",
         "source_class": "case",
-        "bytes": 12920
+        "bytes": 17149
       },
       {
         "uri": "majordomus://test/test/cases/43_plan_command.sh",
@@ -128361,7 +129169,7 @@
         "identity": "test/cases/575_nothing_runs_perl.sh",
         "path": "test/cases/575_nothing_runs_perl.sh",
         "source_class": "case",
-        "bytes": 6408
+        "bytes": 6413
       },
       {
         "uri": "majordomus://test/test/cases/578_an_unknown_gate_refuses_completed.sh",
@@ -130462,7 +131270,7 @@
       "identity": [
         "id"
       ],
-      "objects": 1156
+      "objects": 1159
     },
     {
       "name": "knowledge",
@@ -130559,7 +131367,7 @@
         "id",
         "version"
       ],
-      "objects": 192
+      "objects": 193
     },
     {
       "name": "scope",
@@ -130624,7 +131432,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 672
+      "objects": 673
     },
     {
       "name": "use-case",
@@ -148147,6 +148955,146 @@
             "path": [
               "majordomus",
               "release",
+              "site"
+            ],
+            "route": "/docs/cli/release/site/",
+            "executable": true,
+            "usage": "majordomus release site [OPTIONS]",
+            "about": "Whether a release leaves the site better than the previous one found it: no measure of the site regressed, and at least one change in the window improves it through a source it is generated from",
+            "args": [
+              {
+                "name": "since",
+                "long": "since",
+                "positional": false,
+                "help": "The previous release: a recorded tag or version, or any commit; the newest recorded stable release that is an ancestor of the head when absent",
+                "value_name": "REF",
+                "takes_value": true,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "head",
+                "long": "head",
+                "positional": false,
+                "help": "The commit being released",
+                "value_name": "REF",
+                "takes_value": true,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": [
+                  "HEAD"
+                ]
+              },
+              {
+                "name": "repo",
+                "long": "repo",
+                "positional": false,
+                "help": "Start the search for the repository root here (default: the current directory)",
+                "value_name": "PATH",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "discovery",
+                "long": "discovery",
+                "positional": false,
+                "help": "How declarative files are enumerated",
+                "value_name": "DISCOVERY",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "vcs",
+                    "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
+                  },
+                  {
+                    "name": "filesystem",
+                    "help": "A walk of the work tree with the same glob semantics; untracked files included"
+                  }
+                ],
+                "defaults": [
+                  "vcs"
+                ]
+              },
+              {
+                "name": "strict",
+                "long": "strict",
+                "positional": false,
+                "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+                "value_name": "STRICT",
+                "takes_value": false,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": [
+                  "false"
+                ]
+              },
+              {
+                "name": "share",
+                "long": "share",
+                "positional": false,
+                "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+                "value_name": "DIR",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "format",
+                "long": "format",
+                "positional": false,
+                "help": "How to render the answer",
+                "value_name": "FORMAT",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "text",
+                    "help": "Lines for a person"
+                  },
+                  {
+                    "name": "json",
+                    "help": "One JSON document, deterministic"
+                  }
+                ],
+                "defaults": [
+                  "text"
+                ]
+              }
+            ],
+            "examples": [
+              {
+                "id": "release-site",
+                "title": "Whether a release leaves the site better than it found it",
+                "description": "The verdict of project.a-release-leaves-the-site-better: every measure of the site the executable computes — the text pairs below WCAG AA and the weakest text contrast in each theme, and the page files written by hand — at the previous release's recorded commit and at the commit being released, each with its delta; then every commit of the window that touched the site or named it, and whether it counts as an improvement. Exit 0 passes, 10 is a regression or a window with no improvement, each finding naming the measure and its delta or the commits and why none counts. The release workflow asks it before it builds anything. This fixture has recorded no release, so there is nothing to compare with, and it says so with exit 12 rather than passing.",
+                "argv": [
+                  "release",
+                  "site",
+                  "--format",
+                  "json"
+                ],
+                "command": "majordomus release site --format json",
+                "setup": [],
+                "expectation": "exits 12"
+              }
+            ],
+            "subcommands": []
+          },
+          {
+            "path": [
+              "majordomus",
+              "release",
               "bump"
             ],
             "route": "/docs/cli/release/bump/",
@@ -162170,6 +163118,217 @@
       {
         "path": [
           "majordomus",
+          "gates"
+        ],
+        "route": "/docs/cli/gates/",
+        "executable": false,
+        "usage": "majordomus gates [OPTIONS] <COMMAND>",
+        "about": "Whether each structure job of the CI model fits in half its bound: the p90 of its wall time over the committed window against its timeout-minutes, naming the job and its three most expensive gates when it does not",
+        "args": [
+          {
+            "name": "repo",
+            "long": "repo",
+            "positional": false,
+            "help": "Start the search for the repository root here (default: the current directory)",
+            "value_name": "PATH",
+            "takes_value": true,
+            "required": false,
+            "global": true,
+            "possible_values": [],
+            "defaults": []
+          },
+          {
+            "name": "discovery",
+            "long": "discovery",
+            "positional": false,
+            "help": "How declarative files are enumerated",
+            "value_name": "DISCOVERY",
+            "takes_value": true,
+            "required": false,
+            "global": true,
+            "possible_values": [
+              {
+                "name": "vcs",
+                "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
+              },
+              {
+                "name": "filesystem",
+                "help": "A walk of the work tree with the same glob semantics; untracked files included"
+              }
+            ],
+            "defaults": [
+              "vcs"
+            ]
+          },
+          {
+            "name": "strict",
+            "long": "strict",
+            "positional": false,
+            "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+            "value_name": "STRICT",
+            "takes_value": false,
+            "required": false,
+            "global": true,
+            "possible_values": [],
+            "defaults": [
+              "false"
+            ]
+          },
+          {
+            "name": "share",
+            "long": "share",
+            "positional": false,
+            "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+            "value_name": "DIR",
+            "takes_value": true,
+            "required": false,
+            "global": true,
+            "possible_values": [],
+            "defaults": []
+          },
+          {
+            "name": "format",
+            "long": "format",
+            "positional": false,
+            "help": "Output shape",
+            "value_name": "FORMAT",
+            "takes_value": true,
+            "required": false,
+            "global": true,
+            "possible_values": [
+              {
+                "name": "text",
+                "help": "Lines for a person"
+              },
+              {
+                "name": "json",
+                "help": "One JSON document, deterministic"
+              }
+            ],
+            "defaults": [
+              "text"
+            ]
+          }
+        ],
+        "examples": [],
+        "subcommands": [
+          {
+            "path": [
+              "majordomus",
+              "gates",
+              "headroom"
+            ],
+            "route": "/docs/cli/gates/headroom/",
+            "executable": true,
+            "usage": "majordomus gates headroom [OPTIONS]",
+            "about": "Refuse a structure job whose p90 wall time over the committed window passes half its bound; exit 10 when one does, 12 when one cannot be measured",
+            "args": [
+              {
+                "name": "repo",
+                "long": "repo",
+                "positional": false,
+                "help": "Start the search for the repository root here (default: the current directory)",
+                "value_name": "PATH",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "discovery",
+                "long": "discovery",
+                "positional": false,
+                "help": "How declarative files are enumerated",
+                "value_name": "DISCOVERY",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "vcs",
+                    "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
+                  },
+                  {
+                    "name": "filesystem",
+                    "help": "A walk of the work tree with the same glob semantics; untracked files included"
+                  }
+                ],
+                "defaults": [
+                  "vcs"
+                ]
+              },
+              {
+                "name": "strict",
+                "long": "strict",
+                "positional": false,
+                "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+                "value_name": "STRICT",
+                "takes_value": false,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": [
+                  "false"
+                ]
+              },
+              {
+                "name": "share",
+                "long": "share",
+                "positional": false,
+                "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+                "value_name": "DIR",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "format",
+                "long": "format",
+                "positional": false,
+                "help": "Output shape",
+                "value_name": "FORMAT",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "text",
+                    "help": "Lines for a person"
+                  },
+                  {
+                    "name": "json",
+                    "help": "One JSON document, deterministic"
+                  }
+                ],
+                "defaults": [
+                  "text"
+                ]
+              }
+            ],
+            "examples": [
+              {
+                "id": "gates-headroom-unmeasured",
+                "title": "A repository with no committed window is never a pass",
+                "description": "Every structure job of the CI model with its bound, the p90 of its wall time over .ai/repo/ci/structure-job-durations.tsv and the share of the bound it takes. A job past half its bound exits 10 and names its three costliest gates; a repository that has committed no window, as this example's fresh one has not, answers unmeasured and exits 12, which is a refusal and never a pass. `scripts/ci-baseline --structure-durations` writes the window.",
+                "argv": [
+                  "gates",
+                  "headroom"
+                ],
+                "command": "majordomus gates headroom",
+                "setup": [],
+                "expectation": "exits 12"
+              }
+            ],
+            "subcommands": []
+          }
+        ]
+      },
+      {
+        "path": [
+          "majordomus",
           "pack"
         ],
         "route": "/docs/cli/pack/",
@@ -165317,6 +166476,23 @@
         "output": "CommitVerdict"
       },
       {
+        "name": "majordomus_compute_verify",
+        "id": "compute.verify",
+        "title": "Whether a browser's result is what the server computes",
+        "description": "Recompute a claimed result of a portable-core function (today `canonical_digest`: SHA-256 of a JSON document's canonical bytes) on the input the claim carries, with the same core the browser ran as wasm32, and answer `match`, `mismatch`, or `invalid` with the reason when the input is not JSON, exceeds 1 MiB or the result is not the function's shape. It records nothing: no execution, ledger entry or journal event, and the claim never enters a record.",
+        "kind": "query",
+        "read_only": true,
+        "effect": "read",
+        "hints": {
+          "read_only": true,
+          "destructive": false,
+          "idempotent": true,
+          "open_world": false
+        },
+        "input": "ComputeVerifyInput",
+        "output": "ComputeVerification"
+      },
+      {
         "name": "majordomus_continuity_device",
         "id": "continuity.device",
         "title": "This device's identity, and its label",
@@ -166267,6 +167443,23 @@
         },
         "input": "CompletionInput",
         "output": "Completion"
+      },
+      {
+        "name": "majordomus_gate_headroom",
+        "id": "gates.headroom",
+        "title": "Whether each structure job fits in half its bound",
+        "description": "Every structure job the CI model assigns gates to (`structure`, `structure-<x>`), with its `timeout-minutes` from .github/workflows/validate.yml, the 90th percentile (nearest rank) of its wall time over the committed window .ai/repo/ci/structure-job-durations.tsv, and that p90 as a share of the bound. A job past half its bound is `exceeds` and names its three most expensive gates from .ai/repo/ci/structure-durations.tsv, so the remedy is a split or a cheaper gate and never a larger bound (I4381). A missing window, a job with no measured run or no bound is `unmeasured`, never a pass; `ok` is true only when every job fits and every input was read.",
+        "kind": "query",
+        "read_only": true,
+        "effect": "read",
+        "hints": {
+          "read_only": true,
+          "destructive": false,
+          "idempotent": true,
+          "open_world": false
+        },
+        "input": "Empty",
+        "output": "HeadroomReport"
       },
       {
         "name": "majordomus_gates",
@@ -168071,6 +169264,23 @@
         "output": "LandingDecision"
       },
       {
+        "name": "majordomus_release_site",
+        "id": "release.site",
+        "title": "Whether a release leaves the site better than it found it",
+        "description": "The verdict of `project.a-release-leaves-the-site-better` on one release: every measure of the site this executable computes from a tree — the text pairs below WCAG AA and the weakest text contrast in each theme, from the design declaration and the stylesheets that consume it, and how many of the site's page files are written by hand rather than generated — at the previous release's recorded commit and at the commit being released, each named with its delta and whether it held, improved or regressed; then every commit of the window between them that touched the site or named it as its subject, with whether it counts as an improvement and why. A change counts when its type is one the publication model's `release` section counts and it changes, outside every file `.gitattributes` marks `merge=derived`, a source of the site's gate classes, or any source while its scope names the site; a change whose every file is generated output counts for nothing. The release passes when no measure regressed or could not be taken and at least one change counts; otherwise each finding names the measure and its delta, or the commits that touched the site and why none counts. A repository with no recorded release that is an ancestor of the commit has nothing to compare with, and is refused rather than passed.",
+        "kind": "query",
+        "read_only": true,
+        "effect": "read",
+        "hints": {
+          "read_only": true,
+          "destructive": false,
+          "idempotent": true,
+          "open_world": false
+        },
+        "input": "ReleaseSiteInput",
+        "output": "ReleaseSiteVerdict"
+      },
+      {
         "name": "majordomus_release_version",
         "id": "release.version",
         "title": "The version, and the one the contract requires next",
@@ -168726,6 +169936,13 @@
         "kind": "query"
       },
       {
+        "uri": "majordomus://gates/headroom",
+        "name": "gate-headroom",
+        "id": "gates.headroom",
+        "title": "Whether each structure job fits in half its bound",
+        "kind": "query"
+      },
+      {
         "uri": "majordomus://gates",
         "name": "gates",
         "id": "gates.model",
@@ -169083,6 +170300,12 @@
       },
       {
         "method": "POST",
+        "path": "/api/v1/compute/verify",
+        "id": "compute.verify",
+        "kind": "query"
+      },
+      {
+        "method": "POST",
         "path": "/api/v1/continuity/device",
         "id": "continuity.device",
         "kind": "command"
@@ -169427,6 +170650,12 @@
         "method": "GET",
         "path": "/api/v1/gates/completion",
         "id": "gates.completion",
+        "kind": "query"
+      },
+      {
+        "method": "GET",
+        "path": "/api/v1/gates/headroom",
+        "id": "gates.headroom",
         "kind": "query"
       },
       {
@@ -170087,6 +171316,12 @@
         "method": "GET",
         "path": "/api/v1/release/next",
         "id": "release.next",
+        "kind": "query"
+      },
+      {
+        "method": "GET",
+        "path": "/api/v1/release/site",
+        "id": "release.site",
         "kind": "query"
       },
       {
@@ -170938,6 +172173,64 @@
         "case": "merge",
         "cached": false,
         "route": "GET /api/v1/commit/validate"
+      },
+      {
+        "key": "compute.verify|direct|match",
+        "kind": "capability",
+        "transport": "direct",
+        "id": "compute.verify",
+        "module": "compute",
+        "case": "match",
+        "cached": false
+      },
+      {
+        "key": "compute.verify|direct|mismatch",
+        "kind": "capability",
+        "transport": "direct",
+        "id": "compute.verify",
+        "module": "compute",
+        "case": "mismatch",
+        "cached": false
+      },
+      {
+        "key": "compute.verify|mcp|match",
+        "kind": "capability",
+        "transport": "mcp",
+        "id": "compute.verify",
+        "module": "compute",
+        "case": "match",
+        "cached": false,
+        "tool": "majordomus_compute_verify"
+      },
+      {
+        "key": "compute.verify|mcp|mismatch",
+        "kind": "capability",
+        "transport": "mcp",
+        "id": "compute.verify",
+        "module": "compute",
+        "case": "mismatch",
+        "cached": false,
+        "tool": "majordomus_compute_verify"
+      },
+      {
+        "key": "compute.verify|http|match",
+        "kind": "capability",
+        "transport": "http",
+        "id": "compute.verify",
+        "module": "compute",
+        "case": "match",
+        "cached": false,
+        "route": "POST /api/v1/compute/verify"
+      },
+      {
+        "key": "compute.verify|http|mismatch",
+        "kind": "capability",
+        "transport": "http",
+        "id": "compute.verify",
+        "module": "compute",
+        "case": "mismatch",
+        "cached": false,
+        "route": "POST /api/v1/compute/verify"
       },
       {
         "key": "continuity.plan|direct|default",
@@ -172900,6 +174193,35 @@
         "case": "everything-on-demand",
         "cached": false,
         "route": "GET /api/v1/gates/completion"
+      },
+      {
+        "key": "gates.headroom|direct|default",
+        "kind": "capability",
+        "transport": "direct",
+        "id": "gates.headroom",
+        "module": "gates",
+        "case": "default",
+        "cached": false
+      },
+      {
+        "key": "gates.headroom|mcp|default",
+        "kind": "capability",
+        "transport": "mcp",
+        "id": "gates.headroom",
+        "module": "gates",
+        "case": "default",
+        "cached": false,
+        "tool": "majordomus_gate_headroom"
+      },
+      {
+        "key": "gates.headroom|http|default",
+        "kind": "capability",
+        "transport": "http",
+        "id": "gates.headroom",
+        "module": "gates",
+        "case": "default",
+        "cached": false,
+        "route": "GET /api/v1/gates/headroom"
       },
       {
         "key": "gates.model|direct|default",
@@ -177970,6 +179292,14 @@
         "route": "GET /ui/mesh"
       },
       {
+        "key": "system.http.ui.compute",
+        "kind": "page",
+        "transport": "http",
+        "module": "system",
+        "cached": true,
+        "route": "GET /ui/compute"
+      },
+      {
         "key": "system.http.ui.peers",
         "kind": "page",
         "transport": "http",
@@ -178120,6 +179450,14 @@
         "module": "system",
         "cached": true,
         "route": "GET /ui/mesh"
+      },
+      {
+        "key": "system.http.live.ui.compute",
+        "kind": "page",
+        "transport": "http",
+        "module": "system",
+        "cached": true,
+        "route": "GET /ui/compute"
       },
       {
         "key": "system.http.live.ui.peers",
@@ -178509,6 +179847,27 @@
           "transport": "http",
           "state": "covered",
           "cases": 3
+        },
+        {
+          "subject": "compute.verify",
+          "module": "compute",
+          "transport": "direct",
+          "state": "covered",
+          "cases": 2
+        },
+        {
+          "subject": "compute.verify",
+          "module": "compute",
+          "transport": "mcp",
+          "state": "covered",
+          "cases": 2
+        },
+        {
+          "subject": "compute.verify",
+          "module": "compute",
+          "transport": "http",
+          "state": "covered",
+          "cases": 2
         },
         {
           "subject": "continuity.device",
@@ -179766,6 +181125,27 @@
           "transport": "http",
           "state": "covered",
           "cases": 4
+        },
+        {
+          "subject": "gates.headroom",
+          "module": "gates",
+          "transport": "direct",
+          "state": "covered",
+          "cases": 1
+        },
+        {
+          "subject": "gates.headroom",
+          "module": "gates",
+          "transport": "mcp",
+          "state": "covered",
+          "cases": 1
+        },
+        {
+          "subject": "gates.headroom",
+          "module": "gates",
+          "transport": "http",
+          "state": "covered",
+          "cases": 1
         },
         {
           "subject": "gates.model",
@@ -182137,6 +183517,30 @@
           "reason": "published_history"
         },
         {
+          "subject": "release.site",
+          "module": "release",
+          "transport": "direct",
+          "state": "waived",
+          "cases": 0,
+          "reason": "published_history"
+        },
+        {
+          "subject": "release.site",
+          "module": "release",
+          "transport": "mcp",
+          "state": "waived",
+          "cases": 0,
+          "reason": "published_history"
+        },
+        {
+          "subject": "release.site",
+          "module": "release",
+          "transport": "http",
+          "state": "waived",
+          "cases": 0,
+          "reason": "published_history"
+        },
+        {
           "subject": "release.version",
           "module": "release",
           "transport": "direct",
@@ -182904,24 +184308,24 @@
       ],
       "tallies": {
         "direct": {
-          "required": 220,
-          "covered": 181,
+          "required": 223,
+          "covered": 183,
           "missing": 0,
-          "waived": 39,
+          "waived": 40,
           "inapplicable": 0
         },
         "http": {
-          "required": 212,
-          "covered": 181,
+          "required": 215,
+          "covered": 183,
           "missing": 0,
-          "waived": 31,
+          "waived": 32,
           "inapplicable": 0
         },
         "mcp": {
-          "required": 206,
-          "covered": 176,
+          "required": 209,
+          "covered": 178,
           "missing": 0,
-          "waived": 30,
+          "waived": 31,
           "inapplicable": 0
         },
         "system": {
@@ -182932,10 +184336,10 @@
           "inapplicable": 0
         },
         "total": {
-          "required": 652,
-          "covered": 552,
+          "required": 661,
+          "covered": 558,
           "missing": 0,
-          "waived": 100,
+          "waived": 103,
           "inapplicable": 0
         }
       }

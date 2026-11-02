@@ -199,6 +199,35 @@ impl BenchmarkCases for NextInput {
     }
 }
 
+/// The input of `release.site`: the release judged, and the one it is judged against.
+///
+/// ```
+/// use majordomus_cli::capability::builtin::release::SiteInput;
+/// // nothing named is this commit against the newest recorded release that is its ancestor
+/// let input = SiteInput::default();
+/// assert!(input.since.is_none() && input.head.is_none());
+/// ```
+#[derive(Debug, Clone, Default, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+#[schemars(rename = "ReleaseSiteInput")]
+pub struct SiteInput {
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    /// The previous release: a recorded tag or version, or any commit; the newest recorded
+    /// stable release that is an ancestor of `head` when absent.
+    pub since: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    /// The commit being released; `HEAD` when absent.
+    pub head: Option<String>,
+}
+
+impl BenchmarkCases for SiteInput {
+    /// None, for the reason [`AnalysisInput`] gives: the verdict compares two released trees,
+    /// and a benchmark fixture has released nothing.
+    fn benchmark_cases(_: &CaseContext<'_>) -> Vec<NamedCase<Self>> {
+        Vec::new()
+    }
+}
+
 /// The module.
 pub fn module() -> ModuleDescriptor {
     module! {
@@ -316,9 +345,33 @@ pub fn module() -> ModuleDescriptor {
                 benchmark: BenchmarkPolicy::Waived { reason: WaiverReason::PublishedHistory },
                 handler: currency,
             },
+            capability! {
+                id: SITE_ID,
+                title: "Whether a release leaves the site better than it found it",
+                description: "The verdict of `project.a-release-leaves-the-site-better` on one release: every measure of the site this executable computes from a tree — the text pairs below WCAG AA and the weakest text contrast in each theme, from the design declaration and the stylesheets that consume it, and how many of the site's page files are written by hand rather than generated — at the previous release's recorded commit and at the commit being released, each named with its delta and whether it held, improved or regressed; then every commit of the window between them that touched the site or named it as its subject, with whether it counts as an improvement and why. A change counts when its type is one the publication model's `release` section counts and it changes, outside every file `.gitattributes` marks `merge=derived`, a source of the site's gate classes, or any source while its scope names the site; a change whose every file is generated output counts for nothing. The release passes when no measure regressed or could not be taken and at least one change counts; otherwise each finding names the measure and its delta, or the commits that touched the site and why none counts. A repository with no recorded release that is an ancestor of the commit has nothing to compare with, and is refused rather than passed.",
+                input: SiteInput,
+                output: release::site::SiteVerdict,
+                stability: Stability::Implemented,
+                exposure: Exposure {
+                    mcp: Some(McpExposure {
+                        tool: Some("majordomus_release_site".into()),
+                        resource: None,
+                    }),
+                    http: get("/api/v1/release/site"),
+                    // `majordomus release site` renders this capability; `cli::LOCAL`
+                    // declares that once, as it does for `release analyze`.
+                    cli: None,
+                },
+                tags: ["release", "site", "web"],
+                benchmark: BenchmarkPolicy::Waived { reason: WaiverReason::PublishedHistory },
+                handler: site,
+            },
         ],
     }
 }
+
+/// The site verdict, named beside its declaration.
+pub const SITE_ID: &str = "release.site";
 
 /// The compatibility analysis, named beside its declaration.
 pub const ANALYSIS_ID: &str = "release.analysis";
@@ -465,9 +518,28 @@ fn currency(
     Ok(answer)
 }
 
+/// Whether the release of the input's head leaves the site better than the previous release
+/// did. A verdict that could not be taken is refused, never answered as a pass.
+fn site(ctx: &Context, input: SiteInput) -> Result<release::site::SiteVerdict, CapabilityError> {
+    let root = std::path::Path::new(&ctx.index.repository.root);
+    release::site::judge(root, input.since.as_deref(), input.head.as_deref())
+        .map_err(CapabilityError::NotFound)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// A repository with no release to compare with is refused, never passed.
+    #[test]
+    fn a_site_verdict_without_a_baseline_is_refused() {
+        let repo = crate::synthetic::SyntheticRepository::small().expect("a synthetic repository");
+        let ctx = repo.context().expect("a context");
+        match site(&ctx, SiteInput::default()) {
+            Err(CapabilityError::NotFound(_)) => {}
+            other => panic!("not refused as not found: {other:?}"),
+        }
+    }
 
     /// A repository whose manifest cannot be read is refused by name, never guessed at.
     #[test]

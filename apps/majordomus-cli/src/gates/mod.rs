@@ -57,6 +57,7 @@
 // it.
 pub(crate) mod closing;
 pub(crate) mod done;
+pub(crate) mod headroom;
 pub(crate) mod judge;
 pub(crate) mod model;
 pub(crate) mod policy;
@@ -74,6 +75,7 @@ use crate::capability::builtin::ActiveTask;
 use crate::discovery::glob::Glob;
 
 pub use done::{DoneQuestion, ObligationStanding};
+pub use headroom::{GateCost, HeadroomReport, HeadroomVerdict, JobHeadroom};
 pub use judge::{Gate, GateRun, GateStatus};
 pub(crate) use model::GateModel;
 pub use model::{GateClass, GateClassMatch, GateDecl, GatePlan, GatePlanMode, Lane};

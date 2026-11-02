@@ -15,6 +15,7 @@ Every capability this executable ships, as the registry holds it. MCP tools and 
 | `capabilities` | Capabilities | behaviorally_verified | 3 | [`modules/capabilities.md`](modules/capabilities.md) |
 | `commands` | Command graph | implemented | 3 | [`modules/commands.md`](modules/commands.md) |
 | `commit` | Commit | behaviorally_verified | 4 | [`modules/commit.md`](modules/commit.md) |
+| `compute` | Browser compute | experimental | 1 | [`modules/compute.md`](modules/compute.md) |
 | `continuity` | Continuity | behaviorally_verified | 8 | [`modules/continuity.md`](modules/continuity.md) |
 | `convergence` | Convergence | behaviorally_verified | 1 | [`modules/convergence.md`](modules/convergence.md) |
 | `dashboard` | Dashboards | behaviorally_verified | 1 | [`modules/dashboard.md`](modules/dashboard.md) |
@@ -32,7 +33,7 @@ Every capability this executable ships, as the registry holds it. MCP tools and 
 | `episodes` | Episodes | behaviorally_verified | 3 | [`modules/episodes.md`](modules/episodes.md) |
 | `evidence` | Evidence | behaviorally_verified | 5 | [`modules/evidence.md`](modules/evidence.md) |
 | `executions` | Executions | behaviorally_verified | 8 | [`modules/executions.md`](modules/executions.md) |
-| `gates` | Completion gates | behaviorally_verified | 4 | [`modules/gates.md`](modules/gates.md) |
+| `gates` | Completion gates | behaviorally_verified | 5 | [`modules/gates.md`](modules/gates.md) |
 | `graph` | Graphs | behaviorally_verified | 2 | [`modules/graph.md`](modules/graph.md) |
 | `guard` | Edit guard | experimental | 1 | [`modules/guard.md`](modules/guard.md) |
 | `health` | Health | behaviorally_verified | 3 | [`modules/health.md`](modules/health.md) |
@@ -57,7 +58,7 @@ Every capability this executable ships, as the registry holds it. MCP tools and 
 | `quality` | Public API quality | behaviorally_verified | 2 | [`modules/quality.md`](modules/quality.md) |
 | `reasoning` | Reasoning | experimental | 6 | [`modules/reasoning.md`](modules/reasoning.md) |
 | `recover` | Recovery of the record stores | behaviorally_verified | 1 | [`modules/recover.md`](modules/recover.md) |
-| `release` | Release | implemented | 5 | [`modules/release.md`](modules/release.md) |
+| `release` | Release | implemented | 6 | [`modules/release.md`](modules/release.md) |
 | `repository` | Repository | behaviorally_verified | 3 | [`modules/repository.md`](modules/repository.md) |
 | `rules` | Rules | behaviorally_verified | 3 | [`modules/rules.md`](modules/rules.md) |
 | `served` | Served deployments | behaviorally_verified | 3 | [`modules/served.md`](modules/served.md) |
@@ -87,6 +88,7 @@ Every capability this executable ships, as the registry holds it. MCP tools and 
 | `commit.plan` | `commit` | query | behaviorally_verified | `majordomus_commit_plan` | `majordomus://commit/plan` | `GET /api/v1/commit/plan` | `majordomus commit plan` | — | required |
 | `commit.scopes` | `commit` | query | behaviorally_verified | `majordomus_commit_scopes` | `majordomus://commit/scopes` | `GET /api/v1/commit/scopes` | `majordomus commit scopes` | — | required |
 | `commit.validate` | `commit` | query | behaviorally_verified | `majordomus_commit_validate` | — | `GET /api/v1/commit/validate` | `majordomus commit validate` | — | required |
+| `compute.verify` | `compute` | query | experimental | `majordomus_compute_verify` | — | `POST /api/v1/compute/verify` | — | — | required |
 | `continuity.device` | `continuity` | command | experimental | `majordomus_continuity_device` | — | `POST /api/v1/continuity/device` | `majordomus continuity device` | — | waived (destructive) |
 | `continuity.plan` | `continuity` | query | experimental | `majordomus_continuity_plan` | — | `GET /api/v1/continuity/plan` | `majordomus continuity plan` | — | required |
 | `continuity.publish` | `continuity` | command | experimental | `majordomus_continuity_publish` | — | `POST /api/v1/continuity/publish` | `majordomus continuity publish` | — | waived (destructive) |
@@ -148,6 +150,7 @@ Every capability this executable ships, as the registry holds it. MCP tools and 
 | `executions.report` | `executions` | command | behaviorally_verified | — | — | `POST /api/v1/executions/report` | — | — | waived (transient_state) |
 | `executions.start` | `executions` | command | behaviorally_verified | `majordomus_execution_start` | — | `POST /api/v1/executions/start` | `majordomus run` | — | required |
 | `gates.completion` | `gates` | query | behaviorally_verified | `majordomus_completion` | `majordomus://gates/completion` | `GET /api/v1/gates/completion` | — | — | required |
+| `gates.headroom` | `gates` | query | behaviorally_verified | `majordomus_gate_headroom` | `majordomus://gates/headroom` | `GET /api/v1/gates/headroom` | `majordomus gates headroom` | — | required |
 | `gates.model` | `gates` | query | behaviorally_verified | `majordomus_gates` | `majordomus://gates` | `GET /api/v1/gates` | — | process, 4 entries, 5s | required |
 | `gates.policy` | `gates` | query | behaviorally_verified | `majordomus_completion_policy` | `majordomus://gates/policy` | `GET /api/v1/gates/policy` | — | process, 4 entries, 5s | required |
 | `gates.state` | `gates` | query | behaviorally_verified | `majordomus_gate_state` | `majordomus://gates/state` | `GET /api/v1/gates/state` | — | — | required |
@@ -261,6 +264,7 @@ Every capability this executable ships, as the registry holds it. MCP tools and 
 | `release.changelog` | `release` | query | implemented | `majordomus_changelog` | `majordomus://changelog` | `GET /api/v1/changelog` | — | — | required |
 | `release.currency` | `release` | query | implemented | `majordomus_release_currency` | — | `GET /api/v1/release/currency` | — | — | waived (published_history) |
 | `release.next` | `release` | query | implemented | `majordomus_release_next` | — | `GET /api/v1/release/next` | — | — | waived (published_history) |
+| `release.site` | `release` | query | implemented | `majordomus_release_site` | — | `GET /api/v1/release/site` | — | — | waived (published_history) |
 | `release.version` | `release` | query | implemented | `majordomus_release_version` | — | `GET /api/v1/release/version` | — | process, 2 entries, per checkout state | required |
 | `repository.info` | `repository` | query | behaviorally_verified | `majordomus_repository` | `majordomus://repository` | `GET /api/v1/repository` | — | process, 1 entries, per generation | required |
 | `repository.scope` | `repository` | query | behaviorally_verified | `majordomus_scope` | `majordomus://scope` | `GET /api/v1/scope` | `majordomus scope` | — | required |

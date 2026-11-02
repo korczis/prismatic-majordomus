@@ -83,6 +83,26 @@ jobs:
           apps/majordomus-cli/target/debug/majordomus distribution validate
           apps/majordomus-cli/target/debug/majordomus generate distribution --check
 
+      # Every release leaves the site better than the release before it found it
+      # (project.a-release-leaves-the-site-better): no measure the executable computes from the
+      # two trees got worse, and the window carries at least one improvement made in a source
+      # the site is generated from. Asked here, before any target is built, so a refusal
+      # publishes nothing; exit 10 names the measure and its delta or the commits, exit 12 is
+      # a verdict that could not be taken. The verdict is kept beside the run either way.
+      - name: the release leaves the site better than the last one found it
+        run: |
+          mj=apps/majordomus-cli/target/debug/majordomus
+          "$mj" release site --format json > release-site.json || true
+          "$mj" release site | tee -a "$GITHUB_STEP_SUMMARY"
+
+      - name: the site verdict, kept as release evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-site
+          path: release-site.json
+          if-no-files-found: ignore
+
       - id: matrix
         name: the build matrix, generated from the model
         run: |

@@ -1,0 +1,33 @@
+id: I2730
+milestone: derived-data-integrity
+title: "A derive does not depend on how loaded the machine is"
+slug: a-derive-does-not-depend-on-load
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Give the workflow runner a bound a derivation can rely on, declared in policy.yaml beside the other timings, and make a runner that misses it a refusal naming the command and the bound rather than a different projection."
+why: "Observed 2026-10-15 ~03:4xZ on lundra under load: a derive failed in stage A (generate editors) because `just --dump` hit the hard 2 s TIMEOUT in apps/majordomus-cli/src/environment/workflows.rs, and a retry of the same tree passed. A derive that fails on machine load is nondeterministic and wastes a whole derive (5 to 10 minutes). The same bound also cut `just --groups --unsorted` short silently: the group order fell back to empty, so the committed task order could change with the load without any finding."
+current_state: "environment::workflows::TIMEOUT (2 s, a constant) bounds every `just` call, for the shell-prompt snapshot and for `generate editors` alike. probe::bounded_output folds a timeout and a refusal into one None, so editors reported `just --dump could not describe it` with a remedy to install `just`, and a late group listing became an empty order without a finding."
+desired_state: "policy.yaml declares workflows.describe_timeout_seconds (30; the policy schema validates it; absent keeps the compiled DESCRIBE_TIMEOUT of 30 s). `generate editors` waits that long for `just --dump` and `just --groups`; past it, the derivation refuses (exit 12) with a message naming the command and the bound and a remedy naming the policy key. The shell-prompt snapshot keeps its 2 s budget."
+scope:
+  - "apps/majordomus-cli/src/environment/workflows.rs"
+  - "apps/majordomus-cli/src/environment/probe.rs"
+  - "apps/majordomus-cli/src/editors/mod.rs"
+  - "apps/majordomus-cli/src/generate.rs"
+  - "apps/majordomus-cli/src/policy.rs"
+  - ".ai/repo/policy.yaml"
+  - "share/schemas/majordomus/policy"
+non_scope:
+  - "The environment snapshot's own 2 s budget, which serves a shell prompt rather than a committed projection"
+  - "Other bounded probes (toolchain versions, evidence provenance), which commit nothing load-dependent"
+acceptance_criteria:
+  - "A stand-in runner slower than a configured bound yields a refusal naming `just --dump --dump-format json` and the bound, and one within the bound describes the justfile"
+  - "A group listing slower than the bound is a refusal, not an empty group order"
+  - "The bound is declared in policy.yaml under workflows: and validated by the policy schema"
+validation:
+  - "cargo test -p majordomus-cli environment::workflows"
+  - "bin/majordomus plan validate"
+evidence_required:
+  - "describe_timeout_refusal_test"
+created_at: 2026-10-15
+updated_at: 2026-10-15

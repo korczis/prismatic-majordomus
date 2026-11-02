@@ -187,6 +187,15 @@
         "status": "query"
       },
       {
+        "id": "capability:compute.verify",
+        "kind": "capability",
+        "label": "compute.verify",
+        "summary": "Whether a browser's result is what the server computes",
+        "route": "/cockpit/capabilities/compute.verify",
+        "source": "apps/majordomus-cli/src/capability/builtin/compute.rs",
+        "status": "query"
+      },
+      {
         "id": "capability:continuity.device",
         "kind": "capability",
         "label": "continuity.device",
@@ -732,6 +741,15 @@
         "label": "gates.completion",
         "summary": "Whether this task may be called finished",
         "route": "/cockpit/capabilities/gates.completion",
+        "source": "apps/majordomus-cli/src/capability/builtin/gates.rs",
+        "status": "query"
+      },
+      {
+        "id": "capability:gates.headroom",
+        "kind": "capability",
+        "label": "gates.headroom",
+        "summary": "Whether each structure job fits in half its bound",
+        "route": "/cockpit/capabilities/gates.headroom",
         "source": "apps/majordomus-cli/src/capability/builtin/gates.rs",
         "status": "query"
       },
@@ -1749,6 +1767,15 @@
         "label": "release.next",
         "summary": "The version a landing allocates, and why",
         "route": "/cockpit/capabilities/release.next",
+        "source": "apps/majordomus-cli/src/capability/builtin/release.rs",
+        "status": "query"
+      },
+      {
+        "id": "capability:release.site",
+        "kind": "capability",
+        "label": "release.site",
+        "summary": "Whether a release leaves the site better than it found it",
+        "route": "/cockpit/capabilities/release.site",
         "source": "apps/majordomus-cli/src/capability/builtin/release.rs",
         "status": "query"
       },
@@ -43644,6 +43671,48 @@
         }
       },
       {
+        "id": "majordomus://issue/I2730",
+        "kind": "issue",
+        "label": "I2730",
+        "summary": "A derive does not depend on how loaded the machine is",
+        "route": "/cockpit/objects/issue/i2730",
+        "source": ".ai/repo/project/issues/I2730.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A stand-in runner slower than a configured bound yields a refusal naming `just --dump --dump-format json` and the bound, and one within the bound describes the justfile",
+            "A group listing slower than the bound is a refusal, not an empty group order",
+            "The bound is declared in policy.yaml under workflows: and validated by the policy schema"
+          ],
+          "created_at": "2026-10-15",
+          "evidence_required": [
+            "describe_timeout_refusal_test"
+          ],
+          "milestone": "derived-data-integrity",
+          "non_scope": [
+            "The environment snapshot's own 2 s budget, which serves a shell prompt rather than a committed projection",
+            "Other bounded probes (toolchain versions, evidence provenance), which commit nothing load-dependent"
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/environment/workflows.rs",
+            "apps/majordomus-cli/src/environment/probe.rs",
+            "apps/majordomus-cli/src/editors/mod.rs",
+            "apps/majordomus-cli/src/generate.rs",
+            "apps/majordomus-cli/src/policy.rs",
+            ".ai/repo/policy.yaml",
+            "share/schemas/majordomus/policy"
+          ],
+          "slug": "a-derive-does-not-depend-on-load",
+          "updated_at": "2026-10-15",
+          "validation": [
+            "cargo test -p majordomus-cli environment::workflows",
+            "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
         "id": "majordomus://issue/I2731",
         "kind": "issue",
         "label": "I2731",
@@ -44775,6 +44844,54 @@
         }
       },
       {
+        "id": "majordomus://issue/I2785",
+        "kind": "issue",
+        "label": "I2785",
+        "summary": "The server recomputes a browser's claimed result with the portable core",
+        "route": "/cockpit/objects/issue/i2785",
+        "source": ".ai/repo/project/issues/I2785.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Every fixture case is answered match with the claimed digest and mismatch with one digit changed",
+            "Every invalid fixture row is answered invalid with its reason",
+            "A caller on another host is answered, and the repository and the execution store are unchanged",
+            "An input over 1 MiB is answered invalid without being read"
+          ],
+          "created_at": "2026-10-17",
+          "current_state": "executions.report stores what a reporter says; nothing recomputes a claim.",
+          "depends_on": [
+            "I2784"
+          ],
+          "desired_state": "POST /api/v1/compute/verify and majordomus_compute_verify judge any claimed canonical digest by recomputing it, for every fixture row, writing nothing.",
+          "evidence_required": [
+            "compute_verify_tests"
+          ],
+          "milestone": "browser-compute",
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/capability/builtin/compute.rs",
+            "apps/majordomus-cli/src/capability/builtin/mod.rs",
+            "apps/majordomus-cli/tests/compute_verify.rs",
+            ".ai/repo/project",
+            "docs",
+            "site",
+            "share"
+          ],
+          "serves": [
+            "a-browser-computes-what-the-server-verifies#the-server-recomputes-a-claim"
+          ],
+          "slug": "the-server-verifies-a-browsers-result",
+          "updated_at": "2026-10-17",
+          "validation": [
+            "majordomus plan validate",
+            "cargo test --lib capability::builtin::compute",
+            "cargo test --test compute_verify"
+          ]
+        }
+      },
+      {
         "id": "majordomus://issue/I2786",
         "kind": "issue",
         "label": "I2786",
@@ -44861,6 +44978,60 @@
           "updated_at": "2026-10-19T15:31:11Z",
           "validation": [
             "majordomus plan validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2788",
+        "kind": "issue",
+        "label": "I2788",
+        "summary": "A page computes the canonical digest in a Worker and shows the server's verdict",
+        "route": "/cockpit/objects/issue/i2788",
+        "source": ".ai/repo/project/issues/I2788.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "/ui/compute is served under the Cockpit's policy, and only the Worker script's response adds 'wasm-unsafe-eval'",
+            "The committed module is served as application/wasm, byte for byte",
+            "The committed module names the digest of the core sources it was built from, that digest is the sources' current one, and the module carries no host path",
+            "The committed module, executed, answers every fixture row",
+            "In a real browser the page computes on request and shows the server's match"
+          ],
+          "created_at": "2026-10-17",
+          "current_state": "The wasm32 module is built and executed only by node in a CI gate; nothing serves it to a browser.",
+          "depends_on": [
+            "I2785"
+          ],
+          "desired_state": "/ui/compute computes in the browser on request and shows the server's recomputation; the served module is the committed one, tied to its sources and judged by the fixture.",
+          "evidence_required": [
+            "ui_compute_tests"
+          ],
+          "milestone": "browser-compute",
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/ui",
+            "apps/majordomus-cli/src/cockpit/assets.rs",
+            "apps/majordomus-cli/src/web",
+            "apps/majordomus-cli/src/bench",
+            "apps/majordomus-cli/tests/ui_compute.rs",
+            "apps/majordomus-core",
+            "share/ui",
+            ".ai/repo",
+            "docs",
+            "site",
+            "test/cases",
+            ".gitattributes"
+          ],
+          "serves": [
+            "a-browser-computes-what-the-server-verifies#a-page-computes-and-the-server-agrees"
+          ],
+          "slug": "a-browser-computes-on-the-page",
+          "updated_at": "2026-10-17",
+          "validation": [
+            "majordomus plan validate",
+            "cargo test --test ui_compute",
+            "cargo test --lib cockpit::assets"
           ]
         }
       },
@@ -89483,6 +89654,32 @@
         }
       },
       {
+        "id": "majordomus://rule/project.a-release-leaves-the-site-better@1",
+        "kind": "rule",
+        "label": "project.a-release-leaves-the-site-better@1",
+        "summary": "A release leaves the site better than it found it",
+        "route": "/cockpit/objects/rule/project-a-release-leaves-the-site-better-1",
+        "source": ".ai/repo/rules/project/a-release-leaves-the-site-better.v1.md",
+        "status": "active",
+        "facts": {
+          "class": "blocking",
+          "depends_on": [
+            "project.release-is-a-projection@2",
+            "project.the-site-offers-the-release-it-published@1",
+            "project.homepage-tells-a-declared-story@2",
+            "project.derived-files-regenerated@1",
+            "project.design-tokens-declared-once@2"
+          ],
+          "tags": [
+            "release",
+            "web",
+            "publication",
+            "design",
+            "projections"
+          ]
+        }
+      },
+      {
         "id": "majordomus://rule/project.a-session-joins-the-cluster-before-it-works@1",
         "kind": "rule",
         "label": "project.a-session-joins-the-cluster-before-it-works@1",
@@ -100202,6 +100399,13 @@
         "source": "test/cases/3160_a_scope_entry_is_one_path.sh"
       },
       {
+        "id": "majordomus://test/test/cases/3170_a_release_leaves_the_site_better.sh",
+        "kind": "test",
+        "label": "test/cases/3170_a_release_leaves_the_site_better.sh",
+        "route": "/cockpit/objects/test/test-cases-3170-a-release-leaves-the-site-better-sh",
+        "source": "test/cases/3170_a_release_leaves_the_site_better.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/3176_a_checkout_serves_the_current_trunk.sh",
         "kind": "test",
         "label": "test/cases/3176_a_checkout_serves_the_current_trunk.sh",
@@ -105226,6 +105430,11 @@
         "label": "commit"
       },
       {
+        "id": "module:compute",
+        "kind": "module",
+        "label": "compute"
+      },
+      {
         "id": "module:continuity",
         "kind": "module",
         "label": "continuity"
@@ -105826,6 +106035,21 @@
         "kind": "projects"
       },
       {
+        "source": "capability:compute.verify",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:compute.verify",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:compute.verify",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
         "source": "capability:continuity.device",
         "target": "projection:cli",
         "kind": "projects"
@@ -106897,6 +107121,26 @@
       },
       {
         "source": "capability:gates.completion",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:gates.headroom",
+        "target": "projection:cli",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:gates.headroom",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:gates.headroom",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:gates.headroom",
         "target": "projection:mcp",
         "kind": "projects"
       },
@@ -108777,6 +109021,21 @@
       },
       {
         "source": "capability:release.next",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:release.site",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:release.site",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:release.site",
         "target": "projection:mcp",
         "kind": "projects"
       },
@@ -131766,6 +132025,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I2730",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2730",
+        "target": "majordomus://milestone/derived-data-integrity",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://issue/I2731",
         "target": "kind:issue",
         "kind": "is_a"
@@ -132056,6 +132325,21 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I2785",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2785",
+        "target": "majordomus://issue/I2784",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2785",
+        "target": "majordomus://milestone/browser-compute",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://issue/I2786",
         "target": "kind:issue",
         "kind": "is_a"
@@ -132078,6 +132362,21 @@
       {
         "source": "majordomus://issue/I2787",
         "target": "majordomus://milestone/development-runtime",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2788",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2788",
+        "target": "majordomus://issue/I2785",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2788",
+        "target": "majordomus://milestone/browser-compute",
         "kind": "belongs_to"
       },
       {
@@ -144326,6 +144625,36 @@
         "kind": "depends_on"
       },
       {
+        "source": "majordomus://rule/project.a-release-leaves-the-site-better@1",
+        "target": "kind:rule",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://rule/project.a-release-leaves-the-site-better@1",
+        "target": "majordomus://rule/project.derived-files-regenerated@1",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.a-release-leaves-the-site-better@1",
+        "target": "majordomus://rule/project.design-tokens-declared-once@2",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.a-release-leaves-the-site-better@1",
+        "target": "majordomus://rule/project.homepage-tells-a-declared-story@2",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.a-release-leaves-the-site-better@1",
+        "target": "majordomus://rule/project.release-is-a-projection@2",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.a-release-leaves-the-site-better@1",
+        "target": "majordomus://rule/project.the-site-offers-the-release-it-published@1",
+        "kind": "depends_on"
+      },
+      {
         "source": "majordomus://rule/project.a-session-joins-the-cluster-before-it-works@1",
         "target": "kind:rule",
         "kind": "is_a"
@@ -147737,6 +148066,11 @@
       },
       {
         "source": "majordomus://test/test/cases/3160_a_scope_entry_is_one_path.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/3170_a_release_leaves_the_site_better.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -152736,6 +153070,11 @@
         "kind": "composes"
       },
       {
+        "source": "module:compute",
+        "target": "capability:compute.verify",
+        "kind": "composes"
+      },
+      {
         "source": "module:continuity",
         "target": "capability:continuity.device",
         "kind": "composes"
@@ -153038,6 +153377,11 @@
       {
         "source": "module:gates",
         "target": "capability:gates.completion",
+        "kind": "composes"
+      },
+      {
+        "source": "module:gates",
+        "target": "capability:gates.headroom",
         "kind": "composes"
       },
       {
@@ -153607,6 +153951,11 @@
       },
       {
         "source": "module:release",
+        "target": "capability:release.site",
+        "kind": "composes"
+      },
+      {
+        "source": "module:release",
         "target": "capability:release.version",
         "kind": "composes"
       },
@@ -153772,8 +154121,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4196,
-      "edges": 9637,
+      "nodes": 4205,
+      "edges": 9665,
       "acyclic": false,
       "truncated": false
     }

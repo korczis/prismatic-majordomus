@@ -20,7 +20,7 @@ use std::collections::BTreeMap;
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex, OnceLock};
 
-use crate::http::router::{Request, Response};
+use crate::http::router::{Body, Request, Response};
 
 /// The directory inside the share directory that holds the Cockpit's files.
 pub const DIR: &str = "cockpit";
@@ -28,9 +28,10 @@ pub const DIR: &str = "cockpit";
 /// The URL prefix every asset is served under.
 pub const PREFIX: &str = "/cockpit/assets/";
 
-/// Media types by file extension. An extension not named here is not served: the Cockpit
-/// ships text, and a directory that grows a binary by accident should not become a file
-/// server.
+/// Media types by file extension. An extension not named here is not served: the surfaces
+/// ship text, and a directory that grows a binary by accident should not become a file
+/// server. The one binary is WebAssembly, named here and in [`BINARY`] on purpose: the
+/// portable core a browser Worker runs (ADR 0170).
 const MEDIA_TYPES: &[(&str, &str)] = &[
     ("css", "text/css; charset=utf-8"),
     ("js", "text/javascript; charset=utf-8"),
@@ -39,7 +40,12 @@ const MEDIA_TYPES: &[(&str, &str)] = &[
     ("map", "application/json"),
     ("svg", "image/svg+xml"),
     ("txt", "text/plain; charset=utf-8"),
+    ("wasm", "application/wasm"),
 ];
+
+/// The extensions whose files are served as the bytes on disk rather than as text: no
+/// UTF-8 is required of them and no import of theirs is rewritten.
+const BINARY: &[&str] = &["wasm"];
 
 /// How long a browser may keep an asset whose URL carries the right digest. A year: the
 /// URL changes when the bytes change, so the entry can never be wrong.
@@ -52,7 +58,7 @@ const VERSION_LEN: usize = 16;
 /// revalidation copies nothing but a pointer.
 #[derive(Debug)]
 struct Loaded {
-    body: String,
+    body: Body,
     media_type: &'static str,
     digest: String,
 }
@@ -150,6 +156,27 @@ impl Assets {
         self.load(name).is_some()
     }
 
+    /// The text of an asset the surface serves, when it is there and is text: what a screen
+    /// reads of a file it describes rather than links (a record beside a binary).
+    ///
+    /// ```
+    /// use majordomus_cli::cockpit::assets::Assets;
+    /// let dir = tempfile::tempdir().unwrap();
+    /// std::fs::create_dir_all(dir.path().join("ui")).unwrap();
+    /// std::fs::write(dir.path().join("ui/record.json"), r#"{"a":1}"#).unwrap();
+    /// std::fs::write(dir.path().join("ui/core.wasm"), [0, 0x61, 0x73, 0x6d]).unwrap();
+    /// let ui = Assets::under(dir.path(), "ui", "/ui/assets/");
+    /// assert_eq!(ui.text("record.json").as_deref(), Some(r#"{"a":1}"#));
+    /// assert_eq!(ui.text("core.wasm"), None, "bytes are not text");
+    /// assert_eq!(ui.text("absent.json"), None);
+    /// ```
+    pub fn text(&self, name: &str) -> Option<String> {
+        match &self.load(name)?.body {
+            Body::Text(text) => Some(text.clone()),
+            Body::Bytes(_) => None,
+        }
+    }
+
     /// The URL a page emits for an asset: the path with the digest of its bytes, so the
     /// URL changes exactly when the file does. An asset that is not there keeps its plain
     /// path, so the 404 names the file a reader should look for.
@@ -240,6 +267,14 @@ impl Assets {
             );
             return None;
         }
+        if is_binary(&relative) {
+            let bytes = std::fs::read(&resolved).ok()?;
+            return Some(Loaded {
+                digest: digest(&bytes),
+                body: Body::Bytes(bytes),
+                media_type,
+            });
+        }
         let mut body = std::fs::read_to_string(&resolved).ok()?;
         if is_script(&relative) {
             body = rewrite_imports(&body, |specifier| {
@@ -253,7 +288,7 @@ impl Assets {
         }
         Some(Loaded {
             digest: digest(body.as_bytes()),
-            body,
+            body: Body::Text(body),
             media_type,
         })
     }
@@ -265,6 +300,12 @@ fn none_match_holds(candidates: &str, etag: &str) -> bool {
     candidates.split(',').map(str::trim).any(|candidate| {
         candidate == "*" || candidate.strip_prefix("W/").unwrap_or(candidate) == etag
     })
+}
+
+/// Is this file served as its bytes ([`BINARY`])?
+fn is_binary(name: &str) -> bool {
+    name.rsplit_once('.')
+        .is_some_and(|(_, extension)| BINARY.contains(&extension))
 }
 
 /// Is this file a script module, whose relative imports are rewritten to digested URLs?
@@ -412,7 +453,8 @@ pub fn safe_name(name: &str) -> Option<String> {
 /// ```
 /// use majordomus_cli::cockpit::assets::media_type;
 /// assert_eq!(media_type("cockpit.css"), Some("text/css; charset=utf-8"));
-/// assert_eq!(media_type("x.wasm"), None);
+/// assert_eq!(media_type("core.wasm"), Some("application/wasm"));
+/// assert_eq!(media_type("x.exe"), None);
 /// assert_eq!(media_type("noextension"), None);
 /// ```
 pub fn media_type(name: &str) -> Option<&'static str> {
@@ -508,6 +550,31 @@ mod tests {
         std::fs::remove_file(cockpit.join("cockpit.css")).expect("remove");
         assert_eq!(assets.respond("cockpit.css", &get("/", &[])).status, 200);
         assert_eq!(version.len(), VERSION_LEN);
+    }
+
+    #[test]
+    fn a_wasm_module_is_served_as_its_bytes() {
+        let dir = tempfile::tempdir().expect("tempdir");
+        let ui = dir.path().join("ui");
+        std::fs::create_dir_all(&ui).expect("mkdir");
+        // the module header, then bytes no UTF-8 reader would accept
+        let bytes = [0x00, 0x61, 0x73, 0x6d, 0x01, 0x00, 0x00, 0x00, 0xff, 0xfe];
+        std::fs::write(ui.join("core.wasm"), bytes).expect("write");
+        let assets = Assets::under(dir.path(), "ui", "/ui/assets/");
+        let url = assets.url("core.wasm");
+        assert!(url.starts_with("/ui/assets/core.wasm?v="), "{url}");
+        let answer = assets.respond("core.wasm", &get("/", &[]));
+        assert_eq!(answer.status, 200);
+        assert_eq!(answer.content_type, "application/wasm");
+        assert_eq!(
+            answer.body.as_bytes(),
+            bytes,
+            "byte for byte, nothing rewritten"
+        );
+        assert!(
+            url.ends_with(&digest(&bytes)[..VERSION_LEN]),
+            "the URL names the bytes"
+        );
     }
 
     #[test]
