@@ -51,3 +51,4 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I2785` | shares .ai/repo/project with I3932; they may not run concurrently |
 | WARN | `scope_conflict` | `I2785` | shares .ai/repo/project with I3970; they may not run concurrently |
 | WARN | `scope_conflict` | `I2785` | shares docs with I4332; they may not run concurrently |
+| WARN | `scope_conflict` | `I2785` | shares .ai/repo/project with I4523; they may not run concurrently |

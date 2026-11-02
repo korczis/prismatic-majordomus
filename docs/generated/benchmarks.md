@@ -9,11 +9,11 @@ Every externally callable operation is a benchmark target, derived from the regi
 
 | scope | required | covered | missing | waived |
 |---|---|---|---|---|
-| direct | 223 | 183 | 0 | 40 |
-| http | 215 | 183 | 0 | 32 |
-| mcp | 209 | 178 | 0 | 31 |
+| direct | 227 | 185 | 0 | 42 |
+| http | 216 | 183 | 0 | 33 |
+| mcp | 212 | 180 | 0 | 32 |
 | system | 14 | 14 | 0 | 0 |
-| total | 661 | 558 | 0 | 103 |
+| total | 669 | 562 | 0 | 107 |
 
 ## Capabilities
 
@@ -21,6 +21,7 @@ Every externally callable operation is a benchmark target, derived from the regi
 |---|---|---|---|---|---|---|---|
 | `artifacts.list` | artifacts | query | process, 8 entries, 5s | covered | covered | covered | `all`, `one-encoding` |
 | `blackboard.snapshot` | blackboard | query | — | covered | covered | covered | `this-checkout`, `addressed` |
+| `board.snapshot` | board | query | — | waived | waived | waived | — |
 | `brief.session` | brief | query | — | covered | covered | covered | `default` |
 | `capabilities.describe` | capabilities | query | process, 512 entries | covered | covered | covered | `repository-info` |
 | `capabilities.list` | capabilities | query | process, 16 entries | covered | covered | covered | `all`, `queries` |
@@ -53,6 +54,9 @@ Every externally callable operation is a benchmark target, derived from the regi
 | `deploy.slug` | deploy | command | — | waived | — | — | — |
 | `design.contrast` | design | query | — | covered | covered | covered | `default` |
 | `design.explain` | design | query | — | covered | covered | covered | `role`, `state` |
+| `design.kit` | design | query | — | covered | covered | — | `policy`, `evidence` |
+| `design.kit.adopt` | design | command | — | waived | — | — | — |
+| `design.licence` | design | query | — | covered | covered | — | `policy` |
 | `design.system` | design | query | — | covered | covered | covered | `default` |
 | `design.tokens` | design | query | — | covered | covered | covered | `all`, `roles` |
 | `devcontext.compile` | devcontext | query | process, 16 entries | covered | covered | covered | `no-seed`, `issue`, `milestone`, `intent`, `source-ranges` |
