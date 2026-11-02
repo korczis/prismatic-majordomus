@@ -6083,11 +6083,11 @@ pub const EXAMPLES: &[CommandExamples] = &[
         command: "proceed plan",
         examples: &[ExampleDoc {
             id: "proceed-plan-json",
-            title: "What to proceed with, and why, when there is nothing to take",
-            description: "The same answer `GET /api/v1/proceed/plan` and the MCP tool `majordomus_proceed_plan` return: the READY issues in the plan's hand-out order, each with the claims that refuse it, the selected one with what it unblocks and the commands that take it, the unfinished issues that wait by status, and whether the board and the mesh could be read. The command line asks the server holding this checkout's lease; this fixture has no server, declares no mesh and no plan, so the decision is composed here, reads the mesh as undeclared rather than unread, selects nothing and exits 10.",
+            title: "What to proceed with, and why",
+            description: "The same answer `GET /api/v1/proceed/plan` and the MCP tool `majordomus_proceed_plan` return: the READY issues in the plan's hand-out order, each with the claims that refuse it, the selected one with what it unblocks and the commands that take it, the unfinished issues that wait by status, and whether the board and the mesh could be read. The command line asks the server holding this checkout's lease; this fixture has no server and declares no mesh, so the decision is composed here and reads the mesh as undeclared rather than unread; its plan has one READY issue, I0001, which nothing refuses, so it is selected with the commands that take it, and the command exits 0.",
             argv: &["proceed", "plan", "--format", "json"],
             setup: &[],
-            expect: Expect::ExitCode(10),
+            expect: Expect::Success,
         }],
     },
     CommandExamples {

@@ -6,7 +6,7 @@
     "version": "1.0.0-alpha.10"
   },
   "registry": {
-    "fingerprint": "a73af9de0258d192a799e1314be2e4652b4003ab92c87fbff15b75b1df745297",
+    "fingerprint": "4409140023e6c9f74f69a722dee6b3b73720970d96c874ea5955214f333ef6e9",
     "summary": {
       "total": 3762,
       "builtin": 226,
@@ -95864,7 +95864,7 @@
     ]
   },
   "index": {
-    "fingerprint": "ca8a0f13dd637350129bfc9369aa57278f735b7ef316b0c196c0a069952e4f24",
+    "fingerprint": "81ccd5f4e98314e99c83cbdb8bfa7d6ed22a08047ef58c10d66eda2862d52104",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -167446,8 +167446,8 @@
             "examples": [
               {
                 "id": "proceed-plan-json",
-                "title": "What to proceed with, and why, when there is nothing to take",
-                "description": "The same answer `GET /api/v1/proceed/plan` and the MCP tool `majordomus_proceed_plan` return: the READY issues in the plan's hand-out order, each with the claims that refuse it, the selected one with what it unblocks and the commands that take it, the unfinished issues that wait by status, and whether the board and the mesh could be read. The command line asks the server holding this checkout's lease; this fixture has no server, declares no mesh and no plan, so the decision is composed here, reads the mesh as undeclared rather than unread, selects nothing and exits 10.",
+                "title": "What to proceed with, and why",
+                "description": "The same answer `GET /api/v1/proceed/plan` and the MCP tool `majordomus_proceed_plan` return: the READY issues in the plan's hand-out order, each with the claims that refuse it, the selected one with what it unblocks and the commands that take it, the unfinished issues that wait by status, and whether the board and the mesh could be read. The command line asks the server holding this checkout's lease; this fixture has no server and declares no mesh, so the decision is composed here and reads the mesh as undeclared rather than unread; its plan has one READY issue, I0001, which nothing refuses, so it is selected with the commands that take it, and the command exits 0.",
                 "argv": [
                   "proceed",
                   "plan",
@@ -167456,7 +167456,7 @@
                 ],
                 "command": "majordomus proceed plan --format json",
                 "setup": [],
-                "expectation": "exits 10"
+                "expectation": "exits 0"
               }
             ],
             "subcommands": []

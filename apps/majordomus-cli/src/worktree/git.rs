@@ -262,8 +262,18 @@ fn wait_bounded(cmd: &mut Command, timeout: Duration) -> std::io::Result<Finishe
             bytes
         })
     };
-    let out = drain(child.stdout.take().map(|p| Box::new(p) as Box<dyn Read + Send>));
-    let err = drain(child.stderr.take().map(|p| Box::new(p) as Box<dyn Read + Send>));
+    let out = drain(
+        child
+            .stdout
+            .take()
+            .map(|p| Box::new(p) as Box<dyn Read + Send>),
+    );
+    let err = drain(
+        child
+            .stderr
+            .take()
+            .map(|p| Box::new(p) as Box<dyn Read + Send>),
+    );
     let deadline = Instant::now() + timeout;
     let waited = loop {
         match child.try_wait() {
@@ -315,14 +325,16 @@ pub fn run_bounded<S: AsRef<OsStr>>(cwd: &Path, args: &[S], timeout: Duration) -
             stderr,
             status: finished.code,
         }),
-        None => Err(WorktreeError::GitCommandFailed {
-            command,
-            status: format!("killed after {}s without finishing", timeout.as_secs()),
-            stderr: format!(
+        None => {
+            Err(WorktreeError::GitCommandFailed {
+                command,
+                status: format!("killed after {}s without finishing", timeout.as_secs()),
+                stderr: format!(
                 "{}; a registration it may have left half-made is cleared by `git worktree prune`",
                 if stderr.is_empty() { "git said nothing" } else { stderr.as_str() }
             ),
-        }),
+            })
+        }
         Some(_) => Err(WorktreeError::GitCommandFailed {
             command,
             status: finished
@@ -546,5 +558,28 @@ mod tests {
             commits_between(repo, "master", "refs/remotes/x/master"),
             None
         );
+    }
+
+    /// A command that outlives its deadline is killed and said to have been ended by it, never
+    /// reported as an exit; one that finishes in time keeps its status, code and output.
+    #[test]
+    fn a_command_past_its_deadline_is_killed_and_said_to_be() {
+        let mut slow = Command::new("sleep");
+        slow.arg("5");
+        let started = Instant::now();
+        let f = wait_bounded(&mut slow, Duration::from_millis(100)).unwrap();
+        assert_eq!(f.status, None, "ended by the deadline");
+        assert_eq!(f.code, None);
+        assert!(
+            started.elapsed() < Duration::from_secs(4),
+            "killed at the deadline, not waited out"
+        );
+
+        let mut quick = Command::new("sh");
+        quick.args(["-c", "printf ok; exit 3"]);
+        let f = wait_bounded(&mut quick, Duration::from_secs(5)).unwrap();
+        assert_eq!(f.status, Some(Some(false)));
+        assert_eq!(f.code, Some(3));
+        assert_eq!(f.stdout, b"ok");
     }
 }

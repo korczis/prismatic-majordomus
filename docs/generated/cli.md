@@ -7199,13 +7199,13 @@ majordomus proceed plan [OPTIONS]
 
 Examples:
 
-- **What to proceed with, and why, when there is nothing to take** — The same answer `GET /api/v1/proceed/plan` and the MCP tool `majordomus_proceed_plan` return: the READY issues in the plan's hand-out order, each with the claims that refuse it, the selected one with what it unblocks and the commands that take it, the unfinished issues that wait by status, and whether the board and the mesh could be read. The command line asks the server holding this checkout's lease; this fixture has no server, declares no mesh and no plan, so the decision is composed here, reads the mesh as undeclared rather than unread, selects nothing and exits 10.
+- **What to proceed with, and why** — The same answer `GET /api/v1/proceed/plan` and the MCP tool `majordomus_proceed_plan` return: the READY issues in the plan's hand-out order, each with the claims that refuse it, the selected one with what it unblocks and the commands that take it, the unfinished issues that wait by status, and whether the board and the mesh could be read. The command line asks the server holding this checkout's lease; this fixture has no server and declares no mesh, so the decision is composed here and reads the mesh as undeclared rather than unread; its plan has one READY issue, I0001, which nothing refuses, so it is selected with the commands that take it, and the command exits 0.
 
   ```console
   $ majordomus proceed plan --format json
   ```
 
-  Verified: exits 10.
+  Verified: exits 0.
 
 <a id="majordomus-proceed-step"></a>
 ## `majordomus proceed step`

@@ -1336,4 +1336,68 @@ mod tests {
             ["proceed", "plan"]
         );
     }
+
+    /// A canned leaseholder answering every request with `status` and `body`; its URL.
+    fn leaseholder(status: u16, body: String) -> String {
+        use std::io::{Read, Write};
+        let listener = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
+        let url = format!("http://{}", listener.local_addr().unwrap());
+        std::thread::spawn(move || {
+            for stream in listener.incoming() {
+                let Ok(mut stream) = stream else { return };
+                let mut buffer = [0u8; 8192];
+                let _ = stream.read(&mut buffer);
+                let _ = stream.write_all(
+                    format!(
+                        "HTTP/1.1 {status} X\r\nContent-Type: application/json\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{}",
+                        body.len(),
+                        body
+                    )
+                    .as_bytes(),
+                );
+            }
+        });
+        url
+    }
+
+    /// The leaseholder's answer is the decision; every way it cannot be read is a reason that
+    /// names the leaseholder, never a decision composed from this process's empty board.
+    #[test]
+    fn forward_returns_the_leaseholders_decision_and_names_each_way_it_fails() {
+        let repo = planned(&[("I0001", &[], &["src/a"])]);
+        let ctx = repo.context().unwrap();
+        let input = ProceedPlanInput {
+            milestone: Some("m one".into()),
+            session: Some("s/1".into()),
+            local: false,
+        };
+        let decided = proceed_plan(
+            &ctx,
+            ProceedPlanInput {
+                local: true,
+                ..ProceedPlanInput::default()
+            },
+        )
+        .unwrap();
+        let ok = leaseholder(200, serde_json::to_string(&decided).unwrap());
+        assert_eq!(forward(&ctx, &ok, &input).unwrap(), decided);
+
+        let old = leaseholder(404, "{}".into());
+        let why = forward(&ctx, &old, &input).unwrap_err();
+        assert!(why.contains("answered 404") && why.contains(&old), "{why}");
+
+        let garbled = leaseholder(200, "not a decision".into());
+        let why = forward(&ctx, &garbled, &input).unwrap_err();
+        assert!(why.contains("cannot read"), "{why}");
+
+        let gone = {
+            let l = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
+            format!("http://{}", l.local_addr().unwrap())
+        };
+        let why = forward(&ctx, &gone, &input).unwrap_err();
+        assert!(
+            why.contains("did not answer") && why.contains(&gone),
+            "{why}"
+        );
+    }
 }
