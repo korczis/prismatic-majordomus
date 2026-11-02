@@ -5,7 +5,7 @@ order: 520
 priority: p1
 problem: "Realising an intent is still a sequence a person runs: /proceed names work but nothing claims it, starts it exactly once, fans it out, reports it or schedules the next step; a stuck or dead loop is found by a person; heavy work starves on one lock; idle servers and deleting pushes cost the machine minutes. The pieces exist as unpushed stacks (I2972-I2976, I3040, ADR 0177) and as Mission Control findings B1 to B6, and none of them is one path."
 outcome: "A session asks /proceed what to do, receives one idempotent work order derived from intent_realization and the claim-aware plan, takes it under a mesh claim held by the run, starts it once, reports it and schedules its own next step until the intent is met; /watchdog wakes, hands over and reaps a stalled loop from deadlines; heavy work shares the machine through one slot."
-current_state: "Planned only. Records I4000 to I4009 and cases 4000 to 4009 exist as plan; no code is written by this milestone's planning pull request."
+current_state: "I4000 to I4005 are built on #2522 (the proceed.step stack, with cases 4000 to 4005); I4006 to I4009 remain planned. proceed take is retired by the owner's decision of 2026-11-02 (ADR 0177 decision 3 amended)."
 desired_state: "Every satisfaction criterion of the intent is proved by its case; no new store, scheduler, journal kind or registry exists; every projection is generated."
 scope:
   - "apps/majordomus-cli/src"

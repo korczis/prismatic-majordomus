@@ -15,20 +15,19 @@ page is wrong and changes in the same commit. The decision is
 the module is [`proceed.rs`](https://github.com/korczis/prismatic-majordomus/blob/@source-ref@/apps/majordomus-cli/src/capability/builtin/proceed.rs) and the
 step is [`proceed/step.rs`](https://github.com/korczis/prismatic-majordomus/blob/@source-ref@/apps/majordomus-cli/src/capability/builtin/proceed/step.rs).
 
-## Two capabilities and a take, one order
+## Two capabilities, one order
 
 <div class="overflow-x-auto" tabindex="0">
 
 | what | command line | what it answers |
 |---|---|---|
 | `proceed.plan` | `majordomus proceed plan` | the decision: the READY issue nothing refuses, every READY issue passed over with the claim that refused it, and the sources read |
-| the take | `majordomus proceed take --session <s>` | the command line's own composition of `proceed.plan`, `mesh.claim`, `worktree create` and `start`: claim, worktree and task for the selection, created once |
 | `proceed.step` | `majordomus proceed step [--intent <id>]` | the step: one work order a loop acts on |
 
 </div>
 
 
-None of them ranks anything of its own. The order is the plan's (`plan.next`: the asked
+Neither ranks anything of its own. What acts on the order is `devtask.implement` ([EXECUTIONS.md](@/docs/executions.md)): its execution holds the issue's claim until the run ends; `proceed take`, an earlier second path, is retired (ADR 0177, decision 3 amended). The order is the plan's (`plan.next`: the asked
 milestone first, then wave, priority, what an issue unblocks, and id); a claim on the board or
 the mesh removes an issue from it without reordering what remains.
 

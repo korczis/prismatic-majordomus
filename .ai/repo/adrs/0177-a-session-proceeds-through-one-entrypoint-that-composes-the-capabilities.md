@@ -86,19 +86,21 @@ What is missing is not another orchestrator. It is:
    holds the two engines to one answer), so `plan.next` and `proceed.plan` keep one order. A weighted score
    (impact, confidence, effort, risk, coordination cost) is a later change that must be
    calibrated against finished work and must show its terms; it is not decided here.
-3. **One command, `proceed take`, acts.** It takes the decision and performs, through the
-   existing capabilities only, the exclusive mesh claim, `worktree create` and `start` bound to
-   the issue (I2974). Every mesh call goes to the primary checkout's server, so a take is held on
-   one runtime whichever checkout asks. The claim is the announcement: a command line has no
-   board session to announce from, and the claim reaches every runtime and the board's mesh
-   projection, while the generated skill announces on the board over MCP. What a session holds
-   is read from a record the take writes into the worktree, not from the claim alone, because
-   a mesh session's key ends with its server run: taken again by the same session, from either
-   checkout, after a restart or after `finish`, it returns that work (re-claiming an expired
-   claim, releasing a finished one) and creates nothing.
-4. **The `/proceed` skill is generated and thin.** `.ai/repo/skills/proceed/` names the
-   command and the existing `implement` skill and holds no rule list, workflow copy or issue
-   list; a change to the capabilities never requires editing it.
+3. **One path acts: the step's work order, carried out by `devtask.implement`.** `proceed.step`
+   (I4005) answers one idempotent work order whose `do` names `devtask.implement` (I4003);
+   that capability runs readiness, preflight, the issue's mesh claim, `worktree create` and one
+   execution, and the execution holds the claim until its run ends (I4004). A repeated start
+   with the same key answers the same execution (I4000), so asking again creates nothing.
+   *Amended 2026-11-02 by the owner's decision:* the earlier `proceed take` (I2974), a second
+   composition of claim, worktree and start that held a caller-side claim and a record of its
+   own in the worktree, is retired and I2974 is cancelled. Two acting paths duplicated the
+   stack instead of extending it, and the second carried most of its uncovered code.
+4. **The `/proceed` skill is generated and thin.** It is generated from the `.skill()`
+   declaration of `proceed.step` (I4005), never written by hand: it names the command and the
+   existing `implement` skill and holds no rule list, workflow copy or issue list; a change to
+   the capabilities never requires editing it, and `generate --check` refuses a hand edit.
+   *Amended 2026-11-02:* it was first planned as `.ai/repo/skills/proceed/`, which cases 3369
+   and 4005 hold to be absent.
 5. **It never lands and never releases.** Delivery stays with the one landing seat and the one
    release seat (ADR 0167): `proceed` ends a finished task by handing its head and receipt to
    the landing seat on the board and the mesh.

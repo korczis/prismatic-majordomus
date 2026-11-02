@@ -394,11 +394,8 @@ pub struct ProceedArgs {
 /// let Command::Proceed(args) = cli.command else { panic!("not the proceed command") };
 /// assert!(matches!(args.command, ProceedCommand::Plan { milestone: None, session: None }));
 ///
-/// // a take is held under a session, which it cannot do without
-/// assert!(Cli::try_parse_from(["majordomus", "proceed", "take"]).is_err());
-/// let cli = Cli::try_parse_from(["majordomus", "proceed", "take", "--session", "s1"]).unwrap();
-/// let Command::Proceed(args) = cli.command else { panic!("not the proceed command") };
-/// assert!(matches!(args.command, ProceedCommand::Take { ref session, .. } if session == "s1"));
+/// // `proceed take` is retired (ADR 0177, decision 3 amended): the step's order acts
+/// assert!(Cli::try_parse_from(["majordomus", "proceed", "take", "--session", "s1"]).is_err());
 ///
 /// // a step takes the intent it serves and the moment it is taken at, both optional
 /// let cli = Cli::try_parse_from(["majordomus", "proceed", "step", "--intent", "i",
@@ -416,15 +413,6 @@ pub enum ProceedCommand {
         /// The mesh session the decision is for, whose own claims are not held against it
         #[arg(long, value_name = "ID")]
         session: Option<String>,
-    },
-    /// Take the decision once: claim the selection exclusively on the primary checkout's server, ensure the issue's canonical worktree, record the take there and start the task bound to the issue in it. The same session taking again, from either checkout, after a restart or after finish, gets that work back (re-claiming an expired claim, releasing a finished one) and creates nothing. Exit 10 when nothing can be selected, 11 when the decision is provisional or no server answers for the primary checkout, 15 when the take is refused; start's own exit is passed through
-    Take {
-        /// The mesh session the work is taken for and held under, on the primary checkout's server
-        #[arg(long, value_name = "ID")]
-        session: String,
-        /// The milestone whose READY issues come first; the active one when absent
-        #[arg(long, value_name = "ID")]
-        milestone: Option<String>,
     },
     /// One step, as one work order, read only: `do` (the capability to run next and its input), `fan_out` (what may run beside it), `report` (what to announce) and `next_due_at` (when to step again); for an intent, `done` once its realisation is met. The same state answers the same order and key. Exit 0 when work is ordered or the order is done, 10 when the step waits
     Step {
@@ -6100,17 +6088,6 @@ pub const EXAMPLES: &[CommandExamples] = &[
             argv: &["proceed", "plan", "--format", "json"],
             setup: &[],
             expect: Expect::ExitCode(10),
-        }],
-    },
-    CommandExamples {
-        command: "proceed take",
-        examples: &[ExampleDoc {
-            id: "proceed-take-no-server",
-            title: "Take nothing while no server holds the primary checkout",
-            description: "A take is held on the primary checkout's server, whichever checkout asks, so that the same session taking again from a worktree or after a restart is told of the work it already took. This fixture runs no server: nothing is claimed, no worktree is created, no task is started, and the command exits 11 and names the command that starts one.",
-            argv: &["proceed", "take", "--session", "s1"],
-            setup: &[],
-            expect: Expect::ExitCode(11),
         }],
     },
     CommandExamples {

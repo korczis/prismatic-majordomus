@@ -865,8 +865,7 @@ fn issue_branch(repo: &crate::cli::RepoArgs, id: &str) -> Result<String> {
     branch_of_issue(app.index(), id)
 }
 
-/// The same branch, read from an index already loaded: `proceed take` creates the issue's
-/// worktree on the branch `worktree create --issue` would.
+/// The same branch, read from an index already loaded.
 pub(crate) fn branch_of_issue(index: &crate::index::Index, id: &str) -> Result<String> {
     let object = index
         .objects

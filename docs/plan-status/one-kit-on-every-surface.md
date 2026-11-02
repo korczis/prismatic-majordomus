@@ -28,11 +28,8 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 
 | level | code | subject | message |
 |---|---|---|---|
-| WARN | `scope_conflict` | `I3793` | shares site/kit.js with I3820; they may not run concurrently |
-| WARN | `scope_conflict` | `I3793` | shares site/kit.js with I3829; they may not run concurrently |
 | WARN | `scope_conflict` | `I3793` | shares scripts/ci/design-check with I4306; they may not run concurrently |
 | WARN | `scope_conflict` | `I3793` | shares scripts/ci/design-check with I4316; they may not run concurrently |
 | WARN | `scope_conflict` | `I3793` | shares site/kit.js with I4400; they may not run concurrently |
 | WARN | `scope_conflict` | `I3793` | shares scripts/ci/design-check with I4468; they may not run concurrently |
-| WARN | `scope_conflict` | `I3795` | shares docs/DESIGN_SYSTEM.md with I3820; they may not run concurrently |
 | WARN | `scope_conflict` | `I3795` | shares docs/DESIGN_SYSTEM.md with I4400; they may not run concurrently |

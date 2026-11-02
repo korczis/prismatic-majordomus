@@ -2,8 +2,9 @@
 # /proceed is a generated skill that names only the command (I2975, ADR 0177 decision 4),
 # and since I4005 it is generated from the declaration of `proceed.step` itself.
 #
-# The decision, the take and the step belong to `proceed.plan`, `majordomus proceed take` and
-# `proceed.step`; the skill only says to run the step and what to do with its order. A skill
+# The decision and the step belong to `proceed.plan` and `proceed.step` (`proceed take` is
+# retired, ADR 0177 decision 3 amended); the skill only says to run the step and what to do
+# with its order. A skill
 # that restated a rule, a workflow step or an issue would be a second copy of something the
 # repository already says, and would go stale the first time that changed. So this case judges
 # every projected /proceed the way a reviewer would, and every judgement is mechanical:
@@ -29,9 +30,10 @@ jq -r '.. | objects | select(has("path") and has("usage")) | .path[1:] | join(" 
   | sed '/^$/d' > "$T/rust.txt"
 jq -r '.commands[].name' "$SHELL_COMMANDS" > "$T/shell.txt"
 [ -s "$T/rust.txt" ] && [ -s "$T/shell.txt" ] || { echo "    a command catalogue read empty"; exit 1; }
-for path in 'proceed plan' 'proceed take' 'proceed step'; do
+for path in 'proceed plan' 'proceed step'; do
   grep -qx "$path" "$T/rust.txt" || { echo "    the Rust executable declares no $path"; exit 1; }
 done
+! grep -qx 'proceed take' "$T/rust.txt" || { echo "    proceed take is retired, yet the Rust executable declares it"; exit 1; }
 
 # judge <file>: prints one line per finding, nothing for a thin skill
 judge() {

@@ -9,7 +9,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 
 | milestone | status | done of required | ready | blocked | active | verify | cancelled | outcome |
 |---|---|---|---|---|---|---|---|---|
-| [a-session-proceeds](https://majordomus.dev/plan/a-session-proceeds/) | PLANNED | 0/9 | 2 | 7 | 0 | 0 | 0 | `/proceed` in any session runs `majordomus proceed`: one explained decision from the existing capabilities, an exclusive claim, a worktree and a task bound to the chosen issue, the implement skill, finish, and a receipt handed to the landing seat; said again with nothing changed it creates nothing. |
+| [a-session-proceeds](https://majordomus.dev/plan/a-session-proceeds/) | PLANNED | 0/8 | 2 | 6 | 0 | 0 | 1 | `/proceed` in any session runs `majordomus proceed`: one explained decision from the existing capabilities, an exclusive claim, a worktree and a task bound to the chosen issue, the implement skill, finish, and a receipt handed to the landing seat; said again with nothing changed it creates nothing. |
 
 ## Issues
 
@@ -17,7 +17,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 |---|---|---|---|---|
 | [I2972](https://majordomus.dev/plan/i2972/) | READY | 0 | — | One query decides what a session proceeds with, and says why |
 | [I2973](https://majordomus.dev/plan/i2973/) | BLOCKED | 1 | I2972 | The choice ranks by what it unblocks |
-| [I2974](https://majordomus.dev/plan/i2974/) | BLOCKED | 2 | I2973 | Proceeding claims and starts the chosen work once |
+| [I2974](https://majordomus.dev/plan/i2974/) | CANCELLED | 2 | I2973 | Proceeding claims and starts the chosen work once |
 | [I2975](https://majordomus.dev/plan/i2975/) | BLOCKED | 3 | I2974 | /proceed is a generated skill that names only the command |
 | [I2976](https://majordomus.dev/plan/i2976/) | BLOCKED | 3 | I2974 | Two sessions proceeding at once never hold the same work |
 | [I2977](https://majordomus.dev/plan/i2977/) | BLOCKED | 3 | I2974 | A session whose work stopped is resumed, never duplicated |
@@ -62,7 +62,6 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I2972` | shares apps/majordomus-cli/src/capability/builtin with I3771; they may not run concurrently |
 | WARN | `scope_conflict` | `I2972` | shares apps/majordomus-cli/src/capability/builtin with I3774; they may not run concurrently |
 | WARN | `scope_conflict` | `I2972` | shares apps/majordomus-cli/src/capability/builtin with I3810; they may not run concurrently |
-| WARN | `scope_conflict` | `I2972` | shares apps/majordomus-cli/src/commands with I3829; they may not run concurrently |
 | WARN | `scope_conflict` | `I2972` | shares apps/majordomus-cli/src/commands with I3835; they may not run concurrently |
 | WARN | `scope_conflict` | `I2972` | shares apps/majordomus-cli/src/capability/builtin with I3941; they may not run concurrently |
 | WARN | `scope_conflict` | `I2972` | shares apps/majordomus-cli/src/capability/builtin with I3961; they may not run concurrently |
@@ -80,8 +79,6 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I2972` | shares apps/majordomus-cli/src/capability/builtin with I4346; they may not run concurrently |
 | WARN | `scope_conflict` | `I2972` | shares apps/majordomus-cli/src/capability/builtin with I4349; they may not run concurrently |
 | WARN | `scope_conflict` | `I2972` | shares apps/majordomus-cli/src/plan.rs with I4350; they may not run concurrently |
-| WARN | `scope_conflict` | `I2972` | shares apps/majordomus-cli/src/capability/builtin with I4352; they may not run concurrently |
-| WARN | `scope_conflict` | `I2972` | shares apps/majordomus-cli/src/capability/builtin with I4381; they may not run concurrently |
 | WARN | `scope_conflict` | `I2972` | shares apps/majordomus-cli/src/capability/builtin with I4417; they may not run concurrently |
 | WARN | `scope_conflict` | `I2972` | shares apps/majordomus-cli/src/cli.rs with I4418; they may not run concurrently |
 | WARN | `scope_conflict` | `I2972` | shares apps/majordomus-cli/src/capability/builtin with I4460; they may not run concurrently |
@@ -131,8 +128,6 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I3040` | shares apps/majordomus-cli/src/capability/builtin with I4343; they may not run concurrently |
 | WARN | `scope_conflict` | `I3040` | shares apps/majordomus-cli/src/capability/builtin with I4346; they may not run concurrently |
 | WARN | `scope_conflict` | `I3040` | shares apps/majordomus-cli/src/capability/builtin with I4349; they may not run concurrently |
-| WARN | `scope_conflict` | `I3040` | shares apps/majordomus-cli/src/capability/builtin with I4352; they may not run concurrently |
-| WARN | `scope_conflict` | `I3040` | shares apps/majordomus-cli/src/capability/builtin with I4381; they may not run concurrently |
 | WARN | `scope_conflict` | `I3040` | shares apps/majordomus-cli/src/capability/builtin with I4417; they may not run concurrently |
 | WARN | `scope_conflict` | `I3040` | shares apps/majordomus-cli/src/cli.rs with I4418; they may not run concurrently |
 | WARN | `scope_conflict` | `I3040` | shares apps/majordomus-cli/src/capability/builtin with I4460; they may not run concurrently |

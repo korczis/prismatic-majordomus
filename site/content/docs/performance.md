@@ -55,7 +55,12 @@ milliseconds; a thousand of them cost the tool its users. The fixes are the same
   documents and the site generator read that way;
 - nothing per row that forks: the tab for `IFS` is computed once (`MJ_TAB`), a substring
   replaces a `cut`, and the generator's JSON strings and arrays are built by `jstr`,
-  `jarr` and `jline` instead of a jq per value.
+  `jarr` and `jline` instead of a jq per value;
+- the executable has the same shape: a read that chooses one record of many chooses from
+  what every record already says (its front matter), and only the chosen one is asked what
+  costs a `git` process — its ancestry, a diff. A served read pays a process per question,
+  and a process costs whatever the machine's load makes it cost, so a question asked per
+  candidate turns a page into a minute on a busy machine (`continuity.state`, I4243).
 
 The measured deltas of each step are in the commit messages (`git log --grep perf`), the
 accepted state is `baseline.json` under `.ai/repo/benchmarks/` once one is written, and the history of local runs is under `.ai/local/benchmarks/`. This
