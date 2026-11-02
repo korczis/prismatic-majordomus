@@ -5,7 +5,7 @@ template = "page.html"
 [extra]
 lang = "cs"
 translated_from = "seats-not-names/"
-source_digest = "5b26414f155534e79c5587a3457a7c8faf3d2188b7f4151836050397fc9ad48c"
+source_digest = "ba64b391f7679aa9b77b23e0cb16dff20bfb0c5860c12687d17422c5e6f746d7"
 related = ["vsechno-v-jednom-proudu/", "teze/", "vlozene-zadani-se-stava-planem/", "plan-se-napadne-driv-nez-se-postavi/", "zabrano-driv-nez-se-stavi/", "mnoho-stroju-jeden-denik/"]
 [extra.translations]
 en = "seats-not-names/"
@@ -33,7 +33,7 @@ Vlastník repozitáře sessions to ráno odpověděl několika řádky v češti
 
 První rozhodnutí se týkalo toho, kdo co dělá. Integrace potřebuje několik rolí, které smí v jednu chvíli držet jen jedna session: někdo přistává, někdo vydává. Nejjednodušší je zapsat to jménem do dokumentu: „vydává session 9c“. Jenže to jméno přestane platit ve chvíli, kdy se session znovu připojí pod jinou identitou, spadne nebo práci předá, a nic si toho nevšimne.
 
-Role je proto **křeslo** (seat) a křeslo se drží tak, že se drží exkluzivní claim na meshi, a nijak jinak. Claim už je podepsaná událost, kterou replikuje každý stroj, která žije jen tak dlouho jako heartbeat její session a kterou jiná session nemůže vzít, dokud ji drží. Pravidlo [project.the-cooperation-model-is-the-owners-word](@/rules/project-the-cooperation-model-is-the-owners-word-2.md) jmenuje čtyři křesla:
+Role je proto **křeslo** (seat) a křeslo se drží tak, že se drží exkluzivní claim na meshi, a nijak jinak. Claim už je podepsaná událost, kterou replikuje každý stroj, která žije jen tak dlouho jako heartbeat její session a kterou jiná session nemůže vzít, dokud ji drží. Pravidlo [project.the-cooperation-model-is-the-owners-word](@/rules/project-the-cooperation-model-is-the-owners-word-3.md) jmenuje čtyři křesla:
 
 <div class="overflow-x-auto" tabindex="0">
 

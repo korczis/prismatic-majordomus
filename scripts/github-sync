@@ -32,7 +32,7 @@
 # before the marker existed is matched by its title once, reported as an adoption, and given
 # a marker by --apply.
 #
-# States. Every finding about a body is one of six, from two independent questions: has a
+# States. Every finding about a body is one of five, from two independent questions: has a
 # person rewritten the region since it was posted, and has the canonical record moved since?
 #
 #   insync    intact and current
@@ -40,7 +40,25 @@
 #   edited    a person rewrote the region; --apply refuses without --force
 #   conflict  a person rewrote it and the canonical record has moved; --apply refuses
 #   adopt     no identity marker; matched by title this once, and --apply writes one
-#   missing   no counterpart on GitHub at all
+#
+# A record with no counterpart on GitHub at all is one of two, because --apply must treat
+# them oppositely (I4290):
+#
+#   never-created     GitHub never carried it; --apply creates it
+#   deleted-remotely  GitHub carried it and a person deleted it there; --apply refuses to
+#                     create it again until a person decides, by naming it in
+#                     MJ_GH_RECREATE (ids separated by spaces or commas)
+#
+# Which of the two is read from what both sides already record, so nothing is stored for it.
+# Every projected record GitHub serves says when it was created, and the newest of those is
+# the last apply that created anything: an apply creates every record it finds missing, so a
+# record that reached the trunk before that moment was created by it or by an earlier one.
+# A record that reached the trunk later, a remote that carries no projected record yet (the
+# first apply of an adopting repository), and a record whose arrival the history cannot date
+# (a shallow clone) all read never-created, which is what `missing` used to mean for every
+# absence. What this cannot tell apart: a record an apply failed to create (a FAIL line, a
+# red run) whose remote then moved on reads deleted-remotely, and is refused rather than
+# created twice; naming it in MJ_GH_RECREATE creates it.
 #
 # and, of a remote record rather than a canonical one, `unmanaged`: an issue claiming a
 # canonical id this repository does not have.
@@ -233,15 +251,17 @@ PACE="${MJ_GH_PACE:-1}"
 pace() { [ "$MODE" = apply ] && [ "$PACE" != 0 ] && sleep "$PACE"; return 0; }
 
 # The remote's milestones and issues, one row each, in the shape a fixture carries too:
-#   milestones  number, title, state
-#   issues      number, title, state, body (base64), milestone title, record identity
+#   milestones  number, title, state, created (UTC)
+#   issues      number, title, state, body (base64), milestone title, record identity, created (UTC)
 # The issues come from `gh issue list`, which reads GraphQL and carries no pull request.
+# `created` is the last column so that a fixture written before it existed still reads: a row
+# without it says nothing about when the remote was projected (see the States above).
 #
 # A listing that failed is not an empty remote. Read as empty, every record would be
 # reported missing, the gate would count a ratchet breach where it should say it cannot
 # read, and an apply would create every issue a second time.
-GH_MS_JQ='[(.number|tostring), .title, .state] | @tsv'
-GH_IS_JQ='[(.number|tostring), .title, (.state|ascii_downcase), (.body // "" | @base64), (.milestone.title // ""), ((.body // "") | [scan("majordomus:record ([A-Za-z0-9_.-]+)")] | if length > 0 then .[0][0] else "" end)] | @tsv'
+GH_MS_JQ='[(.number|tostring), .title, .state, (.created_at // "")] | @tsv'
+GH_IS_JQ='[(.number|tostring), .title, (.state|ascii_downcase), (.body // "" | @base64), (.milestone.title // ""), ((.body // "") | [scan("majordomus:record ([A-Za-z0-9_.-]+)")] | if length > 0 then .[0][0] else "" end), (.createdAt // "")] | @tsv'
 unreadable() {
   echo "github-sync: could not list the $1 of $REPO; nothing was read and nothing was changed (reproduce: gh api repos/$REPO/$1)" >&2
   exit 12
@@ -254,7 +274,7 @@ gh_list_remote() {
   # so most issues read as missing and an --apply created 487 duplicates (I3920). A listing
   # shorter than the repository's own count is therefore unreadable, never a set of absences.
   gh issue list --repo "$REPO" --state all --limit 1000000 \
-    --json number,title,state,body,milestone \
+    --json number,title,state,body,milestone,createdAt \
     --jq ".[] | $GH_IS_JQ" \
     > "$REMOTE_IS" 2>/dev/null || unreadable issues
   want_issues="$(gh api graphql -f owner="${REPO%%/*}" -f name="${REPO#*/}" \
@@ -879,6 +899,47 @@ else
   gh_list_remote
 fi
 
+# ---------------------------------------------------------------- what GitHub once carried
+# The two absences (never-created, deleted-remotely; the States above) are told apart by two
+# moments both sides already record. PROJECTED_AT is the newest creation GitHub reports for a
+# projected record: an issue carrying an identity marker, or a milestone titled `<id> — `.
+# LANDED maps each canonical record to when its file first reached the trunk, read from the
+# trunk's first-parent history, so a record merged with its pull request is dated by the merge
+# and not by the branch commit that wrote it. Both are UTC in one format, so they compare as
+# text. No trunk (a fixture repository with no remote) falls back to HEAD; no history for a
+# record leaves it undated, and an undated record is never-created.
+PROJECTED_AT="$(
+  { awk -F'\t' '$6 != "" && $7 != "" { print $7 }' "$REMOTE_IS"
+    awk -F'\t' '$2 ~ /^[^ ]+ — / && $4 != "" { print $4 }' "$REMOTE_MS"; } | LC_ALL=C sort | tail -n 1
+)"
+LANDED="$(mktemp "${TMPDIR:-/tmp}/mj.landed.XXXXXX")"
+trap 'rm -f "$REMOTE_MS" "$REMOTE_IS" "$LANDED"; apply_unlock; mj_cleanup' EXIT
+landed_ref="$(git -C "$MJ_ROOT" symbolic-ref -q "refs/remotes/$GH_REMOTE/HEAD" 2>/dev/null)" || landed_ref=""
+[ -n "$landed_ref" ] || landed_ref=HEAD
+if [ -n "$PROJECTED_AT" ]; then
+  TZ=UTC0 git -C "$MJ_ROOT" log --first-parent --diff-merges=first-parent --diff-filter=A --name-only \
+    --format='@%cd' --date=format-local:'%Y-%m-%dT%H:%M:%SZ' "$landed_ref" -- \
+    "$MJ_PROJECT_DIR/issues" "$MJ_PROJECT_DIR/milestones" 2>/dev/null \
+    | awk '/^@/ { at = substr($0, 2); next }
+           NF   { n = $0; sub(/.*\//, "", n); sub(/\.yaml$/, "", n); first[n] = at }
+           END  { for (n in first) print n "\t" first[n] }' > "$LANDED" || : > "$LANDED"
+fi
+
+# never-created or deleted-remotely, for a record GitHub does not serve. The log is newest
+# first, so the last date awk kept for a record is the oldest: its arrival on the trunk.
+absence_of() {
+  local at
+  at="$(awk -F'\t' -v k="$1" '$1 == k { print $2; exit }' "$LANDED")"
+  if [ -n "$at" ] && [ -n "$PROJECTED_AT" ] && ! [[ "$at" > "$PROJECTED_AT" ]]; then
+    printf 'deleted-remotely\t%s' "$at"
+  else
+    printf 'never-created\t%s' "$at"
+  fi
+}
+# A person decided a deleted-remotely record is to be created again.
+recreate_decided() { case " $(printf '%s' "${MJ_GH_RECREATE:-}" | tr ',' ' ') " in *" $1 "*) return 0 ;; esac; return 1; }
+REFUSED=0
+
 remote_issue_number()     { remote_issue_line "$1" | cut -f1; }
 remote_issue_state()      { remote_issue_line "$1" | cut -f3; }
 remote_issue_body()       { remote_issue_line "$1" | cut -f4 | base64 --decode 2>/dev/null || true; }
@@ -976,9 +1037,18 @@ for id in $(selected_milestones); do
   desc="$(printf '%s — %s. Canonical: .ai/repo/project/milestones/%s.yaml' \
     "$(mj_pj_m_status "$id")" "$(mj_pj_get "$id" outcome)" "$id" | cut -c1-980)"
   if [ -z "$num" ]; then
-    note DRIFT missing "milestone $id is not on GitHub"
+    absence="$(absence_of "$id")"; at="${absence#*$'\t'}"; absence="${absence%%$'\t'*}"
+    if [ "$absence" = deleted-remotely ] && ! recreate_decided "$id"; then
+      note DRIFT deleted-remotely "milestone $id was on GitHub (on the trunk since $at, before the projection of $PROJECTED_AT) and is not any more; --apply creates it again only when a person names it: MJ_GH_RECREATE=$id"
+      if [ "$MODE" = apply ]; then
+        note REFUSED created "milestone $id — deleted on GitHub; nothing was written"
+        REFUSED=$((REFUSED + 1))
+      fi
+      continue
+    fi
+    note DRIFT "$absence" "milestone $id is not on GitHub; --apply creates it"
     if [ "$MODE" = apply ]; then
-      applied created "milestone $id" "the canonical record has no counterpart on GitHub" \
+      applied created "milestone $id" "the canonical record has no counterpart on GitHub ($absence)" \
         gh api -X POST "repos/$REPO/milestones" -f title="$(title_of "$id")" -f description="$desc" ${due[@]+"${due[@]}"}
       pace
     fi
@@ -1015,7 +1085,16 @@ for id in $(selected_issues); do
   want_state="$(state_of "$id")"
   ms="$(mj_pj_col I "$id" 3)"
   if [ -z "$num" ]; then
-    note DRIFT missing "issue $id is not on GitHub"
+    absence="$(absence_of "$id")"; at="${absence#*$'\t'}"; absence="${absence%%$'\t'*}"
+    if [ "$absence" = deleted-remotely ] && ! recreate_decided "$id"; then
+      note DRIFT deleted-remotely "issue $id was on GitHub (on the trunk since $at, before the projection of $PROJECTED_AT) and is not any more; --apply creates it again only when a person names it: MJ_GH_RECREATE=$id"
+      if [ "$MODE" = apply ]; then
+        note REFUSED created "issue $id — deleted on GitHub; nothing was written"
+        REFUSED=$((REFUSED + 1))
+      fi
+      continue
+    fi
+    note DRIFT "$absence" "issue $id is not on GitHub; --apply creates it"
     if [ "$MODE" = apply ]; then
       tmp="$(mktemp "${TMPDIR:-/tmp}/mj.body.XXXXXX")"; printf '%s\n' "$body" > "$tmp"
       # A refused creation is a FAIL line, not the end of the run: under `set -e` the bare
@@ -1138,6 +1217,10 @@ printf '\ngithub-sync %s: %s drift finding(s)\n' "$MODE" "$DRIFT"
 if [ "$FAILED" -gt 0 ]; then
   printf 'github-sync apply: %s mutation(s) failed (the FAIL lines above); the remote is partly applied. Fix the cause and run --apply again: it creates nothing twice.\n' "$FAILED" >&2
   exit 13
+fi
+if [ "$REFUSED" -gt 0 ]; then
+  printf 'github-sync apply: %s record(s) deleted on GitHub were not created again (the REFUSED lines above); everything else was applied. A person decides each: name it in MJ_GH_RECREATE to create it again, or remove the canonical record.\n' "$REFUSED" >&2
+  exit 15
 fi
 [ "$MODE" = check ] && [ "$DRIFT" -gt 0 ] && exit 11
 exit 0

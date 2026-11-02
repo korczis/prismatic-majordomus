@@ -18,11 +18,14 @@
 #   unmanaged  a remote issue claims a canonical id this repository does not have
 #   state      the remote's open/closed disagrees with the derived status
 #   milestone  the remote's milestone assignment disagrees
+#   deleted-remotely  GitHub carried the record and a person deleted it there; --apply
+#              refuses to create it again until a person decides (I4290)
 #
 # The states that are the known backlog of a projection that stopped being applied are
 # ratcheted against a baseline, so the gate lands green today and refuses any increase:
 #
-#   missing    a canonical record with no counterpart on GitHub
+#   never-created  a canonical record GitHub never carried (the adapter's `missing` before
+#              I4290; a baseline that still names `missing` is read as its ceiling)
 #   adopt      a counterpart carrying no identity marker
 #
 # The baseline shrinks to zero when the backfill runs; it may never grow. Writing it is a
@@ -49,7 +52,7 @@
 #                   the remedy. The trunk is a run whose GITHUB_REF is the default branch,
 #                   or, with no CI event, a HEAD the remote's default branch contains.
 #
-# `missing` waits for the same apply, for the same two sets, when the record is one the
+# `never-created` waits for the same apply, for the same two sets, when the record is one the
 # head or the young landing ADDED: a record whose file is not in the reference commit has no
 # counterpart on GitHub because nothing has projected it yet, and the ratchet counted it as
 # backlog. A pull request that adds a record was red from birth, exactly as one that edited
@@ -122,8 +125,8 @@ set -e
 
 lines_of() { grep -E "^DRIFT  $1 " "$out" || true; }
 count_of() { grep -cE "^DRIFT  $1 " "$out" || true; }
-REFUSED="behind edited conflict unmanaged state milestone closed"
-RATCHET="missing adopt"
+REFUSED="behind edited conflict unmanaged state milestone closed deleted-remotely"
+RATCHET="never-created adopt"
 # What an apply from the trunk writes, and therefore what can be waiting for one.
 PENDABLE="behind state milestone closed"
 
@@ -282,12 +285,18 @@ split_lines() { # <state> <pending|held>
 
 # Nothing is measured until something could be pending: a tree with no such drift costs
 # what it always cost, and prints what it always printed.
-baseline_of() { local b; b="$(awk -v s="$1" '$1==s { print $2; exit }' "$BASELINE")"; printf '%s' "${b:-0}"; }
+# A baseline written before I4290 names `never-created` by its old word, `missing`.
+baseline_of() {
+  local b
+  b="$(awk -v s="$1" '$1==s { print $2; exit }' "$BASELINE")"
+  [ -n "$b" ] || [ "$1" != never-created ] || b="$(awk '$1=="missing" { print $2; exit }' "$BASELINE")"
+  printf '%s' "${b:-0}"
+}
 waiting=0
 for s in $PENDABLE; do waiting=$((waiting + $(count_of "$s"))); done
-# a `missing` over its ceiling is measured too: the excess may be what this tree added
+# a `never-created` over its ceiling is measured too: the excess may be what this tree added
 over=0
-if [ "$(count_of missing)" -gt "$(baseline_of missing)" ]; then over=1; fi
+if [ "$(count_of never-created)" -gt "$(baseline_of never-created)" ]; then over=1; fi
 if [ "$waiting" -gt 0 ] || [ "$over" = 1 ]; then
   decide_reference
   if [ "$KIND" = none ]; then
@@ -337,14 +346,14 @@ done
 for s in $RATCHET; do
   n="$(count_of "$s")"
   b="$(baseline_of "$s")"
-  # The missing records this tree added wait for the apply and are not backlog. The ids are
+  # The never-created records this tree added wait for the apply and are not backlog. The ids are
   # read in BEGIN, as in split_lines: an empty list must make no line pending.
   waits=""; p=0; held="$(lines_of "$s")"
-  if [ "$s" = missing ] && [ -s "$ADDED" ]; then
-    waits="$(lines_of missing | awk -v list="$ADDED" '
+  if [ "$s" = never-created ] && [ -s "$ADDED" ]; then
+    waits="$(lines_of "$s" | awk -v list="$ADDED" '
       BEGIN { while ((getline id < list) > 0) c[id] = 1 }
       ($4 in c)')"
-    held="$(lines_of missing | awk -v list="$ADDED" '
+    held="$(lines_of "$s" | awk -v list="$ADDED" '
       BEGIN { while ((getline id < list) > 0) c[id] = 1 }
       !($4 in c)')"
     p="$(printf '%s' "$waits" | grep -c . || true)"

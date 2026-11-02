@@ -39,7 +39,7 @@ expect_grep 'left out unrecorded: no recorded duration'
 expect_grep 'left out too-slow: CI recorded 400s, over the 15s a push spends on one gate'
 expect_grep 'left out budget-b: 12s more would pass the 20s budget for gates'
 expect_grep '  ok     budget-a'
-expect_grep 'failed: cheap-fails. CI would refuse this push for the same reason, and CI holds the verdict'
+expect_grep 'failed: cheap-fails\. CI would refuse this push for the same reason\.$'
 expect_grep 'against a bound of 180s'
 # without the failing gate, the push goes on
 plan_with "$(gate cheap-ok true false)" "$(gate networked true true)"
