@@ -30,4 +30,21 @@ evidence_required:
 depends_on: []
 serves: []
 created_at: 2026-10-29
-updated_at: 2026-10-29
+updated_at: 2026-11-01T04:32:24Z
+started_at: 2026-11-01T04:28:48Z
+started_event: sha256:1e498d6dca675d4e29b570ddf59444b5697ca27427423379be83a6c9ca5bca8a
+completed_at: 2026-11-01T04:32:24Z
+completed_event: sha256:b44f2f37920133a5732cac37a8a8ff7cc64feab6629cda3f7b47b76ecb2863fa
+evidence:
+  - covers: "test"
+    type: test
+    command: "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib economics && bin/majordomus plan validate"
+    result: "delivered by d2dceb66122 on master: economics 93 passed, 0 failed, plan validate passes; run on imac at master aca6f182b41 (clippy -D warnings is master CI's rust job)"
+    commit: aca6f182b4175a0da20878211103eff3801132f1
+    recorded_at: 2026-11-01T04:31:42Z
+  - covers: "rust"
+    type: test
+    command: "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib economics && bin/majordomus plan validate"
+    result: "delivered by d2dceb66122 on master: economics 93 passed, 0 failed, plan validate passes; run on imac at master aca6f182b41 (clippy -D warnings is master CI's rust job)"
+    commit: aca6f182b4175a0da20878211103eff3801132f1
+    recorded_at: 2026-11-01T04:32:02Z

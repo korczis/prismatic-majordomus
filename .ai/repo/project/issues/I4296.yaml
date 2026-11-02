@@ -24,4 +24,15 @@ evidence_required:
   - ci
 risk: "A blobless clone fetches a blob lazily the first time a gate reads file contents from history; a gate that walks many past files would turn one slow fetch into many. Today's structure gates read one past file (the release registry), so the cost is one round trip."
 created_at: 2026-10-28
-updated_at: 2026-10-28
+updated_at: 2026-11-01T04:19:12Z
+started_at: 2026-11-01T04:18:18Z
+started_event: sha256:61a300831939dca707bfd37b6d33e6d2d6cabb33a80389fdd035a12f3675e1b3
+completed_at: 2026-11-01T04:19:12Z
+completed_event: sha256:a7690609f08ee20cefe00a9925e5e7ff0dc654b3f41cfb6ca0a4f0b33e5c7bd5
+evidence:
+  - covers: "ci"
+    type: test
+    command: "actionlint .github/workflows/validate.yml && scripts/ci/step-bound-check && bin/majordomus plan validate"
+    result: "delivered by 77155f4137c on master: actionlint clean, step-bound-check passes (every full-history checkout bounded), plan validate passes, at master aca6f182b41"
+    commit: aca6f182b4175a0da20878211103eff3801132f1
+    recorded_at: 2026-11-01T04:18:55Z

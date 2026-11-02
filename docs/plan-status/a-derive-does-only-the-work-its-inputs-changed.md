@@ -57,7 +57,6 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I2521` | shares .ai/repo/benchmarks with I3307; they may not run concurrently |
 | WARN | `scope_conflict` | `I2521` | shares .ai/repo/project/issues/I2521.yaml with I3373; they may not run concurrently |
 | WARN | `scope_conflict` | `I2521` | shares docs/PERFORMANCE.md with I3442; they may not run concurrently |
-| WARN | `scope_conflict` | `I2521` | shares docs/PERFORMANCE.md with I3820; they may not run concurrently |
 | WARN | `scope_conflict` | `I2521` | shares .ai/repo/benchmarks with I3861; they may not run concurrently |
 | WARN | `scope_conflict` | `I2521` | shares docs/PERFORMANCE.md with I4306; they may not run concurrently |
 | WARN | `scope_conflict` | `I2521` | shares scripts/derive with I4512; they may not run concurrently |
@@ -85,12 +84,8 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I2867` | shares .github/workflows/validate.yml with I3931; they may not run concurrently |
 | WARN | `scope_conflict` | `I2867` | shares .github/workflows/validate.yml with I3936; they may not run concurrently |
 | WARN | `scope_conflict` | `I2867` | shares .github/workflows/validate.yml with I3973; they may not run concurrently |
-| WARN | `scope_conflict` | `I2867` | shares .github/workflows/validate.yml with I4296; they may not run concurrently |
-| WARN | `scope_conflict` | `I2867` | shares .github/workflows/validate.yml with I4338; they may not run concurrently |
 | WARN | `scope_conflict` | `I2867` | shares .github/workflows/validate.yml with I4347; they may not run concurrently |
 | WARN | `scope_conflict` | `I2867` | shares .github/workflows/validate.yml with I4349; they may not run concurrently |
 | WARN | `scope_conflict` | `I2867` | shares .github/workflows/validate.yml with I4357; they may not run concurrently |
-| WARN | `scope_conflict` | `I2867` | shares .github/workflows/pages.yml with I4380; they may not run concurrently |
-| WARN | `scope_conflict` | `I2867` | shares .github/workflows/validate.yml with I4381; they may not run concurrently |
 | WARN | `scope_conflict` | `I2867` | shares lib/usecase.sh with I4462; they may not run concurrently |
 | WARN | `scope_conflict` | `I2867` | shares lib/usecase.sh with I4468; they may not run concurrently |
