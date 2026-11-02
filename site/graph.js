@@ -38,7 +38,25 @@
     // share/design/surface.css declared these names, nothing did, so every lookup here
     // missed and the drawing was painted from the literals that used to sit in this
     // function — while the comment above said the palette came from the page.
-    function v(name) { var x = s.getPropertyValue(name).trim(); return x || b.color; }
+    // The tokens are declared in OKLCH, and Cytoscape's colour parser rejects that notation
+    // (it logs that the style property is invalid), so every colour handed to it was
+    // dropped and the drawing kept Cytoscape's own defaults. Each token is resolved by the
+    // browser and read back from one painted pixel, which is sRGB whatever the notation, as
+    // site/diagrams.js, site/charts.js and the Cockpit's viewer already do.
+    var canvas = document.createElement('canvas');
+    canvas.width = canvas.height = 1;
+    var paint = canvas.getContext('2d', { willReadFrequently: true });
+    function srgb(value) {
+      if (!paint || !value) { return value; }
+      paint.save();
+      paint.clearRect(0, 0, 1, 1);
+      paint.fillStyle = value;
+      paint.fillRect(0, 0, 1, 1);
+      var px = paint.getImageData(0, 0, 1, 1).data;
+      paint.restore();
+      return '#' + [px[0], px[1], px[2]].map(function (c) { return (c < 16 ? '0' : '') + c.toString(16); }).join('');
+    }
+    function v(name) { var x = s.getPropertyValue(name).trim(); return srgb(x || b.color); }
     return {
       dark: dark,
       text: v('--mj-fg'),
@@ -76,7 +94,18 @@
         'padding': 6,
         'shape': 'round-rectangle',
         'width': 'label',
-        'height': 'label'
+        'height': 'label',
+        // a label smaller than this on screen is a smear, not text: it is left out until the
+        // reader zooms in, and the node keeps its coloured box, so the overview still shows
+        // what kind each node is and where the clusters are
+        'min-zoomed-font-size': 6
+      } },
+      // Zoomed out past reading (see overview), a node is a mark of its role's colour: the
+      // outline that carries the colour at reading size is under a pixel there, and the fill
+      // is the page's own surface, so without this the overview is an empty box.
+      { selector: 'node.far', style: {
+        'background-color': function (n) { return p[n.data('role') || KIND_COLOUR[n.data('kind')] || 'muted']; },
+        'border-width': 0
       } },
       { selector: 'node[?dimmed]', style: { 'opacity': 0.2 } },
       { selector: 'node:selected', style: { 'border-width': 3, 'border-color': p.accent, 'color': p.accent } },
@@ -112,6 +141,34 @@
     });
   }
 
+  // Above this many nodes a graph is laid out compactly (see mount).
+  var LARGE = 200;
+  // The zoom a reader may not go below: the drawing's own floor.
+  var MIN_ZOOM = 0.15;
+
+  // Fit the whole graph in its box. A fixed floor of MIN_ZOOM stopped fit() short on a large
+  // graph, so the reader saw a fragment and no way to tell there was more; the floor is lowered
+  // to the zoom the fit needs, never raised, and the labels that zoom would smear are hidden by
+  // the stylesheet's min-zoomed-font-size.
+  // Below this zoom a node is drawn as a filled mark rather than an outlined label.
+  var FAR = 0.35;
+
+  // Mark every node as far or near for the zoom the reader is at; the stylesheet draws the two.
+  function overview(cy) {
+    var far = cy.zoom() < FAR;
+    cy.batch(function () { cy.nodes().toggleClass('far', far); });
+  }
+
+  function fitAll(cy) {
+    var bb = cy.elements().boundingBox();
+    if (bb.w > 0 && bb.h > 0 && cy.width() > 32 && cy.height() > 32) {
+      var need = Math.min((cy.width() - 32) / bb.w, (cy.height() - 32) / bb.h);
+      cy.minZoom(Math.min(MIN_ZOOM, need));
+    }
+    cy.fit(undefined, 16);
+    overview(cy);
+  }
+
   function mount(el, cytoscape, data) {
     if (!data || !data.nodes || !data.nodes.length) { return; }
 
@@ -138,7 +195,7 @@
       elements: elements,
       style: stylesheet(p),
       layout: { name: 'preset' },   // the real layout is run below, once roots can be resolved
-      minZoom: 0.15,
+      minZoom: MIN_ZOOM,
       maxZoom: 3,
       wheelSensitivity: 0.2,
       autoungrabify: false
@@ -154,14 +211,30 @@
           minNodeSpacing: 14, equidistant: false, startAngle: -Math.PI / 2, fit: true,
           concentric: function (n) { var i = order.indexOf(n.data('kind')); return i === -1 ? 0 : order.length - i; },
           levelWidth: function () { return 1; } }
-      : { name: 'cose', animate: false, randomize: false, idealEdgeLength: 120,
-          nodeRepulsion: 9000, edgeElasticity: 60, nodeOverlap: 20, padding: 16,
-          componentSpacing: 110, gravity: 0.3, numIter: reduced ? 500 : 1500, fit: true };
+      : data.nodes.length > LARGE
+        // A large graph spread at the small-graph spacing came out about 8000 units across
+        // the evidence page's 942px box (586 nodes, 2026-11-02): the fit needed a zoom of
+        // 0.056 and the drawing was a strip at one edge. Tighter springs and stronger
+        // gravity keep the components together, as the Cockpit's viewer does for its own
+        // large graphs (an ideal edge of 48, share/cockpit/graph.js choose()).
+        ? { name: 'cose', animate: false, randomize: false, idealEdgeLength: 48,
+            nodeRepulsion: 4500, edgeElasticity: 80, nodeOverlap: 12, padding: 16,
+            componentSpacing: 40, gravity: 1.2, numIter: reduced ? 500 : 1500, fit: true }
+        : { name: 'cose', animate: false, randomize: false, idealEdgeLength: 120,
+            nodeRepulsion: 9000, edgeElasticity: 60, nodeOverlap: 20, padding: 16,
+            componentSpacing: 110, gravity: 0.3, numIter: reduced ? 500 : 1500, fit: true };
+    // cose refines the positions it is given, and preset gives every node the same one: from a
+    // single point a large graph unfolds into one long arm. A grid first spreads the nodes
+    // deterministically, so the force layout starts from the whole box and keeps it.
+    if (opts.name === 'cose' && data.nodes.length > LARGE) {
+      cy.layout({ name: 'grid', animate: false, fit: false, avoidOverlap: true }).run();
+    }
     cy.layout(opts).run();
-    cy.fit(undefined, 16);
+    cy.on('zoom', function () { overview(cy); });
+    fitAll(cy);
     // the canvas is inside a responsive grid; a resize that changes its box must re-fit
     if (window.ResizeObserver) {
-      var ro = new ResizeObserver(function () { cy.resize(); cy.fit(undefined, 16); });
+      var ro = new ResizeObserver(function () { cy.resize(); fitAll(cy); });
       ro.observe(canvas);
     }
 
@@ -214,7 +287,7 @@
     });
 
     var reset = el.querySelector('[data-graph-reset]');
-    if (reset) { reset.addEventListener('click', function () { cy.elements().unselect(); clearFocus(); cy.fit(undefined, 16); }); }
+    if (reset) { reset.addEventListener('click', function () { cy.elements().unselect(); clearFocus(); fitAll(cy); }); }
 
     // the fallback list and the canvas are the same graph: clicking a name selects the node
     el.querySelectorAll('[data-graph-node]').forEach(function (a) {

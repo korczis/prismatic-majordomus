@@ -201,4 +201,22 @@ expect_grep 'mjGraph.extent\(\)' "$PROBE"
 # the defect: a probe that only looks at the small graph cannot see it
 expect_grep 'graphAtScale' "$PROBE"
 
+echo "  the site's viewer draws as the Cockpit's does: tokens it can read, a fit it can reach"
+# site/graph.js draws the evidence graph, the program map, the method, the features and the
+# failure modes on majordomus.dev. On 2026-11-02 the evidence page (586 nodes) showed a strip at
+# one edge of its box: its fixed minZoom of 0.15 stopped fit() at a fragment of a drawing that
+# needed 0.056, and every token colour reached Cytoscape as oklch and was dropped (579 "is
+# invalid" warnings on the program map alone).
+SITE_VIEWER="$ROOT/site/graph.js"
+expect_grep 'getImageData' "$SITE_VIEWER"
+expect_grep 'srgb\(x \|\| b\.color\)' "$SITE_VIEWER"
+# every fit goes through fitAll, which lowers the floor to the zoom the fit needs
+expect_grep 'cy\.minZoom\(Math\.min\(MIN_ZOOM, need\)\)' "$SITE_VIEWER"
+expect_no_grep 'cy\.fit\(undefined, 16\); *\}\);' "$SITE_VIEWER"
+[ "$(grep -c 'cy\.fit(' "$SITE_VIEWER")" = 1 ] \
+  || { echo "    site/graph.js fits outside fitAll, where the fixed floor stops it short"; exit 1; }
+# zoomed out past reading, a node is a filled mark of its role, not an invisible outline
+expect_grep "selector: 'node\.far'" "$SITE_VIEWER"
+expect_grep "'min-zoomed-font-size'" "$SITE_VIEWER"
+
 echo "    every claim held"
