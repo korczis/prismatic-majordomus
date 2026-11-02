@@ -138,6 +138,7 @@ mkdir -p "$S/nojq"
 printf '%s\n' "$PATH" | tr ':' '\n' | while IFS= read -r d; do
   [ -d "$d" ] || continue
   for x in "$d"/*; do
+    [ -e "$x" ] || continue
     n="${x##*/}"; [ "$n" = jq ] || [ -e "$S/nojq/$n" ] || ln -s "$x" "$S/nojq/$n"
   done
 done
