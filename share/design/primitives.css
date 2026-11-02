@@ -324,8 +324,11 @@
     @apply underline decoration-dotted underline-offset-2;
     color: var(--mj-muted);
   }
+  /* Inline code is most often an identifier with nowhere to break: a rule id such as
+     `majordomus.never-reported-is-not-green` or a case path in a rule's body pushed
+     /cockpit/object 93px past a 320px viewport. Like `.mj-identity`, it breaks anywhere. */
   .mj-md-code {
-    @apply rounded-sm px-1 py-0.5 font-mono text-[0.9em];
+    @apply rounded-sm px-1 py-0.5 font-mono text-[0.9em] [overflow-wrap:anywhere];
     background: var(--mj-sunken);
     color: var(--mj-fg);
   }
