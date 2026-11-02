@@ -225,6 +225,17 @@ done
 ci_blk="$(awk '$0 == "  ci:" {f=1; next} /^  [a-z][a-z-]*:$/ {f=0} f' "$W")"
 printf '%s\n' "$ci_blk" | grep -q 'pattern: ci-receipts-\*' || { echo "    the ci job does not download the receipts"; exit 1; }
 printf '%s\n' "$ci_blk" | grep -q 'scripts/ci/verdict .*--receipts receipts' || { echo "    the ci verdict is not asked for the receipts"; exit 1; }
+# the verdict builds nothing, so it runs where the owner points it and never waits for a hosted
+# slot behind other trains' builds; unset it is hosted, and a fork's pull request always is
+ci_runs_on="$(printf '%s\n' "$ci_blk" | sed -n 's/^    runs-on: //p')"
+case "$ci_runs_on" in
+  *"vars.MJ_AGGREGATE_RUNNER || 'ubuntu-latest'"*) ;;
+  *) echo "    the ci job runs on '$ci_runs_on', not on vars.MJ_AGGREGATE_RUNNER with a hosted default"; exit 1 ;;
+esac
+case "$ci_runs_on" in
+  *"github.event.pull_request.head.repo.full_name != github.repository && 'ubuntu-latest'"*) ;;
+  *) echo "    a fork's pull request could run the ci job on the repository's own runner"; exit 1 ;;
+esac
 # a started run reaches its verdict: a pull request's runs queue per pull request, and a
 # newer commit never cancels the run in progress (a two-hour suite under frequent pushes
 # never finished); master's runs are each their own group
