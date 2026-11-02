@@ -9,13 +9,13 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 
 | milestone | status | done of required | ready | blocked | active | verify | cancelled | outcome |
 |---|---|---|---|---|---|---|---|---|
-| [the-session-domain-is-written-once](https://majordomus.dev/plan/the-session-domain-is-written-once/) | PLANNED | 0/9 | 1 | 8 | 0 | 0 | 0 | Each lifecycle transition has one implementation in the typed domain; the shell commands keep their arguments, output and exit codes and delegate; a closed record states whether it is complete. |
+| [the-session-domain-is-written-once](https://majordomus.dev/plan/the-session-domain-is-written-once/) | ACTIVE | 1/9 | 1 | 7 | 0 | 0 | 0 | Each lifecycle transition has one implementation in the typed domain; the shell commands keep their arguments, output and exit codes and delegate; a closed record states whether it is complete. |
 
 ## Issues
 
 | issue | status | wave | depends on | title |
 |---|---|---|---|---|
-| [I3141](https://majordomus.dev/plan/i3141/) | BLOCKED | 1 | I3320 | majordomus session close writes its record through the typed domain's closer, and the shell closer is deleted |
+| [I3141](https://majordomus.dev/plan/i3141/) | READY | 1 | I3320 | majordomus session close writes its record through the typed domain's closer, and the shell closer is deleted |
 | [I3142](https://majordomus.dev/plan/i3142/) | BLOCKED | 2 | I3141, I3320 | An episode opens through the typed domain and records the task and issue it began on |
 | [I3143](https://majordomus.dev/plan/i3143/) | BLOCKED | 3 | I3142, I3320 | Each provider lifecycle event leaves a typed receipt written by the domain before any guard can return early |
 | [I3144](https://majordomus.dev/plan/i3144/) | BLOCKED | 3 | I3142 | Checkpoints and handovers are recorded against the episode, and the shell only parses and renders them |
@@ -23,20 +23,12 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | [I3146](https://majordomus.dev/plan/i3146/) | BLOCKED | 3 | I3142 | A closed session record says whether it is complete, and one that changed the tree without saying what it served is not |
 | [I3311](https://majordomus.dev/plan/i3311/) | BLOCKED | 3 | I3142 | Generated sequences of episode events never move an episode in a way its transition table forbids |
 | [I3313](https://majordomus.dev/plan/i3313/) | BLOCKED | 4 | I3146 | A failing verification in a closed session record says whether the ledger already held it failing at the task's base |
-| [I3320](https://majordomus.dev/plan/i3320/) | READY | 0 | — | A lifecycle command run against an absent or stale executable fails loudly and never falls back to a shell writer |
+| [I3320](https://majordomus.dev/plan/i3320/) | DONE | 0 | — | A lifecycle command run against an absent or stale executable fails loudly and never falls back to a shell writer |
 
 ## Findings
 
 | level | code | subject | message |
 |---|---|---|---|
-| WARN | `scope_conflict` | `I3320` | shares share/events.yaml with I4292; they may not run concurrently |
-| WARN | `scope_conflict` | `I3320` | shares lib/common.sh with I4323; they may not run concurrently |
-| WARN | `scope_conflict` | `I3320` | shares lib/common.sh with I4333; they may not run concurrently |
-| WARN | `scope_conflict` | `I3320` | shares lib/common.sh with I4410; they may not run concurrently |
-| WARN | `scope_conflict` | `I3320` | shares lib/common.sh with I4411; they may not run concurrently |
-| WARN | `scope_conflict` | `I3320` | shares lib/common.sh with I4413; they may not run concurrently |
-| WARN | `scope_conflict` | `I3320` | shares lib/common.sh with I4415; they may not run concurrently |
-| WARN | `scope_conflict` | `I3320` | shares lib/common.sh with I4416; they may not run concurrently |
-| WARN | `scope_conflict` | `I3320` | shares lib/common.sh with I4461; they may not run concurrently |
-| WARN | `scope_conflict` | `I3320` | shares lib/common.sh with I4467; they may not run concurrently |
-| WARN | `scope_conflict` | `I3320` | shares lib/rust_bin.sh with I4468; they may not run concurrently |
+| WARN | `scope_conflict` | `I3141` | shares .ai/repo/automation/inventory.jsonl with I3378; they may not run concurrently |
+| WARN | `scope_conflict` | `I3141` | shares test/cases/220_exactly_once_close.sh with I3825; they may not run concurrently |
+| WARN | `scope_conflict` | `I3141` | shares test/cases/220_exactly_once_close.sh with I3837; they may not run concurrently |

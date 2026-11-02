@@ -28,4 +28,15 @@ evidence_required:
   - ci
 risk: "A hold label left on a pull request that should land alone stops its CI; removing the label and pushing, or labelling it ci:full after removing hold, brings the run back."
 created_at: 2026-10-28
-updated_at: 2026-10-28
+updated_at: 2026-11-01T03:58:10Z
+started_at: 2026-11-01T03:57:30Z
+started_event: sha256:283a412d823e17c96ca22e133071c3c378cb66bfd4938791bede85e6028613eb
+completed_at: 2026-11-01T03:58:10Z
+completed_event: sha256:f551ed30d12325aa776bfa7ef6b0b29199dfcaf91179190cfabc3edf3e6a026d
+evidence:
+  - covers: "ci"
+    type: test
+    command: "actionlint .github/workflows/validate.yml && scripts/ci/step-bound-check && bash test/run.sh 26_ci_wiring"
+    result: "delivered by 1de8be88507 (merged on master): validate.yml's plan job opens with 'a held member yields to its train'; actionlint clean, step-bound-check passes on validate.yml and pages.yml, case 26_ci_wiring ok 1 passed at master aca6f182b41; observed live on 2026-11-01, when #2758 labelled hold yielded its run"
+    commit: aca6f182b4175a0da20878211103eff3801132f1
+    recorded_at: 2026-11-01T03:57:57Z
