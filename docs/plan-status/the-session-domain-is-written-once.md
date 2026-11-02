@@ -30,5 +30,6 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | level | code | subject | message |
 |---|---|---|---|
 | WARN | `scope_conflict` | `I3141` | shares .ai/repo/automation/inventory.jsonl with I3378; they may not run concurrently |
+| WARN | `scope_conflict` | `I3141` | shares docs/generated/cli.yaml with I3668; they may not run concurrently |
 | WARN | `scope_conflict` | `I3141` | shares test/cases/220_exactly_once_close.sh with I3825; they may not run concurrently |
 | WARN | `scope_conflict` | `I3141` | shares test/cases/220_exactly_once_close.sh with I3837; they may not run concurrently |

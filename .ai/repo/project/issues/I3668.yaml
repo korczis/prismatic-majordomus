@@ -1,0 +1,43 @@
+id: I3668
+milestone: test-evidence
+title: "The evidence receipt names what the plan owed each producer, so an absence is not_required, missing, interrupted or refused, never guessed from the disk"
+slug: the-evidence-receipt-names-each-producers-obligation
+priority: p1
+profile: implementation
+objective: "Tell scripts/ci/evidence-collect what the plan owed (`--obligation suite|crate|coverage=REQUIRED:RESULT`, `--planner`) and have it write receipt.json on every gather: each producer recorded, not_required (with the reason and the planner), missing, interrupted or refused. A required suite or crate that is missing, refused or left by a cancelled job fails the gather after the receipt names which; coverage is receipted and fails nothing. validate.yml's evidence job runs on every decided, uncancelled plan, passes each producer's obligation from the plan output that selects it with its own job's result, builds the executable and downloads reports only when a test report is owed, keeps the receipt as the artifact evidence-receipt on every run, and keeps the artifact evidence and the publication refresh for a run that recorded something."
+why: "On 2026-10-20 run 39489940286 at 573df967bb5 ended ci success and evidence failure: the plan selected light lanes, every test lane was skipped, and evidence-collect exited 12 with nothing to record. I3013 (2b, landed through train 2) skipped the job for a plan that selects no test lane, which stopped the red but left no record of what the plan owed: a skipped job and a job that never ran look alike, and the collector still decided from which files were on disk. The owner's autonomous delivery pack (2026-10-21, wave W01) asks for the obligation in the receipt: a test not selected is not a test passed, a selected test without a report is not a legitimate skip, and an interrupted job stays interrupted. This carries I3013's commits and changes its condition from skip to receipt."
+current_state: "The evidence job's if (I3013) skips the job unless the plan selected shell_suite or rust_check and that job succeeded or failed; evidence-collect knows only which report files are present and exits 12 on none."
+desired_state: "Every decided run leaves an evidence-receipt artifact naming each producer's obligation and state; the gather fails exactly when a required test report is missing, refused or interrupted; a records-only plan costs no build and is green with not_required."
+scope:
+  - "scripts/ci/evidence-collect"
+  - ".github/workflows/validate.yml"
+  - "test/cases/357_ci_records_evidence.sh"
+  - "test/cases/3402_a_records_only_plan_owes_no_test_report.sh"
+  - ".ai/repo/project/issues/I3668.yaml"
+  - ".ai/repo/project/issues/I3013.yaml"
+  - "docs/generated"
+  - "site"
+non_scope:
+  - "Reusing an earlier run's evidence for an equivalent tree: a later increment, which needs the provenance of inputs, toolchain and policy"
+  - "Run-attempt identity of a report: a re-run that downloads an earlier attempt's artifact is not yet told apart"
+  - "The gate receipts of scripts/ci/verdict and step-bound-check (MJ_CI_RECEIPTS), which already require a receipt per gate"
+depends_on:
+  - "I3013"
+acceptance_criteria:
+  - "A records-only plan's gather writes a receipt with suite, crate and coverage not_required and the reason, needs no executable, writes no manifest, and exits 0"
+  - "An owed suite with no report is missing and the gather exits 12, naming it"
+  - "An owed crate whose job was cancelled is interrupted, even with a report on disk, and the gather exits 13"
+  - "An owed report measured on another commit is refused and the gather exits 12"
+  - "A run that records the suite and owes coverage it did not get is gathered (exit 0) with coverage missing in the receipt"
+  - "A malformed --obligation is a usage error (exit 2)"
+  - "The evidence job runs for records, crate, suite and interrupted plans, not for a failed plan or a cancelled run, and passes each obligation from shell_suite, rust_check and rust_coverage with the suite, rust and coverage job results"
+  - "Both cases fail against the collector and workflow they replace, and pass after"
+validation:
+  - "bash test/run.sh 357_ci_records_evidence"
+  - "bash test/run.sh 3402_a_records_only_plan_owes_no_test_report"
+  - "scripts/ci/step-bound-check --gates .ai/repo/ci/gates.yaml .github/workflows/validate.yml"
+  - "majordomus plan validate"
+evidence_required:
+  - "records_only_plan_receipt"
+created_at: 2026-10-22
+updated_at: 2026-10-22

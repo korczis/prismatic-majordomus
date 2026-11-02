@@ -14,17 +14,21 @@ current_state: "Not built: this issue is planned by the milestone a-session-proc
 desired_state: "The acceptance criteria below hold and case 4009 proves them."
 scope:
   - "apps/majordomus-cli/src/capability/builtin"
-  - "share/skills"
+  - "apps/majordomus-cli/src/editors"
+  - ".ai/repo/skills"
   - "docs/PROCEED.md"
   - "test/cases/4009_watchdog_wakes_hands_over_and_reaps.sh"
   - ".ai/repo/project/issues/I4009.yaml"
 depends_on:
   - "I4005"
+  - "I3182"
 acceptance_criteria:
   - "A suspended claim, a missed phase beat or an overdue deadline is signalled with its claim, holder and phase"
   - "Wake precedes handover precedes reap, and each is recorded"
   - "Reap by anyone but the owner or a seat is refused (ADR 0200), and only after assess-before-deleting"
   - "It depends on the liveness substrate I3990-I3994 (branch feature/a-claim-lives-by-its-holders-progress); this issue adds none of it"
+  - "It starts only after the owner accepts I4005's ADR on proceeding without a person's word and ADR 0200, and after I3990 and I3182 are on master; it composes I3182's classification and I3183's repair and adds no reader or repairer of its own"
+  - "Wake is a board or mesh message to the holder with a recorded deadline; nothing is signalled to a process the watchdog does not own, and the overdue signal is emitted by the server that holds the claim, not by a client polling"
 validation:
   - "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 4009_watchdog_wakes_hands_over_and_reaps"
 evidence_required:
