@@ -295,6 +295,47 @@ pub struct SessionBrief {
     pub release: BriefReleaseSection,
     /// The derive queue.
     pub derive: BriefDeriveSection,
+    /// Where this checkout's runtime stands, and its last recorded transition, as
+    /// `server.status` derives it (I3179). Absent from the answer of a server older than the
+    /// field.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub runtime: Option<server::RuntimeState>,
+}
+
+impl SessionBrief {
+    /// The brief with this checkout's runtime state: the field, and one line saying it,
+    /// before the line that says who answered, which stays the last.
+    fn with_runtime(mut self, runtime: server::RuntimeState) -> Self {
+        let at = self
+            .lines
+            .iter()
+            .position(|l| l.starts_with("answered by"))
+            .unwrap_or(self.lines.len());
+        self.lines
+            .insert(at, format!("runtime      {}", runtime_summary(&runtime)));
+        self.runtime = Some(runtime);
+        self
+    }
+}
+
+/// The runtime in words: the state, why, and the last transition recorded.
+fn runtime_summary(r: &server::RuntimeState) -> String {
+    let mut words = r.state.as_str().to_string();
+    if let Some(why) = &r.reason {
+        words.push_str(&format!(" ({why})"));
+    }
+    if let Some(t) = &r.transition {
+        words.push_str(&format!(
+            "; last recorded {} at {} by {}",
+            t.state.as_str(),
+            t.at,
+            serde_json::to_value(t.by)
+                .ok()
+                .and_then(|v| v.as_str().map(str::to_string))
+                .unwrap_or_default()
+        ));
+    }
+    words
 }
 
 // ---------------------------------------------------------------- the handler
@@ -302,7 +343,8 @@ pub struct SessionBrief {
 fn brief(ctx: &Context, input: BriefInput) -> Result<SessionBrief, CapabilityError> {
     let root = PathBuf::from(&ctx.index.repository.root);
     let root = root.canonicalize().unwrap_or(root);
-    let (standing, _, read) = server::standing_at(&root, &server::local_half(&root));
+    let local_half = server::local_half(&root);
+    let (standing, _, read) = server::standing_at(&root, &local_half);
     let doc = read.document();
     let own = doc.is_some_and(lease::is_own);
     let url = doc.and_then(|d| d.url.clone());
@@ -356,6 +398,10 @@ fn brief(ctx: &Context, input: BriefInput) -> Result<SessionBrief, CapabilityErr
     let release = release_section(ctx);
     let derive = derive_section(&root);
     let interval_minutes = interval_minutes(&root);
+    // the runtime as `server.status` derives it, read and never recorded here: the brief is
+    // none of the named writers (I3179)
+    let readiness = server::readiness_for(ctx, standing, &read);
+    let runtime = server::runtime_read(&root, &local_half, standing, &read, readiness.as_ref());
     Ok(compose(
         crate::ledger::now(),
         interval_minutes,
@@ -366,7 +412,8 @@ fn brief(ctx: &Context, input: BriefInput) -> Result<SessionBrief, CapabilityErr
         integration,
         release,
         derive,
-    ))
+    )
+    .with_runtime(runtime))
 }
 
 /// Ask the leaseholder over the route the registry declares for this capability.
@@ -919,6 +966,7 @@ fn compose(
         integration,
         release,
         derive,
+        runtime: None,
     }
 }
 
@@ -1787,6 +1835,60 @@ mod tests {
             BriefReleaseSection::default(),
             derive_from(false, None, None),
         )
+    }
+
+    /// The runtime is one line of the brief, before the line that says who answered, which
+    /// stays the last; its words carry the state, why, and the last recorded transition.
+    #[test]
+    fn the_runtime_is_a_line_of_the_brief_before_who_answered() {
+        use server::{RuntimeState, RuntimeTransition, RuntimeWriter};
+        let plain = a_brief().with_runtime(RuntimeState {
+            state: ServerStanding::Operational,
+            reason: None,
+            transition: None,
+        });
+        assert_eq!(
+            plain.lines.last().map(String::as_str),
+            Some("runtime      operational")
+        );
+        assert_eq!(
+            plain.runtime.map(|r| r.state),
+            Some(ServerStanding::Operational)
+        );
+        let mut noted = a_brief();
+        noted
+            .lines
+            .push("answered by  this_process (no server)".into());
+        let noted = noted.with_runtime(RuntimeState {
+            state: ServerStanding::Failed,
+            reason: Some("pid 9 is gone".into()),
+            transition: Some(RuntimeTransition::new(
+                ServerStanding::Failed,
+                Some(ServerStanding::Ready),
+                "gone",
+                RuntimeWriter::ServerStatus,
+                Some(9),
+            )),
+        });
+        let n = noted.lines.len();
+        assert!(
+            noted.lines[n - 1].starts_with("answered by"),
+            "{:?}",
+            noted.lines
+        );
+        let line = &noted.lines[n - 2];
+        assert!(
+            line.starts_with("runtime      failed (pid 9 is gone); last recorded failed at "),
+            "{line}"
+        );
+        assert!(line.ends_with(" by server_status"), "{line}");
+        // a brief from a server older than the field still reads
+        let mut old = serde_json::to_value(a_brief()).unwrap();
+        old.as_object_mut().unwrap().remove("runtime");
+        assert!(serde_json::from_value::<SessionBrief>(old)
+            .unwrap()
+            .runtime
+            .is_none());
     }
 
     /// A release section as `release.currency` would make it.

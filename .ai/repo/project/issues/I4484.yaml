@@ -1,0 +1,51 @@
+id: I4484
+milestone: idd-reads-at-a-glance
+title: "An intent opens its gap and its critique where it is read"
+slug: an-intent-opens-its-gap-and-its-critique
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Complete the UI's intent inspector with the two things the intent model holds and no screen shows: the recorded gap with its observations and the recorded critique with its findings, each read from a capability's answer. The realisation is shown already (I2789)."
+why: "campaigns/majordomus-intent-ui-pack/04-UI-PROJECTIONS.md asks that the Intents view show the criterion and evidence matrix, the gap and critique, the plan and the provenance, and campaigns/majordomus-intent-ui-pack/03-INTENT-VERTICAL.md asks that observed, inferred and unknown facts be separated and that work be blocked when a mandatory critique is missing. The records and the derivations exist: gaps and critiques are typed records under .ai/repo/project/gaps and .ai/repo/project/critiques (apps/majordomus-cli/src/intent_review.rs), and intent_realization.explain answers an intent with the reasons for its stage, its coverage and the work realising it. The inspector that I2476 built shows the statement, the invariants, the criteria with their evidence and the serving milestones and issues, and none of these three."
+current_state: "Measured at 51b38035a71. The Roadmap inspector apps/majordomus-cli/src/ui/intent.rs (/ui/roadmap?intent=) reads intents.list and plan.issues; the workspace ui/idd.rs reads intents.list, plan.roadmap, plan.issues, plan.waves, plan.next and intents.record, and its standing panel answers intent_realization.explain (delivered by I2789). No screen and no capability answer of intents.record carries a gap or a critique: intents.record answers statement, invariants, milestones, criteria, stage and verdict, and intents.preflight and intents.binding carry the critique and the gap only for an issue or a path. The records exist (.ai/repo/project/gaps/intent-planning.yaml, .ai/repo/project/critiques/intent-planning.yaml); I4321 (planned) makes a schema-invalid one read as invalid."
+desired_state: "intents.record answers, with the intent, the gap and the critique recorded for it, or says that none is recorded. The intent workspace /ui/idd for the open intent and the inspector at /ui/roadmap?intent=<id> gain two panels, on a panel route off the first paint where a read is slow: Gap (source, when observed, by whom, each observation and condition, the risks) and Critique (source, when reviewed, by whom, and each finding). An intent without a gap or a critique says none and names what the preflight makes of that. A proposal, which has neither, reads as a proposal."
+scope:
+  - "apps/majordomus-cli/src/capability/builtin/intents.rs"
+  - "apps/majordomus-cli/src/intent_review.rs"
+  - "apps/majordomus-cli/src/ui/intent.rs"
+  - "apps/majordomus-cli/src/ui/roadmap.rs"
+  - "apps/majordomus-cli/tests/intent.rs"
+  - "apps/majordomus-cli/tests/ui_surface.rs"
+  - "test/cases/1081_an_intent_opens_what_serves_it.sh"
+  - "docs/MAJORDOMUS_UI.md"
+  - "docs/generated"
+  - ".ai/repo/project/issues/I4484.yaml"
+  - "apps/majordomus-cli/src/ui/idd.rs"
+  - "apps/majordomus-cli/tests/ui_idd_evidence.rs"
+non_scope:
+  - "Writing or editing a gap or a critique from the page"
+  - "A gap inferred by the page or by a model: the panel shows the record a person or a worker committed"
+  - "A new screen in the navigation: the Roadmap already lists every intent, and the inspector stays at its address"
+depends_on:
+  - I4321
+acceptance_criteria:
+  - "intents.record of an intent with a recorded gap and critique answers both, and of an intent without them answers their absence explicitly, over HTTP, MCP and the command line alike"
+  - "The inspector of intent-planning shows the observations of .ai/repo/project/gaps/intent-planning.yaml and the findings of .ai/repo/project/critiques/intent-planning.yaml"
+  - "The inspector of an intent with no gap record says none in the Gap panel and draws no empty table"
+  - "Every panel closes with the capability and pointer it read, and nothing under apps/majordomus-cli/src/ui reads the index for a gap or a critique"
+  - "A gap or critique file that fails its schema reads as invalid with the validator's message, never as none (I4321)"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib capability::builtin::intents"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib ui::intent"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test intent"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test ui_idd_evidence"
+  - "MJ_TEST_JOBS=2 bash test/run.sh 1081_an_intent_opens_what_serves_it 1091_no_link_on_the_ui_is_dead 547_the_ui_says_only_what_is_derived"
+  - "majordomus generate --check"
+evidence_required:
+  - "gap_and_critique_on_the_inspector"
+  - "absent_gap_reads_none"
+serves:
+  - the-owner-directs-work-from-the-ui#the-workspace-shows-why-and-what-moved
+created_at: 2026-10-30
+updated_at: 2026-10-30

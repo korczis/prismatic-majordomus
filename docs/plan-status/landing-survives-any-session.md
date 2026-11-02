@@ -9,7 +9,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 
 | milestone | status | done of required | ready | blocked | active | verify | cancelled | outcome |
 |---|---|---|---|---|---|---|---|---|
-| [landing-survives-any-session](https://majordomus.dev/plan/landing-survives-any-session/) | PLANNED | 0/7 | 3 | 4 | 0 | 0 | 0 | Landing green work on master never waits on a person or on one session staying alive. |
+| [landing-survives-any-session](https://majordomus.dev/plan/landing-survives-any-session/) | PLANNED | 0/8 | 4 | 4 | 0 | 0 | 0 | Landing green work on master never waits on a person or on one session staying alive. |
 
 ## Issues
 
@@ -22,6 +22,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | [I3914](https://majordomus.dev/plan/i3914/) | BLOCKED | 1 | I3910 | A standing approval is one owner-attributed record in the repository, each machine reports whether it carries it, and only the owner writes it |
 | [I3915](https://majordomus.dev/plan/i3915/) | BLOCKED | 1 | I3910 | A combined top is composed by a typed command from members declared in a tracked train manifest |
 | [I4231](https://majordomus.dev/plan/i4231/) | READY | 0 | — | The containment test's unwalkable mirror names a parent that was never written, so a commit-graph cannot walk it |
+| [I4523](https://majordomus.dev/plan/i4523/) | READY | 1 | I4380 | The lander judges the candidate it would merge even when the forge cannot list every open pull request |
 
 ## Findings
 
@@ -32,6 +33,9 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I3910` | shares .ai/repo/adrs/0167-work-moves-through-seats-on-the-mesh-and-lands-in-combined-tops.md with I4307; they may not run concurrently |
 | WARN | `scope_conflict` | `I3910` | shares apps/majordomus-cli/tests/integration_executor.rs with I4315; they may not run concurrently |
 | WARN | `scope_conflict` | `I3910` | shares docs/INTEGRATION.md with I4333; they may not run concurrently |
+| WARN | `scope_conflict` | `I3910` | shares apps/majordomus-cli/tests/integration_executor.rs with I4481; they may not run concurrently |
+| WARN | `scope_conflict` | `I3910` | shares .ai/repo/adrs/0167-work-moves-through-seats-on-the-mesh-and-lands-in-combined-tops.md with I4500; they may not run concurrently |
 | WARN | `scope_conflict` | `I3911` | shares apps/majordomus-cli/src/integration/drain.rs with I4002; they may not run concurrently |
 | WARN | `scope_conflict` | `I3911` | shares apps/majordomus-cli/tests/integration_executor.rs with I4315; they may not run concurrently |
 | WARN | `scope_conflict` | `I3911` | shares docs/INTEGRATION.md with I4333; they may not run concurrently |
+| WARN | `scope_conflict` | `I3911` | shares apps/majordomus-cli/tests/integration_executor.rs with I4481; they may not run concurrently |
