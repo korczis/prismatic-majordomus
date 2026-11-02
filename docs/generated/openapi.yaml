@@ -17295,6 +17295,12 @@ components:
           format: uint64
           minimum: 0
           description: "Of those, how many failed."
+        cancelled:
+          type: integer
+          format: uint64
+          minimum: 0
+          description: "Of those, how many were cancelled before they gave a verdict: counted as neither\npassed nor failed, and, cut short, no sample of how long the check takes (I3202)."
+          default: 0
         median_seconds:
           type: integer
           format: uint64

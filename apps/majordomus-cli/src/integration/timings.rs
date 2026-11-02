@@ -27,6 +27,10 @@ pub struct CheckTiming {
     pub passed: u64,
     /// Of those, how many failed.
     pub failed: u64,
+    /// Of those, how many were cancelled before they gave a verdict: counted as neither
+    /// passed nor failed, and, cut short, no sample of how long the check takes (I3202).
+    #[serde(default)]
+    pub cancelled: u64,
     /// The median duration, in seconds.
     pub median_seconds: u64,
     /// The 90th percentile duration (nearest rank), in seconds.
@@ -99,6 +103,17 @@ fn rank(sorted: &[u64], p: u64) -> u64 {
     sorted[i as usize]
 }
 
+/// One check's runs while they are read: the durations of the runs that ran to a verdict,
+/// then how many runs were measured, passed, failed and were cancelled.
+#[derive(Default)]
+struct Tally {
+    took: Vec<u64>,
+    runs: u64,
+    passed: u64,
+    failed: u64,
+    cancelled: u64,
+}
+
 /// CI timings measured from `obs`.
 ///
 /// ```text
@@ -113,9 +128,15 @@ fn rank(sorted: &[u64], p: u64) -> u64 {
 /// check (I3202): a check whose runs were all skipped has no duration and is not listed, and
 /// its runs still count in `measured_runs`. Before, the instant of a skip entered the sample as
 /// 0 s and pulled the median of bench, install, macos and rust to 0.
+///
+/// A cancelled run is measured too, but it gave no verdict and was cut short: it is counted
+/// as `cancelled`, as neither passed nor failed, adds no duration to the sample, is never a
+/// head's slowest check and does not make its head `failed` (I3202). The merge decision still
+/// reads it as failed (`CheckRunState`); only the measurement tells it apart, by the forge's
+/// conclusion. Before, the first-red self-cancel of a pull-request run (I2664) read as 31
+/// failures of suite-shard against 11 passes.
 pub fn timings(obs: &ForgeObservation) -> CiTimings {
-    // per check: the durations of the runs that ran, the measured runs, passed, failed
-    let mut by_check: BTreeMap<String, (Vec<u64>, u64, u64, u64)> = BTreeMap::new();
+    let mut by_check: BTreeMap<String, Tally> = BTreeMap::new();
     let mut heads = Vec::new();
     let mut unmeasured = 0u64;
     for pr in &obs.pull_requests {
@@ -130,16 +151,18 @@ pub fn timings(obs: &ForgeObservation) -> CiTimings {
                 continue;
             };
             let took = end - start;
-            let entry = by_check.entry(c.name.clone()).or_default();
-            entry.1 += 1;
-            let ran = c.state != CheckRunState::Skipped;
+            let tally = by_check.entry(c.name.clone()).or_default();
+            tally.runs += 1;
+            let cancelled = c.conclusion == "cancelled";
+            let ran = c.state != CheckRunState::Skipped && !cancelled;
             if ran {
-                entry.0.push(took);
+                tally.took.push(took);
             }
             match c.state {
-                CheckRunState::Passed => entry.2 += 1,
+                _ if cancelled => tally.cancelled += 1,
+                CheckRunState::Passed => tally.passed += 1,
                 CheckRunState::Failed => {
-                    entry.3 += 1;
+                    tally.failed += 1;
                     failed = true;
                 }
                 _ => {}
@@ -169,19 +192,20 @@ pub fn timings(obs: &ForgeObservation) -> CiTimings {
             });
         }
     }
-    let measured_runs: u64 = by_check.values().map(|(_, runs, _, _)| runs).sum();
+    let measured_runs: u64 = by_check.values().map(|t| t.runs).sum();
     let mut checks: Vec<CheckTiming> = by_check
         .into_iter()
-        .filter(|(_, (took, _, _, _))| !took.is_empty())
-        .map(|(name, (took, runs, passed, failed))| {
+        .filter(|(_, t)| !t.took.is_empty())
+        .map(|(name, t)| {
             // a sample has one order, `order::numeric`'s; whole seconds are exact in an f64
-            let mut sample: Vec<f64> = took.iter().map(|&t| t as f64).collect();
+            let mut sample: Vec<f64> = t.took.iter().map(|&s| s as f64).collect();
             numeric(&mut sample);
-            let took: Vec<u64> = sample.into_iter().map(|t| t as u64).collect();
+            let took: Vec<u64> = sample.into_iter().map(|s| s as u64).collect();
             CheckTiming {
-                runs,
-                passed,
-                failed,
+                runs: t.runs,
+                passed: t.passed,
+                failed: t.failed,
+                cancelled: t.cancelled,
                 median_seconds: rank(&took, 50),
                 p90_seconds: rank(&took, 90),
                 slowest_seconds: *took.last().unwrap_or(&0),
@@ -420,6 +444,59 @@ mod tests {
             t.heads[1].wall_seconds,
             15 * 60,
             "13 waited until its last completion"
+        );
+    }
+
+    /// A cancelled run is failed to the merge decision and cancelled to the measurement: it
+    /// counts as neither passed nor failed, adds no cut-short duration to the sample and does
+    /// not mark its head failed (I3202). A run that failed stays failed.
+    #[test]
+    fn a_cancelled_run_is_counted_apart_from_a_failed_one() {
+        let cancelled = |name: &str, started: &str, completed: &str| CheckObservation {
+            conclusion: "cancelled".into(),
+            ..check(name, CheckRunState::Failed, started, completed)
+        };
+        let failure = |name: &str, started: &str, completed: &str| CheckObservation {
+            conclusion: "failure".into(),
+            ..check(name, CheckRunState::Failed, started, completed)
+        };
+        let o = observation(vec![
+            pr(
+                21,
+                vec![
+                    check("suite-shard", CheckRunState::Passed, &at(0), &at(60)),
+                    cancelled("suite-shard", &at(0), &at(5)),
+                    cancelled("coverage", &at(0), &at(90)),
+                    check("rust", CheckRunState::Passed, &at(0), &at(20)),
+                ],
+            ),
+            pr(22, vec![failure("suite-shard", &at(0), &at(30))]),
+        ]);
+        let t = timings(&o);
+        assert_eq!(t.measured_runs, 5, "a cancelled run is measured");
+        let shard = t.checks.iter().find(|c| c.name == "suite-shard").unwrap();
+        assert_eq!(
+            (shard.runs, shard.passed, shard.failed, shard.cancelled),
+            (3, 1, 1, 1)
+        );
+        assert_eq!(
+            (shard.median_seconds, shard.slowest_seconds),
+            (30 * 60, 60 * 60),
+            "the 5 min cancel is no sample"
+        );
+        assert!(
+            !t.checks.iter().any(|c| c.name == "coverage"),
+            "a check only ever cancelled has no duration"
+        );
+        let heads: Vec<(u64, &str, bool)> = t
+            .heads
+            .iter()
+            .map(|h| (h.number, h.slowest_check.as_str(), h.failed))
+            .collect();
+        assert_eq!(
+            heads,
+            [(21, "suite-shard", false), (22, "suite-shard", true)],
+            "the 90 min cancel is not 21's slowest, and a cancel is no failure"
         );
     }
 

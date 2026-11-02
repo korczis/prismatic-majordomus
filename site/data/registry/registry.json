@@ -6,7 +6,7 @@
     "version": "1.0.0-alpha.10"
   },
   "registry": {
-    "fingerprint": "a023263da23f657082857c306cf256e30880c16d7d0d7c92c5a2a3c333893fac",
+    "fingerprint": "43734025a22fdb4bab64a8508da99f3054063c52198207ba883c29a4ac6a6a9a",
     "summary": {
       "total": 3732,
       "builtin": 220,
@@ -39923,6 +39923,13 @@
                     "format": "uint64",
                     "minimum": 0,
                     "description": "Of those, how many failed."
+                  },
+                  "cancelled": {
+                    "type": "integer",
+                    "format": "uint64",
+                    "minimum": 0,
+                    "description": "Of those, how many were cancelled before they gave a verdict: counted as neither\npassed nor failed, and, cut short, no sample of how long the check takes (I3202).",
+                    "default": 0
                   },
                   "median_seconds": {
                     "type": "integer",
@@ -92097,7 +92104,7 @@
     ]
   },
   "index": {
-    "fingerprint": "f4e80a4c1809ccdcd3241cfd7f6f7ec516d66a600e926013ee5ed47171281bd3",
+    "fingerprint": "0f755060c5fccec723995b59c1f92edb2527e3239b0f241867ecbebf8b9143f0",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
