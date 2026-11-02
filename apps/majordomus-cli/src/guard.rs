@@ -53,6 +53,10 @@ use serde::{Deserialize, Serialize};
 use crate::integration::exclusive::Mesh;
 use crate::mesh::state::{ClaimState, ClaimView};
 
+/// The second question the provider's pre-tool hook asks, of a shell command rather than a
+/// write: does it start a build on a declared cluster host outside the offload path (I3956)?
+pub(crate) mod remote_build;
+
 /// The answer to one edit: whether it may proceed, the one word it was decided on, the
 /// sentence a person reads and, for a refusal, what would allow it. `guard.edit` returns it
 /// as it is; `guard hook` turns it into an exit code.

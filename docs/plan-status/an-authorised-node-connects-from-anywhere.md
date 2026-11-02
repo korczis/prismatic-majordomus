@@ -29,4 +29,10 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I3176` | shares test/cases/491_the_mesh_is_on_here.sh with I3825; they may not run concurrently |
 | WARN | `scope_conflict` | `I3176` | shares apps/majordomus-cli/src/mesh/config.rs with I3826; they may not run concurrently |
 | WARN | `scope_conflict` | `I3176` | shares test/cases/491_the_mesh_is_on_here.sh with I3837; they may not run concurrently |
+| WARN | `scope_conflict` | `I3176` | shares docs/MESH.md with I3992; they may not run concurrently |
+| WARN | `scope_conflict` | `I3176` | shares docs/MESH.md with I3993; they may not run concurrently |
+| WARN | `scope_conflict` | `I3176` | shares docs/MESH.md with I3994; they may not run concurrently |
 | WARN | `scope_conflict` | `I3826` | shares test/cases/3826_a_hosted_hub_is_trusted_and_closed_to_strangers.sh with I3837; they may not run concurrently |
+| WARN | `scope_conflict` | `I3826` | shares apps/majordomus-cli/src/mesh with I3992; they may not run concurrently |
+| WARN | `scope_conflict` | `I3826` | shares apps/majordomus-cli/src/mesh with I3993; they may not run concurrently |
+| WARN | `scope_conflict` | `I3826` | shares apps/majordomus-cli/src/mesh with I3994; they may not run concurrently |

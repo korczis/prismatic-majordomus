@@ -47,8 +47,11 @@ is now a command of the executable, and its hosts are an object of the layer.
 
 A refusal says what to do and exits with the code `docs/OFFLOAD.md` lists for it. A host that
 cannot be asked is skipped with its reason. When none is left, the command refuses with 12
-rather than deriving here. A derive run on a host by hand, or a lock taken by hand, is outside
-this rule's enforcement, and the rule's statement forbids both.
+rather than deriving here. A lock taken by hand is outside this rule's enforcement, and the
+rule's statement forbids it. A build started on a declared host by hand, through the
+provider's shell tool (`ssh <host> … cargo|rustc|scripts/derive|scripts/rust-*`), is refused
+by the pre-tool hook before it runs, naming this rule and `majordomus offload derive` as the
+way (I3956, `majordomus guard hook`); a shell the hook does not see is outside it.
 
 ## Verification
 
@@ -66,4 +69,9 @@ and hosts that are directories reached through a local stand-in for ssh:
 
 Each of these mutations fails it: a lock taken regardless of position, dead tickets kept, and
 the build directory pointed at the shared one.
+
+The refusal of a build by hand is proven by the unit tests of
+`apps/majordomus-cli/src/guard/remote_build.rs` and by section 7 of
+`test/cases/3957_every_process_is_traced_to_its_session.sh`, which pipes the provider's
+PreToolUse payloads for refused and allowed commands into the hook and its tracked shim.
 {% endraw %}

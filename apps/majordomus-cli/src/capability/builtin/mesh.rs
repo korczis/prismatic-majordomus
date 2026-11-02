@@ -30,7 +30,8 @@ use crate::mesh::cooperation::{
 };
 use crate::mesh::firewall::{FirewallApplyReport, FirewallReport};
 use crate::mesh::journal::{
-    ClaimMode, Cursor, CursorError, MeshEvent, SessionInfo, StreamId, StreamLiveness,
+    blocked_reason, ClaimMode, Cursor, CursorError, MeshEvent, SessionInfo, StreamId,
+    StreamLiveness,
 };
 use crate::mesh::link::{LinkReply, RefusalCode, Signed, HELLO_PATH, SYNC_PATH};
 use crate::mesh::page::{self, ClaimBrief, Query, Summary, View};
@@ -319,6 +320,34 @@ fn mesh_build_cache_key(
     ))
 }
 
+#[derive(Debug, Default, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+/// The input of `mesh.who`.
+pub struct WhoInput {
+    /// A pid, `host:pid`, a run tag, `host:tag`, an issue (`I<digits>`) or a path.
+    pub subject: String,
+}
+
+impl BenchmarkCases for WhoInput {
+    fn benchmark_cases(_: &CaseContext<'_>) -> Vec<NamedCase<Self>> {
+        vec![NamedCase::new(
+            "issue",
+            WhoInput {
+                subject: "I1".into(),
+            },
+        )]
+    }
+}
+
+fn mesh_who(
+    ctx: &Context,
+    input: WhoInput,
+) -> Result<crate::mesh::who::WhoReport, CapabilityError> {
+    let subject =
+        crate::mesh::who::Subject::parse(&input.subject).map_err(CapabilityError::InvalidInput)?;
+    Ok(crate::mesh::who::who(ctx, input.subject.trim(), &subject))
+}
+
 #[derive(Debug, Serialize, Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
 /// The input of `mesh.build_cache.ensure`.
@@ -556,16 +585,22 @@ pub struct SessionNode {
     pub claims_held: usize,
     /// The review requests it opened, by key.
     pub reviews: Vec<String>,
-    /// Milliseconds since this runtime stored the session's newest session beat, on its own
-    /// clock: how long ago its worker last showed progress (I3990). Absent for a session
-    /// that never beat — it lives by its runtime's beat alone. Outside the digest, like
-    /// every age.
+    /// Milliseconds since this runtime stored the session's newest session beat that was
+    /// progress, on its own clock: how long ago its worker last showed progress (I3990).
+    /// Absent for a session that never beat — it lives by its runtime's beat alone — and for
+    /// one that has only said it waits on a person (I3992). Outside the digest, like every
+    /// age.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub progress_ms: Option<u64>,
     /// What its newest session beat said it was doing — `waiting on CI run 123` — when it
     /// said (I3990).
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub phase: Option<String>,
+    /// Why the session waits on a person — `permission dialog`, `awaiting input` — while its
+    /// phase says it does (`blocked: …`, see [`blocked_reason`]), until its next real work
+    /// clears it (I3992). Information only: its claims are judged by its progress alone.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub blocked: Option<String>,
 }
 
 /// One runtime in the peer tree.
@@ -734,6 +769,11 @@ pub fn peer_tree(c: &Cooperation, query: &Query) -> PeerTree {
             .map(|r| r.key.clone())
             .collect();
         let progress = c.journal().session_beat_age(&session.key);
+        // this runtime's own sessions may have said something newer than their last beat
+        // carried: a phase inside the interval is held, not written (I3990)
+        let phase = c
+            .session_phase(&session.key)
+            .or_else(|| progress.as_ref().and_then(|(_, phase)| phase.clone()));
         if let Some(runtime) = runtimes.get_mut(&session.runtime) {
             runtime.sessions.push(SessionNode {
                 key: session.key.clone(),
@@ -742,12 +782,11 @@ pub fn peer_tree(c: &Cooperation, query: &Query) -> PeerTree {
                 claims: if summary { Vec::new() } else { claims },
                 claims_held,
                 reviews,
-                progress_ms: progress.as_ref().map(|(age, _)| age.as_millis() as u64),
-                // this runtime's own sessions may have said something newer than their last
-                // beat carried: a phase inside the interval is held, not written (I3990)
-                phase: c
-                    .session_phase(&session.key)
-                    .or_else(|| progress.and_then(|(_, phase)| phase)),
+                progress_ms: progress
+                    .and_then(|(age, _)| age)
+                    .map(|age| age.as_millis() as u64),
+                blocked: blocked_reason(phase.as_deref()),
+                phase,
             });
         }
     }
@@ -1346,12 +1385,77 @@ pub struct BeatInput {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub session: Option<String>,
     /// What the session is doing, one line: `waiting on CI run 123`, `holding the build
-    /// lock`. Redacted before it is signed, and shown beside the session everywhere.
+    /// lock`. Redacted before it is signed, and shown beside the session everywhere. A phase
+    /// opening with `blocked:` says the session waits on a person (`blocked: permission
+    /// dialog`): it is written at once, is not progress, and the next beat that is clears it.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub phase: Option<String>,
     /// The process the beat speaks for; refused unless it is running on this machine.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub pid: Option<u32>,
+}
+
+impl BeatInput {
+    /// The beat a provider's hook event stands for (I3992), read from the payload the
+    /// provider hands the hook on stdin; `None` when the event says nothing about whether
+    /// the session works or waits, or names no session.
+    ///
+    /// The session is `<provider>-<session_id>`, the one the provider's start event opened
+    /// on the mesh. A permission dialog or an idle prompt (Claude Code's `Notification`) and
+    /// the end of a turn (`Stop`) are waits on a person, and say so in the phase
+    /// (`blocked: permission dialog`, `blocked: awaiting input`); a prompt or a tool call
+    /// (`UserPromptSubmit`, `PreToolUse`, `PostToolUse`) is real work, a beat with no phase,
+    /// which clears the wait.
+    pub fn from_hook(provider: &str, payload: &str) -> Option<BeatInput> {
+        let v: serde_json::Value = serde_json::from_str(payload).ok()?;
+        let id = v["session_id"]
+            .as_str()
+            .or_else(|| v["sessionId"].as_str())?
+            .trim();
+        if id.is_empty() {
+            return None;
+        }
+        let message = v["message"].as_str().unwrap_or_default().trim();
+        let phase = match v["hook_event_name"].as_str()? {
+            "UserPromptSubmit" | "PreToolUse" | "PostToolUse" => None,
+            "Stop" => Some(AWAITING_INPUT.to_string()),
+            "Notification" => Some(notification_wait(v["notification_type"].as_str(), message)?),
+            _ => return None,
+        };
+        Some(BeatInput {
+            session: Some(format!("{provider}-{id}")),
+            phase,
+            pid: None,
+        })
+    }
+}
+
+/// The phase of a session whose turn ended and which waits for a person to answer (I3992).
+const AWAITING_INPUT: &str = "blocked: awaiting input";
+
+/// The wait a notification announces (I3992): by its type when the provider names one
+/// (`permission_prompt`, `idle_prompt`, `elicitation_dialog`), by its message when it does
+/// not; `None` for one that announces no wait (`auth_success`).
+fn notification_wait(kind: Option<&str>, message: &str) -> Option<String> {
+    let lower = message.to_lowercase();
+    let kind = kind.unwrap_or(if lower.contains("permission") {
+        "permission_prompt"
+    } else if lower.contains("waiting for your input") {
+        "idle_prompt"
+    } else {
+        ""
+    });
+    let wait = match kind {
+        "permission_prompt" => "blocked: permission dialog",
+        "idle_prompt" => return Some(AWAITING_INPUT.to_string()),
+        "elicitation_dialog" => "blocked: an MCP server's question",
+        _ => return None,
+    };
+    Some(if message.is_empty() {
+        wait.to_string()
+    } else {
+        format!("{wait} ({message})")
+    })
 }
 
 impl BenchmarkCases for BeatInput {
@@ -1822,6 +1926,25 @@ pub fn module() -> ModuleDescriptor {
                 handler: mesh_build_cache_key,
             },
             capability! {
+                id: "mesh.who",
+                title: "Who runs this",
+                description: "The session behind a process, a path, an issue or an offloaded run (I3956): a pid (or `host:pid` on a declared offload host, read through its ssh path only) is read where it runs — its parent chain up to the provider's process and its messaging socket, its group, start, command and working directory, and the owner variables of its environment — and joined with that host's run records, the repository's board (whose rows carry each worker's address) and the mesh claims; a run tag is the record its host keeps; an issue or a path is every live mesh claim, announcement and run record naming or covering it. Each owner comes with its board peer, issue, address and the facts that named it. A process whose parent is init and whose directory is gone is marked a leftover and named with its owner when its environment or a run record knows it. Nothing is guessed from a name: an answer that cannot name an owner says unknown and lists the evidence it lacked. Reads processes and records; signals nothing.",
+                input: WhoInput,
+                output: crate::mesh::who::WhoReport,
+                stability: Stability::Experimental,
+                exposure: Exposure {
+                    mcp: mcp("majordomus_mesh_who"),
+                    http: get("/api/v1/mesh/who"),
+                    cli: Some(CliExposure { path: vec!["mesh".into(), "who".into()] }),
+                },
+                tags: ["mesh", "coordination", "diagnostics"],
+                cache: CachePolicy::Disabled,
+                benchmark: BenchmarkPolicy::Waived { reason: WaiverReason::ExternalDependency },
+                handler: mesh_who,
+            }
+            // the machine's processes and the board, not the repository's: a loopback caller only
+            .reads_only_locally(),
+            capability! {
                 id: "mesh.build_cache.ensure",
                 kind: CapabilityKind::Command,
                 title: "Restore an install before its command, and save it after",
@@ -2191,6 +2314,7 @@ mod tests {
                 Some("majordomus_mesh_build_cache_key"),
                 "/api/v1/mesh/build-cache/key",
             ),
+            ("mesh.who", Some("majordomus_mesh_who"), "/api/v1/mesh/who"),
             // a command served nowhere over HTTP or MCP: it runs the caller's install command
             ("mesh.build_cache.ensure", None, ""),
             (
@@ -2326,6 +2450,7 @@ mod tests {
             "mesh.doctor",
             "mesh.build_cache.env",
             "mesh.build_cache.key",
+            "mesh.who",
             "mesh.firewall",
             "mesh.cooperation",
             "mesh.peers",
@@ -2604,6 +2729,125 @@ mod tests {
             .unwrap();
         assert_eq!(s1.claims.len(), 2, "every claim listed");
         assert_eq!(s1.claims_held, 2);
+    }
+
+    /// I3992: each hook event a provider fires is a wait on a person, real work, or nothing,
+    /// for the session `<provider>-<session_id>`.
+    #[test]
+    fn a_hook_event_is_a_wait_real_work_or_nothing() {
+        let event = |name: &str, extra: &str| {
+            BeatInput::from_hook(
+                "claude-code",
+                &format!(r#"{{"session_id":"s1","hook_event_name":"{name}"{extra}}}"#),
+            )
+        };
+        let stop = event("Stop", "").unwrap();
+        assert_eq!(stop.session.as_deref(), Some("claude-code-s1"));
+        assert_eq!(stop.phase.as_deref(), Some("blocked: awaiting input"));
+        assert_eq!(stop.pid, None);
+        let idle = event("Notification", r#","notification_type":"idle_prompt""#).unwrap();
+        assert_eq!(idle.phase.as_deref(), Some("blocked: awaiting input"));
+        for work in ["UserPromptSubmit", "PreToolUse", "PostToolUse"] {
+            let beat = event(work, "").unwrap();
+            assert_eq!(
+                beat.phase, None,
+                "{work} is real work, which clears the wait"
+            );
+        }
+        assert!(
+            event("SubagentStop", "").is_none(),
+            "the session itself goes on"
+        );
+        assert!(
+            event("Notification", r#","notification_type":"auth_success""#).is_none(),
+            "a notification that announces no wait"
+        );
+        let unnamed = r#"{"session_id":" ","hook_event_name":"Stop"}"#;
+        assert!(BeatInput::from_hook("claude-code", unnamed).is_none());
+        let anonymous = r#"{"hook_event_name":"Stop"}"#;
+        assert!(BeatInput::from_hook("claude-code", anonymous).is_none());
+        let eventless = r#"{"session_id":"s1"}"#;
+        assert!(BeatInput::from_hook("claude-code", eventless).is_none());
+        let camel = r#"{"sessionId":"s2","hook_event_name":"Stop"}"#;
+        assert_eq!(
+            BeatInput::from_hook("gemini-cli", camel)
+                .unwrap()
+                .session
+                .as_deref(),
+            Some("gemini-cli-s2")
+        );
+    }
+
+    /// I3992: a notification names its wait by its type, by its message when the provider
+    /// sends no type, and carries the message as the reason.
+    #[test]
+    fn a_notification_names_its_wait_by_type_or_by_message() {
+        assert_eq!(
+            notification_wait(Some("permission_prompt"), "").as_deref(),
+            Some("blocked: permission dialog")
+        );
+        assert_eq!(
+            notification_wait(Some("elicitation_dialog"), "Pick one").as_deref(),
+            Some("blocked: an MCP server's question (Pick one)")
+        );
+        assert_eq!(notification_wait(Some("auth_success"), "Signed in"), None);
+        assert_eq!(
+            notification_wait(None, "Claude needs your permission to use Edit").as_deref(),
+            Some("blocked: permission dialog (Claude needs your permission to use Edit)")
+        );
+        assert_eq!(
+            notification_wait(None, "Claude is waiting for your input").as_deref(),
+            Some("blocked: awaiting input")
+        );
+        assert_eq!(notification_wait(None, "Something else"), None);
+    }
+
+    #[test]
+    fn a_blocked_phase_gives_its_reason_and_work_gives_none() {
+        assert_eq!(
+            blocked_reason(Some("  blocked:   awaiting input ")).as_deref(),
+            Some("awaiting input")
+        );
+        assert_eq!(
+            blocked_reason(Some("blocked:")).as_deref(),
+            Some("a person")
+        );
+        assert_eq!(blocked_reason(Some("waiting on CI")), None);
+        assert_eq!(blocked_reason(None), None);
+    }
+
+    /// I3992: the peer tree shows a session that waits on a person, with its reason and no
+    /// progress, even when it holds no claim; its next real work clears it.
+    #[test]
+    fn the_peer_tree_shows_a_waiting_session_until_its_next_work() {
+        let c = cooperation();
+        c.open_session(SessionInfo::named("claude-code-s1", "claude-code"))
+            .unwrap();
+        let session = |c: &Cooperation| -> SessionNode {
+            peer_tree(c, &Query::default())
+                .machines
+                .into_iter()
+                .flat_map(|m| m.runtimes)
+                .flat_map(|r| r.sessions)
+                .find(|s| s.key.ends_with("/claude-code-s1"))
+                .expect("the open session is listed")
+        };
+        assert_eq!(session(&c).blocked, None);
+        c.beat(
+            "claude-code-s1",
+            Some("blocked: permission dialog".into()),
+            None,
+        )
+        .expect("a wait is written though the session holds no claim");
+        let waiting = session(&c);
+        assert_eq!(waiting.blocked.as_deref(), Some("permission dialog"));
+        assert_eq!(waiting.phase.as_deref(), Some("blocked: permission dialog"));
+        assert_eq!(waiting.progress_ms, None, "a wait is not progress");
+        c.beat("claude-code-s1", None, None)
+            .expect("the next work clears the wait at once");
+        let working = session(&c);
+        assert_eq!((working.blocked, working.phase), (None, None));
+        assert!(working.progress_ms.is_some(), "and is progress");
     }
 
     /// A session that beat says in the peer tree how long ago it made progress and what it

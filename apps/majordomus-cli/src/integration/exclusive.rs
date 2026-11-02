@@ -16,8 +16,17 @@
 //! mesh never refuses to its own session: the next executor here takes the lease and then
 //! releases the leftover, so a crash costs other machines a wait until this checkout runs
 //! its executor again, never a claim nobody can give back.
+//!
+//! The claim lives by the executor's progress through its queue, not by its process existing
+//! (I3991): it is beaten once as it is taken and again each time the executor advances its
+//! queue ([`MeshClaim::beat`]), so an executor that holds it and does nothing has it suspended
+//! by the mesh once `cooperation.session_ttl_seconds` passes, and another machine's executor
+//! is admitted. Before every write to the forge the executor asks whether it still holds it
+//! ([`MeshClaim::holds`]); one admitted over meanwhile is released by the mesh with
+//! [`crate::mesh::cooperation::OVERTAKEN`] at that beat, and the executor acts on nothing.
 
 use std::path::Path;
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::time::Duration;
 
 use serde_json::{json, Value};
@@ -95,6 +104,12 @@ pub struct MeshClaim {
     mesh: Box<dyn Mesh>,
     key: String,
     session: String,
+    /// The mesh said the claim ended — released, or no longer known — so the drop has
+    /// nothing to give back.
+    ended: AtomicBool,
+    /// A refused beat was said once; the rest are not, so an executor of a mesh with the
+    /// progress rule off does not say it at every step.
+    beat_refusal_said: AtomicBool,
 }
 
 impl std::fmt::Debug for MeshClaim {
@@ -107,6 +122,16 @@ impl std::fmt::Debug for MeshClaim {
 }
 
 impl MeshClaim {
+    fn of(mesh: Box<dyn Mesh>, key: String, session: &str) -> Self {
+        MeshClaim {
+            mesh,
+            key,
+            session: session.to_string(),
+            ended: AtomicBool::new(false),
+            beat_refusal_said: AtomicBool::new(false),
+        }
+    }
+
     /// `<stream>/<claim>`, as the mesh answered it.
     pub fn key(&self) -> &str {
         &self.key
@@ -143,13 +168,86 @@ impl MeshClaim {
             }
         }
     }
+
+    /// Beat this claim's session with `phase`: the executor advanced its queue (I3991). The
+    /// mesh writes at most one beat a quarter of its ttl, so this is cheap to ask. A mesh that
+    /// refuses it — the progress rule off, a server older than the beat — keeps the claim by
+    /// its stream alone, as before: said once, and never a reason to stop.
+    pub(crate) fn beat(&self, phase: &str) {
+        let body = json!({
+            "session": self.session,
+            "phase": phase,
+            "pid": std::process::id(),
+        });
+        let refused = match self.mesh.ask("POST", "/api/v1/mesh/beats", Some(body)) {
+            Ok((200, _)) => return,
+            Ok((status, v)) => format!("status {status}: {v}"),
+            Err(e) => e,
+        };
+        if !self.beat_refusal_said.swap(true, Ordering::SeqCst) {
+            eprintln!(
+                "majordomus: the integration claim {} was not beaten ({refused}); it lives by its \
+                 runtime's beat alone",
+                self.key
+            );
+        }
+    }
+
+    /// Whether this claim still holds its scope, asked before `act` reaches the forge. It
+    /// beats first, so that the mesh re-arms a claim suspended while nobody was admitted over
+    /// it, and releases one another session was admitted over meanwhile
+    /// ([`crate::mesh::cooperation::OVERTAKEN`]); then it reads the claim. Held passes;
+    /// suspended, conflicted, released, expired or unknown is refused, and so is a mesh that
+    /// cannot be read: this checkout's server not answering is its runtime not beating, and
+    /// its claims expire on every other machine.
+    pub(crate) fn holds(&self, act: &str) -> Result<(), String> {
+        self.beat(act);
+        let claims = claims_of(
+            self.mesh.as_ref(),
+            &format!("/api/v1/mesh/state?view=full&session={}", self.session),
+        )
+        .map_err(|e| {
+            format!(
+                "the integration claim {} could not be read on the mesh: {e}",
+                self.key
+            )
+        })?;
+        let Some(claim) = claims.iter().find(|c| c["key"] == json!(self.key)) else {
+            self.ended.store(true, Ordering::SeqCst);
+            return Err(format!(
+                "the mesh no longer knows the integration claim {}",
+                self.key
+            ));
+        };
+        let state = claim["state"]["state"].as_str().unwrap_or("unreadable");
+        if state == "held" {
+            return Ok(());
+        }
+        if state == "released" {
+            self.ended.store(true, Ordering::SeqCst);
+        }
+        let why = claim["state"]["detail"]
+            .as_str()
+            .map(|d| format!(" ({d})"))
+            .unwrap_or_default();
+        Err(format!(
+            "the integration claim {} is {state} on the mesh{why}: another executor may hold \
+             its scope now",
+            self.key
+        ))
+    }
 }
 
-/// The mesh's live claims, from the full view of its state. A server older than that view
-/// refuses the query as invalid input and answers the whole state when asked bare, so the
-/// one refusal is asked again without it: the claims are the same either way.
+/// The mesh's live claims, from the full view of its state.
 fn live_claims(mesh: &dyn Mesh) -> Result<Vec<Value>, String> {
-    let answer = match mesh.ask("GET", "/api/v1/mesh/state?view=full&claims=live", None)? {
+    claims_of(mesh, "/api/v1/mesh/state?view=full&claims=live")
+}
+
+/// The claims of the state `query` asks for. A server older than the full view refuses the
+/// query as invalid input and answers the whole state when asked bare, so the one refusal is
+/// asked again without it: every claim asked about is in the whole state too.
+fn claims_of(mesh: &dyn Mesh, query: &str) -> Result<Vec<Value>, String> {
+    let answer = match mesh.ask("GET", query, None)? {
         (400, _) => mesh.ask("GET", "/api/v1/mesh/state", None)?,
         other => other,
     };
@@ -172,6 +270,9 @@ fn release(mesh: &dyn Mesh, key: &str) -> Result<(), String> {
 
 impl Drop for MeshClaim {
     fn drop(&mut self) {
+        if self.ended.load(Ordering::SeqCst) {
+            return;
+        }
         if let Err(e) = release(self.mesh.as_ref(), &self.key) {
             // a destructor cannot refuse; it says so where a person reads
             eprintln!(
@@ -216,11 +317,7 @@ pub fn claim(
             .as_str()
             .ok_or_else(|| format!("the mesh answered a claim without a key: {answer}"))?
             .to_string();
-        return Ok(Reach::Repository(MeshClaim {
-            mesh,
-            key,
-            session: session.to_string(),
-        }));
+        return Ok(Reach::Repository(MeshClaim::of(mesh, key, session)));
     }
     let message = answer["error"]["message"].as_str().unwrap_or_default();
     if message.starts_with("not_active") {
@@ -309,10 +406,11 @@ pub fn acquire_through(
         Reach::Repository(claim) => {
             let lease = IntegrationLease::acquire_holding(root, base, Some(claim))?;
             // the lease holds the claim it was given, so this releases exactly once
-            lease
-                .mesh_claim()
-                .into_iter()
-                .for_each(MeshClaim::release_leftovers);
+            if let Some(claim) = lease.mesh_claim() {
+                claim.release_leftovers();
+                // from its first beat the claim lives by the executor's progress (I3991)
+                claim.beat("took the integration lease");
+            }
             Ok(lease)
         }
         Reach::CloneOnly => IntegrationLease::acquire(root, base),
@@ -522,11 +620,7 @@ mod tests {
             ])),
             Ok((200, json!({}))),
         ]);
-        let held = MeshClaim {
-            mesh: Box::new(mesh.clone()),
-            key: "s1/c-new".into(),
-            session: "integration-me".into(),
-        };
+        let held = MeshClaim::of(Box::new(mesh.clone()), "s1/c-new".into(), "integration-me");
         held.release_leftovers();
         let released: Vec<Value> = mesh
             .asked()
@@ -540,11 +634,7 @@ mod tests {
 
         // what cannot be read or released is said, and nothing is released blindly
         let mesh = Scripted::new(vec![Err("down".into())]);
-        let held = MeshClaim {
-            mesh: Box::new(mesh.clone()),
-            key: "k".into(),
-            session: "integration-me".into(),
-        };
+        let held = MeshClaim::of(Box::new(mesh.clone()), "k".into(), "integration-me");
         held.release_leftovers();
         assert_eq!(
             mesh.asked().len(),
@@ -560,11 +650,7 @@ mod tests {
             // the drop's own release, also refused: said, not raised
             Err("down".into()),
         ]);
-        let held = MeshClaim {
-            mesh: Box::new(mesh.clone()),
-            key: "k".into(),
-            session: "integration-me".into(),
-        };
+        let held = MeshClaim::of(Box::new(mesh.clone()), "k".into(), "integration-me");
         held.release_leftovers();
         drop(held);
         assert_eq!(mesh.asked().len(), 3);
@@ -681,6 +767,168 @@ mod tests {
         // and with no server for a checkout, `acquire` finds none
         assert!(server_of(repo.path()).is_none());
         drop(acquire(repo.path(), "master").unwrap());
+    }
+
+    /// A git repository to take a lease in.
+    fn repository() -> tempfile::TempDir {
+        let repo = tempfile::tempdir().unwrap();
+        assert!(std::process::Command::new("git")
+            .args(["init", "-q", "-b", "master"])
+            .arg(repo.path())
+            .status()
+            .unwrap()
+            .success());
+        repo
+    }
+
+    fn beats(mesh: &Scripted) -> Vec<Value> {
+        mesh.asked()
+            .into_iter()
+            .filter(|(_, t, _)| t == "/api/v1/mesh/beats")
+            .filter_map(|(_, _, b)| b)
+            .collect()
+    }
+
+    #[test]
+    fn a_granted_claim_beats_once_as_it_is_taken() {
+        let repo = repository();
+        let mesh = Scripted::new(vec![
+            Ok((200, json!({ "key": "s1/c-1" }))),
+            state(json!([])),
+            Ok((200, json!({ "key": "s1/integration-x", "event": "s1/3" }))),
+        ]);
+        let lease = acquire_through(repo.path(), "master", Some(Box::new(mesh.clone()))).unwrap();
+        let beaten = beats(&mesh);
+        assert_eq!(beaten.len(), 1, "{beaten:?}");
+        assert_eq!(beaten[0]["session"], json!(session(repo.path(), "master")));
+        assert_eq!(beaten[0]["phase"], "took the integration lease");
+        assert_eq!(beaten[0]["pid"], json!(std::process::id()));
+        // the first beat comes after the leftovers were read: the claim is the lease's by then
+        let order: Vec<String> = mesh.asked().into_iter().map(|(_, t, _)| t).collect();
+        assert_eq!(
+            order[..3],
+            [
+                "/api/v1/mesh/claims",
+                "/api/v1/mesh/state?view=full&claims=live",
+                "/api/v1/mesh/beats"
+            ]
+        );
+
+        // each advance of the queue beats again, with what the executor did
+        lease.progressed("merge_succeeded #7");
+        assert_eq!(beats(&mesh).last().unwrap()["phase"], "merge_succeeded #7");
+        drop(lease);
+        assert_eq!(mesh.asked().pop().unwrap().1, "/api/v1/mesh/claims/release");
+    }
+
+    #[test]
+    fn a_claim_read_suspended_or_released_is_not_held() {
+        let ok = || Ok((200, json!({})));
+        let claim = |standing: Value| {
+            state(json!([
+                { "key": "s1/c-1", "session": "s1/integration-me", "state": standing },
+                { "key": "s2/c-9", "session": "s2/integration-me", "state": { "state": "held" } },
+            ]))
+        };
+        let held_by = |answers: Vec<Answer>| {
+            let mesh = Scripted::new(answers);
+            let held = MeshClaim::of(Box::new(mesh.clone()), "s1/c-1".into(), "integration-me");
+            let verdict = held.holds("merging #4");
+            (mesh, held, verdict)
+        };
+
+        // held: the beat first, with the act, then the claim read by its session
+        let (mesh, held, verdict) = held_by(vec![ok(), claim(json!({ "state": "held" }))]);
+        verdict.expect("held");
+        let asked = mesh.asked();
+        assert_eq!(asked[0].1, "/api/v1/mesh/beats");
+        assert_eq!(asked[0].2.clone().unwrap()["phase"], "merging #4");
+        assert_eq!(
+            asked[1].1,
+            "/api/v1/mesh/state?view=full&session=integration-me"
+        );
+        drop(held);
+        assert_eq!(mesh.asked().pop().unwrap().1, "/api/v1/mesh/claims/release");
+
+        // suspended: refused, naming why, and still given back when dropped
+        let (mesh, held, verdict) = held_by(vec![
+            ok(),
+            claim(json!({ "state": "suspended",
+                          "detail": "its holder stopped making progress: no beat for over 8s" })),
+        ]);
+        let e = verdict.unwrap_err();
+        assert!(
+            e.contains("suspended") && e.contains("no beat for over 8s"),
+            "{e}"
+        );
+        drop(held);
+        assert_eq!(mesh.asked().pop().unwrap().1, "/api/v1/mesh/claims/release");
+
+        // released by the mesh at that beat (overtaken): refused, and not released again
+        let (mesh, held, verdict) = held_by(vec![
+            Ok((
+                400,
+                json!({ "error": { "code": "invalid_input", "message": "no beat was written" } }),
+            )),
+            claim(json!({ "state": "released" })),
+        ]);
+        assert!(verdict.unwrap_err().contains("is released on the mesh"));
+        drop(held);
+        assert_eq!(
+            mesh.asked().len(),
+            2,
+            "a released claim is not released twice"
+        );
+
+        // unknown to the mesh: refused, and nothing to give back
+        let (mesh, held, verdict) = held_by(vec![ok(), state(json!([]))]);
+        assert!(verdict.unwrap_err().contains("no longer knows"));
+        drop(held);
+        assert_eq!(mesh.asked().len(), 2);
+
+        // a mesh that cannot be read is refused: its claims expire everywhere else
+        let (_, held, verdict) = held_by(vec![ok(), Err("connection refused".into())]);
+        assert!(verdict.unwrap_err().contains("could not be read"));
+        std::mem::forget(held);
+
+        // an older server answers the whole state bare, where the claim is found as well
+        let (mesh, held, verdict) = held_by(vec![
+            Ok((404, json!({ "error": "no such route" }))),
+            Ok((400, json!({ "error": { "code": "invalid_input" } }))),
+            claim(json!({ "state": "held" })),
+        ]);
+        verdict.expect("held, read from the whole state");
+        assert_eq!(mesh.asked()[2].1, "/api/v1/mesh/state");
+        std::mem::forget(held);
+    }
+
+    #[test]
+    fn a_server_without_beats_or_with_the_rule_off_still_grants() {
+        for refusal in [
+            Ok((404, json!({ "error": "no such route" }))),
+            Ok((
+                400,
+                json!({ "error": { "code": "invalid_input",
+                "message": "the progress rule is off on this runtime" } }),
+            )),
+            Err("connection reset".to_string()),
+        ] {
+            let repo = repository();
+            let mesh = Scripted::new(vec![
+                Ok((200, json!({ "key": "s1/c-1" }))),
+                state(json!([])),
+                refusal,
+            ]);
+            let lease =
+                acquire_through(repo.path(), "master", Some(Box::new(mesh.clone()))).unwrap();
+            assert_eq!(lease.mesh_claim().map(MeshClaim::key), Some("s1/c-1"));
+            let claim = lease.mesh_claim().unwrap();
+            assert!(claim.beat_refusal_said.load(Ordering::SeqCst), "said once");
+            // the next beat is asked, and refused or not, nothing stops
+            lease.progressed("selected #1");
+            assert_eq!(beats(&mesh).len(), 2);
+            drop(lease);
+        }
     }
 
     /// The server half answers over a real socket: a JSON answer, a body that is not JSON,
