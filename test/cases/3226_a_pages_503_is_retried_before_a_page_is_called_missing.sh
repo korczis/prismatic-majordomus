@@ -20,7 +20,7 @@
 . "$ROOT/test/lib.sh"
 command -v jq >/dev/null 2>&1 || skip "jq is not installed"
 command -v curl >/dev/null 2>&1 || skip "curl is not installed"
-command -v python3 >/dev/null 2>&1 || skip "python3 is not installed"
+mj_runs python3 || skip "$(mj_runs_why python3)"
 
 S="$(mktemp -d "${TMPDIR:-/tmp}/mj3221.XXXXXX")"
 SRV=""

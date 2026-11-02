@@ -14,8 +14,8 @@
 #      review request that names the reader reaches it marked for that reader, with no snapshot
 #      frame on a channel that asked for signals only.
 . "$ROOT/test/lib.sh"
-command -v node >/dev/null 2>&1 || skip "no node"
-command -v python3 >/dev/null 2>&1 || skip "no python3"
+mj_runs node || skip "$(mj_runs_why node)"
+mj_runs python3 || skip "$(mj_runs_why python3)"
 command -v jq >/dev/null 2>&1 || skip "no jq"
 command -v curl >/dev/null 2>&1 || skip "curl not installed"
 

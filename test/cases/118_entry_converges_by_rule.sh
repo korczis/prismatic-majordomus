@@ -31,7 +31,7 @@ GATE="$ROOT/scripts/ci/entry-converges"
 # distribution (the skeleton, the allow list, the schema) and the crate.
 expect_grep 'id: entry-converges' "$ROOT/.ai/repo/ci/gates.yaml"
 expect_grep 'scripts/ci/entry-converges' "$ROOT/.ai/repo/ci/gates.yaml"
-if command -v python3 >/dev/null 2>&1 && python3 -c 'import yaml' >/dev/null 2>&1; then
+if mj_runs python3 && python3 -c 'import yaml' >/dev/null 2>&1; then
   python3 - "$ROOT/.ai/repo/ci/gates.yaml" <<'PY' || exit 1
 import sys, yaml
 m = yaml.safe_load(open(sys.argv[1]))

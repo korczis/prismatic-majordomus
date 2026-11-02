@@ -6,9 +6,9 @@
 # over; one that receives `stream.ready` does. The suite runs against a fake WebSocket and a
 # fake clock, with no server: scripts/lib/cockpit-socket.test.mjs.
 . "$ROOT/test/lib.sh"
-command -v node >/dev/null 2>&1 || {
-  [ -z "${CI:-}" ] || { echo "    node is required on CI: the reconnection suite cannot run"; exit 1; }
-  skip "no node"; }
+mj_runs node || {
+  [ -z "${CI:-}" ] || { echo "    node is required on CI: the reconnection suite cannot run ($(mj_runs_why node))"; exit 1; }
+  skip "$(mj_runs_why node)"; }
 out="$(cd "$ROOT" && node --test scripts/lib/cockpit-socket.test.mjs 2>&1)" \
   || { printf '%s\n' "$out" | grep -E '^not ok|# (pass|fail)|Error|expected|actual' | head -40; exit 1; }
 printf '%s\n' "$out" | grep -qE '^# fail 0$' || { printf '%s\n' "$out" | tail -20; exit 1; }

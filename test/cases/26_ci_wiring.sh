@@ -45,8 +45,8 @@ for f in "$CORE" "$LINT"; do grep -q '^set -eu' "$f" || { echo "    ${f##*/} doe
 #    running other cases beside this one, and they read that directory.
 H="$T/harness"; mkdir -p "$H/test/cases" "$H/bin" "$H/lib"
 cp "$ROOT/test/run.sh" "$H/test/run.sh"; cp "$ROOT/test/lib.sh" "$H/test/lib.sh"
-# test/lib.sh sources the tool's own lib/sha256.sh
-cp "$ROOT/lib/sha256.sh" "$H/lib/sha256.sh"
+# test/lib.sh sources the tool's own lib/sha256.sh and lib/runnable.sh
+cp "$ROOT/lib/sha256.sh" "$H/lib/sha256.sh"; cp "$ROOT/lib/runnable.sh" "$H/lib/runnable.sh"
 tmpcase="$H/test/cases/zz_ci_wiring_probe.sh"
 printf '# deliberately failing probe\nexit 1\n' > "$tmpcase"
 if bash "$H/test/run.sh" zz_ci_wiring_probe >/dev/null 2>&1; then

@@ -7,7 +7,7 @@
 #
 # Skips itself without zola or node_modules, as 12_site_build does; the build is real.
 . "$ROOT/test/lib.sh"
-command -v zola >/dev/null || skip "zola absent"
+mj_zola_ready "$ROOT" || skip "$(mj_zola_why "$ROOT")"
 [ -d "$ROOT/node_modules/tailwindcss" ] || skip "node_modules absent"
 S="$(mktemp -d "${TMPDIR:-/tmp}/mj96.XXXXXX")"; trap 'rm -rf "$S"' EXIT
 
