@@ -20,8 +20,8 @@
 #     `#diagram-<name>:<node>`, and fails a link to a node the diagram does not declare, and a
 #     link to a diagram the page does not carry, each with a finding that names it.
 . "$ROOT/test/lib.sh"
-command -v node >/dev/null 2>&1 || skip "no node"
-command -v python3 >/dev/null 2>&1 || skip "no python3"
+mj_runs node || skip "$(mj_runs_why node)"
+mj_runs python3 || skip "$(mj_runs_why python3)"
 PASS="$ROOT/scripts/lib/diagrams.mjs"
 CHECK="$ROOT/scripts/ci/link-check"
 

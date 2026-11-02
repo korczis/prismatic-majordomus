@@ -12,9 +12,9 @@
 # every edge of roadmap-graph.json is listed under its source and under its target in that
 # direction, and the old reading ("<source> requires <target>") appears nowhere.
 . "$ROOT/test/lib.sh"
-command -v zola >/dev/null || skip "zola absent"
+mj_zola_ready "$ROOT" || skip "$(mj_zola_why "$ROOT")"
 command -v jq >/dev/null || skip "jq absent"
-command -v python3 >/dev/null || skip "python3 absent"
+mj_runs python3 || skip "$(mj_runs_why python3)"
 
 G="$ROOT/site/data/generated/roadmap-graph.json"
 # the producer names the kind by the direction it is drawn in

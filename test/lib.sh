@@ -142,10 +142,24 @@ file_mode() { stat -c %a "$1" 2>/dev/null || stat -f %Lp "$1"; }
 # from there: the `../lib/sha256.sh` this said before resolved outside the tree (I4381).
 # shellcheck source=lib/sha256.sh
 . "$ROOT/lib/sha256.sh"
+# shellcheck source=lib/runnable.sh
+. "$ROOT/lib/runnable.sh"
 
 # The SHA-256 of a file, for a case that must prove a file did not change rather than that a
 # command said it did not.
 sha256_of_file() { mj_sha256_hex "$1"; }
+
+# A harness for a case that drives the runner on a fixture suite: test/run.sh and this file
+# under <dir>/test, with every lib/ file the two source, read from their own `. "$ROOT/lib/..."`
+# lines, under <dir>/lib. The copies listed their libraries by hand, so when #1358 made this
+# file source lib/runnable.sh, cases 413, 4223 and 829 ran a harness without it (train 21, run
+# 41352959070). Case 3180 holds that no case copies this file any other way.
+mj_harness() { # <dir>
+  mkdir -p "$1/test/cases" "$1/lib"
+  cp "$ROOT/test/run.sh" "$ROOT/test/lib.sh" "$1/test/"
+  sed -n 's|^[[:space:]]*\. "\$ROOT/\(lib/[A-Za-z0-9_.-]*\)".*|\1|p' "$ROOT/test/lib.sh" "$ROOT/test/run.sh" \
+    | sort -u | while IFS= read -r mj_hn_lib; do cp "$ROOT/$mj_hn_lib" "$1/$mj_hn_lib" || exit 1; done
+}
 
 # The Rust executable a case drives. MAJORDOMUS_BIN names a prebuilt one (CI hands the
 # artifact of its rust job to a later job this way, a person points at a release build);
@@ -208,7 +222,7 @@ rust_bin_exit() { [ "$1" = 3 ] && skip "no executable of this tree, no installed
 # protects master never reports `ok` for a case that did not run. Anywhere else the case ends
 # with a line that names what was not measured, so a reader who greps a log for `skip:` finds
 # every pass that proved nothing.
-#   command -v zola >/dev/null || skip_case "zola is absent, so the site build was not measured"
+#   mj_zola_ready "$ROOT" || skip_case "$(mj_zola_why "$ROOT"), so the site build was not measured"
 skip_case() {
   if [ "${CI:-}" = true ]; then
     printf '    %s; under CI every tool the suite needs is installed, so this is a failure, not a skip\n' "$1"
@@ -491,8 +505,8 @@ start_http() {
   local dir="$1" tries=0 port
   HTTP_PORT=""; HTTP_BASE=""; HTTP_PID=""
   local runner=""
-  if command -v python3 >/dev/null 2>&1; then runner=python3
-  elif command -v node >/dev/null 2>&1; then runner=node
+  if mj_runs python3; then runner=python3
+  elif mj_runs node; then runner=node
   else return 1; fi
   while [ "$tries" -lt 20 ]; do
     port=$(( 20000 + ((( $$ + tries * 977 ) * 31 ) % 20000) ))
@@ -710,7 +724,7 @@ reasoning_fixture() {
   # A skipped case reports ok, so on a CI runner a missing node is a failure, not a skip.
   local node; node="$(node -p 'process.execPath' 2>/dev/null)" || {
     [ -z "${CI:-}" ] || { echo "    node is required on CI: the reasoning transport cannot run"; exit 1; }
-    skip "no node"; }
+    skip "$(mj_runs_why node)"; }
   ln -sf "$node" "$RZ_BIN/node"
   RZ_ENV=""
 }
