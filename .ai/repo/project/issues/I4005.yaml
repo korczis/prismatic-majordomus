@@ -14,7 +14,12 @@ current_state: "Not built: this issue is planned by the milestone a-session-proc
 desired_state: "The acceptance criteria below hold and case 4005 proves them."
 scope:
   - "apps/majordomus-cli/src/capability/builtin"
-  - "share/skills"
+  - "apps/majordomus-cli/src/commands"
+  - "apps/majordomus-cli/src/editors"
+  - ".ai/repo/skills"
+  - ".claude/skills"
+  - ".agents/skills"
+  - ".ai/repo/adrs"
   - "docs/PROCEED.md"
   - "test/cases/4005_proceed_step_is_one_idempotent_work_order.sh"
   - ".ai/repo/project/issues/I4005.yaml"
@@ -25,6 +30,11 @@ acceptance_criteria:
   - "An intent whose realisation is met answers done and schedules nothing (it-stops-when-the-intent-is-met)"
   - "The /proceed skill of every provider is generated and a hand edit fails generate --check"
   - "The stack I2972-I2976 and I3040 is extended, not duplicated"
+  - "One take path: the order's do is devtask.implement, and proceed take (I2974, case 3443) runs the same claim, worktree and start or is retired; cases 3443 and 3370 still pass once the stack is on master"
+  - "Each work item names the model models.route selects and the effort of the issue's profile; fan_out lists the independent admissible items that may run beside it; report is the peers.announce input"
+  - "next_due_at is the only scheduling: /loop consumes it on Claude Code and no scheduler is written; a provider without /loop steps when asked"
+  - "An ADR extending ADR 0177 decides that a session proceeds without a person's word through next_due_at and that /watchdog calls the same capability, citing ADR 0200; its number is taken on the board when it is written, and until the owner accepts it next_due_at is advisory and only a person's /loop steps again"
+  - "Exactly one /proceed exists: the hand-written .ai/repo/skills/proceed record is removed when the alias is declared, and the intent a-session-proceeds names this intent as its extension or is superseded by it when the stack lands"
 validation:
   - "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 4005_proceed_step_is_one_idempotent_work_order"
 evidence_required:

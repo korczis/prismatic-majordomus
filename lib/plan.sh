@@ -473,7 +473,8 @@ mj_plan_evidence_table() {
 # illegal, so an issue cannot be started before its dependencies or completed without its
 # evidence or without having been started. The guards and the bytes written are those of
 # plan::check and plan::transition in apps/majordomus-cli/src/plan.rs, held equal by
-# test/cases/133_plan_transition.sh and 582_the_done_guard_holds_in_both_engines.sh.
+# test/cases/133_plan_transition.sh and 582_the_done_guard_holds_in_both_engines.sh; `done`
+# is not mirrored at all, it is plan.transition's (mj_plan_done).
 mj_plan_transition() {
   local id="$1" what="$2" st bb f now
   [ -n "$id" ] || mj_die "$MJ_EX_USAGE" "plan $what needs an issue id"
@@ -504,20 +505,8 @@ mj_plan_transition() {
       mj_plan_stamp "$id" verified_at verified_event plan_verify "$now"
       printf 'plan: %s VERIFY\n' "$id" ;;
     done)
-      [ -n "$bb" ] && mj_die "$MJ_EX_REFUSED" "$id cannot be DONE while $bb is not DONE"
-      case "$st" in ACTIVE|VERIFY) ;; *) mj_die "$MJ_EX_REFUSED" "$id is $st; only an ACTIVE or VERIFY issue can move to DONE" ;; esac
-      # one token per line, read whole: a token may hold spaces ("anthropic api adapter:
-      # request normalisation, credential, usage"), and a word-split loop asked for each word
-      local need missing=""
-      while IFS= read -r need; do
-        [ -n "$need" ] || continue
-        mj_plan_has_evidence "$id" "$need" || missing="$missing $need"
-      done <<EOF
-$(mj_pj_list "$id" evidence_required)
-EOF
-      [ -n "$missing" ] && mj_die "$MJ_EX_CONTRACT" "$id has no evidence for:$missing (run: majordomus plan evidence $id --covers <token> ...)"
-      mj_plan_stamp "$id" completed_at completed_event plan_done "$now"
-      printf 'plan: %s DONE\n' "$id" ;;
+      # Decided and written by plan.transition, never here (I1504, ADR 0040).
+      mj_plan_done "$id" ;;
   esac
   mj_project_unload
   mj_project_load >/dev/null 2>&1 || true
@@ -525,12 +514,64 @@ EOF
   printf 'next ready issue: %s\n' "${nxt:-none}"
 }
 
+# mj_plan_done <issue>
+# `done` is one capability, plan.transition (I1504, ADR 0040): its guard decides, it writes the
+# stamp, the seal and `updated_at`, and it appends plan_done. The MCP tool, the HTTP route, the
+# OpenAPI operation and the Cockpit's runner are projections of the same declaration, and this
+# is one more caller of it, as lib/recover.sh is of recover.orphans. What stays here is the
+# command line's contract: a refusal for missing evidence exits 10 and names each token still
+# owed — the capability's sentence counts them, its hint is how that refusal is told apart — and
+# every other refusal exits 15 with the capability's own sentence.
+mj_plan_done() {
+  local id="$1" bin share out rc=0 code msg need missing=""
+  # shellcheck source=rust_bin.sh
+  # shellcheck disable=SC1091
+  . "$MJ_LIB_DIR/rust_bin.sh"
+  bin="$(mj_rust_bin "$MJ_HOME")"
+  [ -x "$bin" ] || mj_die "$MJ_EX_CONTRACT" \
+    "plan done: the runtime that moves an issue is not built at $bin, and nothing here moves it a second time (build it: bin/majordomus-cli --help)"
+  command -v jq >/dev/null 2>&1 || mj_die "$MJ_EX_CONTRACT" \
+    "plan done: jq is not installed, so the runtime's answer cannot be read here (brew install jq)"
+  # the repository's own distribution when it has one, else the tool's (as lib/recover.sh does)
+  share="$(mj_rust_share "$MJ_ROOT")"
+  [ -n "$share" ] || { [ -f "$MJ_BIN_DIR/../share/kinds.yaml" ] && share="$MJ_BIN_DIR/../share"; }
+  # --discovery filesystem: this command reads the records in the work tree, committed or not,
+  # and so must the capability it asks; by default the index holds only what git tracks, and an
+  # issue written and not yet added would be "no issue" here while `plan start` had moved it.
+  out="$( [ -z "$share" ] || export MAJORDOMUS_SHARE="$share"
+          "$bin" run plan.transition --input "$(jq -cn --arg i "$id" '{issue: $i, transition: "done"}')" \
+            --discovery filesystem --quiet --format json --repo "$MJ_ROOT" 2>/dev/null )" || rc=$?
+  if [ "$rc" = 0 ] && printf '%s' "$out" | jq -e '.output.to' >/dev/null 2>&1; then
+    printf 'plan: %s %s\n' "$id" "$(printf '%s' "$out" | jq -r '.output.to')"
+    return 0
+  fi
+  # An answer that is not JSON is no answer: jq's failure on it must not end this command
+  # under `set -e` with jq's exit status and no word said (case 582, the `broken` arm).
+  code="$(printf '%s' "$out" | jq -r '.error.code // empty' 2>/dev/null || true)"
+  msg="$(printf '%s' "$out" | jq -r '.error.message // empty' 2>/dev/null || true)"
+  case "$code" in
+    refused)
+      case "$msg" in
+        *"(run: majordomus plan evidence "*)
+          for need in $(mj_pj_list "$id" evidence_required); do
+            mj_plan_has_evidence "$id" "$need" || missing="$missing $need"
+          done
+          [ -n "$missing" ] || mj_die "$MJ_EX_CONTRACT" "$msg"
+          mj_die "$MJ_EX_CONTRACT" "$id has no evidence for:$missing (run: majordomus plan evidence $id --covers <token> ...)" ;;
+        *) mj_die "$MJ_EX_REFUSED" "$msg" ;;
+      esac ;;
+    not_found) mj_die "$MJ_EX_MISSING" "no issue '$id'" ;;
+    *) mj_die "$MJ_EX_CONTRACT" "plan done: the runtime could not move $id (exit $rc${msg:+: $msg}); this command wrote nothing" ;;
+  esac
+}
+
 # mj_ledger_append-writes: plan_start plan_verify plan_done
 #
 # The line above is read by test/cases/33_event_registry.sh, which holds every declared event
 # to something that writes it. This helper appends the event its caller names, so the name is
-# a variable at the one call site and a literal at three; the declaration is how a scan that
-# reads source rather than runs it can still see which events reach the ledger from here.
+# a variable at the one call site and a literal at two; plan_done is appended by plan.transition
+# on this command's behalf (mj_plan_done). The declaration is how a scan that reads source
+# rather than runs it can still see which events reach the ledger from `majordomus plan`.
 #
 # mj_plan_stamp <issue> <stamp-field> <seal-field> <event> <now>
 # The stamp, the seal that proves it, `updated_at`, then the event — the order plan::transition
