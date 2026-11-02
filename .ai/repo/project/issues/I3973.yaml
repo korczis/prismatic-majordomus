@@ -6,7 +6,7 @@ priority: p1
 profile: implementation
 parallel_safe: false
 objective: "A gate in the structure job (wired in .github/workflows/validate.yml and declared in .ai/repo/ci/gates.yaml) reads the record ids that a pull request ADDS, in the added lines of its diff hunks over records, documents and its commit messages, and refuses one that resolves neither on the base branch nor in the pull request's own tree, naming the file, line and id and the unmerged branch that holds it if any. The id grammars it judges are issue ids (I followed by four or more digits), ADR numbers written as ADR followed by four digits, and rule ids written as project. followed by a rule name; a line the pull request did not add is never judged, so the 62 ids master's records and docs already name without a record at 355a0cee79a stay where they are and are reported once as a baseline count that may not grow. The commit-msg judge already refuses an id the working tree's layer lacks (commit/verdict.rs UnresolvedReference, policy reference_unresolved: error), but the working tree may hold records another branch brought in. convergence (apps/majordomus-cli/src/convergence) adds a holding kind: a record id named on master that resolves only on an unmerged branch is reported as stranded, with that branch."
-why: "Records written on one branch and named from another reach master before what they name: the I3920 record exists only on chore/landing-survives-any-session while train 4 and the landing seat's messages already cite it, and plan validate refuses depends_on to an issue master lacks, which is why the landing-survives-any-session plan could not depend on I2790. A reference that does not resolve on master is a reference a reader cannot follow."
+why: "Records written on one branch and named from another reach master before what they name: the I3920 record exists only on chore/landing-survives-any-session while train 4 and the landing seat's messages already cite it, and plan validate refuses depends_on to an issue master lacks, which is why the landing-survives-any-session plan could not depend on I2790. A reference that does not resolve on master is a reference a reader cannot follow. The owner's pack asks for the same in campaigns/majordomus-shellfall/01-canonical-workflow-contract.md; PR #1058 planned it as I2549, which never landed, and the criteria of that record this one did not hold were folded in on 2026-10-30."
 current_state: "Verified at 355a0cee79a: commit validate refuses an unresolved record id against the tree it runs in (verdict.rs:312-321); scripts/ci/reference-check checks repository paths in prose and exempts records; convergence reports worktrees, branches and stashes at risk, not records; nothing compares a named id with the base branch; 62 distinct issue ids named in master's issue and intent records and docs/*.md have no record on master."
 desired_state: "A pull request citing an id that exists only on another unmerged branch is refused until that branch lands or the record is brought in; convergence lists stranded records on master."
 scope:
@@ -26,6 +26,7 @@ acceptance_criteria:
   - "A fixture pull request that edits a file already naming an unresolved id on an untouched line passes, and the baseline count of such ids on master may not grow"
   - "convergence on a fixture master citing an id held only by an unmerged branch reports it stranded with the branch"
   - "The gate runs in the structure job, and gates.yaml declares it"
+  - "The baseline names the ADR numbers tracked files cite with no record behind them on 2026-10-30 (0034, 0137, 0148, 0151, 0156, 0159, 0168, 0228 and the fixture 0999), and 0137, cited from code and configuration, is resolved or given a record rather than kept"
 validation:
   - "bin/majordomus plan validate"
   - "env -u MAJORDOMUS_SHARE cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib -- commit:: convergence::"
@@ -36,4 +37,4 @@ depends_on: []
 serves:
   - "merging-and-referencing-are-enforced#references-resolve-on-master"
 created_at: 2026-10-22
-updated_at: 2026-10-22
+updated_at: 2026-10-30

@@ -295,6 +295,26 @@ EOF
   fi
 }
 
+# The runtime record (I3179). A server that is gone cannot record its own end, so once a
+# `--kill` sweep is done the reaper asks `serve status`, the reader that records `stopped` or
+# `failed` for every checkout whose lease names a process that no longer exists, and it asks
+# as itself (MAJORDOMUS_RUNTIME_WRITER). The record is written only when a state changes, and
+# never into the lease's directory, which `.envrc` watches. A report run changes nothing, so
+# it records nothing either.
+record_runtime() {
+  [ -f "$ROOT/.ai/manifest.yaml" ] || return 0
+  rr_bin="$(mj_rust_bin "$HERE")"
+  if [ ! -x "$rr_bin" ]; then
+    echo "reap-orphans: runtime not recorded — no majordomus executable at $rr_bin"
+    return 0
+  fi
+  if MAJORDOMUS_RUNTIME_WRITER=reap_orphans "$rr_bin" serve status --repo "$ROOT" --format json >/dev/null 2>&1; then
+    echo "reap-orphans: runtime recorded for every checkout of $ROOT (serve status, as reap_orphans)"
+  else
+    echo "reap-orphans: runtime not recorded — serve status failed for $ROOT"
+  fi
+}
+
 # -------------------------------------------------------------------------- build output
 
 SNAP_PS=""; SNAP_CWD=""
@@ -745,6 +765,7 @@ before="$(free_kb "$ROOT")"
 if [ "$DO_SERVERS" -eq 1 ]; then
   PHASE="examining servers"
   reap_servers
+  [ "$KILL" -eq 0 ] || record_runtime
   SRV_REACHED=1
 fi
 if [ "$DO_TARGETS" -eq 1 ]; then

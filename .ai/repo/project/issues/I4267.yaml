@@ -1,0 +1,27 @@
+id: I4267
+milestone: a-second-adopter-is-served
+title: "A repository's static site is a deployment the layer can state"
+slug: a-static-site-is-a-deployment
+priority: p3
+profile: implementation
+parallel_safe: true
+objective: "deployment/v1 accepts a static kind (build command, output directory, publish target, visibility) that doctor validates and the site pipeline reads."
+why: "An adopter's field report (a private Python client repository adopted from the v1.0.0-alpha.8 release on 2026-10-27, with the plan model, project rules, knowledge, skills, Claude Code capture and a GitHub projection all in use) found: the adopter deploys its generated wiki site privately (a hosted static page), and deployment/v1 models only a container of the tool's executable, so the deployment went into an ADR instead of a deployment record."
+current_state: "deployment/v1 has build.package, listen and health for a server; nothing describes a static site and where it is published."
+desired_state: "deployment/v1 accepts a static kind (build command, output directory, publish target, visibility) that doctor validates and the site pipeline reads."
+scope:
+  - ".ai/repo/project/issues/I4267.yaml"
+  - "share/schemas/majordomus/deployment/deployment.v1.schema.json"
+  - "share/allow/deployment.txt"
+  - "docs/SCHEMAS.md"
+  - "test/cases/4267_a_static_site_is_a_deployment.sh"
+depends_on: []
+acceptance_criteria:
+  - "A static deployment record validates and names its output directory"
+  - "A public target for a repository marked private is refused"
+validation:
+  - "bash test/run.sh 4267_a_static_site_is_a_deployment"
+evidence_required:
+  - "case_a_static_site_is_a_deployment"
+created_at: 2026-10-27
+updated_at: 2026-10-27
