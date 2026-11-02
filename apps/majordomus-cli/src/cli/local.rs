@@ -258,6 +258,11 @@ pub const LOCAL: &[LocalCommand] = &[
         note: "closes pull requests on the forge whose work is provably on master, only with --apply.",
     },
     LocalCommand {
+        command: "prs supervise",
+        reason: LocalReason::WritesRepository,
+        note: "reads the in-flight CI runs and open pull requests on the forge over the network and, only with --apply, force-cancels the runs past their declared bound, recording each act on the integration trail first: a mutation of the remote the shared server never reaches (ADR 0101, I3903).",
+    },
+    LocalCommand {
         command: "pack build",
         reason: LocalReason::WritesRepository,
         note: "writes the pack's index, shards and manifest under tmp/packs/ (or --out), after planning with pack.plan and before verifying with pack.verify.",

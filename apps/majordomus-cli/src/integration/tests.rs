@@ -3258,7 +3258,7 @@ fn a_continuous_drain_is_recorded_when_it_starts_and_stops() {
 }
 
 /// Every action, in the order an executor's run meets them.
-const ALL_ACTIONS: [drain::IntegrationAction; 31] = [
+const ALL_ACTIONS: [drain::IntegrationAction; 38] = [
     drain::IntegrationAction::LeaseAcquired,
     drain::IntegrationAction::LeaseReleased,
     drain::IntegrationAction::ContinuousStarted,
@@ -3290,6 +3290,13 @@ const ALL_ACTIONS: [drain::IntegrationAction; 31] = [
     drain::IntegrationAction::Idle,
     drain::IntegrationAction::FailureAcknowledged,
     drain::IntegrationAction::ObserveFailed,
+    drain::IntegrationAction::RunCancelAttempted,
+    drain::IntegrationAction::RunCancelled,
+    drain::IntegrationAction::RunCancelFailed,
+    drain::IntegrationAction::RunAlreadyEnded,
+    drain::IntegrationAction::RunRerunAttempted,
+    drain::IntegrationAction::RunRerunRequested,
+    drain::IntegrationAction::RunRerunFailed,
 ];
 
 /// A new action must be added to [`ALL_ACTIONS`] before this compiles: no wildcard.
@@ -3327,7 +3334,14 @@ fn every_action_is_listed(a: drain::IntegrationAction) {
         | A::RepairRefused
         | A::Idle
         | A::FailureAcknowledged
-        | A::ObserveFailed => (),
+        | A::ObserveFailed
+        | A::RunCancelAttempted
+        | A::RunCancelled
+        | A::RunCancelFailed
+        | A::RunAlreadyEnded
+        | A::RunRerunAttempted
+        | A::RunRerunRequested
+        | A::RunRerunFailed => (),
     }
 }
 

@@ -16,18 +16,36 @@ scope:
   - ".github/workflows"
   - "scripts/ci/release-path"
   - "docs/CI.md"
+  - "docs/INTEGRATION.md"
+  - "test/cases/3903_the_supervisor_is_wired_to_survive_a_burst.sh"
+  - "apps/majordomus-cli/src/cli.rs"
+  - "apps/majordomus-cli/src/commands/prs.rs"
+  - "SECURITY.md"
 non_scope:
   - "Hung Pages builds: I3902."
 depends_on: ["I3902"]
 acceptance_criteria:
-  - "A queued or in-progress run past its declared bound is cancelled once, with its reason recorded"
+  - "A queued or in-progress run past its declared bound is cancelled once, with its reason recorded, unless it is the last run of its pull request's head"
+  - "No pass leaves an open pull request's head that had a run on its way to a verdict without one: such a run that waits is held as last_run_of_head, and one with a job past its bound is cancelled and re-run once ended (run_rerun_requested); supervise_property.rs asserts it over every replay, every unit scenario and generated worlds through the command's own apply"
+  - "The paired re-run is asked whenever the run reads completed without passing after the act, whatever force-cancel returned (a gh error after a landed cancel is run_already_ended and then a re-run), and nothing when it passed on its own"
+  - "A head a pass left bare (a refused re-run, a cancel that landed after gh reported it failed) is found by later passes from the trail and its newest run, one this supervisor cancelled, asked again at most RERUN_ATTEMPTS (3) times in all, each run_rerun_attempted first; while it has none the pass exits 12 naming the pull request, and supervise_property.rs asserts the invariant recovers within three passes over worlds whose forge half-fails"
   - "A pull-request run whose head moved is cancelled; a run of master, a release, a tag or a deploy never is for that reason"
   - "A dry run decides without acting, and the decision is the same"
+  - "The running bound holds each job in progress from that job's start, never the run: replays of 40764355688 at 00:50Z, 40576851731 at 01:10Z, 40680986818 at 15:58Z, release 38013111243's attempt 2 at 07:20Z and 40747313397's attempt 3 at 01:11Z give no cancel; jobs a re-run carries over never count"
+  - "The queue bound runs from the later of created_at and run_started_at, so a re-run of a run created six hours earlier and queued two minutes is not cancelled"
+  - "A first-attempt pull-request run waiting with no job created, of a commit whose run of the same branch created within 120 s of it is in flight, is cancelled as a duplicate (a replay of 40713048283 by 15:10Z); an admitted twin whose jobs exist never is (a replay of #2678's 40811621641 at 05:35Z), nor a run of a judged commit, a re-run, a reopen, a later label, a head back at a judged sha or a train sharing a member's sha, and ci:full holds it"
+  - "A twin whose older run is itself to be ended, now or within 30 minutes, is held as earlier_run_ends rather than cancelled with it (a replay of #2674's 40801560222 at 06:05Z), and each act re-checks against the runs the same pass already cancelled"
+  - "An integration/* run is never cancelled through queued_past_bound or running_past_bound, and a queued run of the trunk, a tag, the schedule, a dispatch or a release is held"
+  - "A run's jobs are read only where a rule could act on it, each gh call is bounded at 20 s and the observation at 180 s, and --unless-supervised-within with --supervised-by lets a covering lane stand aside on the covered lane's success only, never on its own stand-aside"
+  - "supervise.yml runs on lundra and then, in the same run, on a hosted lane that needs it and runs only when lundra did not supervise, from a prebuilt executable, each step bounded under the job (1 + 2 + 4 under 8 minutes, the supervise step longer than the 180 s forge budget), with cancel-in-progress false, so five validate requests within 60 s let an apply complete"
+  - "A newest supervise success by lundra older than 30 minutes is reported as supervise_stale, and queue.yml fails on it: the alive check names the lane, so a lundra lane that always fails is not hidden by the hosted lane's successes"
+  - "The supervisor's newest success is read past runs whose every job was cancelled while waiting, up to three pages and forty runs' jobs"
 validation:
   - "cargo test --lib integration"
+  - "bash test/run.sh 3903_the_supervisor_is_wired_to_survive_a_burst 350_the_queue_measures_itself"
 evidence_required:
   - "supervise_unit_tests"
 serves:
   - "nothing-in-the-mesh-waits-on-something-dead#states-are-classified"
 created_at: 2026-10-22
-updated_at: 2026-10-22
+updated_at: 2026-10-29

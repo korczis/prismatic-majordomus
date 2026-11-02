@@ -4,8 +4,8 @@
 //! queue the integration module builds from the last recorded observation — the same value
 //! the HTTP route, the MCP tool and the Cockpit page (`/cockpit/integration`) render — and
 //! never reach the network; neither does `repair` without `--apply`, which decides on the same
-//! queue. `refresh`, `drain`, `repair --apply` and `cleanup` are the ones that do, and each says
-//! so in its help.
+//! queue. `refresh`, `drain`, `repair --apply`, `cleanup` and `supervise` are the ones that do,
+//! and each says so in its help.
 //!
 //! Exit codes: 0 when the answer is complete; 10 when it is a finding (a stale or absent
 //! observation, a drain that stopped on a verification failure, a pull request that is not
@@ -406,6 +406,243 @@ fn render_proof(p: &integration::proof::DryRunProof, out: &mut impl Write) -> Re
     w(out, lines.join("\n"))
 }
 
+/// `prs supervise`: judge every in-flight CI run against the declared bounds and, with
+/// `apply`, force-cancel what was decided ([`integration::runs`]).
+fn supervise(
+    root: &std::path::Path,
+    apply: bool,
+    unless: Option<integration::runs::StandAside>,
+    format: OutputFormat,
+    out: &mut impl Write,
+) -> Result<u8> {
+    let model = integration::supervise::read_model(root).map_err(unusable)?;
+    let mut forge = integration::runs::GhRunForge::connect(root)
+        .map_err(|e| unusable(format!("the forge could not be read: {e}")))?;
+    // the supervising run's own id, when it runs in GitHub Actions: never cancelled
+    let self_run = std::env::var("GITHUB_RUN_ID")
+        .ok()
+        .and_then(|v| v.parse::<u64>().ok());
+    let now = || {
+        std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .map(|d| d.as_secs())
+            .unwrap_or(0)
+    };
+    let report = integration::runs::supervise(
+        root,
+        &mut forge,
+        &model,
+        &now,
+        self_run,
+        apply,
+        unless.as_ref(),
+    )
+    .map_err(|e| unusable(format!("the forge could not be read: {e}")))?;
+    if format == OutputFormat::Json {
+        json(out, &report)?;
+        return Ok(report.exit_code());
+    }
+    render_supervise(&report, out)?;
+    Ok(report.exit_code())
+}
+
+/// `prs supervise`'s text: what was judged, decided, held and done, and whether the supervisor
+/// is alive.
+pub(crate) fn render_supervise(
+    report: &integration::runs::SuperviseReport,
+    out: &mut impl Write,
+) -> Result<()> {
+    let apply = report.applied;
+    if let Some(why) = &report.skipped {
+        return w(out, format!("stood aside: {why}"));
+    }
+    let mut lines = vec![format!(
+        "{} in-flight run(s) of {} judged at {}{}",
+        report.in_flight,
+        report.repository,
+        report.observed_at,
+        if apply {
+            ""
+        } else {
+            " (dry run: nothing is cancelled)"
+        }
+    )];
+    for d in &report.decisions {
+        lines.push(format!(
+            "cancel  run {:<12} {:<12} {:<18} {:<26} {}",
+            d.run,
+            trunc(&d.workflow, 12),
+            trunc(&d.event, 18),
+            d.reason.word(),
+            d.reason.explain(),
+        ));
+        if d.rerun {
+            lines.push(format!(
+                "        run {:<12} its pull request's head has no other run: run again once ended",
+                d.run
+            ));
+        }
+    }
+    for h in &report.held {
+        let why = match &h.reason {
+            integration::supervise::HoldReason::SupersededWithoutSuccessor { pull_request } => {
+                format!("superseded, and nothing of #{pull_request} waits behind it: it reaches its verdict")
+            }
+            integration::supervise::HoldReason::Protected { protection } => format!(
+                "superseded, but never cancelled for it ({})",
+                serde_json::to_value(protection)
+                    .ok()
+                    .and_then(|v| v.as_str().map(str::to_string))
+                    .unwrap_or_default()
+            ),
+            integration::supervise::HoldReason::Supervisor => "the supervisor's own run".into(),
+            integration::supervise::HoldReason::FullRunRequested {
+                pull_request,
+                earlier,
+            } => format!(
+                "a second run of #{pull_request}'s commit (run {earlier} is the first), asked for \
+                 with {}",
+                integration::supervise::FULL_LABEL
+            ),
+            integration::supervise::HoldReason::EarlierRunEnds {
+                pull_request,
+                earlier,
+                ends_for,
+            } => format!(
+                "a twin of #{pull_request}'s commit whose older run {earlier} is to be ended \
+                 ({ends_for}): it takes that run's place"
+            ),
+            integration::supervise::HoldReason::RerunRequested {
+                pull_request,
+                earlier,
+                attempt,
+            } => format!(
+                "attempt {attempt} of #{pull_request}'s commit while run {earlier} of it is in \
+                 flight: a re-run was asked for"
+            ),
+            integration::supervise::HoldReason::IntegrationTopWaits { minutes, bound } => format!(
+                "an integration top queued {minutes} min (bound {bound}): it waits for a runner \
+                 and is never cancelled for it"
+            ),
+            integration::supervise::HoldReason::IntegrationTopRuns {
+                job,
+                minutes,
+                bound,
+            } => format!(
+                "an integration top whose job `{job}` has run {minutes} min (bound {bound}): \
+                 never cancelled for it"
+            ),
+            integration::supervise::HoldReason::ProtectedRunWaits {
+                protection,
+                minutes,
+                bound,
+            } => format!(
+                "queued {minutes} min (bound {bound}), but in a group of its own ({}): ending \
+                 it frees nothing",
+                serde_json::to_value(protection)
+                    .ok()
+                    .and_then(|v| v.as_str().map(str::to_string))
+                    .unwrap_or_default()
+            ),
+            integration::supervise::HoldReason::LastRunOfHead {
+                pull_request,
+                would_end_for,
+            } => format!(
+                "the last run of #{pull_request}'s head, which {would_end_for} would end: it \
+                 waits, holding no runner, and ending it would leave the head with no run"
+            ),
+            integration::supervise::HoldReason::HeadExhausted {
+                pull_request,
+                attempts,
+            } => format!(
+                "the newest run of #{pull_request}'s head, cancelled at attempt {attempts}, at \
+                 most {} besides those the release path took: no more re-runs are asked, and the \
+                 head has no run until a person re-runs it or pushes",
+                integration::runs::MAX_ATTEMPTS
+            ),
+            integration::supervise::HoldReason::Unjudgeable { detail } => {
+                format!("not judged: {detail}")
+            }
+        };
+        lines.push(format!(
+            "hold    run {:<12} {:<12} {:<18} {why}",
+            h.run,
+            trunc(&h.workflow, 12),
+            trunc(&h.event, 18)
+        ));
+    }
+    for a in &report.acts {
+        let word = serde_json::to_value(a.outcome)
+            .ok()
+            .and_then(|v| v.as_str().map(str::to_string))
+            .unwrap_or_default();
+        lines.push(format!("{word:<11} run {:<12} {}", a.run, a.detail));
+    }
+    for r in &report.recovered {
+        let word = serde_json::to_value(r.outcome)
+            .ok()
+            .and_then(|v| v.as_str().map(str::to_string))
+            .unwrap_or_default();
+        lines.push(format!(
+            "{word:<11} run {:<12} #{} at {}: {}",
+            r.run, r.pull_request, r.head_sha, r.detail
+        ));
+    }
+    for u in &report.unread {
+        lines.push(format!("unread      {u}"));
+    }
+    if report.decisions.is_empty() {
+        lines.push("nothing to cancel".into());
+    }
+    let l = &report.liveness;
+    lines.push(match (&l.finding, &l.newest_success_at) {
+        (Some(f), _) => format!(
+            "{f}: {}",
+            l.detail.as_deref().unwrap_or("the supervisor is not alive")
+        ),
+        (None, Some(at)) => format!(
+            "supervisor alive{}: its newest success ended {} min ago ({at}), within {} min",
+            l.lane
+                .as_deref()
+                .map(|lane| format!(" ({lane})"))
+                .unwrap_or_default(),
+            l.minutes.unwrap_or(0),
+            l.bound_minutes
+        ),
+        (None, None) => "supervisor alive".into(),
+    });
+    // a pull request's head no pass can give a run, one whose re-run the forge refused, and what
+    // recovery could not read: warnings the workflow raises as annotations, never a failed pass
+    for h in &report.held {
+        if let integration::supervise::HoldReason::HeadExhausted {
+            pull_request,
+            attempts,
+        } = &h.reason
+        {
+            lines.push(format!(
+                "::warning title=supervise::#{pull_request} has no run of its head: run {} of \
+                 {} was cancelled at attempt {attempts}, at most {} besides those the release \
+                 path took; re-run it or push",
+                h.run,
+                h.workflow,
+                integration::runs::MAX_ATTEMPTS
+            ));
+        }
+    }
+    for r in &report.recovered {
+        if r.outcome == integration::runs::RecoveryOutcome::RerunFailed {
+            lines.push(format!(
+                "::warning title=supervise::#{} has no run of its head {}: {}",
+                r.pull_request, r.head_sha, r.detail
+            ));
+        }
+    }
+    for u in &report.unread {
+        lines.push(format!("::warning title=supervise::{u}"));
+    }
+    w(out, lines.join("\n"))
+}
+
 /// Run `majordomus prs`.
 pub fn run(args: PrsArgs) -> Result<u8> {
     let root = root_of(&args)?;
@@ -651,6 +888,19 @@ pub fn run(args: PrsArgs) -> Result<u8> {
             Ok(0)
         }
         PrsCommand::Trains => trains(&root, format, &mut out),
+        PrsCommand::Supervise {
+            apply,
+            unless_supervised_within,
+            supervised_by,
+            ..
+        } => {
+            let unless =
+                unless_supervised_within.map(|within_minutes| integration::runs::StandAside {
+                    within_minutes,
+                    lane: supervised_by,
+                });
+            supervise(&root, apply, unless, format, &mut out)
+        }
         PrsCommand::Events => {
             let events = drain::events(&root);
             if format == OutputFormat::Json {

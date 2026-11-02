@@ -31,3 +31,22 @@ report:
   # made" and does: a report nobody can trust is worse than no report, and a green job that
   # measured nothing is the shape this repository has paid for repeatedly.
   fails_on: unusable
+
+# I3903: the supervisor (.ai/repo/ci/supervise.yaml) cannot report that it stopped, so this
+# clock reports it. A dry run of `prs supervise` reads the newest successful job of the
+# supervise workflow's lundra lane (`--supervised-by lundra`); one older than thirty minutes, or
+# none, is `supervise_stale` (an unreadable one `supervise_unobserved`), and either fails the
+# job. It names the lane: counting any lane's success, a lundra lane that failed on every tick
+# was hidden by the hosted lane's until the hosted pool filled. The dry run acts on nothing. It
+# is its own job (`alive`), in two lanes like the supervisor's, lundra and hosted, from a
+# prebuilt executable that answers `prs supervise --help`: a check compiled on the pool the
+# supervisor waits on would wait with it. Neither lane can start while lundra takes no job and
+# the hosted pool is saturated; that is read from outside Actions, by the same command on any
+# machine of the mesh.
+liveness:
+  command: majordomus prs supervise --format json --unless-supervised-within 30 --supervised-by lundra
+  lane: lundra
+  lanes: [lundra, hosted]
+  stale_minutes: 30
+  findings: [supervise_stale, supervise_unobserved]
+  fails_on: finding
