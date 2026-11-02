@@ -71,7 +71,7 @@ sequenceDiagram
   W->>M: majordomus finish --outcome completed --verify-command
   M->>G: every line of the finish contract, verification run for real
   alt a line fails
-    M-->>W: refused, naming the unmet line; nothing is written
+    M-->>W: refused, naming the unmet line, and nothing is written
   else every line holds
     M->>G: outcome, handover and evidence recorded
     M-->>P: accepted, with the evidence
