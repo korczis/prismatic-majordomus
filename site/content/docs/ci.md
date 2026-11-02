@@ -440,8 +440,13 @@ release's token dispatched. While any of them is queued or running:
   verdict is one) and every fifteen minutes by `release-path.yml`'s schedule.
 
 Never cancelled by this: anything of the release path, master's validate, the schedule and a
-dispatch, a run on a record branch, and a run whose pull request GitHub does not name. A
-reading that cannot be made lets a run proceed and touches nothing. The model is
+dispatch, a run on a record branch, and a run whose pull request GitHub does not name. Nor a
+train: a pull request labelled `train` (the model's `exempt_label`), the landing seat's
+combined top, on whose one run every member waits. The owner decided that on 2026-11-01; the
+members and every other pull request still yield. A reading of the runs that cannot be made
+lets a run proceed and touches nothing; labels that cannot be read exempt nothing, so that run
+is not known to be a train and yields as before. The label is read when the run asks, so the
+composer opens a top's pull request with `gh pr create --label train`. The model is
 `.ai/repo/ci/release-path.yaml`; case 3027 holds the decisions and the wiring.
 
 The `pages` job judges the site only after the deployment of its own commit (I2711). It starts
