@@ -114,12 +114,9 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I2148` | shares test/cases with I4007; they may not run concurrently |
 | WARN | `scope_conflict` | `I2148` | shares test/cases with I4008; they may not run concurrently |
 | WARN | `scope_conflict` | `I2148` | shares test/cases with I4232; they may not run concurrently |
-| WARN | `scope_conflict` | `I2148` | shares test/cases with I4251; they may not run concurrently |
 | WARN | `scope_conflict` | `I2148` | shares lib/init.sh with I4252; they may not run concurrently |
-| WARN | `scope_conflict` | `I2148` | shares test/cases with I4253; they may not run concurrently |
 | WARN | `scope_conflict` | `I2148` | shares share/skeleton with I4256; they may not run concurrently |
 | WARN | `scope_conflict` | `I2148` | shares lib/init.sh with I4257; they may not run concurrently |
-| WARN | `scope_conflict` | `I2148` | shares share/skeleton with I4258; they may not run concurrently |
 | WARN | `scope_conflict` | `I2148` | shares test/cases with I4261; they may not run concurrently |
 | WARN | `scope_conflict` | `I2148` | shares test/cases with I4264; they may not run concurrently |
 | WARN | `scope_conflict` | `I2148` | shares test/cases with I4268; they may not run concurrently |
@@ -163,6 +160,8 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I2148` | shares apps/majordomus-cli/src/capability/builtin/mcp.rs with I4468; they may not run concurrently |
 | WARN | `scope_conflict` | `I2148` | shares test/cases with I4512; they may not run concurrently |
 | WARN | `scope_conflict` | `I2148` | shares test/cases with I4522; they may not run concurrently |
+| WARN | `scope_conflict` | `I2148` | shares test/cases with I4527; they may not run concurrently |
+| WARN | `scope_conflict` | `I2148` | shares test/cases with I4528; they may not run concurrently |
 | WARN | `scope_conflict` | `I2840` | shares docs/MCP.md with I2901; they may not run concurrently |
 | WARN | `scope_conflict` | `I2840` | shares docs/MCP.md with I2902; they may not run concurrently |
 | WARN | `scope_conflict` | `I2840` | shares docs/MCP.md with I2903; they may not run concurrently |
