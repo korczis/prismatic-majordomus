@@ -11,7 +11,7 @@
       "title": "Decisions",
       "description": "Every architecture decision this repository has recorded, with what it supersedes, what it put in force, and what has since referred back to it. One page per decision, generated from the decision's own file.",
       "weight": 45,
-      "count": 167,
+      "count": 168,
       "dir": "adrs",
       "statuses": [
         "accepted",
@@ -40,7 +40,7 @@
       "route": "/adrs/",
       "title": "Decisions",
       "reason": null,
-      "count": 167
+      "count": 168
     },
     {
       "kind": "application",
@@ -96,7 +96,7 @@
       "route": null,
       "title": null,
       "reason": "A critique is the adversarial pass over one intent's plan, written by a worker, and work started under the intent without it or with a blocking finding open fails intent validation (ADR 0073). It is planning state of this repository; what the plan became is published on /plan/.",
-      "count": 38
+      "count": 39
     },
     {
       "kind": "deployment",
@@ -128,7 +128,7 @@
       "route": null,
       "title": null,
       "reason": "A document of the layer is prose already published where it belongs — /docs/, /method/, /context/ — and a second address for the same words is the duplication this file exists to prevent.",
-      "count": 353
+      "count": 354
     },
     {
       "kind": "domain",
@@ -160,7 +160,7 @@
       "route": null,
       "title": null,
       "reason": "An implementation object is a source file a claim names. It is reachable from the claim that names it and from the repository; a page rendering a Rust module is the source browser GitHub already is.",
-      "count": 52
+      "count": 53
     },
     {
       "kind": "intent",
@@ -176,7 +176,7 @@
       "route": "/plan/",
       "title": null,
       "reason": null,
-      "count": 1160
+      "count": 1207
     },
     {
       "kind": "knowledge",
@@ -184,7 +184,7 @@
       "route": null,
       "title": null,
       "reason": "Curated knowledge is written for the worker reading the layer, not for a visitor: it is the orientation a session starts from, and it changes with the work rather than with the product.",
-      "count": 90
+      "count": 103
     },
     {
       "kind": "mesh-declaration",
@@ -200,7 +200,7 @@
       "route": "/plan/",
       "title": null,
       "reason": null,
-      "count": 114
+      "count": 116
     },
     {
       "kind": "moment",
@@ -264,7 +264,7 @@
       "route": "/sessions/",
       "title": null,
       "reason": null,
-      "count": 93
+      "count": 94
     },
     {
       "kind": "skill",
@@ -288,7 +288,7 @@
       "route": null,
       "title": null,
       "reason": "A test object is a case file. What it proves is published — on /guarantees/ for the claim and on the rule's own page for the rule — and that is the direction a reader asks in.",
-      "count": 674
+      "count": 680
     },
     {
       "kind": "use-case",
@@ -10048,9 +10048,9 @@
         },
         {
           "edge": "put_in_force",
-          "label": "project.the-cooperation-model-is-the-owners-word@2",
+          "label": "project.the-cooperation-model-is-the-owners-word@3",
           "kind": "rule",
-          "route": "/rules/project-the-cooperation-model-is-the-owners-word-2/",
+          "route": "/rules/project-the-cooperation-model-is-the-owners-word-3/",
           "external": false
         },
         {
@@ -14729,6 +14729,73 @@
       "referenced_by": []
     },
     {
+      "kind": "adr",
+      "id": "majordomus://adr/adr-0230",
+      "identity": "adr-0230",
+      "slug": "adr-0230",
+      "cockpit": "/cockpit/objects/adr/adr-0230",
+      "title": "Flowbite Pro is adapted onto Tailwind 4 and Flowbite 4, a brand's colour is the primary scale, and one capability judges every repository's interface against it",
+      "status": "proposed",
+      "tags": [
+        "design",
+        "ui",
+        "enforcement"
+      ],
+      "source": ".ai/repo/adrs/0230-flowbite-pro-is-adapted-onto-tailwind-4.md",
+      "references": [
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-cli/src/design/kit.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-cli/src/design/licence.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "share/design/kits/flowbite-pro.rule.md",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "share/design/kits/flowbite-pro.yaml",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "I4334",
+          "kind": "issue",
+          "route": "/plan/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "I4336",
+          "kind": "issue",
+          "route": "/plan/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "test/cases/4334_the_ui_kit_is_checked_by_one_capability.sh",
+          "kind": "test",
+          "route": null,
+          "external": false
+        }
+      ],
+      "referenced_by": []
+    },
+    {
       "kind": "rule",
       "id": "majordomus://rule/majordomus.adr-integrity@1",
       "identity": "majordomus.adr-integrity@1",
@@ -18027,23 +18094,23 @@
     },
     {
       "kind": "rule",
-      "id": "majordomus://rule/project.a-push-runs-what-ci-would-find-first@2",
-      "identity": "project.a-push-runs-what-ci-would-find-first@2",
-      "slug": "project-a-push-runs-what-ci-would-find-first-2",
-      "cockpit": "/cockpit/objects/rule/project-a-push-runs-what-ci-would-find-first-2",
+      "id": "majordomus://rule/project.a-push-runs-what-ci-would-find-first@3",
+      "identity": "project.a-push-runs-what-ci-would-find-first@3",
+      "slug": "project-a-push-runs-what-ci-would-find-first-3",
+      "cockpit": "/cockpit/objects/rule/project-a-push-runs-what-ci-would-find-first-3",
       "title": "A push runs what CI would find first, and CI decides",
       "status": "active",
       "tags": [
         "ci",
         "process"
       ],
-      "source": ".ai/repo/rules/project/a-push-runs-what-ci-would-find-first.v2.md",
+      "source": ".ai/repo/rules/project/a-push-runs-what-ci-would-find-first.v3.md",
       "references": [
         {
           "edge": "depends_on",
-          "label": "project.the-cooperation-model-is-the-owners-word@2",
+          "label": "project.the-cooperation-model-is-the-owners-word@3",
           "kind": "rule",
-          "route": "/rules/project-the-cooperation-model-is-the-owners-word-2/",
+          "route": "/rules/project-the-cooperation-model-is-the-owners-word-3/",
           "external": false
         }
       ],
@@ -18409,9 +18476,9 @@
       "referenced_by": [
         {
           "edge": "depends_on",
-          "label": "project.the-cooperation-model-is-the-owners-word@2",
+          "label": "project.the-cooperation-model-is-the-owners-word@3",
           "kind": "rule",
-          "route": "/rules/project-the-cooperation-model-is-the-owners-word-2/",
+          "route": "/rules/project-the-cooperation-model-is-the-owners-word-3/",
           "external": false
         }
       ]
@@ -18472,9 +18539,9 @@
         },
         {
           "edge": "depends_on",
-          "label": "project.the-cooperation-model-is-the-owners-word@2",
+          "label": "project.the-cooperation-model-is-the-owners-word@3",
           "kind": "rule",
-          "route": "/rules/project-the-cooperation-model-is-the-owners-word-2/",
+          "route": "/rules/project-the-cooperation-model-is-the-owners-word-3/",
           "external": false
         }
       ]
@@ -20729,9 +20796,9 @@
         },
         {
           "edge": "depends_on",
-          "label": "project.the-cooperation-model-is-the-owners-word@2",
+          "label": "project.the-cooperation-model-is-the-owners-word@3",
           "kind": "rule",
-          "route": "/rules/project-the-cooperation-model-is-the-owners-word-2/",
+          "route": "/rules/project-the-cooperation-model-is-the-owners-word-3/",
           "external": false
         }
       ]
@@ -21305,9 +21372,9 @@
         },
         {
           "edge": "depends_on",
-          "label": "project.the-cooperation-model-is-the-owners-word@2",
+          "label": "project.the-cooperation-model-is-the-owners-word@3",
           "kind": "rule",
-          "route": "/rules/project-the-cooperation-model-is-the-owners-word-2/",
+          "route": "/rules/project-the-cooperation-model-is-the-owners-word-3/",
           "external": false
         }
       ]
@@ -23412,10 +23479,10 @@
     },
     {
       "kind": "rule",
-      "id": "majordomus://rule/project.the-cooperation-model-is-the-owners-word@2",
-      "identity": "project.the-cooperation-model-is-the-owners-word@2",
-      "slug": "project-the-cooperation-model-is-the-owners-word-2",
-      "cockpit": "/cockpit/objects/rule/project-the-cooperation-model-is-the-owners-word-2",
+      "id": "majordomus://rule/project.the-cooperation-model-is-the-owners-word@3",
+      "identity": "project.the-cooperation-model-is-the-owners-word@3",
+      "slug": "project-the-cooperation-model-is-the-owners-word-3",
+      "cockpit": "/cockpit/objects/rule/project-the-cooperation-model-is-the-owners-word-3",
       "title": "Work moves through seats held as mesh claims, a worker lands its own green head, and every checkout is kept current",
       "status": "active",
       "tags": [
@@ -23473,9 +23540,9 @@
         },
         {
           "edge": "depends_on",
-          "label": "project.a-push-runs-what-ci-would-find-first@2",
+          "label": "project.a-push-runs-what-ci-would-find-first@3",
           "kind": "rule",
-          "route": "/rules/project-a-push-runs-what-ci-would-find-first-2/",
+          "route": "/rules/project-a-push-runs-what-ci-would-find-first-3/",
           "external": false
         }
       ]
@@ -24490,9 +24557,9 @@
         },
         {
           "edge": "depends_on",
-          "label": "project.the-cooperation-model-is-the-owners-word@2",
+          "label": "project.the-cooperation-model-is-the-owners-word@3",
           "kind": "rule",
-          "route": "/rules/project-the-cooperation-model-is-the-owners-word-2/",
+          "route": "/rules/project-the-cooperation-model-is-the-owners-word-3/",
           "external": false
         }
       ]
