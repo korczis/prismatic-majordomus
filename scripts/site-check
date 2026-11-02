@@ -40,6 +40,9 @@
 #                                   scan a case runs on a fixture. Exit 0 clean, 10 findings, 12
 #                                   missing.
 set -eu
+# loaded before the early modes: --memory's memory_keyed asks mj_runs (#1358)
+# shellcheck source=../lib/runnable.sh
+. "$(cd "$(dirname "$0")/.." && pwd)/lib/runnable.sh" 2>/dev/null || { mj_runs() { command -v "$1" >/dev/null 2>&1; }; mj_runs_why() { printf '%s is not available' "$1"; }; mj_zola_ready() { command -v zola >/dev/null 2>&1; }; mj_zola_why() { printf 'zola is not available'; }; mj_node_env() { :; }; }
 SYNC=1
 if [ "${1:-}" = --no-sync ]; then SYNC=0; shift; fi
 SINCE_REPO=""
@@ -486,8 +489,6 @@ if [ "${1:-}" = --prose-figures ]; then
   exit 10
 fi
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"; SITE="$ROOT/site"; PUB="$SITE/public"
-# shellcheck source=../lib/runnable.sh
-. "$(cd "$(dirname "$0")/.." && pwd)/lib/runnable.sh" 2>/dev/null || { mj_runs() { command -v "$1" >/dev/null 2>&1; }; mj_runs_why() { printf '%s is not available' "$1"; }; mj_zola_ready() { command -v zola >/dev/null 2>&1; }; mj_zola_why() { printf 'zola is not available'; }; mj_node_env() { :; }; }
 mj_node_env "$(cd "$(dirname "$0")/.." && pwd)" || true
 MJ_VERSION="site"; MJ_BIN_DIR="$ROOT/bin"; MJ_LIB_DIR="$ROOT/lib"; export MJ_VERSION MJ_BIN_DIR MJ_LIB_DIR
 # shellcheck source=../lib/common.sh
