@@ -6,7 +6,7 @@
 # anywhere. Everything else here is the machinery that makes that claim checkable without a
 # browser, so this case never needs one.
 . "$ROOT/test/lib.sh"
-command -v node >/dev/null 2>&1 || skip "no node"
+mj_runs node || skip "$(mj_runs_why node)"
 
 # The modules under test come from the checkout; the fixtures are built here. Nothing in this
 # case writes into the checkout, so it runs in the parallel phase.

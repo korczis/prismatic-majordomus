@@ -51,6 +51,9 @@
 #                        A gate skipped here writes none; the step that runs it writes its own.
 set -u
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
+# shellcheck source=../lib/runnable.sh
+. "$(cd "$(dirname "$0")/../.." && pwd)/lib/runnable.sh" 2>/dev/null || { mj_runs() { command -v "$1" >/dev/null 2>&1; }; mj_runs_why() { printf '%s is not available' "$1"; }; mj_zola_ready() { command -v zola >/dev/null 2>&1; }; mj_zola_why() { printf 'zola is not available'; }; mj_node_env() { :; }; }
+mj_node_env "$(cd "$(dirname "$0")/../.." && pwd)" || true
 cd "$ROOT" || exit 2
 
 # Git hands a hook its repository through the environment (GIT_DIR, when the hook runs in a

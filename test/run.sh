@@ -57,6 +57,8 @@
 # `git status` of the checkout changed, the run fails naming the paths.
 set -u
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+# shellcheck source=../lib/runnable.sh
+. "$ROOT/lib/runnable.sh"; mj_node_env "$ROOT" || true
 
 # A case builds repositories of its own, and git tells a hook which repository it is in
 # through the environment: a pre-push hook run from a linked worktree gets GIT_DIR. A fixture

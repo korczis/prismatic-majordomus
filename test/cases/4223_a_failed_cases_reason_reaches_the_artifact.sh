@@ -21,7 +21,7 @@ fail() { printf '    %s\n' "$*"; exit 1; }
 
 H="$T/harness"
 mkdir -p "$H/test/cases" "$H/lib"
-cp "$ROOT/test/run.sh" "$ROOT/test/lib.sh" "$H/test/"; cp "$ROOT/lib/sha256.sh" "$H/lib/"
+cp "$ROOT/test/run.sh" "$ROOT/test/lib.sh" "$H/test/"; cp "$ROOT/lib/sha256.sh" "$ROOT/lib/runnable.sh" "$H/lib/"
 cat > "$H/test/cases/01_passes.sh" <<'SH'
 . "$ROOT/test/lib.sh"
 echo "    a line a passing case prints"

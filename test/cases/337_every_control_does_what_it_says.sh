@@ -11,7 +11,7 @@
 # are the site's own: a broken control under /ref, a mount the fixture's topology composes (ADR 0086), is that
 # surface's business and is not driven; under a mount the topology does not compose it is, and fails.
 . "$ROOT/test/lib.sh"
-command -v node >/dev/null 2>&1 || skip "no node"
+mj_runs node || skip "$(mj_runs_why node)"
 [ -d "$ROOT/node_modules/playwright" ] || { [ "${CI:-}" = true ] && { echo "    playwright absent under CI"; exit 1; }; skip "playwright absent (npm ci)"; }
 PROBE="$ROOT/scripts/interaction-probe"
 

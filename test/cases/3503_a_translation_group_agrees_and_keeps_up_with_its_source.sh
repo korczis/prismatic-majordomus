@@ -115,7 +115,7 @@ run 10 fx
 expect_grep 'FAIL articles .*fx/content/y\.md is translated from .*fx/content/w\.md, which is not one of its counterparts'
 
 # ---------------------------------------------------------------- base.html links every member
-if command -v zola >/dev/null; then
+if mj_zola_ready "$ROOT"; then
   Z="$PWD/zsite"; mkdir -p "$Z/templates" "$Z/content"
   printf 'base_url = "https://example.invalid"\ntitle = "fixture"\n' > "$Z/config.toml"
   # the alternate links of the real base.html, from its translations branch to its endif
