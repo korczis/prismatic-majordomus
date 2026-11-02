@@ -28,4 +28,5 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 |---|---|---|---|
 | WARN | `scope_conflict` | `I3350` | shares site/data/homepage.toml with I3820; they may not run concurrently |
 | WARN | `scope_conflict` | `I3350` | shares site/data/homepage.toml with I3829; they may not run concurrently |
+| WARN | `scope_conflict` | `I3350` | shares site/data/homepage.toml with I4294; they may not run concurrently |
 | WARN | `scope_conflict` | `I3350` | shares site/data/homepage.toml with I4400; they may not run concurrently |

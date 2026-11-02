@@ -251,6 +251,22 @@ mj_first_word() {
   return 0
 }
 
+# Is a MAJORDOMUS_KIT_EVIDENCE_<KIT> variable exported here, set or empty? CI exports the
+# secret by that name; a builtin, so a launcher without one spends no process on asking.
+mj_kit_evidence_exported() {
+  local v
+  for v in $(compgen -e); do case "$v" in MAJORDOMUS_KIT_EVIDENCE_?*) return 0 ;; esac; done
+  return 1
+}
+
+# Do these arguments of `design` ask for a judgement: `kit` (not `kit adopt`) or `licence`?
+mj_design_judges() {
+  local a
+  case "$MJ_FIRST_WORD" in kit|licence) ;; *) return 1 ;; esac
+  for a in "$@"; do [ "$a" = adopt ] && return 1; done
+  return 0
+}
+
 # global options may precede the command
 pre=()
 while [ $# -gt 0 ]; do
@@ -288,6 +304,18 @@ case "$cmd" in
     "mj_cmd_$cmd" "${MJ_ARGS[@]+"${MJ_ARGS[@]}"}"
     ;;
   *)
+    # `design kit` and `design licence` judge a licensed kit by a kit-evidence/v1 file, and
+    # the executable never reads the environment for it: where CI exports a
+    # MAJORDOMUS_KIT_EVIDENCE_<KIT> secret, it is decoded into a file and passed as
+    # --evidence first (lib/fleet.sh). Anywhere else the command is the executable's,
+    # unchanged. Not an exec: the decoded file is removed after the run.
+    if [ "$cmd" = design ] && mj_kit_evidence_exported && mj_design_judges "$@"; then
+      mj_tmp_root_init
+      # shellcheck disable=SC1090,SC1091
+      . "$MJ_LIB_DIR/fleet.sh"
+      rc=0; mj_fleet_design_judge "$@" || rc=$?
+      exit "$rc"
+    fi
     # the other program's command: run it through the launcher, which finds the shipped
     # executable in an installed tree and builds it in a checkout when it must
     if mj_rust_command "$cmd"; then exec "$MJ_BIN_DIR/majordomus-cli" "$cmd" "$@"; fi
