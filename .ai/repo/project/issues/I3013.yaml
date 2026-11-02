@@ -11,7 +11,7 @@ current_state: "The evidence job's if is always() && (suite succeeded or failed,
 desired_state: "The evidence job's if names the plan outputs that make a lane leave a report (shell_suite, rust_check) together with that lane's result. A plan that selects neither skips the job. evidence-collect keeps refusing a run where a planned lane should have left a report and left none."
 scope:
   - ".github/workflows/validate.yml"
-  - "test/cases/3402_a_records_only_plan_skips_the_evidence_job.sh"
+  - "test/cases/3402_a_records_only_plan_owes_no_test_report.sh"
   - ".ai/repo/project/issues/I3013.yaml"
   - "site"
 non_scope:
@@ -23,7 +23,7 @@ acceptance_criteria:
   - "A case evaluates the job's condition for a records-only plan (shell_suite false, rust_check false, rust_integration true, rust success) and finds it false, and for a suite or crate-test plan finds it true"
   - "A records-only pull request's validate run shows evidence skipped, not failed"
 validation:
-  - "bash test/run.sh 3402_a_records_only_plan_skips_the_evidence_job"
+  - "bash test/run.sh 3402_a_records_only_plan_owes_no_test_report"
   - "bash test/run.sh 26_ci_wiring"
   - "majordomus plan validate"
   - "scripts/derive-check"

@@ -11,16 +11,18 @@
 # version asked `generate --check` instead, which passes an executable of another crate whenever
 # its registry matches, so a branch's changed module would have been judged by master's code.
 # Amended for ADR 0224: what used to fall back to `cargo run` now falls back to the tree's own
-# executable, and with none current the gate fails with exit 12 naming `just build`.
+# executable, and with none current the gate exits 12 naming `just build`. Since rule
+# project.a-push-runs-what-ci-would-find-first v3 that gate is printed NOT JUDGED and does not
+# make the step fail: no host may build below the 35 GiB floor, and CI judges it.
 # A copy of run-plan, the launcher and lib/rust_bin.sh runs in a small repository whose crate
 # is one file; a stand-in executable and a stand-in cargo on PATH record which one each gate ran:
 #
 #   1  built from HEAD (MAJORDOMUS_BIN_COMMIT), crate unchanged: the gate runs the executable
 #   2  the same commit read from a shared ~/.cache/majordomus-master-bin/<sha>/ path
 #   3  a crate file edited, uncommitted: MAJORDOMUS_BIN is not used, naming why, and with no
-#      executable of the tree the gate fails at exit 12 naming `just build`
+#      executable of the tree the gate exits 12 naming `just build`, NOT JUDGED here
 #   4  an untracked file in the crate: the same;  5  no build commit known: the same
-#   6  no MAJORDOMUS_BIN at all: the tree's own executable when it is current, a refusal when
+#   6  no MAJORDOMUS_BIN at all: the tree's own executable when it is current, NOT JUDGED when
 #      it is missing — and cargo is never called, in any of the six
 . "$ROOT/test/lib.sh"
 # The fixture names every executable and commit itself. One inherited from the session running
@@ -60,18 +62,18 @@ printf '{"schema":1,"mode":"test","reason":"a fixture","selected":[],"gates":[{"
 printf 'economics-claims\t6\n' > "$T/durations.tsv"; : > "$T/cases.tsv"
 export MJ_PUSH_DURATIONS="$T/durations.tsv" MJ_PUSH_CASES="$T/cases.tsv"
 
-# push [expect-refusal]: run the pre-push dispatcher; a refusal is expected only when asked for
+# push: run the pre-push dispatcher; it exits 0 whether the gate ran or was not judged
 push() {
   : > "$CALLS"; local rc=0
   "$R" --before-push --plan "$T/plan.json" > "$T/out" 2>&1 || rc=$?
-  if [ "${1:-}" = refused ]; then [ "$rc" = 1 ] || fail "the push was not refused (exit $rc): $(cat "$T/out")"
-  else [ "$rc" = 0 ] || fail "the push failed: $(cat "$T/out")"; fi
+  [ "$rc" = 0 ] || fail "the push failed (exit $rc): $(cat "$T/out")"
   ! grep -q '^cargo ' "$CALLS" || fail "a gate called cargo: $(cat "$CALLS")"
 }
 borrowed() { grep -q '^bin economics check$' "$CALLS"; }
-refused_naming_the_build() {
+not_judged_naming_the_build() {
   ! grep -q '^bin ' "$CALLS" || fail "an executable ran where none of this tree's generation exists: $(cat "$CALLS")"
-  grep -q 'FAILED economics-claims' "$T/out" || fail "the gate did not fail: $(cat "$T/out")"
+  grep -q 'NOT JUDGED economics-claims' "$T/out" || fail "the gate was not named NOT JUDGED: $(cat "$T/out")"
+  grep -q 'FAILED' "$T/out" && fail "a gate with no executable was counted as failed: $(cat "$T/out")"
   grep -q 'run: just build' "$T/out" || fail "the refusal does not name the explicit build: $(cat "$T/out")"
 }
 
@@ -86,26 +88,26 @@ borrowed || fail "the build commit was not read from the cache path: $(cat "$CAL
 
 # ---------------------------------------------------------------- 3. the crate edited
 printf 'fn main() { println!("changed"); }\n' > repo/apps/majordomus-cli/src/main.rs
-MAJORDOMUS_BIN="$T/stand-in/majordomus" MAJORDOMUS_BIN_COMMIT="$built" push refused
-refused_naming_the_build
+MAJORDOMUS_BIN="$T/stand-in/majordomus" MAJORDOMUS_BIN_COMMIT="$built" push
+not_judged_naming_the_build
 grep -q "the crate differs from ${built:0:11}" "$T/out" || fail "the reason is not named: $(cat "$T/out")"
 git -C repo checkout -q -- apps/majordomus-cli/src/main.rs
 
 # ---------------------------------------------------------------- 4. an untracked file in the crate
 printf 'pub fn new() {}\n' > repo/apps/majordomus-cli/src/new.rs
-MAJORDOMUS_BIN="$T/stand-in/majordomus" MAJORDOMUS_BIN_COMMIT="$built" push refused
-refused_naming_the_build
+MAJORDOMUS_BIN="$T/stand-in/majordomus" MAJORDOMUS_BIN_COMMIT="$built" push
+not_judged_naming_the_build
 grep -q 'the crate has untracked files' "$T/out" || fail "the reason is not named: $(cat "$T/out")"
 rm repo/apps/majordomus-cli/src/new.rs
 
 # ---------------------------------------------------------------- 5. no build commit known
-( unset MAJORDOMUS_BIN_COMMIT; MAJORDOMUS_BIN="$T/stand-in/majordomus" push refused ) || exit 1
-refused_naming_the_build
+( unset MAJORDOMUS_BIN_COMMIT; MAJORDOMUS_BIN="$T/stand-in/majordomus" push ) || exit 1
+not_judged_naming_the_build
 grep -q 'the commit it was built from is unknown' "$T/out" || fail "the reason is not named: $(cat "$T/out")"
 
-# ---------------------------------------------------------------- 6. none named: the tree's own, or a refusal
-( unset MAJORDOMUS_BIN MAJORDOMUS_BIN_COMMIT; push refused ) || exit 1
-refused_naming_the_build
+# ---------------------------------------------------------------- 6. none named: the tree's own, or not judged
+( unset MAJORDOMUS_BIN MAJORDOMUS_BIN_COMMIT; push ) || exit 1
+not_judged_naming_the_build
 grep -q 'is not used' "$T/out" && fail "an executable was judged with none named: $(cat "$T/out")"
 mkdir -p "$T/target/debug" && cp stand-in/majordomus "$T/target/debug/majordomus"
 ( unset MAJORDOMUS_BIN MAJORDOMUS_BIN_COMMIT; push ) || exit 1
