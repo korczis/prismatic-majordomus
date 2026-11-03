@@ -127,11 +127,7 @@ pub(crate) enum Taken {
 pub(crate) fn take(ctx: &Context, id: &ExecutionId, intent: &str, issue: &str) -> Taken {
     let scope = scope_of(ctx, issue);
     let Some(cooperation) = ctx.mesh.cooperation() else {
-        let reason = ctx
-            .mesh
-            .cooperation_status()
-            .reason
-            .unwrap_or_else(|| "mesh cooperation is not running in this process".into());
+        let reason = unmeshed(ctx);
         return Taken::Unclaimed(IssueClaim {
             standing: ClaimStanding::Unclaimed,
             scope,
@@ -142,6 +138,12 @@ pub(crate) fn take(ctx: &Context, id: &ExecutionId, intent: &str, issue: &str) -
         });
     };
     take_with(cooperation, id, intent, issue, scope)
+}
+
+/// Why no mesh can be asked in this process, in the mesh's own words: without a running
+/// cooperation its status is `CooperationStatus::inactive`, which always carries the reason.
+fn unmeshed(ctx: &Context) -> String {
+    ctx.mesh.cooperation_status().reason.unwrap_or_default()
 }
 
 fn take_with(
@@ -267,11 +269,7 @@ pub(crate) fn admission(ctx: &Context, issue: &str) -> Admission {
         Some(cooperation) => admission_with(&cooperation, issue, scope),
         None => Admission::Unmeshed {
             scope,
-            reason: ctx
-                .mesh
-                .cooperation_status()
-                .reason
-                .unwrap_or_else(|| "mesh cooperation is not running in this process".into()),
+            reason: unmeshed(ctx),
         },
     }
 }

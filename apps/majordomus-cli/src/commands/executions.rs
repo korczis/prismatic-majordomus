@@ -40,7 +40,16 @@ const PATIENCE: std::time::Duration = std::time::Duration::from_secs(600);
 /// Run `majordomus run`.
 pub fn run(args: RunArgs) -> Result<u8> {
     let app = App::load(&args.repo)?;
-    let ctx = &app.context;
+    run_in(&app.context, &app.repository, &args)
+}
+
+/// [`run`] against a repository already loaded: its context, which answers the capabilities,
+/// and the repository whose server, if one serves it, is told about the run.
+fn run_in(
+    ctx: &crate::capability::Context,
+    repository: &crate::repository::Repository,
+    args: &RunArgs,
+) -> Result<u8> {
     let input: Value = match &args.input {
         Some(text) => serde_json::from_str(text).map_err(|e| Error::Protocol {
             reason: format!("--input is not JSON: {e}"),
@@ -57,7 +66,7 @@ pub fn run(args: RunArgs) -> Result<u8> {
     let mut out = stdout.lock();
     let show = args.follow || (!args.quiet && args.format == OutputFormat::Text);
     // the server already serving this checkout, if any; never one started for this run
-    let server = crate::lease::serving(&app.repository);
+    let server = crate::lease::serving(repository);
 
     // subscribe before starting: an execution this fast would otherwise be over before
     // anything was listening
@@ -1347,6 +1356,32 @@ mod tests {
         assert_eq!(
             run(run_args(&repo, false, OutputFormat::Json)).expect("ran"),
             0
+        );
+    }
+
+    /// A registry that exposes no `majordomus run` is refused by name, before anything runs.
+    #[test]
+    fn a_run_without_the_run_capability_is_refused_by_name() {
+        let repo = runnable();
+        let bare = crate::capability::Context::new(
+            Arc::new(repo.index().expect("an index")),
+            Arc::new(
+                crate::capability::CapabilityRegistry::builder()
+                    .build()
+                    .expect("an empty registry"),
+            ),
+        );
+        let repository = crate::repository::Repository::open(repo.root()).expect("opens");
+        let err = run_in(
+            &bare,
+            &repository,
+            &run_args(&repo, true, OutputFormat::Json),
+        )
+        .unwrap_err();
+        assert!(
+            err.to_string()
+                .contains("no capability is exposed as `majordomus run`"),
+            "{err}"
         );
     }
 

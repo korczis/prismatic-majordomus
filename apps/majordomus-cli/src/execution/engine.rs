@@ -434,14 +434,16 @@ impl ExecutionEngine {
             self.store.get(&id)
         };
         self.dispatch();
+        // the store evicts only finished executions, so the snapshot is there unless a cancel
+        // and a full store forgot it in between; the refusal for that is made either way
+        let forgotten =
+            SubmitError::Unavailable("the execution was forgotten as it was created".into());
         accepted
             .map(|execution| Submitted {
                 execution,
                 deduplicated: false,
             })
-            .ok_or_else(|| {
-                SubmitError::Unavailable("the execution was forgotten as it was created".into())
-            })
+            .ok_or(forgotten)
     }
 
     /// Start whatever may start now: the bound on concurrent handlers, and the serial
@@ -577,6 +579,12 @@ impl ExecutionEngine {
 
 /// Run one execution to its end, whatever happens inside the handler.
 fn run(store: &Arc<ExecutionStore>, pending: Pending) {
+    run_with(store, pending, || {});
+}
+
+/// [`run`], with `between` called after the issue's claim is taken and before the start is
+/// published: the instant a cancel can land in, which a test holds open with it.
+fn run_with(store: &Arc<ExecutionStore>, pending: Pending, between: impl FnOnce()) {
     let Pending {
         id,
         capability,
@@ -597,6 +605,7 @@ fn run(store: &Arc<ExecutionStore>, pending: Pending) {
         },
         None => None,
     };
+    between();
     // it may have been cancelled while it waited, up to this very instant: the start is
     // refused from a final state under the lock a cancel takes, and a refused start runs
     // nothing, where a look at the state first would leave that instant open
@@ -1118,6 +1127,61 @@ mod tests {
             store.get(&id).unwrap().issue_claim.unwrap().standing,
             ClaimStanding::Unclaimed
         );
+    }
+
+    fn pending(ctx: &Context, id: &ExecutionId) -> Pending {
+        Pending {
+            id: id.clone(),
+            capability: "executions.demonstrate".into(),
+            title: "Demo".into(),
+            input: serde_json::json!({ "steps": 1, "delay_ms": 0 }),
+            ctx: ctx.clone(),
+            issue: Some("I4004".into()),
+        }
+    }
+
+    /// A stop that lands after the claim is taken and before the start runs nothing: a cancel
+    /// finishes the execution cancelled, anything else leaves it as it is, and either way the
+    /// claim goes back.
+    #[test]
+    fn what_lands_between_the_claim_and_the_start_runs_nothing_and_gives_the_claim_back() {
+        let (_repo, ctx) = context(true);
+        let store = ctx.executions.store();
+        let id = held_by_store(&ctx);
+        run_with(store, pending(&ctx, &id), || {
+            store.request_cancel(&id, "test");
+        });
+        let cancelled = store.get(&id).unwrap();
+        assert_eq!(cancelled.state, ExecutionState::Cancelled);
+        assert_eq!(cancelled.started_at, None, "nothing ran");
+        assert_eq!(
+            cancelled.issue_claim.unwrap().standing,
+            ClaimStanding::Released
+        );
+        assert_eq!(live_claims(&ctx, "I4004"), 0);
+
+        let id = held_by_store(&ctx);
+        run_with(store, pending(&ctx, &id), || {
+            store.publish(
+                &id,
+                EventPayload::Failed {
+                    error: ExecutionError {
+                        code: "internal".into(),
+                        message: "it broke before it started".into(),
+                        suggestion: None,
+                        correlation_id: id.to_string(),
+                    },
+                },
+            );
+        });
+        let failed = store.get(&id).unwrap();
+        assert_eq!(failed.state, ExecutionState::Failed);
+        assert!(!types(&ctx, &id).contains(&"execution.started"));
+        assert_eq!(
+            failed.issue_claim.unwrap().standing,
+            ClaimStanding::Released
+        );
+        assert_eq!(live_claims(&ctx, "I4004"), 0);
     }
 
     #[test]

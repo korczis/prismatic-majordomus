@@ -259,6 +259,8 @@ struct Record {
     /// The digest of the input a keyed start was sent with: what a repeated start with the
     /// same key must match to be answered this execution.
     digest: Option<String>,
+    /// The key a keyed start was sent with, as parsed: what [`scope_of`] holds it under.
+    key: Option<IdempotencyKey>,
 }
 
 /// What an idempotency key is unique within: one repository's one capability. The same key
@@ -266,11 +268,11 @@ struct Record {
 type KeyScope = (String, String, IdempotencyKey);
 
 /// The scope a keyed execution's key is held under; `None` for one started without a key.
-fn scope_of(snapshot: &Execution) -> Option<KeyScope> {
-    let key = IdempotencyKey::parse(snapshot.idempotency_key.as_deref()?).ok()?;
+fn scope_of(record: &Record) -> Option<KeyScope> {
+    let key = record.key.clone()?;
     Some((
-        snapshot.repository.id.clone(),
-        snapshot.capability.clone(),
+        record.snapshot.repository.id.clone(),
+        record.snapshot.capability.clone(),
         key,
     ))
 }
@@ -533,7 +535,7 @@ impl ExecutionStore {
         let cancel = Arc::clone(&record.cancel);
         {
             let mut inner = self.lock();
-            if let Some(scope) = scope_of(&record.snapshot) {
+            if let Some(scope) = scope_of(&record) {
                 let held = inner
                     .keys
                     .get(&scope)
@@ -871,6 +873,7 @@ impl ExecutionStore {
             started: None,
             reported,
             digest: idempotency.map(|i| i.digest.clone()),
+            key: idempotency.map(|i| i.key.clone()),
         };
         (record, created)
     }
@@ -896,16 +899,16 @@ impl ExecutionStore {
             }) else {
                 break;
             };
-            if let Some(id) = inner.order.remove(position) {
-                if let Some(gone) = inner.records.remove(&id) {
-                    // the key goes with the execution it started: the store answers a
-                    // repeated start for as long as it holds the execution, and no longer
-                    if let Some(scope) = scope_of(&gone.snapshot) {
-                        if inner.keys.get(&scope) == Some(&id) {
-                            inner.keys.remove(&scope);
-                        }
-                    }
-                }
+            // the position is of an id the records hold, so both removals find it
+            let gone = inner
+                .order
+                .remove(position)
+                .and_then(|id| inner.records.remove(&id));
+            // the key goes with the execution it started: the store answers a repeated start
+            // for as long as it holds the execution, and no longer. A held key always names
+            // the execution holding it, because a start under a held key starts nothing.
+            if let Some(scope) = gone.as_ref().and_then(scope_of) {
+                inner.keys.remove(&scope);
             }
         }
     }
