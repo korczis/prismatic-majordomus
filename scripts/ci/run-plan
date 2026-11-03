@@ -215,7 +215,10 @@ if [ "$before_push" = 1 ]; then
   # the fast cases, four at a time. Fast is what CI recorded; local is what the case does. A
   # case that starts a server (serve_up, mcp_shared, serve ensure or start, the MCP launcher)
   # or declares that it runs alone measures timing and ports: on a machine nine sessions share
-  # it fails for the load and not for the change, so CI runs it and the push does not.
+  # it fails for the load and not for the change, so CI runs it and the push does not. A case
+  # that serves on every interface and calls this machine at its address off loopback is left
+  # out too: a host firewall in stealth mode drops that call, and the case times out for the
+  # host, not for the change (cases 1086 and 3861 on a developer Mac, 2026-11-03).
   names=""
   for n in $(awk -F'\t' -v m="$per_case" '$2 ~ /^[0-9]+$/ && $2 <= m { print $1 }' "$cases_file"); do
     [ -f "test/cases/$n.sh" ] || continue
@@ -223,6 +226,9 @@ if [ "$before_push" = 1 ]; then
       printf '  left out case %s: it declares that it runs alone; CI runs it\n' "$n"; continue; fi
     if grep -qE '\bserve_up\b|\bmcp_shared\b|\bserve (ensure|start)\b|majordomus-mcp|\$MJ"? mcp\b' "test/cases/$n.sh"; then
       printf '  left out case %s: it starts a server; CI runs it\n' "$n"; continue; fi
+    if grep -qE 'serve --host (0\.0\.0\.0|::|\[::\])' "test/cases/$n.sh"; then
+      printf '  left out case %s: it serves off loopback, which a host firewall may drop; CI runs it\n' "$n"
+      continue; fi
     if [ "$no_exe" = 1 ] && grep -qE '\brust_bin\b' "test/cases/$n.sh"; then
       printf '  left out case %s: it runs the executable, and none of this tree'"'"'s generation is here; CI runs it\n' "$n"
       continue; fi
