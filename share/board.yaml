@@ -1,0 +1,153 @@
+# The lanes of the delivery board (I4294): every open milestone of the plan in exactly one
+# lane, declared once. `board.snapshot` composes the board's documents from the plan, the
+# intents and the recorded pull request queue, and files each open issue under the lane of
+# its milestone. A milestone in no lane is an error, never "other": the snapshot refuses,
+# and `board::tests::every_open_milestone_has_a_lane` fails CI naming every milestone that
+# has none. Only a DONE milestone may stay unlaned.
+#
+# Declaration order is the board's lane order. A milestone belongs to one lane; the loader
+# refuses a key, or a milestone, declared twice.
+version: 1
+
+lanes:
+  - key: land
+    title: "Landing, CI and release"
+    milestones:
+      - landing-survives-any-session
+      - ci-critical-path
+      - merging-and-referencing-are-enforced
+      - finished-work-reaches-a-verified-release
+      - a-version-follows-the-work
+      - a-release-is-proven-end-to-end
+      - delivery-flow-is-measured
+      - a-change-is-judged-in-minutes
+      - work-graph-github
+      - architecture-is-enforced
+  - key: mesh
+    title: "Mesh and cooperation"
+    milestones:
+      - mesh-journal-converges
+      - runtime-trust
+      - an-authorised-node-connects-from-anywhere
+      - the-mesh-is-operated-from-any-device
+      - every-session-joins-the-mesh
+      - the-mesh-works-out-of-the-box
+      - peer-blackboard
+      - a-session-proceeds-through-the-mesh
+      - mesh-connectivity
+      - the-mesh-is-operated-from-one-page
+      - the-hub-is-reached-from-any-device
+      - mesh-peers-execute-assigned-work
+      - safe-self-update
+      - prismatic-lumen
+  - key: runtime
+    title: "Runtime, server and surfaces"
+    milestones:
+      - development-runtime
+      - runtime-lifecycle
+      - mcp-transports-are-reliable
+      - surfaces-never-disagree
+      - failure-is-visible
+      - the-runtime-supervises-itself
+      - the-host-knows-its-runtimes
+      - runtime-adapters
+      - everything-is-followed-in-one-stream
+      - every-surface-follows-what-changed
+      - ordinary-commands-never-build
+      - capability-graph
+      - automation
+      - repository-automation-is-typed
+      - execution-telemetry
+      - a-profile-is-resolved-once-and-enforced
+  - key: derive
+    title: "Derive, build and performance"
+    milestones:
+      - M004
+      - a-derive-does-only-the-work-its-inputs-changed
+      - a-derivation-computed-once-is-reused
+      - a-derive-answers-within-a-second
+      - builds-reuse-the-mesh-cache
+      - derived-data-integrity
+      - measurements-are-tracked-over-time
+  - key: plan
+    title: "Plan, intents and evidence"
+    milestones:
+      - truthful-plan-surfaces
+      - intent-lifecycle
+      - intent-planning
+      - intent-bound-work
+      - intent-intake
+      - test-evidence
+      - a-claim-stands-only-on-its-evidence
+      - a-test-fails-when-the-code-is-wrong
+      - the-plan-says-what-a-fix-unblocks
+      - an-unmet-criterion-is-drafted-into-work
+      - command-and-deployment-criteria-are-judged
+      - the-intent-loop-is-proved-end-to-end
+      - an-outcome-becomes-a-reviewed-plan
+      - a-paste-is-decomposed-by-a-skill
+      - a-prompt-reaches-the-work-it-serves
+      - campaigns-are-read-as-provenance
+      - a-finish-reads-the-criteria-its-work-serves
+      - an-entity-says-how-it-is-known-and-what-it-affects
+      - operation-convergence
+      - a-finding-is-tracked-to-its-issue
+      - a-bounded-task-is-carried-to-accepted-work
+  - key: session
+    title: "Sessions, knowledge and workspaces"
+    milestones:
+      - M002
+      - M003
+      - the-session-domain-is-written-once
+      - knowledge-acts-on-what-it-learns
+      - knowledge-is-reconciled-before-it-is-reviewed
+      - entry-proves-what-it-handed
+      - a-promoted-record-opens-its-message
+      - what-a-workspace-decides-reaches-the-repository-with-its-source
+      - a-workspace-reaches-the-repository
+      - external-workspaces
+      - a-provider-carries-the-contract-natively
+      - shared-policy
+  - key: ui
+    title: "UI, site and proof page"
+    milestones:
+      - idd-reads-at-a-glance
+      - public-proof
+      - the-ui-runs-and-explains
+      - one-kit-on-every-surface
+      - the-ui-works-on-a-phone
+      - a-visitor-understands-and-checks-majordomus
+      - browser-compute
+      - a-screen-is-fast-bounded-and-says-why
+  - key: adopt
+    title: "Adoption"
+    milestones:
+      - two-folder-integration
+      - adopter-upgrades
+      - a-second-adopter-is-served
+      - a-stranger-adopts-it-unaided
+      - a-newcomer-reaches-a-first-verified-intent
+      - a-foreign-repository-is-adopted-and-measured
+  - key: proof
+    title: "Proof, economics and models"
+    milestones:
+      - the-product-shows-what-it-caught
+      - the-proof-tests-are-registered-before-they-run
+      - the-proof-scorecard-is-published
+      - the-corpus-is-registered-before-it-runs
+      - a-registered-corpus-judges-majordomus
+      - every-task-states-its-delivery-economics
+      - delivery-economics-are-measured-over-declared-windows
+      - the-mesh-is-measured-against-one-agent
+      - recovery-from-injected-faults-is-proven
+      - cost-per-accepted-outcome
+      - routing-recommendations
+      - every-sessions-usage-is-observed
+      - every-model-call-is-paid-from-a-declared-source
+      - an-inference-names-its-source-and-budget
+      - a-review-is-published-at-its-commit
+  - key: deploy
+    title: "Deployment and identity"
+    milestones:
+      - fly-deployment
+      - web-sign-in

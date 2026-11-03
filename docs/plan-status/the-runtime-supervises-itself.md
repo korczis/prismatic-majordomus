@@ -9,7 +9,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 
 | milestone | status | done of required | ready | blocked | active | verify | cancelled | outcome |
 |---|---|---|---|---|---|---|---|---|
-| [the-runtime-supervises-itself](https://majordomus.dev/plan/the-runtime-supervises-itself/) | BLOCKED | 0/9 | 0 | 9 | 0 | 0 | 1 | One read capability classifies the runtime's work; a bounded repair loop acts only through ensure, recovery, leases and the reaper. |
+| [the-runtime-supervises-itself](https://majordomus.dev/plan/the-runtime-supervises-itself/) | BLOCKED | 0/10 | 0 | 10 | 0 | 0 | 1 | One read capability classifies the runtime's work; a bounded repair loop acts only through ensure, recovery, leases and the reaper. |
 
 ## Issues
 
@@ -25,6 +25,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | [I4360](https://majordomus.dev/plan/i4360/) | BLOCKED | 2 | I3903 | monitor reports a GitHub run queued past its bound, not only the runs that completed |
 | [I4363](https://majordomus.dev/plan/i4363/) | BLOCKED | 0 | — | A parked monitor --follow waits on its source instead of spinning: under 1 s of CPU in 10 s |
 | [I4414](https://majordomus.dev/plan/i4414/) | BLOCKED | 1 | I4326 | A repository whose runs wait while another repository of the same account holds the Actions jobs is told so, and the landing seat is advised to hold new train runs while it lasts |
+| [I4480](https://majordomus.dev/plan/i4480/) | BLOCKED | 2 | I4001 | An execution accepted before a restart is answered after it as an unknown outcome, never as absent |
 
 ## Findings
 

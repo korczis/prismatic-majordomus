@@ -161,12 +161,29 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 2
+      # I4347: a label that changes nothing starts no second verdict. `labeled` starts this
+      # workflow for every label, and only ci:full and hold change what a run does; any other
+      # label on a head that already carries a verdict gives the runners back here, before any
+      # gate job asks for one, and the ci job writes that verdict again rather than skipping
+      # (a skipped required check reads as passing). A head with no verdict yet runs its plan.
+      # Before the release path, so a redundant run never waits for a release only to carry.
+      # Enforcer: scripts/ci/carried-verdict; case 26.
+      - name: a label that changes nothing carries the head's verdict
+        if: github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ACTION: ${{ github.event.action }}
+          LABEL: ${{ github.event.label.name }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: scripts/ci/carried-verdict yield --action "$ACTION" --label "$LABEL" --sha "$HEAD_SHA" --self "$GITHUB_RUN_ID"
       # I2710: the release path goes first. While a release run, its record's verdict or the
       # deploy it asked for is queued or running, a pull request's run gives its slots back:
       # it labels its pull request, says which run it yielded to, and cancels itself, before
       # any job of its own has asked for a runner. `release-path resume` runs it again once
-      # the path is clear. Never on master, the schedule or a dispatch, and never on a record
-      # branch; a reading that cannot be made lets the run proceed. Model and enforcer:
+      # the path is clear. Never on master, the schedule or a dispatch, never on a record
+      # branch, and never on a pull request labelled train (the exempt_label: the landing
+      # seat's combined top); a reading that cannot be made lets the run proceed, except that
+      # labels which cannot be read exempt nothing. Model and enforcer:
       # .ai/repo/ci/release-path.yaml, scripts/ci/release-path; case 3027.
       - name: the release path goes first
         if: github.event_name == 'pull_request'
@@ -1051,19 +1068,23 @@ jobs:
   # The reports and the result live under the runner's temporary directory, never in the
   # checkout the report is derived in. It is not a gate and the verdict does not need it: it
   # reads jobs that have already decided, and a red suite is exactly the evidence worth
-  # keeping. It runs whenever the plan ran the suite or the crate's tests (shell_suite,
-  # rust_check), whatever they concluded. A plan of records alone runs neither: its rust lanes
-  # build the executable and run the registry checks (rust_integration), which write no test
-  # output, so the job is skipped there rather than failing at evidence-collect's "no report to
-  # record" (#1745, #1746 and #1749 were red for that alone; I3013, case 3402). A planned lane
-  # that left no report is still refused.
+  # keeping. It runs on every run whose plan decided, and the collector is told what the plan
+  # owed: the suite when it selected shell_suite, the crate's tests when it selected rust_check,
+  # coverage when it selected rust_coverage, each with its job's result. A plan of records
+  # alone owes no test report (its rust lanes build the executable and run the registry checks,
+  # rust_integration, which write no test output), so the job writes a receipt saying
+  # not_required and why, instead of failing at "no report to record" (#1745, #1746 and #1749
+  # were red for that alone; I3013, I3668, case 3402). A required report that is missing,
+  # refused or left by a cancelled job fails it, after the receipt names which; the receipt is
+  # kept as the artifact `evidence-receipt` on every run.
   #
-  # On master, when this commit is still the tip, it then dispatches the pages workflow, so the
-  # site that was published at once with the nearest older evidence (labelled stale) republishes
-  # with the evidence of the commit it shows. pages.yml stays triggered by the push alone.
+  # On master, when this commit is still the tip and a run was recorded, it then dispatches the
+  # pages workflow, so the site that was published at once with the nearest older evidence
+  # (labelled stale) republishes with the evidence of the commit it shows. A run that recorded
+  # nothing keeps the nearest older evidence there. pages.yml stays triggered by the push alone.
   evidence:
     needs: [plan, suite, rust, coverage, build]
-    if: always() && ((needs.plan.outputs.shell_suite == 'true' && (needs.suite.result == 'success' || needs.suite.result == 'failure')) || (needs.plan.outputs.rust_check == 'true' && (needs.rust.result == 'success' || needs.rust.result == 'failure')))
+    if: ${{ !cancelled() && needs.plan.result == 'success' && (needs.plan.outputs.shell_suite == 'true' || needs.plan.outputs.rust_check == 'true' || needs.plan.outputs.rust_integration == 'true') }}
     timeout-minutes: 30
     runs-on: ubuntu-latest
     permissions:
@@ -1073,24 +1094,41 @@ jobs:
     env:
       # the head a pull request was built from, carried beside the merge commit that ran
       MJ_RUN_HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+      # what the plan owed and what each producing job concluded, for the receipt
+      MJ_OWES_SUITE: ${{ needs.plan.outputs.shell_suite }}
+      MJ_OWES_CRATE: ${{ needs.plan.outputs.rust_check }}
+      MJ_OWES_COVERAGE: ${{ needs.plan.outputs.rust_coverage }}
+      MJ_RESULT_SUITE: ${{ needs.suite.result }}
+      MJ_RESULT_RUST: ${{ needs.rust.result }}
+      MJ_RESULT_COVERAGE: ${{ needs.coverage.result }}
+      MJ_PLAN_MODE: ${{ needs.plan.outputs.mode }}
     steps:
       # the whole history: the report compares each execution's commit with the tree
       - uses: actions/checkout@v4
         timeout-minutes: 20
         with:
           fetch-depth: 0
+      # whether anything a recording needs was owed: a plan that owes no test report needs no
+      # executable and downloads nothing, and its receipt says not_required
+      - id: owed
+        run: |
+          if [ "$MJ_OWES_SUITE" = true ] || [ "$MJ_OWES_CRATE" = true ]; then tests=true; else tests=false; fi
+          echo "tests=$tests" >> "$GITHUB_OUTPUT"
       # the build job's executable, downloaded; the toolchain is set up only if it has to be built
       - name: the executable
+        if: steps.owed.outputs.tests == 'true'
         uses: ./.github/actions/majordomus-bin
         with:
           exe: "true"
       - uses: actions/download-artifact@v4
+        if: steps.owed.outputs.tests == 'true'
         with:
           pattern: '{ci-metrics-suite,ci-metrics-coverage,ci-evidence-suite-tree}'
           path: ${{ runner.temp }}/reports
           merge-multiple: true
       # each lane in a directory of its own: every lane names its measurement crate-tree.json
       - uses: actions/download-artifact@v4
+        if: steps.owed.outputs.tests == 'true'
         with:
           pattern: ci-evidence-crate-*
           path: ${{ runner.temp }}/lanes
@@ -1099,8 +1137,9 @@ jobs:
       # The crate ran in three trees: clean only when all three were and on one commit, and
       # unknown (no file) when a lane left no measurement.
       - name: gather
+        id: gather
         run: |
-          r="$RUNNER_TEMP/reports"; mkdir -p "$r"
+          r="$RUNNER_TEMP/reports"; mkdir -p "$r" "$RUNNER_TEMP/lanes"
           cat "$RUNNER_TEMP"/lanes/*/cargo-test-*.txt > "$r/cargo-test.txt" 2>/dev/null || : > "$r/cargo-test.txt"
           set -- "$RUNNER_TEMP"/lanes/*/crate-tree.json
           if [ "$#" -eq 3 ] && [ -f "$1" ]; then
@@ -1109,14 +1148,29 @@ jobs:
                                    then "clean" else "dirty" end),
                     excluded: .[0].excluded}' "$@" > "$r/crate-tree.json"
           fi
-          scripts/ci/evidence-collect --out "$RUNNER_TEMP/evidence" --suite "$r/suite.tsv" --suite-tree "$r/suite-tree.json" --crate-output "$r/cargo-test.txt" --crate-tree "$r/crate-tree.json" --coverage "$r/coverage.json"
+          # the receipt reaches its artifact whatever the gather decides
+          rc=0
+          scripts/ci/evidence-collect --out "$RUNNER_TEMP/evidence" --suite "$r/suite.tsv" --suite-tree "$r/suite-tree.json" --crate-output "$r/cargo-test.txt" --crate-tree "$r/crate-tree.json" --coverage "$r/coverage.json" \
+            --obligation "suite=${MJ_OWES_SUITE:-false}:$MJ_RESULT_SUITE" \
+            --obligation "crate=${MJ_OWES_CRATE:-false}:$MJ_RESULT_RUST" \
+            --obligation "coverage=${MJ_OWES_COVERAGE:-false}:$MJ_RESULT_COVERAGE" \
+            --planner "validate.yml plan, mode ${MJ_PLAN_MODE:-unknown}" || rc=$?
+          if [ -f "$RUNNER_TEMP/evidence/manifest.json" ]; then echo "recorded=true" >> "$GITHUB_OUTPUT"; fi
+          exit "$rc"
       - uses: actions/upload-artifact@v4
+        if: ${{ !cancelled() }}
+        with:
+          name: evidence-receipt
+          path: ${{ runner.temp }}/evidence/receipt.json
+          retention-days: 90
+      - uses: actions/upload-artifact@v4
+        if: steps.gather.outputs.recorded == 'true'
         with:
           name: evidence
           path: ${{ runner.temp }}/evidence
           retention-days: 90
       - name: refresh the publication
-        if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+        if: github.event_name == 'push' && github.ref == 'refs/heads/master' && steps.gather.outputs.recorded == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
         run: scripts/ci/evidence-collect --refresh-publication
@@ -2068,29 +2122,51 @@ jobs:
     needs: [plan, build, rustdoc-surface, structure, structure-b, suite, rust, coverage, bench, site, site-probe, interactions, ui, cockpit, mesh-lab, macos, install, pages]
     if: always()
     timeout-minutes: 15
-    runs-on: ubuntu-latest
+    # The verdict builds nothing: it reads the needs, the receipts and the timings. On
+    # 2026-11-02 a train whose every gate had passed waited 27 minutes for this job to get one
+    # of the account's hosted slots, held by other trains' builds, so it may run where the
+    # owner points vars.MJ_AGGREGATE_RUNNER (a runner label, e.g. lundra). Unset, it is hosted
+    # as before, and a fork's pull request always is: a fork never runs on the repository's own
+    # machines. The remedy for an offline pool is to unset the variable.
+    runs-on: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository && 'ubuntu-latest' || vars.MJ_AGGREGATE_RUNNER || 'ubuntu-latest' }}
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/download-artifact@v4
+      # I4347: a run started by a label that changes nothing ran no gate (the plan job's
+      # first step gave its runners back); its verdict is the one the head already carries,
+      # written again here — success or failure, never a skip. Every other run decides from
+      # its own gates below.
+      - id: carried
+        name: a label that changes nothing carries the head's verdict
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ACTION: ${{ github.event.action }}
+          LABEL: ${{ github.event.label.name }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: scripts/ci/carried-verdict verdict --action "$ACTION" --label "$LABEL" --sha "$HEAD_SHA" --self "$GITHUB_RUN_ID"
+      - if: steps.carried.outputs.carried != 'true'
+        uses: actions/download-artifact@v4
         with:
           name: ci-plan
-      - uses: actions/download-artifact@v4
+      - if: steps.carried.outputs.carried != 'true'
+        uses: actions/download-artifact@v4
         with:
           pattern: ci-metrics-*
           path: metrics
       # every gate job's receipts: what each selected gate's steps said about themselves.
       # None arriving leaves the directory empty, and every selected gate red.
-      - uses: actions/download-artifact@v4
+      - if: steps.carried.outputs.carried != 'true'
+        uses: actions/download-artifact@v4
         with:
           pattern: ci-receipts-*
           path: receipts
-      - env:
+      - if: steps.carried.outputs.carried != 'true'
+        env:
           NEEDS: ${{ toJSON(needs) }}
         run: |
           printf '%s' "$NEEDS" > needs.json
           scripts/ci/metrics metrics > ci-metrics.tsv
           scripts/ci/verdict --plan plan.json --needs needs.json --receipts receipts
-      - if: always()
+      - if: always() && steps.carried.outputs.carried != 'true'
         uses: actions/upload-artifact@v4
         with:
           name: ci-performance-metrics

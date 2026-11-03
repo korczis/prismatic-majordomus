@@ -39,4 +39,15 @@ evidence_required:
   - suite
 risk: "A forge that times out every page of 25 too now costs the observation one failed `gh pr list` plus four attempts per page before it degrades; each read is bounded inside its own step (420 s and 135 s), so the cost is a warning and never the publication; a hung forge adds about seven minutes to ui-snapshot, well inside its 45."
 created_at: 2026-10-29
-updated_at: 2026-10-29
+updated_at: 2026-11-01T04:46:23Z
+started_at: 2026-11-01T04:45:10Z
+started_event: sha256:8b4ba6b5adf5a815c2d95fe4dbed56cb20740c4fc159780febbde6614e6dc9b6
+completed_at: 2026-11-01T04:46:23Z
+completed_event: sha256:fb25c7e7889f967b1311a877163324300e902d949dd54897bc225560449d49f0
+evidence:
+  - covers: "suite"
+    type: test
+    command: "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib integration::forge && bash test/run.sh 4380_an_optional_step_is_bounded_inside_its_own_bound 3933_the_trends_are_read_from_the_runs_themselves 742_only_an_outage_is_asked_again 3749_a_full_history_checkout_is_bounded 3748_a_pages_step_bound_follows_its_budget && actionlint .github/workflows/pages.yml"
+    result: "delivered by ba1eccf87fd on master: integration::forge 37 passed (imac), the five cases ok 5 passed, actionlint on pages.yml clean, at master aca6f182b41"
+    commit: aca6f182b4175a0da20878211103eff3801132f1
+    recorded_at: 2026-11-01T04:45:47Z

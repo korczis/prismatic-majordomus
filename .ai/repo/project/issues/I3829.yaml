@@ -41,4 +41,15 @@ validation:
 evidence_required:
   - "case_a_provider_declares_its_browser_bridge"
 created_at: 2026-10-21
-updated_at: 2026-10-29
+updated_at: 2026-11-01T04:52:18Z
+started_at: 2026-11-01T04:50:44Z
+started_event: sha256:7416be6aa3b031c1726c6bc9e93018fd1c55179d4622701a541749763dc5354f
+completed_at: 2026-11-01T04:52:18Z
+completed_event: sha256:9bc90587736d60bdcffb3bd65b3e0aac979628968da051b38082f754f1c1a41b
+evidence:
+  - covers: "case_a_provider_declares_its_browser_bridge"
+    type: test
+    command: "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test provider_browser && bash test/run.sh 3829_a_provider_declares_its_browser_bridge"
+    result: "delivered by bd5a5c3a086 on master: provider_browser 8 passed (imac), case 3829 ok 1 passed, at master aca6f182b41"
+    commit: aca6f182b4175a0da20878211103eff3801132f1
+    recorded_at: 2026-11-01T04:51:48Z

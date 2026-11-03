@@ -35,6 +35,23 @@
       "tool": "majordomus_blackboard"
     },
     {
+      "api_anchor": "/docs/api/board/#op-board-snapshot",
+      "claims": [],
+      "cli": "majordomus board snapshot",
+      "id": "board.snapshot",
+      "kind": "query",
+      "module": "board",
+      "module_route": "/registry/modules/board/",
+      "resource": null,
+      "route": "/registry/capabilities/board-snapshot/",
+      "slug": "board-snapshot",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/board.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/board.rs",
+      "tests": [],
+      "title": "The delivery board's documents",
+      "tool": "majordomus_board_snapshot"
+    },
+    {
       "api_anchor": "/docs/api/brief/#op-brief-session",
       "claims": [],
       "cli": "majordomus brief",
@@ -560,6 +577,57 @@
       "tests": [],
       "title": "What a design token means",
       "tool": "majordomus_design_explain"
+    },
+    {
+      "api_anchor": null,
+      "claims": [],
+      "cli": "majordomus design kit",
+      "id": "design.kit",
+      "kind": "query",
+      "module": "design",
+      "module_route": "/registry/modules/design/",
+      "resource": null,
+      "route": "/registry/capabilities/design-kit/",
+      "slug": "design-kit",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/design.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/design.rs",
+      "tests": [],
+      "title": "Whether the interface is built on the kit",
+      "tool": "majordomus_design_kit"
+    },
+    {
+      "api_anchor": null,
+      "claims": [],
+      "cli": "majordomus design kit adopt",
+      "id": "design.kit.adopt",
+      "kind": "command",
+      "module": "design",
+      "module_route": "/registry/modules/design/",
+      "resource": null,
+      "route": "/registry/capabilities/design-kit-adopt/",
+      "slug": "design-kit-adopt",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/design.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/design.rs",
+      "tests": [],
+      "title": "Declare the kit in the repository",
+      "tool": null
+    },
+    {
+      "api_anchor": null,
+      "claims": [],
+      "cli": "majordomus design licence",
+      "id": "design.licence",
+      "kind": "query",
+      "module": "design",
+      "module_route": "/registry/modules/design/",
+      "resource": null,
+      "route": "/registry/capabilities/design-licence/",
+      "slug": "design-licence",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/design.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/design.rs",
+      "tests": [],
+      "title": "Whether a public tree holds a licensed kit's files",
+      "tool": "majordomus_design_licence"
     },
     {
       "api_anchor": "/docs/api/design/#op-design-system",
@@ -4547,9 +4615,9 @@
     ]
   },
   "counts": {
-    "capabilities": 220,
+    "capabilities": 224,
     "claims": 93,
-    "modules": 60
+    "modules": 61
   },
   "generator": "majordomus-cli 1.0.0-alpha.10",
   "modules": [
@@ -4584,6 +4652,22 @@
       "source_path": "apps/majordomus-cli/src/capability/builtin/blackboard.rs",
       "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/blackboard.rs",
       "title": "The peer blackboard"
+    },
+    {
+      "capabilities": [
+        {
+          "id": "board.snapshot",
+          "route": "/registry/capabilities/board-snapshot/",
+          "slug": "board-snapshot"
+        }
+      ],
+      "claims": [],
+      "id": "board",
+      "route": "/registry/modules/board/",
+      "slug": "board",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/board.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/board.rs",
+      "title": "The delivery board"
     },
     {
       "capabilities": [
@@ -4840,6 +4924,21 @@
           "id": "design.explain",
           "route": "/registry/capabilities/design-explain/",
           "slug": "design-explain"
+        },
+        {
+          "id": "design.kit",
+          "route": "/registry/capabilities/design-kit/",
+          "slug": "design-kit"
+        },
+        {
+          "id": "design.kit.adopt",
+          "route": "/registry/capabilities/design-kit-adopt/",
+          "slug": "design-kit-adopt"
+        },
+        {
+          "id": "design.licence",
+          "route": "/registry/capabilities/design-licence/",
+          "slug": "design-licence"
         },
         {
           "id": "design.system",

@@ -1,0 +1,51 @@
+id: I4506
+milestone: a-profile-is-resolved-once-and-enforced
+title: "The executor refuses what the task's profile does not grant: a typed refusal on every transport, and an event in the ledger"
+slug: the-executor-refuses-what-the-profile-does-not-grant
+priority: p0
+profile: implementation
+parallel_safe: false
+objective: "Enforce the granted effects at the one place every transport passes: before a capability's handler runs, the executor compares its declared effect with the effects the active task's effective profile grants, and refuses with a typed error and a ledger event when it is not among them."
+why: "campaigns/majordomus-profile-system-v2-prompt-pack/MAJORDOMUS_PROFILE_SYSTEM_V2_PROMPT_PACK.md, PROMPT 03 exit gate: a profile has at least one demonstrable, observable effect on dispatch and one reliable refusal at a trusted boundary, and its adversarial list includes an unauthorized invocation through a worker and an override that weakens security; invariant 3 says an override may tighten and never silently weaken. Every enforcement a profile has today is at finish, after the work. The transports refuse a remote caller with CapabilityError::remote (case 1086_a_remote_caller_cannot_write); the executor's invoke, the one path every transport shares, refuses nothing by effect, so the boundary exists and reads no profile."
+current_state: "Measured at 51b38035a71, where no commit since 3491f35cab has touched the profile schema, share/allow/profile.txt, .ai/repo/profiles, share/skeleton/profiles or the claim pages. capability/executor.rs invoke is the path every transport and execution shares; it looks the capability's effect up only to count a RepositoryMutation as a write, and refuses nothing by effect. The remote-caller refusal is not in the executor: http/router.rs and mcp/surface.rs refuse a write from beyond loopback with the typed CapabilityError::remote (capability/handler.rs, code forbidden, ADR 0126), held by case 1086_a_remote_caller_cannot_write. The registry permits writes_repository only on commands (capability/registry.rs). share/events.yaml has task.refused and no event for a refused capability."
+desired_state: "The executor resolves the active task's effective profile through the resolver, once per generation of the repository and per task record, and refuses a capability whose effect the profile does not grant with a typed error (code profile_denied) that names the capability, its effect, the profile and the field's source. The refusal is appended to the ledger as constraint.denied with the task id and the profile fingerprint. With no active task, or under a profile that grants every effect, nothing changes. The check cannot be widened by a caller: no input, header or environment variable grants an effect, and the transport's remote-caller refusal still precedes it. A project rule states that a profile narrows and never widens what policy and the transport allow, and names the tests as its proof."
+scope:
+  - "apps/majordomus-cli/src/capability/executor.rs"
+  - "apps/majordomus-cli/src/capability/handler.rs"
+  - "apps/majordomus-cli/src/profile"
+  - "apps/majordomus-cli/src/error.rs"
+  - "apps/majordomus-cli/src/ledger.rs"
+  - "apps/majordomus-cli/tests"
+  - "share/events.yaml"
+  - ".ai/repo/rules/project"
+  - "test/cases"
+  - "docs/PROFILES.md"
+  - "docs/CAPABILITIES.md"
+  - ".ai/repo/project/issues/I4506.yaml"
+  - "apps/majordomus-cli/src/http/router.rs"
+  - "apps/majordomus-cli/src/mcp/surface.rs"
+non_scope:
+  - "What a worker does with its own tools outside this executable: the tool cannot observe it and does not claim to"
+  - "The opt-in key and provider clamps of I0203 and I0204: this refusal is declared by the profile a task was started under and needs no second switch"
+  - "Budgets, timeouts and parallelism per profile: no axis declares them"
+depends_on:
+  - I4504
+  - I4505
+acceptance_criteria:
+  - "Under a task started with the review profile, plan.transition is refused over the command line, HTTP and MCP with the same typed error, and the issue file is unchanged"
+  - "The same call under a task with the implementation profile, and with no active task, succeeds as before"
+  - "Each refusal is one constraint.denied event carrying the capability, the effect, the task id and the fingerprint"
+  - "No request input, header or environment variable makes the refused call succeed, proven by a test that tries each"
+  - "A read capability's latency under an active task is within the bench tolerance of its latency before the change"
+  - "Removing the comparison from the executor fails a test"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test executor"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib profile::"
+  - "MJ_TEST_JOBS=2 bash test/run.sh 1086_a_remote_caller_cannot_write 16_profiles"
+evidence_required:
+  - "executor_refusal_under_profile"
+  - "refusal_event_in_ledger"
+  - "no_widening_test"
+created_at: 2026-10-30
+updated_at: 2026-10-30

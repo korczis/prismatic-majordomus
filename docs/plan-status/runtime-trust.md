@@ -9,7 +9,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 
 | milestone | status | done of required | ready | blocked | active | verify | cancelled | outcome |
 |---|---|---|---|---|---|---|---|---|
-| [runtime-trust](https://majordomus.dev/plan/runtime-trust/) | ACTIVE | 7/10 | 3 | 0 | 0 | 0 | 0 | Discovery is not trust, trust is not authorization, and a caller is admitted to change anything only by a key the trust policy names. A host that can reach a runtime reads it and changes nothing it cannot authenticate; every event in the journal was checked against the trust policy that holds now, whether it arrived over a link or from disk; and the limits the documents state are the limits the code enforces. |
+| [runtime-trust](https://majordomus.dev/plan/runtime-trust/) | ACTIVE | 7/11 | 4 | 0 | 0 | 0 | 0 | Discovery is not trust, trust is not authorization, and a caller is admitted to change anything only by a key the trust policy names. A host that can reach a runtime reads it and changes nothing it cannot authenticate; every event in the journal was checked against the trust policy that holds now, whether it arrived over a link or from disk; and the limits the documents state are the limits the code enforces. |
 
 ## Issues
 
@@ -25,6 +25,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | [I2704](https://majordomus.dev/plan/i2704/) | READY | 1 | I2133 | A dialer reads no reply beyond the link bound and no more candidates than the bound, and a refusing peer is retried at a measured, jittered rate |
 | [I2705](https://majordomus.dev/plan/i2705/) | DONE | 1 | I2134 | A node key can be rotated, peers follow the new key, and the old key is refused |
 | [I3175](https://majordomus.dev/plan/i3175/) | READY | 0 | — | Two hosts presenting one node key are named as a duplicate, never folded into one flapping node |
+| [I4481](https://majordomus.dev/plan/i4481/) | READY | 0 | — | The policy names the highest effect each transport may cause, and a capability above it is refused the same way everywhere |
 
 ## Findings
 
@@ -36,10 +37,13 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I2703` | shares .ai/repo/rules/project with I3072; they may not run concurrently |
 | WARN | `scope_conflict` | `I2703` | shares docs/MESH.md with I3176; they may not run concurrently |
 | WARN | `scope_conflict` | `I2703` | shares test/cases/301_the_mesh_stays_one_subsystem.sh with I3825; they may not run concurrently |
+| WARN | `scope_conflict` | `I2703` | shares apps/majordomus-cli/src/mesh/cooperation.rs with I3826; they may not run concurrently |
 | WARN | `scope_conflict` | `I2703` | shares scripts/ci/mesh-check with I3837; they may not run concurrently |
+| WARN | `scope_conflict` | `I2703` | shares .ai/repo/rules/project with I3970; they may not run concurrently |
 | WARN | `scope_conflict` | `I2704` | shares apps/majordomus-cli/src/mesh/link.rs with I2709; they may not run concurrently |
 | WARN | `scope_conflict` | `I2704` | shares apps/majordomus-cli/src/mesh/cooperation.rs with I3072; they may not run concurrently |
 | WARN | `scope_conflict` | `I2704` | shares apps/majordomus-cli/src/mesh/rendezvous.rs with I3176; they may not run concurrently |
+| WARN | `scope_conflict` | `I2704` | shares apps/majordomus-cli/src/mesh/link.rs with I3826; they may not run concurrently |
 | WARN | `scope_conflict` | `I3175` | shares docs/MESH.md with I3322; they may not run concurrently |
 | WARN | `scope_conflict` | `I3175` | shares apps/majordomus-cli/src/mesh/doctor.rs with I3444; they may not run concurrently |
 | WARN | `scope_conflict` | `I3175` | shares apps/majordomus-cli/src/mesh/doctor.rs with I3606; they may not run concurrently |
@@ -50,9 +54,14 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I3175` | shares apps/majordomus-cli/src/mesh/doctor.rs with I3772; they may not run concurrently |
 | WARN | `scope_conflict` | `I3175` | shares docs/MESH.md with I3774; they may not run concurrently |
 | WARN | `scope_conflict` | `I3175` | shares docs/MESH.md with I3810; they may not run concurrently |
-| WARN | `scope_conflict` | `I3175` | shares docs/MESH.md with I3820; they may not run concurrently |
 | WARN | `scope_conflict` | `I3175` | shares apps/majordomus-cli/src/mesh/registry.rs with I3835; they may not run concurrently |
 | WARN | `scope_conflict` | `I3175` | shares docs/MESH.md with I4306; they may not run concurrently |
 | WARN | `scope_conflict` | `I3175` | shares docs/MESH.md with I4327; they may not run concurrently |
 | WARN | `scope_conflict` | `I3175` | shares apps/majordomus-cli/src/mesh/doctor.rs with I4343; they may not run concurrently |
 | WARN | `scope_conflict` | `I3175` | shares docs/MESH.md with I4466; they may not run concurrently |
+| WARN | `scope_conflict` | `I4481` | shares apps/majordomus-cli/tests with I4483; they may not run concurrently |
+| WARN | `scope_conflict` | `I4481` | shares apps/majordomus-cli/tests with I4485; they may not run concurrently |
+| WARN | `scope_conflict` | `I4481` | shares apps/majordomus-cli/src/capability/builtin/capabilities.rs with I4486; they may not run concurrently |
+| WARN | `scope_conflict` | `I4481` | shares apps/majordomus-cli/tests with I4488; they may not run concurrently |
+| WARN | `scope_conflict` | `I4481` | shares .ai/repo/adrs with I4500; they may not run concurrently |
+| WARN | `scope_conflict` | `I4481` | shares .ai/repo/policy.yaml with I4512; they may not run concurrently |

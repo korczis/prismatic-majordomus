@@ -98,9 +98,13 @@ run always 2 CARGO_BUILD_BUILD_DIR="$T/mine"
 printf '%s\n' "$ERR" | grep -q 'nowhere else to build' || { echo "    the stop was not explained: $ERR"; exit 1; }
 
 # ---------------------------------------------------------------- the disk floor is asked first
+# MAJORDOMUS_PRIVATE_BUILD_ABOVE_MB=0 as run() sets it: otherwise a machine with less free than
+# the high-water mark (50 GB) waits on the shared lock again, up to 1800 s, instead of reaching
+# the floor, and the case measured the runner's disk rather than the function (I4528).
 : > "$CALLS"; RC=0
 ERR="$(env -u CARGO_BUILD_BUILD_DIR PATH="$FAKE:$PATH" FAKE_MODE=held FAKE_CALLS="$CALLS" CARGO_HOME="$T/cargo-home" \
       MAJORDOMUS_BUILD_LOCK_WAIT=1 MAJORDOMUS_MIN_FREE_MB=999999999 MAJORDOMUS_INCREMENTAL_IDLE_MIN=0 \
+      MAJORDOMUS_PRIVATE_BUILD_ABOVE_MB=0 \
       sh -c '. "$1"; mj_cargo_bounded "$2" build --quiet' sh "$LIB" "$T" 2>&1 >/dev/null)" || RC=$?
 [ "$RC" = 12 ] || { echo "    a private build below the disk floor returned $RC, expected 12: $ERR"; exit 1; }
 [ "$(calls)" = 1 ] || { echo "    a private build started below the disk floor: $(cat "$CALLS")"; exit 1; }
