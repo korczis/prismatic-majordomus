@@ -318,9 +318,9 @@ Every file `majordomus generate` writes, with the document it projects, the enco
 | `docs/generated/changelog.json` | `changelog` | json | 1616078 | `6ac6c02b143e348d` |
 | `docs/generated/changelog.md` | `changelog` | markdown | 327545 | `e761c59dfe03202d` |
 | `docs/generated/changelog.yaml` | `changelog` | yaml | 1273568 | `ea3f24728990538c` |
-| `docs/generated/cli.json` | `cli` | json | 1382344 | `c92833a6a304047c` |
-| `docs/generated/cli.md` | `cli` | markdown | 608886 | `dfc5bebf33031ad7` |
-| `docs/generated/cli.yaml` | `cli` | yaml | 1083968 | `1287d287c06fd907` |
+| `docs/generated/cli.json` | `cli` | json | 1382252 | `a9c6a682dd654609` |
+| `docs/generated/cli.md` | `cli` | markdown | 608862 | `72a52a1bd46a4a8f` |
+| `docs/generated/cli.yaml` | `cli` | yaml | 1083878 | `790947891544389d` |
 | `docs/generated/design.json` | `design` | json | 155558 | `39f9813f16e5b8a5` |
 | `docs/generated/design.md` | `design` | markdown | 11799 | `af057f33aa46287c` |
 | `docs/generated/design.yaml` | `design` | yaml | 126217 | `cc293b626bb83238` |
@@ -461,7 +461,7 @@ Every file `majordomus generate` writes, with the document it projects, the enco
 | `site/data/registry/evidence-subjects.json` | `site-evidence-subjects` | json | 875051 | `149fb78380d48bdd` |
 | `site/data/registry/product-graph.json` | `site-product-graph` | json | 112756 | `a0afddc07ab8ba81` |
 | `site/data/registry/product.json` | `site-product` | json | 785158 | `a058c9554ed0f8a7` |
-| `site/data/registry/registry.json` | `site-registry` | json | 8860403 | `18ec113c5157e719` |
+| `site/data/registry/registry.json` | `site-registry` | json | 8860311 | `598c489557437164` |
 | `site/data/registry/why-graph.json` | `site-why-graph` | json | 180171 | `c5c85c57475615eb` |
 | `site/data/registry/why.json` | `site-why` | json | 349932 | `f34d973e38325648` |
 | `site/static/favicon.svg` | `design-mark` | text | 912 | `d3a39f415f9bd167` |

@@ -27,7 +27,7 @@ mkdir -p "$R/test/cases" "$R/.ai/repo/adrs" "$R/.ai/repo/project/issues" "$R/.ai
 printf '' > "$R/test/cases/41_a_case.sh"
 printf '# 12. An ADR\n' > "$R/.ai/repo/adrs/0012-an-adr.md"
 { printf 'schema: mesh/v1\nkind: mesh-declaration\nid: majordomus\nenabled: true\n'
-  printf 'multicast:\n  enabled: false\ntrust:\n  policy: tofu\n'
+  printf 'multicast:\n  enabled: false\ntailscale:\n  enabled: false\ntrust:\n  policy: tofu\n'
   printf 'cooperation:\n  heartbeat_seconds: 1\n  expiry_seconds: 30\n  repository: case-3440\n'
 } > "$R/.ai/repo/mesh/majordomus.yaml"
 git -C "$R" add -A >/dev/null && git -C "$R" commit -qm base >/dev/null

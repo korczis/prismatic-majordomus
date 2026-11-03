@@ -35,7 +35,7 @@ git -C "$R" config user.name t
   && pj_issue I0003 M000 && pj_issue I0004 M000 && pj_issue I0005 M000 )
 mkdir -p "$R/.ai/repo/mesh"
 { printf 'schema: mesh/v1\nkind: mesh-declaration\nid: majordomus\nenabled: true\n'
-  printf 'multicast:\n  enabled: false\ntrust:\n  policy: tofu\n'
+  printf 'multicast:\n  enabled: false\ntailscale:\n  enabled: false\ntrust:\n  policy: tofu\n'
   printf 'cooperation:\n  heartbeat_seconds: 1\n  expiry_seconds: 30\n  repository: case-3367\n'
 } > "$R/.ai/repo/mesh/majordomus.yaml"
 git -C "$R" add -A >/dev/null && git -C "$R" commit -qm base >/dev/null

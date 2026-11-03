@@ -591,6 +591,90 @@ mod tests {
         assert!(detail.contains("the session did not close"), "{detail}");
     }
 
+    /// An armed claim over `c` with the key and the session given, as a settle finds it.
+    fn armed(c: &Arc<Cooperation>, key: Option<String>, session: Option<&str>) -> HeldClaim {
+        HeldClaim {
+            cooperation: Arc::clone(c),
+            claim: IssueClaim {
+                standing: ClaimStanding::Held,
+                key,
+                session: session.map(str::to_string),
+                ..IssueClaim::wanted("I1")
+            },
+            armed: true,
+        }
+    }
+
+    /// Settle under a subscriber that takes warnings, so the warning a claim given back
+    /// uncleanly writes is written rather than skipped.
+    fn settled_under_a_subscriber(held: HeldClaim) -> IssueClaim {
+        let subscriber = tracing_subscriber::fmt()
+            .with_max_level(tracing::Level::WARN)
+            .with_writer(std::io::sink)
+            .finish();
+        tracing::subscriber::with_default(subscriber, || {
+            held.settle(Some(ExecutionState::Succeeded))
+        })
+    }
+
+    #[test]
+    fn a_claim_without_a_key_closes_its_session_and_one_without_a_session_releases_its_key() {
+        let c = crate::mesh::testing::cooperation();
+        // no key: only the session is closed
+        c.open_session(SessionInfo::named("s1", "test")).unwrap();
+        let settled = armed(&c, None, Some("s1")).settle(Some(ExecutionState::Succeeded));
+        assert_eq!(settled.standing, ClaimStanding::Released);
+        assert_eq!(settled.detail, None, "given back cleanly");
+        assert!(
+            c.state()
+                .sessions
+                .iter()
+                .any(|s| s.info.session == "s1"
+                    && s.state == crate::mesh::state::SessionState::Closed)
+        );
+
+        // no session: only the key is released
+        let key = c
+            .claim(
+                &SessionInfo::named("s2", "test"),
+                vec!["issue/I1".into()],
+                None,
+                ClaimMode::Exclusive,
+                Some("I1".into()),
+            )
+            .unwrap()
+            .key;
+        let settled = armed(&c, Some(key.clone()), None).settle(Some(ExecutionState::Failed));
+        assert_eq!(settled.standing, ClaimStanding::Released);
+        assert_eq!(settled.detail, None, "given back cleanly");
+        assert!(!live(&c, &key), "released");
+    }
+
+    #[test]
+    fn a_release_or_a_close_the_mesh_refuses_is_warned_and_said_alone() {
+        let c = crate::mesh::testing::cooperation();
+        // a key of another runtime, and no session
+        let refused = settled_under_a_subscriber(armed(
+            &c,
+            Some("somebody-0000000000000002/c-abc".into()),
+            None,
+        ));
+        assert_eq!(refused.standing, ClaimStanding::Released);
+        let detail = refused.detail.expect("said");
+        assert!(detail.starts_with("the release was refused: "), "{detail}");
+        assert!(!detail.contains("session"), "{detail}");
+
+        // no key, and a session this runtime never opened
+        let unclosed = settled_under_a_subscriber(armed(&c, None, Some("never-opened")));
+        assert_eq!(unclosed.standing, ClaimStanding::Released);
+        let detail = unclosed.detail.expect("said");
+        assert!(
+            detail.starts_with("the session did not close: "),
+            "{detail}"
+        );
+        assert!(!detail.contains("release"), "{detail}");
+    }
+
     #[test]
     fn without_a_mesh_admission_says_so_and_names_the_scope() {
         let repo = crate::synthetic::SyntheticRepository::small().unwrap();

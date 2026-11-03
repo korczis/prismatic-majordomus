@@ -70,7 +70,7 @@ issue I0002 src/nowhere "serves:
 # a mesh that runs in the server and links nobody (the declaration of cases 3067 and 4004)
 mkdir -p .ai/repo/mesh
 printf 'schema: mesh/v1\nkind: mesh-declaration\nid: majordomus\nenabled: true\n' > .ai/repo/mesh/majordomus.yaml
-printf 'multicast:\n  enabled: false\ntrust:\n  policy: tofu\n' >> .ai/repo/mesh/majordomus.yaml
+printf 'multicast:\n  enabled: false\ntailscale:\n  enabled: false\ntrust:\n  policy: tofu\n' >> .ai/repo/mesh/majordomus.yaml
 printf 'cooperation:\n  heartbeat_seconds: 1\n  expiry_seconds: 30\n  repository: case-4003\n' >> .ai/repo/mesh/majordomus.yaml
 git add -A >/dev/null && git commit -qm layer
 
