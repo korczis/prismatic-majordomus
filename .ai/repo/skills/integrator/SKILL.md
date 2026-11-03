@@ -1,7 +1,7 @@
 ---
 schema: skill/v1
 id: integrator
-version: 1
+version: 2
 title: Take finished work to a verified master
 description: Carry a finished change from an open pull request to master and beyond through the one integration engine and the one landing seat, answering at each stage why it is not there yet and stopping only at a landing verified on master, a release, or a named blocker with its next act.
 status: active
@@ -87,6 +87,31 @@ Cost here is CI time: one required-check run took 226 minutes at the median in t
 2026-11-01, and refresh throughput is one pull request per run. A strategy that adds a run
 (a needless refresh, a re-run, a label that starts a run) must buy more than it costs.
 
+### Composing and judging a train top
+
+Whoever composes a top (the landing seat, or a worker the seat gives a top to) calls it ready
+when its own pre-push judgement passed, not when it is committed:
+
+- **Master stays the first parent.** A top committed with `git commit` over a hand-written
+  `MERGE_HEAD` loses master as a parent whenever a member already contains it, because git
+  reduces redundant parents. In a linked worktree `.git` is a file, so write the mode where
+  git reads it: `printf no-ff > "$(git rev-parse --git-path MERGE_MODE)"` (the file is
+  compared as exactly `no-ff`; `echo`'s newline does not count). `git rev-parse HEAD^1` must
+  then be master.
+- **Judge before the slot.** `git push --dry-run -u origin <train-branch>` runs the pre-push
+  hook and moves nothing; a push carrying an `integration/train-*` ref refuses run-plan's
+  exit 1 (`.githooks/pre-push`). Report the head and run-plan's own last line, never "ok".
+  `run-plan --before-push` runs only the structure and structure-b gates; the rust job's
+  gates, `intent-check` among them, are first met in CI. Until
+  `project.a-push-runs-what-ci-would-find-first` reaches them, a ready report also carries
+  `bin/majordomus-cli intent validate` with no failure.
+- **Judge where CI's tools are.** A host whose pinned tools differ from CI's fails cases on
+  plain master too: zola 0.22 against the 0.23 that `.github/actions/setup-site` installs
+  failed seven cases on master and on the top alike. Before a member is blamed or dropped,
+  run the failing cases on the base on the same host (`bash test/run.sh <cases>` in a
+  detached worktree of master); identical failures are the host's, and the top is judged
+  on a host whose pinned tools match (the macOS differences of `docs/INTEGRATION.md` aside).
+
 ## 4. Do not starve the queue
 
 - A pull request passed over three times is `starving` (`prs status`): put it in the next
@@ -95,6 +120,13 @@ Cost here is CI time: one required-check run took 226 minutes at the median in t
   do not re-run it by hand while the release path holds — the re-run yields again.
 - A label other than `ci:full` or `hold` starts no second verdict (I4347,
   `scripts/ci/carried-verdict`); `ci:full` deliberately does.
+- A github-projection failure that says a record is `behind` and "this head did not change
+  them" is not the pull request's: either the trunk moved past its base, master's projection
+  is still running, or master's projection run failed and did not apply what a landing
+  carried (on 2026-11-02 at 23:02Z its checkout timed out). Read master's projection run
+  first. When it failed, prefer re-running its failed job over the manual apply the rule
+  keeps for a workflow that cannot (`project.the-projection-is-applied-at-landing`), so the
+  records keep one writer; once it is green, the seat re-runs the pull request's failed job.
 
 ## 5. Verify the landing, then the release
 
