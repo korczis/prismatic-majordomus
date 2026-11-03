@@ -13,7 +13,7 @@
 use std::ffi::OsStr;
 use std::io::Read;
 use std::path::Path;
-use std::process::{Command, Stdio};
+use std::process::{Child, Command, ExitStatus, Stdio};
 use std::time::{Duration, Instant};
 
 use super::error::{Result, WorktreeError};
@@ -252,49 +252,57 @@ fn wait_bounded(cmd: &mut Command, timeout: Duration) -> std::io::Result<Finishe
         .stdout(Stdio::piped())
         .stderr(Stdio::piped());
     let mut child = cmd.spawn()?;
-    // Drained beside the wait, so a chatty process cannot fill a pipe and stall itself.
-    let drain = |pipe: Option<Box<dyn Read + Send>>| {
+    // Drained beside the wait, so a chatty process cannot fill a pipe and stall itself. Both
+    // pipes were asked for above, so both are there to take.
+    let drain = |mut pipe: Box<dyn Read + Send>| {
         std::thread::spawn(move || {
             let mut bytes = Vec::new();
-            if let Some(mut p) = pipe {
-                let _ = p.read_to_end(&mut bytes);
-            }
+            let _ = pipe.read_to_end(&mut bytes);
             bytes
         })
     };
-    let out = drain(
-        child
-            .stdout
-            .take()
-            .map(|p| Box::new(p) as Box<dyn Read + Send>),
-    );
-    let err = drain(
-        child
-            .stderr
-            .take()
-            .map(|p| Box::new(p) as Box<dyn Read + Send>),
-    );
-    let deadline = Instant::now() + timeout;
-    let waited = loop {
-        match child.try_wait() {
-            Ok(None) if Instant::now() < deadline => std::thread::sleep(Duration::from_millis(25)),
-            Ok(None) => {
-                let _ = child.kill();
-                let _ = child.wait();
-                break None;
-            }
-            Ok(Some(status)) => break Some(Some(status)),
-            Err(_) => break Some(None),
-        }
+    let out = child
+        .stdout
+        .take()
+        .map(|p| drain(Box::new(p) as Box<dyn Read + Send>));
+    let err = child
+        .stderr
+        .take()
+        .map(|p| drain(Box::new(p) as Box<dyn Read + Send>));
+    let waited = wait_until(&mut child, Instant::now() + timeout, Child::try_wait);
+    let joined = |h: Option<std::thread::JoinHandle<Vec<u8>>>| {
+        h.and_then(|h| h.join().ok()).unwrap_or_default()
     };
-    let stdout = out.join().unwrap_or_default();
-    let stderr = String::from_utf8_lossy(&err.join().unwrap_or_default()).to_string();
+    let stdout = joined(out);
+    let stderr = String::from_utf8_lossy(&joined(err)).to_string();
     Ok(Finished {
         status: waited.map(|s| s.map(|s| s.success())),
         code: waited.flatten().and_then(|s| s.code()),
         stdout,
         stderr,
     })
+}
+
+/// Wait for `child` until `deadline`, asking `try_wait` (the child's own, but for a test that
+/// makes the wait itself fail): `None` when the deadline ended it, killed and reaped;
+/// `Some(None)` when the wait failed; otherwise its exit status.
+fn wait_until(
+    child: &mut Child,
+    deadline: Instant,
+    try_wait: fn(&mut Child) -> std::io::Result<Option<ExitStatus>>,
+) -> Option<Option<ExitStatus>> {
+    loop {
+        match try_wait(child) {
+            Ok(None) if Instant::now() < deadline => std::thread::sleep(Duration::from_millis(25)),
+            Ok(None) => {
+                let _ = child.kill();
+                let _ = child.wait();
+                return None;
+            }
+            Ok(Some(status)) => return Some(Some(status)),
+            Err(_) => return Some(None),
+        }
+    }
 }
 
 /// Run `git -C <cwd> <args>` as [`run`] does, and refuse it when it has not finished
@@ -581,6 +589,17 @@ mod tests {
         assert_eq!(f.status, Some(Some(false)));
         assert_eq!(f.code, Some(3));
         assert_eq!(f.stdout, b"ok");
+    }
+
+    /// A wait that itself fails is said to have failed, never read as an exit or a deadline.
+    #[test]
+    fn a_wait_that_fails_is_neither_an_exit_nor_a_deadline() {
+        let mut child = Command::new("true").spawn().expect("true runs");
+        let waited = wait_until(&mut child, Instant::now() + Duration::from_secs(5), |_| {
+            Err(std::io::Error::other("the wait broke"))
+        });
+        assert_eq!(waited, Some(None));
+        child.wait().expect("reaped");
     }
 
     /// A bounded run that fails says what git said, or that it said nothing, and one that a
