@@ -9,7 +9,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 
 | milestone | status | done of required | ready | blocked | active | verify | cancelled | outcome |
 |---|---|---|---|---|---|---|---|---|
-| [a-session-proceeds](https://majordomus.dev/plan/a-session-proceeds/) | PLANNED | 0/8 | 2 | 6 | 0 | 0 | 1 | `/proceed` in any session runs `majordomus proceed`: one explained decision from the existing capabilities, an exclusive claim, a worktree and a task bound to the chosen issue, the implement skill, finish, and a receipt handed to the landing seat; said again with nothing changed it creates nothing. |
+| [a-session-proceeds](https://majordomus.dev/plan/a-session-proceeds/) | PLANNED | 0/5 | 2 | 3 | 0 | 0 | 4 | `/proceed` in any session runs `majordomus proceed`: one explained decision from the existing capabilities, an exclusive claim, a worktree and a task bound to the chosen issue, the implement skill, finish, and a receipt handed to the landing seat; said again with nothing changed it creates nothing. |
 
 ## Issues
 
@@ -19,10 +19,10 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | [I2973](https://majordomus.dev/plan/i2973/) | BLOCKED | 1 | I2972 | The choice ranks by what it unblocks |
 | [I2974](https://majordomus.dev/plan/i2974/) | CANCELLED | 2 | I2973 | Proceeding claims and starts the chosen work once |
 | [I2975](https://majordomus.dev/plan/i2975/) | BLOCKED | 3 | I2974 | /proceed is a generated skill that names only the command |
-| [I2976](https://majordomus.dev/plan/i2976/) | BLOCKED | 3 | I2974 | Two sessions proceeding at once never hold the same work |
-| [I2977](https://majordomus.dev/plan/i2977/) | BLOCKED | 3 | I2974 | A session whose work stopped is resumed, never duplicated |
+| [I2976](https://majordomus.dev/plan/i2976/) | CANCELLED | 3 | I2974 | Two sessions proceeding at once never hold the same work |
+| [I2977](https://majordomus.dev/plan/i2977/) | CANCELLED | 3 | I2974 | A session whose work stopped is resumed, never duplicated |
 | [I2978](https://majordomus.dev/plan/i2978/) | BLOCKED | 1 | I2972 | The UI shows what proceeding chose, what it refused and why |
-| [I2979](https://majordomus.dev/plan/i2979/) | BLOCKED | 3 | I2974 | A finished task hands its head and receipt to the landing seat |
+| [I2979](https://majordomus.dev/plan/i2979/) | CANCELLED | 3 | I2974 | A finished task hands its head and receipt to the landing seat |
 | [I3040](https://majordomus.dev/plan/i3040/) | READY | 0 | — | An id is taken by one atomic claim |
 
 ## Findings

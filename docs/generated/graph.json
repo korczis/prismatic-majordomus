@@ -47901,7 +47901,7 @@
             "test/cases/3443_proceeding_twice_creates_nothing.sh"
           ],
           "serves": [
-            "a-session-proceeds#proceeding-twice-creates-nothing"
+            "a-session-proceeds#a-session-is-told-what-to-take"
           ],
           "slug": "proceeding-claims-and-starts-once",
           "updated_at": "2026-11-02",
@@ -47941,6 +47941,9 @@
             ".ai/repo/skills/proceed",
             "test/cases/3369_the_proceed_skill_names_only_the_command.sh"
           ],
+          "serves": [
+            "a-session-proceeds#a-session-is-told-what-to-take"
+          ],
           "slug": "proceed-is-a-generated-skill",
           "updated_at": "2026-10-18",
           "validation": [
@@ -47961,6 +47964,7 @@
             "Two simultaneous proceeds on one runtime hold different work",
             "Across two linked runtimes the loser of a conflicting claim stops and takes the next eligible issue"
           ],
+          "cancelled": true,
           "created_at": "2026-10-18",
           "current_state": "Nothing stops two sessions choosing the same issue but the person reading the board.",
           "depends_on": [
@@ -47996,6 +48000,7 @@
             "Work whose session is gone is offered before new work and resumed in its own worktree and task",
             "No second claim, worktree or task is created for it"
           ],
+          "cancelled": true,
           "created_at": "2026-10-18",
           "current_state": "Orphaned work is found and resumed by a person reading the board and the handovers.",
           "depends_on": [
@@ -48048,6 +48053,9 @@
           "scope": [
             "apps/majordomus-cli/src/ui"
           ],
+          "serves": [
+            "a-session-proceeds#a-session-is-told-what-to-take"
+          ],
           "slug": "the-ui-shows-the-proceed-decision",
           "updated_at": "2026-10-18",
           "validation": [
@@ -48068,6 +48076,7 @@
             "The hand-off carries the finished head and the cases and gates that ran, read from the finish record",
             "Proceeding never merges, tags or releases"
           ],
+          "cancelled": true,
           "created_at": "2026-10-18",
           "current_state": "Workers announce READY by hand with a free-text receipt.",
           "depends_on": [
@@ -71110,8 +71119,7 @@
             ".ai/repo/project/issues/I4003.yaml"
           ],
           "serves": [
-            "a-session-proceeds-through-the-mesh#an-implement-request-runs-once",
-            "a-session-proceeds#proceeding-twice-creates-nothing"
+            "a-session-proceeds-through-the-mesh#an-implement-request-runs-once"
           ],
           "slug": "devtask-implement-claims-creates-and-starts-once",
           "updated_at": "2026-10-23",

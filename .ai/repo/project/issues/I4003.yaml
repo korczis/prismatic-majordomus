@@ -7,7 +7,6 @@ profile: implementation
 parallel_safe: false
 serves:
   - a-session-proceeds-through-the-mesh#an-implement-request-runs-once
-  - a-session-proceeds#proceeding-twice-creates-nothing
 objective: "devtask.implement: issue readiness and intents.preflight, then mesh.claim, worktree.create and an agent run through executions.start; it refuses an overlap or an invalid intent with a reason and answers pending when no worker is attached (Mission Control B4)."
 why: "Taking an issue is a hand-run sequence; two sessions can follow it at once and a double request starts two runs."
 current_state: "Built on #2522: devtask.implement runs readiness, preflight, the issue claim, worktree create and one execution (case 4003)."

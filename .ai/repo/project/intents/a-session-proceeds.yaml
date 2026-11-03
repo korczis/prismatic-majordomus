@@ -19,10 +19,6 @@ satisfaction:
     criterion: Among READY issues equal in milestone, wave and priority, the one that unblocks more unfinished issues (transitively, each counted once) is handed out first by plan.next, majordomus plan next and proceed.plan alike, and adding a dependency changes that order with no list edited
     evidence: test
     ref: test/cases/3441_the_choice_ranks_by_what_it_unblocks.sh
-  - id: proceeding-twice-creates-nothing
-    criterion: the step's work order is carried out by devtask.implement, whose execution takes the issue's mesh claim, ensures its worktree and starts once, and asking again with the same key answers the same execution and creates no claim, worktree or task
-    evidence: test
-    ref: test/cases/4003_devtask_implement_claims_creates_and_starts_once.sh
 milestones:
   - a-session-proceeds
 governance:
