@@ -7607,6 +7607,19 @@ pub fn entity(ctx: &Context, kind: &str, slug: &str) -> Page {
 mod tests {
     use super::*;
 
+    #[test]
+    fn every_execution_state_has_its_one_badge_status() {
+        for state in ExecutionState::ALL {
+            let want = match state {
+                ExecutionState::Succeeded => "ok",
+                ExecutionState::Failed | ExecutionState::Refused => "fail",
+                ExecutionState::Cancelled | ExecutionState::UnknownOutcome => "warn",
+                _ => "info",
+            };
+            assert_eq!(execution_status(state), want, "{state:?}");
+        }
+    }
+
     fn command(origin: &str, effect: &str) -> CommandSummary {
         serde_json::from_value(json!({
             "id": format!("{origin}.x.{effect}"),

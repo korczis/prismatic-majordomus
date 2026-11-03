@@ -835,6 +835,17 @@ mod tests {
         }
         // the one event a terminal does not need: it is already looking at the queue
         assert!(describe(&event(EventPayload::Queued { ahead: 0 })).is_none());
+        // a held claim names its key, and a claim with a detail says it
+        let held = crate::execution::IssueClaim {
+            standing: crate::execution::ClaimStanding::Held,
+            key: Some("stream/c-1".into()),
+            detail: Some("the holder is named".into()),
+            ..crate::execution::IssueClaim::wanted("I4004")
+        };
+        assert_eq!(
+            describe(&event(EventPayload::IssueClaim(held))).unwrap(),
+            "---  I4004 mesh claim held stream/c-1 — the holder is named"
+        );
         // and the words a reader looks for are there
         assert!(describe(&event(EventPayload::Progress(ProgressView {
             current: 3,
@@ -1337,6 +1348,23 @@ mod tests {
             run(run_args(&repo, false, OutputFormat::Json)).expect("ran"),
             0
         );
+    }
+
+    /// A run started under an idempotency key sends it, and a key no capability admits is
+    /// refused before anything runs.
+    #[test]
+    fn a_run_sends_its_idempotency_key_and_a_bad_one_is_refused() {
+        let repo = runnable();
+        let keyed = RunArgs {
+            idempotency_key: Some("click-1".into()),
+            ..run_args(&repo, true, OutputFormat::Json)
+        };
+        assert_eq!(run(keyed).expect("ran"), 0);
+        let bad = RunArgs {
+            idempotency_key: Some("a b/c".into()),
+            ..run_args(&repo, true, OutputFormat::Json)
+        };
+        assert!(run(bad).is_err());
     }
 
     /// With a server serving the checkout, the run reports itself to it until the server

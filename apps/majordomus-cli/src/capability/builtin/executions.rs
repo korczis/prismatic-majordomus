@@ -921,6 +921,43 @@ mod tests {
     use super::*;
     use crate::capability::CapabilityKind;
 
+    /// A stop asked of an execution whose outcome waits for a reconciliation changes nothing,
+    /// and says so.
+    #[test]
+    fn a_stop_of_an_unknown_outcome_is_answered_outcome_unknown() {
+        let repo = crate::synthetic::SyntheticRepository::small().unwrap();
+        let ctx = repo.context().unwrap();
+        let store = ctx.executions.store();
+        let id = ExecutionId::fresh();
+        store.create(
+            id.clone(),
+            "executions.demonstrate",
+            "Demo",
+            serde_json::json!({}),
+            true,
+            crate::execution::Actor::of(crate::execution::ActorKind::Internal),
+            crate::execution::engine::repository_of(&ctx),
+        );
+        store.publish(&id, crate::execution::EventPayload::Started);
+        store.publish(
+            &id,
+            crate::execution::EventPayload::UnknownOutcome {
+                error: crate::execution::ExecutionError {
+                    code: "unavailable".into(),
+                    message: "it went silent".into(),
+                    suggestion: None,
+                    correlation_id: id.to_string(),
+                },
+            },
+        );
+        let report = executions_cancel(&ctx, CancelInput { id: id.to_string() }).unwrap();
+        assert_eq!(report.outcome, "outcome_unknown");
+        assert_eq!(
+            report.execution.execution.state,
+            crate::execution::ExecutionState::UnknownOutcome
+        );
+    }
+
     /// The declaration is the only place these names exist; every projection is derived
     /// from it. A dropped exposure would still compile and every behavioural test would
     /// still pass. This is the assertion that would not.
