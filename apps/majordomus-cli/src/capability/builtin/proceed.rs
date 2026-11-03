@@ -1337,6 +1337,19 @@ mod tests {
         );
     }
 
+    /// What the agent does with an answer belongs to a skill: a capability that declares none
+    /// gains nothing by naming a follow.
+    #[test]
+    fn only_a_capability_with_a_skill_follows() {
+        let plan = module()
+            .capabilities
+            .into_iter()
+            .find(|e| e.capability.id.as_str() == "proceed.plan")
+            .unwrap();
+        assert!(plan.capability.skill.is_none());
+        assert!(plan.follow("Carry it out.").capability.skill.is_none());
+    }
+
     /// A canned leaseholder answering every request with `status` and `body`; its URL.
     fn leaseholder(status: u16, body: String) -> String {
         use std::io::{Read, Write};
@@ -1399,5 +1412,342 @@ mod tests {
             why.contains("did not answer") && why.contains(&gone),
             "{why}"
         );
+    }
+
+    // ------------------------------------------------ the leaseholder, asked by the handler
+
+    /// A leaseholder of the checkout at `root`: its home page answers as this checkout's
+    /// server, every other path with `status` and `body`. Its URL is written into the
+    /// checkout's lease, so that the handler finds a server that answers and asks it.
+    fn lease_to(root: &std::path::Path, status: u16, body: String) -> String {
+        use std::io::{Read, Write};
+        let listener = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
+        let url = format!("http://{}", listener.local_addr().unwrap());
+        let home = json!({
+            "name": "majordomus",
+            "repository_id": crate::repository::identity(root),
+        })
+        .to_string();
+        std::thread::spawn(move || {
+            for stream in listener.incoming() {
+                let Ok(mut stream) = stream else { return };
+                let mut buffer = [0u8; 8192];
+                let n = stream.read(&mut buffer).unwrap_or(0);
+                let head = String::from_utf8_lossy(&buffer[..n]).to_string();
+                let (status, body) = if head.starts_with("GET / ") {
+                    (200, home.as_str())
+                } else {
+                    (status, body.as_str())
+                };
+                let _ = stream.write_all(
+                    format!(
+                        "HTTP/1.1 {status} X\r\nContent-Type: application/json\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{}",
+                        body.len(),
+                        body
+                    )
+                    .as_bytes(),
+                );
+            }
+        });
+        let lease = lease::lease_file(root, &server::local_half(root));
+        std::fs::create_dir_all(lease.parent().unwrap()).unwrap();
+        std::fs::write(
+            &lease,
+            json!({
+                "schema": lease::SCHEMA,
+                "pid": 0,
+                "token": "another-process",
+                "root": root,
+                "url": url,
+                "started_at": "2026-10-15T00:00:00Z",
+            })
+            .to_string(),
+        )
+        .unwrap();
+        url
+    }
+
+    /// A checkout whose server answers is asked through it: its decision is the answer, and
+    /// a server that cannot be asked leaves this process's own board and mesh said unread.
+    #[test]
+    fn the_handler_asks_the_leaseholder_and_says_so_when_it_cannot() {
+        let repo = planned(&[("I0001", &[], &["src/a"])]);
+        let root = repo.root().canonicalize().unwrap();
+        let ctx = repo.context().unwrap();
+        let mut theirs = proceed_plan(
+            &ctx,
+            ProceedPlanInput {
+                local: true,
+                ..ProceedPlanInput::default()
+            },
+        )
+        .unwrap();
+        theirs.reason = "the leaseholder's own reason".into();
+        lease_to(&root, 200, serde_json::to_string(&theirs).unwrap());
+        assert_eq!(
+            proceed_plan(&ctx, ProceedPlanInput::default()).unwrap(),
+            theirs,
+            "the leaseholder's decision is the answer"
+        );
+
+        let old = lease_to(&root, 404, "{}".into());
+        let d = proceed_plan(&ctx, ProceedPlanInput::default()).unwrap();
+        let board = d.sources.iter().find(|s| s.source == "board").unwrap();
+        assert_ne!(board.state, ProceedSourceState::Read, "{}", board.summary);
+        assert!(
+            board
+                .summary
+                .contains("this checkout's own board is its server's")
+                && board.summary.contains(&old),
+            "{}",
+            board.summary
+        );
+        let mesh = d.sources.iter().find(|s| s.source == "mesh").unwrap();
+        assert!(mesh.summary.contains("answered 404"), "{}", mesh.summary);
+        assert!(d.provisional, "{}", d.reason);
+    }
+
+    #[test]
+    fn a_board_already_unread_stays_so_and_says_why_it_was_not_asked() {
+        let mut board = ProceedSource {
+            state: ProceedSourceState::Unread,
+            summary: "peers.list did not answer".into(),
+            ..read("board")
+        };
+        unasked_board(&mut board, "the leaseholder did not answer");
+        assert_eq!(board.state, ProceedSourceState::Unread);
+        assert!(
+            board
+                .summary
+                .ends_with("its server's: the leaseholder did not answer"),
+            "{}",
+            board.summary
+        );
+    }
+
+    #[test]
+    fn a_plan_record_that_did_not_load_makes_the_plan_partial_and_is_named() {
+        let repo = planned(&[("I0001", &[], &["src/a"])]);
+        let mut index = repo.index().unwrap();
+        index.diagnostics.push(crate::Diagnostic::error(
+            "schema_violation",
+            Some(".ai/repo/project/issues/I0009.yaml".into()),
+            "missing title",
+        ));
+        // an error about no file in particular is no record of the plan
+        index.diagnostics.push(crate::Diagnostic::error(
+            "sources_unreadable",
+            None,
+            "somewhere",
+        ));
+        let ctx = Context::new(
+            std::sync::Arc::new(index),
+            std::sync::Arc::clone(&repo.context().unwrap().registry),
+        );
+        let plan = plan_source(&ctx);
+        assert_eq!(plan.state, ProceedSourceState::Partial);
+        assert!(
+            plan.summary
+                .starts_with("1 record(s) of the plan did not load: ")
+                && plan
+                    .summary
+                    .contains("I0009.yaml: missing title (schema_violation)"),
+            "{}",
+            plan.summary
+        );
+    }
+
+    #[test]
+    fn a_declaration_that_does_not_resolve_leaves_the_mesh_unread_and_advice_is_not_exclusive() {
+        use crate::mesh::journal::{ClaimMode, SessionInfo};
+        let repo = planned(&[("I0001", &[], &["src/a"])]);
+        let dir = repo.root().join(".ai/repo/mesh");
+        std::fs::create_dir_all(&dir).unwrap();
+        std::fs::write(
+            dir.join("majordomus.yaml"),
+            "schema: mesh/v1\nkind: mesh-declaration\nid: majordomus\nenabled: true\n\
+             rendezvous:\n  endpoints:\n    - \"ws://nowhere\"\n",
+        )
+        .unwrap();
+        let ctx = repo.context().unwrap();
+        assert!(
+            matches!(
+                super::super::mesh::resolved_declaration(&ctx).declaration,
+                Some(Err(_))
+            ),
+            "the index holds the declaration and the resolver refuses it"
+        );
+        let mut holds = Vec::new();
+        let mesh = mesh_holds(&ctx, None, &mut holds);
+        assert_eq!(mesh.state, ProceedSourceState::Unread);
+        assert!(
+            mesh.summary
+                .starts_with("the mesh declaration could not be read ("),
+            "{}",
+            mesh.summary
+        );
+
+        // a declaration that resolves, and an advisory claim of another session: it holds,
+        // and excludes nobody
+        std::fs::write(
+            dir.join("majordomus.yaml"),
+            "schema: mesh/v1\nkind: mesh-declaration\nid: majordomus\nenabled: true\n",
+        )
+        .unwrap();
+        let ctx = repo.context().unwrap();
+        let c = crate::mesh::testing::cooperation();
+        c.claim(
+            &SessionInfo::named("adviser", "test"),
+            vec!["src/a".into()],
+            None,
+            ClaimMode::Advisory,
+            None,
+        )
+        .unwrap();
+        crate::mesh::testing::attach(&ctx, c);
+        let mut holds = Vec::new();
+        let mesh = mesh_holds(&ctx, None, &mut holds);
+        assert_eq!((mesh.state, mesh.holds), (ProceedSourceState::Read, 1));
+        assert!(!holds[0].exclusive);
+        assert_eq!(
+            holds[0].words, "",
+            "an advisory claim without an intent says nothing"
+        );
+    }
+
+    // ------------------------------------------------ owners that answer what a test says
+
+    #[derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema)]
+    pub(super) struct Anything {}
+
+    impl BenchmarkCases for Anything {
+        fn benchmark_cases(_: &CaseContext<'_>) -> Vec<NamedCase<Self>> {
+            vec![NamedCase::new("default", Anything {})]
+        }
+    }
+
+    thread_local! {
+        /// What each stand-in owner answers on this test's thread; an owner with nothing here
+        /// refuses.
+        static CANNED: std::cell::RefCell<BTreeMap<&'static str, serde_json::Value>> =
+            Default::default();
+    }
+
+    /// Have the stand-in for `id` answer `answer`, or refuse when it is `None`, on this thread.
+    pub(super) fn can(id: &'static str, answer: Option<serde_json::Value>) {
+        CANNED.with(|c| match answer {
+            Some(a) => {
+                c.borrow_mut().insert(id, a);
+            }
+            None => {
+                c.borrow_mut().remove(id);
+            }
+        });
+    }
+
+    fn canned(id: &str) -> Result<serde_json::Value, CapabilityError> {
+        CANNED
+            .with(|c| c.borrow().get(id).cloned())
+            .ok_or_else(|| CapabilityError::Refused(format!("{id} does not answer")))
+    }
+
+    fn canned_peers(_: &Context, _: Anything) -> Result<serde_json::Value, CapabilityError> {
+        canned("peers.list")
+    }
+
+    fn canned_realization(_: &Context, _: Anything) -> Result<serde_json::Value, CapabilityError> {
+        canned("intent_realization.work")
+    }
+
+    /// A context whose registry holds this module and stand-ins for the owners it asks.
+    pub(super) fn canned_context(repo: &crate::synthetic::SyntheticRepository) -> Context {
+        let registry = crate::capability::CapabilityRegistry::builder()
+            .with_modules(vec![module()])
+            .with_builtin(vec![
+                capability! {
+                    id: "peers.list", title: "Peers", description: "Canned.",
+                    input: Anything, output: serde_json::Value,
+                    stability: Stability::Experimental, exposure: Exposure::default(), tags: [],
+                    handler: canned_peers,
+                },
+                capability! {
+                    id: "intent_realization.work", title: "Realization", description: "Canned.",
+                    input: Anything, output: serde_json::Value,
+                    stability: Stability::Experimental, exposure: Exposure::default(), tags: [],
+                    handler: canned_realization,
+                },
+            ])
+            .build()
+            .expect("a registry of stand-ins");
+        Context::new(
+            std::sync::Arc::new(repo.index().expect("an index")),
+            std::sync::Arc::new(registry),
+        )
+    }
+
+    #[test]
+    fn a_board_that_does_not_answer_or_answers_another_shape_is_unread() {
+        let repo = planned(&[("I0001", &[], &["src/a"])]);
+        let ctx = canned_context(&repo);
+        let root = PathBuf::from(&ctx.index.repository.root);
+        can("peers.list", None);
+        let mut holds = Vec::new();
+        let board = board_holds(&ctx, &root, None, &mut holds);
+        assert_eq!(board.state, ProceedSourceState::Unread);
+        assert!(
+            board.summary.starts_with("peers.list did not answer (")
+                && board.summary.contains("does not answer"),
+            "{}",
+            board.summary
+        );
+        can("peers.list", Some(json!({ "peers": "nobody" })));
+        let board = board_holds(&ctx, &root, None, &mut holds);
+        assert_eq!(board.state, ProceedSourceState::Unread, "{}", board.summary);
+        assert!(holds.is_empty());
+    }
+
+    #[test]
+    fn a_named_claim_a_branchless_checkout_and_an_unread_board_are_each_said() {
+        let repo = planned(&[("I0001", &[], &["src/a"])]);
+        let live = repo.context().unwrap();
+        let p = live.peers.attach(crate::peers::Transport::Http);
+        live.peers.announce(&p, "work on a", vec!["src/a".into()]);
+        let mut list = live
+            .execute("peers.list", json!({ "checkouts": "this" }))
+            .expect("the board");
+        let peer = list["peers"]
+            .as_array_mut()
+            .unwrap()
+            .iter_mut()
+            .find(|x| x["id"] == json!(p.as_str()))
+            .expect("the announcing peer");
+        peer["claims"][0]["name"] = json!("second");
+        if let Some(checkout) = peer.get_mut("checkout").and_then(|c| c.as_object_mut()) {
+            checkout.remove("branch");
+        }
+        let mut unread = list["boards"][0].clone();
+        unread["reason"] = json!("its server is starting and has no board to read yet");
+        list["boards"].as_array_mut().unwrap().push(unread);
+
+        let ctx = canned_context(&repo);
+        can("peers.list", Some(list));
+        let root = PathBuf::from(&ctx.index.repository.root);
+        let mut holds = Vec::new();
+        let board = board_holds(&ctx, &root, None, &mut holds);
+        assert_eq!(
+            board.state,
+            ProceedSourceState::Partial,
+            "{}",
+            board.summary
+        );
+        assert!(
+            board.summary.ends_with("1 of them unread"),
+            "{}",
+            board.summary
+        );
+        assert_eq!(holds.len(), 1, "{holds:?}");
+        assert!(holds[0].key.ends_with(":second"), "{}", holds[0].key);
+        assert!(holds[0].holder.ends_with("@?"), "{}", holds[0].holder);
+        assert_eq!(holds[0].words, "work on a");
     }
 }

@@ -471,4 +471,159 @@ mod tests {
             .unwrap()
             .starts_with("selected  nothing\n"));
     }
+
+    /// A terminal that cannot be written to: the answer was composed and could not be said.
+    struct Closed;
+
+    impl Write for Closed {
+        fn write(&mut self, _: &[u8]) -> std::io::Result<usize> {
+            Err(std::io::Error::other("the terminal is gone"))
+        }
+        fn flush(&mut self) -> std::io::Result<()> {
+            Ok(())
+        }
+    }
+
+    #[test]
+    fn a_step_renders_as_text_and_an_answer_that_cannot_be_written_is_an_error() {
+        let repo = crate::synthetic::SyntheticRepository::small().unwrap();
+        let ctx = repo.context().unwrap();
+        let mut out = Vec::new();
+        step(
+            &ctx,
+            &args(&["step", "--at", "2026-10-23T10:00:00Z"]),
+            &mut out,
+        )
+        .unwrap();
+        assert!(
+            String::from_utf8(out)
+                .unwrap()
+                .starts_with("order     step-"),
+            "the text rendering"
+        );
+        assert!(step(
+            &ctx,
+            &args(&["step", "--at", "2026-10-23T10:00:00Z"]),
+            &mut Closed
+        )
+        .is_err());
+        assert!(answer(&ctx, &args(&["plan"]), &mut Closed).is_err());
+    }
+
+    #[test]
+    fn a_registry_without_the_command_or_whose_capability_refuses_is_an_error() {
+        let repo = crate::synthetic::SyntheticRepository::small().unwrap();
+        let bare = Context::new(
+            std::sync::Arc::new(repo.index().unwrap()),
+            std::sync::Arc::new(
+                crate::capability::CapabilityRegistry::builder()
+                    .build()
+                    .expect("an empty registry"),
+            ),
+        );
+        let mut out = Vec::new();
+        let err = answer(&bare, &args(&["plan"]), &mut out).unwrap_err();
+        assert!(
+            err.to_string()
+                .contains("no capability is exposed as `majordomus proceed plan`"),
+            "{err}"
+        );
+        let err = step(&bare, &args(&["step"]), &mut out).unwrap_err();
+        assert!(
+            err.to_string()
+                .contains("no capability is exposed as `majordomus proceed step`"),
+            "{err}"
+        );
+
+        let refusing = Context::new(
+            std::sync::Arc::new(repo.index().unwrap()),
+            std::sync::Arc::new(
+                crate::capability::CapabilityRegistry::builder()
+                    .with_builtin(vec![crate::capability! {
+                        id: "proceed.plan", title: "Plan", description: "Refuses.",
+                        input: Anything, output: Value,
+                        stability: crate::capability::model::Stability::Experimental,
+                        exposure: crate::capability::model::Exposure {
+                            cli: Some(crate::capability::model::CliExposure {
+                                path: vec!["proceed".into(), "plan".into()],
+                            }),
+                            ..Default::default()
+                        },
+                        tags: [],
+                        handler: refuse,
+                    }])
+                    .build()
+                    .expect("a registry"),
+            ),
+        );
+        let err = answer(&refusing, &args(&["plan"]), &mut out).unwrap_err();
+        assert!(err.to_string().contains("not today"), "{err}");
+        assert!(out.is_empty(), "nothing was written");
+    }
+
+    #[derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema)]
+    struct Anything {}
+
+    impl crate::capability::benchmark::BenchmarkCases for Anything {
+        fn benchmark_cases(
+            _: &crate::capability::benchmark::CaseContext<'_>,
+        ) -> Vec<crate::capability::benchmark::NamedCase<Self>> {
+            vec![crate::capability::benchmark::NamedCase::new(
+                "default",
+                Anything {},
+            )]
+        }
+    }
+
+    fn refuse(
+        _: &Context,
+        _: Anything,
+    ) -> std::result::Result<Value, crate::capability::CapabilityError> {
+        Err(crate::capability::CapabilityError::Refused(
+            "not today".into(),
+        ))
+    }
+
+    #[test]
+    fn a_command_outside_a_repository_is_an_error() {
+        assert!(run(args(&["plan", "--repo", "/nonexistent/checkout"])).is_err());
+    }
+
+    #[test]
+    fn every_source_and_every_refusal_after_the_first_is_a_line_of_its_own() {
+        let v = json!({
+            "selected": null,
+            "reason": "r",
+            "candidates": [{
+                "issue": "I0001",
+                "refused": [
+                    {"constraint": "claimed", "holder": "p2", "detail": "names I0001"},
+                    {"constraint": "scope_held", "holder": "p3", "detail": "holds src"}
+                ]
+            }],
+            "sources": [
+                {"source": "board", "state": "read", "summary": "1 board(s)"},
+                {"source": "mesh", "state": "undeclared", "summary": "no mesh"}
+            ]
+        });
+        let text = render(&v);
+        assert!(
+            text.contains("          I0001  scope_held by p3: holds src\n"),
+            "{text}"
+        );
+        assert!(
+            text.contains("          mesh undeclared: no mesh\n"),
+            "{text}"
+        );
+        let order = render_order(&json!({
+            "sources": [
+                {"source": "board", "state": "read", "summary": "1 board(s)"},
+                {"source": "mesh", "state": "undeclared", "summary": "no mesh"}
+            ]
+        }));
+        assert!(
+            order.contains("          mesh undeclared: no mesh\n"),
+            "{order}"
+        );
+    }
 }

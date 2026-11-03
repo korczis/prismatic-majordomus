@@ -956,4 +956,76 @@ mod tests {
             ("proceed", "intent")
         );
     }
+
+    #[test]
+    fn the_fan_out_stops_once_it_is_full_and_a_path_is_reported_once() {
+        let safe: Vec<(String, bool, &str)> = (1..=7)
+            .map(|n| (format!("I{n}"), true, "implementation"))
+            .collect();
+        let refs: Vec<(&str, bool, &str)> =
+            safe.iter().map(|(i, s, p)| (i.as_str(), *s, *p)).collect();
+        let p = plan(&refs);
+        let mut candidates = vec![candidate("I1", &["src/1", "src/1"], false)];
+        for n in 2..=7 {
+            let path = format!("src/{n}");
+            candidates.push(candidate(&format!("I{n}"), &[path.as_str()], false));
+        }
+        let o = order(&p, &decision(candidates), None, AT);
+        let fanned: Vec<&str> = o.fan_out.iter().map(|w| w.issue.as_str()).collect();
+        assert_eq!(
+            fanned,
+            ["I2", "I3", "I4", "I5"],
+            "no more than {MAX_FAN_OUT}"
+        );
+        assert_eq!(
+            o.report.scope,
+            ["src/1", "src/2", "src/3", "src/4", "src/5"],
+            "a path the order names twice is reported once"
+        );
+    }
+
+    #[test]
+    fn an_issue_serving_two_unmet_criteria_is_named_serving_once() {
+        let v = view(
+            IntentStage::Executing,
+            3,
+            &[("a", &["I1", "I2"]), ("b", &["I1"])],
+        );
+        let s = summary(&v);
+        assert_eq!(s.unmet, ["a", "b"]);
+        assert_eq!(s.serving, ["I1", "I2"]);
+    }
+
+    #[test]
+    fn a_realization_without_the_intent_or_in_another_shape_is_refused() {
+        use super::super::tests::{can, canned_context};
+        let repo = crate::synthetic::SyntheticRepository::small().expect("a repository");
+        let ctx = canned_context(&repo);
+        let input = ProceedStepInput {
+            intent: "probe".into(),
+            at: Some("2026-10-23T10:00:00Z".into()),
+            local: true,
+            ..ProceedStepInput::default()
+        };
+        can(
+            "intent_realization.work",
+            Some(json!({ "intents": [], "work": [], "orphans": 0, "findings": [] })),
+        );
+        match proceed_step(&ctx, input.clone()) {
+            Err(CapabilityError::NotFound(m)) => {
+                assert!(m.contains("answered no intent 'probe'"), "{m}")
+            }
+            other => panic!("{other:?}"),
+        }
+        can(
+            "intent_realization.work",
+            Some(json!({ "intents": "none" })),
+        );
+        match proceed_step(&ctx, input) {
+            Err(CapabilityError::Internal(m)) => {
+                assert!(m.starts_with("intent_realization.work: "), "{m}")
+            }
+            other => panic!("{other:?}"),
+        }
+    }
 }
