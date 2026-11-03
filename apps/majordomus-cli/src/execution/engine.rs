@@ -1060,9 +1060,83 @@ mod tests {
             (CapabilityError::NotFound("m".into()), "not_found"),
             (CapabilityError::Refused("m".into()), "refused"),
             (CapabilityError::Internal("m".into()), "internal"),
+            (CapabilityError::Conflict("m".into()), "conflict"),
         ] {
             let e = failure(&id, &error);
             assert_eq!((e.code.as_str(), e.message.as_str()), (code, "m"));
         }
+    }
+
+    /// An execution held by the store of `ctx`'s engine and handed to no worker: what a
+    /// worker finds when it picks one up, in whatever state the test then moves it to.
+    fn held_by_store(ctx: &Context) -> ExecutionId {
+        let id = ExecutionId::fresh();
+        ctx.executions.store().create(
+            id.clone(),
+            "executions.demonstrate",
+            "Demo",
+            serde_json::json!({}),
+            true,
+            Actor::of(ActorKind::Internal),
+            repository_of(ctx),
+        );
+        id
+    }
+
+    #[test]
+    fn an_execution_stopped_while_it_waited_claims_nothing() {
+        let (_repo, ctx) = context(true);
+        let store = ctx.executions.store();
+        let id = held_by_store(&ctx);
+        store.request_cancel(&id, "test");
+        assert_eq!(store.get(&id).unwrap().state, ExecutionState::Cancelled);
+        assert!(claim_issue(store, &ctx, &id, "Demo", "I4004").is_none());
+        assert_eq!(live_claims(&ctx, "I4004"), 0, "nothing was claimed");
+        assert!(!types(&ctx, &id).contains(&"execution.issue_claim"));
+    }
+
+    #[test]
+    fn a_claim_taken_for_an_execution_that_moved_on_is_given_back_at_once() {
+        let (_repo, ctx) = context(true);
+        let store = ctx.executions.store();
+        let id = held_by_store(&ctx);
+        // running already: `claimed` is a move the state machine refuses from here
+        store.publish(&id, EventPayload::Started);
+        assert!(claim_issue(store, &ctx, &id, "Demo", "I4004").is_none());
+        let claim = store.get(&id).unwrap().issue_claim.expect("said");
+        assert_eq!(claim.standing, ClaimStanding::Released);
+        assert_eq!(live_claims(&ctx, "I4004"), 0, "given back");
+        assert!(!types(&ctx, &id).contains(&"execution.claimed"));
+
+        // and without a mesh, the unclaimed run that cannot be marked claimed does not run
+        let (_repo, bare) = context(false);
+        let store = bare.executions.store();
+        let id = held_by_store(&bare);
+        store.publish(&id, EventPayload::Started);
+        assert!(claim_issue(store, &bare, &id, "Demo", "I4004").is_none());
+        assert_eq!(
+            store.get(&id).unwrap().issue_claim.unwrap().standing,
+            ClaimStanding::Unclaimed
+        );
+    }
+
+    #[test]
+    fn a_claim_the_mesh_cannot_take_fails_the_execution_as_unavailable() {
+        let (_repo, ctx) = context(true);
+        let store = ctx.executions.store();
+        let id = held_by_store(&ctx);
+        // a title past the bound the journal admits as an intent: the claim is not written
+        let title = "t".repeat(600);
+        assert!(claim_issue(store, &ctx, &id, &title, "I4004").is_none());
+        let failed = store.get(&id).unwrap();
+        assert_eq!(failed.state, ExecutionState::Failed);
+        let error = failed.error.expect("why");
+        assert_eq!(error.code, "unavailable");
+        assert!(
+            error.suggestion.as_deref().unwrap().contains("mesh doctor"),
+            "{error:?}"
+        );
+        assert_eq!(failed.issue_claim.unwrap().standing, ClaimStanding::Refused);
+        assert_eq!(live_claims(&ctx, "I4004"), 0);
     }
 }

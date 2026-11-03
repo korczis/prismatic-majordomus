@@ -537,6 +537,63 @@ mod tests {
     }
 
     #[test]
+    fn a_claim_the_mesh_refuses_for_another_reason_is_refused_without_a_conflict() {
+        let c = crate::mesh::testing::cooperation();
+        // an intent past the bound the journal admits is refused when it is written
+        let intent = "x".repeat(600);
+        match take_with(
+            Arc::clone(&c),
+            &ExecutionId::fresh(),
+            &intent,
+            "I4004",
+            vec!["issue/I4004".into()],
+        ) {
+            Taken::Refused {
+                claim,
+                conflict,
+                message,
+            } => {
+                assert!(!conflict, "nobody holds the scope");
+                assert_eq!(claim.standing, ClaimStanding::Refused);
+                assert!(claim.detail.is_some_and(|d| !d.is_empty()));
+                assert!(
+                    message.starts_with("the mesh claim of I4004 could not be taken"),
+                    "{message}"
+                );
+                assert!(message.ends_with("nothing ran"), "{message}");
+            }
+            other => panic!("{other:?}"),
+        }
+        assert!(c.state().claims.is_empty(), "nothing was claimed");
+    }
+
+    #[test]
+    fn a_release_the_mesh_refuses_is_said_in_the_settled_claim() {
+        let c = crate::mesh::testing::cooperation();
+        // a key of another runtime and a session this runtime never opened: neither goes back
+        let held = HeldClaim {
+            cooperation: Arc::clone(&c),
+            claim: IssueClaim {
+                standing: ClaimStanding::Held,
+                key: Some("somebody-0000000000000002/c-abc".into()),
+                session: Some("never-opened".into()),
+                ..IssueClaim::wanted("I1")
+            },
+            armed: true,
+        };
+        let shown = format!("{held:?}");
+        assert!(
+            shown.contains("HeldClaim") && shown.contains("armed: true"),
+            "{shown}"
+        );
+        let settled = held.settle(Some(ExecutionState::Failed));
+        assert_eq!(settled.standing, ClaimStanding::Released);
+        let detail = settled.detail.expect("what went wrong is said");
+        assert!(detail.contains("the release was refused"), "{detail}");
+        assert!(detail.contains("the session did not close"), "{detail}");
+    }
+
+    #[test]
     fn without_a_mesh_admission_says_so_and_names_the_scope() {
         let repo = crate::synthetic::SyntheticRepository::small().unwrap();
         let ctx = repo.context().unwrap();

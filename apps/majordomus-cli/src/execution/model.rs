@@ -1017,6 +1017,27 @@ mod tests {
     }
 
     #[test]
+    fn a_claim_standing_is_the_word_serde_writes_and_a_key_is_what_was_sent() {
+        for standing in [
+            ClaimStanding::Wanted,
+            ClaimStanding::Held,
+            ClaimStanding::Released,
+            ClaimStanding::Kept,
+            ClaimStanding::Unclaimed,
+            ClaimStanding::Refused,
+        ] {
+            assert_eq!(
+                serde_json::to_value(standing).unwrap(),
+                standing.as_str(),
+                "{standing:?}"
+            );
+        }
+        let key = IdempotencyKey::parse("retry.7").unwrap();
+        assert_eq!(key.as_str(), "retry.7");
+        assert_eq!(key.as_str(), key.to_string());
+    }
+
+    #[test]
     fn a_compact_timestamp_is_the_layers_own_shape() {
         assert_eq!(compact_utc(0), "19700101T000000Z");
         assert_eq!(compact_utc(1_788_000_000).len(), 16);

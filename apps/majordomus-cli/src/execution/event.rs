@@ -545,8 +545,13 @@ mod tests {
         );
         v["schema_version"] = "".into();
         assert!(
-            serde_json::from_value::<ExecutionEvent>(v).is_err(),
+            serde_json::from_value::<ExecutionEvent>(v.clone()).is_err(),
             "not a version"
+        );
+        v["schema_version"] = 1.into();
+        assert!(
+            serde_json::from_value::<ExecutionEvent>(v).is_err(),
+            "a version is a string, not a number"
         );
     }
 
