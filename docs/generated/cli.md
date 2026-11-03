@@ -7352,10 +7352,10 @@ majordomus proceed step [OPTIONS]
 
 Examples:
 
-- **One step as one work order, when nothing is left to do** — The same answer `GET /api/v1/proceed/step` and the MCP tool `majordomus_proceed_step` return, and what `/proceed` runs: `do`, the capability to run next and its input; `fan_out`, what may run beside it; `report`, what to announce; `next_due_at`, when to step again; and a `key` that the same state answers again. This fixture declares no plan, so nothing is unfinished: the order is `done`, runs nothing, schedules nothing, and the command exits 0. The moment is given, so the answer is the same on every run.
+- **One step as one work order, when nothing is left to do** — The same answer `GET /api/v1/proceed/step` and the MCP tool `majordomus_proceed_step` return, and what `/proceed` runs: `do`, the capability to run next and its input; `fan_out`, what may run beside it; `report`, what to announce; `next_due_at`, when to step again; and a `key` that the same state answers again. This fixture declares no plan, so nothing is unfinished: the order is `done`, runs nothing, schedules nothing, and the command exits 0; with nothing scheduled, the moment changes nothing it decides.
 
   ```console
-  $ majordomus proceed step --at 2026-10-23T10:00:00Z --format json
+  $ majordomus proceed step --format json
   ```
 
   Verified: exits 0.

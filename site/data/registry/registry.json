@@ -6,7 +6,7 @@
     "version": "1.0.0-alpha.10"
   },
   "registry": {
-    "fingerprint": "fc53dd8d53c374df9b93f4ed6fca817a84cb25d6840531a37327fc0a172a5a13",
+    "fingerprint": "3f88a7d8be3dd7d169e2db9e0727f5b158d9e228596b15db224e2ab065f1d8f5",
     "summary": {
       "total": 3843,
       "builtin": 230,
@@ -97340,7 +97340,7 @@
     ]
   },
   "index": {
-    "fingerprint": "affe9b02cf0cfd87f5de4c673559cad6e9e35450aa9c0eb1a37d598ff344ebdf",
+    "fingerprint": "c9f4eaf126c08cf036722981e691977198da0a5156c5d3f4600484b199f03e41",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -132993,7 +132993,7 @@
         "identity": "test/cases/3367_a_session_is_told_what_to_proceed_with_and_why.sh",
         "path": "test/cases/3367_a_session_is_told_what_to_proceed_with_and_why.sh",
         "source_class": "case",
-        "bytes": 10197
+        "bytes": 10227
       },
       {
         "uri": "majordomus://test/test/cases/3369_the_proceed_skill_names_only_the_command.sh",
@@ -133201,7 +133201,7 @@
         "identity": "test/cases/3440_an_id_is_taken_by_one_atomic_claim.sh",
         "path": "test/cases/3440_an_id_is_taken_by_one_atomic_claim.sh",
         "source_class": "case",
-        "bytes": 7128
+        "bytes": 7158
       },
       {
         "uri": "majordomus://test/test/cases/3441_the_choice_ranks_by_what_it_unblocks.sh",
@@ -133937,7 +133937,7 @@
         "identity": "test/cases/4003_devtask_implement_claims_creates_and_starts_once.sh",
         "path": "test/cases/4003_devtask_implement_claims_creates_and_starts_once.sh",
         "source_class": "case",
-        "bytes": 10853
+        "bytes": 10883
       },
       {
         "uri": "majordomus://test/test/cases/4004_an_execution_holds_its_issue_claim.sh",
@@ -133945,7 +133945,7 @@
         "identity": "test/cases/4004_an_execution_holds_its_issue_claim.sh",
         "path": "test/cases/4004_an_execution_holds_its_issue_claim.sh",
         "source_class": "case",
-        "bytes": 8690
+        "bytes": 8720
       },
       {
         "uri": "majordomus://test/test/cases/4005_proceed_step_is_one_idempotent_work_order.sh",
@@ -170525,16 +170525,14 @@
               {
                 "id": "proceed-step-json",
                 "title": "One step as one work order, when nothing is left to do",
-                "description": "The same answer `GET /api/v1/proceed/step` and the MCP tool `majordomus_proceed_step` return, and what `/proceed` runs: `do`, the capability to run next and its input; `fan_out`, what may run beside it; `report`, what to announce; `next_due_at`, when to step again; and a `key` that the same state answers again. This fixture declares no plan, so nothing is unfinished: the order is `done`, runs nothing, schedules nothing, and the command exits 0. The moment is given, so the answer is the same on every run.",
+                "description": "The same answer `GET /api/v1/proceed/step` and the MCP tool `majordomus_proceed_step` return, and what `/proceed` runs: `do`, the capability to run next and its input; `fan_out`, what may run beside it; `report`, what to announce; `next_due_at`, when to step again; and a `key` that the same state answers again. This fixture declares no plan, so nothing is unfinished: the order is `done`, runs nothing, schedules nothing, and the command exits 0; with nothing scheduled, the moment changes nothing it decides.",
                 "argv": [
                   "proceed",
                   "step",
-                  "--at",
-                  "2026-10-23T10:00:00Z",
                   "--format",
                   "json"
                 ],
-                "command": "majordomus proceed step --at 2026-10-23T10:00:00Z --format json",
+                "command": "majordomus proceed step --format json",
                 "setup": [],
                 "expectation": "exits 0"
               }
