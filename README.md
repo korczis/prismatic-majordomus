@@ -15,6 +15,21 @@
 
 **Your AI agents say the work is done. Majordomus makes them prove it.**
 
+<p align="center">
+  <a href="https://majordomus.dev/challenge/"><img src="site/static/images/readme/contract-loop.svg" alt="An AI worker runs majordomus finish and says the work is done. Majordomus checks the scope, the state and the verification: the test exits 1, so the claim is refused and nothing is written; after the fix every line holds and the claim is accepted with its evidence." width="880"></a>
+</p>
+
+<p align="center">
+  <a href="#see-it">See it</a> ·
+  <a href="#quick-start">Quick start</a> ·
+  <a href="#per-task">Per task</a> ·
+  <a href="#mental-model">Mental model</a> ·
+  <a href="#mesh-and-models">Mesh</a> ·
+  <a href="#from-a-pull-request-to-master">From a pull request to master</a> ·
+  <a href="#interfaces">Interfaces</a> ·
+  <a href="#roadmap">Roadmap</a>
+</p>
+
 [Website](https://majordomus.dev) ·
 **[The challenge: watch it refuse an agent](https://majordomus.dev/challenge/)** ·
 [CLI reference](docs/CLI.md) ·
@@ -624,6 +639,10 @@ flowchart TD
 The whole picture, with discovery, the object index and how drift is refused, is in
 [`docs/HOW_IT_WORKS.md`](docs/HOW_IT_WORKS.md).
 
+<details>
+<summary><b>How the interfaces are built</b>: generation, the UI, the Cockpit, executions, the
+shared server, web surfaces, clients, peers, use cases and scope</summary>
+
 Every generated file in the repository comes out of the same executable: `majordomus
 generate` writes `docs/generated/`, `share/allow/`, the provider bootstraps `AGENTS.md`
 and `CLAUDE.md` (from the policy and the templates), and the site's registry and product
@@ -788,6 +807,8 @@ shared server's lifecycle and the client configurations:
 [`docs/MCP.md`](docs/MCP.md). The kinds and their schemas are read at run time from
 [`share/kinds.yaml`](share/kinds.yaml) and [`share/schemas/`](share/schemas/), and the shell
 tool's allow-lists under `share/allow/` are generated from those schemas.
+
+</details>
 
 ## Contributing
 

@@ -1,0 +1,89 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 260" width="880" height="260" role="img" aria-labelledby="t d">
+  <title id="t">An AI worker's claim, held to its contract</title>
+  <desc id="d">An AI worker says the work is done. Majordomus checks the scope, the state and the
+  verification command. The first time the verification fails and the claim is refused; after the
+  fix every line holds, the claim is accepted and the evidence is recorded.</desc>
+  <!-- Colours are the Tailwind palette steps share/design/tokens.yaml declares (gray, blue,
+       emerald, red), written as sRGB because an SVG an <img> loads cannot read a custom property. -->
+  <style>
+    .ink { fill: #111827 } .muted { fill: #4b5563 } .line { stroke: #d1d5db }
+    .card { fill: #ffffff; stroke: #e5e7eb } .accent { fill: #2563eb } .accent-s { stroke: #2563eb }
+    .ok { fill: #059669 } .bad { fill: #dc2626 } .ok-bg { fill: #ecfdf5 } .bad-bg { fill: #fef2f2 }
+    .mono { font: 500 13px ui-monospace, SFMono-Regular, Menlo, monospace }
+    .label { font: 600 15px system-ui, -apple-system, "Segoe UI", Inter, sans-serif }
+    .small { font: 400 12px system-ui, -apple-system, "Segoe UI", Inter, sans-serif }
+    @media (prefers-color-scheme: dark) {
+      .ink { fill: #f9fafb } .muted { fill: #9ca3af } .line { stroke: #374151 }
+      .card { fill: #1f2937; stroke: #374151 } .accent { fill: #60a5fa } .accent-s { stroke: #60a5fa }
+      .ok { fill: #34d399 } .bad { fill: #f87171 } .ok-bg { fill: #064e3b } .bad-bg { fill: #450a0a }
+    }
+    /* one 10 s cycle: claim, checks, refused (0-50 %); fix, claim, checks, accepted (50-100 %) */
+    .token { animation: travel 10s ease-in-out infinite }
+    @keyframes travel {
+      0%, 4% { transform: translateX(0); opacity: 0 } 6% { opacity: 1 }
+      16%, 46% { transform: translateX(64px); opacity: 1 } 48%, 54% { transform: translateX(64px); opacity: 0 }
+      55% { transform: translateX(0); opacity: 0 } 57% { opacity: 1 }
+      67%, 96% { transform: translateX(64px); opacity: 1 } 100% { transform: translateX(64px); opacity: 0 }
+    }
+    .c1, .c2, .c3, .c3x, .refused, .accepted, .rec { opacity: 0 }
+    .c1 { animation: c1 10s infinite } .c2 { animation: c2 10s infinite }
+    .c3x { animation: c3x 10s infinite } .c3 { animation: c3 10s infinite }
+    .refused { animation: refused 10s infinite } .accepted { animation: accepted 10s infinite }
+    .rec { animation: rec 10s infinite }
+    @keyframes c1 { 0%, 19% { opacity: 0 } 21%, 48% { opacity: 1 } 50%, 69% { opacity: 0 } 71%, 98% { opacity: 1 } 100% { opacity: 0 } }
+    @keyframes c2 { 0%, 25% { opacity: 0 } 27%, 48% { opacity: 1 } 50%, 75% { opacity: 0 } 77%, 98% { opacity: 1 } 100% { opacity: 0 } }
+    @keyframes c3x { 0%, 31% { opacity: 0 } 33%, 48% { opacity: 1 } 50%, 100% { opacity: 0 } }
+    @keyframes c3 { 0%, 81% { opacity: 0 } 83%, 98% { opacity: 1 } 100% { opacity: 0 } }
+    @keyframes refused { 0%, 35% { opacity: 0 } 37%, 48% { opacity: 1 } 50%, 100% { opacity: 0 } }
+    @keyframes accepted { 0%, 85% { opacity: 0 } 87%, 98% { opacity: 1 } 100% { opacity: 0 } }
+    @keyframes rec { 0%, 88% { opacity: 0 } 90%, 98% { opacity: 1 } 100% { opacity: 0 } }
+    @media (prefers-reduced-motion: reduce) {
+      .token, .c1, .c2, .c3x, .c3, .refused, .accepted, .rec { animation: none }
+      .token { transform: translateX(64px); opacity: 1 }
+      .c1, .c2, .c3, .accepted, .rec { opacity: 1 }
+    }
+  </style>
+
+  <!-- the worker -->
+  <rect class="card" x="20" y="70" width="190" height="120" rx="14" stroke-width="1.5"/>
+  <text class="label ink" x="40" y="104">AI worker</text>
+  <text class="mono muted" x="40" y="132">$ majordomus finish</text>
+  <text class="mono muted" x="40" y="152">  --outcome completed</text>
+  <text class="small muted" x="40" y="176">"the work is done"</text>
+
+  <!-- the claim travelling to the contract -->
+  <line class="line" x1="212" y1="128" x2="294" y2="128" stroke-width="2" stroke-dasharray="4 5"/>
+  <line class="line" x1="466" y1="128" x2="476" y2="128" stroke-width="2" stroke-dasharray="4 5"/>
+  <g class="token"><circle class="accent" cx="222" cy="128" r="7"/></g>
+
+  <!-- Majordomus: the prism of the logo mark -->
+  <rect class="card" x="296" y="40" width="168" height="190" rx="14" stroke-width="1.5"/>
+  <g transform="translate(320 66) scale(1.6)" fill="none" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" class="accent-s">
+    <path d="M4 32h16"/>
+    <path d="M32 12 46 52H18Z"/>
+    <path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/>
+  </g>
+  <g transform="translate(320 66) scale(1.6)" class="accent"><circle cx="60" cy="16" r="2.6"/><circle cx="60" cy="32" r="2.6"/><circle cx="60" cy="48" r="2.6"/></g>
+  <text class="label ink" x="380" y="190" text-anchor="middle">Majordomus</text>
+  <text class="small muted" x="380" y="210" text-anchor="middle">git and the contract decide</text>
+
+  <!-- the contract -->
+  <rect class="card" x="478" y="40" width="382" height="190" rx="14" stroke-width="1.5"/>
+  <text class="label ink" x="500" y="72">finish contract</text>
+  <text class="mono muted" x="500" y="104">scope</text>
+  <text class="mono muted" x="500" y="132">state</text>
+  <text class="mono muted" x="500" y="160">verification</text>
+  <g class="c1"><text class="mono ok" x="626" y="104">OK  1 file, inside the scope</text></g>
+  <g class="c2"><text class="mono ok" x="626" y="132">OK  exact, at the head</text></g>
+  <g class="c3x"><text class="mono bad" x="626" y="160">FAIL  test exits 1</text></g>
+  <g class="c3"><text class="mono ok" x="626" y="160">OK  test exits 0</text></g>
+  <g class="refused">
+    <rect class="bad-bg" x="496" y="178" width="346" height="36" rx="8"/>
+    <text class="mono bad" x="512" y="201">finish: refused, 1 unmet - nothing written</text>
+  </g>
+  <g class="accepted">
+    <rect class="ok-bg" x="496" y="178" width="346" height="36" rx="8"/>
+    <text class="mono ok" x="512" y="201">finish: accepted - evidence recorded</text>
+  </g>
+  <g class="rec"><circle class="ok" cx="842" cy="58" r="6"/></g>
+</svg>
