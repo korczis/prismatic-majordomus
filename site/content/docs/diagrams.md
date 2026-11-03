@@ -175,11 +175,58 @@ reader and a printout get.
 
 
 A series takes the colour its header is drawn in when the header carries a status badge, so
-a state is drawn in the colour the design declares for it; any other series takes the next
-of the design's series colours. ECharts is vendored at build from the pinned npm package and
-is fetched the first time a chart nears the viewport.
+a state is drawn in the colour the design declares for it (the state's middle step, between
+the badge's ink and its line, so a fill never reads as black); any other series takes the
+next of the design's series colours, in declared order, and keeps it when another series is
+hidden. Every colour, length and duration is a design token read back from the page, and a
+derived one (a receding gridline, the fade under a single line) is a `color-mix` of tokens
+the browser resolves. ECharts is vendored at build from the pinned npm package, is fetched
+the first time a chart nears the viewport, and draws in SVG, so text and lines stay sharp
+at any pixel density, page zoom and in print.
 
-Two charts are drawn this way today:
+At most six series take the design's series colours: the palette's seventh and eighth fail
+the contrast and colour-blind checks against the page in one theme or the other, so a
+seventh such series stays in the table and the figure says so beneath the chart. A status
+series is not counted against the six: it is drawn in its state's colour, two states may be
+drawn in near colours, and its name in the legend and the card tells them apart. A chart has
+one value axis, always.
+
+### Reading a chart
+
+The chart reads the same with a pointer, a finger and the keyboard.
+
+<div class="overflow-x-auto" tabindex="0">
+
+<div class="overflow-x-auto" tabindex="0">
+
+| Control | What it does |
+|---|---|
+| the legend above the chart | one button per series, with its swatch, its name and its figure (a stack's total, a line's latest value); a press shows or hides the series, and a series taken out keeps its button, hollow and struck through. Pointing at or focusing a button steps every other series back |
+| pointing at a category | its whole band lights, the same wherever in the band the pointer is, and a card lists every series' value with its unit; a band whose row is a link opens that row's page on a click |
+| Tab | the drawing takes the focus once it is drawn (`role="application"`, described by a note of its keys); leaving it lets go of the cursor |
+| the left and right arrows, or up and down when horizontal | move a cursor through the categories: the band lights, its card opens and a polite live readout says it (`M003: done 12 issues, active 3 issues`) |
+| Home and End | the first and the last category |
+| Enter | open the cursor's row, when it is a link |
+| `Escape` | let go of the cursor and close the card, whichever opened it |
+| Ctrl or Cmd with the wheel; a pinch; `+`, `-` and `0` | zoom a line of more than 30 categories, and fit it whole again; `Reset zoom` appears beside the legend once it is zoomed. The plain wheel always scrolls the page |
+
+</div>
+
+
+</div>
+
+
+Hiding every series leaves the frame, and the readout the arrows write to, saying `Nothing
+matches` rather than empty axes. A few lines are named where they end; when a named line's
+first value is not recorded the chart is drawn at once rather than swept in, because the
+name would otherwise ride a line that has no start. A reader who asked for stillness
+(`prefers-reduced-motion`) gets no animation at all; a theme
+change or a new width restyles the chart in place and never replays its entrance. A reader
+who asked for more contrast, or a forced-colours mode, gets the series patterned as well as
+coloured. A touch screen gets no card: the table beneath is the reading there, and a tap on
+a band opens its row.
+
+Four charts are drawn this way today:
 
 <div class="overflow-x-auto" tabindex="0">
 
@@ -187,6 +234,8 @@ Two charts are drawn this way today:
 |---|---|---|---|
 | `#chart-milestones` | `/plan/` | issues of each milestone by derived state | `plan.json` |
 | `#chart-context-history` | `/economics/` | the context reduction ratio at each recorded run | `economics.json` |
+| `#chart-trends-coverage` | `/trends/` | the line, function and region coverage at each run of master | `trends.json` |
+| `#chart-trends-cost` | `/trends/` | each run's wall time and the minutes its jobs queued | `trends.json` |
 
 </div>
 
@@ -206,8 +255,9 @@ Two charts are drawn this way today:
 </div>
 
 
-The charts have no behaviour spec yet: they declare no control, so the probe has nothing to
-claim, and what a chart read from its table is asserted by no gate. That is issue I2654.
+The charts have no behaviour spec yet: their legend, keys and readout are claimed above and
+held by no probe, and what a chart read from its table (`window.mjCharts.state(id)`) is
+asserted by no gate. That is issue I2654.
 
 ## Limits
 

@@ -8,7 +8,7 @@
 # Needs a browser scripts/lib/browser.mjs can launch (the installed Chrome, which CI's runners carry, or
 # Playwright's Chromium). Without one it skips locally and fails under CI=true.
 . "$ROOT/test/lib.sh"
-command -v node >/dev/null 2>&1 || skip "no node"
+mj_runs node || skip "$(mj_runs_why node)"
 [ -d "$ROOT/node_modules/playwright" ] && [ -d "$ROOT/node_modules/axe-core" ] || {
   skip "playwright and axe-core are not installed (npm ci)"; }
 

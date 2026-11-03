@@ -22,7 +22,7 @@
 [ -f "$ROOT/apps/majordomus-cli/Cargo.toml" ] || { echo "    apps/majordomus-cli/Cargo.toml is missing"; exit 1; }
 RB="$(rust_bin)" || rust_bin_exit $?
 [ -x "$RB" ] || { echo "    the build produced no executable at $RB"; exit 1; }
-command -v python3 >/dev/null 2>&1 || skip "no python3 to stub the store"
+mj_runs python3 || skip "$(mj_runs_why python3)"
 command -v nc >/dev/null 2>&1 || skip "no nc to see whether a server listens"
 MAJORDOMUS_SHARE="$ROOT/share"; export MAJORDOMUS_SHARE
 

@@ -1,0 +1,31 @@
+id: I4528
+milestone: ci-critical-path
+title: Case 3002's disk-floor scenario proves the function, not the runner's free disk
+slug: the-disk-floor-case-is-independent-of-the-runners-disk
+priority: p0
+profile: implementation
+parallel_safe: true
+serves: []
+objective: "The disk-floor scenario of test/cases/3002_a_build_never_waits_in_silence.sh sets MAJORDOMUS_PRIVATE_BUILD_ABOVE_MB=0, as every other scenario does through run(), so it reaches the floor's refusal (exit 12) on any machine, whatever its free disk."
+why: "Master's validate on aca6f182b41 (run 41267963565, the landing of train 13c) failed suite-shard (4) with 'FAIL 3002_a_build_never_waits_in_silence 3212s'. The scenario 'the disk floor is asked first' did not set MAJORDOMUS_PRIVATE_BUILD_ABOVE_MB, so on a machine with less free disk than the high-water mark (51200 MB by default) mj_cargo_bounded did not move to the private build the floor guards; it waited on the shared lock again ('N MB free is under 51200MB ... waiting on the shared lock again (19s of 1800s)'), up to 1800 s, against a stand-in cargo that holds the lock forever. A case written to finish in seconds took 53 minutes and timed out; it passed on 54c317f11ad only on a runner with more free disk. Reproduced locally at 47175 MB free: the case was terminated at 300 s and 600 s."
+current_state: "Measured at aca6f182b41: the scenario's env omits MAJORDOMUS_PRIVATE_BUILD_ABOVE_MB; run() sets it to 0 for every other scenario."
+desired_state: "The scenario sets MAJORDOMUS_PRIVATE_BUILD_ABOVE_MB=0 and passes in seconds below the high-water mark; nothing in lib/rust_bin.sh changes."
+scope:
+  - ".ai/repo/project/issues/I4528.yaml"
+  - "test/cases/3002_a_build_never_waits_in_silence.sh"
+  - "site/content/plan/I4528.md"
+non_scope:
+  - "The high-water mark's own behaviour, which this scenario does not test"
+depends_on: []
+acceptance_criteria:
+  - "Case 3002 passes in under a minute on a machine with less than 51200 MB free (measured: 17 s at 47 GB free); without the line it times out on the same machine"
+  - "The next master validate passes suite-shard (4)"
+validation:
+  - "bash test/run.sh 3002_a_build_never_waits_in_silence"
+evidence_required:
+  - suite
+risk: "None for the product: a test-only change that makes one scenario set what the others already set."
+created_at: 2026-11-01
+updated_at: 2026-11-01T08:20:49Z
+started_at: 2026-11-01T08:20:49Z
+started_event: sha256:f80a2305ea807a1a4aec5caf5e803be3cd3bd316743146e1df5bceb255d27c83

@@ -914,8 +914,14 @@ PROJECTED_AT="$(
 )"
 LANDED="$(mktemp "${TMPDIR:-/tmp}/mj.landed.XXXXXX")"
 trap 'rm -f "$REMOTE_MS" "$REMOTE_IS" "$LANDED"; apply_unlock; mj_cleanup' EXIT
+# The trunk is origin/HEAD where a clone set it; actions/checkout never does, so the default
+# branch's remote ref comes next. HEAD (a fixture with no remote) is the last resort: on a pull
+# request it is the branch itself, and a record the branch adds would read as landed.
 landed_ref="$(git -C "$MJ_ROOT" symbolic-ref -q "refs/remotes/$GH_REMOTE/HEAD" 2>/dev/null)" || landed_ref=""
-[ -n "$landed_ref" ] || landed_ref=HEAD
+if [ -z "$landed_ref" ]; then
+  landed_ref="refs/remotes/$GH_REMOTE/$(mj_pj_default_branch)"
+  git -C "$MJ_ROOT" rev-parse -q --verify "$landed_ref^{commit}" >/dev/null 2>&1 || landed_ref=HEAD
+fi
 if [ -n "$PROJECTED_AT" ]; then
   TZ=UTC0 git -C "$MJ_ROOT" log --first-parent --diff-merges=first-parent --diff-filter=A --name-only \
     --format='@%cd' --date=format-local:'%Y-%m-%dT%H:%M:%SZ' "$landed_ref" -- \

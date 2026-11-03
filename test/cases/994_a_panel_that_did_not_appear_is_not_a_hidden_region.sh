@@ -15,7 +15,7 @@
 #   3. a panel the tab does not select: the same finding, saying the state is still hidden;
 #   4. a region nothing reveals keeps the finding it always had, with what hides it.
 . "$ROOT/test/lib.sh"
-command -v node >/dev/null 2>&1 || skip "no node"
+mj_runs node || skip "$(mj_runs_why node)"
 [ -d "$ROOT/node_modules/playwright" ] || { [ "${CI:-}" = true ] && { echo "    playwright absent under CI"; exit 1; }; skip "playwright absent (npm ci)"; }
 ALPINE="$ROOT/node_modules/alpinejs/dist/cdn.min.js"
 [ -f "$ALPINE" ] || { [ "${CI:-}" = true ] && { echo "    alpinejs absent under CI"; exit 1; }; skip "alpinejs absent (npm ci)"; }

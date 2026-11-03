@@ -3,7 +3,7 @@
 # the constructs that break narrow viewports; it is static, so it catches the causes, not
 # the symptom. Rendered-width checks need a browser and are out of scope for a shell test.
 . "$ROOT/test/lib.sh"
-command -v zola >/dev/null || skip "zola absent"
+mj_zola_ready "$ROOT" || skip "$(mj_zola_why "$ROOT")"
 command -v jq >/dev/null || skip "jq absent"
 # `--no-css` skips the Node steps, which is what this case wants: it lints markup and never
 # looks at a stylesheet. But the Zola build itself resolves `get_url(path="app.css")` in

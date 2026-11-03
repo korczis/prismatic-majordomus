@@ -31,8 +31,8 @@
 #      the template stops the build on an issue the plan does not hold or a document the docs
 #      dataset does not route.
 . "$ROOT/test/lib.sh"
-command -v zola >/dev/null || skip "zola absent"
-command -v python3 >/dev/null || skip "python3 absent"
+mj_zola_ready "$ROOT" || skip "$(mj_zola_why "$ROOT")"
+mj_runs python3 || skip "$(mj_runs_why python3)"
 command -v jq >/dev/null || skip "jq absent"
 
 S="$T/site-copy"

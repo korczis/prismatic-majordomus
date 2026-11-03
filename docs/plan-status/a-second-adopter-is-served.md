@@ -9,7 +9,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 
 | milestone | status | done of required | ready | blocked | active | verify | cancelled | outcome |
 |---|---|---|---|---|---|---|---|---|
-| [a-second-adopter-is-served](https://majordomus.dev/plan/a-second-adopter-is-served/) | ACTIVE | 6/34 | 26 | 2 | 0 | 0 | 0 | Each finding is fixed generically, with no test of whether the repository is this one: by a declaration, a derivation or a default that an adopter can state. Each fix carries a case that fails without it, its derived files regenerated and its page of the documentation corrected. |
+| [a-second-adopter-is-served](https://majordomus.dev/plan/a-second-adopter-is-served/) | ACTIVE | 9/34 | 23 | 2 | 0 | 0 | 0 | Each finding is fixed generically, with no test of whether the repository is this one: by a declaration, a derivation or a default that an adopter can state. Each fix carries a case that fails without it, its derived files regenerated and its page of the documentation corrected. |
 
 ## Issues
 
@@ -20,14 +20,14 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | [I2987](https://majordomus.dev/plan/i2987/) | DONE | 0 | — | server.status and peers.list ask every checkout at once, a bounded number at a time |
 | [I2993](https://majordomus.dev/plan/i2993/) | DONE | 0 | — | doctor counts the work no remote holds in one walk, whatever the number of branches |
 | [I2995](https://majordomus.dev/plan/i2995/) | DONE | 0 | — | doctor does no work whose answer cannot change a finding: the roadmap lookups and the board's wide status |
-| [I4251](https://majordomus.dev/plan/i4251/) | READY | 0 | — | capture install writes no Markdown link that leaves the adopting repository |
+| [I4251](https://majordomus.dev/plan/i4251/) | DONE | 0 | — | capture install writes no Markdown link that leaves the adopting repository |
 | [I4252](https://majordomus.dev/plan/i4252/) | READY | 0 | — | init seeds the scope of a Python, Node or Go repository, not only Elixir and Rust |
-| [I4253](https://majordomus.dev/plan/i4253/) | READY | 0 | — | The remedy doctor names for an orphan skill is a command the shell runs |
+| [I4253](https://majordomus.dev/plan/i4253/) | DONE | 0 | — | The remedy doctor names for an orphan skill is a command the shell runs |
 | [I4254](https://majordomus.dev/plan/i4254/) | READY | 0 | — | An adopter projects its plan to GitHub with the installed tool, not a clone of its source |
 | [I4255](https://majordomus.dev/plan/i4255/) | READY | 0 | — | A project rule can be enforced by a command the repository names |
 | [I4256](https://majordomus.dev/plan/i4256/) | READY | 0 | — | A skill is proved by the adopter's own tests, and its findings name nothing of the tool's tree |
 | [I4257](https://majordomus.dev/plan/i4257/) | READY | 0 | — | init projects into an existing CLAUDE.md or AGENTS.md as a region |
-| [I4258](https://majordomus.dev/plan/i4258/) | READY | 0 | — | Documents below docs/ are knowledge without a hand-declared class each |
+| [I4258](https://majordomus.dev/plan/i4258/) | DONE | 0 | — | Documents below docs/ are knowledge without a hand-declared class each |
 | [I4259](https://majordomus.dev/plan/i4259/) | READY | 0 | — | A document's own metadata and a folded YAML scalar are diagnosed, not just refused |
 | [I4260](https://majordomus.dev/plan/i4260/) | READY | 0 | — | A task's scope can be widened, with the widening recorded |
 | [I4261](https://majordomus.dev/plan/i4261/) | READY | 0 | — | An issue names the external requirement it serves, and a milestone its due date |
@@ -59,14 +59,6 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I4252` | shares lib/init.sh with I4262; they may not run concurrently |
 | WARN | `scope_conflict` | `I4252` | shares lib/init.sh with I4336; they may not run concurrently |
 | WARN | `scope_conflict` | `I4252` | shares lib/init.sh with I4468; they may not run concurrently |
-| WARN | `scope_conflict` | `I4253` | shares bin/majordomus with I4254; they may not run concurrently |
-| WARN | `scope_conflict` | `I4253` | shares lib/skills.sh with I4256; they may not run concurrently |
-| WARN | `scope_conflict` | `I4253` | shares bin/majordomus with I4260; they may not run concurrently |
-| WARN | `scope_conflict` | `I4253` | shares bin/majordomus with I4268; they may not run concurrently |
-| WARN | `scope_conflict` | `I4253` | shares bin/majordomus with I4322; they may not run concurrently |
-| WARN | `scope_conflict` | `I4253` | shares bin/majordomus with I4329; they may not run concurrently |
-| WARN | `scope_conflict` | `I4253` | shares bin/majordomus with I4334; they may not run concurrently |
-| WARN | `scope_conflict` | `I4253` | shares lib/skills.sh with I4468; they may not run concurrently |
 | WARN | `scope_conflict` | `I4254` | shares bin/majordomus with I4260; they may not run concurrently |
 | WARN | `scope_conflict` | `I4254` | shares scripts/github-sync with I4261; they may not run concurrently |
 | WARN | `scope_conflict` | `I4254` | shares bin/majordomus with I4268; they may not run concurrently |
