@@ -81357,6 +81357,26 @@
         }
       },
       {
+        "id": "majordomus://knowledge/s-20261103014800-e1b0-4fa824190a4e",
+        "kind": "knowledge",
+        "label": "s-20261103014800-e1b0-4fa824190a4e",
+        "summary": "run-plan --before-push runs only the structure and structure-b gates, so the rust job's gates, intent-check (bin/majordomus-cli intent validate) among them, never run in a train top's pre-push judgement and are first met in CI",
+        "route": "/cockpit/objects/knowledge/s-20261103014800-e1b0-4fa824190a4e",
+        "source": ".ai/repo/knowledge/candidates/s-20261103014800-e1b0-4fa824190a4e.md",
+        "status": "candidate",
+        "facts": {
+          "about": "scripts/ci/run-plan",
+          "class": "lesson",
+          "date": "2026-11-03",
+          "epistemics": "observed",
+          "route": "project",
+          "tags": [
+            "derived",
+            "observation"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/s-20261103014800-e1b0-61f10931287e",
         "kind": "knowledge",
         "label": "s-20261103014800-e1b0-61f10931287e",
@@ -81386,6 +81406,26 @@
         "status": "verified",
         "facts": {
           "about": ".ai/repo/skills/integrator/SKILL.md",
+          "class": "lesson",
+          "date": "2026-11-03",
+          "epistemics": "observed",
+          "route": "project",
+          "tags": [
+            "derived",
+            "observation"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://knowledge/s-20261103014800-e1b0-f47681588ac2",
+        "kind": "knowledge",
+        "label": "s-20261103014800-e1b0-f47681588ac2",
+        "summary": "a build host whose tools differ from CI's pins fails cases on plain master: a host with zola 0.22.1 against the 0.23.4 setup-site pins failed cases 1070, 3043, 533 and 805 on the component tag, and 3196, 3503 and 731 on its environment, on master 5bc72353c8d as on the train top, so its train-top pre-push refused the top; on a host with zola 0.23.3 the same top passed 35 gates and 195 cases",
+        "route": "/cockpit/objects/knowledge/s-20261103014800-e1b0-f47681588ac2",
+        "source": ".ai/repo/knowledge/candidates/s-20261103014800-e1b0-f47681588ac2.md",
+        "status": "candidate",
+        "facts": {
+          "about": "scripts/ci/run-plan",
           "class": "lesson",
           "date": "2026-11-03",
           "epistemics": "observed",
@@ -146294,12 +146334,22 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://knowledge/s-20261103014800-e1b0-4fa824190a4e",
+        "target": "kind:knowledge",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://knowledge/s-20261103014800-e1b0-61f10931287e",
         "target": "kind:knowledge",
         "kind": "is_a"
       },
       {
         "source": "majordomus://knowledge/s-20261103014800-e1b0-864245a4df1d",
+        "target": "kind:knowledge",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://knowledge/s-20261103014800-e1b0-f47681588ac2",
         "target": "kind:knowledge",
         "kind": "is_a"
       },
@@ -157925,8 +157975,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4286,
-      "edges": 9837,
+      "nodes": 4288,
+      "edges": 9839,
       "acyclic": false,
       "truncated": false
     }

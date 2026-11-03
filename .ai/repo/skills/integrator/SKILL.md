@@ -101,6 +101,10 @@ when its own pre-push judgement passed, not when it is committed:
 - **Judge before the slot.** `git push --dry-run -u origin <train-branch>` runs the pre-push
   hook and moves nothing; a push carrying an `integration/train-*` ref refuses run-plan's
   exit 1 (`.githooks/pre-push`). Report the head and run-plan's own last line, never "ok".
+  `run-plan --before-push` runs only the structure and structure-b gates; the rust job's
+  gates, `intent-check` among them, are first met in CI. Until
+  `project.a-push-runs-what-ci-would-find-first` reaches them, a ready report also carries
+  `bin/majordomus-cli intent validate` with no failure.
 - **Judge where CI's tools are.** A host whose pinned tools differ from CI's fails cases on
   plain master too: zola 0.22 against the 0.23 that `.github/actions/setup-site` installs
   failed seven cases on master and on the top alike. Before a member is blamed or dropped,
