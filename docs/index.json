@@ -2,17 +2,17 @@
  "schema": 1,
  "generated_by": "scripts/lib/docs-index.mjs",
  "build": {
-  "commit": "5bc72353c8dfad90cc73e3714bf604d07a446e6d",
+  "commit": "9df9061de3e5ce138c6921b941f52ffad1d60f23",
   "source_version": "1.0.0-alpha.10",
-  "registry_fingerprint": "91cfe3455a9ef9bd3e68a9a5c6d8b0d9de40e01f2d6908604e6ce3b3387720a0"
+  "registry_fingerprint": "ae06145998bd02140864593b62a0e81f9c5181cfb06422de13c3d67ff86054ca"
  },
  "counts": {
-  "pages": 6374,
-  "capabilities": 3813,
+  "pages": 6380,
+  "capabilities": 3821,
   "cli_commands": 124,
   "http_routes": 213,
   "mcp_tools": 209,
-  "mcp_resources": 3646,
+  "mcp_resources": 3654,
   "modules": 95
  },
  "kinds": [
@@ -142,7 +142,7 @@
    "route": null,
    "title": null,
    "reason": "An implementation object is a source file a claim names. It is reachable from the claim that names it and from the repository; a page rendering a Rust module is the source browser GitHub already is.",
-   "count": 53
+   "count": 54
   },
   {
    "kind": "intent",
@@ -158,7 +158,7 @@
    "route": "/plan/",
    "title": null,
    "reason": null,
-   "count": 1203
+   "count": 1206
   },
   {
    "kind": "knowledge",
@@ -166,7 +166,7 @@
    "route": null,
    "title": null,
    "reason": "Curated knowledge is written for the worker reading the layer, not for a visitor: it is the orientation a session starts from, and it changes with the work rather than with the product.",
-   "count": 103
+   "count": 104
   },
   {
    "kind": "mesh-declaration",
@@ -270,7 +270,7 @@
    "route": null,
    "title": null,
    "reason": "A test object is a case file. What it proves is published — on /guarantees/ for the claim and on the rule's own page for the rule — and that is the direction a reader asks in.",
-   "count": 678
+   "count": 681
   },
   {
    "kind": "use-case",
@@ -15279,6 +15279,12 @@
    "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
   },
   {
+   "route": "/cs/plan/i4377/",
+   "title": "I4377 — Every graph and chart reads at a glance and answers the hand, in one visual and interaction language",
+   "description": "The five graph components (site/charts.js on ECharts; site/graph.js, share/cockpit/graph.js, share/cockpit/trains.js and share/ui/ui.js on Cytoscape) follow one language: colour by role from the --mj-* tokens only (series in declared order, at most six categorical series, state in its status role with its word), derived fills, gridlines and gradients by color-mix over tokens resolved by the browser, one token-styled HTML tooltip card, HTML legend chips that filter and preview, hover and selection that light a neighbourhood and dim the rest, search with a live count for relation graphs, zoom-out, zoom-in and fit controls with bounds, keyboard operation with visible focus, and no motion under prefers-reduced-motion, in light and dark.",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
    "route": "/cs/plan/i4380/",
    "title": "I4380 — An optional step of the Pages publication never stops the deploy",
    "description": "A step of pages.yml that is written to degrade (`|| echo \\\"::warning ...\\\"`) degrades when it runs out of time instead of being killed: its command is bounded inside the step's own timeout-minutes, and scripts/ci/step-bound-check refuses one that is not. The trends reading reads its runs eight at a time with every forge call bounded, and `majordomus prs refresh` reads the open pull requests in GraphQL pages of 25 when the forge times out `gh pr list`'s page of a hundred (a gateway 504, GraphQL's own \\\"may be the result of a timeout\\\", or a body cut off on its way, \\\"unexpected end of JSON input\\\"). The ui-snapshot's forge observation is two degrading steps, each bounded from measured runs: a healthy forge is always observed, and a forge that cannot be asked leaves the PR Drain and Deployments screens saying the forge was not observed, and the site is still published.",
@@ -15630,6 +15636,18 @@
    "route": "/cs/plan/i4524/",
    "title": "I4524 — Telemetry does not run for a validate run that was cancelled",
    "description": "The export job of .github/workflows/telemetry.yml carries `if: github.event.workflow_run.conclusion != 'cancelled'`. A validate run that was cancelled then starts no telemetry job and takes no hosted runner slot: the workflow run is recorded as skipped and no runner is assigned. The model .ai/repo/ci/telemetry.yaml declares the same condition (trigger.skip_conclusions: [cancelled]), and the workflow stays its adapter. Case 4524 reads the workflow and the model and fails when the job has no such condition or when the two disagree. docs/CI.md, section Telemetry, says a cancelled run is not exported, and why.",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/plan/i4527/",
+   "title": "I4527 — The installed launcher is checked on a layer the release wrote, never on the source checkout",
+   "description": "scripts/ci/install-check runs the installed MCP launcher's no-toolchain check (--standalone, MAJORDOMUS_NO_BUILD=1) on the repository the installed release itself initialised, so a source checkout whose layer is newer than the published release does not fail a whole archive.",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/plan/i4528/",
+   "title": "I4528 — Case 3002's disk-floor scenario proves the function, not the runner's free disk",
+   "description": "The disk-floor scenario of test/cases/3002_a_build_never_waits_in_silence.sh sets MAJORDOMUS_PRIVATE_BUILD_ABOVE_MB=0, as every other scenario does through run(), so it reaches the floor's refusal (exit 12) on any machine, whatever its free disk.",
    "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
   },
   {
@@ -32289,6 +32307,12 @@
    "section": "The plan"
   },
   {
+   "route": "/plan/i4377/",
+   "title": "I4377 — Every graph and chart reads at a glance and answers the hand, in one visual and interaction language",
+   "description": "The five graph components (site/charts.js on ECharts; site/graph.js, share/cockpit/graph.js, share/cockpit/trains.js and share/ui/ui.js on Cytoscape) follow one language: colour by role from the --mj-* tokens only (series in declared order, at most six categorical series, state in its status role with its word), derived fills, gridlines and gradients by color-mix over tokens resolved by the browser, one token-styled HTML tooltip card, HTML legend chips that filter and preview, hover and selection that light a neighbourhood and dim the rest, search with a live count for relation graphs, zoom-out, zoom-in and fit controls with bounds, keyboard operation with visible focus, and no motion under prefers-reduced-motion, in light and dark.",
+   "section": "The plan"
+  },
+  {
    "route": "/plan/i4380/",
    "title": "I4380 — An optional step of the Pages publication never stops the deploy",
    "description": "A step of pages.yml that is written to degrade (`|| echo \\\"::warning ...\\\"`) degrades when it runs out of time instead of being killed: its command is bounded inside the step's own timeout-minutes, and scripts/ci/step-bound-check refuses one that is not. The trends reading reads its runs eight at a time with every forge call bounded, and `majordomus prs refresh` reads the open pull requests in GraphQL pages of 25 when the forge times out `gh pr list`'s page of a hundred (a gateway 504, GraphQL's own \\\"may be the result of a timeout\\\", or a body cut off on its way, \\\"unexpected end of JSON input\\\"). The ui-snapshot's forge observation is two degrading steps, each bounded from measured runs: a healthy forge is always observed, and a forge that cannot be asked leaves the PR Drain and Deployments screens saying the forge was not observed, and the site is still published.",
@@ -32640,6 +32664,18 @@
    "route": "/plan/i4524/",
    "title": "I4524 — Telemetry does not run for a validate run that was cancelled",
    "description": "The export job of .github/workflows/telemetry.yml carries `if: github.event.workflow_run.conclusion != 'cancelled'`. A validate run that was cancelled then starts no telemetry job and takes no hosted runner slot: the workflow run is recorded as skipped and no runner is assigned. The model .ai/repo/ci/telemetry.yaml declares the same condition (trigger.skip_conclusions: [cancelled]), and the workflow stays its adapter. Case 4524 reads the workflow and the model and fails when the job has no such condition or when the two disagree. docs/CI.md, section Telemetry, says a cancelled run is not exported, and why.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i4527/",
+   "title": "I4527 — The installed launcher is checked on a layer the release wrote, never on the source checkout",
+   "description": "scripts/ci/install-check runs the installed MCP launcher's no-toolchain check (--standalone, MAJORDOMUS_NO_BUILD=1) on the repository the installed release itself initialised, so a source checkout whose layer is newer than the published release does not fail a whole archive.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i4528/",
+   "title": "I4528 — Case 3002's disk-floor scenario proves the function, not the runner's free disk",
+   "description": "The disk-floor scenario of test/cases/3002_a_build_never_waits_in_silence.sh sets MAJORDOMUS_PRIVATE_BUILD_ABOVE_MB=0, as every other scenario does through run(), so it reaches the floor's refusal (exit 12) on any machine, whatever its free disk.",
    "section": "The plan"
   },
   {
@@ -36539,7 +36575,7 @@
   {
    "route": "/rustdoc/",
    "title": "majordomus-cli 1.0.0-alpha.10 — Rust API reference",
-   "description": "The rustdoc reference of majordomus-cli 1.0.0-alpha.10, built from commit 5bc72353c8dfad90cc73e3714bf604d07a446e6d: the public items of the library and of the executable, and the source they were built from.",
+   "description": "The rustdoc reference of majordomus-cli 1.0.0-alpha.10, built from commit 9df9061de3e5ce138c6921b941f52ffad1d60f23: the public items of the library and of the executable, and the source they were built from.",
    "section": "majordomus-cli 1.0.0-alpha.10 — Rust API reference"
   },
   {
