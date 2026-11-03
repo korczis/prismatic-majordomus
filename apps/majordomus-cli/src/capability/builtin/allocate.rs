@@ -650,4 +650,114 @@ mod tests {
             refs.detail
         );
     }
+
+    #[test]
+    fn an_issue_is_named_and_listed_where_its_records_are() {
+        assert_eq!(IdKind::Issue.word(), "issue");
+        assert_eq!(IdKind::Issue.dir(), ".ai/repo/project/issues");
+        assert_eq!(IdKind::Case.word(), "case");
+        assert_eq!(IdKind::Adr.dir(), ".ai/repo/adrs");
+    }
+
+    fn git_in(dir: &Path, args: &[&str]) {
+        let o = std::process::Command::new("git")
+            .arg("-C")
+            .arg(dir)
+            .args([
+                "-c",
+                "user.name=t",
+                "-c",
+                "user.email=t@t",
+                "-c",
+                "commit.gpgsign=false",
+                "-c",
+                "core.hooksPath=/dev/null",
+            ])
+            .args(args)
+            .output()
+            .unwrap();
+        assert!(
+            o.status.success(),
+            "git {args:?}: {}",
+            String::from_utf8_lossy(&o.stderr)
+        );
+    }
+
+    /// A directory that is there and cannot be listed is a source not read, in this tree and
+    /// in a sibling worktree; a sibling that can be listed is read beside it.
+    #[test]
+    fn a_tree_or_a_sibling_that_cannot_be_listed_is_a_source_not_read() {
+        let repo = crate::synthetic::SyntheticRepository::small().unwrap();
+        let root = repo.root();
+        git_in(root, &["init", "-q", "-b", "trunk"]);
+        git_in(root, &["add", "-A"]);
+        git_in(root, &["commit", "-qm", "base", "--no-verify"]);
+        let siblings = tempfile::tempdir().unwrap();
+        let readable = siblings.path().join("readable");
+        let broken = siblings.path().join("broken");
+        for (dir, branch) in [(&readable, "a"), (&broken, "b")] {
+            git_in(
+                root,
+                &["worktree", "add", "-q", "-b", branch, dir.to_str().unwrap()],
+            );
+        }
+        std::fs::create_dir_all(readable.join("test/cases")).unwrap();
+        std::fs::write(readable.join("test/cases/12_x.sh"), "").unwrap();
+        // a file where the directory is: there, and not listable
+        std::fs::create_dir_all(broken.join("test")).unwrap();
+        std::fs::write(broken.join("test/cases"), "").unwrap();
+        std::fs::create_dir_all(root.join("test")).unwrap();
+        std::fs::write(root.join("test/cases"), "").unwrap();
+
+        let c = crate::mesh::testing::cooperation();
+        let sources = survey(root, IdKind::Case, &c);
+        let of = |n: &str| sources.iter().find(|s| s.source == n).unwrap();
+        let tree = of("tree");
+        assert!(!tree.read, "{}", tree.detail);
+        assert!(
+            tree.detail.starts_with("could not be listed: "),
+            "{}",
+            tree.detail
+        );
+        let worktrees = of("worktrees");
+        assert!(!worktrees.read, "{}", worktrees.detail);
+        assert!(
+            worktrees.detail.starts_with("could not be listed: ")
+                && worktrees.detail.contains("broken"),
+            "{}",
+            worktrees.detail
+        );
+        assert_eq!(worktrees.highest, Some(12), "the readable sibling is read");
+    }
+
+    #[test]
+    fn allocate_refuses_an_unnamed_session_and_one_the_mesh_cannot_write() {
+        let repo = crate::synthetic::SyntheticRepository::small().unwrap();
+        let ctx = repo.context().unwrap();
+        crate::mesh::testing::attach(&ctx, crate::mesh::testing::cooperation());
+        git_in(repo.root(), &["init", "-q"]);
+        let input = |session: Option<&str>| AllocateInput {
+            kind: IdKind::Adr,
+            session: session.map(str::to_string),
+            at_least: None,
+        };
+        match allocate(&ctx, input(None)) {
+            Err(CapabilityError::InvalidInput(m)) => {
+                assert!(m.starts_with("name the session"), "{m}")
+            }
+            other => panic!("{other:?}"),
+        }
+        // a session name the journal does not admit: the reservation is not written
+        match allocate(&ctx, input(Some("two words"))) {
+            Err(CapabilityError::InvalidInput(m)) => assert!(m.contains("two words"), "{m}"),
+            other => panic!("{other:?}"),
+        }
+        // an allocation that panicked while it held the one-at-a-time lock does not stop
+        // the next
+        let _ = std::panic::catch_unwind(|| {
+            let _one = ALLOCATING.lock().unwrap_or_else(|e| e.into_inner());
+            panic!("an allocation broke");
+        });
+        assert!(allocate(&ctx, input(Some("me"))).is_ok());
+    }
 }

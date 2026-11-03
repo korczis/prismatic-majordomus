@@ -1599,4 +1599,201 @@ mod tests {
         ctx.peers.detach(&peer.id);
         assert!(!still_attached(&ctx, &input));
     }
+
+    #[test]
+    fn a_withdrawn_issue_is_refused_with_its_reason_when_nothing_blocks_it() {
+        let repo = planned_with(&[(
+            ".ai/repo/project/issues/I0030.yaml",
+            "id: I0030\nmilestone: m-first\ntitle: Withdrawn\nslug: withdrawn\n\
+             priority: p1\nprofile: implementation\nobjective: \"Nothing now.\"\n\
+             scope:\n  - elsewhere\ncancelled: true\nacceptance_criteria:\n  - done\n\
+             validation:\n  - \"true\"\nevidence_required:\n  - proof\n",
+        )]);
+        let ctx = repo.context().unwrap();
+        let (c, _) = as_worker(&ctx);
+        match implement(&c, &request("I0030", None), worker_of(&c)) {
+            Err(CapabilityError::Refused(m)) => {
+                assert_eq!(m, "not_ready: I0030: withdrawn; nothing was created")
+            }
+            other => panic!("{other:?}"),
+        }
+        assert!(ctx.executions.store().is_empty());
+    }
+
+    // ------------------------------------------------ owners that answer what a test says
+
+    #[derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema)]
+    struct Anything {}
+
+    impl BenchmarkCases for Anything {
+        fn benchmark_cases(_: &CaseContext<'_>) -> Vec<NamedCase<Self>> {
+            vec![NamedCase::new("default", Anything {})]
+        }
+    }
+
+    thread_local! {
+        /// What each stand-in owner answers on this test's thread; an owner with nothing here
+        /// refuses.
+        static CANNED: std::cell::RefCell<std::collections::BTreeMap<&'static str, Value>> =
+            Default::default();
+    }
+
+    fn can(id: &'static str, answer: Option<Value>) {
+        CANNED.with(|c| match answer {
+            Some(a) => {
+                c.borrow_mut().insert(id, a);
+            }
+            None => {
+                c.borrow_mut().remove(id);
+            }
+        });
+    }
+
+    fn canned(id: &str) -> Result<Value, CapabilityError> {
+        CANNED
+            .with(|c| c.borrow().get(id).cloned())
+            .ok_or_else(|| CapabilityError::Refused(format!("{id} does not answer")))
+    }
+
+    fn canned_preflight(_: &Context, _: Anything) -> Result<Value, CapabilityError> {
+        canned("intents.preflight")
+    }
+
+    fn canned_create(_: &Context, _: Anything) -> Result<Value, CapabilityError> {
+        canned("worktree.create")
+    }
+
+    fn canned_start(_: &Context, _: Anything) -> Result<Value, CapabilityError> {
+        canned("executions.start")
+    }
+
+    /// A context over `repo` whose registry holds this module and stand-ins for the three
+    /// owners `devtask.implement` composes.
+    fn canned_context(repo: &crate::synthetic::SyntheticRepository) -> Context {
+        let registry = crate::capability::CapabilityRegistry::builder()
+            .with_modules(vec![module()])
+            .with_builtin(vec![
+                capability! {
+                    id: "intents.preflight", title: "Preflight", description: "Canned.",
+                    input: Anything, output: Value,
+                    stability: Stability::Experimental, exposure: Exposure::default(), tags: [],
+                    handler: canned_preflight,
+                },
+                capability! {
+                    id: "worktree.create", title: "Create", description: "Canned.",
+                    input: Anything, output: Value,
+                    stability: Stability::Experimental, exposure: Exposure::default(), tags: [],
+                    handler: canned_create,
+                },
+                capability! {
+                    id: "executions.start", title: "Start", description: "Canned.",
+                    input: Anything, output: Value,
+                    stability: Stability::Experimental, exposure: Exposure::default(), tags: [],
+                    handler: canned_start,
+                },
+            ])
+            .build()
+            .expect("a registry of stand-ins");
+        Context::new(
+            Arc::new(repo.index().expect("an index")),
+            Arc::new(registry),
+        )
+    }
+
+    fn preflight(verdict: &str) -> Value {
+        serde_json::json!({
+            "verdict": verdict, "issues": [], "matches": [], "intents": [],
+            "governance": [], "refusals": []
+        })
+    }
+
+    /// Each owner `devtask.implement` composes is asked as it stands: one that does not answer
+    /// stops the sequence with its own error, an answer of another shape is said to be one,
+    /// and what each answers is carried into the steps.
+    #[test]
+    fn each_owner_the_implementation_composes_is_read_as_it_answers() {
+        let repo = planned_with(&[]);
+        let ctx = canned_context(&repo);
+        let worker = || {
+            let id = ctx.peers.attach(Transport::Http);
+            Ok(ctx.peers.get(&id).unwrap())
+        };
+        let go = || implement(&ctx, &request("I0001", None), worker());
+        let refused = |r: Result<ImplementAnswer, CapabilityError>, owner: &str| match r {
+            Err(CapabilityError::Refused(m)) => {
+                assert_eq!(m, format!("{owner} does not answer"))
+            }
+            other => panic!("{other:?}"),
+        };
+        let internal = |r: Result<ImplementAnswer, CapabilityError>, owner: &str| match r {
+            Err(CapabilityError::Internal(m)) => {
+                assert!(m.starts_with(&format!("{owner} answered: ")), "{m}")
+            }
+            other => panic!("{other:?}"),
+        };
+
+        // 3. the preflight
+        can("intents.preflight", None);
+        refused(go(), "intents.preflight");
+        can(
+            "intents.preflight",
+            Some(serde_json::json!({ "verdict": 7 })),
+        );
+        internal(go(), "intents.preflight");
+        can("intents.preflight", Some(preflight("refused")));
+        match go() {
+            Err(CapabilityError::Refused(m)) => assert_eq!(
+                m,
+                "invalid_intent: I0001: the preflight refused it; nothing was created"
+            ),
+            other => panic!("{other:?}"),
+        }
+        can("intents.preflight", Some(preflight("serves")));
+
+        // 6. the worktree
+        can("worktree.create", None);
+        refused(go(), "worktree.create");
+        can("worktree.create", Some(serde_json::json!({ "path": 7 })));
+        internal(go(), "worktree.create");
+        can(
+            "worktree.create",
+            Some(serde_json::json!({
+                "path": "/w", "branch": "feature/I0001-work-I0001", "branch_created": false,
+                "container": "/c", "container_created": false, "existed": true,
+                "envrc": { "outcome": "no_envrc" }
+            })),
+        );
+
+        // 7. the execution
+        can("executions.start", None);
+        refused(go(), "executions.start");
+        can("executions.start", Some(serde_json::json!({ "id": 7 })));
+        internal(go(), "executions.start");
+        let live = repo.context().unwrap();
+        let mut started = live
+            .execute(
+                "executions.start",
+                serde_json::json!({
+                    "capability": "executions.demonstrate",
+                    "input": { "steps": 1, "delay_ms": 0 }
+                }),
+            )
+            .expect("a started execution");
+        started["deduplicated"] = serde_json::json!(true);
+        can("executions.start", Some(started));
+        let answer = go().unwrap();
+        assert_eq!(answer.standing, ImplementStanding::Deduplicated);
+        let said: Vec<(&str, &str)> = answer
+            .steps
+            .iter()
+            .map(|s| (s.step.as_str(), s.detail.as_str()))
+            .collect();
+        assert_eq!(said[1], ("preflight", "serves a live intent"));
+        assert_eq!(said[4], ("worktree", "/w (existed)"));
+        assert!(
+            said[5].1.ends_with("(already started by this key)"),
+            "{said:?}"
+        );
+        assert_eq!(answer.worktree.as_deref(), Some("/w"));
+    }
 }

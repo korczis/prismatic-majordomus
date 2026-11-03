@@ -1687,6 +1687,35 @@ mod tests {
         );
     }
 
+    /// A plan as it is read off the wire: what a dependent that is finished, withdrawn or not
+    /// in the plan at all unblocks is nothing, and nothing past it is walked.
+    #[test]
+    fn a_finished_withdrawn_or_absent_dependent_unblocks_nothing() {
+        let issue = |id: &str, status: &str, dependents: &[&str]| {
+            json!({"id": id, "milestone": "M", "status": status, "wave": 0,
+                   "priority": "p1", "profile": "implementation", "parallel_safe": false,
+                   "title": format!("t {id}"), "slug": "s", "depends_on": [],
+                   "blocked_by": [], "dependents": dependents, "scope": [], "serves": [],
+                   "objective": "o", "evidence_have": 0, "evidence_need": 1,
+                   "started_at": "", "verified_at": "", "completed_at": ""})
+        };
+        let p: Plan = serde_json::from_value(json!({
+            "project": {"name": "p", "repository": "o/p", "default_branch": "master",
+                        "active_milestone": "M"},
+            "statuses": {"issue": [], "milestone": []},
+            "milestones": [],
+            "issues": [
+                issue("I1", "READY", &["I2", "I3", "I9", "I5"]),
+                issue("I2", "DONE", &["I4"]),
+                issue("I3", "CANCELLED", &["I4"]),
+                issue("I4", "BLOCKED", &[]),
+                issue("I5", "BLOCKED", &[]),
+            ],
+            "waves": [], "edges": [], "milestone_edges": [], "findings": []}))
+        .expect("a plan");
+        assert_eq!(p.unblocks("I1"), ["I5"]);
+    }
+
     /// A diamond places each issue one layer past its deepest dependency, and the tip waits
     /// on both middles. The same graph `test/cases/42_dag_waves.sh` asserts on in the shell.
     #[test]
