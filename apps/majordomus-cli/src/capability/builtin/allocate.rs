@@ -236,16 +236,26 @@ pub(crate) struct IdSkip {
 fn listed(root: &Path, kind: IdKind) -> Result<Vec<u32>, String> {
     let dir = root.join(kind.dir());
     match std::fs::read_dir(&dir) {
-        Ok(rd) => rd
-            .map(|e| {
-                e.map(|e| kind.number_of(&e.file_name().to_string_lossy()))
-                    .map_err(|e| format!("{}: {e}", dir.display()))
-            })
-            .filter_map(Result::transpose)
-            .collect(),
+        Ok(rd) => numbers_in(&dir, kind, rd.map(|e| e.map(|e| e.file_name()))),
         Err(e) if e.kind() == std::io::ErrorKind::NotFound => Ok(Vec::new()),
         Err(e) => Err(format!("{}: {e}", dir.display())),
     }
+}
+
+/// The numbers of `kind` the names read from `dir` carry; an entry that could not be read is
+/// an error naming the directory, because a number it held may be the one reserved next.
+fn numbers_in(
+    dir: &Path,
+    kind: IdKind,
+    names: impl Iterator<Item = std::io::Result<std::ffi::OsString>>,
+) -> Result<Vec<u32>, String> {
+    names
+        .map(|n| {
+            n.map(|n| kind.number_of(&n.to_string_lossy()))
+                .map_err(|e| format!("{}: {e}", dir.display()))
+        })
+        .filter_map(Result::transpose)
+        .collect()
 }
 
 fn source(name: &str, numbers: &[u32], read: bool, detail: String) -> IdSource {
@@ -325,7 +335,31 @@ pub(crate) fn survey(root: &Path, kind: IdKind, cooperation: &Cooperation) -> Ve
         ])
         .arg(kind.dir())
         .output();
-    out.push(match log {
+    out.push(refs_source(kind, log));
+
+    let state = cooperation.state();
+    let numbers: Vec<u32> = state
+        .claims
+        .iter()
+        .flat_map(|c| c.scope.iter())
+        .filter_map(|s| kind.number_of_key(s))
+        .collect();
+    out.push(source(
+        "mesh",
+        &numbers,
+        true,
+        format!(
+            "{} reservation(s) the journal remembers, held or ended",
+            numbers.len()
+        ),
+    ));
+    out
+}
+
+/// The `refs` source from what `git log --all` answered: every number of `kind` a path added
+/// on any ref carries, or why git could not say.
+fn refs_source(kind: IdKind, log: std::io::Result<std::process::Output>) -> IdSource {
+    match log {
         Ok(o) if o.status.success() => {
             let numbers: Vec<u32> = String::from_utf8_lossy(&o.stdout)
                 .split(['\0', '\n'])
@@ -347,25 +381,7 @@ pub(crate) fn survey(root: &Path, kind: IdKind, cooperation: &Cooperation) -> Ve
             format!("git log --all exited {}", o.status),
         ),
         Err(e) => source("refs", &[], false, format!("git could not run: {e}")),
-    });
-
-    let state = cooperation.state();
-    let numbers: Vec<u32> = state
-        .claims
-        .iter()
-        .flat_map(|c| c.scope.iter())
-        .filter_map(|s| kind.number_of_key(s))
-        .collect();
-    out.push(source(
-        "mesh",
-        &numbers,
-        true,
-        format!(
-            "{} reservation(s) the journal remembers, held or ended",
-            numbers.len()
-        ),
-    ));
-    out
+    }
 }
 
 // ---------------------------------------------------------------- the reservation
@@ -728,6 +744,22 @@ mod tests {
             worktrees.detail
         );
         assert_eq!(worktrees.highest, Some(12), "the readable sibling is read");
+    }
+
+    /// An entry that could not be read is a listing that failed, naming the directory; a git
+    /// that could not be run is a ref source not read.
+    #[test]
+    fn an_unreadable_entry_or_a_git_that_cannot_run_is_a_source_not_read() {
+        let names = vec![
+            Ok(std::ffi::OsString::from("12_a.sh")),
+            Err(std::io::Error::other("the disk went away")),
+        ];
+        let e = numbers_in(Path::new("test/cases"), IdKind::Case, names.into_iter()).unwrap_err();
+        assert_eq!(e, "test/cases: the disk went away");
+        let refs = refs_source(IdKind::Case, Err(std::io::Error::other("no git here")));
+        assert!(!refs.read);
+        assert_eq!(refs.highest, None);
+        assert_eq!(refs.detail, "git could not run: no git here");
     }
 
     #[test]
