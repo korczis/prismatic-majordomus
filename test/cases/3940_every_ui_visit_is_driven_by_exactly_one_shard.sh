@@ -22,7 +22,7 @@
 # `partition` red; a union that does not count turns `union` red; a matrix that loses a shard
 # turns `wired` red.
 . "$ROOT/test/lib.sh"
-command -v node >/dev/null 2>&1 || skip "no node"
+mj_runs node || skip "$(mj_runs_why node)"
 UI="$ROOT/scripts/lib"
 WF="$ROOT/.github/workflows/validate.yml"
 

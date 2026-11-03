@@ -16,8 +16,8 @@
 #   3. a second announcement is pushed on the page's own channel as a snapshot frame caused by
 #      the change, and the page read again after that frame shows it, without a reload.
 . "$ROOT/test/lib.sh"
-command -v node >/dev/null 2>&1 || skip "no node"
-command -v python3 >/dev/null 2>&1 || skip "no python3"
+mj_runs node || skip "$(mj_runs_why node)"
+mj_runs python3 || skip "$(mj_runs_why python3)"
 command -v jq >/dev/null 2>&1 || skip "no jq"
 command -v curl >/dev/null 2>&1 || skip "curl not installed"
 

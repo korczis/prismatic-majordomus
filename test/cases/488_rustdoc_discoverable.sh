@@ -28,7 +28,7 @@
 command -v cargo >/dev/null 2>&1 || skip_case "no cargo, so no tree was produced and nothing was served"
 command -v jq >/dev/null 2>&1 || skip_case "no jq, so the topology was not read"
 command -v curl >/dev/null 2>&1 || skip_case "no curl, so the mount was not asked of a server"
-command -v python3 >/dev/null 2>&1 || skip_case "no python3, so scripts/ci/link-check was not run"
+mj_runs python3 || skip_case "no python3, so scripts/ci/link-check was not run"
 RB="$(rust_bin)" || rust_bin_exit $?
 MAJORDOMUS_SHARE="$ROOT/share"; export MAJORDOMUS_SHARE
 S="$(mktemp -d "${TMPDIR:-/tmp}/mj488.XXXXXX")"

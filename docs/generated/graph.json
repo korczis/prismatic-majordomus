@@ -22021,6 +22021,13 @@
         "source": "lib/rules.sh"
       },
       {
+        "id": "majordomus://implementation/lib/runnable.sh",
+        "kind": "implementation",
+        "label": "lib/runnable.sh",
+        "route": "/cockpit/objects/implementation/lib-runnable-sh",
+        "source": "lib/runnable.sh"
+      },
+      {
         "id": "majordomus://implementation/lib/rust_bin.sh",
         "kind": "implementation",
         "label": "lib/rust_bin.sh",
@@ -71294,7 +71301,9 @@
           ],
           "serves": [],
           "slug": "ci-caches-the-shared-build-dir",
-          "updated_at": "2026-10-24",
+          "started_at": "2026-11-01T02:43:58Z",
+          "started_event": "sha256:b669456ca65049c8021c1de21a7d72d42e5be220e36b5a5159689a3519fc4c64",
+          "updated_at": "2026-11-01T02:43:58Z",
           "validation": [
             "Read the coverage job log of two consecutive runs at one key: Cache Paths, Cache Size and the Compiling count"
           ]
@@ -71889,6 +71898,8 @@
             "Every relative link of every mod under share/mods stays inside the mod's directory",
             "The case fails on master's brief README and on a mod copy with an escaping link"
           ],
+          "completed_at": "2026-11-01T02:23:42Z",
+          "completed_event": "sha256:54585fa2e799d1d128fbd5e40c957059b2e6e4f689b544f6112bec5ff15fb862",
           "created_at": "2026-10-27",
           "current_state": "share/mods/claude-code/majordomus-brief/README.md links `../../../../docs/BRIEF.md`.",
           "depends_on": [],
@@ -71906,7 +71917,9 @@
             "test/cases/4251_a_mod_links_nothing_outside_the_repository.sh"
           ],
           "slug": "a-mod-links-nothing-outside-the-repository",
-          "updated_at": "2026-10-27",
+          "started_at": "2026-11-01T02:23:13Z",
+          "started_event": "sha256:7a4e1fa0f7a979b370a42bd5448eaae1f7baf90b08edee35f590374eda6bfe46",
+          "updated_at": "2026-11-01T02:23:42Z",
           "validation": [
             "bash test/run.sh 4251_a_mod_links_nothing_outside_the_repository"
           ]
@@ -71961,6 +71974,8 @@
             "majordomus skills explain <id> answers the executable's report",
             "No doctor remedy for skills names a subcommand the shell refuses"
           ],
+          "completed_at": "2026-11-01T02:27:13Z",
+          "completed_event": "sha256:9ecea5c5cd84ed634ba50cbdc04aa3ff7a44ce88a01c5f04f592169658cd0a14",
           "created_at": "2026-10-27",
           "current_state": "lib/skills.sh dispatches list, show and check; explain is the executable's.",
           "depends_on": [],
@@ -71980,7 +71995,9 @@
             "test/cases/4253_every_skill_remedy_runs.sh"
           ],
           "slug": "skills-explain-reaches-the-executable",
-          "updated_at": "2026-10-27",
+          "started_at": "2026-11-01T02:26:44Z",
+          "started_event": "sha256:cf11cc22607d9b0436b749d8b25638000068599ad34d76f8559a33b92ff62b87",
+          "updated_at": "2026-11-01T02:27:13Z",
           "validation": [
             "bash test/run.sh 4253_every_skill_remedy_runs"
           ]
@@ -72154,6 +72171,8 @@
             "A fresh init discovers docs/a/b.md as a document",
             "No file is claimed by two classes"
           ],
+          "completed_at": "2026-11-01T02:28:58Z",
+          "completed_event": "sha256:204dabc73803b964cb2dc4f1b9f949b1a8cda9e5cd7dcf393cfc86d709f8a843",
           "created_at": "2026-10-27",
           "current_state": "One level of docs/ is discovered.",
           "depends_on": [],
@@ -72172,7 +72191,9 @@
             "test/cases/4258_documents_below_docs_are_discovered.sh"
           ],
           "slug": "knowledge-discovers-documents-below-docs",
-          "updated_at": "2026-10-27",
+          "started_at": "2026-11-01T02:27:33Z",
+          "started_event": "sha256:182141045a0ab3daec135d65c17e50e2410397342855a8faa79e6ff332c26429",
+          "updated_at": "2026-11-01T02:28:58Z",
           "validation": [
             "bash test/run.sh 4258_documents_below_docs_are_discovered"
           ]
@@ -76465,6 +76486,62 @@
         }
       },
       {
+        "id": "majordomus://issue/I4377",
+        "kind": "issue",
+        "label": "I4377",
+        "summary": "Every graph and chart reads at a glance and answers the hand, in one visual and interaction language",
+        "route": "/cockpit/objects/issue/i4377",
+        "source": ".ai/repo/project/issues/I4377.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "scripts/ci/design-check passes: no colour outside share/design/tokens.yaml in the five components or their styles",
+            "scripts/interaction-probe --spec graph passes on every graph and chart page with no console error, driving search, zoom, fit, legend filter, focus and reset",
+            "Cases 190, 3723, 12c, 107 and 1072 pass",
+            "scripts/cockpit-assets --check passes: the built stylesheets match their sources"
+          ],
+          "created_at": "2026-10-29",
+          "depends_on": [],
+          "evidence_required": [
+            "ci"
+          ],
+          "milestone": "one-kit-on-every-surface",
+          "non_scope": [
+            "New libraries or extensions: nothing is vendored beyond the pinned ECharts and Cytoscape",
+            "New design tokens: every value derives from declared ones",
+            "The Cytoscape deprecation warnings already on master (custom wheelSensitivity, 'label' node sizes in site/graph.js)"
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "risk": "A reader used to wheel-zooming the site's relation graphs now zooms with Ctrl/Cmd+wheel or the + and - buttons; the keys note under each graph says so.",
+          "scope": [
+            ".ai/repo/project/issues/I4377.yaml",
+            "site/charts.js",
+            "site/graph.js",
+            "site/templates/partials/graph.html",
+            "share/cockpit/graph.js",
+            "share/cockpit/trains.js",
+            "share/cockpit/src/cockpit.css",
+            "share/cockpit/cockpit.css",
+            "share/ui/ui.js",
+            "share/ui/src/ui.css",
+            "share/ui/ui.css",
+            "share/design/figure.css",
+            "scripts/lib/interaction-specs/graph.mjs",
+            "docs/DIAGRAMS.md",
+            "docs/UI.md"
+          ],
+          "slug": "the-graphs-read-at-a-glance-and-answer-a-hand",
+          "updated_at": "2026-10-29",
+          "validation": [
+            "scripts/ci/design-check",
+            "scripts/interaction-probe --spec graph",
+            "bash test/run.sh 190_graph_drawing 3723_the_graph_text_reads_each_edge_its_way 12c_graph_data 107_design_tokens 1072_the_train_is_seen",
+            "scripts/cockpit-assets --check"
+          ]
+        }
+      },
+      {
         "id": "majordomus://issue/I4380",
         "kind": "issue",
         "label": "I4380",
@@ -79516,6 +79593,87 @@
         }
       },
       {
+        "id": "majordomus://issue/I4527",
+        "kind": "issue",
+        "label": "I4527",
+        "summary": "The installed launcher is checked on a layer the release wrote, never on the source checkout",
+        "route": "/cockpit/objects/issue/i4527",
+        "source": ".ai/repo/project/issues/I4527.yaml",
+        "facts": {
+          "created_at": "2026-11-01",
+          "depends_on": [],
+          "evidence_required": [
+            "suite"
+          ],
+          "milestone": "ci-critical-path",
+          "non_scope": [
+            "Whether a release reads a layer newer than itself: that is version skew, which doctor is to tell from a defect (I1980)",
+            "The order or content of sections 1-4 and 7"
+          ],
+          "parallel_safe": true,
+          "priority": "p0",
+          "profile": "implementation",
+          "risk": "The launcher check no longer touches the source checkout at all; a launcher that reads only a newer layer would pass here, which is the skew I1980 owns, not this gate.",
+          "scope": [
+            ".ai/repo/project/issues/I4527.yaml",
+            "scripts/ci/install-check",
+            "test/cases/97_install_gate.sh",
+            "site/content/plan/I4527.md"
+          ],
+          "serves": [],
+          "slug": "the-install-check-runs-the-release-on-a-layer-it-wrote",
+          "started_at": "2026-11-01T02:54:21Z",
+          "started_event": "sha256:cc9eecd15f90e75f239c2d02bd1b647435a2e1381f16427d538b057859cb357e",
+          "updated_at": "2026-11-01T02:54:21Z",
+          "validation": [
+            "bash test/run.sh 97_install_gate 1024_an_installed_release_serves_a_foreign_repository",
+            "shellcheck -S warning scripts/ci/install-check"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4528",
+        "kind": "issue",
+        "label": "I4528",
+        "summary": "Case 3002's disk-floor scenario proves the function, not the runner's free disk",
+        "route": "/cockpit/objects/issue/i4528",
+        "source": ".ai/repo/project/issues/I4528.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Case 3002 passes in under a minute on a machine with less than 51200 MB free (measured: 17 s at 47 GB free); without the line it times out on the same machine",
+            "The next master validate passes suite-shard (4)"
+          ],
+          "created_at": "2026-11-01",
+          "current_state": "Measured at aca6f182b41: the scenario's env omits MAJORDOMUS_PRIVATE_BUILD_ABOVE_MB; run() sets it to 0 for every other scenario.",
+          "depends_on": [],
+          "desired_state": "The scenario sets MAJORDOMUS_PRIVATE_BUILD_ABOVE_MB=0 and passes in seconds below the high-water mark; nothing in lib/rust_bin.sh changes.",
+          "evidence_required": [
+            "suite"
+          ],
+          "milestone": "ci-critical-path",
+          "non_scope": [
+            "The high-water mark's own behaviour, which this scenario does not test"
+          ],
+          "parallel_safe": true,
+          "priority": "p0",
+          "profile": "implementation",
+          "risk": "None for the product: a test-only change that makes one scenario set what the others already set.",
+          "scope": [
+            ".ai/repo/project/issues/I4528.yaml",
+            "test/cases/3002_a_build_never_waits_in_silence.sh",
+            "site/content/plan/I4528.md"
+          ],
+          "serves": [],
+          "slug": "the-disk-floor-case-is-independent-of-the-runners-disk",
+          "started_at": "2026-11-01T08:20:49Z",
+          "started_event": "sha256:f80a2305ea807a1a4aec5caf5e803be3cd3bd316743146e1df5bceb255d27c83",
+          "updated_at": "2026-11-01T08:20:49Z",
+          "validation": [
+            "bash test/run.sh 3002_a_build_never_waits_in_silence"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "label": "a-brief-is-reconciled-not-transcribed",
@@ -79822,6 +79980,30 @@
           "tags": [
             "providers-economics",
             "chatgpt-project"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://knowledge/an-adopters-release-day-2026-11-02",
+        "kind": "knowledge",
+        "label": "an-adopters-release-day-2026-11-02",
+        "summary": "An adopter's release day, 2026-11-02, and what Majordomus already holds for it",
+        "route": "/cockpit/objects/knowledge/an-adopters-release-day-2026-11-02",
+        "source": ".ai/repo/knowledge/curated/an-adopters-release-day-2026-11-02.md",
+        "status": "verified",
+        "facts": {
+          "class": "lesson",
+          "date": "2026-11-02",
+          "epistemics": "observed",
+          "tags": [
+            "adopter",
+            "release",
+            "ci",
+            "runners",
+            "disk",
+            "mesh",
+            "plan-evidence",
+            "trains"
           ]
         }
       },
@@ -101891,6 +102073,13 @@
         "source": "test/cases/108b_scope_after_trunk_fast_forward.sh"
       },
       {
+        "id": "majordomus://test/test/cases/108c_scope_after_a_dirty_start.sh",
+        "kind": "test",
+        "label": "test/cases/108c_scope_after_a_dirty_start.sh",
+        "route": "/cockpit/objects/test/test-cases-108c-scope-after-a-dirty-start-sh",
+        "source": "test/cases/108c_scope_after_a_dirty_start.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/1090_the_deployments_and_docs_screens_answer.sh",
         "kind": "test",
         "label": "test/cases/1090_the_deployments_and_docs_screens_answer.sh",
@@ -103263,6 +103452,13 @@
         "source": "test/cases/3179_a_prerelease_is_never_published_as_stable.sh"
       },
       {
+        "id": "majordomus://test/test/cases/3180_a_shim_that_cannot_run_is_not_a_tool.sh",
+        "kind": "test",
+        "label": "test/cases/3180_a_shim_that_cannot_run_is_not_a_tool.sh",
+        "route": "/cockpit/objects/test/test-cases-3180-a-shim-that-cannot-run-is-not-a-tool-sh",
+        "source": "test/cases/3180_a_shim_that_cannot_run_is_not_a_tool.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/318_a_partial_sweep_says_so.sh",
         "kind": "test",
         "label": "test/cases/318_a_partial_sweep_says_so.sh",
@@ -104416,6 +104612,13 @@
         "label": "test/cases/41_project_status.sh",
         "route": "/cockpit/objects/test/test-cases-41-project-status-sh",
         "source": "test/cases/41_project_status.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/4221_the_build_cache_saves_only_dependencies.sh",
+        "kind": "test",
+        "label": "test/cases/4221_the_build_cache_saves_only_dependencies.sh",
+        "route": "/cockpit/objects/test/test-cases-4221-the-build-cache-saves-only-dependencies-sh",
+        "source": "test/cases/4221_the_build_cache_saves_only_dependencies.sh"
       },
       {
         "id": "majordomus://test/test/cases/4223_a_failed_cases_reason_reaches_the_artifact.sh",
@@ -128304,6 +128507,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://implementation/lib/runnable.sh",
+        "target": "kind:implementation",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://implementation/lib/rust_bin.sh",
         "target": "kind:implementation",
         "kind": "is_a"
@@ -144929,6 +145137,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I4377",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4377",
+        "target": "majordomus://milestone/one-kit-on-every-surface",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://issue/I4380",
         "target": "kind:issue",
         "kind": "is_a"
@@ -145734,6 +145952,26 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I4527",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4527",
+        "target": "majordomus://milestone/ci-critical-path",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4528",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4528",
+        "target": "majordomus://milestone/ci-critical-path",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -145815,6 +146053,11 @@
       },
       {
         "source": "majordomus://knowledge/a-worktree-is-not-a-security-boundary",
+        "target": "kind:knowledge",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://knowledge/an-adopters-release-day-2026-11-02",
         "target": "kind:knowledge",
         "kind": "is_a"
       },
@@ -150789,6 +151032,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/108c_scope_after_a_dirty_start.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/1090_the_deployments_and_docs_screens_answer.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -151769,6 +152017,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/3180_a_shim_that_cannot_run_is_not_a_tool.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/318_a_partial_sweep_says_so.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -152590,6 +152843,11 @@
       },
       {
         "source": "majordomus://test/test/cases/41_project_status.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/4221_the_build_cache_saves_only_dependencies.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -157825,8 +158083,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4282,
-      "edges": 9833,
+      "nodes": 4290,
+      "edges": 9844,
       "acyclic": false,
       "truncated": false
     }

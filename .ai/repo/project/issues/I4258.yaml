@@ -22,4 +22,16 @@ validation:
 evidence_required:
   - "case_knowledge_discovers_documents_below_docs"
 created_at: 2026-10-27
-updated_at: 2026-10-27
+updated_at: 2026-11-01T02:28:58Z
+started_at: 2026-11-01T02:27:33Z
+started_event: sha256:182141045a0ab3daec135d65c17e50e2410397342855a8faa79e6ff332c26429
+completed_at: 2026-11-01T02:28:58Z
+completed_event: sha256:204dabc73803b964cb2dc4f1b9f949b1a8cda9e5cd7dcf393cfc86d709f8a843
+evidence:
+  - covers: case_knowledge_discovers_documents_below_docs
+    type: test
+    command: "bash test/run.sh 4258_documents_below_docs_are_discovered"
+    result: "delivered by e10e4198a1f: the skeleton's document class is ':(glob)docs/**/*.md' and the overlapping claim_page class is gone, so a fresh init discovers docs/a/b.md once and knowledge validate reports no duplicate claim; passed locally at master 54c317f11ad and in validate run 41107049778 (suite shard: ok 5s)"
+    artifact: "https://github.com/korczis/prismatic-majordomus/actions/runs/41107049778"
+    commit: 54c317f11add0c6e7c7c8cd6f1a1591ee1942f1b
+    recorded_at: 2026-11-01T02:28:10Z

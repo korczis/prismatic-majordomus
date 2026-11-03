@@ -22,7 +22,7 @@
 #   - the exports also come from --report --export, and paths are relative to the root.
 . "$ROOT/test/lib.sh"
 
-command -v python3 >/dev/null 2>&1 || skip "no python3, which scripts/rust-coverage needs"
+mj_runs python3 || skip "$(mj_runs_why python3)"
 command -v jq >/dev/null 2>&1 || skip "no jq"
 
 W="$T/repo"

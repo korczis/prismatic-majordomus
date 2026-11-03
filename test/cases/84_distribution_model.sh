@@ -110,7 +110,7 @@ PY
   printf '%s\n' "$out" | grep -q "$2" || { echo "    refusal did not name '$2': $out"; return 1; }
   return 0
 }
-if command -v python3 >/dev/null 2>&1; then
+if mj_runs python3; then
   refuses 'base_url: https://||base_url: http://' 'not https' || exit 1
   refuses 'rust_target: x86_64-apple-darwin||rust_target: aarch64-apple-darwin' 'claim the Rust target' || exit 1
   refuses 'id: macos-x86_64||id: macos-aarch64' 'claim the id' || exit 1
