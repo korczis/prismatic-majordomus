@@ -1353,6 +1353,21 @@ mod tests {
     use super::*;
 
     #[test]
+    fn a_skill_follows_with_a_sentence_or_not_at_all() {
+        let skill = |follow: Option<&str>| SkillExposure {
+            alias: "step".into(),
+            argument: "x".into(),
+            follow: follow.map(str::to_string),
+        };
+        assert!(skill(None).validate().is_ok());
+        assert!(skill(Some("Carry it out.")).validate().is_ok());
+        assert!(skill(Some("  "))
+            .validate()
+            .unwrap_err()
+            .contains("a follow that says nothing"));
+    }
+
+    #[test]
     fn id_grammar() {
         assert!(CapabilityId::parse("repository.info").is_ok());
         assert!(CapabilityId::parse("rule.majordomus.scope-integrity@1").is_ok());

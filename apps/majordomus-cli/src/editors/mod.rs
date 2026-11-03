@@ -1666,4 +1666,46 @@ mod tests {
         assert_eq!(recipes, ["site::build", "top"]);
         assert!(d.is_empty());
     }
+
+    #[test]
+    fn an_adapter_that_reads_no_skills_is_given_no_commands() {
+        let mut adapter = EditorAdapter {
+            id: "elsewhere".into(),
+            title: "Elsewhere".into(),
+            verified_against: "1".into(),
+            capabilities: Vec::new(),
+        };
+        let before = adapter.clone();
+        let repo = crate::synthetic::SyntheticRepository::small().unwrap();
+        list_commands(&mut adapter, &commands(&repo.context().unwrap().registry));
+        assert_eq!(adapter, before);
+    }
+
+    /// A workflow skill that takes a command's name is not projected under `.agents/skills/`:
+    /// the command is, and keeps the name.
+    #[test]
+    fn a_workflow_skill_that_takes_a_commands_name_yields_to_the_command() {
+        let repo = repository(false);
+        let root = repo.root().to_path_buf();
+        write(
+            &root,
+            ".ai/repo/skills/proceed/SKILL.md",
+            &skill_md("proceed", "A workflow named like a command.", "active"),
+        );
+        let ctx = repo.context().unwrap();
+        assert!(
+            commands(&ctx.registry).iter().any(|c| c.alias == "proceed"),
+            "the command exists"
+        );
+        let plan = plan(&repo.index().unwrap(), &ctx.registry, &root, "0.0.0");
+        let at = ".agents/skills/proceed/SKILL.md";
+        let projected: Vec<&Artifact> = plan.artifacts.iter().filter(|a| a.path == at).collect();
+        assert_eq!(projected.len(), 1, "one file at {at}");
+        assert!(
+            !projected[0]
+                .content
+                .contains("A workflow named like a command."),
+            "the command's projection, not the workflow skill's"
+        );
+    }
 }
