@@ -50,6 +50,23 @@ MJ_PUSH_BOUND=-1 expect_exit 0 "$R" --before-push --plan "$T/plan.json"
 expect_grep 'over it by [0-9]+s; slowest: cheap-ok [0-9]+s; .*the push is not refused for that'
 expect_grep 'nothing CI would find here first'
 
+# ---------------------------------------------------------------- a case that serves off loopback
+# Cases 1086 and 3861 serve on every interface and call this machine at its LAN address; on
+# 2026-11-03 a Mac's firewall in stealth mode dropped that call, both timed out at 30s and the
+# push of train P was refused for the host, not for the change. Such a case is left out of
+# the push like every server case, and CI runs it. A copy of run-plan, beside a case of its
+# own, chooses from that case alone.
+mkdir -p offlan/scripts/ci offlan/lib offlan/test/cases
+cp "$ROOT/scripts/ci/run-plan" offlan/scripts/ci/
+cp "$ROOT/lib/common.sh" "$ROOT/lib/sha256.sh" "$ROOT/lib/rust_bin.sh" offlan/lib/
+printf '( exec "$S/majordomus" serve --host 0.0.0.0 --port 0 --idle 0 ) &\n' \
+  > offlan/test/cases/zz_serves_off_loopback.sh
+printf 'zz_serves_off_loopback\t1\n' > "$T/offlan-cases.tsv"
+plan_with "$(gate cheap-ok true false)"
+MJ_PUSH_CASES="$T/offlan-cases.tsv" expect_exit 0 offlan/scripts/ci/run-plan --before-push --plan "$T/plan.json"
+expect_grep 'left out case zz_serves_off_loopback: it serves off loopback, which a host firewall may drop; CI runs it'
+expect_grep 'gate\(s\) and 0 case\(s\) in'
+
 # ---------------------------------------------------------------- a hook's repository stays its own
 # Git exports GIT_DIR to a pre-push hook run from a linked worktree. `outer` stands for the
 # repository being pushed: a gate dispatched under that environment must not see it, and a
