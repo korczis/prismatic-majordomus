@@ -171,7 +171,12 @@ passing. A verdict is a completed run of the same head whose `plan` succeeded an
 concluded success or failure; a run that yielded is none, so a head whose only runs yielded
 runs its plan, and a forge that cannot be read decides the same. The enforcer is
 `scripts/ci/carried-verdict`; `test/cases/26_ci_wiring.sh` proves the wiring, keeps its label
-set equal to the labels validate.yml reads, and replays the trains of 2026-10-28.
+set equal to the labels validate.yml reads, and replays the trains of 2026-10-28. The label is
+not the only duplicate: a pull request opened with its labels fires opened and labeled in one
+second, and whichever run takes the group first leaves the other pending behind it. So opened,
+synchronize and reopened carry too, reading the pull request's labels and planning when one is
+ci:full or hold; the case replays #2909 of 2026-11-03, whose opened run planned a head its
+labeled run had already judged red.
 
 `test/cases/94_ci_plan.sh` proves the relationships that matter: a Rust change selects the
 Rust gates and never the site, a site change the site gates and never a Rust gate, a

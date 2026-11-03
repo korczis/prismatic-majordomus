@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# carried-verdict — a label that changes nothing starts no second verdict (I4347).
+# carried-verdict — a head that already carries a verdict starts no second one (I4347).
 #
 # validate.yml starts on `labeled` because two labels change what a pull request's run does:
 # ci:full widens its plan and hold makes it yield to its train. Every other label — train,
@@ -9,13 +9,20 @@
 # 2026-11-01, 128 of 436 pull-request validate runs were a further run of a head that had
 # already been run.
 #
+# The label is not the only way in. `gh pr create --label train` fires opened and labeled in
+# the same second: on 2026-11-03 (#2909) the labeled run went first, found no verdict and
+# planned; the opened run waited in the validate-<pr> group until it completed, red, and then
+# planned the same head again, 36 jobs for a verdict that already existed. So any pull-request
+# action carries, not only `labeled`: opened, synchronize and reopened read the pull request's
+# labels (--labels) and carry unless one of them is a plan label.
+#
 # Such a run is redundant only when the head already carries a verdict. It then gives its
 # runners back before any gate job asks for one, and its `ci` job writes the verdict the
 # earlier run wrote: the same head, the same workflow, the same plan inputs. It never writes
 # a verdict of its own, and it never skips `ci`: GitHub counts a skipped required check as
 # passing, so a skip after a red run would read green.
 #
-#   scripts/ci/carried-verdict decide  --action A --label L --sha S --self ID
+#   scripts/ci/carried-verdict decide  --action A --label L --labels L1,L2 --sha S --self ID
 #       one line: `carry <run> <success|failure>` when this run is redundant and the run it
 #       carries from, or `run <why>` when it must run its plan
 #   scripts/ci/carried-verdict yield   --action A --label L --sha S --self ID
@@ -32,9 +39,11 @@
 # and a run that ended at its first red (I2664) is one: its plan succeeded and its ci failed.
 # The newest of at most MAX_RUNS such runs is the one carried.
 #
-# Never redundant, by construction: any action but `labeled`; a label the plan reads
-# (PLAN_LABELS); a head with no verdict yet. A reading that cannot be made decides `run`: the
-# full plan is slower, never wrong.
+# Never redundant, by construction: an action other than opened, synchronize, reopened or
+# labeled; a labeled event whose label the plan reads (PLAN_LABELS); any other action on a pull
+# request that carries a plan label, or whose labels were not given (--labels absent); a head
+# with no verdict yet. A reading that cannot be made decides `run`: the full plan is slower,
+# never wrong.
 #
 # Forge access is `gh api` with GH_TOKEN, against --repo or GITHUB_REPOSITORY.
 # MJ_CARRIED_VERDICT_CANCEL_WAIT overrides the bound yield waits for its own cancel (default
@@ -58,11 +67,12 @@ case "$CMD" in decide|yield|verdict) ;; -h|--help) usage; exit 0 ;;
   *) echo "carried-verdict: unknown command '$CMD' (decide, yield, verdict)" >&2; exit 2 ;;
 esac
 
-ACTION=""; LABEL=""; SHA=""; SELF=""; SLUG="${GITHUB_REPOSITORY:-}"
+ACTION=""; LABEL=""; LABELS=""; LABELS_GIVEN=0; SHA=""; SELF=""; SLUG="${GITHUB_REPOSITORY:-}"
 while [ $# -gt 0 ]; do
   case "$1" in
     --action) ACTION="${2?--action needs a value}"; shift 2 ;;
     --label) LABEL="${2?--label needs a value}"; shift 2 ;;
+    --labels) LABELS="${2?--labels needs a value}"; LABELS_GIVEN=1; shift 2 ;;
     --sha) SHA="${2?--sha needs a value}"; shift 2 ;;
     --self) SELF="${2:?--self needs a run id}"; shift 2 ;;
     --repo) SLUG="${2:?--repo needs owner/name}"; shift 2 ;;
@@ -87,11 +97,19 @@ api() { gh api "$@"; }
 DECISION=""
 decide() {
   local l runs ids id jobs plan ci
-  if [ "$ACTION" != labeled ]; then DECISION="run a ${ACTION:-run with no action} event plans its change"; return; fi
-  [ -n "$LABEL" ] || { DECISION="run a labeled event that names no label is not known to change nothing"; return; }
-  for l in $PLAN_LABELS; do
-    [ "$LABEL" != "$l" ] || { DECISION="run the label $LABEL changes what this run does"; return; }
-  done
+  case "$ACTION" in
+    labeled)
+      [ -n "$LABEL" ] || { DECISION="run a labeled event that names no label is not known to change nothing"; return; }
+      for l in $PLAN_LABELS; do
+        [ "$LABEL" != "$l" ] || { DECISION="run the label $LABEL changes what this run does"; return; }
+      done ;;
+    opened|synchronize|reopened)
+      [ "$LABELS_GIVEN" = 1 ] || { DECISION="run a $ACTION event whose pull request's labels were not given plans its change"; return; }
+      for l in $PLAN_LABELS; do
+        case ",$LABELS," in *",$l,"*) DECISION="run the pull request carries $l, which changes what this run does"; return ;; esac
+      done ;;
+    *) DECISION="run a ${ACTION:-run with no action} event plans its change"; return ;;
+  esac
   [ -n "$SHA" ] || { DECISION="run no head was named, so no earlier verdict can be found"; return; }
   [ -n "$SLUG" ] || { DECISION="run no repository (--repo or GITHUB_REPOSITORY), so no earlier verdict can be read"; return; }
   command -v gh >/dev/null 2>&1 || { DECISION="run gh is not installed, so no earlier verdict can be read"; return; }

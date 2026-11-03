@@ -330,7 +330,7 @@ rp_at="$(printf '%s\n' "$plan_steps" | grep -n 'scripts/ci/release-path yield' |
 [ -n "$rp_at" ] && [ "$yield_at" -lt "$rp_at" ] || { echo "    the plan job asks the release path before carried-verdict, so a redundant run waits for a release"; exit 1; }
 printf '%s\n' "$plan_steps" | grep -B8 'scripts/ci/carried-verdict yield' | grep -q "if: github.event_name == 'pull_request'" \
   || { echo "    the plan job's carried-verdict step is not limited to a pull request"; exit 1; }
-for v in 'ACTION: ${{ github.event.action }}' 'LABEL: ${{ github.event.label.name }}' 'HEAD_SHA: ${{ github.event.pull_request.head.sha }}'; do
+for v in 'ACTION: ${{ github.event.action }}' 'LABEL: ${{ github.event.label.name }}' 'HEAD_SHA: ${{ github.event.pull_request.head.sha }}' "PR_LABELS: \${{ join(github.event.pull_request.labels.*.name, ',') }}"; do
   [ "$(grep -cF "$v" "$W")" -ge 2 ] || { echo "    validate.yml does not pass $v to both carried-verdict steps through the environment"; exit 1; }
 done
 grep -E 'carried-verdict (yield|verdict)' "$W" | grep -q '\${{' \
@@ -373,12 +373,19 @@ case "$*" in
 esac
 STUB
 chmod +x "$CVX/bin/gh"
-cv() { # <command> <action> <label> <sha>
+cv() { # <command> <action> <label> <sha> [<the pull request's labels, comma-separated>]
   : > "$CVLOG"; : > "$CVX/out"
   env -u GITHUB_ACTIONS -u GITHUB_STEP_SUMMARY -u GITHUB_REPOSITORY \
     PATH="$CVX/bin:$PATH" GH_STUB_LOG="$CVLOG" GH_STUB_FX="$CVX/fx" GITHUB_OUTPUT="$CVX/out" \
     MJ_CARRIED_VERDICT_CANCEL_WAIT=0 \
-    "$CV" "$1" --action "$2" --label "$3" --sha "$4" --self 900 --repo o/r
+    "$CV" "$1" --action "$2" --label "$3" --labels "${5-}" --sha "$4" --self 900 --repo o/r
+}
+cv_nolabels() { # <command> <action> <sha>: the pull request's labels not given at all
+  : > "$CVLOG"; : > "$CVX/out"
+  env -u GITHUB_ACTIONS -u GITHUB_STEP_SUMMARY -u GITHUB_REPOSITORY \
+    PATH="$CVX/bin:$PATH" GH_STUB_LOG="$CVLOG" GH_STUB_FX="$CVX/fx" GITHUB_OUTPUT="$CVX/out" \
+    MJ_CARRIED_VERDICT_CANCEL_WAIT=0 \
+    "$CV" "$1" --action "$2" --label "" --sha "$3" --self 900 --repo o/r
 }
 # a completed run of a head, and its jobs' conclusions: <sha> <id> <created> <plan> <ci>
 cv_run() {
@@ -391,13 +398,29 @@ cv_reset() { rm -f "$CVX/fx"/*; }
 cv_says() { [ "$LAST_OUT" = "$1" ] || { echo "    carried-verdict decided '$LAST_OUT', not '$1' ($2)"; exit 1; }; }
 cv_posts() { [ "$(grep -c -- '^api -X POST' "$CVLOG" || true)" = "$1" ] || { echo "    carried-verdict wrote to the forge $1 time(s) expected ($2):"; cat "$CVLOG"; exit 1; }; }
 
-# a. opened, synchronize and reopened plan their change, whatever the head carries, and ask nothing
-cv_reset; cv_run aaa 101 2026-10-28T10:00:00Z success success
+# a. opened, synchronize and reopened plan a head with no verdict; on a head that carries one
+#    they carry it, unless the pull request carries a plan label or its labels were not given
+#    (then they plan and ask nothing); an action the workflow does not start on plans
+cv_reset
 for a in opened synchronize reopened; do
-  expect_exit 0 cv decide "$a" "" aaa || exit 1
-  case "$LAST_OUT" in "run a $a event plans its change") ;; *) echo "    a $a event was not planned: $LAST_OUT"; exit 1 ;; esac
-  [ ! -s "$CVLOG" ] || { echo "    a $a event read the forge"; exit 1; }
+  expect_exit 0 cv decide "$a" "" zzz "train,type:docs" || exit 1
+  cv_says "run head zzz carries no verdict yet" "a $a event on a head with no verdict"
 done
+cv_run aaa 101 2026-10-28T10:00:00Z success success
+for a in opened synchronize reopened; do
+  expect_exit 0 cv decide "$a" "" aaa "train,type:docs" || exit 1
+  cv_says "carry 101 success" "a $a event on a green head"
+  for l in ci:full hold; do
+    expect_exit 0 cv decide "$a" "" aaa "train,$l" || exit 1
+    cv_says "run the pull request carries $l, which changes what this run does" "a $a event with $l"
+    [ ! -s "$CVLOG" ] || { echo "    a $a event with $l read the forge"; exit 1; }
+  done
+  expect_exit 0 cv_nolabels decide "$a" aaa || exit 1
+  cv_says "run a $a event whose pull request's labels were not given plans its change" "a $a event without --labels"
+  [ ! -s "$CVLOG" ] || { echo "    a $a event without --labels read the forge"; exit 1; }
+done
+expect_exit 0 cv decide edited "" aaa "" || exit 1
+cv_says "run a edited event plans its change" "an action validate does not start on"
 # b. ci:full and hold change what the run does: never carried, even on a green head
 for l in ci:full hold; do
   expect_exit 0 cv decide labeled "$l" aaa || exit 1
@@ -457,3 +480,17 @@ for pr in 2631 2630 2593 2592 2591 2501; do
   expect_exit 0 cv decide labeled train "$sha" || exit 1
   cv_says "carry $((1000 + n)) success" "#$pr: the labeled event of a train"
 done
+# i. the replay of 2026-11-03 (#2909): `gh pr create --label train` fired both events in one
+#    second and the labeled run took the group first. It finds no verdict and plans (run
+#    41551191664, red on case 4337); the opened run, pending behind it until it completes,
+#    then carries that red verdict instead of planning the same head again (run 41551191668
+#    planned and asked for 36 jobs). One gate-running run per head, whichever event goes first.
+cv_reset; sha=fcafbcbff2e
+expect_exit 0 cv decide labeled train "$sha" "train" || exit 1
+cv_says "run head fcafbcbff2e carries no verdict yet" "#2909: the labeled event, first in the group"
+cv_run "$sha" 41551191664 2026-11-03T00:12:38Z success failure        # its red verdict
+expect_exit 0 cv decide opened "" "$sha" "train" || exit 1
+cv_says "carry 41551191664 failure" "#2909: the opened event, pending behind it"
+expect_exit 0 cv yield opened "" "$sha" "train" || exit 1
+cv_posts 1 "#2909: the opened run gives its runners back"
+expect_exit 1 cv verdict opened "" "$sha" "train" || { echo "    #2909: the carried red did not fail the ci job"; exit 1; }

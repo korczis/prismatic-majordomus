@@ -8,7 +8,7 @@ This page is the index. Each milestone's issues, and the findings about them, ar
 its own under [`plan-status/`](plan-status/), named by the milestone, so the plan grows by pages
 and no one page grows with it.
 
-Generated from canonical inputs `6da6c2266093`.
+Generated from canonical inputs `4dd17d906f33`.
 
 ## Milestones
 
@@ -486,7 +486,7 @@ Generated from canonical inputs `6da6c2266093`.
 
 ## Findings
 
-8898 finding(s), each on the page of the milestone its subject is or belongs to:
+8899 finding(s), each on the page of the milestone its subject is or belongs to:
 
 | milestone | findings |
 |---|---|
@@ -517,7 +517,7 @@ Generated from canonical inputs `6da6c2266093`.
 | [`automation`](plan-status/automation.md) | 56 |
 | [`campaigns-are-read-as-provenance`](plan-status/campaigns-are-read-as-provenance.md) | 21 |
 | [`capability-graph`](plan-status/capability-graph.md) | 13 |
-| [`ci-critical-path`](plan-status/ci-critical-path.md) | 321 |
+| [`ci-critical-path`](plan-status/ci-critical-path.md) | 322 |
 | [`command-and-deployment-criteria-are-judged`](plan-status/command-and-deployment-criteria-are-judged.md) | 5 |
 | [`delivery-economics-are-measured-over-declared-windows`](plan-status/delivery-economics-are-measured-over-declared-windows.md) | 1 |
 | [`derived-data-integrity`](plan-status/derived-data-integrity.md) | 26 |

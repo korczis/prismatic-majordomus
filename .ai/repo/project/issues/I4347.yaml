@@ -13,6 +13,7 @@ scope:
   - ".ai/repo/project/issues/I4347.yaml"
   - ".github/workflows/validate.yml"
   - "scripts/ci-plan"
+  - "scripts/ci/carried-verdict"
   - "test/cases/26_ci_wiring.sh"
   - "docs/CI.md"
 non_scope:
@@ -21,7 +22,8 @@ non_scope:
 acceptance_criteria:
   - "Case 26: a labeled event with the label train requests no gate job and leaves the head's `ci` conclusion as the earlier run wrote it: written again, success or failure, never skipped (a skipped required check reads as passing)"
   - "Case 26: a labeled event with ci:full reaches the full plan"
-  - "Case 26: opened, synchronize and reopened plan exactly as before (case 94 passes unchanged)"
+  - "Case 26: opened, synchronize and reopened plan a head with no verdict exactly as before (case 94 passes unchanged), and on a head that carries one they carry it unless the pull request carries ci:full or hold"
+  - "Case 26 replays #2909 of 2026-11-03: opened and labeled in one second, the labeled run first; the opened run carries the labeled run's red verdict and plans no gate"
   - "Case 26 replays the events of #2631, #2630, #2593, #2592, #2591 and #2501 and plans one gate-running run per head"
   - "actionlint passes on .github/workflows/validate.yml"
 validation:
@@ -33,4 +35,4 @@ evidence_required:
 depends_on: []
 serves: []
 created_at: 2026-10-29
-updated_at: 2026-11-01
+updated_at: 2026-11-03
