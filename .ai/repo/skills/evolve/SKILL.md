@@ -1,7 +1,7 @@
 ---
 schema: skill/v1
 id: evolve
-version: 3
+version: 4
 title: Evolve the repository's know-how
 description: Turn what sessions observed into reviewed knowledge and into the rule, skill, document or test each lesson belongs in, then deliver the change and tell every peer what moved.
 status: active

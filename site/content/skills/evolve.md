@@ -5,7 +5,7 @@ weight = 3
 [extra]
 id = "evolve"
 status = "active"
-version = 3
+version = 4
 source = ".ai/repo/skills/evolve/SKILL.md"
 +++
 {% raw %}
