@@ -19,7 +19,7 @@
 # test/cases/403_published_translation.sh does and for the reason it gives: the check reads its
 # allow list from beside itself, so a copy lands on a list this case wrote.
 . "$ROOT/test/lib.sh"
-command -v python3 >/dev/null 2>&1 || skip "no python3; the handbook is built by a python program"
+mj_runs python3 || skip "no python3; the handbook is built by a python program"
 [ -f "$ROOT/docs/generated/graph.json" ] || { echo "    docs/generated/graph.json is missing"; exit 1; }
 
 HB="$PWD/hb"
