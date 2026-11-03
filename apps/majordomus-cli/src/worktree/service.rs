@@ -1881,6 +1881,29 @@ mod tests {
         }
     }
 
+    /// A `git worktree add` that git itself refuses, here through a post-checkout hook that
+    /// fails, is refused with what git said rather than read back as made.
+    #[test]
+    fn a_worktree_add_git_refuses_is_refused_with_what_git_said() {
+        use std::os::unix::fs::PermissionsExt;
+        let repo = Repo::new();
+        let hooks = repo.primary.parent().unwrap().join("refusing-hooks");
+        std::fs::create_dir_all(&hooks).unwrap();
+        let hook = hooks.join("post-checkout");
+        std::fs::write(&hook, "#!/bin/sh\necho the hook refuses >&2\nexit 1\n").unwrap();
+        std::fs::set_permissions(&hook, std::fs::Permissions::from_mode(0o755)).unwrap();
+        repo.git(&["config", "core.hooksPath", &hooks.to_string_lossy()]);
+        match repo
+            .service()
+            .create(&request("feature/hooked", Some("master")))
+        {
+            Err(WorktreeError::GitCommandFailed { stderr, .. }) => {
+                assert!(stderr.contains("the hook refuses"), "{stderr}")
+            }
+            other => panic!("{other:?}"),
+        }
+    }
+
     #[test]
     fn a_start_point_names_its_ref_and_says_when_it_is_not_the_remotes_state() {
         let given = StartPoint::Given {

@@ -582,4 +582,48 @@ mod tests {
         assert_eq!(f.code, Some(3));
         assert_eq!(f.stdout, b"ok");
     }
+
+    /// A bounded run that fails says what git said, or that it said nothing, and one that a
+    /// signal ended says that instead of an exit code; one killed at its deadline carries the
+    /// words git wrote before it was.
+    #[test]
+    fn a_bounded_run_names_a_silent_failure_a_signal_and_what_a_hung_git_said() {
+        let dir = tempfile::tempdir().expect("tempdir");
+        let repo = dir.path();
+        git_in(repo, &["init", "-q", "-b", "master", "."]);
+        let t = Duration::from_secs(30);
+
+        match run_bounded(
+            repo,
+            &["rev-parse", "--verify", "--quiet", "no-such-ref"],
+            t,
+        ) {
+            Err(WorktreeError::GitCommandFailed { status, stderr, .. }) => {
+                assert_eq!(status, "1");
+                assert_eq!(stderr, "git said nothing");
+            }
+            other => panic!("{other:?}"),
+        }
+
+        // the shell an alias runs in ends its own git with a signal
+        match run_bounded(repo, &["-c", "alias.die=!kill -9 $PPID", "die"], t) {
+            Err(WorktreeError::GitCommandFailed { status, .. }) => {
+                assert_eq!(status, "terminated by a signal")
+            }
+            other => panic!("{other:?}"),
+        }
+
+        let hung = run_bounded(
+            repo,
+            &["-c", "alias.hang=!echo still busy >&2; sleep 2", "hang"],
+            Duration::from_millis(500),
+        );
+        match hung {
+            Err(WorktreeError::GitCommandFailed { status, stderr, .. }) => {
+                assert!(status.starts_with("killed after 0s"), "{status}");
+                assert!(stderr.starts_with("still busy; a registration"), "{stderr}");
+            }
+            other => panic!("{other:?}"),
+        }
+    }
 }

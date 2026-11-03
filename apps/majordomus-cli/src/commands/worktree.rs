@@ -1302,6 +1302,28 @@ mod tests {
         panic!("the rendering never finished");
     }
 
+    #[test]
+    fn an_issues_branch_is_its_id_and_slug_and_an_unknown_issue_is_refused() {
+        let repo = crate::synthetic::SyntheticRepository::planned();
+        let args = crate::cli::RepoArgs {
+            repo: Some(repo.root().to_path_buf()),
+            discovery: crate::cli::DiscoveryMode::Filesystem,
+            share: Some(crate::synthetic::crate_share()),
+            ..Default::default()
+        };
+        assert_eq!(
+            issue_branch(&args, "I0001").unwrap(),
+            "feature/I0001-work-I0001"
+        );
+        match issue_branch(&args, "I9999") {
+            Err(Error::Refused { code, reason }) => {
+                assert_eq!(code, crate::worktree::EXIT_MISSING);
+                assert!(reason.contains("no issue 'I9999'"), "{reason}");
+            }
+            other => panic!("{other:?}"),
+        }
+    }
+
     fn repo_args(at: &Path) -> crate::cli::RepoArgs {
         crate::cli::RepoArgs {
             repo: Some(at.to_path_buf()),
