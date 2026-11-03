@@ -49,7 +49,7 @@ use crate::intent_realization::{IntentRealization, IntentRealizationView};
 use crate::models::RoutingDecision;
 use crate::plan::Plan;
 
-use super::{proceed_plan, ProceedCandidate, ProceedDecision, ProceedPlanInput, ProceedSource};
+use super::{decision_of, ProceedCandidate, ProceedDecision, ProceedPlanInput, ProceedSource};
 
 /// How often a session that proceeds steps again while work is under way or waits: the
 /// interval the owner asked every peer to report at.
@@ -515,14 +515,14 @@ pub(crate) fn proceed_step(
         ),
         None => None,
     };
-    let decision = proceed_plan(
+    let decision = decision_of(
         ctx,
         ProceedPlanInput {
             milestone: input.milestone.clone(),
             session: input.session.clone(),
             local: input.local,
         },
-    )?;
+    );
     // a catalogue that declares no model, or none a worker can use, leaves the choice to the
     // worker: the order says so by naming none
     let route: Option<RoutingDecision> = ctx
@@ -547,11 +547,16 @@ fn efforts(ctx: &Context) -> BTreeMap<String, String> {
         .filter(|o| o.kind == "profile")
         .filter_map(|o| {
             let name = o.metadata.get("name").and_then(Value::as_str);
-            let effort = o.metadata.get("effort").and_then(Value::as_str)?;
-            Some((
-                name.unwrap_or(o.identity.as_str()).to_string(),
-                effort.to_string(),
-            ))
+            // the profile schema requires an effort; a record without one never reaches here
+            o.metadata
+                .get("effort")
+                .and_then(Value::as_str)
+                .map(|effort| {
+                    (
+                        name.unwrap_or(o.identity.as_str()).to_string(),
+                        effort.to_string(),
+                    )
+                })
         })
         .collect()
 }

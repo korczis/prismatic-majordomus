@@ -31,17 +31,43 @@ pub const EXIT_PROVISIONAL: u8 = 11;
 pub fn run(args: ProceedArgs) -> Result<u8> {
     let app = App::load(&args.repo)?;
     let stdout = std::io::stdout();
+    let out = &mut stdout.lock();
     match &args.command {
-        ProceedCommand::Plan { .. } => answer(&app.context, &args, &mut stdout.lock()),
-        ProceedCommand::Step { .. } => step(&app.context, &args, &mut stdout.lock()),
+        ProceedCommand::Plan { milestone, session } => answer(
+            &app.context,
+            milestone.as_ref(),
+            session.as_ref(),
+            args.format,
+            out,
+        ),
+        ProceedCommand::Step {
+            intent,
+            milestone,
+            session,
+            at,
+        } => step(
+            &app.context,
+            [
+                ("intent", intent.as_ref()),
+                ("milestone", milestone.as_ref()),
+                ("session", session.as_ref()),
+                ("at", at.as_ref()),
+            ],
+            args.format,
+            out,
+        ),
     }
 }
 
-/// Ask the capability exposed as `majordomus proceed plan` and write its answer to `out`.
-fn answer(ctx: &Context, args: &ProceedArgs, out: &mut impl Write) -> Result<u8> {
-    let ProceedCommand::Plan { milestone, session } = &args.command else {
-        unreachable!("answer renders proceed plan only")
-    };
+/// Ask the capability exposed as `majordomus proceed plan` for `milestone` and `session`, and
+/// write its answer to `out` in `format`.
+fn answer(
+    ctx: &Context,
+    milestone: Option<&String>,
+    session: Option<&String>,
+    format: OutputFormat,
+    out: &mut impl Write,
+) -> Result<u8> {
     let id = ctx
         .registry
         .by_cli(&["proceed".to_string(), "plan".to_string()])
@@ -59,7 +85,7 @@ fn answer(ctx: &Context, args: &ProceedArgs, out: &mut impl Write) -> Result<u8>
     let v = ctx.execute(&id, input).map_err(|e| Error::Protocol {
         reason: e.to_string(),
     })?;
-    let text = if args.format == OutputFormat::Json {
+    let text = if format == OutputFormat::Json {
         format!("{}\n", serde_json::to_string_pretty(&v).unwrap_or_default())
     } else {
         render(&v)
@@ -68,17 +94,14 @@ fn answer(ctx: &Context, args: &ProceedArgs, out: &mut impl Write) -> Result<u8>
     Ok(exit_for(&v))
 }
 
-/// Ask the capability exposed as `majordomus proceed step` and write its work order to `out`.
-fn step(ctx: &Context, args: &ProceedArgs, out: &mut impl Write) -> Result<u8> {
-    let ProceedCommand::Step {
-        intent,
-        milestone,
-        session,
-        at,
-    } = &args.command
-    else {
-        unreachable!("step renders proceed step only")
-    };
+/// Ask the capability exposed as `majordomus proceed step` with the fields `asked` names, each
+/// sent when given, and write its work order to `out` in `format`.
+fn step(
+    ctx: &Context,
+    asked: [(&str, Option<&String>); 4],
+    format: OutputFormat,
+    out: &mut impl Write,
+) -> Result<u8> {
     let id = ctx
         .registry
         .by_cli(&["proceed".to_string(), "step".to_string()])
@@ -87,12 +110,7 @@ fn step(ctx: &Context, args: &ProceedArgs, out: &mut impl Write) -> Result<u8> {
             reason: "no capability is exposed as `majordomus proceed step`".into(),
         })?;
     let mut input = json!({});
-    for (k, v) in [
-        ("intent", intent),
-        ("milestone", milestone),
-        ("session", session),
-        ("at", at),
-    ] {
+    for (k, v) in asked {
         if let Some(v) = v {
             input[k] = json!(v);
         }
@@ -100,7 +118,7 @@ fn step(ctx: &Context, args: &ProceedArgs, out: &mut impl Write) -> Result<u8> {
     let v = ctx.execute(&id, input).map_err(|e| Error::Protocol {
         reason: e.to_string(),
     })?;
-    let text = if args.format == OutputFormat::Json {
+    let text = if format == OutputFormat::Json {
         format!("{}\n", serde_json::to_string_pretty(&v).unwrap_or_default())
     } else {
         render_order(&v)
@@ -284,6 +302,38 @@ mod tests {
     use super::*;
     use clap::Parser;
 
+    /// `proceed plan` as the command line parsed it, asked of `ctx`.
+    fn ask_plan(ctx: &Context, a: &ProceedArgs, out: &mut impl Write) -> Result<u8> {
+        let ProceedCommand::Plan { milestone, session } = &a.command else {
+            panic!("not proceed plan")
+        };
+        answer(ctx, milestone.as_ref(), session.as_ref(), a.format, out)
+    }
+
+    /// `proceed step` as the command line parsed it, asked of `ctx`.
+    fn ask_step(ctx: &Context, a: &ProceedArgs, out: &mut impl Write) -> Result<u8> {
+        let ProceedCommand::Step {
+            intent,
+            milestone,
+            session,
+            at,
+        } = &a.command
+        else {
+            panic!("not proceed step")
+        };
+        step(
+            ctx,
+            [
+                ("intent", intent.as_ref()),
+                ("milestone", milestone.as_ref()),
+                ("session", session.as_ref()),
+                ("at", at.as_ref()),
+            ],
+            a.format,
+            out,
+        )
+    }
+
     fn args(argv: &[&str]) -> ProceedArgs {
         let mut full = vec!["majordomus", "proceed"];
         full.extend_from_slice(argv);
@@ -394,7 +444,7 @@ mod tests {
         let ctx = repo.context().unwrap();
         let run = || {
             let mut out = Vec::new();
-            let code = step(
+            let code = ask_step(
                 &ctx,
                 &args(&["step", "--at", "2026-10-23T10:00:00Z", "--format", "json"]),
                 &mut out,
@@ -412,10 +462,10 @@ mod tests {
         assert_eq!(v["at"], "2026-10-23T10:00:00Z");
         assert_eq!(code, order_exit(&v));
         let mut out = Vec::new();
-        let err = step(&ctx, &args(&["step", "--at", "noon"]), &mut out).unwrap_err();
+        let err = ask_step(&ctx, &args(&["step", "--at", "noon"]), &mut out).unwrap_err();
         assert!(err.to_string().contains("RFC 3339"), "{err}");
         let mut out = Vec::new();
-        step(
+        ask_step(
             &ctx,
             &args(&[
                 "step",
@@ -447,7 +497,7 @@ mod tests {
         let repo = crate::synthetic::SyntheticRepository::small().unwrap();
         let ctx = repo.context().unwrap();
         let mut out = Vec::new();
-        let code = answer(
+        let code = ask_plan(
             &ctx,
             &args(&[
                 "plan",
@@ -466,7 +516,7 @@ mod tests {
         assert_eq!(v["milestone"], "M");
         assert!(v["selected"].is_null());
         let mut out = Vec::new();
-        answer(&ctx, &args(&["plan"]), &mut out).unwrap();
+        ask_plan(&ctx, &args(&["plan"]), &mut out).unwrap();
         assert!(String::from_utf8(out)
             .unwrap()
             .starts_with("selected  nothing\n"));
@@ -489,7 +539,7 @@ mod tests {
         let repo = crate::synthetic::SyntheticRepository::small().unwrap();
         let ctx = repo.context().unwrap();
         let mut out = Vec::new();
-        step(
+        ask_step(
             &ctx,
             &args(&["step", "--at", "2026-10-23T10:00:00Z"]),
             &mut out,
@@ -501,13 +551,13 @@ mod tests {
                 .starts_with("order     step-"),
             "the text rendering"
         );
-        assert!(step(
+        assert!(ask_step(
             &ctx,
             &args(&["step", "--at", "2026-10-23T10:00:00Z"]),
             &mut Closed
         )
         .is_err());
-        assert!(answer(&ctx, &args(&["plan"]), &mut Closed).is_err());
+        assert!(ask_plan(&ctx, &args(&["plan"]), &mut Closed).is_err());
     }
 
     #[test]
@@ -522,13 +572,13 @@ mod tests {
             ),
         );
         let mut out = Vec::new();
-        let err = answer(&bare, &args(&["plan"]), &mut out).unwrap_err();
+        let err = ask_plan(&bare, &args(&["plan"]), &mut out).unwrap_err();
         assert!(
             err.to_string()
                 .contains("no capability is exposed as `majordomus proceed plan`"),
             "{err}"
         );
-        let err = step(&bare, &args(&["step"]), &mut out).unwrap_err();
+        let err = ask_step(&bare, &args(&["step"]), &mut out).unwrap_err();
         assert!(
             err.to_string()
                 .contains("no capability is exposed as `majordomus proceed step`"),
@@ -556,7 +606,7 @@ mod tests {
                     .expect("a registry"),
             ),
         );
-        let err = answer(&refusing, &args(&["plan"]), &mut out).unwrap_err();
+        let err = ask_plan(&refusing, &args(&["plan"]), &mut out).unwrap_err();
         assert!(err.to_string().contains("not today"), "{err}");
         assert!(out.is_empty(), "nothing was written");
     }

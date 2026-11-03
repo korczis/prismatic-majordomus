@@ -80,6 +80,8 @@ use super::{get, mcp};
 /// How long the command line waits for the leaseholder's decision: the board's gather probes
 /// every checkout's server, as for the brief.
 const FORWARD_TIMEOUT: Duration = Duration::from_secs(20);
+/// The route `proceed.plan` is declared at, and the one a leaseholder is asked over.
+const PLAN_ROUTE: &str = "/api/v1/proceed/plan";
 /// The statuses an issue leaves the plan with; it is neither work nor waiting.
 const FINISHED: [&str; 2] = ["DONE", "CANCELLED"];
 
@@ -456,6 +458,13 @@ fn proceed_plan(
     ctx: &Context,
     input: ProceedPlanInput,
 ) -> Result<ProceedDecision, CapabilityError> {
+    Ok(decision_of(ctx, input))
+}
+
+/// The decision `proceed.plan` answers: the leaseholder's when it can be asked, else this
+/// process's own, read from every source it can reach. Never an error: a source that cannot
+/// be read is said in the decision, and what it could not read makes it provisional.
+pub(super) fn decision_of(ctx: &Context, input: ProceedPlanInput) -> ProceedDecision {
     let root = PathBuf::from(&ctx.index.repository.root);
     let root = root.canonicalize().unwrap_or(root);
     let (standing, _, read) = server::standing_at(&root, &server::local_half(&root));
@@ -469,8 +478,8 @@ fn proceed_plan(
     let mut unasked = None;
     if !own && !input.local && ctx.caller.is_none() {
         match (answering, url.as_deref()) {
-            (true, Some(url)) => match forward(ctx, url, &input) {
-                Ok(d) => return Ok(d),
+            (true, Some(url)) => match forward(url, &input) {
+                Ok(d) => return d,
                 Err(why) => {
                     unasked = Some(why.clone());
                     note = Some(why)
@@ -497,13 +506,13 @@ fn proceed_plan(
     if let Some(n) = note {
         mesh.summary = format!("{}; {n}", mesh.summary);
     }
-    Ok(decide(
+    decide(
         &Plan::build(&ctx.index),
         input.milestone.as_deref(),
         session.as_deref(),
         &holds,
         vec![plan_source(ctx), board, mesh],
-    ))
+    )
 }
 
 /// Where the repository declares its mesh: the source class `mesh-declaration`'s pathspec,
@@ -711,15 +720,9 @@ fn mesh_holds(ctx: &Context, session: Option<&str>, holds: &mut Vec<Hold>) -> Pr
     }
 }
 
-/// Ask the leaseholder over the route the registry declares for this capability.
-fn forward(ctx: &Context, url: &str, input: &ProceedPlanInput) -> Result<ProceedDecision, String> {
-    let path = ctx
-        .registry
-        .get("proceed.plan")
-        .and_then(|c| c.exposure.http.as_ref())
-        .map(|h| h.path.clone())
-        .ok_or_else(|| "proceed.plan declares no HTTP route to ask over".to_string())?;
-    let mut query = format!("{path}?local=true");
+/// Ask the leaseholder over the route this capability is declared at ([`PLAN_ROUTE`]).
+fn forward(url: &str, input: &ProceedPlanInput) -> Result<ProceedDecision, String> {
+    let mut query = format!("{PLAN_ROUTE}?local=true");
     for (k, v) in [("milestone", &input.milestone), ("session", &input.session)] {
         if let Some(v) = v {
             query.push_str(&format!("&{k}={}", crate::http::router::percent_encode(v)));
@@ -756,7 +759,7 @@ pub fn module() -> ModuleDescriptor {
                 stability: Stability::BehaviorallyVerified,
                 exposure: Exposure {
                     mcp: mcp("majordomus_proceed_plan"),
-                    http: get("/api/v1/proceed/plan"),
+                    http: get(PLAN_ROUTE),
                     cli: Some(CliExposure { path: vec!["proceed".into(), "plan".into()] }),
                 },
                 tags: ["proceed", "plan", "coordination", "session"],
@@ -1393,21 +1396,21 @@ mod tests {
         )
         .unwrap();
         let ok = leaseholder(200, serde_json::to_string(&decided).unwrap());
-        assert_eq!(forward(&ctx, &ok, &input).unwrap(), decided);
+        assert_eq!(forward(&ok, &input).unwrap(), decided);
 
         let old = leaseholder(404, "{}".into());
-        let why = forward(&ctx, &old, &input).unwrap_err();
+        let why = forward(&old, &input).unwrap_err();
         assert!(why.contains("answered 404") && why.contains(&old), "{why}");
 
         let garbled = leaseholder(200, "not a decision".into());
-        let why = forward(&ctx, &garbled, &input).unwrap_err();
+        let why = forward(&garbled, &input).unwrap_err();
         assert!(why.contains("cannot read"), "{why}");
 
         let gone = {
             let l = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
             format!("http://{}", l.local_addr().unwrap())
         };
-        let why = forward(&ctx, &gone, &input).unwrap_err();
+        let why = forward(&gone, &input).unwrap_err();
         assert!(
             why.contains("did not answer") && why.contains(&gone),
             "{why}"
