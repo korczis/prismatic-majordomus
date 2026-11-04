@@ -323,8 +323,8 @@ Every file `majordomus generate` writes, with the document it projects, the enco
 | `docs/generated/economics.json` | `economics` | json | 56212 | `e92397ee42a4775e` |
 | `docs/generated/economics.md` | `economics` | markdown | 15772 | `ee0520007183625a` |
 | `docs/generated/economics.yaml` | `economics` | yaml | 46605 | `264ece032e8525c8` |
-| `docs/generated/entities.json` | `entities` | json | 727221 | `585c98f1042897f0` |
-| `docs/generated/graph.json` | `graph` | json | 6330185 | `1643f8306e78d1e6` |
+| `docs/generated/entities.json` | `entities` | json | 727429 | `80b51d9197ba095d` |
+| `docs/generated/graph.json` | `graph` | json | 6329814 | `5bc32ce53848e3c2` |
 | `docs/generated/graph.schema.json` | `graph-schema` | json | 7634 | `b4c8b25173f9e9c0` |
 | `docs/generated/modules/artifacts.md` | `modules/artifacts` | markdown | 1750 | `b1c0df1e83e28765` |
 | `docs/generated/modules/blackboard.md` | `modules/blackboard` | markdown | 2540 | `f2faf315ceae5835` |
@@ -455,7 +455,7 @@ Every file `majordomus generate` writes, with the document it projects, the enco
 | `site/data/registry/evidence-subjects.json` | `site-evidence-subjects` | json | 868041 | `2e4a1ad91478cd8f` |
 | `site/data/registry/product-graph.json` | `site-product-graph` | json | 112756 | `f3f15ee7a0d1bd4e` |
 | `site/data/registry/product.json` | `site-product` | json | 782595 | `abe60154a19a8a5c` |
-| `site/data/registry/registry.json` | `site-registry` | json | 8625139 | `c2db3df36527d998` |
+| `site/data/registry/registry.json` | `site-registry` | json | 8625139 | `8cbf6357c8d5972a` |
 | `site/data/registry/why-graph.json` | `site-why-graph` | json | 180171 | `c5c85c57475615eb` |
 | `site/data/registry/why.json` | `site-why` | json | 349932 | `f34d973e38325648` |
 | `site/static/favicon.svg` | `design-mark` | text | 912 | `d3a39f415f9bd167` |
