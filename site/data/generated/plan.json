@@ -2159,6 +2159,79 @@
       }
     },
     {
+      "id": "a-session-proceeds",
+      "slug": "a-session-proceeds",
+      "status": "PLANNED",
+      "order": 155,
+      "priority": "p1",
+      "title": "A session proceeds: one entrypoint resolves, reconciles, chooses, claims, executes, proves and hands on",
+      "problem": "Every step of a worker's start exists as a capability (brief.session, peers.list, mesh.state, plan.next, plan.waves, devtask, mesh.claim, worktree create, start, check, finish, the landing seat), and each session composes them by hand from bootstrap prose. plan.next ranks the lowest-wave READY issue by priority then id and knows nothing of a live claim, a held scope or what an issue unblocks; on 2026-10-17 sessions chose issues by grepping the board and two sessions took the same id three times in one day.",
+      "outcome": "`/proceed` in any session runs `majordomus proceed`: one explained decision from the existing capabilities, an exclusive claim, a worktree and a task bound to the chosen issue, the implement skill, finish, and a receipt handed to the landing seat; said again with nothing changed it creates nothing.",
+      "current_state": "No entrypoint composes the capabilities; plan.next is not claim-aware and gives no reason; a second start in a session opens a second task.",
+      "desired_state": "proceed.plan (query) decides and explains; proceed (command) claims and starts idempotently; the /proceed skill is generated and names only the command; the six acceptance scenarios of ADR 0177 are cases.",
+      "scope": [
+        "apps/majordomus-cli/src/capability/builtin",
+        "apps/majordomus-cli/src/plan.rs",
+        ".ai/repo/skills/proceed",
+        "docs/PROCEED.md"
+      ],
+      "non_scope": [
+        "Mesh fencing and claim convergence (milestone mesh-journal-converges)",
+        "Landing and releasing (the landing and release seats, ADR 0167)"
+      ],
+      "acceptance_criteria": [
+        "A fresh session in any directory of the repository runs /proceed and is told its context, the board, the chosen issue and why, without any other instruction",
+        "Two sessions proceeding at once never hold the same issue or overlapping scope",
+        "A session whose work stopped is resumed or its claim released, never duplicated",
+        "Adding a dependency to the plan changes the ranking and its reason with no list edited",
+        "A finished task's head and receipt reach the landing seat; proceed merges nothing",
+        "Proceeding again with nothing changed creates no claim, worktree, task, commit or build"
+      ],
+      "validation": [
+        "bin/majordomus plan validate",
+        "bin/majordomus intent validate a-session-proceeds",
+        "bash test/run.sh 3367_a_session_is_told_what_to_proceed_with_and_why",
+        "bash test/run.sh 3440_an_id_is_taken_by_one_atomic_claim",
+        "bash test/run.sh 3441_the_choice_ranks_by_what_it_unblocks",
+        "bash test/run.sh 3443_proceeding_twice_creates_nothing"
+      ],
+      "evidence_required": [
+        "case_a_session_is_told_what_to_proceed_with_and_why",
+        "case_an_id_is_taken_by_one_atomic_claim",
+        "case_the_choice_ranks_by_what_it_unblocks",
+        "case_proceeding_twice_creates_nothing"
+      ],
+      "risks": [
+        "Without mesh fencing two machines can admit one claim; the loser must stop on the fold's verdict",
+        "A ranking that hides its terms becomes a second opinion nobody can check; every term is shown"
+      ],
+      "evidence": [],
+      "issues": [
+        "I2972",
+        "I2973",
+        "I2974",
+        "I2975",
+        "I2976",
+        "I2977",
+        "I2978",
+        "I2979",
+        "I3040"
+      ],
+      "mermaid": "flowchart LR\n    I2972[\"I2972<br/>One query decides what a session proceeds with, and says why\"]:::ready\n    I2973[\"I2973<br/>The choice ranks by what it unblocks\"]:::blocked\n    I2974[\"I2974<br/>Proceeding claims and starts the chosen work once\"]:::cancelled\n    I2975[\"I2975<br/>/proceed is a generated skill that names only the command\"]:::blocked\n    I2976[\"I2976<br/>Two sessions proceeding at once never hold the same work\"]:::cancelled\n    I2977[\"I2977<br/>A session whose work stopped is resumed, never duplicated\"]:::cancelled\n    I2978[\"I2978<br/>The UI shows what proceeding chose, what it refused and why\"]:::blocked\n    I2979[\"I2979<br/>A finished task hands its head and receipt to the landing seat\"]:::cancelled\n    I3040[\"I3040<br/>An id is taken by one atomic claim\"]:::ready\n    I2972 --> I2973\n    I2972 --> I2978\n    I2973 --> I2974\n    I2974 --> I2975\n    I2974 --> I2976\n    I2974 --> I2977\n    I2974 --> I2979\n    classDef done stroke:#16a34a,fill:#dcfce7,color:#14532d,stroke-width:2px\n    classDef active stroke:#2563eb,fill:#eff6ff,color:#1e3a8a,stroke-width:2px\n    classDef verify stroke:#7c3aed,fill:#f5f3ff,color:#4c1d95,stroke-width:2px\n    classDef ready stroke:#0891b2,fill:#ecfeff,color:#164e63,stroke-width:2px\n    classDef planned stroke:#0891b2,fill:#ecfeff,color:#164e63,stroke-width:2px\n    classDef blocked stroke:#b45309,fill:#fffbeb,color:#78350f,stroke-width:2px\n    classDef cancelled stroke:#6b7280,fill:#f9fafb,color:#374151,stroke-width:2px\n    classDef superseded stroke:#6b7280,fill:#f9fafb,color:#374151,stroke-width:2px",
+      "counts": {
+        "total": 9,
+        "required": 5,
+        "by_status": {
+          "READY": 2,
+          "BLOCKED": 3,
+          "ACTIVE": 0,
+          "VERIFY": 0,
+          "DONE": 0,
+          "CANCELLED": 4
+        }
+      }
+    },
+    {
       "id": "a-session-proceeds-through-the-mesh",
       "slug": "a-session-proceeds-through-the-mesh",
       "status": "PLANNED",
@@ -2230,79 +2303,6 @@
           "VERIFY": 0,
           "DONE": 0,
           "CANCELLED": 0
-        }
-      }
-    },
-    {
-      "id": "a-session-proceeds",
-      "slug": "a-session-proceeds",
-      "status": "PLANNED",
-      "order": 155,
-      "priority": "p1",
-      "title": "A session proceeds: one entrypoint resolves, reconciles, chooses, claims, executes, proves and hands on",
-      "problem": "Every step of a worker's start exists as a capability (brief.session, peers.list, mesh.state, plan.next, plan.waves, devtask, mesh.claim, worktree create, start, check, finish, the landing seat), and each session composes them by hand from bootstrap prose. plan.next ranks the lowest-wave READY issue by priority then id and knows nothing of a live claim, a held scope or what an issue unblocks; on 2026-10-17 sessions chose issues by grepping the board and two sessions took the same id three times in one day.",
-      "outcome": "`/proceed` in any session runs `majordomus proceed`: one explained decision from the existing capabilities, an exclusive claim, a worktree and a task bound to the chosen issue, the implement skill, finish, and a receipt handed to the landing seat; said again with nothing changed it creates nothing.",
-      "current_state": "No entrypoint composes the capabilities; plan.next is not claim-aware and gives no reason; a second start in a session opens a second task.",
-      "desired_state": "proceed.plan (query) decides and explains; proceed (command) claims and starts idempotently; the /proceed skill is generated and names only the command; the six acceptance scenarios of ADR 0177 are cases.",
-      "scope": [
-        "apps/majordomus-cli/src/capability/builtin",
-        "apps/majordomus-cli/src/plan.rs",
-        ".ai/repo/skills/proceed",
-        "docs/PROCEED.md"
-      ],
-      "non_scope": [
-        "Mesh fencing and claim convergence (milestone mesh-journal-converges)",
-        "Landing and releasing (the landing and release seats, ADR 0167)"
-      ],
-      "acceptance_criteria": [
-        "A fresh session in any directory of the repository runs /proceed and is told its context, the board, the chosen issue and why, without any other instruction",
-        "Two sessions proceeding at once never hold the same issue or overlapping scope",
-        "A session whose work stopped is resumed or its claim released, never duplicated",
-        "Adding a dependency to the plan changes the ranking and its reason with no list edited",
-        "A finished task's head and receipt reach the landing seat; proceed merges nothing",
-        "Proceeding again with nothing changed creates no claim, worktree, task, commit or build"
-      ],
-      "validation": [
-        "bin/majordomus plan validate",
-        "bin/majordomus intent validate a-session-proceeds",
-        "bash test/run.sh 3367_a_session_is_told_what_to_proceed_with_and_why",
-        "bash test/run.sh 3440_an_id_is_taken_by_one_atomic_claim",
-        "bash test/run.sh 3441_the_choice_ranks_by_what_it_unblocks",
-        "bash test/run.sh 3443_proceeding_twice_creates_nothing"
-      ],
-      "evidence_required": [
-        "case_a_session_is_told_what_to_proceed_with_and_why",
-        "case_an_id_is_taken_by_one_atomic_claim",
-        "case_the_choice_ranks_by_what_it_unblocks",
-        "case_proceeding_twice_creates_nothing"
-      ],
-      "risks": [
-        "Without mesh fencing two machines can admit one claim; the loser must stop on the fold's verdict",
-        "A ranking that hides its terms becomes a second opinion nobody can check; every term is shown"
-      ],
-      "evidence": [],
-      "issues": [
-        "I2972",
-        "I2973",
-        "I2974",
-        "I2975",
-        "I2976",
-        "I2977",
-        "I2978",
-        "I2979",
-        "I3040"
-      ],
-      "mermaid": "flowchart LR\n    I2972[\"I2972<br/>One query decides what a session proceeds with, and says why\"]:::ready\n    I2973[\"I2973<br/>The choice ranks by what it unblocks\"]:::blocked\n    I2974[\"I2974<br/>Proceeding claims and starts the chosen work once\"]:::cancelled\n    I2975[\"I2975<br/>/proceed is a generated skill that names only the command\"]:::blocked\n    I2976[\"I2976<br/>Two sessions proceeding at once never hold the same work\"]:::cancelled\n    I2977[\"I2977<br/>A session whose work stopped is resumed, never duplicated\"]:::cancelled\n    I2978[\"I2978<br/>The UI shows what proceeding chose, what it refused and why\"]:::blocked\n    I2979[\"I2979<br/>A finished task hands its head and receipt to the landing seat\"]:::cancelled\n    I3040[\"I3040<br/>An id is taken by one atomic claim\"]:::ready\n    I2972 --> I2973\n    I2972 --> I2978\n    I2973 --> I2974\n    I2974 --> I2975\n    I2974 --> I2976\n    I2974 --> I2977\n    I2974 --> I2979\n    classDef done stroke:#16a34a,fill:#dcfce7,color:#14532d,stroke-width:2px\n    classDef active stroke:#2563eb,fill:#eff6ff,color:#1e3a8a,stroke-width:2px\n    classDef verify stroke:#7c3aed,fill:#f5f3ff,color:#4c1d95,stroke-width:2px\n    classDef ready stroke:#0891b2,fill:#ecfeff,color:#164e63,stroke-width:2px\n    classDef planned stroke:#0891b2,fill:#ecfeff,color:#164e63,stroke-width:2px\n    classDef blocked stroke:#b45309,fill:#fffbeb,color:#78350f,stroke-width:2px\n    classDef cancelled stroke:#6b7280,fill:#f9fafb,color:#374151,stroke-width:2px\n    classDef superseded stroke:#6b7280,fill:#f9fafb,color:#374151,stroke-width:2px",
-      "counts": {
-        "total": 9,
-        "required": 5,
-        "by_status": {
-          "READY": 2,
-          "BLOCKED": 3,
-          "ACTIVE": 0,
-          "VERIFY": 0,
-          "DONE": 0,
-          "CANCELLED": 4
         }
       }
     },

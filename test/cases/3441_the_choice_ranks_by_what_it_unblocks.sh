@@ -64,6 +64,9 @@ pair I10000000000000000 I9999999999999999 I9999999999999999
 
 # ---------------------------------------------------------------- 4. a source that did not load
 plan_rc() { rc=0; "$RB" proceed plan --format json > "$T/d.json" 2>/dev/null || rc=$?; }
+# `majordomus init` ships an enabled mesh declaration (closed until a machine is enrolled), so
+# the repository is first made to declare none
+[ ! -e .ai/repo/mesh ] || { git rm -rq .ai/repo/mesh && git commit -qm "no mesh declared" >/dev/null; }
 plan_rc
 [ "$rc" = 0 ] && jq -e '.provisional == false and (.sources[] | select(.source == "mesh") | .state == "undeclared")
   and (.sources[] | select(.source == "plan") | .state == "read")' "$T/d.json" >/dev/null   || { echo "    with no declaration and a whole plan the decision is not final ($rc):"; cat "$T/d.json"; exit 1; }
