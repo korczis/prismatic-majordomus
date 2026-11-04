@@ -165,25 +165,24 @@ pub(crate) fn board_of_checkout(worktree: &Path) -> Vec<Peer> {
     let Some(url) = lease.document().and_then(|d| d.url.clone()) else {
         return Vec::new();
     };
-    let Some(path) = crate::command_graph::load::registry()
+    // no route is no answer: the same empty board as a refused request
+    crate::command_graph::load::registry()
         .and_then(|r| r.get("peers.list").and_then(|c| c.exposure.http.clone()))
-        .map(|h| h.path)
-    else {
-        return Vec::new();
-    };
-    crate::mcp::bridge::request(
-        &url,
-        "GET",
-        &format!("{path}?checkouts=this"),
-        &[],
-        None,
-        crate::lease::timings().probe_timeout,
-    )
-    .ok()
-    .filter(|r| r.status == 200)
-    .and_then(|r| serde_json::from_str::<serde_json::Value>(&r.body).ok())
-    .and_then(|v| serde_json::from_value(v["peers"].clone()).ok())
-    .unwrap_or_default()
+        .and_then(|h| {
+            crate::mcp::bridge::request(
+                &url,
+                "GET",
+                &format!("{}?checkouts=this", h.path),
+                &[],
+                None,
+                crate::lease::timings().probe_timeout,
+            )
+            .ok()
+        })
+        .filter(|r| r.status == 200)
+        .and_then(|r| serde_json::from_str::<serde_json::Value>(&r.body).ok())
+        .and_then(|v| serde_json::from_value(v["peers"].clone()).ok())
+        .unwrap_or_default()
 }
 
 /// A run record as the host keeps it while the run lives.

@@ -683,4 +683,98 @@ mod tests {
         assert!(!record.exists(), "the record ends with the run");
         assert!(!runs.join(format!("{tag}.stopped")).exists());
     }
+
+    /// A host stand-in that answers the record read with a record of `claude-code-a`, and
+    /// the stop with `stdout`, `host: said` on stderr and exit `code`, keeping its command in
+    /// `asked`; with `vanish`, it removes itself after the read, so the stop cannot start.
+    fn host(dir: &std::path::Path, stdout: &str, code: i32, vanish: bool) -> std::path::PathBuf {
+        use std::os::unix::fs::PermissionsExt;
+        let p = dir.join("host");
+        let asked = dir.join("asked");
+        let gone = if vanish { "rm -f \"$0\"" } else { ":" };
+        let body = format!(
+            "#!/bin/sh\ncase \"$1\" in\n  *members*) printf '%s\\n' \"$1\" > '{asked}'; \
+             printf '{stdout}'; echo 'host: said' >&2; exit {code} ;;\nesac\n{gone}\n\
+             printf 'majordomus-offload-run/v1\\ntag 0123456789\\npid 7\\npgid 8\\nhost h\\n\
+             owner_session claude-code-a\\n'\n",
+            asked = asked.display()
+        );
+        std::fs::write(&p, body).unwrap();
+        std::fs::set_permissions(&p, std::fs::Permissions::from_mode(0o755)).unwrap();
+        p
+    }
+
+    /// What the host's stop says is reported as it is: a group that is no longer the run's
+    /// (4), members that survived KILL (5), any other end, and a host that cannot be reached
+    /// for the stop after it answered the read. A forced stop by a caller with no session
+    /// is made by `unnamed`.
+    #[test]
+    fn a_stop_the_host_refuses_or_cannot_finish_is_reported_as_the_host_said() {
+        let tmp = tempfile::tempdir().unwrap();
+        let req = StopRequest {
+            tag: "0123456789".into(),
+            force: true,
+            grace_seconds: 1,
+            ..StopRequest::default()
+        };
+        let stop_through = |stdout: &str, code: i32, vanish: bool| {
+            let remote = Remote::through(&host(tmp.path(), stdout, code, vanish));
+            let mut log = Vec::new();
+            let r = stop_on(
+                &remote,
+                "lundra",
+                "/q.runs",
+                &req,
+                &RunOwner::default(),
+                &mut log,
+            );
+            (r, String::from_utf8(log).unwrap())
+        };
+        let (r, log) = stop_through("members 2\\nreused\\n", 4, false);
+        let e = r.unwrap_err();
+        assert_eq!(e.code, EXIT_UNAVAILABLE);
+        assert!(
+            e.reason
+                .contains("process group 8 on lundra is not run 0123456789's any more")
+                && e.reason.contains("MAJORDOMUS_OWNER_RUN=0123456789")
+                && e.reason.contains("nothing was signalled"),
+            "{}",
+            e.reason
+        );
+        assert!(
+            log.contains("owner claude-code-a") && log.contains("host: said"),
+            "{log}"
+        );
+        let asked = std::fs::read_to_string(tmp.path().join("asked")).unwrap();
+        assert!(
+            asked.contains("unnamed"),
+            "a caller with no session: {asked}"
+        );
+
+        let (r, _) = stop_through("members 2\\nsurvivors 8 9\\n", 5, false);
+        let e = r.unwrap_err();
+        assert_eq!(e.code, EXIT_UNAVAILABLE);
+        assert!(
+            e.reason.contains(
+                "process group 8 on lundra survived TERM and KILL: members 2\nsurvivors 8 9"
+            ),
+            "{}",
+            e.reason
+        );
+
+        let (r, _) = stop_through("", 9, false);
+        let e = r.unwrap_err();
+        assert_eq!(e.code, EXIT_UNAVAILABLE);
+        assert_eq!(e.reason, "lundra: the stop ended with Some(9): host: said");
+
+        let (r, _) = stop_through("", 0, true);
+        let e = r.unwrap_err();
+        assert_eq!(e.code, EXIT_UNAVAILABLE);
+        assert!(e.reason.starts_with("lundra: "), "{}", e.reason);
+        assert!(
+            !e.reason.contains("ended with"),
+            "the stop never ran: {}",
+            e.reason
+        );
+    }
 }

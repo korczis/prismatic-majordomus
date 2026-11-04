@@ -1169,6 +1169,28 @@ fn the_command_refuses_what_it_cannot_read_or_write() {
         let out = closed(args);
         assert!(refused(&out, 13).contains("<stdout>: "), "{args:?}");
     }
+
+    // a stop that succeeded on its host (a leftover record whose group is empty) and
+    // could not say so: a child that has ended and been reaped stands for the group
+    let mut ended = Command::new("true").spawn().unwrap();
+    let dead = ended.id();
+    ended.wait().unwrap();
+    let runs = c.root.join("queue.runs");
+    std::fs::create_dir_all(&runs).unwrap();
+    std::fs::write(
+        runs.join("abcdefabcd.run"),
+        format!(
+            "majordomus-offload-run/v1\ntag abcdefabcd\npid {dead}\npgid {dead}\nhost h0\n\
+             owner_session claude-code-someone\n"
+        ),
+    )
+    .unwrap();
+    let out = closed(&["stop", "abcdefabcd", "--force", "--declaration", decl]);
+    assert!(refused(&out, 13).contains("<stdout>: "), "stop");
+    assert!(
+        !runs.join("abcdefabcd.run").exists(),
+        "the stop ran on its host before it could not be reported"
+    );
 }
 
 /// A repository whose layer declares no host says so, and contacts nobody.

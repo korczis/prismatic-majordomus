@@ -481,11 +481,10 @@ fn join(
             Some(row) => {
                 owner.peer.get_or_insert_with(|| row.id.to_string());
                 owner.checkout = row.checkout.as_ref().map(|c| c.worktree.clone());
-                if let Some(a) = &row.address {
-                    owner.address = Some(a.clone());
-                    if owner.session.is_none() {
-                        owner.session = a.mesh_session();
-                    }
+                // a row board_row returns always carries an address
+                owner.address = row.address.clone().or(owner.address.take());
+                if owner.session.is_none() {
+                    owner.session = row.address.as_ref().and_then(PeerAddress::mesh_session);
                 }
                 owner.basis.push(format!(
                     "board row {}{} carries the address",
@@ -1347,7 +1346,9 @@ fn claims(ctx: &Context, root: &Path, url: Option<String>) -> Result<Vec<ClaimVi
             .mesh
             .cooperation_status()
             .reason
-            .unwrap_or_else(|| "cooperation is not active".into()));
+            .as_deref()
+            .unwrap_or("cooperation is not active")
+            .to_string());
     }
     let url = url.ok_or("no server of this repository is ready to ask")?;
     let path = ctx
@@ -2420,5 +2421,456 @@ mod tests {
             Some(v) => assert_eq!(p.sessions, v),
             None => assert_eq!(p.sessions, "", "the host's own ~/.claude/sessions"),
         }
+    }
+
+    /// A socket directory the environment names is the one read, and a blank session
+    /// directory is the host's own. The values set here read as the defaults do, so a test
+    /// reading the variables meanwhile sees nothing change; a variable already set is left.
+    #[test]
+    fn a_socket_or_session_directory_the_environment_names_is_read() {
+        let set_if_unset = |var: &str, value: &str| {
+            let unset = std::env::var_os(var).is_none();
+            if unset {
+                std::env::set_var(var, value);
+            }
+            unset
+        };
+        let socks_unset = set_if_unset(SOCKET_DIR_ENV, SOCKET_DIR);
+        let sessions_unset = set_if_unset(SESSION_DIR_ENV, "  ");
+        let (socks, sessions) = (socket_dir(), session_dir());
+        if socks_unset {
+            std::env::remove_var(SOCKET_DIR_ENV);
+            assert_eq!(socks, SOCKET_DIR);
+        }
+        if sessions_unset {
+            std::env::remove_var(SESSION_DIR_ENV);
+            assert_eq!(sessions, "", "a blank directory is the host's own");
+        }
+    }
+
+    fn checkout(id: &str, worktree: &Path, this_checkout: bool) -> crate::peers::PeerCheckout {
+        crate::peers::PeerCheckout {
+            id: id.into(),
+            worktree: worktree.to_path_buf(),
+            branch: None,
+            this_checkout,
+        }
+    }
+
+    #[test]
+    fn a_record_line_outside_any_record_is_ignored() {
+        let f = parse_facts("| tag stray\nproc 30 20 30\n| pid 5\n");
+        assert_eq!(f.chain.len(), 1);
+        assert!(f.records.is_empty(), "{f:?}");
+    }
+
+    /// The owner variables of a process's environment name it, and what a provider's
+    /// registry, a run record or a live claim says besides is not taken over them: the
+    /// record matched by its tag names nothing new, so no basis cites it.
+    #[test]
+    fn the_owner_variables_win_and_a_record_or_claim_adds_nothing_already_named() {
+        let mut me = proc(30, 20, 7);
+        for (k, v) in [
+            ("MAJORDOMUS_OWNER_SESSION", "claude-code-s9"),
+            ("MAJORDOMUS_OWNER_PEER", "p4"),
+            ("MAJORDOMUS_OWNER_ISSUE", "I3956"),
+            ("MAJORDOMUS_OWNER_RUN", "aaaaaaaaaa"),
+        ] {
+            me.env.insert(k.into(), v.into());
+        }
+        let mut provider = proc(20, 1, 20);
+        provider.socket = Some("/tmp/cc-socks/20.sock".into());
+        provider.provider_session = Some(ProviderSession {
+            session: Some("other".into()),
+            name: Some("mj-39".into()),
+            socket: None,
+            started: None,
+            verified: true,
+        });
+        let facts = Facts {
+            chain: vec![me, provider],
+            runs: Some("/q".into()),
+            records: vec![RecordRead {
+                file: "/q/aaaaaaaaaa.run".into(),
+                record: Ok(record(
+                    "aaaaaaaaaa",
+                    7,
+                    6,
+                    Some("claude-code-old"),
+                    Some("I1"),
+                )),
+            }],
+        };
+        let claims = vec![claim(
+            "claude-code-s9",
+            Some("I9"),
+            &["apps"],
+            ClaimState::Held,
+        )];
+        // the board row carrying that session, whose address does not replace it
+        let b = board(&[(Some(address(Some("s9"), 20, "mac")), None, &[], true)]);
+        let r = answer(
+            "30",
+            &Subject::parse("30").unwrap(),
+            &sources(Ok(facts), Ok(b), Ok(claims)),
+        );
+        let o = &r.owners[0];
+        assert_eq!(
+            (
+                o.session.as_deref(),
+                o.peer.as_deref(),
+                o.issue.as_deref(),
+                o.name.as_deref()
+            ),
+            (
+                Some("claude-code-s9"),
+                Some("p4"),
+                Some("I3956"),
+                Some("mj-39")
+            )
+        );
+        assert!(
+            o.basis
+                .iter()
+                .any(|b| b == "MAJORDOMUS_OWNER_SESSION in the environment of pid 30"),
+            "{:?}",
+            o.basis
+        );
+        assert!(
+            !o.basis
+                .iter()
+                .any(|b| b.starts_with("run record") || b.starts_with("mesh claim")),
+            "{:?}",
+            o.basis
+        );
+        assert_eq!(r.run.as_ref().map(|r| r.tag.as_str()), Some("aaaaaaaaaa"));
+        assert!(used(&r, "run_records") && used(&r, "mesh_claims") && used(&r, "board"));
+    }
+
+    /// A process whose provider the registry names, with no session of its own anywhere,
+    /// is named by the board row whose address is that provider's pid: the row's session,
+    /// its peer and its checkout.
+    #[test]
+    fn a_board_row_found_by_the_providers_pid_names_the_session_and_its_checkout() {
+        let mut provider = proc(20, 1, 20);
+        provider.provider_session = Some(ProviderSession {
+            session: None,
+            name: Some("mj-40".into()),
+            socket: Some("/tmp/cc-socks/20.sock".into()),
+            started: None,
+            verified: true,
+        });
+        let facts = Facts {
+            chain: vec![proc(30, 20, 30), provider],
+            ..Facts::default()
+        };
+        let mut b = board(&[(Some(address(Some(SID), 20, "mac")), None, &[], true)]);
+        b[0].checkout = Some(checkout("c1", Path::new("/repo-wt/who"), false));
+        let r = answer(
+            "30",
+            &Subject::parse("30").unwrap(),
+            &sources(Ok(facts), Ok(b), Ok(Vec::new())),
+        );
+        assert!(r.known, "{r:?}");
+        let o = &r.owners[0];
+        assert_eq!(o.session.as_deref(), Some("claude-code-877e4b89"));
+        assert_eq!(
+            (o.peer.as_deref(), o.name.as_deref()),
+            (Some("p1"), Some("mj-40"))
+        );
+        assert_eq!(o.checkout.as_deref(), Some(Path::new("/repo-wt/who")));
+        assert!(
+            o.basis
+                .iter()
+                .any(|b| b == "board row p1 of /repo-wt/who carries the address"),
+            "{:?}",
+            o.basis
+        );
+    }
+
+    /// An issue's owners are one per session, else per board peer and checkout, else per
+    /// fact; a holder named twice is one owner with both facts, and an owner with only a
+    /// session is joined with the board row carrying it.
+    #[test]
+    fn an_issues_owners_are_one_per_session_peer_or_fact_and_joined_with_the_board() {
+        let mut b = board(&[
+            (None, Some("I5 the guard"), &[], true),
+            (Some(address(Some(SID), 20, "mac")), Some("I5 a"), &[], true),
+            (Some(address(Some(SID), 21, "mac")), Some("I5 b"), &[], true),
+            (
+                Some(address(Some("yy"), 22, "mac")),
+                Some("other"),
+                &[],
+                true,
+            ),
+        ]);
+        b[0].checkout = Some(checkout("c1", Path::new("/wt/a"), false));
+        b[0].claims[0].name = Some("slice-a".into());
+        b[1].checkout = Some(checkout("c2", Path::new("/wt/b"), false));
+        b[3].checkout = Some(checkout("c4", Path::new("/wt/d"), false));
+        let held = |session: &str, scope: &str| {
+            claim(
+                &format!("{STREAM}/{session}"),
+                Some("I5"),
+                &[scope],
+                ClaimState::Held,
+            )
+        };
+        let claims = vec![
+            held("board-p9", "apps"),
+            held("board-p9", "docs"),
+            held("claude-code-zz", "a"),
+            held("claude-code-zz", "b"),
+            held("claude-code-yy", "c"),
+        ];
+        let facts = Facts {
+            records: vec![RecordRead {
+                file: "/q/aaaaaaaaaa.run".into(),
+                record: Ok(record("aaaaaaaaaa", 7, 6, None, Some("I5"))),
+            }],
+            runs: Some("/q".into()),
+            ..Facts::default()
+        };
+        let r = answer(
+            "I5",
+            &Subject::parse("I5").unwrap(),
+            &sources(Ok(facts), Ok(b), Ok(claims)),
+        );
+        let owner = |session: Option<&str>, peer: Option<&str>| {
+            r.owners
+                .iter()
+                .find(|o| o.session.as_deref() == session && o.peer.as_deref() == peer)
+                .unwrap_or_else(|| panic!("no owner {session:?}/{peer:?}: {:?}", r.owners))
+        };
+        assert_eq!(r.owners.len(), 6, "{:?}", r.owners);
+        let guard = owner(None, Some("p1"));
+        assert_eq!(guard.basis, ["p1 announced I5 (claim slice-a)"]);
+        assert_eq!(guard.checkout.as_deref(), Some(Path::new("/wt/a")));
+        assert_eq!(guard.issue.as_deref(), Some("I5"));
+        let twice = owner(Some("claude-code-877e4b89"), Some("p2"));
+        assert_eq!(twice.basis.len(), 2, "{:?}", twice.basis);
+        assert_eq!(twice.address.as_ref().and_then(|a| a.pid), Some(20));
+        assert_eq!(twice.checkout.as_deref(), Some(Path::new("/wt/b")));
+        let joined = owner(Some("claude-code-yy"), Some("p4"));
+        assert_eq!(joined.checkout.as_deref(), Some(Path::new("/wt/d")));
+        assert_eq!(joined.address.as_ref().and_then(|a| a.pid), Some(22));
+        assert!(
+            joined
+                .basis
+                .iter()
+                .any(|b| b == "board row p4 carries the session"),
+            "{:?}",
+            joined.basis
+        );
+        assert_eq!(owner(Some("claude-code-zz"), None).basis.len(), 2);
+        let board_peer = owner(None, Some("p9"));
+        assert_eq!(
+            (board_peer.basis.len(), board_peer.issue.as_deref()),
+            (2, Some("I5"))
+        );
+        assert_eq!(
+            owner(None, None).basis,
+            ["run record aaaaaaaaaa on lundra names I5"]
+        );
+    }
+
+    /// A path is read against the checkout of each board row: under that checkout it meets
+    /// the row's scope, and the same relative path under another directory does not.
+    #[test]
+    fn a_path_is_read_against_the_checkout_of_each_board_row() {
+        let dir = tempfile::tempdir().unwrap();
+        let (root, wt) = (dir.path().join("primary"), dir.path().join("wt"));
+        let mut b = board(&[(
+            Some(address(Some(SID), 20, "mac")),
+            Some("who"),
+            &["apps/x"],
+            true,
+        )]);
+        b[0].checkout = Some(checkout("c1", &wt, false));
+        let src = Sources {
+            root: root.clone(),
+            ..sources(Ok(Facts::default()), Ok(b), Ok(Vec::new()))
+        };
+        let path = format!("{}/apps/x/y.rs", wt.display());
+        let r = answer(&path, &Subject::parse(&path).unwrap(), &src);
+        assert_eq!(r.owners.len(), 1, "{r:?}");
+        assert_eq!(r.owners[0].checkout.as_deref(), Some(wt.as_path()));
+        let primary = format!("{}/apps/x/y.rs", root.display());
+        let r = answer(&primary, &Subject::parse(&primary).unwrap(), &src);
+        assert!(!r.known, "not the row's checkout: {r:?}");
+    }
+
+    /// A declared host is reached by its name, or as the declaration's only one when a tag
+    /// names none; nothing is contacted to reach it.
+    #[test]
+    fn a_declared_host_is_reached_by_name_or_as_the_only_one() {
+        let dir = tempfile::tempdir().unwrap();
+        let (_repo, two) = context(Some(declaration(dir.path(), 2)));
+        let (remote, label, runs) = reach(&two, Some("h1"), false).unwrap();
+        assert_eq!((remote.label.as_str(), label.as_str()), ("h1", "h1"));
+        assert_eq!(
+            runs,
+            Some(format!("{}.runs", dir.path().join("queue").display()))
+        );
+        let (_repo, one) = context(Some(declaration(dir.path(), 1)));
+        let (_, label, _) = reach(&one, None, true).unwrap();
+        assert_eq!(label, "h0");
+    }
+
+    /// A context whose registry holds only these modules.
+    fn context_of(
+        modules: Vec<crate::capability::ModuleDescriptor>,
+    ) -> (crate::synthetic::SyntheticRepository, Context) {
+        let repo = crate::synthetic::SyntheticRepository::small().unwrap();
+        let index = repo.index().unwrap();
+        let registry = crate::capability::CapabilityRegistry::builder()
+            .with_modules(modules)
+            .with_index(&index)
+            .build()
+            .expect("the registry builds");
+        let ctx = Context::new(std::sync::Arc::new(index), std::sync::Arc::new(registry));
+        (repo, ctx)
+    }
+
+    /// A server that answers one request with `status` and `body`; the request it read.
+    fn serve(status: &'static str, body: String) -> (String, std::thread::JoinHandle<String>) {
+        use std::io::{Read, Write};
+        let listener = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
+        let url = format!("http://{}", listener.local_addr().unwrap());
+        let handle = std::thread::spawn(move || {
+            let (mut stream, _) = listener.accept().unwrap();
+            let mut buf = [0u8; 4096];
+            let n = stream.read(&mut buf).unwrap();
+            let reply = format!(
+                "HTTP/1.1 {status}\r\nContent-Type: application/json\r\nContent-Length: {}\r\n\
+                 Connection: close\r\n\r\n{body}",
+                body.len()
+            );
+            stream.write_all(reply.as_bytes()).unwrap();
+            String::from_utf8_lossy(&buf[..n]).into_owned()
+        });
+        (url, handle)
+    }
+
+    /// A lease of the checkout at `root`, naming `pid` and `url`.
+    fn lease(root: &Path, pid: u32, url: &str) {
+        let half = crate::capability::builtin::server::local_half(root);
+        let file = crate::lease::lease_file(root, &half);
+        std::fs::create_dir_all(file.parent().unwrap()).unwrap();
+        std::fs::write(
+            &file,
+            serde_json::json!({
+                "schema": crate::lease::SCHEMA, "token": "t", "root": root, "pid": pid,
+                "url": url,
+            })
+            .to_string(),
+        )
+        .unwrap();
+    }
+
+    /// The claims are this process's own when it cooperates; a process that is the
+    /// checkout's server and does not cooperate says why; otherwise they are asked of the
+    /// ready server, whose every answer that is not the claims is a reason.
+    #[test]
+    fn the_claims_are_this_processs_or_the_ready_servers() {
+        let dir = tempfile::tempdir().unwrap();
+        let root = dir.path();
+        let (_repo, ctx) = context(None);
+        assert_eq!(
+            super::claims(&ctx, root, None),
+            Err("no server of this repository is ready to ask".to_string())
+        );
+        let closed = format!(
+            "http://{}",
+            std::net::TcpListener::bind("127.0.0.1:0")
+                .unwrap()
+                .local_addr()
+                .unwrap()
+        );
+        let e = super::claims(&ctx, root, Some(closed.clone())).unwrap_err();
+        assert!(e.contains("did not answer"), "{e}");
+        let held = claim("claude-code-x", Some("I7"), &["apps"], ClaimState::Held);
+        let active = serde_json::json!({ "active": true, "state": { "claims": [held] } });
+        for (status, body, want) in [
+            (
+                "500 Internal Server Error",
+                "{}".to_string(),
+                Err("answered 500"),
+            ),
+            ("200 OK", "not json".to_string(), Err("")),
+            (
+                "200 OK",
+                r#"{"active":false,"reason":"the mesh is off"}"#.to_string(),
+                Err("the mesh is off"),
+            ),
+            (
+                "200 OK",
+                r#"{"active":false}"#.to_string(),
+                Err("cooperation is not active"),
+            ),
+            (
+                "200 OK",
+                r#"{"active":true,"state":{"claims":"none"}}"#.to_string(),
+                Err("invalid type"),
+            ),
+            ("200 OK", active.to_string(), Ok(())),
+        ] {
+            let (url, handle) = serve(status, body);
+            let got = super::claims(&ctx, root, Some(url));
+            let request = handle.join().unwrap();
+            assert!(request.contains("view=full"), "{request}");
+            match want {
+                Ok(()) => assert_eq!(got, Ok(vec![held.clone()])),
+                Err(w) => assert!(got.as_ref().is_err_and(|e| e.contains(w)), "{got:?}"),
+            }
+        }
+        let (_repo, no_mesh) = context_of(vec![crate::capability::builtin::peers::module()]);
+        assert_eq!(
+            super::claims(&no_mesh, root, Some(closed.clone())),
+            Err("mesh.state declares no HTTP route".to_string())
+        );
+
+        lease(root, std::process::id(), &closed);
+        assert!(serving(root));
+        let e = super::claims(&ctx, root, Some(closed)).unwrap_err();
+        assert!(!e.is_empty(), "the server says why it does not cooperate");
+        // the server's own list is its own checkout's board already: nothing is asked
+        assert_eq!(
+            board_of_list(&serde_json::json!({ "peers": [] }), root),
+            Ok(Vec::new())
+        );
+
+        crate::mesh::testing::attach(&ctx, crate::mesh::testing::cooperation());
+        assert_eq!(super::claims(&ctx, root, None), Ok(Vec::new()));
+    }
+
+    /// The board is not read when `peers.list` cannot be asked; read from a list, this
+    /// checkout's rows are replaced by its own server's board when this process is not it.
+    #[test]
+    fn this_checkouts_rows_come_from_its_own_server() {
+        let (_repo, no_peers) = context_of(vec![crate::capability::builtin::mesh::module()]);
+        let dir = tempfile::tempdir().unwrap();
+        let (b, url) = super::board(&no_peers, dir.path());
+        assert!(b.is_err() && url.is_none(), "{b:?} {url:?}");
+
+        let mut listed = board(&[
+            (Some(address(Some("stale"), 30, "mac")), None, &[], true),
+            (Some(address(Some("there"), 31, "mac")), None, &[], true),
+        ]);
+        let this = checkout("c1", dir.path(), true);
+        listed[0].checkout = Some(this.clone());
+        listed[1].checkout = Some(checkout("c2", Path::new("/elsewhere"), false));
+        let own = board(&[(Some(address(Some("own"), 40, "mac")), None, &[], true)]);
+        let (url, handle) = serve("200 OK", serde_json::json!({ "peers": own }).to_string());
+        lease(dir.path(), 1, &url);
+        assert!(!serving(dir.path()));
+        let peers = board_of_list(&serde_json::json!({ "peers": listed }), dir.path()).unwrap();
+        handle.join().unwrap();
+        let pids: Vec<Option<u32>> = peers
+            .iter()
+            .map(|p| p.address.as_ref().and_then(|a| a.pid))
+            .collect();
+        assert_eq!(pids, [Some(31), Some(40)], "{peers:?}");
+        assert_eq!(peers[1].checkout.as_ref(), Some(&this));
     }
 }

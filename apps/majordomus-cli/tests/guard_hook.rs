@@ -28,6 +28,54 @@ fn hook(dir: &std::path::Path, payload: &str) -> i32 {
     status.code().expect("an exit code")
 }
 
+/// A shell command that starts a build on a host the checkout declares for the offload is
+/// refused with 2 before the edit guard is asked, the rule and the way on stderr (I3956); a
+/// read on that host is let through.
+#[test]
+fn a_raw_ssh_build_on_a_declared_host_is_refused_with_the_way() {
+    let f = common::Fixture::new();
+    f.write(
+        ".ai/repo/offload/derive.yaml",
+        "schema: derive-offload/v1\nkind: derive-offload\nid: derive\n\
+         hosts:\n  - id: lundra\n    address: korczis@100.65.22.118\n",
+    );
+    let run = |command: &str| {
+        let payload = serde_json::json!({
+            "tool_name": "Bash",
+            "tool_input": { "command": command },
+            "cwd": f.root(),
+        })
+        .to_string();
+        let mut child = common::majordomus()
+            .args(["guard", "hook", "--provider", "claude-code"])
+            .current_dir(f.root())
+            .stdin(Stdio::piped())
+            .stdout(Stdio::null())
+            .stderr(Stdio::piped())
+            .spawn()
+            .expect("the executable starts");
+        child
+            .stdin
+            .take()
+            .expect("a stdin")
+            .write_all(payload.as_bytes())
+            .expect("the payload is written");
+        let out = child.wait_with_output().expect("the hook ends");
+        (
+            out.status.code().expect("an exit code"),
+            String::from_utf8_lossy(&out.stderr).into_owned(),
+        )
+    };
+    let (code, err) = run("ssh lundra 'cd ~/dev/x; cargo test --doc'");
+    assert_eq!(code, 2, "{err}");
+    assert!(
+        err.contains("majordomus offload derive --host lundra"),
+        "{err}"
+    );
+    let (code, err) = run("ssh lundra df -h");
+    assert_eq!(code, 0, "{err}");
+}
+
 #[test]
 fn the_guard_lets_the_tool_run_when_the_payload_names_no_file_of_a_repository() {
     let dir = tempfile::tempdir().unwrap();
