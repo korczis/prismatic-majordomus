@@ -1266,9 +1266,7 @@ mod tests {
     }
 
     fn worktrees_beside(repo: &crate::synthetic::SyntheticRepository) -> std::path::PathBuf {
-        let mut name = repo.root().file_name().unwrap().to_os_string();
-        name.push("-wt");
-        repo.root().with_file_name(name)
+        crate::worktree::path::container_root(repo.root()).expect("a fixture's worktree container")
     }
 
     #[test]
