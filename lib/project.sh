@@ -47,13 +47,14 @@ mj_project_load() {
   MJ_PJ_MILESTONES=""; MJ_PJ_ISSUES=""
   # the records in one collation whatever the shell's locale: a glob sorts by the locale,
   # and the row order of the model must not depend on who loaded it
-  set -- ; for f in $(cd "$dir/milestones" 2>/dev/null && ls -1 2>/dev/null | LC_ALL=C sort); do
-    case "$f" in *.yaml) [ -f "$dir/milestones/$f" ] && set -- "$@" "$dir/milestones/$f" ;; esac
+  # (the ids are collated, not the filenames: with the suffix in, `m-x.yaml` sorts before
+  # `m.yaml` where the executable's order puts m first)
+  set -- ; for id in $(cd "$dir/milestones" 2>/dev/null && ls -1 2>/dev/null | sed -n 's/\.yaml$//p' | LC_ALL=C sort); do
+    [ -f "$dir/milestones/$id.yaml" ] && set -- "$@" "$dir/milestones/$id.yaml"
   done
   for f in "$@"; do MJ_PJ_MILESTONES="$MJ_PJ_MILESTONES $(basename "$f" .yaml)"; done
-  for f in $(cd "$dir/issues" 2>/dev/null && ls -1 2>/dev/null | LC_ALL=C sort); do
-    case "$f" in *.yaml) ;; *) continue ;; esac
-    f="$dir/issues/$f"
+  for f in $(cd "$dir/issues" 2>/dev/null && ls -1 2>/dev/null | sed -n 's/\.yaml$//p' | LC_ALL=C sort); do
+    f="$dir/issues/$f.yaml"
     [ -f "$f" ] || continue
     id="$(basename "$f" .yaml)"
     # one id, one record: the flat directory is keyed by the filename, so a milestone and
