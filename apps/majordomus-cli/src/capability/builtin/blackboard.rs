@@ -48,9 +48,11 @@ pub(crate) const MAX_CONFLICTS: usize = 100;
 /// The most open reviews and untaken handovers one answer lists, each.
 pub(crate) const MAX_RECORDS: usize = 50;
 
-/// The monitor sources asked when the caller does not say: the ones this machine answers.
-/// GitHub is asked only when the caller names it — it is not who is here, and it is the network.
-const DEFAULT_SOURCES: &str = "mesh,executor";
+/// The monitor sources asked when the caller does not say: the ones the declaration marks as
+/// followed by default, which this machine answers. GitHub is asked only when the caller
+/// names it — it is not who is here, and it is the network (crate::monitor::SOURCES, I2944).
+static DEFAULT_SOURCES: std::sync::LazyLock<String> =
+    std::sync::LazyLock::new(crate::monitor::MonitorSource::followed_by_default);
 
 #[derive(Debug, Default, Serialize, Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
@@ -927,7 +929,7 @@ fn read(
             MonitorInput {
                 after: None,
                 limit: Some(wanted),
-                sources: Some(input.sources.unwrap_or_else(|| DEFAULT_SOURCES.into())),
+                sources: Some(input.sources.unwrap_or_else(|| DEFAULT_SOURCES.clone())),
                 reader: input.reader,
                 since: None,
             },
@@ -1561,7 +1563,7 @@ mod tests {
                 case.name
             );
         }
-        let default = super::super::monitor::wanted(Some(DEFAULT_SOURCES)).unwrap();
+        let default = super::super::monitor::wanted(Some(DEFAULT_SOURCES.as_str())).unwrap();
         assert!(!default.contains(&crate::monitor::MonitorSource::Github));
     }
 }

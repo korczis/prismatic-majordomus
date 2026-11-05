@@ -6,23 +6,23 @@
     "version": "1.0.0-alpha.10"
   },
   "registry": {
-    "fingerprint": "01dc8581f5265a228ea8c59dbe1da65321423c2b6146ab4fc39895cb2eeb9d7b",
+    "fingerprint": "d20bf4f1835ddef31c41b27c38e7e76531fd07c16645c68b110da9654ef235d6",
     "summary": {
-      "total": 3851,
+      "total": 3853,
       "builtin": 230,
-      "declarative": 3621,
+      "declarative": 3623,
       "by_kind": {
         "command": 41,
         "query": 189,
-        "resource": 3621
+        "resource": 3623
       },
       "by_stability": {
         "behaviorally_verified": 153,
         "experimental": 67,
-        "implemented": 3631
+        "implemented": 3633
       },
       "mcp_tools": 214,
-      "mcp_resources": 3678,
+      "mcp_resources": 3680,
       "http_routes": 218,
       "cli_commands": 127,
       "modules": 96,
@@ -62333,7 +62333,7 @@
                   "string",
                   "null"
                 ],
-                "description": "A comma-separated subset of `mesh`, `executor` and `github` (default: all three)."
+                "description": "A comma-separated subset of the monitor's sources (`mesh`, `executor`, `github`); a\nname that is not one is refused with every source's name (default: all of them)."
               },
               "for": {
                 "type": [
@@ -96635,7 +96635,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 1215,
+        "capabilities": 1216,
         "capability_ids": []
       },
       {
@@ -97247,7 +97247,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 691,
+        "capabilities": 692,
         "capability_ids": []
       },
       {
@@ -97340,7 +97340,7 @@
     ]
   },
   "index": {
-    "fingerprint": "77f5389ec1ec50d789d1324ace05bbc8d21dac5258c8428294997b55ee049b47",
+    "fingerprint": "74674d14e2acaac7a0927ebcd62f789b8c92cf90d61d11f826e364635ed3adcd",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -97380,7 +97380,7 @@
       "gap": 5,
       "implementation": 54,
       "intent": 45,
-      "issue": 1215,
+      "issue": 1216,
       "knowledge": 104,
       "mesh-declaration": 1,
       "milestone": 117,
@@ -97394,7 +97394,7 @@
       "session": 94,
       "skill": 10,
       "taxonomy": 10,
-      "test": 691,
+      "test": 692,
       "use-case": 49,
       "workspace": 1
     },
@@ -104874,7 +104874,7 @@
         "title": "The monitor",
         "path": "docs/MONITOR.md",
         "source_class": "document",
-        "bytes": 9961
+        "bytes": 10769
       },
       {
         "uri": "majordomus://document/docs/OFFLOAD.md",
@@ -104937,7 +104937,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 131609
+        "bytes": 131772
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -114499,6 +114499,17 @@
         "section": "project",
         "source_class": "issue",
         "bytes": 3196
+      },
+      {
+        "uri": "majordomus://issue/I2944",
+        "kind": "issue",
+        "identity": "I2944",
+        "title": "A monitor source is declared once, and every surface derives its inventory from that declaration",
+        "description": "One table, SOURCES in apps/majordomus-cli/src/monitor/mod.rs, declares every monitor source with its name, cursor tag, whether a follower reads it unasked and whether its positions are coarse. MonitorSource's inventory, parse and name, the refusal that lists the sources, the follow channel's accepted names and default, the blackboard's default, the cursor's parts and the fold's lanes are read from it, so a new source is its variant, its row and its reader, and nothing else lists it.",
+        "path": ".ai/repo/project/issues/I2944.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 4000
       },
       {
         "uri": "majordomus://issue/I2962",
@@ -133010,6 +133021,14 @@
         "bytes": 2323
       },
       {
+        "uri": "majordomus://test/test/cases/3344_a_monitor_source_is_declared_once.sh",
+        "kind": "test",
+        "identity": "test/cases/3344_a_monitor_source_is_declared_once.sh",
+        "path": "test/cases/3344_a_monitor_source_is_declared_once.sh",
+        "source_class": "case",
+        "bytes": 2853
+      },
+      {
         "uri": "majordomus://test/test/cases/334_ui_audit_hears_uncaught_errors.sh",
         "kind": "test",
         "identity": "test/cases/334_ui_audit_hears_uncaught_errors.sh",
@@ -136924,7 +136943,7 @@
       "identity": [
         "id"
       ],
-      "objects": 1215
+      "objects": 1216
     },
     {
       "name": "knowledge",
@@ -137086,7 +137105,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 691
+      "objects": 692
     },
     {
       "name": "use-case",
@@ -161049,7 +161068,7 @@
             "name": "sources",
             "long": "sources",
             "positional": false,
-            "help": "A comma-separated subset of mesh, executor and github (default: all three)",
+            "help": "A comma-separated subset of the monitor's sources; an unknown name is refused with every source's name (default: all of them)",
             "value_name": "SOURCES",
             "takes_value": true,
             "required": false,
@@ -170728,7 +170747,7 @@
             "name": "sources",
             "long": "sources",
             "positional": false,
-            "help": "The monitor sources the signals are read from, a comma-separated subset of mesh, executor and github (default: mesh,executor)",
+            "help": "The monitor sources the signals are read from, a comma-separated subset of the monitor's sources; an unknown name is refused with every source's name (default: those followed by default, mesh,executor)",
             "value_name": "LIST",
             "takes_value": true,
             "required": false,

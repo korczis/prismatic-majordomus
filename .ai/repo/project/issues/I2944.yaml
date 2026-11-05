@@ -1,0 +1,38 @@
+id: I2944
+milestone: every-surface-follows-what-changed
+title: "A monitor source is declared once, and every surface derives its inventory from that declaration"
+slug: a-monitor-source-is-declared-once
+priority: p1
+profile: implementation
+objective: "One table, SOURCES in apps/majordomus-cli/src/monitor/mod.rs, declares every monitor source with its name, cursor tag, whether a follower reads it unasked and whether its positions are coarse. MonitorSource's inventory, parse and name, the refusal that lists the sources, the follow channel's accepted names and default, the blackboard's default, the cursor's parts and the fold's lanes are read from it, so a new source is its variant, its row and its reader, and nothing else lists it."
+why: "The owner's bus mission (2026-11-05, 'jaktoze stale nefunguje genericke bus propojeni?'): discovery found the monitor's sources a closed enum of three, copied by hand into builtin/monitor.rs (the refusal text and the per-source branches), http/follow.rs (DEFAULT_SOURCES, a matches! of the three names, the refusal text), builtin/blackboard.rs (DEFAULT_SOURCES), the CLI help twice and docs/MONITOR.md, with a three-lane fold and a three-part cursor. Reproduced on the shared server: GET /api/v1/monitor?sources=executions answered 'unknown source \"executions\": the sources are mesh, executor and github' while /api/v1/executions held 36 executions. No existing issue owned the registry; I3218 (executions as a source) builds on it."
+current_state: "On master 4795a79d954: monitor/mod.rs:40-57 MonitorSource {Mesh, Executor, Github} with ALL: [_; 3]; assemble folds three named lanes and Cursor has three fields; the copies above."
+desired_state: "MonitorSource::all, spec, as_str, parse, names_sentence and followed_by_default read SOURCES; Cursor keeps one part per source in SOURCES order with typed accessors; Reads is one entry per source and assemble one lane per row of SOURCES, the never-split-a-second rule being the coarse flag; the follow channel, the blackboard and the capability take their names, default and refusal from it; the CLI help and docs/MONITOR.md no longer list the sources by hand."
+scope:
+  - ".ai/repo/project/issues/I2944.yaml"
+  - "apps/majordomus-cli/src/monitor"
+  - "apps/majordomus-cli/src/http/follow.rs"
+  - "apps/majordomus-cli/src/capability/builtin/monitor.rs"
+  - "apps/majordomus-cli/src/capability/builtin/blackboard.rs"
+  - "apps/majordomus-cli/src/cli.rs"
+  - "docs/MONITOR.md"
+  - "test/cases/3344_a_monitor_source_is_declared_once.sh"
+non_scope:
+  - "Executions as a source (I3218, next on this)"
+  - "Session steps in the journal (I3774) and the CLI's follow (I4363)"
+  - "An external producer, the OSCILLA ingress among them: a follow-up on this registry (OSCILLA ADR 0088)"
+serves:
+  - "every-surface-follows-what-changed#executions-are-in-the-stream"
+depends_on: []
+acceptance_criteria:
+  - "A test-only source that is one variant and one row of SOURCES is in MonitorSource::all, parses by name, is listed by the refusal, round-trips its cursor part, is folded, cut and advanced as a lane, and is reported skipped when not asked for (monitor::tests::a_source_declared_once_reaches_every_surface_of_the_monitor)"
+  - "The capability takes it by name and its refusal lists every declared source; the follow channel accepts it and its refusal and default are the declaration's"
+  - "Case 3344: the real executable's refusal on the command line and over HTTP names exactly the declared sources, and a declared name is accepted"
+  - "Removing a source's row from SOURCES fails those tests (mutation)"
+validation:
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib monitor:: http::follow capability::builtin::monitor capability::builtin::blackboard"
+  - "bash test/run.sh 3344_a_monitor_source_is_declared_once 1050_the_monitor_folds_the_noise 1052_an_absent_source_is_reported"
+evidence_required:
+  - "case_a_monitor_source_is_declared_once"
+created_at: 2026-11-05
+updated_at: 2026-11-05

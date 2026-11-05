@@ -47542,6 +47542,49 @@
         }
       },
       {
+        "id": "majordomus://issue/I2944",
+        "kind": "issue",
+        "label": "I2944",
+        "summary": "A monitor source is declared once, and every surface derives its inventory from that declaration",
+        "route": "/cockpit/objects/issue/i2944",
+        "source": ".ai/repo/project/issues/I2944.yaml",
+        "facts": {
+          "created_at": "2026-11-05",
+          "current_state": "On master 4795a79d954: monitor/mod.rs:40-57 MonitorSource {Mesh, Executor, Github} with ALL: [_; 3]; assemble folds three named lanes and Cursor has three fields; the copies above.",
+          "depends_on": [],
+          "evidence_required": [
+            "case_a_monitor_source_is_declared_once"
+          ],
+          "milestone": "every-surface-follows-what-changed",
+          "non_scope": [
+            "Executions as a source (I3218, next on this)",
+            "Session steps in the journal (I3774) and the CLI's follow (I4363)",
+            "An external producer, the OSCILLA ingress among them: a follow-up on this registry (OSCILLA ADR 0088)"
+          ],
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I2944.yaml",
+            "apps/majordomus-cli/src/monitor",
+            "apps/majordomus-cli/src/http/follow.rs",
+            "apps/majordomus-cli/src/capability/builtin/monitor.rs",
+            "apps/majordomus-cli/src/capability/builtin/blackboard.rs",
+            "apps/majordomus-cli/src/cli.rs",
+            "docs/MONITOR.md",
+            "test/cases/3344_a_monitor_source_is_declared_once.sh"
+          ],
+          "serves": [
+            "every-surface-follows-what-changed#executions-are-in-the-stream"
+          ],
+          "slug": "a-monitor-source-is-declared-once",
+          "updated_at": "2026-11-05",
+          "validation": [
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib monitor:: http::follow capability::builtin::monitor capability::builtin::blackboard",
+            "bash test/run.sh 3344_a_monitor_source_is_declared_once 1050_the_monitor_folds_the_noise 1052_an_absent_source_is_reported"
+          ]
+        }
+      },
+      {
         "id": "majordomus://issue/I2962",
         "kind": "issue",
         "label": "I2962",
@@ -104227,6 +104270,13 @@
         "source": "test/cases/3343_an_unobserved_mesh_is_never_zero.sh"
       },
       {
+        "id": "majordomus://test/test/cases/3344_a_monitor_source_is_declared_once.sh",
+        "kind": "test",
+        "label": "test/cases/3344_a_monitor_source_is_declared_once.sh",
+        "route": "/cockpit/objects/test/test-cases-3344-a-monitor-source-is-declared-once-sh",
+        "source": "test/cases/3344_a_monitor_source_is_declared_once.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/334_ui_audit_hears_uncaught_errors.sh",
         "kind": "test",
         "label": "test/cases/334_ui_audit_hears_uncaught_errors.sh",
@@ -136900,6 +136950,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I2944",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2944",
+        "target": "majordomus://milestone/every-surface-follows-what-changed",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://issue/I2962",
         "target": "kind:issue",
         "kind": "is_a"
@@ -153110,6 +153170,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/3344_a_monitor_source_is_declared_once.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/334_ui_audit_hears_uncaught_errors.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -159101,8 +159166,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4322,
-      "edges": 9921,
+      "nodes": 4324,
+      "edges": 9924,
       "acyclic": false,
       "truncated": false
     }

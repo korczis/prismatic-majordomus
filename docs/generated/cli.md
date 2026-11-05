@@ -5325,7 +5325,7 @@ majordomus monitor [OPTIONS]
 | `--after` | `<AFTER>` | — | Start after this cursor (a page's `cursor`), instead of the newest signals |
 | `--cursor-file` | `<FILE>` | — | Keep the cursor in this file: start after the one it holds (unless `--after` is given) and write each page's cursor back, so a restarted watcher repeats nothing |
 | `--limit` | `<LIMIT>` | — | At most this many signals per page (default 50, at most 500) |
-| `--sources` | `<SOURCES>` | — | A comma-separated subset of mesh, executor and github (default: all three) |
+| `--sources` | `<SOURCES>` | — | A comma-separated subset of the monitor's sources; an unknown name is refused with every source's name (default: all of them) |
 | `--for` | `<READER>` | — | Your names, comma-separated (a worker such as 1b, a role, a login): what names them is marked for you; default $MAJORDOMUS_MONITOR_FOR |
 | `--since` | `<SINCE>` | — | How far back the first page reaches: seconds, or a number with s, m, h or d (default 1h) |
 | `--match` | `<PATTERN>` | — | Keep only signals whose summary contains this text (case-insensitive) |
@@ -7377,7 +7377,7 @@ majordomus blackboard [OPTIONS]
 | `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
 | `--this-checkout` | flag | — | Read this checkout's board alone instead of every checkout's |
 | `--for` | `<NAMES>` | — | Comma-separated names of the reader, so that the signals addressed to it are marked for it |
-| `--sources` | `<LIST>` | — | The monitor sources the signals are read from, a comma-separated subset of mesh, executor and github (default: mesh,executor) |
+| `--sources` | `<LIST>` | — | The monitor sources the signals are read from, a comma-separated subset of the monitor's sources; an unknown name is refused with every source's name (default: those followed by default, mesh,executor) |
 | `--format` | `text` \| `json` | `text` | Output shape — `text`: Lines for a person; `json`: One JSON document, deterministic |
 
 Examples:

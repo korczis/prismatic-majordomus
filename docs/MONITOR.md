@@ -122,6 +122,13 @@ cursor stands after everything read.
 
 ## Sources and their states
 
+The sources are declared once, in `SOURCES` of `src/monitor/mod.rs` (I2944). Each row gives
+a source its name, its cursor tag, whether a follower reads it when it names no sources, and
+whether two of its signals can share a position. The names a reader may write, the sentence
+that refuses an unknown one, the sources the follow channel and the blackboard read by
+default, the cursor's parts and the fold's lanes are all read from that table. Nothing else
+lists them. A new source is a variant of `MonitorSource`, its row and its reader.
+
 Every page lists every source with its state:
 
 - `ok`;
@@ -188,7 +195,10 @@ majordomus monitor [--follow] [--for NAMES] [--sources mesh,executor,github] [--
 
 - Unit tests:
   - `src/monitor` covers the cursor, the merge across sources, the fold of each source and
-    for-you;
+    for-you, and that one row of `SOURCES` (a test-only source) reaches the inventory,
+    parsing, the refusal, the default, the cursor and the fold
+    (`a_source_declared_once_reaches_every_surface_of_the_monitor`); the capability and the
+    follow channel take it by name too;
   - `src/commands/monitor.rs` covers rendering and the request target;
   - `src/cockpit/monitor.rs` covers the row.
 - Cases:

@@ -17801,7 +17801,7 @@ cli:
         - name: sources
           long: sources
           positional: false
-          help: "A comma-separated subset of mesh, executor and github (default: all three)"
+          help: "A comma-separated subset of the monitor's sources; an unknown name is refused with every source's name (default: all of them)"
           value_name: SOURCES
           takes_value: true
           required: false
@@ -24984,7 +24984,7 @@ cli:
         - name: sources
           long: sources
           positional: false
-          help: "The monitor sources the signals are read from, a comma-separated subset of mesh, executor and github (default: mesh,executor)"
+          help: "The monitor sources the signals are read from, a comma-separated subset of the monitor's sources; an unknown name is refused with every source's name (default: those followed by default, mesh,executor)"
           value_name: LIST
           takes_value: true
           required: false

@@ -355,7 +355,7 @@ pub struct BlackboardArgs {
     pub reader: Option<String>,
 
     #[arg(long, value_name = "LIST")]
-    /// The monitor sources the signals are read from, a comma-separated subset of mesh, executor and github (default: mesh,executor)
+    /// The monitor sources the signals are read from, a comma-separated subset of the monitor's sources; an unknown name is refused with every source's name (default: those followed by default, mesh,executor)
     pub sources: Option<String>,
 
     #[arg(long, value_enum, default_value_t = OutputFormat::Text)]
@@ -2247,7 +2247,7 @@ pub struct MonitorArgs {
     /// At most this many signals per page (default 50, at most 500)
     #[arg(long)]
     pub limit: Option<u64>,
-    /// A comma-separated subset of mesh, executor and github (default: all three)
+    /// A comma-separated subset of the monitor's sources; an unknown name is refused with every source's name (default: all of them)
     #[arg(long)]
     pub sources: Option<String>,
     /// Your names, comma-separated (a worker such as 1b, a role, a login): what names them is marked for you; default $MAJORDOMUS_MONITOR_FOR

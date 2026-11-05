@@ -14,8 +14,8 @@ use crate::capability::handler::{CapabilityError, Context};
 use crate::capability::model::{Exposure, Stability};
 use crate::capability::module::ModuleDescriptor;
 use crate::monitor::{
-    assemble, executor, github, mesh, Cursor, MonitorPage, MonitorSource, MonitorSourceHealth,
-    Reader, Reads, SourceRead,
+    assemble, executor, github, mesh, mesh_token, Cursor, MonitorPage, MonitorSource,
+    MonitorSourceHealth, Reader, Reads,
 };
 use crate::{capability, module};
 
@@ -42,7 +42,8 @@ pub struct MonitorInput {
     /// At most this many signals (default 50, at most 500).
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub limit: Option<u64>,
-    /// A comma-separated subset of `mesh`, `executor` and `github` (default: all three).
+    /// A comma-separated subset of the monitor's sources (`mesh`, `executor`, `github`); a
+    /// name that is not one is refused with every source's name (default: all of them).
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub sources: Option<String>,
     /// Comma-separated names of the reader — a worker (`1b`), a role, a login — so that what
@@ -92,15 +93,16 @@ fn cases() -> Vec<NamedCase<MonitorInput>> {
 /// The sources a comma list names; every name must be one.
 pub(crate) fn wanted(list: Option<&str>) -> Result<Vec<MonitorSource>, CapabilityError> {
     let Some(list) = list.filter(|l| !l.trim().is_empty()) else {
-        return Ok(MonitorSource::ALL.to_vec());
+        return Ok(MonitorSource::all());
     };
     list.split(',')
         .filter(|n| !n.trim().is_empty())
         .map(|name| {
             MonitorSource::parse(name).ok_or_else(|| {
                 CapabilityError::InvalidInput(format!(
-                    "unknown source {:?}: the sources are mesh, executor and github",
-                    name.trim()
+                    "unknown source {:?}: the sources are {}",
+                    name.trim(),
+                    MonitorSource::names_sentence()
                 ))
             })
         })
@@ -119,8 +121,75 @@ pub(crate) fn runtime_of(stream: &str) -> String {
 /// Why the mesh source is absent when the mesh runtime gives no reason of its own.
 const NOT_RUNNING: &str = "the mesh is not running in this server";
 
-fn skipped<P>() -> Result<SourceRead<P>, (MonitorSourceHealth, String)> {
-    Err((MonitorSourceHealth::Skipped, "not asked for".into()))
+/// What every source's read is asked with.
+struct Asked<'a> {
+    ctx: &'a Context,
+    root: &'a Path,
+    previous: &'a Cursor,
+    since: u64,
+    reader: &'a Reader,
+}
+
+/// One source's read: the one place a source's reader is wired in. Every surface's list of
+/// sources comes from `crate::monitor::SOURCES`; a new source adds its arm here and its
+/// reader, and nothing else (I2944).
+fn read(source: MonitorSource, asked: &Asked<'_>) -> crate::monitor::Read {
+    let Asked {
+        ctx,
+        root,
+        previous,
+        since,
+        reader,
+    } = asked;
+    match source {
+        MonitorSource::Mesh => match ctx.mesh.cooperation() {
+            Some(c) => {
+                let events = c.journal().events_after(0, usize::MAX);
+                let mut machines: HashMap<String, String> = ctx
+                    .mesh
+                    .nodes()
+                    .into_iter()
+                    .map(|n| (n.node_id.as_str().to_string(), n.display_name))
+                    .collect();
+                // the registry holds the nodes this one has heard, never itself
+                if let Some(me) = ctx.mesh.status().identity {
+                    machines.insert(me.node_id.as_str().to_string(), me.display_name);
+                }
+                let fold_ctx = mesh::Context {
+                    reader,
+                    machines: &machines,
+                    since: *since,
+                };
+                Ok(mesh::fold(&events, previous.mesh().as_ref(), &fold_ctx).encoded(mesh_token))
+            }
+            None => Err((
+                MonitorSourceHealth::Absent,
+                ctx.mesh
+                    .cooperation_status()
+                    .reason
+                    .unwrap_or(NOT_RUNNING.to_string()),
+            )),
+        },
+        MonitorSource::Executor => {
+            let trail = crate::integration::drain::events(root);
+            if trail.is_empty() {
+                Err((
+                    MonitorSourceHealth::Absent,
+                    "the executor has recorded nothing in this repository".into(),
+                ))
+            } else {
+                Ok(executor::fold(&trail, previous.executor(), *since, reader)
+                    .encoded(usize::to_string))
+            }
+        }
+        MonitorSource::Github => github::fetch(root)
+            .map(|f| github::fold(&f, previous.github(), *since, reader).encoded(u64::to_string)),
+        #[cfg(test)]
+        MonitorSource::Probe => Err((
+            MonitorSourceHealth::Absent,
+            "the probe source has no reader in this test".into(),
+        )),
+    }
 }
 
 pub(crate) fn monitor(ctx: &Context, input: MonitorInput) -> Result<MonitorPage, CapabilityError> {
@@ -141,71 +210,23 @@ pub(crate) fn monitor(ctx: &Context, input: MonitorInput) -> Result<MonitorPage,
         reader.sessions.push(format!("board-{}", peer.as_str()));
     }
     let root = Path::new(&ctx.index.repository.root);
-
-    let mesh = if !sources.contains(&MonitorSource::Mesh) {
-        skipped()
-    } else if let Some(c) = ctx.mesh.cooperation() {
-        // a review addressed to this runtime is addressed to whoever reads here
+    // a review addressed to this runtime is addressed to whoever reads here, in every source
+    if let Some(c) = ctx.mesh.cooperation() {
         reader
             .sessions
             .push(runtime_of(c.journal().own_stream().as_str()));
-        let events = c.journal().events_after(0, usize::MAX);
-        let mut machines: HashMap<String, String> = ctx
-            .mesh
-            .nodes()
-            .into_iter()
-            .map(|n| (n.node_id.as_str().to_string(), n.display_name))
-            .collect();
-        // the registry holds the nodes this one has heard, never itself
-        if let Some(me) = ctx.mesh.status().identity {
-            machines.insert(me.node_id.as_str().to_string(), me.display_name);
-        }
-        let fold_ctx = mesh::Context {
-            reader: &reader,
-            machines: &machines,
-            since,
-        };
-        Ok(mesh::fold(&events, previous.mesh.as_ref(), &fold_ctx))
-    } else {
-        Err((
-            MonitorSourceHealth::Absent,
-            ctx.mesh
-                .cooperation_status()
-                .reason
-                .unwrap_or(NOT_RUNNING.to_string()),
-        ))
+    }
+    let asked = Asked {
+        ctx,
+        root,
+        previous: &previous,
+        since,
+        reader: &reader,
     };
-
-    let executor = if !sources.contains(&MonitorSource::Executor) {
-        skipped()
-    } else {
-        let trail = crate::integration::drain::events(root);
-        if trail.is_empty() {
-            Err((
-                MonitorSourceHealth::Absent,
-                "the executor has recorded nothing in this repository".into(),
-            ))
-        } else {
-            Ok(executor::fold(&trail, previous.executor, since, &reader))
-        }
-    };
-
-    let github = if !sources.contains(&MonitorSource::Github) {
-        skipped()
-    } else {
-        github::fetch(root).map(|f| github::fold(&f, previous.github, since, &reader))
-    };
-
-    Ok(assemble(
-        Reads {
-            mesh,
-            executor,
-            github,
-        },
-        &previous,
-        resuming,
-        limit,
-    ))
+    let reads = sources.iter().fold(Reads::default(), |reads, &source| {
+        reads.with(source, read(source, &asked))
+    });
+    Ok(assemble(reads, &previous, resuming, limit))
 }
 
 /// The `monitor` module.
@@ -239,14 +260,24 @@ mod tests {
 
     #[test]
     fn sources_are_all_by_default_and_an_unknown_one_is_refused() {
-        assert_eq!(wanted(None).unwrap(), MonitorSource::ALL.to_vec());
-        assert_eq!(wanted(Some(" ")).unwrap(), MonitorSource::ALL.to_vec());
+        assert_eq!(wanted(None).unwrap(), MonitorSource::all());
+        assert_eq!(wanted(Some(" ")).unwrap(), MonitorSource::all());
         assert_eq!(
             wanted(Some("mesh, github")).unwrap(),
             vec![MonitorSource::Mesh, MonitorSource::Github]
         );
         let e = wanted(Some("mesh,slack")).unwrap_err();
         assert!(e.to_string().contains("unknown source \"slack\""), "{e}");
+        // I2944: the refusal lists every declared source, the test-only one included
+        assert!(
+            e.to_string().ends_with(&format!(
+                "the sources are {}",
+                MonitorSource::names_sentence()
+            )),
+            "{e}"
+        );
+        assert!(e.to_string().contains("probe"), "{e}");
+        assert_eq!(wanted(Some("probe")).unwrap(), vec![MonitorSource::Probe]);
     }
 
     #[test]
@@ -275,6 +306,35 @@ mod tests {
     fn state(page: &MonitorPage, source: MonitorSource) -> (MonitorSourceHealth, Option<String>) {
         let s = page.sources.iter().find(|s| s.source == source).unwrap();
         (s.state, s.reason.clone())
+    }
+
+    /// I2944: a source that is one row of SOURCES and its reader arm reaches the handler with
+    /// nothing else edited: asked by name it is read and reported with its own reason, and the
+    /// sources not asked for are reported skipped.
+    #[test]
+    fn a_declared_source_is_read_through_the_capability() {
+        let repo = crate::synthetic::SyntheticRepository::small().unwrap();
+        let ctx = context(&repo);
+        let page = monitor(&ctx, input("probe")).unwrap();
+        assert_eq!(
+            state(&page, MonitorSource::Probe),
+            (
+                MonitorSourceHealth::Absent,
+                Some("the probe source has no reader in this test".into())
+            )
+        );
+        for source in [
+            MonitorSource::Mesh,
+            MonitorSource::Executor,
+            MonitorSource::Github,
+        ] {
+            assert_eq!(
+                state(&page, source).0,
+                MonitorSourceHealth::Skipped,
+                "{source:?}"
+            );
+        }
+        assert_eq!(page.sources.len(), MonitorSource::all().len());
     }
 
     /// Every source answers through the capability: the mesh from the cooperation's journal,
@@ -316,7 +376,11 @@ mod tests {
         );
 
         let page = monitor(&ctx, input("mesh,executor,github")).unwrap();
-        for source in MonitorSource::ALL {
+        for source in [
+            MonitorSource::Mesh,
+            MonitorSource::Executor,
+            MonitorSource::Github,
+        ] {
             assert_eq!(
                 state(&page, source).0,
                 MonitorSourceHealth::Ok,

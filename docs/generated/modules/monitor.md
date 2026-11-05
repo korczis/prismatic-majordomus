@@ -27,7 +27,8 @@ A page of signals after a cursor, oldest first, or without one the newest of the
 | `after` | string or null | no | The `cursor` of the previous page; without it, the page is the newest signals of the
 last `since` seconds. |
 | `limit` | integer or null | no | At most this many signals (default 50, at most 500). |
-| `sources` | string or null | no | A comma-separated subset of `mesh`, `executor` and `github` (default: all three). |
+| `sources` | string or null | no | A comma-separated subset of the monitor's sources (`mesh`, `executor`, `github`); a
+name that is not one is refused with every source's name (default: all of them). |
 | `for` | string or null | no | Comma-separated names of the reader — a worker (`1b`), a role, a login — so that what
 is addressed to it is marked `for_you`. An MCP caller is also its own board session. |
 | `since` | integer or null | no | How far back a first page reaches, in seconds (default 3600). |

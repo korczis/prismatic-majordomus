@@ -9,12 +9,13 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 
 | milestone | status | done of required | ready | blocked | active | verify | cancelled | outcome |
 |---|---|---|---|---|---|---|---|---|
-| [every-surface-follows-what-changed](https://majordomus.dev/plan/every-surface-follows-what-changed/) | PLANNED | 0/8 | 5 | 3 | 0 | 0 | 0 | Executions are a monitor source; the Observatory is told over /events; a write by any client reaches the workspace; every live surface states its transport in ADR 0158's words; a follower converges after loss; a kiosk keeps following for days. |
+| [every-surface-follows-what-changed](https://majordomus.dev/plan/every-surface-follows-what-changed/) | PLANNED | 0/9 | 6 | 3 | 0 | 0 | 0 | Executions are a monitor source; the Observatory is told over /events; a write by any client reaches the workspace; every live surface states its transport in ADR 0158's words; a follower converges after loss; a kiosk keeps following for days. |
 
 ## Issues
 
 | issue | status | wave | depends on | title |
 |---|---|---|---|---|
+| [I2944](https://majordomus.dev/plan/i2944/) | READY | 0 | — | A monitor source is declared once, and every surface derives its inventory from that declaration |
 | [I3218](https://majordomus.dev/plan/i3218/) | READY | 0 | — | The execution ledger is a source of the monitor, so a run started anywhere is followed everywhere |
 | [I3219](https://majordomus.dev/plan/i3219/) | READY | 0 | — | The Observatory is told what happened over the live channel, and asks only when it cannot be told |
 | [I3220](https://majordomus.dev/plan/i3220/) | READY | 3 | I2783 | An intent proposed or an issue moved by any client reaches an open intent workspace without a reload |
@@ -28,6 +29,32 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 
 | level | code | subject | message |
 |---|---|---|---|
+| WARN | `scope_conflict` | `I2944` | shares apps/majordomus-cli/src/capability/builtin/monitor.rs with I2972; they may not run concurrently |
+| WARN | `scope_conflict` | `I2944` | shares .ai/repo/project/issues/I2944.yaml with I3003; they may not run concurrently |
+| WARN | `scope_conflict` | `I2944` | shares .ai/repo/project/issues/I2944.yaml with I3004; they may not run concurrently |
+| WARN | `scope_conflict` | `I2944` | shares .ai/repo/project/issues/I2944.yaml with I3005; they may not run concurrently |
+| WARN | `scope_conflict` | `I2944` | shares apps/majordomus-cli/src/capability/builtin/monitor.rs with I3040; they may not run concurrently |
+| WARN | `scope_conflict` | `I2944` | shares apps/majordomus-cli/src/monitor with I3218; they may not run concurrently |
+| WARN | `scope_conflict` | `I2944` | shares .ai/repo/project/issues/I2944.yaml with I3246; they may not run concurrently |
+| WARN | `scope_conflict` | `I2944` | shares apps/majordomus-cli/src/cli.rs with I3251; they may not run concurrently |
+| WARN | `scope_conflict` | `I2944` | shares test/cases/3344_a_monitor_source_is_declared_once.sh with I3318; they may not run concurrently |
+| WARN | `scope_conflict` | `I2944` | shares .ai/repo/project/issues/I2944.yaml with I3373; they may not run concurrently |
+| WARN | `scope_conflict` | `I2944` | shares test/cases/3344_a_monitor_source_is_declared_once.sh with I3448; they may not run concurrently |
+| WARN | `scope_conflict` | `I2944` | shares apps/majordomus-cli/src/capability/builtin/monitor.rs with I3607; they may not run concurrently |
+| WARN | `scope_conflict` | `I2944` | shares docs/MONITOR.md with I3774; they may not run concurrently |
+| WARN | `scope_conflict` | `I2944` | shares apps/majordomus-cli/src/monitor with I3810; they may not run concurrently |
+| WARN | `scope_conflict` | `I2944` | shares apps/majordomus-cli/src/capability/builtin/monitor.rs with I4002; they may not run concurrently |
+| WARN | `scope_conflict` | `I2944` | shares apps/majordomus-cli/src/capability/builtin/monitor.rs with I4006; they may not run concurrently |
+| WARN | `scope_conflict` | `I2944` | shares apps/majordomus-cli/src/http/follow.rs with I4154; they may not run concurrently |
+| WARN | `scope_conflict` | `I2944` | shares apps/majordomus-cli/src/cli.rs with I4294; they may not run concurrently |
+| WARN | `scope_conflict` | `I2944` | shares docs/MONITOR.md with I4306; they may not run concurrently |
+| WARN | `scope_conflict` | `I2944` | shares apps/majordomus-cli/src/capability/builtin/monitor.rs with I4327; they may not run concurrently |
+| WARN | `scope_conflict` | `I2944` | shares apps/majordomus-cli/src/cli.rs with I4334; they may not run concurrently |
+| WARN | `scope_conflict` | `I2944` | shares apps/majordomus-cli/src/cli.rs with I4418; they may not run concurrently |
+| WARN | `scope_conflict` | `I2944` | shares apps/majordomus-cli/src/monitor with I4466; they may not run concurrently |
+| WARN | `scope_conflict` | `I2944` | shares apps/majordomus-cli/src/capability/builtin/monitor.rs with I4468; they may not run concurrently |
+| WARN | `scope_conflict` | `I2944` | shares apps/majordomus-cli/src/http/follow.rs with I4481; they may not run concurrently |
+| WARN | `scope_conflict` | `I2944` | shares apps/majordomus-cli/src/capability/builtin/monitor.rs with I4486; they may not run concurrently |
 | WARN | `scope_conflict` | `I3218` | shares docs/MONITOR.md with I3774; they may not run concurrently |
 | WARN | `scope_conflict` | `I3218` | shares apps/majordomus-cli/src/monitor with I3810; they may not run concurrently |
 | WARN | `scope_conflict` | `I3218` | shares docs/MONITOR.md with I4306; they may not run concurrently |

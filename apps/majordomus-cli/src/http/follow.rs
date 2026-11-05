@@ -167,9 +167,11 @@ impl Default for Frames {
     }
 }
 
-/// The monitor sources a connection reads when it names none: the two that say when they
-/// change. GitHub is read only when asked, and only on a change or a refresh.
-const DEFAULT_SOURCES: &str = "mesh,executor";
+/// The monitor sources a connection reads when it names none: those the declaration marks
+/// as followed by default, the ones that say when they change. GitHub is read only when
+/// asked, and only on a change or a refresh (crate::monitor::SOURCES, I2944).
+static DEFAULT_SOURCES: std::sync::LazyLock<String> =
+    std::sync::LazyLock::new(crate::monitor::MonitorSource::followed_by_default);
 
 impl Follow {
     /// The query of a request that follows the blackboard: `None` when it follows something
@@ -195,7 +197,7 @@ impl Follow {
                     if !value.is_empty()
                         && value
                             .split(',')
-                            .all(|s| matches!(s.trim(), "mesh" | "executor" | "github")) =>
+                            .all(|s| crate::monitor::MonitorSource::parse(s).is_some()) =>
                 {
                     follow.sources = Some(value.clone())
                 }
@@ -209,7 +211,8 @@ impl Follow {
                 },
                 other => {
                     return Some(Err(format!(
-                        "'{other}={value}' is not something the blackboard is followed by; it takes follow=blackboard, checkouts (this or repository), after, epoch, for, sources (mesh, executor, github) and frames (snapshot, signals)"
+                        "'{other}={value}' is not something the blackboard is followed by; it takes follow=blackboard, checkouts (this or repository), after, epoch, for, sources ({}) and frames (snapshot, signals)",
+                        crate::monitor::MonitorSource::names_sentence()
                     )))
                 }
             }
@@ -362,7 +365,11 @@ impl Follower {
 
     /// The input of `monitor.stream` for this connection, with `rest` added.
     fn monitor_input(&self, mut rest: Value) -> Value {
-        rest["sources"] = json!(self.follow.sources.as_deref().unwrap_or(DEFAULT_SOURCES));
+        rest["sources"] = json!(self
+            .follow
+            .sources
+            .as_deref()
+            .unwrap_or(DEFAULT_SOURCES.as_str()));
         if let Some(reader) = &self.follow.reader {
             rest["for"] = json!(reader);
         }
@@ -375,7 +382,10 @@ impl Follower {
         format!(
             "{}|{}|{}|{cursor}",
             epoch(&self.ctx),
-            self.follow.sources.as_deref().unwrap_or(DEFAULT_SOURCES),
+            self.follow
+                .sources
+                .as_deref()
+                .unwrap_or(DEFAULT_SOURCES.as_str()),
             self.follow.reader.as_deref().unwrap_or_default()
         )
     }
@@ -835,6 +845,28 @@ mod tests {
                 .unwrap_err();
             assert!(refused.contains(value), "{refused}");
         }
+    }
+
+    /// I2944: the channel takes the names the monitor declares and nothing it keeps a copy
+    /// of: the test-only source is accepted, a refusal lists every source, and the default is
+    /// the declaration's.
+    #[test]
+    fn the_sources_a_follower_names_are_the_monitors_declared_ones() {
+        let f = Follow::parse(&q(&[("follow", "blackboard"), ("sources", "probe,mesh")]))
+            .unwrap()
+            .unwrap();
+        assert_eq!(f.sources.as_deref(), Some("probe,mesh"));
+        let refused = Follow::parse(&q(&[("follow", "blackboard"), ("color", "blue")]))
+            .unwrap()
+            .unwrap_err();
+        assert!(
+            refused.contains(&crate::monitor::MonitorSource::names_sentence()),
+            "{refused}"
+        );
+        assert_eq!(
+            DEFAULT_SOURCES.as_str(),
+            crate::monitor::MonitorSource::followed_by_default()
+        );
     }
 
     /// Two snapshots that differ only in what changes on every read say the same thing.
