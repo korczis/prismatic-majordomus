@@ -461,7 +461,7 @@ Every file `majordomus generate` writes, with the document it projects, the enco
 | `site/data/registry/evidence-subjects.json` | `site-evidence-subjects` | json | 877847 | `39aa505bd7dca0fa` |
 | `site/data/registry/product-graph.json` | `site-product-graph` | json | 112756 | `16c97710bc69401d` |
 | `site/data/registry/product.json` | `site-product` | json | 786089 | `47a7fc798063b9af` |
-| `site/data/registry/registry.json` | `site-registry` | json | 8922398 | `c8ca9aa0c81a95ee` |
+| `site/data/registry/registry.json` | `site-registry` | json | 8922398 | `2bc25c573d60dd94` |
 | `site/data/registry/why-graph.json` | `site-why-graph` | json | 180171 | `c5c85c57475615eb` |
 | `site/data/registry/why.json` | `site-why` | json | 349932 | `f34d973e38325648` |
 | `site/static/favicon.svg` | `design-mark` | text | 912 | `d3a39f415f9bd167` |
