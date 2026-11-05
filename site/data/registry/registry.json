@@ -6,23 +6,23 @@
     "version": "1.0.0-alpha.10"
   },
   "registry": {
-    "fingerprint": "d8215827a895a53d9818e822f24c27ad8f63d53878cb2dad9b4a958ed61b20d1",
+    "fingerprint": "3b41d2a0e1854ae48031166eb6b66f646dc30607d9d304001c9921a7397b5481",
     "summary": {
-      "total": 3851,
+      "total": 3860,
       "builtin": 230,
-      "declarative": 3621,
+      "declarative": 3630,
       "by_kind": {
         "command": 41,
         "query": 189,
-        "resource": 3621
+        "resource": 3630
       },
       "by_stability": {
         "behaviorally_verified": 153,
         "experimental": 67,
-        "implemented": 3631
+        "implemented": 3640
       },
       "mcp_tools": 214,
-      "mcp_resources": 3678,
+      "mcp_resources": 3687,
       "http_routes": 218,
       "cli_commands": 127,
       "modules": 96,
@@ -96643,7 +96643,7 @@
         "title": "knowledge",
         "description": "Declarative objects of kind 'knowledge' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 104,
+        "capabilities": 113,
         "capability_ids": []
       },
       {
@@ -97340,7 +97340,7 @@
     ]
   },
   "index": {
-    "fingerprint": "af17aa2828fd90dafb1c61b1b986f1ac1332e784b6769afc0e658f2e18d5aff4",
+    "fingerprint": "ff823f1f91ad8bdd391c0f84ecc5ed9a8549016981981224e44a86e1e4679ff2",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -97381,7 +97381,7 @@
       "implementation": 54,
       "intent": 45,
       "issue": 1215,
-      "knowledge": 104,
+      "knowledge": 113,
       "mesh-declaration": 1,
       "milestone": 117,
       "moment": 38,
@@ -104406,7 +104406,7 @@
         "title": "Prismatic Majordomus",
         "path": "README.md",
         "source_class": "readme",
-        "bytes": 40733
+        "bytes": 48697
       },
       {
         "uri": "majordomus://document/SECURITY.md",
@@ -104802,7 +104802,7 @@
         "title": "Pull-request integration",
         "path": "docs/INTEGRATION.md",
         "source_class": "document",
-        "bytes": 86116
+        "bytes": 86949
       },
       {
         "uri": "majordomus://document/docs/INTEGRATION_ROLLOUT.md",
@@ -123111,7 +123111,7 @@
         "path": ".ai/repo/knowledge/candidates/s-20261027131618-6269-de02bce2f833.md",
         "section": "knowledge",
         "source_class": "candidates",
-        "bytes": 1052,
+        "bytes": 1293,
         "tags": [
           "derived",
           "observation"
@@ -123715,6 +123715,141 @@
         "tags": [
           "derived",
           "task"
+        ]
+      },
+      {
+        "uri": "majordomus://knowledge/s-20261103014800-e1b0-11e9357c5980",
+        "kind": "knowledge",
+        "identity": "s-20261103014800-e1b0-11e9357c5980",
+        "title": "git push --dry-run runs the pre-push hook without moving the remote, so a train top's judgement, run-plan's last line, is known before its validate slot opens; since pull request 2789 a push carrying an integration/train-* ref refuses run-plan's exit 1",
+        "description": "Observed as workaround about .githooks/pre-push in episode s-20261103014800-e1b0.",
+        "path": ".ai/repo/knowledge/curated/s-20261103014800-e1b0-11e9357c5980.md",
+        "section": "knowledge",
+        "source_class": "curated",
+        "bytes": 1878,
+        "tags": [
+          "derived",
+          "observation"
+        ]
+      },
+      {
+        "uri": "majordomus://knowledge/s-20261103014800-e1b0-22099d566ee5",
+        "kind": "knowledge",
+        "identity": "s-20261103014800-e1b0-22099d566ee5",
+        "title": "a pull request's github-projection failed behind on issue I4347 although the head did not change it: master's own projection run for 5bc72353c8d had failed on an actions/checkout timeout and never applied the records train 22 landed; re-running master's failed job applied them, while a hand-run github-sync --apply would have been a second writer on the same records",
+        "description": "Observed as drift about scripts/ci/github-check in episode s-20261103014800-e1b0.",
+        "path": ".ai/repo/knowledge/curated/s-20261103014800-e1b0-22099d566ee5.md",
+        "section": "knowledge",
+        "source_class": "curated",
+        "bytes": 2080,
+        "tags": [
+          "derived",
+          "observation"
+        ]
+      },
+      {
+        "uri": "majordomus://knowledge/s-20261103014800-e1b0-4fa824190a4e",
+        "kind": "knowledge",
+        "identity": "s-20261103014800-e1b0-4fa824190a4e",
+        "title": "run-plan --before-push runs only the structure and structure-b gates, so the rust job's gates, intent-check (bin/majordomus-cli intent validate) among them, never run in a train top's pre-push judgement and are first met in CI",
+        "description": "Observed as defect about scripts/ci/run-plan in episode s-20261103014800-e1b0.",
+        "path": ".ai/repo/knowledge/curated/s-20261103014800-e1b0-4fa824190a4e.md",
+        "section": "knowledge",
+        "source_class": "curated",
+        "bytes": 1847,
+        "tags": [
+          "derived",
+          "observation"
+        ]
+      },
+      {
+        "uri": "majordomus://knowledge/s-20261103014800-e1b0-61f10931287e",
+        "kind": "knowledge",
+        "identity": "s-20261103014800-e1b0-61f10931287e",
+        "title": "a build host whose pinned tools differ from CI's fails cases on plain master: with zola 0.22.1 against the 0.23.4 setup-site installs, cases 1070, 3043, 533 and 805 failed on the component tag and 3196, 3503 and 731 on the host's environment, on master c98e5d3f81f exactly as on the train top built on it, so that host's train-top pre-push refused the top; a host with zola 0.23.3 passed the recomposed top's 35 gates and 195 cases",
+        "description": "Observed as drift about scripts/ci/run-plan in episode s-20261103014800-e1b0.",
+        "path": ".ai/repo/knowledge/curated/s-20261103014800-e1b0-61f10931287e.md",
+        "section": "knowledge",
+        "source_class": "curated",
+        "bytes": 2340,
+        "tags": [
+          "derived",
+          "observation"
+        ]
+      },
+      {
+        "uri": "majordomus://knowledge/s-20261103014800-e1b0-864245a4df1d",
+        "kind": "knowledge",
+        "identity": "s-20261103014800-e1b0-864245a4df1d",
+        "title": "a train top composed by hand with git commit over a hand-written MERGE_HEAD lost its base parent: git reduces redundant parents unless MERGE_MODE says no-ff, and master was dropped because a member already contained it, so the top's first parent was a member instead of master",
+        "description": "Observed as friction about .ai/repo/skills/integrator/SKILL.md in episode s-20261103014800-e1b0.",
+        "path": ".ai/repo/knowledge/curated/s-20261103014800-e1b0-864245a4df1d.md",
+        "section": "knowledge",
+        "source_class": "curated",
+        "bytes": 2007,
+        "tags": [
+          "derived",
+          "observation"
+        ]
+      },
+      {
+        "uri": "majordomus://knowledge/s-20261103014800-e1b0-f47681588ac2",
+        "kind": "knowledge",
+        "identity": "s-20261103014800-e1b0-f47681588ac2",
+        "title": "a build host whose tools differ from CI's pins fails cases on plain master: a host with zola 0.22.1 against the 0.23.4 setup-site pins failed cases 1070, 3043, 533 and 805 on the component tag, and 3196, 3503 and 731 on its environment, on master 5bc72353c8d as on the train top, so its train-top pre-push refused the top; on a host with zola 0.23.3 the same top passed 35 gates and 195 cases",
+        "description": "Observed as drift about scripts/ci/run-plan in episode s-20261103014800-e1b0.",
+        "path": ".ai/repo/knowledge/candidates/s-20261103014800-e1b0-f47681588ac2.md",
+        "section": "knowledge",
+        "source_class": "candidates",
+        "bytes": 1561,
+        "tags": [
+          "derived",
+          "observation"
+        ]
+      },
+      {
+        "uri": "majordomus://knowledge/s-20261105013853-eb29-1e447b09bd0d",
+        "kind": "knowledge",
+        "identity": "s-20261105013853-eb29-1e447b09bd0d",
+        "title": "run-plan --before-push leaves out structure gates CI times past its bounds (core-check 863 s and knowledge-nodes 20 s over the 15 s per gate, adr-collision 11 s past the 120 s sum), and the commit hook's doctor runs no ADR validation, so train 19c, whose member renamed rule project.mesh-cooperation-is-authenticated to its v2 file, passed every local judgement and failed CI structure: ADR 0167 still related the v1 file",
+        "description": "Observed as drift about scripts/ci/run-plan in episode s-20261105013853-eb29.",
+        "path": ".ai/repo/knowledge/curated/s-20261105013853-eb29-1e447b09bd0d.md",
+        "section": "knowledge",
+        "source_class": "curated",
+        "bytes": 3249,
+        "tags": [
+          "derived",
+          "observation"
+        ]
+      },
+      {
+        "uri": "majordomus://knowledge/s-20261105013853-eb29-d4034aa6353f",
+        "kind": "knowledge",
+        "identity": "s-20261105013853-eb29-d4034aa6353f",
+        "title": "a long-lived member's own new cases passed on its branch and failed on the train's merged tree, because master had gained defaults since: init now ships an enabled mesh declaration (case 3441 met a declared mesh), and lib/project.sh sorted record filenames where the executable sorts ids (case 99 met a new id that extends another)",
+        "description": "Observed as friction about case 3441 (3441_the_choice_ranks_by_what_it_unblocks.sh under test/cases/, on #2522) in episode s-20261105013853-eb29.",
+        "path": ".ai/repo/knowledge/curated/s-20261105013853-eb29-d4034aa6353f.md",
+        "section": "knowledge",
+        "source_class": "curated",
+        "bytes": 2985,
+        "tags": [
+          "derived",
+          "observation"
+        ]
+      },
+      {
+        "uri": "majordomus://knowledge/s-20261105013853-eb29-f6d47b5f8b30",
+        "kind": "knowledge",
+        "identity": "s-20261105013853-eb29-f6d47b5f8b30",
+        "title": "run-plan --before-push leaves out every structure gate CI recorded over its 15 s budget (core-check and knowledge-nodes, with adr-collision), and the commit hook's doctor does not resolve an ADR's related paths, so a train top whose member renamed a record file passed every local judgement and failed CI's structure job: train 19c's ADR 0167 still related the v1 file of a rule its member raised to v2",
+        "description": "Observed as drift about scripts/ci/run-plan in episode s-20261105013853-eb29.",
+        "path": ".ai/repo/knowledge/candidates/s-20261105013853-eb29-f6d47b5f8b30.md",
+        "section": "knowledge",
+        "source_class": "candidates",
+        "bytes": 1841,
+        "tags": [
+          "derived",
+          "observation"
         ]
       },
       {
@@ -130469,7 +130604,7 @@
         "path": ".ai/repo/skills/integrator/SKILL.md",
         "section": "skills",
         "source_class": "skill",
-        "bytes": 7021,
+        "bytes": 11099,
         "tags": [
           "integration",
           "landing",
@@ -136934,7 +137069,7 @@
       "identity": [
         "id"
       ],
-      "objects": 104
+      "objects": 113
     },
     {
       "name": "mesh-declaration",

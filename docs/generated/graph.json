@@ -81198,7 +81198,7 @@
         "summary": "inside Claude Code, majordomus session start filed the episode under the key 'hand' while knowledge observe looked for it under CLAUDE_CODE_SESSION_ID and refused 'no episode is open for this caller'; observing needed MJ_SESSION_KEY=hand",
         "route": "/cockpit/objects/knowledge/s-20261027131618-6269-de02bce2f833",
         "source": ".ai/repo/knowledge/candidates/s-20261027131618-6269-de02bce2f833.md",
-        "status": "candidate",
+        "status": "superseded",
         "facts": {
           "about": "lib/knowledge.sh",
           "class": "lesson",
@@ -82006,6 +82006,187 @@
           "tags": [
             "derived",
             "task"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://knowledge/s-20261103014800-e1b0-11e9357c5980",
+        "kind": "knowledge",
+        "label": "s-20261103014800-e1b0-11e9357c5980",
+        "summary": "git push --dry-run runs the pre-push hook without moving the remote, so a train top's judgement, run-plan's last line, is known before its validate slot opens; since pull request 2789 a push carrying an integration/train-* ref refuses run-plan's exit 1",
+        "route": "/cockpit/objects/knowledge/s-20261103014800-e1b0-11e9357c5980",
+        "source": ".ai/repo/knowledge/curated/s-20261103014800-e1b0-11e9357c5980.md",
+        "status": "verified",
+        "facts": {
+          "about": ".githooks/pre-push",
+          "class": "lesson",
+          "date": "2026-11-03",
+          "epistemics": "observed",
+          "route": "project",
+          "tags": [
+            "derived",
+            "observation"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://knowledge/s-20261103014800-e1b0-22099d566ee5",
+        "kind": "knowledge",
+        "label": "s-20261103014800-e1b0-22099d566ee5",
+        "summary": "a pull request's github-projection failed behind on issue I4347 although the head did not change it: master's own projection run for 5bc72353c8d had failed on an actions/checkout timeout and never applied the records train 22 landed; re-running master's failed job applied them, while a hand-run github-sync --apply would have been a second writer on the same records",
+        "route": "/cockpit/objects/knowledge/s-20261103014800-e1b0-22099d566ee5",
+        "source": ".ai/repo/knowledge/curated/s-20261103014800-e1b0-22099d566ee5.md",
+        "status": "verified",
+        "facts": {
+          "about": "scripts/ci/github-check",
+          "class": "lesson",
+          "date": "2026-11-03",
+          "epistemics": "observed",
+          "route": "project",
+          "tags": [
+            "derived",
+            "observation"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://knowledge/s-20261103014800-e1b0-4fa824190a4e",
+        "kind": "knowledge",
+        "label": "s-20261103014800-e1b0-4fa824190a4e",
+        "summary": "run-plan --before-push runs only the structure and structure-b gates, so the rust job's gates, intent-check (bin/majordomus-cli intent validate) among them, never run in a train top's pre-push judgement and are first met in CI",
+        "route": "/cockpit/objects/knowledge/s-20261103014800-e1b0-4fa824190a4e",
+        "source": ".ai/repo/knowledge/curated/s-20261103014800-e1b0-4fa824190a4e.md",
+        "status": "verified",
+        "facts": {
+          "about": "scripts/ci/run-plan",
+          "class": "lesson",
+          "date": "2026-11-03",
+          "epistemics": "observed",
+          "route": "project",
+          "tags": [
+            "derived",
+            "observation"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://knowledge/s-20261103014800-e1b0-61f10931287e",
+        "kind": "knowledge",
+        "label": "s-20261103014800-e1b0-61f10931287e",
+        "summary": "a build host whose pinned tools differ from CI's fails cases on plain master: with zola 0.22.1 against the 0.23.4 setup-site installs, cases 1070, 3043, 533 and 805 failed on the component tag and 3196, 3503 and 731 on the host's environment, on master c98e5d3f81f exactly as on the train top built on it, so that host's train-top pre-push refused the top; a host with zola 0.23.3 passed the recomposed top's 35 gates and 195 cases",
+        "route": "/cockpit/objects/knowledge/s-20261103014800-e1b0-61f10931287e",
+        "source": ".ai/repo/knowledge/curated/s-20261103014800-e1b0-61f10931287e.md",
+        "status": "verified",
+        "facts": {
+          "about": "scripts/ci/run-plan",
+          "class": "lesson",
+          "date": "2026-11-03",
+          "epistemics": "observed",
+          "route": "project",
+          "tags": [
+            "derived",
+            "observation"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://knowledge/s-20261103014800-e1b0-864245a4df1d",
+        "kind": "knowledge",
+        "label": "s-20261103014800-e1b0-864245a4df1d",
+        "summary": "a train top composed by hand with git commit over a hand-written MERGE_HEAD lost its base parent: git reduces redundant parents unless MERGE_MODE says no-ff, and master was dropped because a member already contained it, so the top's first parent was a member instead of master",
+        "route": "/cockpit/objects/knowledge/s-20261103014800-e1b0-864245a4df1d",
+        "source": ".ai/repo/knowledge/curated/s-20261103014800-e1b0-864245a4df1d.md",
+        "status": "verified",
+        "facts": {
+          "about": ".ai/repo/skills/integrator/SKILL.md",
+          "class": "lesson",
+          "date": "2026-11-03",
+          "epistemics": "observed",
+          "route": "project",
+          "tags": [
+            "derived",
+            "observation"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://knowledge/s-20261103014800-e1b0-f47681588ac2",
+        "kind": "knowledge",
+        "label": "s-20261103014800-e1b0-f47681588ac2",
+        "summary": "a build host whose tools differ from CI's pins fails cases on plain master: a host with zola 0.22.1 against the 0.23.4 setup-site pins failed cases 1070, 3043, 533 and 805 on the component tag, and 3196, 3503 and 731 on its environment, on master 5bc72353c8d as on the train top, so its train-top pre-push refused the top; on a host with zola 0.23.3 the same top passed 35 gates and 195 cases",
+        "route": "/cockpit/objects/knowledge/s-20261103014800-e1b0-f47681588ac2",
+        "source": ".ai/repo/knowledge/candidates/s-20261103014800-e1b0-f47681588ac2.md",
+        "status": "superseded",
+        "facts": {
+          "about": "scripts/ci/run-plan",
+          "class": "lesson",
+          "date": "2026-11-03",
+          "epistemics": "observed",
+          "route": "project",
+          "tags": [
+            "derived",
+            "observation"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://knowledge/s-20261105013853-eb29-1e447b09bd0d",
+        "kind": "knowledge",
+        "label": "s-20261105013853-eb29-1e447b09bd0d",
+        "summary": "run-plan --before-push leaves out structure gates CI times past its bounds (core-check 863 s and knowledge-nodes 20 s over the 15 s per gate, adr-collision 11 s past the 120 s sum), and the commit hook's doctor runs no ADR validation, so train 19c, whose member renamed rule project.mesh-cooperation-is-authenticated to its v2 file, passed every local judgement and failed CI structure: ADR 0167 still related the v1 file",
+        "route": "/cockpit/objects/knowledge/s-20261105013853-eb29-1e447b09bd0d",
+        "source": ".ai/repo/knowledge/curated/s-20261105013853-eb29-1e447b09bd0d.md",
+        "status": "verified",
+        "facts": {
+          "about": "scripts/ci/run-plan",
+          "class": "lesson",
+          "date": "2026-11-05",
+          "epistemics": "observed",
+          "route": "project",
+          "tags": [
+            "derived",
+            "observation"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://knowledge/s-20261105013853-eb29-d4034aa6353f",
+        "kind": "knowledge",
+        "label": "s-20261105013853-eb29-d4034aa6353f",
+        "summary": "a long-lived member's own new cases passed on its branch and failed on the train's merged tree, because master had gained defaults since: init now ships an enabled mesh declaration (case 3441 met a declared mesh), and lib/project.sh sorted record filenames where the executable sorts ids (case 99 met a new id that extends another)",
+        "route": "/cockpit/objects/knowledge/s-20261105013853-eb29-d4034aa6353f",
+        "source": ".ai/repo/knowledge/curated/s-20261105013853-eb29-d4034aa6353f.md",
+        "status": "verified",
+        "facts": {
+          "about": "lib/project.sh",
+          "class": "lesson",
+          "date": "2026-11-05",
+          "epistemics": "observed",
+          "route": "project",
+          "tags": [
+            "derived",
+            "observation"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://knowledge/s-20261105013853-eb29-f6d47b5f8b30",
+        "kind": "knowledge",
+        "label": "s-20261105013853-eb29-f6d47b5f8b30",
+        "summary": "run-plan --before-push leaves out every structure gate CI recorded over its 15 s budget (core-check and knowledge-nodes, with adr-collision), and the commit hook's doctor does not resolve an ADR's related paths, so a train top whose member renamed a record file passed every local judgement and failed CI's structure job: train 19c's ADR 0167 still related the v1 file of a rule its member raised to v2",
+        "route": "/cockpit/objects/knowledge/s-20261105013853-eb29-f6d47b5f8b30",
+        "source": ".ai/repo/knowledge/candidates/s-20261105013853-eb29-f6d47b5f8b30.md",
+        "status": "superseded",
+        "facts": {
+          "about": "scripts/ci/run-plan",
+          "class": "lesson",
+          "date": "2026-11-05",
+          "epistemics": "observed",
+          "route": "project",
+          "superseded_by": "s-20261105013853-eb29-1e447b09bd0d",
+          "tags": [
+            "derived",
+            "observation"
           ]
         }
       },
@@ -147384,6 +147565,51 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://knowledge/s-20261103014800-e1b0-11e9357c5980",
+        "target": "kind:knowledge",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://knowledge/s-20261103014800-e1b0-22099d566ee5",
+        "target": "kind:knowledge",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://knowledge/s-20261103014800-e1b0-4fa824190a4e",
+        "target": "kind:knowledge",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://knowledge/s-20261103014800-e1b0-61f10931287e",
+        "target": "kind:knowledge",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://knowledge/s-20261103014800-e1b0-864245a4df1d",
+        "target": "kind:knowledge",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://knowledge/s-20261103014800-e1b0-f47681588ac2",
+        "target": "kind:knowledge",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://knowledge/s-20261105013853-eb29-1e447b09bd0d",
+        "target": "kind:knowledge",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://knowledge/s-20261105013853-eb29-d4034aa6353f",
+        "target": "kind:knowledge",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://knowledge/s-20261105013853-eb29-f6d47b5f8b30",
+        "target": "kind:knowledge",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://knowledge/start-here",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -159105,8 +159331,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4322,
-      "edges": 9921,
+      "nodes": 4331,
+      "edges": 9930,
       "acyclic": false,
       "truncated": false
     }
