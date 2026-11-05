@@ -13,6 +13,12 @@ majordomus handover < note.md # to continue in another session, or
 majordomus finish --outcome <completed|partial|blocked|no_match|failed> --verify-command "<cmd>"
 ```
 
+When nothing names the work, run `/proceed`, the skill generated from `proceed.step`:
+`majordomus proceed step` answers one work order (what to run, what may run beside it, what
+to announce and when to step again, and `done` once the intent is met), `majordomus proceed
+plan` says which ready issue nobody holds and why; the order's `do`, `devtask.implement`,
+claims it, ensures its worktree and starts one execution bound to it, once.
+
 Before `start`, establish where you are. A branch's work happens in its canonical
 worktree — `<repo>-wt/<branch>`, derived from git and never chosen — and the trunk's in
 the primary checkout:
