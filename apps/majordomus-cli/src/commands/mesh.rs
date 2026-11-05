@@ -17,6 +17,7 @@
 //! conflict, an unknown runtime, a failed verification, a failed doctor check) — the
 //! answer is printed either way.
 
+use std::io::Read;
 use std::time::Duration;
 
 use serde_json::{json, Value};
@@ -146,14 +147,17 @@ pub fn run(args: MeshArgs) -> Result<u8> {
             render_written,
             never,
         ),
-        MeshCommand::Beat(a) => ask(
-            &a.query,
-            "POST",
-            "/api/v1/mesh/beats",
-            Some(json!({ "session": a.session, "phase": a.phase, "pid": a.pid })),
-            render_written,
-            never,
-        ),
+        MeshCommand::Beat(a) => match a.hook.as_deref() {
+            Some(provider) => Ok(hook_beat(provider, &a.query, &mut std::io::stdin())),
+            None => ask(
+                &a.query,
+                "POST",
+                "/api/v1/mesh/beats",
+                Some(json!({ "session": a.session, "phase": a.phase, "pid": a.pid })),
+                render_written,
+                never,
+            ),
+        },
         MeshCommand::Session(s) => match s.command {
             MeshSessionCommand::Open(a) => {
                 // read here, in the process the client started, and not by the server: the
@@ -533,6 +537,48 @@ fn ask_at(
     }
     emit(args, &value, render);
     Ok(if failed(&value) { EXIT_REFUSED } else { 0 })
+}
+
+/// `mesh beat --hook <provider>`: the beat the provider's hook event on `stdin` stands for
+/// (I3992), asked of the server the provider session joined. It prints nothing and answers
+/// 0 whatever happens — no payload, an event that is no beat, no server, a refusal, a
+/// timeout — because a hook that fails or writes to stdout (which `UserPromptSubmit` hands
+/// the model) is felt by the person, and a mark on the mesh is not worth that.
+///
+/// It runs on every tool call, so it builds no index and discovers nothing: the checkout is
+/// the one its caller names with `--repo` (the hook passes its checkout's root), and that
+/// checkout's own ready server is read from its lease ([`server_of`]) — the server the
+/// provider's start event opened the session on. Discovering the repository is for its
+/// owners alone (tests/discovery_has_its_owners.rs).
+///
+/// [`server_of`]: crate::integration::exclusive::server_of
+fn hook_beat(provider: &str, query: &MeshQueryArgs, stdin: &mut dyn Read) -> u8 {
+    let Some(body) = hook_body(provider, stdin) else {
+        return 0;
+    };
+    let root = query
+        .repo
+        .repo
+        .clone()
+        .or_else(|| std::env::current_dir().ok())
+        .unwrap_or_default();
+    // the path as the lease records it: a hook names its checkout through a symlinked
+    // directory as readily as not (macOS's /var is /private/var)
+    let root = std::fs::canonicalize(&root).unwrap_or(root);
+    if let Some(server) = crate::integration::exclusive::server_of(&root) {
+        use crate::integration::exclusive::Mesh;
+        let _ = server.ask("POST", "/api/v1/mesh/beats", Some(body));
+    }
+    0
+}
+
+/// The `mesh.beat` input the hook payload on `stdin` stands for, as the JSON body to post;
+/// `None` when it stands for none. The payload is one JSON object, read up to a bound.
+fn hook_body(provider: &str, stdin: &mut dyn Read) -> Option<Value> {
+    let mut payload = String::new();
+    stdin.take(1 << 20).read_to_string(&mut payload).ok()?;
+    let input = crate::capability::builtin::mesh::BeatInput::from_hook(provider, &payload)?;
+    serde_json::to_value(&input).ok()
 }
 
 /// Drop `null` members, so an omitted option is absent rather than null in the input.
@@ -1031,6 +1077,19 @@ fn render_session(sess: &Value, indent: &str, out: &mut String) {
             .map(|i| format!(" ({i})"))
             .unwrap_or_default(),
     ));
+    // what it is doing or waiting on, and when it last showed progress (I3990, I3992)
+    let doing = match (sess["blocked"].as_str(), sess["phase"].as_str()) {
+        (Some(why), _) => Some(format!("blocked: {why} — waiting on a person")),
+        (None, Some(phase)) => Some(format!("phase {phase}")),
+        (None, None) => None,
+    };
+    let progress = sess["progress_ms"]
+        .as_u64()
+        .map(|ms| format!("progress {} s ago", ms / 1000));
+    let line: Vec<String> = [doing, progress].into_iter().flatten().collect();
+    if !line.is_empty() {
+        out.push_str(&format!("{indent}  {}\n", line.join("; ")));
+    }
     for c in sess["claims"].as_array().into_iter().flatten() {
         let scope: Vec<&str> = c["scope"]
             .as_array()
@@ -2775,6 +2834,167 @@ mod tests {
         assert!(
             refused.is_err(),
             "a port that is not a number was answered: {refused:?}"
+        );
+    }
+
+    /// I3992: the hook reads the payload into the beat it stands for, and nothing else.
+    #[test]
+    fn a_hook_payload_becomes_the_beat_it_stands_for() {
+        let mut stop = r#"{"session_id":"s1","hook_event_name":"Stop"}"#.as_bytes();
+        assert_eq!(
+            hook_body("claude-code", &mut stop),
+            Some(json!({ "session": "claude-code-s1", "phase": "blocked: awaiting input" }))
+        );
+        let mut tool = r#"{"session_id":"s1","hook_event_name":"PreToolUse"}"#.as_bytes();
+        assert_eq!(
+            hook_body("claude-code", &mut tool),
+            Some(json!({ "session": "claude-code-s1" })),
+            "real work: no phase, which clears the wait"
+        );
+        assert_eq!(hook_body("claude-code", &mut "".as_bytes()), None);
+        let mut other = r#"{"session_id":"s1","hook_event_name":"SessionStart"}"#.as_bytes();
+        assert_eq!(hook_body("claude-code", &mut other), None);
+    }
+
+    /// I3992: the hook answers 0 whatever happens — no beat, no repository, no server.
+    #[test]
+    fn a_hook_beat_answers_zero_whatever_happens() {
+        let dir = tempfile::tempdir().unwrap();
+        let query = |repo: Option<std::path::PathBuf>| MeshQueryArgs {
+            repo: crate::cli::RepoArgs {
+                repo,
+                discovery: crate::cli::DiscoveryMode::Vcs,
+                strict: false,
+                share: None,
+            },
+            format: OutputFormat::Text,
+        };
+        let stop = r#"{"session_id":"s1","hook_event_name":"Stop"}"#;
+        let here = query(Some(dir.path().to_path_buf()));
+        assert_eq!(hook_beat("claude-code", &here, &mut "".as_bytes()), 0);
+        assert_eq!(
+            hook_beat("claude-code", &here, &mut stop.as_bytes()),
+            0,
+            "no repository"
+        );
+        std::fs::create_dir_all(dir.path().join(".ai")).unwrap();
+        std::fs::write(dir.path().join(".ai/manifest.yaml"), "schema: x\n").unwrap();
+        assert_eq!(
+            hook_beat("claude-code", &here, &mut stop.as_bytes()),
+            0,
+            "no server"
+        );
+    }
+
+    /// I3992: a payload that is not text stands for no beat; nothing is asked of anyone.
+    #[test]
+    fn a_hook_payload_that_is_not_text_stands_for_no_beat() {
+        assert_eq!(hook_body("claude-code", &mut &[0xff, 0xfe, 0xfd][..]), None);
+    }
+
+    /// I3992: in a checkout whose lease names a ready server the beat is posted to that
+    /// server — after one probe that it answers for the checkout — and the hook still
+    /// answers 0.
+    #[test]
+    fn a_hook_beat_is_posted_to_the_server_the_checkouts_lease_names() {
+        use std::io::{BufRead, Read, Write};
+        let dir = tempfile::tempdir().unwrap();
+        let root = std::fs::canonicalize(dir.path()).unwrap();
+        let listener = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
+        let url = format!("http://{}", listener.local_addr().unwrap());
+        let index = json!({
+            "name": "majordomus",
+            "repository_id": crate::repository::identity(&root),
+        });
+        // answers the probe with the index, then the beat; hands back each request line
+        // and body it was asked
+        let server = std::thread::spawn(move || {
+            let mut asked = Vec::new();
+            for answer in [index.to_string(), "{}".to_string()] {
+                let (stream, _) = listener.accept().unwrap();
+                let mut reader = std::io::BufReader::new(stream);
+                let mut head = Vec::new();
+                let mut length = 0usize;
+                loop {
+                    let mut line = String::new();
+                    reader.read_line(&mut line).unwrap();
+                    if let Some(n) = line.to_ascii_lowercase().strip_prefix("content-length:") {
+                        length = n.trim().parse().unwrap();
+                    }
+                    if line.trim().is_empty() {
+                        break;
+                    }
+                    head.push(line.trim().to_string());
+                }
+                let mut body = vec![0u8; length];
+                reader.read_exact(&mut body).unwrap();
+                asked.push((head[0].clone(), String::from_utf8(body).unwrap()));
+                let mut stream = reader.into_inner();
+                write!(
+                    stream,
+                    "HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{answer}",
+                    answer.len()
+                )
+                .unwrap();
+            }
+            asked
+        });
+        let lease = crate::lease::lease_file(&root, ".ai/local");
+        std::fs::create_dir_all(lease.parent().unwrap()).unwrap();
+        let document = json!({
+            "schema": crate::lease::SCHEMA,
+            "pid": std::process::id(),
+            "token": "t",
+            "root": root,
+            "url": url,
+            "started_at": "2026-11-03T00:00:00Z",
+            "version": crate::VERSION,
+        });
+        std::fs::write(&lease, document.to_string()).unwrap();
+
+        let stop = r#"{"session_id":"s1","hook_event_name":"Stop"}"#;
+        let here = query(Some(root.clone()), OutputFormat::Text);
+        assert_eq!(hook_beat("claude-code", &here, &mut stop.as_bytes()), 0);
+        let asked = server.join().unwrap();
+        assert!(asked[0].0.starts_with("GET / "), "{asked:?}");
+        assert!(
+            asked[1].0.starts_with("POST /api/v1/mesh/beats "),
+            "{asked:?}"
+        );
+        assert_eq!(
+            serde_json::from_str::<Value>(&asked[1].1).unwrap(),
+            json!({ "session": "claude-code-s1", "phase": "blocked: awaiting input" })
+        );
+    }
+
+    /// I3992: the text board says what a session does, or that it waits on a person and
+    /// why, beside when it last showed progress.
+    #[test]
+    fn a_session_line_says_what_it_does_or_whom_it_waits_on() {
+        let line = |sess: Value| {
+            let mut out = String::new();
+            render_session(&sess, "", &mut out);
+            out
+        };
+        let info = json!({ "client": "claude-code", "session": "claude-code-s1" });
+        let blocked = line(json!({
+            "info": info, "state": "active", "phase": "blocked: awaiting input",
+            "blocked": "awaiting input", "progress_ms": 61_000,
+        }));
+        assert!(
+            blocked
+                .contains("  blocked: awaiting input — waiting on a person; progress 61 s ago\n"),
+            "{blocked}"
+        );
+        let working = line(json!({ "info": info, "state": "active", "phase": "waiting on CI" }));
+        assert!(working.contains("  phase waiting on CI\n"), "{working}");
+        let silent = line(json!({ "info": info, "state": "active", "progress_ms": 2_000 }));
+        assert!(silent.contains("  progress 2 s ago\n"), "{silent}");
+        let quiet = line(json!({ "info": info, "state": "active" }));
+        assert_eq!(
+            quiet.lines().count(),
+            1,
+            "nothing said, nothing shown: {quiet}"
         );
     }
 

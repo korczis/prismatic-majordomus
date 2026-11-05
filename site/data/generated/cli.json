@@ -25509,14 +25509,14 @@
           "name": "session",
           "positional": false,
           "possible_values": [],
-          "required": true,
+          "required": false,
           "takes_value": true,
           "value_name": "SESSION"
         },
         {
           "defaults": [],
           "global": false,
-          "help": "What it is doing, one line: `waiting on CI run 123`",
+          "help": "What it is doing, one line: `waiting on CI run 123`; `blocked: <why>` says it waits on a person",
           "long": "phase",
           "name": "phase",
           "positional": false,
@@ -25536,6 +25536,18 @@
           "required": false,
           "takes_value": true,
           "value_name": "PID"
+        },
+        {
+          "defaults": [],
+          "global": false,
+          "help": "Read the session and the phase from this provider's hook payload on stdin (`claude-code`); prints nothing, exits 0",
+          "long": "hook",
+          "name": "hook",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PROVIDER"
         },
         {
           "defaults": [],
@@ -41603,7 +41615,7 @@
     }
   ],
   "counts": {
-    "arguments": 1802,
+    "arguments": 1803,
     "commands": 262,
     "examples": 261,
     "runnable": 227
