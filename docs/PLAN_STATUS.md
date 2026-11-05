@@ -8,7 +8,7 @@ This page is the index. Each milestone's issues, and the findings about them, ar
 its own under [`plan-status/`](plan-status/), named by the milestone, so the plan grows by pages
 and no one page grows with it.
 
-Generated from canonical inputs `61627b93487a`.
+Generated from canonical inputs `9f30aefaf772`.
 
 ## Milestones
 
@@ -105,7 +105,7 @@ Generated from canonical inputs `61627b93487a`.
 | [routing-recommendations](https://majordomus.dev/plan/routing-recommendations/) | BLOCKED | 0/4 | 0 | 4 | 0 | 0 | 0 | The profile a task should run under is recommended from measured cost per accepted outcome, and the recommendation names the data it came from. | [`plan-status/routing-recommendations.md`](plan-status/routing-recommendations.md) |
 | [runtime-adapters](https://majordomus.dev/plan/runtime-adapters/) | ACTIVE | 0/6 | 0 | 5 | 1 | 0 | 0 | A profile's axes become opt-in runtime clamps a provider actually applies — read size, output condensation, subagent budget — with the limit derived from the profile rather than configured twice. | [`plan-status/runtime-adapters.md`](plan-status/runtime-adapters.md) |
 | [runtime-lifecycle](https://majordomus.dev/plan/runtime-lifecycle/) | ACTIVE | 7/10 | 3 | 0 | 0 | 0 | 1 | Entering a checkout, opening the Cockpit, or starting any number of MCP clients converges on one server for that checkout, which is taken over only when it is dead, stops in order when asked, removes only its own lease, reports a typed state every surface reads, and stays up while any surface uses it. | [`plan-status/runtime-lifecycle.md`](plan-status/runtime-lifecycle.md) |
-| [runtime-trust](https://majordomus.dev/plan/runtime-trust/) | ACTIVE | 7/11 | 4 | 0 | 0 | 0 | 0 | Discovery is not trust, trust is not authorization, and a caller is admitted to change anything only by a key the trust policy names. A host that can reach a runtime reads it and changes nothing it cannot authenticate; every event in the journal was checked against the trust policy that holds now, whether it arrived over a link or from disk; and the limits the documents state are the limits the code enforces. | [`plan-status/runtime-trust.md`](plan-status/runtime-trust.md) |
+| [runtime-trust](https://majordomus.dev/plan/runtime-trust/) | ACTIVE | 8/11 | 3 | 0 | 0 | 0 | 0 | Discovery is not trust, trust is not authorization, and a caller is admitted to change anything only by a key the trust policy names. A host that can reach a runtime reads it and changes nothing it cannot authenticate; every event in the journal was checked against the trust policy that holds now, whether it arrived over a link or from disk; and the limits the documents state are the limits the code enforces. | [`plan-status/runtime-trust.md`](plan-status/runtime-trust.md) |
 | [safe-self-update](https://majordomus.dev/plan/safe-self-update/) | ACTIVE | 4/12 | 3 | 5 | 0 | 0 | 0 | An enrolled mesh node follows the stable release by itself through the one installer, forward only, activating in order and rolling back a failed activation (ADR 0161); a newer client replaces an older server in an ordered hand-off and an older client is told it is older; a change to any wire or on-disk schema needs a version bump; a released archive carries a provenance attestation the installer checks. | [`plan-status/safe-self-update.md`](plan-status/safe-self-update.md) |
 | [shared-policy](https://majordomus.dev/plan/shared-policy/) | BLOCKED | 0/5 | 0 | 5 | 0 | 0 | 0 | A policy can be shared across repositories and workers, with local override remaining explicit and drift from the shared source detectable in one command. | [`plan-status/shared-policy.md`](plan-status/shared-policy.md) |
 | [surfaces-never-disagree](https://majordomus.dev/plan/surfaces-never-disagree/) | ACTIVE | 8/23 | 15 | 0 | 0 | 0 | 0 | A reader on any surface sees the same value, the time it was observed and whether it is stale; a capability added to or removed from the registry appears or disappears everywhere with no consumer edit; a page served beside the write routes runs only script it shipped. | [`plan-status/surfaces-never-disagree.md`](plan-status/surfaces-never-disagree.md) |
@@ -203,7 +203,6 @@ Generated from canonical inputs `61627b93487a`.
 - `I2694` (development-runtime, wave 0) — A promoted note resolves in every checkout, not only where it was promoted
 - `I2698` (development-runtime, wave 0) — The new scenes have screenshot evidence at 1080p and 4K on a named revision
 - `I2700` (runtime-lifecycle, wave 1) — A lease probe asks a cheap liveness route, and a server holding another lease token is not taken for the leaseholder
-- `I2703` (runtime-trust, wave 1) — The mesh cooperation rule lists the hello checks in the order the code runs them, and a test names that order
 - `I2704` (runtime-trust, wave 1) — A dialer reads no reply beyond the link bound and no more candidates than the bound, and a refusing peer is retried at a measured, jittered rate
 - `I2709` (M004, wave 1) — A red on the trunk has one named carrier, and nobody else may land until it is paid
 - `I2714` (development-runtime, wave 0) — One build directory never serves two worktrees' jobs at once
@@ -489,7 +488,7 @@ Generated from canonical inputs `61627b93487a`.
 
 ## Findings
 
-9059 finding(s), each on the page of the milestone its subject is or belongs to:
+9045 finding(s), each on the page of the milestone its subject is or belongs to:
 
 | milestone | findings |
 |---|---|
@@ -513,25 +512,25 @@ Generated from canonical inputs `61627b93487a`.
 | [`a-session-proceeds-through-the-mesh`](plan-status/a-session-proceeds-through-the-mesh.md) | 55 |
 | [`a-test-fails-when-the-code-is-wrong`](plan-status/a-test-fails-when-the-code-is-wrong.md) | 38 |
 | [`a-version-follows-the-work`](plan-status/a-version-follows-the-work.md) | 18 |
-| [`adopter-upgrades`](plan-status/adopter-upgrades.md) | 573 |
+| [`adopter-upgrades`](plan-status/adopter-upgrades.md) | 572 |
 | [`an-authorised-node-connects-from-anywhere`](plan-status/an-authorised-node-connects-from-anywhere.md) | 6 |
 | [`an-outcome-becomes-a-reviewed-plan`](plan-status/an-outcome-becomes-a-reviewed-plan.md) | 15 |
 | [`an-unmet-criterion-is-drafted-into-work`](plan-status/an-unmet-criterion-is-drafted-into-work.md) | 121 |
 | [`architecture-is-enforced`](plan-status/architecture-is-enforced.md) | 2 |
-| [`automation`](plan-status/automation.md) | 56 |
+| [`automation`](plan-status/automation.md) | 55 |
 | [`campaigns-are-read-as-provenance`](plan-status/campaigns-are-read-as-provenance.md) | 21 |
 | [`capability-graph`](plan-status/capability-graph.md) | 13 |
 | [`ci-critical-path`](plan-status/ci-critical-path.md) | 325 |
 | [`command-and-deployment-criteria-are-judged`](plan-status/command-and-deployment-criteria-are-judged.md) | 5 |
 | [`delivery-economics-are-measured-over-declared-windows`](plan-status/delivery-economics-are-measured-over-declared-windows.md) | 1 |
 | [`derived-data-integrity`](plan-status/derived-data-integrity.md) | 26 |
-| [`development-runtime`](plan-status/development-runtime.md) | 825 |
+| [`development-runtime`](plan-status/development-runtime.md) | 824 |
 | [`every-session-joins-the-mesh`](plan-status/every-session-joins-the-mesh.md) | 13 |
 | [`every-sessions-usage-is-observed`](plan-status/every-sessions-usage-is-observed.md) | 56 |
 | [`every-surface-follows-what-changed`](plan-status/every-surface-follows-what-changed.md) | 18 |
 | [`every-task-states-its-delivery-economics`](plan-status/every-task-states-its-delivery-economics.md) | 7 |
 | [`everything-is-followed-in-one-stream`](plan-status/everything-is-followed-in-one-stream.md) | 11 |
-| [`external-workspaces`](plan-status/external-workspaces.md) | 31 |
+| [`external-workspaces`](plan-status/external-workspaces.md) | 30 |
 | [`failure-is-visible`](plan-status/failure-is-visible.md) | 31 |
 | [`fly-deployment`](plan-status/fly-deployment.md) | 4 |
 | [`idd-reads-at-a-glance`](plan-status/idd-reads-at-a-glance.md) | 3112 |
@@ -549,8 +548,8 @@ Generated from canonical inputs `61627b93487a`.
 | [`recovery-from-injected-faults-is-proven`](plan-status/recovery-from-injected-faults-is-proven.md) | 2 |
 | [`repository-automation-is-typed`](plan-status/repository-automation-is-typed.md) | 33 |
 | [`runtime-adapters`](plan-status/runtime-adapters.md) | 97 |
-| [`runtime-lifecycle`](plan-status/runtime-lifecycle.md) | 47 |
-| [`runtime-trust`](plan-status/runtime-trust.md) | 34 |
+| [`runtime-lifecycle`](plan-status/runtime-lifecycle.md) | 46 |
+| [`runtime-trust`](plan-status/runtime-trust.md) | 25 |
 | [`safe-self-update`](plan-status/safe-self-update.md) | 463 |
 | [`surfaces-never-disagree`](plan-status/surfaces-never-disagree.md) | 320 |
 | [`test-evidence`](plan-status/test-evidence.md) | 25 |
