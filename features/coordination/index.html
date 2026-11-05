@@ -276,6 +276,10 @@ durable, enforced form is the task record and its scope.</p>
           <p class="mt-2 text-sm text-body">Where every linked git worktree of this repository belongs and where each one is. The container is the primary checkout&#39;s sibling named with `-wt`, the path under it is the branch name with its hierarchy kept, and both are derived from git&#39;s own identity — the common directory, the registered worktrees, the branches — never from a registry, a configuration or the current directory. A worktree somewhere else is a typed diagnostic with a remedy; the migration that repairs it is a command-line operation of the same service.</p>
           <ul class="mt-3 divide-y divide-default border-t border-default">
             <li class="flex flex-wrap items-baseline gap-x-3 gap-y-1 py-2">
+              <a href="https://majordomus.dev/registry/capabilities/worktree-create/" class="text-sm font-medium text-heading hover:text-fg-brand hover:underline">The canonical worktree of a branch, made or found</a>
+              <span class="font-mono text-xs text-body-subtle">command</span>
+            </li>
+            <li class="flex flex-wrap items-baseline gap-x-3 gap-y-1 py-2">
               <a href="https://majordomus.dev/registry/capabilities/worktree-inspect/" class="text-sm font-medium text-heading hover:text-fg-brand hover:underline">One branch: where its worktree belongs and what is there</a>
               <span class="font-mono text-xs text-body-subtle">query</span>
             </li>
@@ -424,6 +428,12 @@ durable, enforced form is the task record and its scope.</p>
               <td class="px-3 py-2 font-mono text-xs"><a href="https://majordomus.dev/docs/cli/serve/status/" class="text-fg-brand hover:underline">majordomus serve status</a></td>
               <td class="px-3 py-2 font-mono text-xs"><a href="https://majordomus.dev/docs/api/server/#op-server-status" class="text-fg-brand hover:underline">GET /api/v1/server</a></td>
               <td class="px-3 py-2 font-mono text-xs"><span class="text-body">majordomus_server</span></td>
+            </tr>
+            <tr class="align-baseline">
+              <th scope="row" class="px-3 py-2 font-normal"><a href="https://majordomus.dev/registry/capabilities/worktree-create/" class="font-mono text-xs text-heading hover:text-fg-brand hover:underline">worktree.create</a></th>
+              <td class="px-3 py-2 font-mono text-xs"><a href="https://majordomus.dev/docs/cli/worktree/ensure/" class="text-fg-brand hover:underline">majordomus worktree ensure</a></td>
+              <td class="px-3 py-2 font-mono text-xs"><a href="https://majordomus.dev/docs/api/worktree/#op-worktree-create" class="text-fg-brand hover:underline">POST /api/v1/worktrees/create</a></td>
+              <td class="px-3 py-2 font-mono text-xs"><span class="text-body">majordomus_worktree_create</span></td>
             </tr>
             <tr class="align-baseline">
               <th scope="row" class="px-3 py-2 font-normal"><a href="https://majordomus.dev/registry/capabilities/worktree-inspect/" class="font-mono text-xs text-heading hover:text-fg-brand hover:underline">worktree.inspect</a></th>
@@ -636,6 +646,9 @@ durable, enforced form is the task record and its scope.</p>
           <a href="https://majordomus.dev/docs/cli/worktree/inspect/" class="break-words font-mono text-sm text-heading hover:text-fg-brand hover:underline">majordomus worktree inspect [OPTIONS] &lt;BRANCH&gt;</a><p class="mt-1 text-sm text-body">One branch: its canonical path, whether it exists, what occupies the path, the worktree holding it, and what stands in the way</p>
         </li>
         <li class="p-3">
+          <a href="https://majordomus.dev/docs/cli/worktree/ensure/" class="break-words font-mono text-sm text-heading hover:text-fg-brand hover:underline">majordomus worktree ensure [OPTIONS] &lt;BRANCH&gt;</a><p class="mt-1 text-sm text-body">The canonical worktree of a branch: created when absent, answered when present, refused when the branch is checked out somewhere else</p>
+        </li>
+        <li class="p-3">
           <a href="https://majordomus.dev/docs/cli/worktree/migrate/" class="break-words font-mono text-sm text-heading hover:text-fg-brand hover:underline">majordomus worktree migrate [OPTIONS]</a><p class="mt-1 text-sm text-body">Bring every misplaced worktree to its canonical path, dirty state included, with a fingerprint taken before and after each move; --plan shows the steps and changes nothing</p>
         </li>
         <li class="p-3">
@@ -774,10 +787,10 @@ durable, enforced form is the task record and its scope.</p>
     </nav>
     <h2 class="text-sm font-semibold uppercase tracking-wide text-body-subtle lg:mt-8">Counted at build time</h2>
     <dl class="mt-3 divide-y divide-default rounded-base border border-default bg-neutral-primary-soft">
-      <div class="flex items-baseline justify-between gap-3 px-3 py-2"><dt class="text-xs text-body">capabilities</dt><dd class="font-mono text-sm text-heading">18</dd></div>
-      <div class="flex items-baseline justify-between gap-3 px-3 py-2"><dt class="text-xs text-body">MCP tools</dt><dd class="font-mono text-sm text-heading">18</dd></div>
-      <div class="flex items-baseline justify-between gap-3 px-3 py-2"><dt class="text-xs text-body">HTTP routes</dt><dd class="font-mono text-sm text-heading">18</dd></div>
-      <div class="flex items-baseline justify-between gap-3 px-3 py-2"><dt class="text-xs text-body">command-line paths</dt><dd class="font-mono text-sm text-heading">12</dd></div>
+      <div class="flex items-baseline justify-between gap-3 px-3 py-2"><dt class="text-xs text-body">capabilities</dt><dd class="font-mono text-sm text-heading">19</dd></div>
+      <div class="flex items-baseline justify-between gap-3 px-3 py-2"><dt class="text-xs text-body">MCP tools</dt><dd class="font-mono text-sm text-heading">19</dd></div>
+      <div class="flex items-baseline justify-between gap-3 px-3 py-2"><dt class="text-xs text-body">HTTP routes</dt><dd class="font-mono text-sm text-heading">19</dd></div>
+      <div class="flex items-baseline justify-between gap-3 px-3 py-2"><dt class="text-xs text-body">command-line paths</dt><dd class="font-mono text-sm text-heading">13</dd></div>
       <div class="flex items-baseline justify-between gap-3 px-3 py-2"><dt class="text-xs text-body">rules</dt><dd class="font-mono text-sm text-heading">5</dd></div>
       <div class="flex items-baseline justify-between gap-3 px-3 py-2"><dt class="text-xs text-body">claims</dt><dd class="font-mono text-sm text-heading">5</dd></div>
       <div class="flex items-baseline justify-between gap-3 px-3 py-2"><dt class="text-xs text-body">use cases</dt><dd class="font-mono text-sm text-heading">2</dd></div>
@@ -832,9 +845,9 @@ durable, enforced form is the task record and its scope.</p>
       <div class="min-w-0">
         <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">Project</h2><ul class="space-y-2 text-sm font-medium text-body">
           <li><a href="https://github.com/korczis/prismatic-majordomus" class="hover:text-heading hover:underline">GitHub</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/9df9061de3e5ce138c6921b941f52ffad1d60f23/LICENSE" class="hover:text-heading hover:underline">MIT licence</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/9df9061de3e5ce138c6921b941f52ffad1d60f23/SECURITY.md" class="hover:text-heading hover:underline">Security policy</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/9df9061de3e5ce138c6921b941f52ffad1d60f23/CONTRIBUTING.md" class="hover:text-heading hover:underline">Contributing guide</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/4795a79d95453ed90f5d59be8964cbaf67635ee9/LICENSE" class="hover:text-heading hover:underline">MIT licence</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/4795a79d95453ed90f5d59be8964cbaf67635ee9/SECURITY.md" class="hover:text-heading hover:underline">Security policy</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/4795a79d95453ed90f5d59be8964cbaf67635ee9/CONTRIBUTING.md" class="hover:text-heading hover:underline">Contributing guide</a></li>
         </ul>
       </div>
     </div>
@@ -842,7 +855,7 @@ durable, enforced form is the task record and its scope.</p>
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.10</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/9df9061de3e5ce138c6921b941f52ffad1d60f23" class="font-mono underline">9df9061</a> · inputs <span class="font-mono">6da6c2266093</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/architecture/" class="underline">how this site is derived</a> names them.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.10</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/4795a79d95453ed90f5d59be8964cbaf67635ee9" class="font-mono underline">4795a79</a> · inputs <span class="font-mono">1290d128d875</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/architecture/" class="underline">how this site is derived</a> names them.</p>
     </div>
   </div>
 </footer>

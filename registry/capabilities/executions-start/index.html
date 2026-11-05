@@ -4,12 +4,12 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex">
 <title>executions.start — Prismatic Majordomus</title>
-<meta name="description" content="Run any executable capability of this registry as an execution: the input is checked against that capability&#39;s own input schema, the work is queued, and this answers at once with the execution&#39;s id and the links to follow it. Nothing waits for the handler. The capability runs through the same executor every other interface calls, so there is no second implementation of anything. On the command line (`majordomus run`) it runs in that process and is reported to the server serving the checkout, when one is, through executions.report; a run never starts a server.">
+<meta name="description" content="Run any executable capability of this registry as an execution: the input is checked against that capability&#39;s own input schema, the work is queued, and this answers at once with the execution&#39;s id and the links to follow it. Nothing waits for the handler. With an idempotency_key, a repeated start is one execution: the same key with the same capability and input is answered the execution it started (deduplicated) and nothing new runs, and the same key with another input is refused as a conflict naming that execution. With an issue, the execution holds that issue&#39;s exclusive mesh claim while it runs: taken before the handler is entered (queued, claimed, running), refused with the holder named when another session holds the scope so that nothing runs, given back at the final state, and kept for an outcome that is not known; with no mesh in the serving process it runs unclaimed and says so. The capability runs through the same executor every other interface calls, so there is no second implementation of anything. On the command line (`majordomus run`) it runs in that process and is reported to the server serving the checkout, when one is, through executions.report; a run never starts a server.">
 <link rel="canonical" href="https://majordomus.dev/registry/capabilities/executions-start/">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Prismatic Majordomus">
 <meta property="og:title" content="executions.start — Prismatic Majordomus">
-<meta property="og:description" content="Run any executable capability of this registry as an execution: the input is checked against that capability&#39;s own input schema, the work is queued, and this answers at once with the execution&#39;s id and the links to follow it. Nothing waits for the handler. The capability runs through the same executor every other interface calls, so there is no second implementation of anything. On the command line (`majordomus run`) it runs in that process and is reported to the server serving the checkout, when one is, through executions.report; a run never starts a server.">
+<meta property="og:description" content="Run any executable capability of this registry as an execution: the input is checked against that capability&#39;s own input schema, the work is queued, and this answers at once with the execution&#39;s id and the links to follow it. Nothing waits for the handler. With an idempotency_key, a repeated start is one execution: the same key with the same capability and input is answered the execution it started (deduplicated) and nothing new runs, and the same key with another input is refused as a conflict naming that execution. With an issue, the execution holds that issue&#39;s exclusive mesh claim while it runs: taken before the handler is entered (queued, claimed, running), refused with the holder named when another session holds the scope so that nothing runs, given back at the final state, and kept for an outcome that is not known; with no mesh in the serving process it runs unclaimed and says so. The capability runs through the same executor every other interface calls, so there is no second implementation of anything. On the command line (`majordomus run`) it runs in that process and is reported to the server serving the checkout, when one is, through executions.report; a run never starts a server.">
 <meta property="og:url" content="https://majordomus.dev/registry/capabilities/executions-start/">
 <meta property="og:image" content="https://majordomus.dev/images/social-card.png">
 <meta name="twitter:card" content="summary_large_image">
@@ -178,7 +178,7 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
 </nav>
 
     <h1 class="mt-4 break-words text-3xl font-bold tracking-tight text-heading sm:text-4xl">executions.start</h1>
-    <p class="mt-3 max-w-3xl break-words text-lg text-body">Run any executable capability of this registry as an execution: the input is checked against that capability&#39;s own input schema, the work is queued, and this answers at once with the execution&#39;s id and the links to follow it. Nothing waits for the handler. The capability runs through the same executor every other interface calls, so there is no second implementation of anything. On the command line (`majordomus run`) it runs in that process and is reported to the server serving the checkout, when one is, through executions.report; a run never starts a server.</p>
+    <p class="mt-3 max-w-3xl break-words text-lg text-body">Run any executable capability of this registry as an execution: the input is checked against that capability&#39;s own input schema, the work is queued, and this answers at once with the execution&#39;s id and the links to follow it. Nothing waits for the handler. With an idempotency_key, a repeated start is one execution: the same key with the same capability and input is answered the execution it started (deduplicated) and nothing new runs, and the same key with another input is refused as a conflict naming that execution. With an issue, the execution holds that issue&#39;s exclusive mesh claim while it runs: taken before the handler is entered (queued, claimed, running), refused with the holder named when another session holds the scope so that nothing runs, given back at the final state, and kept for an outcome that is not known; with no mesh in the serving process it runs unclaimed and says so. The capability runs through the same executor every other interface calls, so there is no second implementation of anything. On the command line (`majordomus run`) it runs in that process and is reported to the server serving the checkout, when one is, through executions.report; a run never starts a server.</p>
   </div>
 </div>
 <div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
@@ -196,7 +196,7 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
 
 <div class="mt-6 grid gap-10 lg:grid-cols-[minmax(0,1fr)_18rem]">
   <div class="min-w-0">
-    <p class="break-words text-lg text-body">Run any executable capability of this registry as an execution: the input is checked against that capability&#39;s own input schema, the work is queued, and this answers at once with the execution&#39;s id and the links to follow it. Nothing waits for the handler. The capability runs through the same executor every other interface calls, so there is no second implementation of anything. On the command line (`majordomus run`) it runs in that process and is reported to the server serving the checkout, when one is, through executions.report; a run never starts a server.</p>
+    <p class="break-words text-lg text-body">Run any executable capability of this registry as an execution: the input is checked against that capability&#39;s own input schema, the work is queued, and this answers at once with the execution&#39;s id and the links to follow it. Nothing waits for the handler. With an idempotency_key, a repeated start is one execution: the same key with the same capability and input is answered the execution it started (deduplicated) and nothing new runs, and the same key with another input is refused as a conflict naming that execution. With an issue, the execution holds that issue&#39;s exclusive mesh claim while it runs: taken before the handler is entered (queued, claimed, running), refused with the holder named when another session holds the scope so that nothing runs, given back at the final state, and kept for an outcome that is not known; with no mesh in the serving process it runs unclaimed and says so. The capability runs through the same executor every other interface calls, so there is no second implementation of anything. On the command line (`majordomus run`) it runs in that process and is reported to the server serving the checkout, when one is, through executions.report; a run never starts a server.</p>
     <ul class="mt-4 flex flex-wrap gap-2 font-mono text-xs">
       <li><span class="rounded border border-default bg-neutral-secondary-medium px-1.5 py-0.5 text-heading">command</span></li>
       <li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 text-body">behaviorally_verified</span></li>
@@ -227,10 +227,31 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
         <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The canonical id of the capability to run (<code>health.report</code>, <code>objects.verify</code>).</td>
       </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">idempotency_key</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">A key that makes a repeated start one execution (I4000): sent again with the same
+capability and input, it is answered the execution it started, <code>deduplicated</code>, and
+nothing new runs; sent again with another input, it is refused 409 <code>conflict</code>,
+naming that execution. 1 to 128 characters of <code>A-Z a-z 0-9 . _ : -</code>, scoped to this
+repository and the capability, and held for as long as the server holds the
+execution it started. Without one, every start starts an execution.</td>
+      </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">input</td>
         <td class="px-3 py-2 font-mono text-xs text-body">object</td>
         <td class="px-3 py-2 font-mono text-xs text-body">no</td>
         <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Its input, as its own input schema describes it; an empty object when it takes none. <span class="font-mono text-xs text-body-subtle">default null</span></td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">issue</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The issue the execution works for (I4004): <code>I4004</code>, <code>#184</code>. Before the handler is
+entered the execution takes the issue's exclusive mesh claim — the issue record's
+<code>scope</code>, or <code>issue/&lt;id&gt;</code> when it declares none — as the mesh session
+<code>execution-&lt;id&gt;</code>, and moves <code>queued -&gt; claimed -&gt; running</code>; a claim another session
+holds refuses it (<code>refused</code>, the holder named) and nothing runs. The claim is given
+back at the final state and kept for an outcome that is not known. With no mesh in
+the serving process it runs unclaimed and its <code>execution.issue_claim</code> event says so.</td>
       </tr></tbody>
     </table>
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
@@ -243,9 +264,29 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
       &quot;description&quot;: &quot;The canonical id of the capability to run (`health.report`, `objects.verify`).&quot;,
       &quot;type&quot;: &quot;string&quot;
     },
+    &quot;idempotency_key&quot;: {
+      &quot;description&quot;: &quot;A key that makes a repeated start one execution (I4000): sent again with the same\ncapability and input, it is answered the execution it started, `deduplicated`, and\nnothing new runs; sent again with another input, it is refused 409 `conflict`,\nnaming that execution. 1 to 128 characters of `A-Z a-z 0-9 . _ : -`, scoped to this\nrepository and the capability, and held for as long as the server holds the\nexecution it started. Without one, every start starts an execution.&quot;,
+      &quot;maxLength&quot;: 128,
+      &quot;minLength&quot;: 1,
+      &quot;pattern&quot;: &quot;^[A-Za-z0-9._:-]+$&quot;,
+      &quot;type&quot;: [
+        &quot;string&quot;,
+        &quot;null&quot;
+      ]
+    },
     &quot;input&quot;: {
       &quot;default&quot;: null,
       &quot;description&quot;: &quot;Its input, as its own input schema describes it; an empty object when it takes none.&quot;
+    },
+    &quot;issue&quot;: {
+      &quot;description&quot;: &quot;The issue the execution works for (I4004): `I4004`, `#184`. Before the handler is\nentered the execution takes the issue&#39;s exclusive mesh claim — the issue record&#39;s\n`scope`, or `issue/&lt;id&gt;` when it declares none — as the mesh session\n`execution-&lt;id&gt;`, and moves `queued -&gt; claimed -&gt; running`; a claim another session\nholds refuses it (`refused`, the holder named) and nothing runs. The claim is given\nback at the final state and kept for an outcome that is not known. With no mesh in\nthe serving process it runs unclaimed and its `execution.issue_claim` event says so.&quot;,
+      &quot;maxLength&quot;: 64,
+      &quot;minLength&quot;: 1,
+      &quot;pattern&quot;: &quot;^[A-Za-z0-9#._-]+$&quot;,
+      &quot;type&quot;: [
+        &quot;string&quot;,
+        &quot;null&quot;
+      ]
     }
   },
   &quot;required&quot;: [
@@ -257,7 +298,24 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
   </details>
 </div>
 <div class="min-w-0">
-  <h3 class="font-mono text-sm font-semibold text-heading">output · ExecutionView</h3><div class="mt-1 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">One execution with the links to everything else about it.</div><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+  <h3 class="font-mono text-sm font-semibold text-heading">output · StartedExecution</h3><div class="mt-1 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">The answer of <code>executions.start</code>: the execution, flattened as every other execution
+answer is, and whether this start began it or was answered one its idempotency key had
+already started.</p>
+<pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="plain"><span class="giallo-l"><span>use majordomus_cli::capability::builtin::StartedExecution;</span></span>
+<span class="giallo-l"><span>use majordomus_cli::synthetic::SyntheticRepository;</span></span>
+<span class="giallo-l"><span>let repo = SyntheticRepository::small().unwrap();</span></span>
+<span class="giallo-l"><span>let ctx = repo.context().unwrap();</span></span>
+<span class="giallo-l"><span>let input = serde_json::json!({</span></span>
+<span class="giallo-l"><span>    &quot;capability&quot;: &quot;executions.demonstrate&quot;,</span></span>
+<span class="giallo-l"><span>    &quot;input&quot;: { &quot;steps&quot;: 1, &quot;delay_ms&quot;: 0 },</span></span>
+<span class="giallo-l"><span>    &quot;idempotency_key&quot;: &quot;click-1&quot;,</span></span>
+<span class="giallo-l"><span>});</span></span>
+<span class="giallo-l"><span>let start = || -&gt; StartedExecution {</span></span>
+<span class="giallo-l"><span>    serde_json::from_value(ctx.execute(&quot;executions.start&quot;, input.clone()).unwrap()).unwrap()</span></span>
+<span class="giallo-l"><span>};</span></span>
+<span class="giallo-l"><span>let (first, again) = (start(), start());</span></span>
+<span class="giallo-l"><span>assert!(!first.deduplicated &amp;&amp; again.deduplicated);</span></span>
+<span class="giallo-l"><span>assert_eq!(first.view.execution.id, again.view.execution.id);</span></span></code></pre></div><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
     <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
       <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
       <tbody><tr class="border-t border-default align-top">
@@ -287,6 +345,13 @@ execution id itself, carried under the name a reader of a log expects.</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
         <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">When it was accepted, RFC 3339 in UTC.</td>
       </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">deduplicated</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">boolean</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words"><code>true</code> when this start began nothing: its idempotency key had already started this
+execution with the same input, and the answer is that execution as it stands now.
+<code>false</code> for an execution this start began.</td>
+      </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">diagnostics</td>
         <td class="px-3 py-2 font-mono text-xs text-body">array</td>
         <td class="px-3 py-2 font-mono text-xs text-body">no</td>
@@ -300,7 +365,8 @@ execution id itself, carried under the name a reader of a log expects.</td>
         <td class="px-3 py-2 font-mono text-heading">error</td>
         <td class="px-3 py-2 font-mono text-xs text-body">one of 2</td>
         <td class="px-3 py-2 font-mono text-xs text-body">no</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Why it failed, for a failed execution and never before.</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Why it failed, for a failed execution and never before; why it was refused, for a
+refused one; and why its outcome is not known, for one whose outcome is not.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">event_count</td>
         <td class="px-3 py-2 font-mono text-xs text-body">integer</td>
@@ -322,10 +388,22 @@ execution id itself, carried under the name a reader of a log expects.</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
         <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The identity.</td>
       </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">idempotency_key</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The idempotency key the start was sent with, when it was sent with one: a repeated
+start with this key answers this execution instead of starting another (I4000).</td>
+      </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">input</td>
         <td class="px-3 py-2 font-mono text-xs text-body">object</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
         <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The input it was given, with every value the input schema marks sensitive replaced.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">issue_claim</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">one of 2</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The issue it was started for, and the mesh claim it takes for it, when it was
+started for one (I4004).</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">last_sequence</td>
         <td class="px-3 py-2 font-mono text-xs text-body">integer</td>
@@ -431,6 +509,41 @@ execution id itself, carried under the name a reader of a log expects.</td>
         }
       ]
     },
+    &quot;ClaimStanding&quot;: {
+      &quot;description&quot;: &quot;Where the mesh claim of an execution started for an issue stands (I4004).\n\n```text\n  wanted ──► held ──► released            the run reached a final state\n                 └──► kept                its outcome is not known: the claim stays\n         ──► unclaimed                    no mesh runs here: it ran without a claim\n         ──► refused                      another session holds the scope: nothing ran\n```\n\n```\nuse majordomus_cli::execution::ClaimStanding;\nlet word = serde_json::to_value(ClaimStanding::Kept).unwrap();\nassert_eq!(word, \&quot;kept\&quot;);\nlet back: ClaimStanding = serde_json::from_value(\&quot;unclaimed\&quot;.into()).unwrap();\nassert_eq!(back, ClaimStanding::Unclaimed);\n```&quot;,
+      &quot;oneOf&quot;: [
+        {
+          &quot;const&quot;: &quot;wanted&quot;,
+          &quot;description&quot;: &quot;Started for an issue; the claim is taken when a worker picks it up.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;held&quot;,
+          &quot;description&quot;: &quot;The exclusive claim is held, and the handler runs under it.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;released&quot;,
+          &quot;description&quot;: &quot;The claim was given back when the execution reached its final state.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;kept&quot;,
+          &quot;description&quot;: &quot;The outcome is not known, so the claim is kept: whether the work happened is still\nto be read, and the scope is not free until it has been.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;unclaimed&quot;,
+          &quot;description&quot;: &quot;No mesh cooperation runs in this process, so it ran without a claim. Said, never a\nfailure.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;refused&quot;,
+          &quot;description&quot;: &quot;Another session holds an exclusive claim on the scope; the execution was refused and\nnothing ran.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      ]
+    },
     &quot;ExecutionDiagnostic&quot;: {
       &quot;description&quot;: &quot;A structured finding an execution reported on its way, distinct from its outcome.&quot;,
       &quot;properties&quot;: {
@@ -472,7 +585,7 @@ execution id itself, carried under the name a reader of a log expects.</td>
       &quot;description&quot;: &quot;Why an execution ended badly, in the repository&#39;s diagnostic vocabulary rather than in\nRust&#39;s: a code a program branches on, a sentence a person reads, and where to look.\n\nA panic message and a backtrace are never in here. The engine catches a panicking\nhandler and reports `internal` with the execution&#39;s correlation id; the panic itself is\non the process&#39;s own error stream, where the operator running the server can read it.&quot;,
       &quot;properties&quot;: {
         &quot;code&quot;: {
-          &quot;description&quot;: &quot;`invalid_input`, `not_found`, `refused`, `forbidden`, `internal`, `cancelled`, `unavailable`.&quot;,
+          &quot;description&quot;: &quot;`invalid_input`, `not_found`, `refused`, `forbidden`, `conflict`, `internal`, `cancelled`,\n`unavailable`.&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
         &quot;correlation_id&quot;: {
@@ -536,11 +649,21 @@ execution id itself, carried under the name a reader of a log expects.</td>
       &quot;type&quot;: &quot;object&quot;
     },
     &quot;ExecutionState&quot;: {
-      &quot;description&quot;: &quot;Where an execution is in its life.\n\nThe transitions are the whole contract, and `ExecutionState::may_move_to` is the one\nplace they are written down: the engine asks before every change, the store refuses a\nmove it did not allow, and a client that reads a final state never sees it move again.\n\n```text\n  queued ──► running ──┬──► succeeded\n     │                 ├──► failed\n     │                 └──► cancelling ──┬──► cancelled\n     │                                   ├──► succeeded\n     └──► cancelled                      └──► failed\n```\n\nThere is no `starting`. An in-process engine claims an execution and enters its handler\nin the same instant, so a state between the two would be one no client could ever\nobserve and every client would have to handle.&quot;,
+      &quot;description&quot;: &quot;Where an execution is in its life.\n\nThe transitions are the whole contract, and `ExecutionState::EDGES` is the one place\nthey are written down: `ExecutionState::may_move_to` reads it, the engine asks before\nevery change, the store refuses a move it does not allow, and a client that reads a\nfinal state never sees it move again.\n\n```text\n  authorizing     ──► queued | refused | failed | cancelled\n  queued          ──► running | claimed | refused | failed | cancelled\n  claimed         ──► running | queued | refused | failed | cancelling | unknown_outcome\n  running         ──► verifying | succeeded | failed | cancelling | unknown_outcome\n  verifying       ──► succeeded | failed | cancelling | unknown_outcome\n  cancelling      ──► cancelled | succeeded | failed | unknown_outcome\n  unknown_outcome ──► verifying | succeeded | failed | cancelled        (never running)\n  succeeded, failed, cancelled, refused: final\n```\n\nThe in-process engine moves `queued ──► running` directly: it claims an execution and\nenters its handler in the same instant, so `claimed` would be a state no client could\nobserve. `authorizing`, `claimed`, `verifying`, `refused` and `unknown_outcome` are\nentered by a worker that decides, holds, checks or loses an execution in its own time\n(Mission Control B3): a policy decision before the queue, a lease on a queued ticket, a\ncheck of what the handler produced, a refusal, and a run whose outcome cannot be read.\n\n`unknown_outcome` is the one state a retry may not leave by running again. Whether the\nwork happened is not known, so the next move is a reconciliation that reads evidence\n— to `verifying`, or straight to the outcome it found — and never `running`.&quot;,
       &quot;oneOf&quot;: [
+        {
+          &quot;const&quot;: &quot;authorizing&quot;,
+          &quot;description&quot;: &quot;Accepted, and a policy decision on whether it may run has not been taken yet.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
         {
           &quot;const&quot;: &quot;queued&quot;,
           &quot;description&quot;: &quot;Accepted, and no worker has picked it up.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;claimed&quot;,
+          &quot;description&quot;: &quot;A worker holds it and has not entered the handler yet.&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
         {
@@ -549,8 +672,18 @@ execution id itself, carried under the name a reader of a log expects.</td>
           &quot;type&quot;: &quot;string&quot;
         },
         {
+          &quot;const&quot;: &quot;verifying&quot;,
+          &quot;description&quot;: &quot;The handler returned, and what it produced is being checked.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
           &quot;const&quot;: &quot;cancelling&quot;,
           &quot;description&quot;: &quot;Cancellation was asked for and the handler has not stopped yet.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;unknown_outcome&quot;,
+          &quot;description&quot;: &quot;Whether the work happened is not known: the worker that ran it went silent or its\nanswer could not be read. Only a reconciliation moves it on, never a rerun.&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
         {
@@ -567,8 +700,59 @@ execution id itself, carried under the name a reader of a log expects.</td>
           &quot;const&quot;: &quot;cancelled&quot;,
           &quot;description&quot;: &quot;It stopped because it was asked to.&quot;,
           &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;refused&quot;,
+          &quot;description&quot;: &quot;A policy refused it before it ran, at the request or when a worker claimed it.&quot;,
+          &quot;type&quot;: &quot;string&quot;
         }
       ]
+    },
+    &quot;IssueClaim&quot;: {
+      &quot;description&quot;: &quot;The issue an execution works for and the mesh claim it holds for it (I4004): the issue,\nthe scope claimed, the claim&#39;s key while there is one, and where it stands.\n\n```\nuse majordomus_cli::execution::{ClaimStanding, IssueClaim};\nlet wanted = IssueClaim::wanted(\&quot;I4004\&quot;);\nassert_eq!(wanted.standing, ClaimStanding::Wanted);\nassert!(wanted.scope.is_empty() &amp;&amp; wanted.key.is_none());\nlet json = serde_json::to_value(&amp;wanted).unwrap();\nassert_eq!(json, serde_json::json!({ \&quot;issue\&quot;: \&quot;I4004\&quot;, \&quot;standing\&quot;: \&quot;wanted\&quot; }));\n```&quot;,
+      &quot;properties&quot;: {
+        &quot;detail&quot;: {
+          &quot;description&quot;: &quot;What there is to say: why it ran unclaimed, who holds the scope it was refused, why\nthe claim is kept, or that a release did not go through.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;issue&quot;: {
+          &quot;description&quot;: &quot;The issue, as the start named it.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;key&quot;: {
+          &quot;description&quot;: &quot;The mesh claim&#39;s key, `&lt;stream&gt;/&lt;claim&gt;`, once one was taken.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;scope&quot;: {
+          &quot;description&quot;: &quot;The repository paths claimed: the issue record&#39;s `scope`, or `issue/&lt;id&gt;` when the\nrecord declares none or is not in this checkout.&quot;,
+          &quot;items&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          },
+          &quot;type&quot;: &quot;array&quot;
+        },
+        &quot;session&quot;: {
+          &quot;description&quot;: &quot;The mesh session the claim belongs to, once one was opened: `execution-&lt;id&gt;`.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;standing&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/ClaimStanding&quot;,
+          &quot;description&quot;: &quot;Where the claim stands.&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;issue&quot;,
+        &quot;standing&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
     },
     &quot;ProgressView&quot;: {
       &quot;description&quot;: &quot;How far along an execution is.&quot;,
@@ -709,7 +893,7 @@ execution id itself, carried under the name a reader of a log expects.</td>
       &quot;type&quot;: &quot;object&quot;
     }
   },
-  &quot;description&quot;: &quot;One execution with the links to everything else about it.&quot;,
+  &quot;description&quot;: &quot;The answer of `executions.start`: the execution, flattened as every other execution\nanswer is, and whether this start began it or was answered one its idempotency key had\nalready started.\n\n```\nuse majordomus_cli::capability::builtin::StartedExecution;\nuse majordomus_cli::synthetic::SyntheticRepository;\nlet repo = SyntheticRepository::small().unwrap();\nlet ctx = repo.context().unwrap();\nlet input = serde_json::json!({\n    \&quot;capability\&quot;: \&quot;executions.demonstrate\&quot;,\n    \&quot;input\&quot;: { \&quot;steps\&quot;: 1, \&quot;delay_ms\&quot;: 0 },\n    \&quot;idempotency_key\&quot;: \&quot;click-1\&quot;,\n});\nlet start = || -&gt; StartedExecution {\n    serde_json::from_value(ctx.execute(\&quot;executions.start\&quot;, input.clone()).unwrap()).unwrap()\n};\nlet (first, again) = (start(), start());\nassert!(!first.deduplicated &amp;&amp; again.deduplicated);\nassert_eq!(first.view.execution.id, again.view.execution.id);\n```&quot;,
   &quot;properties&quot;: {
     &quot;actor&quot;: {
       &quot;$ref&quot;: &quot;#/$defs/Actor&quot;,
@@ -730,6 +914,10 @@ execution id itself, carried under the name a reader of a log expects.</td>
     &quot;created_at&quot;: {
       &quot;description&quot;: &quot;When it was accepted, RFC 3339 in UTC.&quot;,
       &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;deduplicated&quot;: {
+      &quot;description&quot;: &quot;`true` when this start began nothing: its idempotency key had already started this\nexecution with the same input, and the answer is that execution as it stands now.\n`false` for an execution this start began.&quot;,
+      &quot;type&quot;: &quot;boolean&quot;
     },
     &quot;diagnostics&quot;: {
       &quot;description&quot;: &quot;The findings it reported.&quot;,
@@ -756,7 +944,7 @@ execution id itself, carried under the name a reader of a log expects.</td>
           &quot;type&quot;: &quot;null&quot;
         }
       ],
-      &quot;description&quot;: &quot;Why it failed, for a failed execution and never before.&quot;
+      &quot;description&quot;: &quot;Why it failed, for a failed execution and never before; why it was refused, for a\nrefused one; and why its outcome is not known, for one whose outcome is not.&quot;
     },
     &quot;event_count&quot;: {
       &quot;description&quot;: &quot;How many events it has produced, including the ones no longer retained.&quot;,
@@ -779,8 +967,26 @@ execution id itself, carried under the name a reader of a log expects.</td>
       &quot;$ref&quot;: &quot;#/$defs/ExecutionId&quot;,
       &quot;description&quot;: &quot;The identity.&quot;
     },
+    &quot;idempotency_key&quot;: {
+      &quot;description&quot;: &quot;The idempotency key the start was sent with, when it was sent with one: a repeated\nstart with this key answers this execution instead of starting another (I4000).&quot;,
+      &quot;type&quot;: [
+        &quot;string&quot;,
+        &quot;null&quot;
+      ]
+    },
     &quot;input&quot;: {
       &quot;description&quot;: &quot;The input it was given, with every value the input schema marks sensitive replaced.&quot;
+    },
+    &quot;issue_claim&quot;: {
+      &quot;anyOf&quot;: [
+        {
+          &quot;$ref&quot;: &quot;#/$defs/IssueClaim&quot;
+        },
+        {
+          &quot;type&quot;: &quot;null&quot;
+        }
+      ],
+      &quot;description&quot;: &quot;The issue it was started for, and the mesh claim it takes for it, when it was\nstarted for one (I4004).&quot;
     },
     &quot;last_sequence&quot;: {
       &quot;description&quot;: &quot;The sequence number of the last event: the cursor a client subscribes from.&quot;,
@@ -847,9 +1053,10 @@ execution id itself, carried under the name a reader of a log expects.</td>
     &quot;actor&quot;,
     &quot;repository&quot;,
     &quot;correlation_id&quot;,
-    &quot;links&quot;
+    &quot;links&quot;,
+    &quot;deduplicated&quot;
   ],
-  &quot;title&quot;: &quot;ExecutionView&quot;,
+  &quot;title&quot;: &quot;StartedExecution&quot;,
   &quot;type&quot;: &quot;object&quot;
 }</pre></div>
   </details>
@@ -880,8 +1087,8 @@ execution id itself, carried under the name a reader of a log expects.</td>
         <div><dt class="text-body-subtle">composed in</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/executions.rs" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">apps/majordomus-cli/src/capability/builtin/executions.rs</a></dd></div>
         <div><dt class="text-body-subtle">Rust module</dt><dd class="min-w-0 break-all font-mono text-heading">majordomus_cli::capability::builtin::executions</dd></div>
         <div><dt class="text-body-subtle">input type</dt><dd class="font-mono text-heading">StartInput</dd></div>
-        <div><dt class="text-body-subtle">output type</dt><dd class="font-mono text-heading">ExecutionView</dd></div>
-        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/9df9061de3e5ce138c6921b941f52ffad1d60f23/docs/generated/modules/executions.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/executions.md</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">ae06145998bd02140864593b62a0e81f9c5181cfb06422de13c3d67ff86054ca</dd></div>
+        <div><dt class="text-body-subtle">output type</dt><dd class="font-mono text-heading">StartedExecution</dd></div>
+        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/4795a79d95453ed90f5d59be8964cbaf67635ee9/docs/generated/modules/executions.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/executions.md</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">01dc8581f5265a228ea8c59dbe1da65321423c2b6146ab4fc39895cb2eeb9d7b</dd></div>
         <div><dt class="text-body-subtle">generated by</dt><dd class="font-mono text-heading">majordomus-cli 1.0.0-alpha.10</dd></div>
       </dl>
     </div>
@@ -937,9 +1144,9 @@ execution id itself, carried under the name a reader of a log expects.</td>
       <div class="min-w-0">
         <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">Project</h2><ul class="space-y-2 text-sm font-medium text-body">
           <li><a href="https://github.com/korczis/prismatic-majordomus" class="hover:text-heading hover:underline">GitHub</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/9df9061de3e5ce138c6921b941f52ffad1d60f23/LICENSE" class="hover:text-heading hover:underline">MIT licence</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/9df9061de3e5ce138c6921b941f52ffad1d60f23/SECURITY.md" class="hover:text-heading hover:underline">Security policy</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/9df9061de3e5ce138c6921b941f52ffad1d60f23/CONTRIBUTING.md" class="hover:text-heading hover:underline">Contributing guide</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/4795a79d95453ed90f5d59be8964cbaf67635ee9/LICENSE" class="hover:text-heading hover:underline">MIT licence</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/4795a79d95453ed90f5d59be8964cbaf67635ee9/SECURITY.md" class="hover:text-heading hover:underline">Security policy</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/4795a79d95453ed90f5d59be8964cbaf67635ee9/CONTRIBUTING.md" class="hover:text-heading hover:underline">Contributing guide</a></li>
         </ul>
       </div>
     </div>
@@ -947,7 +1154,7 @@ execution id itself, carried under the name a reader of a log expects.</td>
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.10</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/9df9061de3e5ce138c6921b941f52ffad1d60f23" class="font-mono underline">9df9061</a> · inputs <span class="font-mono">6da6c2266093</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/architecture/" class="underline">how this site is derived</a> names them.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.10</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/4795a79d95453ed90f5d59be8964cbaf67635ee9" class="font-mono underline">4795a79</a> · inputs <span class="font-mono">1290d128d875</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/architecture/" class="underline">how this site is derived</a> names them.</p>
     </div>
   </div>
 </footer>

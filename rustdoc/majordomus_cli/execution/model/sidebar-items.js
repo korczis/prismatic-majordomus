@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":["ActorKind","ExecutionState","LogStream","StepState"],"fn":["compact_utc"],"struct":["Actor","Execution","ExecutionDiagnostic","ExecutionError","ExecutionId","ProgressView","RepositoryRef","StepView"]};
+window.SIDEBAR_ITEMS = {"constant":["MAX_IDEMPOTENCY_KEY","MAX_ISSUE_ID"],"enum":["ActorKind","ClaimStanding","ExecutionState","LogStream","StepState"],"fn":["compact_utc","parse_issue"],"struct":["Actor","Execution","ExecutionDiagnostic","ExecutionError","ExecutionId","IdempotencyKey","IssueClaim","ProgressView","RepositoryRef","StepView"]};

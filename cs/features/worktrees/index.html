@@ -206,6 +206,10 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
           <p class="mt-2 text-sm text-body">Kam patří každý propojený git worktree tohoto repozitáře a kde který je. Kontejner je sourozenec primárního checkoutu pojmenovaný s `-wt`, cesta pod ním je název větve se zachovanou hierarchií a obojí se odvozuje z vlastní identity gitu — společného adresáře, registrovaných worktrees, větví — nikdy z registru, konfigurace nebo aktuálního adresáře. Worktree jinde je typovaná diagnostika s nápravou; migrace, která ji opraví, je operace příkazové řádky téže služby.</p>
           <ul class="mt-3 divide-y divide-default border-t border-default">
             <li class="flex flex-wrap items-baseline gap-x-3 gap-y-1 py-2">
+              <a href="https://majordomus.dev/cs/registry/capabilities/worktree-create/" class="text-sm font-medium text-heading hover:text-fg-brand hover:underline">The canonical worktree of a branch, made or found</a>
+              <span class="font-mono text-xs text-body-subtle">command</span>
+            </li>
+            <li class="flex flex-wrap items-baseline gap-x-3 gap-y-1 py-2">
               <a href="https://majordomus.dev/cs/registry/capabilities/worktree-inspect/" class="text-sm font-medium text-heading hover:text-fg-brand hover:underline">Jedna větev: kam patří její worktree a co v něm je</a>
               <span class="font-mono text-xs text-body-subtle">query</span>
             </li>
@@ -285,6 +289,12 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
             <tr><th scope="col" class="px-3 py-2 font-medium">schopnost</th><th scope="col" class="px-3 py-2 font-medium">příkazová řádka</th><th scope="col" class="px-3 py-2 font-medium">HTTP</th><th scope="col" class="px-3 py-2 font-medium">nástroj MCP</th></tr>
           </thead>
           <tbody class="divide-y divide-default">
+            <tr class="align-baseline">
+              <th scope="row" class="px-3 py-2 font-normal"><a href="https://majordomus.dev/cs/registry/capabilities/worktree-create/" class="font-mono text-xs text-heading hover:text-fg-brand hover:underline">worktree.create</a></th>
+              <td class="px-3 py-2 font-mono text-xs"><a href="https://majordomus.dev/cs/docs/cli/worktree/ensure/" class="text-fg-brand hover:underline">majordomus worktree ensure</a></td>
+              <td class="px-3 py-2 font-mono text-xs"><a href="https://majordomus.dev/cs/docs/api/worktree/#op-worktree-create" class="text-fg-brand hover:underline">POST /api/v1/worktrees/create</a></td>
+              <td class="px-3 py-2 font-mono text-xs"><span class="text-body">majordomus_worktree_create</span></td>
+            </tr>
             <tr class="align-baseline">
               <th scope="row" class="px-3 py-2 font-normal"><a href="https://majordomus.dev/cs/registry/capabilities/worktree-inspect/" class="font-mono text-xs text-heading hover:text-fg-brand hover:underline">worktree.inspect</a></th>
               <td class="px-3 py-2 font-mono text-xs"><a href="https://majordomus.dev/cs/docs/cli/worktree/inspect/" class="text-fg-brand hover:underline">majordomus worktree inspect</a></td>
@@ -392,6 +402,9 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
           <a href="https://majordomus.dev/cs/docs/cli/worktree/inspect/" class="break-words font-mono text-sm text-heading hover:text-fg-brand hover:underline">majordomus worktree inspect [OPTIONS] &lt;BRANCH&gt;</a><p class="mt-1 text-sm text-body">Jedna větev: její kanonická cesta, zda existuje, co cestu zabírá, worktree, který ji drží, a co stojí v cestě</p>
         </li>
         <li class="p-3">
+          <a href="https://majordomus.dev/cs/docs/cli/worktree/ensure/" class="break-words font-mono text-sm text-heading hover:text-fg-brand hover:underline">majordomus worktree ensure [OPTIONS] &lt;BRANCH&gt;</a><p class="mt-1 text-sm text-body">Kanonický worktree branche: vytvoří se, když chybí, vrátí se, když existuje, a odmítne se, když je branch checkoutnutý jinde</p>
+        </li>
+        <li class="p-3">
           <a href="https://majordomus.dev/cs/docs/cli/worktree/migrate/" class="break-words font-mono text-sm text-heading hover:text-fg-brand hover:underline">majordomus worktree migrate [OPTIONS]</a><p class="mt-1 text-sm text-body">Přenese každý špatně umístěný worktree na jeho kanonickou cestu, včetně necommitovaného stavu, s otiskem pořízeným před každým přesunem a po něm; --plan ukáže kroky a nic nezmění</p>
         </li>
         <li class="p-3">
@@ -496,10 +509,10 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
     </nav>
     <h2 class="text-sm font-semibold uppercase tracking-wide text-body-subtle lg:mt-8">Spočítáno při sestavení</h2>
     <dl class="mt-3 divide-y divide-default rounded-base border border-default bg-neutral-primary-soft">
-      <div class="flex items-baseline justify-between gap-3 px-3 py-2"><dt class="text-xs text-body">capabilities</dt><dd class="font-mono text-sm text-heading">7</dd></div>
-      <div class="flex items-baseline justify-between gap-3 px-3 py-2"><dt class="text-xs text-body">nástroje MCP</dt><dd class="font-mono text-sm text-heading">7</dd></div>
-      <div class="flex items-baseline justify-between gap-3 px-3 py-2"><dt class="text-xs text-body">HTTP routy</dt><dd class="font-mono text-sm text-heading">7</dd></div>
-      <div class="flex items-baseline justify-between gap-3 px-3 py-2"><dt class="text-xs text-body">cesty v příkazové řádce</dt><dd class="font-mono text-sm text-heading">7</dd></div>
+      <div class="flex items-baseline justify-between gap-3 px-3 py-2"><dt class="text-xs text-body">capabilities</dt><dd class="font-mono text-sm text-heading">8</dd></div>
+      <div class="flex items-baseline justify-between gap-3 px-3 py-2"><dt class="text-xs text-body">nástroje MCP</dt><dd class="font-mono text-sm text-heading">8</dd></div>
+      <div class="flex items-baseline justify-between gap-3 px-3 py-2"><dt class="text-xs text-body">HTTP routy</dt><dd class="font-mono text-sm text-heading">8</dd></div>
+      <div class="flex items-baseline justify-between gap-3 px-3 py-2"><dt class="text-xs text-body">cesty v příkazové řádce</dt><dd class="font-mono text-sm text-heading">8</dd></div>
       <div class="flex items-baseline justify-between gap-3 px-3 py-2"><dt class="text-xs text-body">rules</dt><dd class="font-mono text-sm text-heading">2</dd></div>
       <div class="flex items-baseline justify-between gap-3 px-3 py-2"><dt class="text-xs text-body">tvrzení</dt><dd class="font-mono text-sm text-heading">3</dd></div>
       <div class="flex items-baseline justify-between gap-3 px-3 py-2"><dt class="text-xs text-body">případy užití</dt><dd class="font-mono text-sm text-heading">2</dd></div>
@@ -554,9 +567,9 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
       <div class="min-w-0">
         <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">Projekt</h2><ul class="space-y-2 text-sm font-medium text-body">
           <li><a href="https://github.com/korczis/prismatic-majordomus" class="hover:text-heading hover:underline">GitHub</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/9df9061de3e5ce138c6921b941f52ffad1d60f23/LICENSE" class="hover:text-heading hover:underline">Licence MIT</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/9df9061de3e5ce138c6921b941f52ffad1d60f23/SECURITY.md" class="hover:text-heading hover:underline">Bezpečnostní politika</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/9df9061de3e5ce138c6921b941f52ffad1d60f23/CONTRIBUTING.md" class="hover:text-heading hover:underline">Průvodce pro přispěvatele</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/4795a79d95453ed90f5d59be8964cbaf67635ee9/LICENSE" class="hover:text-heading hover:underline">Licence MIT</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/4795a79d95453ed90f5d59be8964cbaf67635ee9/SECURITY.md" class="hover:text-heading hover:underline">Bezpečnostní politika</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/4795a79d95453ed90f5d59be8964cbaf67635ee9/CONTRIBUTING.md" class="hover:text-heading hover:underline">Průvodce pro přispěvatele</a></li>
         </ul>
       </div>
     </div>
@@ -564,7 +577,7 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/cs/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.10</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/9df9061de3e5ce138c6921b941f52ffad1d60f23" class="font-mono underline">9df9061</a> · inputs <span class="font-mono">6da6c2266093</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/cs/architecture/" class="underline">how this site is derived</a> names them.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.10</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/4795a79d95453ed90f5d59be8964cbaf67635ee9" class="font-mono underline">4795a79</a> · inputs <span class="font-mono">1290d128d875</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/cs/architecture/" class="underline">how this site is derived</a> names them.</p>
     </div>
   </div>
 </footer>

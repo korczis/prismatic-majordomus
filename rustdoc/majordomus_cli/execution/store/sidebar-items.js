@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"constant":["REPORT_HEARTBEAT","REPORT_SILENCE"],"enum":["AdoptError","CancelOutcome","Delivery","Filter"],"struct":["EventPage","ExecutionStore","Limits","ReportOutcome","Seed"]};
+window.SIDEBAR_ITEMS = {"constant":["REPORT_HEARTBEAT","REPORT_SILENCE"],"enum":["Admission","AdoptError","CancelOutcome","Delivery","Filter"],"struct":["EventPage","ExecutionStore","Idempotency","KeyConflict","Limits","ReportOutcome","Seed"]};

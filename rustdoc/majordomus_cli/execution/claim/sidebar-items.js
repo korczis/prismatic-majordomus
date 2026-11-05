@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["CLIENT"],"fn":["disposition","scope_of","session_of"]};

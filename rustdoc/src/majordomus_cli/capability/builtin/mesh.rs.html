@@ -504,7 +504,7 @@
 <a href=#504 id=504 data-nosnippet>504</a>    })
 <a href=#505 id=505 data-nosnippet>505</a>}
 <a href=#506 id=506 data-nosnippet>506</a>
-<a href=#507 id=507 data-nosnippet>507</a><span class="kw">fn </span>map_error(e: CooperationError) -&gt; CapabilityError {
+<a href=#507 id=507 data-nosnippet>507</a><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn </span>map_error(e: CooperationError) -&gt; CapabilityError {
 <a href=#508 id=508 data-nosnippet>508</a>    <span class="kw">match </span>e {
 <a href=#509 id=509 data-nosnippet>509</a>        CooperationError::Conflict(<span class="kw">_</span>) =&gt; CapabilityError::Refused(<span class="macro">format!</span>(<span class="string">"claim_conflict: {e}"</span>)),
 <a href=#510 id=510 data-nosnippet>510</a>        CooperationError::NotOwn(m) =&gt; CapabilityError::Refused(<span class="macro">format!</span>(<span class="string">"not_own: {m}"</span>)),
@@ -518,7 +518,7 @@
 <a href=#518 id=518 data-nosnippet>518</a>
 <a href=#519 id=519 data-nosnippet>519</a><span class="doccomment">/// The session a call acts for: the one it names, else the calling MCP session's own board
 <a href=#520 id=520 data-nosnippet>520</a>/// session — the same `board-&lt;peer&gt;` session the board projection opened for it.
-<a href=#521 id=521 data-nosnippet>521</a></span><span class="kw">fn </span>session_of(ctx: <span class="kw-2">&amp;</span>Context, given: <span class="prelude-ty">Option</span>&lt;String&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;String, CapabilityError&gt; {
+<a href=#521 id=521 data-nosnippet>521</a></span><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn </span>session_of(ctx: <span class="kw-2">&amp;</span>Context, given: <span class="prelude-ty">Option</span>&lt;String&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;String, CapabilityError&gt; {
 <a href=#522 id=522 data-nosnippet>522</a>    <span class="kw">if let </span><span class="prelude-val">Some</span>(session) = given.filter(|s| !s.trim().is_empty()) {
 <a href=#523 id=523 data-nosnippet>523</a>        <span class="kw">return </span><span class="prelude-val">Ok</span>(session);
 <a href=#524 id=524 data-nosnippet>524</a>    }

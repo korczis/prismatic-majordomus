@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":["SubmitError"],"fn":["runnable"],"struct":["ExecutionEngine"]};
+window.SIDEBAR_ITEMS = {"enum":["SubmitError"],"fn":["runnable"],"struct":["ExecutionEngine","StartOptions","Submitted"]};

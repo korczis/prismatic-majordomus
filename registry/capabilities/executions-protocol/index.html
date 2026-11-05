@@ -4,12 +4,12 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex">
 <title>executions.protocol — Prismatic Majordomus</title>
-<meta name="description" content="Where the WebSocket is, how a subscription and a reconnect are expressed, what the server writes, and the JSON Schema of every message — derived from the Rust types that implement it, so a client validating against this is validating against the implementation. OpenAPI cannot describe a socket; this is where that contract lives.">
+<meta name="description" content="Where the WebSocket is, how a subscription and a reconnect are expressed, what the server writes, every state an execution may be in with the states it may move to (the transition table the store holds every event to), and the JSON Schema of every message — derived from the Rust types that implement it, so a client validating against this is validating against the implementation. OpenAPI cannot describe a socket; this is where that contract lives.">
 <link rel="canonical" href="https://majordomus.dev/registry/capabilities/executions-protocol/">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Prismatic Majordomus">
 <meta property="og:title" content="executions.protocol — Prismatic Majordomus">
-<meta property="og:description" content="Where the WebSocket is, how a subscription and a reconnect are expressed, what the server writes, and the JSON Schema of every message — derived from the Rust types that implement it, so a client validating against this is validating against the implementation. OpenAPI cannot describe a socket; this is where that contract lives.">
+<meta property="og:description" content="Where the WebSocket is, how a subscription and a reconnect are expressed, what the server writes, every state an execution may be in with the states it may move to (the transition table the store holds every event to), and the JSON Schema of every message — derived from the Rust types that implement it, so a client validating against this is validating against the implementation. OpenAPI cannot describe a socket; this is where that contract lives.">
 <meta property="og:url" content="https://majordomus.dev/registry/capabilities/executions-protocol/">
 <meta property="og:image" content="https://majordomus.dev/images/social-card.png">
 <meta name="twitter:card" content="summary_large_image">
@@ -178,7 +178,7 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
 </nav>
 
     <h1 class="mt-4 break-words text-3xl font-bold tracking-tight text-heading sm:text-4xl">executions.protocol</h1>
-    <p class="mt-3 max-w-3xl break-words text-lg text-body">Where the WebSocket is, how a subscription and a reconnect are expressed, what the server writes, and the JSON Schema of every message — derived from the Rust types that implement it, so a client validating against this is validating against the implementation. OpenAPI cannot describe a socket; this is where that contract lives.</p>
+    <p class="mt-3 max-w-3xl break-words text-lg text-body">Where the WebSocket is, how a subscription and a reconnect are expressed, what the server writes, every state an execution may be in with the states it may move to (the transition table the store holds every event to), and the JSON Schema of every message — derived from the Rust types that implement it, so a client validating against this is validating against the implementation. OpenAPI cannot describe a socket; this is where that contract lives.</p>
   </div>
 </div>
 <div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
@@ -196,7 +196,7 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
 
 <div class="mt-6 grid gap-10 lg:grid-cols-[minmax(0,1fr)_18rem]">
   <div class="min-w-0">
-    <p class="break-words text-lg text-body">Where the WebSocket is, how a subscription and a reconnect are expressed, what the server writes, and the JSON Schema of every message — derived from the Rust types that implement it, so a client validating against this is validating against the implementation. OpenAPI cannot describe a socket; this is where that contract lives.</p>
+    <p class="break-words text-lg text-body">Where the WebSocket is, how a subscription and a reconnect are expressed, what the server writes, every state an execution may be in with the states it may move to (the transition table the store holds every event to), and the JSON Schema of every message — derived from the Rust types that implement it, so a client validating against this is validating against the implementation. OpenAPI cannot describe a socket; this is where that contract lives.</p>
     <ul class="mt-4 flex flex-wrap gap-2 font-mono text-xs">
       <li><span class="rounded border border-default bg-neutral-secondary-medium px-1.5 py-0.5 text-heading">query</span></li>
       <li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 text-body">behaviorally_verified</span></li>
@@ -269,6 +269,12 @@ the types that implement it.</div><div class="mt-3 overflow-x-auto rounded-base 
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
         <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The version of the event protocol this server speaks.</td>
       </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">states</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Every state an execution may be in and the states it may move to: the transition
+table the store holds every event to, so a client never has to restate it.</td>
+      </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">stream_schema</td>
         <td class="px-3 py-2 font-mono text-xs text-body">object</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
@@ -294,6 +300,92 @@ the types that implement it.</div><div class="mt-3 overflow-x-auto rounded-base 
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
   &quot;$defs&quot;: {
+    &quot;ExecutionState&quot;: {
+      &quot;description&quot;: &quot;Where an execution is in its life.\n\nThe transitions are the whole contract, and `ExecutionState::EDGES` is the one place\nthey are written down: `ExecutionState::may_move_to` reads it, the engine asks before\nevery change, the store refuses a move it does not allow, and a client that reads a\nfinal state never sees it move again.\n\n```text\n  authorizing     ──► queued | refused | failed | cancelled\n  queued          ──► running | claimed | refused | failed | cancelled\n  claimed         ──► running | queued | refused | failed | cancelling | unknown_outcome\n  running         ──► verifying | succeeded | failed | cancelling | unknown_outcome\n  verifying       ──► succeeded | failed | cancelling | unknown_outcome\n  cancelling      ──► cancelled | succeeded | failed | unknown_outcome\n  unknown_outcome ──► verifying | succeeded | failed | cancelled        (never running)\n  succeeded, failed, cancelled, refused: final\n```\n\nThe in-process engine moves `queued ──► running` directly: it claims an execution and\nenters its handler in the same instant, so `claimed` would be a state no client could\nobserve. `authorizing`, `claimed`, `verifying`, `refused` and `unknown_outcome` are\nentered by a worker that decides, holds, checks or loses an execution in its own time\n(Mission Control B3): a policy decision before the queue, a lease on a queued ticket, a\ncheck of what the handler produced, a refusal, and a run whose outcome cannot be read.\n\n`unknown_outcome` is the one state a retry may not leave by running again. Whether the\nwork happened is not known, so the next move is a reconciliation that reads evidence\n— to `verifying`, or straight to the outcome it found — and never `running`.&quot;,
+      &quot;oneOf&quot;: [
+        {
+          &quot;const&quot;: &quot;authorizing&quot;,
+          &quot;description&quot;: &quot;Accepted, and a policy decision on whether it may run has not been taken yet.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;queued&quot;,
+          &quot;description&quot;: &quot;Accepted, and no worker has picked it up.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;claimed&quot;,
+          &quot;description&quot;: &quot;A worker holds it and has not entered the handler yet.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;running&quot;,
+          &quot;description&quot;: &quot;The handler is running.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;verifying&quot;,
+          &quot;description&quot;: &quot;The handler returned, and what it produced is being checked.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;cancelling&quot;,
+          &quot;description&quot;: &quot;Cancellation was asked for and the handler has not stopped yet.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;unknown_outcome&quot;,
+          &quot;description&quot;: &quot;Whether the work happened is not known: the worker that ran it went silent or its\nanswer could not be read. Only a reconciliation moves it on, never a rerun.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;succeeded&quot;,
+          &quot;description&quot;: &quot;The handler returned an output.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;failed&quot;,
+          &quot;description&quot;: &quot;The handler returned an error, or the worker could not run it.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;cancelled&quot;,
+          &quot;description&quot;: &quot;It stopped because it was asked to.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;refused&quot;,
+          &quot;description&quot;: &quot;A policy refused it before it ran, at the request or when a worker claimed it.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      ]
+    },
+    &quot;ExecutionStateView&quot;: {
+      &quot;description&quot;: &quot;One state of an execution, with the moves it allows.&quot;,
+      &quot;properties&quot;: {
+        &quot;final&quot;: {
+          &quot;description&quot;: &quot;Whether nothing more will be said about an execution in it.&quot;,
+          &quot;type&quot;: &quot;boolean&quot;
+        },
+        &quot;may_move_to&quot;: {
+          &quot;description&quot;: &quot;The states it may move to; every other move is refused.&quot;,
+          &quot;items&quot;: {
+            &quot;$ref&quot;: &quot;#/$defs/ExecutionState&quot;
+          },
+          &quot;type&quot;: &quot;array&quot;
+        },
+        &quot;state&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/ExecutionState&quot;,
+          &quot;description&quot;: &quot;The state, as the snapshot and the list filter spell it.&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;state&quot;,
+        &quot;final&quot;,
+        &quot;may_move_to&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    },
     &quot;LimitsView&quot;: {
       &quot;description&quot;: &quot;What this process&#39;s execution store keeps.&quot;,
       &quot;properties&quot;: {
@@ -399,6 +491,13 @@ the types that implement it.</div><div class="mt-3 overflow-x-auto rounded-base 
       &quot;description&quot;: &quot;The version of the event protocol this server speaks.&quot;,
       &quot;type&quot;: &quot;string&quot;
     },
+    &quot;states&quot;: {
+      &quot;description&quot;: &quot;Every state an execution may be in and the states it may move to: the transition\ntable the store holds every event to, so a client never has to restate it.&quot;,
+      &quot;items&quot;: {
+        &quot;$ref&quot;: &quot;#/$defs/ExecutionStateView&quot;
+      },
+      &quot;type&quot;: &quot;array&quot;
+    },
     &quot;stream_schema&quot;: {
       &quot;description&quot;: &quot;The JSON Schema of a control message, derived from the Rust type.&quot;
     },
@@ -429,6 +528,7 @@ the types that implement it.</div><div class="mt-3 overflow-x-auto rounded-base 
     &quot;max_connections&quot;,
     &quot;max_replay&quot;,
     &quot;event_types&quot;,
+    &quot;states&quot;,
     &quot;stream_types&quot;,
     &quot;event_schema&quot;,
     &quot;stream_schema&quot;,
@@ -466,7 +566,7 @@ the types that implement it.</div><div class="mt-3 overflow-x-auto rounded-base 
         <div><dt class="text-body-subtle">Rust module</dt><dd class="min-w-0 break-all font-mono text-heading">majordomus_cli::capability::builtin::executions</dd></div>
         <div><dt class="text-body-subtle">input type</dt><dd class="font-mono text-heading">Empty</dd></div>
         <div><dt class="text-body-subtle">output type</dt><dd class="font-mono text-heading">ProtocolReport</dd></div>
-        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/9df9061de3e5ce138c6921b941f52ffad1d60f23/docs/generated/modules/executions.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/executions.md</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">ae06145998bd02140864593b62a0e81f9c5181cfb06422de13c3d67ff86054ca</dd></div>
+        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/4795a79d95453ed90f5d59be8964cbaf67635ee9/docs/generated/modules/executions.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/executions.md</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">01dc8581f5265a228ea8c59dbe1da65321423c2b6146ab4fc39895cb2eeb9d7b</dd></div>
         <div><dt class="text-body-subtle">generated by</dt><dd class="font-mono text-heading">majordomus-cli 1.0.0-alpha.10</dd></div>
       </dl>
     </div>
@@ -522,9 +622,9 @@ the types that implement it.</div><div class="mt-3 overflow-x-auto rounded-base 
       <div class="min-w-0">
         <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">Project</h2><ul class="space-y-2 text-sm font-medium text-body">
           <li><a href="https://github.com/korczis/prismatic-majordomus" class="hover:text-heading hover:underline">GitHub</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/9df9061de3e5ce138c6921b941f52ffad1d60f23/LICENSE" class="hover:text-heading hover:underline">MIT licence</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/9df9061de3e5ce138c6921b941f52ffad1d60f23/SECURITY.md" class="hover:text-heading hover:underline">Security policy</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/9df9061de3e5ce138c6921b941f52ffad1d60f23/CONTRIBUTING.md" class="hover:text-heading hover:underline">Contributing guide</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/4795a79d95453ed90f5d59be8964cbaf67635ee9/LICENSE" class="hover:text-heading hover:underline">MIT licence</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/4795a79d95453ed90f5d59be8964cbaf67635ee9/SECURITY.md" class="hover:text-heading hover:underline">Security policy</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/4795a79d95453ed90f5d59be8964cbaf67635ee9/CONTRIBUTING.md" class="hover:text-heading hover:underline">Contributing guide</a></li>
         </ul>
       </div>
     </div>
@@ -532,7 +632,7 @@ the types that implement it.</div><div class="mt-3 overflow-x-auto rounded-base 
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.10</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/9df9061de3e5ce138c6921b941f52ffad1d60f23" class="font-mono underline">9df9061</a> · inputs <span class="font-mono">6da6c2266093</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/architecture/" class="underline">how this site is derived</a> names them.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.10</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/4795a79d95453ed90f5d59be8964cbaf67635ee9" class="font-mono underline">4795a79</a> · inputs <span class="font-mono">1290d128d875</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/architecture/" class="underline">how this site is derived</a> names them.</p>
     </div>
   </div>
 </footer>

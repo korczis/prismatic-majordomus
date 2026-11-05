@@ -279,7 +279,8 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
         <td class="px-3 py-2 font-mono text-heading">chyba</td>
         <td class="px-3 py-2 font-mono text-xs text-body">jedno ze 2</td>
         <td class="px-3 py-2 font-mono text-xs text-body">ne</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Proč selhal, u selhaného provádění a nikdy dřív.</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Why it failed, for a failed execution and never before; why it was refused, for a
+refused one; and why its outcome is not known, for one whose outcome is not.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">event_count</td>
         <td class="px-3 py-2 font-mono text-xs text-body">integer</td>
@@ -301,10 +302,22 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
         <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
         <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Identita.</td>
       </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">idempotency_key</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">ne</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The idempotency key the start was sent with, when it was sent with one: a repeated
+start with this key answers this execution instead of starting another (I4000).</td>
+      </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">vstup</td>
         <td class="px-3 py-2 font-mono text-xs text-body">object</td>
         <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
         <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Vstup, který dostala, s každou hodnotou, kterou vstupní schéma označuje jako citlivou, nahrazenou.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">issue_claim</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">jedno ze 2</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">ne</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The issue it was started for, and the mesh claim it takes for it, when it was
+started for one (I4004).</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">last_sequence</td>
         <td class="px-3 py-2 font-mono text-xs text-body">integer</td>
@@ -410,6 +423,41 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
         }
       ]
     },
+    &quot;ClaimStanding&quot;: {
+      &quot;description&quot;: &quot;Where the mesh claim of an execution started for an issue stands (I4004).\n\n```text\n  wanted ──► held ──► released            the run reached a final state\n                 └──► kept                its outcome is not known: the claim stays\n         ──► unclaimed                    no mesh runs here: it ran without a claim\n         ──► refused                      another session holds the scope: nothing ran\n```\n\n```\nuse majordomus_cli::execution::ClaimStanding;\nlet word = serde_json::to_value(ClaimStanding::Kept).unwrap();\nassert_eq!(word, \&quot;kept\&quot;);\nlet back: ClaimStanding = serde_json::from_value(\&quot;unclaimed\&quot;.into()).unwrap();\nassert_eq!(back, ClaimStanding::Unclaimed);\n```&quot;,
+      &quot;oneOf&quot;: [
+        {
+          &quot;const&quot;: &quot;wanted&quot;,
+          &quot;description&quot;: &quot;Started for an issue; the claim is taken when a worker picks it up.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;held&quot;,
+          &quot;description&quot;: &quot;The exclusive claim is held, and the handler runs under it.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;released&quot;,
+          &quot;description&quot;: &quot;The claim was given back when the execution reached its final state.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;kept&quot;,
+          &quot;description&quot;: &quot;The outcome is not known, so the claim is kept: whether the work happened is still\nto be read, and the scope is not free until it has been.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;unclaimed&quot;,
+          &quot;description&quot;: &quot;No mesh cooperation runs in this process, so it ran without a claim. Said, never a\nfailure.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;refused&quot;,
+          &quot;description&quot;: &quot;Another session holds an exclusive claim on the scope; the execution was refused and\nnothing ran.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      ]
+    },
     &quot;ExecutionDiagnostic&quot;: {
       &quot;description&quot;: &quot;A structured finding an execution reported on its way, distinct from its outcome.&quot;,
       &quot;properties&quot;: {
@@ -451,7 +499,7 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
       &quot;description&quot;: &quot;Why an execution ended badly, in the repository&#39;s diagnostic vocabulary rather than in\nRust&#39;s: a code a program branches on, a sentence a person reads, and where to look.\n\nA panic message and a backtrace are never in here. The engine catches a panicking\nhandler and reports `internal` with the execution&#39;s correlation id; the panic itself is\non the process&#39;s own error stream, where the operator running the server can read it.&quot;,
       &quot;properties&quot;: {
         &quot;code&quot;: {
-          &quot;description&quot;: &quot;`invalid_input`, `not_found`, `refused`, `forbidden`, `internal`, `cancelled`, `unavailable`.&quot;,
+          &quot;description&quot;: &quot;`invalid_input`, `not_found`, `refused`, `forbidden`, `conflict`, `internal`, `cancelled`,\n`unavailable`.&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
         &quot;correlation_id&quot;: {
@@ -515,11 +563,21 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
       &quot;type&quot;: &quot;object&quot;
     },
     &quot;ExecutionState&quot;: {
-      &quot;description&quot;: &quot;Where an execution is in its life.\n\nThe transitions are the whole contract, and `ExecutionState::may_move_to` is the one\nplace they are written down: the engine asks before every change, the store refuses a\nmove it did not allow, and a client that reads a final state never sees it move again.\n\n```text\n  queued ──► running ──┬──► succeeded\n     │                 ├──► failed\n     │                 └──► cancelling ──┬──► cancelled\n     │                                   ├──► succeeded\n     └──► cancelled                      └──► failed\n```\n\nThere is no `starting`. An in-process engine claims an execution and enters its handler\nin the same instant, so a state between the two would be one no client could ever\nobserve and every client would have to handle.&quot;,
+      &quot;description&quot;: &quot;Where an execution is in its life.\n\nThe transitions are the whole contract, and `ExecutionState::EDGES` is the one place\nthey are written down: `ExecutionState::may_move_to` reads it, the engine asks before\nevery change, the store refuses a move it does not allow, and a client that reads a\nfinal state never sees it move again.\n\n```text\n  authorizing     ──► queued | refused | failed | cancelled\n  queued          ──► running | claimed | refused | failed | cancelled\n  claimed         ──► running | queued | refused | failed | cancelling | unknown_outcome\n  running         ──► verifying | succeeded | failed | cancelling | unknown_outcome\n  verifying       ──► succeeded | failed | cancelling | unknown_outcome\n  cancelling      ──► cancelled | succeeded | failed | unknown_outcome\n  unknown_outcome ──► verifying | succeeded | failed | cancelled        (never running)\n  succeeded, failed, cancelled, refused: final\n```\n\nThe in-process engine moves `queued ──► running` directly: it claims an execution and\nenters its handler in the same instant, so `claimed` would be a state no client could\nobserve. `authorizing`, `claimed`, `verifying`, `refused` and `unknown_outcome` are\nentered by a worker that decides, holds, checks or loses an execution in its own time\n(Mission Control B3): a policy decision before the queue, a lease on a queued ticket, a\ncheck of what the handler produced, a refusal, and a run whose outcome cannot be read.\n\n`unknown_outcome` is the one state a retry may not leave by running again. Whether the\nwork happened is not known, so the next move is a reconciliation that reads evidence\n— to `verifying`, or straight to the outcome it found — and never `running`.&quot;,
       &quot;oneOf&quot;: [
+        {
+          &quot;const&quot;: &quot;authorizing&quot;,
+          &quot;description&quot;: &quot;Accepted, and a policy decision on whether it may run has not been taken yet.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
         {
           &quot;const&quot;: &quot;queued&quot;,
           &quot;description&quot;: &quot;Accepted, and no worker has picked it up.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;claimed&quot;,
+          &quot;description&quot;: &quot;A worker holds it and has not entered the handler yet.&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
         {
@@ -528,8 +586,18 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
           &quot;type&quot;: &quot;string&quot;
         },
         {
+          &quot;const&quot;: &quot;verifying&quot;,
+          &quot;description&quot;: &quot;The handler returned, and what it produced is being checked.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
           &quot;const&quot;: &quot;cancelling&quot;,
           &quot;description&quot;: &quot;Cancellation was asked for and the handler has not stopped yet.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;unknown_outcome&quot;,
+          &quot;description&quot;: &quot;Whether the work happened is not known: the worker that ran it went silent or its\nanswer could not be read. Only a reconciliation moves it on, never a rerun.&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
         {
@@ -546,8 +614,59 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
           &quot;const&quot;: &quot;cancelled&quot;,
           &quot;description&quot;: &quot;It stopped because it was asked to.&quot;,
           &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;refused&quot;,
+          &quot;description&quot;: &quot;A policy refused it before it ran, at the request or when a worker claimed it.&quot;,
+          &quot;type&quot;: &quot;string&quot;
         }
       ]
+    },
+    &quot;IssueClaim&quot;: {
+      &quot;description&quot;: &quot;The issue an execution works for and the mesh claim it holds for it (I4004): the issue,\nthe scope claimed, the claim&#39;s key while there is one, and where it stands.\n\n```\nuse majordomus_cli::execution::{ClaimStanding, IssueClaim};\nlet wanted = IssueClaim::wanted(\&quot;I4004\&quot;);\nassert_eq!(wanted.standing, ClaimStanding::Wanted);\nassert!(wanted.scope.is_empty() &amp;&amp; wanted.key.is_none());\nlet json = serde_json::to_value(&amp;wanted).unwrap();\nassert_eq!(json, serde_json::json!({ \&quot;issue\&quot;: \&quot;I4004\&quot;, \&quot;standing\&quot;: \&quot;wanted\&quot; }));\n```&quot;,
+      &quot;properties&quot;: {
+        &quot;detail&quot;: {
+          &quot;description&quot;: &quot;What there is to say: why it ran unclaimed, who holds the scope it was refused, why\nthe claim is kept, or that a release did not go through.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;issue&quot;: {
+          &quot;description&quot;: &quot;The issue, as the start named it.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;key&quot;: {
+          &quot;description&quot;: &quot;The mesh claim&#39;s key, `&lt;stream&gt;/&lt;claim&gt;`, once one was taken.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;scope&quot;: {
+          &quot;description&quot;: &quot;The repository paths claimed: the issue record&#39;s `scope`, or `issue/&lt;id&gt;` when the\nrecord declares none or is not in this checkout.&quot;,
+          &quot;items&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          },
+          &quot;type&quot;: &quot;array&quot;
+        },
+        &quot;session&quot;: {
+          &quot;description&quot;: &quot;The mesh session the claim belongs to, once one was opened: `execution-&lt;id&gt;`.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;standing&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/ClaimStanding&quot;,
+          &quot;description&quot;: &quot;Where the claim stands.&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;issue&quot;,
+        &quot;standing&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
     },
     &quot;ProgressView&quot;: {
       &quot;description&quot;: &quot;How far along an execution is.&quot;,
@@ -735,7 +854,7 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
           &quot;type&quot;: &quot;null&quot;
         }
       ],
-      &quot;description&quot;: &quot;Why it failed, for a failed execution and never before.&quot;
+      &quot;description&quot;: &quot;Why it failed, for a failed execution and never before; why it was refused, for a\nrefused one; and why its outcome is not known, for one whose outcome is not.&quot;
     },
     &quot;event_count&quot;: {
       &quot;description&quot;: &quot;How many events it has produced, including the ones no longer retained.&quot;,
@@ -758,8 +877,26 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
       &quot;$ref&quot;: &quot;#/$defs/ExecutionId&quot;,
       &quot;description&quot;: &quot;The identity.&quot;
     },
+    &quot;idempotency_key&quot;: {
+      &quot;description&quot;: &quot;The idempotency key the start was sent with, when it was sent with one: a repeated\nstart with this key answers this execution instead of starting another (I4000).&quot;,
+      &quot;type&quot;: [
+        &quot;string&quot;,
+        &quot;null&quot;
+      ]
+    },
     &quot;input&quot;: {
       &quot;description&quot;: &quot;The input it was given, with every value the input schema marks sensitive replaced.&quot;
+    },
+    &quot;issue_claim&quot;: {
+      &quot;anyOf&quot;: [
+        {
+          &quot;$ref&quot;: &quot;#/$defs/IssueClaim&quot;
+        },
+        {
+          &quot;type&quot;: &quot;null&quot;
+        }
+      ],
+      &quot;description&quot;: &quot;The issue it was started for, and the mesh claim it takes for it, when it was\nstarted for one (I4004).&quot;
     },
     &quot;last_sequence&quot;: {
       &quot;description&quot;: &quot;The sequence number of the last event: the cursor a client subscribes from.&quot;,
@@ -860,7 +997,7 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
         <div><dt class="text-body-subtle">modul Rust</dt><dd class="min-w-0 break-all font-mono text-heading">majordomus_cli::capability::builtin::executions</dd></div>
         <div><dt class="text-body-subtle">typ vstupu</dt><dd class="font-mono text-heading">GetInput</dd></div>
         <div><dt class="text-body-subtle">typ výstupu</dt><dd class="font-mono text-heading">ExecutionView</dd></div>
-        <div><dt class="text-body-subtle">reference na GitHubu</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/9df9061de3e5ce138c6921b941f52ffad1d60f23/docs/generated/modules/executions.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/executions.md</a></dd></div><div><dt class="text-body-subtle">otisk registru</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">ae06145998bd02140864593b62a0e81f9c5181cfb06422de13c3d67ff86054ca</dd></div>
+        <div><dt class="text-body-subtle">reference na GitHubu</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/4795a79d95453ed90f5d59be8964cbaf67635ee9/docs/generated/modules/executions.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/executions.md</a></dd></div><div><dt class="text-body-subtle">otisk registru</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">01dc8581f5265a228ea8c59dbe1da65321423c2b6146ab4fc39895cb2eeb9d7b</dd></div>
         <div><dt class="text-body-subtle">vygenerováno nástrojem</dt><dd class="font-mono text-heading">majordomus-cli 1.0.0-alpha.10</dd></div>
       </dl>
     </div>
@@ -916,9 +1053,9 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
       <div class="min-w-0">
         <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">Projekt</h2><ul class="space-y-2 text-sm font-medium text-body">
           <li><a href="https://github.com/korczis/prismatic-majordomus" class="hover:text-heading hover:underline">GitHub</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/9df9061de3e5ce138c6921b941f52ffad1d60f23/LICENSE" class="hover:text-heading hover:underline">Licence MIT</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/9df9061de3e5ce138c6921b941f52ffad1d60f23/SECURITY.md" class="hover:text-heading hover:underline">Bezpečnostní politika</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/9df9061de3e5ce138c6921b941f52ffad1d60f23/CONTRIBUTING.md" class="hover:text-heading hover:underline">Průvodce pro přispěvatele</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/4795a79d95453ed90f5d59be8964cbaf67635ee9/LICENSE" class="hover:text-heading hover:underline">Licence MIT</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/4795a79d95453ed90f5d59be8964cbaf67635ee9/SECURITY.md" class="hover:text-heading hover:underline">Bezpečnostní politika</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/4795a79d95453ed90f5d59be8964cbaf67635ee9/CONTRIBUTING.md" class="hover:text-heading hover:underline">Průvodce pro přispěvatele</a></li>
         </ul>
       </div>
     </div>
@@ -926,7 +1063,7 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/cs/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.10</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/9df9061de3e5ce138c6921b941f52ffad1d60f23" class="font-mono underline">9df9061</a> · inputs <span class="font-mono">6da6c2266093</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/cs/architecture/" class="underline">how this site is derived</a> names them.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.10</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/4795a79d95453ed90f5d59be8964cbaf67635ee9" class="font-mono underline">4795a79</a> · inputs <span class="font-mono">1290d128d875</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/cs/architecture/" class="underline">how this site is derived</a> names them.</p>
     </div>
   </div>
 </footer>

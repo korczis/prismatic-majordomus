@@ -181,16 +181,16 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
 </div></div>
 <div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
   <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4"><div class="rounded-base border border-default bg-neutral-primary-soft p-4">
-      <p class="text-2xl font-semibold tracking-tight text-heading">258</p>
+      <p class="text-2xl font-semibold tracking-tight text-heading">262</p>
       <p class="mt-1 text-sm text-body-subtle">commands</p>
     </div><div class="rounded-base border border-default bg-neutral-primary-soft p-4">
-      <p class="text-2xl font-semibold tracking-tight text-heading">224</p>
+      <p class="text-2xl font-semibold tracking-tight text-heading">227</p>
       <p class="mt-1 text-sm text-body-subtle">of them you can run</p>
     </div><div class="rounded-base border border-default bg-neutral-primary-soft p-4">
-      <p class="text-2xl font-semibold tracking-tight text-heading">1772</p>
+      <p class="text-2xl font-semibold tracking-tight text-heading">1802</p>
       <p class="mt-1 text-sm text-body-subtle">documented arguments</p>
     </div><div class="rounded-base border border-default bg-neutral-primary-soft p-4">
-      <p class="text-2xl font-semibold tracking-tight text-heading">258</p>
+      <p class="text-2xl font-semibold tracking-tight text-heading">261</p>
       <p class="mt-1 text-sm text-body-subtle">executed examples</p>
     </div></div>
 
@@ -802,6 +802,10 @@ Most of the task lifecycle (init, start, check, finish, doctor, ...) is the shel
       <span class="break-words font-mono text-sm text-heading">majordomus mesh claim</span>
       <span class="break-words text-sm text-body sm:flex-1">Claim repository paths for a session; exits 10 naming the claims it meets when an exclusive claim on any linked runtime holds them</span>
       <span class="font-mono text-xs text-body-subtle">1 example</span>
+    </a></li><li><a href="https://majordomus.dev/docs/cli/mesh/allocate/" class="flex flex-col gap-1 px-4 py-3 sm:pl-8 hover:bg-neutral-secondary-medium sm:flex-row sm:items-baseline sm:gap-4">
+      <span class="break-words font-mono text-sm text-heading">majordomus mesh allocate</span>
+      <span class="break-words text-sm text-body sm:flex-1">Reserve the next issue, case or ADR number for a session with one exclusive mesh claim on its id key, after surveying the tree, the worktrees, every ref and the journal; exits 10 when no server runs the mesh</span>
+      <span class="font-mono text-xs text-body-subtle">1 example</span>
     </a></li><li><a href="https://majordomus.dev/docs/cli/mesh/release/" class="flex flex-col gap-1 px-4 py-3 sm:pl-8 hover:bg-neutral-secondary-medium sm:flex-row sm:items-baseline sm:gap-4">
       <span class="break-words font-mono text-sm text-heading">majordomus mesh release</span>
       <span class="break-words text-sm text-body sm:flex-1">Release a claim this server&#39;s current run holds</span>
@@ -1150,6 +1154,18 @@ Most of the task lifecycle (init, start, check, finish, doctor, ...) is the shel
       <span class="break-words font-mono text-sm text-heading">majordomus brief</span>
       <span class="break-words text-sm text-body sm:flex-1">What surrounds this session, in one line and in a few: its episode and task, the peers of every board, the mesh, the integration queue and the derive queue, asked of the server holding this checkout&#39;s lease</span>
       <span class="font-mono text-xs text-body-subtle">1 example</span>
+    </a></li><li><a href="https://majordomus.dev/docs/cli/proceed/" class="flex flex-col gap-1 px-4 py-3  hover:bg-neutral-secondary-medium sm:flex-row sm:items-baseline sm:gap-4">
+      <span class="break-words font-mono text-sm text-heading">majordomus proceed</span>
+      <span class="break-words text-sm text-body sm:flex-1">What this session proceeds with, and why: the READY issue nothing refuses, every one passed over with the claim or exclusive scope that refused it, and the terms of the order, from the plan, every checkout&#39;s board and every linked machine&#39;s live claims (ADR 0177)</span>
+      <span class="font-mono text-xs text-body-subtle">group</span>
+    </a></li><li><a href="https://majordomus.dev/docs/cli/proceed/plan/" class="flex flex-col gap-1 px-4 py-3 sm:pl-8 hover:bg-neutral-secondary-medium sm:flex-row sm:items-baseline sm:gap-4">
+      <span class="break-words font-mono text-sm text-heading">majordomus proceed plan</span>
+      <span class="break-words text-sm text-body sm:flex-1">The decision, read only: the selected issue and why, the READY issues passed over with what refused each, what the selection unblocks and the commands that take it; asked of the server holding this checkout&#39;s lease. Exit 10 when nothing can be selected, 11 when the selection is provisional because the board or a declared mesh could not be read</span>
+      <span class="font-mono text-xs text-body-subtle">1 example</span>
+    </a></li><li><a href="https://majordomus.dev/docs/cli/proceed/step/" class="flex flex-col gap-1 px-4 py-3 sm:pl-8 hover:bg-neutral-secondary-medium sm:flex-row sm:items-baseline sm:gap-4">
+      <span class="break-words font-mono text-sm text-heading">majordomus proceed step</span>
+      <span class="break-words text-sm text-body sm:flex-1">One step, as one work order, read only: `do` (the capability to run next and its input), `fan_out` (what may run beside it), `report` (what to announce) and `next_due_at` (when to step again); for an intent, `done` once its realisation is met. The same state answers the same order and key. Exit 0 when work is ordered or the order is done, 10 when the step waits</span>
+      <span class="font-mono text-xs text-body-subtle">1 example</span>
     </a></li><li><a href="https://majordomus.dev/docs/cli/blackboard/" class="flex flex-col gap-1 px-4 py-3  hover:bg-neutral-secondary-medium sm:flex-row sm:items-baseline sm:gap-4">
       <span class="break-words font-mono text-sm text-heading">majordomus blackboard</span>
       <span class="break-words text-sm text-body sm:flex-1">Who works on what in this repository, on every board and every linked machine: each worker with its client, intent, checkout, branch and claims, the claims that meet, the reviews and handovers that wait, typed relations verified only by an explicit identifier, and whether every source could be read — asked of the server holding this checkout&#39;s lease</span>
@@ -1229,7 +1245,7 @@ Most of the task lifecycle (init, start, check, finish, doctor, ...) is the shel
     </a></li></ul>
 
   <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">What makes this true</h2>
-  <p class="mt-2 max-w-3xl break-words text-sm text-body">Every command above is declared once, in <a href="https://github.com/korczis/prismatic-majordomus/blob/9df9061de3e5ce138c6921b941f52ffad1d60f23/apps/majordomus-cli/src/cli.rs" class="break-all font-mono text-fg-brand underline inline-block py-1">apps/majordomus-cli/src/cli.rs</a>, together with its examples. The executable walks that declaration into <a href="https://github.com/korczis/prismatic-majordomus/blob/9df9061de3e5ce138c6921b941f52ffad1d60f23/docs/generated/cli.json" class="break-all font-mono text-fg-brand underline inline-block py-1">docs/generated/cli.json</a>, and these pages, <code class="font-mono">--help</code> and <a href="https://github.com/korczis/prismatic-majordomus/blob/9df9061de3e5ce138c6921b941f52ffad1d60f23/docs/generated/cli.md" class="break-all font-mono text-fg-brand underline inline-block py-1">docs/generated/cli.md</a> render it. A command a person can run cannot exist without an example: the executable's own validator refuses it, and the examples shown here are the argument vectors the crate's example tests execute against the built binary.</p>
+  <p class="mt-2 max-w-3xl break-words text-sm text-body">Every command above is declared once, in <a href="https://github.com/korczis/prismatic-majordomus/blob/4795a79d95453ed90f5d59be8964cbaf67635ee9/apps/majordomus-cli/src/cli.rs" class="break-all font-mono text-fg-brand underline inline-block py-1">apps/majordomus-cli/src/cli.rs</a>, together with its examples. The executable walks that declaration into <a href="https://github.com/korczis/prismatic-majordomus/blob/4795a79d95453ed90f5d59be8964cbaf67635ee9/docs/generated/cli.json" class="break-all font-mono text-fg-brand underline inline-block py-1">docs/generated/cli.json</a>, and these pages, <code class="font-mono">--help</code> and <a href="https://github.com/korczis/prismatic-majordomus/blob/4795a79d95453ed90f5d59be8964cbaf67635ee9/docs/generated/cli.md" class="break-all font-mono text-fg-brand underline inline-block py-1">docs/generated/cli.md</a> render it. A command a person can run cannot exist without an example: the executable's own validator refuses it, and the examples shown here are the argument vectors the crate's example tests execute against the built binary.</p>
   <p class="mt-3 max-w-3xl text-sm text-body">The whole command line on one page: <a href="https://majordomus.dev/registry/cli/" class="text-fg-brand underline">the registry's command-line page</a>. The task lifecycle (<code class="font-mono">init</code>, <code class="font-mono">start</code>, <code class="font-mono">check</code>, <code class="font-mono">finish</code>, <code class="font-mono">doctor</code>, ...) belongs to the <em>shell</em> tool <code class="font-mono">bin/majordomus</code>, a different program: see <a href="https://majordomus.dev/commands/" class="text-fg-brand underline">Commands</a> and its <a href="https://majordomus.dev/docs/cli-specification/" class="text-fg-brand underline">specification</a>.</p>
 </div>
 
@@ -1278,9 +1294,9 @@ Most of the task lifecycle (init, start, check, finish, doctor, ...) is the shel
       <div class="min-w-0">
         <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">Project</h2><ul class="space-y-2 text-sm font-medium text-body">
           <li><a href="https://github.com/korczis/prismatic-majordomus" class="hover:text-heading hover:underline">GitHub</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/9df9061de3e5ce138c6921b941f52ffad1d60f23/LICENSE" class="hover:text-heading hover:underline">MIT licence</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/9df9061de3e5ce138c6921b941f52ffad1d60f23/SECURITY.md" class="hover:text-heading hover:underline">Security policy</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/9df9061de3e5ce138c6921b941f52ffad1d60f23/CONTRIBUTING.md" class="hover:text-heading hover:underline">Contributing guide</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/4795a79d95453ed90f5d59be8964cbaf67635ee9/LICENSE" class="hover:text-heading hover:underline">MIT licence</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/4795a79d95453ed90f5d59be8964cbaf67635ee9/SECURITY.md" class="hover:text-heading hover:underline">Security policy</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/4795a79d95453ed90f5d59be8964cbaf67635ee9/CONTRIBUTING.md" class="hover:text-heading hover:underline">Contributing guide</a></li>
         </ul>
       </div>
     </div>
@@ -1288,7 +1304,7 @@ Most of the task lifecycle (init, start, check, finish, doctor, ...) is the shel
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.10</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/9df9061de3e5ce138c6921b941f52ffad1d60f23" class="font-mono underline">9df9061</a> · inputs <span class="font-mono">6da6c2266093</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/architecture/" class="underline">how this site is derived</a> names them.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.10</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/4795a79d95453ed90f5d59be8964cbaf67635ee9" class="font-mono underline">4795a79</a> · inputs <span class="font-mono">1290d128d875</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/architecture/" class="underline">how this site is derived</a> names them.</p>
     </div>
   </div>
 </footer>

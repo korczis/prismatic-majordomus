@@ -1,0 +1,40 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="`plan.allocate`: an identifier is taken by one atomic claim (I3040, ADR 0177)."><title>majordomus_cli::capability::builtin::allocate - Rust</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../../static.files/rustdoc-1ed95124.css"><meta name="rustdoc-vars" data-root-path="../../../../" data-static-root-path="../../../../static.files/" data-current-crate="majordomus_cli" data-themes="" data-resource-suffix="" data-rustdoc-version="1.98.1 (48a229cea 2026-09-01)" data-channel="1.98.1" data-search-js="search-9944d736.js" data-stringdex-js="stringdex-2da4960a.js" data-settings-js="settings-170eb4bf.js" ><script src="../../../../static.files/storage-41dd4d93.js"></script><script defer src="../sidebar-items.js"></script><script defer src="../../../../static.files/main-417ebf0a.js"></script><noscript><link rel="stylesheet" href="../../../../static.files/noscript-f7c3ffd8.css"></noscript><link rel="alternate icon" type="image/png" href="../../../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../../../static.files/favicon-044be391.svg"></head><body class="rustdoc mod"><a class="skip-main-content" href="#main-content">Skip to main content</a><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><rustdoc-topbar><h2><a href="#">Module allocate</a></h2></rustdoc-topbar><nav class="sidebar"><div class="sidebar-crate"><h2><a href="../../../../majordomus_cli/index.html">majordomus_<wbr>cli</a><span class="version">1.0.0-alpha.10</span></h2></div><div class="sidebar-elems"><section id="rustdoc-toc"><h2 class="location"><a href="#">Module allocate</a></h2><h3><a href="#">Sections</a></h3><ul class="block top-toc"><li><a href="#why-a-survey-is-not-enough" title="Why a survey is not enough">Why a survey is not enough</a></li><li><a href="#what-is-surveyed" title="What is surveyed">What is surveyed</a></li><li><a href="#what-it-does-not-promise" title="What it does not promise">What it does not promise</a></li></ul><h3><a href="#enums">Module Items</a></h3><ul class="block"><li><a href="#enums" title="Enums">Enums</a></li></ul></section><div id="rustdoc-modnav"><h2><a href="../index.html">In majordomus_<wbr>cli::<wbr>capability::<wbr>builtin</a></h2></div></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><div class="width-limiter"><section id="main-content" class="content" tabindex="-1"><div class="main-heading"><div class="rustdoc-breadcrumbs"><a href="../../../index.html">majordomus_cli</a>::<wbr><a href="../../index.html">capability</a>::<wbr><a href="../index.html">builtin</a></div><h1>Module <span>allocate</span>&nbsp;<button id="copy-path" title="Copy item path to clipboard">Copy item path</button></h1><rustdoc-toolbar></rustdoc-toolbar><span class="sub-heading"><a class="src" href="../../../../src/majordomus_cli/capability/builtin/allocate.rs.html#1-795">Source</a> </span></div><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p><code>plan.allocate</code>: an identifier is taken by one atomic claim (I3040, ADR 0177).</p>
+<h2 id="why-a-survey-is-not-enough"><a class="doc-anchor" href="#why-a-survey-is-not-enough">§</a>Why a survey is not enough</h2>
+<p><code>scripts/case-numbers next</code> and <code>majordomus adr next</code> survey this tree, the sibling
+worktrees, every ref and the board, and both say of their answer that it is a best
+reading, not a reservation: a number two sessions read in the same minute is the same
+number. On 2026-10-17 I2795, case 3178 and case 3221 were each taken twice in one day, and
+the seats fell back on hand-assigned blocks of ids. What a reading cannot give, one claim
+can: an exclusive mesh claim on the identifier’s own key, <code>id:&lt;kind&gt;/&lt;number&gt;</code>, is admitted
+under the runtime’s admission lock (<code>Cooperation::claim</code>), so of two callers on one runtime
+exactly one holds a number and the other is told who does.</p>
+<h2 id="what-is-surveyed"><a class="doc-anchor" href="#what-is-surveyed">§</a>What is surveyed</h2>
+<p>Four sources, each answering what the others cannot, and each reported with what it held:
+this tree, the sibling worktrees (authored and uncommitted is a real claim), every ref
+(every identity ever added on any branch, tag, remote or rescue ref: a renamed or deleted
+file leaves its number spent) and every claim the mesh has folded on <code>id:&lt;kind&gt;/*</code>, held,
+released or expired, so that a number reserved and given up is never handed out again
+while the journal remembers it. The candidate is one past the highest of them, or the
+caller’s <code>at_least</code> when that is higher (a survey the caller ran itself, the board’s
+announced blocks), and allocation never fills a hole. A source that could not be read
+refuses the allocation (<code>source_unread</code>): a number past what was not read may be one it
+holds. Allocations of one process run one at a time, because an exclusive claim does not
+meet another claim of its own session and only the order of the surveys keeps two
+allocations of one session apart.</p>
+<h2 id="what-it-does-not-promise"><a class="doc-anchor" href="#what-it-does-not-promise">§</a>What it does not promise</h2>
+<p>Across linked runtimes two claims made before they sync are both admitted, and the fold
+then names one winner on every runtime (ADR 0067); the loser’s claim reads <code>conflicted</code>
+on <code>mesh.state</code> and its holder must allocate again. Fencing is
+<code>mesh-journal-converges</code>’ work, not this capability’s. The reservation lives while its
+session does; once the record carrying the number is pushed, every ref survey sees it and
+the claim may be released with <code>majordomus mesh release &lt;key&gt;</code>.</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>majordomus_cli::capability::builtin::allocate::IdKind;
+
+<span class="comment">// the three kinds, spelled as every surface spells them
+</span><span class="kw">let </span>words: Vec&lt;<span class="kw">_</span>&gt; = [IdKind::Issue, IdKind::Case, IdKind::Adr]
+    .iter()
+    .map(|k| serde_json::to_value(k).unwrap())
+    .collect();
+<span class="macro">assert_eq!</span>(words, [<span class="string">"issue"</span>, <span class="string">"case"</span>, <span class="string">"adr"</span>]);</code></pre></div></div></details><h2 id="enums" class="section-header">Enums<a href="#enums" class="anchor">§</a></h2><dl class="item-table"><dt><a class="enum" href="enum.IdKind.html" title="enum majordomus_cli::capability::builtin::allocate::IdKind">IdKind</a></dt><dd>The kind of identifier allocated: what <code>majordomus mesh allocate &lt;kind&gt;</code> and
+<code>plan.allocate</code> take.</dd></dl></section></div></main></body></html>

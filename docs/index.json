@@ -2,18 +2,18 @@
  "schema": 1,
  "generated_by": "scripts/lib/docs-index.mjs",
  "build": {
-  "commit": "9df9061de3e5ce138c6921b941f52ffad1d60f23",
+  "commit": "4795a79d95453ed90f5d59be8964cbaf67635ee9",
   "source_version": "1.0.0-alpha.10",
-  "registry_fingerprint": "ae06145998bd02140864593b62a0e81f9c5181cfb06422de13c3d67ff86054ca"
+  "registry_fingerprint": "01dc8581f5265a228ea8c59dbe1da65321423c2b6146ab4fc39895cb2eeb9d7b"
  },
  "counts": {
-  "pages": 6380,
-  "capabilities": 3821,
-  "cli_commands": 124,
-  "http_routes": 213,
-  "mcp_tools": 209,
-  "mcp_resources": 3654,
-  "modules": 95
+  "pages": 6430,
+  "capabilities": 3851,
+  "cli_commands": 127,
+  "http_routes": 218,
+  "mcp_tools": 214,
+  "mcp_resources": 3678,
+  "modules": 96
  },
  "kinds": [
   {
@@ -22,7 +22,7 @@
    "route": "/adrs/",
    "title": "Decisions",
    "reason": null,
-   "count": 168
+   "count": 169
   },
   {
    "kind": "application",
@@ -78,7 +78,7 @@
    "route": null,
    "title": null,
    "reason": "A critique is the adversarial pass over one intent's plan, written by a worker, and work started under the intent without it or with a blocking finding open fails intent validation (ADR 0073). It is planning state of this repository; what the plan became is published on /plan/.",
-   "count": 39
+   "count": 40
   },
   {
    "kind": "deployment",
@@ -110,7 +110,7 @@
    "route": null,
    "title": null,
    "reason": "A document of the layer is prose already published where it belongs — /docs/, /method/, /context/ — and a second address for the same words is the duplication this file exists to prevent.",
-   "count": 356
+   "count": 357
   },
   {
    "kind": "domain",
@@ -150,7 +150,7 @@
    "route": null,
    "title": null,
    "reason": "An intent's stage and criteria are derived on every read from the plan and the evidence ledger (ADR 0070); a static page would freeze a derivation at the commit the site was built from. The milestones that realise an intent are published on /plan/, and `majordomus intent show` and the Cockpit's /cockpit/intents answer for the intent itself.",
-   "count": 44
+   "count": 45
   },
   {
    "kind": "issue",
@@ -158,7 +158,7 @@
    "route": "/plan/",
    "title": null,
    "reason": null,
-   "count": 1206
+   "count": 1215
   },
   {
    "kind": "knowledge",
@@ -182,7 +182,7 @@
    "route": "/plan/",
    "title": null,
    "reason": null,
-   "count": 116
+   "count": 117
   },
   {
    "kind": "moment",
@@ -270,7 +270,7 @@
    "route": null,
    "title": null,
    "reason": "A test object is a case file. What it proves is published — on /guarantees/ for the claim and on the rule's own page for the rule — and that is the direction a reader asks in.",
-   "count": 681
+   "count": 691
   },
   {
    "kind": "use-case",
@@ -1419,6 +1419,15 @@
    "kind": "adr",
    "id": "majordomus://adr/adr-0176",
    "source": ".ai/repo/adrs/0176-the-blackboard-is-one-projection-pushed-over-one-socket.md",
+   "section": "Decisions"
+  },
+  {
+   "route": "/adrs/adr-0177/",
+   "title": "A session proceeds through one entrypoint that composes the capabilities the repository already has",
+   "description": "A session proceeds through one entrypoint that composes the capabilities the repository already has",
+   "kind": "adr",
+   "id": "majordomus://adr/adr-0177",
+   "source": ".ai/repo/adrs/0177-a-session-proceeds-through-one-entrypoint-that-composes-the-capabilities.md",
    "section": "Decisions"
   },
   {
@@ -2883,6 +2892,12 @@
    "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
   },
   {
+   "route": "/cs/adrs/adr-0177/",
+   "title": "A session proceeds through one entrypoint that composes the capabilities the repository already has",
+   "description": "A session proceeds through one entrypoint that composes the capabilities the repository already has",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
    "route": "/cs/adrs/adr-0180/",
    "title": "Balík promptů je kampaň: uchovaná tak, jak byla přijata, indexovaná jako druh a citovaná záznamy, které řídila",
    "description": "Balík promptů je kampaň: uchovává se tak, jak přišel, indexuje se jako druh a citují ho záznamy, které řídil",
@@ -3545,7 +3560,7 @@
   {
    "route": "/cs/docs/api/devtask/",
    "title": "HTTP API: devtask",
-   "description": "Úkol a milník čtené jako práce k vykonání, nikoli jako metadata: co člověk napsal, kam je staví graf plánu, co se s nimi lokálně stalo, v jakém stavu je jejich externí projekce a zda je worker smí začít — s původem každé hodnoty přímo u hodnoty. Nic z toho není druhý model projektu: záznamy jsou kanonické, status a graf patří `plan`, branche a commity patří `trace`, slovník připravenosti zpřesňuje tři kanonické stavy, aniž by kterýkoli nahrazoval, a projekce na GitHub zůstává věcí `scripts/github-sync`. Nic z toho nic nezapisuje, a proto je před tím hodnota napsaná uživatelem na GitHubu v bezpečí.",
+   "description": "An issue and a milestone read as work to be done rather than as metadata: what a person authored, where the plan graph puts it, what happened to it locally, where its external projection stands, and whether a worker may start it — with the origin of every value on the value. Nothing here is a second project model: the records are the canonical ones, the status and the graph are `plan`'s, the branches and commits are `trace`'s, the readiness vocabulary refines three canonical statuses without replacing any, and the projection onto GitHub stays `scripts/github-sync`'s. The two readers write nothing, which is what makes a user-authored GitHub value safe from them; `devtask.implement` writes only through the capabilities it composes (`worktree.create`, `executions.start`), and `devtask.run` is the run it starts.",
    "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
   },
   {
@@ -3726,6 +3741,12 @@
    "route": "/cs/docs/api/plan/",
    "title": "HTTP API: plan",
    "description": "Model milníků a úkolů tohoto repozitáře a vše, co se z něj odvozuje a co nikdo nenapsal: stav každého záznamu, grafy závislostí nad hranicí milníku i pod ní, topologické vlny provádění, pořadí podle plánu rozvoje, právě prováděný milník a jeden úkol, který vzít jako další. Stav se nikdy neukládá — záznam říká, co se s ním stalo, a stav z toho a ze stavu jeho závislostí vyplývá — takže žádný soubor nemůže odporovat grafu. Tato schopnost čte; zápis značky životního cyklu do záznamu je `plan.transition`, která deklaruje, že zapisuje do repozitáře.",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/docs/api/proceed/",
+   "title": "HTTP API: proceed",
+   "description": "The decision a session starts from (ADR 0177): the issue to take, every READY issue it passed over with the constraint that issue failed and the hold that failed it, and the terms of the order, composed from the plan, every checkout's board and every linked machine's live claims. Writes nothing.",
    "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
   },
   {
@@ -4599,6 +4620,12 @@
    "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
   },
   {
+   "route": "/cs/docs/cli/mesh/allocate/",
+   "title": "majordomus mesh allocate",
+   "description": "Reserve the next issue, case or ADR number for a session with one exclusive mesh claim on its id key, after surveying the tree, the worktrees, every ref and the journal; exits 10 when no server runs the mesh",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
    "route": "/cs/docs/cli/mesh/beat/",
    "title": "majordomus mesh beat",
    "description": "Say a session is making progress, and what it is doing, so its exclusive claims keep excluding",
@@ -4866,6 +4893,24 @@
    "route": "/cs/docs/cli/plan/drift/",
    "title": "majordomus plan drift",
    "description": "Každý rozpor mezi deklarovaným stavem úkolu a jeho dodávkou — merged_not_recorded, active_without_work, done_without_trace — každý s důkazem; s --gate posouzeno proti oknu, které deklaruje .ai/repo/ci/plan.yaml",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/docs/cli/proceed/",
+   "title": "majordomus proceed",
+   "description": "What this session proceeds with, and why: the READY issue nothing refuses, every one passed over with the claim or exclusive scope that refused it, and the terms of the order, from the plan, every checkout's board and every linked machine's live claims (ADR 0177)",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/docs/cli/proceed/plan/",
+   "title": "majordomus proceed plan",
+   "description": "The decision, read only: the selected issue and why, the READY issues passed over with what refused each, what the selection unblocks and the commands that take it; asked of the server holding this checkout's lease. Exit 10 when nothing can be selected, 11 when the selection is provisional because the board or a declared mesh could not be read",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/docs/cli/proceed/step/",
+   "title": "majordomus proceed step",
+   "description": "One step, as one work order, read only: `do` (the capability to run next and its input), `fan_out` (what may run beside it), `report` (what to announce) and `next_due_at` (when to step again); for an intent, `done` once its realisation is met. The same state answers the same order and key. Exit 0 when work is ordered or the order is done, 10 when the step waits",
    "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
   },
   {
@@ -5718,6 +5763,12 @@
    "route": "/cs/docs/preflight/",
    "title": "Preflight",
    "description": "preflight: co je prokázáno o checkoutu, ne co to je — verdikt za každé tvrzení (git, epizoda, briefing, úloha, předávka, politika, pravidla, ADR, server a plochy, peery, běhy testů, vynucování, projekce, generované dokumenty, nasazení) s důkazem za ním; devět verdiktů, co vstup čte a nikdy nečte, naměřená cena a co spustit pro každý verdikt",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/docs/proceed/",
+   "title": "Proceeding",
+   "description": "proceeding: what a session told only to proceed does — `proceed.plan`'s claim-aware decision, the take, and `proceed.step`'s work order (`do`, `fan_out`, `report`, `next_due_at`), why the same state answers the same order and key, when a step is done, and the generated `/proceed` skill",
    "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
   },
   {
@@ -8184,6 +8235,12 @@
    "route": "/cs/plan/a-session-proceeds-through-the-mesh/",
    "title": "a-session-proceeds-through-the-mesh — A session proceeds through the mesh: it finds the work, claims it once, runs it watched and stops when the intent is met",
    "description": "A session asks /proceed what to do, receives one idempotent work order derived from intent_realization and the claim-aware plan, takes it under a mesh claim held by the run, starts it once, reports it and schedules its own next step until the intent is met; /watchdog wakes, hands over and reaps a stalled loop from deadlines; heavy work shares the machine through one slot.",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/plan/a-session-proceeds/",
+   "title": "a-session-proceeds — A session proceeds: one entrypoint resolves, reconciles, chooses, claims, executes, proves and hands on",
+   "description": "`/proceed` in any session runs `majordomus proceed`: one explained decision from the existing capabilities, an exclusive claim, a worktree and a task bound to the chosen issue, the implement skill, finish, and a receipt handed to the landing seat; said again with nothing changed it creates nothing.",
    "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
   },
   {
@@ -11499,6 +11556,54 @@
    "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
   },
   {
+   "route": "/cs/plan/i2972/",
+   "title": "I2972 — One query decides what a session proceeds with, and says why",
+   "description": "Declare proceed.plan (a query, capability!) that composes the plan's hand-out order, the repository's board (peers.list) and the live mesh claims (mesh.state) into one decision: the selected issue, every READY candidate with the hard constraint it failed (claimed, named, scope_held) and the hold that failed it, provisional when the board or a declared mesh could not be read, each term of the order, what the selection unblocks, the evidence that finishes it and the commands that take it; projected as `majordomus proceed plan`, MCP majordomus_proceed_plan and GET /api/v1/proceed/plan.",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/plan/i2973/",
+   "title": "I2973 — The choice ranks by what it unblocks",
+   "description": "Move the transitive-unblock count from proceed.rs into Plan::unblocks (distinct unfinished issues that depend on an issue, walked only through unfinished ones, each counted once), and order READY issues by it after milestone membership, wave and priority and before id, in plan.rs (ready_in_order, so plan.next and proceed.plan) and lib/project.sh (mj_pj_ready_ranked) together, held to one answer by case 99.",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/plan/i2974/",
+   "title": "I2974 — Proceeding claims and starts the chosen work once",
+   "description": "Add majordomus proceed take: through the existing capabilities only, take proceed.plan's selection with one exclusive mesh claim on the primary checkout's runtime, ensure the issue's canonical worktree, record the take in that worktree and start the task bound to the issue there; a session whose take is recorded gets that work back and nothing is created, a finished one is reported and its claim released.",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/plan/i2975/",
+   "title": "I2975 — /proceed is a generated skill that names only the command",
+   "description": "Declare .ai/repo/skills/proceed/ so that `majordomus generate` projects /proceed for every provider; it runs `majordomus proceed`, shows the decision, follows the implement skill and ends with finish and the hand-off, and holds no rule list, workflow copy or issue list.",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/plan/i2976/",
+   "title": "I2976 — Two sessions proceeding at once never hold the same work",
+   "description": "Hold that two sessions running proceed at the same moment, on one machine or two, never both hold the same issue or overlapping scope: on one runtime the exclusive claim admits one, and across runtimes the loser of the fold's winner-naming stops and proceeds with the next eligible issue.",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/plan/i2977/",
+   "title": "I2977 — A session whose work stopped is resumed, never duplicated",
+   "description": "When proceed finds work whose session is gone — a task with no live episode, a claim whose runtime expired, a handover nobody took — offer it first, resume it through handover --resolve and the existing claim, and never open a second claim, worktree or task for it.",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/plan/i2978/",
+   "title": "I2978 — The UI shows what proceeding chose, what it refused and why",
+   "description": "Render proceed.plan's decision on /ui/proceed and in the Cockpit: the selection, the rejected candidates with their constraints, the ranking terms, what it unblocks, and the history of decisions this repository's sessions took, followed live through the existing event stream.",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/plan/i2979/",
+   "title": "I2979 — A finished task hands its head and receipt to the landing seat",
+   "description": "End a proceeded task, after finish --outcome completed, by publishing its branch head and a receipt derived from the finish record (sha, the cases and gates that ran with their results, ci on that head when it exists) to the landing seat on the board and the mesh; never merge, tag or release.",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
    "route": "/cs/plan/i2980/",
    "title": "I2980 — The blackboard is one projection answered on every interface",
    "description": "Add blackboard.snapshot: one read capability that composes the repository-wide board (peers.list), the live mesh state (sessions, claims, reviews, handovers) and the newest monitor signals into one typed snapshot with the sources it read and their health, whether it is complete, every worker with its claims (advisory or exclusive), the conflicts (potential overlaps and confirmed conflicted claims), open reviews, untaken handovers, typed relations (verified or candidate) and the monitor cursor a stream resumes from.",
@@ -11694,6 +11799,12 @@
    "route": "/cs/plan/i3025/",
    "title": "I3025 — Každá dlaždice Knowledge se čte celá na šířce telefonu",
    "description": "Hero dlaždice /ui/knowledge nesou popisky a psané hodnoty, které se vejdou do nejužší dlaždice sady (9.5rem, asi 152 px při 390 px): Unknown branch, Not learned from a 'no ledger', kde není zaznamenán žádný ledger relace, s crate testem, který drží každý popisek dlaždice a psanou hodnotu v naměřeném rozpočtu.",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/plan/i3040/",
+   "title": "I3040 — An id is taken by one atomic claim",
+   "description": "Add plan.allocate (a command that writes only the mesh journal; MCP majordomus_plan_allocate, POST /api/v1/plan/allocate, `majordomus mesh allocate <issue|case|adr> --session S [--at-least N]`): survey this tree, the sibling worktrees, every ref (git log --all --diff-filter=A) and every reservation the mesh journal remembers, take one past the highest (or --at-least), and reserve it with one exclusive mesh claim on the identifier's own key `id:<kind>/<n>`, moving to the next number on a claim_conflict and naming its holder.",
    "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
   },
   {
@@ -16317,6 +16428,12 @@
    "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
   },
   {
+   "route": "/cs/registry/capabilities/devtask-implement/",
+   "title": "devtask.implement",
+   "description": "Take one issue as one request (I4003): a key that already started an execution for it answers that execution (`deduplicated`) and creates nothing; otherwise the issue's readiness as `devtask.issue` derives it (refused `not_ready` with the reason and the blockers), `intents.preflight` (refused `invalid_intent` with its refusal), whether the issue's exclusive mesh claim would be admitted now (refused `claim_conflict` naming each holder), the worker — the attached MCP peer that asked; with none the answer is `pending` and nothing is created — then `worktree.create` on `feature/<id>-<slug>` and `executions.start` of `devtask.run` for the issue under the key (default `implement-<issue>`), whose execution takes the issue's claim before it runs (I4004). A refusal creates nothing. The answer is the standing, every step with what it found, the branch, the worktree, the worker and the execution with its links.",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
    "route": "/cs/registry/capabilities/devtask-issue/",
    "title": "devtask.issue",
    "description": "Identita, název, záměr, stav, milník, kritéria přijetí, závislosti, blokátory, commity, které jmenují jeho vlastní důkazy, a commity, které našel git, jeho větve, relace, které na něm pracovaly, jeho připravenost a vše, co je špatně v jeho záznamech — každé pole uvádí, zda ho napsal člověk (`explicit`), stroj ho odvodil pravidlem, které se nemůže mýlit (`derived`), stroj ho odvodil pravidlem, které se mýlit může (`inferred`, s uvedeným pravidlem), nebo není dostupné vůbec (`unknown`, s důvodem). Klíč, který záznam nenese, je `unknown`, nikdy prázdný řetězec: `objective: \"\"` a záznam bez cíle jsou stejný řetězec a odlišné skutečnosti. Id, které model nedeklaruje, se zodpoví, nezamítne. `git: false` odpovídá jen ze záznamů, což je to, co porovnání mezi stroji potřebuje.",
@@ -16326,6 +16443,12 @@
    "route": "/cs/registry/capabilities/devtask-milestone/",
    "title": "devtask.milestone",
    "description": "Každý úkol milníku jako uzel s jeho připraveností, vlnou a tím, co na něj čeká; každá hrana závislosti s alespoň jedním koncem uvnitř, přecházející označené; úkoly rozdělené na připravené, blokované, čekající, aktivní, v revizi, blokované dokončením, dokončené a zrušené; kritické blokátory seřazené podle toho, kolik nedokončené práce každý zdržuje; zahajitelná práce rozdělená do podmnožin, které skutečně mohou běžet současně — stejná vlna, každá bezpečná pro paralelismus, žádné dvě nesdílejí cestu rozsahu — s tím, že každá serializace jmenuje cestu, která ji způsobila; každý cyklus závislostí jako jeho silně souvislá komponenta; a každý nález o milníku nebo jeho úkolech. Čistá funkce kanonických záznamů: žádný git, žádné hodiny, žádná síť, každý seznam v kanonickém pořadí, takže dva běhy na dvou strojích dají stejné bajty. Pracovní povrch, který toto čte, sám nic neodvozuje.",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/registry/capabilities/devtask-run/",
+   "title": "devtask.run",
+   "description": "The execution `devtask.implement` starts, and nothing else: the run handed to the attached peer that asked, in the issue's worktree, under the issue's mesh claim. It lasts while that peer stays attached — the same position id, attached at the same instant — and ends `succeeded` when it detaches, `cancelled` when asked to stop, and `failed` on its deadline; refused when the worker is not attached when it starts. What the worker did is in the worktree and is verified by what verifies a branch, never by this. Reachable only through `executions.start`: it declares no route, tool or command of its own.",
    "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
   },
   {
@@ -16511,19 +16634,19 @@
   {
    "route": "/cs/registry/capabilities/executions-protocol/",
    "title": "executions.protocol",
-   "description": "Kde je WebSocket, jak se vyjadřuje odběr a opětovné připojení, co server zapisuje a JSON Schema každé zprávy — odvozeno z typů Rustu, které jej implementují, takže klient validující proti tomuto validuje proti implementaci. OpenAPI nedokáže popsat socket; zde žije tento kontrakt.",
+   "description": "Where the WebSocket is, how a subscription and a reconnect are expressed, what the server writes, every state an execution may be in with the states it may move to (the transition table the store holds every event to), and the JSON Schema of every message — derived from the Rust types that implement it, so a client validating against this is validating against the implementation. OpenAPI cannot describe a socket; this is where that contract lives.",
    "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
   },
   {
    "route": "/cs/registry/capabilities/executions-report/",
    "title": "executions.report",
-   "description": "Co `majordomus run` posílá, zatímco spouští schopnost ve vlastním procesu a checkout už obsluhuje server: popis provádění a jeho události po poslední sekvenci, kterou tento server převzal. Server to drží jako provádění zahájené z příkazového řádku, s pid, ve stejném úložišti, výpisu, stránkách Cockpitu a živém kanálu jako vlastní; každou událost použije jednou a v pořadí, přičemž odpoví, kde začíná další hlášení; oznámí hlásiči, když ho někdo požádal o zastavení; a selže ho s `unavailable`, když hlásič mlčel 30 s. Nic se tu nespouští. Mění jen paměť tohoto procesu.",
+   "description": "What `majordomus run` posts while it runs a capability in its own process and a server already serves the checkout: the execution's description and its events after the last sequence this server took. The server holds it as an execution started by the command line, with the pid, in the same store, listing, Cockpit pages and live channel as its own; applies each event once and in order, answering where the next report starts; tells the reporter when somebody asked it to stop; and, once the reporter has been silent for 30 s, says its outcome is unknown (`unknown_outcome`, code `unavailable`) — never completed — until the reporter's own outcome reconciles it; a `started` after that is passed over, since nothing runs again before the outcome is known. Every event is held to the state machine `executions.protocol` lists, and an event of a newer schema version is refused by name. Nothing runs here. Changes this process's memory only.",
    "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
   },
   {
    "route": "/cs/registry/capabilities/executions-start/",
    "title": "executions.start",
-   "description": "Spustit jakoukoli spustitelnou schopnost tohoto registru jako provádění: vstup se zkontroluje podle vlastního vstupního schématu té schopnosti, práce se zařadí do fronty a odpověď přijde ihned s id provádění a odkazy, kterými ho sledovat. Nic nečeká na handler. Schopnost běží přes stejný executor, který volá každé jiné rozhraní, takže nic nemá druhou implementaci. Na příkazové řádce (`majordomus run`) běží v tomto procesu a hlásí se serveru obsluhujícímu checkout, je-li nějaký, přes executions.report; běh nikdy nespustí server.",
+   "description": "Run any executable capability of this registry as an execution: the input is checked against that capability's own input schema, the work is queued, and this answers at once with the execution's id and the links to follow it. Nothing waits for the handler. With an idempotency_key, a repeated start is one execution: the same key with the same capability and input is answered the execution it started (deduplicated) and nothing new runs, and the same key with another input is refused as a conflict naming that execution. With an issue, the execution holds that issue's exclusive mesh claim while it runs: taken before the handler is entered (queued, claimed, running), refused with the holder named when another session holds the scope so that nothing runs, given back at the final state, and kept for an outcome that is not known; with no mesh in the serving process it runs unclaimed and says so. The capability runs through the same executor every other interface calls, so there is no second implementation of anything. On the command line (`majordomus run`) it runs in that process and is reported to the server serving the checkout, when one is, through executions.report; a run never starts a server.",
    "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
   },
   {
@@ -17025,6 +17148,12 @@
    "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
   },
   {
+   "route": "/cs/registry/capabilities/plan-allocate/",
+   "title": "plan.allocate",
+   "description": "One number of the kind asked (`issue`, `case`, `adr`), reserved for one mesh session by one exclusive claim on the identifier's own key, `id:<kind>/<number>`. The candidate is one past the highest number this tree, the sibling worktrees, every ref and every reservation the mesh journal remembers hold, or the caller's `at_least` when that is higher; a number another session's claim already holds is skipped and its holder named, and a source that could not be read refuses the allocation (`source_unread`). On one runtime the claim is admitted under the admission lock, so two allocations at once answer two numbers; across linked runtimes two claims made before they sync are both admitted and the fold names one winner, whose loser allocates again (fencing is mesh-journal-converges' work). Writes this runtime's mesh journal only, never the repository; the reservation ends with its session or `mesh release`.",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
    "route": "/cs/registry/capabilities/plan-delivery/",
    "title": "plan.delivery",
    "description": "Pro každý úkol (nebo jeden) nejdále prokázaná fáze dodání — none, branch, pr_open, merged, released, deployed — každá s objektem, který ji prokázal, a kdy byl pozorován: větev, která úkol jmenuje (id, pravidlo I1405, nebo slug), otevřený pull request v zaznamenaném pozorování forgu, nejnovější commit v historii trunku, který ho jmenuje (merge podle názvu pull requestu nebo větve, jiný commit podle předmětu, nikdy podle těla), první záznam release (`.ai/repo/releases/v*.yaml`), jehož commit tento merge obsahuje, a publikovaný `latest.json`, který jmenuje tento release nebo pozdější. Vedle toho deklarovaný stav úkolu, takže rozpor mezi razítky a prací je na jedno porovnání. Ve výchozím nastavení živě: trunk, který tento klon zná, každá větev, pozorování forgu zaznamenané `majordomus prs refresh`, záznamy release a `latest.json` commitu, který publikovalo poslední nasazení Pages. S `at` merge z historie onoho commitu a záznamy release stromu a nic živého — každý zdroj větví, forgu a nasazení se hlásí jako nepřečtený — takže lze prokázat jen merged a released a odpověď je funkcí samotného commitu. Zdroj, který se nečetl, se hlásí jako nepřečtený s důvodem, nikdy jako none: úkol, který mohl postoupit dál, není vyřízen a zdroj jmenuje. Odvozuje se při každém volání a nikde se neukládá; nikdy nezapisuje razítko.",
@@ -17094,6 +17223,18 @@
    "route": "/cs/registry/capabilities/plan-waves/",
    "title": "plan.waves",
    "description": "Topologické vrstvení grafu úkolů: úkol vstoupí do vlny, až když ji opustila každá jeho závislost, takže jeho vlna je o jedna za nejdelší cestou k němu. Sdílení vlny je nutná podmínka pro souběžné spuštění dvou úkolů, ne dostatečná — překrývající se rozsah je serializuje a každý takový překryv se hlásí vedle vln, místo aby ho dva pracovníci objevili v merge konfliktu.",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/registry/capabilities/proceed-plan/",
+   "title": "proceed.plan",
+   "description": "The READY issues in the plan's hand-out order (the asked milestone first, then wave, priority and id, as `plan.next`), each refused when another worker holds it: a live mesh claim names it as its issue or a hold claims its record (`claimed`), a board or mesh announcement names its id as a word of its own (`named`, quoted beside it), or a live exclusive mesh claim of another session meets its scope (`scope_held`); advisory holds over its scope are listed as `shared_with` and refuse nothing. The first issue nothing refuses is `selected`, with what it unblocks, what finishes it and the commands that take it; `reason` says why in one sentence, and `sources` whether the board and the mesh could be read. A decision that could not read the board, or a declared mesh, is `provisional` and gives no commands. The caller's own session (its mesh claims on this runtime, and its board announcements) is never held against it; a session of the same name on another runtime is another worker. Composed by the server holding this checkout's lease, which holds the board and the mesh; the command line asks it. Writes nothing.",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/registry/capabilities/proceed-step/",
+   "title": "proceed.step",
+   "description": "One step of a session that proceeds, as a work order a loop acts on: `do`, the capability to run next and its input — `devtask.implement` for the issue `proceed.plan` selects, under the idempotency key `devtask.implement` defaults to, so that a repeated order is one execution; `fan_out`, the other free READY issues declared parallel safe that share no path with it, at most four; `report`, what to announce on the board, as `peers.announce` takes it; and `next_due_at`, the next five-minute boundary after `at`, when to step again. Given an `intent`, only the issues serving its unmet criteria (`intent_realization.work`) are ordered, and an intent whose every criterion has current evidence, or that is satisfied, cancelled or superseded, answers `done` with nothing to run and nothing scheduled; without one, the whole plan is stepped and is done when no unfinished issue is left. Each item names the model `models.route` selects for a worker and the effort of the issue's profile. A provisional decision orders nothing. The same state answers the same order: `key` is the digest of everything but the moment, so a step repeated over unchanged state carries the same key at any later time. Writes nothing.",
    "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
   },
   {
@@ -17373,6 +17514,12 @@
    "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
   },
   {
+   "route": "/cs/registry/capabilities/worktree-create/",
+   "title": "worktree.create",
+   "description": "Make the worktree of a branch at its canonical path — the container beside the primary checkout, then the branch name with its hierarchy kept, derived and never given — or find it there. Idempotent: the canonical worktree already holding the branch is the answer (`existed: true`), with nothing created. Refused with the service's reason and nothing changed: the branch checked out somewhere else (`BranchAlreadyCheckedOut`, with the path it belongs at), the canonical path occupied by something else (`DestinationConflict`), a name git or the topology does not accept. A branch that does not exist here starts at `base` when given, else where the remote has it, else at the remote's trunk fetched now within a deadline, else the local trunk with how far behind it is (`start`). `git worktree add` runs under the worktree lock and a deadline, and is killed and refused when it passes it. The answer is the branch, the path, the `head` read back from the worktree, and whether it was created or existed; direnv's approval and the per-worktree hooks are carried to it as `worktree ensure` does, because this is that command.",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
    "route": "/cs/registry/capabilities/worktree-inspect/",
    "title": "worktree.inspect",
    "description": "Kanonická cesta větve, odvozená pouze z jejího názvu, zda větev existuje, zda tu cestu něco zabírá, worktree, které větev drží, když nějaké je, a co brání jeho vytvoření nebo migraci. Odpověď pro větev, která ještě neexistuje, je cesta, kterou by použilo `worktree create`.",
@@ -17519,7 +17666,7 @@
   {
    "route": "/cs/registry/modules/devtask/",
    "title": "Spustitelné vývojové rozsahy",
-   "description": "Úkol a milník čtené jako práce k vykonání, nikoli jako metadata: co člověk napsal, kam je staví graf plánu, co se s nimi lokálně stalo, v jakém stavu je jejich externí projekce a zda je worker smí začít — s původem každé hodnoty přímo u hodnoty. Nic z toho není druhý model projektu: záznamy jsou kanonické, status a graf patří `plan`, branche a commity patří `trace`, slovník připravenosti zpřesňuje tři kanonické stavy, aniž by kterýkoli nahrazoval, a projekce na GitHub zůstává věcí `scripts/github-sync`. Nic z toho nic nezapisuje, a proto je před tím hodnota napsaná uživatelem na GitHubu v bezpečí.",
+   "description": "An issue and a milestone read as work to be done rather than as metadata: what a person authored, where the plan graph puts it, what happened to it locally, where its external projection stands, and whether a worker may start it — with the origin of every value on the value. Nothing here is a second project model: the records are the canonical ones, the status and the graph are `plan`'s, the branches and commits are `trace`'s, the readiness vocabulary refines three canonical statuses without replacing any, and the projection onto GitHub stays `scripts/github-sync`'s. The two readers write nothing, which is what makes a user-authored GitHub value safe from them; `devtask.implement` writes only through the capabilities it composes (`worktree.create`, `executions.start`), and `devtask.run` is the run it starts.",
    "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
   },
   {
@@ -17700,6 +17847,12 @@
    "route": "/cs/registry/modules/plan/",
    "title": "Plán a jeho odvození",
    "description": "Model milníků a úkolů tohoto repozitáře a vše, co se z něj odvozuje a co nikdo nenapsal: stav každého záznamu, grafy závislostí nad hranicí milníku i pod ní, topologické vlny provádění, pořadí podle plánu rozvoje, právě prováděný milník a jeden úkol, který vzít jako další. Stav se nikdy neukládá — záznam říká, co se s ním stalo, a stav z toho a ze stavu jeho závislostí vyplývá — takže žádný soubor nemůže odporovat grafu. Tato schopnost čte; zápis značky životního cyklu do záznamu je `plan.transition`, která deklaruje, že zapisuje do repozitáře.",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/registry/modules/proceed/",
+   "title": "What a session proceeds with",
+   "description": "The decision a session starts from (ADR 0177): the issue to take, every READY issue it passed over with the constraint that issue failed and the hold that failed it, and the terms of the order, composed from the plan, every checkout's board and every linked machine's live claims. Writes nothing.",
    "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
   },
   {
@@ -20573,7 +20726,7 @@
   {
    "route": "/docs/api/devtask/",
    "title": "HTTP API: devtask",
-   "description": "An issue and a milestone read as work to be done rather than as metadata: what a person authored, where the plan graph puts it, what happened to it locally, where its external projection stands, and whether a worker may start it — with the origin of every value on the value. Nothing here is a second project model: the records are the canonical ones, the status and the graph are `plan`'s, the branches and commits are `trace`'s, the readiness vocabulary refines three canonical statuses without replacing any, and the projection onto GitHub stays `scripts/github-sync`'s. Nothing here writes anything, which is what makes a user-authored GitHub value safe from it.",
+   "description": "An issue and a milestone read as work to be done rather than as metadata: what a person authored, where the plan graph puts it, what happened to it locally, where its external projection stands, and whether a worker may start it — with the origin of every value on the value. Nothing here is a second project model: the records are the canonical ones, the status and the graph are `plan`'s, the branches and commits are `trace`'s, the readiness vocabulary refines three canonical statuses without replacing any, and the projection onto GitHub stays `scripts/github-sync`'s. The two readers write nothing, which is what makes a user-authored GitHub value safe from them; `devtask.implement` writes only through the capabilities it composes (`worktree.create`, `executions.start`), and `devtask.run` is the run it starts.",
    "section": "Documentation"
   },
   {
@@ -20754,6 +20907,12 @@
    "route": "/docs/api/plan/",
    "title": "HTTP API: plan",
    "description": "The milestone and issue model of this repository, and everything derived from it that nobody authored: the status of each record, the dependency graphs above and below the milestone boundary, the topological execution waves, the roadmap order, the milestone being executed and the one issue to take next. Status is never stored — a record says what happened to it and the status follows from that and from the state of its dependencies — so no file can contradict the graph. This capability reads; writing a lifecycle marker into a record is `plan.transition`, which declares that it writes the repository.",
+   "section": "Documentation"
+  },
+  {
+   "route": "/docs/api/proceed/",
+   "title": "HTTP API: proceed",
+   "description": "The decision a session starts from (ADR 0177): the issue to take, every READY issue it passed over with the constraint that issue failed and the hold that failed it, and the terms of the order, composed from the plan, every checkout's board and every linked machine's live claims. Writes nothing.",
    "section": "Documentation"
   },
   {
@@ -21627,6 +21786,12 @@
    "section": "Documentation"
   },
   {
+   "route": "/docs/cli/mesh/allocate/",
+   "title": "majordomus mesh allocate",
+   "description": "Reserve the next issue, case or ADR number for a session with one exclusive mesh claim on its id key, after surveying the tree, the worktrees, every ref and the journal; exits 10 when no server runs the mesh",
+   "section": "Documentation"
+  },
+  {
    "route": "/docs/cli/mesh/beat/",
    "title": "majordomus mesh beat",
    "description": "Say a session is making progress, and what it is doing, so its exclusive claims keep excluding",
@@ -21894,6 +22059,24 @@
    "route": "/docs/cli/plan/drift/",
    "title": "majordomus plan drift",
    "description": "Every contradiction between an issue's declared status and its delivery — merged_not_recorded, active_without_work, done_without_trace — each with its proof; with --gate, judged against the window .ai/repo/ci/plan.yaml declares",
+   "section": "Documentation"
+  },
+  {
+   "route": "/docs/cli/proceed/",
+   "title": "majordomus proceed",
+   "description": "What this session proceeds with, and why: the READY issue nothing refuses, every one passed over with the claim or exclusive scope that refused it, and the terms of the order, from the plan, every checkout's board and every linked machine's live claims (ADR 0177)",
+   "section": "Documentation"
+  },
+  {
+   "route": "/docs/cli/proceed/plan/",
+   "title": "majordomus proceed plan",
+   "description": "The decision, read only: the selected issue and why, the READY issues passed over with what refused each, what the selection unblocks and the commands that take it; asked of the server holding this checkout's lease. Exit 10 when nothing can be selected, 11 when the selection is provisional because the board or a declared mesh could not be read",
+   "section": "Documentation"
+  },
+  {
+   "route": "/docs/cli/proceed/step/",
+   "title": "majordomus proceed step",
+   "description": "One step, as one work order, read only: `do` (the capability to run next and its input), `fan_out` (what may run beside it), `report` (what to announce) and `next_due_at` (when to step again); for an intent, `done` once its realisation is met. The same state answers the same order and key. Exit 0 when work is ordered or the order is done, 10 when the step waits",
    "section": "Documentation"
   },
   {
@@ -22746,6 +22929,12 @@
    "route": "/docs/preflight/",
    "title": "The preflight",
    "description": "the preflight: what is proven about a checkout rather than what it is — a verdict per claim (git, episode, briefing, task, handover, policy, rules, ADRs, server and surfaces, peers, test runs, enforcement, projections, generated docs, deployment) with the evidence behind it; the nine verdicts, what entry reads and never reads, the measured cost, and what to run for each verdict",
+   "section": "Documentation"
+  },
+  {
+   "route": "/docs/proceed/",
+   "title": "Proceeding",
+   "description": "proceeding: what a session told only to proceed does — `proceed.plan`'s claim-aware decision, the take, and `proceed.step`'s work order (`do`, `fan_out`, `report`, `next_due_at`), why the same state answers the same order and key, when a step is done, and the generated `/proceed` skill",
    "section": "Documentation"
   },
   {
@@ -25212,6 +25401,12 @@
    "route": "/plan/a-session-proceeds-through-the-mesh/",
    "title": "a-session-proceeds-through-the-mesh — A session proceeds through the mesh: it finds the work, claims it once, runs it watched and stops when the intent is met",
    "description": "A session asks /proceed what to do, receives one idempotent work order derived from intent_realization and the claim-aware plan, takes it under a mesh claim held by the run, starts it once, reports it and schedules its own next step until the intent is met; /watchdog wakes, hands over and reaps a stalled loop from deadlines; heavy work shares the machine through one slot.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/a-session-proceeds/",
+   "title": "a-session-proceeds — A session proceeds: one entrypoint resolves, reconciles, chooses, claims, executes, proves and hands on",
+   "description": "`/proceed` in any session runs `majordomus proceed`: one explained decision from the existing capabilities, an exclusive claim, a worktree and a task bound to the chosen issue, the implement skill, finish, and a receipt handed to the landing seat; said again with nothing changed it creates nothing.",
    "section": "The plan"
   },
   {
@@ -28527,6 +28722,54 @@
    "section": "The plan"
   },
   {
+   "route": "/plan/i2972/",
+   "title": "I2972 — One query decides what a session proceeds with, and says why",
+   "description": "Declare proceed.plan (a query, capability!) that composes the plan's hand-out order, the repository's board (peers.list) and the live mesh claims (mesh.state) into one decision: the selected issue, every READY candidate with the hard constraint it failed (claimed, named, scope_held) and the hold that failed it, provisional when the board or a declared mesh could not be read, each term of the order, what the selection unblocks, the evidence that finishes it and the commands that take it; projected as `majordomus proceed plan`, MCP majordomus_proceed_plan and GET /api/v1/proceed/plan.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i2973/",
+   "title": "I2973 — The choice ranks by what it unblocks",
+   "description": "Move the transitive-unblock count from proceed.rs into Plan::unblocks (distinct unfinished issues that depend on an issue, walked only through unfinished ones, each counted once), and order READY issues by it after milestone membership, wave and priority and before id, in plan.rs (ready_in_order, so plan.next and proceed.plan) and lib/project.sh (mj_pj_ready_ranked) together, held to one answer by case 99.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i2974/",
+   "title": "I2974 — Proceeding claims and starts the chosen work once",
+   "description": "Add majordomus proceed take: through the existing capabilities only, take proceed.plan's selection with one exclusive mesh claim on the primary checkout's runtime, ensure the issue's canonical worktree, record the take in that worktree and start the task bound to the issue there; a session whose take is recorded gets that work back and nothing is created, a finished one is reported and its claim released.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i2975/",
+   "title": "I2975 — /proceed is a generated skill that names only the command",
+   "description": "Declare .ai/repo/skills/proceed/ so that `majordomus generate` projects /proceed for every provider; it runs `majordomus proceed`, shows the decision, follows the implement skill and ends with finish and the hand-off, and holds no rule list, workflow copy or issue list.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i2976/",
+   "title": "I2976 — Two sessions proceeding at once never hold the same work",
+   "description": "Hold that two sessions running proceed at the same moment, on one machine or two, never both hold the same issue or overlapping scope: on one runtime the exclusive claim admits one, and across runtimes the loser of the fold's winner-naming stops and proceeds with the next eligible issue.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i2977/",
+   "title": "I2977 — A session whose work stopped is resumed, never duplicated",
+   "description": "When proceed finds work whose session is gone — a task with no live episode, a claim whose runtime expired, a handover nobody took — offer it first, resume it through handover --resolve and the existing claim, and never open a second claim, worktree or task for it.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i2978/",
+   "title": "I2978 — The UI shows what proceeding chose, what it refused and why",
+   "description": "Render proceed.plan's decision on /ui/proceed and in the Cockpit: the selection, the rejected candidates with their constraints, the ranking terms, what it unblocks, and the history of decisions this repository's sessions took, followed live through the existing event stream.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i2979/",
+   "title": "I2979 — A finished task hands its head and receipt to the landing seat",
+   "description": "End a proceeded task, after finish --outcome completed, by publishing its branch head and a receipt derived from the finish record (sha, the cases and gates that ran with their results, ci on that head when it exists) to the landing seat on the board and the mesh; never merge, tag or release.",
+   "section": "The plan"
+  },
+  {
    "route": "/plan/i2980/",
    "title": "I2980 — The blackboard is one projection answered on every interface",
    "description": "Add blackboard.snapshot: one read capability that composes the repository-wide board (peers.list), the live mesh state (sessions, claims, reviews, handovers) and the newest monitor signals into one typed snapshot with the sources it read and their health, whether it is complete, every worker with its claims (advisory or exclusive), the conflicts (potential overlaps and confirmed conflicted claims), open reviews, untaken handovers, typed relations (verified or candidate) and the monitor cursor a stream resumes from.",
@@ -28722,6 +28965,12 @@
    "route": "/plan/i3025/",
    "title": "I3025 — Every Knowledge tile reads whole at a phone's width",
    "description": "The hero tiles of /ui/knowledge carry labels and written values that fit the kit's narrowest tile (9.5rem, about 152 px at 390 px): Unknown branch, Not learned from, and 'no ledger' where no session ledger is recorded, with a crate test that holds every tile label and the written value to the measured budget.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i3040/",
+   "title": "I3040 — An id is taken by one atomic claim",
+   "description": "Add plan.allocate (a command that writes only the mesh journal; MCP majordomus_plan_allocate, POST /api/v1/plan/allocate, `majordomus mesh allocate <issue|case|adr> --session S [--at-least N]`): survey this tree, the sibling worktrees, every ref (git log --all --diff-filter=A) and every reservation the mesh journal remembers, take one past the highest (or --at-least), and reserve it with one exclusive mesh claim on the identifier's own key `id:<kind>/<n>`, moving to the next number on a claim_conflict and naming its holder.",
    "section": "The plan"
   },
   {
@@ -33345,6 +33594,12 @@
    "section": "Registry"
   },
   {
+   "route": "/registry/capabilities/devtask-implement/",
+   "title": "devtask.implement",
+   "description": "Take one issue as one request (I4003): a key that already started an execution for it answers that execution (`deduplicated`) and creates nothing; otherwise the issue's readiness as `devtask.issue` derives it (refused `not_ready` with the reason and the blockers), `intents.preflight` (refused `invalid_intent` with its refusal), whether the issue's exclusive mesh claim would be admitted now (refused `claim_conflict` naming each holder), the worker — the attached MCP peer that asked; with none the answer is `pending` and nothing is created — then `worktree.create` on `feature/<id>-<slug>` and `executions.start` of `devtask.run` for the issue under the key (default `implement-<issue>`), whose execution takes the issue's claim before it runs (I4004). A refusal creates nothing. The answer is the standing, every step with what it found, the branch, the worktree, the worker and the execution with its links.",
+   "section": "Registry"
+  },
+  {
    "route": "/registry/capabilities/devtask-issue/",
    "title": "devtask.issue",
    "description": "Identity, title, intent, status, milestone, acceptance criteria, dependencies, blockers, the commits its own evidence names and the commits git found, its branches, the sessions that worked on it, its readiness and everything wrong with its records — each field carrying whether a person authored it (`explicit`), a machine worked it out by a rule that cannot be wrong (`derived`), a machine worked it out by a rule that can (`inferred`, with the rule stated), or it is not available at all (`unknown`, with the reason). A key the record does not carry is `unknown`, never an empty string: `objective: \"\"` and a record with no objective are the same string and different facts. An id the model does not declare is answered, not refused. `git: false` answers from the records alone, which is what a comparison across machines wants.",
@@ -33354,6 +33609,12 @@
    "route": "/registry/capabilities/devtask-milestone/",
    "title": "devtask.milestone",
    "description": "Every issue of the milestone as a node with its readiness, its wave and what waits on it; every dependency edge with at least one end inside, the crossing ones marked; the issues partitioned into ready, blocked, waiting, active, review, completion-blocked, complete and cancelled; the critical blockers ordered by how much unfinished work each holds back; the startable work partitioned into subsets that may genuinely run at the same time — same wave, each parallel-safe, no two sharing a scope path — with each serialisation naming the path that caused it; every dependency cycle as its strongly connected component; and every finding about the milestone or its issues. A pure function of the canonical records: no git, no clock, no network, every list in canonical order, so two runs on two machines produce the same bytes. A work surface reading this derives nothing itself.",
+   "section": "Registry"
+  },
+  {
+   "route": "/registry/capabilities/devtask-run/",
+   "title": "devtask.run",
+   "description": "The execution `devtask.implement` starts, and nothing else: the run handed to the attached peer that asked, in the issue's worktree, under the issue's mesh claim. It lasts while that peer stays attached — the same position id, attached at the same instant — and ends `succeeded` when it detaches, `cancelled` when asked to stop, and `failed` on its deadline; refused when the worker is not attached when it starts. What the worker did is in the worktree and is verified by what verifies a branch, never by this. Reachable only through `executions.start`: it declares no route, tool or command of its own.",
    "section": "Registry"
   },
   {
@@ -33539,19 +33800,19 @@
   {
    "route": "/registry/capabilities/executions-protocol/",
    "title": "executions.protocol",
-   "description": "Where the WebSocket is, how a subscription and a reconnect are expressed, what the server writes, and the JSON Schema of every message — derived from the Rust types that implement it, so a client validating against this is validating against the implementation. OpenAPI cannot describe a socket; this is where that contract lives.",
+   "description": "Where the WebSocket is, how a subscription and a reconnect are expressed, what the server writes, every state an execution may be in with the states it may move to (the transition table the store holds every event to), and the JSON Schema of every message — derived from the Rust types that implement it, so a client validating against this is validating against the implementation. OpenAPI cannot describe a socket; this is where that contract lives.",
    "section": "Registry"
   },
   {
    "route": "/registry/capabilities/executions-report/",
    "title": "executions.report",
-   "description": "What `majordomus run` posts while it runs a capability in its own process and a server already serves the checkout: the execution's description and its events after the last sequence this server took. The server holds it as an execution started by the command line, with the pid, in the same store, listing, Cockpit pages and live channel as its own; applies each event once and in order, answering where the next report starts; tells the reporter when somebody asked it to stop; and fails it with `unavailable` once the reporter has been silent for 30 s. Nothing runs here. Changes this process's memory only.",
+   "description": "What `majordomus run` posts while it runs a capability in its own process and a server already serves the checkout: the execution's description and its events after the last sequence this server took. The server holds it as an execution started by the command line, with the pid, in the same store, listing, Cockpit pages and live channel as its own; applies each event once and in order, answering where the next report starts; tells the reporter when somebody asked it to stop; and, once the reporter has been silent for 30 s, says its outcome is unknown (`unknown_outcome`, code `unavailable`) — never completed — until the reporter's own outcome reconciles it; a `started` after that is passed over, since nothing runs again before the outcome is known. Every event is held to the state machine `executions.protocol` lists, and an event of a newer schema version is refused by name. Nothing runs here. Changes this process's memory only.",
    "section": "Registry"
   },
   {
    "route": "/registry/capabilities/executions-start/",
    "title": "executions.start",
-   "description": "Run any executable capability of this registry as an execution: the input is checked against that capability's own input schema, the work is queued, and this answers at once with the execution's id and the links to follow it. Nothing waits for the handler. The capability runs through the same executor every other interface calls, so there is no second implementation of anything. On the command line (`majordomus run`) it runs in that process and is reported to the server serving the checkout, when one is, through executions.report; a run never starts a server.",
+   "description": "Run any executable capability of this registry as an execution: the input is checked against that capability's own input schema, the work is queued, and this answers at once with the execution's id and the links to follow it. Nothing waits for the handler. With an idempotency_key, a repeated start is one execution: the same key with the same capability and input is answered the execution it started (deduplicated) and nothing new runs, and the same key with another input is refused as a conflict naming that execution. With an issue, the execution holds that issue's exclusive mesh claim while it runs: taken before the handler is entered (queued, claimed, running), refused with the holder named when another session holds the scope so that nothing runs, given back at the final state, and kept for an outcome that is not known; with no mesh in the serving process it runs unclaimed and says so. The capability runs through the same executor every other interface calls, so there is no second implementation of anything. On the command line (`majordomus run`) it runs in that process and is reported to the server serving the checkout, when one is, through executions.report; a run never starts a server.",
    "section": "Registry"
   },
   {
@@ -34053,6 +34314,12 @@
    "section": "Registry"
   },
   {
+   "route": "/registry/capabilities/plan-allocate/",
+   "title": "plan.allocate",
+   "description": "One number of the kind asked (`issue`, `case`, `adr`), reserved for one mesh session by one exclusive claim on the identifier's own key, `id:<kind>/<number>`. The candidate is one past the highest number this tree, the sibling worktrees, every ref and every reservation the mesh journal remembers hold, or the caller's `at_least` when that is higher; a number another session's claim already holds is skipped and its holder named, and a source that could not be read refuses the allocation (`source_unread`). On one runtime the claim is admitted under the admission lock, so two allocations at once answer two numbers; across linked runtimes two claims made before they sync are both admitted and the fold names one winner, whose loser allocates again (fencing is mesh-journal-converges' work). Writes this runtime's mesh journal only, never the repository; the reservation ends with its session or `mesh release`.",
+   "section": "Registry"
+  },
+  {
    "route": "/registry/capabilities/plan-delivery/",
    "title": "plan.delivery",
    "description": "For every issue (or one), the furthest delivery stage proved — none, branch, pr_open, merged, released, deployed — each with the object that proved it and when it was observed: the branch that names the issue (by id, the I1405 rule, or by its slug), the open pull request in the recorded forge observation, the newest commit in the trunk's history that names it (a merge by its pull-request title or branch, any other commit by its subject, never by its body), the first release record (`.ai/repo/releases/v*.yaml`) whose commit contains that merge, and the published `latest.json` that names that release or a later one. Beside it, the issue's declared status, so a contradiction between the stamps and the work is one comparison away. Live by default: the trunk this clone knows, every branch, the forge observation `majordomus prs refresh` recorded, the release records, and the `latest.json` of the commit the last Pages deployment published. With `at`, the merges of that commit's history and the tree's release records and nothing live — every branch, forge and deployment source is reported unread — so only merged and released can be proved and the answer is a function of the commit alone. A source that was not read is reported unread with its reason, never as none: an issue it could have moved further is not settled and names it. Inferred on every call and stored nowhere; it never writes a stamp.",
@@ -34122,6 +34389,18 @@
    "route": "/registry/capabilities/plan-waves/",
    "title": "plan.waves",
    "description": "The topological layering of the issue graph: an issue enters a wave only once every dependency has left it, so its wave is one past the longest path to it. Sharing a wave is a necessary condition for running two issues at once, not a sufficient one — overlapping scope serialises them, and every such overlap is reported beside the waves rather than left for two workers to discover in a merge conflict.",
+   "section": "Registry"
+  },
+  {
+   "route": "/registry/capabilities/proceed-plan/",
+   "title": "proceed.plan",
+   "description": "The READY issues in the plan's hand-out order (the asked milestone first, then wave, priority and id, as `plan.next`), each refused when another worker holds it: a live mesh claim names it as its issue or a hold claims its record (`claimed`), a board or mesh announcement names its id as a word of its own (`named`, quoted beside it), or a live exclusive mesh claim of another session meets its scope (`scope_held`); advisory holds over its scope are listed as `shared_with` and refuse nothing. The first issue nothing refuses is `selected`, with what it unblocks, what finishes it and the commands that take it; `reason` says why in one sentence, and `sources` whether the board and the mesh could be read. A decision that could not read the board, or a declared mesh, is `provisional` and gives no commands. The caller's own session (its mesh claims on this runtime, and its board announcements) is never held against it; a session of the same name on another runtime is another worker. Composed by the server holding this checkout's lease, which holds the board and the mesh; the command line asks it. Writes nothing.",
+   "section": "Registry"
+  },
+  {
+   "route": "/registry/capabilities/proceed-step/",
+   "title": "proceed.step",
+   "description": "One step of a session that proceeds, as a work order a loop acts on: `do`, the capability to run next and its input — `devtask.implement` for the issue `proceed.plan` selects, under the idempotency key `devtask.implement` defaults to, so that a repeated order is one execution; `fan_out`, the other free READY issues declared parallel safe that share no path with it, at most four; `report`, what to announce on the board, as `peers.announce` takes it; and `next_due_at`, the next five-minute boundary after `at`, when to step again. Given an `intent`, only the issues serving its unmet criteria (`intent_realization.work`) are ordered, and an intent whose every criterion has current evidence, or that is satisfied, cancelled or superseded, answers `done` with nothing to run and nothing scheduled; without one, the whole plan is stepped and is done when no unfinished issue is left. Each item names the model `models.route` selects for a worker and the effort of the issue's profile. A provisional decision orders nothing. The same state answers the same order: `key` is the digest of everything but the moment, so a step repeated over unchanged state carries the same key at any later time. Writes nothing.",
    "section": "Registry"
   },
   {
@@ -34401,6 +34680,12 @@
    "section": "Registry"
   },
   {
+   "route": "/registry/capabilities/worktree-create/",
+   "title": "worktree.create",
+   "description": "Make the worktree of a branch at its canonical path — the container beside the primary checkout, then the branch name with its hierarchy kept, derived and never given — or find it there. Idempotent: the canonical worktree already holding the branch is the answer (`existed: true`), with nothing created. Refused with the service's reason and nothing changed: the branch checked out somewhere else (`BranchAlreadyCheckedOut`, with the path it belongs at), the canonical path occupied by something else (`DestinationConflict`), a name git or the topology does not accept. A branch that does not exist here starts at `base` when given, else where the remote has it, else at the remote's trunk fetched now within a deadline, else the local trunk with how far behind it is (`start`). `git worktree add` runs under the worktree lock and a deadline, and is killed and refused when it passes it. The answer is the branch, the path, the `head` read back from the worktree, and whether it was created or existed; direnv's approval and the per-worktree hooks are carried to it as `worktree ensure` does, because this is that command.",
+   "section": "Registry"
+  },
+  {
    "route": "/registry/capabilities/worktree-inspect/",
    "title": "worktree.inspect",
    "description": "The canonical path of a branch, derived from its name alone, whether the branch exists, whether something occupies that path, the worktree holding the branch when one does, and what stands in the way of creating or migrating it. The answer for a branch that does not exist yet is the path `worktree create` would use.",
@@ -34547,7 +34832,7 @@
   {
    "route": "/registry/modules/devtask/",
    "title": "Executable development scopes",
-   "description": "An issue and a milestone read as work to be done rather than as metadata: what a person authored, where the plan graph puts it, what happened to it locally, where its external projection stands, and whether a worker may start it — with the origin of every value on the value. Nothing here is a second project model: the records are the canonical ones, the status and the graph are `plan`'s, the branches and commits are `trace`'s, the readiness vocabulary refines three canonical statuses without replacing any, and the projection onto GitHub stays `scripts/github-sync`'s. Nothing here writes anything, which is what makes a user-authored GitHub value safe from it.",
+   "description": "An issue and a milestone read as work to be done rather than as metadata: what a person authored, where the plan graph puts it, what happened to it locally, where its external projection stands, and whether a worker may start it — with the origin of every value on the value. Nothing here is a second project model: the records are the canonical ones, the status and the graph are `plan`'s, the branches and commits are `trace`'s, the readiness vocabulary refines three canonical statuses without replacing any, and the projection onto GitHub stays `scripts/github-sync`'s. The two readers write nothing, which is what makes a user-authored GitHub value safe from them; `devtask.implement` writes only through the capabilities it composes (`worktree.create`, `executions.start`), and `devtask.run` is the run it starts.",
    "section": "Registry"
   },
   {
@@ -34728,6 +35013,12 @@
    "route": "/registry/modules/plan/",
    "title": "The plan and its derivations",
    "description": "The milestone and issue model of this repository, and everything derived from it that nobody authored: the status of each record, the dependency graphs above and below the milestone boundary, the topological execution waves, the roadmap order, the milestone being executed and the one issue to take next. Status is never stored — a record says what happened to it and the status follows from that and from the state of its dependencies — so no file can contradict the graph. This capability reads; writing a lifecycle marker into a record is `plan.transition`, which declares that it writes the repository.",
+   "section": "Registry"
+  },
+  {
+   "route": "/registry/modules/proceed/",
+   "title": "What a session proceeds with",
+   "description": "The decision a session starts from (ADR 0177): the issue to take, every READY issue it passed over with the constraint that issue failed and the hold that failed it, and the terms of the order, composed from the plan, every checkout's board and every linked machine's live claims. Writes nothing.",
    "section": "Registry"
   },
   {
@@ -36575,7 +36866,7 @@
   {
    "route": "/rustdoc/",
    "title": "majordomus-cli 1.0.0-alpha.10 — Rust API reference",
-   "description": "The rustdoc reference of majordomus-cli 1.0.0-alpha.10, built from commit 9df9061de3e5ce138c6921b941f52ffad1d60f23: the public items of the library and of the executable, and the source they were built from.",
+   "description": "The rustdoc reference of majordomus-cli 1.0.0-alpha.10, built from commit 4795a79d95453ed90f5d59be8964cbaf67635ee9: the public items of the library and of the executable, and the source they were built from.",
    "section": "majordomus-cli 1.0.0-alpha.10 — Rust API reference"
   },
   {
@@ -36636,6 +36927,12 @@
    "route": "/rustdoc/majordomus_cli/capability/builtin/",
    "title": "majordomus_cli::capability::builtin - Rust",
    "description": "The executable capabilities this executable ships: one Rust module per capability module, each owning its typed inputs and outputs, its handlers, its benchmark cases and its `module()` composition; `modules` composes the application from them with `compose_modules!`, and that list is the only root composition there is. Adding a capability to an existing module touches that module’s file alone; every projection, benchmark target and generated document follows from the descriptor.",
+   "section": "majordomus-cli 1.0.0-alpha.10 — Rust API reference"
+  },
+  {
+   "route": "/rustdoc/majordomus_cli/capability/builtin/allocate/",
+   "title": "majordomus_cli::capability::builtin::allocate - Rust",
+   "description": "`plan.allocate`: an identifier is taken by one atomic claim (I3040, ADR 0177).",
    "section": "majordomus-cli 1.0.0-alpha.10 — Rust API reference"
   },
   {
@@ -37344,6 +37641,12 @@
    "route": "/rustdoc/majordomus_cli/execution/",
    "title": "majordomus_cli::execution - Rust",
    "description": "Executions: watching a capability call that takes longer than a request should be held open for.",
+   "section": "majordomus-cli 1.0.0-alpha.10 — Rust API reference"
+  },
+  {
+   "route": "/rustdoc/majordomus_cli/execution/claim/",
+   "title": "majordomus_cli::execution::claim - Rust",
+   "description": "The mesh claim an execution started for an issue holds while it runs (I4004).",
    "section": "majordomus-cli 1.0.0-alpha.10 — Rust API reference"
   },
   {

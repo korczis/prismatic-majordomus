@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"constant":["PROTOCOL_VERSION"],"enum":["EventPayload"],"fn":["sanitise"],"struct":["ExecutionEvent"]};
+window.SIDEBAR_ITEMS = {"constant":["PROTOCOL_VERSION"],"enum":["EventPayload"],"fn":["check_schema_version","sanitise"],"struct":["ExecutionEvent"]};

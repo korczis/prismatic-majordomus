@@ -175,11 +175,11 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
   <nav class="lg:sticky lg:top-24 lg:self-start" aria-label="Sekce API">
     <p class="mb-2"><a href="https://majordomus.dev/cs/docs/api/" class="font-mono text-xs uppercase tracking-wide text-fg-brand hover:underline">Rejstřík HTTP API</a></p>
     <p class="mb-2 font-mono text-xs uppercase tracking-wide text-body-subtle">na této stránce</p>
-    <ul class="flex flex-wrap gap-2 text-sm lg:flex-col lg:gap-1"><li><a href="#op-worktree-topology" class="block truncate rounded px-2 py-1 font-mono text-xs text-body hover:bg-neutral-secondary-medium hover:text-heading">worktree.topology</a></li><li><a href="#op-worktree-inspect" class="block truncate rounded px-2 py-1 font-mono text-xs text-body hover:bg-neutral-secondary-medium hover:text-heading">worktree.inspect</a></li><li><a href="#op-worktree-migration_plan" class="block truncate rounded px-2 py-1 font-mono text-xs text-body hover:bg-neutral-secondary-medium hover:text-heading">worktree.migration_plan</a></li><li><a href="#op-worktree-status" class="block truncate rounded px-2 py-1 font-mono text-xs text-body hover:bg-neutral-secondary-medium hover:text-heading">worktree.status</a></li><li><a href="#op-worktree-trunk" class="block truncate rounded px-2 py-1 font-mono text-xs text-body hover:bg-neutral-secondary-medium hover:text-heading">worktree.trunk</a></li><li><a href="#op-worktree-uncommitted" class="block truncate rounded px-2 py-1 font-mono text-xs text-body hover:bg-neutral-secondary-medium hover:text-heading">worktree.uncommitted</a></li><li><a href="#schemas" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Schémata</a></li>
+    <ul class="flex flex-wrap gap-2 text-sm lg:flex-col lg:gap-1"><li><a href="#op-worktree-topology" class="block truncate rounded px-2 py-1 font-mono text-xs text-body hover:bg-neutral-secondary-medium hover:text-heading">worktree.topology</a></li><li><a href="#op-worktree-create" class="block truncate rounded px-2 py-1 font-mono text-xs text-body hover:bg-neutral-secondary-medium hover:text-heading">worktree.create</a></li><li><a href="#op-worktree-inspect" class="block truncate rounded px-2 py-1 font-mono text-xs text-body hover:bg-neutral-secondary-medium hover:text-heading">worktree.inspect</a></li><li><a href="#op-worktree-migration_plan" class="block truncate rounded px-2 py-1 font-mono text-xs text-body hover:bg-neutral-secondary-medium hover:text-heading">worktree.migration_plan</a></li><li><a href="#op-worktree-status" class="block truncate rounded px-2 py-1 font-mono text-xs text-body hover:bg-neutral-secondary-medium hover:text-heading">worktree.status</a></li><li><a href="#op-worktree-trunk" class="block truncate rounded px-2 py-1 font-mono text-xs text-body hover:bg-neutral-secondary-medium hover:text-heading">worktree.trunk</a></li><li><a href="#op-worktree-uncommitted" class="block truncate rounded px-2 py-1 font-mono text-xs text-body hover:bg-neutral-secondary-medium hover:text-heading">worktree.uncommitted</a></li><li><a href="#schemas" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Schémata</a></li>
     </ul>
   </nav>
   <div class="min-w-0">
-    <p class="mb-6 text-sm text-body-subtle">Vykresleno z <a href="https://github.com/korczis/prismatic-majordomus/blob/9df9061de3e5ce138c6921b941f52ffad1d60f23/docs/generated/openapi.json" class="font-mono underline">docs/generated/openapi.json</a>, který spustitelný soubor generuje ze svého registru schopností a CI jej odmítne, je-li zastaralý. Surový dokument je na <a href="https://majordomus.dev/openapi.json" class="font-mono text-fg-brand underline">/openapi.json</a>; běžící server servíruje stejný dokument na vlastní <code class="font-mono">/openapi.json</code> a Swagger UI na <code class="font-mono">/swagger</code>.</p><section id="tag-worktree" class="scroll-mt-24">
+    <p class="mb-6 text-sm text-body-subtle">Vykresleno z <a href="https://github.com/korczis/prismatic-majordomus/blob/4795a79d95453ed90f5d59be8964cbaf67635ee9/docs/generated/openapi.json" class="font-mono underline">docs/generated/openapi.json</a>, který spustitelný soubor generuje ze svého registru schopností a CI jej odmítne, je-li zastaralý. Surový dokument je na <a href="https://majordomus.dev/openapi.json" class="font-mono text-fg-brand underline">/openapi.json</a>; běžící server servíruje stejný dokument na vlastní <code class="font-mono">/openapi.json</code> a Swagger UI na <code class="font-mono">/swagger</code>.</p><section id="tag-worktree" class="scroll-mt-24">
       <h2 class="font-mono text-xl font-semibold tracking-tight text-heading">worktree</h2>
       <p class="mt-2 max-w-3xl text-sm text-body">Kam patří každý propojený git worktree tohoto repozitáře a kde který je. Kontejner je sourozenec primárního checkoutu pojmenovaný s `-wt`, cesta pod ním je název větve se zachovanou hierarchií a obojí se odvozuje z vlastní identity gitu — společného adresáře, registrovaných worktrees, větví — nikdy z registru, konfigurace nebo aktuálního adresáře. Worktree jinde je typovaná diagnostika s nápravou; migrace, která ji opraví, je operace příkazové řádky téže služby.</p><article id="op-worktree-topology" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
   <div class="flex flex-wrap items-center gap-2">
@@ -195,7 +195,7 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
     <li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body" title="politika benchmarku">vyžaduje se měření výkonu</span></li>
     <li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body" title="politika cache">cache vypnuta</span></li><li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body break-all">nástroj MCP majordomus_worktrees</span></li><li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body break-all">Zdroj MCP {&quot;name&quot;: &quot;worktrees&quot;, &quot;uri&quot;: &quot;majordomus://worktrees&quot;}</span></li><li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body break-all">$ worktree topology</span></li></ul><p class="mt-5 text-sm text-body-subtle">Žádné parametry.</p><h4 class="mt-5 font-mono text-xs uppercase tracking-wide text-body-subtle">Vyzkoušejte</h4>
   <p class="mt-1 text-xs text-body-subtle">Port je ten, který server zalogoval; 8741 je ten, o který žádá jako první. Hodnoty jsou první příklad operace.</p>
-  <div class="mt-2 overflow-x-auto rounded-base border border-default bg-neutral-secondary-medium" tabindex="0"><pre class="m-0 p-3 font-mono text-xs leading-relaxed text-heading" tabindex="0">curl -s &quot;http://127.0.0.1:8741/api/v1/worktrees&quot;</pre></div><p class="mt-1 text-xs text-body-subtle">Testováno v <a href="https://github.com/korczis/prismatic-majordomus/blob/9df9061de3e5ce138c6921b941f52ffad1d60f23/apps/majordomus-cli/tests/http_serve.rs" class="break-all font-mono text-fg-brand underline inline-block py-1">apps/majordomus-cli/tests/http_serve.rs</a>, který přehrává routu s těmito hodnotami proti serveru na skutečném socketu.</p>
+  <div class="mt-2 overflow-x-auto rounded-base border border-default bg-neutral-secondary-medium" tabindex="0"><pre class="m-0 p-3 font-mono text-xs leading-relaxed text-heading" tabindex="0">curl -s &quot;http://127.0.0.1:8741/api/v1/worktrees&quot;</pre></div><p class="mt-1 text-xs text-body-subtle">Testováno v <a href="https://github.com/korczis/prismatic-majordomus/blob/4795a79d95453ed90f5d59be8964cbaf67635ee9/apps/majordomus-cli/tests/http_serve.rs" class="break-all font-mono text-fg-brand underline inline-block py-1">apps/majordomus-cli/tests/http_serve.rs</a>, který přehrává routu s těmito hodnotami proti serveru na skutečném socketu.</p>
 
   <h4 class="mt-5 font-mono text-xs uppercase tracking-wide text-body-subtle">Odpovědi</h4>
   <div class="mt-2 overflow-x-auto rounded-base border border-default" tabindex="0">
@@ -213,6 +213,59 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
           <td class="px-3 py-2 font-mono font-semibold text-heading">404</td>
           <td class="px-3 py-2 font-mono"><a href="https://majordomus.dev/cs/docs/api/shared/#schema-ErrorBody" class="text-fg-brand hover:underline">ErrorBody</a></td>
           <td class="px-3 py-2 text-body"><div class="min-w-0 [&_pre]:max-w-full [&_pre]:overflow-x-auto"><code>not_found</code>: Vstup pojmenovává něco, co repozitář nemá.</div></td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">500</td>
+          <td class="px-3 py-2 font-mono"><a href="https://majordomus.dev/cs/docs/api/shared/#schema-ErrorBody" class="text-fg-brand hover:underline">ErrorBody</a></td>
+          <td class="px-3 py-2 text-body"><div class="min-w-0 [&_pre]:max-w-full [&_pre]:overflow-x-auto"><code>internal</code>: Schopnost selhala z vlastního důvodu; zpráva ho pojmenovává.</div></td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">výchozí</td>
+          <td class="px-3 py-2 font-mono"><a href="https://majordomus.dev/cs/docs/api/shared/#schema-ErrorBody" class="text-fg-brand hover:underline">ErrorBody</a></td>
+          <td class="px-3 py-2 text-body"><div class="min-w-0 [&_pre]:max-w-full [&_pre]:overflow-x-auto">Jakékoli jiné selhání, které transport hlásí: 405 <code>method_not_allowed</code> pro jinou metodu na této cestě, 400 <code>invalid_input</code> pro tělo, které není objektem JSON.</div></td>
+        </tr></tbody>
+    </table>
+  </div>
+</article>
+<article id="op-worktree-create" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+  <div class="flex flex-wrap items-center gap-2">
+    <span class="rounded px-2 py-0.5 font-mono text-xs font-bold bg-warning-soft text-fg-warning border border-warning-subtle">POST</span>
+    <code class="break-all font-mono text-base font-semibold text-heading">/api/v1/worktrees/create</code>
+    <a href="#op-worktree-create" class="font-mono text-xs text-body-subtle hover:underline">worktree.create</a>
+  </div>
+  <h3 class="mt-3 text-lg font-semibold tracking-tight text-heading">The canonical worktree of a branch, made or found</h3>
+  <p class="mt-1 break-words text-sm text-body">Make the worktree of a branch at its canonical path — the container beside the primary checkout, then the branch name with its hierarchy kept, derived and never given — or find it there. Idempotent: the canonical worktree already holding the branch is the answer (`existed: true`), with nothing created. Refused with the service&#39;s reason and nothing changed: the branch checked out somewhere else (`BranchAlreadyCheckedOut`, with the path it belongs at), the canonical path occupied by something else (`DestinationConflict`), a name git or the topology does not accept. A branch that does not exist here starts at `base` when given, else where the remote has it, else at the remote&#39;s trunk fetched now within a deadline, else the local trunk with how far behind it is (`start`). `git worktree add` runs under the worktree lock and a deadline, and is killed and refused when it passes it. The answer is the branch, the path, the `head` read back from the worktree, and whether it was created or existed; direnv&#39;s approval and the per-worktree hooks are carried to it as `worktree ensure` does, because this is that command.</p>
+  <ul class="mt-3 flex flex-wrap gap-2 text-xs">
+    <li><span class="rounded border border-default bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-heading">command</span></li>
+    <li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body">behaviorally_verified</span></li>
+    <li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body" title="politika benchmarku">vyžaduje se měření výkonu</span></li>
+    <li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body" title="politika cache">cache vypnuta</span></li><li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body break-all">MCP tool majordomus_worktree_create</span></li><li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body break-all">$ worktree ensure</span></li></ul><h4 class="mt-5 font-mono text-xs uppercase tracking-wide text-body-subtle">Request body <span class="normal-case">— <a href="https://majordomus.dev/cs/docs/api/worktree/#schema-CreateInput" class="font-mono text-fg-brand underline">CreateInput</a>, JSON</span></h4><p class="mt-2 font-mono text-xs text-body-subtle">example <span class="text-heading">refused-name</span></p>
+  <div class="mt-1 overflow-x-auto rounded-base border border-default bg-neutral-secondary-medium" tabindex="0"><pre class="m-0 p-3 font-mono text-xs leading-relaxed text-body" tabindex="0">{&quot;branch&quot;:&quot;feature/../escape&quot;}</pre></div><h4 class="mt-5 font-mono text-xs uppercase tracking-wide text-body-subtle">Vyzkoušejte</h4>
+  <p class="mt-1 text-xs text-body-subtle">Port je ten, který server zalogoval; 8741 je ten, o který žádá jako první. Hodnoty jsou první příklad operace.</p>
+  <div class="mt-2 overflow-x-auto rounded-base border border-default bg-neutral-secondary-medium" tabindex="0"><pre class="m-0 p-3 font-mono text-xs leading-relaxed text-heading" tabindex="0">curl -s -X POST &quot;http://127.0.0.1:8741/api/v1/worktrees/create&quot; -H &quot;content-type: application/json&quot; -d &#39;{&quot;branch&quot;:&quot;feature/../escape&quot;}&#39;</pre></div><p class="mt-1 text-xs text-body-subtle">Testováno v <a href="https://github.com/korczis/prismatic-majordomus/blob/4795a79d95453ed90f5d59be8964cbaf67635ee9/apps/majordomus-cli/tests/http_serve.rs" class="break-all font-mono text-fg-brand underline inline-block py-1">apps/majordomus-cli/tests/http_serve.rs</a>, který přehrává routu s těmito hodnotami proti serveru na skutečném socketu.</p>
+
+  <h4 class="mt-5 font-mono text-xs uppercase tracking-wide text-body-subtle">Odpovědi</h4>
+  <div class="mt-2 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">status</th><th class="px-3 py-2">tělo</th><th class="px-3 py-2">význam</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-fg-success-strong">200</td>
+          <td class="px-3 py-2 font-mono"><a href="https://majordomus.dev/cs/docs/api/worktree/#schema-CreateReport" class="text-fg-brand hover:underline">CreateReport</a></td>
+          <td class="px-3 py-2 text-body"><div class="min-w-0 [&_pre]:max-w-full [&_pre]:overflow-x-auto">The canonical worktree of a branch, made or found: the result.</div></td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">400</td>
+          <td class="px-3 py-2 font-mono"><a href="https://majordomus.dev/cs/docs/api/shared/#schema-ErrorBody" class="text-fg-brand hover:underline">ErrorBody</a></td>
+          <td class="px-3 py-2 text-body"><div class="min-w-0 [&_pre]:max-w-full [&_pre]:overflow-x-auto"><code>invalid_input</code>: Vstup neodpovídá schématu: parametr špatného typu, neznámý parametr nebo hodnota, kterou schopnost odmítne.</div></td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">404</td>
+          <td class="px-3 py-2 font-mono"><a href="https://majordomus.dev/cs/docs/api/shared/#schema-ErrorBody" class="text-fg-brand hover:underline">ErrorBody</a></td>
+          <td class="px-3 py-2 text-body"><div class="min-w-0 [&_pre]:max-w-full [&_pre]:overflow-x-auto"><code>not_found</code>: Vstup pojmenovává něco, co repozitář nemá.</div></td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">409</td>
+          <td class="px-3 py-2 font-mono"><a href="https://majordomus.dev/cs/docs/api/shared/#schema-ErrorBody" class="text-fg-brand hover:underline">ErrorBody</a></td>
+          <td class="px-3 py-2 text-body"><div class="min-w-0 [&_pre]:max-w-full [&_pre]:overflow-x-auto"><code>conflict</code>: The command contradicts what the server already holds, such as an idempotency key sent again with a different input; the message names what the key already started.</div></td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">422</td>
+          <td class="px-3 py-2 font-mono"><a href="https://majordomus.dev/cs/docs/api/shared/#schema-ErrorBody" class="text-fg-brand hover:underline">ErrorBody</a></td>
+          <td class="px-3 py-2 text-body"><div class="min-w-0 [&_pre]:max-w-full [&_pre]:overflow-x-auto"><code>refused</code>: Příkaz byl srozumitelný a byl odmítnut z důvodu, který uvádí zpráva.</div></td>
         </tr><tr class="border-t border-default align-top">
           <td class="px-3 py-2 font-mono font-semibold text-heading">500</td>
           <td class="px-3 py-2 font-mono"><a href="https://majordomus.dev/cs/docs/api/shared/#schema-ErrorBody" class="text-fg-brand hover:underline">ErrorBody</a></td>
@@ -251,7 +304,7 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
     </table>
   </div><h4 class="mt-5 font-mono text-xs uppercase tracking-wide text-body-subtle">Vyzkoušejte</h4>
   <p class="mt-1 text-xs text-body-subtle">Port je ten, který server zalogoval; 8741 je ten, o který žádá jako první. Hodnoty jsou první příklad operace.</p>
-  <div class="mt-2 overflow-x-auto rounded-base border border-default bg-neutral-secondary-medium" tabindex="0"><pre class="m-0 p-3 font-mono text-xs leading-relaxed text-heading" tabindex="0">curl -s &quot;http://127.0.0.1:8741/api/v1/worktrees/inspect?branch=feature%2Fexample&quot;</pre></div><p class="mt-1 text-xs text-body-subtle">Testováno v <a href="https://github.com/korczis/prismatic-majordomus/blob/9df9061de3e5ce138c6921b941f52ffad1d60f23/apps/majordomus-cli/tests/http_serve.rs" class="break-all font-mono text-fg-brand underline inline-block py-1">apps/majordomus-cli/tests/http_serve.rs</a>, který přehrává routu s těmito hodnotami proti serveru na skutečném socketu.</p>
+  <div class="mt-2 overflow-x-auto rounded-base border border-default bg-neutral-secondary-medium" tabindex="0"><pre class="m-0 p-3 font-mono text-xs leading-relaxed text-heading" tabindex="0">curl -s &quot;http://127.0.0.1:8741/api/v1/worktrees/inspect?branch=feature%2Fexample&quot;</pre></div><p class="mt-1 text-xs text-body-subtle">Testováno v <a href="https://github.com/korczis/prismatic-majordomus/blob/4795a79d95453ed90f5d59be8964cbaf67635ee9/apps/majordomus-cli/tests/http_serve.rs" class="break-all font-mono text-fg-brand underline inline-block py-1">apps/majordomus-cli/tests/http_serve.rs</a>, který přehrává routu s těmito hodnotami proti serveru na skutečném socketu.</p>
 
   <h4 class="mt-5 font-mono text-xs uppercase tracking-wide text-body-subtle">Odpovědi</h4>
   <div class="mt-2 overflow-x-auto rounded-base border border-default" tabindex="0">
@@ -295,7 +348,7 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
     <li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body" title="politika benchmarku">vyžaduje se měření výkonu</span></li>
     <li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body" title="politika cache">cache vypnuta</span></li><li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body break-all">Nástroj MCP majordomus_worktree_migration_plan</span></li><li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body break-all">$ worktree migrate</span></li></ul><p class="mt-5 text-sm text-body-subtle">Žádné parametry.</p><h4 class="mt-5 font-mono text-xs uppercase tracking-wide text-body-subtle">Vyzkoušejte</h4>
   <p class="mt-1 text-xs text-body-subtle">Port je ten, který server zalogoval; 8741 je ten, o který žádá jako první. Hodnoty jsou první příklad operace.</p>
-  <div class="mt-2 overflow-x-auto rounded-base border border-default bg-neutral-secondary-medium" tabindex="0"><pre class="m-0 p-3 font-mono text-xs leading-relaxed text-heading" tabindex="0">curl -s &quot;http://127.0.0.1:8741/api/v1/worktrees/migration&quot;</pre></div><p class="mt-1 text-xs text-body-subtle">Testováno v <a href="https://github.com/korczis/prismatic-majordomus/blob/9df9061de3e5ce138c6921b941f52ffad1d60f23/apps/majordomus-cli/tests/http_serve.rs" class="break-all font-mono text-fg-brand underline inline-block py-1">apps/majordomus-cli/tests/http_serve.rs</a>, který přehrává routu s těmito hodnotami proti serveru na skutečném socketu.</p>
+  <div class="mt-2 overflow-x-auto rounded-base border border-default bg-neutral-secondary-medium" tabindex="0"><pre class="m-0 p-3 font-mono text-xs leading-relaxed text-heading" tabindex="0">curl -s &quot;http://127.0.0.1:8741/api/v1/worktrees/migration&quot;</pre></div><p class="mt-1 text-xs text-body-subtle">Testováno v <a href="https://github.com/korczis/prismatic-majordomus/blob/4795a79d95453ed90f5d59be8964cbaf67635ee9/apps/majordomus-cli/tests/http_serve.rs" class="break-all font-mono text-fg-brand underline inline-block py-1">apps/majordomus-cli/tests/http_serve.rs</a>, který přehrává routu s těmito hodnotami proti serveru na skutečném socketu.</p>
 
   <h4 class="mt-5 font-mono text-xs uppercase tracking-wide text-body-subtle">Odpovědi</h4>
   <div class="mt-2 overflow-x-auto rounded-base border border-default" tabindex="0">
@@ -351,7 +404,7 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
     </table>
   </div><h4 class="mt-5 font-mono text-xs uppercase tracking-wide text-body-subtle">Vyzkoušejte</h4>
   <p class="mt-1 text-xs text-body-subtle">Port je ten, který server zalogoval; 8741 je ten, o který žádá jako první. Hodnoty jsou první příklad operace.</p>
-  <div class="mt-2 overflow-x-auto rounded-base border border-default bg-neutral-secondary-medium" tabindex="0"><pre class="m-0 p-3 font-mono text-xs leading-relaxed text-heading" tabindex="0">curl -s &quot;http://127.0.0.1:8741/api/v1/worktrees/status?path=.&quot;</pre></div><p class="mt-1 text-xs text-body-subtle">Testováno v <a href="https://github.com/korczis/prismatic-majordomus/blob/9df9061de3e5ce138c6921b941f52ffad1d60f23/apps/majordomus-cli/tests/http_serve.rs" class="break-all font-mono text-fg-brand underline inline-block py-1">apps/majordomus-cli/tests/http_serve.rs</a>, který přehrává routu s těmito hodnotami proti serveru na skutečném socketu.</p>
+  <div class="mt-2 overflow-x-auto rounded-base border border-default bg-neutral-secondary-medium" tabindex="0"><pre class="m-0 p-3 font-mono text-xs leading-relaxed text-heading" tabindex="0">curl -s &quot;http://127.0.0.1:8741/api/v1/worktrees/status?path=.&quot;</pre></div><p class="mt-1 text-xs text-body-subtle">Testováno v <a href="https://github.com/korczis/prismatic-majordomus/blob/4795a79d95453ed90f5d59be8964cbaf67635ee9/apps/majordomus-cli/tests/http_serve.rs" class="break-all font-mono text-fg-brand underline inline-block py-1">apps/majordomus-cli/tests/http_serve.rs</a>, který přehrává routu s těmito hodnotami proti serveru na skutečném socketu.</p>
 
   <h4 class="mt-5 font-mono text-xs uppercase tracking-wide text-body-subtle">Odpovědi</h4>
   <div class="mt-2 overflow-x-auto rounded-base border border-default" tabindex="0">
@@ -407,7 +460,7 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
     </table>
   </div><h4 class="mt-5 font-mono text-xs uppercase tracking-wide text-body-subtle">Vyzkoušejte</h4>
   <p class="mt-1 text-xs text-body-subtle">Port je ten, který server zalogoval; 8741 je ten, o který žádá jako první. Hodnoty jsou první příklad operace.</p>
-  <div class="mt-2 overflow-x-auto rounded-base border border-default bg-neutral-secondary-medium" tabindex="0"><pre class="m-0 p-3 font-mono text-xs leading-relaxed text-heading" tabindex="0">curl -s &quot;http://127.0.0.1:8741/api/v1/worktrees/trunk?path=.&quot;</pre></div><p class="mt-1 text-xs text-body-subtle">Testováno v <a href="https://github.com/korczis/prismatic-majordomus/blob/9df9061de3e5ce138c6921b941f52ffad1d60f23/apps/majordomus-cli/tests/http_serve.rs" class="break-all font-mono text-fg-brand underline inline-block py-1">apps/majordomus-cli/tests/http_serve.rs</a>, který přehrává routu s těmito hodnotami proti serveru na skutečném socketu.</p>
+  <div class="mt-2 overflow-x-auto rounded-base border border-default bg-neutral-secondary-medium" tabindex="0"><pre class="m-0 p-3 font-mono text-xs leading-relaxed text-heading" tabindex="0">curl -s &quot;http://127.0.0.1:8741/api/v1/worktrees/trunk?path=.&quot;</pre></div><p class="mt-1 text-xs text-body-subtle">Testováno v <a href="https://github.com/korczis/prismatic-majordomus/blob/4795a79d95453ed90f5d59be8964cbaf67635ee9/apps/majordomus-cli/tests/http_serve.rs" class="break-all font-mono text-fg-brand underline inline-block py-1">apps/majordomus-cli/tests/http_serve.rs</a>, který přehrává routu s těmito hodnotami proti serveru na skutečném socketu.</p>
 
   <h4 class="mt-5 font-mono text-xs uppercase tracking-wide text-body-subtle">Odpovědi</h4>
   <div class="mt-2 overflow-x-auto rounded-base border border-default" tabindex="0">
@@ -463,7 +516,7 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
     </table>
   </div><h4 class="mt-5 font-mono text-xs uppercase tracking-wide text-body-subtle">Vyzkoušejte</h4>
   <p class="mt-1 text-xs text-body-subtle">Port je ten, který server zalogoval; 8741 je ten, o který žádá jako první. Hodnoty jsou první příklad operace.</p>
-  <div class="mt-2 overflow-x-auto rounded-base border border-default bg-neutral-secondary-medium" tabindex="0"><pre class="m-0 p-3 font-mono text-xs leading-relaxed text-heading" tabindex="0">curl -s &quot;http://127.0.0.1:8741/api/v1/worktrees/uncommitted?older_than=1h&quot;</pre></div><p class="mt-1 text-xs text-body-subtle">Testováno v <a href="https://github.com/korczis/prismatic-majordomus/blob/9df9061de3e5ce138c6921b941f52ffad1d60f23/apps/majordomus-cli/tests/http_serve.rs" class="break-all font-mono text-fg-brand underline inline-block py-1">apps/majordomus-cli/tests/http_serve.rs</a>, který přehrává routu s těmito hodnotami proti serveru na skutečném socketu.</p>
+  <div class="mt-2 overflow-x-auto rounded-base border border-default bg-neutral-secondary-medium" tabindex="0"><pre class="m-0 p-3 font-mono text-xs leading-relaxed text-heading" tabindex="0">curl -s &quot;http://127.0.0.1:8741/api/v1/worktrees/uncommitted?older_than=1h&quot;</pre></div><p class="mt-1 text-xs text-body-subtle">Testováno v <a href="https://github.com/korczis/prismatic-majordomus/blob/4795a79d95453ed90f5d59be8964cbaf67635ee9/apps/majordomus-cli/tests/http_serve.rs" class="break-all font-mono text-fg-brand underline inline-block py-1">apps/majordomus-cli/tests/http_serve.rs</a>, který přehrává routu s těmito hodnotami proti serveru na skutečném socketu.</p>
 
   <h4 class="mt-5 font-mono text-xs uppercase tracking-wide text-body-subtle">Odpovědi</h4>
   <div class="mt-2 overflow-x-auto rounded-base border border-default" tabindex="0">
@@ -575,6 +628,110 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
         </tr></tbody>
     </table>
   </div><p class="mt-3 text-xs text-body-subtle">Používá <a href="https://majordomus.dev/cs/docs/api/worktree/#schema-RepositoryTopology" class="font-mono text-fg-brand underline">RepositoryTopology</a> <a href="https://majordomus.dev/cs/docs/api/worktree/#schema-StatusReport" class="font-mono text-fg-brand underline">StatusReport</a></p></article>
+<article id="schema-CreateInput" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+  <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+    <h3 class="font-mono text-base font-semibold text-heading">CreateInput</h3>
+    <span class="min-w-0 break-all font-mono text-xs text-body-subtle">object</span>
+  </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">The branch whose canonical worktree is wanted.</div><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[32rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">vlastnost</th><th class="px-3 py-2">typ</th><th class="px-3 py-2">povinné</th><th class="px-3 py-2">popis</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">větev</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">ano</td>
+          <td class="px-3 py-2 text-body"><div class="min-w-0 [&_pre]:max-w-full [&_pre]:overflow-x-auto">The branch, full name (<code>feature/improve-cli</code>). Checked out when it exists here,
+taken up from the remote when the remote has it, otherwise created at <code>base</code>.</div></td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">základ</td>
+          <td class="px-3 py-2 font-mono text-body">string | null</td>
+          <td class="px-3 py-2 font-mono text-body">ne</td>
+          <td class="px-3 py-2 text-body"><div class="min-w-0 [&_pre]:max-w-full [&_pre]:overflow-x-auto">The commit or ref a new branch starts from, as given and never fetched. Default: the
+remote's trunk, fetched now within a deadline, then the local trunk, said in <code>start</code>.
+Ignored when the branch exists.</div></td>
+        </tr></tbody>
+    </table>
+  </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="https://majordomus.dev/cs/docs/api/worktree/#op-worktree-create" class="font-mono text-fg-brand hover:underline">worktree.create</a></p></article>
+<article id="schema-CreateReport" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+  <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+    <h3 class="font-mono text-base font-semibold text-heading">CreateReport</h3>
+    <span class="min-w-0 break-all font-mono text-xs text-body-subtle">object</span>
+  </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">What a create did.</div><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[32rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">vlastnost</th><th class="px-3 py-2">typ</th><th class="px-3 py-2">povinné</th><th class="px-3 py-2">popis</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">path</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">ano</td>
+          <td class="px-3 py-2 text-body"><div class="min-w-0 [&_pre]:max-w-full [&_pre]:overflow-x-auto">Where the worktree is.</div></td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">větev</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">ano</td>
+          <td class="px-3 py-2 text-body"><div class="min-w-0 [&_pre]:max-w-full [&_pre]:overflow-x-auto">The branch checked out in it.</div></td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">branch_created</td>
+          <td class="px-3 py-2 font-mono text-body">boolean</td>
+          <td class="px-3 py-2 font-mono text-body">ano</td>
+          <td class="px-3 py-2 text-body"><div class="min-w-0 [&_pre]:max-w-full [&_pre]:overflow-x-auto">Whether that branch was created by this command.</div></td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">základ</td>
+          <td class="px-3 py-2 font-mono text-body">string | null</td>
+          <td class="px-3 py-2 font-mono text-body">ne</td>
+          <td class="px-3 py-2 text-body"><div class="min-w-0 [&_pre]:max-w-full [&_pre]:overflow-x-auto">The ref a new branch started from (<code>origin/master</code>).</div></td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">start</td>
+          <td class="px-3 py-2 font-mono text-body">StartPoint | null <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/cs/docs/api/worktree/#schema-StartPoint" class="text-fg-brand underline">StartPoint</a></td>
+          <td class="px-3 py-2 font-mono text-body">ne</td>
+          <td class="px-3 py-2 text-body"><div class="min-w-0 [&_pre]:max-w-full [&_pre]:overflow-x-auto">Where a branch this command created started, and why there.</div></td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">start_commit</td>
+          <td class="px-3 py-2 font-mono text-body">string | null</td>
+          <td class="px-3 py-2 font-mono text-body">ne</td>
+          <td class="px-3 py-2 text-body"><div class="min-w-0 [&_pre]:max-w-full [&_pre]:overflow-x-auto">The exact commit a branch this command created starts at, read back from the
+worktree rather than assumed.</div></td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">kontejner</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">ano</td>
+          <td class="px-3 py-2 text-body"><div class="min-w-0 [&_pre]:max-w-full [&_pre]:overflow-x-auto">The container it went into.</div></td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">container_created</td>
+          <td class="px-3 py-2 font-mono text-body">boolean</td>
+          <td class="px-3 py-2 font-mono text-body">ano</td>
+          <td class="px-3 py-2 text-body"><div class="min-w-0 [&_pre]:max-w-full [&_pre]:overflow-x-auto">Whether the container was created by this command.</div></td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">existed</td>
+          <td class="px-3 py-2 font-mono text-body">boolean</td>
+          <td class="px-3 py-2 font-mono text-body">ano</td>
+          <td class="px-3 py-2 text-body"><div class="min-w-0 [&_pre]:max-w-full [&_pre]:overflow-x-auto">The worktree already existed at its canonical path and nothing was created: the
+<code>existing</code> answer of an idempotent create, where <code>false</code> is <code>created</code>.</div></td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">head</td>
+          <td class="px-3 py-2 font-mono text-body">string | null</td>
+          <td class="px-3 py-2 font-mono text-body">ne</td>
+          <td class="px-3 py-2 text-body"><div class="min-w-0 [&_pre]:max-w-full [&_pre]:overflow-x-auto">The commit the worktree's HEAD names now, read back from it after the create or the
+find, whichever this was; <code>None</code> when git cannot say (an unborn branch).</div></td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">envrc</td>
+          <td class="px-3 py-2 font-mono text-body">EnvrcApproval <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/cs/docs/api/worktree/#schema-EnvrcApproval" class="text-fg-brand underline">EnvrcApproval</a></td>
+          <td class="px-3 py-2 font-mono text-body">ano</td>
+          <td class="px-3 py-2 text-body"><div class="min-w-0 [&_pre]:max-w-full [&_pre]:overflow-x-auto">What became of its <code>.envrc</code> under direnv: the primary checkout's approval carried to
+this path, or why it was not. A worktree that starts blocked is the recurring
+"direnv does not work again"; this says so before the first <code>cd</code> does.</div></td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">envrc_local</td>
+          <td class="px-3 py-2 font-mono text-body">LocalOverrides <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/cs/docs/api/worktree/#schema-LocalOverrides" class="text-fg-brand underline">LocalOverrides</a></td>
+          <td class="px-3 py-2 font-mono text-body">ne</td>
+          <td class="px-3 py-2 text-body"><div class="min-w-0 [&_pre]:max-w-full [&_pre]:overflow-x-auto">What became of the primary checkout's machine-local <code>.envrc.local</code> here.</div></td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">hooky</td>
+          <td class="px-3 py-2 font-mono text-body">HooksPath <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/cs/docs/api/worktree/#schema-HooksPath" class="text-fg-brand underline">HooksPath</a></td>
+          <td class="px-3 py-2 font-mono text-body">ne</td>
+          <td class="px-3 py-2 text-body"><div class="min-w-0 [&_pre]:max-w-full [&_pre]:overflow-x-auto">Which hooks it runs: its own tree's, bound per worktree when the shared
+<code>core.hooksPath</code> would have sent it to the primary checkout's (I2718).</div></td>
+        </tr></tbody>
+    </table>
+  </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="https://majordomus.dev/cs/docs/api/worktree/#op-worktree-create" class="font-mono text-fg-brand hover:underline">worktree.create</a></p></article>
 <article id="schema-DiagnosticCode" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
   <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
     <h3 class="font-mono text-base font-semibold text-heading">DiagnosticCode</h3>
@@ -654,7 +811,7 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
     <table class="w-full min-w-[32rem] text-left text-sm" tabindex="0">
       <tbody><tr class="border-t border-default align-top first:border-0"><td class="px-3 py-2 font-mono font-semibold text-heading">zpráva</td><td class="px-3 py-2 font-mono text-body">string</td><td class="px-3 py-2 font-mono text-body">ano</td><td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">standardní chybový výstup direnv nebo chyba při jeho spuštění.</td></tr><tr class="border-t border-default align-top first:border-0"><td class="px-3 py-2 font-mono font-semibold text-heading">výsledek</td><td class="px-3 py-2 font-mono text-body">&quot;failed&quot;</td><td class="px-3 py-2 font-mono text-body">ano</td><td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words"></td></tr></tbody>
     </table>
-  </div><p class="mt-3 text-xs text-body-subtle">Používá <a href="https://majordomus.dev/cs/docs/api/worktree/#schema-MigrationStep" class="font-mono text-fg-brand underline">MigrationStep</a></p></article>
+  </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="https://majordomus.dev/cs/docs/api/worktree/#schema-CreateReport" class="font-mono text-fg-brand underline">CreateReport</a> <a href="https://majordomus.dev/cs/docs/api/worktree/#schema-MigrationStep" class="font-mono text-fg-brand underline">MigrationStep</a></p></article>
 <article id="schema-HooksPath" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
   <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
     <h3 class="font-mono text-base font-semibold text-heading">HooksPath</h3>
@@ -701,7 +858,7 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
     <table class="w-full min-w-[32rem] text-left text-sm" tabindex="0">
       <tbody><tr class="border-t border-default align-top first:border-0"><td class="px-3 py-2 font-mono font-semibold text-heading">zpráva</td><td class="px-3 py-2 font-mono text-body">string</td><td class="px-3 py-2 font-mono text-body">ano</td><td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Co se pokazilo.</td></tr><tr class="border-t border-default align-top first:border-0"><td class="px-3 py-2 font-mono font-semibold text-heading">výsledek</td><td class="px-3 py-2 font-mono text-body">&quot;failed&quot;</td><td class="px-3 py-2 font-mono text-body">ano</td><td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words"></td></tr></tbody>
     </table>
-  </div><p class="mt-3 text-xs text-body-subtle">Používá <a href="https://majordomus.dev/cs/docs/api/worktree/#schema-MigrationStep" class="font-mono text-fg-brand underline">MigrationStep</a></p></article>
+  </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="https://majordomus.dev/cs/docs/api/worktree/#schema-CreateReport" class="font-mono text-fg-brand underline">CreateReport</a> <a href="https://majordomus.dev/cs/docs/api/worktree/#schema-MigrationStep" class="font-mono text-fg-brand underline">MigrationStep</a></p></article>
 <article id="schema-InspectReport" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
   <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
     <h3 class="font-mono text-base font-semibold text-heading">InspectReport</h3>
@@ -747,6 +904,38 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
         </tr></tbody>
     </table>
   </div><p class="mt-3 text-xs text-body-subtle">Používá <a href="https://majordomus.dev/cs/docs/api/worktree/#op-worktree-inspect" class="font-mono text-fg-brand hover:underline">worktree.inspect</a></p></article>
+<article id="schema-LocalOverrides" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+  <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+    <h3 class="font-mono text-base font-semibold text-heading">LocalOverrides</h3>
+    <span class="min-w-0 break-all font-mono text-xs text-body-subtle">jedna z 5 variant</span>
+  </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">What became of the primary checkout's machine-local <code>.envrc.local</code> for a worktree.</div><div class="mt-3 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_pre]:max-w-full [&_pre]:overflow-x-auto [&_p]:m-0"><span class="font-mono text-xs uppercase tracking-wide text-body-subtle">variant</span> Linked: the worktree's <code>.envrc.local</code> is a symlink to the primary checkout's, so the
+person's machine-local exports (keychain-backed secrets among them) load here too.</div>
+  <div class="mt-1 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[32rem] text-left text-sm" tabindex="0">
+      <tbody><tr class="border-t border-default align-top first:border-0"><td class="px-3 py-2 font-mono font-semibold text-heading">výsledek</td><td class="px-3 py-2 font-mono text-body">&quot;linked&quot;</td><td class="px-3 py-2 font-mono text-body">ano</td><td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words"></td></tr></tbody>
+    </table>
+  </div><div class="mt-3 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_pre]:max-w-full [&_pre]:overflow-x-auto [&_p]:m-0"><span class="font-mono text-xs uppercase tracking-wide text-body-subtle">variant</span> The worktree already has its own <code>.envrc.local</code>; it is left alone.</div>
+  <div class="mt-1 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[32rem] text-left text-sm" tabindex="0">
+      <tbody><tr class="border-t border-default align-top first:border-0"><td class="px-3 py-2 font-mono font-semibold text-heading">výsledek</td><td class="px-3 py-2 font-mono text-body">&quot;own_kept&quot;</td><td class="px-3 py-2 font-mono text-body">ano</td><td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words"></td></tr></tbody>
+    </table>
+  </div><div class="mt-3 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_pre]:max-w-full [&_pre]:overflow-x-auto [&_p]:m-0"><span class="font-mono text-xs uppercase tracking-wide text-body-subtle">variant</span> The primary checkout has none; there is nothing to share.</div>
+  <div class="mt-1 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[32rem] text-left text-sm" tabindex="0">
+      <tbody><tr class="border-t border-default align-top first:border-0"><td class="px-3 py-2 font-mono font-semibold text-heading">výsledek</td><td class="px-3 py-2 font-mono text-body">&quot;none_primary&quot;</td><td class="px-3 py-2 font-mono text-body">ano</td><td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words"></td></tr></tbody>
+    </table>
+  </div><div class="mt-3 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_pre]:max-w-full [&_pre]:overflow-x-auto [&_p]:m-0"><span class="font-mono text-xs uppercase tracking-wide text-body-subtle">variant</span> Not linked, because git in the worktree does not ignore <code>.envrc.local</code> — a link a
+commit could pick up is the one way this could leak.</div>
+  <div class="mt-1 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[32rem] text-left text-sm" tabindex="0">
+      <tbody><tr class="border-t border-default align-top first:border-0"><td class="px-3 py-2 font-mono font-semibold text-heading">výsledek</td><td class="px-3 py-2 font-mono text-body">&quot;not_ignored&quot;</td><td class="px-3 py-2 font-mono text-body">ano</td><td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words"></td></tr></tbody>
+    </table>
+  </div><div class="mt-3 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_pre]:max-w-full [&_pre]:overflow-x-auto [&_p]:m-0"><span class="font-mono text-xs uppercase tracking-wide text-body-subtle">variant</span> The link could not be made; the error.</div>
+  <div class="mt-1 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[32rem] text-left text-sm" tabindex="0">
+      <tbody><tr class="border-t border-default align-top first:border-0"><td class="px-3 py-2 font-mono font-semibold text-heading">zpráva</td><td class="px-3 py-2 font-mono text-body">string</td><td class="px-3 py-2 font-mono text-body">ano</td><td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Why.</td></tr><tr class="border-t border-default align-top first:border-0"><td class="px-3 py-2 font-mono font-semibold text-heading">výsledek</td><td class="px-3 py-2 font-mono text-body">&quot;failed&quot;</td><td class="px-3 py-2 font-mono text-body">ano</td><td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words"></td></tr></tbody>
+    </table>
+  </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="https://majordomus.dev/cs/docs/api/worktree/#schema-CreateReport" class="font-mono text-fg-brand underline">CreateReport</a></p></article>
 <article id="schema-MigrationAction" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
   <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
     <h3 class="font-mono text-base font-semibold text-heading">MigrationAction</h3>
@@ -1017,6 +1206,55 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
     <h3 class="font-mono text-base font-semibold text-heading">Postavení</h3>
     <span class="min-w-0 break-all font-mono text-xs text-body-subtle">&quot;primary&quot; | &quot;canonical&quot; | &quot;misplaced&quot; | &quot;detached&quot; | &quot;ephemeral&quot; | &quot;missing&quot;</span>
   </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">Kde pracovní strom stojí vůči topologii.</div><ul class="mt-3 space-y-1 text-sm"><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">primary</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">Primární checkout: osvobozen od pravidla cesty, vázán pravidlem trunku.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">canonical</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">Linked worktree přesně na kanonické cestě své větve.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">misplaced</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">Propojený pracovní strom jinde. Migrace jej přivede domů.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">detached</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">Propojený work tree bez větve. Nemá kanonickou cestu a nikdy se nepřesouvá.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">ephemeral</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">Linked worktree pod dočasným adresářem operačního systému nebo pod <code>.claude/worktrees/</code> primárního checkoutu: pracovní checkout relace, vlastněný a odstraňovaný harnessem, který ho vytvořil. Hlásí se; migruje se jen na žádost.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">missing</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">Registrace, jejíž adresář zmizel. Oprava ji zahodí.</span></li></ul><p class="mt-3 text-xs text-body-subtle">Používá <a href="https://majordomus.dev/cs/docs/api/worktree/#schema-WorktreeState" class="font-mono text-fg-brand underline">WorktreeState</a></p></article>
+<article id="schema-StartPoint" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+  <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+    <h3 class="font-mono text-base font-semibold text-heading">StartPoint</h3>
+    <span class="min-w-0 break-all font-mono text-xs text-body-subtle">jedna z 5 variant</span>
+  </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">Where a new branch started, and why there.</p>
+<p>The local trunk of a long-lived checkout is routinely hundreds of commits behind its
+remote, because nothing advances it; a branch cut from it carries none of that work and
+every worker had to reset it by hand. So the default is the remote's trunk, fetched at
+the moment of creation, and the local trunk only when the remote cannot be read — said,
+never silent.</p>
+<pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="plain"><span class="giallo-l"><span>use majordomus_cli::worktree::StartPoint;</span></span>
+<span class="giallo-l"><span>let p = StartPoint::RemoteTrunk { remote: &quot;origin&quot;.into(), branch: &quot;master&quot;.into() };</span></span>
+<span class="giallo-l"><span>assert_eq!(p.reference(), &quot;origin/master&quot;);</span></span>
+<span class="giallo-l"><span>assert!(p.fallback().is_none());</span></span>
+<span class="giallo-l"><span>let fell = StartPoint::LocalTrunk {</span></span>
+<span class="giallo-l"><span>    branch: &quot;master&quot;.into(),</span></span>
+<span class="giallo-l"><span>    unreachable: Some(&quot;origin&quot;.into()),</span></span>
+<span class="giallo-l"><span>    reason: Some(&quot;no answer within 60s&quot;.into()),</span></span>
+<span class="giallo-l"><span>    behind: Some(779),</span></span>
+<span class="giallo-l"><span>};</span></span>
+<span class="giallo-l"><span>assert_eq!(fell.reference(), &quot;master&quot;);</span></span>
+<span class="giallo-l"><span>assert!(fell.fallback().unwrap().contains(&quot;779 commits behind origin/master&quot;));</span></span></code></pre></div><div class="mt-3 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_pre]:max-w-full [&_pre]:overflow-x-auto [&_p]:m-0"><span class="font-mono text-xs uppercase tracking-wide text-body-subtle">variant</span> The ref <code>--base</code> named, as given; never fetched.</div>
+  <div class="mt-1 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[32rem] text-left text-sm" tabindex="0">
+      <tbody><tr class="border-t border-default align-top first:border-0"><td class="px-3 py-2 font-mono font-semibold text-heading">reference</td><td class="px-3 py-2 font-mono text-body">string</td><td class="px-3 py-2 font-mono text-body">ano</td><td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Ref.</td></tr><tr class="border-t border-default align-top first:border-0"><td class="px-3 py-2 font-mono font-semibold text-heading">z</td><td class="px-3 py-2 font-mono text-body">&quot;given&quot;</td><td class="px-3 py-2 font-mono text-body">ano</td><td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words"></td></tr></tbody>
+    </table>
+  </div><div class="mt-3 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_pre]:max-w-full [&_pre]:overflow-x-auto [&_p]:m-0"><span class="font-mono text-xs uppercase tracking-wide text-body-subtle">variant</span> The trunk on its remote, fetched by this command.</div>
+  <div class="mt-1 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[32rem] text-left text-sm" tabindex="0">
+      <tbody><tr class="border-t border-default align-top first:border-0"><td class="px-3 py-2 font-mono font-semibold text-heading">remote</td><td class="px-3 py-2 font-mono text-body">string</td><td class="px-3 py-2 font-mono text-body">ano</td><td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Remote.</td></tr><tr class="border-t border-default align-top first:border-0"><td class="px-3 py-2 font-mono font-semibold text-heading">větev</td><td class="px-3 py-2 font-mono text-body">string</td><td class="px-3 py-2 font-mono text-body">ano</td><td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The trunk branch.</td></tr><tr class="border-t border-default align-top first:border-0"><td class="px-3 py-2 font-mono font-semibold text-heading">z</td><td class="px-3 py-2 font-mono text-body">&quot;remote_trunk&quot;</td><td class="px-3 py-2 font-mono text-body">ano</td><td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words"></td></tr></tbody>
+    </table>
+  </div><div class="mt-3 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_pre]:max-w-full [&_pre]:overflow-x-auto [&_p]:m-0"><span class="font-mono text-xs uppercase tracking-wide text-body-subtle">variant</span> The branch already on the remote: the local branch is created at it and tracks it.</div>
+  <div class="mt-1 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[32rem] text-left text-sm" tabindex="0">
+      <tbody><tr class="border-t border-default align-top first:border-0"><td class="px-3 py-2 font-mono font-semibold text-heading">remote</td><td class="px-3 py-2 font-mono text-body">string</td><td class="px-3 py-2 font-mono text-body">ano</td><td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Remote.</td></tr><tr class="border-t border-default align-top first:border-0"><td class="px-3 py-2 font-mono font-semibold text-heading">větev</td><td class="px-3 py-2 font-mono text-body">string</td><td class="px-3 py-2 font-mono text-body">ano</td><td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The branch, the same name on both sides.</td></tr><tr class="border-t border-default align-top first:border-0"><td class="px-3 py-2 font-mono font-semibold text-heading">staženo</td><td class="px-3 py-2 font-mono text-body">boolean</td><td class="px-3 py-2 font-mono text-body">ano</td><td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Whether it was fetched now; <code>false</code> is the remote-tracking ref as last fetched,
+because the remote could not be read.</td></tr><tr class="border-t border-default align-top first:border-0"><td class="px-3 py-2 font-mono font-semibold text-heading">z</td><td class="px-3 py-2 font-mono text-body">&quot;remote_branch&quot;</td><td class="px-3 py-2 font-mono text-body">ano</td><td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words"></td></tr></tbody>
+    </table>
+  </div><div class="mt-3 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_pre]:max-w-full [&_pre]:overflow-x-auto [&_p]:m-0"><span class="font-mono text-xs uppercase tracking-wide text-body-subtle">variant</span> The local trunk: the trunk has no remote, or its remote could not be read.</div>
+  <div class="mt-1 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[32rem] text-left text-sm" tabindex="0">
+      <tbody><tr class="border-t border-default align-top first:border-0"><td class="px-3 py-2 font-mono font-semibold text-heading">větev</td><td class="px-3 py-2 font-mono text-body">string</td><td class="px-3 py-2 font-mono text-body">ano</td><td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The trunk branch.</td></tr><tr class="border-t border-default align-top first:border-0"><td class="px-3 py-2 font-mono font-semibold text-heading">unreachable</td><td class="px-3 py-2 font-mono text-body">string | null</td><td class="px-3 py-2 font-mono text-body">ne</td><td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The remote that could not be read; <code>None</code> when the trunk has no remote.</td></tr><tr class="border-t border-default align-top first:border-0"><td class="px-3 py-2 font-mono font-semibold text-heading">důvod</td><td class="px-3 py-2 font-mono text-body">string | null</td><td class="px-3 py-2 font-mono text-body">ne</td><td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Why it could not be read.</td></tr><tr class="border-t border-default align-top first:border-0"><td class="px-3 py-2 font-mono font-semibold text-heading">pozadu</td><td class="px-3 py-2 font-mono text-body">integer | null</td><td class="px-3 py-2 font-mono text-body">ne</td><td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">How many commits the remote's trunk, as last fetched, has that the local trunk
+lacks; <code>None</code> when it was never fetched.</td></tr><tr class="border-t border-default align-top first:border-0"><td class="px-3 py-2 font-mono font-semibold text-heading">z</td><td class="px-3 py-2 font-mono text-body">&quot;local_trunk&quot;</td><td class="px-3 py-2 font-mono text-body">ano</td><td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words"></td></tr></tbody>
+    </table>
+  </div><div class="mt-3 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_pre]:max-w-full [&_pre]:overflow-x-auto [&_p]:m-0"><span class="font-mono text-xs uppercase tracking-wide text-body-subtle">variant</span> HEAD, because no trunk is known.</div>
+  <div class="mt-1 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[32rem] text-left text-sm" tabindex="0">
+      <tbody><tr class="border-t border-default align-top first:border-0"><td class="px-3 py-2 font-mono font-semibold text-heading">z</td><td class="px-3 py-2 font-mono text-body">&quot;head&quot;</td><td class="px-3 py-2 font-mono text-body">ano</td><td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words"></td></tr></tbody>
+    </table>
+  </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="https://majordomus.dev/cs/docs/api/worktree/#schema-CreateReport" class="font-mono text-fg-brand underline">CreateReport</a></p></article>
 <article id="schema-StatusReport" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
   <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
     <h3 class="font-mono text-base font-semibold text-heading">StatusReport</h3>
@@ -1706,9 +1944,9 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
       <div class="min-w-0">
         <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">Projekt</h2><ul class="space-y-2 text-sm font-medium text-body">
           <li><a href="https://github.com/korczis/prismatic-majordomus" class="hover:text-heading hover:underline">GitHub</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/9df9061de3e5ce138c6921b941f52ffad1d60f23/LICENSE" class="hover:text-heading hover:underline">Licence MIT</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/9df9061de3e5ce138c6921b941f52ffad1d60f23/SECURITY.md" class="hover:text-heading hover:underline">Bezpečnostní politika</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/9df9061de3e5ce138c6921b941f52ffad1d60f23/CONTRIBUTING.md" class="hover:text-heading hover:underline">Průvodce pro přispěvatele</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/4795a79d95453ed90f5d59be8964cbaf67635ee9/LICENSE" class="hover:text-heading hover:underline">Licence MIT</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/4795a79d95453ed90f5d59be8964cbaf67635ee9/SECURITY.md" class="hover:text-heading hover:underline">Bezpečnostní politika</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/4795a79d95453ed90f5d59be8964cbaf67635ee9/CONTRIBUTING.md" class="hover:text-heading hover:underline">Průvodce pro přispěvatele</a></li>
         </ul>
       </div>
     </div>
@@ -1716,7 +1954,7 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/cs/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.10</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/9df9061de3e5ce138c6921b941f52ffad1d60f23" class="font-mono underline">9df9061</a> · inputs <span class="font-mono">6da6c2266093</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/cs/architecture/" class="underline">how this site is derived</a> names them.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.10</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/4795a79d95453ed90f5d59be8964cbaf67635ee9" class="font-mono underline">4795a79</a> · inputs <span class="font-mono">1290d128d875</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/cs/architecture/" class="underline">how this site is derived</a> names them.</p>
     </div>
   </div>
 </footer>
