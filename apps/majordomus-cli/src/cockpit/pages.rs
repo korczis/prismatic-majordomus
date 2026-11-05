@@ -6539,9 +6539,14 @@ pub(crate) fn param(query: &[(String, String)], key: &str) -> Option<String> {
 fn execution_status(state: ExecutionState) -> &'static str {
     match state {
         ExecutionState::Succeeded => "ok",
-        ExecutionState::Failed => "fail",
-        ExecutionState::Cancelled => "warn",
-        ExecutionState::Running | ExecutionState::Cancelling | ExecutionState::Queued => "info",
+        ExecutionState::Failed | ExecutionState::Refused => "fail",
+        ExecutionState::Cancelled | ExecutionState::UnknownOutcome => "warn",
+        ExecutionState::Authorizing
+        | ExecutionState::Queued
+        | ExecutionState::Claimed
+        | ExecutionState::Running
+        | ExecutionState::Verifying
+        | ExecutionState::Cancelling => "info",
     }
 }
 
@@ -6602,14 +6607,7 @@ pub fn executions(ctx: &Context, query: &[(String, String)]) -> Page {
             "http::events",
         ));
 
-    let states = [
-        ExecutionState::Queued,
-        ExecutionState::Running,
-        ExecutionState::Cancelling,
-        ExecutionState::Succeeded,
-        ExecutionState::Failed,
-        ExecutionState::Cancelled,
-    ];
+    let states = ExecutionState::ALL;
     let filters = el("form")
         .class("mj-filters")
         .attr("method", "get")
@@ -7608,6 +7606,19 @@ pub fn entity(ctx: &Context, kind: &str, slug: &str) -> Page {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn every_execution_state_has_its_one_badge_status() {
+        for state in ExecutionState::ALL {
+            let want = match state {
+                ExecutionState::Succeeded => "ok",
+                ExecutionState::Failed | ExecutionState::Refused => "fail",
+                ExecutionState::Cancelled | ExecutionState::UnknownOutcome => "warn",
+                _ => "info",
+            };
+            assert_eq!(execution_status(state), want, "{state:?}");
+        }
+    }
 
     fn command(origin: &str, effect: &str) -> CommandSummary {
         serde_json::from_value(json!({

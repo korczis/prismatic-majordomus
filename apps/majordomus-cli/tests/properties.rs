@@ -159,6 +159,7 @@ fn class(e: &CapabilityError) -> &'static str {
         CapabilityError::Refused(_) => "refused",
         CapabilityError::Internal(_) => "internal",
         CapabilityError::Forbidden(_) => "forbidden",
+        CapabilityError::Conflict(_) => "conflict",
     }
 }
 
@@ -335,6 +336,7 @@ fn direct_http_and_mcp_answer_the_same_data_or_fail_the_same_way() {
                                     CapabilityError::Refused(_) => 422,
                                     CapabilityError::Internal(_) => 500,
                                     CapabilityError::Forbidden(_) => 403,
+                                    CapabilityError::Conflict(_) => 409,
                                 };
                                 prop_assert_eq!(response.status, expected, "{} {}: {}", id, target, response.body);
                                 // and the word HTTP answers is the one MCP carries

@@ -9,7 +9,7 @@ serves:
   - a-session-proceeds-through-the-mesh#an-implement-request-runs-once
 objective: "Add Authorizing, Claimed, Verifying, Refused and UnknownOutcome to the execution state machine with may_move_to for each edge and a versioned event schema (Mission Control B3)."
 why: "The executor knows only running and its terminal states, so a refused start, a claimed-but-not-started item and a run whose outcome is unknown are indistinguishable."
-current_state: "Not built: this issue is planned by the milestone a-session-proceeds-through-the-mesh and nothing of it exists."
+current_state: "Built on #2522: the execution state machine names Authorizing, Claimed, Verifying, Refused and UnknownOutcome (case 4001)."
 desired_state: "The acceptance criteria below hold and case 4001 proves them."
 scope:
   - "apps/majordomus-cli/src/execution/model.rs"
