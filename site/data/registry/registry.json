@@ -6,23 +6,23 @@
     "version": "1.0.0-alpha.10"
   },
   "registry": {
-    "fingerprint": "01dc8581f5265a228ea8c59dbe1da65321423c2b6146ab4fc39895cb2eeb9d7b",
+    "fingerprint": "817284a491b1f7ffbb1bc8fa9e609df42aeef19ba0038030fcd7ea1608dbcefa",
     "summary": {
-      "total": 3851,
+      "total": 3853,
       "builtin": 230,
-      "declarative": 3621,
+      "declarative": 3623,
       "by_kind": {
         "command": 41,
         "query": 189,
-        "resource": 3621
+        "resource": 3623
       },
       "by_stability": {
         "behaviorally_verified": 153,
         "experimental": 67,
-        "implemented": 3631
+        "implemented": 3633
       },
       "mcp_tools": 214,
-      "mcp_resources": 3678,
+      "mcp_resources": 3680,
       "http_routes": 218,
       "cli_commands": 127,
       "modules": 96,
@@ -96635,7 +96635,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 1215,
+        "capabilities": 1216,
         "capability_ids": []
       },
       {
@@ -97247,7 +97247,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 691,
+        "capabilities": 692,
         "capability_ids": []
       },
       {
@@ -97340,7 +97340,7 @@
     ]
   },
   "index": {
-    "fingerprint": "77f5389ec1ec50d789d1324ace05bbc8d21dac5258c8428294997b55ee049b47",
+    "fingerprint": "713125d5bfd11d9051f1fcfe1447173325b1001c04e7f48238d24abd031510a8",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -97380,7 +97380,7 @@
       "gap": 5,
       "implementation": 54,
       "intent": 45,
-      "issue": 1215,
+      "issue": 1216,
       "knowledge": 104,
       "mesh-declaration": 1,
       "milestone": 117,
@@ -97394,7 +97394,7 @@
       "session": 94,
       "skill": 10,
       "taxonomy": 10,
-      "test": 691,
+      "test": 692,
       "use-case": 49,
       "workspace": 1
     },
@@ -104505,7 +104505,7 @@
         "title": "Continuous integration",
         "path": "docs/CI.md",
         "source_class": "document",
-        "bytes": 46531
+        "bytes": 49528
       },
       {
         "uri": "majordomus://document/docs/CLI.md",
@@ -104937,7 +104937,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 131609
+        "bytes": 131616
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -120485,6 +120485,17 @@
         "bytes": 3500
       },
       {
+        "uri": "majordomus://issue/I4242",
+        "kind": "issue",
+        "identity": "I4242",
+        "title": "Lundra is the first wave: the validate jobs of trusted events run on the repository's own runners",
+        "description": "The plan job of validate.yml chooses the runner of the first wave, the jobs that run once beside the critical path or are its cheap unions (the shards stay on GitHub-hosted runners, which take them twenty at once): the repository variable MJ_RUNNER (a label, or a JSON list of labels) for a push, the schedule, a dispatch and a pull request from a branch of this repository; GitHub-hosted ubuntu-latest for a pull request from a fork, for an unset or unreadable variable, and for the macOS jobs. A dispatch may name the runner for one run, so the self-hosted pool is proved on a branch before the variable sends every run to it.",
+        "path": ".ai/repo/project/issues/I4242.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3938
+      },
+      {
         "uri": "majordomus://issue/I4244",
         "kind": "issue",
         "identity": "I4244",
@@ -134234,6 +134245,14 @@
         "bytes": 1546
       },
       {
+        "uri": "majordomus://test/test/cases/4242_the_runner_is_planned.sh",
+        "kind": "test",
+        "identity": "test/cases/4242_the_runner_is_planned.sh",
+        "path": "test/cases/4242_the_runner_is_planned.sh",
+        "source_class": "case",
+        "bytes": 5597
+      },
+      {
         "uri": "majordomus://test/test/cases/4251_a_mod_links_nothing_outside_the_repository.sh",
         "kind": "test",
         "identity": "test/cases/4251_a_mod_links_nothing_outside_the_repository.sh",
@@ -135935,7 +135954,7 @@
         "identity": "test/cases/94_ci_plan.sh",
         "path": "test/cases/94_ci_plan.sh",
         "source_class": "case",
-        "bytes": 53399
+        "bytes": 53504
       },
       {
         "uri": "majordomus://test/test/cases/94_use_cases.sh",
@@ -136924,7 +136943,7 @@
       "identity": [
         "id"
       ],
-      "objects": 1215
+      "objects": 1216
     },
     {
       "name": "knowledge",
@@ -137086,7 +137105,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 691
+      "objects": 692
     },
     {
       "name": "use-case",

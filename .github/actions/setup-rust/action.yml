@@ -27,13 +27,16 @@ runs:
     - uses: dtolnay/rust-toolchain@stable
       with:
         components: ${{ inputs.components }}
+    # I4242: a self-hosted runner keeps cargo's build-dir on its own disk between jobs, so the
+    # cache would only upload gigabytes over the machine's uplink (24 min on lundra, run
+    # 40398294743) to restore what is already there.
     # Where cargo compiles (I4221), as cargo itself answers it. .cargo/config.toml puts the
     # intermediates — the dependencies, fingerprints and incremental state — in build-dir,
     # {cargo-cache-home}/build-shared/majordomus, and leaves only finished artifacts in the
     # workspace's target/. rust-cache joins a workspace's target onto the workspace root, so
     # the directory is handed over relative to apps/majordomus-cli.
     - id: build-dir
-      if: inputs.cache == 'true'
+      if: inputs.cache == 'true' && runner.environment != 'self-hosted'
       shell: bash
       run: |
         dir=$(cargo metadata --format-version 1 --no-deps --manifest-path apps/majordomus-cli/Cargo.toml | jq -r '.build_directory // empty')
@@ -41,7 +44,7 @@ runs:
         rel=$(python3 -c 'import os, sys; print(os.path.relpath(sys.argv[1], sys.argv[2]))' "$dir" apps/majordomus-cli)
         echo "relative=$rel" >> "$GITHUB_OUTPUT"
     - id: cache
-      if: inputs.cache == 'true'
+      if: inputs.cache == 'true' && runner.environment != 'self-hosted'
       uses: Swatinem/rust-cache@v2
       with:
         # The build directory is a second target of the same workspace rather than a
