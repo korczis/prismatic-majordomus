@@ -21,10 +21,10 @@
 #                                                 list is still this build's, so run it against the commit
 #                                                 scripts/pages verify says is served
 #   MJ_PROBE_ROUTE_SECONDS=N                      seconds one page may take, from opening it to its last spec, plus
-#                                                 0.5 s for every control it declares (default 240); past it the
+#                                                 2.5 s for every control it declares (default 240); past it the
 #                                                 page is a finding and its browser context is closed
 #   MJ_PROBE_SPEC_SECONDS=N                       seconds one spec may take on one page, the resize to its width
-#                                                 included, plus 0.5 s for every control of it there (default 60)
+#                                                 included, plus 2.5 s for every control of it there (default 60)
 #
 # A shard drives its heaviest pages first: the most controls the markup declares, then the route, so the pages that
 # take minutes start while every worker is free rather than meeting the bound at the end of the queue (F02). A page
@@ -115,7 +115,10 @@ const t0 = Date.now();
 const seconds = (v, d) => (Number(v) > 0 ? Number(v) : d);
 const ROUTE_SECONDS = seconds(env.MJ_PROBE_ROUTE_SECONDS, 240);
 const SPEC_SECONDS = seconds(env.MJ_PROBE_SPEC_SECONDS, 60);
-const PER_CONTROL = 0.5;
+// 2.5 s per declared control: CI run 41919666430 measured disclosure specs at 0.79 s a control or more
+// (/changelog/: 207 cut at 163.5 s; /roadmap/: 234 cut at 177 s), so this is about 3.2 times the slowest
+// lower bound; a spec that never resolves still fails, naming its page (case 337)
+const PER_CONTROL = 2.5;
 const controlsOf = (byspec) => [...byspec.values()].reduce((a, c) => a + c.live + c.conditional, 0);
 const within = (base, controls) => Math.round((base + PER_CONTROL * controls) * 10) / 10;
 const EXPIRED = Symbol('expired');

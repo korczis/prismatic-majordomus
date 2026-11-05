@@ -134,7 +134,7 @@ start=$SECONDS
 MJ_PROBE_SPEC_SECONDS=2 MJ_PROBE_ROUTE_SECONDS=30 bounded 60 --only '/a/ /hung/ /m/ /z-heavy/'
 took=$((SECONDS - start))
 [ "$rc" = 10 ] || { echo "    a page whose spec hangs ended the probe with '$rc' after ${took}s, not exit 10 with a finding"; cat out.txt; exit 1; }
-expect_grep 'FAIL behaviour +/hung/: \[hang\] did not finish within 2\.5s: still at hang: exercise$' out.txt
+expect_grep 'FAIL behaviour +/hung/: \[hang\] did not finish within 4\.5s: still at hang: exercise$' out.txt
 [ "$(grep -c '^FAIL' out.txt)" = 1 ] || { echo "    the hung page's closed context was reported as more than its one finding"; cat out.txt; exit 1; }
 order="$(tr '\n' ' ' < trace)"
 [ "$order" = '/z-heavy/ /a/ /hung/ /m/ ' ] \
@@ -145,7 +145,7 @@ echo "    ok: the heaviest page was driven first, and a hung spec was a finding 
 # the page's own deadline names the step a page was at when it ran out, whichever spec it was in
 MJ_PROBE_SPEC_SECONDS=60 MJ_PROBE_ROUTE_SECONDS=2 bounded 60 --only /hung/
 [ "$rc" = 10 ] || { echo "    a page past its deadline ended the probe with '$rc', not exit 10"; cat out.txt; exit 1; }
-expect_grep 'FAIL behaviour +/hung/: did not finish within 2\.5s: still at hang: exercise$' out.txt
+expect_grep 'FAIL behaviour +/hung/: did not finish within 4\.5s: still at hang: exercise$' out.txt
 
 # stopped from outside, the probe names every page still in flight and its step before it exits
 MJ_PROBE_SPEC_SECONDS=120 MJ_PROBE_ROUTE_SECONDS=120 MJ_CASE_TERM_ON=/hung/ bounded 60 --only /hung/
