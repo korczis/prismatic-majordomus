@@ -728,6 +728,17 @@ The procedure:
    is the widest and slowest the
    repository has, and every member waits on it. The composer finds the member the failure
    belongs to and applies step 4.
+
+   The hook's `--before-push` is a budget, not step 2's plan: it keeps the structure gates CI
+   recorded at 15 s or less while their sum stays within 120 s, so core-check and
+   knowledge-nodes, and adr-collision once cheaper gates fill the sum, are first met in CI. A
+   top that raises a rule's or a decision's version, or renames any record file, runs those
+   three itself and greps the tree for the old path. Train 19c (#2918) passed its hook and
+   failed structure in run 41896185903 on ADR 0167, which still related the `.v1.md` file of
+   a rule its member raised to v2 (fixed by `5512734636d`). Step 1's merged judgement holds
+   for a member's own cases as well: train P (#2855) failed cases 3441 and 99, which #2522 had
+   written against an older master and no finished run of its own had repeated
+   (`37a8ef2f4c9`).
 4. **A member that blocks moves to the next train at once, unless its fix is small and
    ready.** Small and green beats big. A top waits on its worst member, so one member's red
    holds back every other member's landing. Clause 2, as the owner decided on 2026-11-01 at

@@ -5,7 +5,7 @@ weight = 5
 [extra]
 id = "integrator"
 status = "active"
-version = 2
+version = 3
 source = ".ai/repo/skills/integrator/SKILL.md"
 +++
 {% raw %}
@@ -109,6 +109,26 @@ when its own pre-push judgement passed, not when it is committed:
   run the failing cases on the base on the same host (`bash test/run.sh <cases>` in a
   detached worktree of master); identical failures are the host's, and the top is judged
   on a host whose pinned tools match (the macOS differences of `docs/INTEGRATION.md` aside).
+- **Run what the budget leaves out when a record is renamed.** `run-plan --before-push`
+  runs a structure gate only when CI recorded it at 15 s or less and the sum stays within
+  120 s (`.ai/repo/ci/structure-durations.tsv`), so core-check and knowledge-nodes are
+  first met in CI, and adr-collision is too once cheaper gates fill the sum; the commit
+  hook's doctor does not resolve a decision's `related:` paths. A top that carries a rule's
+  or a decision's version raise, or any record file renamed, runs
+  `bin/majordomus adr check`, `bin/majordomus knowledge nodes --scope shared` and
+  `scripts/ci/core-check` itself, and greps the tree for the old path
+  (`git grep -n -F <old path>`), before it is called ready. Train 19c (#2918) passed every
+  local judgement and failed structure in run 41896185903: ADR 0167 still related the
+  `.v1.md` file of the rule its member raised to v2 (5512734636d).
+- **Judge a long-lived member's own cases on the merged tree.** A case a member added
+  passes against the master it was written on and can fail on the current one, because
+  master gained defaults since. Train P (#2855) met two in #2522: case 3441 met the mesh
+  declaration `majordomus init` has shipped enabled since 2026-10-22, and case 99 met a
+  milestone id master added beside the member's, which `lib/project.sh` ordered otherwise
+  than the executable (37a8ef2f4c9). Every validate run of the member had been cancelled,
+  so the top ran them first. Run the cases the member adds or changes
+  (`git diff --name-only origin/master...<member> -- test/cases`) with
+  `bash test/run.sh <cases>` on the merged top, not only on the member's head.
 
 ### 4. Do not starve the queue
 
