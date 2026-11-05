@@ -7,7 +7,7 @@ description: A session that does real work has a session beat written for it; an
 statement: An exclusive claim of a session that ever wrote a session_beat with a ttl above 0 is suspended — not live, refused by nobody, the session and its advisory claims untouched — while that session's newest beat is older than its ttl on the holder's runtime, or its ttl and the expiry on any other, and holds again at its next beat unless another session's exclusive claim over its scope was admitted meanwhile; a beat is written only for real work, never for a ping.
 status: active
 class: blocking
-depends_on: [project.mesh-cooperation-is-authenticated@1]
+depends_on: [project.mesh-cooperation-is-authenticated@2]
 tags: [mesh, cooperation, liveness, doctrine]
 
 x-majordomus:
