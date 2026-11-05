@@ -90,6 +90,15 @@ pub fn run(args: MeshArgs) -> Result<u8> {
                 not_ok,
             ),
         },
+        // A process is a fact of the machine it runs on, the board is gathered from every
+        // checkout's server: answered in this process, like the identity.
+        MeshCommand::Who(a) => in_process(
+            a.query,
+            &["mesh", "who"],
+            json!({ "subject": a.subject }),
+            render_who,
+            |v| v["known"] != json!(true),
+        ),
         MeshCommand::Peers(v) => {
             let target = viewed("/api/v1/mesh/peers", &v);
             ask(&v.query, "GET", &target, None, render_peers, never)
@@ -800,6 +809,69 @@ fn render_build_cache_key(v: &Value) -> String {
             "",
             k["location"].as_str().unwrap_or("")
         ));
+    }
+    out
+}
+
+fn render_who(v: &Value) -> String {
+    let text = |v: &Value| v.as_str().unwrap_or("").to_string();
+    let mut out = format!(
+        "{} {} on {}: {}{}\n",
+        text(&v["kind"]),
+        text(&v["subject"]),
+        text(&v["host"]),
+        if v["known"] == json!(true) {
+            "known"
+        } else {
+            "unknown"
+        },
+        if v["leftover"] == json!(true) {
+            ", a leftover"
+        } else {
+            ""
+        }
+    );
+    for o in v["owners"].as_array().into_iter().flatten() {
+        out.push_str(&format!(
+            "owner      {}  peer {}  issue {}{}\n",
+            o["session"].as_str().unwrap_or("-"),
+            o["peer"].as_str().unwrap_or("-"),
+            o["issue"].as_str().unwrap_or("-"),
+            o["name"]
+                .as_str()
+                .map(|n| format!("  name {n}"))
+                .unwrap_or_default()
+        ));
+        if let Ok(a) = serde_json::from_value::<crate::peers::PeerAddress>(o["address"].clone()) {
+            out.push_str(&format!("address    {}\n", a.line()));
+        }
+        for b in o["basis"].as_array().into_iter().flatten() {
+            out.push_str(&format!("  because  {}\n", text(b)));
+        }
+    }
+    for p in v["chain"].as_array().into_iter().flatten() {
+        out.push_str(&format!(
+            "process    {} <- {}  group {}  {}\n",
+            p["pid"],
+            p["ppid"],
+            p["pgid"],
+            p["command"].as_str().unwrap_or("")
+        ));
+    }
+    for e in v["evidence"].as_array().into_iter().flatten() {
+        out.push_str(&format!(
+            "{} {:<12} {}\n",
+            if e["used"] == json!(true) {
+                "used    "
+            } else {
+                "consulted"
+            },
+            text(&e["source"]),
+            text(&e["detail"])
+        ));
+    }
+    for m in v["missing"].as_array().into_iter().flatten() {
+        out.push_str(&format!("missing    {}\n", text(m)));
     }
     out
 }
@@ -3131,6 +3203,51 @@ mod tests {
         );
         let none = render_build_cache_key(&json!({ "platform": "p", "kinds": [] }));
         assert!(none.contains("nothing here is cacheable"), "{none}");
+    }
+
+    /// A known leftover is printed with every owner (its name, address and basis), its
+    /// chain, and each source as used or consulted; an unknown answer says what is missing.
+    #[test]
+    fn a_who_answer_names_its_owners_chain_evidence_and_what_is_missing() {
+        let v = json!({
+            "subject": "lundra:30", "kind": "pid", "host": "lundra",
+            "known": true, "leftover": true,
+            "owners": [
+                { "session": "claude-code-s1", "peer": "p2", "issue": "I3956", "name": "mj-39",
+                  "address": { "provider": "claude-code", "host": "mac", "pid": 20,
+                               "session": "s1", "socket": "/tmp/cc-socks/20.sock" },
+                  "basis": ["run record 083ddafbbc (its tag) names its owner"] },
+                { "basis": [] },
+            ],
+            "chain": [
+                { "pid": 30, "ppid": 1, "pgid": 7, "command": "rustc --crate-name x" },
+                { "pid": 7, "ppid": 1, "pgid": 7 },
+            ],
+            "evidence": [
+                { "source": "process", "used": true, "detail": "pid 30" },
+                { "source": "board", "used": false, "detail": "not read: off" },
+            ],
+            "missing": ["peer: no board row"],
+        });
+        let text = render_who(&v);
+        let lines: Vec<&str> = text.lines().collect();
+        assert_eq!(
+            lines,
+            [
+                "pid lundra:30 on lundra: known, a leftover",
+                "owner      claude-code-s1  peer p2  issue I3956  name mj-39",
+                "address    claude-code pid 20 on mac, /tmp/cc-socks/20.sock",
+                "  because  run record 083ddafbbc (its tag) names its owner",
+                "owner      -  peer -  issue -",
+                "process    30 <- 1  group 7  rustc --crate-name x",
+                "process    7 <- 1  group 7  ",
+                "used     process      pid 30",
+                "consulted board        not read: off",
+                "missing    peer: no board row",
+            ]
+        );
+        let unknown = render_who(&json!({ "subject": "I1", "kind": "issue", "host": "mac" }));
+        assert_eq!(unknown, "issue I1 on mac: unknown\n");
     }
 
     #[test]
