@@ -574,7 +574,7 @@ mod tests {
             .with_max_level(tracing::Level::INFO)
             .with_writer(move || writer.clone())
             .finish();
-        tracing::subscriber::with_default(subscriber, || {
+        crate::logging::with_scoped(subscriber, || {
             w.sweep(start + Duration::from_secs(3));
         });
         assert_eq!(w.peers()[&peer], Phase::Closed, "past the deadline");

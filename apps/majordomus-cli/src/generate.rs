@@ -3678,7 +3678,7 @@ mod tests {
             .with_max_level(tracing::Level::WARN)
             .with_writer(std::io::sink)
             .finish();
-        let planned = tracing::subscriber::with_default(subscriber, || planned_changelog(&args));
+        let planned = crate::logging::with_scoped(subscriber, || planned_changelog(&args));
         let section = planned
             .sections
             .iter()
