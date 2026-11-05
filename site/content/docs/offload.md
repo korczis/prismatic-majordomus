@@ -30,6 +30,8 @@ majordomus offload probe                  # measure every host, name the one a d
 majordomus offload derive .               # derive this worktree on the chosen host, stage the result
 majordomus offload derive . --host lundra # on a named host (a declared id or address)
 majordomus offload derive . --keep        # keep the host's worktree afterwards
+majordomus offload stop <tag>             # stop your own run as a process group on its host
+majordomus offload stop <tag> --host lundra --grace 30   # on a named host, 30 s from TERM to KILL
 ```
 
 `--declaration <file>` reads a declaration file instead of the repository's, and
@@ -45,7 +47,20 @@ majordomus offload derive . --keep        # keep the host's worktree afterwards
 | 10 | the derive failed on the host; the last lines of its log are printed and its worktree is kept there |
 | 11 | the derive deleted a tracked file; nothing was applied, and the snapshot is named for applying by hand |
 | 12 | no declared host can take it, the host could not be used, or the result did not apply |
+| 14 | the run was stopped with `offload stop`; its worktree is kept on the host |
 | 75 | the queue's declared wait ran out; the ticket is withdrawn |
+
+</div>
+
+
+<div class="overflow-x-auto" tabindex="0">
+
+| exit | `offload stop` |
+|---|---|
+| 0 | the group was stopped, or it was already empty and its leftover record is removed |
+| 2 | the tag is not one (ten to forty letters and digits), or several hosts are declared and none is named |
+| 12 | the host holds no record of the run, cannot be reached, the record names no process group, or the group is not the run's any more |
+| 13 | the record names another session, or none, and `--force` was not given; nothing was signalled |
 
 </div>
 
@@ -151,6 +166,58 @@ The machine's own derive lock (`project.one-derive-at-a-time`) is not taken: it 
 machine, and this machine is not deriving. On the host, `scripts/derive` takes that host's
 machine lock as usual.
 
+## Who owns a run, and stopping one
+
+On 2026-10-22 a 33-minute remote `cargo test --doc` kept lundra at load 21, and the session
+that started it could be named only by walking a process tree by hand. When its owner killed
+its cargo and its shell, a `rustc` under them ran on for 50 minutes with init as its parent
+and a deleted worktree as its working directory: nothing stopped the group (I3956).
+
+- **The owner travels with the run.** `offload derive` derives its owner from the address
+  model the board uses (the provider's session id on the mesh, `claude-code-<id>`, and its
+  pid), the checkout's active task (the issue) and the board row whose address is this
+  worker's (the peer). An owner this process inherited from an outer run wins. Every value
+  is validated (one word of letters, digits and `-_.:@/`, at most 128 characters) and
+  dropped otherwise, then passed to the host as a quoted argument. The provider's messaging
+  token is a credential and is never read. On the host every process of the run has
+  `MAJORDOMUS_OWNER_SESSION`, `_PEER`, `_ISSUE`, `_HOST`, `_PID` and `MAJORDOMUS_OWNER_RUN`
+  (the tag) in its environment, so any `cargo` or `rustc` of it names its owner.
+- **The run is a process group.** The derive is started under `setsid`, or Python's
+  `os.setsid` on a host without it, and leads a group of its own.
+- **The run record** is `<queue.directory>.runs/<tag>.run` on the host, beside the ticket
+  directory and never in it. It is written atomically (a temporary file and a rename) once
+  the derive has started, and holds the schema line `majordomus-offload-run/v1`, then
+  `tag`, `pid` (the run's shell), `pgid`, `started_at` (epoch seconds), `host`, `cwd` and
+  the five `owner_*` fields. Every ending the run's shell sees removes it: success, failure,
+  a stop, a signal. A record that outlives its run is the evidence of a crash.
+- **A caller that goes away stops its run.** `offload derive` holds the remote script's
+  standard input open while it runs. When it closes (the caller killed, the connection
+  lost), the run's shell stops the group, `TERM` and then `KILL`, and exits 129.
+- **`offload stop <tag>`** reads the record on the host (the declaration's only host, or
+  `--host`), refuses unless the record names the caller's own session (`--force` overrides,
+  for a run whose owner is gone), and signals the whole group: `TERM`, then `KILL` to what
+  is left after `--grace` seconds (10 by default). On a host with `/proc`, a group none of
+  whose processes carries `MAJORDOMUS_OWNER_RUN=<tag>` is refused, because the host has
+  handed that group id to someone else since. The run's shell sees its derive end, says the
+  run was stopped, and the waiting `offload derive` exits 14. A record whose group is
+  already empty is reported gone and removed. Stopping a run is done this way and no other:
+  never by ssh to the host and `kill` by hand, and never another session's run.
+- **`majordomus mesh who <subject>`** names the owner (capability `mesh.who`, also the MCP
+  tool `majordomus_mesh_who` and `GET /api/v1/mesh/who`). The subject is a pid, `host:pid`
+  on a declared host, a run tag or `host:tag`, an issue, or a path. A pid is read where it
+  runs: its parent chain, process group, start, command and working directory, and the
+  owner variables of its environment. The provider's process in that chain is the one with
+  a socket under `/tmp/cc-socks`, or the one whose entry in `~/.claude/sessions/<pid>.json`
+  records its own start, which also gives the session's id and name. An entry left by an
+  earlier process with that pid is reported and not used. The answer is joined with the
+  host's run records (by the run's tag, then its group, then its shell), the board (whose
+  rows carry each worker's address) and the mesh claims. A declared host is read through
+  its ssh address, exactly as `offload` reaches it, and an undeclared one is refused before
+  anything is reached. A process whose parent is init and whose directory is gone is
+  marked `leftover` and named by its run record. When nothing names an owner, the answer
+  is `known: false`, lists every fact it lacked under `missing`, and exits 10. A command
+  line is reported but never used to decide whose a process is.
+
 ## The board and the mesh
 
 The offload is a shared resource, and the peer board and the mesh are how sessions share it:
@@ -167,6 +234,37 @@ The offload is a shared resource, and the peer board and the mesh are how sessio
 - Never run `scripts/derive` on a host by hand while offloads run there. It takes neither the
   queue nor the offload lock.
 
+## A build over ssh is refused before it runs
+
+A build started with a bare `ssh <host> '…; cargo test'` waits for no queue, carries no owner
+and is stopped as no group: on 2026-10-22 one such `cargo test --doc` kept lundra at load 21
+for 33 minutes, and its `rustc` outlived the shell that was killed above it (I3956). So the
+provider's pre-tool hook asks of every shell command what it asks of every edit:
+`.claude/hooks/majordomus-edit-guard` hands a Bash payload to `majordomus guard hook`, which
+exits 2 when the command starts a build on a declared host, with the rule
+(`project.a-derive-offload-waits-its-turn`) and the way, `majordomus offload derive --host
+<id> <worktree>` and `majordomus offload stop <tag>`.
+
+- **The hosts are the declaration's.** A destination is a declared host by its `id`, the host
+  of its `address`, or a name whose first label is its id (`lundra.<tailnet>.ts.net`); the
+  login (`user@`) and the `ssh://…:port` form are read through. A host no declaration names
+  is not judged.
+- **The command is read as a shell reads it**: quotes, `;`, `&&`, `|`, newlines, redirections,
+  assignments and the wrappers that run another program (`env A=B`, `nice -n 10`, `nohup`,
+  `timeout`, `sudo`). A script given to `bash -c`, `sh -lc` or `eval` is read again, and so
+  is ssh's remote command, after its options (`-o X`, `-p22`, `-tt`, options after the
+  destination, `--`); a hop through an undeclared host to a declared one is judged too.
+- **A build** is `cargo` (but not `cargo --version` or `--list`), `rustc`, `scripts/derive`
+  or a `scripts/rust-*` script, wherever it is spelt from. A read (`ps`, `df`, `uptime`,
+  `grep cargo`), `ssh <host> majordomus offload …` and an interactive login are let through.
+- **The offload itself is never judged**: its ssh runs inside the executable, not through the
+  provider's shell tool. What the hook cannot read, a payload that is not JSON or a checkout
+  with no layer above its `cwd`, is let through.
+- **The wiring.** Like the edit guard, the hook runs only when the provider's configuration
+  names it for the tool: a PreToolUse entry with the matcher `Bash` (beside
+  `Edit|Write|MultiEdit|NotebookEdit`) whose command is the shim. `capture install` writes
+  neither entry yet; I3322 is the issue that wires the guard.
+
 ## Tests
 
 <div class="overflow-x-auto" tabindex="0">
@@ -176,6 +274,11 @@ The offload is a shared resource, and the peer board and the mesh are how sessio
 | `apps/majordomus-cli/src/offload/queue.rs` (unit) | the decision over observations: order, dead tickets, a dead lock reclaimed, an uncheckable lock waited for, a lost ticket, an unreadable answer refused |
 | `apps/majordomus-cli/src/offload/host.rs` (unit) | host choice: least loaded, ties by declaration order, unreachable, under its minimum, unknown space, a host's own minimum |
 | `apps/majordomus-cli/src/offload/declaration.rs` (unit) | the declaration: defaults, unknown keys refused, addresses and paths validated |
+| `apps/majordomus-cli/src/offload/owner.rs` (unit) | the owner: an inherited owner wins, the address and the task name it, bad values are dropped, the board peer is the row with this worker's address, the run record's fields |
+| `apps/majordomus-cli/src/offload/stop.rs` (unit) | the stop: only the owner without `--force`, every refusal before a signal, a leftover record removed, a live run's group stopped with its grandchild |
+| `apps/majordomus-cli/src/offload/run.rs` (unit) | the host's derive script itself: the owner exported, the derive leading its group, the record written and removed, a caller that goes away stopping the group |
+| `test/cases/3957_every_process_is_traced_to_its_session.sh` | the command end to end through a stand-in ssh: the owner exported and never the token, the group, the record's fields, another session's stop refused, the owner's stop ending the group |
+| `apps/majordomus-cli/src/guard/remote_build.rs` (unit) | the remote-build guard: every refused form, every allowed one, an undeclared host, the shell's quoting, wrappers, ssh's options, the nesting limit, the declared hosts read from the layer |
 | `apps/majordomus-cli/tests/offload.rs` | the queue against a real directory with real holder processes, and the command end to end against hosts that are directories on this machine, reached through a local stand-in for ssh |
 
 </div>
@@ -195,7 +298,9 @@ these behaviours:
 - a merge in progress keeps both parents;
 - untracked files, an unresolved merge, a deleting derive and a failed derive are each
   refused;
-- a concurrent build into the shared directory does not replace the derive's executable.
+- a concurrent build into the shared directory does not replace the derive's executable;
+- a derive runs for its owner and leaves no run record, and a running derive is stopped by
+  its owner and only by it.
 
 Each of these mutations fails a test: a lock taken regardless of position, dead tickets kept,
 `CARGO_TARGET_DIR` pointed at the shared directory, and `CARGO_BUILD_BUILD_DIR` left to the

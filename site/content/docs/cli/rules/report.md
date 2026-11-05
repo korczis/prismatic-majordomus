@@ -1,7 +1,7 @@
 +++
 title = "majordomus rules report"
 description = "Every rule against the proof there is for it"
-weight = 195
+weight = 197
 [extra]
 route = "/docs/cli/rules/report/"
 command = "majordomus rules report"

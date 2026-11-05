@@ -541,7 +541,9 @@ pub fn run(args: PrsArgs) -> Result<u8> {
             }
             Ok(if report.failure.is_some() {
                 UNUSABLE
-            } else if report.stopped.contains("could not be verified") {
+            } else if report.stopped.contains("could not be verified")
+                || report.stopped.contains("integration lease was lost")
+            {
                 FINDING
             } else {
                 0
@@ -732,10 +734,12 @@ fn drain_exit(report: &drain::DrainReport) -> u8 {
     } else if stopped_on(|s| {
         matches!(
             s,
-            // a reopen that failed may have left a release's record closed: a person looks
+            // a reopen that failed may have left a release's record closed: a person looks.
+            // A lost lease is another executor's turn, which a person may want to know of
             DrainStepOutcome::VerificationFailed { .. }
                 | DrainStepOutcome::Halted { .. }
                 | DrainStepOutcome::ReopenFailed { .. }
+                | DrainStepOutcome::LeaseLost { .. }
         )
     }) {
         FINDING
@@ -811,13 +815,14 @@ pub(crate) fn brief(root: &std::path::Path) -> Option<String> {
                 l.renewed_seconds_ago
             ),
             (Some(h), false) => format!(
-                "lease held by pid {} on {}, {}",
+                "lease held by pid {} on {}, {}{}",
                 h.pid,
                 h.host,
                 match &h.mesh_claim {
                     Some(key) => format!("across machines by mesh claim {key}"),
                     None => "per-clone guard only".to_string(),
-                }
+                },
+                without_progress(h)
             ),
             (None, false) => "lease held (holder unreadable)".into(),
         },
@@ -845,6 +850,22 @@ pub(crate) fn brief(root: &std::path::Path) -> Option<String> {
         ));
     }
     Some(parts.join("; "))
+}
+
+/// ", no queue progress for N s (over the ttl of T s)" when the holder of a lease has advanced
+/// its queue for longer than the ttl its mesh claim lives by (I3991): the executor that holds
+/// the base and does nothing. Empty for a holder within it, or one whose record predates it.
+fn without_progress(h: &drain::LeaseHolder) -> String {
+    let now = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map_or(0, |d| d.as_secs());
+    match (h.progressed_at, h.progress_ttl_seconds) {
+        (Some(at), Some(ttl)) if now.saturating_sub(at) > ttl => format!(
+            ", no queue progress for {} s (over the ttl of {ttl} s)",
+            now - at
+        ),
+        _ => String::new(),
+    }
 }
 
 /// The last event that says how the executor's work last went — a refresh it pushed, a merge
@@ -951,6 +972,9 @@ pub(crate) fn describe(s: &DrainStepOutcome) -> String {
             reason,
         } => format!(
             "#{pr}: nothing was done, because the trail could not record {unrecorded}: {reason}"
+        ),
+        DrainStepOutcome::LeaseLost { pr, reason } => format!(
+            "#{pr}: nothing was done, because this executor no longer holds the integration lease: {reason}"
         ),
     }
 }
@@ -1573,6 +1597,31 @@ mod tests {
             "only the newest outcome is said: {b}"
         );
         assert!(b.contains("per-clone guard only"), "{b}");
+        assert!(!b.contains("no queue progress"), "taken a moment ago: {b}");
+        // a holder that has advanced nothing for longer than its ttl is named so (I3991)
+        let common = std::process::Command::new("git")
+            .arg("-C")
+            .arg(&s.0)
+            .args(["rev-parse", "--path-format=absolute", "--git-common-dir"])
+            .output()
+            .unwrap();
+        let path = IntegrationLease::path_for(
+            std::path::Path::new(String::from_utf8_lossy(&common.stdout).trim()),
+            "master",
+        );
+        let taken = std::fs::read_to_string(&path).unwrap();
+        let mut idle: drain::LeaseHolder = serde_json::from_str(&taken).unwrap();
+        idle.progressed_at = idle.progressed_at.map(|t| t - 1000);
+        idle.progress_ttl_seconds = Some(600);
+        std::fs::write(&path, serde_json::to_string(&idle).unwrap()).unwrap();
+        let b = brief(&s.0).expect("a brief");
+        assert!(b.contains("no queue progress for 10"), "{b}");
+        assert!(b.contains("(over the ttl of 600 s)"), "{b}");
+        // a record an older executor wrote says nothing of progress
+        idle.progressed_at = None;
+        std::fs::write(&path, serde_json::to_string(&idle).unwrap()).unwrap();
+        assert!(!brief(&s.0).unwrap().contains("no queue progress"));
+        std::fs::write(&path, taken).unwrap();
         drop(lease);
         drain::record(&s.0, event(A::Refreshed, None)).expect("recorded");
         let b = brief(&s.0).expect("a brief");
@@ -1642,6 +1691,10 @@ mod tests {
                 reason: "left closed".into(),
                 class: drain::FailureClass::PolicyViolation,
             },
+            DrainStepOutcome::LeaseLost {
+                pr: 14,
+                reason: "the integration claim s1/c-1 is released on the mesh".into(),
+            },
         ];
         let said: std::collections::BTreeSet<String> = outcomes.iter().map(describe).collect();
         assert_eq!(
@@ -1658,6 +1711,13 @@ mod tests {
             steps: vec![outcomes[13].clone()],
             merged: Vec::new(),
             stopped: String::new(),
+        };
+        assert_eq!(drain_exit(&report), FINDING);
+        // so is a lost lease: another executor's turn, which a person may want to know of
+        assert!(describe(&outcomes[14]).contains("no longer holds the integration lease"));
+        let report = drain::DrainReport {
+            steps: vec![outcomes[14].clone()],
+            ..report
         };
         assert_eq!(drain_exit(&report), FINDING);
     }

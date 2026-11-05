@@ -33,3 +33,4 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I3378` | shares apps/majordomus-cli/src/economics with I3390; they may not run concurrently |
 | WARN | `scope_conflict` | `I3378` | shares test/cases/54_session_lifecycle_hooks.sh with I3825; they may not run concurrently |
 | WARN | `scope_conflict` | `I3378` | shares test/cases/54_session_lifecycle_hooks.sh with I3837; they may not run concurrently |
+| WARN | `scope_conflict` | `I3378` | shares .claude/settings.json with I3992; they may not run concurrently |

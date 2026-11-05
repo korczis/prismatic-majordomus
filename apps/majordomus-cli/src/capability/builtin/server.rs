@@ -2010,7 +2010,7 @@ mod tests {
             .with_max_level(tracing::Level::WARN)
             .with_writer(move || writer.clone())
             .finish();
-        let r = tracing::subscriber::with_default(subscriber, || {
+        let r = crate::logging::with_scoped(subscriber, || {
             runtime_at(
                 dir.path(),
                 ".ai/local",

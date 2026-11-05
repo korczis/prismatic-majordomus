@@ -153,6 +153,8 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I1505` | shares test/cases with I3843; they may not run concurrently |
 | WARN | `scope_conflict` | `I1505` | shares test/cases with I3932; they may not run concurrently |
 | WARN | `scope_conflict` | `I1505` | shares test/cases with I3970; they may not run concurrently |
+| WARN | `scope_conflict` | `I1505` | shares test/cases with I3991; they may not run concurrently |
+| WARN | `scope_conflict` | `I1505` | shares apps/majordomus-cli/src/capability/builtin with I3992; they may not run concurrently |
 | WARN | `scope_conflict` | `I1505` | shares apps/majordomus-cli/src/capability/builtin with I4332; they may not run concurrently |
 | WARN | `scope_conflict` | `I1505` | shares test/cases with I4523; they may not run concurrently |
 | WARN | `scope_conflict` | `I1997` | shares apps/majordomus-cli/src/capability/builtin/peers.rs with I1999; they may not run concurrently |
