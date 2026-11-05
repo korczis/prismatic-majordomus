@@ -2541,11 +2541,11 @@ impl Integrator for ForgeIntegrator<'_> {
         }
         refresh(self.root)?;
         // the executor just observed: what it learnt is kept for the readers after it
-        let queue = super::queue_and_record(self.root)?;
-        if let Some(l) = self.lease {
-            l.observed(&queue);
-        }
-        Ok(queue)
+        super::queue_and_record(self.root).inspect(|queue| {
+            if let Some(l) = self.lease {
+                l.observed(queue);
+            }
+        })
     }
 
     fn progressed(&mut self, phase: &str) {

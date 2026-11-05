@@ -198,6 +198,9 @@ struct World {
     holds_asked: Vec<String>,
     /// The lease is no longer held, for this reason: another executor was admitted over it.
     lease_lost: Option<String>,
+    /// When the lease is found lost, this trail refuses every append from then on: the loss
+    /// cannot be recorded.
+    trail_breaks_with_the_lease: Option<std::path::PathBuf>,
 }
 
 impl Default for World {
@@ -239,6 +242,7 @@ impl Default for World {
             progressed: Vec::new(),
             holds_asked: Vec::new(),
             lease_lost: None,
+            trail_breaks_with_the_lease: None,
         }
     }
 }
@@ -639,6 +643,9 @@ impl Integrator for World {
 
     fn holds(&mut self, act: &str) -> Result<(), String> {
         self.holds_asked.push(act.to_string());
+        if let (Some(_), Some(trail)) = (&self.lease_lost, &self.trail_breaks_with_the_lease) {
+            unwritable(trail);
+        }
         self.lease_lost.clone().map_or(Ok(()), Err)
     }
 }
@@ -8991,4 +8998,182 @@ fn progress_rewrites_the_record_and_the_lease_is_still_its_holders() {
         drain::progress_ttl(&root),
         Some(crate::mesh::config::DEFAULT_SESSION_TTL)
     );
+}
+
+/// The ttl is read from the mesh declaration's YAML files alone: a note or a file without
+/// an extension beside it says nothing, however it reads.
+#[test]
+fn the_progress_ttl_is_read_from_the_yaml_files_of_the_declaration_alone() {
+    let root = scratch();
+    let mesh = root.join(".ai/repo/mesh");
+    std::fs::create_dir_all(&mesh).unwrap();
+    let says = "cooperation:\n  session_ttl_seconds: 5\n";
+    std::fs::write(mesh.join("NOTES.md"), says).unwrap();
+    std::fs::write(mesh.join("README"), says).unwrap();
+    assert_eq!(
+        drain::progress_ttl(&root),
+        Some(crate::mesh::config::DEFAULT_SESSION_TTL)
+    );
+    std::fs::write(
+        mesh.join("mesh.yml"),
+        "cooperation:\n  session_ttl_seconds: 90\n",
+    )
+    .unwrap();
+    assert_eq!(drain::progress_ttl(&root), Some(90));
+}
+
+/// A progress whose record cannot be written leaves the record and the lease as they were:
+/// the lease still renews, because what it holds is still what the file says.
+#[test]
+fn a_progress_the_record_cannot_take_leaves_the_lease_as_it_was() {
+    let root = scratch();
+    let lease = drain::IntegrationLease::acquire(&root, "master").unwrap();
+    let path = drain::IntegrationLease::path_for(&root.join(".git"), "master");
+    let before = std::fs::read_to_string(&path).unwrap();
+    // a second later, so that the progress would write another record
+    std::thread::sleep(std::time::Duration::from_millis(1100));
+    drain::FAIL_WRITE.with(|n| n.set(1));
+    lease.progressed("selected #1");
+    assert_eq!(std::fs::read_to_string(&path).unwrap(), before);
+    lease.renew().expect("still the lease's record");
+}
+
+/// A lease taken over by another holder is not rewritten by its old holder's progress: the
+/// loss is said at its next renewal, not overwritten here.
+#[test]
+fn a_progress_after_the_lease_was_lost_writes_nothing() {
+    let root = scratch();
+    let lease = drain::IntegrationLease::acquire(&root, "master").unwrap();
+    let path = drain::IntegrationLease::path_for(&root.join(".git"), "master");
+    std::fs::write(&path, "another holder").unwrap();
+    lease.progressed("selected #1");
+    assert_eq!(std::fs::read_to_string(&path).unwrap(), "another holder");
+    assert!(lease.renew().unwrap_err().contains("lease was lost"));
+}
+
+/// [`drain::recorded`] records every event, and tells the integrator only of those that
+/// advance the queue: taking the lease, idling or losing it is no progress.
+#[test]
+fn an_event_that_advances_nothing_is_recorded_and_said_to_nobody() {
+    let root = scratch();
+    let mut w = World::default();
+    for action in [
+        drain::IntegrationAction::Idle,
+        drain::IntegrationAction::LeaseLost,
+    ] {
+        drain::recorded(&root, &mut w, drain::IntegrationEvent::of(action)).unwrap();
+    }
+    assert!(w.progressed.is_empty(), "{:?}", w.progressed);
+    assert_eq!(trail_actions(&root), ["idle", "lease_lost"]);
+}
+
+/// A record pull request is not closed and reopened by an executor whose lease was lost:
+/// asked first, refused, and the trail says why.
+#[test]
+fn a_record_is_not_reopened_by_an_executor_that_lost_its_lease() {
+    let root = scratch();
+    let mut w = World {
+        open: vec![record_sim(7)],
+        record_reopenable: BTreeSet::from([7]),
+        lease_lost: Some("the integration claim s1/c-1 is suspended on the mesh".into()),
+        ..Default::default()
+    };
+    let out = drain::step(&root, &mut w, false, false).unwrap();
+    assert!(
+        matches!(&out, DrainStepOutcome::LeaseLost { pr: 7, reason } if reason.contains("suspended")),
+        "{out:?}"
+    );
+    assert_eq!(w.reopen_calls, 0);
+    assert_eq!(w.holds_asked, ["reopening #7"]);
+    let trail = trail_actions(&root);
+    assert_eq!(trail.last().map(String::as_str), Some("lease_lost"));
+    assert!(!trail.iter().any(|a| a == "reopen_attempted"), "{trail:?}");
+}
+
+/// A lost lease the trail cannot record is an error, and the act it stopped is still not
+/// taken: no merge, reopen, refresh, repair or closure reaches the forge or a branch.
+#[test]
+fn a_lost_lease_the_trail_cannot_record_is_an_error_and_nothing_is_done() {
+    let lost = |root: &std::path::Path, w: World| World {
+        lease_lost: Some("the integration claim s1/c-1 is released on the mesh".into()),
+        trail_breaks_with_the_lease: Some(trail_of(root)),
+        ..w
+    };
+
+    // a merge
+    let root = scratch();
+    let mut w = lost(
+        &root,
+        World {
+            open: vec![sim(1)],
+            ..Default::default()
+        },
+    );
+    assert!(drain::step(&root, &mut w, false, false).is_err());
+    assert_eq!((w.holds_asked.len(), w.merge_calls), (1, 0));
+
+    // a record's reopening
+    let root = scratch();
+    let mut w = lost(
+        &root,
+        World {
+            open: vec![record_sim(7)],
+            record_reopenable: BTreeSet::from([7]),
+            ..Default::default()
+        },
+    );
+    assert!(drain::step(&root, &mut w, false, false).is_err());
+    assert_eq!((w.holds_asked.len(), w.reopen_calls), (1, 0));
+
+    // bringing master into a branch
+    let root = scratch();
+    let mut w = lost(&root, one_behind());
+    assert!(drain::step(&root, &mut w, false, true).is_err());
+    assert_eq!((w.holds_asked.len(), w.refresh_calls), (1, 0));
+
+    // a person's repair
+    let root = scratch();
+    let mut w = lost(&root, repair_world());
+    assert!(repair::apply(&root, &mut w, &RepairTarget::Number(1)).is_err());
+    assert_eq!((w.holds_asked.len(), w.refresh_calls), (1, 0));
+
+    // a closure
+    let root = scratch();
+    let mut redundant = sim(1);
+    redundant.redundant_after = Some(99);
+    let mut w = lost(
+        &root,
+        World {
+            open: vec![redundant],
+            merged: vec![99],
+            ..Default::default()
+        },
+    );
+    assert!(drain::cleanup(&root, &mut w, true).is_err());
+    assert_eq!((w.holds_asked.len(), w.close_calls), (1, 0));
+}
+
+/// An executor that runs without a lease has nothing to beat for its progress and holds
+/// whatever it is asked; one with a lease asks it.
+#[test]
+fn a_forge_integrator_without_a_lease_beats_nothing_and_holds() {
+    let root = scratch();
+    let mut forge = drain::ForgeIntegrator {
+        root: &root,
+        lease: None,
+    };
+    forge.progressed("selected #1");
+    assert!(forge.holds("merging #1").is_ok());
+    assert!(drain::IntegrationLease::read(&root, "master")
+        .unwrap()
+        .is_none());
+    assert!(drain::events(&root).is_empty());
+
+    let lease = drain::IntegrationLease::acquire(&root, "master").unwrap();
+    let mut forge = drain::ForgeIntegrator {
+        root: &root,
+        lease: Some(&lease),
+    };
+    forge.progressed("selected #1");
+    assert!(forge.holds("merging #1").is_ok());
 }
