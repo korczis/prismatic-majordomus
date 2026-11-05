@@ -82382,6 +82382,146 @@
         }
       },
       {
+        "id": "majordomus://knowledge/s-20261105041806-8f14-113f58dd14e0",
+        "kind": "knowledge",
+        "label": "s-20261105041806-8f14-113f58dd14e0",
+        "summary": "two train tops validating side by side on master are one slot: when train P (#2855, merge 4795a79d954) landed at 02:53:53Z on 2026-11-05, train 19c (#2918) went DIRTY and CONFLICTING on GitHub at once, because derived files that resolve to ours locally conflict on the forge, which costs a master merge and another round of about 2.5 h; the remedy the mesh agreed is to stack the second top on the first top's head, so the first landing does not dirty it",
+        "route": "/cockpit/objects/knowledge/s-20261105041806-8f14-113f58dd14e0",
+        "source": ".ai/repo/knowledge/curated/s-20261105041806-8f14-113f58dd14e0.md",
+        "status": "verified",
+        "facts": {
+          "about": ".ai/repo/skills/integrator/SKILL.md",
+          "class": "lesson",
+          "date": "2026-11-05",
+          "epistemics": "observed",
+          "route": "project",
+          "tags": [
+            "derived",
+            "observation"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://knowledge/s-20261105041806-8f14-51f725c738b3",
+        "kind": "knowledge",
+        "label": "s-20261105041806-8f14-51f725c738b3",
+        "summary": "a test that captures logs with tracing::subscriber::with_default can see an empty log: capability::builtin::server::tests::a_record_that_cannot_be_put_in_place_leaves_nothing_and_is_logged failed at server.rs:2026 in validate run 41953099953, job rust (2), because the callsite interest cache another thread's dispatcher filled says never for the scoped subscriber; the fix is in flight on branch fix/a-scoped-log-subscriber-asks-every-callsite-again",
+        "route": "/cockpit/objects/knowledge/s-20261105041806-8f14-51f725c738b3",
+        "source": ".ai/repo/knowledge/curated/s-20261105041806-8f14-51f725c738b3.md",
+        "status": "verified",
+        "facts": {
+          "about": "apps/majordomus-cli/src/capability/builtin/server.rs",
+          "class": "lesson",
+          "date": "2026-11-05",
+          "epistemics": "observed",
+          "route": "project",
+          "tags": [
+            "derived",
+            "observation"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://knowledge/s-20261105041806-8f14-558639f60422",
+        "kind": "knowledge",
+        "label": "s-20261105041806-8f14-558639f60422",
+        "summary": "the suite shards are dealt from a record that fell behind: .ai/repo/ci/suite-durations.tsv was last written in b0e33db797d (2026-10-23) and holds 599 of 691 cases, the other 93 dealt at its median, and its seconds have drifted; in validate run 41932965548 (attempt 1, train P) suite-shard (2) took 7726 s against 4004-5523 s for the other shards and was the critical path of a 156 min run; replaying the deal (longest first over 4x4 slots) with that run's measured seconds gives 11926/16443/10598/13200 case-seconds per shard from the record (max/min 1.55) and 13042/13042/13341/12742 from a refreshed one (1.05); the refresh is in flight on branch chore/the-suite-shards-are-dealt-from-measured-seconds, and nothing refreshes the record on master after a landing",
+        "route": "/cockpit/objects/knowledge/s-20261105041806-8f14-558639f60422",
+        "source": ".ai/repo/knowledge/curated/s-20261105041806-8f14-558639f60422.md",
+        "status": "verified",
+        "facts": {
+          "about": ".ai/repo/ci/suite-durations.tsv",
+          "class": "lesson",
+          "date": "2026-11-05",
+          "epistemics": "observed",
+          "route": "project",
+          "tags": [
+            "derived",
+            "observation"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://knowledge/s-20261105041806-8f14-82b35a204e96",
+        "kind": "knowledge",
+        "label": "s-20261105041806-8f14-82b35a204e96",
+        "summary": "the runner pool is shared across the account's repositories: at 04:02Z on 2026-11-05, 83 queued jobs of eight feature-branch CI runs of another repository kept train 22c's validate (run 41961637000, queued from 03:28:43Z) queued for more than 35 minutes, and at about 04:20Z five of that repository's runs still held 60 queued jobs; I4360 plans the monitor moment for a run queued past its bound, with 'no runner online' as its only named cause, which a pool busy with another repository is not",
+        "route": "/cockpit/objects/knowledge/s-20261105041806-8f14-82b35a204e96",
+        "source": ".ai/repo/knowledge/curated/s-20261105041806-8f14-82b35a204e96.md",
+        "status": "verified",
+        "facts": {
+          "about": ".ai/repo/ci/queue.yaml",
+          "class": "lesson",
+          "date": "2026-11-05",
+          "epistemics": "observed",
+          "route": "project",
+          "tags": [
+            "derived",
+            "observation"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://knowledge/s-20261105041806-8f14-8b4a73a68752",
+        "kind": "knowledge",
+        "label": "s-20261105041806-8f14-8b4a73a68752",
+        "summary": "a saturated coverage count wraps to a false uncovered: counters on long-lived thread loops reach 2^63-1, and merging such a segment wraps it to 0, so the coverage differential reported covered code as uncovered in train P's coverage job (validate run 41932965548, attempt 1); the premise that counters were not atomic was refuted by measurement, since rustc 1.98.1 already counts atomically (40685 lock incq with or without -instrprof-atomic-counter-update-all); the fix is in flight on branch fix/a-saturated-coverage-count-is-discarded",
+        "route": "/cockpit/objects/knowledge/s-20261105041806-8f14-8b4a73a68752",
+        "source": ".ai/repo/knowledge/curated/s-20261105041806-8f14-8b4a73a68752.md",
+        "status": "verified",
+        "facts": {
+          "about": "scripts/rust-coverage",
+          "class": "lesson",
+          "date": "2026-11-05",
+          "epistemics": "observed",
+          "route": "project",
+          "tags": [
+            "derived",
+            "observation"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://knowledge/s-20261105041806-8f14-aecc295cb90d",
+        "kind": "knowledge",
+        "label": "s-20261105041806-8f14-aecc295cb90d",
+        "summary": "an empty build directory variable stops the build-directory sweep silently: with CARGO_TARGET_DIR= (empty, meant as unset) mj_rust_prune_build_dir asks cargo metadata, which refuses an empty CARGO_TARGET_DIR or CARGO_BUILD_BUILD_DIR, so the sweep prints 'none removed: cargo did not say where this build keeps them (cargo metadata failed)' and returns 0; callers that discarded its output saw nothing and a build host sat under its 35 GiB floor for over an hour on 2026-11-05, while the same sweep with the variable unset freed 4.7 GB",
+        "route": "/cockpit/objects/knowledge/s-20261105041806-8f14-aecc295cb90d",
+        "source": ".ai/repo/knowledge/curated/s-20261105041806-8f14-aecc295cb90d.md",
+        "status": "verified",
+        "facts": {
+          "about": "lib/rust_bin.sh",
+          "class": "lesson",
+          "date": "2026-11-05",
+          "epistemics": "observed",
+          "route": "project",
+          "tags": [
+            "derived",
+            "observation"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://knowledge/s-20261105041806-8f14-c522d4649ef5",
+        "kind": "knowledge",
+        "label": "s-20261105041806-8f14-c522d4649ef5",
+        "summary": "mesh messages are stamped from an estimate, not the clock: on 2026-11-05 two long-running sessions stamped board and mesh messages 10-17 minutes ahead of the clock (a message stamped 04:31Z was sent at about 04:14Z, one stamped 04:3xZ at about 04:18Z), and each corrected the other; no rule, workflow or docs/MESH.md says a stamp is read from date -u immediately before the message, and a sentence would not be enough either, since both sessions knew the time could be read; the mechanism it asks for is a stamp the board or the message tool writes itself",
+        "route": "/cockpit/objects/knowledge/s-20261105041806-8f14-c522d4649ef5",
+        "source": ".ai/repo/knowledge/curated/s-20261105041806-8f14-c522d4649ef5.md",
+        "status": "verified",
+        "facts": {
+          "about": "rule:project.the-cooperation-model-is-the-owners-word",
+          "class": "lesson",
+          "date": "2026-11-05",
+          "epistemics": "observed",
+          "route": "enforcement",
+          "tags": [
+            "derived",
+            "observation"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/start-here",
         "kind": "knowledge",
         "label": "start-here",
@@ -105833,6 +105973,13 @@
         "label": "test/cases/4512_no_derived_page_outgrows_the_index.sh",
         "route": "/cockpit/objects/test/test-cases-4512-no-derived-page-outgrows-the-index-sh",
         "source": "test/cases/4512_no_derived_page_outgrows_the_index.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/4561_an_empty_cargo_dir_variable_is_read_as_unset.sh",
+        "kind": "test",
+        "label": "test/cases/4561_an_empty_cargo_dir_variable_is_read_as_unset.sh",
+        "route": "/cockpit/objects/test/test-cases-4561-an-empty-cargo-dir-variable-is-read-as-unset-sh",
+        "source": "test/cases/4561_an_empty_cargo_dir_variable_is_read_as_unset.sh"
       },
       {
         "id": "majordomus://test/test/cases/45_github_projection.sh",
@@ -147895,6 +148042,41 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://knowledge/s-20261105041806-8f14-113f58dd14e0",
+        "target": "kind:knowledge",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://knowledge/s-20261105041806-8f14-51f725c738b3",
+        "target": "kind:knowledge",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://knowledge/s-20261105041806-8f14-558639f60422",
+        "target": "kind:knowledge",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://knowledge/s-20261105041806-8f14-82b35a204e96",
+        "target": "kind:knowledge",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://knowledge/s-20261105041806-8f14-8b4a73a68752",
+        "target": "kind:knowledge",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://knowledge/s-20261105041806-8f14-aecc295cb90d",
+        "target": "kind:knowledge",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://knowledge/s-20261105041806-8f14-c522d4649ef5",
+        "target": "kind:knowledge",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://knowledge/start-here",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -154505,6 +154687,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/4561_an_empty_cargo_dir_variable_is_read_as_unset.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/45_github_projection.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -159631,8 +159818,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4338,
-      "edges": 9949,
+      "nodes": 4346,
+      "edges": 9957,
       "acyclic": false,
       "truncated": false
     }

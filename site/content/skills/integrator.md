@@ -5,7 +5,7 @@ weight = 5
 [extra]
 id = "integrator"
 status = "active"
-version = 3
+version = 4
 source = ".ai/repo/skills/integrator/SKILL.md"
 +++
 {% raw %}
@@ -145,6 +145,21 @@ when its own pre-push judgement passed, not when it is committed:
   first. When it failed, prefer re-running its failed job over the manual apply the rule
   keeps for a workflow that cannot (`project.the-projection-is-applied-at-landing`), so the
   records keep one writer; once it is green, the seat re-runs the pull request's failed job.
+- Stack the second validating top on the first top's head, not on master. Two tops judged
+  side by side on master are one slot: when train P (#2855) landed at 02:53:53Z on
+  2026-11-05, train 19c (#2918) went DIRTY on the forge at once, because derived files that
+  resolve to ours locally conflict there, and that cost a master merge and another round of
+  about 2.5 h. Stack it when its authored files merge cleanly onto the first head, say
+  "stacked on #<n>" in its body, and expect its github-projection job red until the base
+  lands; otherwise compose it on master once the first has landed.
+- The runner pool is shared across the account's repositories. At 04:02Z on 2026-11-05, 83
+  queued jobs of eight feature-branch runs of another repository kept a train top's validate
+  (run 41961637000) queued for over 35 minutes. Before pushing a top, count the queued jobs
+  of every repository of the account (`gh run list -R <owner>/<repo> --status queued`, then
+  `gh run view <id> --json jobs`); a deep queue elsewhere means the top waits behind it, and
+  pushing a second head only adds to it. Issue I4360 plans the monitor moment for a run
+  queued past its bound; the cause it names is "no runner online", which a pool busy with
+  another repository is not.
 
 ### 5. Verify the landing, then the release
 
