@@ -65,16 +65,21 @@ fn bar(value: Option<u64>, max: u64, tone: &str) -> El {
         ))
 }
 
-/// The check that bounded a head's wall time, how long it took and its share of the wait:
-/// `suite-shard (2) · 2 h 08 min · 83% of the wall time`, or `unknown` when the answer names
-/// none.
+/// The check that bounded a head's wall time, how long it took and its share of the wait,
+/// with what the chain was read from: `critical path (inferred from job times): suite-shard (2)
+/// · 2 h 08 min · 83% of the wall time`, or `unknown` when the answer names none.
 fn critical(head: &Value) -> String {
     let Some(path) = head.get("critical_path").filter(|p| p.is_object()) else {
         return "unknown".into();
     };
     let share = path.get("share").and_then(Value::as_f64);
+    // the basis the answer gave, in words; one it did not give is unknown, never assumed
+    let basis = match path.get("basis").and_then(Value::as_str) {
+        Some("inferred_from_job_times") => "inferred from job times",
+        Some(_) | None => "basis unknown",
+    };
     format!(
-        "{} · {} · {} of the wall time",
+        "critical path ({basis}): {} · {} · {} of the wall time",
         text(path, "check"),
         seconds(num(path, "seconds")),
         share.map_or_else(|| "unknown".into(), |s| format!("{:.0}%", s * 100.0))
@@ -290,7 +295,8 @@ mod tests {
                          "median_seconds": 7726, "p90_seconds": 7726, "slowest_seconds": 7726 }],
             "heads": [
                 { "number": 2900, "head_sha": "a", "wall_seconds": 9360, "failed": false,
-                  "critical_path": { "chain": ["plan", "suite-shard (2)"], "check": "suite-shard (2)",
+                  "critical_path": { "basis": "inferred_from_job_times",
+                                     "chain": ["plan", "suite-shard (2)"], "check": "suite-shard (2)",
                                      "seconds": 7726, "share": 0.83 },
                   "matrices": [{ "family": "suite-shard", "shards": 4, "slowest_shard": "suite-shard (2)",
                                  "slowest_seconds": 7726, "fastest_seconds": 4004, "spread": 1.93 }] },
@@ -304,9 +310,9 @@ mod tests {
         .render();
         for want in [
             "Critical path",
-            "suite-shard (2) · 2 h 08 min · 83% of the wall time",
+            "critical path (inferred from job times): suite-shard (2) · 2 h 08 min · 83% of the wall time",
             "suite-shard ×1.93 (slowest suite-shard (2))",
-            "lint · unknown · unknown of the wall time",
+            "critical path (basis unknown): lint · unknown · unknown of the wall time",
             "lint ×unknown (slowest lint (a))",
             ">unknown<",
             ">none<",

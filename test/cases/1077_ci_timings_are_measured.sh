@@ -62,9 +62,9 @@ got="$(printf '%s' "$t" | jq -r '.timings | [.measured_runs, .unmeasured_runs, .
 [ "$got" = "5 2 site 2400 2 600 1800 11 2400 site" ] \
   || { echo "    the timings are not what the runs took: '$got'"; printf '%s\n' "$t" | head -c 1200 | sed 's/^/    | /'; echo; exit 1; }
 # #11's wait is bounded by site alone; #13's shards were dealt 2 min against 1. The ratios are
-# compared as numbers: one jq prints 1.0 where another prints 1
-got="$(printf '%s' "$t" | jq -r '.timings.heads | [(.[0].critical_path | .check, .seconds, .share == 1), (.[] | select(.number==13) | .matrices[0] | .family, .shards, .slowest_shard, .spread == 2)] | map(tostring) | join(" ")')"
-[ "$got" = "site 2400 true shard 2 shard (2) true" ] \
+# compared as numbers: one jq prints 1.0 where another prints 1. The path says it is inferred
+got="$(printf '%s' "$t" | jq -r '.timings.heads | [(.[0].critical_path | .basis, .check, .seconds, .share == 1), (.[] | select(.number==13) | .matrices[0] | .family, .shards, .slowest_shard, .spread == 2)] | map(tostring) | join(" ")')"
+[ "$got" = "inferred_from_job_times site 2400 true shard 2 shard (2) true" ] \
   || { echo "    the critical path or the matrix spread is not what the runs took: '$got'"; printf '%s\n' "$t" | head -c 1600 | sed 's/^/    | /'; echo; exit 1; }
 
 # ---------------------------------------------------------------- the MCP tool, as a client calls it
@@ -93,7 +93,7 @@ done
   || { echo "    the CI/CD screen does not draw the slowest check's median, ten seconds after it was first asked"; exit 1; }
 printf '%s' "$page" | grep -qF 'href="/ui/prs?pr=11#pr"' \
   || { echo "    the longest wait does not lead to its pull request"; exit 1; }
-printf '%s' "$page" | grep -qF 'site · 40 min 00 s · 100% of the wall time' \
+printf '%s' "$page" | grep -qF 'critical path (inferred from job times): site · 40 min 00 s · 100% of the wall time' \
   || { echo "    the longest wait does not name its critical path"; exit 1; }
 printf '%s' "$page" | grep -qF 'shard ×2.00 (slowest shard (2))' \
   || { echo "    the uneven matrix is not drawn"; exit 1; }

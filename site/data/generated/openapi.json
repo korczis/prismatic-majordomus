@@ -426,6 +426,7 @@
     "schema-CriterionCoverage": "docs/api/shared/",
     "schema-CriticalBlocker": "docs/api/devtask/",
     "schema-CriticalPath": "docs/api/integration/",
+    "schema-CriticalPathBasis": "docs/api/integration/",
     "schema-CritiqueClass": "docs/api/intents/",
     "schema-CritiqueFinding": "docs/api/intents/",
     "schema-DashboardCard": "docs/api/dashboard/",
@@ -1403,7 +1404,7 @@
   "binding": "GET binds every top-level input property as a query parameter; POST binds the input as the JSON body",
   "counts": {
     "operations": 218,
-    "schemas": 1119,
+    "schemas": 1120,
     "tags": 62
   },
   "dialect": "https://spec.openapis.org/oas/3.1/dialect/base",
@@ -1930,6 +1931,7 @@
     "CriterionCoverage": "shared",
     "CriticalBlocker": "devtask",
     "CriticalPath": "integration",
+    "CriticalPathBasis": "integration",
     "CritiqueClass": "intents",
     "CritiqueFinding": "intents",
     "DashboardCard": "dashboard",
@@ -14210,6 +14212,15 @@
       "name": "CriticalPath",
       "properties": [
         {
+          "description": "What the chain was read from, so that no reader takes it for the job graph.",
+          "name": "basis",
+          "refs": [
+            "CriticalPathBasis"
+          ],
+          "required": true,
+          "type": "CriticalPathBasis"
+        },
+        {
           "description": "The checks of the chain, first to last, each started after the one before completed.",
           "name": "chain",
           "refs": [],
@@ -14244,6 +14255,25 @@
         "HeadTiming"
       ],
       "values": [],
+      "variants": []
+    },
+    {
+      "description": "What a critical path was read from.",
+      "home": "integration",
+      "is_enum": true,
+      "name": "CriticalPathBasis",
+      "properties": [],
+      "type": "\"inferred_from_job_times\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "CriticalPath"
+      ],
+      "values": [
+        {
+          "description": "Inferred from the checks' start and completion times: the observation holds no job\ngraph, so a check that completed in the gap before another started reads as its\npredecessor.",
+          "value": "inferred_from_job_times"
+        }
+      ],
       "variants": []
     },
     {
@@ -71924,7 +71954,7 @@
           "cache_detail": "",
           "cli": "",
           "curl": "curl -s \"http://127.0.0.1:8741/api/v1/pull-requests/timings\"",
-          "description": "How long CI takes on the open pull requests, measured from the recorded forge observation: for every check, how many of its runs started and completed, how many passed and failed, and its median, 90th percentile (nearest rank) and longest duration in seconds, the slowest median first; for every open head with a measured check, the wall time from its first check's start to its last check's completion and the check that took longest, the longest wait first, with its critical path (the chain of checks back from the last completion, each the one that completed last before the next started, inferred from the times because the observation holds no job graph; the longest check of that chain, its seconds and its share of the wall time to two decimals) and, for every matrix family of checks named `<family> (<values>)`, its shards, slowest shard, slowest and fastest seconds and their spread (slowest over fastest, to two decimals; null when the fastest took 0 s), the most uneven deal first; and how many runs could not be measured (still running, queued, or recorded before starts were read), which are counted and never measured as zero. A read: it asks the forge for nothing; `majordomus prs refresh` records the observation. `observed: false` with the reason when this checkout has recorded none.",
+          "description": "How long CI takes on the open pull requests, measured from the recorded forge observation: for every check, how many of its runs started and completed, how many passed and failed, and its median, 90th percentile (nearest rank) and longest duration in seconds, the slowest median first; for every open head with a measured check, the wall time from its first check's start to its last check's completion and the check that took longest, the longest wait first, with its critical path (the chain of checks back from the last completion, each the one that completed last before the next started, inferred from the times because the observation holds no job graph, which its `basis: inferred_from_job_times` says; the longest check of that chain, its seconds and its share of the wall time to two decimals) and, for every matrix family of checks named `<family> (<values>)`, its shards, slowest shard, slowest and fastest seconds and their spread (slowest over fastest, to two decimals; null when the fastest took 0 s), the most uneven deal first; and how many runs could not be measured (still running, queued, or recorded before starts were read), which are counted and never measured as zero. A read: it asks the forge for nothing; `majordomus prs refresh` records the observation. `observed: false` with the reason when this checkout has recorded none.",
           "home": "integration",
           "id": "integration.timings",
           "kind": "query",

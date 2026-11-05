@@ -46,6 +46,8 @@ pub struct CheckTiming {
 /// longest: the job a shorter run has to shorten.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema)]
 pub struct CriticalPath {
+    /// What the chain was read from, so that no reader takes it for the job graph.
+    pub basis: CriticalPathBasis,
     /// The checks of the chain, first to last, each started after the one before completed.
     pub chain: Vec<String>,
     /// The check of the chain that took longest.
@@ -54,6 +56,16 @@ pub struct CriticalPath {
     pub seconds: u64,
     /// `seconds / wall_seconds` of the head, to two decimals; 0 for a wall time of 0 s.
     pub share: f64,
+}
+
+/// What a critical path was read from.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+pub enum CriticalPathBasis {
+    /// Inferred from the checks' start and completion times: the observation holds no job
+    /// graph, so a check that completed in the gap before another started reads as its
+    /// predecessor.
+    InferredFromJobTimes,
 }
 
 /// How unevenly one matrix family was dealt on a head: the checks named `<family> (<values>)`.
@@ -185,6 +197,7 @@ fn critical_path(jobs: &[Job<'_>], wall: u64) -> Option<CriticalPath> {
     let (name, start, end) = jobs[longest];
     let seconds = end - start;
     Some(CriticalPath {
+        basis: CriticalPathBasis::InferredFromJobTimes,
         chain: chain.iter().map(|&i| jobs[i].0.to_string()).collect(),
         check: name.to_string(),
         seconds,
@@ -209,11 +222,17 @@ fn matrices(jobs: &[Job<'_>]) -> Vec<MatrixSpread> {
     }
     let mut spreads: Vec<MatrixSpread> = by_family
         .into_iter()
-        .map(|(family, mut shards)| {
-            // longest first, and of equal ones the earlier name
-            shards.sort_by(|a, b| b.0.cmp(&a.0).then(a.1.cmp(b.1)));
-            let (slowest, name) = shards[0];
-            let fastest = shards[shards.len() - 1].0;
+        .map(|(family, shards)| {
+            // a family holds at least the shard that named it; the longest, and of equal ones
+            // the earlier name, is folded out, so no order of the shards is kept
+            let (slowest, name) = shards.iter().fold(shards[0], |best, &s| {
+                if s.0 > best.0 || (s.0 == best.0 && s.1 < best.1) {
+                    s
+                } else {
+                    best
+                }
+            });
+            let fastest = shards.iter().fold(slowest, |m, s| m.min(s.0));
             MatrixSpread {
                 family: family.to_string(),
                 shards: shards.len() as u64,
@@ -592,6 +611,11 @@ mod tests {
         assert!(crate::order::is_canonical(&h.matrices));
         let json = serde_json::to_value(&t).unwrap();
         assert_eq!(json["heads"][0]["critical_path"]["share"], 0.83);
+        assert_eq!(
+            json["heads"][0]["critical_path"]["basis"], "inferred_from_job_times",
+            "the chain says it was read from the times, not from a job graph"
+        );
+        assert_eq!(path.basis, CriticalPathBasis::InferredFromJobTimes);
         assert_eq!(json["heads"][0]["matrices"][0]["spread"], 1.93);
     }
 

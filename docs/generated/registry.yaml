@@ -30784,7 +30784,7 @@ capabilities:
     module: integration
     kind: query
     title: How long CI takes
-    description: "How long CI takes on the open pull requests, measured from the recorded forge observation: for every check, how many of its runs started and completed, how many passed and failed, and its median, 90th percentile (nearest rank) and longest duration in seconds, the slowest median first; for every open head with a measured check, the wall time from its first check's start to its last check's completion and the check that took longest, the longest wait first, with its critical path (the chain of checks back from the last completion, each the one that completed last before the next started, inferred from the times because the observation holds no job graph; the longest check of that chain, its seconds and its share of the wall time to two decimals) and, for every matrix family of checks named `<family> (<values>)`, its shards, slowest shard, slowest and fastest seconds and their spread (slowest over fastest, to two decimals; null when the fastest took 0 s), the most uneven deal first; and how many runs could not be measured (still running, queued, or recorded before starts were read), which are counted and never measured as zero. A read: it asks the forge for nothing; `majordomus prs refresh` records the observation. `observed: false` with the reason when this checkout has recorded none."
+    description: "How long CI takes on the open pull requests, measured from the recorded forge observation: for every check, how many of its runs started and completed, how many passed and failed, and its median, 90th percentile (nearest rank) and longest duration in seconds, the slowest median first; for every open head with a measured check, the wall time from its first check's start to its last check's completion and the check that took longest, the longest wait first, with its critical path (the chain of checks back from the last completion, each the one that completed last before the next started, inferred from the times because the observation holds no job graph, which its `basis: inferred_from_job_times` says; the longest check of that chain, its seconds and its share of the wall time to two decimals) and, for every matrix family of checks named `<family> (<values>)`, its shards, slowest shard, slowest and fastest seconds and their spread (slowest over fastest, to two decimals; null when the fastest took 0 s), the most uneven deal first; and how many runs could not be measured (still running, queued, or recorded before starts were read), which are counted and never measured as zero. A read: it asks the forge for nothing; `majordomus prs refresh` records the observation. `observed: false` with the reason when this checkout has recorded none."
     input:
       name: Empty
       schema:
@@ -30950,6 +30950,9 @@ capabilities:
           CriticalPath:
             type: object
             properties:
+              basis:
+                "$ref": "#/$defs/CriticalPathBasis"
+                description: "What the chain was read from, so that no reader takes it for the job graph."
               chain:
                 type: array
                 items:
@@ -30968,11 +30971,18 @@ capabilities:
                 format: double
                 description: "`seconds / wall_seconds` of the head, to two decimals; 0 for a wall time of 0 s."
             required:
+              - basis
               - chain
               - check
               - seconds
               - share
             description: "The chain of checks that bounded one head's wall time, and the one of them that took\nlongest: the job a shorter run has to shorten."
+          CriticalPathBasis:
+            oneOf:
+              - type: string
+                const: inferred_from_job_times
+                description: "Inferred from the checks' start and completion times: the observation holds no job\ngraph, so a check that completed in the gap before another started reads as its\npredecessor."
+            description: What a critical path was read from.
           MatrixSpread:
             type: object
             properties:
