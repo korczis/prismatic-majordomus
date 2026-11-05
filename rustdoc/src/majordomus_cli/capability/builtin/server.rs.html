@@ -2010,7 +2010,7 @@
 <a href=#2010 id=2010 data-nosnippet>2010</a>            .with_max_level(tracing::Level::WARN)
 <a href=#2011 id=2011 data-nosnippet>2011</a>            .with_writer(<span class="kw">move </span>|| writer.clone())
 <a href=#2012 id=2012 data-nosnippet>2012</a>            .finish();
-<a href=#2013 id=2013 data-nosnippet>2013</a>        <span class="kw">let </span>r = tracing::subscriber::with_default(subscriber, || {
+<a href=#2013 id=2013 data-nosnippet>2013</a>        <span class="kw">let </span>r = <span class="kw">crate</span>::logging::with_scoped(subscriber, || {
 <a href=#2014 id=2014 data-nosnippet>2014</a>            runtime_at(
 <a href=#2015 id=2015 data-nosnippet>2015</a>                dir.path(),
 <a href=#2016 id=2016 data-nosnippet>2016</a>                <span class="string">".ai/local"</span>,

@@ -3678,7 +3678,7 @@
 <a href=#3678 id=3678 data-nosnippet>3678</a>            .with_max_level(tracing::Level::WARN)
 <a href=#3679 id=3679 data-nosnippet>3679</a>            .with_writer(std::io::sink)
 <a href=#3680 id=3680 data-nosnippet>3680</a>            .finish();
-<a href=#3681 id=3681 data-nosnippet>3681</a>        <span class="kw">let </span>planned = tracing::subscriber::with_default(subscriber, || planned_changelog(<span class="kw-2">&amp;</span>args));
+<a href=#3681 id=3681 data-nosnippet>3681</a>        <span class="kw">let </span>planned = <span class="kw">crate</span>::logging::with_scoped(subscriber, || planned_changelog(<span class="kw-2">&amp;</span>args));
 <a href=#3682 id=3682 data-nosnippet>3682</a>        <span class="kw">let </span>section = planned
 <a href=#3683 id=3683 data-nosnippet>3683</a>            .sections
 <a href=#3684 id=3684 data-nosnippet>3684</a>            .iter()

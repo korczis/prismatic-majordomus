@@ -1883,7 +1883,7 @@
 <a href=#1883 id=1883 data-nosnippet>1883</a>            .with_max_level(tracing::Level::WARN)
 <a href=#1884 id=1884 data-nosnippet>1884</a>            .with_writer(std::io::sink)
 <a href=#1885 id=1885 data-nosnippet>1885</a>            .finish();
-<a href=#1886 id=1886 data-nosnippet>1886</a>        tracing::subscriber::with_default(subscriber, || {
+<a href=#1886 id=1886 data-nosnippet>1886</a>        <span class="kw">crate</span>::logging::with_scoped(subscriber, || {
 <a href=#1887 id=1887 data-nosnippet>1887</a>            <span class="macro">assert_eq!</span>(superseded_by(<span class="kw-2">&amp;</span>lease, <span class="kw-2">&amp;</span>identity_of(<span class="kw-2">&amp;</span>exe), <span class="string">"0.30.2"</span>), <span class="prelude-val">None</span>);
 <a href=#1888 id=1888 data-nosnippet>1888</a>        });
 <a href=#1889 id=1889 data-nosnippet>1889</a>    }
@@ -1909,7 +1909,7 @@
 <a href=#1909 id=1909 data-nosnippet>1909</a>            .with_max_level(tracing::Level::WARN)
 <a href=#1910 id=1910 data-nosnippet>1910</a>            .with_writer(std::io::sink)
 <a href=#1911 id=1911 data-nosnippet>1911</a>            .finish();
-<a href=#1912 id=1912 data-nosnippet>1912</a>        tracing::subscriber::with_default(subscriber, || {
+<a href=#1912 id=1912 data-nosnippet>1912</a>        <span class="kw">crate</span>::logging::with_scoped(subscriber, || {
 <a href=#1913 id=1913 data-nosnippet>1913</a>            <span class="macro">assert!</span>(!record_runtime(
 <a href=#1914 id=1914 data-nosnippet>1914</a>                <span class="kw-2">&amp;</span>path,
 <a href=#1915 id=1915 data-nosnippet>1915</a>                <span class="kw-2">&amp;</span>held.token,
@@ -2120,7 +2120,7 @@
 <a href=#2120 id=2120 data-nosnippet>2120</a>            .with_max_level(tracing::Level::WARN)
 <a href=#2121 id=2121 data-nosnippet>2121</a>            .with_writer(std::io::sink)
 <a href=#2122 id=2122 data-nosnippet>2122</a>            .finish();
-<a href=#2123 id=2123 data-nosnippet>2123</a>        tracing::subscriber::with_default(subscriber, || {
+<a href=#2123 id=2123 data-nosnippet>2123</a>        <span class="kw">crate</span>::logging::with_scoped(subscriber, || {
 <a href=#2124 id=2124 data-nosnippet>2124</a>            <span class="macro">assert!</span>(
 <a href=#2125 id=2125 data-nosnippet>2125</a>                !remove_if_held(<span class="kw-2">&amp;</span>path, <span class="string">"owner"</span>),
 <a href=#2126 id=2126 data-nosnippet>2126</a>                <span class="string">"no removal without the lock"
@@ -2322,7 +2322,7 @@
 <a href=#2322 id=2322 data-nosnippet>2322</a>            .with_writer(std::io::sink)
 <a href=#2323 id=2323 data-nosnippet>2323</a>            .finish();
 <a href=#2324 id=2324 data-nosnippet>2324</a>        <span class="kw">let </span><span class="kw-2">mut </span>ran = <span class="bool-val">false</span>;
-<a href=#2325 id=2325 data-nosnippet>2325</a>        tracing::subscriber::with_default(subscriber, || {
+<a href=#2325 id=2325 data-nosnippet>2325</a>        <span class="kw">crate</span>::logging::with_scoped(subscriber, || {
 <a href=#2326 id=2326 data-nosnippet>2326</a>            take_over_with(<span class="kw-2">&amp;</span>path, <span class="kw-2">&amp;</span>seen, Duration::ZERO, || ran = <span class="bool-val">true</span>).unwrap();
 <a href=#2327 id=2327 data-nosnippet>2327</a>        });
 <a href=#2328 id=2328 data-nosnippet>2328</a>        <span class="macro">assert!</span>(!ran, <span class="string">"nothing past the lock ran"</span>);

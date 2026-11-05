@@ -170,16 +170,16 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
 </div></div>
 <div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
   <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4"><div class="rounded-base border border-default bg-neutral-primary-soft p-4">
-      <p class="text-2xl font-semibold tracking-tight text-heading">262</p>
+      <p class="text-2xl font-semibold tracking-tight text-heading">264</p>
       <p class="mt-1 text-sm text-body-subtle">commands</p>
     </div><div class="rounded-base border border-default bg-neutral-primary-soft p-4">
-      <p class="text-2xl font-semibold tracking-tight text-heading">227</p>
+      <p class="text-2xl font-semibold tracking-tight text-heading">229</p>
       <p class="mt-1 text-sm text-body-subtle">z nich můžete spustit</p>
     </div><div class="rounded-base border border-default bg-neutral-primary-soft p-4">
-      <p class="text-2xl font-semibold tracking-tight text-heading">1802</p>
+      <p class="text-2xl font-semibold tracking-tight text-heading">1819</p>
       <p class="mt-1 text-sm text-body-subtle">zdokumentované argumenty</p>
     </div><div class="rounded-base border border-default bg-neutral-primary-soft p-4">
-      <p class="text-2xl font-semibold tracking-tight text-heading">261</p>
+      <p class="text-2xl font-semibold tracking-tight text-heading">263</p>
       <p class="mt-1 text-sm text-body-subtle">spuštěné příklady</p>
     </div></div>
 
@@ -391,6 +391,10 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
       <span class="break-words font-mono text-sm text-heading">majordomus offload probe</span> <span class="break-words text-sm text-body sm:flex-1">Změří každého deklarovaného hostitele — volné místo, běžící nebo čekající derive — a pojmenuje toho, jejž by derive použil; exit 12, když žádný nemůže převzít</span> <span class="font-mono text-xs text-body-subtle">1 příklad</span>
     </a></li><li><a href="https://majordomus.dev/cs/docs/cli/offload/derive/" class="flex flex-col gap-1 px-4 py-3 sm:pl-8 hover:bg-neutral-secondary-medium sm:flex-row sm:items-baseline sm:gap-4">
       <span class="break-words font-mono text-sm text-heading">majordomus offload derive</span> <span class="break-words text-sm text-body sm:flex-1">Odvodí worktree na deklarovaném hostiteli a připraví do indexu, co změnil; nic se necommituje ani nepushuje. Exit 2 u nesledovaného souboru nebo nevyřešeného merge, 10 při selhání odvození, 11 když smaže sledovaný soubor, 12 když ho žádný hostitel nemůže převzít, 75 když vyprší čekání ve frontě</span> <span class="font-mono text-xs text-body-subtle">1 příklad</span>
+    </a></li><li><a href="https://majordomus.dev/cs/docs/cli/offload/stop/" class="flex flex-col gap-1 px-4 py-3 sm:pl-8 hover:bg-neutral-secondary-medium sm:flex-row sm:items-baseline sm:gap-4">
+      <span class="break-words font-mono text-sm text-heading">majordomus offload stop</span>
+      <span class="break-words text-sm text-body sm:flex-1">Stop an offloaded run as a process group on its host: read its run record, refuse unless the record names this session (or --force), then TERM the group and KILL what is left after the grace period. Exit 2 on a tag that is not one or an ambiguous host, 12 when the host holds no record or the group is not the run&#39;s, 13 when the run belongs to another session</span>
+      <span class="font-mono text-xs text-body-subtle">1 example</span>
     </a></li><li><a href="https://majordomus.dev/cs/docs/cli/convergence/" class="flex flex-col gap-1 px-4 py-3  hover:bg-neutral-secondary-medium sm:flex-row sm:items-baseline sm:gap-4">
       <span class="break-words font-mono text-sm text-heading">majordomus convergence</span> <span class="break-words text-sm text-body sm:flex-1">Je některá práce tohoto repozitáře držena tam, kde se může ztratit? Každý držitel — pracovní strom s necommitnutými soubory, větev s commity, stash — s dispozicí čtenou z gitu a jeden verdikt nad nimi</span> <span class="font-mono text-xs text-body-subtle">1 příklad</span>
     </a></li><li><a href="https://majordomus.dev/cs/docs/cli/commit/" class="flex flex-col gap-1 px-4 py-3  hover:bg-neutral-secondary-medium sm:flex-row sm:items-baseline sm:gap-4">
@@ -460,7 +464,9 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
     </a></li><li><a href="https://majordomus.dev/cs/docs/cli/guard/" class="flex flex-col gap-1 px-4 py-3  hover:bg-neutral-secondary-medium sm:flex-row sm:items-baseline sm:gap-4">
       <span class="break-words font-mono text-sm text-heading">majordomus guard</span> <span class="break-words text-sm text-body sm:flex-1">Hlídač úprav: zda smí nástroj poskytovatele nyní zapsat soubor tohoto checkoutu, posuzováno podle rozsahu aktivní úlohy a živých mesh tvrzení zapisující relace</span> <span class="font-mono text-xs text-body-subtle">skupina</span>
     </a></li><li><a href="https://majordomus.dev/cs/docs/cli/guard/hook/" class="flex flex-col gap-1 px-4 py-3 sm:pl-8 hover:bg-neutral-secondary-medium sm:flex-row sm:items-baseline sm:gap-4">
-      <span class="break-words font-mono text-sm text-heading">majordomus guard hook</span> <span class="break-words text-sm text-body sm:flex-1">Posoudí úpravu, kterou se chystá provést payload poskytovatele před nástrojem (na stdin); výstupní kód 2 s důvodem a nápravou, když ji nepokrývá žádný claim, jinak 0</span> <span class="font-mono text-xs text-body-subtle">1 příklad</span>
+      <span class="break-words font-mono text-sm text-heading">majordomus guard hook</span>
+      <span class="break-words text-sm text-body sm:flex-1">Judge the tool call a provider&#39;s pre-tool payload (on stdin) is about to make; exit 2 with the reason and the remedy when no claim covers the file it edits, or when its shell command starts a build (cargo, rustc, scripts/derive, scripts/rust-*) over ssh on a declared offload host outside `majordomus offload`; 0 otherwise</span>
+      <span class="font-mono text-xs text-body-subtle">1 example</span>
     </a></li><li><a href="https://majordomus.dev/cs/docs/cli/mesh/" class="flex flex-col gap-1 px-4 py-3  hover:bg-neutral-secondary-medium sm:flex-row sm:items-baseline sm:gap-4">
       <span class="break-words font-mono text-sm text-heading">majordomus mesh</span> <span class="break-words text-sm text-body sm:flex-1">Mesh: uzly, které běžící server tohoto repozitáře objevil v síti, identita uzlu tohoto stroje a samotest, který dokazuje předpoklady jen na tomto stroji</span> <span class="font-mono text-xs text-body-subtle">group</span>
     </a></li><li><a href="https://majordomus.dev/cs/docs/cli/mesh/status/" class="flex flex-col gap-1 px-4 py-3 sm:pl-8 hover:bg-neutral-secondary-medium sm:flex-row sm:items-baseline sm:gap-4">
@@ -540,6 +546,10 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
     </a></li><li><a href="https://majordomus.dev/cs/docs/cli/mesh/build-cache/provision/" class="flex flex-col gap-1 px-4 py-3 sm:pl-14 hover:bg-neutral-secondary-medium sm:flex-row sm:items-baseline sm:gap-4">
       <span class="break-words font-mono text-sm text-heading">majordomus mesh build-cache provision</span>
       <span class="break-words text-sm text-body sm:flex-1">Plan what this host still owes as a cache provider, or with --apply bring it there as root; idempotent, no secret reported</span>
+      <span class="font-mono text-xs text-body-subtle">1 example</span>
+    </a></li><li><a href="https://majordomus.dev/cs/docs/cli/mesh/who/" class="flex flex-col gap-1 px-4 py-3 sm:pl-8 hover:bg-neutral-secondary-medium sm:flex-row sm:items-baseline sm:gap-4">
+      <span class="break-words font-mono text-sm text-heading">majordomus mesh who</span>
+      <span class="break-words text-sm text-body sm:flex-1">Who runs this: the session, board peer, issue and address behind a pid, host:pid, run tag, issue or path; exits 10 when no evidence names one</span>
       <span class="font-mono text-xs text-body-subtle">1 example</span>
     </a></li><li><a href="https://majordomus.dev/cs/docs/cli/monitor/" class="flex flex-col gap-1 px-4 py-3  hover:bg-neutral-secondary-medium sm:flex-row sm:items-baseline sm:gap-4">
       <span class="break-words font-mono text-sm text-heading">majordomus monitor</span> <span class="break-words text-sm text-body sm:flex-1">Vše, co se děje kolem tohoto repozitáře, sledované v jednom streamu: relace mesh, nároky, předávky a revize na každém propojeném stroji, merge a selhání executoru a pull requesty a běhy GitHubu, s označením toho, co je adresováno vám</span> <span class="font-mono text-xs text-body-subtle">2 příklady</span>
@@ -758,7 +768,7 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
     </a></li></ul>
 
   <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Co z toho činí pravdu</h2>
-  <p class="mt-2 max-w-3xl break-words text-sm text-body">Každý příkaz výše je deklarován jednou, v <a href="https://github.com/korczis/prismatic-majordomus/blob/995bd9fba1bc97a9999a5f38795adc7cb4d6c8a5/apps/majordomus-cli/src/cli.rs" class="break-all font-mono text-fg-brand underline inline-block py-1">apps/majordomus-cli/src/cli.rs</a>, spolu s jeho příklady. Spustitelný soubor tu deklaraci převede do <a href="https://github.com/korczis/prismatic-majordomus/blob/995bd9fba1bc97a9999a5f38795adc7cb4d6c8a5/docs/generated/cli.json" class="break-all font-mono text-fg-brand underline inline-block py-1">docs/generated/cli.json</a> a vykreslují ji tyto stránky, <code class="font-mono">--help</code> a <a href="https://github.com/korczis/prismatic-majordomus/blob/995bd9fba1bc97a9999a5f38795adc7cb4d6c8a5/docs/generated/cli.md" class="break-all font-mono text-fg-brand underline inline-block py-1">docs/generated/cli.md</a>. Příkaz, který člověk může spustit, nemůže existovat bez příkladu: vlastní validátor spustitelného souboru jej odmítne a příklady zde ukázané jsou vektory argumentů, které testy příkladů crate spouštějí proti sestavené binárce.</p>
+  <p class="mt-2 max-w-3xl break-words text-sm text-body">Každý příkaz výše je deklarován jednou, v <a href="https://github.com/korczis/prismatic-majordomus/blob/64d28e2d9c5065d72412616935e78211b24c0c73/apps/majordomus-cli/src/cli.rs" class="break-all font-mono text-fg-brand underline inline-block py-1">apps/majordomus-cli/src/cli.rs</a>, spolu s jeho příklady. Spustitelný soubor tu deklaraci převede do <a href="https://github.com/korczis/prismatic-majordomus/blob/64d28e2d9c5065d72412616935e78211b24c0c73/docs/generated/cli.json" class="break-all font-mono text-fg-brand underline inline-block py-1">docs/generated/cli.json</a> a vykreslují ji tyto stránky, <code class="font-mono">--help</code> a <a href="https://github.com/korczis/prismatic-majordomus/blob/64d28e2d9c5065d72412616935e78211b24c0c73/docs/generated/cli.md" class="break-all font-mono text-fg-brand underline inline-block py-1">docs/generated/cli.md</a>. Příkaz, který člověk může spustit, nemůže existovat bez příkladu: vlastní validátor spustitelného souboru jej odmítne a příklady zde ukázané jsou vektory argumentů, které testy příkladů crate spouštějí proti sestavené binárce.</p>
   <p class="mt-3 max-w-3xl text-sm text-body">Celá příkazová řádka na jedné stránce: <a href="https://majordomus.dev/cs/registry/cli/" class="text-fg-brand underline">stránka příkazové řádky registru</a>. Životní cyklus úlohy (<code class="font-mono">init</code>, <code class="font-mono">start</code>, <code class="font-mono">check</code>, <code class="font-mono">finish</code>, <code class="font-mono">doctor</code>, ...) patří <em>shellovému</em> nástroji <code class="font-mono">bin/majordomus</code>, což je jiný program: viz <a href="https://majordomus.dev/cs/commands/" class="text-fg-brand underline">Příkazy</a> a jeho <a href="https://majordomus.dev/cs/docs/cli-specification/" class="text-fg-brand underline">specifikace</a>.</p>
 </div>
 
@@ -807,9 +817,9 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
       <div class="min-w-0">
         <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">Projekt</h2><ul class="space-y-2 text-sm font-medium text-body">
           <li><a href="https://github.com/korczis/prismatic-majordomus" class="hover:text-heading hover:underline">GitHub</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/995bd9fba1bc97a9999a5f38795adc7cb4d6c8a5/LICENSE" class="hover:text-heading hover:underline">Licence MIT</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/995bd9fba1bc97a9999a5f38795adc7cb4d6c8a5/SECURITY.md" class="hover:text-heading hover:underline">Bezpečnostní politika</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/995bd9fba1bc97a9999a5f38795adc7cb4d6c8a5/CONTRIBUTING.md" class="hover:text-heading hover:underline">Průvodce pro přispěvatele</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/64d28e2d9c5065d72412616935e78211b24c0c73/LICENSE" class="hover:text-heading hover:underline">Licence MIT</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/64d28e2d9c5065d72412616935e78211b24c0c73/SECURITY.md" class="hover:text-heading hover:underline">Bezpečnostní politika</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/64d28e2d9c5065d72412616935e78211b24c0c73/CONTRIBUTING.md" class="hover:text-heading hover:underline">Průvodce pro přispěvatele</a></li>
         </ul>
       </div>
     </div>
@@ -817,7 +827,7 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/cs/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.10</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/995bd9fba1bc97a9999a5f38795adc7cb4d6c8a5" class="font-mono underline">995bd9f</a> · inputs <span class="font-mono">9f30aefaf772</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/cs/architecture/" class="underline">how this site is derived</a> names them.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.10</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/64d28e2d9c5065d72412616935e78211b24c0c73" class="font-mono underline">64d28e2</a> · inputs <span class="font-mono">0bb0beba3b03</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/cs/architecture/" class="underline">how this site is derived</a> names them.</p>
     </div>
   </div>
 </footer>

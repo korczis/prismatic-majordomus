@@ -574,7 +574,7 @@
 <a href=#574 id=574 data-nosnippet>574</a>            .with_max_level(tracing::Level::INFO)
 <a href=#575 id=575 data-nosnippet>575</a>            .with_writer(<span class="kw">move </span>|| writer.clone())
 <a href=#576 id=576 data-nosnippet>576</a>            .finish();
-<a href=#577 id=577 data-nosnippet>577</a>        tracing::subscriber::with_default(subscriber, || {
+<a href=#577 id=577 data-nosnippet>577</a>        <span class="kw">crate</span>::logging::with_scoped(subscriber, || {
 <a href=#578 id=578 data-nosnippet>578</a>            w.sweep(start + Duration::from_secs(<span class="number">3</span>));
 <a href=#579 id=579 data-nosnippet>579</a>        });
 <a href=#580 id=580 data-nosnippet>580</a>        <span class="macro">assert_eq!</span>(w.peers()[<span class="kw-2">&amp;</span>peer], Phase::Closed, <span class="string">"past the deadline"</span>);

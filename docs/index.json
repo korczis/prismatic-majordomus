@@ -2,17 +2,17 @@
  "schema": 1,
  "generated_by": "scripts/lib/docs-index.mjs",
  "build": {
-  "commit": "995bd9fba1bc97a9999a5f38795adc7cb4d6c8a5",
+  "commit": "64d28e2d9c5065d72412616935e78211b24c0c73",
   "source_version": "1.0.0-alpha.10",
-  "registry_fingerprint": "d84e30561d22c441e5f6c788cce394e249e8b02184a8115f4bb3ab8e33e3b8f4"
+  "registry_fingerprint": "877abf81f8c8150a159861f53c6b04614d6568a64fc67d5c60e3ddaca55eb897"
  },
  "counts": {
-  "pages": 6430,
-  "capabilities": 3860,
-  "cli_commands": 127,
-  "http_routes": 218,
-  "mcp_tools": 214,
-  "mcp_resources": 3687,
+  "pages": 6444,
+  "capabilities": 3867,
+  "cli_commands": 128,
+  "http_routes": 219,
+  "mcp_tools": 215,
+  "mcp_resources": 3693,
   "modules": 96
  },
  "kinds": [
@@ -158,7 +158,7 @@
    "route": "/plan/",
    "title": null,
    "reason": null,
-   "count": 1215
+   "count": 1219
   },
   {
    "kind": "knowledge",
@@ -270,7 +270,7 @@
    "route": null,
    "title": null,
    "reason": "A test object is a case file. What it proves is published — on /guarantees/ for the claim and on the rule's own page for the rule — and that is the direction a reader asks in.",
-   "count": 691
+   "count": 693
   },
   {
    "kind": "use-case",
@@ -4508,7 +4508,7 @@
   {
    "route": "/cs/docs/cli/guard/hook/",
    "title": "majordomus guard hook",
-   "description": "Posoudit úpravu, kterou se chystá provést payload poskytovatele před nástrojem (na stdin); skončí kódem 2 s důvodem a nápravou, když ji žádný nárok nekryje, jinak 0",
+   "description": "Judge the tool call a provider's pre-tool payload (on stdin) is about to make; exit 2 with the reason and the remedy when no claim covers the file it edits, or when its shell command starts a build (cargo, rustc, scripts/derive, scripts/rust-*) over ssh on a declared offload host outside `majordomus offload`; 0 otherwise",
    "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
   },
   {
@@ -4806,6 +4806,12 @@
    "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
   },
   {
+   "route": "/cs/docs/cli/mesh/who/",
+   "title": "majordomus mesh who",
+   "description": "Who runs this: the session, board peer, issue and address behind a pid, host:pid, run tag, issue or path; exits 10 when no evidence names one",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
    "route": "/cs/docs/cli/models/",
    "title": "majordomus models",
    "description": "Katalog modelů, který distribuce deklaruje, a vysvětlitelné směrování nad ním: dodavatelé, kanonické reference modelů, typované schopnosti a který model zadaná potřeba vybírá — s vysvětlením pro každého kandidáta",
@@ -4851,6 +4857,12 @@
    "route": "/cs/docs/cli/offload/probe/",
    "title": "majordomus offload probe",
    "description": "Změřit každého deklarovaného hosta — volné místo, běžící nebo čekající derive — a pojmenovat toho, který by derive převzal; exit 12, když žádný nemůže",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/docs/cli/offload/stop/",
+   "title": "majordomus offload stop",
+   "description": "Stop an offloaded run as a process group on its host: read its run record, refuse unless the record names this session (or --force), then TERM the group and KILL what is left after the grace period. Exit 2 on a tag that is not one or an ambiguous host, 12 when the host holds no record or the group is not the run's, 13 when the run belongs to another session",
    "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
   },
   {
@@ -14580,6 +14592,30 @@
    "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
   },
   {
+   "route": "/cs/plan/i3991/",
+   "title": "I3991 — The integration lease lives by its executor's progress through the queue, not by its process existing",
+   "description": "Make the integration executor's exclusive mesh claim on integration/<repository>/<base> beat only when the executor advances its queue (a pull request planned, repaired, merged or refused, a derive or a CI verdict observed), so an executor that holds the lease and does nothing is suspended by the rule of I3990 and another machine's executor is admitted; and make the clone's flock lease carry the same progress stamp, so prs brief and the Cockpit show how long the holder has made no progress.",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/plan/i3992/",
+   "title": "I3992 — A session that waits on a person says so: the Notification and Stop hooks mark it blocked on the mesh",
+   "description": "When a Claude Code session raises a permission dialog or an idle notification (the Notification hook) or ends its turn waiting for input (the Stop hook), record on the mesh that the session is blocked on a person, with the reason, so peers and the landing seat see it at once instead of after the progress ttl; and clear the mark at the session's next real work.",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/plan/i3993/",
+   "title": "I3993 — Every wait on a peer is bounded and says what it waited for when the bound is reached",
+   "description": "Find every place the executable waits on another session or runtime (a mesh review answer, a handover consumer, a derive or offload queue, a lease, a claim admission retry) and give each an explicit bound read from the declaration, after which it stops waiting, names what it waited for and who held it, and routes around (another host, another seat, or a report) instead of hanging.",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/plan/i3994/",
+   "title": "I3994 — Superseded session beats are compacted, so liveness never spends a node's event quota",
+   "description": "Compact a session's superseded session_beat events in the journal (only the newest beat of a session decides its liveness), so a long-lived runtime's beats do not accumulate toward the per-node event quota that I2825 showed can deadlock a node, while keeping the (stream, seq) order every consumer relies on.",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
    "route": "/cs/plan/i3995/",
    "title": "I3995 — A task started before the first commit finishes: an unborn recorded head is an ancestor of every commit",
    "description": "mj_git_label (lib/common.sh) labels a recorded head of NONE, which mj_git_head writes when start runs on an unborn branch, as advanced once the branch has commits, so the state doctrine passes and check and a completed finish are no longer refused for a history that was never rewritten. start's refusal of a second task names the commands that release the first: finish, or handover --close.",
@@ -17043,6 +17079,12 @@
    "route": "/cs/registry/capabilities/mesh-verify/",
    "title": "mesh.verify",
    "description": "Provést živé ověření: spolupráce je aktivní, identita repozitáře se určí, endpointy jsou dosažitelné i mimo loopback, heartbeat tepe, žurnál nedrží zaseknutou mezeru; pak jedno kolo synchronizace s každým peerem, na kterého se tento runtime připojuje, změřené časem, a zda obě strany nyní drží stejné high-water marky. Každá selhaná kontrola uvádí svůj dopad a nápravu. Nemění nic kromě replikace žurnálu.",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/registry/capabilities/mesh-who/",
+   "title": "mesh.who",
+   "description": "The session behind a process, a path, an issue or an offloaded run (I3956): a pid (or `host:pid` on a declared offload host, read through its ssh path only) is read where it runs — its parent chain up to the provider's process and its messaging socket, its group, start, command and working directory, and the owner variables of its environment — and joined with that host's run records, the repository's board (whose rows carry each worker's address) and the mesh claims; a run tag is the record its host keeps; an issue or a path is every live mesh claim, announcement and run record naming or covering it. Each owner comes with its board peer, issue, address and the facts that named it. A process whose parent is init and whose directory is gone is marked a leftover and named with its owner when its environment or a run record knows it. Nothing is guessed from a name: an answer that cannot name an owner says unknown and lists the evidence it lacked. Reads processes and records; signals nothing.",
    "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
   },
   {
@@ -21674,7 +21716,7 @@
   {
    "route": "/docs/cli/guard/hook/",
    "title": "majordomus guard hook",
-   "description": "Judge the edit a provider's pre-tool payload (on stdin) is about to make; exit 2 with the reason and the remedy when no claim covers it, 0 otherwise",
+   "description": "Judge the tool call a provider's pre-tool payload (on stdin) is about to make; exit 2 with the reason and the remedy when no claim covers the file it edits, or when its shell command starts a build (cargo, rustc, scripts/derive, scripts/rust-*) over ssh on a declared offload host outside `majordomus offload`; 0 otherwise",
    "section": "Documentation"
   },
   {
@@ -21972,6 +22014,12 @@
    "section": "Documentation"
   },
   {
+   "route": "/docs/cli/mesh/who/",
+   "title": "majordomus mesh who",
+   "description": "Who runs this: the session, board peer, issue and address behind a pid, host:pid, run tag, issue or path; exits 10 when no evidence names one",
+   "section": "Documentation"
+  },
+  {
    "route": "/docs/cli/models/",
    "title": "majordomus models",
    "description": "The model catalogue the distribution declares, and the explainable routing over it: vendors, canonical model references, typed capabilities, and which model a stated need selects — with why, for every candidate",
@@ -22017,6 +22065,12 @@
    "route": "/docs/cli/offload/probe/",
    "title": "majordomus offload probe",
    "description": "Measure every declared host — free space, derives running or waiting — and name the one a derive would take; exit 12 when none can take one",
+   "section": "Documentation"
+  },
+  {
+   "route": "/docs/cli/offload/stop/",
+   "title": "majordomus offload stop",
+   "description": "Stop an offloaded run as a process group on its host: read its run record, refuse unless the record names this session (or --force), then TERM the group and KILL what is left after the grace period. Exit 2 on a tag that is not one or an ambiguous host, 12 when the host holds no record or the group is not the run's, 13 when the run belongs to another session",
    "section": "Documentation"
   },
   {
@@ -31746,6 +31800,30 @@
    "section": "The plan"
   },
   {
+   "route": "/plan/i3991/",
+   "title": "I3991 — The integration lease lives by its executor's progress through the queue, not by its process existing",
+   "description": "Make the integration executor's exclusive mesh claim on integration/<repository>/<base> beat only when the executor advances its queue (a pull request planned, repaired, merged or refused, a derive or a CI verdict observed), so an executor that holds the lease and does nothing is suspended by the rule of I3990 and another machine's executor is admitted; and make the clone's flock lease carry the same progress stamp, so prs brief and the Cockpit show how long the holder has made no progress.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i3992/",
+   "title": "I3992 — A session that waits on a person says so: the Notification and Stop hooks mark it blocked on the mesh",
+   "description": "When a Claude Code session raises a permission dialog or an idle notification (the Notification hook) or ends its turn waiting for input (the Stop hook), record on the mesh that the session is blocked on a person, with the reason, so peers and the landing seat see it at once instead of after the progress ttl; and clear the mark at the session's next real work.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i3993/",
+   "title": "I3993 — Every wait on a peer is bounded and says what it waited for when the bound is reached",
+   "description": "Find every place the executable waits on another session or runtime (a mesh review answer, a handover consumer, a derive or offload queue, a lease, a claim admission retry) and give each an explicit bound read from the declaration, after which it stops waiting, names what it waited for and who held it, and routes around (another host, another seat, or a report) instead of hanging.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i3994/",
+   "title": "I3994 — Superseded session beats are compacted, so liveness never spends a node's event quota",
+   "description": "Compact a session's superseded session_beat events in the journal (only the newest beat of a session decides its liveness), so a long-lived runtime's beats do not accumulate toward the per-node event quota that I2825 showed can deadlock a node, while keeping the (stream, seq) order every consumer relies on.",
+   "section": "The plan"
+  },
+  {
    "route": "/plan/i3995/",
    "title": "I3995 — A task started before the first commit finishes: an unborn recorded head is an ancestor of every commit",
    "description": "mj_git_label (lib/common.sh) labels a recorded head of NONE, which mj_git_head writes when start runs on an unborn branch, as advanced once the branch has commits, so the state doctrine passes and check and a completed finish are no longer refused for a history that was never rewritten. start's refusal of a second task names the commands that release the first: finish, or handover --close.",
@@ -34209,6 +34287,12 @@
    "route": "/registry/capabilities/mesh-verify/",
    "title": "mesh.verify",
    "description": "Run a live verification: cooperation is active, the repository identity resolves, the endpoints are reachable beyond loopback, the heartbeat beats, the journal holds no stuck gap; then one sync round with every peer this runtime dials, timed, and whether both sides now hold the same high-water marks. Each failed check names its impact and remedy. Changes nothing but the journal's replication.",
+   "section": "Registry"
+  },
+  {
+   "route": "/registry/capabilities/mesh-who/",
+   "title": "mesh.who",
+   "description": "The session behind a process, a path, an issue or an offloaded run (I3956): a pid (or `host:pid` on a declared offload host, read through its ssh path only) is read where it runs — its parent chain up to the provider's process and its messaging socket, its group, start, command and working directory, and the owner variables of its environment — and joined with that host's run records, the repository's board (whose rows carry each worker's address) and the mesh claims; a run tag is the record its host keeps; an issue or a path is every live mesh claim, announcement and run record naming or covering it. Each owner comes with its board peer, issue, address and the facts that named it. A process whose parent is init and whose directory is gone is marked a leftover and named with its owner when its environment or a run record knows it. Nothing is guessed from a name: an answer that cannot name an owner says unknown and lists the evidence it lacked. Reads processes and records; signals nothing.",
    "section": "Registry"
   },
   {
@@ -36866,7 +36950,7 @@
   {
    "route": "/rustdoc/",
    "title": "majordomus-cli 1.0.0-alpha.10 — Rust API reference",
-   "description": "The rustdoc reference of majordomus-cli 1.0.0-alpha.10, built from commit 995bd9fba1bc97a9999a5f38795adc7cb4d6c8a5: the public items of the library and of the executable, and the source they were built from.",
+   "description": "The rustdoc reference of majordomus-cli 1.0.0-alpha.10, built from commit 64d28e2d9c5065d72412616935e78211b24c0c73: the public items of the library and of the executable, and the source they were built from.",
    "section": "majordomus-cli 1.0.0-alpha.10 — Rust API reference"
   },
   {

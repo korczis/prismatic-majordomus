@@ -198,7 +198,13 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
 <li>Přenáší se worktree tak, jak je, a rozpracovaný merge putuje s oběma rodiči. Nesledované soubory a nevyřešený merge se odmítnou dřív, než se cokoli přenese. Derive, který maže sledovaný soubor, se odmítne dřív, než se cokoli aplikuje. Nic se necommituje ani nepushuje.</li>
 </ul>
 <h2 id="failure-behaviour"><a class="zola-anchor" href="#failure-behaviour" aria-label="Odkaz na kotvu: failure-behaviour">Chování při selhání</a></h2>
-<p>Odmítnutí říká, co dělat, a skončí kódem, který pro něj uvádí <code>docs/OFFLOAD.md</code>. Hostitel, na něhož se nelze zeptat, se přeskočí s uvedením důvodu. Když žádný nezbyde, příkaz odmítne kódem 12 místo odvozování zde. Derive spuštěný ručně na hostiteli nebo ručně vzatý zámek je mimo vynucování tohoto pravidla a znění pravidla zakazuje obojí.</p>
+<p>A refusal says what to do and exits with the code <code>docs/OFFLOAD.md</code> lists for it. A host that
+cannot be asked is skipped with its reason. When none is left, the command refuses with 12
+rather than deriving here. A lock taken by hand is outside this rule's enforcement, and the
+rule's statement forbids it. A build started on a declared host by hand, through the
+provider's shell tool (<code>ssh &lt;host&gt; … cargo|rustc|scripts/derive|scripts/rust-*</code>), is refused
+by the pre-tool hook before it runs, naming this rule and <code>majordomus offload derive</code> as the
+way (I3956, <code>majordomus guard hook</code>); a shell the hook does not see is outside it.</p>
 <h2 id="verification"><a class="zola-anchor" href="#verification" aria-label="Odkaz na kotvu: verification">Ověření</a></h2>
 <p><code>apps/majordomus-cli/tests/offload.rs</code> dokazuje tato chování, se skutečnými procesy držitelů a hosty, které jsou adresáře dosažené přes lokální náhradu ssh:</p>
 <ul>
@@ -212,11 +218,15 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
 <li>souběžné sestavení do sdíleného adresáře, které nenahrazuje spustitelný soubor derive.</li>
 </ul>
 <p>Každá z těchto mutací ji shodí: zámek převzatý bez ohledu na pozici, ponechané mrtvé tikety a build adresář nasměrovaný na sdílený.</p>
+<p>The refusal of a build by hand is proven by the unit tests of
+<code>apps/majordomus-cli/src/guard/remote_build.rs</code> and by section 7 of
+<code>test/cases/3957_every_process_is_traced_to_its_session.sh</code>, which pipes the provider's
+PreToolUse payloads for refused and allowed commands into the hook and its tracked shim.</p>
 </article>
 
     <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Odkud to pochází</h2>
     <dl class="mt-3 grid gap-x-6 gap-y-2 text-sm sm:grid-cols-[max-content_1fr]">
-      <dt class="text-body-subtle">kanonický soubor</dt><dd class="min-w-0"><a class="break-all font-mono text-fg-brand hover:underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/blob/995bd9fba1bc97a9999a5f38795adc7cb4d6c8a5/.ai/repo/rules/project/a-derive-offload-waits-its-turn.v1.md">.ai/repo/rules/project/a-derive-offload-waits-its-turn.v1.md</a></dd>
+      <dt class="text-body-subtle">kanonický soubor</dt><dd class="min-w-0"><a class="break-all font-mono text-fg-brand hover:underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/blob/64d28e2d9c5065d72412616935e78211b24c0c73/.ai/repo/rules/project/a-derive-offload-waits-its-turn.v1.md">.ai/repo/rules/project/a-derive-offload-waits-its-turn.v1.md</a></dd>
       <dt class="text-body-subtle">identity</dt><dd class="min-w-0 break-all font-mono text-heading">project.a-derive-offload-waits-its-turn@1</dd>
       <dt class="text-body-subtle">dostupné také jako</dt><dd class="min-w-0 break-all font-mono text-heading">Zdroj MCP <code>majordomus://rule/project.a-derive-offload-waits-its-turn@1</code> · <code>majordomus entity show rule/project-a-derive-offload-waits-its-turn-1</code> · <code>GET /api/v1/entity?uri=majordomus://rule/project.a-derive-offload-waits-its-turn@1</code></dd>
       <dt class="text-body-subtle">v Cockpitu</dt><dd class="min-w-0 break-all font-mono text-heading">/cockpit/objects/rule/project-a-derive-offload-waits-its-turn-1</dd>
@@ -273,9 +283,9 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
       <div class="min-w-0">
         <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">Projekt</h2><ul class="space-y-2 text-sm font-medium text-body">
           <li><a href="https://github.com/korczis/prismatic-majordomus" class="hover:text-heading hover:underline">GitHub</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/995bd9fba1bc97a9999a5f38795adc7cb4d6c8a5/LICENSE" class="hover:text-heading hover:underline">Licence MIT</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/995bd9fba1bc97a9999a5f38795adc7cb4d6c8a5/SECURITY.md" class="hover:text-heading hover:underline">Bezpečnostní politika</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/995bd9fba1bc97a9999a5f38795adc7cb4d6c8a5/CONTRIBUTING.md" class="hover:text-heading hover:underline">Průvodce pro přispěvatele</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/64d28e2d9c5065d72412616935e78211b24c0c73/LICENSE" class="hover:text-heading hover:underline">Licence MIT</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/64d28e2d9c5065d72412616935e78211b24c0c73/SECURITY.md" class="hover:text-heading hover:underline">Bezpečnostní politika</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/64d28e2d9c5065d72412616935e78211b24c0c73/CONTRIBUTING.md" class="hover:text-heading hover:underline">Průvodce pro přispěvatele</a></li>
         </ul>
       </div>
     </div>
@@ -283,7 +293,7 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/cs/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.10</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/995bd9fba1bc97a9999a5f38795adc7cb4d6c8a5" class="font-mono underline">995bd9f</a> · inputs <span class="font-mono">9f30aefaf772</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/cs/architecture/" class="underline">how this site is derived</a> names them.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.10</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/64d28e2d9c5065d72412616935e78211b24c0c73" class="font-mono underline">64d28e2</a> · inputs <span class="font-mono">0bb0beba3b03</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/cs/architecture/" class="underline">how this site is derived</a> names them.</p>
     </div>
   </div>
 </footer>
