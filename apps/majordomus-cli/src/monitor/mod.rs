@@ -376,9 +376,14 @@ impl Cursor {
         match self.parts.iter_mut().find(|(s, _)| *s == source) {
             Some(slot) => slot.1 = position,
             None => {
-                self.parts.push((source, position));
-                let order = |s: &MonitorSource| SOURCES.iter().position(|x| x.source == *s);
-                self.parts.sort_by_key(|(s, _)| order(s));
+                // inserted before the first part SOURCES declares after it: no sort, one order
+                let rank = |s: MonitorSource| SOURCES.iter().position(|x| x.source == s);
+                let at = self
+                    .parts
+                    .iter()
+                    .position(|(s, _)| rank(*s) > rank(source))
+                    .unwrap_or(self.parts.len());
+                self.parts.insert(at, (source, position));
             }
         }
     }
