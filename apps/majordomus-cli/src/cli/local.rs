@@ -273,11 +273,6 @@ pub const LOCAL: &[LocalCommand] = &[
         note: "creates a branch and a linked worktree on disk at the path the topology derives for it.",
     },
     LocalCommand {
-        command: "worktree ensure",
-        reason: LocalReason::WritesRepository,
-        note: "creates the canonical worktree of a branch when it is absent, which is the same write made idempotent.",
-    },
-    LocalCommand {
         command: "worktree repair",
         reason: LocalReason::WritesRepository,
         note: "rewrites the git administrative files of a worktree whose links no longer resolve.",
@@ -394,6 +389,11 @@ pub const LOCAL: &[LocalCommand] = &[
         command: "mesh claim",
         reason: LocalReason::RendersCapability("mesh.claim"),
         note: "runs mesh.claim on this checkout's running server, whose journal replicates it; exits 10 with the conflicting claims when it is refused.",
+    },
+    LocalCommand {
+        command: "mesh allocate",
+        reason: LocalReason::RendersCapability("plan.allocate"),
+        note: "runs plan.allocate on this checkout's running server, whose mesh admits the reservation under one lock; exits 10 when no server runs the mesh.",
     },
     LocalCommand {
         command: "mesh release",

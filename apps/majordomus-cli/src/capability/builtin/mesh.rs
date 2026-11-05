@@ -504,7 +504,7 @@ fn cooperation(ctx: &Context) -> Result<std::sync::Arc<Cooperation>, CapabilityE
     })
 }
 
-fn map_error(e: CooperationError) -> CapabilityError {
+pub(super) fn map_error(e: CooperationError) -> CapabilityError {
     match e {
         CooperationError::Conflict(_) => CapabilityError::Refused(format!("claim_conflict: {e}")),
         CooperationError::NotOwn(m) => CapabilityError::Refused(format!("not_own: {m}")),
@@ -518,7 +518,7 @@ fn map_error(e: CooperationError) -> CapabilityError {
 
 /// The session a call acts for: the one it names, else the calling MCP session's own board
 /// session — the same `board-<peer>` session the board projection opened for it.
-fn session_of(ctx: &Context, given: Option<String>) -> Result<String, CapabilityError> {
+pub(super) fn session_of(ctx: &Context, given: Option<String>) -> Result<String, CapabilityError> {
     if let Some(session) = given.filter(|s| !s.trim().is_empty()) {
         return Ok(session);
     }

@@ -4,7 +4,7 @@ description = "The repository's user interface against its UI kit: `kit` judges 
 sort_by = "weight"
 template = "docs-cli-group.html"
 page_template = "docs-cli-command.html"
-weight = 229
+weight = 230
 [extra]
 route = "/docs/cli/design/"
 command = "majordomus design"
