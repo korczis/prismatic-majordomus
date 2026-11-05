@@ -184,6 +184,26 @@ fn redact(text: &str) -> String {
     redaction::redact_secrets(text).text
 }
 
+/// Run `f` with `subscriber` as this thread's default, as `tracing::subscriber::with_default`
+/// does, after asking every callsite again whether it is interested.
+///
+/// A test that reads what a scoped subscriber captured needs the second half. A callsite
+/// caches its interest the first time any thread reaches it. Another test running in
+/// parallel can reach it while this subscriber is still being registered, and cache
+/// "never" from a list that does not yet hold it; the event is then never offered, and the
+/// captured log reads empty (train 19c, run 41953099953: server.rs's transition warning).
+/// Asking again once the subscriber is the default closes that window.
+#[cfg(test)]
+pub(crate) fn with_scoped<S, T>(subscriber: S, f: impl FnOnce() -> T) -> T
+where
+    S: Subscriber + Send + Sync + 'static,
+{
+    tracing::subscriber::with_default(subscriber, || {
+        tracing::callsite::rebuild_interest_cache();
+        f()
+    })
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -264,7 +284,7 @@ mod tests {
     #[test]
     fn a_failed_write_ends_the_fields_that_follow_it() {
         let seen = std::sync::Arc::new(FormatsIntoARefusal(std::sync::Mutex::new(None)));
-        tracing::subscriber::with_default(std::sync::Arc::clone(&seen), || {
+        with_scoped(std::sync::Arc::clone(&seen), || {
             tracing::error!(first = "a", second = "b", third = 3, "a message");
         });
         let (result, attempts) = seen
