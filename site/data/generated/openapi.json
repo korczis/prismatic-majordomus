@@ -425,6 +425,7 @@
     "schema-CreateReport": "docs/api/worktree/",
     "schema-CriterionCoverage": "docs/api/shared/",
     "schema-CriticalBlocker": "docs/api/devtask/",
+    "schema-CriticalPath": "docs/api/integration/",
     "schema-CritiqueClass": "docs/api/intents/",
     "schema-CritiqueFinding": "docs/api/intents/",
     "schema-DashboardCard": "docs/api/dashboard/",
@@ -802,6 +803,7 @@
     "schema-Materiality": "docs/api/reasoning/",
     "schema-Matrix": "docs/api/product/",
     "schema-MatrixRow": "docs/api/product/",
+    "schema-MatrixSpread": "docs/api/integration/",
     "schema-McpClient": "docs/api/mcp/",
     "schema-McpClientStanding": "docs/api/mcp/",
     "schema-McpEffectCount": "docs/api/mcp/",
@@ -1401,7 +1403,7 @@
   "binding": "GET binds every top-level input property as a query parameter; POST binds the input as the JSON body",
   "counts": {
     "operations": 218,
-    "schemas": 1117,
+    "schemas": 1119,
     "tags": 62
   },
   "dialect": "https://spec.openapis.org/oas/3.1/dialect/base",
@@ -1927,6 +1929,7 @@
     "CreateReport": "worktree",
     "CriterionCoverage": "shared",
     "CriticalBlocker": "devtask",
+    "CriticalPath": "integration",
     "CritiqueClass": "intents",
     "CritiqueFinding": "intents",
     "DashboardCard": "dashboard",
@@ -2304,6 +2307,7 @@
     "Materiality": "reasoning",
     "Matrix": "product",
     "MatrixRow": "product",
+    "MatrixSpread": "integration",
     "McpClient": "mcp",
     "McpClientStanding": "mcp",
     "McpEffectCount": "mcp",
@@ -14195,6 +14199,49 @@
       "used_by": [],
       "used_by_schemas": [
         "MilestoneGraph"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "The chain of checks that bounded one head's wall time, and the one of them that took\nlongest: the job a shorter run has to shorten.",
+      "home": "integration",
+      "is_enum": false,
+      "name": "CriticalPath",
+      "properties": [
+        {
+          "description": "The checks of the chain, first to last, each started after the one before completed.",
+          "name": "chain",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
+        },
+        {
+          "description": "The check of the chain that took longest.",
+          "name": "check",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "How long it took, in seconds.",
+          "name": "seconds",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        },
+        {
+          "description": "`seconds / wall_seconds` of the head, to two decimals; 0 for a wall time of 0 s.",
+          "name": "share",
+          "refs": [],
+          "required": true,
+          "type": "number (double)"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "HeadTiming"
       ],
       "values": [],
       "variants": []
@@ -28034,6 +28081,24 @@
           "refs": [],
           "required": true,
           "type": "boolean"
+        },
+        {
+          "description": "The chain of checks that bounded the wall time; `None` when every measured check on\nthe head was skipped, so none ran.",
+          "name": "critical_path",
+          "refs": [
+            "CriticalPath"
+          ],
+          "required": false,
+          "type": "CriticalPath | null"
+        },
+        {
+          "description": "Every matrix family on the head, the most uneven deal first.",
+          "name": "matrices",
+          "refs": [
+            "MatrixSpread"
+          ],
+          "required": true,
+          "type": "array of MatrixSpread"
         }
       ],
       "type": "object",
@@ -35422,6 +35487,63 @@
       "used_by": [],
       "used_by_schemas": [
         "Matrix"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "How unevenly one matrix family was dealt on a head: the checks named `<family> (<values>)`.",
+      "home": "integration",
+      "is_enum": false,
+      "name": "MatrixSpread",
+      "properties": [
+        {
+          "description": "The family: the name before its matrix values, `suite-shard` of `suite-shard (2)`.",
+          "name": "family",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "How many of its checks were measured.",
+          "name": "shards",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        },
+        {
+          "description": "The shard that took longest.",
+          "name": "slowest_shard",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "How long it took, in seconds.",
+          "name": "slowest_seconds",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        },
+        {
+          "description": "How long the fastest shard took, in seconds.",
+          "name": "fastest_seconds",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        },
+        {
+          "description": "`slowest_seconds / fastest_seconds`, to two decimals: 1 for an even deal; `None` when\nthe fastest shard took 0 s, so there is nothing to divide by.",
+          "name": "spread",
+          "refs": [],
+          "required": false,
+          "type": "number | null"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "HeadTiming"
       ],
       "values": [],
       "variants": []
@@ -71802,7 +71924,7 @@
           "cache_detail": "",
           "cli": "",
           "curl": "curl -s \"http://127.0.0.1:8741/api/v1/pull-requests/timings\"",
-          "description": "How long CI takes on the open pull requests, measured from the recorded forge observation: for every check, how many of its runs started and completed, how many passed and failed, and its median, 90th percentile (nearest rank) and longest duration in seconds, the slowest median first; for every open head with a measured check, the wall time from its first check's start to its last check's completion and the check that took longest, the longest wait first; and how many runs could not be measured (still running, queued, or recorded before starts were read), which are counted and never measured as zero. A read: it asks the forge for nothing; `majordomus prs refresh` records the observation. `observed: false` with the reason when this checkout has recorded none.",
+          "description": "How long CI takes on the open pull requests, measured from the recorded forge observation: for every check, how many of its runs started and completed, how many passed and failed, and its median, 90th percentile (nearest rank) and longest duration in seconds, the slowest median first; for every open head with a measured check, the wall time from its first check's start to its last check's completion and the check that took longest, the longest wait first, with its critical path (the chain of checks back from the last completion, each the one that completed last before the next started, inferred from the times because the observation holds no job graph; the longest check of that chain, its seconds and its share of the wall time to two decimals) and, for every matrix family of checks named `<family> (<values>)`, its shards, slowest shard, slowest and fastest seconds and their spread (slowest over fastest, to two decimals; null when the fastest took 0 s), the most uneven deal first; and how many runs could not be measured (still running, queued, or recorded before starts were read), which are counted and never measured as zero. A read: it asks the forge for nothing; `majordomus prs refresh` records the observation. `observed: false` with the reason when this checkout has recorded none.",
           "home": "integration",
           "id": "integration.timings",
           "kind": "query",

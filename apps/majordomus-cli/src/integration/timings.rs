@@ -5,6 +5,13 @@
 //! that has both, and a run without either is counted as unmeasured, never as zero. The
 //! observation holds the latest run of each check on each open head, so this is what CI took
 //! on the heads now open, not a history; the history of merges is `integration::metrics`.
+//!
+//! Each head also names its critical path, the chain of checks that bounded its wall time,
+//! and how unevenly each matrix family (`suite-shard (1)` .. `suite-shard (4)`) was dealt.
+//! The observation holds no job graph, so the chain is inferred from the times alone: it ends
+//! at the check that completed last, and each check's predecessor is the one that completed
+//! last before it started. A check that happened to complete in that gap is read as the
+//! predecessor; the check of the chain that took longest is named whatever the order.
 
 use std::collections::BTreeMap;
 
@@ -35,9 +42,41 @@ pub struct CheckTiming {
     pub slowest_seconds: u64,
 }
 
+/// The chain of checks that bounded one head's wall time, and the one of them that took
+/// longest: the job a shorter run has to shorten.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema)]
+pub struct CriticalPath {
+    /// The checks of the chain, first to last, each started after the one before completed.
+    pub chain: Vec<String>,
+    /// The check of the chain that took longest.
+    pub check: String,
+    /// How long it took, in seconds.
+    pub seconds: u64,
+    /// `seconds / wall_seconds` of the head, to two decimals; 0 for a wall time of 0 s.
+    pub share: f64,
+}
+
+/// How unevenly one matrix family was dealt on a head: the checks named `<family> (<values>)`.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema)]
+pub struct MatrixSpread {
+    /// The family: the name before its matrix values, `suite-shard` of `suite-shard (2)`.
+    pub family: String,
+    /// How many of its checks were measured.
+    pub shards: u64,
+    /// The shard that took longest.
+    pub slowest_shard: String,
+    /// How long it took, in seconds.
+    pub slowest_seconds: u64,
+    /// How long the fastest shard took, in seconds.
+    pub fastest_seconds: u64,
+    /// `slowest_seconds / fastest_seconds`, to two decimals: 1 for an even deal; `None` when
+    /// the fastest shard took 0 s, so there is nothing to divide by.
+    pub spread: Option<f64>,
+}
+
 /// How long CI took on one open pull request's head: from its first check's start to its last
 /// check's completion, and the check that took longest.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema)]
 pub struct HeadTiming {
     /// The pull request.
     pub number: u64,
@@ -55,10 +94,15 @@ pub struct HeadTiming {
     pub slowest_seconds: u64,
     /// Whether any measured check on the head failed.
     pub failed: bool,
+    /// The chain of checks that bounded the wall time; `None` when every measured check on
+    /// the head was skipped, so none ran.
+    pub critical_path: Option<CriticalPath>,
+    /// Every matrix family on the head, the most uneven deal first.
+    pub matrices: Vec<MatrixSpread>,
 }
 
 /// CI timings over every open head the observation holds.
-#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize, JsonSchema)]
 pub struct CiTimings {
     /// When the forge was observed, RFC 3339: the moment these timings describe.
     pub observed_at: String,
@@ -88,8 +132,100 @@ impl Ordered for HeadTiming {
     }
 }
 
+/// Matrix families are read most uneven first, then by family; a spread that could not be
+/// divided reads last.
+impl Ordered for MatrixSpread {
+    fn order_key(&self) -> OrderKey<'_> {
+        let hundredths = self.spread.map_or(0, |s| (s * 100.0).round() as u64);
+        OrderKey::plain(&self.family, &self.family).ranked(slowest_first(hundredths))
+    }
+}
+
 fn slowest_first(seconds: u64) -> i64 {
     i64::try_from(seconds).map_or(i64::MIN, |s| -s)
+}
+
+/// `n / d` to two decimals.
+fn ratio(n: u64, d: u64) -> f64 {
+    (n as f64 / d as f64 * 100.0).round() / 100.0
+}
+
+/// A check that ran on a head: its name, start and completion, in seconds since the epoch.
+type Job<'a> = (&'a str, u64, u64);
+
+/// The critical path of `jobs` over a wall time of `wall` seconds, inferred from the times:
+/// from the check that completed last, back through the check that completed last before each
+/// one started. Equal completions go to the longer check, then the later name, so the chain
+/// is one and equal instants read in name order; the longest of equals is the earlier name.
+fn critical_path(jobs: &[Job<'_>], wall: u64) -> Option<CriticalPath> {
+    // the latest completion at or before `bound`, among the checks not yet on the chain
+    let latest = |bound: u64, taken: &[bool]| {
+        (0..jobs.len())
+            .filter(|&i| !taken[i] && jobs[i].2 <= bound)
+            .max_by(|&a, &b| {
+                let (na, sa, ea) = jobs[a];
+                let (nb, sb, eb) = jobs[b];
+                (ea, ea - sa).cmp(&(eb, eb - sb)).then(na.cmp(nb))
+            })
+    };
+    let mut taken = vec![false; jobs.len()];
+    let mut chain = Vec::new();
+    let mut at = latest(u64::MAX, &taken);
+    while let Some(i) = at {
+        taken[i] = true;
+        chain.push(i);
+        at = latest(jobs[i].1, &taken);
+    }
+    chain.reverse();
+    let longest = chain.iter().copied().max_by(|&a, &b| {
+        let (na, sa, ea) = jobs[a];
+        let (nb, sb, eb) = jobs[b];
+        (ea - sa).cmp(&(eb - sb)).then(nb.cmp(na))
+    })?;
+    let (name, start, end) = jobs[longest];
+    let seconds = end - start;
+    Some(CriticalPath {
+        chain: chain.iter().map(|&i| jobs[i].0.to_string()).collect(),
+        check: name.to_string(),
+        seconds,
+        share: if wall == 0 { 0.0 } else { ratio(seconds, wall) },
+    })
+}
+
+/// The family of a matrix check, `suite-shard` of `suite-shard (2)`; `None` for a check that
+/// carries no matrix values.
+fn family(name: &str) -> Option<&str> {
+    let open = name.strip_suffix(')')?.rfind(" (")?;
+    Some(&name[..open]).filter(|f| !f.is_empty())
+}
+
+/// How unevenly each matrix family among `jobs` was dealt, the most uneven first.
+fn matrices(jobs: &[Job<'_>]) -> Vec<MatrixSpread> {
+    let mut by_family: BTreeMap<&str, Vec<(u64, &str)>> = BTreeMap::new();
+    for &(name, start, end) in jobs {
+        if let Some(f) = family(name) {
+            by_family.entry(f).or_default().push((end - start, name));
+        }
+    }
+    let mut spreads: Vec<MatrixSpread> = by_family
+        .into_iter()
+        .map(|(family, mut shards)| {
+            // longest first, and of equal ones the earlier name
+            shards.sort_by(|a, b| b.0.cmp(&a.0).then(a.1.cmp(b.1)));
+            let (slowest, name) = shards[0];
+            let fastest = shards[shards.len() - 1].0;
+            MatrixSpread {
+                family: family.to_string(),
+                shards: shards.len() as u64,
+                slowest_shard: name.to_string(),
+                slowest_seconds: slowest,
+                fastest_seconds: fastest,
+                spread: (fastest > 0).then(|| ratio(slowest, fastest)),
+            }
+        })
+        .collect();
+    canonical(&mut spreads);
+    spreads
 }
 
 /// The value at the nearest rank `p` (0..=100) of `sorted`, which is ascending and not empty.
@@ -116,6 +252,8 @@ pub fn timings(obs: &ForgeObservation) -> CiTimings {
         let mut last: Option<(u64, &str)> = None;
         let mut slowest: Option<(u64, &str)> = None;
         let mut failed = false;
+        // the checks that ran, for the critical path and the matrices: a skip ran nothing
+        let mut jobs: Vec<Job<'_>> = Vec::new();
         for c in pr.checks.iter().filter(|c| c.kind == CheckKind::CheckRun) {
             let measured = parse_rfc3339(&c.started_at).zip(parse_rfc3339(&c.completed_at));
             let Some((start, end)) = measured.filter(|(s, e)| e >= s) else {
@@ -123,6 +261,9 @@ pub fn timings(obs: &ForgeObservation) -> CiTimings {
                 continue;
             };
             let took = end - start;
+            if c.state != CheckRunState::Skipped {
+                jobs.push((c.name.as_str(), start, end));
+            }
             let entry = by_check.entry(c.name.clone()).or_default();
             entry.0.push(took);
             match c.state {
@@ -155,6 +296,8 @@ pub fn timings(obs: &ForgeObservation) -> CiTimings {
                 slowest_check: name.to_string(),
                 slowest_seconds: took,
                 failed,
+                critical_path: critical_path(&jobs, e - s),
+                matrices: matrices(&jobs),
             });
         }
     }
@@ -378,5 +521,162 @@ mod tests {
             (h.slowest_check.as_str(), h.slowest_seconds),
             ("site", 40 * 60)
         );
+    }
+
+    /// `T` plus `s` seconds.
+    fn sec(s: u64) -> String {
+        let s = parse_rfc3339(T).unwrap() + s;
+        crate::peers::rfc3339(std::time::UNIX_EPOCH + std::time::Duration::from_secs(s))
+    }
+
+    /// The fourteen jobs of validate run 41932965548, attempt 1 (2026-11-05), each as long as
+    /// it took there; the starts and the waits between them are laid out to its 156 min.
+    fn run_41932965548() -> Vec<CheckObservation> {
+        let ran = |name: &str, start: u64, took: u64| {
+            check(name, CheckRunState::Passed, &sec(start), &sec(start + took))
+        };
+        vec![
+            ran("plan", 0, 40),
+            ran("suite-shard (1)", 100, 4004),
+            ran("suite-shard (2)", 100, 7726),
+            ran("suite-shard (3)", 100, 4800),
+            ran("suite-shard (4)", 100, 5523),
+            ran("suite", 8400, 30),
+            ran("evidence", 8800, 560),
+            ran("rust (1)", 100, 2100),
+            ran("rust (2)", 100, 2400),
+            ran("rust (3)", 100, 2733),
+            ran("coverage", 100, 1975),
+            ran("structure", 100, 600),
+            ran("site", 100, 900),
+            ran("ui", 100, 1600),
+        ]
+    }
+
+    /// The hand diagnosis of 2026-11-05, read from the timings: suite-shard (2) bounded the
+    /// run at 7726 s of its 9360, and the suite was dealt 1.93 times as long to its slowest
+    /// shard as to its fastest.
+    #[test]
+    fn run_41932965548_is_bounded_by_its_second_suite_shard() {
+        let t = timings(&observation(vec![pr(2900, run_41932965548())]));
+        let h = &t.heads[0];
+        assert_eq!(h.wall_seconds, 9360, "156 min");
+        let path = h.critical_path.as_ref().expect("a critical path");
+        assert_eq!(
+            path.chain,
+            ["plan", "suite-shard (2)", "suite", "evidence"],
+            "back from the last completion through the check each waited for"
+        );
+        assert_eq!(
+            (path.check.as_str(), path.seconds),
+            ("suite-shard (2)", 7726)
+        );
+        assert_eq!(path.share, 0.83);
+        let families: Vec<&str> = h.matrices.iter().map(|m| m.family.as_str()).collect();
+        assert_eq!(
+            families,
+            ["suite-shard", "rust"],
+            "the most uneven deal first"
+        );
+        let suite = &h.matrices[0];
+        assert_eq!(
+            (
+                suite.shards,
+                suite.slowest_shard.as_str(),
+                suite.slowest_seconds
+            ),
+            (4, "suite-shard (2)", 7726)
+        );
+        assert_eq!((suite.fastest_seconds, suite.spread), (4004, Some(1.93)));
+        assert_eq!(h.matrices[1].spread, Some(1.3));
+        assert!(crate::order::is_canonical(&h.matrices));
+        let json = serde_json::to_value(&t).unwrap();
+        assert_eq!(json["heads"][0]["critical_path"]["share"], 0.83);
+        assert_eq!(json["heads"][0]["matrices"][0]["spread"], 1.93);
+    }
+
+    /// A head with no check run has no wait to bound, and nothing of it is reported.
+    #[test]
+    fn an_empty_run_has_no_head_and_no_critical_path() {
+        let t = timings(&observation(vec![pr(1, vec![])]));
+        assert!(t.heads.is_empty() && t.checks.is_empty());
+        assert_eq!(critical_path(&[], 0), None);
+        assert!(matrices(&[]).is_empty());
+    }
+
+    /// One job is the whole of its run, and a name without matrix values is no family.
+    #[test]
+    fn a_single_job_is_its_own_critical_path() {
+        let t = timings(&observation(vec![pr(
+            2,
+            vec![check("build", CheckRunState::Failed, &at(0), &at(10))],
+        )]));
+        let h = &t.heads[0];
+        let path = h.critical_path.as_ref().unwrap();
+        assert_eq!(path.chain, ["build"]);
+        assert_eq!(
+            (path.check.as_str(), path.seconds, path.share),
+            ("build", 600, 1.0)
+        );
+        assert!(h.matrices.is_empty());
+    }
+
+    /// A matrix of one shard is dealt evenly: its spread is 1.
+    #[test]
+    fn a_matrix_of_one_is_an_even_deal() {
+        let t = timings(&observation(vec![pr(
+            3,
+            vec![check(
+                "suite-shard (1)",
+                CheckRunState::Passed,
+                &at(0),
+                &at(5),
+            )],
+        )]));
+        let m = &t.heads[0].matrices;
+        assert_eq!(m.len(), 1);
+        assert_eq!(
+            (m[0].family.as_str(), m[0].shards, m[0].spread),
+            ("suite-shard", 1, Some(1.0))
+        );
+        assert_eq!((m[0].slowest_seconds, m[0].fastest_seconds), (300, 300));
+    }
+
+    /// A shard of 0 s cannot be divided by, so its family's spread is unknown and reads last;
+    /// a head of 0 s gives its check no share; and a head whose checks were all skipped ran
+    /// nothing, so it has no critical path.
+    #[test]
+    fn a_zero_is_never_divided_by_and_a_skip_is_no_critical_path() {
+        let jobs: Vec<Job<'_>> = vec![
+            ("lint (a)", 5, 5),
+            ("lint (b)", 5, 5),
+            ("rust (1)", 0, 4),
+            ("rust (2)", 0, 2),
+        ];
+        let m = matrices(&jobs);
+        let read: Vec<(&str, Option<f64>)> =
+            m.iter().map(|m| (m.family.as_str(), m.spread)).collect();
+        assert_eq!(read, [("rust", Some(2.0)), ("lint", None)]);
+        let path = critical_path(&jobs[..2], 0).unwrap();
+        assert_eq!(path.share, 0.0);
+        assert_eq!(
+            path.chain,
+            ["lint (a)", "lint (b)"],
+            "two instants, one after the other"
+        );
+        let skipped = timings(&observation(vec![pr(
+            4,
+            vec![check("lint", CheckRunState::Skipped, &at(0), &at(1))],
+        )]));
+        assert_eq!(skipped.heads[0].critical_path, None);
+    }
+
+    #[test]
+    fn a_family_is_the_name_before_its_matrix_values() {
+        assert_eq!(family("suite-shard (2)"), Some("suite-shard"));
+        assert_eq!(family("rust (3, ubuntu)"), Some("rust"));
+        assert_eq!(family("rust"), None);
+        assert_eq!(family(" (1)"), None);
+        assert_eq!(family("odd)"), None);
     }
 }

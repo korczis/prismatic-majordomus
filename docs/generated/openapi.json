@@ -17994,7 +17994,7 @@
       "get": {
         "operationId": "integration.timings",
         "summary": "How long CI takes",
-        "description": "How long CI takes on the open pull requests, measured from the recorded forge observation: for every check, how many of its runs started and completed, how many passed and failed, and its median, 90th percentile (nearest rank) and longest duration in seconds, the slowest median first; for every open head with a measured check, the wall time from its first check's start to its last check's completion and the check that took longest, the longest wait first; and how many runs could not be measured (still running, queued, or recorded before starts were read), which are counted and never measured as zero. A read: it asks the forge for nothing; `majordomus prs refresh` records the observation. `observed: false` with the reason when this checkout has recorded none.",
+        "description": "How long CI takes on the open pull requests, measured from the recorded forge observation: for every check, how many of its runs started and completed, how many passed and failed, and its median, 90th percentile (nearest rank) and longest duration in seconds, the slowest median first; for every open head with a measured check, the wall time from its first check's start to its last check's completion and the check that took longest, the longest wait first, with its critical path (the chain of checks back from the last completion, each the one that completed last before the next started, inferred from the times because the observation holds no job graph; the longest check of that chain, its seconds and its share of the wall time to two decimals) and, for every matrix family of checks named `<family> (<values>)`, its shards, slowest shard, slowest and fastest seconds and their spread (slowest over fastest, to two decimals; null when the fastest took 0 s), the most uneven deal first; and how many runs could not be measured (still running, queued, or recorded before starts were read), which are counted and never measured as zero. A read: it asks the forge for nothing; `majordomus prs refresh` records the observation. `observed: false` with the reason when this checkout has recorded none.",
         "tags": [
           "integration"
         ],
@@ -31572,6 +31572,40 @@
         ],
         "description": "One unfinished issue that holds back downstream work, and how much."
       },
+      "CriticalPath": {
+        "type": "object",
+        "properties": {
+          "chain": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The checks of the chain, first to last, each started after the one before completed."
+          },
+          "check": {
+            "type": "string",
+            "description": "The check of the chain that took longest."
+          },
+          "seconds": {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "description": "How long it took, in seconds."
+          },
+          "share": {
+            "type": "number",
+            "format": "double",
+            "description": "`seconds / wall_seconds` of the head, to two decimals; 0 for a wall time of 0 s."
+          }
+        },
+        "required": [
+          "chain",
+          "check",
+          "seconds",
+          "share"
+        ],
+        "description": "The chain of checks that bounded one head's wall time, and the one of them that took\nlongest: the job a shorter run has to shorten."
+      },
       "CritiqueClass": {
         "oneOf": [
           {
@@ -42066,6 +42100,24 @@
           "failed": {
             "type": "boolean",
             "description": "Whether any measured check on the head failed."
+          },
+          "critical_path": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CriticalPath"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The chain of checks that bounded the wall time; `None` when every measured check on\nthe head was skipped, so none ran."
+          },
+          "matrices": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MatrixSpread"
+            },
+            "description": "Every matrix family on the head, the most uneven deal first."
           }
         },
         "required": [
@@ -42076,7 +42128,8 @@
           "wall_seconds",
           "slowest_check",
           "slowest_seconds",
-          "failed"
+          "failed",
+          "matrices"
         ],
         "description": "How long CI took on one open pull request's head: from its first check's start to its last\ncheck's completion, and the check that took longest."
       },
@@ -47837,6 +47890,53 @@
           "claims"
         ],
         "description": "One row of the matrix: a feature and the surfaces it is exposed through."
+      },
+      "MatrixSpread": {
+        "type": "object",
+        "properties": {
+          "family": {
+            "type": "string",
+            "description": "The family: the name before its matrix values, `suite-shard` of `suite-shard (2)`."
+          },
+          "shards": {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "description": "How many of its checks were measured."
+          },
+          "slowest_shard": {
+            "type": "string",
+            "description": "The shard that took longest."
+          },
+          "slowest_seconds": {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "description": "How long it took, in seconds."
+          },
+          "fastest_seconds": {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "description": "How long the fastest shard took, in seconds."
+          },
+          "spread": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "format": "double",
+            "description": "`slowest_seconds / fastest_seconds`, to two decimals: 1 for an even deal; `None` when\nthe fastest shard took 0 s, so there is nothing to divide by."
+          }
+        },
+        "required": [
+          "family",
+          "shards",
+          "slowest_shard",
+          "slowest_seconds",
+          "fastest_seconds"
+        ],
+        "description": "How unevenly one matrix family was dealt on a head: the checks named `<family> (<values>)`."
       },
       "McpClient": {
         "type": "object",

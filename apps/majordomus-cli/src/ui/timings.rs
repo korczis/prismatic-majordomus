@@ -1,7 +1,8 @@
 //! How long CI takes, for the CI/CD screen: `integration.timings`, measured from the recorded
 //! forge observation. Every check with its runs, failures and median, 90th percentile and
 //! longest duration, each median drawn as a bar against the slowest; and the open heads that
-//! waited longest for CI, each a link to its pull request on the PR Drain.
+//! waited longest for CI, each a link to its pull request on the PR Drain, with the check that
+//! bounded its wall time and its most unevenly dealt matrix.
 //!
 //! Nothing is estimated: a run without a start or an end is counted beside the figures and
 //! never drawn as zero, and a checkout that recorded no observation says so.
@@ -62,6 +63,37 @@ fn bar(value: Option<u64>, max: u64, tone: &str) -> El {
         .raw(format!(
             r#"<svg viewBox="0 0 100 6" width="120" height="8" preserveAspectRatio="none" focusable="false"><rect x="0" y="0" width="100" height="6" rx="3" fill="currentColor" opacity="0.15"/><rect x="0" y="0" width="{width}" height="6" rx="3" fill="currentColor"/></svg>"#
         ))
+}
+
+/// The check that bounded a head's wall time, how long it took and its share of the wait:
+/// `suite-shard (2) · 2 h 08 min · 83% of the wall time`, or `unknown` when the answer names
+/// none.
+fn critical(head: &Value) -> String {
+    let Some(path) = head.get("critical_path").filter(|p| p.is_object()) else {
+        return "unknown".into();
+    };
+    let share = path.get("share").and_then(Value::as_f64);
+    format!(
+        "{} · {} · {} of the wall time",
+        text(path, "check"),
+        seconds(num(path, "seconds")),
+        share.map_or_else(|| "unknown".into(), |s| format!("{:.0}%", s * 100.0))
+    )
+}
+
+/// The head's most uneven matrix family and its spread, slowest over fastest shard:
+/// `suite-shard ×1.93 (slowest suite-shard (2))`, or `none` without a matrix.
+fn uneven(head: &Value) -> String {
+    let Some(m) = head.pointer("/matrices/0") else {
+        return "none".into();
+    };
+    let spread = m.get("spread").and_then(Value::as_f64);
+    format!(
+        "{} ×{} (slowest {})",
+        text(m, "family"),
+        spread.map_or_else(|| "unknown".into(), |s| format!("{s:.2}")),
+        text(m, "slowest_shard")
+    )
 }
 
 /// The panel.
@@ -136,11 +168,8 @@ pub fn panel_of(timings: &Answer) -> El {
                             ))
                             .child(el("span").class("mj-ui-mono").text(format!(" {}", seconds(num(h, "wall_seconds"))))),
                     )
-                    .child(el("td").class("mj-ui-mono mj-ui-dim").text(format!(
-                        "{} · {}",
-                        text(h, "slowest_check"),
-                        seconds(num(h, "slowest_seconds"))
-                    )))
+                    .child(el("td").class("mj-ui-mono mj-ui-dim").text(critical(h)))
+                    .child(el("td").class("mj-ui-mono mj-ui-dim").text(uneven(h)))
             })
             .collect::<Vec<_>>();
         el("div")
@@ -157,7 +186,7 @@ pub fn panel_of(timings: &Answer) -> El {
             ))
             .child(el("h3").class("mj-ui-panel-title").text("Longest waits"))
             .child(table(
-                &["Pull request", "Wall time", "Slowest check"],
+                &["Pull request", "Wall time", "Critical path", "Most uneven matrix"],
                 head_rows,
                 "No open head has a measured check.",
             ))
@@ -249,6 +278,41 @@ mod tests {
             "observed_at": "t", "measured_runs": 0, "unmeasured_runs": 4, "checks": [], "heads": [] }}))).render();
         assert!(empty.contains("has both a start and an end"));
         assert!(!empty.contains("<svg"));
+    }
+
+    /// A head is drawn with the check that bounded it, its share of the wait and its most
+    /// uneven matrix; a head without them reads unknown and none, never a zero.
+    #[test]
+    fn a_head_names_its_critical_path_and_its_most_uneven_matrix() {
+        let html = panel_of(&answer(serde_json::json!({ "observed": true, "timings": {
+            "observed_at": "2026-11-05T04:00:00Z", "measured_runs": 2, "unmeasured_runs": 0,
+            "checks": [{ "name": "suite-shard (2)", "runs": 1, "passed": 1, "failed": 0,
+                         "median_seconds": 7726, "p90_seconds": 7726, "slowest_seconds": 7726 }],
+            "heads": [
+                { "number": 2900, "head_sha": "a", "wall_seconds": 9360, "failed": false,
+                  "critical_path": { "chain": ["plan", "suite-shard (2)"], "check": "suite-shard (2)",
+                                     "seconds": 7726, "share": 0.83 },
+                  "matrices": [{ "family": "suite-shard", "shards": 4, "slowest_shard": "suite-shard (2)",
+                                 "slowest_seconds": 7726, "fastest_seconds": 4004, "spread": 1.93 }] },
+                { "number": 2901, "head_sha": "b", "wall_seconds": 60, "failed": false,
+                  "critical_path": { "check": "lint" },
+                  "matrices": [{ "family": "lint", "slowest_shard": "lint (a)", "spread": null }] },
+                { "number": 2902, "head_sha": "c", "wall_seconds": 30, "failed": false,
+                  "critical_path": null, "matrices": [] }
+            ]
+        }})))
+        .render();
+        for want in [
+            "Critical path",
+            "suite-shard (2) · 2 h 08 min · 83% of the wall time",
+            "suite-shard ×1.93 (slowest suite-shard (2))",
+            "lint · unknown · unknown of the wall time",
+            "lint ×unknown (slowest lint (a))",
+            ">unknown<",
+            ">none<",
+        ] {
+            assert!(html.contains(want), "no {want}: {html}");
+        }
     }
 
     /// A head whose checks failed is drawn in the failing tone even when no check's median
