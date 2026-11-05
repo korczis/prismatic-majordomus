@@ -6,23 +6,23 @@
     "version": "1.0.0-alpha.10"
   },
   "registry": {
-    "fingerprint": "877abf81f8c8150a159861f53c6b04614d6568a64fc67d5c60e3ddaca55eb897",
+    "fingerprint": "9c7311c39ff4204bb373d93782314831aa7d17da2b24b1140933d9ab4eb02659",
     "summary": {
-      "total": 3867,
+      "total": 3875,
       "builtin": 231,
-      "declarative": 3636,
+      "declarative": 3644,
       "by_kind": {
         "command": 41,
         "query": 190,
-        "resource": 3636
+        "resource": 3644
       },
       "by_stability": {
         "behaviorally_verified": 153,
         "experimental": 68,
-        "implemented": 3646
+        "implemented": 3654
       },
       "mcp_tools": 215,
-      "mcp_resources": 3693,
+      "mcp_resources": 3701,
       "http_routes": 219,
       "cli_commands": 128,
       "modules": 96,
@@ -97180,7 +97180,7 @@
         "title": "knowledge",
         "description": "Declarative objects of kind 'knowledge' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 113,
+        "capabilities": 120,
         "capability_ids": []
       },
       {
@@ -97785,7 +97785,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 693,
+        "capabilities": 694,
         "capability_ids": []
       },
       {
@@ -97878,7 +97878,7 @@
     ]
   },
   "index": {
-    "fingerprint": "ea179e0ae5098f7b98649b256f8c77faaac9363b590b869206306852f5a3c9bd",
+    "fingerprint": "5e7e0b97d4526325ac2be2b8ca1857863d595e611447e199c31f4320eb9240ef",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -97919,7 +97919,7 @@
       "implementation": 54,
       "intent": 45,
       "issue": 1219,
-      "knowledge": 113,
+      "knowledge": 120,
       "mesh-declaration": 1,
       "milestone": 117,
       "moment": 38,
@@ -97932,7 +97932,7 @@
       "session": 94,
       "skill": 10,
       "taxonomy": 10,
-      "test": 693,
+      "test": 694,
       "use-case": 49,
       "workspace": 1
     },
@@ -108881,7 +108881,7 @@
         "identity": "lib/rust_bin.sh",
         "path": "lib/rust_bin.sh",
         "source_class": "library",
-        "bytes": 109047
+        "bytes": 110429
       },
       {
         "uri": "majordomus://implementation/lib/search.sh",
@@ -124435,6 +124435,111 @@
         ]
       },
       {
+        "uri": "majordomus://knowledge/s-20261105041806-8f14-113f58dd14e0",
+        "kind": "knowledge",
+        "identity": "s-20261105041806-8f14-113f58dd14e0",
+        "title": "two train tops validating side by side on master are one slot: when train P (#2855, merge 4795a79d954) landed at 02:53:53Z on 2026-11-05, train 19c (#2918) went DIRTY and CONFLICTING on GitHub at once, because derived files that resolve to ours locally conflict on the forge, which costs a master merge and another round of about 2.5 h; the remedy the mesh agreed is to stack the second top on the first top's head, so the first landing does not dirty it",
+        "description": "Observed as friction about .ai/repo/skills/integrator/SKILL.md in episode s-20261105041806-8f14.",
+        "path": ".ai/repo/knowledge/curated/s-20261105041806-8f14-113f58dd14e0.md",
+        "section": "knowledge",
+        "source_class": "curated",
+        "bytes": 2065,
+        "tags": [
+          "derived",
+          "observation"
+        ]
+      },
+      {
+        "uri": "majordomus://knowledge/s-20261105041806-8f14-51f725c738b3",
+        "kind": "knowledge",
+        "identity": "s-20261105041806-8f14-51f725c738b3",
+        "title": "a test that captures logs with tracing::subscriber::with_default can see an empty log: capability::builtin::server::tests::a_record_that_cannot_be_put_in_place_leaves_nothing_and_is_logged failed at server.rs:2026 in validate run 41953099953, job rust (2), because the callsite interest cache another thread's dispatcher filled says never for the scoped subscriber; the fix is in flight on branch fix/a-scoped-log-subscriber-asks-every-callsite-again",
+        "description": "Observed as defect about apps/majordomus-cli/src/capability/builtin/server.rs in episode s-20261105041806-8f14.",
+        "path": ".ai/repo/knowledge/curated/s-20261105041806-8f14-51f725c738b3.md",
+        "section": "knowledge",
+        "source_class": "curated",
+        "bytes": 2212,
+        "tags": [
+          "derived",
+          "observation"
+        ]
+      },
+      {
+        "uri": "majordomus://knowledge/s-20261105041806-8f14-558639f60422",
+        "kind": "knowledge",
+        "identity": "s-20261105041806-8f14-558639f60422",
+        "title": "the suite shards are dealt from a record that fell behind: .ai/repo/ci/suite-durations.tsv was last written in b0e33db797d (2026-10-23) and holds 599 of 691 cases, the other 93 dealt at its median, and its seconds have drifted; in validate run 41932965548 (attempt 1, train P) suite-shard (2) took 7726 s against 4004-5523 s for the other shards and was the critical path of a 156 min run; replaying the deal (longest first over 4x4 slots) with that run's measured seconds gives 11926/16443/10598/13200 case-seconds per shard from the record (max/min 1.55) and 13042/13042/13341/12742 from a refreshed one (1.05); the refresh is in flight on branch chore/the-suite-shards-are-dealt-from-measured-seconds, and nothing refreshes the record on master after a landing",
+        "description": "Observed as drift about .ai/repo/ci/suite-durations.tsv in episode s-20261105041806-8f14.",
+        "path": ".ai/repo/knowledge/curated/s-20261105041806-8f14-558639f60422.md",
+        "section": "knowledge",
+        "source_class": "curated",
+        "bytes": 3343,
+        "tags": [
+          "derived",
+          "observation"
+        ]
+      },
+      {
+        "uri": "majordomus://knowledge/s-20261105041806-8f14-82b35a204e96",
+        "kind": "knowledge",
+        "identity": "s-20261105041806-8f14-82b35a204e96",
+        "title": "the runner pool is shared across the account's repositories: at 04:02Z on 2026-11-05, 83 queued jobs of eight feature-branch CI runs of another repository kept train 22c's validate (run 41961637000, queued from 03:28:43Z) queued for more than 35 minutes, and at about 04:20Z five of that repository's runs still held 60 queued jobs; I4360 plans the monitor moment for a run queued past its bound, with 'no runner online' as its only named cause, which a pool busy with another repository is not",
+        "description": "Observed as friction about .ai/repo/ci/queue.yaml in episode s-20261105041806-8f14.",
+        "path": ".ai/repo/knowledge/curated/s-20261105041806-8f14-82b35a204e96.md",
+        "section": "knowledge",
+        "source_class": "curated",
+        "bytes": 2419,
+        "tags": [
+          "derived",
+          "observation"
+        ]
+      },
+      {
+        "uri": "majordomus://knowledge/s-20261105041806-8f14-8b4a73a68752",
+        "kind": "knowledge",
+        "identity": "s-20261105041806-8f14-8b4a73a68752",
+        "title": "a saturated coverage count wraps to a false uncovered: counters on long-lived thread loops reach 2^63-1, and merging such a segment wraps it to 0, so the coverage differential reported covered code as uncovered in train P's coverage job (validate run 41932965548, attempt 1); the premise that counters were not atomic was refuted by measurement, since rustc 1.98.1 already counts atomically (40685 lock incq with or without -instrprof-atomic-counter-update-all); the fix is in flight on branch fix/a-saturated-coverage-count-is-discarded",
+        "description": "Observed as defect about scripts/rust-coverage in episode s-20261105041806-8f14.",
+        "path": ".ai/repo/knowledge/curated/s-20261105041806-8f14-8b4a73a68752.md",
+        "section": "knowledge",
+        "source_class": "curated",
+        "bytes": 2252,
+        "tags": [
+          "derived",
+          "observation"
+        ]
+      },
+      {
+        "uri": "majordomus://knowledge/s-20261105041806-8f14-aecc295cb90d",
+        "kind": "knowledge",
+        "identity": "s-20261105041806-8f14-aecc295cb90d",
+        "title": "an empty build directory variable stops the build-directory sweep silently: with CARGO_TARGET_DIR= (empty, meant as unset) mj_rust_prune_build_dir asks cargo metadata, which refuses an empty CARGO_TARGET_DIR or CARGO_BUILD_BUILD_DIR, so the sweep prints 'none removed: cargo did not say where this build keeps them (cargo metadata failed)' and returns 0; callers that discarded its output saw nothing and a build host sat under its 35 GiB floor for over an hour on 2026-11-05, while the same sweep with the variable unset freed 4.7 GB",
+        "description": "Observed as defect about lib/rust_bin.sh in episode s-20261105041806-8f14.",
+        "path": ".ai/repo/knowledge/curated/s-20261105041806-8f14-aecc295cb90d.md",
+        "section": "knowledge",
+        "source_class": "curated",
+        "bytes": 2692,
+        "tags": [
+          "derived",
+          "observation"
+        ]
+      },
+      {
+        "uri": "majordomus://knowledge/s-20261105041806-8f14-c522d4649ef5",
+        "kind": "knowledge",
+        "identity": "s-20261105041806-8f14-c522d4649ef5",
+        "title": "mesh messages are stamped from an estimate, not the clock: on 2026-11-05 two long-running sessions stamped board and mesh messages 10-17 minutes ahead of the clock (a message stamped 04:31Z was sent at about 04:14Z, one stamped 04:3xZ at about 04:18Z), and each corrected the other; no rule, workflow or docs/MESH.md says a stamp is read from date -u immediately before the message, and a sentence would not be enough either, since both sessions knew the time could be read; the mechanism it asks for is a stamp the board or the message tool writes itself",
+        "description": "Observed as friction about rule:project.the-cooperation-model-is-the-owners-word in episode s-20261105041806-8f14.",
+        "path": ".ai/repo/knowledge/curated/s-20261105041806-8f14-c522d4649ef5.md",
+        "section": "knowledge",
+        "source_class": "curated",
+        "bytes": 2641,
+        "tags": [
+          "derived",
+          "observation"
+        ]
+      },
+      {
         "uri": "majordomus://knowledge/start-here",
         "kind": "knowledge",
         "identity": "start-here",
@@ -131186,7 +131291,7 @@
         "path": ".ai/repo/skills/integrator/SKILL.md",
         "section": "skills",
         "source_class": "skill",
-        "bytes": 11099,
+        "bytes": 12367,
         "tags": [
           "integration",
           "landing",
@@ -135135,6 +135240,14 @@
         "bytes": 6738
       },
       {
+        "uri": "majordomus://test/test/cases/4561_an_empty_cargo_dir_variable_is_read_as_unset.sh",
+        "kind": "test",
+        "identity": "test/cases/4561_an_empty_cargo_dir_variable_is_read_as_unset.sh",
+        "path": "test/cases/4561_an_empty_cargo_dir_variable_is_read_as_unset.sh",
+        "source_class": "case",
+        "bytes": 4335
+      },
+      {
         "uri": "majordomus://test/test/cases/45_github_projection.sh",
         "kind": "test",
         "identity": "test/cases/45_github_projection.sh",
@@ -137667,7 +137780,7 @@
       "identity": [
         "id"
       ],
-      "objects": 113
+      "objects": 120
     },
     {
       "name": "mesh-declaration",
@@ -137819,7 +137932,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 693
+      "objects": 694
     },
     {
       "name": "use-case",
