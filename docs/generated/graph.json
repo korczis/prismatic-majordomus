@@ -72333,7 +72333,8 @@
             "test/cases/4242_the_runner_is_planned.sh",
             "scripts/cockpit-probe",
             "test/mesh-lab/run",
-            ".ai/repo/project/issues/I4242.yaml"
+            ".ai/repo/project/issues/I4242.yaml",
+            "test/cases/3345_a_fleet_job_checks_the_floor_first.sh"
           ],
           "serves": [
             "a-change-is-judged-in-minutes#pr-verdict-within-five-minutes",
@@ -72342,10 +72343,11 @@
           "slug": "lundra-is-the-first-wave",
           "started_at": "2026-10-26T20:21:23Z",
           "started_event": "sha256:c93de354943c8c0250b11df2bb6fc53e853400d42d3f7a7e24e0c1895a93f257",
-          "updated_at": "2026-10-29T02:40:00Z",
+          "updated_at": "2026-11-05",
           "validation": [
             "majordomus plan validate",
-            "bash test/run.sh 4242"
+            "bash test/run.sh 4242",
+            "bash test/run.sh 3345_a_fleet_job_checks_the_floor_first"
           ]
         }
       },
@@ -104269,6 +104271,13 @@
         "label": "test/cases/3343_an_unobserved_mesh_is_never_zero.sh",
         "route": "/cockpit/objects/test/test-cases-3343-an-unobserved-mesh-is-never-zero-sh",
         "source": "test/cases/3343_an_unobserved_mesh_is_never_zero.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/3345_a_fleet_job_checks_the_floor_first.sh",
+        "kind": "test",
+        "label": "test/cases/3345_a_fleet_job_checks_the_floor_first.sh",
+        "route": "/cockpit/objects/test/test-cases-3345-a-fleet-job-checks-the-floor-first-sh",
+        "source": "test/cases/3345_a_fleet_job_checks_the_floor_first.sh"
       },
       {
         "id": "majordomus://test/test/cases/334_ui_audit_hears_uncaught_errors.sh",
@@ -153171,6 +153180,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/3345_a_fleet_job_checks_the_floor_first.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/334_ui_audit_hears_uncaught_errors.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -159167,8 +159181,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4324,
-      "edges": 9924,
+      "nodes": 4325,
+      "edges": 9925,
       "acyclic": false,
       "truncated": false
     }

@@ -104,6 +104,15 @@ concurrency:
 # never come near them. Raise one when the work legitimately grows; do not raise one to make
 # a hang pass.
 
+# I4242: the free-disk floor of a machine of the fleet. No host starts a build below 35 GiB free
+# (project.the-cooperation-model-is-the-owners-word, clause 7), and a test or coverage build
+# needs about ten more. Every job a self-hosted runner can take checks it as its first step, so
+# a run that cannot fit fails with the reason instead of filling a disk every user of the
+# machine shares (run 41976073596: coverage took lundra from 76 GiB free to none). Case 3345.
+env:
+  MJ_FLEET_FLOOR_GIB: 35
+  MJ_FLEET_TEST_FLOOR_GIB: 45
+
 jobs:
   # ------------------------------------------------------------------ plan
   # What this change can affect, from the model: a pull request is planned from its diff
@@ -692,6 +701,16 @@ jobs:
       # every gate's receipts, "<gate><TAB><step outcome><TAB><source>": what the ci verdict asks each selected gate for
       MJ_CI_RECEIPTS: ${{ github.workspace }}/receipts.tsv
     steps:
+      # I4242: the fleet's disk floor, before anything is written (case 3345)
+      - name: the fleet's disk floor
+        if: runner.environment == 'self-hosted'
+        working-directory: ${{ runner.temp }}
+        env:
+          FLOOR_GIB: ${{ env.MJ_FLEET_TEST_FLOOR_GIB }}
+        run: |
+          free=$(df -BG --output=avail . | tail -n 1 | tr -dc 0-9)
+          echo "$RUNNER_NAME: ${free:-unknown} GiB free, the floor of this job is $FLOOR_GIB GiB"
+          [ "${free:-0}" -ge "$FLOOR_GIB" ] || { echo "::error::$RUNNER_NAME has ${free:-unknown} GiB free, under this job's floor of $FLOOR_GIB GiB: it does not start a build that could fill the disk every user of the machine shares"; exit 75; }
       # I4242: the scripts of every job run node, which a GitHub-hosted image carries and a
       # self-hosted runner need not; the pool is given the Node setup-site pins (cockpit has it)
       - if: runner.environment == 'self-hosted'
@@ -1013,6 +1032,16 @@ jobs:
       run:
         working-directory: apps/majordomus-cli
     steps:
+      # I4242: the fleet's disk floor, before anything is written (case 3345)
+      - name: the fleet's disk floor
+        if: runner.environment == 'self-hosted'
+        working-directory: ${{ runner.temp }}
+        env:
+          FLOOR_GIB: ${{ env.MJ_FLEET_TEST_FLOOR_GIB }}
+        run: |
+          free=$(df -BG --output=avail . | tail -n 1 | tr -dc 0-9)
+          echo "$RUNNER_NAME: ${free:-unknown} GiB free, the floor of this job is $FLOOR_GIB GiB"
+          [ "${free:-0}" -ge "$FLOOR_GIB" ] || { echo "::error::$RUNNER_NAME has ${free:-unknown} GiB free, under this job's floor of $FLOOR_GIB GiB: it does not start a build that could fill the disk every user of the machine shares"; exit 75; }
       # I4242: the scripts of every job run node, which a GitHub-hosted image carries and a
       # self-hosted runner need not; the pool is given the Node setup-site pins (cockpit has it)
       - if: runner.environment == 'self-hosted'
@@ -1025,6 +1054,15 @@ jobs:
       # differential needs one more commit, not the history (next step).
       - uses: actions/checkout@v4
         timeout-minutes: 5
+      # I4242: on a machine of the fleet the instrumented build is this job's alone. It goes to a
+      # private build directory under the runner's temp, never the shared build-shared, which
+      # persists between jobs there with no cache to bound it (72 GB in one run, 41976073596)
+      # and whose reaper pulls files from under a running build; the step before the last one
+      # removes it whatever happened (case 3345)
+      - name: a private build directory
+        if: runner.environment == 'self-hosted'
+        working-directory: ${{ runner.temp }}
+        run: echo "CARGO_BUILD_BUILD_DIR=$RUNNER_TEMP/coverage-build-$GITHUB_RUN_ID" >> "$GITHUB_ENV"
       # The base the differential diffs against, and nothing else. `rust-coverage --changed`
       # diffs that commit's tree against the working tree, so on a pull request the base
       # commit itself is enough. Without a base (a push, the schedule, a dispatch) the gate
@@ -1105,6 +1143,10 @@ jobs:
         run: ../../scripts/ci/summary --job coverage --fact "rust cache hit=${{ steps.rust.outputs.cache-hit }}" --fact "crate threshold=$(cat ../../scripts/rust-coverage-threshold)" --fact "session domain threshold=$(cat ../../scripts/session-coverage-threshold)"
       # I2664: a run on a branch ends at its first red. Last, so this job's uploads and
       # summary have run; never on master, the schedule or a dispatch (see `concurrency`).
+      - name: the private build directory is removed
+        if: always() && runner.environment == 'self-hosted'
+        working-directory: ${{ runner.temp }}
+        run: rm -rf -- "$RUNNER_TEMP/coverage-build-$GITHUB_RUN_ID" "$GITHUB_WORKSPACE/apps/majordomus-cli/target/llvm-cov-target"
       - name: a failed branch run ends here
         if: failure() && github.event_name == 'pull_request'
         env:
@@ -1156,6 +1198,16 @@ jobs:
       MJ_RESULT_COVERAGE: ${{ needs.coverage.result }}
       MJ_PLAN_MODE: ${{ needs.plan.outputs.mode }}
     steps:
+      # I4242: the fleet's disk floor, before anything is written (case 3345)
+      - name: the fleet's disk floor
+        if: runner.environment == 'self-hosted'
+        working-directory: ${{ runner.temp }}
+        env:
+          FLOOR_GIB: ${{ env.MJ_FLEET_FLOOR_GIB }}
+        run: |
+          free=$(df -BG --output=avail . | tail -n 1 | tr -dc 0-9)
+          echo "$RUNNER_NAME: ${free:-unknown} GiB free, the floor of this job is $FLOOR_GIB GiB"
+          [ "${free:-0}" -ge "$FLOOR_GIB" ] || { echo "::error::$RUNNER_NAME has ${free:-unknown} GiB free, under this job's floor of $FLOOR_GIB GiB: it does not start a build that could fill the disk every user of the machine shares"; exit 75; }
       # I4242: the scripts of every job run node, which a GitHub-hosted image carries and a
       # self-hosted runner need not; the pool is given the Node setup-site pins (cockpit has it)
       - if: runner.environment == 'self-hosted'
@@ -1499,6 +1551,16 @@ jobs:
     env:
       MJ_CI_RECEIPTS: ${{ github.workspace }}/receipts.tsv
     steps:
+      # I4242: the fleet's disk floor, before anything is written (case 3345)
+      - name: the fleet's disk floor
+        if: runner.environment == 'self-hosted'
+        working-directory: ${{ runner.temp }}
+        env:
+          FLOOR_GIB: ${{ env.MJ_FLEET_FLOOR_GIB }}
+        run: |
+          free=$(df -BG --output=avail . | tail -n 1 | tr -dc 0-9)
+          echo "$RUNNER_NAME: ${free:-unknown} GiB free, the floor of this job is $FLOOR_GIB GiB"
+          [ "${free:-0}" -ge "$FLOOR_GIB" ] || { echo "::error::$RUNNER_NAME has ${free:-unknown} GiB free, under this job's floor of $FLOOR_GIB GiB: it does not start a build that could fill the disk every user of the machine shares"; exit 75; }
       # I4242: the scripts of every job run node, which a GitHub-hosted image carries and a
       # self-hosted runner need not; the pool is given the Node setup-site pins (cockpit has it)
       - if: runner.environment == 'self-hosted'
@@ -1607,6 +1669,16 @@ jobs:
       # every gate's receipts, "<gate><TAB><step outcome><TAB><source>": what the ci verdict asks each selected gate for
       MJ_CI_RECEIPTS: ${{ github.workspace }}/receipts.tsv
     steps:
+      # I4242: the fleet's disk floor, before anything is written (case 3345)
+      - name: the fleet's disk floor
+        if: runner.environment == 'self-hosted'
+        working-directory: ${{ runner.temp }}
+        env:
+          FLOOR_GIB: ${{ env.MJ_FLEET_FLOOR_GIB }}
+        run: |
+          free=$(df -BG --output=avail . | tail -n 1 | tr -dc 0-9)
+          echo "$RUNNER_NAME: ${free:-unknown} GiB free, the floor of this job is $FLOOR_GIB GiB"
+          [ "${free:-0}" -ge "$FLOOR_GIB" ] || { echo "::error::$RUNNER_NAME has ${free:-unknown} GiB free, under this job's floor of $FLOOR_GIB GiB: it does not start a build that could fill the disk every user of the machine shares"; exit 75; }
       # I4242: the scripts of every job run node, which a GitHub-hosted image carries and a
       # self-hosted runner need not; the pool is given the Node setup-site pins (cockpit has it)
       - if: runner.environment == 'self-hosted'
@@ -1813,6 +1885,16 @@ jobs:
       # every gate's receipts, "<gate><TAB><step outcome><TAB><source>": what the ci verdict asks each selected gate for
       MJ_CI_RECEIPTS: ${{ github.workspace }}/receipts.tsv
     steps:
+      # I4242: the fleet's disk floor, before anything is written (case 3345)
+      - name: the fleet's disk floor
+        if: runner.environment == 'self-hosted'
+        working-directory: ${{ runner.temp }}
+        env:
+          FLOOR_GIB: ${{ env.MJ_FLEET_FLOOR_GIB }}
+        run: |
+          free=$(df -BG --output=avail . | tail -n 1 | tr -dc 0-9)
+          echo "$RUNNER_NAME: ${free:-unknown} GiB free, the floor of this job is $FLOOR_GIB GiB"
+          [ "${free:-0}" -ge "$FLOOR_GIB" ] || { echo "::error::$RUNNER_NAME has ${free:-unknown} GiB free, under this job's floor of $FLOOR_GIB GiB: it does not start a build that could fill the disk every user of the machine shares"; exit 75; }
       # I4242: the scripts of every job run node, which a GitHub-hosted image carries and a
       # self-hosted runner need not; the pool is given the Node setup-site pins (cockpit has it)
       - if: runner.environment == 'self-hosted'
@@ -1903,6 +1985,16 @@ jobs:
       # every gate's receipts, "<gate><TAB><step outcome><TAB><source>": what the ci verdict asks each selected gate for
       MJ_CI_RECEIPTS: ${{ github.workspace }}/receipts.tsv
     steps:
+      # I4242: the fleet's disk floor, before anything is written (case 3345)
+      - name: the fleet's disk floor
+        if: runner.environment == 'self-hosted'
+        working-directory: ${{ runner.temp }}
+        env:
+          FLOOR_GIB: ${{ env.MJ_FLEET_TEST_FLOOR_GIB }}
+        run: |
+          free=$(df -BG --output=avail . | tail -n 1 | tr -dc 0-9)
+          echo "$RUNNER_NAME: ${free:-unknown} GiB free, the floor of this job is $FLOOR_GIB GiB"
+          [ "${free:-0}" -ge "$FLOOR_GIB" ] || { echo "::error::$RUNNER_NAME has ${free:-unknown} GiB free, under this job's floor of $FLOOR_GIB GiB: it does not start a build that could fill the disk every user of the machine shares"; exit 75; }
       - uses: actions/checkout@v4
       - id: site
         uses: ./.github/actions/setup-site
@@ -1964,6 +2056,16 @@ jobs:
       # every gate's receipts, "<gate><TAB><step outcome><TAB><source>": what the ci verdict asks each selected gate for
       MJ_CI_RECEIPTS: ${{ github.workspace }}/receipts.tsv
     steps:
+      # I4242: the fleet's disk floor, before anything is written (case 3345)
+      - name: the fleet's disk floor
+        if: runner.environment == 'self-hosted'
+        working-directory: ${{ runner.temp }}
+        env:
+          FLOOR_GIB: ${{ env.MJ_FLEET_TEST_FLOOR_GIB }}
+        run: |
+          free=$(df -BG --output=avail . | tail -n 1 | tr -dc 0-9)
+          echo "$RUNNER_NAME: ${free:-unknown} GiB free, the floor of this job is $FLOOR_GIB GiB"
+          [ "${free:-0}" -ge "$FLOOR_GIB" ] || { echo "::error::$RUNNER_NAME has ${free:-unknown} GiB free, under this job's floor of $FLOOR_GIB GiB: it does not start a build that could fill the disk every user of the machine shares"; exit 75; }
       # I4242: the scripts of every job run node, which a GitHub-hosted image carries and a
       # self-hosted runner need not; the pool is given the Node setup-site pins (cockpit has it)
       - if: runner.environment == 'self-hosted'
@@ -2166,6 +2268,16 @@ jobs:
       # its last step cancels a branch's run that this job turned red, as every gate job's does
       actions: write
     steps:
+      # I4242: the fleet's disk floor, before anything is written (case 3345)
+      - name: the fleet's disk floor
+        if: runner.environment == 'self-hosted'
+        working-directory: ${{ runner.temp }}
+        env:
+          FLOOR_GIB: ${{ env.MJ_FLEET_FLOOR_GIB }}
+        run: |
+          free=$(df -BG --output=avail . | tail -n 1 | tr -dc 0-9)
+          echo "$RUNNER_NAME: ${free:-unknown} GiB free, the floor of this job is $FLOOR_GIB GiB"
+          [ "${free:-0}" -ge "$FLOOR_GIB" ] || { echo "::error::$RUNNER_NAME has ${free:-unknown} GiB free, under this job's floor of $FLOOR_GIB GiB: it does not start a build that could fill the disk every user of the machine shares"; exit 75; }
       # I4242: the scripts of every job run node, which a GitHub-hosted image carries and a
       # self-hosted runner need not; the pool is given the Node setup-site pins (cockpit has it)
       - if: runner.environment == 'self-hosted'
@@ -2229,6 +2341,16 @@ jobs:
     # I4242: unset, it runs where the plan sent this run's jobs (the first wave's runner).
     runs-on: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository && 'ubuntu-latest' || vars.MJ_AGGREGATE_RUNNER || fromJSON(needs.plan.outputs.runner || '"ubuntu-latest"') }}
     steps:
+      # I4242: the fleet's disk floor, before anything is written (case 3345)
+      - name: the fleet's disk floor
+        if: runner.environment == 'self-hosted'
+        working-directory: ${{ runner.temp }}
+        env:
+          FLOOR_GIB: ${{ env.MJ_FLEET_FLOOR_GIB }}
+        run: |
+          free=$(df -BG --output=avail . | tail -n 1 | tr -dc 0-9)
+          echo "$RUNNER_NAME: ${free:-unknown} GiB free, the floor of this job is $FLOOR_GIB GiB"
+          [ "${free:-0}" -ge "$FLOOR_GIB" ] || { echo "::error::$RUNNER_NAME has ${free:-unknown} GiB free, under this job's floor of $FLOOR_GIB GiB: it does not start a build that could fill the disk every user of the machine shares"; exit 75; }
       # I4242: the scripts of every job run node, which a GitHub-hosted image carries and a
       # self-hosted runner need not; the pool is given the Node setup-site pins (cockpit has it)
       - if: runner.environment == 'self-hosted'

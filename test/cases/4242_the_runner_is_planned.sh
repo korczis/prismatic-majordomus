@@ -29,6 +29,9 @@
 W="$ROOT/.github/workflows/validate.yml"
 [ -f "$W" ] || { echo "    .github/workflows/validate.yml is missing"; exit 1; }
 EXPR="\${{ fromJSON(needs.plan.outputs.runner || '\"ubuntu-latest\"') }}"
+# ci, the verdict, may instead run where the owner points vars.MJ_AGGREGATE_RUNNER (master's
+# own rule since 2026-11-02, kept by the trial merge); a fork's pull request is hosted either way
+CI_EXPR="\${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository && 'ubuntu-latest' || vars.MJ_AGGREGATE_RUNNER || fromJSON(needs.plan.outputs.runner || '\"ubuntu-latest\"') }}"
 FIRST=" suite coverage evidence site-probe interactions ui cockpit mesh-lab pages ci "
 
 # "<job>\t<runs-on>" for every job
@@ -46,6 +49,7 @@ while IFS="$(printf '\t')" read -r job value; do
   case "$job:$value" in
     plan:ubuntu-latest) ;;
     plan:*) echo "    the plan job runs on '$value', not ubuntu-latest"; fail=1 ;;
+    ci:*) [ "$value" = "$CI_EXPR" ] || { echo "    the ci job runs on '$value', not the aggregate runner or the planned one"; fail=1; } ;;
     *:macos-latest|*:'${{ matrix.runner }}') ;;
     *) case "$FIRST" in
          *" $job "*) [ "$value" = "$EXPR" ] || { echo "    first-wave job $job runs on '$value', not the planned runner"; fail=1; } ;;

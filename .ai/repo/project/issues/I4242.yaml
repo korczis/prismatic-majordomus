@@ -19,6 +19,7 @@ scope:
   - "scripts/cockpit-probe"
   - "test/mesh-lab/run"
   - ".ai/repo/project/issues/I4242.yaml"
+  - "test/cases/3345_a_fleet_job_checks_the_floor_first.sh"
 non_scope:
   - "pages.yml and release.yml: the deploy and the release hold secrets and stay on GitHub-hosted runners"
   - "The macOS jobs and the install matrix, which name their platform"
@@ -28,13 +29,15 @@ acceptance_criteria:
   - "Every first-wave job of validate.yml takes runs-on from needs.plan.outputs.runner, every other Linux job stays on ubuntu-latest, and a case fails when either names another runner"
   - "A pull request whose head repository is not this one is planned onto ubuntu-latest whatever MJ_RUNNER says, and the case drives the plan's runner step with a fork's event to show it"
   - "A dispatch with runner=lundra on this branch runs its jobs on lundra runners and reaches its ci verdict"
+  - "Every first-wave job checks the fleet's disk floor first (35 GiB, 45 for suite, coverage, cockpit and mesh-lab) and exits 75 with the reason under it; coverage on a self-hosted runner builds in a private directory under RUNNER_TEMP and always removes it (case 3345, after run 41976073596 filled lundra)"
   - "The cockpit job serves the executable the build job made (majordomus-bin), the probe says before it builds one and bounds its first request, and the mesh lab waits MESH_LAB_START_WAIT (240 s) for a node and names a late node's container state"
 validation:
   - "majordomus plan validate"
   - "bash test/run.sh 4242"
+  - "bash test/run.sh 3345_a_fleet_job_checks_the_floor_first"
 evidence_required:
   - case_runner_is_planned
 created_at: 2026-10-26
-updated_at: 2026-10-29T02:40:00Z
+updated_at: 2026-11-05
 started_at: 2026-10-26T20:21:23Z
 started_event: sha256:c93de354943c8c0250b11df2bb6fc53e853400d42d3f7a7e24e0c1895a93f257

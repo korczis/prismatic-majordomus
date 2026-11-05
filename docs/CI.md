@@ -381,6 +381,18 @@ on a self-hosted runner: `setup-site`, or `actions/setup-node` guarded by
 without it, run 40416931397). Case 4242 holds every job to the planned runner and to that Node, and drives
 the plan's runner step with a fork's event.
 
+A machine of the fleet is shared, and a run must not fill its disk. The workflow declares the
+floor once, at its top: `MJ_FLEET_FLOOR_GIB` (35, the cooperation rule's "none starts below 35
+GiB free") and `MJ_FLEET_TEST_FLOOR_GIB` (45, for a test or coverage build). The first step of
+every first-wave job is "the fleet's disk floor", guarded by `runner.environment ==
+'self-hosted'`: under its floor the job exits 75 and names the runner, its free space and the
+floor. Coverage builds there in a directory of its own, `$RUNNER_TEMP/coverage-build-<run id>`,
+never the persistent `build-shared` (a self-hosted job has no cache, so nothing bounds it, and
+its reaper pulls files from under a running build), and an `always()` step removes it and the
+`llvm-cov-target` before the last step. Without them, the first trial of the pool (run
+41976073596) wrote 72 GB of instrumented build into `build-shared` and took lundra from 76 GiB
+free to none. Case 3345 holds both.
+
 ## Caches and artifacts
 
 Caches hold reusable dependency and build state; artifacts carry a job's outputs to a
