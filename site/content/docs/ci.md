@@ -1,7 +1,7 @@
 +++
 title = "Continuous integration"
 description = "how a change is validated: the validation workflow over repository-owned gates, the planner and its model of what can affect what, the gates and how to run each locally, the caches and artifacts, the executable as a build output, the parallel suite and probe, the platform policy, and where the measurements live"
-weight = 79
+weight = 80
 [extra]
 source = "docs/CI.md"
 +++
@@ -169,6 +169,19 @@ either, which is what `completed` claims. `partial` and `blocked` are never refu
 To force full validation of a pull request, add the label `ci:full`; the `labeled` event
 re-plans it. To see why a gate ran or did not, read the `plan` job's summary or the
 `ci-plan` artifact, or run the planner on the same diff locally.
+
+Any other label starts no second verdict (I4347). `labeled` starts validate for every label,
+and only `ci:full` and `hold` change what a run does; in the seven days to 2026-11-01, 128 of
+436 pull-request validate runs were a further run of a head that had already been run, most
+of them started by the label a train or a records branch is opened with. So a run started by
+another label, on a head that already carries a verdict, gives its runners back in the plan
+job's first step, and its `ci` job writes that verdict again: success stays success and a
+red stays red. It never skips `ci`, because GitHub counts a skipped required check as
+passing. A verdict is a completed run of the same head whose `plan` succeeded and whose `ci`
+concluded success or failure; a run that yielded is none, so a head whose only runs yielded
+runs its plan, and a forge that cannot be read decides the same. The enforcer is
+`scripts/ci/carried-verdict`; `test/cases/26_ci_wiring.sh` proves the wiring, keeps its label
+set equal to the labels validate.yml reads, and replays the trains of 2026-10-28.
 
 `test/cases/94_ci_plan.sh` proves the relationships that matter: a Rust change selects the
 Rust gates and never the site, a site change the site gates and never a Rust gate, a

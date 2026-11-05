@@ -40,7 +40,7 @@ rc=0; MJ_ROOT="$F" MJ_PROBE_SHARD=4/3 "$PROBE" > out.txt 2>&1 || rc=$?
 echo "    ok: a malformed shard is refused before a browser is opened"
 
 # --- the probe itself, in a browser
-command -v node >/dev/null 2>&1 || skip "no node, so the shards were not driven"
+mj_runs node || skip "$(mj_runs_why node)"
 [ -d "$ROOT/node_modules/playwright" ] || { [ "${CI:-}" = true ] && { echo "    playwright absent under CI"; exit 1; }; skip "playwright absent (npm ci)"; }
 printf 'base_url = "https://fixture.test"\n' > "$F/site/config.toml"
 printf '%s\n' '{"surfaces":[{"id":"app","kind":"static-directory","mount":"/","artifact":"site/public","availability":"published-only"}]}' > "$F/docs/generated/web.json"

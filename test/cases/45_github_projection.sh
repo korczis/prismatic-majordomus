@@ -258,6 +258,22 @@ expect_grep 'OK +created +issue I0002'
 grep -q 'issue create .*I0002 — ' "$CALLS" || { echo "    MJ_GH_RECREATE=I0002 did not create I0002"; cat "$CALLS"; exit 1; }
 rm -f "$FX_I" "$FX_M"
 
+# --- actions/checkout sets no origin/HEAD: the default branch's remote ref is then the trunk,
+#     not HEAD. On a pull request HEAD is the branch, and a record the branch adds, committed
+#     before the last projection, must read never-created and not deleted-remotely (train 23).
+# MUTATION, RUN: drop the default-branch fallback in github-sync (landed_ref=HEAD) -> I0003
+# reads deleted-remotely.
+git push -q origin HEAD:refs/heads/master
+git symbolic-ref --delete refs/remotes/origin/HEAD
+pj_issue I0003 M000
+git add -A >/dev/null; git commit -qm "a branch adds I0003" >/dev/null
+remote_at 2999-01-01T00:00:00Z
+expect_exit 11 check_fx
+expect_grep 'DRIFT +never-created +issue I0003'
+expect_no_grep 'deleted-remotely +issue I0003'
+expect_grep 'DRIFT +deleted-remotely +issue I0002'
+rm -f "$FX_I" "$FX_M"
+
 # --- nothing the adapter does writes to the canonical model
 before="$(find .ai/repo/project -type f -print0 | mj_sha256_xargs -0 | LC_ALL=C sort)"
 "$SYNC" --plan >/dev/null; "$SYNC" --render M000 >/dev/null

@@ -30,6 +30,7 @@
 //! );
 //! ```
 
+pub mod allocate;
 pub mod artifacts;
 pub(crate) mod blackboard;
 pub(crate) mod board;
@@ -77,6 +78,7 @@ pub mod pack;
 pub(crate) mod peers;
 pub(crate) mod perf;
 pub mod plan;
+pub(crate) mod proceed;
 pub(crate) mod product;
 pub mod quality;
 pub mod reasoning;
@@ -131,7 +133,7 @@ pub use environment::{EnvironmentInput, EnvironmentProvenance, ExplainInput, ENV
 pub use episodes::{AttachInput, DetachInput, EpisodeList};
 pub use executions::{
     CancelReport, EventHistory, ExecutionLinks, ExecutionList, ExecutionView, ProtocolReport,
-    EXECUTIONS_URI, EXECUTION_PROTOCOL_URI,
+    StartedExecution, EXECUTIONS_URI, EXECUTION_PROTOCOL_URI,
 };
 pub use gates::{CompletionInput, GateModelEntry, GateModelReport, COMPLETION_URI, GATES_URI};
 pub use graph::{GraphInput, GraphList, GRAPHS_URI};
@@ -220,6 +222,7 @@ pub fn modules() -> Vec<ModuleDescriptor> {
         pack,
         perf,
         plan,
+        proceed,
         recover,
         directories,
         devcontext,
@@ -339,6 +342,9 @@ mod tests {
                 "continuity.sync",
                 // writes the kit's rule and policy block into a repository (I4334)
                 "design.kit.adopt",
+                // creates an issue's worktree and starts its run, through worktree.create and
+                // executions.start (I4003)
+                "devtask.implement",
                 // runs any executable capability, writers included (ADR 0126)
                 "executions.start",
                 // writes one new intent record, never a stage (ADR 0144)
@@ -347,7 +353,10 @@ mod tests {
                 "mesh.enrol",
                 "plan.transition",
                 "reasoning.record",
-                "recover.orphans"
+                "recover.orphans",
+                // the canonical worktree of a branch, made or found; never moved or removed
+                // (I4002)
+                "worktree.create"
             ]
         );
     }

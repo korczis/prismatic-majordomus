@@ -18,7 +18,7 @@
 . "$ROOT/test/lib.sh"
 GATE="$ROOT/scripts/ci/diagram-check"
 [ -x "$GATE" ] || { echo "    $GATE is not executable"; exit 1; }
-command -v python3 >/dev/null 2>&1 || skip "python3 absent"
+mj_runs python3 || skip "$(mj_runs_why python3)"
 
 S="$(mktemp -d "${TMPDIR:-/tmp}/mj-3106.XXXXXX")"
 trap 'rm -rf "$S"' EXIT

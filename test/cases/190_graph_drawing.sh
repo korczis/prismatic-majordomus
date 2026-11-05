@@ -27,7 +27,7 @@
 # is where a real renderer exists to ask.
 . "$ROOT/test/lib.sh"
 
-command -v node >/dev/null 2>&1 || {
+mj_runs node || {
   echo "    node is not available; this case runs the viewer's own functions"
   exit 1
 }

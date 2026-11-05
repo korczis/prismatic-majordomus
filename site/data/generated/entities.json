@@ -9,7 +9,7 @@
       "title": "Decisions",
       "description": "Every architecture decision this repository has recorded, with what it supersedes, what it put in force, and what has since referred back to it. One page per decision, generated from the decision's own file.",
       "weight": 45,
-      "count": 168,
+      "count": 169,
       "dir": "adrs",
       "statuses": [
         "accepted",
@@ -38,7 +38,7 @@
       "route": "/adrs/",
       "title": "Decisions",
       "reason": null,
-      "count": 168
+      "count": 169
     },
     {
       "kind": "application",
@@ -94,7 +94,7 @@
       "route": null,
       "title": null,
       "reason": "A critique is the adversarial pass over one intent's plan, written by a worker, and work started under the intent without it or with a blocking finding open fails intent validation (ADR 0073). It is planning state of this repository; what the plan became is published on /plan/.",
-      "count": 39
+      "count": 40
     },
     {
       "kind": "deployment",
@@ -126,7 +126,7 @@
       "route": null,
       "title": null,
       "reason": "A document of the layer is prose already published where it belongs — /docs/, /method/, /context/ — and a second address for the same words is the duplication this file exists to prevent.",
-      "count": 354
+      "count": 357
     },
     {
       "kind": "domain",
@@ -158,7 +158,7 @@
       "route": null,
       "title": null,
       "reason": "An implementation object is a source file a claim names. It is reachable from the claim that names it and from the repository; a page rendering a Rust module is the source browser GitHub already is.",
-      "count": 53
+      "count": 54
     },
     {
       "kind": "intent",
@@ -166,7 +166,7 @@
       "route": null,
       "title": null,
       "reason": "An intent's stage and criteria are derived on every read from the plan and the evidence ledger (ADR 0070); a static page would freeze a derivation at the commit the site was built from. The milestones that realise an intent are published on /plan/, and `majordomus intent show` and the Cockpit's /cockpit/intents answer for the intent itself.",
-      "count": 44
+      "count": 45
     },
     {
       "kind": "issue",
@@ -174,7 +174,7 @@
       "route": "/plan/",
       "title": null,
       "reason": null,
-      "count": 1203
+      "count": 1215
     },
     {
       "kind": "knowledge",
@@ -182,7 +182,7 @@
       "route": null,
       "title": null,
       "reason": "Curated knowledge is written for the worker reading the layer, not for a visitor: it is the orientation a session starts from, and it changes with the work rather than with the product.",
-      "count": 103
+      "count": 113
     },
     {
       "kind": "mesh-declaration",
@@ -198,7 +198,7 @@
       "route": "/plan/",
       "title": null,
       "reason": null,
-      "count": 116
+      "count": 117
     },
     {
       "kind": "moment",
@@ -270,7 +270,7 @@
       "route": "/skills/",
       "title": null,
       "reason": null,
-      "count": 8
+      "count": 10
     },
     {
       "kind": "taxonomy",
@@ -286,7 +286,7 @@
       "route": null,
       "title": null,
       "reason": "A test object is a case file. What it proves is published — on /guarantees/ for the claim and on the rule's own page for the rule — and that is the direction a reader asks in.",
-      "count": 678
+      "count": 691
     },
     {
       "kind": "use-case",
@@ -485,6 +485,13 @@
           "label": "adr-0149",
           "kind": "adr",
           "route": "/adrs/adr-0149/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0177",
+          "kind": "adr",
+          "route": "/adrs/adr-0177/",
           "external": false
         },
         {
@@ -4433,9 +4440,9 @@
         },
         {
           "edge": "put_in_force",
-          "label": "project.mesh-cooperation-is-authenticated@1",
+          "label": "project.mesh-cooperation-is-authenticated@2",
           "kind": "rule",
-          "route": "/rules/project-mesh-cooperation-is-authenticated-1/",
+          "route": "/rules/project-mesh-cooperation-is-authenticated-2/",
           "external": false
         },
         {
@@ -4772,6 +4779,13 @@
           "label": "adr-0144",
           "kind": "adr",
           "route": "/adrs/adr-0144/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0177",
+          "kind": "adr",
+          "route": "/adrs/adr-0177/",
           "external": false
         },
         {
@@ -7542,9 +7556,9 @@
         },
         {
           "edge": "put_in_force",
-          "label": "project.mesh-cooperation-is-authenticated@1",
+          "label": "project.mesh-cooperation-is-authenticated@2",
           "kind": "rule",
-          "route": "/rules/project-mesh-cooperation-is-authenticated-1/",
+          "route": "/rules/project-mesh-cooperation-is-authenticated-2/",
           "external": false
         },
         {
@@ -8592,6 +8606,13 @@
           "label": "adr-0146",
           "kind": "adr",
           "route": "/adrs/adr-0146/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0177",
+          "kind": "adr",
+          "route": "/adrs/adr-0177/",
           "external": false
         },
         {
@@ -10039,9 +10060,9 @@
         },
         {
           "edge": "put_in_force",
-          "label": "project.mesh-cooperation-is-authenticated@1",
+          "label": "project.mesh-cooperation-is-authenticated@2",
           "kind": "rule",
-          "route": "/rules/project-mesh-cooperation-is-authenticated-1/",
+          "route": "/rules/project-mesh-cooperation-is-authenticated-2/",
           "external": false
         },
         {
@@ -10067,6 +10088,13 @@
         }
       ],
       "referenced_by": [
+        {
+          "edge": "put_in_force",
+          "label": "adr-0177",
+          "kind": "adr",
+          "route": "/adrs/adr-0177/",
+          "external": false
+        },
         {
           "edge": "put_in_force",
           "label": "adr-0186",
@@ -10482,6 +10510,110 @@
         {
           "edge": "put_in_force",
           "label": "peer-blackboard",
+          "kind": "milestone",
+          "route": "/plan/",
+          "external": false
+        }
+      ],
+      "referenced_by": []
+    },
+    {
+      "kind": "adr",
+      "id": "majordomus://adr/adr-0177",
+      "identity": "adr-0177",
+      "slug": "adr-0177",
+      "cockpit": "/cockpit/objects/adr/adr-0177",
+      "title": "A session proceeds through one entrypoint that composes the capabilities the repository already has",
+      "status": "proposed",
+      "tags": [
+        "proceed",
+        "orchestration",
+        "planning",
+        "mesh",
+        "session"
+      ],
+      "source": ".ai/repo/adrs/0177-a-session-proceeds-through-one-entrypoint-that-composes-the-capabilities.md",
+      "references": [
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-cli/src/capability/builtin/brief.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-cli/src/capability/builtin/plan.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-cli/src/mesh/state.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-cli/src/peers.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-cli/src/plan.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0004",
+          "kind": "adr",
+          "route": "/adrs/adr-0004/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0070",
+          "kind": "adr",
+          "route": "/adrs/adr-0070/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0144",
+          "kind": "adr",
+          "route": "/adrs/adr-0144/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0167",
+          "kind": "adr",
+          "route": "/adrs/adr-0167/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": ".ai/repo/workflows/task-lifecycle.md",
+          "kind": "document",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "a-session-proceeds",
+          "kind": "intent",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "a-session-proceeds",
           "kind": "milestone",
           "route": "/plan/",
           "external": false
@@ -18465,9 +18597,9 @@
       "references": [
         {
           "edge": "depends_on",
-          "label": "project.mesh-cooperation-is-authenticated@1",
+          "label": "project.mesh-cooperation-is-authenticated@2",
           "kind": "rule",
-          "route": "/rules/project-mesh-cooperation-is-authenticated-1/",
+          "route": "/rules/project-mesh-cooperation-is-authenticated-2/",
           "external": false
         }
       ],
@@ -21296,10 +21428,10 @@
     },
     {
       "kind": "rule",
-      "id": "majordomus://rule/project.mesh-cooperation-is-authenticated@1",
-      "identity": "project.mesh-cooperation-is-authenticated@1",
-      "slug": "project-mesh-cooperation-is-authenticated-1",
-      "cockpit": "/cockpit/objects/rule/project-mesh-cooperation-is-authenticated-1",
+      "id": "majordomus://rule/project.mesh-cooperation-is-authenticated@2",
+      "identity": "project.mesh-cooperation-is-authenticated@2",
+      "slug": "project-mesh-cooperation-is-authenticated-2",
+      "cockpit": "/cockpit/objects/rule/project-mesh-cooperation-is-authenticated-2",
       "title": "Mesh cooperation is admitted per link, replicated through one journal, and projected by every surface alike",
       "status": "active",
       "tags": [
@@ -21308,7 +21440,7 @@
         "cooperation",
         "doctrine"
       ],
-      "source": ".ai/repo/rules/project/mesh-cooperation-is-authenticated.v1.md",
+      "source": ".ai/repo/rules/project/mesh-cooperation-is-authenticated.v2.md",
       "references": [
         {
           "edge": "depends_on",
@@ -21437,9 +21569,9 @@
         },
         {
           "edge": "depends_on",
-          "label": "project.mesh-cooperation-is-authenticated@1",
+          "label": "project.mesh-cooperation-is-authenticated@2",
           "kind": "rule",
-          "route": "/rules/project-mesh-cooperation-is-authenticated-1/",
+          "route": "/rules/project-mesh-cooperation-is-authenticated-2/",
           "external": false
         }
       ]
@@ -23515,9 +23647,9 @@
         },
         {
           "edge": "depends_on",
-          "label": "project.mesh-cooperation-is-authenticated@1",
+          "label": "project.mesh-cooperation-is-authenticated@2",
           "kind": "rule",
-          "route": "/rules/project-mesh-cooperation-is-authenticated-1/",
+          "route": "/rules/project-mesh-cooperation-is-authenticated-2/",
           "external": false
         },
         {

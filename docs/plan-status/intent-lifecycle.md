@@ -46,9 +46,11 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I1900` | shares .ai/repo/project/intents with I2914; they may not run concurrently |
 | WARN | `scope_conflict` | `I1900` | shares .ai/repo/project/intents with I2918; they may not run concurrently |
 | WARN | `scope_conflict` | `I1900` | shares .ai/repo/project/intents with I2919; they may not run concurrently |
+| WARN | `scope_conflict` | `I1900` | shares apps/majordomus-cli/src/capability/builtin/intents.rs with I2972; they may not run concurrently |
 | WARN | `scope_conflict` | `I1900` | shares .ai/repo/project/intents with I3003; they may not run concurrently |
 | WARN | `scope_conflict` | `I1900` | shares .ai/repo/project/intents with I3004; they may not run concurrently |
 | WARN | `scope_conflict` | `I1900` | shares .ai/repo/project/intents with I3005; they may not run concurrently |
+| WARN | `scope_conflict` | `I1900` | shares apps/majordomus-cli/src/capability/builtin/intents.rs with I3040; they may not run concurrently |
 | WARN | `scope_conflict` | `I1900` | shares .ai/repo/project/intents with I3110; they may not run concurrently |
 | WARN | `scope_conflict` | `I1900` | shares .ai/repo/project/intents with I3113; they may not run concurrently |
 | WARN | `scope_conflict` | `I1900` | shares .ai/repo/ci/gates.yaml with I3116; they may not run concurrently |
