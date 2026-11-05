@@ -261,3 +261,79 @@ grep -q '^\[1, 2, 3, 4, 5, 6, 7, 8, 9\]$' "$TL" \
 write_rawstr plain; touch9
 expect_exit 10 cov9 "$BASE9"
 expect_grep "$REL9:8"
+
+# ------------------------------- 10. a saturated count is discarded, never read as a finding
+#
+# llvm-cov's JSON clamps a count to 2**63-1, and only a counter expression that came out negative
+# reaches it. On CI run 41932965548 one copy (instantiation) of editors::plan (228 calls)
+# counted the region at editors/mod.rs:697 at 2**63-1 and another counted it 1; llvm summed
+# them, 2**64-1 + 1 wrapped the line segment to 0, and the gate called a line that ran "not
+# covered" (exit 10). The fixtures put both shapes on the sample's line 6, over a segment of 0:
+#   (a) one saturated copy and one counting 1: the saturated copy is discarded, the region and
+#       the line count 1, and touching line 6 PASSES (0), neither a FAIL (10) nor BLOCKED (12)
+#   (b) every copy saturated: there is no count, and touching line 6 is BLOCKED (12), naming the
+#       region and what to do about it
+#   (c) one saturated copy and one counting 0: the 0 is not evidence the line never ran (the
+#       discarded copy may be the one that ran it), so it is BLOCKED (12) too, never a FAIL (10)
+fixture10() { W="$W" REL="$REL" SHAPE="$1" python3 - "$2" <<'PY'
+import json, os, sys
+target = os.path.join(os.environ["W"], os.environ["REL"])
+SAT = 2**63 - 1
+seg = lambda l, c, n, s: [l, c, n, s, s, False]
+copies = [{"name": "_RNvCs4PoU8zQlhil_6sample6unused", "count": 228, "filenames": [target],
+           "regions": [[5, 1, 7, 1, 228, 0, 0, 0], [6, 5, 6, 10, SAT, 0, 0, 0]]}]
+if os.environ["SHAPE"] in ("a", "c"):
+    ran = 1 if os.environ["SHAPE"] == "a" else 0
+    copies.append({"name": "_RNvCs9aB8zQlhil0_6sample6unused", "count": 1, "filenames": [target],
+                   "regions": [[5, 1, 7, 1, 1, 0, 0, 0], [6, 5, 6, 10, ran, 0, 0, 0]]})
+line6 = 0 if os.environ["SHAPE"] == "a" else SAT
+data = {"version": "2.0.1", "type": "llvm.coverage.json.export", "data": [{
+    "files": [{"filename": target, "summary": {}, "segments": [
+        seg(3, 5, 7, True), seg(3, 10, 0, False), seg(6, 5, line6, True), seg(6, 10, 0, False)]}],
+    "functions": [{"name": "add", "count": 7, "filenames": [target],
+                   "regions": [[1, 1, 4, 1, 7, 0, 0, 0]]}] + copies}]}
+json.dump(data, open(sys.argv[1], "w"))
+PY
+}
+FX10A="$T/export10a.json"; FX10B="$T/export10b.json"; FX10C="$T/export10c.json"
+fixture10 a "$FX10A"; fixture10 b "$FX10B"; fixture10 c "$FX10C"
+cov10() { ( cd "$W" && MJ_ROOT="$W" MJ_COVERAGE_EXPORT="$1" \
+    scripts/ci/coverage-differential "$BASE" ); }
+git -C "$W" reset -q --hard "$BASE"
+touch_line 6
+# (a) one unsaturated copy: its count is the region's, and the changed line is covered
+expect_exit 0 cov10 "$FX10A"
+expect_grep "PASS: every changed executable line"
+expect_no_grep "UNTRUSTED|^FAIL "
+# (b) no unsaturated copy: BLOCKED, with the region and the remedy named
+expect_exit 12 cov10 "$FX10B"
+expect_grep "could not be trusted"
+expect_grep "UNTRUSTED $REL:6:5-6:10 in .*every copy of this region's count saturated"
+expect_grep "stop or join the thread in the test before the process exits, then measure again"
+expect_no_grep "^FAIL |^PASS"
+# (c) a saturated copy and a copy that counted 0: BLOCKED, not uncovered
+expect_exit 12 cov10 "$FX10C"
+expect_grep "UNTRUSTED $REL:6:5-6:10 in .*1 of the 2 copies of this region's count saturated"
+expect_no_grep "^FAIL |^PASS"
+git -C "$W" checkout -- "$REL"
+# the covered line beside it is judged as before: no untrusted span reaches line 3
+touch_line 3
+expect_exit 0 cov10 "$FX10B"
+expect_grep "every changed executable line"
+git -C "$W" checkout -- "$REL"
+# The floors. (a): both lines count, 100%, and nothing is untrusted. (b): line 3 ran and line 6
+# has no count, so the lines are at 50% read one way and 100% the other; a floor of 75% is
+# decided by the untrusted count (12), one of 40% is not (0).
+printf '75\n' > "$W/scripts/rust-coverage-threshold"
+expect_exit 0 "$W/scripts/rust-coverage" --from "$FX10A"
+expect_no_grep "UNTRUSTED"
+expect_exit 12 "$W/scripts/rust-coverage" --from "$FX10B"
+expect_grep "UNTRUSTED $REL:6:5-6:10"
+expect_grep "could not be trusted"
+printf '40\n' > "$W/scripts/rust-coverage-threshold"
+expect_exit 0 "$W/scripts/rust-coverage" --from "$FX10B"
+expect_grep "so it stands"
+# --report holds nothing, and still names the untrusted region
+expect_exit 0 "$W/scripts/rust-coverage" --report --from "$FX10B"
+expect_grep "UNTRUSTED $REL:6:5-6:10"
+rm -f "$W/scripts/rust-coverage-threshold"
