@@ -541,6 +541,41 @@ jobs:
   # The published installer, from its published URL, installing the release that was just
   # published. This is the check that catches a release whose artifacts exist and whose
   # names the installer does not expect.
+  # The published homepage, read in a real browser for the tag this run published (I4530):
+  # GitHub's newest release is this tag and the page names it; the trust strip, the navbar
+  # badge, /releases/latest.json and the newest pre-release ahead of stable agree; the footer
+  # names /build.json's commit. The smoke matrix waits for the metadata file with curl; this is
+  # the page a person sees, and its screenshot is the run's artifact. It waits up to ten
+  # minutes for the Pages build the publish asked for.
+  live:
+    needs: [plan, publish]
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        timeout-minutes: 3
+        with:
+          ref: ${{ needs.plan.outputs.tag }}
+          fetch-depth: 1
+      - uses: ./.github/actions/setup-site
+      - id: browser
+        name: the homepage in a real browser names this release
+        timeout-minutes: 12
+        env:
+          GH_TOKEN: ${{ github.token }}
+          CHROME_BIN: google-chrome
+          CI: "true"
+        run: scripts/release-probe --expect '${{ needs.plan.outputs.tag }}' --wait 600 --out target/release-probe
+      - name: the browser's reading, as an artifact
+        if: always() && steps.browser.outcome != 'skipped'
+        timeout-minutes: 1
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-probe
+          path: target/release-probe
+          if-no-files-found: ignore
+          retention-days: 90
+
   smoke:
     needs: [plan, publish]
     runs-on: ${{ matrix.runner }}
