@@ -5,7 +5,7 @@ weight = 5
 [extra]
 id = "integrator"
 status = "active"
-version = 5
+version = 6
 source = ".ai/repo/skills/integrator/SKILL.md"
 +++
 {% raw %}
