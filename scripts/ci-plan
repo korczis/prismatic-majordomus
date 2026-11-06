@@ -452,11 +452,13 @@ MATCH="$(awk -F= -v files="$LIST" '
     }
   }' "$FLAT")"
 
+# a here-string, never `printf | grep -q`: grep -q leaves at its first match and closes the
+# pipe on the writer behind it ("printf: write error: Broken pipe" on two pre-pushes, 2026-11-05)
 mode=affected; reason="the gates of the classes the changed paths fall in"
 if [ "$FULL" = 1 ]; then mode=full; reason="$WHY"
-elif printf '%s\n' "$MATCH" | grep -q '^full'; then
+elif grep -q '^full' <<<"$MATCH"; then
   mode=full; reason="a changed path is in a class that escalates: $(printf '%s\n' "$MATCH" | awk -F'\t' '$1=="full"{print $3}' | head -3 | tr '\n' ' ')"
-elif printf '%s\n' "$MATCH" | grep -q '^unclassified'; then
+elif grep -q '^unclassified' <<<"$MATCH"; then
   mode=full; reason="a changed path is in no class of the model: $(printf '%s\n' "$MATCH" | awk -F'\t' '$1=="unclassified"{print $3}' | head -3 | tr '\n' ' ')"
 elif [ ! -s "$LIST" ]; then
   reason="no changed path; only the gates that always run"

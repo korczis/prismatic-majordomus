@@ -6,23 +6,23 @@
     "version": "1.0.0"
   },
   "registry": {
-    "fingerprint": "7779980e6fc10ddb6b18646b4fcf19b0a3b11fcffdecead11a57f5a9c305b201",
+    "fingerprint": "0151eeeafacc3525612b994c09319d5a97d1a384c5cc570685493cfb7c694ece",
     "summary": {
-      "total": 3927,
+      "total": 3950,
       "builtin": 231,
-      "declarative": 3696,
+      "declarative": 3719,
       "by_kind": {
         "command": 41,
         "query": 190,
-        "resource": 3696
+        "resource": 3719
       },
       "by_stability": {
         "behaviorally_verified": 153,
         "experimental": 68,
-        "implemented": 3706
+        "implemented": 3729
       },
       "mcp_tools": 215,
-      "mcp_resources": 3753,
+      "mcp_resources": 3776,
       "http_routes": 219,
       "cli_commands": 128,
       "modules": 96,
@@ -97180,7 +97180,7 @@
         "title": "knowledge",
         "description": "Declarative objects of kind 'knowledge' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 163,
+        "capabilities": 186,
         "capability_ids": []
       },
       {
@@ -97878,7 +97878,7 @@
     ]
   },
   "index": {
-    "fingerprint": "d819452d56e660ea5d11e692e71fbbaa1d5d8951f9cfae208f68950a0ac10ef6",
+    "fingerprint": "0c7783050231e9ecb74b01265893e228a6ee4e75b77e21d6713a24b5e72a631b",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -97919,7 +97919,7 @@
       "implementation": 54,
       "intent": 45,
       "issue": 1223,
-      "knowledge": 163,
+      "knowledge": 186,
       "mesh-declaration": 1,
       "milestone": 117,
       "moment": 38,
@@ -125109,6 +125109,21 @@
         ]
       },
       {
+        "uri": "majordomus://knowledge/s-20261105123339-40ab-65579550a7f6",
+        "kind": "knowledge",
+        "identity": "s-20261105123339-40ab-65579550a7f6",
+        "title": "v1.0.0-alpha.10 tagged at 64d28e2d9c5 and pushed from macbook-2 at about 16:21Z on 2026-11-06 on the owner's order (\\\"mjm proceed release asap\\\", 2026-11-06 ~16:15Z); release run 42251574700",
+        "description": "Recorded as a decision outside a task in episode s-20261105123339-40ab.",
+        "path": ".ai/repo/knowledge/curated/s-20261105123339-40ab-65579550a7f6.md",
+        "section": "knowledge",
+        "source_class": "curated",
+        "bytes": 1481,
+        "tags": [
+          "derived",
+          "decision"
+        ]
+      },
+      {
         "uri": "majordomus://knowledge/s-20261105133225-40b8-1c1a781f4634",
         "kind": "knowledge",
         "identity": "s-20261105133225-40b8-1c1a781f4634",
@@ -125223,6 +125238,336 @@
         "section": "knowledge",
         "source_class": "candidates",
         "bytes": 1015,
+        "tags": [
+          "derived",
+          "observation"
+        ]
+      },
+      {
+        "uri": "majordomus://knowledge/s-20261105135037-9134-2815b89f6892",
+        "kind": "knowledge",
+        "identity": "s-20261105135037-9134-2815b89f6892",
+        "title": "The repository's object store had grown to 1,197 pack files (8.8 GB) and 482k loose objects (12.4 GiB) over 440 worktrees, so every git merge-base cost about 0.5 s and the entry's per-handover resolver paid it 142 times (23 s per cd, direnv warning). git repack -A -d (nothing pruned) took 13 min and left 1 pack of 3.1 GiB, 193k loose, 39 GiB free; nothing measures or bounds the object store the way the build directories are bounded.",
+        "description": "Observed as drift about scripts/reap-orphans in episode s-20261105135037-9134.",
+        "path": ".ai/repo/knowledge/curated/s-20261105135037-9134-2815b89f6892.md",
+        "section": "knowledge",
+        "source_class": "curated",
+        "bytes": 2288,
+        "tags": [
+          "derived",
+          "observation"
+        ]
+      },
+      {
+        "uri": "majordomus://knowledge/s-20261105135037-9134-3338dd0df7e7",
+        "kind": "knowledge",
+        "identity": "s-20261105135037-9134-3338dd0df7e7",
+        "title": "A Claude Code shell opened in the primary checkout carries its direnv exports (MAJORDOMUS_ROOT, MAJORDOMUS_SHARE, MAJORDOMUS_URL) into every worktree it works in; scripts/pages current then ran generate --check against the primary's tree and reported docs/generated/artifacts.* as differing right after a clean derive, while majordomus generate rewrote nothing. Every majordomus call, git commit and git push in a worktree needed env -u MAJORDOMUS_SHARE -u MAJORDOMUS_ROOT -u MAJORDOMUS_URL in front.",
+        "description": "Observed as friction about bin/majordomus-cli in episode s-20261105135037-9134.",
+        "path": ".ai/repo/knowledge/curated/s-20261105135037-9134-3338dd0df7e7.md",
+        "section": "knowledge",
+        "source_class": "curated",
+        "bytes": 2611,
+        "tags": [
+          "derived",
+          "observation"
+        ]
+      },
+      {
+        "uri": "majordomus://knowledge/s-20261105135037-9134-4bc4c88301fc",
+        "kind": "knowledge",
+        "identity": "s-20261105135037-9134-4bc4c88301fc",
+        "title": "A task's scope is judged over every file of every commit since the branch base (git log --first-parent --name-only base..HEAD), so a branch that cherry-picks another PR's commit as its base must name that commit's files in --scope at start; the I3769 task's pre-push finish --check refused site/i18n/cs/memory/db.jsonl from #2943's commit, and the cure was finish partial, start again with the file, three evidence runs, check, push. A scope cannot be widened while active (I4340).",
+        "description": "Observed as friction about lib/finish.sh in episode s-20261105135037-9134.",
+        "path": ".ai/repo/knowledge/curated/s-20261105135037-9134-4bc4c88301fc.md",
+        "section": "knowledge",
+        "source_class": "curated",
+        "bytes": 2271,
+        "tags": [
+          "derived",
+          "observation"
+        ]
+      },
+      {
+        "uri": "majordomus://knowledge/s-20261105135037-9134-8c3baa86a1ee",
+        "kind": "knowledge",
+        "identity": "s-20261105135037-9134-8c3baa86a1ee",
+        "title": "A release-record PR opened by release.yml gets a pull_request validate with zero jobs (bot event, 42260679713); the workflow's own dispatch 42260673493 is the verdict and its plan selected build+rust only, where case 3045 needs zola and the rust job has no setup-site, so --no-skips counted the skip as a failure; a hand reopen added a duplicate full run on the same head (#2942).",
+        "description": "Observed as defect about .github/workflows/release.yml in episode s-20261105135037-9134.",
+        "path": ".ai/repo/knowledge/curated/s-20261105135037-9134-8c3baa86a1ee.md",
+        "section": "knowledge",
+        "source_class": "curated",
+        "bytes": 2599,
+        "tags": [
+          "derived",
+          "observation"
+        ]
+      },
+      {
+        "uri": "majordomus://knowledge/s-20261105135037-9134-ac31e1057c90",
+        "kind": "knowledge",
+        "identity": "s-20261105135037-9134-ac31e1057c90",
+        "title": "A validate run started by a labeled event (priority:p0) only carries the head's existing verdict through carried-verdict and cancels its own jobs; rerunning it cannot turn a head green. Train 28 (#2940, a4bcc410edc): the seat reran the labeled run 42105197744 twice; the pull_request run 42105196366 was the one to rerun. Read the run's event before any rerun.",
+        "description": "Observed as defect about scripts/ci/carried-verdict in episode s-20261105135037-9134.",
+        "path": ".ai/repo/knowledge/curated/s-20261105135037-9134-ac31e1057c90.md",
+        "section": "knowledge",
+        "source_class": "curated",
+        "bytes": 2227,
+        "tags": [
+          "derived",
+          "observation"
+        ]
+      },
+      {
+        "uri": "majordomus://knowledge/s-20261106212411-be2e-16bd427c8946",
+        "kind": "knowledge",
+        "identity": "s-20261106212411-be2e-16bd427c8946",
+        "title": "scripts/derive during a staged merge observed delivery.json at the pre-merge head (8c1b854ed1f) and turned 21 merged features into none/false, because delivery_observe names the worktree's HEAD and a staged merge has not moved it; a composition re-derives on the committed merge (rm site/data/generated/delivery.json; scripts/derive) before it pushes, as the record branch of alpha.10 did in its commit chore(derive): delivery.json observes the committed merge, and the composition step did not say so",
+        "description": "Observed as repetition about .ai/repo/skills/integrator/SKILL.md in episode s-20261106212411-be2e.",
+        "path": ".ai/repo/knowledge/curated/s-20261106212411-be2e-16bd427c8946.md",
+        "section": "knowledge",
+        "source_class": "curated",
+        "bytes": 2503,
+        "tags": [
+          "derived",
+          "observation"
+        ]
+      },
+      {
+        "uri": "majordomus://knowledge/s-20261106212411-be2e-22bb877b7f1d",
+        "kind": "knowledge",
+        "identity": "s-20261106212411-be2e-22bb877b7f1d",
+        "title": "release run 42251574700 published v1.0.0-alpha.10 (7 assets, releases/v1.0.0-alpha.10.json on the site, record PR #2942) and then failed its smoke jobs on four of six platforms at 17:40-17:42Z on 2026-11-06 with HTTP 404 for the tag's metadata file while the two linux-x86_64 jobs, which ran later, passed: the publish job pushed gh-pages and GitHub's own Pages build lagged past the smoke's wait (60 attempts 15 s apart), and by 18:05Z the file named the tag; one rerun of the failed jobs settled it, and the wait bound belongs beside Pages' build time (the model's deploy.release_window) rather than as a literal in the workflow",
+        "description": "Observed as friction about .github/workflows/release.yml in episode s-20261106212411-be2e.",
+        "path": ".ai/repo/knowledge/curated/s-20261106212411-be2e-22bb877b7f1d.md",
+        "section": "knowledge",
+        "source_class": "curated",
+        "bytes": 2774,
+        "tags": [
+          "derived",
+          "observation"
+        ]
+      },
+      {
+        "uri": "majordomus://knowledge/s-20261106212411-be2e-343efea00313",
+        "kind": "knowledge",
+        "identity": "s-20261106212411-be2e-343efea00313",
+        "title": "three remote waiters of the form ssh host 'pgrep -f \\\"<script>\\\" && echo running' never ended on lundra on 2026-11-05: Linux pgrep -f matches the remote zsh -c whose own command line carries the pattern; anchor the pattern to the interpreter (pgrep -f '^bash /abs/path/script.sh') or poll the pid with kill -0, and the ssh-failure branch of an until ! ssh ... loop read a timed-out connection as ended, so a wait on a remote process must tell a dead connection from a finished process",
+        "description": "Observed as friction about docs/INTEGRATION.md in episode s-20261106212411-be2e.",
+        "path": ".ai/repo/knowledge/curated/s-20261106212411-be2e-343efea00313.md",
+        "section": "knowledge",
+        "source_class": "curated",
+        "bytes": 2549,
+        "tags": [
+          "derived",
+          "observation"
+        ]
+      },
+      {
+        "uri": "majordomus://knowledge/s-20261106212411-be2e-42386b8320b1",
+        "kind": "knowledge",
+        "identity": "s-20261106212411-be2e-42386b8320b1",
+        "title": "a host-relative benchmark budget whose steadiness is a lower median lets 2 of 5 units be 10x slower and still count as steady, and on a hosted runner's 1 ms clock tick a 12-15 ms reference sized k=1 so the fail-closed pin passed where it should have refused (an adopter's exercise E058, run 42042495829, 2026-11-05); a benchmark policy here (the rule, scripts/ci/suite-budget) states the detection limit beside the margin and sizes the reference to the clock tick",
+        "description": "Observed as friction about .ai/repo/rules/project/benchmarkable-commands.v1.md in episode s-20261106212411-be2e.",
+        "path": ".ai/repo/knowledge/curated/s-20261106212411-be2e-42386b8320b1.md",
+        "section": "knowledge",
+        "source_class": "curated",
+        "bytes": 2566,
+        "tags": [
+          "derived",
+          "observation"
+        ]
+      },
+      {
+        "uri": "majordomus://knowledge/s-20261106212411-be2e-46f5c7c04d8a",
+        "kind": "knowledge",
+        "identity": "s-20261106212411-be2e-46f5c7c04d8a",
+        "title": "the judging host already held a linked worktree integration/train-27-20261105 with another seat's unpushed composition (stacked on train 25b's old head bb61667a09a), the composition chain's [ -d \\\"$W\\\" ] || git worktree add reused it silently and built and judged the wrong top (the push died with rc 141, so nothing reached origin); a composition script asserts the worktree's HEAD before it builds, and a peer's unpushed train top is a branch to push or a rescue ref, never a worktree left behind; the right top went out as integration/train-27b-20261105 (#2933)",
+        "description": "Observed as defect about .ai/repo/skills/integrator/SKILL.md in episode s-20261106212411-be2e.",
+        "path": ".ai/repo/knowledge/curated/s-20261106212411-be2e-46f5c7c04d8a.md",
+        "section": "knowledge",
+        "source_class": "curated",
+        "bytes": 2753,
+        "tags": [
+          "derived",
+          "observation"
+        ]
+      },
+      {
+        "uri": "majordomus://knowledge/s-20261106212411-be2e-555bc81eabfa",
+        "kind": "knowledge",
+        "identity": "s-20261106212411-be2e-555bc81eabfa",
+        "title": "after authoring 1.0.0 in Cargo.toml on 2026-11-06, cargo build then scripts/derive left the executable stale (older than its sources) and the commit hook and cases 10, 85 and 87b refused: mj_rust_stale (lib/rust_bin.sh) judges the executable by the mtime of apps/majordomus-cli/src, Cargo.toml and Cargo.lock against it, so whatever rewrites one of those after the build (the bump's lines in the manifest and the lock, a derive that touches the crate) makes it stale; a version change is bump, build, derive, build again, then scripts/derive-check before the commit, and the Releasing section's step 1 does not say so",
+        "description": "Observed as friction about docs/RELEASE.md in episode s-20261106212411-be2e.",
+        "path": ".ai/repo/knowledge/curated/s-20261106212411-be2e-555bc81eabfa.md",
+        "section": "knowledge",
+        "source_class": "curated",
+        "bytes": 2820,
+        "tags": [
+          "derived",
+          "observation"
+        ]
+      },
+      {
+        "uri": "majordomus://knowledge/s-20261106212411-be2e-79cf8bf8ff14",
+        "kind": "knowledge",
+        "identity": "s-20261106212411-be2e-79cf8bf8ff14",
+        "title": "scripts/derive refused the evolve branch of 2026-11-05 with rc 10 because 43 new record files were untracked (a derive projects what git tracks; MAJORDOMUS_DERIVE_ALLOW_UNTRACKED=1 runs anyway), and the commit's pages gate then refused for stale derived data: the records a run promotes are staged (git add -A) before scripts/derive, and step 4 of the evolve skill did not say so",
+        "description": "Observed as repetition about .ai/repo/skills/evolve/SKILL.md in episode s-20261106212411-be2e.",
+        "path": ".ai/repo/knowledge/curated/s-20261106212411-be2e-79cf8bf8ff14.md",
+        "section": "knowledge",
+        "source_class": "curated",
+        "bytes": 2169,
+        "tags": [
+          "derived",
+          "observation"
+        ]
+      },
+      {
+        "uri": "majordomus://knowledge/s-20261106212411-be2e-7ac46522e698",
+        "kind": "knowledge",
+        "identity": "s-20261106212411-be2e-7ac46522e698",
+        "title": "scripts/site-build release_prerelease() reads the pre-release beside the stable release from the tree's release records alone (never from a ref, by its own comment), while the stable channel reads the newer of the record and the metadata gh-pages already serves (--release-ref, origin/gh-pages), so every master pages deploy between a pre-release's publish and the landing of its record pull request rewrote the homepage hero back to the previous alpha: alpha.9 after alpha.10 was published on 2026-11-06, for as long as #2942 stayed open; the fix is in flight as I4531 on fix/the-pages-name-the-pre-release-that-was-published, beside I3448's fix/a-deploy-keeps-every-pre-release-it-serves",
+        "description": "Observed as defect about scripts/site-build in episode s-20261106212411-be2e.",
+        "path": ".ai/repo/knowledge/curated/s-20261106212411-be2e-7ac46522e698.md",
+        "section": "knowledge",
+        "source_class": "curated",
+        "bytes": 3070,
+        "tags": [
+          "derived",
+          "observation"
+        ]
+      },
+      {
+        "uri": "majordomus://knowledge/s-20261106212411-be2e-9399484054fd",
+        "kind": "knowledge",
+        "identity": "s-20261106212411-be2e-9399484054fd",
+        "title": "the homepage's Delivery ... inferred at <sha> is the last commit at which an issue fact changed, not the build: generate-site-data keeps the committed delivery.json, observation and all, while the facts (issues without observed_at) are byte-equal, so derive-check holds on a clean tree and the stamp stays behind the build; the owner reads it as stale (2026-11-06), so the panel owes two stamps, facts last changed at <sha> and verified at <build commit, time>, both of which the Pages build knows",
+        "description": "Observed as friction about site/templates/index.html in episode s-20261106212411-be2e.",
+        "path": ".ai/repo/knowledge/curated/s-20261106212411-be2e-9399484054fd.md",
+        "section": "knowledge",
+        "source_class": "curated",
+        "bytes": 2533,
+        "tags": [
+          "derived",
+          "observation"
+        ]
+      },
+      {
+        "uri": "majordomus://knowledge/s-20261106212411-be2e-9569f41ee758",
+        "kind": "knowledge",
+        "identity": "s-20261106212411-be2e-9569f41ee758",
+        "title": "#2932's auto-merge waited on the project check (pr-meta run 42035733979) whose actions/checkout of the whole history timed out after its 5 minutes at 13:31Z on 2026-11-05, and one rerun of the failed job made it green and the merge fired; validate.yml's full-history checkouts were bounded at 20 minutes by I4296 for the same fetch on the same runners, and pr-meta.yml's project job still fetches the whole history under 5",
+        "description": "Observed as friction about .github/workflows/pr-meta.yml in episode s-20261106212411-be2e.",
+        "path": ".ai/repo/knowledge/curated/s-20261106212411-be2e-9569f41ee758.md",
+        "section": "knowledge",
+        "source_class": "curated",
+        "bytes": 2200,
+        "tags": [
+          "derived",
+          "observation"
+        ]
+      },
+      {
+        "uri": "majordomus://knowledge/s-20261106212411-be2e-a7f2edaf7f9f",
+        "kind": "knowledge",
+        "identity": "s-20261106212411-be2e-a7f2edaf7f9f",
+        "title": "nothing read the live site in a real browser after a deploy or a release: scripts/pages release-live is curl and sed over the homepage's data-release, build.json, latest.json and GitHub's latest release, the stable channel only, so the homepage hero naming the previous alpha after the alpha.10 publish on 2026-11-06 was found by the owner's eye and sent as a screenshot many times; the owner's standing order of 2026-11-06 20:50Z is that every release and every hand deploy ends with a Playwright chromium reading of https://majordomus.dev/ with its cache bypassed and its screenshot before it is reported, and the durable form (a case beside 1087, a step of scripts/pages verify, the deploy-site and integrator skills, the Releasing section's step 5) is in flight as I4530 on feature/the-live-site-is-probed-in-a-real-browser",
+        "description": "Observed as defect about scripts/pages in episode s-20261106212411-be2e.",
+        "path": ".ai/repo/knowledge/curated/s-20261106212411-be2e-a7f2edaf7f9f.md",
+        "section": "knowledge",
+        "source_class": "curated",
+        "bytes": 3378,
+        "tags": [
+          "derived",
+          "observation"
+        ]
+      },
+      {
+        "uri": "majordomus://knowledge/s-20261106212411-be2e-a8fdfa59b279",
+        "kind": "knowledge",
+        "identity": "s-20261106212411-be2e-a8fdfa59b279",
+        "title": "a batched cancel of five runs with a force-cancel fallback, one of them another session's pull-request run, was refused by the provider's auto-mode classifier as interfering with workloads on 2026-11-06, while a single gh run cancel of the seat's own run passed: a seat cancels one run per command and only its own, and asks the owner of the others, as the owner's orders of 2026-10-28 and 10-30 already bound the landing seat",
+        "description": "Observed as friction about .ai/repo/skills/integrator/SKILL.md in episode s-20261106212411-be2e.",
+        "path": ".ai/repo/knowledge/curated/s-20261106212411-be2e-a8fdfa59b279.md",
+        "section": "knowledge",
+        "source_class": "curated",
+        "bytes": 2416,
+        "tags": [
+          "derived",
+          "observation"
+        ]
+      },
+      {
+        "uri": "majordomus://knowledge/s-20261106212411-be2e-acd5c29f4fa8",
+        "kind": "knowledge",
+        "identity": "s-20261106212411-be2e-acd5c29f4fa8",
+        "title": "two pre-push runs on 2026-11-05 printed scripts/ci-plan: line 457: printf: write error: Broken pipe, from printf '%s\\\\n' \\\"$MATCH\\\" | grep -q '^full' (lines 457 and 459: grep -q leaves at its first match and closes the pipe on the printf behind it); ci-plan sets -eu without pipefail, so the line cannot fail the plan, and bin/majordomus already says a here-string and one awk, never | grep -q; one of the two pushes exited 141 with nothing pushed and the other pushed, and the producer of that 141 was not identified",
+        "description": "Observed as defect about scripts/ci-plan in episode s-20261106212411-be2e.",
+        "path": ".ai/repo/knowledge/curated/s-20261106212411-be2e-acd5c29f4fa8.md",
+        "section": "knowledge",
+        "source_class": "curated",
+        "bytes": 2607,
+        "tags": [
+          "derived",
+          "observation"
+        ]
+      },
+      {
+        "uri": "majordomus://knowledge/s-20261106212411-be2e-ae29a7a7a7f2",
+        "kind": "knowledge",
+        "identity": "s-20261106212411-be2e-ae29a7a7a7f2",
+        "title": "plan drift and plan delivery decide whether an issue landed by what a merge's title or branch, a commit's subject or a merged pull request's forge title names, never a body, so an issue delivered inside a train whose merge commit reads Merge <branch> <sha> into integration/train-N and whose branch is a slug stays READY and holds its dependants (an adopter saw one delivered issue hold three for a day on 2026-11-06); the machine-written Refs region of a merged pull request's body is the source that names it, and reading it is I4367, so the lesson is mapped there and no issue is filed twice",
+        "description": "Observed as defect about apps/majordomus-cli/src/plan/delivery.rs in episode s-20261106212411-be2e.",
+        "path": ".ai/repo/knowledge/curated/s-20261106212411-be2e-ae29a7a7a7f2.md",
+        "section": "knowledge",
+        "source_class": "curated",
+        "bytes": 2828,
+        "tags": [
+          "derived",
+          "observation"
+        ]
+      },
+      {
+        "uri": "majordomus://knowledge/s-20261106212411-be2e-e4260fdc69f8",
+        "kind": "knowledge",
+        "identity": "s-20261106212411-be2e-e4260fdc69f8",
+        "title": "GET /api/v1/release/currency on the server at :8741 (started from a worktree's executable, serving the primary checkout) answered trunk origin/main, stance unknown (no release record or version tag whose commit this clone holds) on 2026-11-06, while the primary's executable of master 1112bace343 (bin/majordomus-cli run release.currency) answers trunk origin/master, stance overdue (6 commits in 2 landings past v1.0.0-alpha.10, its record not landed): delivery::revision::trunk_ref asks origin/HEAD first, so the server's executable predates it; a capability reading from a long-lived server is a reading of the executable it was started from, and a defect read there is verified on the trunk's executable before it is filed",
+        "description": "Observed as friction about capability:release.currency in episode s-20261106212411-be2e.",
+        "path": ".ai/repo/knowledge/curated/s-20261106212411-be2e-e4260fdc69f8.md",
+        "section": "knowledge",
+        "source_class": "curated",
+        "bytes": 3277,
+        "tags": [
+          "derived",
+          "observation"
+        ]
+      },
+      {
+        "uri": "majordomus://knowledge/s-20261106212411-be2e-e5ad20cbaa7a",
+        "kind": "knowledge",
+        "identity": "s-20261106212411-be2e-e5ad20cbaa7a",
+        "title": "the #2596 trial (I4242, trial/lundra-first-wave-20261105 at a896bd86db9) routed only its coverage job to lundra and that one job filled the host twice on 2026-11-05: run 42036017630 took it from 77 to 25 GB free in 25 minutes beside the seat's derive and commit chains, and the re-dispatched run 42067809640 took it from 72 GB to 0 within 45 minutes (No space left on device broke the seat's derive and commit of the 4381 fix); the floor step at job start does not bound what the job then writes, so the coverage job owes a disk bound (a private build directory evicted at a size cap, not only at the end) before the trial can be green on a host a seat also uses",
+        "description": "Observed as defect about .github/workflows/validate.yml in episode s-20261106212411-be2e.",
+        "path": ".ai/repo/knowledge/curated/s-20261106212411-be2e-e5ad20cbaa7a.md",
+        "section": "knowledge",
+        "source_class": "curated",
+        "bytes": 2989,
+        "tags": [
+          "derived",
+          "observation"
+        ]
+      },
+      {
+        "uri": "majordomus://knowledge/s-20261106212411-be2e-f77a16aa9837",
+        "kind": "knowledge",
+        "identity": "s-20261106212411-be2e-f77a16aa9837",
+        "title": "train 27b (#2933, 8e10535c254) failed case 4381 in suite-shard (1) on 2026-11-05: #2931 added mj_cargo_empty_dir_vars to lib/rust_bin.sh and never rewrote test/lib/rust_bin.functions.sh, and its own validate had been cancelled, so the top found it; two members of two trains that day (#2410's hook, case 3958; #2931's declarations, case 4381) carried a defect their cancelled validates would have shown, so a member whose validate never completed owes the top's composer the member's changed cases and the structure cases that read the files it changed, run before the top is pushed; fixed on the top under clause 2 (42b7fe2d288)",
+        "description": "Observed as defect about .ai/repo/skills/integrator/SKILL.md in episode s-20261106212411-be2e.",
+        "path": ".ai/repo/knowledge/curated/s-20261106212411-be2e-f77a16aa9837.md",
+        "section": "knowledge",
+        "source_class": "curated",
+        "bytes": 2963,
         "tags": [
           "derived",
           "observation"
@@ -131967,7 +132312,7 @@
         "path": ".ai/repo/skills/evolve/SKILL.md",
         "section": "skills",
         "source_class": "skill",
-        "bytes": 14587,
+        "bytes": 14996,
         "tags": [
           "knowledge",
           "review",
@@ -138514,7 +138859,7 @@
       "identity": [
         "id"
       ],
-      "objects": 163
+      "objects": 186
     },
     {
       "name": "mesh-declaration",
