@@ -1108,14 +1108,16 @@ for id in $(selected_issues); do
       # `|| rc` takes the status of the last command of the branch taken, so in both branches
       # that command is the creation.
       err="$(mktemp "${TMPDIR:-/tmp}/mj.err.XXXXXX")"; rc=0
-      if [ -n "$(remote_milestone_number "$ms")" ]; then
-        url="$(gh issue create --repo "$REPO" --title "$(title_of "$id")" --body-file "$tmp" \
-          --label "$(labels_of "$id")" --milestone "$(awk -F'\t' -v p="$ms — " 'index($2,p)==1 { print $2; exit }' "$REMOTE_MS")")"
-      else
-        note DRIFT milestone "issue $id has no GitHub milestone; $ms does not exist there"
-        url="$(gh issue create --repo "$REPO" --title "$(title_of "$id")" --body-file "$tmp" \
-          --label "$(labels_of "$id")")"
-      fi 2> "$err" || rc=$?
+      # Created without a milestone and joined to it by number below. `gh issue create
+      # --milestone` resolves a title among the OPEN milestones only, and the milestone of a
+      # DONE record is closed on GitHub by this run's own milestone pass a moment earlier, so
+      # an issue recorded under a finished milestone could never be created ("could not add
+      # to milestone") and every --apply of such a repository failed (I4529, first seen by an
+      # adopter at v1.0.0-alpha.8). The REST field takes the number and accepts a closed one.
+      ms_number="$(remote_milestone_number "$ms")"
+      [ -n "$ms_number" ] || note DRIFT milestone "issue $id has no GitHub milestone; $ms does not exist there"
+      url="$(gh issue create --repo "$REPO" --title "$(title_of "$id")" --body-file "$tmp" \
+        --label "$(labels_of "$id")" 2> "$err")" || rc=$?
       rm -f "$tmp"
       if [ "$rc" != 0 ]; then
         note FAIL created "issue $id — the canonical record has no counterpart on GitHub: 'gh issue create --repo $REPO' exited $rc: $(tr '\n' ' ' < "$err" | cut -c1-200)"
@@ -1127,6 +1129,10 @@ for id in $(selected_issues); do
       num="${url##*/}"
       case "$num" in ''|*[!0-9]*) note DRIFT created "issue $id was created but GitHub returned no number in '$url'"; num="" ;; esac
       note OK created "issue $id${num:+ (#$num)} — the canonical record has no counterpart on GitHub"
+      if [ -n "$ms_number" ] && [ -n "$num" ]; then
+        applied updated "issue $id (#$num) milestone" "joined to $ms (#$ms_number) by number" \
+          gh api -X PATCH "repos/$REPO/issues/$num" -F "milestone=$ms_number"
+      fi
       # a created issue starts open; canonical status decides whether it stays that way
       if [ "$want_state" = closed ] && [ -n "$num" ]; then
         applied closed "issue $id (#$num)" "created open, canonically $(mj_pj_i_status "$id")" \
@@ -1157,8 +1163,10 @@ for id in $(selected_issues); do
   if [ -n "$want_ms" ] && [ "$(remote_issue_milestone "$id")" != "$want_ms" ]; then
     note DRIFT milestone "issue $id (#$num) is not on GitHub milestone $ms"
     if [ "$MODE" = apply ]; then
-      applied updated "issue $id (#$num) milestone" "set to '$want_ms', its canonical milestone" \
-        gh issue edit "$num" --repo "$REPO" --milestone "$want_ms"
+      # by number, through the REST field: `gh issue edit --milestone` resolves a title among
+      # the open milestones only, and the canonical milestone may be DONE and closed (I4529)
+      applied updated "issue $id (#$num) milestone" "set to '$want_ms' (#$(remote_milestone_number "$ms"), its canonical milestone)" \
+        gh api -X PATCH "repos/$REPO/issues/$num" -F "milestone=$(remote_milestone_number "$ms")"
     fi
   fi
   [ "$have_state" = "$want_state" ] || { changed=1; note DRIFT state "issue $id (#$num) is $have_state on GitHub, canonically $want_state"; }
