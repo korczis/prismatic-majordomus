@@ -39,4 +39,21 @@ evidence_required:
   - "runner_host_apply_is_idempotent"
 serves: []
 created_at: 2026-10-28
-updated_at: 2026-10-29
+updated_at: 2026-11-01T04:31:01Z
+started_at: 2026-11-01T04:27:13Z
+started_event: sha256:c0bf5f96de227b3528eb0ba58ba46e50c4f73af3650a4131836e95223324886b
+completed_at: 2026-11-01T04:31:01Z
+completed_event: sha256:7361ba95b675926a5ba0785586d4456b836ce6961924e00f1db49d37c8b1d122
+evidence:
+  - covers: "suite"
+    type: test
+    command: "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib mesh::cache_provision && cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib commands::mesh::tests::a_check_that_holds_with_a_remedy_is_a_warning && bin/majordomus plan validate"
+    result: "delivered by bd5a5c3a086 on master: mesh::cache_provision 40 passed (including the runner host's idempotent apply), the remedy-is-a-warning test 1 passed, plan validate passes; run on imac at master aca6f182b41"
+    commit: aca6f182b4175a0da20878211103eff3801132f1
+    recorded_at: 2026-11-01T04:30:22Z
+  - covers: "runner_host_apply_is_idempotent"
+    type: test
+    command: "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib mesh::cache_provision && cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib commands::mesh::tests::a_check_that_holds_with_a_remedy_is_a_warning && bin/majordomus plan validate"
+    result: "delivered by bd5a5c3a086 on master: mesh::cache_provision 40 passed (including the runner host's idempotent apply), the remedy-is-a-warning test 1 passed, plan validate passes; run on imac at master aca6f182b41"
+    commit: aca6f182b4175a0da20878211103eff3801132f1
+    recorded_at: 2026-11-01T04:30:40Z

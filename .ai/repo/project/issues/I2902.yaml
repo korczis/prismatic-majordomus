@@ -6,7 +6,7 @@ priority: p2
 profile: implementation
 parallel_safe: false
 objective: "Give plan::Transition the rule of which status admits which move (READY start, ACTIVE verify, VERIFY done), used by plan::transition's refusal, ui/idd.rs and cockpit::plan::moves, with a test that they agree."
-why: "idd.rs maps READY, ACTIVE and VERIFY to moves on its own (idd.rs:383, :470); plan.rs owns the moves but keeps the admitting status only inside its refusals."
+why: "idd.rs maps READY, ACTIVE and VERIFY to moves on its own (idd.rs:383, :470); plan.rs owns the moves but keeps the admitting status only inside its refusals. The owner's pack asks for the same in campaigns/majordomus-intent-ui-pack/04-UI-PROJECTIONS.md; PR #1058 planned it as I2539, which never landed, and the criteria of that record this one did not hold were folded in on 2026-10-30."
 serves:
   - the-owner-directs-work-from-the-ui#workspace-is-derived
 current_state: "The status-to-move map is written in three places."
@@ -22,10 +22,11 @@ depends_on: []
 acceptance_criteria:
   - "The workspace offers exactly the move plan.transition would accept for each status"
   - "No status string is compared in ui/idd.rs"
+  - "The issue inspector (ui/prs.rs issue_panel) links to the move its status admits through idd::move_href when the issue serves an intent"
 validation:
   - "majordomus plan validate"
   - "cargo test --lib plan::"
   - "cargo test --test ui_idd_moves"
 evidence_required: []
 created_at: 2026-10-18
-updated_at: 2026-10-18
+updated_at: 2026-10-30

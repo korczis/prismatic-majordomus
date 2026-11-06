@@ -68,13 +68,16 @@
           "3113_the_adoption_footprint_is_inventoried",
           "3340_a_fresh_init_leaves_doctor_clean",
           "3405_a_misplaced_artifact_is_refused",
+          "4225_the_fleet_pack_installs_only_what_it_lists",
+          "4226_ci_judges_from_the_kit_evidence_secret",
           "4257_init_keeps_a_hand_written_provider_file",
           "4258_documents_below_docs_are_discovered",
           "4265_the_adopter_hook_runs_doctor_in_commit_context"
         ],
         "negative": [
           "01_init",
-          "2979_a_personal_layer_changes_nothing_shared"
+          "2979_a_personal_layer_changes_nothing_shared",
+          "4226_ci_judges_from_the_kit_evidence_secret"
         ]
       },
       "demo_data": {
@@ -194,6 +197,7 @@
           "3340_a_fresh_init_leaves_doctor_clean",
           "33_event_registry",
           "3405_a_misplaced_artifact_is_refused",
+          "4225_the_fleet_pack_installs_only_what_it_lists",
           "4257_init_keeps_a_hand_written_provider_file"
         ],
         "negative": [
@@ -299,6 +303,8 @@
           "3036_a_worktree_runs_its_own_hooks",
           "3340_a_fresh_init_leaves_doctor_clean",
           "36_command_doctrines",
+          "4225_the_fleet_pack_installs_only_what_it_lists",
+          "4226_ci_judges_from_the_kit_evidence_secret",
           "4265_the_adopter_hook_runs_doctor_in_commit_context",
           "4400_a_profile_axis_names_the_limit_it_derives",
           "44_model_doctrine",
@@ -333,6 +339,9 @@
           "32_schema_integrity",
           "36_command_doctrines",
           "391_skills_are_proven_capabilities",
+          "4225_the_fleet_pack_installs_only_what_it_lists",
+          "4226_ci_judges_from_the_kit_evidence_secret",
+          "4227_a_fleet_skill_is_proved_by_its_pack",
           "4400_a_profile_axis_names_the_limit_it_derives",
           "54_session_lifecycle_hooks",
           "55_session_context",
@@ -958,6 +967,7 @@
           "1073_a_path_with_a_space_is_one_path",
           "108_scope_after_trunk_merge",
           "108b_scope_after_trunk_fast_forward",
+          "108c_scope_after_a_dirty_start",
           "131_completion_gates",
           "15_command_surface",
           "17_doctrine_enforcement",
@@ -979,6 +989,7 @@
           "1073_a_path_with_a_space_is_one_path",
           "108_scope_after_trunk_merge",
           "108b_scope_after_trunk_fast_forward",
+          "108c_scope_after_a_dirty_start",
           "17_doctrine_enforcement",
           "19_end_to_end",
           "21_decision_question",
@@ -1851,13 +1862,16 @@
       ],
       "tests": {
         "behaviour": [
+          "3369_the_proceed_skill_names_only_the_command",
           "391_skills_are_proven_capabilities",
+          "4227_a_fleet_skill_is_proved_by_its_pack",
           "4253_every_skill_remedy_runs",
           "4337_a_changed_skill_raises_its_version",
           "95_skills"
         ],
         "negative": [
           "391_skills_are_proven_capabilities",
+          "4227_a_fleet_skill_is_proved_by_its_pack",
           "95_skills"
         ]
       },
@@ -2329,6 +2343,7 @@
           "3101_merged_work_unrecorded_is_drift",
           "3102_a_milestone_version_is_inferred",
           "3244_a_milestone_title_fits_on_github",
+          "3441_the_choice_ranks_by_what_it_unblocks",
           "40_project_model",
           "41_project_status",
           "4235_an_evidence_token_is_matched_whole",
@@ -2475,7 +2490,7 @@
           }
         ]
       },
-      "doc_md": "\nRead the canonical project model, and move one issue through its lifecycle. A milestone is\nan executable specification of an outcome; an issue is a bounded execution contract; the\ndependency graph between the issues decides what may be executed next. See\n[`docs/PLANNING.md`](https://majordomus.dev/docs/planning/) for the semantics.\n\n**Reads:** `.ai/repo/project/project.yaml`, `.ai/repo/project/milestones/*.yaml`,\n`.ai/repo/project/issues/*.yaml`, `share/allow/{project,milestone,issue}.txt`.\n**Writes:** one lifecycle field in one issue file, and one ledger event — `start`, `verify`,\n`evidence` and `done` only. Every other subcommand writes nothing.\n\n```\nmajordomus plan validate         schemas, references, the DAG, status consistency\nmajordomus plan status           milestone progress and the next executable issue\nmajordomus plan list             one line per issue: id, status, wave, milestone, title\nmajordomus plan show <id>        the full record of one milestone or issue\nmajordomus plan ready            issues whose dependencies are all satisfied\nmajordomus plan blocked          issues waiting on a dependency, and on which one\nmajordomus plan waves            topological execution waves, derived from the graph\nmajordomus plan graph            the dependency DAG as Mermaid\nmajordomus plan next             the one issue a worker should take now\nmajordomus plan body <id>        the provider-neutral projection body for one record\nmajordomus plan start <id>       record that execution began\nmajordomus plan verify <id>      record that implementation is complete, evidence pending\nmajordomus plan evidence <id>    attach one piece of evidence\nmajordomus plan done <id>        record completion\n```\n\n**Options:** `--json` on the read subcommands a surface consumes; `--milestone <id>` to\nrestrict `list`, `ready`, `blocked`, `waves` and `graph`; `--covers`, `--type`, `--command`,\n`--result` and `--artifact` on `evidence`.\n\n**Behaviour:**\n- No status is stored anywhere. `BLOCKED`, `READY`, `ACTIVE`, `VERIFY`, `DONE` and\n  `CANCELLED` are derived from what an issue records about itself and from the state of its\n  dependencies, by `lib/project.awk`. Writing a `status:` field is an unknown key.\n- `validate` reports unknown keys, unknown and self dependencies, duplicate ids, cycles,\n  issues executing ahead of a dependency, and issues with no acceptance criteria. It exits\n  `10` when any finding is a failure, `0` when only warnings remain.\n- `start` refuses (`15`) an issue that is not `READY`, naming what it waits on. `verify`\n  refuses an issue that is not `ACTIVE`.\n- `evidence` refuses (`15`) a token the issue does not declare, and refuses (`2`) without a\n  `--command` or an `--artifact`: narrative is not evidence. It appends to the issue's own\n  file with the commit and the timestamp.\n- `done` refuses (`10`) while any declared evidence token is uncovered, and refuses (`15`)\n  while a dependency is not `DONE`. Every writing subcommand prints the next ready issue\n  after the graph has been recomputed.\n- Exits `12` when the record named does not exist, or when the repository has no canonical\n  project model at all — the model is opt-in, and `doctor` skips it rather than failing\n  where it is absent.\n\nThe same model is projected to GitHub by `scripts/github-sync` and to the website by\n`scripts/generate-site-data`. Neither re-derives a status; both read this engine."
+      "doc_md": "\nRead the canonical project model, and move one issue through its lifecycle. A milestone is\nan executable specification of an outcome; an issue is a bounded execution contract; the\ndependency graph between the issues decides what may be executed next. See\n[`docs/PLANNING.md`](https://majordomus.dev/docs/planning/) for the semantics.\n\n**Reads:** `.ai/repo/project/project.yaml`, `.ai/repo/project/milestones/*.yaml`,\n`.ai/repo/project/issues/*.yaml`, `share/allow/{project,milestone,issue}.txt`.\n**Writes:** one lifecycle field in one issue file, and one ledger event — `start`, `verify`,\n`evidence` and `done` only. Every other subcommand writes nothing.\n\n```\nmajordomus plan validate         schemas, references, the DAG, status consistency\nmajordomus plan status           milestone progress and the next executable issue\nmajordomus plan list             one line per issue: id, status, wave, milestone, title\nmajordomus plan show <id>        the full record of one milestone or issue\nmajordomus plan ready            issues whose dependencies are all satisfied\nmajordomus plan blocked          issues waiting on a dependency, and on which one\nmajordomus plan waves            topological execution waves, derived from the graph\nmajordomus plan graph            the dependency DAG as Mermaid\nmajordomus plan next             the one issue a worker should take now\nmajordomus plan body <id>        the provider-neutral projection body for one record\nmajordomus plan start <id>       record that execution began\nmajordomus plan verify <id>      record that implementation is complete, evidence pending\nmajordomus plan evidence <id>    attach one piece of evidence\nmajordomus plan done <id>        record completion\n```\n\n**Options:** `--json` on the read subcommands a surface consumes; `--milestone <id>` to\nrestrict `list`, `ready`, `blocked`, `waves` and `graph`; `--covers`, `--type`, `--command`,\n`--result` and `--artifact` on `evidence`.\n\n**Behaviour:**\n- No status is stored anywhere. `BLOCKED`, `READY`, `ACTIVE`, `VERIFY`, `DONE` and\n  `CANCELLED` are derived from what an issue records about itself and from the state of its\n  dependencies, by `lib/project.awk`. Writing a `status:` field is an unknown key.\n- `validate` reports unknown keys, unknown and self dependencies, duplicate ids, cycles,\n  issues executing ahead of a dependency, and issues with no acceptance criteria. It exits\n  `10` when any finding is a failure, `0` when only warnings remain.\n- `start` refuses (`15`) an issue that is not `READY`, naming what it waits on. `verify`\n  refuses an issue that is not `ACTIVE`.\n- `evidence` refuses (`15`) a token the issue does not declare, and refuses (`2`) without a\n  `--command` or an `--artifact`: narrative is not evidence. It appends to the issue's own\n  file with the commit and the timestamp.\n- `done` refuses (`10`) while any declared evidence token is uncovered, and refuses (`15`)\n  while a dependency is not `DONE` or the issue is not `ACTIVE` or `VERIFY`. It is the\n  `plan.transition` capability's move, run by the executable as the MCP tool and the HTTP\n  route run it, over the records in the work tree; the shell tool writes nothing of it\n  itself, and without the executable it refuses (`10`) rather than write a second way. Every\n  writing subcommand prints the next ready issue after the graph has been recomputed.\n- Exits `12` when the record named does not exist, or when the repository has no canonical\n  project model at all — the model is opt-in, and `doctor` skips it rather than failing\n  where it is absent.\n\nThe same model is projected to GitHub by `scripts/github-sync` and to the website by\n`scripts/generate-site-data`. Neither re-derives a status; both read this engine."
     },
     {
       "name": "version",
@@ -3272,6 +3287,7 @@
           "133_rule_graph",
           "138_governance_gates",
           "3015_an_unsupervised_repository_exits_12_from_both_tools",
+          "4225_the_fleet_pack_installs_only_what_it_lists",
           "67_rule_dag"
         ],
         "negative": [
@@ -3285,6 +3301,7 @@
           "3728_an_unkeyed_memory_entry_is_refused",
           "3731_a_number_in_a_segment_is_a_placeholder",
           "403_published_translation",
+          "4225_the_fleet_pack_installs_only_what_it_lists",
           "67_rule_dag"
         ]
       },
@@ -3630,14 +3647,15 @@
       "requires_repository": true,
       "requires_installed": true,
       "json_output": true,
-      "syntax": "majordomus bench [<command>...] [--samples <n>] [--warmup <n>] [--cold-samples <n>] [--mode cold|warm|both] [--format text|json] [--no-save] [--list] [--check] [--write-baseline [--force]]",
+      "syntax": "majordomus bench [<command>...] [--samples <n>] [--warmup <n>] [--cold-samples <n>] [--mode cold|warm|both] [--format text|json] [--no-save] [--list] [--check] [--write-baseline [--force]] | majordomus bench compare <run-a> <run-b>",
       "demo": "benchmark-run",
-      "note": "The targets are the registry's public commands; the scenarios are the command fixtures when the suite is present. A run is local evidence; only --write-baseline writes the tracked baseline, and --check refuses a regression over the policy's thresholds when two samples agree; one sample over is a warning to re-measure, and every finding names its sample count, the runner and its load average.",
+      "note": "The targets are the registry's public commands; the scenarios are the command fixtures when the suite is present. A run is local evidence; only --write-baseline writes the tracked baseline, and --check refuses a regression over the policy's thresholds when two samples agree; one sample over is a warning to re-measure, and every finding names its sample count, the runner and its load average. `bench compare` reads two persisted runs (an id, a file, latest or baseline) and ranks the largest p95 regressions and improvements; it writes nothing.",
       "reads": [
         "share/commands.yaml",
         "test/fixtures/commands/",
         ".ai/repo/policy.yaml",
-        ".ai/repo/benchmarks/baseline.json"
+        ".ai/repo/benchmarks/baseline.json",
+        ".ai/local/benchmarks/runs/"
       ],
       "writes": [
         ".ai/local/benchmarks/",
@@ -3653,12 +3671,14 @@
       ],
       "tests": {
         "behaviour": [
+          "3058_bench_compares_two_runs",
           "79_bench_command",
           "80_bench_persistence",
           "81_bench_baseline",
           "82_bench_check"
         ],
         "negative": [
+          "3058_bench_compares_two_runs",
           "79_bench_command",
           "80_bench_persistence",
           "81_bench_baseline",

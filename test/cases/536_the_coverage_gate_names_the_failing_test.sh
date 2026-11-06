@@ -21,7 +21,7 @@
 
 FX_EXP="$ROOT/test/fixtures/coverage/export.json"
 [ -f "$FX_EXP" ] || { echo "    the coverage fixture export is missing"; exit 1; }
-command -v python3 >/dev/null 2>&1 || skip "no python3"
+mj_runs python3 || skip "$(mj_runs_why python3)"
 
 # A scratch root the script resolves itself against: the script, and the crate directory it
 # changes into before asking cargo.

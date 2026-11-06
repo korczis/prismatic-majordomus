@@ -1,0 +1,36 @@
+id: I4495
+milestone: a-screen-is-fast-bounded-and-says-why
+title: "The issue list is read a page at a time, and the page is in the URL"
+slug: the-issue-list-is-read-a-page-at-a-time
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "Draw the issues screen a bounded page at a time, with the page in the query string beside the filters, so the size of the response does not grow with the plan."
+why: "campaigns/majordomus-ui-speed-pack/00-MASTER.md step 7 asks for bounded pagination and its proof matrix says large issue and task lists are bounded; its URL policy says query parameters encode pagination. ui/issues.rs draws one row for every issue the filters admit, and the plan holds 1101 issue records on 2026-10-30, and I4200 measured /ui/issues at about 970 KB with 976 rows on 2026-10-28; it grows with every brief that is planned."
+current_state: "Measured at 51b38035a71, after the readings (I2486) and the UI budgets (I2489) landed and I4200 made warm screens borrow instead of copy. apps/majordomus-cli/src/ui/issues.rs collects every issue its Pick admits and says 'N of M issues shown'; Pick has no page. The plan holds 1101 issue records; I4200 (commit 43f1acecb4e) measured /ui/issues at about 970 KB with 976 rows, warm p95 22.2 ms locally and 46.8 ms on CI against the 100 ms budget of .ai/repo/benchmarks/rust/policy.yaml. I4200's non_scope leaves paging /ui/issues out. The dashboard's lists are cut at ROWS = 8 (ui/dashboard.rs)."
+desired_state: "Pick carries a page. The screen draws PAGE issues, says which of how many it shows, and links to the next and previous page with every filter kept. A page past the end is answered as the last page. The order is the plan's own, so a page is stable while the plan stands still."
+scope:
+  - "apps/majordomus-cli/src/ui/issues.rs"
+  - "apps/majordomus-cli/src/ui/view.rs"
+  - "docs/MAJORDOMUS_UI.md"
+  - "test/cases/1080_the_issues_are_browsed.sh"
+  - ".ai/repo/project/issues/I4495.yaml"
+non_scope:
+  - "Paging in plan.issues itself: the capability's answer is unchanged"
+  - "Scrolling that loads more rows by script"
+depends_on: []
+acceptance_criteria:
+  - "The screen given ten thousand issues emits at most PAGE rows"
+  - "Next and previous keep status, milestone, priority and q, and every page link answers 200"
+  - "The pages of one filter, read in order, hold every admitted issue once"
+  - "A page number that is not a number or is past the end is answered, never an error page"
+  - "system.http.ui.issues stays within its budget, and the size of one page no longer grows with the plan"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib ui::issues"
+  - "MJ_TEST_JOBS=2 bash test/run.sh 1080_the_issues_are_browsed"
+evidence_required:
+  - "issue_list_paging_unit_tests"
+  - "issues_case_1080"
+created_at: 2026-10-30
+updated_at: 2026-10-30

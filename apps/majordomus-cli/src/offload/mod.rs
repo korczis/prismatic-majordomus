@@ -11,15 +11,19 @@
 //!   waiting, then declaration order;
 //! - [`queue`]: the FIFO queue on the host, decided here over what the host reports;
 //! - [`remote`]: how a script reaches a host, over ssh or directly;
-//! - [`run`]: the round trip — bundle in, derive, bundle back, stage.
+//! - [`run`]: the round trip — bundle in, derive, bundle back, stage;
+//! - [`owner`]: who a run belongs to, exported into it and recorded on its host (I3956);
+//! - [`stop`]: a run stopped as a process group, on its host, by its owner (I3956).
 //!
 //! `docs/OFFLOAD.md` is the reference; `majordomus offload` is the command.
 
 pub mod declaration;
 pub mod host;
+pub mod owner;
 pub mod queue;
 pub mod remote;
 pub mod run;
+pub mod stop;
 
 use declaration::{OffloadDeclaration, KIND};
 

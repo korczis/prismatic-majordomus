@@ -1,0 +1,70 @@
+id: a-profile-is-resolved-once-and-enforced
+title: "A profile is resolved once, explains every field, and refuses at the executor what it does not grant"
+slug: a-profile-is-resolved-once-and-enforced
+order: 550
+priority: p1
+problem: "The owner's brief of 2026-10-12, campaigns/majordomus-profile-system-v2-prompt-pack/MAJORDOMUS_PROFILE_SYSTEM_V2_PROMPT_PACK.md, asks for the existing repository profiles to become typed, composable, enforced execution policy with every surface derived from one resolver. It extends the system that exists; it does not name a second one. Its first line says so (extend the existing repository profiles), its global contract forbids a second configuration or execution plane, and it keeps routine, implementation, debugging and deep-work. That system is read today by shell alone: a profile is a YAML file flattened by lib/common.sh, each command reads the keys it wants, and the Rust executable, which serves the API, MCP and the UI, knows only the default's name. So there is no effective profile to ask for, no surface but check --explain that shows one, nothing that says which fields are enforced and which are advice, and no boundary at which a profile refuses anything except finish."
+outcome: "One typed resolver in the Rust executable turns the policy, a profile definition and the task, issue and intent it is asked about into an effective profile with a source and a reason for every field and a fingerprint. The command line, HTTP, MCP and a screen of majordomus ui read that one answer; the shell lifecycle reads it too; a task record carries its fingerprint; every axis says how far it is enforced; and a capability that changes the repository is refused at the executor under a profile that does not grant it."
+current_state: "Measured at 51b38035a71: unchanged since 3491f35cab, no commit having touched the profile schema, share/allow/profile.txt, .ai/repo/profiles, share/skeleton/profiles or the claim pages. The only profile reader is shell, lib/common.sh mj_load_profile and mj_pro, called from lib/start.sh, lib/check.sh, lib/context.sh, lib/finish.sh, lib/doctor.sh and lib/update.sh. Rust knows ProfilesPolicy (default, checkpoint_interval_default) and a hash over every profile file (policy.rs), the profile kind (share/kinds.yaml), a profile name on an issue (plan.rs) and a continuity record, and devcontext's tiering. There is no profile module, no typed Profile, no profile capability and no majordomus profile command, and no screen reads a profile. docs/claims/profile-axes.md says the axes are advisory. Planned and not started: runtime-adapters (I0201-I0206), and I3123, I3128, I3199 and I3395, which assume an effective profile nothing resolves yet."
+desired_state: "apps/majordomus-cli/src/profile holds the typed definition and the resolver. profile.list, profile.show, profile.validate, profile.resolve and profile.explain are declared once with capability! and reach the command line, HTTP, OpenAPI and MCP by generation. start, check --explain, context, finish and doctor take a profile from that resolver and from nowhere else. A task record and its ledger event carry the fingerprint it was started with, and check says when the policy or the definition has moved since. Each axis carries a declared standing (enforced, observed, requested, unobservable) with the test that proves an enforced one. A profile may withhold the repository-mutation effect, and the executor refuses such a capability with a typed error and a ledger event. /ui shows the profiles, the effective one with its provenance, and the difference a candidate would make."
+scope:
+  - ".ai/repo/adrs"
+  - ".ai/repo/project"
+  - ".ai/repo/profiles"
+  - ".ai/repo/rules/project"
+  - "apps/majordomus-cli/src/profile"
+  - "apps/majordomus-cli/src/policy.rs"
+  - "apps/majordomus-cli/src/capability"
+  - "apps/majordomus-cli/src/gates"
+  - "apps/majordomus-cli/src/ui"
+  - "apps/majordomus-cli/tests"
+  - "lib"
+  - "share/skeleton/profiles"
+  - "share/schemas/majordomus/profile"
+  - "share/allow"
+  - "share/commands.yaml"
+  - "share/events.yaml"
+  - "test/cases"
+  - "docs"
+
+non_scope:
+  - "Selecting or invoking a model, or routing work to a vendor: ADR 0032 and ADR 0044 keep the tool from calling one, and models.route stays the explained recommendation it is"
+  - "A scheduler that dispatches work to mesh peers by capability: none exists, and the brief forbids building a second execution plane to have one"
+  - "The runtime limits a provider applies (read size, output condensation, subagent budget): milestone runtime-adapters and I0201 to I0206 hold them"
+  - "A named profile per combination of axes, or the brief's seven work modes as seven files: one preset is added, where a consumer enforces it"
+  - "Approvals, branch protection and release gates: a profile reads them as constraints and can mint none"
+
+acceptance_criteria:
+  - "profile.resolve answers the same effective profile, byte for byte and with the same fingerprint, over the command line, HTTP and MCP, and whatever order the definitions are discovered in"
+  - "Every field of an effective profile names its source (policy, definition, issue, task, default) and a reason code"
+  - "check --explain, context and finish act on the resolver's answer, and no shell function reads a profile file's keys itself"
+  - "A task record carries the fingerprint it was started with, and a later change of the policy or the definition is reported by check, never applied silently"
+  - "Every axis states its standing, and an axis stated as enforced names a test that fails when the enforcement is removed"
+  - "Under a profile that withholds repository mutation, a capability with that effect is refused at the executor with a typed error, over every transport, and the refusal is in the ledger"
+  - "A profile file added to a fixture appears in the command line, the API, MCP and the UI with no other file changed"
+  - "The four shipped profiles resolve to the values their files hold today, and case 16_profiles passes unchanged"
+
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib profile::"
+  - "MJ_TEST_JOBS=2 bash test/run.sh 16_profiles"
+  - "bin/majordomus generate --check"
+
+evidence_required:
+  - "profile_trace_audit"
+  - "resolver_determinism_tests"
+  - "surface_parity_fingerprint"
+  - "axis_standing_table"
+  - "executor_refusal_under_profile"
+  - "profiles_screen"
+  - "case_16_profiles"
+
+risks:
+  - "Two resolvers for a while: until the shell lifecycle reads the Rust answer, mj_load_profile and the resolver can disagree, so the parity test between them lands with the resolver and not after it."
+  - "An enforcement nobody opted into changes every session on update; the withheld effect is declared by a profile a task was started under, and the four shipped profiles withhold nothing."
+  - "Milestone runtime-adapters was written for a shell resolver (I0202); its issues need re-reading against this resolver before either is started, or the limits get a second owner."
+  - "The brief's latency targets for resolution (50 ms warm, 150 ms cold) are its own; what binds is what the bench measures and the policy then declares."
+  - "I3123 adds verification.verify_commands to the same schema, and I3128, I3395 and I3199 read an effective profile this milestone defines: whichever lands second adapts to the other."
+
+created_at: 2026-10-30
+updated_at: 2026-10-30

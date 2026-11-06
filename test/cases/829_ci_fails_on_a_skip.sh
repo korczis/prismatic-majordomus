@@ -31,7 +31,7 @@ trap 'rm -rf "$S"' EXIT
 R="$S/repo"
 mkdir -p "$R/test/cases" "$R/bin" "$R/lib"
 cp "$ROOT/test/run.sh" "$ROOT/test/lib.sh" "$R/test/"
-cp "$ROOT/lib/sha256.sh" "$R/lib/"   # test/lib.sh sources it
+cp "$ROOT/lib/sha256.sh" "$ROOT/lib/runnable.sh" "$R/lib/"   # test/lib.sh sources them
 : > "$R/bin/majordomus"
 
 cat > "$R/test/cases/passes.sh" <<'CASE'

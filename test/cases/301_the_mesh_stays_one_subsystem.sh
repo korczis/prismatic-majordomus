@@ -54,7 +54,7 @@ RS
   printf '# The mesh observes; it grants nothing.\n' \
     > "$F/.ai/repo/rules/project/mesh-is-observation-not-authority.v1.md"
   printf '# A peer is admitted only by its key.\n' \
-    > "$F/.ai/repo/rules/project/mesh-cooperation-is-authenticated.v1.md"
+    > "$F/.ai/repo/rules/project/mesh-cooperation-is-authenticated.v2.md"
   # what the gate grew after this case was written: the Cockpit's mesh page asks the four
   # mesh capabilities, and an initialised repository's source classes read the declaration
   mkdir -p "$C/cockpit" "$F/share/skeleton/ai/repo/knowledge"

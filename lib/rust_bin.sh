@@ -607,6 +607,20 @@ mj_rust_space_check() {
 # Both hand sweeps above took everything idle for five minutes and broke no build.
 MJ_INCREMENTAL_IDLE_MIN_DEFAULT=30
 
+# mj_cargo_empty_dir_vars — the directory variables cargo reads that are set but empty, one
+# name per line. Cargo refuses each ("the target directory is set to an empty string"), so a
+# caller's `CARGO_TARGET_DIR= <command>`, meant as "unset", made every cargo metadata here
+# fail: on 2026-11-05 a sweep so called removed nothing, said only "cargo metadata failed",
+# and a build host sat under its 35 GiB floor for over an hour; unset, the same sweep freed
+# 4.7 GB. `${V-x}` is x when V is unset and V's value when it is set, so it is empty only
+# when V is set and empty.
+mj_cargo_empty_dir_vars() {
+  [ -n "${CARGO_TARGET_DIR-x}" ] || echo CARGO_TARGET_DIR
+  [ -n "${CARGO_BUILD_TARGET_DIR-x}" ] || echo CARGO_BUILD_TARGET_DIR
+  [ -n "${CARGO_BUILD_BUILD_DIR-x}" ] || echo CARGO_BUILD_BUILD_DIR
+  return 0
+}
+
 # mj_cargo_metadata_dir <crate-directory> <build_directory|target_directory>
 #
 # That directory as cargo itself reports it. `build_directory` folds in CARGO_BUILD_BUILD_DIR,
@@ -620,10 +634,14 @@ MJ_INCREMENTAL_IDLE_MIN_DEFAULT=30
 # and not by --manifest-path: from anywhere else the machine's default toolchain answers,
 # and a cargo older than build-dir reports no `build_directory` at all (on 2026-10-16 the
 # default here was 1.90.0, the pin 1.98.1).
+#
+# A directory variable set but empty is asked as unset (mj_cargo_empty_dir_vars).
 mj_cargo_metadata_dir() {
   command -v cargo >/dev/null 2>&1 || return 1
-  mj_cmd_json="$(cd "$1" 2>/dev/null && command cargo metadata --format-version 1 --no-deps \
-    --manifest-path "$1/Cargo.toml" 2>/dev/null)" || return 1
+  mj_cmd_json="$(cd "$1" 2>/dev/null || exit 1
+    for mj_cmd_v in $(mj_cargo_empty_dir_vars); do unset "$mj_cmd_v"; done
+    command cargo metadata --format-version 1 --no-deps \
+      --manifest-path "$1/Cargo.toml" 2>/dev/null)" || return 1
   mj_cmd_dir="$(printf '%s' "$mj_cmd_json" | sed -n "s/.*\"$2\":\"\\([^\"]*\\)\".*/\\1/p")"
   case "$mj_cmd_dir" in /*) printf '%s\n' "$mj_cmd_dir" ;; *) return 1 ;; esac
 }
@@ -1053,8 +1071,15 @@ mj_rust_prune_build_dir() {
   mj_pb_crate="$mj_pb_root/apps/majordomus-cli"
   mj_pb_dir="$(mj_cargo_build_dir "$mj_pb_crate" || true)"
   if [ -z "$mj_pb_dir" ]; then
-    printf '%s: none removed: cargo did not say where this build keeps them (cargo metadata failed)\n' \
-      "$mj_pb_say" >&2
+    # an empty directory variable is the likeliest cause: name it, though it was read as unset
+    mj_pb_why='cargo metadata failed'
+    mj_pb_empty="$(mj_cargo_empty_dir_vars | tr '\n' ' ')"
+    if [ -n "$mj_pb_empty" ]; then
+      mj_pb_why="$mj_pb_why; set but empty: ${mj_pb_empty% }, which cargo refuses"
+      mj_pb_why="$mj_pb_why (read here as unset; unset it for the build as well)"
+    fi
+    printf '%s: none removed: cargo did not say where this build keeps them (%s)\n' \
+      "$mj_pb_say" "$mj_pb_why" >&2
     return 0
   fi
   [ -d "$mj_pb_dir" ] || return 0   # nothing was ever built there, so there is nothing to reclaim
