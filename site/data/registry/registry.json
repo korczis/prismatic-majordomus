@@ -6,23 +6,23 @@
     "version": "1.0.0"
   },
   "registry": {
-    "fingerprint": "19de63074fe1b72e872f455c0932e18d2d686f0fc92ee6f966560c36bb5a30b6",
+    "fingerprint": "7779980e6fc10ddb6b18646b4fcf19b0a3b11fcffdecead11a57f5a9c305b201",
     "summary": {
-      "total": 3926,
+      "total": 3927,
       "builtin": 231,
-      "declarative": 3695,
+      "declarative": 3696,
       "by_kind": {
         "command": 41,
         "query": 190,
-        "resource": 3695
+        "resource": 3696
       },
       "by_stability": {
         "behaviorally_verified": 153,
         "experimental": 68,
-        "implemented": 3705
+        "implemented": 3706
       },
       "mcp_tools": 215,
-      "mcp_resources": 3752,
+      "mcp_resources": 3753,
       "http_routes": 219,
       "cli_commands": 128,
       "modules": 96,
@@ -97172,7 +97172,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 1222,
+        "capabilities": 1223,
         "capability_ids": []
       },
       {
@@ -97878,7 +97878,7 @@
     ]
   },
   "index": {
-    "fingerprint": "2440f964feefac59cc4cd45d37eb89b0b0432833721109760882fadf25ceb10b",
+    "fingerprint": "d819452d56e660ea5d11e692e71fbbaa1d5d8951f9cfae208f68950a0ac10ef6",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -97918,7 +97918,7 @@
       "gap": 5,
       "implementation": 54,
       "intent": 45,
-      "issue": 1222,
+      "issue": 1223,
       "knowledge": 163,
       "mesh-declaration": 1,
       "milestone": 117,
@@ -105475,7 +105475,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 132101
+        "bytes": 132233
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -122893,6 +122893,17 @@
         "bytes": 5797
       },
       {
+        "uri": "majordomus://issue/I4531",
+        "kind": "issue",
+        "identity": "I4531",
+        "title": "The pages name the pre-release that was published, not only the one recorded",
+        "description": "scripts/site-build derives the pre-release the pages name beside the stable release the way it derives the stable one (project.the-site-offers-the-release-it-published): from the release records of the tree and from the pre-release documents the published branch already serves, the newer pick named and its source recorded in build.json; scripts/site-deploy keeps a published release document the build does not carry; scripts/pages release-live holds the live homepage's pre-release to GitHub's newest pre-release the way it holds the stable one.",
+        "path": ".ai/repo/project/issues/I4531.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 4732
+      },
+      {
         "uri": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "identity": "a-brief-is-reconciled-not-transcribed",
@@ -130612,11 +130623,11 @@
         "kind": "rule",
         "identity": "project.the-site-offers-the-release-it-published@1",
         "title": "The site offers the release that was published, on every surface at once",
-        "description": "Which release is the latest is derived once, by the site build, as the newer of the newest release record and the release metadata the published site already serves, and every page that names it reads that one derivation; the homepage, /releases/latest.json and the newest GitHub release are held to one version, at build time and against the live site, beyond a bounded window after a publication.",
+        "description": "Which release is the latest is derived once, by the site build, as the newer of the newest release record and the release metadata the published site already serves, and the pre-release named beside it the same way, from the pre-release records and the pre-release documents the published site serves; every page that names either reads that one derivation; a deploy keeps a published release document the build does not carry; the homepage, /releases/latest.json and the newest GitHub release are held to one version, and the homepage's pre-release to GitHub's newest pre-release, at build time and against the live site, beyond a bounded window after a publication.",
         "path": ".ai/repo/rules/project/the-site-offers-the-release-it-published.v1.md",
         "section": "rules",
         "source_class": "rule",
-        "bytes": 7019,
+        "bytes": 10926,
         "tags": [
           "release",
           "publication",
@@ -132664,7 +132675,7 @@
         "identity": "test/cases/1087_the_site_offers_the_release_it_published.sh",
         "path": "test/cases/1087_the_site_offers_the_release_it_published.sh",
         "source_class": "case",
-        "bytes": 14473
+        "bytes": 18933
       },
       {
         "uri": "majordomus://test/test/cases/1088_the_command_and_capability_screens_answer.sh",
@@ -134368,7 +134379,7 @@
         "identity": "test/cases/3222_an_alpha_publishes_beside_the_latest_release.sh",
         "path": "test/cases/3222_an_alpha_publishes_beside_the_latest_release.sh",
         "source_class": "case",
-        "bytes": 5256
+        "bytes": 7601
       },
       {
         "uri": "majordomus://test/test/cases/3223_the_release_smoke_installs_an_alpha_pinned.sh",
@@ -135056,7 +135067,7 @@
         "identity": "test/cases/3727_the_pages_name_the_pre_release_beside_the_stable_one.sh",
         "path": "test/cases/3727_the_pages_name_the_pre_release_beside_the_stable_one.sh",
         "source_class": "case",
-        "bytes": 4351
+        "bytes": 8698
       },
       {
         "uri": "majordomus://test/test/cases/3728_an_unkeyed_memory_entry_is_refused.sh",
@@ -138493,7 +138504,7 @@
       "identity": [
         "id"
       ],
-      "objects": 1222
+      "objects": 1223
     },
     {
       "name": "knowledge",

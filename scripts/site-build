@@ -28,8 +28,10 @@
 #     [--release-record FILE]     the record's projection to read instead of
 #                                 site/data/registry/distribution.json
 #     [--release-published FILE]  a published releases/latest.json to read instead of the ref
+#     [--release-published-dir DIR]  the published pre-release documents to read instead of
+#                                 the ref: releases/v*.json as gh-pages serves them
 #     [--release-ref REF]         the published branch to read it from (default origin/gh-pages,
-#                                 or $MJ_SITE_RELEASE_REF); all three apply to a full build too
+#                                 or $MJ_SITE_RELEASE_REF); all four apply to a full build too
 #
 # THE RELEASE THIS SITE OFFERS is derived here, once, and every page reads it from
 # data/build.json (`build.release`) — the navbar badge, the homepage's hero and trust strip,
@@ -44,7 +46,9 @@
 # fetched over the network here: the build is a function of two commits, and build.json
 # names both (`published_from`). When the published release wins, its two files are copied
 # into the build, so the bytes this build publishes at /releases/latest.json are the release
-# its pages offer. The rule is project.the-site-offers-the-release-it-published.
+# its pages offer. The pre-release the pages name beside it is derived the same way, from the
+# records and from the pre-release documents the published branch serves (release_prerelease
+# below; I4531). The rule is project.the-site-offers-the-release-it-published.
 #
 # Every build, published or served, also COMPOSES the other published static surfaces into
 # its output at their mounts (ADR 0086): each surface of docs/generated/web.json of kind
@@ -84,6 +88,7 @@ while [ $# -gt 0 ]; do case "$1" in
   --release-record) REL_RECORD="${2:?--release-record needs a file}"; shift 2 ;;
   --release-records) REL_RECORDS="${2:?--release-records needs a directory}"; shift 2 ;;
   --release-published) REL_PUBLISHED="${2:?--release-published needs a file}"; shift 2 ;;
+  --release-published-dir) REL_PUBLISHED_DIR="${2:?--release-published-dir needs a directory}"; shift 2 ;;
   --release-ref) REL_REF="${2:?--release-ref needs a ref}"; shift 2 ;;
   *) echo "site-build: unknown option $1" >&2; exit 2 ;;
 esac; done
@@ -96,16 +101,19 @@ esac; done
 REL_RECORD="${REL_RECORD:-$SITE/data/registry/distribution.json}"
 REL_RECORDS="${REL_RECORDS:-$ROOT/.ai/repo/releases}"
 REL_PUBLISHED="${REL_PUBLISHED:-}"
+REL_PUBLISHED_DIR="${REL_PUBLISHED_DIR:-}"
 REL_REF="${REL_REF:-${MJ_SITE_RELEASE_REF:-origin/gh-pages}}"
 release_offered() {
   local dir="$1" from="" sha="" tag
   [ -f "$REL_RECORD" ] && jq -e . "$REL_RECORD" >/dev/null 2>&1 \
     || { echo "site-build: $REL_RECORD cannot be read; run majordomus generate" >&2; exit 12; }
   rm -f "$dir/published.json" "$dir/latest.json"
+  # the published commit, resolved once for both channels; a file given for the stable reading
+  # stands in for the whole branch
+  [ -n "$REL_PUBLISHED" ] || sha="$(git -C "$ROOT" rev-parse --verify -q "$REL_REF^{commit}" 2>/dev/null || true)"
   if [ -n "$REL_PUBLISHED" ]; then
     cp "$REL_PUBLISHED" "$dir/published.json"; from="file:${REL_PUBLISHED##*/}"
-  elif sha="$(git -C "$ROOT" rev-parse --verify -q "$REL_REF^{commit}" 2>/dev/null)" \
-       && git -C "$ROOT" cat-file -e "$sha:releases/latest.json" 2>/dev/null; then
+  elif [ -n "$sha" ] && git -C "$ROOT" cat-file -e "$sha:releases/latest.json" 2>/dev/null; then
     git -C "$ROOT" show "$sha:releases/latest.json" > "$dir/published.json"; from="$REL_REF@$sha"
   fi
   if [ -f "$dir/published.json" ]; then
@@ -140,41 +148,82 @@ release_offered() {
     cp "$dir/published.json" "$dir/latest.json"
   fi
   rm -f "$dir/published.json"
-  release_prerelease "$dir"
+  release_prerelease "$dir" "$from" "$sha"
 }
 # The newest pre-release beside the stable release (I3449, the release seat's ruling of
 # 2026-10-21): the pages a person reads name both channels, each with its own notes and its own
 # install line, while /releases/latest.json and the installer's default stay the stable one
-# (I2829; cases 3222, 3179, 3225). Read from the release records themselves, never from a ref: the
-# highest record of channel prerelease that is not yanked, and only when it is ahead of the
-# stable release (an alpha of a version already released stable is behind it). Versions order
-# by their numeric fields, then a pre-release's own dot-separated identifiers, numbers as numbers.
-release_prerelease() { # dir (holds release.json; rewritten with .prerelease)
-  local dir="$1" rows f
+# (I2829; cases 3222, 3179, 3225). Derived as the stable release is, from two readings of one
+# fact (I4531): the release records of this tree, and the pre-release documents the published
+# branch already serves — releases/v*.json of channel prerelease, which the release's publish
+# job writes beside latest.json minutes after its archives and hours before its record lands.
+# Until 2026-11-06 this read the records alone, so every deploy of master between a pre-release
+# and the landing of its record put the previous pre-release back into the homepage's hero:
+# v1.0.0-alpha.10 was published at 17:09Z and the pages named alpha.9 all evening. Each side
+# picks its highest pre-release that is not yanked and is ahead of the stable release by its
+# base version (an alpha of a version already released stable is behind it); the newer of the
+# two picks is offered, the record on a tie, and a tag the tree records is the record's whatever
+# the branch serves, so a yanked record withdraws the published document too. Versions order by
+# their numeric fields, then a pre-release's own dot-separated identifiers, numbers as numbers.
+# When the published pre-release wins, its document is kept beside release.json
+# (<dir>/prerelease.json) for the build to serve at its tag's own path.
+release_prerelease() { # <dir> <from> <sha>: dir holds release.json; rewritten with .prerelease
+  local dir="$1" sha="${3:-}" rows pfrom="" f bad tag
   rows="$dir/records.jsonl"
-  : > "$rows"
+  : > "$rows"; rm -f "$dir/prerelease.json"
   if [ -d "$REL_RECORDS" ]; then
     for f in "$REL_RECORDS"/v*.yaml; do
       [ -f "$f" ] || continue
       awk '/^(version|tag|channel|published_at|notes_url|yanked):/ {
              k = $1; sub(/:$/, "", k); v = $0; sub(/^[a-z_]+:[ ]*/, "", v); gsub(/^"|"$/, "", v)
              out = out (out == "" ? "" : ",") "\"" k "\":\"" v "\"" }
-           END { print "{" out "}" }' "$f" >> "$rows"
+           END { print "{" out (out == "" ? "" : ",") "\"source\":\"record\"}" }' "$f" >> "$rows"
     done
   fi
-  jq -s --slurpfile r "$dir/release.json" --arg install "$(jq -r '.install_command // empty' "$REL_RECORD")" '
+  # The published side: a directory of documents (the cases), or every releases/v*.json the
+  # published commit serves. A file given for the stable reading names no pre-release. Where
+  # it was read from is decided before the pipeline below, whose producer runs in a subshell.
+  if [ -n "$REL_PUBLISHED_DIR" ]; then pfrom="dir:${REL_PUBLISHED_DIR##*/}"
+  elif [ -z "$REL_PUBLISHED" ] && [ -n "$sha" ]; then pfrom="$REL_REF@$sha"; fi
+  if [ -n "$REL_PUBLISHED_DIR" ]; then
+    for f in "$REL_PUBLISHED_DIR"/v*.json; do [ -f "$f" ] && cat "$f"; done
+  elif [ -n "$pfrom" ]; then
+    git -C "$ROOT" ls-tree --name-only "$sha" releases/ 2>/dev/null | while IFS= read -r f; do
+      case "$f" in releases/v*.json) git -C "$ROOT" show "$sha:$f" ;; esac
+    done
+  fi | jq -c 'select(type == "object" and .channel == "prerelease")
+              | {schema, version, tag, channel, published_at, notes_url, yanked: (.yanked // false), source: "published"}' >> "$rows" \
+    || { echo "site-build: the pre-release documents ${pfrom:-the published branch} serves could not be read" >&2; exit 13; }
+  bad="$(jq -r 'select(.source == "published" and (.schema != "release/v1" or (.version | type) != "string" or .tag != ("v" + (.version | tostring)))) | .tag // "?"' "$rows" | head -n 1)"
+  [ -z "$bad" ] || { echo "site-build: ${pfrom} serves a pre-release document ($bad) that is not a release/v1 document naming its own tag" >&2; exit 10; }
+  jq -s --slurpfile r "$dir/release.json" --arg install "$(jq -r '.install_command // empty' "$REL_RECORD")" --arg pfrom "$pfrom" '
     def base: split("-")[0] | split("+")[0] | split(".") | map(tonumber? // 0);
     def pre: (split("+")[0] | split("-")[1:] | join("-") | split("."))
              | map(if test("^[0-9]+$") then [0, tonumber] else [1, .] end);
+    def key: [(.version | base), (.version | pre)];
     ($r[0]) as $s
-    | [.[] | select(.channel == "prerelease" and (.yanked // "false") != "true" and (.version // "") != "")]
-    | (if $s == null then . else map(select((.version | base) > ($s.version | base))) end)
-    | sort_by([(.version | base), (.version | pre)]) | last
-    | (if . == null then null
-       else {version, tag, published_at, notes_url,
-             install_command: (if $install == "" then null else $install + " -s -- --version " + .tag end)} end) as $p
+    | map(select(type == "object")) as $all
+    | [$all[] | select(.source == "record")] as $rec
+    | [$rec[] | .tag] as $recorded
+    | def pick: [.[] | select(.channel == "prerelease" and ((.yanked // false) | tostring) != "true" and (.version // "") != "")]
+                | (if $s == null then . else map(select((.version | base) > ($s.version | base))) end)
+                | sort_by(key) | last;
+    ($rec | pick) as $pr
+    | ([$all[] | select(.source == "published" and (.tag as $t | any($recorded[]; . == $t) | not))] | pick) as $pp
+    | (if $pp != null and ($pr == null or ($pp | key) > ($pr | key)) then $pp
+       elif $pr != null then $pr else null end) as $w
+    | (if $w == null then null
+       else {version: $w.version, tag: $w.tag, published_at: $w.published_at, notes_url: $w.notes_url,
+             install_command: (if $install == "" then null else $install + " -s -- --version " + $w.tag end),
+             source: $w.source, record: ($pr.version // null), published: ($pp.version // null),
+             published_from: (if $pfrom == "" then null else $pfrom end)} end) as $p
     | if $s == null then null else $s + {prerelease: $p} end' "$rows" > "$dir/release.next.json" \
     || { echo "site-build: the pre-release beside the offered release could not be derived" >&2; exit 13; }
+  if [ "$(jq -r '.prerelease.source // empty' "$dir/release.next.json")" = published ]; then
+    tag="$(jq -r '.prerelease.tag' "$dir/release.next.json")"
+    if [ -n "$REL_PUBLISHED_DIR" ]; then cp "$REL_PUBLISHED_DIR/$tag.json" "$dir/prerelease.json"
+    else git -C "$ROOT" show "$sha:releases/$tag.json" > "$dir/prerelease.json"; fi
+  fi
   mv "$dir/release.next.json" "$dir/release.json"; rm -f "$rows"
 }
 if [ "${RELEASE_ONLY:-0}" = 1 ]; then
@@ -473,6 +522,7 @@ EOF
 fi
 release_offered "$RELDIR"
 echo "== release $(jq -r 'if . == null then "none: no record and nothing published" else "v\(.version) (from the \(.source); record \(.record // "none"), published \(.published // "none")\(if .published_from then " at " + .published_from else "" end))" end' "$RELDIR/release.json")"
+echo "== pre-release $(jq -r '(. // {}).prerelease | if . == null then "none ahead of the stable release" else "v\(.version) (from the \(.source); record \(.record // "none"), published \(.published // "none")\(if .published_from then " at " + .published_from else "" end))" end' "$RELDIR/release.json")"
 while IFS="$MJ_TAB" read -r c_id c_mount c_artifact c_producer; do
   [ -n "$c_id" ] || continue
   c_built=""
@@ -574,6 +624,12 @@ if [ -f "$RELDIR/latest.json" ]; then
   mkdir -p "$PUBLIC/releases"
   cp "$RELDIR/latest.json" "$PUBLIC/releases/latest.json"
   cp "$RELDIR/latest.json" "$PUBLIC/releases/$(jq -r .tag "$RELDIR/latest.json").json"
+fi
+# The published pre-release the pages name, when it is newer than the records, is served at its
+# tag's own path for the same reason; latest.json stays the stable release (I2829).
+if [ -f "$RELDIR/prerelease.json" ]; then
+  mkdir -p "$PUBLIC/releases"
+  cp "$RELDIR/prerelease.json" "$PUBLIC/releases/$(jq -r .tag "$RELDIR/prerelease.json").json"
 fi
 # Zola wrote the two highlighting themes into static/ and public/; scope the dark one under .dark
 # (generated CSS, not hand-written) so class-based dark mode picks the right palette.
