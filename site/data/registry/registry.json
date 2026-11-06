@@ -6,23 +6,23 @@
     "version": "1.0.0"
   },
   "registry": {
-    "fingerprint": "7dc7dbd93fc0cdfb29b6379602988ee259e2c37a4ce11f1ba9bfe93454af61ed",
+    "fingerprint": "42bb75668bfcccbb5415475289bb87dfbba2cfed4186341ebf95cc9308aaa049",
     "summary": {
-      "total": 3920,
+      "total": 3922,
       "builtin": 231,
-      "declarative": 3689,
+      "declarative": 3691,
       "by_kind": {
         "command": 41,
         "query": 190,
-        "resource": 3689
+        "resource": 3691
       },
       "by_stability": {
         "behaviorally_verified": 153,
         "experimental": 68,
-        "implemented": 3699
+        "implemented": 3701
       },
       "mcp_tools": 215,
-      "mcp_resources": 3746,
+      "mcp_resources": 3748,
       "http_routes": 219,
       "cli_commands": 128,
       "modules": 96,
@@ -97172,7 +97172,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 1220,
+        "capabilities": 1221,
         "capability_ids": []
       },
       {
@@ -97785,7 +97785,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 694,
+        "capabilities": 695,
         "capability_ids": []
       },
       {
@@ -97878,7 +97878,7 @@
     ]
   },
   "index": {
-    "fingerprint": "9084af87b50a79c4a03c0e1f94cdaf3c1594163e431362dc40f2a3745ff95e29",
+    "fingerprint": "89e2f9d49c837069c793cfe6b99e6718012cafc8f563256bdfb8d2d378767644",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -97918,7 +97918,7 @@
       "gap": 5,
       "implementation": 54,
       "intent": 45,
-      "issue": 1220,
+      "issue": 1221,
       "knowledge": 163,
       "mesh-declaration": 1,
       "milestone": 117,
@@ -97932,7 +97932,7 @@
       "session": 95,
       "skill": 10,
       "taxonomy": 10,
-      "test": 694,
+      "test": 695,
       "use-case": 49,
       "workspace": 1
     },
@@ -105475,7 +105475,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 132220
+        "bytes": 132227
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -122871,6 +122871,17 @@
         "bytes": 2483
       },
       {
+        "uri": "majordomus://issue/I4529",
+        "kind": "issue",
+        "identity": "I4529",
+        "title": "An issue joins a closed milestone by number, so a record under a finished milestone can be created",
+        "description": "scripts/github-sync creates an issue without --milestone and joins it to its canonical milestone by number through the REST field (PATCH repos/<r>/issues/<n> milestone=<number>), which accepts a closed milestone, and moves an existing issue to its milestone the same way; a case on a closed-milestone fixture holds both.",
+        "path": ".ai/repo/project/issues/I4529.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3705
+      },
+      {
         "uri": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "identity": "a-brief-is-reconciled-not-transcribed",
@@ -135915,6 +135926,14 @@
         "bytes": 4335
       },
       {
+        "uri": "majordomus://test/test/cases/4562_an_issue_joins_a_closed_milestone_by_number.sh",
+        "kind": "test",
+        "identity": "test/cases/4562_an_issue_joins_a_closed_milestone_by_number.sh",
+        "path": "test/cases/4562_an_issue_joins_a_closed_milestone_by_number.sh",
+        "source_class": "case",
+        "bytes": 5446
+      },
+      {
         "uri": "majordomus://test/test/cases/45_github_projection.sh",
         "kind": "test",
         "identity": "test/cases/45_github_projection.sh",
@@ -138437,7 +138456,7 @@
       "identity": [
         "id"
       ],
-      "objects": 1220
+      "objects": 1221
     },
     {
       "name": "knowledge",
@@ -138599,7 +138618,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 694
+      "objects": 695
     },
     {
       "name": "use-case",

@@ -80415,6 +80415,43 @@
         }
       },
       {
+        "id": "majordomus://issue/I4529",
+        "kind": "issue",
+        "label": "I4529",
+        "summary": "An issue joins a closed milestone by number, so a record under a finished milestone can be created",
+        "route": "/cockpit/objects/issue/i4529",
+        "source": ".ai/repo/project/issues/I4529.yaml",
+        "facts": {
+          "created_at": "2026-11-06",
+          "depends_on": [],
+          "evidence_required": [
+            "an_issue_joins_a_closed_milestone_by_number"
+          ],
+          "milestone": "work-graph-github",
+          "non_scope": [
+            "The milestone pass itself (which state a milestone is set to, and when)",
+            "Reopening a milestone on GitHub for any reason",
+            "The adopter's repository; the fix ships in the next release and its next --apply uses it"
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "scripts/github-sync",
+            "test/cases/4562_an_issue_joins_a_closed_milestone_by_number.sh",
+            ".ai/repo/project/issues/I4529.yaml"
+          ],
+          "slug": "an-issue-joins-a-closed-milestone-by-number",
+          "started_at": "2026-11-06T20:12:56Z",
+          "started_event": "sha256:bcdf43c1343986833576a7c37acb6fbfe0a7d95893aaf6c249a17c2e08e34d75",
+          "updated_at": "2026-11-06T20:12:56Z",
+          "validation": [
+            "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 4562_an_issue_joins_a_closed_milestone_by_number",
+            "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 45_github_projection"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "label": "a-brief-is-reconciled-not-transcribed",
@@ -106934,6 +106971,13 @@
         "label": "test/cases/4561_an_empty_cargo_dir_variable_is_read_as_unset.sh",
         "route": "/cockpit/objects/test/test-cases-4561-an-empty-cargo-dir-variable-is-read-as-unset-sh",
         "source": "test/cases/4561_an_empty_cargo_dir_variable_is_read_as_unset.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/4562_an_issue_joins_a_closed_milestone_by_number.sh",
+        "kind": "test",
+        "label": "test/cases/4562_an_issue_joins_a_closed_milestone_by_number.sh",
+        "route": "/cockpit/objects/test/test-cases-4562-an-issue-joins-a-closed-milestone-by-number-sh",
+        "source": "test/cases/4562_an_issue_joins_a_closed_milestone_by_number.sh"
       },
       {
         "id": "majordomus://test/test/cases/45_github_projection.sh",
@@ -148486,6 +148530,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I4529",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4529",
+        "target": "majordomus://milestone/work-graph-github",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -155876,6 +155930,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/4562_an_issue_joins_a_closed_milestone_by_number.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/45_github_projection.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -161002,8 +161061,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4391,
-      "edges": 10003,
+      "nodes": 4393,
+      "edges": 10006,
       "acyclic": false,
       "truncated": false
     }
