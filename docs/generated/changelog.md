@@ -7,6 +7,34 @@ Every entry below is derived: a section per release the layer records, its decis
 
 Current version: **1.0.0**
 
+## v1.0.0 — 2026-11-06
+
+### Fixed
+
+- **ci**: the rust_bin declarations name mj_cargo_empty_dir_vars (#2931, case 4381) (`42b7fe2d2`)
+- **continuity**: the handover resolver asks git once, for the record it returns (I2858) (`316b3cc64`)
+- **ci**: a saturated coverage count is discarded, and a region nothing else counted is untrusted (`b2fa293aa`)
+
+### Documentation
+
+- **knowledge**: evolve 2026-11-05, the outbox carried and the train lessons in the integrator skill (`47eaf0b2d`)
+- **knowledge**: evolve 11-05, an empty cargo dir variable is unset and stacked tops (`0b0cb42c7`)
+
+### Housekeeping
+
+- **release**: 1.0.0 is authored, the first stable version (`e3dd08606`)
+- **ci**: the suite shards are dealt from the seconds train P's run measured (`34ce30e83`)
+
+### Published
+
+- `macos-aarch64` — majordomus-v1.0.0-aarch64-apple-darwin.tar.gz (`f6f5e6b26946`)
+- `macos-x86_64` — majordomus-v1.0.0-x86_64-apple-darwin.tar.gz (`29153abd5aa6`)
+- `linux-x86_64-gnu` — majordomus-v1.0.0-x86_64-unknown-linux-gnu.tar.gz (`0fc3f6ad9ef2`)
+- `linux-x86_64-musl` — majordomus-v1.0.0-x86_64-unknown-linux-musl.tar.gz (`e11214f2f330`)
+- `linux-aarch64-gnu` — majordomus-v1.0.0-aarch64-unknown-linux-gnu.tar.gz (`9994bed514b2`)
+- `linux-aarch64-musl` — majordomus-v1.0.0-aarch64-unknown-linux-musl.tar.gz (`02990de91db6`)
+
+
 ## v1.0.0-alpha.10 — 2026-11-06
 
 ### Decisions

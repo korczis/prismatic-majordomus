@@ -5,6 +5,160 @@
   "current": "1.0.0",
   "sections": [
     {
+      "version": "1.0.0",
+      "tag": "v1.0.0",
+      "date": "2026-11-06T22:44:12Z",
+      "commit": "e3dd08606fa661a7b4bc60efb34d0ba6b082de06",
+      "unreleased": false,
+      "notes_url": "https://github.com/korczis/prismatic-majordomus/releases/tag/v1.0.0",
+      "compare_url": "https://github.com/korczis/prismatic-majordomus/compare/v1.0.0-alpha.10...v1.0.0",
+      "tree_url": "https://github.com/korczis/prismatic-majordomus/tree/v1.0.0",
+      "decisions": [],
+      "groups": [
+        {
+          "kind": "fix",
+          "heading": "Fixed",
+          "rank": 1,
+          "changes": [
+            {
+              "kind": "fix",
+              "scope": "ci",
+              "subject": "the rust_bin declarations name mj_cargo_empty_dir_vars (#2931, case 4381)",
+              "breaking": false,
+              "commit": "42b7fe2d2",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/42b7fe2d2",
+              "references": [
+                {
+                  "kind": "issue",
+                  "id": "I4381",
+                  "title": "The structure job fits in half its bound: shellcheck stops re-reading lib/rust_bin.sh for every case, and the network gates run in a second job",
+                  "route": "/plan/i4381/"
+                }
+              ]
+            },
+            {
+              "kind": "fix",
+              "scope": "continuity",
+              "subject": "the handover resolver asks git once, for the record it returns (I2858)",
+              "breaking": false,
+              "commit": "316b3cc64",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/316b3cc64",
+              "references": [
+                {
+                  "kind": "issue",
+                  "id": "I2858",
+                  "title": "a briefing resolves one handover and one checkpoint with one git call each, not one per record",
+                  "route": "/plan/i2858/"
+                }
+              ]
+            },
+            {
+              "kind": "fix",
+              "scope": "ci",
+              "subject": "a saturated coverage count is discarded, and a region nothing else counted is untrusted",
+              "breaking": false,
+              "commit": "b2fa293aa",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/b2fa293aa"
+            }
+          ]
+        },
+        {
+          "kind": "docs",
+          "heading": "Documentation",
+          "rank": 4,
+          "changes": [
+            {
+              "kind": "docs",
+              "scope": "knowledge",
+              "subject": "evolve 2026-11-05, the outbox carried and the train lessons in the integrator skill",
+              "breaking": false,
+              "commit": "47eaf0b2d",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/47eaf0b2d"
+            },
+            {
+              "kind": "docs",
+              "scope": "knowledge",
+              "subject": "evolve 11-05, an empty cargo dir variable is unset and stacked tops",
+              "breaking": false,
+              "commit": "0b0cb42c7",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/0b0cb42c7",
+              "references": [
+                {
+                  "kind": "issue",
+                  "id": "I4360",
+                  "title": "monitor reports a GitHub run queued past its bound, not only the runs that completed",
+                  "route": "/plan/i4360/"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "kind": "chore",
+          "heading": "Housekeeping",
+          "rank": 7,
+          "changes": [
+            {
+              "kind": "chore",
+              "scope": "release",
+              "subject": "1.0.0 is authored, the first stable version",
+              "breaking": false,
+              "commit": "e3dd08606",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/e3dd08606"
+            },
+            {
+              "kind": "chore",
+              "scope": "ci",
+              "subject": "the suite shards are dealt from the seconds train P's run measured",
+              "breaking": false,
+              "commit": "34ce30e83",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/34ce30e83",
+              "references": [
+                {
+                  "kind": "issue",
+                  "id": "I3930",
+                  "title": "The suite is dealt from the seconds it costs now, and the record that deals it says when it falls behind",
+                  "route": "/plan/i3930/"
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "artifacts": [
+        {
+          "target": "macos-aarch64",
+          "name": "majordomus-v1.0.0-aarch64-apple-darwin.tar.gz",
+          "sha256": "f6f5e6b269464260d3dd9b6ec2cc0536a0f5afc3fde2ef266066a42c25747b32"
+        },
+        {
+          "target": "macos-x86_64",
+          "name": "majordomus-v1.0.0-x86_64-apple-darwin.tar.gz",
+          "sha256": "29153abd5aa6ceffb7fad7312ec439e06824a79eecd4d839e7b629291e6d457c"
+        },
+        {
+          "target": "linux-x86_64-gnu",
+          "name": "majordomus-v1.0.0-x86_64-unknown-linux-gnu.tar.gz",
+          "sha256": "0fc3f6ad9ef2c4f1b5ff8454f6d6373d1b9d1c4732822ca5d06c4ce6c65cdd6e"
+        },
+        {
+          "target": "linux-x86_64-musl",
+          "name": "majordomus-v1.0.0-x86_64-unknown-linux-musl.tar.gz",
+          "sha256": "e11214f2f330c6885af86cd2e61da59845296fafedb07d24252c29aaaf9372fe"
+        },
+        {
+          "target": "linux-aarch64-gnu",
+          "name": "majordomus-v1.0.0-aarch64-unknown-linux-gnu.tar.gz",
+          "sha256": "9994bed514b29b67e3b29355fc2b397533e65e5b0122ee82f7af91aec191f8c2"
+        },
+        {
+          "target": "linux-aarch64-musl",
+          "name": "majordomus-v1.0.0-aarch64-unknown-linux-musl.tar.gz",
+          "sha256": "02990de91db65a0f52c624816e918aab723802e856c6b270c04a9a145e0e90bf"
+        }
+      ]
+    },
+    {
       "version": "1.0.0-alpha.10",
       "tag": "v1.0.0-alpha.10",
       "date": "2026-11-06T17:09:16Z",
