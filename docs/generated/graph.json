@@ -66333,8 +66333,7 @@
           ],
           "depends_on": [],
           "evidence_required": [
-            "a_built_page_reads_delivery_at_its_build_commit",
-            "a_render_without_a_build_record_falls_back_to_committed_delivery"
+            "a_published_page_reads_delivery_at_its_build_commit"
           ],
           "milestone": "truthful-plan-surfaces",
           "non_scope": [
@@ -66356,6 +66355,9 @@
             ".ai/repo/project/issues/I3769.yaml"
           ],
           "slug": "a-published-page-reads-delivery-at-its-build-commit",
+          "started_at": "2026-11-06T19:08:17Z",
+          "started_event": "sha256:b6ac8681f723293565feebb032941bd58c7fa2baeb63bce1228c5f110d2da20c",
+          "updated_at": "2026-11-06T19:08:17Z",
           "validation": [
             "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 3742_a_published_page_reads_delivery_at_its_build_commit",
             "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 51_derived_artifacts_committed 333_homepage_narrative",
@@ -106265,6 +106267,13 @@
         "label": "test/cases/373_delivery_is_computed.sh",
         "route": "/cockpit/objects/test/test-cases-373-delivery-is-computed-sh",
         "source": "test/cases/373_delivery_is_computed.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/3742_a_published_page_reads_delivery_at_its_build_commit.sh",
+        "kind": "test",
+        "label": "test/cases/3742_a_published_page_reads_delivery_at_its_build_commit.sh",
+        "route": "/cockpit/objects/test/test-cases-3742-a-published-page-reads-delivery-at-its-build-commit-sh",
+        "source": "test/cases/3742_a_published_page_reads_delivery_at_its_build_commit.sh"
       },
       {
         "id": "majordomus://test/test/cases/3747_a_gated_step_leaves_its_receipt.sh",
@@ -155455,6 +155464,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/3742_a_published_page_reads_delivery_at_its_build_commit.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/3747_a_gated_step_leaves_its_receipt.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -161126,8 +161140,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4395,
-      "edges": 10009,
+      "nodes": 4396,
+      "edges": 10010,
       "acyclic": false,
       "truncated": false
     }

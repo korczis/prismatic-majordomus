@@ -428,7 +428,33 @@ dirty=false; [ -z "$(git -C "$ROOT" status --porcelain --untracked-files=no 2>/d
 SURFACES="$(mktemp "${TMPDIR:-/tmp}/mj-site-surfaces.XXXXXX")"
 SNAPSHOTS="$(mktemp "${TMPDIR:-/tmp}/mj-site-snapshots.XXXXXX")"
 RELDIR="$(mktemp -d "${TMPDIR:-/tmp}/mj-site-release.XXXXXX")"
-trap 'rm -f "$SURFACES" "$SNAPSHOTS"; rm -rf "$RELDIR"; mj_cleanup' EXIT
+DELIVERY="$(mktemp "${TMPDIR:-/tmp}/mj-site-delivery.XXXXXX")"
+trap 'rm -f "$SURFACES" "$SNAPSHOTS" "$DELIVERY" "$DELIVERY.err" "$DELIVERY.tmp"; rm -rf "$RELDIR"; mj_cleanup' EXIT
+# the issues' delivery, read at this build's own commit (I3769). The committed delivery.json can
+# only observe the commit before the one it lands in (case 51: a derived file cannot name the
+# commit it lands in), so a page that read it named a commit older than the page, and a visitor
+# could not tell which reading was current. The build knows its commit and writes a provenance
+# nothing commits, so the reading is taken here, through the same tool the generator asks, and
+# a page reads it from build.json when the build carries one (index.html, roadmap.html). A dirty
+# build records it dirty, as build.json already does; a tree with no commit records none; a
+# read the tool cannot answer stops the build with 12, as generate-site-data stops its own
+# (project.a-verdict-states-its-subject).
+delivery_at_build() {   # <commit> <dirty> <out>
+  local at="$1" is_dirty="$2" out="$3" rc=0
+  if [ "$at" = unknown ]; then echo null > "$out"; return 0; fi
+  "$ROOT/bin/majordomus" --repo "$ROOT" --json plan delivery --at "$at" > "$out" 2> "$out.err" || rc=$?
+  if [ "$rc" = 0 ] && jq empty "$out" >/dev/null 2>&1; then
+    jq --argjson dirty "$is_dirty" '.observed.dirty = $dirty' "$out" > "$out.tmp" && mv "$out.tmp" "$out"
+    rm -f "$out.err"
+    if [ "$is_dirty" = true ]; then echo "== delivery read at ${at:0:12}, dirty"; else echo "== delivery read at ${at:0:12}"; fi
+    return 0
+  fi
+  echo "site-build: the issues' delivery at $at could not be read: 'majordomus --json plan delivery --at $at' exited $rc" >&2
+  if [ -s "$out.err" ]; then sed 's/^/  /' "$out.err" >&2; fi
+  echo "  the build's provenance is not written from a reading this run could not reach" >&2
+  exit 12
+}
+delivery_at_build "$commit" "$dirty" "$DELIVERY"
 # `snapshots` is what the PUBLICATION holds beside this build and this build does not compose:
 # a served surface read once at the published commit and placed at its mount by the deploy
 # (ADR 0141), as the publication model declares it (.ai/repo/ci/pages.yaml deploy.snapshots,
@@ -459,11 +485,12 @@ EOF
 jq -n --arg commit "$commit" --arg commit_time "$commit_time" --argjson dirty "$dirty" \
   --slurpfile src "$SITE/data/generated/source.json" --slurpfile reg "$SITE/data/registry/registry.json" \
   --slurpfile surfaces "$SURFACES" --slurpfile snapshots "$SNAPSHOTS" --slurpfile release "$RELDIR/release.json" \
+  --slurpfile delivery "$DELIVERY" \
   '{schema: 1, commit: $commit, commit_time: (if $commit_time == "" then null else $commit_time end), dirty: $dirty,
     source_version: $src[0].source_version, source_hash: $src[0].source_hash, site_generator_version: $src[0].generator_version,
     registry_fingerprint: $reg[0].registry.fingerprint, index_fingerprint: $reg[0].index.fingerprint,
     registry_generator: ($reg[0].generator.id + " " + $reg[0].generator.version), registry_dataset: $reg[0].schema,
-    surfaces: $surfaces, snapshots: $snapshots, release: $release[0]}' \
+    surfaces: $surfaces, snapshots: $snapshots, release: $release[0], delivery: $delivery[0]}' \
   > "$SITE/data/build.json"
 cp "$SITE/data/build.json" "$SITE/static/build.json"
 # what moved since the deployment this build replaces, beside build.json and ignored like it
