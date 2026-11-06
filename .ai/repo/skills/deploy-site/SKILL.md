@@ -1,7 +1,7 @@
 ---
 schema: skill/v1
 id: deploy-site
-version: 1
+version: 2
 title: Deploy the site by hand
 description: Publish the website to GitHub Pages from a terminal, through the one script the Pages workflow runs, when waiting for the Actions queue is not acceptable.
 status: active

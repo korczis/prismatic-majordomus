@@ -5,7 +5,7 @@ weight = 2
 [extra]
 id = "deploy-site"
 status = "active"
-version = 1
+version = 2
 source = ".ai/repo/skills/deploy-site/SKILL.md"
 +++
 {% raw %}
