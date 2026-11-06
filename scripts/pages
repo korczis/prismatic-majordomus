@@ -109,7 +109,9 @@
 #                                         one version. A disagreement younger than the window
 #                                         (deploy.release_window) after GitHub's release is a
 #                                         publication in flight; older, or a site offering what
-#                                         GitHub has not published, is refused. --wait polls
+#                                         GitHub has not published, is refused. The pre-release
+#                                         the homepage names beside it is held to GitHub's
+#                                         newest pre-release the same way (I4531). --wait polls
 #                                         until they agree; --expect TAG also requires GitHub's
 #                                         newest release to be TAG. 0 one release, or in flight;
 #                                         10 they disagree; 12 a reading could not be taken
@@ -1649,9 +1651,89 @@ release_reading() {   # <url> -> body on stdout, or nothing
     *) curl -fsSL --max-time 30 -H 'Cache-Control: no-cache' "$u?t=$(now)" 2>/dev/null || true ;;
   esac
 }
+# release_newer <a> <b>: is version a newer than version b? Numeric fields first, then a
+# pre-release's own dot-separated identifiers, numbers as numbers, as scripts/site-build orders
+# them; a version without identifiers is the newest of its base (1.0.0 after 1.0.0-rc.1).
+release_newer() {
+  jq -en --arg a "$1" --arg b "$2" '
+    def base: split("-")[0] | split("+")[0] | split(".") | map(tonumber? // 0);
+    def pre: (split("+")[0] | split("-")[1:] | join("-") | split("."))
+             | if . == [] then [[2]] else map(if test("^[0-9]+$") then [0, tonumber] else [1, .] end) end;
+    [($a | base), ($a | pre)] > [($b | base), ($b | pre)]' >/dev/null 2>&1
+}
+# release_base_ahead <a> <b>: is a ahead of b by its base version alone? 1.0.0-alpha.1 is ahead
+# of 0.30.2; 0.30.0-rc.1 is not, being an rc of a version already released.
+release_base_ahead() {
+  jq -en --arg a "$1" --arg b "$2" '
+    def base: split("-")[0] | split("+")[0] | split(".") | map(tonumber? // 0);
+    ($a | base) > ($b | base)' >/dev/null 2>&1
+}
+# The pre-release beside the stable release, judged over the readings cmd_release_live took
+# (its locals reach the function it calls). The pages name GitHub's newest pre-release when it
+# is ahead of GitHub's newest release by its base version, and none otherwise, as
+# scripts/site-build derives it; a pre-release GitHub has not published is never weather; one
+# behind GitHub's is in flight inside the window and a failed publication beyond it. On
+# 2026-11-06 v1.0.0-alpha.10 was published at 17:09Z and the homepage named alpha.9 all
+# evening, because every deploy of master rebuilt the hero from the records alone and nothing
+# here read the pre-release (I4531). A GitHub that answered for its newest release and not for
+# its list of releases (a stub that knows one endpoint, in the cases of every gate that asks
+# pages-check) leaves the pre-release unjudged, said so; a GitHub that answers for neither is
+# the stable reading's NOT DETERMINED.
+release_live_prerelease() {
+  local pre_age
+  if [ -z "$gh_pre_line" ]; then
+    printf 'pages release-live: note — GitHub'"'"'s newest pre-release could not be read, so the pre-release beside %s was not judged\n' "$gh_tag"
+    return 0
+  fi
+  if [ -n "$home_pre" ] && { [ -z "$gh_pre_v" ] || release_newer "$home_pre" "$gh_pre_v"; }; then
+    printf 'pages release-live: FAIL the site names the pre-release %s, which GitHub has not published (its newest pre-release is %s)\n' \
+      "$home_pre" "${gh_pre_tag:-none}" >&2
+    return 10
+  fi
+  if [ "$home_pre" = "$want_pre" ]; then
+    if [ -n "$want_pre" ]; then
+      printf 'pages release-live: ok — the homepage names the pre-release %s GitHub published beside it\n' "$gh_pre_tag"
+    else
+      printf 'pages release-live: ok — GitHub has no pre-release ahead of %s, and the homepage names none\n' "$gh_tag"
+    fi
+    return 0
+  fi
+  if [ -n "$want_pre" ]; then
+    pre_age="$(jq -rn --arg at "$gh_pre_at" '($at | fromdateiso8601? // empty) as $t | if $t then (now - $t | floor) else empty end' 2>/dev/null || true)"
+    if [ -z "$pre_age" ]; then
+      printf 'pages release-live: NOT DETERMINED — GitHub'"'"'s pre-release %s carries no readable published_at, so the window cannot be judged\n' "$gh_pre_tag" >&2
+      return 12
+    fi
+    if [ "$pre_age" -lt "$window" ]; then
+      printf 'pages release-live: ok — in flight: GitHub published the pre-release %s %ss ago, inside the %ss window; the homepage names %s until the publication reaches it\n' \
+        "$gh_pre_tag" "$pre_age" "$window" "${home_pre:-no pre-release}"
+      return 0
+    fi
+    printf 'pages release-live: FAIL GitHub published the pre-release %s %ss ago, beyond the %ss window, and the homepage names %s\n' \
+      "$gh_pre_tag" "$pre_age" "$window" "${home_pre:-no pre-release}" >&2
+    printf '  the publish job writes releases/%s.json (scripts/site-deploy --release-metadata); the pages follow\n  the next build of master, which reads it (scripts/site-build); dispatch the pages workflow\n' "$gh_pre_tag" >&2
+    return 10
+  fi
+  # the homepage names a pre-release GitHub did publish and the stable release has since
+  # overtaken: the stable release's own window applies
+  pre_age="$(jq -rn --arg at "$gh_at" '($at | fromdateiso8601? // empty) as $t | if $t then (now - $t | floor) else empty end' 2>/dev/null || true)"
+  if [ -z "$pre_age" ]; then
+    printf 'pages release-live: NOT DETERMINED — GitHub'"'"'s release %s carries no readable published_at, so the window cannot be judged\n' "$gh_tag" >&2
+    return 12
+  fi
+  if [ "$pre_age" -lt "$window" ]; then
+    printf 'pages release-live: ok — in flight: GitHub published %s %ss ago, inside the %ss window; the homepage still names the pre-release %s it overtook\n' \
+      "$gh_tag" "$pre_age" "$window" "$home_pre"
+    return 0
+  fi
+  printf 'pages release-live: FAIL the homepage names the pre-release %s, which %s, published %ss ago and beyond the %ss window, has overtaken\n' \
+    "$home_pre" "$gh_tag" "$pre_age" "$window" >&2
+  return 10
+}
 cmd_release_live() {
-  local url="" window="" wait=0 expect="" repo="" t0 home build latest gh_line
+  local url="" window="" wait=0 expect="" repo="" t0 home build latest gh_line gh_pre_line
   local home_v build_v latest_v gh_tag gh_v gh_at age missing newer_than_gh v
+  local home_pre build_pre gh_pre_tag gh_pre_v gh_pre_at want_pre
   while [ $# -gt 0 ]; do case "$1" in
     --url) url="${2:?--url needs a value}"; shift 2 ;;
     --window) window="${2:?--window needs seconds}"; shift 2 ;;
@@ -1686,13 +1768,31 @@ cmd_release_live() {
       | grep -oE '>[0-9]+\.[0-9]+\.[0-9]+<' | head -n 1 | tr -d '<>' || true)"
     build_v="$(printf '%s' "$build" | jq -r '.release.version // empty' 2>/dev/null || true)"
     latest_v="$(printf '%s' "$latest" | jq -r '.version // empty' 2>/dev/null || true)"
-    gh_line=""
+    # The pre-release beside it (I3449, I4531): the homepage names it under data-prerelease,
+    # build.json under release.prerelease, and GitHub's newest pre-release is the one published.
+    home_pre="$(printf '%s' "$home" | sed -n 's/.*data-prerelease="\([^"]*\)".*/\1/p' | head -n 1)"
+    build_pre="$(printf '%s' "$build" | jq -r '.release.prerelease.version // empty' 2>/dev/null || true)"
+    gh_line=""; gh_pre_line=""
     if command -v gh >/dev/null 2>&1 && [ -n "$repo" ]; then
       gh_line="$(gh api "repos/$repo/releases/latest" --jq '[.tag_name, .published_at] | @tsv' 2>/dev/null || true)"
+      # the newest pre-release that is not a draft, or `none`: an empty answer is a GitHub that
+      # could not be read, not a GitHub without one
+      gh_pre_line="$(gh api "repos/$repo/releases?per_page=30" \
+        --jq '([.[] | select(.prerelease == true and .draft == false)] | first) as $p
+              | if $p == null then "none" else [$p.tag_name, $p.published_at] | @tsv end' 2>/dev/null || true)"
     fi
     gh_tag="$(printf '%s' "$gh_line" | cut -f1)"; gh_v="${gh_tag#v}"
     gh_at="$(printf '%s' "$gh_line" | cut -f2)"
-    if [ -n "$home_v" ] && [ "$home_v" = "$build_v" ] && [ "$home_v" = "$latest_v" ] && [ "$home_v" = "$gh_v" ]; then
+    gh_pre_tag="$(printf '%s' "$gh_pre_line" | cut -f1)"; gh_pre_at="$(printf '%s' "$gh_pre_line" | cut -f2)"
+    [ "$gh_pre_tag" != none ] || { gh_pre_tag=""; gh_pre_at=""; }
+    gh_pre_v="${gh_pre_tag#v}"
+    # what the pages should name beside the stable release: GitHub's newest pre-release when it
+    # is ahead of GitHub's newest release by its base version, nothing otherwise (as
+    # scripts/site-build derives it)
+    want_pre=""
+    if [ -n "$gh_pre_v" ] && [ -n "$gh_v" ] && release_base_ahead "$gh_pre_v" "$gh_v"; then want_pre="$gh_pre_v"; fi
+    if [ -n "$home_v" ] && [ "$home_v" = "$build_v" ] && [ "$home_v" = "$latest_v" ] && [ "$home_v" = "$gh_v" ] \
+       && [ "$home_pre" = "$build_pre" ] && [ "$home_pre" = "$want_pre" ]; then
       break
     fi
     [ $(( $(now) - t0 )) -lt "$wait" ] || break
@@ -1703,6 +1803,10 @@ cmd_release_live() {
   printf '  /%s offers      %s\n' "$IDENTITY" "${build_v:-(no release in it)}"
   printf '  /releases/latest.json   %s\n' "${latest_v:-(unreadable)}"
   printf '  GitHub newest release   %s%s\n' "${gh_tag:-(unreadable: no gh, no token, or no release)}" "${gh_at:+ published $gh_at}"
+  printf '  homepage pre-release    %s\n' "${home_pre:-(none)}"
+  printf '  /%s pre-release %s\n' "$IDENTITY" "${build_pre:-(none)}"
+  if [ -z "$gh_pre_line" ]; then printf '  GitHub pre-release      (unreadable: no gh, no token, or no answer)\n'
+  else printf '  GitHub pre-release      %s%s\n' "${gh_pre_tag:-(none)}" "${gh_pre_at:+ published $gh_pre_at}"; fi
   missing=""
   [ -n "$home_v" ] || missing="$missing the homepage's offer,"
   [ -n "$latest_v" ] || missing="$missing /releases/latest.json,"
@@ -1719,8 +1823,14 @@ cmd_release_live() {
     printf 'pages release-live: FAIL the homepage offers %s and /%s %s; the pages and the build that made them disagree\n' "$home_v" "$IDENTITY" "${build_v:-nothing}" >&2
     return 10
   fi
+  if [ -n "$build_v" ] && [ "$home_pre" != "$build_pre" ]; then
+    printf 'pages release-live: FAIL the homepage names the pre-release %s and /%s %s; the pages and the build that made them disagree\n' \
+      "${home_pre:-none}" "$IDENTITY" "${build_pre:-none}" >&2
+    return 10
+  fi
   if [ "$home_v" = "$latest_v" ] && [ "$home_v" = "$gh_v" ]; then
     printf 'pages release-live: ok — the homepage, /releases/latest.json and GitHub name one release, %s\n' "$gh_tag"
+    release_live_prerelease || return $?
     return 0
   fi
   # A surface ahead of GitHub offers what was not published: never weather.
@@ -1743,6 +1853,7 @@ cmd_release_live() {
   if [ "$age" -lt "$window" ]; then
     printf 'pages release-live: ok — in flight: GitHub published %s %ss ago, inside the %ss window; the homepage offers %s and latest.json names %s until the publication reaches them\n' \
       "$gh_tag" "$age" "$window" "$home_v" "$latest_v"
+    release_live_prerelease || return $?
     return 0
   fi
   printf 'pages release-live: FAIL GitHub published %s %ss ago, beyond the %ss window, and the homepage offers %s while /releases/latest.json names %s\n' \

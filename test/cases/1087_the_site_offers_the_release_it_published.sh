@@ -9,13 +9,15 @@
 #
 #   1. the derivation (scripts/site-build --release) picks the published release over an older
 #      record, the record over an older or absent publication, copies the published bytes, reads
-#      the published branch from git, and refuses a malformed or self-contradicting publication
+#      the published branch from git — the pre-release documents it serves too (I4531) — and
+#      refuses a malformed or self-contradicting publication
 #   2. every template that names the latest release reads that one derivation, and the site
 #      data carries no release of its own
 #   3. the live gate (scripts/pages release-live) over a file:// site and a gh on PATH: one
 #      release passes; a fresh disagreement passes as in flight; each of the three surfaces
 #      naming another release past the window fails; an offer ahead of GitHub fails at once; a
-#      reading it cannot take is 12
+#      reading it cannot take is 12; and the pre-release the homepage names beside the stable
+#      release is held to GitHub's newest pre-release the same way (2026-11-06, I4531)
 #   4. the gate is wired: pages-check asks it, the pages workflow runs it after a deploy, the
 #      model declares the window, and site-check refuses a build whose surfaces disagree
 #   5. pages-check reads the newest deploy under a release-metadata commit instead of exit 12
@@ -26,9 +28,9 @@ command -v curl >/dev/null 2>&1 || skip "curl is not installed"
 S="$(mktemp -d "${TMPDIR:-/tmp}/mj1087.XXXXXX")"; trap 'rm -rf "$S"' EXIT
 gitq() { git -c user.email=t@example.com -c user.name=t -c core.hooksPath=/dev/null "$@"; }
 
-meta() {   # <version> [published_at]: a release/v1 document as the record projects it
-  jq -n --arg v "$1" --arg at "${2:-2026-10-12T10:23:49Z}" \
-    '{schema: "release/v1", version: $v, tag: ("v" + $v), channel: "stable", published_at: $at,
+meta() {   # <version> [published_at] [channel]: a release/v1 document as the record projects it
+  jq -n --arg v "$1" --arg at "${2:-2026-10-12T10:23:49Z}" --arg ch "${3:-stable}" \
+    '{schema: "release/v1", version: $v, tag: ("v" + $v), channel: $ch, published_at: $at,
       notes_url: ("https://example.invalid/releases/tag/v" + $v), artifacts: {}}'
 }
 record() {   # <version|"">: the record's projection site-build reads (distribution.json)
@@ -87,6 +89,17 @@ out="$("$R/scripts/site-build" --release)"
 [ "$(printf '%s' "$out" | jq -r .version)" = 0.21.0 ] || { echo "    origin/gh-pages was not read:"; echo "$out"; exit 1; }
 printf '%s' "$out" | jq -e --arg c "$(git -C "$gp" rev-parse HEAD)" '.published_from == ("origin/gh-pages@" + $c)' >/dev/null \
   || { echo "    the build does not name the published commit it read: $(printf '%s' "$out" | jq -r .published_from)"; exit 1; }
+# The pre-release beside it is read from the same commit (I4531): a document the branch serves
+# ahead of any record is named, from the published branch, with the commit it was read from.
+meta 0.22.0-rc.1 2026-10-12T12:00:00Z prerelease > "$gp/releases/v0.22.0-rc.1.json"
+gitq -C "$gp" add -A; gitq -C "$gp" commit -qm "release: v0.22.0-rc.1 pre-release metadata, published beside the latest release"
+published_branch
+out="$("$R/scripts/site-build" --release)"
+[ "$(printf '%s' "$out" | jq -r '.prerelease.version + " " + .prerelease.source + " " + (.prerelease.record // "none") + " " + .prerelease.published')" = "0.22.0-rc.1 published none 0.22.0-rc.1" ] \
+  || { echo "    a pre-release published ahead of any record is not named from the published branch:"; echo "$out"; exit 1; }
+printf '%s' "$out" | jq -e --arg c "$(git -C "$gp" rev-parse HEAD)" '.prerelease.published_from == ("origin/gh-pages@" + $c)' >/dev/null \
+  || { echo "    the pre-release does not name the published commit it was read from: $(printf '%s' "$out" | jq -r .prerelease.published_from)"; exit 1; }
+echo "    the pre-release document the published branch serves is named beside the stable release"
 meta 0.21.0 2026-10-12T11:00:00Z > "$gp/releases/v0.21.0.json"
 gitq -C "$gp" commit -qam "a tag file that differs"
 published_branch
@@ -122,14 +135,23 @@ echo "    every template reads the one derivation; the site data carries no rele
 # ---------------------------------------------------------------- 3. the live gate
 W="$S/site"; mkdir -p "$W/releases" "$S/bin"
 iso() { jq -rn --argjson s "$1" '(now - $s) | floor | todate'; }
-site() {   # <homepage> <build.json> <latest.json>: a published site as files
-  printf '<html><dl data-trust><div class="p-4" data-trust-key="release" data-release="%s"><dt>latest release</dt><dd><a href="#">%s</a></dd></div></dl></html>\n' "$1" "$1" > "$W/index.html"
-  jq -n --arg v "$2" '{schema: 1, commit: "abc", release: {version: $v, source: "published"}}' > "$W/build.json"
+site() {   # <homepage> <build.json> <latest.json> [<homepage pre-release> [<build.json pre-release>]]: a published site as files
+  local pre_attr=""
+  [ -z "${4:-}" ] || pre_attr=" data-prerelease=\"$4\""
+  printf '<html><p><a href="#"%s>%s</a></p><dl data-trust><div class="p-4" data-trust-key="release" data-release="%s"><dt>latest release</dt><dd><a href="#">%s</a></dd></div></dl></html>\n' \
+    "$pre_attr" "${4:-}" "$1" "$1" > "$W/index.html"
+  jq -n --arg v "$2" --arg p "${5:-${4:-}}" \
+    '{schema: 1, commit: "abc", release: ({version: $v, source: "published"} + (if $p == "" then {} else {prerelease: {version: $p}} end))}' > "$W/build.json"
   meta "$3" > "$W/releases/latest.json"
 }
-github() {   # <version> <seconds ago> | fail
+github() {   # <version> <seconds ago> [<pre-release> <seconds ago>] | fail: GitHub's newest release, and its newest pre-release
+  local pre=none
   if [ "$1" = fail ]; then printf '#!/bin/sh\necho "HTTP 401" >&2; exit 1\n' > "$S/bin/gh"
-  else printf '#!/bin/sh\nprintf "v%s\\t%s\\n"\n' "$1" "$(iso "$2")" > "$S/bin/gh"; fi
+  else
+    [ -z "${3:-}" ] || pre="$(printf 'v%s\t%s' "$3" "$(iso "$4")")"
+    printf '#!/bin/sh\ncase "$2" in */releases/latest) printf "v%s\\t%s\\n" ;; *) printf "%%s\\n" "%s" ;; esac\n' \
+      "$1" "$(iso "$2")" "$pre" > "$S/bin/gh"
+  fi
   chmod +x "$S/bin/gh"
 }
 live() { PATH="$S/bin:$PATH" "$ROOT/scripts/pages" release-live --url "file://$W" --window 1800 --repo o/r "$@"; }
@@ -166,6 +188,38 @@ expect_exit 10 live --expect v0.22.0; expect_grep 'not v0.22.0'
 github fail
 expect_exit 12 live; expect_grep "NOT DETERMINED .*GitHub's newest release"
 echo "    --expect pins GitHub's release; an unreadable GitHub is 12, never a pass"
+
+# The pre-release beside it (I4531). 2026-11-06 itself: v1.0.0-alpha.10 published at 17:09Z,
+# and every deploy of master put alpha.9 back into the homepage's hero.
+site 0.21.0 0.21.0 0.21.0 1.0.0-alpha.10; github 0.21.0 7200 1.0.0-alpha.10 7200
+expect_exit 0 live; expect_grep 'names the pre-release v1.0.0-alpha.10 GitHub published beside it'
+site 0.21.0 0.21.0 0.21.0; github 0.21.0 7200 0.21.0-rc.1 7200
+expect_exit 0 live; expect_grep 'GitHub has no pre-release ahead of v0.21.0, and the homepage names none'
+echo "    the pre-release GitHub published is named beside the stable one; an rc behind it is not"
+
+site 0.21.0 0.21.0 0.21.0 1.0.0-alpha.9; github 0.21.0 7200 1.0.0-alpha.10 60
+expect_exit 0 live; expect_grep 'in flight: GitHub published the pre-release v1.0.0-alpha.10 [0-9]+s ago, inside the 1800s window; the homepage names 1.0.0-alpha.9'
+github 0.21.0 7200 1.0.0-alpha.10 7200
+expect_exit 10 live; expect_grep 'GitHub published the pre-release v1.0.0-alpha.10 [0-9]+s ago, beyond the 1800s window, and the homepage names 1.0.0-alpha.9'
+site 0.21.0 0.21.0 0.21.0
+expect_exit 10 live; expect_grep 'beyond the 1800s window, and the homepage names no pre-release'
+echo "    the homepage behind GitHub's pre-release: in flight at one minute, refused at two hours, named or not"
+
+site 0.21.0 0.21.0 0.21.0 1.0.0-alpha.11; github 0.21.0 7200 1.0.0-alpha.10 5
+expect_exit 10 live; expect_grep 'names the pre-release 1.0.0-alpha.11, which GitHub has not published \(its newest pre-release is v1.0.0-alpha.10\)'
+github 0.21.0 7200
+expect_exit 10 live; expect_grep 'which GitHub has not published \(its newest pre-release is none\)'
+echo "    a pre-release ahead of GitHub is refused at once, window or not"
+
+site 0.21.0 0.21.0 0.21.0 1.0.0-alpha.10 1.0.0-alpha.9; github 0.21.0 7200 1.0.0-alpha.10 7200
+expect_exit 10 live; expect_grep 'names the pre-release 1.0.0-alpha.10 and /build.json 1.0.0-alpha.9; the pages and the build that made them disagree'
+echo "    a homepage whose pre-release disagrees with its own build.json: refused"
+
+site 1.0.0 1.0.0 1.0.0 1.0.0-alpha.10; github 1.0.0 60 1.0.0-alpha.10 9000
+expect_exit 0 live; expect_grep 'the homepage still names the pre-release 1.0.0-alpha.10 it overtook'
+github 1.0.0 7200 1.0.0-alpha.10 9000
+expect_exit 10 live; expect_grep 'names the pre-release 1.0.0-alpha.10, which v1.0.0, published [0-9]+s ago and beyond the 1800s window, has overtaken'
+echo "    a pre-release the stable release overtook: in flight inside the window, refused beyond it"
 
 # a homepage built before the attribute existed is still read, from its trust card
 printf '<div class="p-4" data-trust-key="release"><dt>latest release</dt>\n<dd><a href="x">0.20.0</a></dd></div>\n' > "$W/index.html"

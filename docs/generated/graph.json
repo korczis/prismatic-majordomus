@@ -80415,6 +80415,42 @@
         }
       },
       {
+        "id": "majordomus://issue/I4531",
+        "kind": "issue",
+        "label": "I4531",
+        "summary": "The pages name the pre-release that was published, not only the one recorded",
+        "route": "/cockpit/objects/issue/i4531",
+        "source": ".ai/repo/project/issues/I4531.yaml",
+        "facts": {
+          "created_at": "2026-11-06",
+          "depends_on": [],
+          "evidence_required": [
+            "suite"
+          ],
+          "milestone": "surfaces-never-disagree",
+          "non_scope": [
+            "The release workflow and scripts/release-record, which publish the document and open the record's pull request as before",
+            "/releases/latest.json and the installer's unasked default, which stay the stable release (I2829)"
+          ],
+          "parallel_safe": true,
+          "priority": "p0",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I4531.yaml",
+            "scripts/site-build",
+            "scripts/site-deploy",
+            "scripts/pages",
+            "test/cases/1087_the_site_offers_the_release_it_published.sh",
+            "test/cases/3727_the_pages_name_the_pre_release_beside_the_stable_one.sh",
+            "test/cases/3222_an_alpha_publishes_beside_the_latest_release.sh",
+            ".ai/repo/rules/project/the-site-offers-the-release-it-published.v1.md",
+            "site/content/plan/I4531.md"
+          ],
+          "serves": [],
+          "slug": "the-pages-name-the-pre-release-that-was-published"
+        }
+      },
+      {
         "id": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "label": "a-brief-is-reconciled-not-transcribed",
@@ -148486,6 +148522,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I4531",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4531",
+        "target": "majordomus://milestone/surfaces-never-disagree",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -161002,8 +161048,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4391,
-      "edges": 10003,
+      "nodes": 4392,
+      "edges": 10005,
       "acyclic": false,
       "truncated": false
     }

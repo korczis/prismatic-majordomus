@@ -28459,11 +28459,31 @@
         },
         {
           "via": "rule",
+          "test": "suite:3222_an_alpha_publishes_beside_the_latest_release",
+          "path": "test/cases/3222_an_alpha_publishes_beside_the_latest_release.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/3222_an_alpha_publishes_beside_the_latest_release.sh",
+            ".ai/repo/rules/project/the-site-offers-the-release-it-published.v1.md"
+          ]
+        },
+        {
+          "via": "rule",
           "test": "suite:352_the_version_the_site_shows_is_one_you_can_get",
           "path": "test/cases/352_the_version_the_site_shows_is_one_you_can_get.sh",
           "category": "e2e",
           "inputs": [
             "test/cases/352_the_version_the_site_shows_is_one_you_can_get.sh",
+            ".ai/repo/rules/project/the-site-offers-the-release-it-published.v1.md"
+          ]
+        },
+        {
+          "via": "rule",
+          "test": "suite:3727_the_pages_name_the_pre_release_beside_the_stable_one",
+          "path": "test/cases/3727_the_pages_name_the_pre_release_beside_the_stable_one.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/3727_the_pages_name_the_pre_release_beside_the_stable_one.sh",
             ".ai/repo/rules/project/the-site-offers-the-release-it-published.v1.md"
           ]
         }
@@ -28472,7 +28492,8 @@
         "scripts/ci/pages-check",
         "scripts/pages",
         "scripts/site-build",
-        "scripts/site-check"
+        "scripts/site-check",
+        "scripts/site-deploy"
       ],
       "findings": []
     },
@@ -30388,7 +30409,6 @@
     "suite:318_a_partial_sweep_says_so",
     "suite:3212_a_prerelease_version_is_bumped_and_ordered",
     "suite:3220_the_idd_loop_is_walked_in_a_browser",
-    "suite:3222_an_alpha_publishes_beside_the_latest_release",
     "suite:3223_the_release_smoke_installs_an_alpha_pinned",
     "suite:3224_a_published_alpha_owes_its_record",
     "suite:3225_the_installer_takes_an_alpha_only_by_name",
@@ -30444,7 +30464,6 @@
     "suite:3723_the_graph_text_reads_each_edge_its_way",
     "suite:3724_the_roadmap_says_what_the_plan_holds",
     "suite:3726_a_record_holds_no_template_delimiter",
-    "suite:3727_the_pages_name_the_pre_release_beside_the_stable_one",
     "suite:3732_every_languages_homepage_is_held_to_its_budget",
     "suite:373_delivery_is_computed",
     "suite:3747_a_gated_step_leaves_its_receipt",

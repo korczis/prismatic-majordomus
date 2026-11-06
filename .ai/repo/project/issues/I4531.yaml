@@ -1,0 +1,38 @@
+id: I4531
+milestone: surfaces-never-disagree
+title: The pages name the pre-release that was published, not only the one recorded
+slug: the-pages-name-the-pre-release-that-was-published
+priority: p0
+profile: implementation
+parallel_safe: true
+serves: []
+objective: "scripts/site-build derives the pre-release the pages name beside the stable release the way it derives the stable one (project.the-site-offers-the-release-it-published): from the release records of the tree and from the pre-release documents the published branch already serves, the newer pick named and its source recorded in build.json; scripts/site-deploy keeps a published release document the build does not carry; scripts/pages release-live holds the live homepage's pre-release to GitHub's newest pre-release the way it holds the stable one."
+why: "On 2026-11-06 v1.0.0-alpha.10 was released at 17:09Z and its document published on gh-pages (4d804d0b7a4), while its record was pull request #2942 in the train queue. Master (1112bace343) carried the alpha.9 record, and the pre-release was read from the records alone ('never from a ref', I3449), so every pages deploy of master that evening (0381bb36144, 926562c712f, 60f08268f38) rebuilt the homepage's hero as '1.0.0-alpha.9 (pre-release) · stable 0.30.2' — the screenshot the owner sent many times — and each took releases/v1.0.0-alpha.10.json off the site, because an ordinary deploy kept only latest.json and the stable tag file it names (ADR 0131). The stable channel got the published-wins rule on 2026-10-12; the pre-release channel did not."
+current_state: "scripts/site-build release_prerelease() reads .ai/repo/releases/v*.yaml only; scripts/site-deploy keeps releases/latest.json and the tag file it names; scripts/pages release-live reads data-release, /build.json's release.version, /releases/latest.json and GitHub's newest release, and nothing of the pre-release."
+desired_state: "release_prerelease() merges the records with the pre-release documents of the published ref (every releases/v*.json of channel prerelease; --release-published-dir for the cases), applies the one selection to each side, names the newer pick with its source and published_from, and copies a winning published document into the build; site-deploy keeps every release document gh-pages serves that the build lacks and names them; release-live reads data-prerelease, release.prerelease.version and GitHub's newest pre-release and fails past the window, or at once for one GitHub has not published; the rule names both channels."
+scope:
+  - ".ai/repo/project/issues/I4531.yaml"
+  - "scripts/site-build"
+  - "scripts/site-deploy"
+  - "scripts/pages"
+  - "test/cases/1087_the_site_offers_the_release_it_published.sh"
+  - "test/cases/3727_the_pages_name_the_pre_release_beside_the_stable_one.sh"
+  - "test/cases/3222_an_alpha_publishes_beside_the_latest_release.sh"
+  - ".ai/repo/rules/project/the-site-offers-the-release-it-published.v1.md"
+  - "site/content/plan/I4531.md"
+non_scope:
+  - "The release workflow and scripts/release-record, which publish the document and open the record's pull request as before"
+  - "/releases/latest.json and the installer's unasked default, which stay the stable release (I2829)"
+depends_on: []
+acceptance_criteria:
+  - "scripts/site-build --release on a tree holding only the alpha.9 record, with origin/gh-pages serving releases/v1.0.0-alpha.10.json, names prerelease 1.0.0-alpha.10 with source published"
+  - "Case 3727 proves the selection over both readings: a published pre-release newer than every record wins, the record wins an older or equal publication, a yanked record withdraws the published document, a published pre-release behind the stable release is not offered, a malformed document is refused"
+  - "Case 1087 proves the published branch is read for the pre-release and the live gate judges the pre-release surfaces: agreeing, behind inside and beyond the window, ahead of GitHub, disagreeing with build.json"
+  - "Case 3222 proves an ordinary deploy keeps a published pre-release document the build does not carry until its record lands"
+validation:
+  - "bash test/run.sh 1087_the_site_offers_the_release_it_published 3727_the_pages_name_the_pre_release_beside_the_stable_one 3222_an_alpha_publishes_beside_the_latest_release 352_the_version_the_site_shows_is_one_you_can_get 180_publication_is_observed"
+  - "scripts/site-build --release"
+evidence_required:
+  - suite
+risk: "A deploy now keeps every release document gh-pages serves that the build lacks; a document deliberately removed from the records is not a case that exists (a record is yanked, never deleted), and a yanked record withdraws the published document from the pages."
+created_at: 2026-11-06
