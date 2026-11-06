@@ -1,7 +1,7 @@
 ---
 schema: skill/v1
 id: integrator
-version: 4
+version: 5
 title: Take finished work to a verified master
 description: Carry a finished change from an open pull request to master and beyond through the one integration engine and the one landing seat, answering at each stage why it is not there yet and stopping only at a landing verified on master, a release, or a named blocker with its next act.
 status: active
@@ -92,6 +92,30 @@ Cost here is CI time: one required-check run took 226 minutes at the median in t
 Whoever composes a top (the landing seat, or a worker the seat gives a top to) calls it ready
 when its own pre-push judgement passed, not when it is committed:
 
+- **Build before the first merge, derive before each merge commit.** A fresh linked worktree
+  holds no executable, and every hook of a merge commit asks for one of the tree's generation
+  (ADR 0224): on 2026-11-05 `git merge --no-ff` of #2931 into train 27 auto-merged every file and
+  the commit hook refused, leaving `MERGE_HEAD` staged. Build first (`cargo build --locked
+  --manifest-path apps/majordomus-cli/Cargo.toml` in the worktree), then for each member
+  `git merge --no-ff --no-commit <member>`, `scripts/derive` while the merge is staged,
+  `git add -A`, `git commit`: the pre-commit pages gate refuses a merge commit whose derived
+  data is stale (candidate s-20261028115702-2cb6-c77d6b5c9317, met again the same day), and a
+  derive after the commit only adds a second commit. Rebuild between members only when a
+  member changes the crate.
+- **A build host is not a judging host.** The host that builds, derives and commits a top may
+  not carry CI's tools: on 2026-11-05 lundra refused train 25b's top at pre-push with
+  `190_graph_drawing` ("node is not available"), `3196_stale_crate_artifacts_are_pruned_under_cargos_lock`
+  and `3590_the_site_is_derived_in_every_language` red, 45 gates and 193 cases in 314 s against
+  the 180 s bound, while the same head passed run-plan on a host with node and zola 0.23
+  (166 s) and was pushed. Move the commits with `git bundle`, judge and push from the host
+  whose tools match CI's, and say which host judged in the ready report.
+- **A seat's ledgers live where a session's death cannot take them.** The flake ledger and the
+  strategy protocol of the seat that vanished at 11:40Z on 2026-11-05 were board claims
+  (`majordomus_announce`), which belong to an MCP connection; its mesh claims and handovers
+  survived and its board did not, and the next seat could not recover train 27's READY
+  contract. Keep a ledger in a mesh claim's intent (`majordomus mesh claim`), a handover
+  (`majordomus handover`) or a tracked record; the board carries what is true for the
+  connection, never the only copy of anything.
 - **Master stays the first parent.** A top committed with `git commit` over a hand-written
   `MERGE_HEAD` loses master as a parent whenever a member already contains it, because git
   reduces redundant parents. In a linked worktree `.git` is a file, so write the mode where
