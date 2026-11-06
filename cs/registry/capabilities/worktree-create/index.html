@@ -229,25 +229,25 @@ taken up from the remote when the remote has it, otherwise created at <code>base
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
   &quot;additionalProperties&quot;: false,
-  &quot;required&quot;: [
-    &quot;branch&quot;
-  ],
-  &quot;type&quot;: &quot;object&quot;,
-  &quot;title&quot;: &quot;CreateInput&quot;,
+  &quot;description&quot;: &quot;The branch whose canonical worktree is wanted.&quot;,
   &quot;properties&quot;: {
     &quot;base&quot;: {
+      &quot;description&quot;: &quot;The commit or ref a new branch starts from, as given and never fetched. Default: the\nremote&#39;s trunk, fetched now within a deadline, then the local trunk, said in `start`.\nIgnored when the branch exists.&quot;,
       &quot;type&quot;: [
         &quot;string&quot;,
         &quot;null&quot;
-      ],
-      &quot;description&quot;: &quot;The commit or ref a new branch starts from, as given and never fetched. Default: the\nremote&#39;s trunk, fetched now within a deadline, then the local trunk, said in `start`.\nIgnored when the branch exists.&quot;
+      ]
     },
     &quot;branch&quot;: {
-      &quot;type&quot;: &quot;string&quot;,
-      &quot;description&quot;: &quot;The branch, full name (`feature/improve-cli`). Checked out when it exists here,\ntaken up from the remote when the remote has it, otherwise created at `base`.&quot;
+      &quot;description&quot;: &quot;The branch, full name (`feature/improve-cli`). Checked out when it exists here,\ntaken up from the remote when the remote has it, otherwise created at `base`.&quot;,
+      &quot;type&quot;: &quot;string&quot;
     }
   },
-  &quot;description&quot;: &quot;The branch whose canonical worktree is wanted.&quot;
+  &quot;required&quot;: [
+    &quot;branch&quot;
+  ],
+  &quot;title&quot;: &quot;CreateInput&quot;,
+  &quot;type&quot;: &quot;object&quot;
 }</pre></div>
   </details>
 </div>
@@ -256,10 +256,30 @@ taken up from the remote when the remote has it, otherwise created at <code>base
     <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
       <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">vlastnost</th><th class="px-3 py-2">typ</th><th class="px-3 py-2">povinné</th><th class="px-3 py-2">popis</th></tr></thead>
       <tbody><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">základ</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">ne</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The ref a new branch started from (<code>origin/master</code>).</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">větev</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The branch checked out in it.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">branch_created</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">boolean</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Whether that branch was created by this command.</td>
+      </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">kontejner</td>
         <td class="px-3 py-2 font-mono text-xs text-body">string</td>
         <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
         <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The container it went into.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">container_created</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">boolean</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Whether the container was created by this command.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">envrc</td>
         <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
@@ -268,22 +288,10 @@ taken up from the remote when the remote has it, otherwise created at <code>base
 this path, or why it was not. A worktree that starts blocked is the recurring
 "direnv does not work again"; this says so before the first <code>cd</code> does.</td>
       </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">branch_created</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">boolean</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Whether that branch was created by this command.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">hooky</td>
+        <td class="px-3 py-2 font-mono text-heading">envrc_local</td>
         <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
         <td class="px-3 py-2 font-mono text-xs text-body">ne</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Which hooks it runs: its own tree's, bound per worktree when the shared
-<code>core.hooksPath</code> would have sent it to the primary checkout's (I2718). <span class="font-mono text-xs text-body-subtle">default {&quot;outcome&quot;:&quot;not_configured&quot;}</span></td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">start_commit</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">ne</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The exact commit a branch this command created starts at, read back from the
-worktree rather than assumed.</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">What became of the primary checkout's machine-local <code>.envrc.local</code> here. <span class="font-mono text-xs text-body-subtle">default {&quot;outcome&quot;:&quot;none_primary&quot;}</span></td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">existed</td>
         <td class="px-3 py-2 font-mono text-xs text-body">boolean</td>
@@ -297,334 +305,37 @@ worktree rather than assumed.</td>
         <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The commit the worktree's HEAD names now, read back from it after the create or the
 find, whichever this was; <code>None</code> when git cannot say (an unborn branch).</td>
       </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">envrc_local</td>
+        <td class="px-3 py-2 font-mono text-heading">hooky</td>
         <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
         <td class="px-3 py-2 font-mono text-xs text-body">ne</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">What became of the primary checkout's machine-local <code>.envrc.local</code> here. <span class="font-mono text-xs text-body-subtle">default {&quot;outcome&quot;:&quot;none_primary&quot;}</span></td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Which hooks it runs: its own tree's, bound per worktree when the shared
+<code>core.hooksPath</code> would have sent it to the primary checkout's (I2718). <span class="font-mono text-xs text-body-subtle">default {&quot;outcome&quot;:&quot;not_configured&quot;}</span></td>
       </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">container_created</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">boolean</td>
+        <td class="px-3 py-2 font-mono text-heading">path</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
         <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Whether the container was created by this command.</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Where the worktree is.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">start</td>
         <td class="px-3 py-2 font-mono text-xs text-body">jedno ze 2</td>
         <td class="px-3 py-2 font-mono text-xs text-body">ne</td>
         <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Where a branch this command created started, and why there.</td>
       </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">základ</td>
+        <td class="px-3 py-2 font-mono text-heading">start_commit</td>
         <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
         <td class="px-3 py-2 font-mono text-xs text-body">ne</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The ref a new branch started from (<code>origin/master</code>).</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">větev</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The branch checked out in it.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">path</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Where the worktree is.</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The exact commit a branch this command created starts at, read back from the
+worktree rather than assumed.</td>
       </tr></tbody>
     </table>
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
-  &quot;required&quot;: [
-    &quot;path&quot;,
-    &quot;branch&quot;,
-    &quot;branch_created&quot;,
-    &quot;container&quot;,
-    &quot;container_created&quot;,
-    &quot;existed&quot;,
-    &quot;envrc&quot;
-  ],
-  &quot;title&quot;: &quot;CreateReport&quot;,
-  &quot;properties&quot;: {
-    &quot;container&quot;: {
-      &quot;type&quot;: &quot;string&quot;,
-      &quot;description&quot;: &quot;The container it went into.&quot;
-    },
-    &quot;envrc&quot;: {
-      &quot;description&quot;: &quot;What became of its `.envrc` under direnv: the primary checkout&#39;s approval carried to\nthis path, or why it was not. A worktree that starts blocked is the recurring\n\&quot;direnv does not work again\&quot;; this says so before the first `cd` does.&quot;,
-      &quot;$ref&quot;: &quot;#/$defs/EnvrcApproval&quot;
-    },
-    &quot;branch_created&quot;: {
-      &quot;description&quot;: &quot;Whether that branch was created by this command.&quot;,
-      &quot;type&quot;: &quot;boolean&quot;
-    },
-    &quot;hooks&quot;: {
-      &quot;$ref&quot;: &quot;#/$defs/HooksPath&quot;,
-      &quot;default&quot;: {
-        &quot;outcome&quot;: &quot;not_configured&quot;
-      },
-      &quot;description&quot;: &quot;Which hooks it runs: its own tree&#39;s, bound per worktree when the shared\n`core.hooksPath` would have sent it to the primary checkout&#39;s (I2718).&quot;
-    },
-    &quot;start_commit&quot;: {
-      &quot;type&quot;: [
-        &quot;string&quot;,
-        &quot;null&quot;
-      ],
-      &quot;description&quot;: &quot;The exact commit a branch this command created starts at, read back from the\nworktree rather than assumed.&quot;
-    },
-    &quot;existed&quot;: {
-      &quot;description&quot;: &quot;The worktree already existed at its canonical path and nothing was created: the\n`existing` answer of an idempotent create, where `false` is `created`.&quot;,
-      &quot;type&quot;: &quot;boolean&quot;
-    },
-    &quot;head&quot;: {
-      &quot;type&quot;: [
-        &quot;string&quot;,
-        &quot;null&quot;
-      ],
-      &quot;description&quot;: &quot;The commit the worktree&#39;s HEAD names now, read back from it after the create or the\nfind, whichever this was; `None` when git cannot say (an unborn branch).&quot;
-    },
-    &quot;envrc_local&quot;: {
-      &quot;description&quot;: &quot;What became of the primary checkout&#39;s machine-local `.envrc.local` here.&quot;,
-      &quot;default&quot;: {
-        &quot;outcome&quot;: &quot;none_primary&quot;
-      },
-      &quot;$ref&quot;: &quot;#/$defs/LocalOverrides&quot;
-    },
-    &quot;container_created&quot;: {
-      &quot;description&quot;: &quot;Whether the container was created by this command.&quot;,
-      &quot;type&quot;: &quot;boolean&quot;
-    },
-    &quot;start&quot;: {
-      &quot;anyOf&quot;: [
-        {
-          &quot;$ref&quot;: &quot;#/$defs/StartPoint&quot;
-        },
-        {
-          &quot;type&quot;: &quot;null&quot;
-        }
-      ],
-      &quot;description&quot;: &quot;Where a branch this command created started, and why there.&quot;
-    },
-    &quot;base&quot;: {
-      &quot;type&quot;: [
-        &quot;string&quot;,
-        &quot;null&quot;
-      ],
-      &quot;description&quot;: &quot;The ref a new branch started from (`origin/master`).&quot;
-    },
-    &quot;branch&quot;: {
-      &quot;description&quot;: &quot;The branch checked out in it.&quot;,
-      &quot;type&quot;: &quot;string&quot;
-    },
-    &quot;path&quot;: {
-      &quot;type&quot;: &quot;string&quot;,
-      &quot;description&quot;: &quot;Where the worktree is.&quot;
-    }
-  },
   &quot;$defs&quot;: {
-    &quot;LocalOverrides&quot;: {
-      &quot;oneOf&quot;: [
-        {
-          &quot;required&quot;: [
-            &quot;outcome&quot;
-          ],
-          &quot;description&quot;: &quot;Linked: the worktree&#39;s `.envrc.local` is a symlink to the primary checkout&#39;s, so the\nperson&#39;s machine-local exports (keychain-backed secrets among them) load here too.&quot;,
-          &quot;properties&quot;: {
-            &quot;outcome&quot;: {
-              &quot;type&quot;: &quot;string&quot;,
-              &quot;const&quot;: &quot;linked&quot;
-            }
-          },
-          &quot;type&quot;: &quot;object&quot;
-        },
-        {
-          &quot;properties&quot;: {
-            &quot;outcome&quot;: {
-              &quot;const&quot;: &quot;own_kept&quot;,
-              &quot;type&quot;: &quot;string&quot;
-            }
-          },
-          &quot;description&quot;: &quot;The worktree already has its own `.envrc.local`; it is left alone.&quot;,
-          &quot;type&quot;: &quot;object&quot;,
-          &quot;required&quot;: [
-            &quot;outcome&quot;
-          ]
-        },
-        {
-          &quot;type&quot;: &quot;object&quot;,
-          &quot;properties&quot;: {
-            &quot;outcome&quot;: {
-              &quot;const&quot;: &quot;none_primary&quot;,
-              &quot;type&quot;: &quot;string&quot;
-            }
-          },
-          &quot;description&quot;: &quot;The primary checkout has none; there is nothing to share.&quot;,
-          &quot;required&quot;: [
-            &quot;outcome&quot;
-          ]
-        },
-        {
-          &quot;properties&quot;: {
-            &quot;outcome&quot;: {
-              &quot;const&quot;: &quot;not_ignored&quot;,
-              &quot;type&quot;: &quot;string&quot;
-            }
-          },
-          &quot;description&quot;: &quot;Not linked, because git in the worktree does not ignore `.envrc.local` — a link a\ncommit could pick up is the one way this could leak.&quot;,
-          &quot;type&quot;: &quot;object&quot;,
-          &quot;required&quot;: [
-            &quot;outcome&quot;
-          ]
-        },
-        {
-          &quot;description&quot;: &quot;The link could not be made; the error.&quot;,
-          &quot;required&quot;: [
-            &quot;outcome&quot;,
-            &quot;message&quot;
-          ],
-          &quot;type&quot;: &quot;object&quot;,
-          &quot;properties&quot;: {
-            &quot;message&quot;: {
-              &quot;type&quot;: &quot;string&quot;,
-              &quot;description&quot;: &quot;Why.&quot;
-            },
-            &quot;outcome&quot;: {
-              &quot;const&quot;: &quot;failed&quot;,
-              &quot;type&quot;: &quot;string&quot;
-            }
-          }
-        }
-      ],
-      &quot;description&quot;: &quot;What became of the primary checkout&#39;s machine-local `.envrc.local` for a worktree.&quot;
-    },
-    &quot;StartPoint&quot;: {
-      &quot;description&quot;: &quot;Where a new branch started, and why there.\n\nThe local trunk of a long-lived checkout is routinely hundreds of commits behind its\nremote, because nothing advances it; a branch cut from it carries none of that work and\nevery worker had to reset it by hand. So the default is the remote&#39;s trunk, fetched at\nthe moment of creation, and the local trunk only when the remote cannot be read — said,\nnever silent.\n\n```\nuse majordomus_cli::worktree::StartPoint;\nlet p = StartPoint::RemoteTrunk { remote: \&quot;origin\&quot;.into(), branch: \&quot;master\&quot;.into() };\nassert_eq!(p.reference(), \&quot;origin/master\&quot;);\nassert!(p.fallback().is_none());\nlet fell = StartPoint::LocalTrunk {\n    branch: \&quot;master\&quot;.into(),\n    unreachable: Some(\&quot;origin\&quot;.into()),\n    reason: Some(\&quot;no answer within 60s\&quot;.into()),\n    behind: Some(779),\n};\nassert_eq!(fell.reference(), \&quot;master\&quot;);\nassert!(fell.fallback().unwrap().contains(\&quot;779 commits behind origin/master\&quot;));\n```&quot;,
-      &quot;oneOf&quot;: [
-        {
-          &quot;description&quot;: &quot;The ref `--base` named, as given; never fetched.&quot;,
-          &quot;properties&quot;: {
-            &quot;reference&quot;: {
-              &quot;type&quot;: &quot;string&quot;,
-              &quot;description&quot;: &quot;The ref.&quot;
-            },
-            &quot;from&quot;: {
-              &quot;type&quot;: &quot;string&quot;,
-              &quot;const&quot;: &quot;given&quot;
-            }
-          },
-          &quot;required&quot;: [
-            &quot;from&quot;,
-            &quot;reference&quot;
-          ],
-          &quot;type&quot;: &quot;object&quot;
-        },
-        {
-          &quot;properties&quot;: {
-            &quot;remote&quot;: {
-              &quot;type&quot;: &quot;string&quot;,
-              &quot;description&quot;: &quot;The remote.&quot;
-            },
-            &quot;from&quot;: {
-              &quot;type&quot;: &quot;string&quot;,
-              &quot;const&quot;: &quot;remote_trunk&quot;
-            },
-            &quot;branch&quot;: {
-              &quot;description&quot;: &quot;The trunk branch.&quot;,
-              &quot;type&quot;: &quot;string&quot;
-            }
-          },
-          &quot;type&quot;: &quot;object&quot;,
-          &quot;description&quot;: &quot;The trunk on its remote, fetched by this command.&quot;,
-          &quot;required&quot;: [
-            &quot;from&quot;,
-            &quot;remote&quot;,
-            &quot;branch&quot;
-          ]
-        },
-        {
-          &quot;type&quot;: &quot;object&quot;,
-          &quot;required&quot;: [
-            &quot;from&quot;,
-            &quot;remote&quot;,
-            &quot;branch&quot;,
-            &quot;fetched&quot;
-          ],
-          &quot;description&quot;: &quot;The branch already on the remote: the local branch is created at it and tracks it.&quot;,
-          &quot;properties&quot;: {
-            &quot;branch&quot;: {
-              &quot;description&quot;: &quot;The branch, the same name on both sides.&quot;,
-              &quot;type&quot;: &quot;string&quot;
-            },
-            &quot;fetched&quot;: {
-              &quot;type&quot;: &quot;boolean&quot;,
-              &quot;description&quot;: &quot;Whether it was fetched now; `false` is the remote-tracking ref as last fetched,\nbecause the remote could not be read.&quot;
-            },
-            &quot;from&quot;: {
-              &quot;const&quot;: &quot;remote_branch&quot;,
-              &quot;type&quot;: &quot;string&quot;
-            },
-            &quot;remote&quot;: {
-              &quot;description&quot;: &quot;The remote.&quot;,
-              &quot;type&quot;: &quot;string&quot;
-            }
-          }
-        },
-        {
-          &quot;properties&quot;: {
-            &quot;from&quot;: {
-              &quot;type&quot;: &quot;string&quot;,
-              &quot;const&quot;: &quot;local_trunk&quot;
-            },
-            &quot;reason&quot;: {
-              &quot;description&quot;: &quot;Why it could not be read.&quot;,
-              &quot;type&quot;: [
-                &quot;string&quot;,
-                &quot;null&quot;
-              ]
-            },
-            &quot;unreachable&quot;: {
-              &quot;type&quot;: [
-                &quot;string&quot;,
-                &quot;null&quot;
-              ],
-              &quot;description&quot;: &quot;The remote that could not be read; `None` when the trunk has no remote.&quot;
-            },
-            &quot;behind&quot;: {
-              &quot;format&quot;: &quot;uint64&quot;,
-              &quot;minimum&quot;: 0,
-              &quot;description&quot;: &quot;How many commits the remote&#39;s trunk, as last fetched, has that the local trunk\nlacks; `None` when it was never fetched.&quot;,
-              &quot;type&quot;: [
-                &quot;integer&quot;,
-                &quot;null&quot;
-              ]
-            },
-            &quot;branch&quot;: {
-              &quot;type&quot;: &quot;string&quot;,
-              &quot;description&quot;: &quot;The trunk branch.&quot;
-            }
-          },
-          &quot;description&quot;: &quot;The local trunk: the trunk has no remote, or its remote could not be read.&quot;,
-          &quot;type&quot;: &quot;object&quot;,
-          &quot;required&quot;: [
-            &quot;from&quot;,
-            &quot;branch&quot;
-          ]
-        },
-        {
-          &quot;type&quot;: &quot;object&quot;,
-          &quot;required&quot;: [
-            &quot;from&quot;
-          ],
-          &quot;properties&quot;: {
-            &quot;from&quot;: {
-              &quot;type&quot;: &quot;string&quot;,
-              &quot;const&quot;: &quot;head&quot;
-            }
-          },
-          &quot;description&quot;: &quot;HEAD, because no trunk is known.&quot;
-        }
-      ]
-    },
     &quot;EnvrcApproval&quot;: {
+      &quot;description&quot;: &quot;What became of the `.envrc` of a worktree that was just created, found, or moved.&quot;,
       &quot;oneOf&quot;: [
         {
-          &quot;type&quot;: &quot;object&quot;,
           &quot;description&quot;: &quot;direnv accepted it: the next `cd` loads the environment.&quot;,
           &quot;properties&quot;: {
             &quot;outcome&quot;: {
@@ -634,33 +345,34 @@ find, whichever this was; <code>None</code> when git cannot say (an unborn branc
           },
           &quot;required&quot;: [
             &quot;outcome&quot;
-          ]
+          ],
+          &quot;type&quot;: &quot;object&quot;
         },
         {
+          &quot;description&quot;: &quot;The worktree has no `.envrc`; there is nothing to approve and nothing is blocked.&quot;,
           &quot;properties&quot;: {
             &quot;outcome&quot;: {
-              &quot;type&quot;: &quot;string&quot;,
-              &quot;const&quot;: &quot;no_envrc&quot;
+              &quot;const&quot;: &quot;no_envrc&quot;,
+              &quot;type&quot;: &quot;string&quot;
             }
           },
           &quot;required&quot;: [
             &quot;outcome&quot;
           ],
-          &quot;type&quot;: &quot;object&quot;,
-          &quot;description&quot;: &quot;The worktree has no `.envrc`; there is nothing to approve and nothing is blocked.&quot;
+          &quot;type&quot;: &quot;object&quot;
         },
         {
-          &quot;required&quot;: [
-            &quot;outcome&quot;
-          ],
           &quot;description&quot;: &quot;direnv is not on the PATH; nothing was done, and nothing is blocked either, because\nnothing would load the file.&quot;,
-          &quot;type&quot;: &quot;object&quot;,
           &quot;properties&quot;: {
             &quot;outcome&quot;: {
               &quot;const&quot;: &quot;direnv_absent&quot;,
               &quot;type&quot;: &quot;string&quot;
             }
-          }
+          },
+          &quot;required&quot;: [
+            &quot;outcome&quot;
+          ],
+          &quot;type&quot;: &quot;object&quot;
         },
         {
           &quot;description&quot;: &quot;The worktree&#39;s `.envrc` is not the primary checkout&#39;s, so the approval given there\ndoes not carry. `direnv allow` in the worktree, after reading it, is the person&#39;s.&quot;,
@@ -676,17 +388,17 @@ find, whichever this was; <code>None</code> when git cannot say (an unborn branc
           &quot;type&quot;: &quot;object&quot;
         },
         {
+          &quot;description&quot;: &quot;The primary checkout&#39;s `.envrc` is not approved, so there is no approval to carry.&quot;,
           &quot;properties&quot;: {
             &quot;outcome&quot;: {
-              &quot;type&quot;: &quot;string&quot;,
-              &quot;const&quot;: &quot;not_approved_in_primary&quot;
+              &quot;const&quot;: &quot;not_approved_in_primary&quot;,
+              &quot;type&quot;: &quot;string&quot;
             }
           },
-          &quot;description&quot;: &quot;The primary checkout&#39;s `.envrc` is not approved, so there is no approval to carry.&quot;,
-          &quot;type&quot;: &quot;object&quot;,
           &quot;required&quot;: [
             &quot;outcome&quot;
-          ]
+          ],
+          &quot;type&quot;: &quot;object&quot;
         },
         {
           &quot;description&quot;: &quot;direnv was asked and refused, or could not be run; the message is its own.&quot;,
@@ -706,26 +418,26 @@ find, whichever this was; <code>None</code> when git cannot say (an unborn branc
           ],
           &quot;type&quot;: &quot;object&quot;
         }
-      ],
-      &quot;description&quot;: &quot;What became of the `.envrc` of a worktree that was just created, found, or moved.&quot;
+      ]
     },
     &quot;HooksPath&quot;: {
       &quot;description&quot;: &quot;What became of the hooks directory of a worktree that was just created, found or moved.\n\nIt travels in the JSON of `worktree create`, `ensure`, `migrate` and `repair`, tagged by\n`outcome`, so a reader branches on one word rather than parsing the line:\n\n```\nuse majordomus_cli::worktree::HooksPath;\n\nlet set = HooksPath::Set {\n    path: \&quot;/r-wt/fix/x/.githooks\&quot;.into(),\n    enabled: vec![],\n};\nlet json = serde_json::to_value(&amp;set).unwrap();\nassert_eq!(json[\&quot;outcome\&quot;], \&quot;set\&quot;);\nassert_eq!(json[\&quot;path\&quot;], \&quot;/r-wt/fix/x/.githooks\&quot;);\nlet back: HooksPath = serde_json::from_value(json).unwrap();\nassert_eq!(back, set);\n```&quot;,
       &quot;oneOf&quot;: [
         {
-          &quot;required&quot;: [
-            &quot;outcome&quot;
-          ],
-          &quot;type&quot;: &quot;object&quot;,
           &quot;description&quot;: &quot;The repository&#39;s configuration sets no `core.hooksPath`: git&#39;s own hooks directory\nin the common directory (or a value of the user&#39;s) serves every worktree, and there\nis no tracked directory to follow.&quot;,
           &quot;properties&quot;: {
             &quot;outcome&quot;: {
               &quot;const&quot;: &quot;not_configured&quot;,
               &quot;type&quot;: &quot;string&quot;
             }
-          }
+          },
+          &quot;required&quot;: [
+            &quot;outcome&quot;
+          ],
+          &quot;type&quot;: &quot;object&quot;
         },
         {
+          &quot;description&quot;: &quot;Git already resolves this worktree&#39;s hooks to its own directory; nothing was set.&quot;,
           &quot;properties&quot;: {
             &quot;outcome&quot;: {
               &quot;const&quot;: &quot;own&quot;,
@@ -736,7 +448,6 @@ find, whichever this was; <code>None</code> when git cannot say (an unborn branc
               &quot;type&quot;: &quot;string&quot;
             }
           },
-          &quot;description&quot;: &quot;Git already resolves this worktree&#39;s hooks to its own directory; nothing was set.&quot;,
           &quot;required&quot;: [
             &quot;outcome&quot;,
             &quot;path&quot;
@@ -744,38 +455,33 @@ find, whichever this was; <code>None</code> when git cannot say (an unborn branc
           &quot;type&quot;: &quot;object&quot;
         },
         {
-          &quot;type&quot;: &quot;object&quot;,
+          &quot;description&quot;: &quot;This worktree&#39;s `core.hooksPath` was set, per worktree, to its own directory.&quot;,
+          &quot;properties&quot;: {
+            &quot;enabled&quot;: {
+              &quot;description&quot;: &quot;Repository settings switched on so that a per-worktree value is honoured, as\n`key=value`; empty when they were on already.&quot;,
+              &quot;items&quot;: {
+                &quot;type&quot;: &quot;string&quot;
+              },
+              &quot;type&quot;: &quot;array&quot;
+            },
+            &quot;outcome&quot;: {
+              &quot;const&quot;: &quot;set&quot;,
+              &quot;type&quot;: &quot;string&quot;
+            },
+            &quot;path&quot;: {
+              &quot;description&quot;: &quot;The directory it now runs the hooks from.&quot;,
+              &quot;type&quot;: &quot;string&quot;
+            }
+          },
           &quot;required&quot;: [
             &quot;outcome&quot;,
             &quot;path&quot;,
             &quot;enabled&quot;
           ],
-          &quot;description&quot;: &quot;This worktree&#39;s `core.hooksPath` was set, per worktree, to its own directory.&quot;,
-          &quot;properties&quot;: {
-            &quot;enabled&quot;: {
-              &quot;type&quot;: &quot;array&quot;,
-              &quot;description&quot;: &quot;Repository settings switched on so that a per-worktree value is honoured, as\n`key=value`; empty when they were on already.&quot;,
-              &quot;items&quot;: {
-                &quot;type&quot;: &quot;string&quot;
-              }
-            },
-            &quot;path&quot;: {
-              &quot;description&quot;: &quot;The directory it now runs the hooks from.&quot;,
-              &quot;type&quot;: &quot;string&quot;
-            },
-            &quot;outcome&quot;: {
-              &quot;const&quot;: &quot;set&quot;,
-              &quot;type&quot;: &quot;string&quot;
-            }
-          }
+          &quot;type&quot;: &quot;object&quot;
         },
         {
-          &quot;required&quot;: [
-            &quot;outcome&quot;,
-            &quot;path&quot;
-          ],
           &quot;description&quot;: &quot;The hooks directory is outside the primary checkout — one directory shared on\npurpose — and every worktree runs it; nothing was set.&quot;,
-          &quot;type&quot;: &quot;object&quot;,
           &quot;properties&quot;: {
             &quot;outcome&quot;: {
               &quot;const&quot;: &quot;shared&quot;,
@@ -785,38 +491,38 @@ find, whichever this was; <code>None</code> when git cannot say (an unborn branc
               &quot;description&quot;: &quot;The directory every worktree runs the hooks from.&quot;,
               &quot;type&quot;: &quot;string&quot;
             }
-          }
+          },
+          &quot;required&quot;: [
+            &quot;outcome&quot;,
+            &quot;path&quot;
+          ],
+          &quot;type&quot;: &quot;object&quot;
         },
         {
+          &quot;description&quot;: &quot;The primary checkout&#39;s hooks directory has no counterpart in this worktree&#39;s tree,\nso the worktree keeps running the primary&#39;s: pointing it at a directory that does\nnot exist would switch its hooks off.&quot;,
+          &quot;properties&quot;: {
+            &quot;missing&quot;: {
+              &quot;description&quot;: &quot;The directory that would be the worktree&#39;s own, and is not there.&quot;,
+              &quot;type&quot;: &quot;string&quot;
+            },
+            &quot;outcome&quot;: {
+              &quot;const&quot;: &quot;untracked&quot;,
+              &quot;type&quot;: &quot;string&quot;
+            },
+            &quot;runs&quot;: {
+              &quot;description&quot;: &quot;The directory the worktree runs the hooks from instead.&quot;,
+              &quot;type&quot;: &quot;string&quot;
+            }
+          },
           &quot;required&quot;: [
             &quot;outcome&quot;,
             &quot;missing&quot;,
             &quot;runs&quot;
           ],
-          &quot;type&quot;: &quot;object&quot;,
-          &quot;properties&quot;: {
-            &quot;outcome&quot;: {
-              &quot;type&quot;: &quot;string&quot;,
-              &quot;const&quot;: &quot;untracked&quot;
-            },
-            &quot;runs&quot;: {
-              &quot;description&quot;: &quot;The directory the worktree runs the hooks from instead.&quot;,
-              &quot;type&quot;: &quot;string&quot;
-            },
-            &quot;missing&quot;: {
-              &quot;type&quot;: &quot;string&quot;,
-              &quot;description&quot;: &quot;The directory that would be the worktree&#39;s own, and is not there.&quot;
-            }
-          },
-          &quot;description&quot;: &quot;The primary checkout&#39;s hooks directory has no counterpart in this worktree&#39;s tree,\nso the worktree keeps running the primary&#39;s: pointing it at a directory that does\nnot exist would switch its hooks off.&quot;
+          &quot;type&quot;: &quot;object&quot;
         },
         {
           &quot;description&quot;: &quot;Git was asked and refused, or could not be run; the message is its own.&quot;,
-          &quot;required&quot;: [
-            &quot;outcome&quot;,
-            &quot;message&quot;
-          ],
-          &quot;type&quot;: &quot;object&quot;,
           &quot;properties&quot;: {
             &quot;message&quot;: {
               &quot;description&quot;: &quot;What went wrong.&quot;,
@@ -826,13 +532,307 @@ find, whichever this was; <code>None</code> when git cannot say (an unborn branc
               &quot;const&quot;: &quot;failed&quot;,
               &quot;type&quot;: &quot;string&quot;
             }
-          }
+          },
+          &quot;required&quot;: [
+            &quot;outcome&quot;,
+            &quot;message&quot;
+          ],
+          &quot;type&quot;: &quot;object&quot;
+        }
+      ]
+    },
+    &quot;LocalOverrides&quot;: {
+      &quot;description&quot;: &quot;What became of the primary checkout&#39;s machine-local `.envrc.local` for a worktree.&quot;,
+      &quot;oneOf&quot;: [
+        {
+          &quot;description&quot;: &quot;Linked: the worktree&#39;s `.envrc.local` is a symlink to the primary checkout&#39;s, so the\nperson&#39;s machine-local exports (keychain-backed secrets among them) load here too.&quot;,
+          &quot;properties&quot;: {
+            &quot;outcome&quot;: {
+              &quot;const&quot;: &quot;linked&quot;,
+              &quot;type&quot;: &quot;string&quot;
+            }
+          },
+          &quot;required&quot;: [
+            &quot;outcome&quot;
+          ],
+          &quot;type&quot;: &quot;object&quot;
+        },
+        {
+          &quot;description&quot;: &quot;The worktree already has its own `.envrc.local`; it is left alone.&quot;,
+          &quot;properties&quot;: {
+            &quot;outcome&quot;: {
+              &quot;const&quot;: &quot;own_kept&quot;,
+              &quot;type&quot;: &quot;string&quot;
+            }
+          },
+          &quot;required&quot;: [
+            &quot;outcome&quot;
+          ],
+          &quot;type&quot;: &quot;object&quot;
+        },
+        {
+          &quot;description&quot;: &quot;The primary checkout has none; there is nothing to share.&quot;,
+          &quot;properties&quot;: {
+            &quot;outcome&quot;: {
+              &quot;const&quot;: &quot;none_primary&quot;,
+              &quot;type&quot;: &quot;string&quot;
+            }
+          },
+          &quot;required&quot;: [
+            &quot;outcome&quot;
+          ],
+          &quot;type&quot;: &quot;object&quot;
+        },
+        {
+          &quot;description&quot;: &quot;Not linked, because git in the worktree does not ignore `.envrc.local` — a link a\ncommit could pick up is the one way this could leak.&quot;,
+          &quot;properties&quot;: {
+            &quot;outcome&quot;: {
+              &quot;const&quot;: &quot;not_ignored&quot;,
+              &quot;type&quot;: &quot;string&quot;
+            }
+          },
+          &quot;required&quot;: [
+            &quot;outcome&quot;
+          ],
+          &quot;type&quot;: &quot;object&quot;
+        },
+        {
+          &quot;description&quot;: &quot;The link could not be made; the error.&quot;,
+          &quot;properties&quot;: {
+            &quot;message&quot;: {
+              &quot;description&quot;: &quot;Why.&quot;,
+              &quot;type&quot;: &quot;string&quot;
+            },
+            &quot;outcome&quot;: {
+              &quot;const&quot;: &quot;failed&quot;,
+              &quot;type&quot;: &quot;string&quot;
+            }
+          },
+          &quot;required&quot;: [
+            &quot;outcome&quot;,
+            &quot;message&quot;
+          ],
+          &quot;type&quot;: &quot;object&quot;
+        }
+      ]
+    },
+    &quot;StartPoint&quot;: {
+      &quot;description&quot;: &quot;Where a new branch started, and why there.\n\nThe local trunk of a long-lived checkout is routinely hundreds of commits behind its\nremote, because nothing advances it; a branch cut from it carries none of that work and\nevery worker had to reset it by hand. So the default is the remote&#39;s trunk, fetched at\nthe moment of creation, and the local trunk only when the remote cannot be read — said,\nnever silent.\n\n```\nuse majordomus_cli::worktree::StartPoint;\nlet p = StartPoint::RemoteTrunk { remote: \&quot;origin\&quot;.into(), branch: \&quot;master\&quot;.into() };\nassert_eq!(p.reference(), \&quot;origin/master\&quot;);\nassert!(p.fallback().is_none());\nlet fell = StartPoint::LocalTrunk {\n    branch: \&quot;master\&quot;.into(),\n    unreachable: Some(\&quot;origin\&quot;.into()),\n    reason: Some(\&quot;no answer within 60s\&quot;.into()),\n    behind: Some(779),\n};\nassert_eq!(fell.reference(), \&quot;master\&quot;);\nassert!(fell.fallback().unwrap().contains(\&quot;779 commits behind origin/master\&quot;));\n```&quot;,
+      &quot;oneOf&quot;: [
+        {
+          &quot;description&quot;: &quot;The ref `--base` named, as given; never fetched.&quot;,
+          &quot;properties&quot;: {
+            &quot;from&quot;: {
+              &quot;const&quot;: &quot;given&quot;,
+              &quot;type&quot;: &quot;string&quot;
+            },
+            &quot;reference&quot;: {
+              &quot;description&quot;: &quot;The ref.&quot;,
+              &quot;type&quot;: &quot;string&quot;
+            }
+          },
+          &quot;required&quot;: [
+            &quot;from&quot;,
+            &quot;reference&quot;
+          ],
+          &quot;type&quot;: &quot;object&quot;
+        },
+        {
+          &quot;description&quot;: &quot;The trunk on its remote, fetched by this command.&quot;,
+          &quot;properties&quot;: {
+            &quot;branch&quot;: {
+              &quot;description&quot;: &quot;The trunk branch.&quot;,
+              &quot;type&quot;: &quot;string&quot;
+            },
+            &quot;from&quot;: {
+              &quot;const&quot;: &quot;remote_trunk&quot;,
+              &quot;type&quot;: &quot;string&quot;
+            },
+            &quot;remote&quot;: {
+              &quot;description&quot;: &quot;The remote.&quot;,
+              &quot;type&quot;: &quot;string&quot;
+            }
+          },
+          &quot;required&quot;: [
+            &quot;from&quot;,
+            &quot;remote&quot;,
+            &quot;branch&quot;
+          ],
+          &quot;type&quot;: &quot;object&quot;
+        },
+        {
+          &quot;description&quot;: &quot;The branch already on the remote: the local branch is created at it and tracks it.&quot;,
+          &quot;properties&quot;: {
+            &quot;branch&quot;: {
+              &quot;description&quot;: &quot;The branch, the same name on both sides.&quot;,
+              &quot;type&quot;: &quot;string&quot;
+            },
+            &quot;fetched&quot;: {
+              &quot;description&quot;: &quot;Whether it was fetched now; `false` is the remote-tracking ref as last fetched,\nbecause the remote could not be read.&quot;,
+              &quot;type&quot;: &quot;boolean&quot;
+            },
+            &quot;from&quot;: {
+              &quot;const&quot;: &quot;remote_branch&quot;,
+              &quot;type&quot;: &quot;string&quot;
+            },
+            &quot;remote&quot;: {
+              &quot;description&quot;: &quot;The remote.&quot;,
+              &quot;type&quot;: &quot;string&quot;
+            }
+          },
+          &quot;required&quot;: [
+            &quot;from&quot;,
+            &quot;remote&quot;,
+            &quot;branch&quot;,
+            &quot;fetched&quot;
+          ],
+          &quot;type&quot;: &quot;object&quot;
+        },
+        {
+          &quot;description&quot;: &quot;The local trunk: the trunk has no remote, or its remote could not be read.&quot;,
+          &quot;properties&quot;: {
+            &quot;behind&quot;: {
+              &quot;description&quot;: &quot;How many commits the remote&#39;s trunk, as last fetched, has that the local trunk\nlacks; `None` when it was never fetched.&quot;,
+              &quot;format&quot;: &quot;uint64&quot;,
+              &quot;minimum&quot;: 0,
+              &quot;type&quot;: [
+                &quot;integer&quot;,
+                &quot;null&quot;
+              ]
+            },
+            &quot;branch&quot;: {
+              &quot;description&quot;: &quot;The trunk branch.&quot;,
+              &quot;type&quot;: &quot;string&quot;
+            },
+            &quot;from&quot;: {
+              &quot;const&quot;: &quot;local_trunk&quot;,
+              &quot;type&quot;: &quot;string&quot;
+            },
+            &quot;reason&quot;: {
+              &quot;description&quot;: &quot;Why it could not be read.&quot;,
+              &quot;type&quot;: [
+                &quot;string&quot;,
+                &quot;null&quot;
+              ]
+            },
+            &quot;unreachable&quot;: {
+              &quot;description&quot;: &quot;The remote that could not be read; `None` when the trunk has no remote.&quot;,
+              &quot;type&quot;: [
+                &quot;string&quot;,
+                &quot;null&quot;
+              ]
+            }
+          },
+          &quot;required&quot;: [
+            &quot;from&quot;,
+            &quot;branch&quot;
+          ],
+          &quot;type&quot;: &quot;object&quot;
+        },
+        {
+          &quot;description&quot;: &quot;HEAD, because no trunk is known.&quot;,
+          &quot;properties&quot;: {
+            &quot;from&quot;: {
+              &quot;const&quot;: &quot;head&quot;,
+              &quot;type&quot;: &quot;string&quot;
+            }
+          },
+          &quot;required&quot;: [
+            &quot;from&quot;
+          ],
+          &quot;type&quot;: &quot;object&quot;
         }
       ]
     }
   },
-  &quot;type&quot;: &quot;object&quot;,
-  &quot;description&quot;: &quot;What a create did.&quot;
+  &quot;description&quot;: &quot;What a create did.&quot;,
+  &quot;properties&quot;: {
+    &quot;base&quot;: {
+      &quot;description&quot;: &quot;The ref a new branch started from (`origin/master`).&quot;,
+      &quot;type&quot;: [
+        &quot;string&quot;,
+        &quot;null&quot;
+      ]
+    },
+    &quot;branch&quot;: {
+      &quot;description&quot;: &quot;The branch checked out in it.&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;branch_created&quot;: {
+      &quot;description&quot;: &quot;Whether that branch was created by this command.&quot;,
+      &quot;type&quot;: &quot;boolean&quot;
+    },
+    &quot;container&quot;: {
+      &quot;description&quot;: &quot;The container it went into.&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;container_created&quot;: {
+      &quot;description&quot;: &quot;Whether the container was created by this command.&quot;,
+      &quot;type&quot;: &quot;boolean&quot;
+    },
+    &quot;envrc&quot;: {
+      &quot;$ref&quot;: &quot;#/$defs/EnvrcApproval&quot;,
+      &quot;description&quot;: &quot;What became of its `.envrc` under direnv: the primary checkout&#39;s approval carried to\nthis path, or why it was not. A worktree that starts blocked is the recurring\n\&quot;direnv does not work again\&quot;; this says so before the first `cd` does.&quot;
+    },
+    &quot;envrc_local&quot;: {
+      &quot;$ref&quot;: &quot;#/$defs/LocalOverrides&quot;,
+      &quot;default&quot;: {
+        &quot;outcome&quot;: &quot;none_primary&quot;
+      },
+      &quot;description&quot;: &quot;What became of the primary checkout&#39;s machine-local `.envrc.local` here.&quot;
+    },
+    &quot;existed&quot;: {
+      &quot;description&quot;: &quot;The worktree already existed at its canonical path and nothing was created: the\n`existing` answer of an idempotent create, where `false` is `created`.&quot;,
+      &quot;type&quot;: &quot;boolean&quot;
+    },
+    &quot;head&quot;: {
+      &quot;description&quot;: &quot;The commit the worktree&#39;s HEAD names now, read back from it after the create or the\nfind, whichever this was; `None` when git cannot say (an unborn branch).&quot;,
+      &quot;type&quot;: [
+        &quot;string&quot;,
+        &quot;null&quot;
+      ]
+    },
+    &quot;hooks&quot;: {
+      &quot;$ref&quot;: &quot;#/$defs/HooksPath&quot;,
+      &quot;default&quot;: {
+        &quot;outcome&quot;: &quot;not_configured&quot;
+      },
+      &quot;description&quot;: &quot;Which hooks it runs: its own tree&#39;s, bound per worktree when the shared\n`core.hooksPath` would have sent it to the primary checkout&#39;s (I2718).&quot;
+    },
+    &quot;path&quot;: {
+      &quot;description&quot;: &quot;Where the worktree is.&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;start&quot;: {
+      &quot;anyOf&quot;: [
+        {
+          &quot;$ref&quot;: &quot;#/$defs/StartPoint&quot;
+        },
+        {
+          &quot;type&quot;: &quot;null&quot;
+        }
+      ],
+      &quot;description&quot;: &quot;Where a branch this command created started, and why there.&quot;
+    },
+    &quot;start_commit&quot;: {
+      &quot;description&quot;: &quot;The exact commit a branch this command created starts at, read back from the\nworktree rather than assumed.&quot;,
+      &quot;type&quot;: [
+        &quot;string&quot;,
+        &quot;null&quot;
+      ]
+    }
+  },
+  &quot;required&quot;: [
+    &quot;path&quot;,
+    &quot;branch&quot;,
+    &quot;branch_created&quot;,
+    &quot;container&quot;,
+    &quot;container_created&quot;,
+    &quot;existed&quot;,
+    &quot;envrc&quot;
+  ],
+  &quot;title&quot;: &quot;CreateReport&quot;,
+  &quot;type&quot;: &quot;object&quot;
 }</pre></div>
   </details>
 </div>
@@ -863,7 +863,7 @@ find, whichever this was; <code>None</code> when git cannot say (an unborn branc
         <div><dt class="text-body-subtle">modul Rust</dt><dd class="min-w-0 break-all font-mono text-heading">majordomus_cli::capability::builtin::worktree</dd></div>
         <div><dt class="text-body-subtle">typ vstupu</dt><dd class="font-mono text-heading">CreateInput</dd></div>
         <div><dt class="text-body-subtle">typ výstupu</dt><dd class="font-mono text-heading">CreateReport</dd></div>
-        <div><dt class="text-body-subtle">reference na GitHubu</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/docs/generated/modules/worktree.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/worktree.md</a></dd></div><div><dt class="text-body-subtle">otisk registru</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">3f734f2faf797f0ca7c39b4cd837e68b6619c41c6f6711f3d3aeca8f341934eb</dd></div>
+        <div><dt class="text-body-subtle">reference na GitHubu</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/1112bace3437ee0d82067b1e8f61813e70190078/docs/generated/modules/worktree.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/worktree.md</a></dd></div><div><dt class="text-body-subtle">otisk registru</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">5cdbf22cd21589ddbe464d5f0987b6bcf4607d05479004d6f815c3b306fdb08a</dd></div>
         <div><dt class="text-body-subtle">vygenerováno nástrojem</dt><dd class="font-mono text-heading">majordomus-cli 1.0.0-alpha.10</dd></div>
       </dl>
     </div>
@@ -919,9 +919,9 @@ find, whichever this was; <code>None</code> when git cannot say (an unborn branc
       <div class="min-w-0">
         <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">Projekt</h2><ul class="space-y-2 text-sm font-medium text-body">
           <li><a href="https://github.com/korczis/prismatic-majordomus" class="hover:text-heading hover:underline">GitHub</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/LICENSE" class="hover:text-heading hover:underline">Licence MIT</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/SECURITY.md" class="hover:text-heading hover:underline">Bezpečnostní politika</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/CONTRIBUTING.md" class="hover:text-heading hover:underline">Průvodce pro přispěvatele</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/1112bace3437ee0d82067b1e8f61813e70190078/LICENSE" class="hover:text-heading hover:underline">Licence MIT</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/1112bace3437ee0d82067b1e8f61813e70190078/SECURITY.md" class="hover:text-heading hover:underline">Bezpečnostní politika</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/1112bace3437ee0d82067b1e8f61813e70190078/CONTRIBUTING.md" class="hover:text-heading hover:underline">Průvodce pro přispěvatele</a></li>
         </ul>
       </div>
     </div>
@@ -929,7 +929,7 @@ find, whichever this was; <code>None</code> when git cannot say (an unborn branc
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/cs/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.10</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/745db2ea21e02613943face75a2bf95542be1f2e" class="font-mono underline">745db2e</a> · inputs <span class="font-mono">0a58c217d1b7</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/cs/architecture/" class="underline">how this site is derived</a> names them.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.10</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/1112bace3437ee0d82067b1e8f61813e70190078" class="font-mono underline">1112bac</a> · inputs <span class="font-mono">830f884cc5aa</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/cs/architecture/" class="underline">how this site is derived</a> names them.</p>
     </div>
   </div>
 </footer>

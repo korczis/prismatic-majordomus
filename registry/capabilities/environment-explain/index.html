@@ -233,18 +233,18 @@ absent.</td>
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
   &quot;additionalProperties&quot;: false,
-  &quot;title&quot;: &quot;ExplainInput&quot;,
+  &quot;description&quot;: &quot;Which field&#39;s provenance to explain.&quot;,
   &quot;properties&quot;: {
     &quot;field&quot;: {
+      &quot;description&quot;: &quot;The field in dotted form (`services.url`, `capabilities.objects`); every field when\nabsent.&quot;,
       &quot;type&quot;: [
         &quot;string&quot;,
         &quot;null&quot;
-      ],
-      &quot;description&quot;: &quot;The field in dotted form (`services.url`, `capabilities.objects`); every field when\nabsent.&quot;
+      ]
     }
   },
-  &quot;type&quot;: &quot;object&quot;,
-  &quot;description&quot;: &quot;Which field&#39;s provenance to explain.&quot;
+  &quot;title&quot;: &quot;ExplainInput&quot;,
+  &quot;type&quot;: &quot;object&quot;
 }</pre></div>
   </details>
 </div>
@@ -267,29 +267,45 @@ absent.</td>
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
-  &quot;type&quot;: &quot;object&quot;,
   &quot;$defs&quot;: {
-    &quot;FieldSource&quot;: {
-      &quot;required&quot;: [
-        &quot;field&quot;,
-        &quot;source&quot;,
-        &quot;resolver&quot;,
-        &quot;confidence&quot;
-      ],
-      &quot;description&quot;: &quot;Where one field of the snapshot came from. This is what makes an inferred system\ndebuggable: every fact can name the thing that decided it, so \&quot;why does it say that\&quot;\nis answered by the tool rather than by reading its source.&quot;,
-      &quot;type&quot;: &quot;object&quot;,
-      &quot;properties&quot;: {
-        &quot;resolver&quot;: {
-          &quot;description&quot;: &quot;The part of this executable that read it.&quot;,
+    &quot;Confidence&quot;: {
+      &quot;description&quot;: &quot;How far a resolved value can be trusted.&quot;,
+      &quot;oneOf&quot;: [
+        {
+          &quot;const&quot;: &quot;exact&quot;,
+          &quot;description&quot;: &quot;Read from its canonical source during this resolution.&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
+        {
+          &quot;const&quot;: &quot;cached&quot;,
+          &quot;description&quot;: &quot;Read from a cache whose fingerprint still matches its inputs.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;unknown&quot;,
+          &quot;description&quot;: &quot;Not resolved.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      ]
+    },
+    &quot;FieldSource&quot;: {
+      &quot;description&quot;: &quot;Where one field of the snapshot came from. This is what makes an inferred system\ndebuggable: every fact can name the thing that decided it, so \&quot;why does it say that\&quot;\nis answered by the tool rather than by reading its source.&quot;,
+      &quot;properties&quot;: {
         &quot;confidence&quot;: {
           &quot;$ref&quot;: &quot;#/$defs/Confidence&quot;,
           &quot;description&quot;: &quot;How certain the value is.&quot;
         },
+        &quot;field&quot;: {
+          &quot;description&quot;: &quot;The field, in dotted form: `services.cockpit.url`, `vcs.branch`.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;resolver&quot;: {
+          &quot;description&quot;: &quot;The part of this executable that read it.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
         &quot;source&quot;: {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;What decided it: a file, a command, a compile-time constant, the cache.&quot;
+          &quot;description&quot;: &quot;What decided it: a file, a command, a compile-time constant, the cache.&quot;,
+          &quot;type&quot;: &quot;string&quot;
         },
         &quot;value&quot;: {
           &quot;description&quot;: &quot;The value as it appears in the snapshot, rendered for a person; absent for a field\nthat resolved to nothing.&quot;,
@@ -297,14 +313,18 @@ absent.</td>
             &quot;string&quot;,
             &quot;null&quot;
           ]
-        },
-        &quot;field&quot;: {
-          &quot;description&quot;: &quot;The field, in dotted form: `services.cockpit.url`, `vcs.branch`.&quot;,
-          &quot;type&quot;: &quot;string&quot;
         }
-      }
+      },
+      &quot;required&quot;: [
+        &quot;field&quot;,
+        &quot;source&quot;,
+        &quot;resolver&quot;,
+        &quot;confidence&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
     },
     &quot;Resolution&quot;: {
+      &quot;description&quot;: &quot;How completely a snapshot was resolved. Carried in the snapshot because a consumer must\nbe able to tell \&quot;there is no server running\&quot; from \&quot;nobody looked\&quot;.&quot;,
       &quot;oneOf&quot;: [
         {
           &quot;const&quot;: &quot;fast&quot;,
@@ -312,34 +332,14 @@ absent.</td>
           &quot;type&quot;: &quot;string&quot;
         },
         {
-          &quot;description&quot;: &quot;Everything, including the index. Writes the cache.&quot;,
           &quot;const&quot;: &quot;full&quot;,
+          &quot;description&quot;: &quot;Everything, including the index. Writes the cache.&quot;,
           &quot;type&quot;: &quot;string&quot;
         }
-      ],
-      &quot;description&quot;: &quot;How completely a snapshot was resolved. Carried in the snapshot because a consumer must\nbe able to tell \&quot;there is no server running\&quot; from \&quot;nobody looked\&quot;.&quot;
-    },
-    &quot;Confidence&quot;: {
-      &quot;oneOf&quot;: [
-        {
-          &quot;description&quot;: &quot;Read from its canonical source during this resolution.&quot;,
-          &quot;const&quot;: &quot;exact&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;Read from a cache whose fingerprint still matches its inputs.&quot;,
-          &quot;const&quot;: &quot;cached&quot;
-        },
-        {
-          &quot;const&quot;: &quot;unknown&quot;,
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;Not resolved.&quot;
-        }
-      ],
-      &quot;description&quot;: &quot;How far a resolved value can be trusted.&quot;
+      ]
     }
   },
+  &quot;description&quot;: &quot;Where the values of one snapshot came from.&quot;,
   &quot;properties&quot;: {
     &quot;fields&quot;: {
       &quot;description&quot;: &quot;One entry per field, in the order the resolver produced them.&quot;,
@@ -353,12 +353,12 @@ absent.</td>
       &quot;description&quot;: &quot;How the snapshot behind these entries was resolved.&quot;
     }
   },
-  &quot;title&quot;: &quot;EnvironmentProvenance&quot;,
   &quot;required&quot;: [
     &quot;resolution&quot;,
     &quot;fields&quot;
   ],
-  &quot;description&quot;: &quot;Where the values of one snapshot came from.&quot;
+  &quot;title&quot;: &quot;EnvironmentProvenance&quot;,
+  &quot;type&quot;: &quot;object&quot;
 }</pre></div>
   </details>
 </div>
@@ -389,7 +389,7 @@ absent.</td>
         <div><dt class="text-body-subtle">Rust module</dt><dd class="min-w-0 break-all font-mono text-heading">majordomus_cli::capability::builtin::environment</dd></div>
         <div><dt class="text-body-subtle">input type</dt><dd class="font-mono text-heading">ExplainInput</dd></div>
         <div><dt class="text-body-subtle">output type</dt><dd class="font-mono text-heading">EnvironmentProvenance</dd></div>
-        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/docs/generated/modules/environment.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/environment.md</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">3f734f2faf797f0ca7c39b4cd837e68b6619c41c6f6711f3d3aeca8f341934eb</dd></div>
+        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/1112bace3437ee0d82067b1e8f61813e70190078/docs/generated/modules/environment.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/environment.md</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">5cdbf22cd21589ddbe464d5f0987b6bcf4607d05479004d6f815c3b306fdb08a</dd></div>
         <div><dt class="text-body-subtle">generated by</dt><dd class="font-mono text-heading">majordomus-cli 1.0.0-alpha.10</dd></div>
       </dl>
     </div>
@@ -445,9 +445,9 @@ absent.</td>
       <div class="min-w-0">
         <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">Project</h2><ul class="space-y-2 text-sm font-medium text-body">
           <li><a href="https://github.com/korczis/prismatic-majordomus" class="hover:text-heading hover:underline">GitHub</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/LICENSE" class="hover:text-heading hover:underline">MIT licence</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/SECURITY.md" class="hover:text-heading hover:underline">Security policy</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/CONTRIBUTING.md" class="hover:text-heading hover:underline">Contributing guide</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/1112bace3437ee0d82067b1e8f61813e70190078/LICENSE" class="hover:text-heading hover:underline">MIT licence</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/1112bace3437ee0d82067b1e8f61813e70190078/SECURITY.md" class="hover:text-heading hover:underline">Security policy</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/1112bace3437ee0d82067b1e8f61813e70190078/CONTRIBUTING.md" class="hover:text-heading hover:underline">Contributing guide</a></li>
         </ul>
       </div>
     </div>
@@ -455,7 +455,7 @@ absent.</td>
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.10</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/745db2ea21e02613943face75a2bf95542be1f2e" class="font-mono underline">745db2e</a> · inputs <span class="font-mono">0a58c217d1b7</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/architecture/" class="underline">how this site is derived</a> names them.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.10</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/1112bace3437ee0d82067b1e8f61813e70190078" class="font-mono underline">1112bac</a> · inputs <span class="font-mono">830f884cc5aa</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/architecture/" class="underline">how this site is derived</a> names them.</p>
     </div>
   </div>
 </footer>

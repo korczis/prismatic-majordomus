@@ -227,16 +227,14 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
-  &quot;type&quot;: &quot;object&quot;,
-  &quot;additionalProperties&quot;: false,
   &quot;$defs&quot;: {
     &quot;ExecutionEffect&quot;: {
       &quot;description&quot;: &quot;What running a capability changes outside the caller.\n\nClassified, never declared: it follows from the kind, which is the field a declaration\nalready carries. A projection reads this to decide whether to ask before running\nsomething — the Cockpit&#39;s confirmation is derived from it — instead of naming\ncapabilities it must treat carefully, which is a list that goes stale the day after it\nis written.&quot;,
       &quot;oneOf&quot;: [
         {
           &quot;const&quot;: &quot;read&quot;,
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;Nothing changes. Every query and every resource of this executable.&quot;
+          &quot;description&quot;: &quot;Nothing changes. Every query and every resource of this executable.&quot;,
+          &quot;type&quot;: &quot;string&quot;
         },
         {
           &quot;const&quot;: &quot;process_state&quot;,
@@ -244,16 +242,17 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
           &quot;type&quot;: &quot;string&quot;
         },
         {
-          &quot;description&quot;: &quot;The repository changes.\n\nFor most of this executable&#39;s life nothing classified to this, because no capability\nof any kind wrote to the repository. That day arrived with [ADR 0040]: development\nsemantics are capabilities of this runtime, and the first of them — `plan.transition`\n— stamps a field into an issue&#39;s own tracked record. The variant was put on the model\nin advance so that when one did, it would say so *here*, where a projection already\nreads it and a client already asks before running it, rather than in whichever page\nhappens to render its button.\n\nIt is not classified from the kind, because the kind cannot know it: a command that\nannounces a peer and a command that writes a tracked file are the same kind. A\nhandler that writes the repository says so with\n`ExecutionPolicy::writes_repository`, the way one that stops says so with\n`ExecutionPolicy::stoppable`.\n\n[ADR 0040]: https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/adrs/0040-development-semantics-are-capabilities-of-one-runtime.md&quot;,
           &quot;const&quot;: &quot;repository_mutation&quot;,
+          &quot;description&quot;: &quot;The repository changes.\n\nFor most of this executable&#39;s life nothing classified to this, because no capability\nof any kind wrote to the repository. That day arrived with [ADR 0040]: development\nsemantics are capabilities of this runtime, and the first of them — `plan.transition`\n— stamps a field into an issue&#39;s own tracked record. The variant was put on the model\nin advance so that when one did, it would say so *here*, where a projection already\nreads it and a client already asks before running it, rather than in whichever page\nhappens to render its button.\n\nIt is not classified from the kind, because the kind cannot know it: a command that\nannounces a peer and a command that writes a tracked file are the same kind. A\nhandler that writes the repository says so with\n`ExecutionPolicy::writes_repository`, the way one that stops says so with\n`ExecutionPolicy::stoppable`.\n\n[ADR 0040]: https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/adrs/0040-development-semantics-are-capabilities-of-one-runtime.md&quot;,
           &quot;type&quot;: &quot;string&quot;
         }
       ]
     }
   },
+  &quot;additionalProperties&quot;: false,
+  &quot;description&quot;: &quot;The input of `mcp.projection`: which tools to list. Everything else in the answer is\nabout the projection as a whole and is always given.\n\n```\nuse majordomus_cli::capability::builtin::mcp::McpProjectionInput;\nuse majordomus_cli::capability::Effect;\nlet all: McpProjectionInput = serde_json::from_str(\&quot;{}\&quot;).unwrap();\nassert!(all.effect.is_none());\nlet writers: McpProjectionInput =\n    serde_json::from_str(r#\&quot;{\&quot;effect\&quot;:\&quot;repository_mutation\&quot;}\&quot;#).unwrap();\nassert_eq!(writers.effect, Some(Effect::RepositoryMutation));\n```&quot;,
   &quot;properties&quot;: {
     &quot;effect&quot;: {
-      &quot;description&quot;: &quot;List only the tools with this effect: `read`, `process_state` or\n`repository_mutation`. Absent lists every tool.&quot;,
       &quot;anyOf&quot;: [
         {
           &quot;$ref&quot;: &quot;#/$defs/ExecutionEffect&quot;
@@ -261,11 +260,12 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
         {
           &quot;type&quot;: &quot;null&quot;
         }
-      ]
+      ],
+      &quot;description&quot;: &quot;List only the tools with this effect: `read`, `process_state` or\n`repository_mutation`. Absent lists every tool.&quot;
     }
   },
   &quot;title&quot;: &quot;McpProjectionInput&quot;,
-  &quot;description&quot;: &quot;The input of `mcp.projection`: which tools to list. Everything else in the answer is\nabout the projection as a whole and is always given.\n\n```\nuse majordomus_cli::capability::builtin::mcp::McpProjectionInput;\nuse majordomus_cli::capability::Effect;\nlet all: McpProjectionInput = serde_json::from_str(\&quot;{}\&quot;).unwrap();\nassert!(all.effect.is_none());\nlet writers: McpProjectionInput =\n    serde_json::from_str(r#\&quot;{\&quot;effect\&quot;:\&quot;repository_mutation\&quot;}\&quot;#).unwrap();\nassert_eq!(writers.effect, Some(Effect::RepositoryMutation));\n```&quot;
+  &quot;type&quot;: &quot;object&quot;
 }</pre></div>
   </details>
 </div>
@@ -292,25 +292,10 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
     <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
       <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">vlastnost</th><th class="px-3 py-2">typ</th><th class="px-3 py-2">povinné</th><th class="px-3 py-2">popis</th></tr></thead>
       <tbody><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">tool_count</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">integer</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Kolik nástrojů registr promítá, ať se filtr ptal na cokoli.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">obsluhuje</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Co z protokolu se obsluhuje.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">protocol_versions</td>
+        <td class="px-3 py-2 font-mono text-heading">klienti</td>
         <td class="px-3 py-2 font-mono text-xs text-body">array</td>
         <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Přijímané verze protokolu, nejnovější první.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">nástroje</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Požadované nástroje v pořadí registru.</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Klienti, pro které distribuce deklaruje konfiguraci, a v jakém stavu každý je.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">efekty</td>
         <td class="px-3 py-2 font-mono text-xs text-body">array</td>
@@ -327,6 +312,11 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
         <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
         <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Zda tento repozitář nese launcher na <code>bin/majordomus-mcp</code>. Kde ho nenese, konfigurace pojmenovává nainstalovaný příkaz téhož jména.</td>
       </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">protocol_versions</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Přijímané verze protokolu, nejnovější první.</td>
+      </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">zdroje</td>
         <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
         <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
@@ -337,15 +327,25 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
         <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
         <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Kdo odpovídá na <code>initialize</code>.</td>
       </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">obsluhuje</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Co z protokolu se obsluhuje.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">tool_count</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">integer</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Kolik nástrojů registr promítá, ať se filtr ptal na cokoli.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">nástroje</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Požadované nástroje v pořadí registru.</td>
+      </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">transporty</td>
         <td class="px-3 py-2 font-mono text-xs text-body">array</td>
         <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
         <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Jak se klient k serveru dostane.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">klienti</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Klienti, pro které distribuce deklaruje konfiguraci, a v jakém stavu každý je.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">zapisovatelé</td>
         <td class="px-3 py-2 font-mono text-xs text-body">array</td>
@@ -356,23 +356,41 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
-  &quot;title&quot;: &quot;McpProjection&quot;,
-  &quot;type&quot;: &quot;object&quot;,
   &quot;$defs&quot;: {
-    &quot;ExecutionHints&quot;: {
-      &quot;type&quot;: &quot;object&quot;,
-      &quot;properties&quot;: {
-        &quot;open_world&quot;: {
-          &quot;type&quot;: &quot;boolean&quot;,
-          &quot;description&quot;: &quot;The call reaches beyond this machine. No handler of this executable does: observing\nthe forge and talking to an advisor are commands a person runs, not capabilities.&quot;
+    &quot;ExecutionEffect&quot;: {
+      &quot;description&quot;: &quot;What running a capability changes outside the caller.\n\nClassified, never declared: it follows from the kind, which is the field a declaration\nalready carries. A projection reads this to decide whether to ask before running\nsomething — the Cockpit&#39;s confirmation is derived from it — instead of naming\ncapabilities it must treat carefully, which is a list that goes stale the day after it\nis written.&quot;,
+      &quot;oneOf&quot;: [
+        {
+          &quot;const&quot;: &quot;read&quot;,
+          &quot;description&quot;: &quot;Nothing changes. Every query and every resource of this executable.&quot;,
+          &quot;type&quot;: &quot;string&quot;
         },
+        {
+          &quot;const&quot;: &quot;process_state&quot;,
+          &quot;description&quot;: &quot;This process&#39;s own memory changes, and nothing outside it.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;repository_mutation&quot;,
+          &quot;description&quot;: &quot;The repository changes.\n\nFor most of this executable&#39;s life nothing classified to this, because no capability\nof any kind wrote to the repository. That day arrived with [ADR 0040]: development\nsemantics are capabilities of this runtime, and the first of them — `plan.transition`\n— stamps a field into an issue&#39;s own tracked record. The variant was put on the model\nin advance so that when one did, it would say so *here*, where a projection already\nreads it and a client already asks before running it, rather than in whichever page\nhappens to render its button.\n\nIt is not classified from the kind, because the kind cannot know it: a command that\nannounces a peer and a command that writes a tracked file are the same kind. A\nhandler that writes the repository says so with\n`ExecutionPolicy::writes_repository`, the way one that stops says so with\n`ExecutionPolicy::stoppable`.\n\n[ADR 0040]: https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/adrs/0040-development-semantics-are-capabilities-of-one-runtime.md&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      ]
+    },
+    &quot;ExecutionHints&quot;: {
+      &quot;description&quot;: &quot;What a caller may assume about a call before making it: the four facts MCP names tool\nannotations, held once on the model so that no projection states its own.\n\nClassified by `ExecutionPolicy::hints`, never declared.\n\n```\nuse majordomus_cli::capability::{CapabilityKind, ExecutionPolicy, Hints};\nlet read: Hints = ExecutionPolicy::classify(CapabilityKind::Query).hints();\nassert_eq!(\n    serde_json::to_value(read).unwrap(),\n    serde_json::json!({ \&quot;read_only\&quot;: true, \&quot;destructive\&quot;: false, \&quot;idempotent\&quot;: true, \&quot;open_world\&quot;: false })\n);\n```&quot;,
+      &quot;properties&quot;: {
         &quot;destructive&quot;: {
           &quot;description&quot;: &quot;The call may overwrite or remove something that outlives this process.&quot;,
           &quot;type&quot;: &quot;boolean&quot;
         },
         &quot;idempotent&quot;: {
-          &quot;type&quot;: &quot;boolean&quot;,
-          &quot;description&quot;: &quot;A second identical call changes nothing the first did not.&quot;
+          &quot;description&quot;: &quot;A second identical call changes nothing the first did not.&quot;,
+          &quot;type&quot;: &quot;boolean&quot;
+        },
+        &quot;open_world&quot;: {
+          &quot;description&quot;: &quot;The call reaches beyond this machine. No handler of this executable does: observing\nthe forge and talking to an advisor are commands a person runs, not capabilities.&quot;,
+          &quot;type&quot;: &quot;boolean&quot;
         },
         &quot;read_only&quot;: {
           &quot;description&quot;: &quot;The call changes nothing, anywhere.&quot;,
@@ -385,87 +403,25 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
         &quot;idempotent&quot;,
         &quot;open_world&quot;
       ],
-      &quot;description&quot;: &quot;What a caller may assume about a call before making it: the four facts MCP names tool\nannotations, held once on the model so that no projection states its own.\n\nClassified by `ExecutionPolicy::hints`, never declared.\n\n```\nuse majordomus_cli::capability::{CapabilityKind, ExecutionPolicy, Hints};\nlet read: Hints = ExecutionPolicy::classify(CapabilityKind::Query).hints();\nassert_eq!(\n    serde_json::to_value(read).unwrap(),\n    serde_json::json!({ \&quot;read_only\&quot;: true, \&quot;destructive\&quot;: false, \&quot;idempotent\&quot;: true, \&quot;open_world\&quot;: false })\n);\n```&quot;
-    },
-    &quot;McpServing&quot;: {
-      &quot;properties&quot;: {
-        &quot;tools&quot;: {
-          &quot;description&quot;: &quot;Tools: every capability that declares one.&quot;,
-          &quot;type&quot;: &quot;boolean&quot;
-        },
-        &quot;notifications&quot;: {
-          &quot;description&quot;: &quot;Subscriptions and list-change notifications. Not served: this server sends nothing\nunasked.&quot;,
-          &quot;type&quot;: &quot;boolean&quot;
-        },
-        &quot;methods&quot;: {
-          &quot;type&quot;: &quot;array&quot;,
-          &quot;description&quot;: &quot;The methods a request may name. Anything else is answered `-32601`.&quot;,
-          &quot;items&quot;: {
-            &quot;type&quot;: &quot;string&quot;
-          }
-        },
-        &quot;prompts&quot;: {
-          &quot;type&quot;: &quot;boolean&quot;,
-          &quot;description&quot;: &quot;Prompts. Not served: the repository&#39;s prompt assets are resources, because a prompt\nserved unrendered would read as finished.&quot;
-        },
-        &quot;resources&quot;: {
-          &quot;type&quot;: &quot;boolean&quot;,
-          &quot;description&quot;: &quot;Resources: every capability that declares one, and every object of the layer.&quot;
-        }
-      },
-      &quot;type&quot;: &quot;object&quot;,
-      &quot;description&quot;: &quot;What the server serves of the protocol, and what it does not.\n\n```\nuse majordomus_cli::capability::builtin::mcp::McpServing;\nlet s: McpServing = serde_json::from_value(serde_json::json!({\n    \&quot;methods\&quot;: [\&quot;initialize\&quot;, \&quot;tools/call\&quot;], \&quot;tools\&quot;: true, \&quot;resources\&quot;: true,\n    \&quot;prompts\&quot;: false, \&quot;notifications\&quot;: false,\n})).unwrap();\n// what is not served is stated, so a client does not learn it from a refusal\nassert!(s.tools &amp;&amp; !s.prompts &amp;&amp; !s.notifications);\nassert!(!s.methods.iter().any(|m| m.starts_with(\&quot;prompts/\&quot;)));\n```&quot;,
-      &quot;required&quot;: [
-        &quot;methods&quot;,
-        &quot;tools&quot;,
-        &quot;resources&quot;,
-        &quot;prompts&quot;,
-        &quot;notifications&quot;
-      ]
-    },
-    &quot;McpTransportEntry&quot;: {
-      &quot;required&quot;: [
-        &quot;id&quot;,
-        &quot;reached_by&quot;,
-        &quot;attached&quot;
-      ],
-      &quot;properties&quot;: {
-        &quot;attached&quot;: {
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;type&quot;: &quot;integer&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;description&quot;: &quot;Sessions attached to this process over it right now.&quot;
-        },
-        &quot;reached_by&quot;: {
-          &quot;description&quot;: &quot;How it is reached: the command a client starts, or the path on the shared server.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;id&quot;: {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;`stdio` or `http`.&quot;
-        }
-      },
-      &quot;type&quot;: &quot;object&quot;,
-      &quot;description&quot;: &quot;One way a client reaches the server.\n\n```\nuse majordomus_cli::capability::builtin::mcp::McpTransportEntry;\nlet t: McpTransportEntry = serde_json::from_value(serde_json::json!({\n    \&quot;id\&quot;: \&quot;stdio\&quot;, \&quot;reached_by\&quot;: \&quot;majordomus mcp\&quot;, \&quot;attached\&quot;: 1,\n})).unwrap();\n// a count of sessions at the moment of asking, not a claim that a server is running\nassert_eq!((t.id.as_str(), t.attached), (\&quot;stdio\&quot;, 1));\n```&quot;
+      &quot;type&quot;: &quot;object&quot;
     },
     &quot;McpClient&quot;: {
       &quot;description&quot;: &quot;One client the distribution declares a project-scoped configuration for.\n\n```\nuse majordomus_cli::capability::builtin::mcp::{McpClient, McpClientStanding};\nlet mut clients: Vec&lt;McpClient&gt; = serde_json::from_value(serde_json::json!([\n    { \&quot;id\&quot;: \&quot;gemini\&quot;, \&quot;title\&quot;: \&quot;Gemini CLI\&quot;, \&quot;config\&quot;: \&quot;.gemini/settings.json\&quot;, \&quot;standing\&quot;: \&quot;absent\&quot; },\n    { \&quot;id\&quot;: \&quot;claude-code\&quot;, \&quot;title\&quot;: \&quot;Claude Code\&quot;, \&quot;config\&quot;: \&quot;.mcp.json\&quot;, \&quot;standing\&quot;: \&quot;wired\&quot; },\n])).unwrap();\n// ordered by the provider&#39;s id, whatever order the distribution declared them in\nmajordomus_cli::order::canonical(&amp;mut clients);\nassert_eq!(clients[0].id, \&quot;claude-code\&quot;);\nassert_eq!(clients[0].standing, McpClientStanding::Wired);\n```&quot;,
-      &quot;type&quot;: &quot;object&quot;,
       &quot;properties&quot;: {
-        &quot;title&quot;: {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;The name a person knows it by.&quot;
+        &quot;config&quot;: {
+          &quot;description&quot;: &quot;The file it reads, repository-relative.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;id&quot;: {
+          &quot;description&quot;: &quot;The provider id.&quot;,
+          &quot;type&quot;: &quot;string&quot;
         },
         &quot;standing&quot;: {
           &quot;$ref&quot;: &quot;#/$defs/McpClientStanding&quot;,
           &quot;description&quot;: &quot;Where that file stands here.&quot;
         },
-        &quot;config&quot;: {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;The file it reads, repository-relative.&quot;
-        },
-        &quot;id&quot;: {
-          &quot;description&quot;: &quot;The provider id.&quot;,
+        &quot;title&quot;: {
+          &quot;description&quot;: &quot;The name a person knows it by.&quot;,
           &quot;type&quot;: &quot;string&quot;
         }
       },
@@ -474,20 +430,41 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
         &quot;title&quot;,
         &quot;config&quot;,
         &quot;standing&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;McpClientStanding&quot;: {
+      &quot;description&quot;: &quot;Where a client&#39;s project-scoped configuration stands in this repository.\n\n```\nuse majordomus_cli::capability::builtin::mcp::McpClientStanding;\n// the words a caller reads, as they are written on every surface\nassert_eq!(serde_json::to_value(McpClientStanding::Wired).unwrap(), \&quot;wired\&quot;);\nassert_eq!(serde_json::to_value(McpClientStanding::Foreign).unwrap(), \&quot;foreign\&quot;);\nassert_eq!(serde_json::to_value(McpClientStanding::Absent).unwrap(), \&quot;absent\&quot;);\n```&quot;,
+      &quot;oneOf&quot;: [
+        {
+          &quot;const&quot;: &quot;wired&quot;,
+          &quot;description&quot;: &quot;The file exists and names the launcher: this client starts this repository&#39;s server.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;foreign&quot;,
+          &quot;description&quot;: &quot;The file exists and does not name the launcher: the client reads it and starts\nsomething else, or nothing.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;absent&quot;,
+          &quot;description&quot;: &quot;The file does not exist: this client starts no server here until it is written.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
       ]
     },
     &quot;McpEffectCount&quot;: {
       &quot;description&quot;: &quot;How many tools have one effect.\n\n```\nuse majordomus_cli::capability::builtin::mcp::McpEffectCount;\nuse majordomus_cli::capability::Effect;\nlet c: McpEffectCount =\n    serde_json::from_value(serde_json::json!({ \&quot;effect\&quot;: \&quot;read\&quot;, \&quot;tools\&quot;: 149 })).unwrap();\nassert_eq!((c.effect, c.tools), (Effect::Read, 149));\n```&quot;,
       &quot;properties&quot;: {
         &quot;effect&quot;: {
-          &quot;description&quot;: &quot;The effect.&quot;,
-          &quot;$ref&quot;: &quot;#/$defs/ExecutionEffect&quot;
+          &quot;$ref&quot;: &quot;#/$defs/ExecutionEffect&quot;,
+          &quot;description&quot;: &quot;The effect.&quot;
         },
         &quot;tools&quot;: {
-          &quot;type&quot;: &quot;integer&quot;,
           &quot;description&quot;: &quot;How many tools have it.&quot;,
+          &quot;format&quot;: &quot;uint&quot;,
           &quot;minimum&quot;: 0,
-          &quot;format&quot;: &quot;uint&quot;
+          &quot;type&quot;: &quot;integer&quot;
         }
       },
       &quot;required&quot;: [
@@ -497,13 +474,14 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
       &quot;type&quot;: &quot;object&quot;
     },
     &quot;McpFinding&quot;: {
+      &quot;description&quot;: &quot;Something about the projection a person should act on.\n\n```\nuse majordomus_cli::capability::builtin::mcp::McpFinding;\nlet f: McpFinding = serde_json::from_value(serde_json::json!({\n    \&quot;code\&quot;: \&quot;mcp_client_config_foreign\&quot;,\n    \&quot;message\&quot;: \&quot;.mcp.json exists and does not name majordomus-mcp\&quot;,\n    \&quot;remedy\&quot;: \&quot;add a `majordomus` server to .mcp.json whose command is majordomus-mcp\&quot;,\n})).unwrap();\n// a finding always says what to do, not only what is wrong\nassert!(!f.code.is_empty() &amp;&amp; !f.remedy.is_empty());\n```&quot;,
       &quot;properties&quot;: {
-        &quot;message&quot;: {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;What is wrong.&quot;
-        },
         &quot;code&quot;: {
           &quot;description&quot;: &quot;The stable code.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;message&quot;: {
+          &quot;description&quot;: &quot;What is wrong.&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
         &quot;remedy&quot;: {
@@ -516,85 +494,22 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
         &quot;message&quot;,
         &quot;remedy&quot;
       ],
-      &quot;type&quot;: &quot;object&quot;,
-      &quot;description&quot;: &quot;Something about the projection a person should act on.\n\n```\nuse majordomus_cli::capability::builtin::mcp::McpFinding;\nlet f: McpFinding = serde_json::from_value(serde_json::json!({\n    \&quot;code\&quot;: \&quot;mcp_client_config_foreign\&quot;,\n    \&quot;message\&quot;: \&quot;.mcp.json exists and does not name majordomus-mcp\&quot;,\n    \&quot;remedy\&quot;: \&quot;add a `majordomus` server to .mcp.json whose command is majordomus-mcp\&quot;,\n})).unwrap();\n// a finding always says what to do, not only what is wrong\nassert!(!f.code.is_empty() &amp;&amp; !f.remedy.is_empty());\n```&quot;
-    },
-    &quot;ExecutionEffect&quot;: {
-      &quot;oneOf&quot;: [
-        {
-          &quot;description&quot;: &quot;Nothing changes. Every query and every resource of this executable.&quot;,
-          &quot;const&quot;: &quot;read&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;description&quot;: &quot;This process&#39;s own memory changes, and nothing outside it.&quot;,
-          &quot;const&quot;: &quot;process_state&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;description&quot;: &quot;The repository changes.\n\nFor most of this executable&#39;s life nothing classified to this, because no capability\nof any kind wrote to the repository. That day arrived with [ADR 0040]: development\nsemantics are capabilities of this runtime, and the first of them — `plan.transition`\n— stamps a field into an issue&#39;s own tracked record. The variant was put on the model\nin advance so that when one did, it would say so *here*, where a projection already\nreads it and a client already asks before running it, rather than in whichever page\nhappens to render its button.\n\nIt is not classified from the kind, because the kind cannot know it: a command that\nannounces a peer and a command that writes a tracked file are the same kind. A\nhandler that writes the repository says so with\n`ExecutionPolicy::writes_repository`, the way one that stops says so with\n`ExecutionPolicy::stoppable`.\n\n[ADR 0040]: https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/adrs/0040-development-semantics-are-capabilities-of-one-runtime.md&quot;,
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;const&quot;: &quot;repository_mutation&quot;
-        }
-      ],
-      &quot;description&quot;: &quot;What running a capability changes outside the caller.\n\nClassified, never declared: it follows from the kind, which is the field a declaration\nalready carries. A projection reads this to decide whether to ask before running\nsomething — the Cockpit&#39;s confirmation is derived from it — instead of naming\ncapabilities it must treat carefully, which is a list that goes stale the day after it\nis written.&quot;
-    },
-    &quot;McpServerIdentity&quot;: {
-      &quot;description&quot;: &quot;Who answers `initialize`, as it answers.\n\n```\nuse majordomus_cli::capability::builtin::mcp::McpServerIdentity;\nlet s: McpServerIdentity = serde_json::from_value(serde_json::json!({\n    \&quot;name\&quot;: \&quot;majordomus\&quot;, \&quot;title\&quot;: \&quot;Majordomus\&quot;, \&quot;version\&quot;: \&quot;0.14.0\&quot;,\n})).unwrap();\n// the version is the executable&#39;s: the protocol adapter has none of its own to drift\nassert_eq!((s.name.as_str(), s.version.as_str()), (\&quot;majordomus\&quot;, \&quot;0.14.0\&quot;));\n```&quot;,
-      &quot;type&quot;: &quot;object&quot;,
-      &quot;required&quot;: [
-        &quot;name&quot;,
-        &quot;title&quot;,
-        &quot;version&quot;
-      ],
-      &quot;properties&quot;: {
-        &quot;name&quot;: {
-          &quot;description&quot;: &quot;The server name.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;version&quot;: {
-          &quot;description&quot;: &quot;The version: this executable&#39;s, never one of the protocol adapter&#39;s own.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;title&quot;: {
-          &quot;description&quot;: &quot;The name a person reads.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      }
-    },
-    &quot;McpClientStanding&quot;: {
-      &quot;oneOf&quot;: [
-        {
-          &quot;description&quot;: &quot;The file exists and names the launcher: this client starts this repository&#39;s server.&quot;,
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;const&quot;: &quot;wired&quot;
-        },
-        {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;The file exists and does not name the launcher: the client reads it and starts\nsomething else, or nothing.&quot;,
-          &quot;const&quot;: &quot;foreign&quot;
-        },
-        {
-          &quot;const&quot;: &quot;absent&quot;,
-          &quot;description&quot;: &quot;The file does not exist: this client starts no server here until it is written.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      ],
-      &quot;description&quot;: &quot;Where a client&#39;s project-scoped configuration stands in this repository.\n\n```\nuse majordomus_cli::capability::builtin::mcp::McpClientStanding;\n// the words a caller reads, as they are written on every surface\nassert_eq!(serde_json::to_value(McpClientStanding::Wired).unwrap(), \&quot;wired\&quot;);\nassert_eq!(serde_json::to_value(McpClientStanding::Foreign).unwrap(), \&quot;foreign\&quot;);\nassert_eq!(serde_json::to_value(McpClientStanding::Absent).unwrap(), \&quot;absent\&quot;);\n```&quot;
+      &quot;type&quot;: &quot;object&quot;
     },
     &quot;McpResourceSummary&quot;: {
+      &quot;description&quot;: &quot;The resources a client can read.\n\n```\nuse majordomus_cli::capability::builtin::mcp::McpResourceSummary;\nlet r: McpResourceSummary = serde_json::from_value(serde_json::json!({\n    \&quot;builtin\&quot;: 54, \&quot;objects\&quot;: 1742, \&quot;template\&quot;: \&quot;majordomus://&lt;kind&gt;/&lt;identity&gt;\&quot;,\n})).unwrap();\n// the two counts together are the length of `resources/list`\nassert_eq!(r.builtin + r.objects, 1796);\n```&quot;,
       &quot;properties&quot;: {
-        &quot;objects&quot;: {
-          &quot;description&quot;: &quot;Objects of this repository&#39;s layer, each one more resource.&quot;,
-          &quot;type&quot;: &quot;integer&quot;,
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;minimum&quot;: 0
-        },
         &quot;builtin&quot;: {
-          &quot;type&quot;: &quot;integer&quot;,
+          &quot;description&quot;: &quot;Resources a builtin capability answers.&quot;,
           &quot;format&quot;: &quot;uint&quot;,
           &quot;minimum&quot;: 0,
-          &quot;description&quot;: &quot;Resources a builtin capability answers.&quot;
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;objects&quot;: {
+          &quot;description&quot;: &quot;Objects of this repository&#39;s layer, each one more resource.&quot;,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
         },
         &quot;template&quot;: {
           &quot;description&quot;: &quot;The URI shape of an object&#39;s resource.&quot;,
@@ -606,36 +521,93 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
         &quot;objects&quot;,
         &quot;template&quot;
       ],
-      &quot;description&quot;: &quot;The resources a client can read.\n\n```\nuse majordomus_cli::capability::builtin::mcp::McpResourceSummary;\nlet r: McpResourceSummary = serde_json::from_value(serde_json::json!({\n    \&quot;builtin\&quot;: 54, \&quot;objects\&quot;: 1742, \&quot;template\&quot;: \&quot;majordomus://&lt;kind&gt;/&lt;identity&gt;\&quot;,\n})).unwrap();\n// the two counts together are the length of `resources/list`\nassert_eq!(r.builtin + r.objects, 1796);\n```&quot;,
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;McpServerIdentity&quot;: {
+      &quot;description&quot;: &quot;Who answers `initialize`, as it answers.\n\n```\nuse majordomus_cli::capability::builtin::mcp::McpServerIdentity;\nlet s: McpServerIdentity = serde_json::from_value(serde_json::json!({\n    \&quot;name\&quot;: \&quot;majordomus\&quot;, \&quot;title\&quot;: \&quot;Majordomus\&quot;, \&quot;version\&quot;: \&quot;0.14.0\&quot;,\n})).unwrap();\n// the version is the executable&#39;s: the protocol adapter has none of its own to drift\nassert_eq!((s.name.as_str(), s.version.as_str()), (\&quot;majordomus\&quot;, \&quot;0.14.0\&quot;));\n```&quot;,
+      &quot;properties&quot;: {
+        &quot;name&quot;: {
+          &quot;description&quot;: &quot;The server name.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;title&quot;: {
+          &quot;description&quot;: &quot;The name a person reads.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;version&quot;: {
+          &quot;description&quot;: &quot;The version: this executable&#39;s, never one of the protocol adapter&#39;s own.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;name&quot;,
+        &quot;title&quot;,
+        &quot;version&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;McpServing&quot;: {
+      &quot;description&quot;: &quot;What the server serves of the protocol, and what it does not.\n\n```\nuse majordomus_cli::capability::builtin::mcp::McpServing;\nlet s: McpServing = serde_json::from_value(serde_json::json!({\n    \&quot;methods\&quot;: [\&quot;initialize\&quot;, \&quot;tools/call\&quot;], \&quot;tools\&quot;: true, \&quot;resources\&quot;: true,\n    \&quot;prompts\&quot;: false, \&quot;notifications\&quot;: false,\n})).unwrap();\n// what is not served is stated, so a client does not learn it from a refusal\nassert!(s.tools &amp;&amp; !s.prompts &amp;&amp; !s.notifications);\nassert!(!s.methods.iter().any(|m| m.starts_with(\&quot;prompts/\&quot;)));\n```&quot;,
+      &quot;properties&quot;: {
+        &quot;methods&quot;: {
+          &quot;description&quot;: &quot;The methods a request may name. Anything else is answered `-32601`.&quot;,
+          &quot;items&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          },
+          &quot;type&quot;: &quot;array&quot;
+        },
+        &quot;notifications&quot;: {
+          &quot;description&quot;: &quot;Subscriptions and list-change notifications. Not served: this server sends nothing\nunasked.&quot;,
+          &quot;type&quot;: &quot;boolean&quot;
+        },
+        &quot;prompts&quot;: {
+          &quot;description&quot;: &quot;Prompts. Not served: the repository&#39;s prompt assets are resources, because a prompt\nserved unrendered would read as finished.&quot;,
+          &quot;type&quot;: &quot;boolean&quot;
+        },
+        &quot;resources&quot;: {
+          &quot;description&quot;: &quot;Resources: every capability that declares one, and every object of the layer.&quot;,
+          &quot;type&quot;: &quot;boolean&quot;
+        },
+        &quot;tools&quot;: {
+          &quot;description&quot;: &quot;Tools: every capability that declares one.&quot;,
+          &quot;type&quot;: &quot;boolean&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;methods&quot;,
+        &quot;tools&quot;,
+        &quot;resources&quot;,
+        &quot;prompts&quot;,
+        &quot;notifications&quot;
+      ],
       &quot;type&quot;: &quot;object&quot;
     },
     &quot;McpToolEntry&quot;: {
       &quot;description&quot;: &quot;One tool, as the registry projects it.\n\n```\nuse majordomus_cli::capability::builtin::mcp::McpToolEntry;\nuse majordomus_cli::capability::Effect;\nlet t: McpToolEntry = serde_json::from_value(serde_json::json!({\n    \&quot;name\&quot;: \&quot;majordomus_plan_transition\&quot;, \&quot;capability\&quot;: \&quot;plan.transition\&quot;,\n    \&quot;module\&quot;: \&quot;plan\&quot;, \&quot;title\&quot;: \&quot;Move an issue\&quot;, \&quot;effect\&quot;: \&quot;repository_mutation\&quot;,\n    \&quot;hints\&quot;: { \&quot;read_only\&quot;: false, \&quot;destructive\&quot;: true, \&quot;idempotent\&quot;: false, \&quot;open_world\&quot;: false },\n})).unwrap();\nassert_eq!(t.effect, Effect::RepositoryMutation);\n// the hints are the effect&#39;s classification, carried beside it rather than restated\nassert!(t.hints.destructive &amp;&amp; !t.hints.read_only &amp;&amp; !t.hints.idempotent);\n```&quot;,
-      &quot;type&quot;: &quot;object&quot;,
       &quot;properties&quot;: {
+        &quot;capability&quot;: {
+          &quot;description&quot;: &quot;The capability it projects; `capabilities.describe` answers its schemas.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;effect&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/ExecutionEffect&quot;,
+          &quot;description&quot;: &quot;What a call changes.&quot;
+        },
         &quot;hints&quot;: {
           &quot;$ref&quot;: &quot;#/$defs/ExecutionHints&quot;,
           &quot;description&quot;: &quot;What a caller may assume before calling; the tool&#39;s annotations are this value.&quot;
-        },
-        &quot;capability&quot;: {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;The capability it projects; `capabilities.describe` answers its schemas.&quot;
         },
         &quot;module&quot;: {
           &quot;description&quot;: &quot;The module that composes the capability.&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
+        &quot;name&quot;: {
+          &quot;description&quot;: &quot;The name a client calls.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
         &quot;title&quot;: {
           &quot;description&quot;: &quot;The title.&quot;,
           &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;effect&quot;: {
-          &quot;description&quot;: &quot;What a call changes.&quot;,
-          &quot;$ref&quot;: &quot;#/$defs/ExecutionEffect&quot;
-        },
-        &quot;name&quot;: {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;The name a client calls.&quot;
         }
       },
       &quot;required&quot;: [
@@ -645,10 +617,109 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
         &quot;title&quot;,
         &quot;effect&quot;,
         &quot;hints&quot;
-      ]
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;McpTransportEntry&quot;: {
+      &quot;description&quot;: &quot;One way a client reaches the server.\n\n```\nuse majordomus_cli::capability::builtin::mcp::McpTransportEntry;\nlet t: McpTransportEntry = serde_json::from_value(serde_json::json!({\n    \&quot;id\&quot;: \&quot;stdio\&quot;, \&quot;reached_by\&quot;: \&quot;majordomus mcp\&quot;, \&quot;attached\&quot;: 1,\n})).unwrap();\n// a count of sessions at the moment of asking, not a claim that a server is running\nassert_eq!((t.id.as_str(), t.attached), (\&quot;stdio\&quot;, 1));\n```&quot;,
+      &quot;properties&quot;: {
+        &quot;attached&quot;: {
+          &quot;description&quot;: &quot;Sessions attached to this process over it right now.&quot;,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;id&quot;: {
+          &quot;description&quot;: &quot;`stdio` or `http`.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;reached_by&quot;: {
+          &quot;description&quot;: &quot;How it is reached: the command a client starts, or the path on the shared server.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;id&quot;,
+        &quot;reached_by&quot;,
+        &quot;attached&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
     }
   },
   &quot;description&quot;: &quot;The MCP projection of this registry in this repository.\n\n```\nuse majordomus_cli::capability::builtin::mcp::McpProjection;\nlet p: McpProjection = serde_json::from_value(serde_json::json!({\n    \&quot;server\&quot;: { \&quot;name\&quot;: \&quot;majordomus\&quot;, \&quot;title\&quot;: \&quot;Majordomus\&quot;, \&quot;version\&quot;: \&quot;0.14.0\&quot; },\n    \&quot;protocol_versions\&quot;: [\&quot;2025-06-18\&quot;],\n    \&quot;transports\&quot;: [{ \&quot;id\&quot;: \&quot;stdio\&quot;, \&quot;reached_by\&quot;: \&quot;majordomus mcp\&quot;, \&quot;attached\&quot;: 0 }],\n    \&quot;serving\&quot;: { \&quot;methods\&quot;: [\&quot;initialize\&quot;], \&quot;tools\&quot;: true, \&quot;resources\&quot;: true, \&quot;prompts\&quot;: false, \&quot;notifications\&quot;: false },\n    \&quot;tool_count\&quot;: 2,\n    \&quot;tools\&quot;: [],\n    \&quot;effects\&quot;: [{ \&quot;effect\&quot;: \&quot;read\&quot;, \&quot;tools\&quot;: 1 }, { \&quot;effect\&quot;: \&quot;repository_mutation\&quot;, \&quot;tools\&quot;: 1 }],\n    \&quot;writers\&quot;: [\&quot;majordomus_plan_transition\&quot;],\n    \&quot;resources\&quot;: { \&quot;builtin\&quot;: 1, \&quot;objects\&quot;: 0, \&quot;template\&quot;: \&quot;majordomus://&lt;kind&gt;/&lt;identity&gt;\&quot; },\n    \&quot;launcher_in_repository\&quot;: false,\n    \&quot;clients\&quot;: [],\n    \&quot;findings\&quot;: [],\n})).unwrap();\n// the count is of every tool, whatever the `effect` filter narrowed `tools` to\nassert_eq!(p.tool_count, p.effects.iter().map(|e| e.tools).sum::&lt;usize&gt;());\nassert!(p.tools.is_empty() &amp;&amp; p.writers.len() == 1);\n```&quot;,
+  &quot;properties&quot;: {
+    &quot;clients&quot;: {
+      &quot;description&quot;: &quot;The clients the distribution declares a configuration for, and where each stands.&quot;,
+      &quot;items&quot;: {
+        &quot;$ref&quot;: &quot;#/$defs/McpClient&quot;
+      },
+      &quot;type&quot;: &quot;array&quot;
+    },
+    &quot;effects&quot;: {
+      &quot;description&quot;: &quot;The tools counted by effect, every effect present.&quot;,
+      &quot;items&quot;: {
+        &quot;$ref&quot;: &quot;#/$defs/McpEffectCount&quot;
+      },
+      &quot;type&quot;: &quot;array&quot;
+    },
+    &quot;findings&quot;: {
+      &quot;description&quot;: &quot;What a person should act on. Empty is nothing to do.&quot;,
+      &quot;items&quot;: {
+        &quot;$ref&quot;: &quot;#/$defs/McpFinding&quot;
+      },
+      &quot;type&quot;: &quot;array&quot;
+    },
+    &quot;launcher_in_repository&quot;: {
+      &quot;description&quot;: &quot;Whether this repository carries the launcher at `bin/majordomus-mcp`. Where it does\nnot, the installed command of the same name is what a configuration names.&quot;,
+      &quot;type&quot;: &quot;boolean&quot;
+    },
+    &quot;protocol_versions&quot;: {
+      &quot;description&quot;: &quot;The protocol versions accepted, newest first.&quot;,
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;string&quot;
+      },
+      &quot;type&quot;: &quot;array&quot;
+    },
+    &quot;resources&quot;: {
+      &quot;$ref&quot;: &quot;#/$defs/McpResourceSummary&quot;,
+      &quot;description&quot;: &quot;The resources.&quot;
+    },
+    &quot;server&quot;: {
+      &quot;$ref&quot;: &quot;#/$defs/McpServerIdentity&quot;,
+      &quot;description&quot;: &quot;Who answers `initialize`.&quot;
+    },
+    &quot;serving&quot;: {
+      &quot;$ref&quot;: &quot;#/$defs/McpServing&quot;,
+      &quot;description&quot;: &quot;What of the protocol is served.&quot;
+    },
+    &quot;tool_count&quot;: {
+      &quot;description&quot;: &quot;How many tools the registry projects, whatever the filter asked for.&quot;,
+      &quot;format&quot;: &quot;uint&quot;,
+      &quot;minimum&quot;: 0,
+      &quot;type&quot;: &quot;integer&quot;
+    },
+    &quot;tools&quot;: {
+      &quot;description&quot;: &quot;The tools asked for, in registry order.&quot;,
+      &quot;items&quot;: {
+        &quot;$ref&quot;: &quot;#/$defs/McpToolEntry&quot;
+      },
+      &quot;type&quot;: &quot;array&quot;
+    },
+    &quot;transports&quot;: {
+      &quot;description&quot;: &quot;How a client reaches the server.&quot;,
+      &quot;items&quot;: {
+        &quot;$ref&quot;: &quot;#/$defs/McpTransportEntry&quot;
+      },
+      &quot;type&quot;: &quot;array&quot;
+    },
+    &quot;writers&quot;: {
+      &quot;description&quot;: &quot;The tools that write the repository, by name. The `initialize` instructions name the\nsame ones.&quot;,
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;string&quot;
+      },
+      &quot;type&quot;: &quot;array&quot;
+    }
+  },
   &quot;required&quot;: [
     &quot;server&quot;,
     &quot;protocol_versions&quot;,
@@ -663,79 +734,8 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
     &quot;clients&quot;,
     &quot;findings&quot;
   ],
-  &quot;properties&quot;: {
-    &quot;tool_count&quot;: {
-      &quot;description&quot;: &quot;How many tools the registry projects, whatever the filter asked for.&quot;,
-      &quot;format&quot;: &quot;uint&quot;,
-      &quot;type&quot;: &quot;integer&quot;,
-      &quot;minimum&quot;: 0
-    },
-    &quot;serving&quot;: {
-      &quot;$ref&quot;: &quot;#/$defs/McpServing&quot;,
-      &quot;description&quot;: &quot;What of the protocol is served.&quot;
-    },
-    &quot;protocol_versions&quot;: {
-      &quot;description&quot;: &quot;The protocol versions accepted, newest first.&quot;,
-      &quot;items&quot;: {
-        &quot;type&quot;: &quot;string&quot;
-      },
-      &quot;type&quot;: &quot;array&quot;
-    },
-    &quot;tools&quot;: {
-      &quot;description&quot;: &quot;The tools asked for, in registry order.&quot;,
-      &quot;items&quot;: {
-        &quot;$ref&quot;: &quot;#/$defs/McpToolEntry&quot;
-      },
-      &quot;type&quot;: &quot;array&quot;
-    },
-    &quot;effects&quot;: {
-      &quot;type&quot;: &quot;array&quot;,
-      &quot;items&quot;: {
-        &quot;$ref&quot;: &quot;#/$defs/McpEffectCount&quot;
-      },
-      &quot;description&quot;: &quot;The tools counted by effect, every effect present.&quot;
-    },
-    &quot;findings&quot;: {
-      &quot;items&quot;: {
-        &quot;$ref&quot;: &quot;#/$defs/McpFinding&quot;
-      },
-      &quot;type&quot;: &quot;array&quot;,
-      &quot;description&quot;: &quot;What a person should act on. Empty is nothing to do.&quot;
-    },
-    &quot;launcher_in_repository&quot;: {
-      &quot;type&quot;: &quot;boolean&quot;,
-      &quot;description&quot;: &quot;Whether this repository carries the launcher at `bin/majordomus-mcp`. Where it does\nnot, the installed command of the same name is what a configuration names.&quot;
-    },
-    &quot;resources&quot;: {
-      &quot;$ref&quot;: &quot;#/$defs/McpResourceSummary&quot;,
-      &quot;description&quot;: &quot;The resources.&quot;
-    },
-    &quot;server&quot;: {
-      &quot;$ref&quot;: &quot;#/$defs/McpServerIdentity&quot;,
-      &quot;description&quot;: &quot;Who answers `initialize`.&quot;
-    },
-    &quot;transports&quot;: {
-      &quot;type&quot;: &quot;array&quot;,
-      &quot;description&quot;: &quot;How a client reaches the server.&quot;,
-      &quot;items&quot;: {
-        &quot;$ref&quot;: &quot;#/$defs/McpTransportEntry&quot;
-      }
-    },
-    &quot;clients&quot;: {
-      &quot;type&quot;: &quot;array&quot;,
-      &quot;description&quot;: &quot;The clients the distribution declares a configuration for, and where each stands.&quot;,
-      &quot;items&quot;: {
-        &quot;$ref&quot;: &quot;#/$defs/McpClient&quot;
-      }
-    },
-    &quot;writers&quot;: {
-      &quot;items&quot;: {
-        &quot;type&quot;: &quot;string&quot;
-      },
-      &quot;description&quot;: &quot;The tools that write the repository, by name. The `initialize` instructions name the\nsame ones.&quot;,
-      &quot;type&quot;: &quot;array&quot;
-    }
-  }
+  &quot;title&quot;: &quot;McpProjection&quot;,
+  &quot;type&quot;: &quot;object&quot;
 }</pre></div>
   </details>
 </div>
@@ -766,7 +766,7 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
         <div><dt class="text-body-subtle">modul Rust</dt><dd class="min-w-0 break-all font-mono text-heading">majordomus_cli::capability::builtin::mcp</dd></div>
         <div><dt class="text-body-subtle">typ vstupu</dt><dd class="font-mono text-heading">McpProjectionInput</dd></div>
         <div><dt class="text-body-subtle">typ výstupu</dt><dd class="font-mono text-heading">McpProjection</dd></div>
-        <div><dt class="text-body-subtle">reference na GitHubu</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/docs/generated/modules/mcp.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/mcp.md</a></dd></div><div><dt class="text-body-subtle">otisk registru</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">3f734f2faf797f0ca7c39b4cd837e68b6619c41c6f6711f3d3aeca8f341934eb</dd></div>
+        <div><dt class="text-body-subtle">reference na GitHubu</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/1112bace3437ee0d82067b1e8f61813e70190078/docs/generated/modules/mcp.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/mcp.md</a></dd></div><div><dt class="text-body-subtle">otisk registru</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">5cdbf22cd21589ddbe464d5f0987b6bcf4607d05479004d6f815c3b306fdb08a</dd></div>
         <div><dt class="text-body-subtle">vygenerováno nástrojem</dt><dd class="font-mono text-heading">majordomus-cli 1.0.0-alpha.10</dd></div>
       </dl>
     </div>
@@ -822,9 +822,9 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
       <div class="min-w-0">
         <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">Projekt</h2><ul class="space-y-2 text-sm font-medium text-body">
           <li><a href="https://github.com/korczis/prismatic-majordomus" class="hover:text-heading hover:underline">GitHub</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/LICENSE" class="hover:text-heading hover:underline">Licence MIT</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/SECURITY.md" class="hover:text-heading hover:underline">Bezpečnostní politika</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/CONTRIBUTING.md" class="hover:text-heading hover:underline">Průvodce pro přispěvatele</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/1112bace3437ee0d82067b1e8f61813e70190078/LICENSE" class="hover:text-heading hover:underline">Licence MIT</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/1112bace3437ee0d82067b1e8f61813e70190078/SECURITY.md" class="hover:text-heading hover:underline">Bezpečnostní politika</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/1112bace3437ee0d82067b1e8f61813e70190078/CONTRIBUTING.md" class="hover:text-heading hover:underline">Průvodce pro přispěvatele</a></li>
         </ul>
       </div>
     </div>
@@ -832,7 +832,7 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/cs/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.10</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/745db2ea21e02613943face75a2bf95542be1f2e" class="font-mono underline">745db2e</a> · inputs <span class="font-mono">0a58c217d1b7</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/cs/architecture/" class="underline">how this site is derived</a> names them.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.10</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/1112bace3437ee0d82067b1e8f61813e70190078" class="font-mono underline">1112bac</a> · inputs <span class="font-mono">830f884cc5aa</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/cs/architecture/" class="underline">how this site is derived</a> names them.</p>
     </div>
   </div>
 </footer>

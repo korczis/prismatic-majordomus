@@ -221,10 +221,10 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
   <h3 class="font-mono text-sm font-semibold text-heading">input · Empty</h3><div class="mt-1 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">No input.</div><p class="mt-2 text-sm text-body-subtle">No properties: the capability takes no input.</p><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
-  &quot;title&quot;: &quot;Empty&quot;,
-  &quot;type&quot;: &quot;object&quot;,
   &quot;additionalProperties&quot;: false,
-  &quot;description&quot;: &quot;No input.&quot;
+  &quot;description&quot;: &quot;No input.&quot;,
+  &quot;title&quot;: &quot;Empty&quot;,
+  &quot;type&quot;: &quot;object&quot;
 }</pre></div>
   </details>
 </div>
@@ -234,15 +234,40 @@ the types that implement it.</div><div class="mt-3 overflow-x-auto rounded-base 
     <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
       <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
       <tbody><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">event_schema</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">object</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The JSON Schema of an event, derived from the Rust type.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">event_types</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The event types a client may receive, from the one enum that defines them.</td>
+      </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">heartbeat_seconds</td>
         <td class="px-3 py-2 font-mono text-xs text-body">integer</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
         <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">How many seconds of quiet before the server pings.</td>
       </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">limits</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">What the store keeps, so a client knows what it may ask for.</td>
+      </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">max_connections</td>
         <td class="px-3 py-2 font-mono text-xs text-body">integer</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
         <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">How many live channels this process serves at once.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">max_replay</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">integer</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">How many retained events a scoped connection replays before going live.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">protocol_version</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The version of the event protocol this server speaks.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">states</td>
         <td class="px-3 py-2 font-mono text-xs text-body">array</td>
@@ -255,63 +280,216 @@ table the store holds every event to, so a client never has to restate it.</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
         <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The JSON Schema of a control message, derived from the Rust type.</td>
       </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">event_schema</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">object</td>
+        <td class="px-3 py-2 font-mono text-heading">stream_types</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The JSON Schema of an event, derived from the Rust type.</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The stream's own control messages.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">subscription</td>
         <td class="px-3 py-2 font-mono text-xs text-body">array</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
         <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">How the subscription is expressed, and what a reconnect sends.</td>
       </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">limits</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">What the store keeps, so a client knows what it may ask for.</td>
-      </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">websocket</td>
         <td class="px-3 py-2 font-mono text-xs text-body">string</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
         <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Where the live channel is: a path on this same server, not a second daemon.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">max_replay</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">integer</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">How many retained events a scoped connection replays before going live.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">stream_types</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The stream's own control messages.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">protocol_version</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The version of the event protocol this server speaks.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">event_types</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The event types a client may receive, from the one enum that defines them.</td>
       </tr></tbody>
     </table>
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
-  &quot;type&quot;: &quot;object&quot;,
+  &quot;$defs&quot;: {
+    &quot;ExecutionState&quot;: {
+      &quot;description&quot;: &quot;Where an execution is in its life.\n\nThe transitions are the whole contract, and `ExecutionState::EDGES` is the one place\nthey are written down: `ExecutionState::may_move_to` reads it, the engine asks before\nevery change, the store refuses a move it does not allow, and a client that reads a\nfinal state never sees it move again.\n\n```text\n  authorizing     ──► queued | refused | failed | cancelled\n  queued          ──► running | claimed | refused | failed | cancelled\n  claimed         ──► running | queued | refused | failed | cancelling | unknown_outcome\n  running         ──► verifying | succeeded | failed | cancelling | unknown_outcome\n  verifying       ──► succeeded | failed | cancelling | unknown_outcome\n  cancelling      ──► cancelled | succeeded | failed | unknown_outcome\n  unknown_outcome ──► verifying | succeeded | failed | cancelled        (never running)\n  succeeded, failed, cancelled, refused: final\n```\n\nThe in-process engine moves `queued ──► running` directly: it claims an execution and\nenters its handler in the same instant, so `claimed` would be a state no client could\nobserve. `authorizing`, `claimed`, `verifying`, `refused` and `unknown_outcome` are\nentered by a worker that decides, holds, checks or loses an execution in its own time\n(Mission Control B3): a policy decision before the queue, a lease on a queued ticket, a\ncheck of what the handler produced, a refusal, and a run whose outcome cannot be read.\n\n`unknown_outcome` is the one state a retry may not leave by running again. Whether the\nwork happened is not known, so the next move is a reconciliation that reads evidence\n— to `verifying`, or straight to the outcome it found — and never `running`.&quot;,
+      &quot;oneOf&quot;: [
+        {
+          &quot;const&quot;: &quot;authorizing&quot;,
+          &quot;description&quot;: &quot;Accepted, and a policy decision on whether it may run has not been taken yet.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;queued&quot;,
+          &quot;description&quot;: &quot;Accepted, and no worker has picked it up.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;claimed&quot;,
+          &quot;description&quot;: &quot;A worker holds it and has not entered the handler yet.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;running&quot;,
+          &quot;description&quot;: &quot;The handler is running.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;verifying&quot;,
+          &quot;description&quot;: &quot;The handler returned, and what it produced is being checked.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;cancelling&quot;,
+          &quot;description&quot;: &quot;Cancellation was asked for and the handler has not stopped yet.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;unknown_outcome&quot;,
+          &quot;description&quot;: &quot;Whether the work happened is not known: the worker that ran it went silent or its\nanswer could not be read. Only a reconciliation moves it on, never a rerun.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;succeeded&quot;,
+          &quot;description&quot;: &quot;The handler returned an output.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;failed&quot;,
+          &quot;description&quot;: &quot;The handler returned an error, or the worker could not run it.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;cancelled&quot;,
+          &quot;description&quot;: &quot;It stopped because it was asked to.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;refused&quot;,
+          &quot;description&quot;: &quot;A policy refused it before it ran, at the request or when a worker claimed it.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      ]
+    },
+    &quot;ExecutionStateView&quot;: {
+      &quot;description&quot;: &quot;One state of an execution, with the moves it allows.&quot;,
+      &quot;properties&quot;: {
+        &quot;final&quot;: {
+          &quot;description&quot;: &quot;Whether nothing more will be said about an execution in it.&quot;,
+          &quot;type&quot;: &quot;boolean&quot;
+        },
+        &quot;may_move_to&quot;: {
+          &quot;description&quot;: &quot;The states it may move to; every other move is refused.&quot;,
+          &quot;items&quot;: {
+            &quot;$ref&quot;: &quot;#/$defs/ExecutionState&quot;
+          },
+          &quot;type&quot;: &quot;array&quot;
+        },
+        &quot;state&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/ExecutionState&quot;,
+          &quot;description&quot;: &quot;The state, as the snapshot and the list filter spell it.&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;state&quot;,
+        &quot;final&quot;,
+        &quot;may_move_to&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;LimitsView&quot;: {
+      &quot;description&quot;: &quot;What this process&#39;s execution store keeps.&quot;,
+      &quot;properties&quot;: {
+        &quot;max_events&quot;: {
+          &quot;description&quot;: &quot;How many events are retained per execution.&quot;,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;max_executions&quot;: {
+          &quot;description&quot;: &quot;How many executions are remembered.&quot;,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;max_log_chars&quot;: {
+          &quot;description&quot;: &quot;The longest a single log line may be.&quot;,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;max_running&quot;: {
+          &quot;description&quot;: &quot;How many executions run at once.&quot;,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;max_subscriber_queue&quot;: {
+          &quot;description&quot;: &quot;How far a live channel may fall behind before it is told to resynchronise.&quot;,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;max_executions&quot;,
+        &quot;max_events&quot;,
+        &quot;max_log_chars&quot;,
+        &quot;max_running&quot;,
+        &quot;max_subscriber_queue&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;ParameterView&quot;: {
+      &quot;description&quot;: &quot;One query parameter of the live channel.&quot;,
+      &quot;properties&quot;: {
+        &quot;description&quot;: {
+          &quot;description&quot;: &quot;What it does.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;name&quot;: {
+          &quot;description&quot;: &quot;Its name.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;required&quot;: {
+          &quot;description&quot;: &quot;Whether it must be given.&quot;,
+          &quot;type&quot;: &quot;boolean&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;name&quot;,
+        &quot;description&quot;,
+        &quot;required&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    }
+  },
+  &quot;description&quot;: &quot;The answer of `executions.protocol`: the live channel&#39;s whole contract, derived from\nthe types that implement it.&quot;,
   &quot;properties&quot;: {
+    &quot;event_schema&quot;: {
+      &quot;description&quot;: &quot;The JSON Schema of an event, derived from the Rust type.&quot;
+    },
+    &quot;event_types&quot;: {
+      &quot;description&quot;: &quot;The event types a client may receive, from the one enum that defines them.&quot;,
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;string&quot;
+      },
+      &quot;type&quot;: &quot;array&quot;
+    },
     &quot;heartbeat_seconds&quot;: {
-      &quot;format&quot;: &quot;uint64&quot;,
       &quot;description&quot;: &quot;How many seconds of quiet before the server pings.&quot;,
-      &quot;type&quot;: &quot;integer&quot;,
-      &quot;minimum&quot;: 0
+      &quot;format&quot;: &quot;uint64&quot;,
+      &quot;minimum&quot;: 0,
+      &quot;type&quot;: &quot;integer&quot;
+    },
+    &quot;limits&quot;: {
+      &quot;$ref&quot;: &quot;#/$defs/LimitsView&quot;,
+      &quot;description&quot;: &quot;What the store keeps, so a client knows what it may ask for.&quot;
     },
     &quot;max_connections&quot;: {
       &quot;description&quot;: &quot;How many live channels this process serves at once.&quot;,
       &quot;format&quot;: &quot;uint&quot;,
-      &quot;type&quot;: &quot;integer&quot;,
-      &quot;minimum&quot;: 0
+      &quot;minimum&quot;: 0,
+      &quot;type&quot;: &quot;integer&quot;
+    },
+    &quot;max_replay&quot;: {
+      &quot;description&quot;: &quot;How many retained events a scoped connection replays before going live.&quot;,
+      &quot;format&quot;: &quot;uint&quot;,
+      &quot;minimum&quot;: 0,
+      &quot;type&quot;: &quot;integer&quot;
+    },
+    &quot;protocol_version&quot;: {
+      &quot;description&quot;: &quot;The version of the event protocol this server speaks.&quot;,
+      &quot;type&quot;: &quot;string&quot;
     },
     &quot;states&quot;: {
       &quot;description&quot;: &quot;Every state an execution may be in and the states it may move to: the transition\ntable the store holds every event to, so a client never has to restate it.&quot;,
@@ -323,8 +501,12 @@ table the store holds every event to, so a client never has to restate it.</td>
     &quot;stream_schema&quot;: {
       &quot;description&quot;: &quot;The JSON Schema of a control message, derived from the Rust type.&quot;
     },
-    &quot;event_schema&quot;: {
-      &quot;description&quot;: &quot;The JSON Schema of an event, derived from the Rust type.&quot;
+    &quot;stream_types&quot;: {
+      &quot;description&quot;: &quot;The stream&#39;s own control messages.&quot;,
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;string&quot;
+      },
+      &quot;type&quot;: &quot;array&quot;
     },
     &quot;subscription&quot;: {
       &quot;description&quot;: &quot;How the subscription is expressed, and what a reconnect sends.&quot;,
@@ -333,40 +515,11 @@ table the store holds every event to, so a client never has to restate it.</td>
       },
       &quot;type&quot;: &quot;array&quot;
     },
-    &quot;limits&quot;: {
-      &quot;description&quot;: &quot;What the store keeps, so a client knows what it may ask for.&quot;,
-      &quot;$ref&quot;: &quot;#/$defs/LimitsView&quot;
-    },
     &quot;websocket&quot;: {
       &quot;description&quot;: &quot;Where the live channel is: a path on this same server, not a second daemon.&quot;,
       &quot;type&quot;: &quot;string&quot;
-    },
-    &quot;max_replay&quot;: {
-      &quot;type&quot;: &quot;integer&quot;,
-      &quot;description&quot;: &quot;How many retained events a scoped connection replays before going live.&quot;,
-      &quot;minimum&quot;: 0,
-      &quot;format&quot;: &quot;uint&quot;
-    },
-    &quot;stream_types&quot;: {
-      &quot;description&quot;: &quot;The stream&#39;s own control messages.&quot;,
-      &quot;items&quot;: {
-        &quot;type&quot;: &quot;string&quot;
-      },
-      &quot;type&quot;: &quot;array&quot;
-    },
-    &quot;protocol_version&quot;: {
-      &quot;description&quot;: &quot;The version of the event protocol this server speaks.&quot;,
-      &quot;type&quot;: &quot;string&quot;
-    },
-    &quot;event_types&quot;: {
-      &quot;type&quot;: &quot;array&quot;,
-      &quot;description&quot;: &quot;The event types a client may receive, from the one enum that defines them.&quot;,
-      &quot;items&quot;: {
-        &quot;type&quot;: &quot;string&quot;
-      }
     }
   },
-  &quot;title&quot;: &quot;ProtocolReport&quot;,
   &quot;required&quot;: [
     &quot;protocol_version&quot;,
     &quot;websocket&quot;,
@@ -381,161 +534,8 @@ table the store holds every event to, so a client never has to restate it.</td>
     &quot;stream_schema&quot;,
     &quot;limits&quot;
   ],
-  &quot;$defs&quot;: {
-    &quot;ParameterView&quot;: {
-      &quot;description&quot;: &quot;One query parameter of the live channel.&quot;,
-      &quot;type&quot;: &quot;object&quot;,
-      &quot;required&quot;: [
-        &quot;name&quot;,
-        &quot;description&quot;,
-        &quot;required&quot;
-      ],
-      &quot;properties&quot;: {
-        &quot;name&quot;: {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;Its name.&quot;
-        },
-        &quot;required&quot;: {
-          &quot;type&quot;: &quot;boolean&quot;,
-          &quot;description&quot;: &quot;Whether it must be given.&quot;
-        },
-        &quot;description&quot;: {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;What it does.&quot;
-        }
-      }
-    },
-    &quot;ExecutionState&quot;: {
-      &quot;description&quot;: &quot;Where an execution is in its life.\n\nThe transitions are the whole contract, and `ExecutionState::EDGES` is the one place\nthey are written down: `ExecutionState::may_move_to` reads it, the engine asks before\nevery change, the store refuses a move it does not allow, and a client that reads a\nfinal state never sees it move again.\n\n```text\n  authorizing     ──► queued | refused | failed | cancelled\n  queued          ──► running | claimed | refused | failed | cancelled\n  claimed         ──► running | queued | refused | failed | cancelling | unknown_outcome\n  running         ──► verifying | succeeded | failed | cancelling | unknown_outcome\n  verifying       ──► succeeded | failed | cancelling | unknown_outcome\n  cancelling      ──► cancelled | succeeded | failed | unknown_outcome\n  unknown_outcome ──► verifying | succeeded | failed | cancelled        (never running)\n  succeeded, failed, cancelled, refused: final\n```\n\nThe in-process engine moves `queued ──► running` directly: it claims an execution and\nenters its handler in the same instant, so `claimed` would be a state no client could\nobserve. `authorizing`, `claimed`, `verifying`, `refused` and `unknown_outcome` are\nentered by a worker that decides, holds, checks or loses an execution in its own time\n(Mission Control B3): a policy decision before the queue, a lease on a queued ticket, a\ncheck of what the handler produced, a refusal, and a run whose outcome cannot be read.\n\n`unknown_outcome` is the one state a retry may not leave by running again. Whether the\nwork happened is not known, so the next move is a reconciliation that reads evidence\n— to `verifying`, or straight to the outcome it found — and never `running`.&quot;,
-      &quot;oneOf&quot;: [
-        {
-          &quot;const&quot;: &quot;authorizing&quot;,
-          &quot;description&quot;: &quot;Accepted, and a policy decision on whether it may run has not been taken yet.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;queued&quot;,
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;Accepted, and no worker has picked it up.&quot;
-        },
-        {
-          &quot;const&quot;: &quot;claimed&quot;,
-          &quot;description&quot;: &quot;A worker holds it and has not entered the handler yet.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;description&quot;: &quot;The handler is running.&quot;,
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;const&quot;: &quot;running&quot;
-        },
-        {
-          &quot;description&quot;: &quot;The handler returned, and what it produced is being checked.&quot;,
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;const&quot;: &quot;verifying&quot;
-        },
-        {
-          &quot;description&quot;: &quot;Cancellation was asked for and the handler has not stopped yet.&quot;,
-          &quot;const&quot;: &quot;cancelling&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;unknown_outcome&quot;,
-          &quot;description&quot;: &quot;Whether the work happened is not known: the worker that ran it went silent or its\nanswer could not be read. Only a reconciliation moves it on, never a rerun.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;description&quot;: &quot;The handler returned an output.&quot;,
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;const&quot;: &quot;succeeded&quot;
-        },
-        {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;The handler returned an error, or the worker could not run it.&quot;,
-          &quot;const&quot;: &quot;failed&quot;
-        },
-        {
-          &quot;const&quot;: &quot;cancelled&quot;,
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;It stopped because it was asked to.&quot;
-        },
-        {
-          &quot;const&quot;: &quot;refused&quot;,
-          &quot;description&quot;: &quot;A policy refused it before it ran, at the request or when a worker claimed it.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      ]
-    },
-    &quot;ExecutionStateView&quot;: {
-      &quot;properties&quot;: {
-        &quot;final&quot;: {
-          &quot;type&quot;: &quot;boolean&quot;,
-          &quot;description&quot;: &quot;Whether nothing more will be said about an execution in it.&quot;
-        },
-        &quot;may_move_to&quot;: {
-          &quot;items&quot;: {
-            &quot;$ref&quot;: &quot;#/$defs/ExecutionState&quot;
-          },
-          &quot;description&quot;: &quot;The states it may move to; every other move is refused.&quot;,
-          &quot;type&quot;: &quot;array&quot;
-        },
-        &quot;state&quot;: {
-          &quot;description&quot;: &quot;The state, as the snapshot and the list filter spell it.&quot;,
-          &quot;$ref&quot;: &quot;#/$defs/ExecutionState&quot;
-        }
-      },
-      &quot;type&quot;: &quot;object&quot;,
-      &quot;description&quot;: &quot;One state of an execution, with the moves it allows.&quot;,
-      &quot;required&quot;: [
-        &quot;state&quot;,
-        &quot;final&quot;,
-        &quot;may_move_to&quot;
-      ]
-    },
-    &quot;LimitsView&quot;: {
-      &quot;description&quot;: &quot;What this process&#39;s execution store keeps.&quot;,
-      &quot;type&quot;: &quot;object&quot;,
-      &quot;properties&quot;: {
-        &quot;max_running&quot;: {
-          &quot;description&quot;: &quot;How many executions run at once.&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;max_events&quot;: {
-          &quot;description&quot;: &quot;How many events are retained per execution.&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;,
-          &quot;format&quot;: &quot;uint&quot;
-        },
-        &quot;max_executions&quot;: {
-          &quot;description&quot;: &quot;How many executions are remembered.&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;,
-          &quot;format&quot;: &quot;uint&quot;
-        },
-        &quot;max_subscriber_queue&quot;: {
-          &quot;type&quot;: &quot;integer&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;description&quot;: &quot;How far a live channel may fall behind before it is told to resynchronise.&quot;,
-          &quot;format&quot;: &quot;uint&quot;
-        },
-        &quot;max_log_chars&quot;: {
-          &quot;description&quot;: &quot;The longest a single log line may be.&quot;,
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;type&quot;: &quot;integer&quot;,
-          &quot;minimum&quot;: 0
-        }
-      },
-      &quot;required&quot;: [
-        &quot;max_executions&quot;,
-        &quot;max_events&quot;,
-        &quot;max_log_chars&quot;,
-        &quot;max_running&quot;,
-        &quot;max_subscriber_queue&quot;
-      ]
-    }
-  },
-  &quot;description&quot;: &quot;The answer of `executions.protocol`: the live channel&#39;s whole contract, derived from\nthe types that implement it.&quot;
+  &quot;title&quot;: &quot;ProtocolReport&quot;,
+  &quot;type&quot;: &quot;object&quot;
 }</pre></div>
   </details>
 </div>
@@ -566,7 +566,7 @@ table the store holds every event to, so a client never has to restate it.</td>
         <div><dt class="text-body-subtle">Rust module</dt><dd class="min-w-0 break-all font-mono text-heading">majordomus_cli::capability::builtin::executions</dd></div>
         <div><dt class="text-body-subtle">input type</dt><dd class="font-mono text-heading">Empty</dd></div>
         <div><dt class="text-body-subtle">output type</dt><dd class="font-mono text-heading">ProtocolReport</dd></div>
-        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/docs/generated/modules/executions.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/executions.md</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">3f734f2faf797f0ca7c39b4cd837e68b6619c41c6f6711f3d3aeca8f341934eb</dd></div>
+        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/1112bace3437ee0d82067b1e8f61813e70190078/docs/generated/modules/executions.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/executions.md</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">5cdbf22cd21589ddbe464d5f0987b6bcf4607d05479004d6f815c3b306fdb08a</dd></div>
         <div><dt class="text-body-subtle">generated by</dt><dd class="font-mono text-heading">majordomus-cli 1.0.0-alpha.10</dd></div>
       </dl>
     </div>
@@ -622,9 +622,9 @@ table the store holds every event to, so a client never has to restate it.</td>
       <div class="min-w-0">
         <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">Project</h2><ul class="space-y-2 text-sm font-medium text-body">
           <li><a href="https://github.com/korczis/prismatic-majordomus" class="hover:text-heading hover:underline">GitHub</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/LICENSE" class="hover:text-heading hover:underline">MIT licence</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/SECURITY.md" class="hover:text-heading hover:underline">Security policy</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/CONTRIBUTING.md" class="hover:text-heading hover:underline">Contributing guide</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/1112bace3437ee0d82067b1e8f61813e70190078/LICENSE" class="hover:text-heading hover:underline">MIT licence</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/1112bace3437ee0d82067b1e8f61813e70190078/SECURITY.md" class="hover:text-heading hover:underline">Security policy</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/1112bace3437ee0d82067b1e8f61813e70190078/CONTRIBUTING.md" class="hover:text-heading hover:underline">Contributing guide</a></li>
         </ul>
       </div>
     </div>
@@ -632,7 +632,7 @@ table the store holds every event to, so a client never has to restate it.</td>
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.10</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/745db2ea21e02613943face75a2bf95542be1f2e" class="font-mono underline">745db2e</a> · inputs <span class="font-mono">0a58c217d1b7</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/architecture/" class="underline">how this site is derived</a> names them.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.10</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/1112bace3437ee0d82067b1e8f61813e70190078" class="font-mono underline">1112bac</a> · inputs <span class="font-mono">830f884cc5aa</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/architecture/" class="underline">how this site is derived</a> names them.</p>
     </div>
   </div>
 </footer>

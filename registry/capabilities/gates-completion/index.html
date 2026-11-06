@@ -263,6 +263,8 @@ input, in the words <code>scripts/ci-plan --tier</code> refuses it with.</td>
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
+  &quot;additionalProperties&quot;: false,
+  &quot;description&quot;: &quot;```\nuse majordomus_cli::capability::builtin::gates::CompletionInput;\n\n// the default asks about the active task&#39;s own change set\nlet mine = CompletionInput::default();\nassert!(mine.changed.is_none() &amp;&amp; mine.base.is_none());\n\n// and a caller may name the change instead, which is how a test drives it\nlet named = CompletionInput {\n    changed: Some(vec![\&quot;docs/CLI.md\&quot;.into()]),\n    ..Default::default()\n};\nassert_eq!(named.changed.unwrap(), [\&quot;docs/CLI.md\&quot;]);\n```\nWhich change to judge completion over.&quot;,
   &quot;properties&quot;: {
     &quot;base&quot;: {
       &quot;description&quot;: &quot;The commit to compare with, when the task&#39;s own starting commit is not wanted.&quot;,
@@ -272,21 +274,21 @@ input, in the words <code>scripts/ci-plan --tier</code> refuses it with.</td>
       ]
     },
     &quot;changed&quot;: {
-      &quot;type&quot;: [
-        &quot;array&quot;,
-        &quot;null&quot;
-      ],
       &quot;description&quot;: &quot;The changed paths, repository-relative. Absent means the task&#39;s own change set:\neverything between the commit the task started at and the working tree.&quot;,
       &quot;items&quot;: {
         &quot;type&quot;: &quot;string&quot;
-      }
+      },
+      &quot;type&quot;: [
+        &quot;array&quot;,
+        &quot;null&quot;
+      ]
     },
     &quot;on_demand&quot;: {
+      &quot;description&quot;: &quot;Also plan the gates the model marks on-demand. Off by default, because a plan that\nselects a gate whose runner is unavailable is a plan whose verdict never arrives.&quot;,
       &quot;type&quot;: [
         &quot;boolean&quot;,
         &quot;null&quot;
-      ],
-      &quot;description&quot;: &quot;Also plan the gates the model marks on-demand. Off by default, because a plan that\nselects a gate whose runner is unavailable is a plan whose verdict never arrives.&quot;
+      ]
     },
     &quot;tier&quot;: {
       &quot;description&quot;: &quot;Plan at this tier of the model&#39;s `tiers` (ADR 0186): a gate whose lane the tier does\nnot run is left out, and nothing implies or requires it back. Absent plans every lane.\nA model that declares no tiers, or a tier it does not declare, is refused as invalid\ninput, in the words `scripts/ci-plan --tier` refuses it with.&quot;,
@@ -296,10 +298,8 @@ input, in the words <code>scripts/ci-plan --tier</code> refuses it with.</td>
       ]
     }
   },
-  &quot;type&quot;: &quot;object&quot;,
-  &quot;additionalProperties&quot;: false,
-  &quot;description&quot;: &quot;```\nuse majordomus_cli::capability::builtin::gates::CompletionInput;\n\n// the default asks about the active task&#39;s own change set\nlet mine = CompletionInput::default();\nassert!(mine.changed.is_none() &amp;&amp; mine.base.is_none());\n\n// and a caller may name the change instead, which is how a test drives it\nlet named = CompletionInput {\n    changed: Some(vec![\&quot;docs/CLI.md\&quot;.into()]),\n    ..Default::default()\n};\nassert_eq!(named.changed.unwrap(), [\&quot;docs/CLI.md\&quot;]);\n```\nWhich change to judge completion over.&quot;,
-  &quot;title&quot;: &quot;CompletionInput&quot;
+  &quot;title&quot;: &quot;CompletionInput&quot;,
+  &quot;type&quot;: &quot;object&quot;
 }</pre></div>
   </details>
 </div>
@@ -340,29 +340,10 @@ renders it, and all of them are reading this one execution.</div><div class="mt-
     <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
       <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
       <tbody><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">unverified</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The required gates that have never reported, or cannot be judged here. A task
-finished over these is finished unverified, and the record says so.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">policy</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The completion policy the questions were taken from, as the distribution names it.
-Absent when no policy could be read; a finding then says why, the one question asked
-is whether it can be, and nothing is complete.</td>
-      </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">blocking</td>
         <td class="px-3 py-2 font-mono text-xs text-body">array</td>
         <td class="px-3 py-2 font-mono text-xs text-body">no</td>
         <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The required gates whose status refuses completion.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">finishable</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">boolean</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">False when a required gate is known to be failing, stale, or blocked by one that is.
-Absence of a verdict does not make this false — it makes <code>unverified</code> non-empty.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">complete</td>
         <td class="px-3 py-2 font-mono text-xs text-body">boolean</td>
@@ -371,10 +352,27 @@ Absence of a verdict does not make this false — it makes <code>unverified</cod
 exempt. The one field that may be read as "done": it is the stage fold's word, and
 no surface computes it a second time from the parts.</td>
       </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">findings</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">What could not be established, each as one line. Never empty when something was
+skipped: a gap is reported rather than left to be inferred.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">finishable</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">boolean</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">False when a required gate is known to be failing, stale, or blocked by one that is.
+Absence of a verdict does not make this false — it makes <code>unverified</code> non-empty.</td>
+      </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">gates</td>
         <td class="px-3 py-2 font-mono text-xs text-body">array</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
         <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Every gate of the model, what refuses first.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">model</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The CI model this was judged against.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">obligations</td>
         <td class="px-3 py-2 font-mono text-xs text-body">array</td>
@@ -387,6 +385,18 @@ judgement of a declared one is <code>obligations.closure</code>'s, not this modu
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
         <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Affected or full, and why.</td>
       </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">policy</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The completion policy the questions were taken from, as the distribution names it.
+Absent when no policy could be read; a finding then says why, the one question asked
+is whether it can be, and nothing is complete.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">present</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">boolean</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">True when a task record was found in this checkout.</td>
+      </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">questions</td>
         <td class="px-3 py-2 font-mono text-xs text-body">array</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
@@ -397,21 +407,6 @@ and the closing readings; a question nothing here reaches is <code>unknown</code
 command that would answer it. Exactly the questions of the completion policy, in its
 order, each with the stage the policy places it in.</td>
       </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">present</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">boolean</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">True when a task record was found in this checkout.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">task</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">one of 2</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The task, as its record declares it.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">model</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The CI model this was judged against.</td>
-      </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">stage</td>
         <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
@@ -419,259 +414,94 @@ order, each with the stage the policy places it in.</td>
 stage order: the first stage blocked, else the first stage pending, else the last.
 Derived on every reading and never written down by anybody.</td>
       </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">findings</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">What could not be established, each as one line. Never empty when something was
-skipped: a gap is reported rather than left to be inferred.</td>
-      </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">tallies</td>
         <td class="px-3 py-2 font-mono text-xs text-body">object</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
         <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">How many gates stand in each status, by word.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">task</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">one of 2</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The task, as its record declares it.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">unverified</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The required gates that have never reported, or cannot be judged here. A task
+finished over these is finished unverified, and the record says so.</td>
       </tr></tbody>
     </table>
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
-  &quot;description&quot;: &quot;```\nuse majordomus_cli::gates::Completion;\n\n// the document every surface reads, as `gates.completion` answers with it. The property\n// that matters is the one asserted here: a gate that never reported leaves the task\n// finishable and *unverified*, which is a different thing from a task that passed.\nlet c: Completion = serde_json::from_value(serde_json::json!({\n    \&quot;present\&quot;: true,\n    \&quot;model\&quot;: \&quot;.ai/repo/ci/gates.yaml\&quot;,\n    \&quot;plan\&quot;: { \&quot;mode\&quot;: \&quot;affected\&quot;, \&quot;reason\&quot;: \&quot;1 path in 1 class\&quot;, \&quot;changed\&quot;: [\&quot;docs/CLI.md\&quot;],\n              \&quot;classes\&quot;: [], \&quot;unclassified\&quot;: [], \&quot;selected\&quot;: {}, \&quot;excluded\&quot;: {} },\n    \&quot;finishable\&quot;: true,\n    \&quot;unverified\&quot;: [\&quot;reference-check\&quot;],\n    \&quot;tallies\&quot;: { \&quot;queued\&quot;: 1 },\n    \&quot;gates\&quot;: [],\n    \&quot;obligations\&quot;: [],\n    \&quot;questions\&quot;: [],\n    \&quot;policy\&quot;: \&quot;share/completion.yaml\&quot;,\n    \&quot;stage\&quot;: { \&quot;id\&quot;: \&quot;gates\&quot;, \&quot;title\&quot;: \&quot;Gates\&quot;, \&quot;state\&quot;: \&quot;pending\&quot;, \&quot;complete\&quot;: false,\n               \&quot;owing\&quot;: [\&quot;ci\&quot;], \&quot;stages\&quot;: [] },\n    \&quot;complete\&quot;: false\n}))\n.unwrap();\nassert!(c.finishable, \&quot;absence of a verdict does not refuse\&quot;);\nassert_eq!(c.unverified, [\&quot;reference-check\&quot;], \&quot;and it is never silently accepted\&quot;);\nassert!(c.blocking.is_empty());\n// finishable is not complete: the stage the answers fold to still owes the ci question\nassert!(!c.complete);\nassert_eq!(c.stage.id, \&quot;gates\&quot;);\nassert_eq!(c.stage.owing, [\&quot;ci\&quot;]);\n```\nWhether the active task may be called finished, and everything the answer rests on.\n\n`finishable` is the field a caller acts on and the one thing no surface may recompute:\nthe shell tool&#39;s `check` and `finish` read it, the HTTP API serves it, the Cockpit\nrenders it, and all of them are reading this one execution.&quot;,
-  &quot;required&quot;: [
-    &quot;present&quot;,
-    &quot;model&quot;,
-    &quot;plan&quot;,
-    &quot;finishable&quot;,
-    &quot;tallies&quot;,
-    &quot;gates&quot;,
-    &quot;obligations&quot;,
-    &quot;questions&quot;,
-    &quot;stage&quot;,
-    &quot;complete&quot;
-  ],
-  &quot;title&quot;: &quot;Completion&quot;,
-  &quot;type&quot;: &quot;object&quot;,
   &quot;$defs&quot;: {
-    &quot;GateRun&quot;: {
-      &quot;type&quot;: &quot;object&quot;,
-      &quot;properties&quot;: {
-        &quot;session&quot;: {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;The session that recorded it.&quot;
-        },
-        &quot;branch&quot;: {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;The branch it was recorded on.&quot;
-        },
-        &quot;head&quot;: {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;The commit the ledger&#39;s envelope stamped on it.&quot;
-        },
-        &quot;command&quot;: {
-          &quot;description&quot;: &quot;The command that produced it — narrative is not evidence.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;exit&quot;: {
-          &quot;type&quot;: &quot;integer&quot;,
-          &quot;format&quot;: &quot;int64&quot;,
-          &quot;description&quot;: &quot;The exit status the gate reported. `0` is a pass.&quot;
-        },
-        &quot;inputs_hash&quot;: {
-          &quot;description&quot;: &quot;The hash of the files that select the gate, as they stood when it ran.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;recorded_at&quot;: {
-          &quot;description&quot;: &quot;When it was recorded, RFC 3339 UTC.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      },
-      &quot;required&quot;: [
-        &quot;recorded_at&quot;,
-        &quot;head&quot;,
-        &quot;branch&quot;,
-        &quot;exit&quot;
-      ],
-      &quot;description&quot;: &quot;```\nuse majordomus_cli::gates::GateRun;\n\n// what `majordomus evidence --gate` writes: a run, and the tree it was taken over\nlet run = GateRun {\n    recorded_at: \&quot;2026-01-01T00:00:00Z\&quot;.into(),\n    head: \&quot;9b1e2d4\&quot;.into(),\n    branch: \&quot;master\&quot;.into(),\n    exit: 0,\n    command: \&quot;scripts/rust-check --ci\&quot;.into(),\n    inputs_hash: \&quot;3f0a\&quot;.into(),\n    session: \&quot;s-1\&quot;.into(),\n};\n// the hash is what makes a run go stale rather than merely old: the same run read\n// against a different tree is evidence about a tree that no longer exists\nassert_eq!(run.exit, 0);\nassert_ne!(run.inputs_hash, \&quot;0000\&quot;);\n```\nThe `task.gate` ledger line that last reported a gate, as the ledger holds it.&quot;
-    },
-    &quot;GatePlanMode&quot;: {
-      &quot;oneOf&quot;: [
-        {
-          &quot;const&quot;: &quot;affected&quot;,
-          &quot;description&quot;: &quot;The gates of the classes the changed paths fall in.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;description&quot;: &quot;Every gate but the on-demand ones: asked for, or escalated to.&quot;,
-          &quot;const&quot;: &quot;full&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      ],
-      &quot;description&quot;: &quot;```\nuse majordomus_cli::gates::GatePlanMode;\n\n// a plan is either the gates the change selects, or everything the runners allow\nassert_eq!(GatePlanMode::Affected.as_str(), \&quot;affected\&quot;);\nassert_eq!(GatePlanMode::Full.as_str(), \&quot;full\&quot;);\nassert_ne!(GatePlanMode::Affected, GatePlanMode::Full);\n```\nWhy the plan selects what it selects.&quot;
-    },
-    &quot;GateClassMatch&quot;: {
-      &quot;properties&quot;: {
-        &quot;id&quot;: {
-          &quot;description&quot;: &quot;The class&#39;s identity.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;paths&quot;: {
-          &quot;type&quot;: &quot;array&quot;,
-          &quot;items&quot;: {
-            &quot;type&quot;: &quot;string&quot;
-          },
-          &quot;description&quot;: &quot;The changed paths this class covers.&quot;
-        }
-      },
-      &quot;required&quot;: [
-        &quot;id&quot;,
-        &quot;paths&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;,
-      &quot;description&quot;: &quot;```\nuse majordomus_cli::gates::GateClassMatch;\n\nlet hit = GateClassMatch { id: \&quot;docs\&quot;.into(), paths: vec![\&quot;docs/CLI.md\&quot;.into()] };\n// the class, and the files of the change that put it in the plan — never the class alone,\n// because a plan a reader cannot check is a plan a reader has to believe\nassert_eq!(hit.paths.len(), 1);\n```\nOne class a change fell in, and the paths that put it there.&quot;
-    },
-    &quot;GateStatus&quot;: {
-      &quot;oneOf&quot;: [
-        {
-          &quot;description&quot;: &quot;It ran over these inputs and succeeded. The only word that discharges anything.&quot;,
-          &quot;const&quot;: &quot;pass&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;description&quot;: &quot;It ran over these inputs and failed. Completion is refused.&quot;,
-          &quot;const&quot;: &quot;fail&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;description&quot;: &quot;It ran, and the files that select it have changed since; what it proved is about a\ntree that no longer exists. Completion is refused, because the alternative is\ntreating a claim about the past as a claim about the present.&quot;,
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;const&quot;: &quot;stale&quot;
-        },
-        {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;const&quot;: &quot;blocked&quot;,
-          &quot;description&quot;: &quot;Something it cannot run without has not passed, so its own silence means nothing.&quot;
-        },
-        {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;The plan selects it and no run has ever reported. Not `unknown`: the question was\nasked and no answer came, which is a debt somebody owes, and not `pass`, which is\nthe mistake this word exists to make impossible.&quot;,
-          &quot;const&quot;: &quot;queued&quot;
-        },
-        {
-          &quot;const&quot;: &quot;exempt&quot;,
-          &quot;description&quot;: &quot;The plan does not select it: nothing the task changed can make it true or false.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;unknown&quot;,
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;It cannot be judged here at all — no model, no git, a ledger that would not read.\nAn honest gap, and never a pass.&quot;
-        }
-      ],
-      &quot;description&quot;: &quot;```\nuse majordomus_cli::gates::GateStatus;\n\n// the three answers a reader is entitled to, and they are different answers\nassert!(GateStatus::Fail.refuses(), \&quot;a run that failed refuses\&quot;);\nassert!(GateStatus::Queued.unverified(), \&quot;asked and unanswered is a debt\&quot;);\nassert!(!GateStatus::Exempt.refuses() &amp;&amp; !GateStatus::Exempt.unverified());\n\n// and the one that is neither: a run whose tree has moved proves nothing about this one\nassert!(GateStatus::Stale.refuses());\nassert_eq!(GateStatus::Stale.as_str(), \&quot;stale\&quot;);\n```\nWhat is known about one gate. Every word is one this repository&#39;s design tokens already\ncarry (`share/design/tokens.yaml`, `status.states`), so a surface renders it without\nbeing taught a sixth vocabulary and the design gate does not refuse it.&quot;
-    },
-    &quot;StageReport&quot;: {
-      &quot;properties&quot;: {
-        &quot;owing&quot;: {
-          &quot;description&quot;: &quot;The questions still owed or refusing, in policy order.&quot;,
-          &quot;type&quot;: &quot;array&quot;,
-          &quot;items&quot;: {
-            &quot;type&quot;: &quot;string&quot;
-          }
-        },
-        &quot;state&quot;: {
-          &quot;description&quot;: &quot;Where it stands.&quot;,
-          &quot;$ref&quot;: &quot;#/$defs/StageState&quot;
-        },
-        &quot;questions&quot;: {
-          &quot;items&quot;: {
-            &quot;type&quot;: &quot;string&quot;
-          },
-          &quot;description&quot;: &quot;The questions of this stage, in policy order.&quot;,
-          &quot;type&quot;: &quot;array&quot;
-        },
-        &quot;title&quot;: {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;The stage as a heading.&quot;
-        },
-        &quot;id&quot;: {
-          &quot;description&quot;: &quot;The stage&#39;s identity.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      },
-      &quot;type&quot;: &quot;object&quot;,
-      &quot;description&quot;: &quot;One stage of the lifecycle, with what its questions said. Every stage of the policy\ngets one, in the policy&#39;s order, so a reader sees the stages behind the task as well\nas the one it stands at; `owing` is written only when something is owed.\n\n```\nuse majordomus_cli::gates::{StageReport, StageState};\n\nlet report = StageReport {\n    id: \&quot;commit\&quot;.into(),\n    title: \&quot;Commit and push\&quot;.into(),\n    state: StageState::Complete,\n    questions: vec![\&quot;committed\&quot;.into(), \&quot;pushed\&quot;.into()],\n    owing: Vec::new(),\n};\nlet json = serde_json::to_value(&amp;report).unwrap();\nassert_eq!(json[\&quot;state\&quot;], \&quot;complete\&quot;);\nassert!(json.get(\&quot;owing\&quot;).is_none(), \&quot;nothing owed is nothing written\&quot;);\n```&quot;,
-      &quot;required&quot;: [
-        &quot;id&quot;,
-        &quot;title&quot;,
-        &quot;state&quot;,
-        &quot;questions&quot;
-      ]
-    },
     &quot;ActiveTask&quot;: {
       &quot;description&quot;: &quot;The active task of this checkout, when there is one.&quot;,
       &quot;properties&quot;: {
-        &quot;requires&quot;: {
-          &quot;type&quot;: &quot;array&quot;,
-          &quot;description&quot;: &quot;The obligations it owes before the outcome `completed` is available.\n\nBeside `scope` and not inside it, because the two are different promises: scope is\ncontainment — where a worker may write — and this is delivery. A change can sit\nentirely inside its scope and still be uncommitted on a laptop (ADR 0030).\n`super::obligations` is what judges each of these against its evidence; here it\nis reported as declared.&quot;,
-          &quot;items&quot;: {
-            &quot;type&quot;: &quot;string&quot;
-          }
+        &quot;binding&quot;: {
+          &quot;description&quot;: &quot;The standing `intents.binding` answered when the task started — what `start` was\ntold then, not where the work stands now.&quot;,
+          &quot;type&quot;: &quot;string&quot;
         },
         &quot;evidence_standing&quot;: {
           &quot;description&quot;: &quot;The pin of where the served criteria&#39;s evidence stood when the task started.&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
-        &quot;scope&quot;: {
-          &quot;items&quot;: {
-            &quot;type&quot;: &quot;string&quot;
-          },
-          &quot;type&quot;: &quot;array&quot;,
-          &quot;description&quot;: &quot;The paths it claims.&quot;
-        },
-        &quot;started_at&quot;: {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;When it started.&quot;
-        },
         &quot;exemption&quot;: {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;The exemption class the worker gave instead (`start --exempt`).&quot;
+          &quot;description&quot;: &quot;The exemption class the worker gave instead (`start --exempt`).&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;exemption_because&quot;: {
+          &quot;description&quot;: &quot;The reason given with the exemption.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;head&quot;: {
+          &quot;description&quot;: &quot;The commit it started at.&quot;,
+          &quot;type&quot;: &quot;string&quot;
         },
         &quot;id&quot;: {
           &quot;description&quot;: &quot;The task id.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;intent&quot;: {
+          &quot;description&quot;: &quot;The intent the worker said this task serves (`start --intent`).&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;issue&quot;: {
+          &quot;description&quot;: &quot;The issue the worker said this task executes (`start --issue`). A name, never state:\nwhat it serves is answered by `intents.binding` on every read (ADR 0111).&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;outcome&quot;: {
+          &quot;description&quot;: &quot;Its typed outcome so far: `active`, `handed_over`, or a finished one.&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
         &quot;plan_revision&quot;: {
           &quot;description&quot;: &quot;The pin of what the work was for when the task started.&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
-        &quot;issue&quot;: {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;The issue the worker said this task executes (`start --issue`). A name, never state:\nwhat it serves is answered by `intents.binding` on every read (ADR 0111).&quot;
-        },
         &quot;profile&quot;: {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;The execution profile it runs under.&quot;
-        },
-        &quot;intent&quot;: {
-          &quot;description&quot;: &quot;The intent the worker said this task serves (`start --intent`).&quot;,
+          &quot;description&quot;: &quot;The execution profile it runs under.&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
-        &quot;exemption_because&quot;: {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;The reason given with the exemption.&quot;
+        &quot;requires&quot;: {
+          &quot;description&quot;: &quot;The obligations it owes before the outcome `completed` is available.\n\nBeside `scope` and not inside it, because the two are different promises: scope is\ncontainment — where a worker may write — and this is delivery. A change can sit\nentirely inside its scope and still be uncommitted on a laptop (ADR 0030).\n`super::obligations` is what judges each of these against its evidence; here it\nis reported as declared.&quot;,
+          &quot;items&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          },
+          &quot;type&quot;: &quot;array&quot;
         },
-        &quot;head&quot;: {
-          &quot;description&quot;: &quot;The commit it started at.&quot;,
+        &quot;scope&quot;: {
+          &quot;description&quot;: &quot;The paths it claims.&quot;,
+          &quot;items&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          },
+          &quot;type&quot;: &quot;array&quot;
+        },
+        &quot;started_at&quot;: {
+          &quot;description&quot;: &quot;When it started.&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
         &quot;task&quot;: {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;What is being worked on.&quot;
-        },
-        &quot;binding&quot;: {
-          &quot;description&quot;: &quot;The standing `intents.binding` answered when the task started — what `start` was\ntold then, not where the work stands now.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;outcome&quot;: {
-          &quot;description&quot;: &quot;Its typed outcome so far: `active`, `handed_over`, or a finished one.&quot;,
+          &quot;description&quot;: &quot;What is being worked on.&quot;,
           &quot;type&quot;: &quot;string&quot;
         }
       },
@@ -683,161 +513,57 @@ skipped: a gap is reported rather than left to be inferred.</td>
       ],
       &quot;type&quot;: &quot;object&quot;
     },
-    &quot;ImpliedObligation&quot;: {
-      &quot;description&quot;: &quot;```\nuse majordomus_cli::gates::ImpliedObligation;\n\nlet owed = ImpliedObligation {\n    id: \&quot;tests\&quot;.into(),\n    title: \&quot;The cases the change obliges were run\&quot;.into(),\n    applicable: true,\n    declared: false,\n    reason: \&quot;lib/check.sh is an input of this obligation\&quot;.into(),\n    because: vec![\&quot;lib/check.sh\&quot;.into()],\n    remediation: \&quot;majordomus start --requires tests\&quot;.into(),\n};\n// applicable and undeclared is the gap nothing else reports: the change owes it and\n// the task promised nothing, so no validator holds anybody to it\nassert!(owed.applicable &amp;&amp; !owed.declared);\n```\nOne obligation the change set implies, and whether the task promised it.\n\nApplicability is derived and nothing else: a token&#39;s own `inputs` in\n`share/obligations.yaml` name the files it is about, so a change to one of them is what\nmakes the token owed. A token with no `inputs` names a fact outside the tree — a push, a\npublication, a deployment — which no change to a tree can imply, so those are owed when\nthe task declares them and reported as not applicable when it does not.&quot;,
+    &quot;DoneQuestion&quot;: {
+      &quot;description&quot;: &quot;```\nuse majordomus_cli::gates::{DoneQuestion, GateStatus};\n\nlet q = DoneQuestion {\n    id: \&quot;pushed\&quot;.into(),\n    stage: \&quot;commit\&quot;.into(),\n    question: \&quot;Has the commit reached the remote?\&quot;.into(),\n    status: GateStatus::Queued,\n    evidence: \&quot;the obligation is owed\&quot;.into(),\n    source: \&quot;obligation push (obligations.closure)\&quot;.into(),\n    remediation: \&quot;git push\&quot;.into(),\n};\n// every question names what answered it and what would settle it: a question with\n// neither is a checklist line, which is the artifact this type exists instead of\nassert!(!q.source.is_empty() &amp;&amp; !q.remediation.is_empty());\nassert!(q.status.unverified());\n```\nOne question of the done invariant, and what answered it.&quot;,
       &quot;properties&quot;: {
-        &quot;title&quot;: {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;The obligation as a heading, from the vocabulary.&quot;
-        },
-        &quot;applicable&quot;: {
-          &quot;description&quot;: &quot;True when the change set, or the task&#39;s own declaration, makes it owed.&quot;,
-          &quot;type&quot;: &quot;boolean&quot;
-        },
-        &quot;because&quot;: {
-          &quot;description&quot;: &quot;The changed paths that implied it, when paths did.&quot;,
-          &quot;items&quot;: {
-            &quot;type&quot;: &quot;string&quot;
-          },
-          &quot;type&quot;: &quot;array&quot;
+        &quot;evidence&quot;: {
+          &quot;description&quot;: &quot;What was actually read — never a restatement of the status.&quot;,
+          &quot;type&quot;: &quot;string&quot;
         },
         &quot;id&quot;: {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;The token.&quot;
-        },
-        &quot;declared&quot;: {
-          &quot;description&quot;: &quot;True when the task&#39;s `requires` names it, so `finish` already holds the task to it.&quot;,
-          &quot;type&quot;: &quot;boolean&quot;
-        },
-        &quot;reason&quot;: {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;Why it applies, or why it does not.&quot;
-        },
-        &quot;remediation&quot;: {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;What would discharge it.&quot;
-        }
-      },
-      &quot;type&quot;: &quot;object&quot;,
-      &quot;required&quot;: [
-        &quot;id&quot;,
-        &quot;title&quot;,
-        &quot;applicable&quot;,
-        &quot;declared&quot;,
-        &quot;reason&quot;,
-        &quot;remediation&quot;
-      ]
-    },
-    &quot;LifecycleStage&quot;: {
-      &quot;required&quot;: [
-        &quot;id&quot;,
-        &quot;title&quot;,
-        &quot;state&quot;,
-        &quot;complete&quot;,
-        &quot;stages&quot;
-      ],
-      &quot;description&quot;: &quot;Where the task stands: the one stage a reader acts on, and every stage behind and\nahead of it. Produced by `derive_stage` and by nothing else, so the stage a report\nnames is always the fold over the answers and never a word somebody wrote down.\n\n```\nuse majordomus_cli::gates::{DoneQuestion, GateStatus, LifecycleStage, StageDecl, StageState, derive_stage};\n\nlet stages = [StageDecl { id: \&quot;build\&quot;.into(), title: \&quot;Build\&quot;.into(), summary: \&quot;s\&quot;.into() }];\nlet owed = DoneQuestion {\n    id: \&quot;committed\&quot;.into(), stage: \&quot;build\&quot;.into(), question: \&quot;Is it committed?\&quot;.into(),\n    status: GateStatus::Queued, evidence: \&quot;owed\&quot;.into(), source: \&quot;s\&quot;.into(), remediation: \&quot;git commit\&quot;.into(),\n};\nlet stage: LifecycleStage = derive_stage(&amp;stages, &amp;[owed]);\nassert_eq!((stage.id.as_str(), stage.state), (\&quot;build\&quot;, StageState::Pending));\nassert_eq!(stage.owing, [\&quot;committed\&quot;]);\nassert!(!stage.complete, \&quot;a question still owed is a task not completed\&quot;);\nassert_eq!(stage.stages.len(), 1);\n```&quot;,
-      &quot;properties&quot;: {
-        &quot;complete&quot;: {
-          &quot;description&quot;: &quot;True only when every stage is complete or empty. The word `completed` is earned\nhere and nowhere else.&quot;,
-          &quot;type&quot;: &quot;boolean&quot;
-        },
-        &quot;id&quot;: {
-          &quot;description&quot;: &quot;The stage the task stands at: the first one blocked, else the first one pending,\nelse the last stage of the policy.&quot;,
+          &quot;description&quot;: &quot;The question&#39;s identity, stable across reports.&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
-        &quot;stages&quot;: {
-          &quot;items&quot;: {
-            &quot;$ref&quot;: &quot;#/$defs/StageReport&quot;
-          },
-          &quot;type&quot;: &quot;array&quot;,
-          &quot;description&quot;: &quot;Every stage of the policy, in order.&quot;
-        },
-        &quot;state&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/StageState&quot;,
-          &quot;description&quot;: &quot;Where it stands.&quot;
-        },
-        &quot;title&quot;: {
-          &quot;description&quot;: &quot;That stage as a heading.&quot;,
+        &quot;question&quot;: {
+          &quot;description&quot;: &quot;The question, as a person would ask it.&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
-        &quot;owing&quot;: {
-          &quot;items&quot;: {
-            &quot;type&quot;: &quot;string&quot;
-          },
-          &quot;type&quot;: &quot;array&quot;,
-          &quot;description&quot;: &quot;The questions still owed or refusing at the stage the task stands at.&quot;
-        }
-      },
-      &quot;type&quot;: &quot;object&quot;
-    },
-    &quot;GatePlan&quot;: {
-      &quot;properties&quot;: {
-        &quot;mode&quot;: {
-          &quot;description&quot;: &quot;Affected, or full.&quot;,
-          &quot;$ref&quot;: &quot;#/$defs/GatePlanMode&quot;
-        },
-        &quot;excluded&quot;: {
-          &quot;type&quot;: &quot;object&quot;,
-          &quot;description&quot;: &quot;Gate id to the reason it was left out, for the gates that are not.&quot;,
-          &quot;additionalProperties&quot;: {
-            &quot;type&quot;: &quot;string&quot;
-          }
-        },
-        &quot;selected&quot;: {
-          &quot;description&quot;: &quot;Gate id to the reason it was selected, for the gates in the plan.&quot;,
-          &quot;type&quot;: &quot;object&quot;,
-          &quot;additionalProperties&quot;: {
-            &quot;type&quot;: &quot;string&quot;
-          }
-        },
-        &quot;changed&quot;: {
-          &quot;description&quot;: &quot;The changed paths the plan was computed over, sorted.&quot;,
-          &quot;type&quot;: &quot;array&quot;,
-          &quot;items&quot;: {
-            &quot;type&quot;: &quot;string&quot;
-          }
-        },
-        &quot;unclassified&quot;: {
-          &quot;description&quot;: &quot;Changed paths no class of the model covers; each one escalates the plan.&quot;,
-          &quot;items&quot;: {
-            &quot;type&quot;: &quot;string&quot;
-          },
-          &quot;type&quot;: &quot;array&quot;
-        },
-        &quot;classes&quot;: {
-          &quot;items&quot;: {
-            &quot;$ref&quot;: &quot;#/$defs/GateClassMatch&quot;
-          },
-          &quot;description&quot;: &quot;The classes they fall in.&quot;,
-          &quot;type&quot;: &quot;array&quot;
-        },
-        &quot;reason&quot;: {
-          &quot;description&quot;: &quot;Why, in words.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      },
-      &quot;required&quot;: [
-        &quot;mode&quot;,
-        &quot;reason&quot;,
-        &quot;changed&quot;,
-        &quot;classes&quot;,
-        &quot;unclassified&quot;,
-        &quot;selected&quot;,
-        &quot;excluded&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;,
-      &quot;description&quot;: &quot;```\nuse majordomus_cli::gates::{GateClassMatch, GatePlan, GatePlanMode};\nuse std::collections::BTreeMap;\n\nlet plan = GatePlan {\n    mode: GatePlanMode::Affected,\n    reason: \&quot;3 path(s) fall in 1 class\&quot;.into(),\n    changed: vec![\&quot;docs/CLI.md\&quot;.into()],\n    classes: vec![GateClassMatch { id: \&quot;docs\&quot;.into(), paths: vec![\&quot;docs/CLI.md\&quot;.into()] }],\n    unclassified: Vec::new(),\n    selected: BTreeMap::from([(\&quot;reference-check\&quot;.to_string(), \&quot;class docs\&quot;.to_string())]),\n    excluded: BTreeMap::new(),\n};\n// the plan says what it selected and why, so a reader can check it rather than believe it\nassert_eq!(plan.selected[\&quot;reference-check\&quot;], \&quot;class docs\&quot;);\nassert!(!plan.selected.contains_key(\&quot;rust-check\&quot;), \&quot;a document change cannot break the crate\&quot;);\n```\nWhich gates a change must pass, and why each one is in or out.&quot;
-    },
-    &quot;Gate&quot;: {
-      &quot;type&quot;: &quot;object&quot;,
-      &quot;properties&quot;: {
         &quot;remediation&quot;: {
           &quot;description&quot;: &quot;What would settle it, as a command.&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
+        &quot;source&quot;: {
+          &quot;description&quot;: &quot;What answered it: an obligation token, a gate id, or the capability that would.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;stage&quot;: {
+          &quot;description&quot;: &quot;The lifecycle stage the policy places it in.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;status&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/GateStatus&quot;,
+          &quot;description&quot;: &quot;The answer, in the same vocabulary every gate uses.&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;id&quot;,
+        &quot;stage&quot;,
+        &quot;question&quot;,
+        &quot;status&quot;,
+        &quot;evidence&quot;,
+        &quot;source&quot;,
+        &quot;remediation&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;Gate&quot;: {
+      &quot;description&quot;: &quot;```\nuse majordomus_cli::gates::{Gate, GateStatus};\n\nlet gate = Gate {\n    id: \&quot;rust-check\&quot;.into(),\n    title: \&quot;the crate builds, is formatted and passes its tests\&quot;.into(),\n    scope: \&quot;apps/majordomus-cli\&quot;.into(),\n    required: true,\n    status: GateStatus::Queued,\n    reason: \&quot;the plan selects it and no run has ever reported\&quot;.into(),\n    remediation: \&quot;majordomus evidence --gate rust-check --exit 0\&quot;.into(),\n    source: \&quot;the plan\&quot;.into(),\n    evidence: None,\n    inputs: vec![\&quot;apps/majordomus-cli/**\&quot;.into()],\n    inputs_hash: \&quot;3f0a\&quot;.into(),\n    evaluated_at: \&quot;2026-01-01T00:00:00Z\&quot;.into(),\n};\n// silence does not refuse and is not a pass either: it is a debt, reported as one\nassert!(!gate.status.refuses());\nassert!(gate.status.unverified());\nassert!(gate.evidence.is_none());\n```\nOne completion gate: what it is, whether it applies, what it said, and what to do.&quot;,
+      &quot;properties&quot;: {
+        &quot;evaluated_at&quot;: {
+          &quot;description&quot;: &quot;When this judgement was made, RFC 3339 UTC. A judgement is about a moment.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
         &quot;evidence&quot;: {
-          &quot;description&quot;: &quot;The run that last reported, when one has.&quot;,
           &quot;anyOf&quot;: [
             {
               &quot;$ref&quot;: &quot;#/$defs/GateRun&quot;
@@ -845,50 +571,51 @@ skipped: a gap is reported rather than left to be inferred.</td>
             {
               &quot;type&quot;: &quot;null&quot;
             }
-          ]
-        },
-        &quot;inputs&quot;: {
-          &quot;description&quot;: &quot;The pathspecs its evidence is taken over, derived from the model.&quot;,
-          &quot;type&quot;: &quot;array&quot;,
-          &quot;items&quot;: {
-            &quot;type&quot;: &quot;string&quot;
-          }
-        },
-        &quot;title&quot;: {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;One line naming it, from the model&#39;s own summary.&quot;
-        },
-        &quot;evaluated_at&quot;: {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;When this judgement was made, RFC 3339 UTC. A judgement is about a moment.&quot;
-        },
-        &quot;status&quot;: {
-          &quot;description&quot;: &quot;What is known about it.&quot;,
-          &quot;$ref&quot;: &quot;#/$defs/GateStatus&quot;
-        },
-        &quot;source&quot;: {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;Where the gate is declared: the model, and the command it runs.&quot;
-        },
-        &quot;inputs_hash&quot;: {
-          &quot;description&quot;: &quot;The hash of those files as they stand now, when it could be taken.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;required&quot;: {
-          &quot;type&quot;: &quot;boolean&quot;,
-          &quot;description&quot;: &quot;True when the plan selects it and its verdict therefore decides completion. False\nfor a gate the plan left out, and for one whose runner is only had on demand.&quot;
-        },
-        &quot;reason&quot;: {
-          &quot;description&quot;: &quot;Why it is in this status, in words a worker can act on.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          ],
+          &quot;description&quot;: &quot;The run that last reported, when one has.&quot;
         },
         &quot;id&quot;: {
           &quot;description&quot;: &quot;The gate&#39;s identity in the model.&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
+        &quot;inputs&quot;: {
+          &quot;description&quot;: &quot;The pathspecs its evidence is taken over, derived from the model.&quot;,
+          &quot;items&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          },
+          &quot;type&quot;: &quot;array&quot;
+        },
+        &quot;inputs_hash&quot;: {
+          &quot;description&quot;: &quot;The hash of those files as they stand now, when it could be taken.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;reason&quot;: {
+          &quot;description&quot;: &quot;Why it is in this status, in words a worker can act on.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;remediation&quot;: {
+          &quot;description&quot;: &quot;What would settle it, as a command.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;required&quot;: {
+          &quot;description&quot;: &quot;True when the plan selects it and its verdict therefore decides completion. False\nfor a gate the plan left out, and for one whose runner is only had on demand.&quot;,
+          &quot;type&quot;: &quot;boolean&quot;
+        },
         &quot;scope&quot;: {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;What it is a gate over: the CI job that runs it.&quot;
+          &quot;description&quot;: &quot;What it is a gate over: the CI job that runs it.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;source&quot;: {
+          &quot;description&quot;: &quot;Where the gate is declared: the model, and the command it runs.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;status&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/GateStatus&quot;,
+          &quot;description&quot;: &quot;What is known about it.&quot;
+        },
+        &quot;title&quot;: {
+          &quot;description&quot;: &quot;One line naming it, from the model&#39;s own summary.&quot;,
+          &quot;type&quot;: &quot;string&quot;
         }
       },
       &quot;required&quot;: [
@@ -902,13 +629,315 @@ skipped: a gap is reported rather than left to be inferred.</td>
         &quot;source&quot;,
         &quot;evaluated_at&quot;
       ],
-      &quot;description&quot;: &quot;```\nuse majordomus_cli::gates::{Gate, GateStatus};\n\nlet gate = Gate {\n    id: \&quot;rust-check\&quot;.into(),\n    title: \&quot;the crate builds, is formatted and passes its tests\&quot;.into(),\n    scope: \&quot;apps/majordomus-cli\&quot;.into(),\n    required: true,\n    status: GateStatus::Queued,\n    reason: \&quot;the plan selects it and no run has ever reported\&quot;.into(),\n    remediation: \&quot;majordomus evidence --gate rust-check --exit 0\&quot;.into(),\n    source: \&quot;the plan\&quot;.into(),\n    evidence: None,\n    inputs: vec![\&quot;apps/majordomus-cli/**\&quot;.into()],\n    inputs_hash: \&quot;3f0a\&quot;.into(),\n    evaluated_at: \&quot;2026-01-01T00:00:00Z\&quot;.into(),\n};\n// silence does not refuse and is not a pass either: it is a debt, reported as one\nassert!(!gate.status.refuses());\nassert!(gate.status.unverified());\nassert!(gate.evidence.is_none());\n```\nOne completion gate: what it is, whether it applies, what it said, and what to do.&quot;
+      &quot;type&quot;: &quot;object&quot;
     },
-    &quot;StageState&quot;: {
+    &quot;GateClassMatch&quot;: {
+      &quot;description&quot;: &quot;```\nuse majordomus_cli::gates::GateClassMatch;\n\nlet hit = GateClassMatch { id: \&quot;docs\&quot;.into(), paths: vec![\&quot;docs/CLI.md\&quot;.into()] };\n// the class, and the files of the change that put it in the plan — never the class alone,\n// because a plan a reader cannot check is a plan a reader has to believe\nassert_eq!(hit.paths.len(), 1);\n```\nOne class a change fell in, and the paths that put it there.&quot;,
+      &quot;properties&quot;: {
+        &quot;id&quot;: {
+          &quot;description&quot;: &quot;The class&#39;s identity.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;paths&quot;: {
+          &quot;description&quot;: &quot;The changed paths this class covers.&quot;,
+          &quot;items&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          },
+          &quot;type&quot;: &quot;array&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;id&quot;,
+        &quot;paths&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;GatePlan&quot;: {
+      &quot;description&quot;: &quot;```\nuse majordomus_cli::gates::{GateClassMatch, GatePlan, GatePlanMode};\nuse std::collections::BTreeMap;\n\nlet plan = GatePlan {\n    mode: GatePlanMode::Affected,\n    reason: \&quot;3 path(s) fall in 1 class\&quot;.into(),\n    changed: vec![\&quot;docs/CLI.md\&quot;.into()],\n    classes: vec![GateClassMatch { id: \&quot;docs\&quot;.into(), paths: vec![\&quot;docs/CLI.md\&quot;.into()] }],\n    unclassified: Vec::new(),\n    selected: BTreeMap::from([(\&quot;reference-check\&quot;.to_string(), \&quot;class docs\&quot;.to_string())]),\n    excluded: BTreeMap::new(),\n};\n// the plan says what it selected and why, so a reader can check it rather than believe it\nassert_eq!(plan.selected[\&quot;reference-check\&quot;], \&quot;class docs\&quot;);\nassert!(!plan.selected.contains_key(\&quot;rust-check\&quot;), \&quot;a document change cannot break the crate\&quot;);\n```\nWhich gates a change must pass, and why each one is in or out.&quot;,
+      &quot;properties&quot;: {
+        &quot;changed&quot;: {
+          &quot;description&quot;: &quot;The changed paths the plan was computed over, sorted.&quot;,
+          &quot;items&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          },
+          &quot;type&quot;: &quot;array&quot;
+        },
+        &quot;classes&quot;: {
+          &quot;description&quot;: &quot;The classes they fall in.&quot;,
+          &quot;items&quot;: {
+            &quot;$ref&quot;: &quot;#/$defs/GateClassMatch&quot;
+          },
+          &quot;type&quot;: &quot;array&quot;
+        },
+        &quot;excluded&quot;: {
+          &quot;additionalProperties&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          },
+          &quot;description&quot;: &quot;Gate id to the reason it was left out, for the gates that are not.&quot;,
+          &quot;type&quot;: &quot;object&quot;
+        },
+        &quot;mode&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/GatePlanMode&quot;,
+          &quot;description&quot;: &quot;Affected, or full.&quot;
+        },
+        &quot;reason&quot;: {
+          &quot;description&quot;: &quot;Why, in words.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;selected&quot;: {
+          &quot;additionalProperties&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          },
+          &quot;description&quot;: &quot;Gate id to the reason it was selected, for the gates in the plan.&quot;,
+          &quot;type&quot;: &quot;object&quot;
+        },
+        &quot;unclassified&quot;: {
+          &quot;description&quot;: &quot;Changed paths no class of the model covers; each one escalates the plan.&quot;,
+          &quot;items&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          },
+          &quot;type&quot;: &quot;array&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;mode&quot;,
+        &quot;reason&quot;,
+        &quot;changed&quot;,
+        &quot;classes&quot;,
+        &quot;unclassified&quot;,
+        &quot;selected&quot;,
+        &quot;excluded&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;GatePlanMode&quot;: {
+      &quot;description&quot;: &quot;```\nuse majordomus_cli::gates::GatePlanMode;\n\n// a plan is either the gates the change selects, or everything the runners allow\nassert_eq!(GatePlanMode::Affected.as_str(), \&quot;affected\&quot;);\nassert_eq!(GatePlanMode::Full.as_str(), \&quot;full\&quot;);\nassert_ne!(GatePlanMode::Affected, GatePlanMode::Full);\n```\nWhy the plan selects what it selects.&quot;,
       &quot;oneOf&quot;: [
         {
-          &quot;description&quot;: &quot;Every question of the stage passes or is exempt.&quot;,
+          &quot;const&quot;: &quot;affected&quot;,
+          &quot;description&quot;: &quot;The gates of the classes the changed paths fall in.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;full&quot;,
+          &quot;description&quot;: &quot;Every gate but the on-demand ones: asked for, or escalated to.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      ]
+    },
+    &quot;GateRun&quot;: {
+      &quot;description&quot;: &quot;```\nuse majordomus_cli::gates::GateRun;\n\n// what `majordomus evidence --gate` writes: a run, and the tree it was taken over\nlet run = GateRun {\n    recorded_at: \&quot;2026-01-01T00:00:00Z\&quot;.into(),\n    head: \&quot;9b1e2d4\&quot;.into(),\n    branch: \&quot;master\&quot;.into(),\n    exit: 0,\n    command: \&quot;scripts/rust-check --ci\&quot;.into(),\n    inputs_hash: \&quot;3f0a\&quot;.into(),\n    session: \&quot;s-1\&quot;.into(),\n};\n// the hash is what makes a run go stale rather than merely old: the same run read\n// against a different tree is evidence about a tree that no longer exists\nassert_eq!(run.exit, 0);\nassert_ne!(run.inputs_hash, \&quot;0000\&quot;);\n```\nThe `task.gate` ledger line that last reported a gate, as the ledger holds it.&quot;,
+      &quot;properties&quot;: {
+        &quot;branch&quot;: {
+          &quot;description&quot;: &quot;The branch it was recorded on.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;command&quot;: {
+          &quot;description&quot;: &quot;The command that produced it — narrative is not evidence.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;exit&quot;: {
+          &quot;description&quot;: &quot;The exit status the gate reported. `0` is a pass.&quot;,
+          &quot;format&quot;: &quot;int64&quot;,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;head&quot;: {
+          &quot;description&quot;: &quot;The commit the ledger&#39;s envelope stamped on it.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;inputs_hash&quot;: {
+          &quot;description&quot;: &quot;The hash of the files that select the gate, as they stood when it ran.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;recorded_at&quot;: {
+          &quot;description&quot;: &quot;When it was recorded, RFC 3339 UTC.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;session&quot;: {
+          &quot;description&quot;: &quot;The session that recorded it.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;recorded_at&quot;,
+        &quot;head&quot;,
+        &quot;branch&quot;,
+        &quot;exit&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;GateStatus&quot;: {
+      &quot;description&quot;: &quot;```\nuse majordomus_cli::gates::GateStatus;\n\n// the three answers a reader is entitled to, and they are different answers\nassert!(GateStatus::Fail.refuses(), \&quot;a run that failed refuses\&quot;);\nassert!(GateStatus::Queued.unverified(), \&quot;asked and unanswered is a debt\&quot;);\nassert!(!GateStatus::Exempt.refuses() &amp;&amp; !GateStatus::Exempt.unverified());\n\n// and the one that is neither: a run whose tree has moved proves nothing about this one\nassert!(GateStatus::Stale.refuses());\nassert_eq!(GateStatus::Stale.as_str(), \&quot;stale\&quot;);\n```\nWhat is known about one gate. Every word is one this repository&#39;s design tokens already\ncarry (`share/design/tokens.yaml`, `status.states`), so a surface renders it without\nbeing taught a sixth vocabulary and the design gate does not refuse it.&quot;,
+      &quot;oneOf&quot;: [
+        {
+          &quot;const&quot;: &quot;pass&quot;,
+          &quot;description&quot;: &quot;It ran over these inputs and succeeded. The only word that discharges anything.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;fail&quot;,
+          &quot;description&quot;: &quot;It ran over these inputs and failed. Completion is refused.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;stale&quot;,
+          &quot;description&quot;: &quot;It ran, and the files that select it have changed since; what it proved is about a\ntree that no longer exists. Completion is refused, because the alternative is\ntreating a claim about the past as a claim about the present.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;blocked&quot;,
+          &quot;description&quot;: &quot;Something it cannot run without has not passed, so its own silence means nothing.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;queued&quot;,
+          &quot;description&quot;: &quot;The plan selects it and no run has ever reported. Not `unknown`: the question was\nasked and no answer came, which is a debt somebody owes, and not `pass`, which is\nthe mistake this word exists to make impossible.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;exempt&quot;,
+          &quot;description&quot;: &quot;The plan does not select it: nothing the task changed can make it true or false.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;unknown&quot;,
+          &quot;description&quot;: &quot;It cannot be judged here at all — no model, no git, a ledger that would not read.\nAn honest gap, and never a pass.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      ]
+    },
+    &quot;ImpliedObligation&quot;: {
+      &quot;description&quot;: &quot;```\nuse majordomus_cli::gates::ImpliedObligation;\n\nlet owed = ImpliedObligation {\n    id: \&quot;tests\&quot;.into(),\n    title: \&quot;The cases the change obliges were run\&quot;.into(),\n    applicable: true,\n    declared: false,\n    reason: \&quot;lib/check.sh is an input of this obligation\&quot;.into(),\n    because: vec![\&quot;lib/check.sh\&quot;.into()],\n    remediation: \&quot;majordomus start --requires tests\&quot;.into(),\n};\n// applicable and undeclared is the gap nothing else reports: the change owes it and\n// the task promised nothing, so no validator holds anybody to it\nassert!(owed.applicable &amp;&amp; !owed.declared);\n```\nOne obligation the change set implies, and whether the task promised it.\n\nApplicability is derived and nothing else: a token&#39;s own `inputs` in\n`share/obligations.yaml` name the files it is about, so a change to one of them is what\nmakes the token owed. A token with no `inputs` names a fact outside the tree — a push, a\npublication, a deployment — which no change to a tree can imply, so those are owed when\nthe task declares them and reported as not applicable when it does not.&quot;,
+      &quot;properties&quot;: {
+        &quot;applicable&quot;: {
+          &quot;description&quot;: &quot;True when the change set, or the task&#39;s own declaration, makes it owed.&quot;,
+          &quot;type&quot;: &quot;boolean&quot;
+        },
+        &quot;because&quot;: {
+          &quot;description&quot;: &quot;The changed paths that implied it, when paths did.&quot;,
+          &quot;items&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          },
+          &quot;type&quot;: &quot;array&quot;
+        },
+        &quot;declared&quot;: {
+          &quot;description&quot;: &quot;True when the task&#39;s `requires` names it, so `finish` already holds the task to it.&quot;,
+          &quot;type&quot;: &quot;boolean&quot;
+        },
+        &quot;id&quot;: {
+          &quot;description&quot;: &quot;The token.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;reason&quot;: {
+          &quot;description&quot;: &quot;Why it applies, or why it does not.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;remediation&quot;: {
+          &quot;description&quot;: &quot;What would discharge it.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;title&quot;: {
+          &quot;description&quot;: &quot;The obligation as a heading, from the vocabulary.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;id&quot;,
+        &quot;title&quot;,
+        &quot;applicable&quot;,
+        &quot;declared&quot;,
+        &quot;reason&quot;,
+        &quot;remediation&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;LifecycleStage&quot;: {
+      &quot;description&quot;: &quot;Where the task stands: the one stage a reader acts on, and every stage behind and\nahead of it. Produced by `derive_stage` and by nothing else, so the stage a report\nnames is always the fold over the answers and never a word somebody wrote down.\n\n```\nuse majordomus_cli::gates::{DoneQuestion, GateStatus, LifecycleStage, StageDecl, StageState, derive_stage};\n\nlet stages = [StageDecl { id: \&quot;build\&quot;.into(), title: \&quot;Build\&quot;.into(), summary: \&quot;s\&quot;.into() }];\nlet owed = DoneQuestion {\n    id: \&quot;committed\&quot;.into(), stage: \&quot;build\&quot;.into(), question: \&quot;Is it committed?\&quot;.into(),\n    status: GateStatus::Queued, evidence: \&quot;owed\&quot;.into(), source: \&quot;s\&quot;.into(), remediation: \&quot;git commit\&quot;.into(),\n};\nlet stage: LifecycleStage = derive_stage(&amp;stages, &amp;[owed]);\nassert_eq!((stage.id.as_str(), stage.state), (\&quot;build\&quot;, StageState::Pending));\nassert_eq!(stage.owing, [\&quot;committed\&quot;]);\nassert!(!stage.complete, \&quot;a question still owed is a task not completed\&quot;);\nassert_eq!(stage.stages.len(), 1);\n```&quot;,
+      &quot;properties&quot;: {
+        &quot;complete&quot;: {
+          &quot;description&quot;: &quot;True only when every stage is complete or empty. The word `completed` is earned\nhere and nowhere else.&quot;,
+          &quot;type&quot;: &quot;boolean&quot;
+        },
+        &quot;id&quot;: {
+          &quot;description&quot;: &quot;The stage the task stands at: the first one blocked, else the first one pending,\nelse the last stage of the policy.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;owing&quot;: {
+          &quot;description&quot;: &quot;The questions still owed or refusing at the stage the task stands at.&quot;,
+          &quot;items&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          },
+          &quot;type&quot;: &quot;array&quot;
+        },
+        &quot;stages&quot;: {
+          &quot;description&quot;: &quot;Every stage of the policy, in order.&quot;,
+          &quot;items&quot;: {
+            &quot;$ref&quot;: &quot;#/$defs/StageReport&quot;
+          },
+          &quot;type&quot;: &quot;array&quot;
+        },
+        &quot;state&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/StageState&quot;,
+          &quot;description&quot;: &quot;Where it stands.&quot;
+        },
+        &quot;title&quot;: {
+          &quot;description&quot;: &quot;That stage as a heading.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;id&quot;,
+        &quot;title&quot;,
+        &quot;state&quot;,
+        &quot;complete&quot;,
+        &quot;stages&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;StageReport&quot;: {
+      &quot;description&quot;: &quot;One stage of the lifecycle, with what its questions said. Every stage of the policy\ngets one, in the policy&#39;s order, so a reader sees the stages behind the task as well\nas the one it stands at; `owing` is written only when something is owed.\n\n```\nuse majordomus_cli::gates::{StageReport, StageState};\n\nlet report = StageReport {\n    id: \&quot;commit\&quot;.into(),\n    title: \&quot;Commit and push\&quot;.into(),\n    state: StageState::Complete,\n    questions: vec![\&quot;committed\&quot;.into(), \&quot;pushed\&quot;.into()],\n    owing: Vec::new(),\n};\nlet json = serde_json::to_value(&amp;report).unwrap();\nassert_eq!(json[\&quot;state\&quot;], \&quot;complete\&quot;);\nassert!(json.get(\&quot;owing\&quot;).is_none(), \&quot;nothing owed is nothing written\&quot;);\n```&quot;,
+      &quot;properties&quot;: {
+        &quot;id&quot;: {
+          &quot;description&quot;: &quot;The stage&#39;s identity.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;owing&quot;: {
+          &quot;description&quot;: &quot;The questions still owed or refusing, in policy order.&quot;,
+          &quot;items&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          },
+          &quot;type&quot;: &quot;array&quot;
+        },
+        &quot;questions&quot;: {
+          &quot;description&quot;: &quot;The questions of this stage, in policy order.&quot;,
+          &quot;items&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          },
+          &quot;type&quot;: &quot;array&quot;
+        },
+        &quot;state&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/StageState&quot;,
+          &quot;description&quot;: &quot;Where it stands.&quot;
+        },
+        &quot;title&quot;: {
+          &quot;description&quot;: &quot;The stage as a heading.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;id&quot;,
+        &quot;title&quot;,
+        &quot;state&quot;,
+        &quot;questions&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;StageState&quot;: {
+      &quot;description&quot;: &quot;Where one stage stands, folded from the answers to its questions and never set by\nanybody. A refusal anywhere in the stage makes it blocked whatever else passed; a\nstage with nothing owed is complete; one with an unanswered question is pending; and\na stage the change asks nothing of is empty, which neither blocks nor completes.\n\n```\nuse majordomus_cli::gates::StageState;\n\nassert_eq!(StageState::Blocked.as_str(), \&quot;blocked\&quot;);\n// serialised as the same word the report prints, so no reader meets two spellings\nassert_eq!(serde_json::to_string(&amp;StageState::Pending).unwrap(), \&quot;\\\&quot;pending\\\&quot;\&quot;);\nassert_eq!(serde_json::from_str::&lt;StageState&gt;(\&quot;\\\&quot;empty\\\&quot;\&quot;).unwrap(), StageState::Empty);\n```&quot;,
+      &quot;oneOf&quot;: [
+        {
           &quot;const&quot;: &quot;complete&quot;,
+          &quot;description&quot;: &quot;Every question of the stage passes or is exempt.&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
         {
@@ -917,109 +946,74 @@ skipped: a gap is reported rather than left to be inferred.</td>
           &quot;type&quot;: &quot;string&quot;
         },
         {
-          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;blocked&quot;,
           &quot;description&quot;: &quot;A question of the stage refuses: failing, stale, or blocked by one that is.&quot;,
-          &quot;const&quot;: &quot;blocked&quot;
+          &quot;type&quot;: &quot;string&quot;
         },
         {
-          &quot;type&quot;: &quot;string&quot;,
           &quot;const&quot;: &quot;empty&quot;,
-          &quot;description&quot;: &quot;The stage declares no question that applies here.&quot;
-        }
-      ],
-      &quot;description&quot;: &quot;Where one stage stands, folded from the answers to its questions and never set by\nanybody. A refusal anywhere in the stage makes it blocked whatever else passed; a\nstage with nothing owed is complete; one with an unanswered question is pending; and\na stage the change asks nothing of is empty, which neither blocks nor completes.\n\n```\nuse majordomus_cli::gates::StageState;\n\nassert_eq!(StageState::Blocked.as_str(), \&quot;blocked\&quot;);\n// serialised as the same word the report prints, so no reader meets two spellings\nassert_eq!(serde_json::to_string(&amp;StageState::Pending).unwrap(), \&quot;\\\&quot;pending\\\&quot;\&quot;);\nassert_eq!(serde_json::from_str::&lt;StageState&gt;(\&quot;\\\&quot;empty\\\&quot;\&quot;).unwrap(), StageState::Empty);\n```&quot;
-    },
-    &quot;DoneQuestion&quot;: {
-      &quot;properties&quot;: {
-        &quot;stage&quot;: {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;The lifecycle stage the policy places it in.&quot;
-        },
-        &quot;id&quot;: {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;The question&#39;s identity, stable across reports.&quot;
-        },
-        &quot;question&quot;: {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;The question, as a person would ask it.&quot;
-        },
-        &quot;evidence&quot;: {
-          &quot;description&quot;: &quot;What was actually read — never a restatement of the status.&quot;,
+          &quot;description&quot;: &quot;The stage declares no question that applies here.&quot;,
           &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;remediation&quot;: {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;What would settle it, as a command.&quot;
-        },
-        &quot;source&quot;: {
-          &quot;description&quot;: &quot;What answered it: an obligation token, a gate id, or the capability that would.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;status&quot;: {
-          &quot;description&quot;: &quot;The answer, in the same vocabulary every gate uses.&quot;,
-          &quot;$ref&quot;: &quot;#/$defs/GateStatus&quot;
         }
-      },
-      &quot;description&quot;: &quot;```\nuse majordomus_cli::gates::{DoneQuestion, GateStatus};\n\nlet q = DoneQuestion {\n    id: \&quot;pushed\&quot;.into(),\n    stage: \&quot;commit\&quot;.into(),\n    question: \&quot;Has the commit reached the remote?\&quot;.into(),\n    status: GateStatus::Queued,\n    evidence: \&quot;the obligation is owed\&quot;.into(),\n    source: \&quot;obligation push (obligations.closure)\&quot;.into(),\n    remediation: \&quot;git push\&quot;.into(),\n};\n// every question names what answered it and what would settle it: a question with\n// neither is a checklist line, which is the artifact this type exists instead of\nassert!(!q.source.is_empty() &amp;&amp; !q.remediation.is_empty());\nassert!(q.status.unverified());\n```\nOne question of the done invariant, and what answered it.&quot;,
-      &quot;type&quot;: &quot;object&quot;,
-      &quot;required&quot;: [
-        &quot;id&quot;,
-        &quot;stage&quot;,
-        &quot;question&quot;,
-        &quot;status&quot;,
-        &quot;evidence&quot;,
-        &quot;source&quot;,
-        &quot;remediation&quot;
       ]
     }
   },
+  &quot;description&quot;: &quot;```\nuse majordomus_cli::gates::Completion;\n\n// the document every surface reads, as `gates.completion` answers with it. The property\n// that matters is the one asserted here: a gate that never reported leaves the task\n// finishable and *unverified*, which is a different thing from a task that passed.\nlet c: Completion = serde_json::from_value(serde_json::json!({\n    \&quot;present\&quot;: true,\n    \&quot;model\&quot;: \&quot;.ai/repo/ci/gates.yaml\&quot;,\n    \&quot;plan\&quot;: { \&quot;mode\&quot;: \&quot;affected\&quot;, \&quot;reason\&quot;: \&quot;1 path in 1 class\&quot;, \&quot;changed\&quot;: [\&quot;docs/CLI.md\&quot;],\n              \&quot;classes\&quot;: [], \&quot;unclassified\&quot;: [], \&quot;selected\&quot;: {}, \&quot;excluded\&quot;: {} },\n    \&quot;finishable\&quot;: true,\n    \&quot;unverified\&quot;: [\&quot;reference-check\&quot;],\n    \&quot;tallies\&quot;: { \&quot;queued\&quot;: 1 },\n    \&quot;gates\&quot;: [],\n    \&quot;obligations\&quot;: [],\n    \&quot;questions\&quot;: [],\n    \&quot;policy\&quot;: \&quot;share/completion.yaml\&quot;,\n    \&quot;stage\&quot;: { \&quot;id\&quot;: \&quot;gates\&quot;, \&quot;title\&quot;: \&quot;Gates\&quot;, \&quot;state\&quot;: \&quot;pending\&quot;, \&quot;complete\&quot;: false,\n               \&quot;owing\&quot;: [\&quot;ci\&quot;], \&quot;stages\&quot;: [] },\n    \&quot;complete\&quot;: false\n}))\n.unwrap();\nassert!(c.finishable, \&quot;absence of a verdict does not refuse\&quot;);\nassert_eq!(c.unverified, [\&quot;reference-check\&quot;], \&quot;and it is never silently accepted\&quot;);\nassert!(c.blocking.is_empty());\n// finishable is not complete: the stage the answers fold to still owes the ci question\nassert!(!c.complete);\nassert_eq!(c.stage.id, \&quot;gates\&quot;);\nassert_eq!(c.stage.owing, [\&quot;ci\&quot;]);\n```\nWhether the active task may be called finished, and everything the answer rests on.\n\n`finishable` is the field a caller acts on and the one thing no surface may recompute:\nthe shell tool&#39;s `check` and `finish` read it, the HTTP API serves it, the Cockpit\nrenders it, and all of them are reading this one execution.&quot;,
   &quot;properties&quot;: {
-    &quot;unverified&quot;: {
-      &quot;items&quot;: {
-        &quot;type&quot;: &quot;string&quot;
-      },
-      &quot;type&quot;: &quot;array&quot;,
-      &quot;description&quot;: &quot;The required gates that have never reported, or cannot be judged here. A task\nfinished over these is finished unverified, and the record says so.&quot;
-    },
-    &quot;policy&quot;: {
-      &quot;type&quot;: [
-        &quot;string&quot;,
-        &quot;null&quot;
-      ],
-      &quot;description&quot;: &quot;The completion policy the questions were taken from, as the distribution names it.\nAbsent when no policy could be read; a finding then says why, the one question asked\nis whether it can be, and nothing is complete.&quot;
-    },
     &quot;blocking&quot;: {
+      &quot;description&quot;: &quot;The required gates whose status refuses completion.&quot;,
       &quot;items&quot;: {
         &quot;type&quot;: &quot;string&quot;
       },
-      &quot;description&quot;: &quot;The required gates whose status refuses completion.&quot;,
+      &quot;type&quot;: &quot;array&quot;
+    },
+    &quot;complete&quot;: {
+      &quot;description&quot;: &quot;True only when a task is present and every question of the policy passes or is\nexempt. The one field that may be read as \&quot;done\&quot;: it is the stage fold&#39;s word, and\nno surface computes it a second time from the parts.&quot;,
+      &quot;type&quot;: &quot;boolean&quot;
+    },
+    &quot;findings&quot;: {
+      &quot;description&quot;: &quot;What could not be established, each as one line. Never empty when something was\nskipped: a gap is reported rather than left to be inferred.&quot;,
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;string&quot;
+      },
       &quot;type&quot;: &quot;array&quot;
     },
     &quot;finishable&quot;: {
-      &quot;type&quot;: &quot;boolean&quot;,
-      &quot;description&quot;: &quot;False when a required gate is known to be failing, stale, or blocked by one that is.\nAbsence of a verdict does not make this false — it makes `unverified` non-empty.&quot;
-    },
-    &quot;complete&quot;: {
-      &quot;type&quot;: &quot;boolean&quot;,
-      &quot;description&quot;: &quot;True only when a task is present and every question of the policy passes or is\nexempt. The one field that may be read as \&quot;done\&quot;: it is the stage fold&#39;s word, and\nno surface computes it a second time from the parts.&quot;
+      &quot;description&quot;: &quot;False when a required gate is known to be failing, stale, or blocked by one that is.\nAbsence of a verdict does not make this false — it makes `unverified` non-empty.&quot;,
+      &quot;type&quot;: &quot;boolean&quot;
     },
     &quot;gates&quot;: {
       &quot;description&quot;: &quot;Every gate of the model, what refuses first.&quot;,
-      &quot;type&quot;: &quot;array&quot;,
       &quot;items&quot;: {
         &quot;$ref&quot;: &quot;#/$defs/Gate&quot;
-      }
+      },
+      &quot;type&quot;: &quot;array&quot;
+    },
+    &quot;model&quot;: {
+      &quot;description&quot;: &quot;The CI model this was judged against.&quot;,
+      &quot;type&quot;: &quot;string&quot;
     },
     &quot;obligations&quot;: {
-      &quot;type&quot;: &quot;array&quot;,
       &quot;description&quot;: &quot;Which obligations the change set implies, and whether the task promised them. The\njudgement of a declared one is `obligations.closure`&#39;s, not this module&#39;s.&quot;,
       &quot;items&quot;: {
         &quot;$ref&quot;: &quot;#/$defs/ImpliedObligation&quot;
-      }
+      },
+      &quot;type&quot;: &quot;array&quot;
     },
     &quot;plan&quot;: {
-      &quot;description&quot;: &quot;Affected or full, and why.&quot;,
-      &quot;$ref&quot;: &quot;#/$defs/GatePlan&quot;
+      &quot;$ref&quot;: &quot;#/$defs/GatePlan&quot;,
+      &quot;description&quot;: &quot;Affected or full, and why.&quot;
+    },
+    &quot;policy&quot;: {
+      &quot;description&quot;: &quot;The completion policy the questions were taken from, as the distribution names it.\nAbsent when no policy could be read; a finding then says why, the one question asked\nis whether it can be, and nothing is complete.&quot;,
+      &quot;type&quot;: [
+        &quot;string&quot;,
+        &quot;null&quot;
+      ]
+    },
+    &quot;present&quot;: {
+      &quot;description&quot;: &quot;True when a task record was found in this checkout.&quot;,
+      &quot;type&quot;: &quot;boolean&quot;
     },
     &quot;questions&quot;: {
       &quot;description&quot;: &quot;The done invariant: the questions a task must answer before anybody may call it\nfinished, each with the source that answered it and the evidence it read. Composed\nfrom the obligation closure, the gates, the change set, the repository&#39;s convergence\nand the closing readings; a question nothing here reaches is `unknown` and names the\ncommand that would answer it. Exactly the questions of the completion policy, in its\norder, each with the stage the policy places it in.&quot;,
@@ -1028,12 +1022,20 @@ skipped: a gap is reported rather than left to be inferred.</td>
       },
       &quot;type&quot;: &quot;array&quot;
     },
-    &quot;present&quot;: {
-      &quot;type&quot;: &quot;boolean&quot;,
-      &quot;description&quot;: &quot;True when a task record was found in this checkout.&quot;
+    &quot;stage&quot;: {
+      &quot;$ref&quot;: &quot;#/$defs/LifecycleStage&quot;,
+      &quot;description&quot;: &quot;Where the task stands in the lifecycle, folded from the answers in the policy&#39;s\nstage order: the first stage blocked, else the first stage pending, else the last.\nDerived on every reading and never written down by anybody.&quot;
+    },
+    &quot;tallies&quot;: {
+      &quot;additionalProperties&quot;: {
+        &quot;format&quot;: &quot;uint&quot;,
+        &quot;minimum&quot;: 0,
+        &quot;type&quot;: &quot;integer&quot;
+      },
+      &quot;description&quot;: &quot;How many gates stand in each status, by word.&quot;,
+      &quot;type&quot;: &quot;object&quot;
     },
     &quot;task&quot;: {
-      &quot;description&quot;: &quot;The task, as its record declares it.&quot;,
       &quot;anyOf&quot;: [
         {
           &quot;$ref&quot;: &quot;#/$defs/ActiveTask&quot;
@@ -1041,33 +1043,31 @@ skipped: a gap is reported rather than left to be inferred.</td>
         {
           &quot;type&quot;: &quot;null&quot;
         }
-      ]
+      ],
+      &quot;description&quot;: &quot;The task, as its record declares it.&quot;
     },
-    &quot;model&quot;: {
-      &quot;type&quot;: &quot;string&quot;,
-      &quot;description&quot;: &quot;The CI model this was judged against.&quot;
-    },
-    &quot;stage&quot;: {
-      &quot;$ref&quot;: &quot;#/$defs/LifecycleStage&quot;,
-      &quot;description&quot;: &quot;Where the task stands in the lifecycle, folded from the answers in the policy&#39;s\nstage order: the first stage blocked, else the first stage pending, else the last.\nDerived on every reading and never written down by anybody.&quot;
-    },
-    &quot;findings&quot;: {
-      &quot;description&quot;: &quot;What could not be established, each as one line. Never empty when something was\nskipped: a gap is reported rather than left to be inferred.&quot;,
-      &quot;type&quot;: &quot;array&quot;,
+    &quot;unverified&quot;: {
+      &quot;description&quot;: &quot;The required gates that have never reported, or cannot be judged here. A task\nfinished over these is finished unverified, and the record says so.&quot;,
       &quot;items&quot;: {
         &quot;type&quot;: &quot;string&quot;
-      }
-    },
-    &quot;tallies&quot;: {
-      &quot;additionalProperties&quot;: {
-        &quot;minimum&quot;: 0,
-        &quot;format&quot;: &quot;uint&quot;,
-        &quot;type&quot;: &quot;integer&quot;
       },
-      &quot;description&quot;: &quot;How many gates stand in each status, by word.&quot;,
-      &quot;type&quot;: &quot;object&quot;
+      &quot;type&quot;: &quot;array&quot;
     }
-  }
+  },
+  &quot;required&quot;: [
+    &quot;present&quot;,
+    &quot;model&quot;,
+    &quot;plan&quot;,
+    &quot;finishable&quot;,
+    &quot;tallies&quot;,
+    &quot;gates&quot;,
+    &quot;obligations&quot;,
+    &quot;questions&quot;,
+    &quot;stage&quot;,
+    &quot;complete&quot;
+  ],
+  &quot;title&quot;: &quot;Completion&quot;,
+  &quot;type&quot;: &quot;object&quot;
 }</pre></div>
   </details>
 </div>
@@ -1098,7 +1098,7 @@ skipped: a gap is reported rather than left to be inferred.</td>
         <div><dt class="text-body-subtle">Rust module</dt><dd class="min-w-0 break-all font-mono text-heading">majordomus_cli::capability::builtin::gates</dd></div>
         <div><dt class="text-body-subtle">input type</dt><dd class="font-mono text-heading">CompletionInput</dd></div>
         <div><dt class="text-body-subtle">output type</dt><dd class="font-mono text-heading">Completion</dd></div>
-        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/docs/generated/modules/gates.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/gates.md</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">3f734f2faf797f0ca7c39b4cd837e68b6619c41c6f6711f3d3aeca8f341934eb</dd></div>
+        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/1112bace3437ee0d82067b1e8f61813e70190078/docs/generated/modules/gates.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/gates.md</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">5cdbf22cd21589ddbe464d5f0987b6bcf4607d05479004d6f815c3b306fdb08a</dd></div>
         <div><dt class="text-body-subtle">generated by</dt><dd class="font-mono text-heading">majordomus-cli 1.0.0-alpha.10</dd></div>
       </dl>
     </div>
@@ -1154,9 +1154,9 @@ skipped: a gap is reported rather than left to be inferred.</td>
       <div class="min-w-0">
         <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">Project</h2><ul class="space-y-2 text-sm font-medium text-body">
           <li><a href="https://github.com/korczis/prismatic-majordomus" class="hover:text-heading hover:underline">GitHub</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/LICENSE" class="hover:text-heading hover:underline">MIT licence</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/SECURITY.md" class="hover:text-heading hover:underline">Security policy</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/CONTRIBUTING.md" class="hover:text-heading hover:underline">Contributing guide</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/1112bace3437ee0d82067b1e8f61813e70190078/LICENSE" class="hover:text-heading hover:underline">MIT licence</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/1112bace3437ee0d82067b1e8f61813e70190078/SECURITY.md" class="hover:text-heading hover:underline">Security policy</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/1112bace3437ee0d82067b1e8f61813e70190078/CONTRIBUTING.md" class="hover:text-heading hover:underline">Contributing guide</a></li>
         </ul>
       </div>
     </div>
@@ -1164,7 +1164,7 @@ skipped: a gap is reported rather than left to be inferred.</td>
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.10</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/745db2ea21e02613943face75a2bf95542be1f2e" class="font-mono underline">745db2e</a> · inputs <span class="font-mono">0a58c217d1b7</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/architecture/" class="underline">how this site is derived</a> names them.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.10</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/1112bace3437ee0d82067b1e8f61813e70190078" class="font-mono underline">1112bac</a> · inputs <span class="font-mono">830f884cc5aa</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/architecture/" class="underline">how this site is derived</a> names them.</p>
     </div>
   </div>
 </footer>

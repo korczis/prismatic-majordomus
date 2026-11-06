@@ -222,16 +222,16 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
     <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
       <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
       <tbody><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">issue</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The issue the work belongs to (<code>#184</code>, <code>I0042</code>).</td>
-      </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">handover</td>
         <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
         <td class="px-3 py-2 font-mono text-xs text-body">no</td>
         <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The file name of a handover record under <code>.ai/local/state/handovers/</code>; the newest
 when absent.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">issue</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The issue the work belongs to (<code>#184</code>, <code>I0042</code>).</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">milestone</td>
         <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
@@ -243,20 +243,21 @@ when absent.</td>
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
   &quot;additionalProperties&quot;: false,
+  &quot;description&quot;: &quot;The input of `continuity.publish`.&quot;,
   &quot;properties&quot;: {
+    &quot;handover&quot;: {
+      &quot;description&quot;: &quot;The file name of a handover record under `.ai/local/state/handovers/`; the newest\nwhen absent.&quot;,
+      &quot;type&quot;: [
+        &quot;string&quot;,
+        &quot;null&quot;
+      ]
+    },
     &quot;issue&quot;: {
       &quot;description&quot;: &quot;The issue the work belongs to (`#184`, `I0042`).&quot;,
       &quot;type&quot;: [
         &quot;string&quot;,
         &quot;null&quot;
       ]
-    },
-    &quot;handover&quot;: {
-      &quot;type&quot;: [
-        &quot;string&quot;,
-        &quot;null&quot;
-      ],
-      &quot;description&quot;: &quot;The file name of a handover record under `.ai/local/state/handovers/`; the newest\nwhen absent.&quot;
     },
     &quot;milestone&quot;: {
       &quot;description&quot;: &quot;The milestone it belongs to.&quot;,
@@ -267,8 +268,7 @@ when absent.</td>
     }
   },
   &quot;title&quot;: &quot;PublishInput&quot;,
-  &quot;type&quot;: &quot;object&quot;,
-  &quot;description&quot;: &quot;The input of `continuity.publish`.&quot;
+  &quot;type&quot;: &quot;object&quot;
 }</pre></div>
   </details>
 </div>
@@ -277,6 +277,11 @@ when absent.</td>
     <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
       <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
       <tbody><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">handover</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The handover record it was read from, relative to the checkout.</td>
+      </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">next</td>
         <td class="px-3 py-2 font-mono text-xs text-body">array</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
@@ -297,53 +302,122 @@ when absent.</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
         <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">False when the same handover at the same source state was already the record this
 checkout stands on: nothing new was written.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">handover</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The handover record it was read from, relative to the checkout.</td>
       </tr></tbody>
     </table>
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
-  &quot;description&quot;: &quot;The answer of `continuity publish`.&quot;,
-  &quot;required&quot;: [
-    &quot;record&quot;,
-    &quot;written&quot;,
-    &quot;tip&quot;,
-    &quot;handover&quot;,
-    &quot;next&quot;
-  ],
-  &quot;title&quot;: &quot;Published&quot;,
   &quot;$defs&quot;: {
-    &quot;Trust&quot;: {
-      &quot;description&quot;: &quot;Whether the device that signed a record is one this repository trusts.&quot;,
-      &quot;oneOf&quot;: [
-        {
-          &quot;description&quot;: &quot;This device signed it.&quot;,
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;const&quot;: &quot;this_device&quot;
+    &quot;Device&quot;: {
+      &quot;description&quot;: &quot;The device a record was written on: the mesh node key&#39;s id and the label its identity\nfile carries. The label is presentation; the node id is identity.&quot;,
+      &quot;properties&quot;: {
+        &quot;label&quot;: {
+          &quot;description&quot;: &quot;The display label of the device&#39;s identity file (`macbook-pro`), or the first eight\nhex of its node id when it has none.&quot;,
+          &quot;type&quot;: &quot;string&quot;
         },
-        {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;const&quot;: &quot;trusted&quot;,
-          &quot;description&quot;: &quot;The mesh declaration&#39;s trust list admits the key.&quot;
-        },
-        {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;The mesh declaration exists and does not admit the key: never resumed from.&quot;,
-          &quot;const&quot;: &quot;untrusted&quot;
-        },
-        {
-          &quot;const&quot;: &quot;undeclared&quot;,
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;The repository declares no mesh, so no list exists to check the key against. The\nsignature still binds the record to its key; the plan warns.&quot;
+        &quot;node&quot;: {
+          &quot;description&quot;: &quot;The node id: the first 32 hex of the SHA-256 of the device&#39;s Ed25519 public key.&quot;,
+          &quot;type&quot;: &quot;string&quot;
         }
-      ]
+      },
+      &quot;required&quot;: [
+        &quot;node&quot;,
+        &quot;label&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
     },
     &quot;RecordView&quot;: {
-      &quot;type&quot;: &quot;object&quot;,
+      &quot;description&quot;: &quot;One record as every surface shows it.&quot;,
+      &quot;properties&quot;: {
+        &quot;age_minutes&quot;: {
+          &quot;description&quot;: &quot;Minutes since then, by this machine&#39;s clock; absent when either clock&#39;s reading is\nunusable.&quot;,
+          &quot;format&quot;: &quot;int64&quot;,
+          &quot;type&quot;: [
+            &quot;integer&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;branch&quot;: {
+          &quot;description&quot;: &quot;The branch it was written on.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;changed_total&quot;: {
+          &quot;description&quot;: &quot;How many paths differed from HEAD at the origin.&quot;,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;device&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/Device&quot;,
+          &quot;description&quot;: &quot;The device that published it.&quot;
+        },
+        &quot;head&quot;: {
+          &quot;description&quot;: &quot;The commit it was written at.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;id&quot;: {
+          &quot;description&quot;: &quot;The record id.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;issue&quot;: {
+          &quot;description&quot;: &quot;The issue.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;line&quot;: {
+          &quot;description&quot;: &quot;Its line.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;objective&quot;: {
+          &quot;description&quot;: &quot;The handover&#39;s `# Objective`, first line.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;parent&quot;: {
+          &quot;description&quot;: &quot;The record it continues.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;published_at&quot;: {
+          &quot;description&quot;: &quot;When it was published, by the publisher&#39;s clock.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;session&quot;: {
+          &quot;description&quot;: &quot;The episode it was published from.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;task&quot;: {
+          &quot;description&quot;: &quot;The task&#39;s title: the intent.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;this_device&quot;: {
+          &quot;description&quot;: &quot;Whether that device is this one.&quot;,
+          &quot;type&quot;: &quot;boolean&quot;
+        },
+        &quot;trust&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/Trust&quot;,
+          &quot;description&quot;: &quot;Whether its signer is trusted here.&quot;
+        },
+        &quot;working_tree&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/WorkingTree&quot;,
+          &quot;description&quot;: &quot;Clean or dirty at the origin.&quot;
+        }
+      },
       &quot;required&quot;: [
         &quot;id&quot;,
         &quot;line&quot;,
@@ -354,99 +428,35 @@ checkout stands on: nothing new was written.</td>
         &quot;changed_total&quot;,
         &quot;published_at&quot;
       ],
-      &quot;description&quot;: &quot;One record as every surface shows it.&quot;,
-      &quot;properties&quot;: {
-        &quot;changed_total&quot;: {
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;type&quot;: &quot;integer&quot;,
-          &quot;description&quot;: &quot;How many paths differed from HEAD at the origin.&quot;,
-          &quot;minimum&quot;: 0
-        },
-        &quot;task&quot;: {
-          &quot;description&quot;: &quot;The task&#39;s title: the intent.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;session&quot;: {
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ],
-          &quot;description&quot;: &quot;The episode it was published from.&quot;
-        },
-        &quot;issue&quot;: {
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ],
-          &quot;description&quot;: &quot;The issue.&quot;
-        },
-        &quot;parent&quot;: {
-          &quot;description&quot;: &quot;The record it continues.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;device&quot;: {
-          &quot;description&quot;: &quot;The device that published it.&quot;,
-          &quot;$ref&quot;: &quot;#/$defs/Device&quot;
-        },
-        &quot;head&quot;: {
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ],
-          &quot;description&quot;: &quot;The commit it was written at.&quot;
-        },
-        &quot;trust&quot;: {
-          &quot;description&quot;: &quot;Whether its signer is trusted here.&quot;,
-          &quot;$ref&quot;: &quot;#/$defs/Trust&quot;
-        },
-        &quot;objective&quot;: {
-          &quot;description&quot;: &quot;The handover&#39;s `# Objective`, first line.&quot;,
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;Trust&quot;: {
+      &quot;description&quot;: &quot;Whether the device that signed a record is one this repository trusts.&quot;,
+      &quot;oneOf&quot;: [
+        {
+          &quot;const&quot;: &quot;this_device&quot;,
+          &quot;description&quot;: &quot;This device signed it.&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
-        &quot;line&quot;: {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;Its line.&quot;
-        },
-        &quot;working_tree&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/WorkingTree&quot;,
-          &quot;description&quot;: &quot;Clean or dirty at the origin.&quot;
-        },
-        &quot;id&quot;: {
-          &quot;description&quot;: &quot;The record id.&quot;,
+        {
+          &quot;const&quot;: &quot;trusted&quot;,
+          &quot;description&quot;: &quot;The mesh declaration&#39;s trust list admits the key.&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
-        &quot;branch&quot;: {
-          &quot;description&quot;: &quot;The branch it was written on.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
+        {
+          &quot;const&quot;: &quot;untrusted&quot;,
+          &quot;description&quot;: &quot;The mesh declaration exists and does not admit the key: never resumed from.&quot;,
+          &quot;type&quot;: &quot;string&quot;
         },
-        &quot;this_device&quot;: {
-          &quot;description&quot;: &quot;Whether that device is this one.&quot;,
-          &quot;type&quot;: &quot;boolean&quot;
-        },
-        &quot;published_at&quot;: {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;When it was published, by the publisher&#39;s clock.&quot;
-        },
-        &quot;age_minutes&quot;: {
-          &quot;format&quot;: &quot;int64&quot;,
-          &quot;type&quot;: [
-            &quot;integer&quot;,
-            &quot;null&quot;
-          ],
-          &quot;description&quot;: &quot;Minutes since then, by this machine&#39;s clock; absent when either clock&#39;s reading is\nunusable.&quot;
+        {
+          &quot;const&quot;: &quot;undeclared&quot;,
+          &quot;description&quot;: &quot;The repository declares no mesh, so no list exists to check the key against. The\nsignature still binds the record to its key; the plan warns.&quot;,
+          &quot;type&quot;: &quot;string&quot;
         }
-      }
+      ]
     },
     &quot;WorkingTree&quot;: {
+      &quot;description&quot;: &quot;Whether the working tree had changes git does not hold in a commit.&quot;,
       &quot;oneOf&quot;: [
         {
           &quot;const&quot;: &quot;clean&quot;,
@@ -458,53 +468,43 @@ checkout stands on: nothing new was written.</td>
           &quot;description&quot;: &quot;Modified, staged or untracked files that HEAD does not hold.&quot;,
           &quot;type&quot;: &quot;string&quot;
         }
-      ],
-      &quot;description&quot;: &quot;Whether the working tree had changes git does not hold in a commit.&quot;
-    },
-    &quot;Device&quot;: {
-      &quot;description&quot;: &quot;The device a record was written on: the mesh node key&#39;s id and the label its identity\nfile carries. The label is presentation; the node id is identity.&quot;,
-      &quot;properties&quot;: {
-        &quot;node&quot;: {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;The node id: the first 32 hex of the SHA-256 of the device&#39;s Ed25519 public key.&quot;
-        },
-        &quot;label&quot;: {
-          &quot;description&quot;: &quot;The display label of the device&#39;s identity file (`macbook-pro`), or the first eight\nhex of its node id when it has none.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      },
-      &quot;required&quot;: [
-        &quot;node&quot;,
-        &quot;label&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
+      ]
     }
   },
+  &quot;description&quot;: &quot;The answer of `continuity publish`.&quot;,
   &quot;properties&quot;: {
+    &quot;handover&quot;: {
+      &quot;description&quot;: &quot;The handover record it was read from, relative to the checkout.&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
     &quot;next&quot;: {
-      &quot;type&quot;: &quot;array&quot;,
       &quot;description&quot;: &quot;What is next: the record reaches another machine only through a sync.&quot;,
       &quot;items&quot;: {
         &quot;type&quot;: &quot;string&quot;
-      }
+      },
+      &quot;type&quot;: &quot;array&quot;
     },
     &quot;record&quot;: {
-      &quot;description&quot;: &quot;The record.&quot;,
-      &quot;$ref&quot;: &quot;#/$defs/RecordView&quot;
+      &quot;$ref&quot;: &quot;#/$defs/RecordView&quot;,
+      &quot;description&quot;: &quot;The record.&quot;
     },
     &quot;tip&quot;: {
-      &quot;type&quot;: &quot;string&quot;,
-      &quot;description&quot;: &quot;The local ref&#39;s commit.&quot;
+      &quot;description&quot;: &quot;The local ref&#39;s commit.&quot;,
+      &quot;type&quot;: &quot;string&quot;
     },
     &quot;written&quot;: {
       &quot;description&quot;: &quot;False when the same handover at the same source state was already the record this\ncheckout stands on: nothing new was written.&quot;,
       &quot;type&quot;: &quot;boolean&quot;
-    },
-    &quot;handover&quot;: {
-      &quot;description&quot;: &quot;The handover record it was read from, relative to the checkout.&quot;,
-      &quot;type&quot;: &quot;string&quot;
     }
   },
+  &quot;required&quot;: [
+    &quot;record&quot;,
+    &quot;written&quot;,
+    &quot;tip&quot;,
+    &quot;handover&quot;,
+    &quot;next&quot;
+  ],
+  &quot;title&quot;: &quot;Published&quot;,
   &quot;type&quot;: &quot;object&quot;
 }</pre></div>
   </details>
@@ -536,7 +536,7 @@ checkout stands on: nothing new was written.</td>
         <div><dt class="text-body-subtle">Rust module</dt><dd class="min-w-0 break-all font-mono text-heading">majordomus_cli::capability::builtin::continuity</dd></div>
         <div><dt class="text-body-subtle">input type</dt><dd class="font-mono text-heading">PublishInput</dd></div>
         <div><dt class="text-body-subtle">output type</dt><dd class="font-mono text-heading">Published</dd></div>
-        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/docs/generated/modules/continuity.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/continuity.md</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">3f734f2faf797f0ca7c39b4cd837e68b6619c41c6f6711f3d3aeca8f341934eb</dd></div>
+        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/1112bace3437ee0d82067b1e8f61813e70190078/docs/generated/modules/continuity.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/continuity.md</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">5cdbf22cd21589ddbe464d5f0987b6bcf4607d05479004d6f815c3b306fdb08a</dd></div>
         <div><dt class="text-body-subtle">generated by</dt><dd class="font-mono text-heading">majordomus-cli 1.0.0-alpha.10</dd></div>
       </dl>
     </div>
@@ -592,9 +592,9 @@ checkout stands on: nothing new was written.</td>
       <div class="min-w-0">
         <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">Project</h2><ul class="space-y-2 text-sm font-medium text-body">
           <li><a href="https://github.com/korczis/prismatic-majordomus" class="hover:text-heading hover:underline">GitHub</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/LICENSE" class="hover:text-heading hover:underline">MIT licence</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/SECURITY.md" class="hover:text-heading hover:underline">Security policy</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/CONTRIBUTING.md" class="hover:text-heading hover:underline">Contributing guide</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/1112bace3437ee0d82067b1e8f61813e70190078/LICENSE" class="hover:text-heading hover:underline">MIT licence</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/1112bace3437ee0d82067b1e8f61813e70190078/SECURITY.md" class="hover:text-heading hover:underline">Security policy</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/1112bace3437ee0d82067b1e8f61813e70190078/CONTRIBUTING.md" class="hover:text-heading hover:underline">Contributing guide</a></li>
         </ul>
       </div>
     </div>
@@ -602,7 +602,7 @@ checkout stands on: nothing new was written.</td>
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.10</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/745db2ea21e02613943face75a2bf95542be1f2e" class="font-mono underline">745db2e</a> · inputs <span class="font-mono">0a58c217d1b7</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/architecture/" class="underline">how this site is derived</a> names them.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.10</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/1112bace3437ee0d82067b1e8f61813e70190078" class="font-mono underline">1112bac</a> · inputs <span class="font-mono">830f884cc5aa</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/architecture/" class="underline">how this site is derived</a> names them.</p>
     </div>
   </div>
 </footer>

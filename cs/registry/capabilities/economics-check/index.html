@@ -215,10 +215,10 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
 <span class="giallo-l"><span>assert!(narrowed.is_err(), &quot;the check is over the whole repository&quot;);</span></span></code></pre></div><p class="mt-2 text-sm text-body-subtle">Žádné vlastnosti: schopnost nebere žádný vstup.</p><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
-  &quot;type&quot;: &quot;object&quot;,
-  &quot;title&quot;: &quot;EconomicsCheckInput&quot;,
+  &quot;additionalProperties&quot;: false,
   &quot;description&quot;: &quot;The input of `economics.check`: nothing to narrow; the check is over the repository.\nUnknown fields are refused rather than ignored, so a caller who tries to scope the check\nto a path learns that it cannot be scoped instead of reading a partial verdict as whole.\n\n```\nuse majordomus_cli::economics::claims::EconomicsCheckInput;\nlet input: EconomicsCheckInput = serde_json::from_str(\&quot;{}\&quot;).unwrap();\nassert_eq!(input, EconomicsCheckInput::default());\nlet narrowed = serde_json::from_str::&lt;EconomicsCheckInput&gt;(r#\&quot;{\&quot;path\&quot;:\&quot;docs\&quot;}\&quot;#);\nassert!(narrowed.is_err(), \&quot;the check is over the whole repository\&quot;);\n```&quot;,
-  &quot;additionalProperties&quot;: false
+  &quot;title&quot;: &quot;EconomicsCheckInput&quot;,
+  &quot;type&quot;: &quot;object&quot;
 }</pre></div>
   </details>
 </div>
@@ -238,64 +238,41 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
     <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
       <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">vlastnost</th><th class="px-3 py-2">typ</th><th class="px-3 py-2">povinné</th><th class="px-3 py-2">popis</th></tr></thead>
       <tbody><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">claims_checked</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">integer</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Vázaná tvrzení zkontrolována.</td>
+      </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">zjištění</td>
         <td class="px-3 py-2 font-mono text-xs text-body">array</td>
         <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
         <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Každý nález.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">prohledáno</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">integer</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Prohledané soubory.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">ok</td>
         <td class="px-3 py-2 font-mono text-xs text-body">boolean</td>
         <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
         <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Žádný nález.</td>
       </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">claims_checked</td>
+        <td class="px-3 py-2 font-mono text-heading">prohledáno</td>
         <td class="px-3 py-2 font-mono text-xs text-body">integer</td>
         <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Vázaná tvrzení zkontrolována.</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Prohledané soubory.</td>
       </tr></tbody>
     </table>
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
-  &quot;properties&quot;: {
-    &quot;findings&quot;: {
-      &quot;items&quot;: {
-        &quot;$ref&quot;: &quot;#/$defs/EconomicsFinding&quot;
-      },
-      &quot;description&quot;: &quot;Every finding.&quot;,
-      &quot;type&quot;: &quot;array&quot;
-    },
-    &quot;scanned&quot;: {
-      &quot;description&quot;: &quot;Files scanned.&quot;,
-      &quot;format&quot;: &quot;uint&quot;,
-      &quot;minimum&quot;: 0,
-      &quot;type&quot;: &quot;integer&quot;
-    },
-    &quot;ok&quot;: {
-      &quot;type&quot;: &quot;boolean&quot;,
-      &quot;description&quot;: &quot;No finding.&quot;
-    },
-    &quot;claims_checked&quot;: {
-      &quot;format&quot;: &quot;uint&quot;,
-      &quot;minimum&quot;: 0,
-      &quot;description&quot;: &quot;Bound claims checked.&quot;,
-      &quot;type&quot;: &quot;integer&quot;
-    }
-  },
-  &quot;title&quot;: &quot;EconomicsCheckReport&quot;,
   &quot;$defs&quot;: {
     &quot;EconomicsFinding&quot;: {
       &quot;description&quot;: &quot;One thing the check refuses. `detail` names the remedy, so a finding can be acted on\nwithout reading the methodology. A finding about a claim or a file rather than a line\ncarries no `line`, and its JSON omits the key. The kinds:\n\n- `unsupported_quantity`: a number typed into hand-written prose next to the economics\n  vocabulary.\n- `claim_unsupported`: a claim binding that does not hold — the bound claim is missing\n  from `docs/CLAIMS.yaml`, or it is `guaranteed` while its metric does not stand where\n  the binding says or its evidence is not current.\n- `claim_unbound`: a `guaranteed` claim says tokens, context or cost go down and no\n  binding ties it to a metric.\n- `claim_duplicate`: one claim id appears more than once in `docs/CLAIMS.yaml`.\n- `declarations_unreadable`: the benchmark declarations cannot be read, so no binding\n  can be shown to hold.\n- `claims_unreadable`: `docs/CLAIMS.yaml` exists and cannot be read or parsed.\n- `scan_failed`: the prose could not be listed or a file in it could not be read, so\n  nothing can be said to be clean.\n\n```\nuse majordomus_cli::economics::claims::EconomicsFinding;\nlet finding = EconomicsFinding {\n    kind: \&quot;claim_unsupported\&quot;.into(),\n    path: \&quot;docs/CLAIMS.yaml\&quot;.into(),\n    line: None,\n    detail: \&quot;set the claim to planned, or record the evidence\&quot;.into(),\n};\nlet json = serde_json::to_value(&amp;finding).unwrap();\nassert!(json.get(\&quot;line\&quot;).is_none(), \&quot;no line, no key\&quot;);\nassert_eq!(serde_json::from_value::&lt;EconomicsFinding&gt;(json).unwrap(), finding);\n```&quot;,
-      &quot;type&quot;: &quot;object&quot;,
       &quot;properties&quot;: {
-        &quot;path&quot;: {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;Repository-relative path.&quot;
+        &quot;detail&quot;: {
+          &quot;description&quot;: &quot;What was found, and what to do about it.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;kind&quot;: {
+          &quot;description&quot;: &quot;`unsupported_quantity`, `claim_unsupported`, `claim_unbound`, `claim_duplicate`,\n`declarations_unreadable`, `claims_unreadable` or `scan_failed`.&quot;,
+          &quot;type&quot;: &quot;string&quot;
         },
         &quot;line&quot;: {
           &quot;description&quot;: &quot;1-based line, when the finding is about a line.&quot;,
@@ -306,12 +283,8 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
             &quot;null&quot;
           ]
         },
-        &quot;detail&quot;: {
-          &quot;description&quot;: &quot;What was found, and what to do about it.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;kind&quot;: {
-          &quot;description&quot;: &quot;`unsupported_quantity`, `claim_unsupported`, `claim_unbound`, `claim_duplicate`,\n`declarations_unreadable`, `claims_unreadable` or `scan_failed`.&quot;,
+        &quot;path&quot;: {
+          &quot;description&quot;: &quot;Repository-relative path.&quot;,
           &quot;type&quot;: &quot;string&quot;
         }
       },
@@ -319,7 +292,34 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
         &quot;kind&quot;,
         &quot;path&quot;,
         &quot;detail&quot;
-      ]
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    }
+  },
+  &quot;description&quot;: &quot;The answer of `economics.check`, the same over the CLI, HTTP and MCP: how much was read\nand every refusal. `ok` is true exactly when `findings` is empty. `scanned` counts the\nhand-written files read, `docs/CLAIMS.yaml` included and generated files excluded;\n`claims_checked` counts the methodology&#39;s claim bindings, whatever their status.\n\n```\nuse majordomus_cli::economics::claims::{check, EconomicsCheckReport};\nlet dir = tempfile::tempdir().unwrap();\nlet git = std::process::Command::new(\&quot;git\&quot;)\n    .env_remove(\&quot;GIT_DIR\&quot;).env_remove(\&quot;GIT_WORK_TREE\&quot;).env_remove(\&quot;GIT_INDEX_FILE\&quot;)\n    .arg(\&quot;-C\&quot;).arg(dir.path()).args([\&quot;init\&quot;, \&quot;-q\&quot;]).status().unwrap();\nassert!(git.success());\nlet report: EconomicsCheckReport = check(dir.path());\nassert!(report.ok &amp;&amp; report.findings.is_empty(), \&quot;an empty repository claims nothing\&quot;);\nlet json = serde_json::to_value(&amp;report).unwrap();\nassert_eq!(json[\&quot;claims_checked\&quot;], 0);\nassert_eq!(serde_json::from_value::&lt;EconomicsCheckReport&gt;(json).unwrap(), report);\n```&quot;,
+  &quot;properties&quot;: {
+    &quot;claims_checked&quot;: {
+      &quot;description&quot;: &quot;Bound claims checked.&quot;,
+      &quot;format&quot;: &quot;uint&quot;,
+      &quot;minimum&quot;: 0,
+      &quot;type&quot;: &quot;integer&quot;
+    },
+    &quot;findings&quot;: {
+      &quot;description&quot;: &quot;Every finding.&quot;,
+      &quot;items&quot;: {
+        &quot;$ref&quot;: &quot;#/$defs/EconomicsFinding&quot;
+      },
+      &quot;type&quot;: &quot;array&quot;
+    },
+    &quot;ok&quot;: {
+      &quot;description&quot;: &quot;No finding.&quot;,
+      &quot;type&quot;: &quot;boolean&quot;
+    },
+    &quot;scanned&quot;: {
+      &quot;description&quot;: &quot;Files scanned.&quot;,
+      &quot;format&quot;: &quot;uint&quot;,
+      &quot;minimum&quot;: 0,
+      &quot;type&quot;: &quot;integer&quot;
     }
   },
   &quot;required&quot;: [
@@ -328,8 +328,8 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
     &quot;claims_checked&quot;,
     &quot;findings&quot;
   ],
-  &quot;type&quot;: &quot;object&quot;,
-  &quot;description&quot;: &quot;The answer of `economics.check`, the same over the CLI, HTTP and MCP: how much was read\nand every refusal. `ok` is true exactly when `findings` is empty. `scanned` counts the\nhand-written files read, `docs/CLAIMS.yaml` included and generated files excluded;\n`claims_checked` counts the methodology&#39;s claim bindings, whatever their status.\n\n```\nuse majordomus_cli::economics::claims::{check, EconomicsCheckReport};\nlet dir = tempfile::tempdir().unwrap();\nlet git = std::process::Command::new(\&quot;git\&quot;)\n    .env_remove(\&quot;GIT_DIR\&quot;).env_remove(\&quot;GIT_WORK_TREE\&quot;).env_remove(\&quot;GIT_INDEX_FILE\&quot;)\n    .arg(\&quot;-C\&quot;).arg(dir.path()).args([\&quot;init\&quot;, \&quot;-q\&quot;]).status().unwrap();\nassert!(git.success());\nlet report: EconomicsCheckReport = check(dir.path());\nassert!(report.ok &amp;&amp; report.findings.is_empty(), \&quot;an empty repository claims nothing\&quot;);\nlet json = serde_json::to_value(&amp;report).unwrap();\nassert_eq!(json[\&quot;claims_checked\&quot;], 0);\nassert_eq!(serde_json::from_value::&lt;EconomicsCheckReport&gt;(json).unwrap(), report);\n```&quot;
+  &quot;title&quot;: &quot;EconomicsCheckReport&quot;,
+  &quot;type&quot;: &quot;object&quot;
 }</pre></div>
   </details>
 </div>
@@ -360,7 +360,7 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
         <div><dt class="text-body-subtle">modul Rust</dt><dd class="min-w-0 break-all font-mono text-heading">majordomus_cli::capability::builtin::economics</dd></div>
         <div><dt class="text-body-subtle">typ vstupu</dt><dd class="font-mono text-heading">EconomicsCheckInput</dd></div>
         <div><dt class="text-body-subtle">typ výstupu</dt><dd class="font-mono text-heading">EconomicsCheckReport</dd></div>
-        <div><dt class="text-body-subtle">reference na GitHubu</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/docs/generated/modules/economics.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/economics.md</a></dd></div><div><dt class="text-body-subtle">otisk registru</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">3f734f2faf797f0ca7c39b4cd837e68b6619c41c6f6711f3d3aeca8f341934eb</dd></div>
+        <div><dt class="text-body-subtle">reference na GitHubu</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/1112bace3437ee0d82067b1e8f61813e70190078/docs/generated/modules/economics.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/economics.md</a></dd></div><div><dt class="text-body-subtle">otisk registru</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">5cdbf22cd21589ddbe464d5f0987b6bcf4607d05479004d6f815c3b306fdb08a</dd></div>
         <div><dt class="text-body-subtle">vygenerováno nástrojem</dt><dd class="font-mono text-heading">majordomus-cli 1.0.0-alpha.10</dd></div>
       </dl>
     </div>
@@ -416,9 +416,9 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
       <div class="min-w-0">
         <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">Projekt</h2><ul class="space-y-2 text-sm font-medium text-body">
           <li><a href="https://github.com/korczis/prismatic-majordomus" class="hover:text-heading hover:underline">GitHub</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/LICENSE" class="hover:text-heading hover:underline">Licence MIT</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/SECURITY.md" class="hover:text-heading hover:underline">Bezpečnostní politika</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/CONTRIBUTING.md" class="hover:text-heading hover:underline">Průvodce pro přispěvatele</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/1112bace3437ee0d82067b1e8f61813e70190078/LICENSE" class="hover:text-heading hover:underline">Licence MIT</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/1112bace3437ee0d82067b1e8f61813e70190078/SECURITY.md" class="hover:text-heading hover:underline">Bezpečnostní politika</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/1112bace3437ee0d82067b1e8f61813e70190078/CONTRIBUTING.md" class="hover:text-heading hover:underline">Průvodce pro přispěvatele</a></li>
         </ul>
       </div>
     </div>
@@ -426,7 +426,7 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/cs/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.10</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/745db2ea21e02613943face75a2bf95542be1f2e" class="font-mono underline">745db2e</a> · inputs <span class="font-mono">0a58c217d1b7</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/cs/architecture/" class="underline">how this site is derived</a> names them.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.10</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/1112bace3437ee0d82067b1e8f61813e70190078" class="font-mono underline">1112bac</a> · inputs <span class="font-mono">830f884cc5aa</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/cs/architecture/" class="underline">how this site is derived</a> names them.</p>
     </div>
   </div>
 </footer>

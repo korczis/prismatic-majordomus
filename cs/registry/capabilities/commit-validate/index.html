@@ -216,15 +216,15 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
     <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
       <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">vlastnost</th><th class="px-3 py-2">typ</th><th class="px-3 py-2">povinné</th><th class="px-3 py-2">popis</th></tr></thead>
       <tbody><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">cesty</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">pole | null</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">ne</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Cesty, které by commit obsahoval. Vynechejte je a soudy, které je potřebují — zda oprava nese test — se neprovedou, místo aby se hádaly. <span class="font-mono text-xs text-body-subtle">default null</span></td>
-      </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">zpráva</td>
         <td class="px-3 py-2 font-mono text-xs text-body">string</td>
         <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
         <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Zpráva commitu tak, jak by byla uložena. Řádky komentářů se ignorují stejně jako v gitu, takže se posuzuje to, co by bylo commitnuto.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">cesty</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">pole | null</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">ne</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Cesty, které by commit obsahoval. Vynechejte je a soudy, které je potřebují — zda oprava nese test — se neprovedou, místo aby se hádaly. <span class="font-mono text-xs text-body-subtle">default null</span></td>
       </tr></tbody>
     </table>
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
@@ -232,12 +232,13 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
   &quot;additionalProperties&quot;: false,
   &quot;description&quot;: &quot;A message to judge, and what is known about the commit it would make.\n```\nuse majordomus_cli::capability::builtin::commit::ValidateInput;\n// paths are optional: a caller that does not know them gets the judgements that need\n// none, rather than a guess\nlet v: ValidateInput = serde_json::from_str(r#\&quot;{\&quot;message\&quot;: \&quot;feat(a): a thing\&quot;}\&quot;#).unwrap();\nassert!(v.paths.is_none());\n```&quot;,
-  &quot;required&quot;: [
-    &quot;message&quot;
-  ],
-  &quot;type&quot;: &quot;object&quot;,
   &quot;properties&quot;: {
+    &quot;message&quot;: {
+      &quot;description&quot;: &quot;The commit message, as it would be stored. Comment lines are ignored, as git ignores\nthem, so what is judged is what would be committed.&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
     &quot;paths&quot;: {
+      &quot;default&quot;: null,
       &quot;description&quot;: &quot;The paths the commit would contain. Omit them and the judgements that need them —\nwhether a fix carries a test — are not made rather than guessed.&quot;,
       &quot;items&quot;: {
         &quot;type&quot;: &quot;string&quot;
@@ -245,15 +246,14 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
       &quot;type&quot;: [
         &quot;array&quot;,
         &quot;null&quot;
-      ],
-      &quot;default&quot;: null
-    },
-    &quot;message&quot;: {
-      &quot;type&quot;: &quot;string&quot;,
-      &quot;description&quot;: &quot;The commit message, as it would be stored. Comment lines are ignored, as git ignores\nthem, so what is judged is what would be committed.&quot;
+      ]
     }
   },
-  &quot;title&quot;: &quot;ValidateInput&quot;
+  &quot;required&quot;: [
+    &quot;message&quot;
+  ],
+  &quot;title&quot;: &quot;ValidateInput&quot;,
+  &quot;type&quot;: &quot;object&quot;
 }</pre></div>
   </details>
 </div>
@@ -272,6 +272,11 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
         <td class="px-3 py-2 font-mono text-xs text-body">ne</td>
         <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Proč commit nebyl posouzen, když nebyl.</td>
       </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">zjištění</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Každé zjištění v pořadí <code>CommitRule::ALL</code>.</td>
+      </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">zpráva</td>
         <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
         <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
@@ -281,34 +286,85 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
         <td class="px-3 py-2 font-mono text-xs text-body">boolean</td>
         <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
         <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Zda nebylo nalezeno nic se závažností chyby.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">zjištění</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Každé zjištění v pořadí <code>CommitRule::ALL</code>.</td>
       </tr></tbody>
     </table>
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
-  &quot;description&quot;: &quot;What the judge concluded: the message as it was parsed, whether anything of error\nseverity was found, the exemption when git composed the subject rather than a person, and\nevery finding in `CommitRule::ALL` order — which is the order the evidence for them\nappears in the message, so a person reads them in the order they would fix them.\n\n```\nuse majordomus_cli::commit::{judge, CommitPolicy, CommitSubject, CommitVerdict};\nlet v: CommitVerdict = judge(&amp;CommitSubject::of(\&quot;update stuff\&quot;), &amp;CommitPolicy::default());\nassert!(!v.passed);\nassert_eq!(v.findings[0].code, \&quot;commit.not_conventional\&quot;);\nassert_eq!(v.message.header.subject, \&quot;update stuff\&quot;, \&quot;what was judged, not what was typed\&quot;);\n```&quot;,
   &quot;$defs&quot;: {
     &quot;CommitExemption&quot;: {
+      &quot;description&quot;: &quot;Why a commit was not judged.\n```\nuse majordomus_cli::commit::{judge, CommitExemption, CommitPolicy, CommitSubject};\nlet v = judge(&amp;CommitSubject::of(\&quot;Merge pull request #1 from a/b\&quot;), &amp;CommitPolicy::default());\nassert_eq!(v.exempt, Some(CommitExemption::GitAuthored));\n```&quot;,
       &quot;oneOf&quot;: [
         {
+          &quot;const&quot;: &quot;git_authored&quot;,
           &quot;description&quot;: &quot;git composed the subject: a merge, a revert, a fixup.&quot;,
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;const&quot;: &quot;git_authored&quot;
+          &quot;type&quot;: &quot;string&quot;
         }
+      ]
+    },
+    &quot;CommitHeader&quot;: {
+      &quot;description&quot;: &quot;The header of a commit message: its first line, taken apart.\n\n`word` is the type as the author wrote it and `kind` is what that word names; they\ndiffer exactly when the word is not one of the eleven the convention defines, and\nkeeping both is what lets a reader see `wip(site): halfway through` as its author typed\nit while a judge still reports that `wip` is not a type.\n```\nuse majordomus_cli::commit::CommitHeader;\nuse majordomus_cli::release::ChangeKind;\nlet h = CommitHeader::parse(\&quot;fix(plan): the fingerprint names what moved\&quot;);\nassert_eq!(h.word, \&quot;fix\&quot;);\nassert_eq!(h.kind, ChangeKind::Fix);\nassert_eq!(h.scope.as_deref(), Some(\&quot;plan\&quot;));\nassert!(!h.breaking);\nassert_eq!(h.subject, \&quot;the fingerprint names what moved\&quot;);\n```&quot;,
+      &quot;properties&quot;: {
+        &quot;breaking&quot;: {
+          &quot;description&quot;: &quot;Whether the head carried the `!` that marks a breaking change. The `BREAKING CHANGE:`\ntrailer is a property of the body and is read by `crate::commit::CommitMessage`.&quot;,
+          &quot;type&quot;: &quot;boolean&quot;
+        },
+        &quot;kind&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/ReleaseChangeKind&quot;,
+          &quot;description&quot;: &quot;What `Self::word` names; `ChangeKind::Other` for a word the convention does not\ndefine, and for a subject with no head.&quot;
+        },
+        &quot;scope&quot;: {
+          &quot;description&quot;: &quot;The parenthesised scope, when there is one.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;subject&quot;: {
+          &quot;description&quot;: &quot;What the commit says it did. For a header that does not parse this is the whole\nfirst line, unchanged, and for an unknown type word it keeps the word: nothing that\nthe author wrote is dropped on the way through.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;word&quot;: {
+          &quot;description&quot;: &quot;The type as written: `feat`, `fix`, `wip`, or the empty string when the subject\ncarries no `type: ` head at all.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;word&quot;,
+        &quot;kind&quot;,
+        &quot;breaking&quot;,
+        &quot;subject&quot;
       ],
-      &quot;description&quot;: &quot;Why a commit was not judged.\n```\nuse majordomus_cli::commit::{judge, CommitExemption, CommitPolicy, CommitSubject};\nlet v = judge(&amp;CommitSubject::of(\&quot;Merge pull request #1 from a/b\&quot;), &amp;CommitPolicy::default());\nassert_eq!(v.exempt, Some(CommitExemption::GitAuthored));\n```&quot;
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;CommitMessage&quot;: {
+      &quot;description&quot;: &quot;A commit message taken apart: header, body, trailers.\n```\nuse majordomus_cli::commit::CommitMessage;\nlet m = CommitMessage::parse(\&quot;feat(a): a thing\\n\\nThe body.\\n\\nRefs: I1305\\n\&quot;);\nassert_eq!(m.header.subject, \&quot;a thing\&quot;);\nassert_eq!(m.body, \&quot;The body.\&quot;);\nassert_eq!(m.trailers.len(), 1);\n```&quot;,
+      &quot;properties&quot;: {
+        &quot;body&quot;: {
+          &quot;description&quot;: &quot;Everything between the header and the trailer block, with surrounding blank lines\nremoved. Empty when the message is a subject alone.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;header&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/CommitHeader&quot;,
+          &quot;description&quot;: &quot;The first line, parsed.&quot;
+        },
+        &quot;trailers&quot;: {
+          &quot;description&quot;: &quot;The `Key: value` lines of the final paragraph, in the order they were written.&quot;,
+          &quot;items&quot;: {
+            &quot;$ref&quot;: &quot;#/$defs/CommitTrailer&quot;
+          },
+          &quot;type&quot;: &quot;array&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;header&quot;,
+        &quot;body&quot;,
+        &quot;trailers&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
     },
     &quot;CommitTrailer&quot;: {
       &quot;description&quot;: &quot;One `Key: value` line in the trailer block at the end of a commit message.\n```\nuse majordomus_cli::commit::CommitMessage;\nuse majordomus_cli::commit::CommitTrailer;\nlet m = CommitMessage::parse(\&quot;fix(x): a thing\\n\\nWhy.\\n\\nRefs: I1305\\n\&quot;);\nlet t: &amp;CommitTrailer = &amp;m.trailers[0];\nassert_eq!(t.key, \&quot;Refs\&quot;);\nassert_eq!(t.value, \&quot;I1305\&quot;);\n```&quot;,
-      &quot;required&quot;: [
-        &quot;key&quot;,
-        &quot;value&quot;
-      ],
       &quot;properties&quot;: {
         &quot;key&quot;: {
           &quot;description&quot;: &quot;The key, as written: `Refs`, `Co-Authored-By`, `BREAKING CHANGE`.&quot;,
@@ -319,42 +375,111 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
           &quot;type&quot;: &quot;string&quot;
         }
       },
+      &quot;required&quot;: [
+        &quot;key&quot;,
+        &quot;value&quot;
+      ],
       &quot;type&quot;: &quot;object&quot;
     },
-    &quot;CommitHeader&quot;: {
-      &quot;type&quot;: &quot;object&quot;,
-      &quot;required&quot;: [
-        &quot;word&quot;,
-        &quot;kind&quot;,
-        &quot;breaking&quot;,
-        &quot;subject&quot;
-      ],
-      &quot;description&quot;: &quot;The header of a commit message: its first line, taken apart.\n\n`word` is the type as the author wrote it and `kind` is what that word names; they\ndiffer exactly when the word is not one of the eleven the convention defines, and\nkeeping both is what lets a reader see `wip(site): halfway through` as its author typed\nit while a judge still reports that `wip` is not a type.\n```\nuse majordomus_cli::commit::CommitHeader;\nuse majordomus_cli::release::ChangeKind;\nlet h = CommitHeader::parse(\&quot;fix(plan): the fingerprint names what moved\&quot;);\nassert_eq!(h.word, \&quot;fix\&quot;);\nassert_eq!(h.kind, ChangeKind::Fix);\nassert_eq!(h.scope.as_deref(), Some(\&quot;plan\&quot;));\nassert!(!h.breaking);\nassert_eq!(h.subject, \&quot;the fingerprint names what moved\&quot;);\n```&quot;,
+    &quot;Diagnostic&quot;: {
+      &quot;description&quot;: &quot;One finding about the declarative state, named by a stable code, tied to a path where\nthere is one, and carrying the command that reproduces it where there is one.&quot;,
       &quot;properties&quot;: {
-        &quot;breaking&quot;: {
-          &quot;type&quot;: &quot;boolean&quot;,
-          &quot;description&quot;: &quot;Whether the head carried the `!` that marks a breaking change. The `BREAKING CHANGE:`\ntrailer is a property of the body and is read by `crate::commit::CommitMessage`.&quot;
-        },
-        &quot;kind&quot;: {
-          &quot;description&quot;: &quot;What `Self::word` names; `ChangeKind::Other` for a word the convention does not\ndefine, and for a subject with no head.&quot;,
-          &quot;$ref&quot;: &quot;#/$defs/ReleaseChangeKind&quot;
-        },
-        &quot;subject&quot;: {
-          &quot;description&quot;: &quot;What the commit says it did. For a header that does not parse this is the whole\nfirst line, unchanged, and for an unknown type word it keeps the word: nothing that\nthe author wrote is dropped on the way through.&quot;,
+        &quot;code&quot;: {
+          &quot;description&quot;: &quot;A stable machine-readable code, e.g. `unknown_key`, `duplicate_identity`.&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
-        &quot;word&quot;: {
-          &quot;description&quot;: &quot;The type as written: `feat`, `fix`, `wip`, or the empty string when the subject\ncarries no `type: ` head at all.&quot;,
+        &quot;message&quot;: {
+          &quot;description&quot;: &quot;What is wrong, for a person; the code is for a program.&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
-        &quot;scope&quot;: {
+        &quot;path&quot;: {
+          &quot;description&quot;: &quot;Repository-relative path of the file concerned, when there is one.&quot;,
           &quot;type&quot;: [
             &quot;string&quot;,
             &quot;null&quot;
-          ],
-          &quot;description&quot;: &quot;The parenthesised scope, when there is one.&quot;
+          ]
+        },
+        &quot;severity&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/Severity&quot;,
+          &quot;description&quot;: &quot;How bad.&quot;
         }
-      }
+      },
+      &quot;required&quot;: [
+        &quot;severity&quot;,
+        &quot;code&quot;,
+        &quot;message&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;ReleaseChangeKind&quot;: {
+      &quot;description&quot;: &quot;What a conventional commit says it did.\n\nThe set is the one the repository&#39;s own commit convention uses; a commit whose subject\ndoes not parse is `ChangeKind::Other` and still appears, because a changelog that\nsilently drops what it cannot classify is a changelog that lies by omission.&quot;,
+      &quot;oneOf&quot;: [
+        {
+          &quot;const&quot;: &quot;feat&quot;,
+          &quot;description&quot;: &quot;A capability a person did not have before.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;fix&quot;,
+          &quot;description&quot;: &quot;Behaviour that was wrong and is not any more.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;perf&quot;,
+          &quot;description&quot;: &quot;Performance, with the behaviour unchanged.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;refactor&quot;,
+          &quot;description&quot;: &quot;Structure, with the behaviour unchanged.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;docs&quot;,
+          &quot;description&quot;: &quot;Documentation.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;test&quot;,
+          &quot;description&quot;: &quot;Tests.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;chore&quot;,
+          &quot;description&quot;: &quot;The build, the pipeline, the tooling.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;ci&quot;,
+          &quot;description&quot;: &quot;Continuous integration.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;style&quot;,
+          &quot;description&quot;: &quot;Formatting, with the behaviour unchanged.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;build&quot;,
+          &quot;description&quot;: &quot;The build system or its dependencies.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;revert&quot;,
+          &quot;description&quot;: &quot;A change that undoes another.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;merge&quot;,
+          &quot;description&quot;: &quot;An integration: one line of work brought into another.\n\nNot in the conventional-commit specification, and in this repository&#39;s history 38\ntimes and counting, because integration here is a deliberate act with a subject\nsomebody writes — `merge: bring origin/master into feature/x` — and not the sentence\n`git merge` composes. Declaring it is what lets the validator hold those subjects to\nthe same width and the same references as every other commit, instead of either\nrefusing a convention this project practises or exempting it from being checked at\nall. The changelog never renders it: `commits::in_range` reads the log with\n`--no-merges`, so a merge commit is not a release entry however its subject is\nspelled.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;other&quot;,
+          &quot;description&quot;: &quot;A commit whose subject does not parse as a conventional commit.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      ]
     },
     &quot;Severity&quot;: {
       &quot;description&quot;: &quot;How bad a diagnostic is. `Error` excludes the file it concerns from the index and puts\nthe index into the degraded state; `Warning` and `Info` do neither.&quot;,
@@ -370,145 +495,14 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
           &quot;type&quot;: &quot;string&quot;
         },
         {
-          &quot;type&quot;: &quot;string&quot;,
           &quot;const&quot;: &quot;error&quot;,
-          &quot;description&quot;: &quot;The file is excluded and the index is degraded.&quot;
+          &quot;description&quot;: &quot;The file is excluded and the index is degraded.&quot;,
+          &quot;type&quot;: &quot;string&quot;
         }
       ]
-    },
-    &quot;Diagnostic&quot;: {
-      &quot;required&quot;: [
-        &quot;severity&quot;,
-        &quot;code&quot;,
-        &quot;message&quot;
-      ],
-      &quot;description&quot;: &quot;One finding about the declarative state, named by a stable code, tied to a path where\nthere is one, and carrying the command that reproduces it where there is one.&quot;,
-      &quot;properties&quot;: {
-        &quot;message&quot;: {
-          &quot;description&quot;: &quot;What is wrong, for a person; the code is for a program.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;severity&quot;: {
-          &quot;description&quot;: &quot;How bad.&quot;,
-          &quot;$ref&quot;: &quot;#/$defs/Severity&quot;
-        },
-        &quot;code&quot;: {
-          &quot;description&quot;: &quot;A stable machine-readable code, e.g. `unknown_key`, `duplicate_identity`.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;path&quot;: {
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ],
-          &quot;description&quot;: &quot;Repository-relative path of the file concerned, when there is one.&quot;
-        }
-      },
-      &quot;type&quot;: &quot;object&quot;
-    },
-    &quot;ReleaseChangeKind&quot;: {
-      &quot;description&quot;: &quot;What a conventional commit says it did.\n\nThe set is the one the repository&#39;s own commit convention uses; a commit whose subject\ndoes not parse is `ChangeKind::Other` and still appears, because a changelog that\nsilently drops what it cannot classify is a changelog that lies by omission.&quot;,
-      &quot;oneOf&quot;: [
-        {
-          &quot;const&quot;: &quot;feat&quot;,
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;A capability a person did not have before.&quot;
-        },
-        {
-          &quot;description&quot;: &quot;Behaviour that was wrong and is not any more.&quot;,
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;const&quot;: &quot;fix&quot;
-        },
-        {
-          &quot;const&quot;: &quot;perf&quot;,
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;Performance, with the behaviour unchanged.&quot;
-        },
-        {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;Structure, with the behaviour unchanged.&quot;,
-          &quot;const&quot;: &quot;refactor&quot;
-        },
-        {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;const&quot;: &quot;docs&quot;,
-          &quot;description&quot;: &quot;Documentation.&quot;
-        },
-        {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;const&quot;: &quot;test&quot;,
-          &quot;description&quot;: &quot;Tests.&quot;
-        },
-        {
-          &quot;const&quot;: &quot;chore&quot;,
-          &quot;description&quot;: &quot;The build, the pipeline, the tooling.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;description&quot;: &quot;Continuous integration.&quot;,
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;const&quot;: &quot;ci&quot;
-        },
-        {
-          &quot;const&quot;: &quot;style&quot;,
-          &quot;description&quot;: &quot;Formatting, with the behaviour unchanged.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;description&quot;: &quot;The build system or its dependencies.&quot;,
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;const&quot;: &quot;build&quot;
-        },
-        {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;A change that undoes another.&quot;,
-          &quot;const&quot;: &quot;revert&quot;
-        },
-        {
-          &quot;description&quot;: &quot;An integration: one line of work brought into another.\n\nNot in the conventional-commit specification, and in this repository&#39;s history 38\ntimes and counting, because integration here is a deliberate act with a subject\nsomebody writes — `merge: bring origin/master into feature/x` — and not the sentence\n`git merge` composes. Declaring it is what lets the validator hold those subjects to\nthe same width and the same references as every other commit, instead of either\nrefusing a convention this project practises or exempting it from being checked at\nall. The changelog never renders it: `commits::in_range` reads the log with\n`--no-merges`, so a merge commit is not a release entry however its subject is\nspelled.&quot;,
-          &quot;const&quot;: &quot;merge&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;A commit whose subject does not parse as a conventional commit.&quot;,
-          &quot;const&quot;: &quot;other&quot;
-        }
-      ]
-    },
-    &quot;CommitMessage&quot;: {
-      &quot;properties&quot;: {
-        &quot;header&quot;: {
-          &quot;description&quot;: &quot;The first line, parsed.&quot;,
-          &quot;$ref&quot;: &quot;#/$defs/CommitHeader&quot;
-        },
-        &quot;body&quot;: {
-          &quot;description&quot;: &quot;Everything between the header and the trailer block, with surrounding blank lines\nremoved. Empty when the message is a subject alone.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;trailers&quot;: {
-          &quot;description&quot;: &quot;The `Key: value` lines of the final paragraph, in the order they were written.&quot;,
-          &quot;type&quot;: &quot;array&quot;,
-          &quot;items&quot;: {
-            &quot;$ref&quot;: &quot;#/$defs/CommitTrailer&quot;
-          }
-        }
-      },
-      &quot;required&quot;: [
-        &quot;header&quot;,
-        &quot;body&quot;,
-        &quot;trailers&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;,
-      &quot;description&quot;: &quot;A commit message taken apart: header, body, trailers.\n```\nuse majordomus_cli::commit::CommitMessage;\nlet m = CommitMessage::parse(\&quot;feat(a): a thing\\n\\nThe body.\\n\\nRefs: I1305\\n\&quot;);\nassert_eq!(m.header.subject, \&quot;a thing\&quot;);\nassert_eq!(m.body, \&quot;The body.\&quot;);\nassert_eq!(m.trailers.len(), 1);\n```&quot;
     }
   },
-  &quot;title&quot;: &quot;CommitVerdict&quot;,
-  &quot;required&quot;: [
-    &quot;message&quot;,
-    &quot;passed&quot;,
-    &quot;findings&quot;
-  ],
+  &quot;description&quot;: &quot;What the judge concluded: the message as it was parsed, whether anything of error\nseverity was found, the exemption when git composed the subject rather than a person, and\nevery finding in `CommitRule::ALL` order — which is the order the evidence for them\nappears in the message, so a person reads them in the order they would fix them.\n\n```\nuse majordomus_cli::commit::{judge, CommitPolicy, CommitSubject, CommitVerdict};\nlet v: CommitVerdict = judge(&amp;CommitSubject::of(\&quot;update stuff\&quot;), &amp;CommitPolicy::default());\nassert!(!v.passed);\nassert_eq!(v.findings[0].code, \&quot;commit.not_conventional\&quot;);\nassert_eq!(v.message.header.subject, \&quot;update stuff\&quot;, \&quot;what was judged, not what was typed\&quot;);\n```&quot;,
   &quot;properties&quot;: {
     &quot;exempt&quot;: {
       &quot;anyOf&quot;: [
@@ -521,6 +515,13 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
       ],
       &quot;description&quot;: &quot;Why the commit was not judged, when it was not.&quot;
     },
+    &quot;findings&quot;: {
+      &quot;description&quot;: &quot;Every finding, in `CommitRule::ALL` order.&quot;,
+      &quot;items&quot;: {
+        &quot;$ref&quot;: &quot;#/$defs/Diagnostic&quot;
+      },
+      &quot;type&quot;: &quot;array&quot;
+    },
     &quot;message&quot;: {
       &quot;$ref&quot;: &quot;#/$defs/CommitMessage&quot;,
       &quot;description&quot;: &quot;The message as parsed; what was judged, not what was typed.&quot;
@@ -528,15 +529,14 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
     &quot;passed&quot;: {
       &quot;description&quot;: &quot;Whether nothing of error severity was found.&quot;,
       &quot;type&quot;: &quot;boolean&quot;
-    },
-    &quot;findings&quot;: {
-      &quot;type&quot;: &quot;array&quot;,
-      &quot;items&quot;: {
-        &quot;$ref&quot;: &quot;#/$defs/Diagnostic&quot;
-      },
-      &quot;description&quot;: &quot;Every finding, in `CommitRule::ALL` order.&quot;
     }
   },
+  &quot;required&quot;: [
+    &quot;message&quot;,
+    &quot;passed&quot;,
+    &quot;findings&quot;
+  ],
+  &quot;title&quot;: &quot;CommitVerdict&quot;,
   &quot;type&quot;: &quot;object&quot;
 }</pre></div>
   </details>
@@ -568,7 +568,7 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
         <div><dt class="text-body-subtle">modul Rust</dt><dd class="min-w-0 break-all font-mono text-heading">majordomus_cli::capability::builtin::commit</dd></div>
         <div><dt class="text-body-subtle">typ vstupu</dt><dd class="font-mono text-heading">ValidateInput</dd></div>
         <div><dt class="text-body-subtle">typ výstupu</dt><dd class="font-mono text-heading">CommitVerdict</dd></div>
-        <div><dt class="text-body-subtle">reference na GitHubu</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/docs/generated/modules/commit.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/commit.md</a></dd></div><div><dt class="text-body-subtle">otisk registru</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">3f734f2faf797f0ca7c39b4cd837e68b6619c41c6f6711f3d3aeca8f341934eb</dd></div>
+        <div><dt class="text-body-subtle">reference na GitHubu</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/1112bace3437ee0d82067b1e8f61813e70190078/docs/generated/modules/commit.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/commit.md</a></dd></div><div><dt class="text-body-subtle">otisk registru</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">5cdbf22cd21589ddbe464d5f0987b6bcf4607d05479004d6f815c3b306fdb08a</dd></div>
         <div><dt class="text-body-subtle">vygenerováno nástrojem</dt><dd class="font-mono text-heading">majordomus-cli 1.0.0-alpha.10</dd></div>
       </dl>
     </div>
@@ -624,9 +624,9 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
       <div class="min-w-0">
         <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">Projekt</h2><ul class="space-y-2 text-sm font-medium text-body">
           <li><a href="https://github.com/korczis/prismatic-majordomus" class="hover:text-heading hover:underline">GitHub</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/LICENSE" class="hover:text-heading hover:underline">Licence MIT</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/SECURITY.md" class="hover:text-heading hover:underline">Bezpečnostní politika</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/CONTRIBUTING.md" class="hover:text-heading hover:underline">Průvodce pro přispěvatele</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/1112bace3437ee0d82067b1e8f61813e70190078/LICENSE" class="hover:text-heading hover:underline">Licence MIT</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/1112bace3437ee0d82067b1e8f61813e70190078/SECURITY.md" class="hover:text-heading hover:underline">Bezpečnostní politika</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/1112bace3437ee0d82067b1e8f61813e70190078/CONTRIBUTING.md" class="hover:text-heading hover:underline">Průvodce pro přispěvatele</a></li>
         </ul>
       </div>
     </div>
@@ -634,7 +634,7 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/cs/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.10</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/745db2ea21e02613943face75a2bf95542be1f2e" class="font-mono underline">745db2e</a> · inputs <span class="font-mono">0a58c217d1b7</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/cs/architecture/" class="underline">how this site is derived</a> names them.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.10</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/1112bace3437ee0d82067b1e8f61813e70190078" class="font-mono underline">1112bac</a> · inputs <span class="font-mono">830f884cc5aa</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/cs/architecture/" class="underline">how this site is derived</a> names them.</p>
     </div>
   </div>
 </footer>
