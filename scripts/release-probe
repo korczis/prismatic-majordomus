@@ -24,7 +24,7 @@
 #
 # Without a browser: SKIP and exit 0 locally, exit 12 under CI=true (the convention of the other probes).
 # Exit 0 agree, 10 a disagreement (named, both sides), 12 a surface that could not be read, 2 usage.
-set -eu
+set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 LIB="$ROOT/scripts/lib"
 # shellcheck source=../lib/runnable.sh
