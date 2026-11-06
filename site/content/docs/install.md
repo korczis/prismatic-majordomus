@@ -195,6 +195,7 @@ the tool's, and no command of this project deletes them.
 
 | Release | Published | Channel | Artifacts | Metadata |
 |---|---|---|---|---|
+| `v1.0.0-alpha.10` | 2026-11-06 | prerelease | 6 | [`v1.0.0-alpha.10.json`](https://majordomus.dev/releases/v1.0.0-alpha.10.json) |
 | `v1.0.0-alpha.9` | 2026-10-28 | prerelease | 6 | [`v1.0.0-alpha.9.json`](https://majordomus.dev/releases/v1.0.0-alpha.9.json) |
 | `v1.0.0-alpha.8` | 2026-10-25 | prerelease | 6 | [`v1.0.0-alpha.8.json`](https://majordomus.dev/releases/v1.0.0-alpha.8.json) |
 | `v1.0.0-alpha.5` | 2026-10-22 | prerelease | 6 | [`v1.0.0-alpha.5.json`](https://majordomus.dev/releases/v1.0.0-alpha.5.json) |

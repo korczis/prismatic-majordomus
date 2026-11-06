@@ -799,6 +799,11 @@ jobs:
         timeout-minutes: 20
         with:
           fetch-depth: 0
+      # the site tools as well: the plan's release-record-cases gate runs case 3045, which
+      # builds a site with zola and skips without it, and `--no-skips` counts the skip as a
+      # failure (the record of v1.0.0-alpha.10 found it on 2026-11-06)
+      - id: site
+        uses: ./.github/actions/setup-site
       - id: rust
         uses: ./.github/actions/setup-rust
         with:
