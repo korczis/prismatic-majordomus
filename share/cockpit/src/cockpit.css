@@ -31,6 +31,9 @@
 @import "../../design/primitives.css";
 @plugin "flowbite/plugin";
 @source "../../../apps/*/src/ui/navbar.html";
+/* Flowbite's own sources, as its Tailwind 4 setup asks: the classes its components set
+   from script are emitted, and the output stays a function of the pinned version */
+@source "../../../node_modules/flowbite";
 @custom-variant dark (&:where(.dark, .dark *));
 
 /* `source(none)` turns off automatic source detection. Nothing in the repository is
