@@ -211,10 +211,16 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
     <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
       <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">vlastnost</th><th class="px-3 py-2">typ</th><th class="px-3 py-2">povinné</th><th class="px-3 py-2">popis</th></tr></thead>
       <tbody><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">schopnost</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Kanonické id schopnosti ke spuštění (<code>health.report</code>, <code>objects.verify</code>).</td>
+        <td class="px-3 py-2 font-mono text-heading">issue</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">ne</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The issue the execution works for (I4004): <code>I4004</code>, <code>#184</code>. Before the handler is
+entered the execution takes the issue's exclusive mesh claim — the issue record's
+<code>scope</code>, or <code>issue/&lt;id&gt;</code> when it declares none — as the mesh session
+<code>execution-&lt;id&gt;</code>, and moves <code>queued -&gt; claimed -&gt; running</code>; a claim another session
+holds refuses it (<code>refused</code>, the holder named) and nothing runs. The claim is given
+back at the final state and kept for an outcome that is not known. With no mesh in
+the serving process it runs unclaimed and its <code>execution.issue_claim</code> event says so.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">idempotency_key</td>
         <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
@@ -226,63 +232,57 @@ naming that execution. 1 to 128 characters of <code>A-Z a-z 0-9 . _ : -</code>, 
 repository and the capability, and held for as long as the server holds the
 execution it started. Without one, every start starts an execution.</td>
       </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">schopnost</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Kanonické id schopnosti ke spuštění (<code>health.report</code>, <code>objects.verify</code>).</td>
+      </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">vstup</td>
         <td class="px-3 py-2 font-mono text-xs text-body">object</td>
         <td class="px-3 py-2 font-mono text-xs text-body">ne</td>
         <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Jeho vstup, jak ho popisuje vlastní vstupní schéma; prázdný objekt, když žádný nebere. <span class="font-mono text-xs text-body-subtle">výchozí null</span></td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">issue</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">ne</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The issue the execution works for (I4004): <code>I4004</code>, <code>#184</code>. Before the handler is
-entered the execution takes the issue's exclusive mesh claim — the issue record's
-<code>scope</code>, or <code>issue/&lt;id&gt;</code> when it declares none — as the mesh session
-<code>execution-&lt;id&gt;</code>, and moves <code>queued -&gt; claimed -&gt; running</code>; a claim another session
-holds refuses it (<code>refused</code>, the holder named) and nothing runs. The claim is given
-back at the final state and kept for an outcome that is not known. With no mesh in
-the serving process it runs unclaimed and its <code>execution.issue_claim</code> event says so.</td>
       </tr></tbody>
     </table>
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
-  &quot;additionalProperties&quot;: false,
-  &quot;description&quot;: &quot;The input of `executions.start`: which capability to run, and with what.&quot;,
+  &quot;type&quot;: &quot;object&quot;,
   &quot;properties&quot;: {
+    &quot;issue&quot;: {
+      &quot;type&quot;: [
+        &quot;string&quot;,
+        &quot;null&quot;
+      ],
+      &quot;maxLength&quot;: 64,
+      &quot;pattern&quot;: &quot;^[A-Za-z0-9#._-]+$&quot;,
+      &quot;description&quot;: &quot;The issue the execution works for (I4004): `I4004`, `#184`. Before the handler is\nentered the execution takes the issue&#39;s exclusive mesh claim — the issue record&#39;s\n`scope`, or `issue/&lt;id&gt;` when it declares none — as the mesh session\n`execution-&lt;id&gt;`, and moves `queued -&gt; claimed -&gt; running`; a claim another session\nholds refuses it (`refused`, the holder named) and nothing runs. The claim is given\nback at the final state and kept for an outcome that is not known. With no mesh in\nthe serving process it runs unclaimed and its `execution.issue_claim` event says so.&quot;,
+      &quot;minLength&quot;: 1
+    },
+    &quot;idempotency_key&quot;: {
+      &quot;pattern&quot;: &quot;^[A-Za-z0-9._:-]+$&quot;,
+      &quot;description&quot;: &quot;A key that makes a repeated start one execution (I4000): sent again with the same\ncapability and input, it is answered the execution it started, `deduplicated`, and\nnothing new runs; sent again with another input, it is refused 409 `conflict`,\nnaming that execution. 1 to 128 characters of `A-Z a-z 0-9 . _ : -`, scoped to this\nrepository and the capability, and held for as long as the server holds the\nexecution it started. Without one, every start starts an execution.&quot;,
+      &quot;type&quot;: [
+        &quot;string&quot;,
+        &quot;null&quot;
+      ],
+      &quot;maxLength&quot;: 128,
+      &quot;minLength&quot;: 1
+    },
     &quot;capability&quot;: {
       &quot;description&quot;: &quot;The canonical id of the capability to run (`health.report`, `objects.verify`).&quot;,
       &quot;type&quot;: &quot;string&quot;
     },
-    &quot;idempotency_key&quot;: {
-      &quot;description&quot;: &quot;A key that makes a repeated start one execution (I4000): sent again with the same\ncapability and input, it is answered the execution it started, `deduplicated`, and\nnothing new runs; sent again with another input, it is refused 409 `conflict`,\nnaming that execution. 1 to 128 characters of `A-Z a-z 0-9 . _ : -`, scoped to this\nrepository and the capability, and held for as long as the server holds the\nexecution it started. Without one, every start starts an execution.&quot;,
-      &quot;maxLength&quot;: 128,
-      &quot;minLength&quot;: 1,
-      &quot;pattern&quot;: &quot;^[A-Za-z0-9._:-]+$&quot;,
-      &quot;type&quot;: [
-        &quot;string&quot;,
-        &quot;null&quot;
-      ]
-    },
     &quot;input&quot;: {
       &quot;default&quot;: null,
       &quot;description&quot;: &quot;Its input, as its own input schema describes it; an empty object when it takes none.&quot;
-    },
-    &quot;issue&quot;: {
-      &quot;description&quot;: &quot;The issue the execution works for (I4004): `I4004`, `#184`. Before the handler is\nentered the execution takes the issue&#39;s exclusive mesh claim — the issue record&#39;s\n`scope`, or `issue/&lt;id&gt;` when it declares none — as the mesh session\n`execution-&lt;id&gt;`, and moves `queued -&gt; claimed -&gt; running`; a claim another session\nholds refuses it (`refused`, the holder named) and nothing runs. The claim is given\nback at the final state and kept for an outcome that is not known. With no mesh in\nthe serving process it runs unclaimed and its `execution.issue_claim` event says so.&quot;,
-      &quot;maxLength&quot;: 64,
-      &quot;minLength&quot;: 1,
-      &quot;pattern&quot;: &quot;^[A-Za-z0-9#._-]+$&quot;,
-      &quot;type&quot;: [
-        &quot;string&quot;,
-        &quot;null&quot;
-      ]
     }
   },
+  &quot;title&quot;: &quot;StartInput&quot;,
+  &quot;additionalProperties&quot;: false,
   &quot;required&quot;: [
     &quot;capability&quot;
   ],
-  &quot;title&quot;: &quot;StartInput&quot;,
-  &quot;type&quot;: &quot;object&quot;
+  &quot;description&quot;: &quot;The input of `executions.start`: which capability to run, and with what.&quot;
 }</pre></div>
   </details>
 </div>
@@ -313,49 +313,6 @@ already started.</p>
         <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
         <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Kdo o to požádal.</td>
       </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">zrušitelné</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">boolean</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Zda žádost o zrušení tohoto provedení něco způsobí: politika schopnosti.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">schopnost</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Schopnost, která běžela, podle svého kanonického id.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">correlation_id</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Id použité v logech a tracing spanech tohoto procesu pro toto provádění; samotné id provádění, nesené pod jménem, které čtenář logu očekává.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">created_at</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Kdy byla přijata, RFC 3339 v UTC.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">deduplikováno</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">boolean</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words"><code>true</code> when this start began nothing: its idempotency key had already started this
-execution with the same input, and the answer is that execution as it stands now.
-<code>false</code> for an execution this start began.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">diagnostika</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">ne</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Nálezy, které nahlásila.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">duration_ms</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">integer | null</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">ne</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Jak dlouho běželo, v milisekundách, po skončení.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">chyba</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">jedno ze 2</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">ne</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Why it failed, for a failed execution and never before; why it was refused, for a
-refused one; and why its outcome is not known, for one whose outcome is not.</td>
-      </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">event_count</td>
         <td class="px-3 py-2 font-mono text-xs text-body">integer</td>
         <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
@@ -371,37 +328,21 @@ refused one; and why its outcome is not known, for one whose outcome is not.</td
         <td class="px-3 py-2 font-mono text-xs text-body">ne</td>
         <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Kdy dosáhlo konečného stavu.</td>
       </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">id</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
+        <td class="px-3 py-2 font-mono text-heading">correlation_id</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
         <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Identita.</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Id použité v logech a tracing spanech tohoto procesu pro toto provádění; samotné id provádění, nesené pod jménem, které čtenář logu očekává.</td>
       </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">idempotency_key</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">ne</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The idempotency key the start was sent with, when it was sent with one: a repeated
-start with this key answers this execution instead of starting another (I4000).</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">vstup</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">object</td>
+        <td class="px-3 py-2 font-mono text-heading">created_at</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
         <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Vstup, který dostala, s každou hodnotou, kterou vstupní schéma označuje jako citlivou, nahrazenou.</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Kdy byla přijata, RFC 3339 v UTC.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">issue_claim</td>
         <td class="px-3 py-2 font-mono text-xs text-body">jedno ze 2</td>
         <td class="px-3 py-2 font-mono text-xs text-body">ne</td>
         <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The issue it was started for, and the mesh claim it takes for it, when it was
 started for one (I4004).</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">last_sequence</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">integer</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Pořadové číslo poslední události: kurzor, od kterého se klient přihlašuje k odběru.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">odkazy</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Kde číst dál.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">výstup</td>
         <td class="px-3 py-2 font-mono text-xs text-body">object</td>
@@ -413,172 +354,105 @@ started for one (I4004).</td>
         <td class="px-3 py-2 font-mono text-xs text-body">ne</td>
         <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Poslední postup, který handler ohlásil.</td>
       </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">repozitář</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Proti kterému repozitáři běželo.</td>
-      </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">started_at</td>
         <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
         <td class="px-3 py-2 font-mono text-xs text-body">ne</td>
         <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Kdy byl handler vstoupen.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">id</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Identita.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">state</td>
         <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
         <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
         <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Kde to je.</td>
       </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">vstup</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">object</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Vstup, který dostala, s každou hodnotou, kterou vstupní schéma označuje jako citlivou, nahrazenou.</td>
+      </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">kroky</td>
         <td class="px-3 py-2 font-mono text-xs text-body">array</td>
         <td class="px-3 py-2 font-mono text-xs text-body">ne</td>
         <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Kroky, kterými prošlo, popořadě.</td>
       </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">odkazy</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Kde číst dál.</td>
+      </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">název</td>
         <td class="px-3 py-2 font-mono text-xs text-body">string</td>
         <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
         <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Titulek této schopnosti, aby seznam nepotřeboval druhé vyhledání.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">chyba</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">jedno ze 2</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">ne</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Why it failed, for a failed execution and never before; why it was refused, for a
+refused one; and why its outcome is not known, for one whose outcome is not.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">deduplikováno</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">boolean</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words"><code>true</code> when this start began nothing: its idempotency key had already started this
+execution with the same input, and the answer is that execution as it stands now.
+<code>false</code> for an execution this start began.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">idempotency_key</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">ne</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The idempotency key the start was sent with, when it was sent with one: a repeated
+start with this key answers this execution instead of starting another (I4000).</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">schopnost</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Schopnost, která běžela, podle svého kanonického id.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">diagnostika</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">ne</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Nálezy, které nahlásila.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">repozitář</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Proti kterému repozitáři běželo.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">last_sequence</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">integer</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Pořadové číslo poslední události: kurzor, od kterého se klient přihlašuje k odběru.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">zrušitelné</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">boolean</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Zda žádost o zrušení tohoto provedení něco způsobí: politika schopnosti.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">duration_ms</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">integer | null</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">ne</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Jak dlouho běželo, v milisekundách, po skončení.</td>
       </tr></tbody>
     </table>
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
+  &quot;type&quot;: &quot;object&quot;,
   &quot;$defs&quot;: {
-    &quot;Actor&quot;: {
-      &quot;description&quot;: &quot;Who asked, and which peer they are when this process knows.&quot;,
-      &quot;properties&quot;: {
-        &quot;kind&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/ActorKind&quot;,
-          &quot;description&quot;: &quot;Where the request came from.&quot;
-        },
-        &quot;peer&quot;: {
-          &quot;description&quot;: &quot;The peer id, for a call that arrived through an MCP session.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;pid&quot;: {
-          &quot;description&quot;: &quot;The process that ran it, for an execution another process ran and reported to this\none: the work happened there, and this process holds what it was told about it.&quot;,
-          &quot;format&quot;: &quot;uint32&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: [
-            &quot;integer&quot;,
-            &quot;null&quot;
-          ]
-        }
-      },
-      &quot;required&quot;: [
-        &quot;kind&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
-    },
-    &quot;ActorKind&quot;: {
-      &quot;description&quot;: &quot;Who asked for the execution. Not an authorisation decision — this server authenticates\nnobody — but a fact worth carrying into the audit line and the UI.&quot;,
-      &quot;oneOf&quot;: [
-        {
-          &quot;const&quot;: &quot;http&quot;,
-          &quot;description&quot;: &quot;An HTTP client, which includes the Cockpit.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;mcp&quot;,
-          &quot;description&quot;: &quot;An MCP client attached to this process.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;cli&quot;,
-          &quot;description&quot;: &quot;A command line: this process&#39;s own, or `majordomus run` in another process of the\nsame checkout that reported its execution to this server, with its pid.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;internal&quot;,
-          &quot;description&quot;: &quot;This executable&#39;s own tests and benchmarks.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      ]
-    },
-    &quot;ClaimStanding&quot;: {
-      &quot;description&quot;: &quot;Where the mesh claim of an execution started for an issue stands (I4004).\n\n```text\n  wanted ──► held ──► released            the run reached a final state\n                 └──► kept                its outcome is not known: the claim stays\n         ──► unclaimed                    no mesh runs here: it ran without a claim\n         ──► refused                      another session holds the scope: nothing ran\n```\n\n```\nuse majordomus_cli::execution::ClaimStanding;\nlet word = serde_json::to_value(ClaimStanding::Kept).unwrap();\nassert_eq!(word, \&quot;kept\&quot;);\nlet back: ClaimStanding = serde_json::from_value(\&quot;unclaimed\&quot;.into()).unwrap();\nassert_eq!(back, ClaimStanding::Unclaimed);\n```&quot;,
-      &quot;oneOf&quot;: [
-        {
-          &quot;const&quot;: &quot;wanted&quot;,
-          &quot;description&quot;: &quot;Started for an issue; the claim is taken when a worker picks it up.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;held&quot;,
-          &quot;description&quot;: &quot;The exclusive claim is held, and the handler runs under it.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;released&quot;,
-          &quot;description&quot;: &quot;The claim was given back when the execution reached its final state.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;kept&quot;,
-          &quot;description&quot;: &quot;The outcome is not known, so the claim is kept: whether the work happened is still\nto be read, and the scope is not free until it has been.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;unclaimed&quot;,
-          &quot;description&quot;: &quot;No mesh cooperation runs in this process, so it ran without a claim. Said, never a\nfailure.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;refused&quot;,
-          &quot;description&quot;: &quot;Another session holds an exclusive claim on the scope; the execution was refused and\nnothing ran.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      ]
-    },
-    &quot;ExecutionDiagnostic&quot;: {
-      &quot;description&quot;: &quot;A structured finding an execution reported on its way, distinct from its outcome.&quot;,
-      &quot;properties&quot;: {
-        &quot;code&quot;: {
-          &quot;description&quot;: &quot;A stable machine-readable code.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;detail&quot;: {
-          &quot;description&quot;: &quot;The rest, when there is more.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;severity&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/Severity&quot;,
-          &quot;description&quot;: &quot;How bad.&quot;
-        },
-        &quot;suggestion&quot;: {
-          &quot;description&quot;: &quot;What to do about it, when there is something.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;summary&quot;: {
-          &quot;description&quot;: &quot;One line, for a person.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      },
-      &quot;required&quot;: [
-        &quot;severity&quot;,
-        &quot;code&quot;,
-        &quot;summary&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
-    },
     &quot;ExecutionError&quot;: {
-      &quot;description&quot;: &quot;Why an execution ended badly, in the repository&#39;s diagnostic vocabulary rather than in\nRust&#39;s: a code a program branches on, a sentence a person reads, and where to look.\n\nA panic message and a backtrace are never in here. The engine catches a panicking\nhandler and reports `internal` with the execution&#39;s correlation id; the panic itself is\non the process&#39;s own error stream, where the operator running the server can read it.&quot;,
       &quot;properties&quot;: {
         &quot;code&quot;: {
-          &quot;description&quot;: &quot;`invalid_input`, `not_found`, `refused`, `forbidden`, `conflict`, `internal`, `cancelled`,\n`unavailable`.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;`invalid_input`, `not_found`, `refused`, `forbidden`, `conflict`, `internal`, `cancelled`,\n`unavailable`.&quot;
         },
         &quot;correlation_id&quot;: {
-          &quot;description&quot;: &quot;The execution this failure belongs to, so a log line and a UI agree.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The execution this failure belongs to, so a log line and a UI agree.&quot;
         },
         &quot;message&quot;: {
           &quot;description&quot;: &quot;What went wrong, for a person.&quot;,
@@ -597,36 +471,93 @@ started for one (I4004).</td>
         &quot;message&quot;,
         &quot;correlation_id&quot;
       ],
+      &quot;description&quot;: &quot;Why an execution ended badly, in the repository&#39;s diagnostic vocabulary rather than in\nRust&#39;s: a code a program branches on, a sentence a person reads, and where to look.\n\nA panic message and a backtrace are never in here. The engine catches a panicking\nhandler and reports `internal` with the execution&#39;s correlation id; the panic itself is\non the process&#39;s own error stream, where the operator running the server can read it.&quot;,
       &quot;type&quot;: &quot;object&quot;
     },
-    &quot;ExecutionId&quot;: {
-      &quot;description&quot;: &quot;The identity of one execution: `x-&lt;UTC timestamp&gt;-&lt;8 hex&gt;`.\n\nThe shape is the layer&#39;s own — a task is `t-20260905034523-a9f1` — so that an id read\nin a log, a URL or a browser tab is recognisable as this repository&#39;s without a\ndependency on a UUID crate. The timestamp orders ids by creation for a reader; the\nsuffix, not the timestamp, is what makes two ids created in the same second differ.&quot;,
-      &quot;type&quot;: &quot;string&quot;
+    &quot;ExecutionState&quot;: {
+      &quot;oneOf&quot;: [
+        {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;authorizing&quot;,
+          &quot;description&quot;: &quot;Accepted, and a policy decision on whether it may run has not been taken yet.&quot;
+        },
+        {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;queued&quot;,
+          &quot;description&quot;: &quot;Accepted, and no worker has picked it up.&quot;
+        },
+        {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;A worker holds it and has not entered the handler yet.&quot;,
+          &quot;const&quot;: &quot;claimed&quot;
+        },
+        {
+          &quot;const&quot;: &quot;running&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The handler is running.&quot;
+        },
+        {
+          &quot;description&quot;: &quot;The handler returned, and what it produced is being checked.&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;verifying&quot;
+        },
+        {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;cancelling&quot;,
+          &quot;description&quot;: &quot;Cancellation was asked for and the handler has not stopped yet.&quot;
+        },
+        {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;unknown_outcome&quot;,
+          &quot;description&quot;: &quot;Whether the work happened is not known: the worker that ran it went silent or its\nanswer could not be read. Only a reconciliation moves it on, never a rerun.&quot;
+        },
+        {
+          &quot;description&quot;: &quot;The handler returned an output.&quot;,
+          &quot;const&quot;: &quot;succeeded&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;failed&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The handler returned an error, or the worker could not run it.&quot;
+        },
+        {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;cancelled&quot;,
+          &quot;description&quot;: &quot;It stopped because it was asked to.&quot;
+        },
+        {
+          &quot;const&quot;: &quot;refused&quot;,
+          &quot;description&quot;: &quot;A policy refused it before it ran, at the request or when a worker claimed it.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      ],
+      &quot;description&quot;: &quot;Where an execution is in its life.\n\nThe transitions are the whole contract, and `ExecutionState::EDGES` is the one place\nthey are written down: `ExecutionState::may_move_to` reads it, the engine asks before\nevery change, the store refuses a move it does not allow, and a client that reads a\nfinal state never sees it move again.\n\n```text\n  authorizing     ──► queued | refused | failed | cancelled\n  queued          ──► running | claimed | refused | failed | cancelled\n  claimed         ──► running | queued | refused | failed | cancelling | unknown_outcome\n  running         ──► verifying | succeeded | failed | cancelling | unknown_outcome\n  verifying       ──► succeeded | failed | cancelling | unknown_outcome\n  cancelling      ──► cancelled | succeeded | failed | unknown_outcome\n  unknown_outcome ──► verifying | succeeded | failed | cancelled        (never running)\n  succeeded, failed, cancelled, refused: final\n```\n\nThe in-process engine moves `queued ──► running` directly: it claims an execution and\nenters its handler in the same instant, so `claimed` would be a state no client could\nobserve. `authorizing`, `claimed`, `verifying`, `refused` and `unknown_outcome` are\nentered by a worker that decides, holds, checks or loses an execution in its own time\n(Mission Control B3): a policy decision before the queue, a lease on a queued ticket, a\ncheck of what the handler produced, a refusal, and a run whose outcome cannot be read.\n\n`unknown_outcome` is the one state a retry may not leave by running again. Whether the\nwork happened is not known, so the next move is a reconciliation that reads evidence\n— to `verifying`, or straight to the outcome it found — and never `running`.&quot;
     },
     &quot;ExecutionLinks&quot;: {
-      &quot;description&quot;: &quot;Where to read more about one execution, in this server&#39;s own terms.\n\nEvery value is derived from the registry&#39;s declared routes and from the live channel&#39;s\nown constant, so a route that moves moves here too and no client holds a path this\nserver does not serve.&quot;,
       &quot;properties&quot;: {
-        &quot;cancel&quot;: {
-          &quot;description&quot;: &quot;Where to ask it to stop: `POST /api/v1/executions/cancel`.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;cockpit&quot;: {
-          &quot;description&quot;: &quot;The page a person opens.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
         &quot;events&quot;: {
           &quot;description&quot;: &quot;The retained history: `GET /api/v1/executions/events?id=…`.&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
         &quot;self&quot;: {
-          &quot;description&quot;: &quot;The snapshot: `GET /api/v1/executions/get?id=…`.&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The snapshot: `GET /api/v1/executions/get?id=…`.&quot;
+        },
+        &quot;cancel&quot;: {
+          &quot;description&quot;: &quot;Where to ask it to stop: `POST /api/v1/executions/cancel`.&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
         &quot;websocket&quot;: {
           &quot;description&quot;: &quot;The live channel, from the beginning: `GET /events?execution=…`.&quot;,
           &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;cockpit&quot;: {
+          &quot;description&quot;: &quot;The page a person opens.&quot;,
+          &quot;type&quot;: &quot;string&quot;
         }
       },
+      &quot;type&quot;: &quot;object&quot;,
       &quot;required&quot;: [
         &quot;self&quot;,
         &quot;events&quot;,
@@ -634,130 +565,11 @@ started for one (I4004).</td>
         &quot;websocket&quot;,
         &quot;cockpit&quot;
       ],
-      &quot;type&quot;: &quot;object&quot;
-    },
-    &quot;ExecutionState&quot;: {
-      &quot;description&quot;: &quot;Where an execution is in its life.\n\nThe transitions are the whole contract, and `ExecutionState::EDGES` is the one place\nthey are written down: `ExecutionState::may_move_to` reads it, the engine asks before\nevery change, the store refuses a move it does not allow, and a client that reads a\nfinal state never sees it move again.\n\n```text\n  authorizing     ──► queued | refused | failed | cancelled\n  queued          ──► running | claimed | refused | failed | cancelled\n  claimed         ──► running | queued | refused | failed | cancelling | unknown_outcome\n  running         ──► verifying | succeeded | failed | cancelling | unknown_outcome\n  verifying       ──► succeeded | failed | cancelling | unknown_outcome\n  cancelling      ──► cancelled | succeeded | failed | unknown_outcome\n  unknown_outcome ──► verifying | succeeded | failed | cancelled        (never running)\n  succeeded, failed, cancelled, refused: final\n```\n\nThe in-process engine moves `queued ──► running` directly: it claims an execution and\nenters its handler in the same instant, so `claimed` would be a state no client could\nobserve. `authorizing`, `claimed`, `verifying`, `refused` and `unknown_outcome` are\nentered by a worker that decides, holds, checks or loses an execution in its own time\n(Mission Control B3): a policy decision before the queue, a lease on a queued ticket, a\ncheck of what the handler produced, a refusal, and a run whose outcome cannot be read.\n\n`unknown_outcome` is the one state a retry may not leave by running again. Whether the\nwork happened is not known, so the next move is a reconciliation that reads evidence\n— to `verifying`, or straight to the outcome it found — and never `running`.&quot;,
-      &quot;oneOf&quot;: [
-        {
-          &quot;const&quot;: &quot;authorizing&quot;,
-          &quot;description&quot;: &quot;Accepted, and a policy decision on whether it may run has not been taken yet.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;queued&quot;,
-          &quot;description&quot;: &quot;Accepted, and no worker has picked it up.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;claimed&quot;,
-          &quot;description&quot;: &quot;A worker holds it and has not entered the handler yet.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;running&quot;,
-          &quot;description&quot;: &quot;The handler is running.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;verifying&quot;,
-          &quot;description&quot;: &quot;The handler returned, and what it produced is being checked.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;cancelling&quot;,
-          &quot;description&quot;: &quot;Cancellation was asked for and the handler has not stopped yet.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;unknown_outcome&quot;,
-          &quot;description&quot;: &quot;Whether the work happened is not known: the worker that ran it went silent or its\nanswer could not be read. Only a reconciliation moves it on, never a rerun.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;succeeded&quot;,
-          &quot;description&quot;: &quot;The handler returned an output.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;failed&quot;,
-          &quot;description&quot;: &quot;The handler returned an error, or the worker could not run it.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;cancelled&quot;,
-          &quot;description&quot;: &quot;It stopped because it was asked to.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;refused&quot;,
-          &quot;description&quot;: &quot;A policy refused it before it ran, at the request or when a worker claimed it.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      ]
-    },
-    &quot;IssueClaim&quot;: {
-      &quot;description&quot;: &quot;The issue an execution works for and the mesh claim it holds for it (I4004): the issue,\nthe scope claimed, the claim&#39;s key while there is one, and where it stands.\n\n```\nuse majordomus_cli::execution::{ClaimStanding, IssueClaim};\nlet wanted = IssueClaim::wanted(\&quot;I4004\&quot;);\nassert_eq!(wanted.standing, ClaimStanding::Wanted);\nassert!(wanted.scope.is_empty() &amp;&amp; wanted.key.is_none());\nlet json = serde_json::to_value(&amp;wanted).unwrap();\nassert_eq!(json, serde_json::json!({ \&quot;issue\&quot;: \&quot;I4004\&quot;, \&quot;standing\&quot;: \&quot;wanted\&quot; }));\n```&quot;,
-      &quot;properties&quot;: {
-        &quot;detail&quot;: {
-          &quot;description&quot;: &quot;What there is to say: why it ran unclaimed, who holds the scope it was refused, why\nthe claim is kept, or that a release did not go through.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;issue&quot;: {
-          &quot;description&quot;: &quot;The issue, as the start named it.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;key&quot;: {
-          &quot;description&quot;: &quot;The mesh claim&#39;s key, `&lt;stream&gt;/&lt;claim&gt;`, once one was taken.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;scope&quot;: {
-          &quot;description&quot;: &quot;The repository paths claimed: the issue record&#39;s `scope`, or `issue/&lt;id&gt;` when the\nrecord declares none or is not in this checkout.&quot;,
-          &quot;items&quot;: {
-            &quot;type&quot;: &quot;string&quot;
-          },
-          &quot;type&quot;: &quot;array&quot;
-        },
-        &quot;session&quot;: {
-          &quot;description&quot;: &quot;The mesh session the claim belongs to, once one was opened: `execution-&lt;id&gt;`.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;standing&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/ClaimStanding&quot;,
-          &quot;description&quot;: &quot;Where the claim stands.&quot;
-        }
-      },
-      &quot;required&quot;: [
-        &quot;issue&quot;,
-        &quot;standing&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
+      &quot;description&quot;: &quot;Where to read more about one execution, in this server&#39;s own terms.\n\nEvery value is derived from the registry&#39;s declared routes and from the live channel&#39;s\nown constant, so a route that moves moves here too and no client holds a path this\nserver does not serve.&quot;
     },
     &quot;ProgressView&quot;: {
-      &quot;description&quot;: &quot;How far along an execution is.&quot;,
+      &quot;type&quot;: &quot;object&quot;,
       &quot;properties&quot;: {
-        &quot;current&quot;: {
-          &quot;description&quot;: &quot;Units done.&quot;,
-          &quot;format&quot;: &quot;uint64&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;message&quot;: {
-          &quot;description&quot;: &quot;What is being done, for a reader.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        },
         &quot;total&quot;: {
           &quot;description&quot;: &quot;Units in total, when the handler knows how many.&quot;,
           &quot;format&quot;: &quot;uint64&quot;,
@@ -766,16 +578,82 @@ started for one (I4004).</td>
             &quot;integer&quot;,
             &quot;null&quot;
           ]
+        },
+        &quot;current&quot;: {
+          &quot;format&quot;: &quot;uint64&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;,
+          &quot;description&quot;: &quot;Units done.&quot;
+        },
+        &quot;message&quot;: {
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ],
+          &quot;description&quot;: &quot;What is being done, for a reader.&quot;
         }
       },
       &quot;required&quot;: [
         &quot;current&quot;
       ],
-      &quot;type&quot;: &quot;object&quot;
+      &quot;description&quot;: &quot;How far along an execution is.&quot;
+    },
+    &quot;StepState&quot;: {
+      &quot;oneOf&quot;: [
+        {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;Entered and not finished.&quot;,
+          &quot;const&quot;: &quot;running&quot;
+        },
+        {
+          &quot;description&quot;: &quot;Finished, and what it was asked to do happened.&quot;,
+          &quot;const&quot;: &quot;completed&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;description&quot;: &quot;Finished, and it did not.&quot;,
+          &quot;const&quot;: &quot;failed&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      ],
+      &quot;description&quot;: &quot;Where a step of an execution stands.&quot;
+    },
+    &quot;ActorKind&quot;: {
+      &quot;oneOf&quot;: [
+        {
+          &quot;description&quot;: &quot;An HTTP client, which includes the Cockpit.&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;http&quot;
+        },
+        {
+          &quot;description&quot;: &quot;An MCP client attached to this process.&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;mcp&quot;
+        },
+        {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;cli&quot;,
+          &quot;description&quot;: &quot;A command line: this process&#39;s own, or `majordomus run` in another process of the\nsame checkout that reported its execution to this server, with its pid.&quot;
+        },
+        {
+          &quot;description&quot;: &quot;This executable&#39;s own tests and benchmarks.&quot;,
+          &quot;const&quot;: &quot;internal&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      ],
+      &quot;description&quot;: &quot;Who asked for the execution. Not an authorisation decision — this server authenticates\nnobody — but a fact worth carrying into the audit line and the UI.&quot;
     },
     &quot;RepositoryRef&quot;: {
       &quot;description&quot;: &quot;Which repository, and which checkout of it, an execution ran against.\n\nAn execution is never run against \&quot;wherever this process happens to be\&quot;: the engine\nstamps the repository the index was read from, and a request that names a different one\nis refused. The path itself is not here — this value is served to whoever can reach the\nsocket, and where the checkout sits on the host is of no use to them.&quot;,
+      &quot;required&quot;: [
+        &quot;name&quot;,
+        &quot;id&quot;
+      ],
       &quot;properties&quot;: {
+        &quot;name&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The repository&#39;s name: the last component of its root.&quot;
+        },
         &quot;branch&quot;: {
           &quot;description&quot;: &quot;The branch checked out, when git can say.&quot;,
           &quot;type&quot;: [
@@ -784,69 +662,17 @@ started for one (I4004).</td>
           ]
         },
         &quot;id&quot;: {
-          &quot;description&quot;: &quot;The stable identity two processes over one checkout both compute.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;name&quot;: {
-          &quot;description&quot;: &quot;The repository&#39;s name: the last component of its root.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The stable identity two processes over one checkout both compute.&quot;
         }
       },
-      &quot;required&quot;: [
-        &quot;name&quot;,
-        &quot;id&quot;
-      ],
       &quot;type&quot;: &quot;object&quot;
     },
-    &quot;Severity&quot;: {
-      &quot;description&quot;: &quot;How bad a diagnostic is. `Error` excludes the file it concerns from the index and puts\nthe index into the degraded state; `Warning` and `Info` do neither.&quot;,
-      &quot;oneOf&quot;: [
-        {
-          &quot;const&quot;: &quot;info&quot;,
-          &quot;description&quot;: &quot;Worth knowing; changes nothing.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;warning&quot;,
-          &quot;description&quot;: &quot;Something to look at; the object is still served.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;error&quot;,
-          &quot;description&quot;: &quot;The file is excluded and the index is degraded.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      ]
-    },
-    &quot;StepState&quot;: {
-      &quot;description&quot;: &quot;Where a step of an execution stands.&quot;,
-      &quot;oneOf&quot;: [
-        {
-          &quot;const&quot;: &quot;running&quot;,
-          &quot;description&quot;: &quot;Entered and not finished.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;completed&quot;,
-          &quot;description&quot;: &quot;Finished, and what it was asked to do happened.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;failed&quot;,
-          &quot;description&quot;: &quot;Finished, and it did not.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      ]
-    },
     &quot;StepView&quot;: {
-      &quot;description&quot;: &quot;One named phase of an execution, as the handler reported it.&quot;,
       &quot;properties&quot;: {
-        &quot;detail&quot;: {
-          &quot;description&quot;: &quot;What it said when it finished, when it said anything.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
+        &quot;state&quot;: {
+          &quot;description&quot;: &quot;Where it stands.&quot;,
+          &quot;$ref&quot;: &quot;#/$defs/StepState&quot;
         },
         &quot;finished_at&quot;: {
           &quot;description&quot;: &quot;When it finished, when it has.&quot;,
@@ -855,23 +681,27 @@ started for one (I4004).</td>
             &quot;null&quot;
           ]
         },
-        &quot;name&quot;: {
-          &quot;description&quot;: &quot;A stable name, unique within the execution.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
         &quot;started_at&quot;: {
-          &quot;description&quot;: &quot;When it was entered, RFC 3339 in UTC.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;state&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/StepState&quot;,
-          &quot;description&quot;: &quot;Where it stands.&quot;
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;When it was entered, RFC 3339 in UTC.&quot;
         },
         &quot;title&quot;: {
           &quot;description&quot;: &quot;One line for a reader.&quot;,
           &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;name&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;A stable name, unique within the execution.&quot;
+        },
+        &quot;detail&quot;: {
+          &quot;description&quot;: &quot;What it said when it finished, when it said anything.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
         }
       },
+      &quot;description&quot;: &quot;One named phase of an execution, as the handler reported it.&quot;,
       &quot;required&quot;: [
         &quot;name&quot;,
         &quot;title&quot;,
@@ -879,66 +709,189 @@ started for one (I4004).</td>
         &quot;started_at&quot;
       ],
       &quot;type&quot;: &quot;object&quot;
-    }
-  },
-  &quot;description&quot;: &quot;The answer of `executions.start`: the execution, flattened as every other execution\nanswer is, and whether this start began it or was answered one its idempotency key had\nalready started.\n\n```\nuse majordomus_cli::capability::builtin::StartedExecution;\nuse majordomus_cli::synthetic::SyntheticRepository;\nlet repo = SyntheticRepository::small().unwrap();\nlet ctx = repo.context().unwrap();\nlet input = serde_json::json!({\n    \&quot;capability\&quot;: \&quot;executions.demonstrate\&quot;,\n    \&quot;input\&quot;: { \&quot;steps\&quot;: 1, \&quot;delay_ms\&quot;: 0 },\n    \&quot;idempotency_key\&quot;: \&quot;click-1\&quot;,\n});\nlet start = || -&gt; StartedExecution {\n    serde_json::from_value(ctx.execute(\&quot;executions.start\&quot;, input.clone()).unwrap()).unwrap()\n};\nlet (first, again) = (start(), start());\nassert!(!first.deduplicated &amp;&amp; again.deduplicated);\nassert_eq!(first.view.execution.id, again.view.execution.id);\n```&quot;,
-  &quot;properties&quot;: {
-    &quot;actor&quot;: {
-      &quot;$ref&quot;: &quot;#/$defs/Actor&quot;,
-      &quot;description&quot;: &quot;Who asked for it.&quot;
     },
-    &quot;cancellable&quot;: {
-      &quot;description&quot;: &quot;Whether asking to cancel this execution will do anything: the capability&#39;s policy.&quot;,
-      &quot;type&quot;: &quot;boolean&quot;
-    },
-    &quot;capability&quot;: {
-      &quot;description&quot;: &quot;The capability that ran, by its canonical id.&quot;,
-      &quot;type&quot;: &quot;string&quot;
-    },
-    &quot;correlation_id&quot;: {
-      &quot;description&quot;: &quot;The id used in this process&#39;s logs and tracing spans for this execution; the\nexecution id itself, carried under the name a reader of a log expects.&quot;,
-      &quot;type&quot;: &quot;string&quot;
-    },
-    &quot;created_at&quot;: {
-      &quot;description&quot;: &quot;When it was accepted, RFC 3339 in UTC.&quot;,
-      &quot;type&quot;: &quot;string&quot;
-    },
-    &quot;deduplicated&quot;: {
-      &quot;description&quot;: &quot;`true` when this start began nothing: its idempotency key had already started this\nexecution with the same input, and the answer is that execution as it stands now.\n`false` for an execution this start began.&quot;,
-      &quot;type&quot;: &quot;boolean&quot;
-    },
-    &quot;diagnostics&quot;: {
-      &quot;description&quot;: &quot;The findings it reported.&quot;,
-      &quot;items&quot;: {
-        &quot;$ref&quot;: &quot;#/$defs/ExecutionDiagnostic&quot;
+    &quot;Actor&quot;: {
+      &quot;description&quot;: &quot;Who asked, and which peer they are when this process knows.&quot;,
+      &quot;properties&quot;: {
+        &quot;peer&quot;: {
+          &quot;description&quot;: &quot;The peer id, for a call that arrived through an MCP session.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;pid&quot;: {
+          &quot;type&quot;: [
+            &quot;integer&quot;,
+            &quot;null&quot;
+          ],
+          &quot;description&quot;: &quot;The process that ran it, for an execution another process ran and reported to this\none: the work happened there, and this process holds what it was told about it.&quot;,
+          &quot;format&quot;: &quot;uint32&quot;,
+          &quot;minimum&quot;: 0
+        },
+        &quot;kind&quot;: {
+          &quot;description&quot;: &quot;Where the request came from.&quot;,
+          &quot;$ref&quot;: &quot;#/$defs/ActorKind&quot;
+        }
       },
-      &quot;type&quot;: &quot;array&quot;
+      &quot;required&quot;: [
+        &quot;kind&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
     },
-    &quot;duration_ms&quot;: {
-      &quot;description&quot;: &quot;How long it ran, in milliseconds, once it has finished.&quot;,
-      &quot;format&quot;: &quot;uint64&quot;,
-      &quot;minimum&quot;: 0,
-      &quot;type&quot;: [
-        &quot;integer&quot;,
-        &quot;null&quot;
-      ]
+    &quot;ExecutionDiagnostic&quot;: {
+      &quot;required&quot;: [
+        &quot;severity&quot;,
+        &quot;code&quot;,
+        &quot;summary&quot;
+      ],
+      &quot;description&quot;: &quot;A structured finding an execution reported on its way, distinct from its outcome.&quot;,
+      &quot;properties&quot;: {
+        &quot;detail&quot;: {
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ],
+          &quot;description&quot;: &quot;The rest, when there is more.&quot;
+        },
+        &quot;code&quot;: {
+          &quot;description&quot;: &quot;A stable machine-readable code.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;severity&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/Severity&quot;,
+          &quot;description&quot;: &quot;How bad.&quot;
+        },
+        &quot;suggestion&quot;: {
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ],
+          &quot;description&quot;: &quot;What to do about it, when there is something.&quot;
+        },
+        &quot;summary&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;One line, for a person.&quot;
+        }
+      },
+      &quot;type&quot;: &quot;object&quot;
     },
-    &quot;error&quot;: {
-      &quot;anyOf&quot;: [
+    &quot;IssueClaim&quot;: {
+      &quot;properties&quot;: {
+        &quot;standing&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/ClaimStanding&quot;,
+          &quot;description&quot;: &quot;Where the claim stands.&quot;
+        },
+        &quot;key&quot;: {
+          &quot;description&quot;: &quot;The mesh claim&#39;s key, `&lt;stream&gt;/&lt;claim&gt;`, once one was taken.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;detail&quot;: {
+          &quot;description&quot;: &quot;What there is to say: why it ran unclaimed, who holds the scope it was refused, why\nthe claim is kept, or that a release did not go through.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;scope&quot;: {
+          &quot;description&quot;: &quot;The repository paths claimed: the issue record&#39;s `scope`, or `issue/&lt;id&gt;` when the\nrecord declares none or is not in this checkout.&quot;,
+          &quot;type&quot;: &quot;array&quot;,
+          &quot;items&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        },
+        &quot;session&quot;: {
+          &quot;description&quot;: &quot;The mesh session the claim belongs to, once one was opened: `execution-&lt;id&gt;`.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;issue&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The issue, as the start named it.&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;issue&quot;,
+        &quot;standing&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;,
+      &quot;description&quot;: &quot;The issue an execution works for and the mesh claim it holds for it (I4004): the issue,\nthe scope claimed, the claim&#39;s key while there is one, and where it stands.\n\n```\nuse majordomus_cli::execution::{ClaimStanding, IssueClaim};\nlet wanted = IssueClaim::wanted(\&quot;I4004\&quot;);\nassert_eq!(wanted.standing, ClaimStanding::Wanted);\nassert!(wanted.scope.is_empty() &amp;&amp; wanted.key.is_none());\nlet json = serde_json::to_value(&amp;wanted).unwrap();\nassert_eq!(json, serde_json::json!({ \&quot;issue\&quot;: \&quot;I4004\&quot;, \&quot;standing\&quot;: \&quot;wanted\&quot; }));\n```&quot;
+    },
+    &quot;ClaimStanding&quot;: {
+      &quot;oneOf&quot;: [
         {
-          &quot;$ref&quot;: &quot;#/$defs/ExecutionError&quot;
+          &quot;const&quot;: &quot;wanted&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;Started for an issue; the claim is taken when a worker picks it up.&quot;
         },
         {
-          &quot;type&quot;: &quot;null&quot;
+          &quot;const&quot;: &quot;held&quot;,
+          &quot;description&quot;: &quot;The exclusive claim is held, and the handler runs under it.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;released&quot;,
+          &quot;description&quot;: &quot;The claim was given back when the execution reached its final state.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;description&quot;: &quot;The outcome is not known, so the claim is kept: whether the work happened is still\nto be read, and the scope is not free until it has been.&quot;,
+          &quot;const&quot;: &quot;kept&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;description&quot;: &quot;No mesh cooperation runs in this process, so it ran without a claim. Said, never a\nfailure.&quot;,
+          &quot;const&quot;: &quot;unclaimed&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;description&quot;: &quot;Another session holds an exclusive claim on the scope; the execution was refused and\nnothing ran.&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;refused&quot;
         }
       ],
-      &quot;description&quot;: &quot;Why it failed, for a failed execution and never before; why it was refused, for a\nrefused one; and why its outcome is not known, for one whose outcome is not.&quot;
+      &quot;description&quot;: &quot;Where the mesh claim of an execution started for an issue stands (I4004).\n\n```text\n  wanted ──► held ──► released            the run reached a final state\n                 └──► kept                its outcome is not known: the claim stays\n         ──► unclaimed                    no mesh runs here: it ran without a claim\n         ──► refused                      another session holds the scope: nothing ran\n```\n\n```\nuse majordomus_cli::execution::ClaimStanding;\nlet word = serde_json::to_value(ClaimStanding::Kept).unwrap();\nassert_eq!(word, \&quot;kept\&quot;);\nlet back: ClaimStanding = serde_json::from_value(\&quot;unclaimed\&quot;.into()).unwrap();\nassert_eq!(back, ClaimStanding::Unclaimed);\n```&quot;
+    },
+    &quot;Severity&quot;: {
+      &quot;description&quot;: &quot;How bad a diagnostic is. `Error` excludes the file it concerns from the index and puts\nthe index into the degraded state; `Warning` and `Info` do neither.&quot;,
+      &quot;oneOf&quot;: [
+        {
+          &quot;const&quot;: &quot;info&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;Worth knowing; changes nothing.&quot;
+        },
+        {
+          &quot;description&quot;: &quot;Something to look at; the object is still served.&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;warning&quot;
+        },
+        {
+          &quot;const&quot;: &quot;error&quot;,
+          &quot;description&quot;: &quot;The file is excluded and the index is degraded.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      ]
+    },
+    &quot;ExecutionId&quot;: {
+      &quot;description&quot;: &quot;The identity of one execution: `x-&lt;UTC timestamp&gt;-&lt;8 hex&gt;`.\n\nThe shape is the layer&#39;s own — a task is `t-20260905034523-a9f1` — so that an id read\nin a log, a URL or a browser tab is recognisable as this repository&#39;s without a\ndependency on a UUID crate. The timestamp orders ids by creation for a reader; the\nsuffix, not the timestamp, is what makes two ids created in the same second differ.&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    }
+  },
+  &quot;properties&quot;: {
+    &quot;actor&quot;: {
+      &quot;description&quot;: &quot;Who asked for it.&quot;,
+      &quot;$ref&quot;: &quot;#/$defs/Actor&quot;
     },
     &quot;event_count&quot;: {
       &quot;description&quot;: &quot;How many events it has produced, including the ones no longer retained.&quot;,
       &quot;format&quot;: &quot;uint64&quot;,
-      &quot;minimum&quot;: 0,
-      &quot;type&quot;: &quot;integer&quot;
+      &quot;type&quot;: &quot;integer&quot;,
+      &quot;minimum&quot;: 0
     },
     &quot;events_truncated&quot;: {
       &quot;description&quot;: &quot;Whether the retained event history has lost its oldest entries to the bound.&quot;,
@@ -951,21 +904,16 @@ started for one (I4004).</td>
         &quot;null&quot;
       ]
     },
-    &quot;id&quot;: {
-      &quot;$ref&quot;: &quot;#/$defs/ExecutionId&quot;,
-      &quot;description&quot;: &quot;The identity.&quot;
+    &quot;correlation_id&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;description&quot;: &quot;The id used in this process&#39;s logs and tracing spans for this execution; the\nexecution id itself, carried under the name a reader of a log expects.&quot;
     },
-    &quot;idempotency_key&quot;: {
-      &quot;description&quot;: &quot;The idempotency key the start was sent with, when it was sent with one: a repeated\nstart with this key answers this execution instead of starting another (I4000).&quot;,
-      &quot;type&quot;: [
-        &quot;string&quot;,
-        &quot;null&quot;
-      ]
-    },
-    &quot;input&quot;: {
-      &quot;description&quot;: &quot;The input it was given, with every value the input schema marks sensitive replaced.&quot;
+    &quot;created_at&quot;: {
+      &quot;description&quot;: &quot;When it was accepted, RFC 3339 in UTC.&quot;,
+      &quot;type&quot;: &quot;string&quot;
     },
     &quot;issue_claim&quot;: {
+      &quot;description&quot;: &quot;The issue it was started for, and the mesh claim it takes for it, when it was\nstarted for one (I4004).&quot;,
       &quot;anyOf&quot;: [
         {
           &quot;$ref&quot;: &quot;#/$defs/IssueClaim&quot;
@@ -973,18 +921,7 @@ started for one (I4004).</td>
         {
           &quot;type&quot;: &quot;null&quot;
         }
-      ],
-      &quot;description&quot;: &quot;The issue it was started for, and the mesh claim it takes for it, when it was\nstarted for one (I4004).&quot;
-    },
-    &quot;last_sequence&quot;: {
-      &quot;description&quot;: &quot;The sequence number of the last event: the cursor a client subscribes from.&quot;,
-      &quot;format&quot;: &quot;uint64&quot;,
-      &quot;minimum&quot;: 0,
-      &quot;type&quot;: &quot;integer&quot;
-    },
-    &quot;links&quot;: {
-      &quot;$ref&quot;: &quot;#/$defs/ExecutionLinks&quot;,
-      &quot;description&quot;: &quot;Where to read more.&quot;
+      ]
     },
     &quot;output&quot;: {
       &quot;description&quot;: &quot;What the handler returned, for a succeeded execution and never before.&quot;
@@ -1000,10 +937,6 @@ started for one (I4004).</td>
       ],
       &quot;description&quot;: &quot;The last progress the handler reported.&quot;
     },
-    &quot;repository&quot;: {
-      &quot;$ref&quot;: &quot;#/$defs/RepositoryRef&quot;,
-      &quot;description&quot;: &quot;Which repository it ran against.&quot;
-    },
     &quot;started_at&quot;: {
       &quot;description&quot;: &quot;When the handler was entered.&quot;,
       &quot;type&quot;: [
@@ -1011,22 +944,91 @@ started for one (I4004).</td>
         &quot;null&quot;
       ]
     },
+    &quot;id&quot;: {
+      &quot;$ref&quot;: &quot;#/$defs/ExecutionId&quot;,
+      &quot;description&quot;: &quot;The identity.&quot;
+    },
     &quot;state&quot;: {
       &quot;$ref&quot;: &quot;#/$defs/ExecutionState&quot;,
       &quot;description&quot;: &quot;Where it is.&quot;
     },
+    &quot;input&quot;: {
+      &quot;description&quot;: &quot;The input it was given, with every value the input schema marks sensitive replaced.&quot;
+    },
     &quot;steps&quot;: {
       &quot;description&quot;: &quot;The steps it entered, in order.&quot;,
+      &quot;type&quot;: &quot;array&quot;,
       &quot;items&quot;: {
         &quot;$ref&quot;: &quot;#/$defs/StepView&quot;
-      },
-      &quot;type&quot;: &quot;array&quot;
+      }
+    },
+    &quot;links&quot;: {
+      &quot;$ref&quot;: &quot;#/$defs/ExecutionLinks&quot;,
+      &quot;description&quot;: &quot;Where to read more.&quot;
     },
     &quot;title&quot;: {
       &quot;description&quot;: &quot;That capability&#39;s title, so a list needs no second lookup.&quot;,
       &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;error&quot;: {
+      &quot;anyOf&quot;: [
+        {
+          &quot;$ref&quot;: &quot;#/$defs/ExecutionError&quot;
+        },
+        {
+          &quot;type&quot;: &quot;null&quot;
+        }
+      ],
+      &quot;description&quot;: &quot;Why it failed, for a failed execution and never before; why it was refused, for a\nrefused one; and why its outcome is not known, for one whose outcome is not.&quot;
+    },
+    &quot;deduplicated&quot;: {
+      &quot;type&quot;: &quot;boolean&quot;,
+      &quot;description&quot;: &quot;`true` when this start began nothing: its idempotency key had already started this\nexecution with the same input, and the answer is that execution as it stands now.\n`false` for an execution this start began.&quot;
+    },
+    &quot;idempotency_key&quot;: {
+      &quot;type&quot;: [
+        &quot;string&quot;,
+        &quot;null&quot;
+      ],
+      &quot;description&quot;: &quot;The idempotency key the start was sent with, when it was sent with one: a repeated\nstart with this key answers this execution instead of starting another (I4000).&quot;
+    },
+    &quot;capability&quot;: {
+      &quot;description&quot;: &quot;The capability that ran, by its canonical id.&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;diagnostics&quot;: {
+      &quot;description&quot;: &quot;The findings it reported.&quot;,
+      &quot;items&quot;: {
+        &quot;$ref&quot;: &quot;#/$defs/ExecutionDiagnostic&quot;
+      },
+      &quot;type&quot;: &quot;array&quot;
+    },
+    &quot;repository&quot;: {
+      &quot;description&quot;: &quot;Which repository it ran against.&quot;,
+      &quot;$ref&quot;: &quot;#/$defs/RepositoryRef&quot;
+    },
+    &quot;last_sequence&quot;: {
+      &quot;type&quot;: &quot;integer&quot;,
+      &quot;description&quot;: &quot;The sequence number of the last event: the cursor a client subscribes from.&quot;,
+      &quot;format&quot;: &quot;uint64&quot;,
+      &quot;minimum&quot;: 0
+    },
+    &quot;cancellable&quot;: {
+      &quot;description&quot;: &quot;Whether asking to cancel this execution will do anything: the capability&#39;s policy.&quot;,
+      &quot;type&quot;: &quot;boolean&quot;
+    },
+    &quot;duration_ms&quot;: {
+      &quot;minimum&quot;: 0,
+      &quot;description&quot;: &quot;How long it ran, in milliseconds, once it has finished.&quot;,
+      &quot;format&quot;: &quot;uint64&quot;,
+      &quot;type&quot;: [
+        &quot;integer&quot;,
+        &quot;null&quot;
+      ]
     }
   },
+  &quot;title&quot;: &quot;StartedExecution&quot;,
+  &quot;description&quot;: &quot;The answer of `executions.start`: the execution, flattened as every other execution\nanswer is, and whether this start began it or was answered one its idempotency key had\nalready started.\n\n```\nuse majordomus_cli::capability::builtin::StartedExecution;\nuse majordomus_cli::synthetic::SyntheticRepository;\nlet repo = SyntheticRepository::small().unwrap();\nlet ctx = repo.context().unwrap();\nlet input = serde_json::json!({\n    \&quot;capability\&quot;: \&quot;executions.demonstrate\&quot;,\n    \&quot;input\&quot;: { \&quot;steps\&quot;: 1, \&quot;delay_ms\&quot;: 0 },\n    \&quot;idempotency_key\&quot;: \&quot;click-1\&quot;,\n});\nlet start = || -&gt; StartedExecution {\n    serde_json::from_value(ctx.execute(\&quot;executions.start\&quot;, input.clone()).unwrap()).unwrap()\n};\nlet (first, again) = (start(), start());\nassert!(!first.deduplicated &amp;&amp; again.deduplicated);\nassert_eq!(first.view.execution.id, again.view.execution.id);\n```&quot;,
   &quot;required&quot;: [
     &quot;id&quot;,
     &quot;capability&quot;,
@@ -1043,9 +1045,7 @@ started for one (I4004).</td>
     &quot;correlation_id&quot;,
     &quot;links&quot;,
     &quot;deduplicated&quot;
-  ],
-  &quot;title&quot;: &quot;StartedExecution&quot;,
-  &quot;type&quot;: &quot;object&quot;
+  ]
 }</pre></div>
   </details>
 </div>
@@ -1076,7 +1076,7 @@ started for one (I4004).</td>
         <div><dt class="text-body-subtle">modul Rust</dt><dd class="min-w-0 break-all font-mono text-heading">majordomus_cli::capability::builtin::executions</dd></div>
         <div><dt class="text-body-subtle">typ vstupu</dt><dd class="font-mono text-heading">StartInput</dd></div>
         <div><dt class="text-body-subtle">typ výstupu</dt><dd class="font-mono text-heading">StartedExecution</dd></div>
-        <div><dt class="text-body-subtle">reference na GitHubu</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/1112bace3437ee0d82067b1e8f61813e70190078/docs/generated/modules/executions.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/executions.md</a></dd></div><div><dt class="text-body-subtle">otisk registru</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">5cdbf22cd21589ddbe464d5f0987b6bcf4607d05479004d6f815c3b306fdb08a</dd></div>
+        <div><dt class="text-body-subtle">reference na GitHubu</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/docs/generated/modules/executions.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/executions.md</a></dd></div><div><dt class="text-body-subtle">otisk registru</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">3f734f2faf797f0ca7c39b4cd837e68b6619c41c6f6711f3d3aeca8f341934eb</dd></div>
         <div><dt class="text-body-subtle">vygenerováno nástrojem</dt><dd class="font-mono text-heading">majordomus-cli 1.0.0-alpha.10</dd></div>
       </dl>
     </div>
@@ -1132,9 +1132,9 @@ started for one (I4004).</td>
       <div class="min-w-0">
         <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">Projekt</h2><ul class="space-y-2 text-sm font-medium text-body">
           <li><a href="https://github.com/korczis/prismatic-majordomus" class="hover:text-heading hover:underline">GitHub</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/1112bace3437ee0d82067b1e8f61813e70190078/LICENSE" class="hover:text-heading hover:underline">Licence MIT</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/1112bace3437ee0d82067b1e8f61813e70190078/SECURITY.md" class="hover:text-heading hover:underline">Bezpečnostní politika</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/1112bace3437ee0d82067b1e8f61813e70190078/CONTRIBUTING.md" class="hover:text-heading hover:underline">Průvodce pro přispěvatele</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/LICENSE" class="hover:text-heading hover:underline">Licence MIT</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/SECURITY.md" class="hover:text-heading hover:underline">Bezpečnostní politika</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/CONTRIBUTING.md" class="hover:text-heading hover:underline">Průvodce pro přispěvatele</a></li>
         </ul>
       </div>
     </div>
@@ -1142,7 +1142,7 @@ started for one (I4004).</td>
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/cs/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.10</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/1112bace3437ee0d82067b1e8f61813e70190078" class="font-mono underline">1112bac</a> · inputs <span class="font-mono">830f884cc5aa</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/cs/architecture/" class="underline">how this site is derived</a> names them.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.10</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/745db2ea21e02613943face75a2bf95542be1f2e" class="font-mono underline">745db2e</a> · inputs <span class="font-mono">0a58c217d1b7</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/cs/architecture/" class="underline">how this site is derived</a> names them.</p>
     </div>
   </div>
 </footer>

@@ -221,10 +221,10 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
   <h3 class="font-mono text-sm font-semibold text-heading">input · Empty</h3><div class="mt-1 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">No input.</div><p class="mt-2 text-sm text-body-subtle">No properties: the capability takes no input.</p><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
-  &quot;additionalProperties&quot;: false,
   &quot;description&quot;: &quot;No input.&quot;,
   &quot;title&quot;: &quot;Empty&quot;,
-  &quot;type&quot;: &quot;object&quot;
+  &quot;type&quot;: &quot;object&quot;,
+  &quot;additionalProperties&quot;: false
 }</pre></div>
   </details>
 </div>
@@ -241,15 +241,15 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
     <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
       <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
       <tbody><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">count</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">integer</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">How many skills.</td>
-      </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">skills</td>
         <td class="px-3 py-2 font-mono text-xs text-body">array</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
         <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Every skill, in index order.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">count</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">integer</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">How many skills.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">standings</td>
         <td class="px-3 py-2 font-mono text-xs text-body">object</td>
@@ -260,6 +260,37 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
+  &quot;properties&quot;: {
+    &quot;skills&quot;: {
+      &quot;items&quot;: {
+        &quot;$ref&quot;: &quot;#/$defs/SkillStatus&quot;
+      },
+      &quot;description&quot;: &quot;Every skill, in index order.&quot;,
+      &quot;type&quot;: &quot;array&quot;
+    },
+    &quot;count&quot;: {
+      &quot;type&quot;: &quot;integer&quot;,
+      &quot;description&quot;: &quot;How many skills.&quot;,
+      &quot;format&quot;: &quot;uint&quot;,
+      &quot;minimum&quot;: 0
+    },
+    &quot;standings&quot;: {
+      &quot;type&quot;: &quot;object&quot;,
+      &quot;additionalProperties&quot;: {
+        &quot;type&quot;: &quot;integer&quot;,
+        &quot;minimum&quot;: 0,
+        &quot;format&quot;: &quot;uint&quot;
+      },
+      &quot;description&quot;: &quot;How many in each standing, keyed by the standing word.&quot;
+    }
+  },
+  &quot;required&quot;: [
+    &quot;count&quot;,
+    &quot;standings&quot;,
+    &quot;skills&quot;
+  ],
+  &quot;title&quot;: &quot;SkillStatusList&quot;,
+  &quot;description&quot;: &quot;Every skill with its derived standing, and how many stand where: what\n`majordomus skills status`, `GET /api/v1/skills` and the `majordomus_skills` tool answer.\n\n```\nuse majordomus_cli::capability::builtin::skills::SkillStatusList;\nlet empty = SkillStatusList {\n    count: 0,\n    standings: std::collections::BTreeMap::new(),\n    skills: vec![],\n};\nassert_eq!(empty.count, 0);\n```&quot;,
   &quot;$defs&quot;: {
     &quot;ProofState&quot;: {
       &quot;description&quot;: &quot;What the repository can say about one claim&#39;s proof, right now.\n\nOrdered from strongest to weakest, so a summary that sorts by this reads as a ranking.\n\n```\nuse majordomus_cli::evidence::ProofState;\n\nlet mut states = vec![ProofState::NotRun, ProofState::Stale, ProofState::Proven];\nstates.sort();\nassert_eq!(\n    states,\n    vec![ProofState::Proven, ProofState::Stale, ProofState::NotRun]\n);\n\n// the two strongest are deliberately not one state: `inputs unchanged` is the absence\n// of a known invalidation, and collapsing it into `proven` is the unaccountable badge\nassert_ne!(ProofState::Proven, ProofState::InputsUnchanged);\nassert!(ProofState::Proven &lt; ProofState::InputsUnchanged);\nassert!(ProofState::InputsUnchanged.passing());\n```\n# Example\n\n```\nuse majordomus_cli::evidence::ProofState;\nassert!(ProofState::Proven.passing());\nassert!(!ProofState::NotRun.passing());\nassert!(!ProofState::InputsUnchanged.meaning().is_empty());\n```&quot;,
@@ -270,148 +301,62 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
           &quot;type&quot;: &quot;string&quot;
         },
         {
-          &quot;const&quot;: &quot;inputs_unchanged&quot;,
           &quot;description&quot;: &quot;A passing run, and nothing this claim names has changed since. Not proof at HEAD:\nsomething the claim does not name may have broken it.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;inputs_unchanged&quot;
         },
         {
-          &quot;const&quot;: &quot;stale&quot;,
           &quot;description&quot;: &quot;A passing run, but something this claim names has changed since. The proof is older\nthan its subject.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;failing&quot;,
-          &quot;description&quot;: &quot;The latest run of this claim&#39;s test did not pass.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;not_run&quot;,
-          &quot;description&quot;: &quot;The claim names a test a runner owns, and no run of it has ever been recorded.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;unrunnable&quot;,
-          &quot;description&quot;: &quot;The claim names a path no runner in this repository drives. Nothing can record it,\nso nothing can prove it this way.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;no_test&quot;,
-          &quot;description&quot;: &quot;The claim names no test at all. Correct for a `planned` or `rejected` claim, and a\ndefect for any other.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      ]
-    },
-    &quot;SkillDocumented&quot;: {
-      &quot;description&quot;: &quot;The documented fact: the page the site projects for the skill.\n\n```\nuse majordomus_cli::skill::SkillDocumented;\nlet d = SkillDocumented { documented: true, page: \&quot;site/content/skills/implement.md\&quot;.into() };\nassert!(d.page.ends_with(\&quot;implement.md\&quot;));\n```&quot;,
-      &quot;properties&quot;: {
-        &quot;documented&quot;: {
-          &quot;description&quot;: &quot;Whether the page is a tracked file.&quot;,
-          &quot;type&quot;: &quot;boolean&quot;
-        },
-        &quot;page&quot;: {
-          &quot;description&quot;: &quot;Where the page is projected.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      },
-      &quot;required&quot;: [
-        &quot;documented&quot;,
-        &quot;page&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
-    },
-    &quot;SkillEnforced&quot;: {
-      &quot;description&quot;: &quot;The enforced fact: the doctrine that validates skills and the gates a change to this one\nselects.\n\n```\nuse majordomus_cli::skill::SkillEnforced;\nlet e = SkillEnforced { enforced: false, doctrine: None, gates: vec![] };\nassert!(!e.enforced);\n```&quot;,
-      &quot;properties&quot;: {
-        &quot;doctrine&quot;: {
-          &quot;description&quot;: &quot;The rule whose validator is `skills`, when the index holds one.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;enforced&quot;: {
-          &quot;description&quot;: &quot;A doctrine validates skills, and a gate running the verification covers this file.&quot;,
-          &quot;type&quot;: &quot;boolean&quot;
-        },
-        &quot;gates&quot;: {
-          &quot;description&quot;: &quot;The CI gates a change to the skill selects whose command runs `skills verify`.&quot;,
-          &quot;items&quot;: {
-            &quot;type&quot;: &quot;string&quot;
-          },
-          &quot;type&quot;: &quot;array&quot;
-        }
-      },
-      &quot;required&quot;: [
-        &quot;enforced&quot;,
-        &quot;gates&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
-    },
-    &quot;SkillEvidence&quot;: {
-      &quot;description&quot;: &quot;What the evidence ledger can say about a skill&#39;s tests, as a whole: the weakest state of\nthe tests that name it, or `untested` when none does.\n\n```\nuse majordomus_cli::skill::SkillEvidence;\nassert!(SkillEvidence::Proven.current());\nassert!(SkillEvidence::InputsUnchanged.current());\nassert!(!SkillEvidence::Stale.current());\nassert!(SkillEvidence::Proven &lt; SkillEvidence::Untested);\n```&quot;,
-      &quot;oneOf&quot;: [
-        {
-          &quot;const&quot;: &quot;proven&quot;,
-          &quot;description&quot;: &quot;Every naming test has a passing run, and nothing but the ledger changed since.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;inputs_unchanged&quot;,
-          &quot;description&quot;: &quot;Every naming test passed, and neither the test nor the skill changed since.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
           &quot;const&quot;: &quot;stale&quot;,
-          &quot;description&quot;: &quot;A passing run exists, and the test or the skill changed since.&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
         {
           &quot;const&quot;: &quot;failing&quot;,
-          &quot;description&quot;: &quot;The latest recorded run of a naming test did not pass.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The latest run of this claim&#39;s test did not pass.&quot;
         },
         {
+          &quot;type&quot;: &quot;string&quot;,
           &quot;const&quot;: &quot;not_run&quot;,
-          &quot;description&quot;: &quot;A test names the skill and no run of it was ever recorded.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;description&quot;: &quot;The claim names a test a runner owns, and no run of it has ever been recorded.&quot;
         },
         {
           &quot;const&quot;: &quot;unrunnable&quot;,
-          &quot;description&quot;: &quot;A test names the skill from a path no runner drives.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The claim names a path no runner in this repository drives. Nothing can record it,\nso nothing can prove it this way.&quot;
         },
         {
-          &quot;const&quot;: &quot;untested&quot;,
-          &quot;description&quot;: &quot;No test names the skill.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The claim names no test at all. Correct for a `planned` or `rejected` claim, and a\ndefect for any other.&quot;,
+          &quot;const&quot;: &quot;no_test&quot;
         }
       ]
     },
     &quot;SkillFinding&quot;: {
       &quot;description&quot;: &quot;One thing the derivation found wrong, with the command that settles or reproduces it.\n\n```\nuse majordomus_cli::skill::{SkillFinding, SkillFindingLevel};\nlet f = SkillFinding {\n    level: SkillFindingLevel::Fail,\n    code: \&quot;untested\&quot;.into(),\n    skill: Some(\&quot;implement\&quot;.into()),\n    subject: \&quot;.ai/repo/skills/implement/SKILL.md\&quot;.into(),\n    message: \&quot;no test names this skill\&quot;.into(),\n    reproduce: \&quot;majordomus skills explain implement\&quot;.into(),\n};\nassert!(f.reproduce.contains(\&quot;explain\&quot;));\n```&quot;,
       &quot;properties&quot;: {
+        &quot;message&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;What is wrong, and what to do about it.&quot;
+        },
+        &quot;reproduce&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The command that reproduces or settles it.&quot;
+        },
+        &quot;skill&quot;: {
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ],
+          &quot;description&quot;: &quot;The skill concerned, when the finding is about one.&quot;
+        },
         &quot;code&quot;: {
-          &quot;description&quot;: &quot;A stable code: `contract`, `untested`, `unused`, `unevidenced`, `failing`,\n`undocumented`, `unenforced`, `unknown_skill_in_test`, `unknown_skill_invoked`.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;A stable code: `contract`, `untested`, `unused`, `unevidenced`, `failing`,\n`undocumented`, `unenforced`, `unknown_skill_in_test`, `unknown_skill_invoked`.&quot;
         },
         &quot;level&quot;: {
           &quot;$ref&quot;: &quot;#/$defs/SkillFindingLevel&quot;,
           &quot;description&quot;: &quot;`fail` or `warn`.&quot;
-        },
-        &quot;message&quot;: {
-          &quot;description&quot;: &quot;What is wrong, and what to do about it.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;reproduce&quot;: {
-          &quot;description&quot;: &quot;The command that reproduces or settles it.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;skill&quot;: {
-          &quot;description&quot;: &quot;The skill concerned, when the finding is about one.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
         },
         &quot;subject&quot;: {
           &quot;description&quot;: &quot;The file the finding is about, repository-relative.&quot;,
@@ -427,67 +372,132 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
       ],
       &quot;type&quot;: &quot;object&quot;
     },
+    &quot;SkillUsed&quot;: {
+      &quot;required&quot;: [
+        &quot;used&quot;,
+        &quot;invocations&quot;
+      ],
+      &quot;properties&quot;: {
+        &quot;invocations&quot;: {
+          &quot;description&quot;: &quot;Every reference, in path and line order.&quot;,
+          &quot;items&quot;: {
+            &quot;$ref&quot;: &quot;#/$defs/SkillInvocation&quot;
+          },
+          &quot;type&quot;: &quot;array&quot;
+        },
+        &quot;used&quot;: {
+          &quot;type&quot;: &quot;boolean&quot;,
+          &quot;description&quot;: &quot;At least one invocation surface references the skill.&quot;
+        }
+      },
+      &quot;type&quot;: &quot;object&quot;,
+      &quot;description&quot;: &quot;The used fact: every invocation surface that references the skill.\n\n```\nuse majordomus_cli::skill::SkillUsed;\nlet u = SkillUsed { used: false, invocations: vec![] };\nassert!(!u.used);\n```&quot;
+    },
+    &quot;SkillTest&quot;: {
+      &quot;properties&quot;: {
+        &quot;state&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/ProofState&quot;,
+          &quot;description&quot;: &quot;What the ledger says about its latest run, for this skill.&quot;
+        },
+        &quot;path&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The test&#39;s path.&quot;
+        },
+        &quot;recorded_at&quot;: {
+          &quot;description&quot;: &quot;When the run behind the state was recorded.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;reproduce&quot;: {
+          &quot;description&quot;: &quot;The command that runs it again.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;test&quot;: {
+          &quot;description&quot;: &quot;Its identity in the ledger, when a runner owns the path.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        }
+      },
+      &quot;required&quot;: [
+        &quot;path&quot;,
+        &quot;state&quot;
+      ],
+      &quot;description&quot;: &quot;One test that names a skill, and what the ledger says about it.\n\n```\nuse majordomus_cli::evidence::ProofState;\nuse majordomus_cli::skill::SkillTest;\nlet t = SkillTest {\n    path: \&quot;test/cases/95_skills.sh\&quot;.into(),\n    test: Some(\&quot;suite:95_skills\&quot;.into()),\n    state: ProofState::NotRun,\n    reproduce: Some(\&quot;bash test/run.sh 95_skills\&quot;.into()),\n    recorded_at: None,\n};\nassert_eq!(t.state, ProofState::NotRun);\n```&quot;,
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;SkillEnforced&quot;: {
+      &quot;properties&quot;: {
+        &quot;enforced&quot;: {
+          &quot;description&quot;: &quot;A doctrine validates skills, and a gate running the verification covers this file.&quot;,
+          &quot;type&quot;: &quot;boolean&quot;
+        },
+        &quot;gates&quot;: {
+          &quot;items&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          },
+          &quot;description&quot;: &quot;The CI gates a change to the skill selects whose command runs `skills verify`.&quot;,
+          &quot;type&quot;: &quot;array&quot;
+        },
+        &quot;doctrine&quot;: {
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ],
+          &quot;description&quot;: &quot;The rule whose validator is `skills`, when the index holds one.&quot;
+        }
+      },
+      &quot;type&quot;: &quot;object&quot;,
+      &quot;required&quot;: [
+        &quot;enforced&quot;,
+        &quot;gates&quot;
+      ],
+      &quot;description&quot;: &quot;The enforced fact: the doctrine that validates skills and the gates a change to this one\nselects.\n\n```\nuse majordomus_cli::skill::SkillEnforced;\nlet e = SkillEnforced { enforced: false, doctrine: None, gates: vec![] };\nassert!(!e.enforced);\n```&quot;
+    },
     &quot;SkillFindingLevel&quot;: {
-      &quot;description&quot;: &quot;How bad a finding is: a failure refuses, a warning is reported.\n\n```\nuse majordomus_cli::skill::SkillFindingLevel;\nassert_ne!(SkillFindingLevel::Fail, SkillFindingLevel::Warn);\n```&quot;,
       &quot;oneOf&quot;: [
         {
           &quot;const&quot;: &quot;fail&quot;,
-          &quot;description&quot;: &quot;Refuses: `skills verify` exits 10 and the doctrine fails.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;Refuses: `skills verify` exits 10 and the doctrine fails.&quot;
         },
         {
           &quot;const&quot;: &quot;warn&quot;,
-          &quot;description&quot;: &quot;Reported, and does not refuse.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;Reported, and does not refuse.&quot;
         }
-      ]
+      ],
+      &quot;description&quot;: &quot;How bad a finding is: a failure refuses, a warning is reported.\n\n```\nuse majordomus_cli::skill::SkillFindingLevel;\nassert_ne!(SkillFindingLevel::Fail, SkillFindingLevel::Warn);\n```&quot;
     },
     &quot;SkillInvocation&quot;: {
       &quot;description&quot;: &quot;One place a skill is invoked from.\n\n```\nuse majordomus_cli::skill::SkillInvocation;\nlet i = SkillInvocation {\n    path: \&quot;.ai/repo/prompts/review.md\&quot;.into(),\n    line: 3,\n    reference: \&quot;majordomus://skill/repo-review\&quot;.into(),\n};\nassert_eq!(i.line, 3);\n```&quot;,
-      &quot;properties&quot;: {
-        &quot;line&quot;: {
-          &quot;description&quot;: &quot;The 1-based line the reference is on.&quot;,
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;path&quot;: {
-          &quot;description&quot;: &quot;The invocation surface, repository-relative.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;reference&quot;: {
-          &quot;description&quot;: &quot;The reference as written.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      },
       &quot;required&quot;: [
         &quot;path&quot;,
         &quot;line&quot;,
         &quot;reference&quot;
       ],
-      &quot;type&quot;: &quot;object&quot;
-    },
-    &quot;SkillProvenance&quot;: {
-      &quot;description&quot;: &quot;Where a skill came from, when it was not written here first: an opaque marker into a\nledger kept outside the repository. The committed half names no source; the ledger entry\nit points at does, locally.\n\n```\nuse majordomus_cli::skill::SkillProvenance;\nlet p = SkillProvenance {\n    origin: \&quot;prior-art\&quot;.into(),\n    ledger: \&quot;import-2026-09-09#1\&quot;.into(),\n    decision: \&quot;adapted\&quot;.into(),\n};\nassert!(p.ledger.starts_with(\&quot;import-\&quot;));\n```&quot;,
       &quot;properties&quot;: {
-        &quot;decision&quot;: {
-          &quot;description&quot;: &quot;`adapted`, `reimplemented` or `merged`.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+        &quot;reference&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The reference as written.&quot;
         },
-        &quot;ledger&quot;: {
-          &quot;description&quot;: &quot;`import-&lt;date&gt;#&lt;n&gt;`: the entry of the local import ledger that holds the mapping.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+        &quot;path&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The invocation surface, repository-relative.&quot;
         },
-        &quot;origin&quot;: {
-          &quot;description&quot;: &quot;`prior-art`: the concept was studied elsewhere before this skill was written.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+        &quot;line&quot;: {
+          &quot;type&quot;: &quot;integer&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;description&quot;: &quot;The 1-based line the reference is on.&quot;
         }
       },
-      &quot;required&quot;: [
-        &quot;origin&quot;,
-        &quot;ledger&quot;,
-        &quot;decision&quot;
-      ],
       &quot;type&quot;: &quot;object&quot;
     },
     &quot;SkillStanding&quot;: {
@@ -499,9 +509,9 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
           &quot;type&quot;: &quot;string&quot;
         },
         {
+          &quot;type&quot;: &quot;string&quot;,
           &quot;const&quot;: &quot;partial&quot;,
-          &quot;description&quot;: &quot;Active, named by a test and invoked, with at least one debt a warning names.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;description&quot;: &quot;Active, named by a test and invoked, with at least one debt a warning names.&quot;
         },
         {
           &quot;const&quot;: &quot;orphan&quot;,
@@ -509,31 +519,30 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
           &quot;type&quot;: &quot;string&quot;
         },
         {
-          &quot;const&quot;: &quot;invalid&quot;,
           &quot;description&quot;: &quot;Its file does not satisfy the skill contract; one the index refused outright is listed\nhere too, so a listing never silently shrinks.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;invalid&quot;
         },
         {
-          &quot;const&quot;: &quot;not_required&quot;,
           &quot;description&quot;: &quot;Draft or deprecated: nothing is owed.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;not_required&quot;
         }
       ]
     },
     &quot;SkillStatus&quot;: {
-      &quot;description&quot;: &quot;One skill with everything derived about it.\n\n```\nuse majordomus_cli::skill::SkillStatus;\n// every fact is always present in the answer, so a client never has to tell \&quot;absent\&quot;\n// from \&quot;false\&quot;; only the provenance is optional\nlet schema = serde_json::to_value(schemars::schema_for!(SkillStatus)).unwrap();\nlet required = schema[\&quot;required\&quot;].as_array().unwrap();\nfor field in [\&quot;id\&quot;, \&quot;valid\&quot;, \&quot;tested\&quot;, \&quot;documented\&quot;, \&quot;enforced\&quot;, \&quot;used\&quot;, \&quot;standing\&quot;] {\n    assert!(required.iter().any(|f| f == field), \&quot;{field}\&quot;);\n}\nassert!(!required.iter().any(|f| f == \&quot;provenance\&quot;));\n```&quot;,
       &quot;properties&quot;: {
-        &quot;description&quot;: {
-          &quot;description&quot;: &quot;The description as authored.&quot;,
+        &quot;tested&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/SkillTested&quot;,
+          &quot;description&quot;: &quot;The tested fact.&quot;
+        },
+        &quot;status&quot;: {
+          &quot;description&quot;: &quot;The lifecycle status as authored: `draft`, `active` or `deprecated`; `unknown` for a\nfile the index refused.&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
-        &quot;documented&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/SkillDocumented&quot;,
-          &quot;description&quot;: &quot;The documented fact.&quot;
-        },
-        &quot;enforced&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/SkillEnforced&quot;,
-          &quot;description&quot;: &quot;The enforced fact.&quot;
+        &quot;title&quot;: {
+          &quot;description&quot;: &quot;The title as authored.&quot;,
+          &quot;type&quot;: &quot;string&quot;
         },
         &quot;findings&quot;: {
           &quot;description&quot;: &quot;The findings about this skill.&quot;,
@@ -542,13 +551,35 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
           },
           &quot;type&quot;: &quot;array&quot;
         },
-        &quot;id&quot;: {
-          &quot;description&quot;: &quot;The skill&#39;s id, which is its directory name.&quot;,
+        &quot;description&quot;: {
+          &quot;description&quot;: &quot;The description as authored.&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
-        &quot;path&quot;: {
-          &quot;description&quot;: &quot;The file, repository-relative.&quot;,
+        &quot;uri&quot;: {
+          &quot;description&quot;: &quot;`majordomus://skill/&lt;id&gt;`.&quot;,
           &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;version&quot;: {
+          &quot;description&quot;: &quot;The version as authored.&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;,
+          &quot;format&quot;: &quot;uint64&quot;
+        },
+        &quot;path&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The file, repository-relative.&quot;
+        },
+        &quot;documented&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/SkillDocumented&quot;,
+          &quot;description&quot;: &quot;The documented fact.&quot;
+        },
+        &quot;standing&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/SkillStanding&quot;,
+          &quot;description&quot;: &quot;Where it stands, derived from the four.&quot;
+        },
+        &quot;enforced&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/SkillEnforced&quot;,
+          &quot;description&quot;: &quot;The enforced fact.&quot;
         },
         &quot;provenance&quot;: {
           &quot;anyOf&quot;: [
@@ -561,39 +592,17 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
           ],
           &quot;description&quot;: &quot;Where it came from, when it declares that.&quot;
         },
-        &quot;standing&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/SkillStanding&quot;,
-          &quot;description&quot;: &quot;Where it stands, derived from the four.&quot;
-        },
-        &quot;status&quot;: {
-          &quot;description&quot;: &quot;The lifecycle status as authored: `draft`, `active` or `deprecated`; `unknown` for a\nfile the index refused.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;tested&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/SkillTested&quot;,
-          &quot;description&quot;: &quot;The tested fact.&quot;
-        },
-        &quot;title&quot;: {
-          &quot;description&quot;: &quot;The title as authored.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;uri&quot;: {
-          &quot;description&quot;: &quot;`majordomus://skill/&lt;id&gt;`.&quot;,
+        &quot;id&quot;: {
+          &quot;description&quot;: &quot;The skill&#39;s id, which is its directory name.&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
         &quot;used&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/SkillUsed&quot;,
-          &quot;description&quot;: &quot;The used fact.&quot;
+          &quot;description&quot;: &quot;The used fact.&quot;,
+          &quot;$ref&quot;: &quot;#/$defs/SkillUsed&quot;
         },
         &quot;valid&quot;: {
           &quot;description&quot;: &quot;Whether the file satisfies the skill contract, as the index judged it.&quot;,
           &quot;type&quot;: &quot;boolean&quot;
-        },
-        &quot;version&quot;: {
-          &quot;description&quot;: &quot;The version as authored.&quot;,
-          &quot;format&quot;: &quot;uint64&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
         }
       },
       &quot;required&quot;: [
@@ -612,121 +621,112 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
         &quot;standing&quot;,
         &quot;findings&quot;
       ],
-      &quot;type&quot;: &quot;object&quot;
-    },
-    &quot;SkillTest&quot;: {
-      &quot;description&quot;: &quot;One test that names a skill, and what the ledger says about it.\n\n```\nuse majordomus_cli::evidence::ProofState;\nuse majordomus_cli::skill::SkillTest;\nlet t = SkillTest {\n    path: \&quot;test/cases/95_skills.sh\&quot;.into(),\n    test: Some(\&quot;suite:95_skills\&quot;.into()),\n    state: ProofState::NotRun,\n    reproduce: Some(\&quot;bash test/run.sh 95_skills\&quot;.into()),\n    recorded_at: None,\n};\nassert_eq!(t.state, ProofState::NotRun);\n```&quot;,
-      &quot;properties&quot;: {
-        &quot;path&quot;: {
-          &quot;description&quot;: &quot;The test&#39;s path.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;recorded_at&quot;: {
-          &quot;description&quot;: &quot;When the run behind the state was recorded.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;reproduce&quot;: {
-          &quot;description&quot;: &quot;The command that runs it again.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;state&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/ProofState&quot;,
-          &quot;description&quot;: &quot;What the ledger says about its latest run, for this skill.&quot;
-        },
-        &quot;test&quot;: {
-          &quot;description&quot;: &quot;Its identity in the ledger, when a runner owns the path.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        }
-      },
-      &quot;required&quot;: [
-        &quot;path&quot;,
-        &quot;state&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
+      &quot;type&quot;: &quot;object&quot;,
+      &quot;description&quot;: &quot;One skill with everything derived about it.\n\n```\nuse majordomus_cli::skill::SkillStatus;\n// every fact is always present in the answer, so a client never has to tell \&quot;absent\&quot;\n// from \&quot;false\&quot;; only the provenance is optional\nlet schema = serde_json::to_value(schemars::schema_for!(SkillStatus)).unwrap();\nlet required = schema[\&quot;required\&quot;].as_array().unwrap();\nfor field in [\&quot;id\&quot;, \&quot;valid\&quot;, \&quot;tested\&quot;, \&quot;documented\&quot;, \&quot;enforced\&quot;, \&quot;used\&quot;, \&quot;standing\&quot;] {\n    assert!(required.iter().any(|f| f == field), \&quot;{field}\&quot;);\n}\nassert!(!required.iter().any(|f| f == \&quot;provenance\&quot;));\n```&quot;
     },
     &quot;SkillTested&quot;: {
       &quot;description&quot;: &quot;The tested fact: the tests that name the skill, and their weakest state.\n\n```\nuse majordomus_cli::skill::{SkillEvidence, SkillTested};\nlet t = SkillTested { state: SkillEvidence::Untested, tests: vec![] };\nassert!(!t.state.current());\n```&quot;,
-      &quot;properties&quot;: {
-        &quot;state&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/SkillEvidence&quot;,
-          &quot;description&quot;: &quot;The weakest state of the naming tests; `untested` when there are none.&quot;
-        },
-        &quot;tests&quot;: {
-          &quot;description&quot;: &quot;Every test that names the skill, in path order.&quot;,
-          &quot;items&quot;: {
-            &quot;$ref&quot;: &quot;#/$defs/SkillTest&quot;
-          },
-          &quot;type&quot;: &quot;array&quot;
-        }
-      },
       &quot;required&quot;: [
         &quot;state&quot;,
         &quot;tests&quot;
       ],
-      &quot;type&quot;: &quot;object&quot;
-    },
-    &quot;SkillUsed&quot;: {
-      &quot;description&quot;: &quot;The used fact: every invocation surface that references the skill.\n\n```\nuse majordomus_cli::skill::SkillUsed;\nlet u = SkillUsed { used: false, invocations: vec![] };\nassert!(!u.used);\n```&quot;,
       &quot;properties&quot;: {
-        &quot;invocations&quot;: {
-          &quot;description&quot;: &quot;Every reference, in path and line order.&quot;,
+        &quot;tests&quot;: {
           &quot;items&quot;: {
-            &quot;$ref&quot;: &quot;#/$defs/SkillInvocation&quot;
+            &quot;$ref&quot;: &quot;#/$defs/SkillTest&quot;
           },
-          &quot;type&quot;: &quot;array&quot;
+          &quot;type&quot;: &quot;array&quot;,
+          &quot;description&quot;: &quot;Every test that names the skill, in path order.&quot;
         },
-        &quot;used&quot;: {
-          &quot;description&quot;: &quot;At least one invocation surface references the skill.&quot;,
-          &quot;type&quot;: &quot;boolean&quot;
+        &quot;state&quot;: {
+          &quot;description&quot;: &quot;The weakest state of the naming tests; `untested` when there are none.&quot;,
+          &quot;$ref&quot;: &quot;#/$defs/SkillEvidence&quot;
         }
       },
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;SkillProvenance&quot;: {
       &quot;required&quot;: [
-        &quot;used&quot;,
-        &quot;invocations&quot;
+        &quot;origin&quot;,
+        &quot;ledger&quot;,
+        &quot;decision&quot;
       ],
+      &quot;description&quot;: &quot;Where a skill came from, when it was not written here first: an opaque marker into a\nledger kept outside the repository. The committed half names no source; the ledger entry\nit points at does, locally.\n\n```\nuse majordomus_cli::skill::SkillProvenance;\nlet p = SkillProvenance {\n    origin: \&quot;prior-art\&quot;.into(),\n    ledger: \&quot;import-2026-09-09#1\&quot;.into(),\n    decision: \&quot;adapted\&quot;.into(),\n};\nassert!(p.ledger.starts_with(\&quot;import-\&quot;));\n```&quot;,
+      &quot;properties&quot;: {
+        &quot;ledger&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;`import-&lt;date&gt;#&lt;n&gt;`: the entry of the local import ledger that holds the mapping.&quot;
+        },
+        &quot;decision&quot;: {
+          &quot;description&quot;: &quot;`adapted`, `reimplemented` or `merged`.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;origin&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;`prior-art`: the concept was studied elsewhere before this skill was written.&quot;
+        }
+      },
       &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;SkillDocumented&quot;: {
+      &quot;required&quot;: [
+        &quot;documented&quot;,
+        &quot;page&quot;
+      ],
+      &quot;properties&quot;: {
+        &quot;documented&quot;: {
+          &quot;type&quot;: &quot;boolean&quot;,
+          &quot;description&quot;: &quot;Whether the page is a tracked file.&quot;
+        },
+        &quot;page&quot;: {
+          &quot;description&quot;: &quot;Where the page is projected.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      },
+      &quot;description&quot;: &quot;The documented fact: the page the site projects for the skill.\n\n```\nuse majordomus_cli::skill::SkillDocumented;\nlet d = SkillDocumented { documented: true, page: \&quot;site/content/skills/implement.md\&quot;.into() };\nassert!(d.page.ends_with(\&quot;implement.md\&quot;));\n```&quot;,
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;SkillEvidence&quot;: {
+      &quot;oneOf&quot;: [
+        {
+          &quot;description&quot;: &quot;Every naming test has a passing run, and nothing but the ledger changed since.&quot;,
+          &quot;const&quot;: &quot;proven&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;inputs_unchanged&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;Every naming test passed, and neither the test nor the skill changed since.&quot;
+        },
+        {
+          &quot;const&quot;: &quot;stale&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;A passing run exists, and the test or the skill changed since.&quot;
+        },
+        {
+          &quot;const&quot;: &quot;failing&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The latest recorded run of a naming test did not pass.&quot;
+        },
+        {
+          &quot;description&quot;: &quot;A test names the skill and no run of it was ever recorded.&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;not_run&quot;
+        },
+        {
+          &quot;const&quot;: &quot;unrunnable&quot;,
+          &quot;description&quot;: &quot;A test names the skill from a path no runner drives.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;description&quot;: &quot;No test names the skill.&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;untested&quot;
+        }
+      ],
+      &quot;description&quot;: &quot;What the evidence ledger can say about a skill&#39;s tests, as a whole: the weakest state of\nthe tests that name it, or `untested` when none does.\n\n```\nuse majordomus_cli::skill::SkillEvidence;\nassert!(SkillEvidence::Proven.current());\nassert!(SkillEvidence::InputsUnchanged.current());\nassert!(!SkillEvidence::Stale.current());\nassert!(SkillEvidence::Proven &lt; SkillEvidence::Untested);\n```&quot;
     }
   },
-  &quot;description&quot;: &quot;Every skill with its derived standing, and how many stand where: what\n`majordomus skills status`, `GET /api/v1/skills` and the `majordomus_skills` tool answer.\n\n```\nuse majordomus_cli::capability::builtin::skills::SkillStatusList;\nlet empty = SkillStatusList {\n    count: 0,\n    standings: std::collections::BTreeMap::new(),\n    skills: vec![],\n};\nassert_eq!(empty.count, 0);\n```&quot;,
-  &quot;properties&quot;: {
-    &quot;count&quot;: {
-      &quot;description&quot;: &quot;How many skills.&quot;,
-      &quot;format&quot;: &quot;uint&quot;,
-      &quot;minimum&quot;: 0,
-      &quot;type&quot;: &quot;integer&quot;
-    },
-    &quot;skills&quot;: {
-      &quot;description&quot;: &quot;Every skill, in index order.&quot;,
-      &quot;items&quot;: {
-        &quot;$ref&quot;: &quot;#/$defs/SkillStatus&quot;
-      },
-      &quot;type&quot;: &quot;array&quot;
-    },
-    &quot;standings&quot;: {
-      &quot;additionalProperties&quot;: {
-        &quot;format&quot;: &quot;uint&quot;,
-        &quot;minimum&quot;: 0,
-        &quot;type&quot;: &quot;integer&quot;
-      },
-      &quot;description&quot;: &quot;How many in each standing, keyed by the standing word.&quot;,
-      &quot;type&quot;: &quot;object&quot;
-    }
-  },
-  &quot;required&quot;: [
-    &quot;count&quot;,
-    &quot;standings&quot;,
-    &quot;skills&quot;
-  ],
-  &quot;title&quot;: &quot;SkillStatusList&quot;,
   &quot;type&quot;: &quot;object&quot;
 }</pre></div>
   </details>
@@ -758,7 +758,7 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
         <div><dt class="text-body-subtle">Rust module</dt><dd class="min-w-0 break-all font-mono text-heading">majordomus_cli::capability::builtin::skills</dd></div>
         <div><dt class="text-body-subtle">input type</dt><dd class="font-mono text-heading">Empty</dd></div>
         <div><dt class="text-body-subtle">output type</dt><dd class="font-mono text-heading">SkillStatusList</dd></div>
-        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/1112bace3437ee0d82067b1e8f61813e70190078/docs/generated/modules/skills.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/skills.md</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">5cdbf22cd21589ddbe464d5f0987b6bcf4607d05479004d6f815c3b306fdb08a</dd></div>
+        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/docs/generated/modules/skills.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/skills.md</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">3f734f2faf797f0ca7c39b4cd837e68b6619c41c6f6711f3d3aeca8f341934eb</dd></div>
         <div><dt class="text-body-subtle">generated by</dt><dd class="font-mono text-heading">majordomus-cli 1.0.0-alpha.10</dd></div>
       </dl>
     </div>
@@ -814,9 +814,9 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
       <div class="min-w-0">
         <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">Project</h2><ul class="space-y-2 text-sm font-medium text-body">
           <li><a href="https://github.com/korczis/prismatic-majordomus" class="hover:text-heading hover:underline">GitHub</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/1112bace3437ee0d82067b1e8f61813e70190078/LICENSE" class="hover:text-heading hover:underline">MIT licence</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/1112bace3437ee0d82067b1e8f61813e70190078/SECURITY.md" class="hover:text-heading hover:underline">Security policy</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/1112bace3437ee0d82067b1e8f61813e70190078/CONTRIBUTING.md" class="hover:text-heading hover:underline">Contributing guide</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/LICENSE" class="hover:text-heading hover:underline">MIT licence</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/SECURITY.md" class="hover:text-heading hover:underline">Security policy</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/CONTRIBUTING.md" class="hover:text-heading hover:underline">Contributing guide</a></li>
         </ul>
       </div>
     </div>
@@ -824,7 +824,7 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.10</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/1112bace3437ee0d82067b1e8f61813e70190078" class="font-mono underline">1112bac</a> · inputs <span class="font-mono">830f884cc5aa</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/architecture/" class="underline">how this site is derived</a> names them.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.10</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/745db2ea21e02613943face75a2bf95542be1f2e" class="font-mono underline">745db2e</a> · inputs <span class="font-mono">0a58c217d1b7</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/architecture/" class="underline">how this site is derived</a> names them.</p>
     </div>
   </div>
 </footer>

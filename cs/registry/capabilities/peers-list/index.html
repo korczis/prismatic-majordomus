@@ -227,19 +227,32 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
+  &quot;properties&quot;: {
+    &quot;checkouts&quot;: {
+      &quot;default&quot;: &quot;repository&quot;,
+      &quot;description&quot;: &quot;Which checkouts the board covers. Absent means `repository`; `this` is the checkout the call reached and nothing else, and it is what a sibling server is asked so that a gather can never ask back.&quot;,
+      &quot;$ref&quot;: &quot;#/$defs/Checkouts&quot;
+    },
+    &quot;view&quot;: {
+      &quot;$ref&quot;: &quot;#/$defs/PeerListView&quot;,
+      &quot;default&quot;: &quot;summary&quot;,
+      &quot;description&quot;: &quot;How many of the covered checkouts are listed in `boards`. Absent means `summary`: every checkout with a server, a worker, or a board that could not be read, the rest counted in `omitted`; `full` lists every one.&quot;
+    }
+  },
+  &quot;description&quot;: &quot;What to ask of `peers.list`: how wide the board is.\n\nThe same one field, the same word and the same default as\n`super::server::ServerStatusInput`, because it is the same question asked of the same\nset of checkouts, and a caller should not have to learn it twice.\n\nThe evidence for that is `the_default_board_is_the_repositorys` below rather than a doc\nexample here: this module is `pub(crate)`, so a doc test — which compiles as an external\ncrate — cannot name the type at all.&quot;,
   &quot;$defs&quot;: {
     &quot;Checkouts&quot;: {
       &quot;description&quot;: &quot;Which checkouts a reading of the server status covers.\n\nThe two answers cost differently and that is the whole reason the choice exists: the\nrepository&#39;s checkouts are read from git&#39;s registry of them and each one costs a lease\nread and a probe, while this checkout alone costs one of each and enumerates nothing.\nThe word each variant serialises to is the word the query parameter, the tool input and\nthe command-line flag all take.\n\n```\nuse majordomus_cli::capability::builtin::server::Checkouts;\nassert_eq!(serde_json::to_value(Checkouts::This).unwrap(), \&quot;this\&quot;);\nassert_eq!(serde_json::to_value(Checkouts::Repository).unwrap(), \&quot;repository\&quot;);\nassert_eq!(Checkouts::default(), Checkouts::Repository, \&quot;the wide answer is what a caller who says nothing has always got\&quot;);\n```&quot;,
       &quot;oneOf&quot;: [
         {
           &quot;const&quot;: &quot;repository&quot;,
-          &quot;description&quot;: &quot;Every checkout git registers for the repository, the primary first — a lease read\nand a probe each. The default, because it is the answer this capability gave before\nthere was anything to ask.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;Every checkout git registers for the repository, the primary first — a lease read\nand a probe each. The default, because it is the answer this capability gave before\nthere was anything to ask.&quot;
         },
         {
+          &quot;type&quot;: &quot;string&quot;,
           &quot;const&quot;: &quot;this&quot;,
-          &quot;description&quot;: &quot;This checkout alone. No other checkout is enumerated, no other lease is read and no\nother server is probed; `servers` holds the one entry, and it is this one.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;description&quot;: &quot;This checkout alone. No other checkout is enumerated, no other lease is read and no\nother server is probed; `servers` holds the one entry, and it is this one.&quot;
         }
       ]
     },
@@ -247,29 +260,16 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
       &quot;description&quot;: &quot;How many of the covered checkouts `peers.list` lists one by one — the same two words, and\nthe same default, as the mesh&#39;s own `view` (`mesh::page::View`), for the same reason.\n\nOn 2026-10-22 this repository registered 625 checkouts, 601 of them with no server and\nnobody attached, and the default answer was 168 kB: past what an MCP client shows, so\nthe read every worker is told to make before it starts went through a saved file. A\ncheckout with no server holds no board (`ServerStanding::Absent`, or a `Stale` lease that\nnames a process that is gone), so listing it says only that it exists; the summary counts\nthose by standing and lists every other. The evidence is\n`the_summary_counts_only_checkouts_that_hold_no_board` below.&quot;,
       &quot;oneOf&quot;: [
         {
-          &quot;const&quot;: &quot;summary&quot;,
           &quot;description&quot;: &quot;This checkout, every checkout with a worker attached or a server standing, and every\nboard that could not be read; the checkouts with no server and nobody attached are\ncounted in `omitted` by standing.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;summary&quot;
         },
         {
+          &quot;type&quot;: &quot;string&quot;,
           &quot;const&quot;: &quot;full&quot;,
-          &quot;description&quot;: &quot;Every covered checkout, one entry each.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;description&quot;: &quot;Every covered checkout, one entry each.&quot;
         }
       ]
-    }
-  },
-  &quot;description&quot;: &quot;What to ask of `peers.list`: how wide the board is.\n\nThe same one field, the same word and the same default as\n`super::server::ServerStatusInput`, because it is the same question asked of the same\nset of checkouts, and a caller should not have to learn it twice.\n\nThe evidence for that is `the_default_board_is_the_repositorys` below rather than a doc\nexample here: this module is `pub(crate)`, so a doc test — which compiles as an external\ncrate — cannot name the type at all.&quot;,
-  &quot;properties&quot;: {
-    &quot;checkouts&quot;: {
-      &quot;$ref&quot;: &quot;#/$defs/Checkouts&quot;,
-      &quot;default&quot;: &quot;repository&quot;,
-      &quot;description&quot;: &quot;Which checkouts the board covers. Absent means `repository`; `this` is the checkout the call reached and nothing else, and it is what a sibling server is asked so that a gather can never ask back.&quot;
-    },
-    &quot;view&quot;: {
-      &quot;$ref&quot;: &quot;#/$defs/PeerListView&quot;,
-      &quot;default&quot;: &quot;summary&quot;,
-      &quot;description&quot;: &quot;How many of the covered checkouts are listed in `boards`. Absent means `summary`: every checkout with a server, a worker, or a board that could not be read, the rest counted in `omitted`; `full` lists every one.&quot;
     }
   },
   &quot;title&quot;: &quot;PeerListInput&quot;,
@@ -282,27 +282,10 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
     <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
       <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">vlastnost</th><th class="px-3 py-2">typ</th><th class="px-3 py-2">povinné</th><th class="px-3 py-2">popis</th></tr></thead>
       <tbody><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">nástěnky</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">One entry per checkout the answer lists, reached or not: every covered checkout under
-<code>view: full</code>; under the default summary, every one but those <code>omitted</code> counts. A board
-that could not be read is always listed.</td>
-      </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">volající</td>
         <td class="px-3 py-2 font-mono text-xs text-body">jedno ze 2</td>
         <td class="px-3 py-2 font-mono text-xs text-body">ne</td>
         <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Vlastní id peera volajícího, když volání přišlo přes relaci MCP. Pozice na nástěnce tohoto checkoutu, ne trvalá identita: po opětovném připojení se přidělí znovu a <code>Peer::checkout</code> je ta polovina identity workera, která není.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">dokončeno</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">boolean</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Zda byla přečtena každá nástěnka, kterou odpověď pokrývá. <code>false</code>, když se server některého checkoutu nepodařilo zeptat, a <code>BoardView::reason</code> říká který a proč — aby se nikdy nehlásilo „nikdo jiný tu není“, když pravda zní „nemohl jsem se zeptat“.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">počet</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">integer</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Kolik peerů je připojeno napříč všemi načtenými nástěnkami, včetně volajícího.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">pokryto</td>
         <td class="px-3 py-2 font-mono text-xs text-body">integer</td>
@@ -316,6 +299,18 @@ count, where the input <code>checkouts</code> is a choice of which to cover.</td
         <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The covered checkouts the summary does not list, counted by standing (<code>absent</code>,
 <code>stale</code>): no server, nobody attached, no board. Empty under <code>view: full</code>.</td>
       </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">dokončeno</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">boolean</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Zda byla přečtena každá nástěnka, kterou odpověď pokrývá. <code>false</code>, když se server některého checkoutu nepodařilo zeptat, a <code>BoardView::reason</code> říká který a proč — aby se nikdy nehlásilo „nikdo jiný tu není“, když pravda zní „nemohl jsem se zeptat“.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">nástěnky</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">One entry per checkout the answer lists, reached or not: every covered checkout under
+<code>view: full</code>; under the default summary, every one but those <code>omitted</code> counts. A board
+that could not be read is always listed.</td>
+      </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">překryvy</td>
         <td class="px-3 py-2 font-mono text-xs text-body">array</td>
         <td class="px-3 py-2 font-mono text-xs text-body">ne</td>
@@ -325,6 +320,11 @@ count, where the input <code>checkouts</code> is a choice of which to cover.</td
         <td class="px-3 py-2 font-mono text-xs text-body">array</td>
         <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
         <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Peeři, nejdřív nástěnka tohoto checkoutu a pak sourozenci v pořadí, v jakém je git registruje, každý v pořadí připojení své vlastní nástěnky. Každý nese checkout, ke kterému patří, protože <code>p1</code> je první relace každé nástěnky. Peer, který něco oznámil a pak odešel, je tu stále, s <code>attached: false</code>.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">počet</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">integer</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Kolik peerů je připojeno napříč všemi načtenými nástěnkami, včetně volajícího.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">proud</td>
         <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
@@ -337,60 +337,62 @@ can name it on that sibling's <code>BoardView</code>.</td>
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
+  &quot;required&quot;: [
+    &quot;count&quot;,
+    &quot;peers&quot;,
+    &quot;covered&quot;,
+    &quot;boards&quot;,
+    &quot;complete&quot;
+  ],
+  &quot;description&quot;: &quot;The answer of `peers.list`: every worker of this repository, from every checkout&#39;s board.&quot;,
   &quot;$defs&quot;: {
-    &quot;Announcement&quot;: {
-      &quot;description&quot;: &quot;One claim a peer has made: what it is working on, and where.\n\nA peer may hold several. The `name` is what tells them apart and what makes announcing\nagain an update rather than a second claim: announce under the same name and the claim\nis replaced, announce under a new one and the peer now holds both. A peer that never\nnames anything holds exactly one claim, the unnamed one, which is what a single session\nannouncing about itself has always had.&quot;,
+    &quot;PeerAddress&quot;: {
       &quot;properties&quot;: {
-        &quot;at&quot;: {
-          &quot;description&quot;: &quot;When it was announced, RFC 3339, UTC.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+        &quot;pid&quot;: {
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: [
+            &quot;integer&quot;,
+            &quot;null&quot;
+          ],
+          &quot;description&quot;: &quot;The worker&#39;s own process: the provider&#39;s pid, not the MCP bridge it started.&quot;,
+          &quot;format&quot;: &quot;uint32&quot;
         },
-        &quot;intent&quot;: {
-          &quot;description&quot;: &quot;One line: the task or intent, in the peer&#39;s words.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+        &quot;host&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The machine the worker runs on.&quot;
         },
-        &quot;name&quot;: {
-          &quot;description&quot;: &quot;What this claim is called, when the peer named it. Absent for a peer&#39;s unnamed claim.&quot;,
+        &quot;provider&quot;: {
           &quot;type&quot;: [
             &quot;string&quot;,
             &quot;null&quot;
-          ]
+          ],
+          &quot;description&quot;: &quot;The provider whose session this is (`claude-code`), when its environment says so.&quot;
         },
-        &quot;scope&quot;: {
-          &quot;description&quot;: &quot;Repository-relative paths the peer expects to touch; informational, never enforced here.&quot;,
-          &quot;items&quot;: {
-            &quot;type&quot;: &quot;string&quot;
-          },
-          &quot;type&quot;: &quot;array&quot;
+        &quot;session&quot;: {
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ],
+          &quot;description&quot;: &quot;The provider&#39;s id for the session, the one its lifecycle hooks are given.&quot;
+        },
+        &quot;socket&quot;: {
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ],
+          &quot;description&quot;: &quot;The socket other sessions on the same machine message this one through.&quot;
         }
       },
       &quot;required&quot;: [
-        &quot;intent&quot;,
-        &quot;scope&quot;,
-        &quot;at&quot;
+        &quot;host&quot;
       ],
+      &quot;description&quot;: &quot;Where the worker behind a peer can be reached from outside its MCP connection.\n\nA board row named a client and a version, and nothing a person or another session could\nact on: on 2026-10-22 the session running a 33-minute remote `cargo test --doc` could be\nfound only by walking an ssh client&#39;s parent chain to a provider pid, its messaging\nsocket, and a start time matched by hand. Every one of those facts is in the environment\nthe provider hands the processes it starts — the MCP server among them — so the address\nis read from there when the peer attaches, and never asked of the model.\n\nThe provider&#39;s messaging *token* is a credential and is never read: the address is where\nto knock, not the key.\n\n```\nuse majordomus_cli::peers::PeerAddress;\n// a client that exposes nothing still has a machine and a parent process\nlet bare = PeerAddress::from_env(|_| None, Some(4242), \&quot;lundra\&quot;).unwrap();\nassert_eq!((bare.host.as_str(), bare.pid), (\&quot;lundra\&quot;, Some(4242)));\nassert!(bare.provider.is_none() &amp;&amp; bare.mesh_session().is_none());\n```&quot;,
       &quot;type&quot;: &quot;object&quot;
     },
     &quot;BoardView&quot;: {
       &quot;description&quot;: &quot;One checkout&#39;s board, as the gather found it.\n\nPresent for every checkout the answer covers, whether or not its board could be read,\nbecause a listing that silently drops the checkouts it could not reach is the shape of\nanswer that made this capability wrong in the first place: a reader would see a short\nboard and conclude nobody else is working here.&quot;,
+      &quot;type&quot;: &quot;object&quot;,
       &quot;properties&quot;: {
-        &quot;attached&quot;: {
-          &quot;description&quot;: &quot;How many of this board&#39;s peers are attached.&quot;,
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;branch&quot;: {
-          &quot;description&quot;: &quot;The branch checked out there, when it could be read.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;id&quot;: {
-          &quot;description&quot;: &quot;The checkout&#39;s identity digest, the same value `server.status` reports as\n`checkout_id`. One per checkout, never a path, and stable across a restart.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
         &quot;reason&quot;: {
           &quot;description&quot;: &quot;Why this board is not in the answer. `None` when it is.&quot;,
           &quot;type&quot;: [
@@ -398,20 +400,16 @@ can name it on that sibling's <code>BoardView</code>.</td>
             &quot;null&quot;
           ]
         },
-        &quot;standing&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/ServerStanding&quot;,
-          &quot;description&quot;: &quot;Where its server stands, by the same reading `server.status` reports.&quot;
+        &quot;id&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The checkout&#39;s identity digest, the same value `server.status` reports as\n`checkout_id`. One per checkout, never a path, and stable across a restart.&quot;
         },
-        &quot;stream&quot;: {
-          &quot;description&quot;: &quot;The mesh stream of the server whose memory holds this board, when its mesh runs: the\nstream it projects the board&#39;s peers into as `board-pN` sessions. A position such as\n`p1` is that server&#39;s alone, so only this stream ties a board peer to its session.&quot;,
+        &quot;branch&quot;: {
           &quot;type&quot;: [
             &quot;string&quot;,
             &quot;null&quot;
-          ]
-        },
-        &quot;this_checkout&quot;: {
-          &quot;description&quot;: &quot;Whether this is the checkout of the server answering the call.&quot;,
-          &quot;type&quot;: &quot;boolean&quot;
+          ],
+          &quot;description&quot;: &quot;The branch checked out there, when it could be read.&quot;
         },
         &quot;url&quot;: {
           &quot;description&quot;: &quot;The address its lease names, when it has one.&quot;,
@@ -423,6 +421,27 @@ can name it on that sibling's <code>BoardView</code>.</td>
         &quot;worktree&quot;: {
           &quot;description&quot;: &quot;Where the checkout is. The one thing on this board that a human can act on\ndirectly, and the one thing that survives a reconnect.&quot;,
           &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;attached&quot;: {
+          &quot;type&quot;: &quot;integer&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;description&quot;: &quot;How many of this board&#39;s peers are attached.&quot;,
+          &quot;format&quot;: &quot;uint&quot;
+        },
+        &quot;standing&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/ServerStanding&quot;,
+          &quot;description&quot;: &quot;Where its server stands, by the same reading `server.status` reports.&quot;
+        },
+        &quot;this_checkout&quot;: {
+          &quot;type&quot;: &quot;boolean&quot;,
+          &quot;description&quot;: &quot;Whether this is the checkout of the server answering the call.&quot;
+        },
+        &quot;stream&quot;: {
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ],
+          &quot;description&quot;: &quot;The mesh stream of the server whose memory holds this board, when its mesh runs: the\nstream it projects the board&#39;s peers into as `board-pN` sessions. A position such as\n`p1` is that server&#39;s alone, so only this stream ties a board peer to its session.&quot;
         }
       },
       &quot;required&quot;: [
@@ -431,40 +450,55 @@ can name it on that sibling's <code>BoardView</code>.</td>
         &quot;this_checkout&quot;,
         &quot;standing&quot;,
         &quot;attached&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
+      ]
     },
-    &quot;ClientInfo&quot;: {
-      &quot;description&quot;: &quot;What a client said about itself in `initialize`.&quot;,
+    &quot;PeerCheckout&quot;: {
+      &quot;required&quot;: [
+        &quot;id&quot;,
+        &quot;worktree&quot;,
+        &quot;this_checkout&quot;
+      ],
       &quot;properties&quot;: {
-        &quot;name&quot;: {
-          &quot;description&quot;: &quot;`clientInfo.name`: `claude-code`, `codex`, `gemini-cli`, whatever the client sends.&quot;,
+        &quot;worktree&quot;: {
+          &quot;description&quot;: &quot;Where the checkout is. The one thing on this board that a human can act on\ndirectly, and the one thing that survives a reconnect.&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
-        &quot;title&quot;: {
-          &quot;description&quot;: &quot;`clientInfo.title`, when the client sends one.&quot;,
+        &quot;id&quot;: {
+          &quot;description&quot;: &quot;The checkout&#39;s identity digest, the same value `server.status` reports as\n`checkout_id`. One per checkout, never a path, and stable across a restart.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;this_checkout&quot;: {
+          &quot;description&quot;: &quot;Whether this is the checkout of the server answering the call.&quot;,
+          &quot;type&quot;: &quot;boolean&quot;
+        },
+        &quot;branch&quot;: {
           &quot;type&quot;: [
             &quot;string&quot;,
             &quot;null&quot;
-          ]
-        },
-        &quot;version&quot;: {
-          &quot;description&quot;: &quot;`clientInfo.version`.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          ],
+          &quot;description&quot;: &quot;The branch checked out there, when it could be read.&quot;
         }
       },
-      &quot;required&quot;: [
-        &quot;name&quot;,
-        &quot;version&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
+      &quot;type&quot;: &quot;object&quot;,
+      &quot;description&quot;: &quot;Which checkout of the repository a peer is attached to.\n\nA board is one process&#39;s memory and a server serves one checkout, so a peer read from\na sibling checkout&#39;s server and a peer of this one are otherwise indistinguishable —\nand worse than indistinguishable, because the ids collide: `p1` is the first session\nof *every* board, so a repository-wide listing without this field would hold several\npeers called `p1` and no way to tell them apart. This is the qualification. The\nworktree path is the durable half of a worker&#39;s identity: the peer id is a position on\none board and is handed out again after a reconnect (`p3` this morning, `p1` after the\nbridge re-attached), while the checkout a worker is working in outlives its connection.\n\nAbsent on a peer a server reports about its own board without being asked which\ncheckout that is — `peers.announce` answers about the announcing session and the\nanswer is this server&#39;s by construction. The repository-wide listing stamps every\npeer it gathers, its own included, so that no entry of that answer is unqualified.\n\n```\nuse majordomus_cli::peers::PeerCheckout;\nlet c = PeerCheckout {\n    id: \&quot;b8293f11\&quot;.into(),\n    worktree: \&quot;/repo-wt/feature/x\&quot;.into(),\n    branch: Some(\&quot;feature/x\&quot;.into()),\n    this_checkout: false,\n};\nlet v = serde_json::to_value(&amp;c).unwrap();\nassert_eq!(v[\&quot;branch\&quot;], \&quot;feature/x\&quot;);\nassert_eq!(v[\&quot;this_checkout\&quot;], false);\n```&quot;
+    },
+    &quot;PeerId&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;description&quot;: &quot;A peer&#39;s identity for the life of the server: `p1`, `p2`, ... in attachment order.\n`p1` is the session that started the server.&quot;
     },
     &quot;Overlap&quot;: {
+      &quot;required&quot;: [
+        &quot;peer&quot;,
+        &quot;attached&quot;,
+        &quot;intent&quot;,
+        &quot;paths&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;,
       &quot;description&quot;: &quot;Two peers that claimed the same ground.\n\nReported when the second of them announces, so that a collision is known at the moment\nit is created rather than discovered afterwards in the history of a branch.&quot;,
       &quot;properties&quot;: {
-        &quot;attached&quot;: {
-          &quot;description&quot;: &quot;Whether that peer is still attached. An overlap with a departed peer is a weaker\nsignal than one with a live session, and the reader is told which it is.&quot;,
-          &quot;type&quot;: &quot;boolean&quot;
+        &quot;peer&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/PeerId&quot;,
+          &quot;description&quot;: &quot;The other peer.&quot;
         },
         &quot;checkout&quot;: {
           &quot;anyOf&quot;: [
@@ -477,9 +511,13 @@ can name it on that sibling's <code>BoardView</code>.</td>
           ],
           &quot;description&quot;: &quot;Which checkout the other peer is attached to, when the reader knew.\n\nThe overlap that matters most is the one nobody could see before: two workers in\ntwo worktrees of one repository, each reading a board that held only itself, both\nclaiming `apps/majordomus-cli/src`. Naming the checkout is what turns \&quot;p1 is on\nyour ground\&quot; into something a reader can act on when `p1` is not on this board.&quot;
         },
+        &quot;attached&quot;: {
+          &quot;type&quot;: &quot;boolean&quot;,
+          &quot;description&quot;: &quot;Whether that peer is still attached. An overlap with a departed peer is a weaker\nsignal than one with a live session, and the reader is told which it is.&quot;
+        },
         &quot;intent&quot;: {
-          &quot;description&quot;: &quot;What it said it was doing.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;What it said it was doing.&quot;
         },
         &quot;paths&quot;: {
           &quot;description&quot;: &quot;The claims that meet: one line per pair, `yours` and `theirs`.&quot;,
@@ -487,53 +525,109 @@ can name it on that sibling's <code>BoardView</code>.</td>
             &quot;$ref&quot;: &quot;#/$defs/OverlapPath&quot;
           },
           &quot;type&quot;: &quot;array&quot;
+        }
+      }
+    },
+    &quot;Announcement&quot;: {
+      &quot;required&quot;: [
+        &quot;intent&quot;,
+        &quot;scope&quot;,
+        &quot;at&quot;
+      ],
+      &quot;description&quot;: &quot;One claim a peer has made: what it is working on, and where.\n\nA peer may hold several. The `name` is what tells them apart and what makes announcing\nagain an update rather than a second claim: announce under the same name and the claim\nis replaced, announce under a new one and the peer now holds both. A peer that never\nnames anything holds exactly one claim, the unnamed one, which is what a single session\nannouncing about itself has always had.&quot;,
+      &quot;properties&quot;: {
+        &quot;at&quot;: {
+          &quot;description&quot;: &quot;When it was announced, RFC 3339, UTC.&quot;,
+          &quot;type&quot;: &quot;string&quot;
         },
-        &quot;peer&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/PeerId&quot;,
-          &quot;description&quot;: &quot;The other peer.&quot;
+        &quot;intent&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;One line: the task or intent, in the peer&#39;s words.&quot;
+        },
+        &quot;scope&quot;: {
+          &quot;type&quot;: &quot;array&quot;,
+          &quot;description&quot;: &quot;Repository-relative paths the peer expects to touch; informational, never enforced here.&quot;,
+          &quot;items&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        },
+        &quot;name&quot;: {
+          &quot;description&quot;: &quot;What this claim is called, when the peer named it. Absent for a peer&#39;s unnamed claim.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        }
+      },
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;ClientInfo&quot;: {
+      &quot;description&quot;: &quot;What a client said about itself in `initialize`.&quot;,
+      &quot;properties&quot;: {
+        &quot;name&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;`clientInfo.name`: `claude-code`, `codex`, `gemini-cli`, whatever the client sends.&quot;
+        },
+        &quot;version&quot;: {
+          &quot;description&quot;: &quot;`clientInfo.version`.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;title&quot;: {
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ],
+          &quot;description&quot;: &quot;`clientInfo.title`, when the client sends one.&quot;
         }
       },
       &quot;required&quot;: [
-        &quot;peer&quot;,
-        &quot;attached&quot;,
-        &quot;intent&quot;,
-        &quot;paths&quot;
+        &quot;name&quot;,
+        &quot;version&quot;
       ],
       &quot;type&quot;: &quot;object&quot;
     },
     &quot;OverlapPath&quot;: {
       &quot;description&quot;: &quot;One pair of claims that contain one another.&quot;,
-      &quot;properties&quot;: {
-        &quot;theirs&quot;: {
-          &quot;description&quot;: &quot;The path the other peer claimed.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;yours&quot;: {
-          &quot;description&quot;: &quot;The path the announcing peer claimed.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      },
       &quot;required&quot;: [
         &quot;yours&quot;,
         &quot;theirs&quot;
       ],
-      &quot;type&quot;: &quot;object&quot;
+      &quot;type&quot;: &quot;object&quot;,
+      &quot;properties&quot;: {
+        &quot;yours&quot;: {
+          &quot;description&quot;: &quot;The path the announcing peer claimed.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;theirs&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The path the other peer claimed.&quot;
+        }
+      }
     },
     &quot;Peer&quot;: {
       &quot;description&quot;: &quot;One peer as the board lists it.&quot;,
       &quot;properties&quot;: {
-        &quot;address&quot;: {
-          &quot;anyOf&quot;: [
-            {
-              &quot;$ref&quot;: &quot;#/$defs/PeerAddress&quot;
-            },
-            {
-              &quot;type&quot;: &quot;null&quot;
-            }
-          ],
-          &quot;description&quot;: &quot;Where the worker behind this peer can be reached from outside its connection: its\nmachine, its process, its provider session and the socket other sessions message it\non; see `PeerAddress`. Derived when the peer attached, never announced by hand.\nAbsent for a client that exposes none of it.&quot;
+        &quot;last_seen_seconds_ago&quot;: {
+          &quot;description&quot;: &quot;Seconds since its last message.&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;format&quot;: &quot;uint64&quot;,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;progress_seconds_ago&quot;: {
+          &quot;description&quot;: &quot;Seconds since it last did real work — a request other than `ping`, or an\nannouncement — or absent when it has done none (I3990). `last_seen_seconds_ago`\ncounts a keep-alive ping as a message, so a session stuck on a permission dialog\nbehind a bridge that pings every 20 s looks seen forever; this is the number its\nmesh claims live by.&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;format&quot;: &quot;uint64&quot;,
+          &quot;type&quot;: [
+            &quot;integer&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;transport&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/Transport&quot;,
+          &quot;description&quot;: &quot;How it is attached.&quot;
         },
         &quot;announcement&quot;: {
+          &quot;description&quot;: &quot;The most recently made of `Peer::claims`, for a reader that wants one line rather\nthan all of them. Derived from `claims` and never a second account of it: a peer\nholding one claim reports the same thing in both, which is what every peer that does\nnot name its claims reports.&quot;,
           &quot;anyOf&quot;: [
             {
               &quot;$ref&quot;: &quot;#/$defs/Announcement&quot;
@@ -541,12 +635,22 @@ can name it on that sibling's <code>BoardView</code>.</td>
             {
               &quot;type&quot;: &quot;null&quot;
             }
-          ],
-          &quot;description&quot;: &quot;The most recently made of `Peer::claims`, for a reader that wants one line rather\nthan all of them. Derived from `claims` and never a second account of it: a peer\nholding one claim reports the same thing in both, which is what every peer that does\nnot name its claims reports.&quot;
+          ]
         },
         &quot;attached&quot;: {
-          &quot;description&quot;: &quot;Whether the session is still attached. A peer that announced something and then\nwent away is kept and listed with `attached: false`: what it said it was working on\noutlives the connection that said it, because the work does.&quot;,
-          &quot;type&quot;: &quot;boolean&quot;
+          &quot;type&quot;: &quot;boolean&quot;,
+          &quot;description&quot;: &quot;Whether the session is still attached. A peer that announced something and then\nwent away is kept and listed with `attached: false`: what it said it was working on\noutlives the connection that said it, because the work does.&quot;
+        },
+        &quot;address&quot;: {
+          &quot;description&quot;: &quot;Where the worker behind this peer can be reached from outside its connection: its\nmachine, its process, its provider session and the socket other sessions message it\non; see `PeerAddress`. Derived when the peer attached, never announced by hand.\nAbsent for a client that exposes none of it.&quot;,
+          &quot;anyOf&quot;: [
+            {
+              &quot;$ref&quot;: &quot;#/$defs/PeerAddress&quot;
+            },
+            {
+              &quot;type&quot;: &quot;null&quot;
+            }
+          ]
         },
         &quot;checkout&quot;: {
           &quot;anyOf&quot;: [
@@ -560,11 +664,11 @@ can name it on that sibling's <code>BoardView</code>.</td>
           &quot;description&quot;: &quot;Which checkout of the repository this peer is attached to; see `PeerCheckout`.\n\nThe board itself never sets it — a board does not know where it is — and it is\nstamped by the reader that gathered this peer, which is the one thing that knows\nwhich checkout&#39;s server it asked.&quot;
         },
         &quot;claims&quot;: {
-          &quot;description&quot;: &quot;Every claim this peer holds, in name order, the unnamed one first. Empty for a peer\nthat has announced nothing.\n\nOne connection may be doing several things at once — a session that fans work out to\nsubagents shares its MCP session with all of them — and before this field the board\ncould hold only the last thing said, so each announcement silently erased the one\nbefore it and the other peers stopped seeing the rest of the scope.&quot;,
+          &quot;type&quot;: &quot;array&quot;,
           &quot;items&quot;: {
             &quot;$ref&quot;: &quot;#/$defs/Announcement&quot;
           },
-          &quot;type&quot;: &quot;array&quot;
+          &quot;description&quot;: &quot;Every claim this peer holds, in name order, the unnamed one first. Empty for a peer\nthat has announced nothing.\n\nOne connection may be doing several things at once — a session that fans work out to\nsubagents shares its MCP session with all of them — and before this field the board\ncould hold only the last thing said, so each announcement silently erased the one\nbefore it and the other peers stopped seeing the rest of the scope.&quot;
         },
         &quot;client&quot;: {
           &quot;$ref&quot;: &quot;#/$defs/ClientInfo&quot;,
@@ -577,25 +681,6 @@ can name it on that sibling's <code>BoardView</code>.</td>
         &quot;id&quot;: {
           &quot;$ref&quot;: &quot;#/$defs/PeerId&quot;,
           &quot;description&quot;: &quot;`p1`, `p2`, ...&quot;
-        },
-        &quot;last_seen_seconds_ago&quot;: {
-          &quot;description&quot;: &quot;Seconds since its last message.&quot;,
-          &quot;format&quot;: &quot;uint64&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;progress_seconds_ago&quot;: {
-          &quot;description&quot;: &quot;Seconds since it last did real work — a request other than `ping`, or an\nannouncement — or absent when it has done none (I3990). `last_seen_seconds_ago`\ncounts a keep-alive ping as a message, so a session stuck on a permission dialog\nbehind a bridge that pings every 20 s looks seen forever; this is the number its\nmesh claims live by.&quot;,
-          &quot;format&quot;: &quot;uint64&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: [
-            &quot;integer&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;transport&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/Transport&quot;,
-          &quot;description&quot;: &quot;How it is attached.&quot;
         }
       },
       &quot;required&quot;: [
@@ -608,90 +693,12 @@ can name it on that sibling's <code>BoardView</code>.</td>
       ],
       &quot;type&quot;: &quot;object&quot;
     },
-    &quot;PeerAddress&quot;: {
-      &quot;description&quot;: &quot;Where the worker behind a peer can be reached from outside its MCP connection.\n\nA board row named a client and a version, and nothing a person or another session could\nact on: on 2026-10-22 the session running a 33-minute remote `cargo test --doc` could be\nfound only by walking an ssh client&#39;s parent chain to a provider pid, its messaging\nsocket, and a start time matched by hand. Every one of those facts is in the environment\nthe provider hands the processes it starts — the MCP server among them — so the address\nis read from there when the peer attaches, and never asked of the model.\n\nThe provider&#39;s messaging *token* is a credential and is never read: the address is where\nto knock, not the key.\n\n```\nuse majordomus_cli::peers::PeerAddress;\n// a client that exposes nothing still has a machine and a parent process\nlet bare = PeerAddress::from_env(|_| None, Some(4242), \&quot;lundra\&quot;).unwrap();\nassert_eq!((bare.host.as_str(), bare.pid), (\&quot;lundra\&quot;, Some(4242)));\nassert!(bare.provider.is_none() &amp;&amp; bare.mesh_session().is_none());\n```&quot;,
-      &quot;properties&quot;: {
-        &quot;host&quot;: {
-          &quot;description&quot;: &quot;The machine the worker runs on.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;pid&quot;: {
-          &quot;description&quot;: &quot;The worker&#39;s own process: the provider&#39;s pid, not the MCP bridge it started.&quot;,
-          &quot;format&quot;: &quot;uint32&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: [
-            &quot;integer&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;provider&quot;: {
-          &quot;description&quot;: &quot;The provider whose session this is (`claude-code`), when its environment says so.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;session&quot;: {
-          &quot;description&quot;: &quot;The provider&#39;s id for the session, the one its lifecycle hooks are given.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;socket&quot;: {
-          &quot;description&quot;: &quot;The socket other sessions on the same machine message this one through.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        }
-      },
-      &quot;required&quot;: [
-        &quot;host&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
-    },
-    &quot;PeerCheckout&quot;: {
-      &quot;description&quot;: &quot;Which checkout of the repository a peer is attached to.\n\nA board is one process&#39;s memory and a server serves one checkout, so a peer read from\na sibling checkout&#39;s server and a peer of this one are otherwise indistinguishable —\nand worse than indistinguishable, because the ids collide: `p1` is the first session\nof *every* board, so a repository-wide listing without this field would hold several\npeers called `p1` and no way to tell them apart. This is the qualification. The\nworktree path is the durable half of a worker&#39;s identity: the peer id is a position on\none board and is handed out again after a reconnect (`p3` this morning, `p1` after the\nbridge re-attached), while the checkout a worker is working in outlives its connection.\n\nAbsent on a peer a server reports about its own board without being asked which\ncheckout that is — `peers.announce` answers about the announcing session and the\nanswer is this server&#39;s by construction. The repository-wide listing stamps every\npeer it gathers, its own included, so that no entry of that answer is unqualified.\n\n```\nuse majordomus_cli::peers::PeerCheckout;\nlet c = PeerCheckout {\n    id: \&quot;b8293f11\&quot;.into(),\n    worktree: \&quot;/repo-wt/feature/x\&quot;.into(),\n    branch: Some(\&quot;feature/x\&quot;.into()),\n    this_checkout: false,\n};\nlet v = serde_json::to_value(&amp;c).unwrap();\nassert_eq!(v[\&quot;branch\&quot;], \&quot;feature/x\&quot;);\nassert_eq!(v[\&quot;this_checkout\&quot;], false);\n```&quot;,
-      &quot;properties&quot;: {
-        &quot;branch&quot;: {
-          &quot;description&quot;: &quot;The branch checked out there, when it could be read.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;id&quot;: {
-          &quot;description&quot;: &quot;The checkout&#39;s identity digest, the same value `server.status` reports as\n`checkout_id`. One per checkout, never a path, and stable across a restart.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;this_checkout&quot;: {
-          &quot;description&quot;: &quot;Whether this is the checkout of the server answering the call.&quot;,
-          &quot;type&quot;: &quot;boolean&quot;
-        },
-        &quot;worktree&quot;: {
-          &quot;description&quot;: &quot;Where the checkout is. The one thing on this board that a human can act on\ndirectly, and the one thing that survives a reconnect.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      },
-      &quot;required&quot;: [
-        &quot;id&quot;,
-        &quot;worktree&quot;,
-        &quot;this_checkout&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
-    },
-    &quot;PeerId&quot;: {
-      &quot;description&quot;: &quot;A peer&#39;s identity for the life of the server: `p1`, `p2`, ... in attachment order.\n`p1` is the session that started the server.&quot;,
-      &quot;type&quot;: &quot;string&quot;
-    },
     &quot;ServerStanding&quot;: {
-      &quot;description&quot;: &quot;Where a checkout&#39;s server stands, decided from its lease, whether the server the lease\nnames answers for that checkout, and whether what answers is this executable&#39;s code —\nand, refined by the readiness report, the mesh runtime and the last recorded transition,\nwhere its runtime stands (I3179).\n\nThe first five words are the lease&#39;s standing, decided by `standing_of`, and they are\nwhat `standing` carries on every surface: shells compare them, so they never change. The\nother seven are the runtime&#39;s refinements, decided by `runtime_of` and carried by\n`runtime.state` alone; `ServerStanding::refines` names the lease word each refines.\n\n```\nuse majordomus_cli::capability::builtin::server::ServerStanding;\nlet all = [ServerStanding::Absent, ServerStanding::Starting, ServerStanding::Ready,\n           ServerStanding::Outdated, ServerStanding::Stale];\nlet words: Vec&lt;&amp;str&gt; = all.iter().map(|s| s.as_str()).collect();\nassert_eq!(words, [\&quot;absent\&quot;, \&quot;starting\&quot;, \&quot;ready\&quot;, \&quot;outdated\&quot;, \&quot;stale\&quot;]);\nassert_eq!(serde_json::from_str::&lt;ServerStanding&gt;(\&quot;\\\&quot;stale\\\&quot;\&quot;).unwrap(), ServerStanding::Stale);\n// the runtime&#39;s words, in the same snake case the JSON carries\nassert_eq!(serde_json::to_value(ServerStanding::MeshAttaching).unwrap(), \&quot;mesh_attaching\&quot;);\nassert_eq!(ServerStanding::MeshAttaching.as_str(), \&quot;mesh_attaching\&quot;);\n```&quot;,
       &quot;oneOf&quot;: [
         {
-          &quot;const&quot;: &quot;absent&quot;,
           &quot;description&quot;: &quot;No lease: nothing serves this checkout.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;absent&quot;
         },
         {
           &quot;const&quot;: &quot;starting&quot;,
@@ -699,13 +706,13 @@ can name it on that sibling's <code>BoardView</code>.</td>
           &quot;type&quot;: &quot;string&quot;
         },
         {
-          &quot;const&quot;: &quot;ready&quot;,
           &quot;description&quot;: &quot;The server the lease names answers for this checkout, from the code on disk, at\nthis executable&#39;s version.&quot;,
+          &quot;const&quot;: &quot;ready&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
         {
-          &quot;const&quot;: &quot;outdated&quot;,
           &quot;description&quot;: &quot;The server answers, but from older code than this executable, or from a file that\nhas been replaced since it started: everything it says is yesterday&#39;s.&quot;,
+          &quot;const&quot;: &quot;outdated&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
         {
@@ -719,19 +726,19 @@ can name it on that sibling's <code>BoardView</code>.</td>
           &quot;type&quot;: &quot;string&quot;
         },
         {
-          &quot;const&quot;: &quot;mesh_attaching&quot;,
+          &quot;type&quot;: &quot;string&quot;,
           &quot;description&quot;: &quot;The server is ready, the repository declares its mesh enabled, and the server has not\nyet decided whether the mesh runs.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;const&quot;: &quot;mesh_attaching&quot;
         },
         {
           &quot;const&quot;: &quot;operational&quot;,
-          &quot;description&quot;: &quot;The server is ready, says so itself, and its mesh runs or is not declared.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The server is ready, says so itself, and its mesh runs or is not declared.&quot;
         },
         {
+          &quot;type&quot;: &quot;string&quot;,
           &quot;const&quot;: &quot;degraded&quot;,
-          &quot;description&quot;: &quot;The server answers, current, but its own readiness report or its mesh says it is not\nwhole: it lost the lease, serves replaced code, read a degraded layer, or its declared\nmesh is not running.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;description&quot;: &quot;The server answers, current, but its own readiness report or its mesh says it is not\nwhole: it lost the lease, serves replaced code, read a degraded layer, or its declared\nmesh is not running.&quot;
         },
         {
           &quot;const&quot;: &quot;stopping&quot;,
@@ -739,43 +746,37 @@ can name it on that sibling's <code>BoardView</code>.</td>
           &quot;type&quot;: &quot;string&quot;
         },
         {
+          &quot;type&quot;: &quot;string&quot;,
           &quot;const&quot;: &quot;stopped&quot;,
-          &quot;description&quot;: &quot;The server is gone after it recorded that it was stopping.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;description&quot;: &quot;The server is gone after it recorded that it was stopping.&quot;
         },
         {
-          &quot;const&quot;: &quot;failed&quot;,
           &quot;description&quot;: &quot;The server is gone without having recorded that it was stopping: its lease names a\nprocess that no longer exists.&quot;,
+          &quot;const&quot;: &quot;failed&quot;,
           &quot;type&quot;: &quot;string&quot;
         }
-      ]
+      ],
+      &quot;description&quot;: &quot;Where a checkout&#39;s server stands, decided from its lease, whether the server the lease\nnames answers for that checkout, and whether what answers is this executable&#39;s code —\nand, refined by the readiness report, the mesh runtime and the last recorded transition,\nwhere its runtime stands (I3179).\n\nThe first five words are the lease&#39;s standing, decided by `standing_of`, and they are\nwhat `standing` carries on every surface: shells compare them, so they never change. The\nother seven are the runtime&#39;s refinements, decided by `runtime_of` and carried by\n`runtime.state` alone; `ServerStanding::refines` names the lease word each refines.\n\n```\nuse majordomus_cli::capability::builtin::server::ServerStanding;\nlet all = [ServerStanding::Absent, ServerStanding::Starting, ServerStanding::Ready,\n           ServerStanding::Outdated, ServerStanding::Stale];\nlet words: Vec&lt;&amp;str&gt; = all.iter().map(|s| s.as_str()).collect();\nassert_eq!(words, [\&quot;absent\&quot;, \&quot;starting\&quot;, \&quot;ready\&quot;, \&quot;outdated\&quot;, \&quot;stale\&quot;]);\nassert_eq!(serde_json::from_str::&lt;ServerStanding&gt;(\&quot;\\\&quot;stale\\\&quot;\&quot;).unwrap(), ServerStanding::Stale);\n// the runtime&#39;s words, in the same snake case the JSON carries\nassert_eq!(serde_json::to_value(ServerStanding::MeshAttaching).unwrap(), \&quot;mesh_attaching\&quot;);\nassert_eq!(ServerStanding::MeshAttaching.as_str(), \&quot;mesh_attaching\&quot;);\n```&quot;
     },
     &quot;Transport&quot;: {
       &quot;description&quot;: &quot;How a peer reached the server.&quot;,
       &quot;oneOf&quot;: [
         {
-          &quot;const&quot;: &quot;stdio&quot;,
           &quot;description&quot;: &quot;The owner&#39;s own client, on the process&#39;s stdin and stdout.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;stdio&quot;
         },
         {
-          &quot;const&quot;: &quot;http&quot;,
           &quot;description&quot;: &quot;MCP over HTTP at `/mcp`: a `majordomus mcp` bridge, or a client speaking it directly.&quot;,
+          &quot;const&quot;: &quot;http&quot;,
           &quot;type&quot;: &quot;string&quot;
         }
       ]
     }
   },
-  &quot;description&quot;: &quot;The answer of `peers.list`: every worker of this repository, from every checkout&#39;s board.&quot;,
   &quot;properties&quot;: {
-    &quot;boards&quot;: {
-      &quot;description&quot;: &quot;One entry per checkout the answer lists, reached or not: every covered checkout under\n`view: full`; under the default summary, every one but those `omitted` counts. A board\nthat could not be read is always listed.&quot;,
-      &quot;items&quot;: {
-        &quot;$ref&quot;: &quot;#/$defs/BoardView&quot;
-      },
-      &quot;type&quot;: &quot;array&quot;
-    },
     &quot;caller&quot;: {
+      &quot;description&quot;: &quot;The caller&#39;s own peer id, when the call came through an MCP session. A position on\nthis checkout&#39;s board, not a durable identity: it is handed out again after a\nreconnect, and `Peer::checkout` is the half of a worker&#39;s identity that is not.&quot;,
       &quot;anyOf&quot;: [
         {
           &quot;$ref&quot;: &quot;#/$defs/PeerId&quot;
@@ -783,47 +784,53 @@ can name it on that sibling's <code>BoardView</code>.</td>
         {
           &quot;type&quot;: &quot;null&quot;
         }
-      ],
-      &quot;description&quot;: &quot;The caller&#39;s own peer id, when the call came through an MCP session. A position on\nthis checkout&#39;s board, not a durable identity: it is handed out again after a\nreconnect, and `Peer::checkout` is the half of a worker&#39;s identity that is not.&quot;
+      ]
+    },
+    &quot;covered&quot;: {
+      &quot;minimum&quot;: 0,
+      &quot;type&quot;: &quot;integer&quot;,
+      &quot;description&quot;: &quot;How many checkouts the answer covers, listed in `boards` or counted in `omitted` — a\ncount, where the input `checkouts` is a choice of which to cover.&quot;,
+      &quot;format&quot;: &quot;uint&quot;
+    },
+    &quot;omitted&quot;: {
+      &quot;type&quot;: &quot;object&quot;,
+      &quot;additionalProperties&quot;: {
+        &quot;type&quot;: &quot;integer&quot;,
+        &quot;format&quot;: &quot;uint&quot;,
+        &quot;minimum&quot;: 0
+      },
+      &quot;description&quot;: &quot;The covered checkouts the summary does not list, counted by standing (`absent`,\n`stale`): no server, nobody attached, no board. Empty under `view: full`.&quot;
     },
     &quot;complete&quot;: {
       &quot;description&quot;: &quot;Whether every board the answer covers was read. `false` when a checkout&#39;s server\ncould not be asked, and `BoardView::reason` says which and why — so that \&quot;nobody\nelse is here\&quot; is never reported when the truth is \&quot;I could not ask\&quot;.&quot;,
       &quot;type&quot;: &quot;boolean&quot;
     },
-    &quot;count&quot;: {
-      &quot;description&quot;: &quot;How many peers are attached across every board that was read, the caller included.&quot;,
-      &quot;format&quot;: &quot;uint&quot;,
-      &quot;minimum&quot;: 0,
-      &quot;type&quot;: &quot;integer&quot;
-    },
-    &quot;covered&quot;: {
-      &quot;description&quot;: &quot;How many checkouts the answer covers, listed in `boards` or counted in `omitted` — a\ncount, where the input `checkouts` is a choice of which to cover.&quot;,
-      &quot;format&quot;: &quot;uint&quot;,
-      &quot;minimum&quot;: 0,
-      &quot;type&quot;: &quot;integer&quot;
-    },
-    &quot;omitted&quot;: {
-      &quot;additionalProperties&quot;: {
-        &quot;format&quot;: &quot;uint&quot;,
-        &quot;minimum&quot;: 0,
-        &quot;type&quot;: &quot;integer&quot;
-      },
-      &quot;description&quot;: &quot;The covered checkouts the summary does not list, counted by standing (`absent`,\n`stale`): no server, nobody attached, no board. Empty under `view: full`.&quot;,
-      &quot;type&quot;: &quot;object&quot;
+    &quot;boards&quot;: {
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;description&quot;: &quot;One entry per checkout the answer lists, reached or not: every covered checkout under\n`view: full`; under the default summary, every one but those `omitted` counts. A board\nthat could not be read is always listed.&quot;,
+      &quot;items&quot;: {
+        &quot;$ref&quot;: &quot;#/$defs/BoardView&quot;
+      }
     },
     &quot;overlaps&quot;: {
-      &quot;description&quot;: &quot;Every pair of peers whose claimed scope meets, each pair once — now across\ncheckouts as well as within one. Empty is the ordinary case, and a reader who sees\nan entry here is looking at two workers about to do the same work.&quot;,
       &quot;items&quot;: {
         &quot;$ref&quot;: &quot;#/$defs/Overlap&quot;
       },
+      &quot;description&quot;: &quot;Every pair of peers whose claimed scope meets, each pair once — now across\ncheckouts as well as within one. Empty is the ordinary case, and a reader who sees\nan entry here is looking at two workers about to do the same work.&quot;,
       &quot;type&quot;: &quot;array&quot;
     },
     &quot;peers&quot;: {
-      &quot;description&quot;: &quot;The peers, this checkout&#39;s board first and then the siblings in the order git\nregisters them, each in its own board&#39;s attachment order. Every one carries the\ncheckout it belongs to, because `p1` is the first session of every board. A peer\nthat announced something and then went away is still here, with `attached: false`.&quot;,
       &quot;items&quot;: {
         &quot;$ref&quot;: &quot;#/$defs/Peer&quot;
       },
-      &quot;type&quot;: &quot;array&quot;
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;description&quot;: &quot;The peers, this checkout&#39;s board first and then the siblings in the order git\nregisters them, each in its own board&#39;s attachment order. Every one carries the\ncheckout it belongs to, because `p1` is the first session of every board. A peer\nthat announced something and then went away is still here, with `attached: false`.&quot;
+    },
+    &quot;count&quot;: {
+      &quot;format&quot;: &quot;uint&quot;,
+      &quot;type&quot;: &quot;integer&quot;,
+      &quot;description&quot;: &quot;How many peers are attached across every board that was read, the caller included.&quot;,
+      &quot;minimum&quot;: 0
     },
     &quot;stream&quot;: {
       &quot;description&quot;: &quot;The mesh stream of the server that answered, when its mesh runs: the stream its own\nboard&#39;s peers are projected into. A sibling&#39;s answer carries it so that the gatherer\ncan name it on that sibling&#39;s `BoardView`.&quot;,
@@ -833,13 +840,6 @@ can name it on that sibling's <code>BoardView</code>.</td>
       ]
     }
   },
-  &quot;required&quot;: [
-    &quot;count&quot;,
-    &quot;peers&quot;,
-    &quot;covered&quot;,
-    &quot;boards&quot;,
-    &quot;complete&quot;
-  ],
   &quot;title&quot;: &quot;PeerList&quot;,
   &quot;type&quot;: &quot;object&quot;
 }</pre></div>
@@ -872,7 +872,7 @@ can name it on that sibling's <code>BoardView</code>.</td>
         <div><dt class="text-body-subtle">modul Rust</dt><dd class="min-w-0 break-all font-mono text-heading">majordomus_cli::capability::builtin::peers</dd></div>
         <div><dt class="text-body-subtle">typ vstupu</dt><dd class="font-mono text-heading">PeerListInput</dd></div>
         <div><dt class="text-body-subtle">typ výstupu</dt><dd class="font-mono text-heading">PeerList</dd></div>
-        <div><dt class="text-body-subtle">reference na GitHubu</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/1112bace3437ee0d82067b1e8f61813e70190078/docs/generated/modules/peers.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/peers.md</a></dd></div><div><dt class="text-body-subtle">otisk registru</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">5cdbf22cd21589ddbe464d5f0987b6bcf4607d05479004d6f815c3b306fdb08a</dd></div>
+        <div><dt class="text-body-subtle">reference na GitHubu</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/docs/generated/modules/peers.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/peers.md</a></dd></div><div><dt class="text-body-subtle">otisk registru</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">3f734f2faf797f0ca7c39b4cd837e68b6619c41c6f6711f3d3aeca8f341934eb</dd></div>
         <div><dt class="text-body-subtle">vygenerováno nástrojem</dt><dd class="font-mono text-heading">majordomus-cli 1.0.0-alpha.10</dd></div>
       </dl>
     </div>
@@ -935,9 +935,9 @@ can name it on that sibling's <code>BoardView</code>.</td>
       <div class="min-w-0">
         <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">Projekt</h2><ul class="space-y-2 text-sm font-medium text-body">
           <li><a href="https://github.com/korczis/prismatic-majordomus" class="hover:text-heading hover:underline">GitHub</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/1112bace3437ee0d82067b1e8f61813e70190078/LICENSE" class="hover:text-heading hover:underline">Licence MIT</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/1112bace3437ee0d82067b1e8f61813e70190078/SECURITY.md" class="hover:text-heading hover:underline">Bezpečnostní politika</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/1112bace3437ee0d82067b1e8f61813e70190078/CONTRIBUTING.md" class="hover:text-heading hover:underline">Průvodce pro přispěvatele</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/LICENSE" class="hover:text-heading hover:underline">Licence MIT</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/SECURITY.md" class="hover:text-heading hover:underline">Bezpečnostní politika</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/CONTRIBUTING.md" class="hover:text-heading hover:underline">Průvodce pro přispěvatele</a></li>
         </ul>
       </div>
     </div>
@@ -945,7 +945,7 @@ can name it on that sibling's <code>BoardView</code>.</td>
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/cs/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.10</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/1112bace3437ee0d82067b1e8f61813e70190078" class="font-mono underline">1112bac</a> · inputs <span class="font-mono">830f884cc5aa</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/cs/architecture/" class="underline">how this site is derived</a> names them.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.10</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/745db2ea21e02613943face75a2bf95542be1f2e" class="font-mono underline">745db2e</a> · inputs <span class="font-mono">0a58c217d1b7</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/cs/architecture/" class="underline">how this site is derived</a> names them.</p>
     </div>
   </div>
 </footer>

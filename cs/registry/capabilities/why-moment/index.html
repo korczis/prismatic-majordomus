@@ -220,18 +220,18 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
-  &quot;additionalProperties&quot;: false,
-  &quot;description&quot;: &quot;Which moment to read.&quot;,
   &quot;properties&quot;: {
     &quot;id&quot;: {
-      &quot;description&quot;: &quot;The moment&#39;s id, as `why.list` gives it. This is also its slug and its route.&quot;,
-      &quot;type&quot;: &quot;string&quot;
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;description&quot;: &quot;The moment&#39;s id, as `why.list` gives it. This is also its slug and its route.&quot;
     }
   },
   &quot;required&quot;: [
     &quot;id&quot;
   ],
+  &quot;additionalProperties&quot;: false,
   &quot;title&quot;: &quot;MomentInput&quot;,
+  &quot;description&quot;: &quot;Which moment to read.&quot;,
   &quot;type&quot;: &quot;object&quot;
 }</pre></div>
   </details>
@@ -241,55 +241,100 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
     <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
       <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">vlastnost</th><th class="px-3 py-2">typ</th><th class="px-3 py-2">povinné</th><th class="px-3 py-2">popis</th></tr></thead>
       <tbody><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">aliasy</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">ne</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Další slova, která by čtenář mohl hledat. <span class="font-mono text-xs text-body-subtle">default []</span></td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">areas</td>
+        <td class="px-3 py-2 font-mono text-heading">příklady</td>
         <td class="px-3 py-2 font-mono text-xs text-body">array</td>
         <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Provozní oblasti, do kterých spadá.</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Konkrétní situace.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">route</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">ne</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Odvozeno: <code>/why/&lt;id&gt;/</code>. Nikdy se nepíše ručně; schéma odmítne klíč <code>route</code>. <span class="font-mono text-xs text-body-subtle">výchozí &quot;&quot;</span></td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">audiences</td>
         <td class="px-3 py-2 font-mono text-xs text-body">array</td>
         <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
         <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Publikum, které ho poznává.</td>
       </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">zpětné odkazy</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Odvozeno: momenty, které tento pojmenovávají ve svém <code>related</code>.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">tělo</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">ne</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Tělo v Markdownu, bez front matter.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">capabilities</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">ne</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Id schopností spustitelného souboru, které na to odpovídají. <span class="font-mono text-xs text-body-subtle">výchozí []</span></td>
-      </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">tvrzení</td>
         <td class="px-3 py-2 font-mono text-xs text-body">array</td>
         <td class="px-3 py-2 font-mono text-xs text-body">ne</td>
         <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Tvrzení, která říkají, co je zde zaručeno. <span class="font-mono text-xs text-body-subtle">výchozí []</span></td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">commands</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">ne</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Příkazy nástroje, které na to odpovídají. <span class="font-mono text-xs text-body-subtle">výchozí []</span></td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">doktríny</td>
         <td class="px-3 py-2 font-mono text-xs text-body">array</td>
         <td class="px-3 py-2 font-mono text-xs text-body">ne</td>
         <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Pravidla účinné sady, která jej řídí. <span class="font-mono text-xs text-body-subtle">výchozí []</span></td>
       </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">příklady</td>
+        <td class="px-3 py-2 font-mono text-heading">váha</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">integer</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">ne</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Pořadí prezentace, nejnižší první. <span class="font-mono text-xs text-body-subtle">výchozí 0</span></td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">název</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Okamžik jako nadpis.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">capabilities</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">ne</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Id schopností spustitelného souboru, které na to odpovídají. <span class="font-mono text-xs text-body-subtle">výchozí []</span></td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">use_cases</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">ne</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Případy užití, které ukazují cestu ven. <span class="font-mono text-xs text-body-subtle">výchozí []</span></td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">zpětné odkazy</td>
         <td class="px-3 py-2 font-mono text-xs text-body">array</td>
         <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Konkrétní situace.</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Odvozeno: momenty, které tento pojmenovávají ve svém <code>related</code>.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">odpovědnosti</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Odvozeno: odpovědnosti, do nichž patří tvrzení, která jmenuje.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">related_detail</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Odvozeno: explicitně související okamžiky, shrnuté tak, aby stránka potřebovala jedno volání.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">životní cyklus</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">ne</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Fáze práce, ve kterých se objevuje. <span class="font-mono text-xs text-body-subtle">výchozí []</span></td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">commands</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">ne</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Příkazy nástroje, které na to odpovídají. <span class="font-mono text-xs text-body-subtle">výchozí []</span></td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">štítky</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">ne</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Volné štítky. <span class="font-mono text-xs text-body-subtle">výchozí []</span></td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">summary</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Jeden řádek: co je skutečně špatně.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">zdroj</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">ne</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Odvozeno: soubor relativní k repozitáři, z něhož záznam pochází. <span class="font-mono text-xs text-body-subtle">výchozí &quot;&quot;</span></td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">sousedé</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Odvozeno: co by měl čtenář vidět příště, v jednom seznamu a ve stanoveném pořadí — co tento okamžik jmenuje, pak co jmenuje jeho, pak co je nejblíž podle sdílených metadat, každé jednou. Tři seznamy výše jsou tytéž vztahy držené odděleně pro čtenáře, který chce vědět, co je které.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">short_title</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">ne</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Dvě nebo tři slova pro úzký sloupec, když je záznam nese.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">zvýrazněné</td>
         <td class="px-3 py-2 font-mono text-xs text-body">boolean</td>
@@ -301,127 +346,320 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
         <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
         <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words"><code>rare</code>, <code>occasional</code>, <code>common</code> nebo <code>constant</code>.</td>
       </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">hook</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Řádek v první osobě, který index ukazuje.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">id</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Identita, slug a název souboru.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">životní cyklus</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">ne</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Fáze práce, ve kterých se objevuje. <span class="font-mono text-xs text-body-subtle">výchozí []</span></td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">sousedé</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Odvozeno: co by měl čtenář vidět příště, v jednom seznamu a ve stanoveném pořadí — co tento okamžik jmenuje, pak co jmenuje jeho, pak co je nejblíž podle sdílených metadat, každé jednou. Tři seznamy výše jsou tytéž vztahy držené odděleně pro čtenáře, který chce vědět, co je které.</td>
-      </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">související</td>
         <td class="px-3 py-2 font-mono text-xs text-body">array</td>
         <td class="px-3 py-2 font-mono text-xs text-body">ne</td>
         <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Okamžiky s tímto výslovně související. Opačný směr je odvozen. <span class="font-mono text-xs text-body-subtle">výchozí []</span></td>
       </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">related_detail</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Odvozeno: explicitně související okamžiky, shrnuté tak, aby stránka potřebovala jedno volání.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">odpovědnosti</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Odvozeno: odpovědnosti, do nichž patří tvrzení, která jmenuje.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">route</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">ne</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Odvozeno: <code>/why/&lt;id&gt;/</code>. Nikdy se nepíše ručně; schéma odmítne klíč <code>route</code>. <span class="font-mono text-xs text-body-subtle">výchozí &quot;&quot;</span></td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">závažnost</td>
+        <td class="px-3 py-2 font-mono text-heading">hook</td>
         <td class="px-3 py-2 font-mono text-xs text-body">string</td>
         <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words"><code>low</code>, <code>medium</code> nebo <code>high</code>.</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Řádek v první osobě, který index ukazuje.</td>
       </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">short_title</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
+        <td class="px-3 py-2 font-mono text-heading">areas</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Provozní oblasti, do kterých spadá.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">aliasy</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
         <td class="px-3 py-2 font-mono text-xs text-body">ne</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Dvě nebo tři slova pro úzký sloupec, když je záznam nese.</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Další slova, která by čtenář mohl hledat. <span class="font-mono text-xs text-body-subtle">default []</span></td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">signály</td>
         <td class="px-3 py-2 font-mono text-xs text-body">array</td>
         <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
         <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Pozorovatelné příznaky.</td>
       </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">tělo</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">ne</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Tělo v Markdownu, bez front matter.</td>
+      </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">podobné</td>
         <td class="px-3 py-2 font-mono text-xs text-body">array</td>
         <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
         <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Odvozeno: okamžiky sdílející s tímto oblast nebo publikum, které on sám nejmenuje, nejbližší první — nejvíc sdílených metadat, pak pořadí prezentace.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">zdroj</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">ne</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Odvozeno: soubor relativní k repozitáři, z něhož záznam pochází. <span class="font-mono text-xs text-body-subtle">výchozí &quot;&quot;</span></td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">status</td>
         <td class="px-3 py-2 font-mono text-xs text-body">string</td>
         <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
         <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words"><code>stable</code>, <code>draft</code> nebo <code>deprecated</code>.</td>
       </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">summary</td>
+        <td class="px-3 py-2 font-mono text-heading">závažnost</td>
         <td class="px-3 py-2 font-mono text-xs text-body">string</td>
         <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Jeden řádek: co je skutečně špatně.</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words"><code>low</code>, <code>medium</code> nebo <code>high</code>.</td>
       </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">štítky</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">ne</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Volné štítky. <span class="font-mono text-xs text-body-subtle">výchozí []</span></td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">název</td>
+        <td class="px-3 py-2 font-mono text-heading">id</td>
         <td class="px-3 py-2 font-mono text-xs text-body">string</td>
         <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Okamžik jako nadpis.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">use_cases</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">ne</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Případy užití, které ukazují cestu ven. <span class="font-mono text-xs text-body-subtle">výchozí []</span></td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">váha</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">integer</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">ne</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Pořadí prezentace, nejnižší první. <span class="font-mono text-xs text-body-subtle">výchozí 0</span></td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Identita, slug a název souboru.</td>
       </tr></tbody>
     </table>
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
+  &quot;required&quot;: [
+    &quot;id&quot;,
+    &quot;title&quot;,
+    &quot;hook&quot;,
+    &quot;summary&quot;,
+    &quot;status&quot;,
+    &quot;severity&quot;,
+    &quot;frequency&quot;,
+    &quot;audiences&quot;,
+    &quot;areas&quot;,
+    &quot;signals&quot;,
+    &quot;examples&quot;,
+    &quot;responsibilities&quot;,
+    &quot;backlinks&quot;,
+    &quot;similar&quot;,
+    &quot;related_detail&quot;,
+    &quot;neighbours&quot;
+  ],
+  &quot;description&quot;: &quot;One moment in full, with everything derived that a page shows and no file states.&quot;,
+  &quot;properties&quot;: {
+    &quot;examples&quot;: {
+      &quot;items&quot;: {
+        &quot;$ref&quot;: &quot;#/$defs/Example&quot;
+      },
+      &quot;description&quot;: &quot;The concrete situations.&quot;,
+      &quot;type&quot;: &quot;array&quot;
+    },
+    &quot;route&quot;: {
+      &quot;description&quot;: &quot;Derived: `/why/&lt;id&gt;/`. Never authored; the schema refuses a `route` key.&quot;,
+      &quot;default&quot;: &quot;&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;audiences&quot;: {
+      &quot;description&quot;: &quot;The audiences that recognise it.&quot;,
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;string&quot;
+      },
+      &quot;type&quot;: &quot;array&quot;
+    },
+    &quot;claims&quot;: {
+      &quot;description&quot;: &quot;Claims that say what is guaranteed here.&quot;,
+      &quot;default&quot;: [],
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;string&quot;
+      }
+    },
+    &quot;doctrines&quot;: {
+      &quot;default&quot;: [],
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;string&quot;
+      },
+      &quot;description&quot;: &quot;Rules of the effective set that govern it.&quot;,
+      &quot;type&quot;: &quot;array&quot;
+    },
+    &quot;weight&quot;: {
+      &quot;description&quot;: &quot;Presentation order, lowest first.&quot;,
+      &quot;default&quot;: 0,
+      &quot;type&quot;: &quot;integer&quot;,
+      &quot;format&quot;: &quot;uint32&quot;,
+      &quot;minimum&quot;: 0
+    },
+    &quot;title&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;description&quot;: &quot;The moment as a heading.&quot;
+    },
+    &quot;capabilities&quot;: {
+      &quot;default&quot;: [],
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;description&quot;: &quot;Capability ids of the executable that answer it.&quot;,
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;string&quot;
+      }
+    },
+    &quot;use_cases&quot;: {
+      &quot;description&quot;: &quot;Use cases that show the way out.&quot;,
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;default&quot;: [],
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;string&quot;
+      }
+    },
+    &quot;backlinks&quot;: {
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;string&quot;
+      },
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;description&quot;: &quot;Derived: the moments that name this one in their `related`.&quot;
+    },
+    &quot;responsibilities&quot;: {
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;string&quot;
+      },
+      &quot;description&quot;: &quot;Derived: the responsibilities the claims it names belong to.&quot;
+    },
+    &quot;related_detail&quot;: {
+      &quot;items&quot;: {
+        &quot;$ref&quot;: &quot;#/$defs/MomentSummary&quot;
+      },
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;description&quot;: &quot;Derived: the explicitly related moments, summarised so a page needs one call.&quot;
+    },
+    &quot;lifecycle&quot;: {
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;description&quot;: &quot;The stages of work at which it shows up.&quot;,
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;string&quot;
+      },
+      &quot;default&quot;: []
+    },
+    &quot;commands&quot;: {
+      &quot;default&quot;: [],
+      &quot;description&quot;: &quot;Commands of the tool that answer it.&quot;,
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;string&quot;
+      }
+    },
+    &quot;tags&quot;: {
+      &quot;default&quot;: [],
+      &quot;description&quot;: &quot;Free tags.&quot;,
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;string&quot;
+      },
+      &quot;type&quot;: &quot;array&quot;
+    },
+    &quot;summary&quot;: {
+      &quot;description&quot;: &quot;One line: what is actually wrong.&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;source&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;description&quot;: &quot;Derived: the repository-relative file the record came from.&quot;,
+      &quot;default&quot;: &quot;&quot;
+    },
+    &quot;neighbours&quot;: {
+      &quot;description&quot;: &quot;Derived: what a reader should see next, in one list and in a stated order — what\nthis moment names, then what names it, then what is nearest by shared metadata,\neach appearing once. The three lists above are the same relations kept apart for a\nreader that wants to know which is which.&quot;,
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;string&quot;
+      },
+      &quot;type&quot;: &quot;array&quot;
+    },
+    &quot;short_title&quot;: {
+      &quot;description&quot;: &quot;Two or three words for a narrow column, when the record carries one.&quot;,
+      &quot;type&quot;: [
+        &quot;string&quot;,
+        &quot;null&quot;
+      ]
+    },
+    &quot;featured&quot;: {
+      &quot;default&quot;: false,
+      &quot;description&quot;: &quot;Whether the homepage shows it.&quot;,
+      &quot;type&quot;: &quot;boolean&quot;
+    },
+    &quot;frequency&quot;: {
+      &quot;description&quot;: &quot;`rare`, `occasional`, `common` or `constant`.&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;related&quot;: {
+      &quot;default&quot;: [],
+      &quot;description&quot;: &quot;Moments explicitly related to this one. The reverse is derived.&quot;,
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;string&quot;
+      },
+      &quot;type&quot;: &quot;array&quot;
+    },
+    &quot;hook&quot;: {
+      &quot;description&quot;: &quot;The first-person line an index shows.&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;areas&quot;: {
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;string&quot;
+      },
+      &quot;description&quot;: &quot;The operational areas it falls under.&quot;
+    },
+    &quot;aliases&quot;: {
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;string&quot;
+      },
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;default&quot;: [],
+      &quot;description&quot;: &quot;Other words a reader might search for.&quot;
+    },
+    &quot;signals&quot;: {
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;items&quot;: {
+        &quot;$ref&quot;: &quot;#/$defs/Signal&quot;
+      },
+      &quot;description&quot;: &quot;The observable symptoms.&quot;
+    },
+    &quot;body&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;description&quot;: &quot;The Markdown body, without its front matter.&quot;
+    },
+    &quot;similar&quot;: {
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;string&quot;
+      },
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;description&quot;: &quot;Derived: moments sharing an area or an audience with this one and not already\nnamed by it, nearest first — most shared metadata, then presentation order.&quot;
+    },
+    &quot;status&quot;: {
+      &quot;description&quot;: &quot;`stable`, `draft` or `deprecated`.&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;severity&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;description&quot;: &quot;`low`, `medium` or `high`.&quot;
+    },
+    &quot;id&quot;: {
+      &quot;description&quot;: &quot;The identity, the slug and the file name.&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    }
+  },
+  &quot;type&quot;: &quot;object&quot;,
+  &quot;title&quot;: &quot;MomentDetail&quot;,
   &quot;$defs&quot;: {
+    &quot;Signal&quot;: {
+      &quot;type&quot;: &quot;object&quot;,
+      &quot;description&quot;: &quot;One observable symptom of a moment: a question a reader can answer about their own\nweek. The questionnaire on the site and the input of `why diagnose` are these and\nnothing else.&quot;,
+      &quot;properties&quot;: {
+        &quot;id&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;Unique within the moment; the identity a diagnosis selects by.&quot;
+        },
+        &quot;text&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The symptom, phrased so a reader can say whether it happened to them.&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;id&quot;,
+        &quot;text&quot;
+      ]
+    },
     &quot;Example&quot;: {
       &quot;description&quot;: &quot;One concrete situation, in one audience, with what happens today and what happens\ninstead.&quot;,
+      &quot;type&quot;: &quot;object&quot;,
       &quot;properties&quot;: {
-        &quot;after&quot;: {
-          &quot;description&quot;: &quot;What happens with it.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;audience&quot;: {
-          &quot;description&quot;: &quot;The audience this situation belongs to; must name an audience of the catalogue.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;before&quot;: {
-          &quot;description&quot;: &quot;What happens without the tool.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
         &quot;id&quot;: {
           &quot;description&quot;: &quot;Unique within the moment.&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
         &quot;title&quot;: {
           &quot;description&quot;: &quot;One line naming the situation.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;before&quot;: {
+          &quot;description&quot;: &quot;What happens without the tool.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;audience&quot;: {
+          &quot;description&quot;: &quot;The audience this situation belongs to; must name an audience of the catalogue.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;after&quot;: {
+          &quot;description&quot;: &quot;What happens with it.&quot;,
           &quot;type&quot;: &quot;string&quot;
         }
       },
@@ -431,42 +669,14 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
         &quot;title&quot;,
         &quot;before&quot;,
         &quot;after&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
+      ]
     },
     &quot;MomentSummary&quot;: {
       &quot;description&quot;: &quot;One moment as a listing shows it: everything a card needs and nothing a page needs.&quot;,
+      &quot;type&quot;: &quot;object&quot;,
       &quot;properties&quot;: {
-        &quot;areas&quot;: {
-          &quot;description&quot;: &quot;The operational areas it falls under.&quot;,
-          &quot;items&quot;: {
-            &quot;type&quot;: &quot;string&quot;
-          },
-          &quot;type&quot;: &quot;array&quot;
-        },
-        &quot;audiences&quot;: {
-          &quot;description&quot;: &quot;The audiences that recognise it.&quot;,
-          &quot;items&quot;: {
-            &quot;type&quot;: &quot;string&quot;
-          },
-          &quot;type&quot;: &quot;array&quot;
-        },
-        &quot;examples&quot;: {
-          &quot;description&quot;: &quot;How many concrete situations it carries.&quot;,
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;featured&quot;: {
-          &quot;description&quot;: &quot;Whether the homepage shows it.&quot;,
-          &quot;type&quot;: &quot;boolean&quot;
-        },
-        &quot;frequency&quot;: {
-          &quot;description&quot;: &quot;`rare`, `occasional`, `common` or `constant`.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;hook&quot;: {
-          &quot;description&quot;: &quot;The first-person line an index shows.&quot;,
+        &quot;severity&quot;: {
+          &quot;description&quot;: &quot;`low`, `medium` or `high`.&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
         &quot;id&quot;: {
@@ -474,47 +684,75 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
           &quot;type&quot;: &quot;string&quot;
         },
         &quot;label&quot;: {
-          &quot;description&quot;: &quot;The name a narrow column shows: the short title, or the title.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The name a narrow column shows: the short title, or the title.&quot;
+        },
+        &quot;signals&quot;: {
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;,
+          &quot;description&quot;: &quot;How many observable symptoms it declares.&quot;
+        },
+        &quot;frequency&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;`rare`, `occasional`, `common` or `constant`.&quot;
+        },
+        &quot;summary&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;One line: what is actually wrong.&quot;
+        },
+        &quot;areas&quot;: {
+          &quot;type&quot;: &quot;array&quot;,
+          &quot;description&quot;: &quot;The operational areas it falls under.&quot;,
+          &quot;items&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        },
+        &quot;featured&quot;: {
+          &quot;description&quot;: &quot;Whether the homepage shows it.&quot;,
+          &quot;type&quot;: &quot;boolean&quot;
+        },
+        &quot;hook&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The first-person line an index shows.&quot;
         },
         &quot;route&quot;: {
           &quot;description&quot;: &quot;Derived: `/why/&lt;id&gt;/`.&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
-        &quot;severity&quot;: {
-          &quot;description&quot;: &quot;`low`, `medium` or `high`.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;signals&quot;: {
-          &quot;description&quot;: &quot;How many observable symptoms it declares.&quot;,
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
+        &quot;tags&quot;: {
+          &quot;type&quot;: &quot;array&quot;,
+          &quot;items&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          },
+          &quot;description&quot;: &quot;Free tags.&quot;
         },
         &quot;status&quot;: {
           &quot;description&quot;: &quot;`stable`, `draft` or `deprecated`.&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
-        &quot;summary&quot;: {
-          &quot;description&quot;: &quot;One line: what is actually wrong.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+        &quot;weight&quot;: {
+          &quot;format&quot;: &quot;uint32&quot;,
+          &quot;description&quot;: &quot;Presentation order.&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
         },
-        &quot;tags&quot;: {
-          &quot;description&quot;: &quot;Free tags.&quot;,
+        &quot;examples&quot;: {
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;description&quot;: &quot;How many concrete situations it carries.&quot;,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;audiences&quot;: {
+          &quot;type&quot;: &quot;array&quot;,
+          &quot;description&quot;: &quot;The audiences that recognise it.&quot;,
           &quot;items&quot;: {
             &quot;type&quot;: &quot;string&quot;
-          },
-          &quot;type&quot;: &quot;array&quot;
+          }
         },
         &quot;title&quot;: {
           &quot;description&quot;: &quot;The moment as a heading.&quot;,
           &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;weight&quot;: {
-          &quot;description&quot;: &quot;Presentation order.&quot;,
-          &quot;format&quot;: &quot;uint32&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
         }
       },
       &quot;required&quot;: [
@@ -534,247 +772,9 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
         &quot;route&quot;,
         &quot;signals&quot;,
         &quot;examples&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
-    },
-    &quot;Signal&quot;: {
-      &quot;description&quot;: &quot;One observable symptom of a moment: a question a reader can answer about their own\nweek. The questionnaire on the site and the input of `why diagnose` are these and\nnothing else.&quot;,
-      &quot;properties&quot;: {
-        &quot;id&quot;: {
-          &quot;description&quot;: &quot;Unique within the moment; the identity a diagnosis selects by.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;text&quot;: {
-          &quot;description&quot;: &quot;The symptom, phrased so a reader can say whether it happened to them.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      },
-      &quot;required&quot;: [
-        &quot;id&quot;,
-        &quot;text&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
-    }
-  },
-  &quot;description&quot;: &quot;One moment in full, with everything derived that a page shows and no file states.&quot;,
-  &quot;properties&quot;: {
-    &quot;aliases&quot;: {
-      &quot;default&quot;: [],
-      &quot;description&quot;: &quot;Other words a reader might search for.&quot;,
-      &quot;items&quot;: {
-        &quot;type&quot;: &quot;string&quot;
-      },
-      &quot;type&quot;: &quot;array&quot;
-    },
-    &quot;areas&quot;: {
-      &quot;description&quot;: &quot;The operational areas it falls under.&quot;,
-      &quot;items&quot;: {
-        &quot;type&quot;: &quot;string&quot;
-      },
-      &quot;type&quot;: &quot;array&quot;
-    },
-    &quot;audiences&quot;: {
-      &quot;description&quot;: &quot;The audiences that recognise it.&quot;,
-      &quot;items&quot;: {
-        &quot;type&quot;: &quot;string&quot;
-      },
-      &quot;type&quot;: &quot;array&quot;
-    },
-    &quot;backlinks&quot;: {
-      &quot;description&quot;: &quot;Derived: the moments that name this one in their `related`.&quot;,
-      &quot;items&quot;: {
-        &quot;type&quot;: &quot;string&quot;
-      },
-      &quot;type&quot;: &quot;array&quot;
-    },
-    &quot;body&quot;: {
-      &quot;description&quot;: &quot;The Markdown body, without its front matter.&quot;,
-      &quot;type&quot;: &quot;string&quot;
-    },
-    &quot;capabilities&quot;: {
-      &quot;default&quot;: [],
-      &quot;description&quot;: &quot;Capability ids of the executable that answer it.&quot;,
-      &quot;items&quot;: {
-        &quot;type&quot;: &quot;string&quot;
-      },
-      &quot;type&quot;: &quot;array&quot;
-    },
-    &quot;claims&quot;: {
-      &quot;default&quot;: [],
-      &quot;description&quot;: &quot;Claims that say what is guaranteed here.&quot;,
-      &quot;items&quot;: {
-        &quot;type&quot;: &quot;string&quot;
-      },
-      &quot;type&quot;: &quot;array&quot;
-    },
-    &quot;commands&quot;: {
-      &quot;default&quot;: [],
-      &quot;description&quot;: &quot;Commands of the tool that answer it.&quot;,
-      &quot;items&quot;: {
-        &quot;type&quot;: &quot;string&quot;
-      },
-      &quot;type&quot;: &quot;array&quot;
-    },
-    &quot;doctrines&quot;: {
-      &quot;default&quot;: [],
-      &quot;description&quot;: &quot;Rules of the effective set that govern it.&quot;,
-      &quot;items&quot;: {
-        &quot;type&quot;: &quot;string&quot;
-      },
-      &quot;type&quot;: &quot;array&quot;
-    },
-    &quot;examples&quot;: {
-      &quot;description&quot;: &quot;The concrete situations.&quot;,
-      &quot;items&quot;: {
-        &quot;$ref&quot;: &quot;#/$defs/Example&quot;
-      },
-      &quot;type&quot;: &quot;array&quot;
-    },
-    &quot;featured&quot;: {
-      &quot;default&quot;: false,
-      &quot;description&quot;: &quot;Whether the homepage shows it.&quot;,
-      &quot;type&quot;: &quot;boolean&quot;
-    },
-    &quot;frequency&quot;: {
-      &quot;description&quot;: &quot;`rare`, `occasional`, `common` or `constant`.&quot;,
-      &quot;type&quot;: &quot;string&quot;
-    },
-    &quot;hook&quot;: {
-      &quot;description&quot;: &quot;The first-person line an index shows.&quot;,
-      &quot;type&quot;: &quot;string&quot;
-    },
-    &quot;id&quot;: {
-      &quot;description&quot;: &quot;The identity, the slug and the file name.&quot;,
-      &quot;type&quot;: &quot;string&quot;
-    },
-    &quot;lifecycle&quot;: {
-      &quot;default&quot;: [],
-      &quot;description&quot;: &quot;The stages of work at which it shows up.&quot;,
-      &quot;items&quot;: {
-        &quot;type&quot;: &quot;string&quot;
-      },
-      &quot;type&quot;: &quot;array&quot;
-    },
-    &quot;neighbours&quot;: {
-      &quot;description&quot;: &quot;Derived: what a reader should see next, in one list and in a stated order — what\nthis moment names, then what names it, then what is nearest by shared metadata,\neach appearing once. The three lists above are the same relations kept apart for a\nreader that wants to know which is which.&quot;,
-      &quot;items&quot;: {
-        &quot;type&quot;: &quot;string&quot;
-      },
-      &quot;type&quot;: &quot;array&quot;
-    },
-    &quot;related&quot;: {
-      &quot;default&quot;: [],
-      &quot;description&quot;: &quot;Moments explicitly related to this one. The reverse is derived.&quot;,
-      &quot;items&quot;: {
-        &quot;type&quot;: &quot;string&quot;
-      },
-      &quot;type&quot;: &quot;array&quot;
-    },
-    &quot;related_detail&quot;: {
-      &quot;description&quot;: &quot;Derived: the explicitly related moments, summarised so a page needs one call.&quot;,
-      &quot;items&quot;: {
-        &quot;$ref&quot;: &quot;#/$defs/MomentSummary&quot;
-      },
-      &quot;type&quot;: &quot;array&quot;
-    },
-    &quot;responsibilities&quot;: {
-      &quot;description&quot;: &quot;Derived: the responsibilities the claims it names belong to.&quot;,
-      &quot;items&quot;: {
-        &quot;type&quot;: &quot;string&quot;
-      },
-      &quot;type&quot;: &quot;array&quot;
-    },
-    &quot;route&quot;: {
-      &quot;default&quot;: &quot;&quot;,
-      &quot;description&quot;: &quot;Derived: `/why/&lt;id&gt;/`. Never authored; the schema refuses a `route` key.&quot;,
-      &quot;type&quot;: &quot;string&quot;
-    },
-    &quot;severity&quot;: {
-      &quot;description&quot;: &quot;`low`, `medium` or `high`.&quot;,
-      &quot;type&quot;: &quot;string&quot;
-    },
-    &quot;short_title&quot;: {
-      &quot;description&quot;: &quot;Two or three words for a narrow column, when the record carries one.&quot;,
-      &quot;type&quot;: [
-        &quot;string&quot;,
-        &quot;null&quot;
       ]
-    },
-    &quot;signals&quot;: {
-      &quot;description&quot;: &quot;The observable symptoms.&quot;,
-      &quot;items&quot;: {
-        &quot;$ref&quot;: &quot;#/$defs/Signal&quot;
-      },
-      &quot;type&quot;: &quot;array&quot;
-    },
-    &quot;similar&quot;: {
-      &quot;description&quot;: &quot;Derived: moments sharing an area or an audience with this one and not already\nnamed by it, nearest first — most shared metadata, then presentation order.&quot;,
-      &quot;items&quot;: {
-        &quot;type&quot;: &quot;string&quot;
-      },
-      &quot;type&quot;: &quot;array&quot;
-    },
-    &quot;source&quot;: {
-      &quot;default&quot;: &quot;&quot;,
-      &quot;description&quot;: &quot;Derived: the repository-relative file the record came from.&quot;,
-      &quot;type&quot;: &quot;string&quot;
-    },
-    &quot;status&quot;: {
-      &quot;description&quot;: &quot;`stable`, `draft` or `deprecated`.&quot;,
-      &quot;type&quot;: &quot;string&quot;
-    },
-    &quot;summary&quot;: {
-      &quot;description&quot;: &quot;One line: what is actually wrong.&quot;,
-      &quot;type&quot;: &quot;string&quot;
-    },
-    &quot;tags&quot;: {
-      &quot;default&quot;: [],
-      &quot;description&quot;: &quot;Free tags.&quot;,
-      &quot;items&quot;: {
-        &quot;type&quot;: &quot;string&quot;
-      },
-      &quot;type&quot;: &quot;array&quot;
-    },
-    &quot;title&quot;: {
-      &quot;description&quot;: &quot;The moment as a heading.&quot;,
-      &quot;type&quot;: &quot;string&quot;
-    },
-    &quot;use_cases&quot;: {
-      &quot;default&quot;: [],
-      &quot;description&quot;: &quot;Use cases that show the way out.&quot;,
-      &quot;items&quot;: {
-        &quot;type&quot;: &quot;string&quot;
-      },
-      &quot;type&quot;: &quot;array&quot;
-    },
-    &quot;weight&quot;: {
-      &quot;default&quot;: 0,
-      &quot;description&quot;: &quot;Presentation order, lowest first.&quot;,
-      &quot;format&quot;: &quot;uint32&quot;,
-      &quot;minimum&quot;: 0,
-      &quot;type&quot;: &quot;integer&quot;
     }
-  },
-  &quot;required&quot;: [
-    &quot;id&quot;,
-    &quot;title&quot;,
-    &quot;hook&quot;,
-    &quot;summary&quot;,
-    &quot;status&quot;,
-    &quot;severity&quot;,
-    &quot;frequency&quot;,
-    &quot;audiences&quot;,
-    &quot;areas&quot;,
-    &quot;signals&quot;,
-    &quot;examples&quot;,
-    &quot;responsibilities&quot;,
-    &quot;backlinks&quot;,
-    &quot;similar&quot;,
-    &quot;related_detail&quot;,
-    &quot;neighbours&quot;
-  ],
-  &quot;title&quot;: &quot;MomentDetail&quot;,
-  &quot;type&quot;: &quot;object&quot;
+  }
 }</pre></div>
   </details>
 </div>
@@ -805,7 +805,7 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
         <div><dt class="text-body-subtle">modul Rust</dt><dd class="min-w-0 break-all font-mono text-heading">majordomus_cli::capability::builtin::why</dd></div>
         <div><dt class="text-body-subtle">typ vstupu</dt><dd class="font-mono text-heading">MomentInput</dd></div>
         <div><dt class="text-body-subtle">typ výstupu</dt><dd class="font-mono text-heading">MomentDetail</dd></div>
-        <div><dt class="text-body-subtle">reference na GitHubu</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/1112bace3437ee0d82067b1e8f61813e70190078/docs/generated/modules/why.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/why.md</a></dd></div><div><dt class="text-body-subtle">otisk registru</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">5cdbf22cd21589ddbe464d5f0987b6bcf4607d05479004d6f815c3b306fdb08a</dd></div>
+        <div><dt class="text-body-subtle">reference na GitHubu</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/docs/generated/modules/why.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/why.md</a></dd></div><div><dt class="text-body-subtle">otisk registru</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">3f734f2faf797f0ca7c39b4cd837e68b6619c41c6f6711f3d3aeca8f341934eb</dd></div>
         <div><dt class="text-body-subtle">vygenerováno nástrojem</dt><dd class="font-mono text-heading">majordomus-cli 1.0.0-alpha.10</dd></div>
       </dl>
     </div>
@@ -861,9 +861,9 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
       <div class="min-w-0">
         <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">Projekt</h2><ul class="space-y-2 text-sm font-medium text-body">
           <li><a href="https://github.com/korczis/prismatic-majordomus" class="hover:text-heading hover:underline">GitHub</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/1112bace3437ee0d82067b1e8f61813e70190078/LICENSE" class="hover:text-heading hover:underline">Licence MIT</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/1112bace3437ee0d82067b1e8f61813e70190078/SECURITY.md" class="hover:text-heading hover:underline">Bezpečnostní politika</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/1112bace3437ee0d82067b1e8f61813e70190078/CONTRIBUTING.md" class="hover:text-heading hover:underline">Průvodce pro přispěvatele</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/LICENSE" class="hover:text-heading hover:underline">Licence MIT</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/SECURITY.md" class="hover:text-heading hover:underline">Bezpečnostní politika</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/CONTRIBUTING.md" class="hover:text-heading hover:underline">Průvodce pro přispěvatele</a></li>
         </ul>
       </div>
     </div>
@@ -871,7 +871,7 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/cs/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.10</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/1112bace3437ee0d82067b1e8f61813e70190078" class="font-mono underline">1112bac</a> · inputs <span class="font-mono">830f884cc5aa</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/cs/architecture/" class="underline">how this site is derived</a> names them.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.10</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/745db2ea21e02613943face75a2bf95542be1f2e" class="font-mono underline">745db2e</a> · inputs <span class="font-mono">0a58c217d1b7</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/cs/architecture/" class="underline">how this site is derived</a> names them.</p>
     </div>
   </div>
 </footer>

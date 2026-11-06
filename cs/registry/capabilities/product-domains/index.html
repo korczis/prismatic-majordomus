@@ -220,20 +220,20 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
-  &quot;additionalProperties&quot;: false,
-  &quot;description&quot;: &quot;Which domains to list.&quot;,
   &quot;properties&quot;: {
     &quot;status&quot;: {
-      &quot;default&quot;: null,
       &quot;description&quot;: &quot;Only domains of this status. Absent means the stable ones; pass `any` for every\ndomain the model holds.&quot;,
+      &quot;default&quot;: null,
       &quot;type&quot;: [
         &quot;string&quot;,
         &quot;null&quot;
       ]
     }
   },
-  &quot;title&quot;: &quot;DomainQuery&quot;,
-  &quot;type&quot;: &quot;object&quot;
+  &quot;type&quot;: &quot;object&quot;,
+  &quot;additionalProperties&quot;: false,
+  &quot;description&quot;: &quot;Which domains to list.&quot;,
+  &quot;title&quot;: &quot;DomainQuery&quot;
 }</pre></div>
   </details>
 </div>
@@ -242,20 +242,20 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
     <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
       <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">vlastnost</th><th class="px-3 py-2">typ</th><th class="px-3 py-2">povinné</th><th class="px-3 py-2">popis</th></tr></thead>
       <tbody><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">počet</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">integer</td>
+        <td class="px-3 py-2 font-mono text-heading">otisk</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
         <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Kolik domén je uvedeno.</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Hash zdrojů modelu a odvozených faktů.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">domains</td>
         <td class="px-3 py-2 font-mono text-xs text-body">array</td>
         <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
         <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Domény v pořadí prezentace: stabilní, nebo všechny se status=any.</td>
       </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">otisk</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
+        <td class="px-3 py-2 font-mono text-heading">počet</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">integer</td>
         <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Hash zdrojů modelu a odvozených faktů.</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Kolik domén je uvedeno.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">schema</td>
         <td class="px-3 py-2 font-mono text-xs text-body">string</td>
@@ -266,89 +266,75 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
+  &quot;required&quot;: [
+    &quot;schema&quot;,
+    &quot;fingerprint&quot;,
+    &quot;count&quot;,
+    &quot;domains&quot;
+  ],
+  &quot;type&quot;: &quot;object&quot;,
+  &quot;description&quot;: &quot;Every domain of the product, each with what its features add up to.&quot;,
+  &quot;properties&quot;: {
+    &quot;fingerprint&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;description&quot;: &quot;The hash of the model&#39;s sources and derived facts.&quot;
+    },
+    &quot;domains&quot;: {
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;items&quot;: {
+        &quot;$ref&quot;: &quot;#/$defs/ResolvedDomain&quot;
+      },
+      &quot;description&quot;: &quot;The domains, in presentation order: the stable ones, or every one with status=any.&quot;
+    },
+    &quot;count&quot;: {
+      &quot;minimum&quot;: 0,
+      &quot;type&quot;: &quot;integer&quot;,
+      &quot;description&quot;: &quot;How many domains are listed.&quot;,
+      &quot;format&quot;: &quot;uint&quot;
+    },
+    &quot;schema&quot;: {
+      &quot;description&quot;: &quot;`SCHEMA`.&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    }
+  },
+  &quot;title&quot;: &quot;DomainList&quot;,
   &quot;$defs&quot;: {
-    &quot;ClaimRef&quot;: {
-      &quot;description&quot;: &quot;One claim the feature names, with the status the matrix gives it.&quot;,
+    &quot;Surfaces&quot;: {
+      &quot;description&quot;: &quot;The interfaces a feature is exposed through, decided from what its references project\nand from nothing a file says. Each is a fact with a reason a reader can check: `cli` is\ntrue when a module of the feature has a capability with a command-line path or the\nfeature names a shell command; `api` when a module has an HTTP route; `mcp` when a module\nhas an MCP tool or resource, or the feature names a kind, since every object of the layer\nis an MCP resource; `cockpit` when the feature names a Cockpit area or a module, since\nevery capability has a Cockpit page; `docs` when it names a document.&quot;,
+      &quot;type&quot;: &quot;object&quot;,
       &quot;properties&quot;: {
-        &quot;claim&quot;: {
-          &quot;description&quot;: &quot;The sentence.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+        &quot;mcp&quot;: {
+          &quot;description&quot;: &quot;MCP: a tool, or a resource.&quot;,
+          &quot;type&quot;: &quot;boolean&quot;
         },
-        &quot;id&quot;: {
-          &quot;description&quot;: &quot;The claim id.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+        &quot;docs&quot;: {
+          &quot;description&quot;: &quot;The documentation.&quot;,
+          &quot;type&quot;: &quot;boolean&quot;
         },
-        &quot;status&quot;: {
-          &quot;description&quot;: &quot;`guaranteed`, `advisory`, `planned` or `rejected`.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+        &quot;cockpit&quot;: {
+          &quot;description&quot;: &quot;The Cockpit.&quot;,
+          &quot;type&quot;: &quot;boolean&quot;
         },
-        &quot;test&quot;: {
-          &quot;description&quot;: &quot;The test that settles it, as `docs/CLAIMS.yaml` records it — the one field that makes a\nclaim checkable rather than stated. Absent where the claim declares none, and where it\ndeclares `-`: a planned or rejected claim has nothing to run yet, and rendering a dash\nas a test would be a projection inventing evidence.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
+        &quot;api&quot;: {
+          &quot;description&quot;: &quot;The HTTP routes under `/api/v1/`, and the OpenAPI document over them.&quot;,
+          &quot;type&quot;: &quot;boolean&quot;
+        },
+        &quot;cli&quot;: {
+          &quot;type&quot;: &quot;boolean&quot;,
+          &quot;description&quot;: &quot;The command line: the executable&#39;s own, or the shell tool&#39;s.&quot;
         }
       },
       &quot;required&quot;: [
-        &quot;id&quot;,
-        &quot;claim&quot;,
-        &quot;status&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
+        &quot;cli&quot;,
+        &quot;api&quot;,
+        &quot;mcp&quot;,
+        &quot;cockpit&quot;,
+        &quot;docs&quot;
+      ]
     },
     &quot;DomainCounts&quot;: {
+      &quot;type&quot;: &quot;object&quot;,
       &quot;description&quot;: &quot;How much stands behind a domain: sums and distinct counts over its stable features.\n\n```\nuse majordomus_cli::product::DomainCounts;\nlet empty = DomainCounts::default();\nassert_eq!(empty.features, 0);\nlet v = serde_json::to_value(&amp;empty).unwrap();\nfor key in [\&quot;features\&quot;, \&quot;claims\&quot;, \&quot;tested\&quot;, \&quot;use_cases\&quot;, \&quot;rules\&quot;, \&quot;enforced_rules\&quot;, \&quot;capabilities\&quot;, \&quot;moments\&quot;] {\n    assert_eq!(v[key], 0, \&quot;{key} is published, and zero for a domain nothing names\&quot;);\n}\n```&quot;,
-      &quot;properties&quot;: {
-        &quot;capabilities&quot;: {
-          &quot;description&quot;: &quot;Distinct capabilities behind its features.&quot;,
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;claims&quot;: {
-          &quot;description&quot;: &quot;Distinct claims its features name.&quot;,
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;enforced_rules&quot;: {
-          &quot;description&quot;: &quot;Distinct rules among them the tool enforces.&quot;,
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;features&quot;: {
-          &quot;description&quot;: &quot;Stable features filed under it.&quot;,
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;moments&quot;: {
-          &quot;description&quot;: &quot;Distinct operational moments its features answer.&quot;,
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;rules&quot;: {
-          &quot;description&quot;: &quot;Distinct rules its features name.&quot;,
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;tested&quot;: {
-          &quot;description&quot;: &quot;Distinct claims that are guaranteed and name the test that settles them: what the\nclaims declare, not whether a recorded run supports them (that verdict is the\nevidence ledger&#39;s).&quot;,
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;use_cases&quot;: {
-          &quot;description&quot;: &quot;Distinct use cases its features name.&quot;,
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        }
-      },
       &quot;required&quot;: [
         &quot;features&quot;,
         &quot;claims&quot;,
@@ -359,105 +345,66 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
         &quot;capabilities&quot;,
         &quot;moments&quot;
       ],
-      &quot;type&quot;: &quot;object&quot;
-    },
-    &quot;DomainMember&quot;: {
-      &quot;description&quot;: &quot;One stable feature of a domain, as a card shows it.\n\n```\nuse majordomus_cli::product::{DomainMember, Surfaces};\nlet m = DomainMember {\n    id: \&quot;finish-contract\&quot;.into(),\n    label: \&quot;Finish contract\&quot;.into(),\n    title: \&quot;Done is a contract\&quot;.into(),\n    headline: \&quot;A worker does not define its own completion.\&quot;.into(),\n    route: \&quot;/features/finish-contract/\&quot;.into(),\n    featured: true,\n    surfaces: Surfaces::default(),\n    claims: 3,\n    tested: 2,\n    use_cases: 1,\n};\nlet v = serde_json::to_value(&amp;m).unwrap();\nassert_eq!(v[\&quot;tested\&quot;], 2);\nassert_eq!(v[\&quot;surfaces\&quot;][\&quot;cli\&quot;], false);\n```&quot;,
       &quot;properties&quot;: {
-        &quot;claims&quot;: {
-          &quot;description&quot;: &quot;How many claims it names.&quot;,
+        &quot;features&quot;: {
+          &quot;description&quot;: &quot;Stable features filed under it.&quot;,
           &quot;format&quot;: &quot;uint&quot;,
+          &quot;type&quot;: &quot;integer&quot;,
+          &quot;minimum&quot;: 0
+        },
+        &quot;claims&quot;: {
+          &quot;description&quot;: &quot;Distinct claims its features name.&quot;,
           &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
+          &quot;type&quot;: &quot;integer&quot;,
+          &quot;format&quot;: &quot;uint&quot;
         },
-        &quot;featured&quot;: {
-          &quot;description&quot;: &quot;Whether the homepage shows it as a chapter.&quot;,
-          &quot;type&quot;: &quot;boolean&quot;
-        },
-        &quot;headline&quot;: {
-          &quot;description&quot;: &quot;The feature&#39;s promise.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;id&quot;: {
-          &quot;description&quot;: &quot;The feature id.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;label&quot;: {
-          &quot;description&quot;: &quot;The name a narrow column shows: the short title, or the title.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;route&quot;: {
-          &quot;description&quot;: &quot;`/features/&lt;id&gt;/`.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;surfaces&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/Surfaces&quot;,
-          &quot;description&quot;: &quot;The interfaces it is exposed through.&quot;
+        &quot;rules&quot;: {
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;type&quot;: &quot;integer&quot;,
+          &quot;description&quot;: &quot;Distinct rules its features name.&quot;,
+          &quot;minimum&quot;: 0
         },
         &quot;tested&quot;: {
-          &quot;description&quot;: &quot;How many of them are guaranteed and name the test that settles them.&quot;,
-          &quot;format&quot;: &quot;uint&quot;,
+          &quot;description&quot;: &quot;Distinct claims that are guaranteed and name the test that settles them: what the\nclaims declare, not whether a recorded run supports them (that verdict is the\nevidence ledger&#39;s).&quot;,
           &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;title&quot;: {
-          &quot;description&quot;: &quot;The feature as a heading.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;type&quot;: &quot;integer&quot;,
+          &quot;format&quot;: &quot;uint&quot;
         },
         &quot;use_cases&quot;: {
-          &quot;description&quot;: &quot;How many use cases show it in use.&quot;,
+          &quot;description&quot;: &quot;Distinct use cases its features name.&quot;,
           &quot;format&quot;: &quot;uint&quot;,
           &quot;minimum&quot;: 0,
           &quot;type&quot;: &quot;integer&quot;
-        }
-      },
-      &quot;required&quot;: [
-        &quot;id&quot;,
-        &quot;label&quot;,
-        &quot;title&quot;,
-        &quot;headline&quot;,
-        &quot;route&quot;,
-        &quot;featured&quot;,
-        &quot;surfaces&quot;,
-        &quot;claims&quot;,
-        &quot;tested&quot;,
-        &quot;use_cases&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
-    },
-    &quot;FeatureEvidence&quot;: {
-      &quot;description&quot;: &quot;What is guaranteed about a feature, counted from the claims it names: never a word a\nperson wrote about the feature&#39;s maturity.&quot;,
-      &quot;properties&quot;: {
-        &quot;claims&quot;: {
-          &quot;additionalProperties&quot;: {
-            &quot;format&quot;: &quot;uint&quot;,
-            &quot;minimum&quot;: 0,
-            &quot;type&quot;: &quot;integer&quot;
-          },
-          &quot;description&quot;: &quot;Claims by status: `guaranteed`, `advisory`, `planned`, `rejected`.&quot;,
-          &quot;type&quot;: &quot;object&quot;
         },
-        &quot;modules&quot;: {
-          &quot;additionalProperties&quot;: {
-            &quot;format&quot;: &quot;uint&quot;,
-            &quot;minimum&quot;: 0,
-            &quot;type&quot;: &quot;integer&quot;
-          },
-          &quot;description&quot;: &quot;The modules it names by stability.&quot;,
-          &quot;type&quot;: &quot;object&quot;
+        &quot;capabilities&quot;: {
+          &quot;minimum&quot;: 0,
+          &quot;description&quot;: &quot;Distinct capabilities behind its features.&quot;,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;enforced_rules&quot;: {
+          &quot;description&quot;: &quot;Distinct rules among them the tool enforces.&quot;,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;type&quot;: &quot;integer&quot;,
+          &quot;minimum&quot;: 0
+        },
+        &quot;moments&quot;: {
+          &quot;description&quot;: &quot;Distinct operational moments its features answer.&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;,
+          &quot;format&quot;: &quot;uint&quot;
         }
-      },
-      &quot;required&quot;: [
-        &quot;claims&quot;,
-        &quot;modules&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
+      }
     },
     &quot;MomentRef&quot;: {
       &quot;description&quot;: &quot;One operational moment the feature answers: derived from the moments that name any of\nthe feature&#39;s commands, capabilities, claims or rules.&quot;,
       &quot;properties&quot;: {
         &quot;hook&quot;: {
-          &quot;description&quot;: &quot;The first-person line an index shows.&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The first-person line an index shows.&quot;
+        },
+        &quot;title&quot;: {
+          &quot;description&quot;: &quot;The title.&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
         &quot;id&quot;: {
@@ -465,12 +412,8 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
           &quot;type&quot;: &quot;string&quot;
         },
         &quot;route&quot;: {
-          &quot;description&quot;: &quot;`/why/&lt;id&gt;/`.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;title&quot;: {
-          &quot;description&quot;: &quot;The title.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;`/why/&lt;id&gt;/`.&quot;
         }
       },
       &quot;required&quot;: [
@@ -481,99 +424,35 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
       ],
       &quot;type&quot;: &quot;object&quot;
     },
-    &quot;ResolvedDomain&quot;: {
-      &quot;description&quot;: &quot;One domain, resolved: the record as its file declares it, and everything derived from\nthe stable features that name it.\n\nThe declared record is flattened, so a reader sees one object: the domain&#39;s own fields\nbeside its derived members and counts.\n\n```\nuse majordomus_cli::product::{Domain, DomainCounts, FeatureEvidence, ResolvedDomain, Surfaces};\nlet domain: Domain = serde_json::from_value(serde_json::json!({\n    \&quot;id\&quot;: \&quot;context\&quot;, \&quot;title\&quot;: \&quot;Context\&quot;, \&quot;status\&quot;: \&quot;stable\&quot;,\n    \&quot;headline\&quot;: \&quot;h\&quot;, \&quot;problem\&quot;: \&quot;p\&quot;,\n}))\n.unwrap();\nlet resolved = ResolvedDomain {\n    domain,\n    features: vec![],\n    surfaces: Surfaces::default(),\n    moments: vec![],\n    claim_refs: vec![],\n    use_case_refs: vec![],\n    counts: DomainCounts::default(),\n    evidence: FeatureEvidence::default(),\n};\nlet v = serde_json::to_value(&amp;resolved).unwrap();\nassert_eq!(v[\&quot;id\&quot;], \&quot;context\&quot;, \&quot;the record is flattened into the resolved view\&quot;);\nassert_eq!(v[\&quot;counts\&quot;][\&quot;features\&quot;], 0);\n```&quot;,
+    &quot;FeatureEvidence&quot;: {
+      &quot;required&quot;: [
+        &quot;claims&quot;,
+        &quot;modules&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;,
+      &quot;description&quot;: &quot;What is guaranteed about a feature, counted from the claims it names: never a word a\nperson wrote about the feature&#39;s maturity.&quot;,
       &quot;properties&quot;: {
-        &quot;body&quot;: {
-          &quot;description&quot;: &quot;The Markdown body, without its front matter.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;claim_refs&quot;: {
-          &quot;description&quot;: &quot;Derived: the distinct claims its features name, with their status and test.&quot;,
-          &quot;items&quot;: {
-            &quot;$ref&quot;: &quot;#/$defs/ClaimRef&quot;
+        &quot;modules&quot;: {
+          &quot;additionalProperties&quot;: {
+            &quot;format&quot;: &quot;uint&quot;,
+            &quot;minimum&quot;: 0,
+            &quot;type&quot;: &quot;integer&quot;
           },
-          &quot;type&quot;: &quot;array&quot;
+          &quot;description&quot;: &quot;The modules it names by stability.&quot;,
+          &quot;type&quot;: &quot;object&quot;
         },
-        &quot;counts&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/DomainCounts&quot;,
-          &quot;description&quot;: &quot;Derived: how much stands behind it.&quot;
-        },
-        &quot;evidence&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/FeatureEvidence&quot;,
-          &quot;description&quot;: &quot;Derived: what is guaranteed, by claim status.&quot;
-        },
-        &quot;features&quot;: {
-          &quot;description&quot;: &quot;Derived: the stable features that name it, in presentation order.&quot;,
-          &quot;items&quot;: {
-            &quot;$ref&quot;: &quot;#/$defs/DomainMember&quot;
+        &quot;claims&quot;: {
+          &quot;additionalProperties&quot;: {
+            &quot;type&quot;: &quot;integer&quot;,
+            &quot;format&quot;: &quot;uint&quot;,
+            &quot;minimum&quot;: 0
           },
-          &quot;type&quot;: &quot;array&quot;
-        },
-        &quot;headline&quot;: {
-          &quot;description&quot;: &quot;What the product does about this domain, in one sentence.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;id&quot;: {
-          &quot;description&quot;: &quot;The identity, the slug and the file name.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;moments&quot;: {
-          &quot;description&quot;: &quot;Derived: the operational moments its features answer, in the catalogue&#39;s order.&quot;,
-          &quot;items&quot;: {
-            &quot;$ref&quot;: &quot;#/$defs/MomentRef&quot;
-          },
-          &quot;type&quot;: &quot;array&quot;
-        },
-        &quot;problem&quot;: {
-          &quot;description&quot;: &quot;The operational failure this domain answers, in one sentence.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;route&quot;: {
-          &quot;default&quot;: &quot;&quot;,
-          &quot;description&quot;: &quot;Derived: `/domains/&lt;id&gt;/`. Never authored; the schema refuses a `route` key.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;source&quot;: {
-          &quot;default&quot;: &quot;&quot;,
-          &quot;description&quot;: &quot;Derived: the repository-relative file the record came from.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;status&quot;: {
-          &quot;description&quot;: &quot;`stable`, `draft` or `deprecated`.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;surfaces&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/Surfaces&quot;,
-          &quot;description&quot;: &quot;Derived: the interfaces any of its features is exposed through.&quot;
-        },
-        &quot;tags&quot;: {
-          &quot;default&quot;: [],
-          &quot;description&quot;: &quot;Free tags.&quot;,
-          &quot;items&quot;: {
-            &quot;type&quot;: &quot;string&quot;
-          },
-          &quot;type&quot;: &quot;array&quot;
-        },
-        &quot;title&quot;: {
-          &quot;description&quot;: &quot;The domain as a heading: one word or two.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;use_case_refs&quot;: {
-          &quot;description&quot;: &quot;Derived: the distinct use cases its features name.&quot;,
-          &quot;items&quot;: {
-            &quot;$ref&quot;: &quot;#/$defs/UseCaseRef&quot;
-          },
-          &quot;type&quot;: &quot;array&quot;
-        },
-        &quot;weight&quot;: {
-          &quot;default&quot;: 0,
-          &quot;description&quot;: &quot;Presentation order, lowest first.&quot;,
-          &quot;format&quot;: &quot;uint32&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
+          &quot;type&quot;: &quot;object&quot;,
+          &quot;description&quot;: &quot;Claims by status: `guaranteed`, `advisory`, `planned`, `rejected`.&quot;
         }
-      },
+      }
+    },
+    &quot;ResolvedDomain&quot;: {
       &quot;required&quot;: [
         &quot;id&quot;,
         &quot;title&quot;,
@@ -588,51 +467,197 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
         &quot;counts&quot;,
         &quot;evidence&quot;
       ],
-      &quot;type&quot;: &quot;object&quot;
-    },
-    &quot;Surfaces&quot;: {
-      &quot;description&quot;: &quot;The interfaces a feature is exposed through, decided from what its references project\nand from nothing a file says. Each is a fact with a reason a reader can check: `cli` is\ntrue when a module of the feature has a capability with a command-line path or the\nfeature names a shell command; `api` when a module has an HTTP route; `mcp` when a module\nhas an MCP tool or resource, or the feature names a kind, since every object of the layer\nis an MCP resource; `cockpit` when the feature names a Cockpit area or a module, since\nevery capability has a Cockpit page; `docs` when it names a document.&quot;,
       &quot;properties&quot;: {
-        &quot;api&quot;: {
-          &quot;description&quot;: &quot;The HTTP routes under `/api/v1/`, and the OpenAPI document over them.&quot;,
-          &quot;type&quot;: &quot;boolean&quot;
+        &quot;title&quot;: {
+          &quot;description&quot;: &quot;The domain as a heading: one word or two.&quot;,
+          &quot;type&quot;: &quot;string&quot;
         },
-        &quot;cli&quot;: {
-          &quot;description&quot;: &quot;The command line: the executable&#39;s own, or the shell tool&#39;s.&quot;,
-          &quot;type&quot;: &quot;boolean&quot;
+        &quot;id&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The identity, the slug and the file name.&quot;
         },
-        &quot;cockpit&quot;: {
-          &quot;description&quot;: &quot;The Cockpit.&quot;,
-          &quot;type&quot;: &quot;boolean&quot;
+        &quot;features&quot;: {
+          &quot;items&quot;: {
+            &quot;$ref&quot;: &quot;#/$defs/DomainMember&quot;
+          },
+          &quot;type&quot;: &quot;array&quot;,
+          &quot;description&quot;: &quot;Derived: the stable features that name it, in presentation order.&quot;
         },
-        &quot;docs&quot;: {
-          &quot;description&quot;: &quot;The documentation.&quot;,
-          &quot;type&quot;: &quot;boolean&quot;
+        &quot;counts&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/DomainCounts&quot;,
+          &quot;description&quot;: &quot;Derived: how much stands behind it.&quot;
         },
-        &quot;mcp&quot;: {
-          &quot;description&quot;: &quot;MCP: a tool, or a resource.&quot;,
-          &quot;type&quot;: &quot;boolean&quot;
+        &quot;tags&quot;: {
+          &quot;description&quot;: &quot;Free tags.&quot;,
+          &quot;items&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          },
+          &quot;default&quot;: [],
+          &quot;type&quot;: &quot;array&quot;
+        },
+        &quot;source&quot;: {
+          &quot;default&quot;: &quot;&quot;,
+          &quot;description&quot;: &quot;Derived: the repository-relative file the record came from.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;moments&quot;: {
+          &quot;type&quot;: &quot;array&quot;,
+          &quot;description&quot;: &quot;Derived: the operational moments its features answer, in the catalogue&#39;s order.&quot;,
+          &quot;items&quot;: {
+            &quot;$ref&quot;: &quot;#/$defs/MomentRef&quot;
+          }
+        },
+        &quot;headline&quot;: {
+          &quot;description&quot;: &quot;What the product does about this domain, in one sentence.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;body&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The Markdown body, without its front matter.&quot;
+        },
+        &quot;surfaces&quot;: {
+          &quot;description&quot;: &quot;Derived: the interfaces any of its features is exposed through.&quot;,
+          &quot;$ref&quot;: &quot;#/$defs/Surfaces&quot;
+        },
+        &quot;status&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;`stable`, `draft` or `deprecated`.&quot;
+        },
+        &quot;evidence&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/FeatureEvidence&quot;,
+          &quot;description&quot;: &quot;Derived: what is guaranteed, by claim status.&quot;
+        },
+        &quot;problem&quot;: {
+          &quot;description&quot;: &quot;The operational failure this domain answers, in one sentence.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;route&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;default&quot;: &quot;&quot;,
+          &quot;description&quot;: &quot;Derived: `/domains/&lt;id&gt;/`. Never authored; the schema refuses a `route` key.&quot;
+        },
+        &quot;use_case_refs&quot;: {
+          &quot;items&quot;: {
+            &quot;$ref&quot;: &quot;#/$defs/UseCaseRef&quot;
+          },
+          &quot;type&quot;: &quot;array&quot;,
+          &quot;description&quot;: &quot;Derived: the distinct use cases its features name.&quot;
+        },
+        &quot;weight&quot;: {
+          &quot;format&quot;: &quot;uint32&quot;,
+          &quot;type&quot;: &quot;integer&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;default&quot;: 0,
+          &quot;description&quot;: &quot;Presentation order, lowest first.&quot;
+        },
+        &quot;claim_refs&quot;: {
+          &quot;type&quot;: &quot;array&quot;,
+          &quot;items&quot;: {
+            &quot;$ref&quot;: &quot;#/$defs/ClaimRef&quot;
+          },
+          &quot;description&quot;: &quot;Derived: the distinct claims its features name, with their status and test.&quot;
         }
       },
-      &quot;required&quot;: [
-        &quot;cli&quot;,
-        &quot;api&quot;,
-        &quot;mcp&quot;,
-        &quot;cockpit&quot;,
-        &quot;docs&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
+      &quot;type&quot;: &quot;object&quot;,
+      &quot;description&quot;: &quot;One domain, resolved: the record as its file declares it, and everything derived from\nthe stable features that name it.\n\nThe declared record is flattened, so a reader sees one object: the domain&#39;s own fields\nbeside its derived members and counts.\n\n```\nuse majordomus_cli::product::{Domain, DomainCounts, FeatureEvidence, ResolvedDomain, Surfaces};\nlet domain: Domain = serde_json::from_value(serde_json::json!({\n    \&quot;id\&quot;: \&quot;context\&quot;, \&quot;title\&quot;: \&quot;Context\&quot;, \&quot;status\&quot;: \&quot;stable\&quot;,\n    \&quot;headline\&quot;: \&quot;h\&quot;, \&quot;problem\&quot;: \&quot;p\&quot;,\n}))\n.unwrap();\nlet resolved = ResolvedDomain {\n    domain,\n    features: vec![],\n    surfaces: Surfaces::default(),\n    moments: vec![],\n    claim_refs: vec![],\n    use_case_refs: vec![],\n    counts: DomainCounts::default(),\n    evidence: FeatureEvidence::default(),\n};\nlet v = serde_json::to_value(&amp;resolved).unwrap();\nassert_eq!(v[\&quot;id\&quot;], \&quot;context\&quot;, \&quot;the record is flattened into the resolved view\&quot;);\nassert_eq!(v[\&quot;counts\&quot;][\&quot;features\&quot;], 0);\n```&quot;
     },
-    &quot;UseCaseRef&quot;: {
-      &quot;description&quot;: &quot;One use case the feature names.&quot;,
+    &quot;ClaimRef&quot;: {
+      &quot;required&quot;: [
+        &quot;id&quot;,
+        &quot;claim&quot;,
+        &quot;status&quot;
+      ],
       &quot;properties&quot;: {
-        &quot;category&quot;: {
-          &quot;description&quot;: &quot;The category it is filed under.&quot;,
+        &quot;claim&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The sentence.&quot;
+        },
+        &quot;id&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The claim id.&quot;
+        },
+        &quot;test&quot;: {
           &quot;type&quot;: [
             &quot;string&quot;,
             &quot;null&quot;
-          ]
+          ],
+          &quot;description&quot;: &quot;The test that settles it, as `docs/CLAIMS.yaml` records it — the one field that makes a\nclaim checkable rather than stated. Absent where the claim declares none, and where it\ndeclares `-`: a planned or rejected claim has nothing to run yet, and rendering a dash\nas a test would be a projection inventing evidence.&quot;
         },
+        &quot;status&quot;: {
+          &quot;description&quot;: &quot;`guaranteed`, `advisory`, `planned` or `rejected`.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      },
+      &quot;type&quot;: &quot;object&quot;,
+      &quot;description&quot;: &quot;One claim the feature names, with the status the matrix gives it.&quot;
+    },
+    &quot;DomainMember&quot;: {
+      &quot;required&quot;: [
+        &quot;id&quot;,
+        &quot;label&quot;,
+        &quot;title&quot;,
+        &quot;headline&quot;,
+        &quot;route&quot;,
+        &quot;featured&quot;,
+        &quot;surfaces&quot;,
+        &quot;claims&quot;,
+        &quot;tested&quot;,
+        &quot;use_cases&quot;
+      ],
+      &quot;properties&quot;: {
+        &quot;route&quot;: {
+          &quot;description&quot;: &quot;`/features/&lt;id&gt;/`.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;headline&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The feature&#39;s promise.&quot;
+        },
+        &quot;label&quot;: {
+          &quot;description&quot;: &quot;The name a narrow column shows: the short title, or the title.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;claims&quot;: {
+          &quot;type&quot;: &quot;integer&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;description&quot;: &quot;How many claims it names.&quot;,
+          &quot;format&quot;: &quot;uint&quot;
+        },
+        &quot;id&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The feature id.&quot;
+        },
+        &quot;tested&quot;: {
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;,
+          &quot;description&quot;: &quot;How many of them are guaranteed and name the test that settles them.&quot;,
+          &quot;format&quot;: &quot;uint&quot;
+        },
+        &quot;surfaces&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/Surfaces&quot;,
+          &quot;description&quot;: &quot;The interfaces it is exposed through.&quot;
+        },
+        &quot;use_cases&quot;: {
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;description&quot;: &quot;How many use cases show it in use.&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;featured&quot;: {
+          &quot;description&quot;: &quot;Whether the homepage shows it as a chapter.&quot;,
+          &quot;type&quot;: &quot;boolean&quot;
+        },
+        &quot;title&quot;: {
+          &quot;description&quot;: &quot;The feature as a heading.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      },
+      &quot;type&quot;: &quot;object&quot;,
+      &quot;description&quot;: &quot;One stable feature of a domain, as a card shows it.\n\n```\nuse majordomus_cli::product::{DomainMember, Surfaces};\nlet m = DomainMember {\n    id: \&quot;finish-contract\&quot;.into(),\n    label: \&quot;Finish contract\&quot;.into(),\n    title: \&quot;Done is a contract\&quot;.into(),\n    headline: \&quot;A worker does not define its own completion.\&quot;.into(),\n    route: \&quot;/features/finish-contract/\&quot;.into(),\n    featured: true,\n    surfaces: Surfaces::default(),\n    claims: 3,\n    tested: 2,\n    use_cases: 1,\n};\nlet v = serde_json::to_value(&amp;m).unwrap();\nassert_eq!(v[\&quot;tested\&quot;], 2);\nassert_eq!(v[\&quot;surfaces\&quot;][\&quot;cli\&quot;], false);\n```&quot;
+    },
+    &quot;UseCaseRef&quot;: {
+      &quot;type&quot;: &quot;object&quot;,
+      &quot;properties&quot;: {
         &quot;id&quot;: {
           &quot;description&quot;: &quot;The use case id.&quot;,
           &quot;type&quot;: &quot;string&quot;
@@ -640,47 +665,22 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
         &quot;title&quot;: {
           &quot;description&quot;: &quot;The title.&quot;,
           &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;category&quot;: {
+          &quot;description&quot;: &quot;The category it is filed under.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
         }
       },
       &quot;required&quot;: [
         &quot;id&quot;,
         &quot;title&quot;
       ],
-      &quot;type&quot;: &quot;object&quot;
+      &quot;description&quot;: &quot;One use case the feature names.&quot;
     }
-  },
-  &quot;description&quot;: &quot;Every domain of the product, each with what its features add up to.&quot;,
-  &quot;properties&quot;: {
-    &quot;count&quot;: {
-      &quot;description&quot;: &quot;How many domains are listed.&quot;,
-      &quot;format&quot;: &quot;uint&quot;,
-      &quot;minimum&quot;: 0,
-      &quot;type&quot;: &quot;integer&quot;
-    },
-    &quot;domains&quot;: {
-      &quot;description&quot;: &quot;The domains, in presentation order: the stable ones, or every one with status=any.&quot;,
-      &quot;items&quot;: {
-        &quot;$ref&quot;: &quot;#/$defs/ResolvedDomain&quot;
-      },
-      &quot;type&quot;: &quot;array&quot;
-    },
-    &quot;fingerprint&quot;: {
-      &quot;description&quot;: &quot;The hash of the model&#39;s sources and derived facts.&quot;,
-      &quot;type&quot;: &quot;string&quot;
-    },
-    &quot;schema&quot;: {
-      &quot;description&quot;: &quot;`SCHEMA`.&quot;,
-      &quot;type&quot;: &quot;string&quot;
-    }
-  },
-  &quot;required&quot;: [
-    &quot;schema&quot;,
-    &quot;fingerprint&quot;,
-    &quot;count&quot;,
-    &quot;domains&quot;
-  ],
-  &quot;title&quot;: &quot;DomainList&quot;,
-  &quot;type&quot;: &quot;object&quot;
+  }
 }</pre></div>
   </details>
 </div>
@@ -711,7 +711,7 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
         <div><dt class="text-body-subtle">modul Rust</dt><dd class="min-w-0 break-all font-mono text-heading">majordomus_cli::capability::builtin::product</dd></div>
         <div><dt class="text-body-subtle">typ vstupu</dt><dd class="font-mono text-heading">DomainQuery</dd></div>
         <div><dt class="text-body-subtle">typ výstupu</dt><dd class="font-mono text-heading">DomainList</dd></div>
-        <div><dt class="text-body-subtle">reference na GitHubu</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/1112bace3437ee0d82067b1e8f61813e70190078/docs/generated/modules/product.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/product.md</a></dd></div><div><dt class="text-body-subtle">otisk registru</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">5cdbf22cd21589ddbe464d5f0987b6bcf4607d05479004d6f815c3b306fdb08a</dd></div>
+        <div><dt class="text-body-subtle">reference na GitHubu</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/docs/generated/modules/product.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/product.md</a></dd></div><div><dt class="text-body-subtle">otisk registru</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">3f734f2faf797f0ca7c39b4cd837e68b6619c41c6f6711f3d3aeca8f341934eb</dd></div>
         <div><dt class="text-body-subtle">vygenerováno nástrojem</dt><dd class="font-mono text-heading">majordomus-cli 1.0.0-alpha.10</dd></div>
       </dl>
     </div>
@@ -767,9 +767,9 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
       <div class="min-w-0">
         <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">Projekt</h2><ul class="space-y-2 text-sm font-medium text-body">
           <li><a href="https://github.com/korczis/prismatic-majordomus" class="hover:text-heading hover:underline">GitHub</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/1112bace3437ee0d82067b1e8f61813e70190078/LICENSE" class="hover:text-heading hover:underline">Licence MIT</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/1112bace3437ee0d82067b1e8f61813e70190078/SECURITY.md" class="hover:text-heading hover:underline">Bezpečnostní politika</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/1112bace3437ee0d82067b1e8f61813e70190078/CONTRIBUTING.md" class="hover:text-heading hover:underline">Průvodce pro přispěvatele</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/LICENSE" class="hover:text-heading hover:underline">Licence MIT</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/SECURITY.md" class="hover:text-heading hover:underline">Bezpečnostní politika</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/CONTRIBUTING.md" class="hover:text-heading hover:underline">Průvodce pro přispěvatele</a></li>
         </ul>
       </div>
     </div>
@@ -777,7 +777,7 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/cs/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.10</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/1112bace3437ee0d82067b1e8f61813e70190078" class="font-mono underline">1112bac</a> · inputs <span class="font-mono">830f884cc5aa</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/cs/architecture/" class="underline">how this site is derived</a> names them.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.10</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/745db2ea21e02613943face75a2bf95542be1f2e" class="font-mono underline">745db2e</a> · inputs <span class="font-mono">0a58c217d1b7</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/cs/architecture/" class="underline">how this site is derived</a> names them.</p>
     </div>
   </div>
 </footer>

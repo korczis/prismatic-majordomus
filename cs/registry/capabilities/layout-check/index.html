@@ -210,10 +210,10 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
   <h3 class="font-mono text-sm font-semibold text-heading">vstup · Prázdné</h3><div class="mt-1 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">Žádný vstup.</div><p class="mt-2 text-sm text-body-subtle">Žádné vlastnosti: schopnost nebere žádný vstup.</p><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
-  &quot;additionalProperties&quot;: false,
   &quot;description&quot;: &quot;No input.&quot;,
   &quot;title&quot;: &quot;Empty&quot;,
-  &quot;type&quot;: &quot;object&quot;
+  &quot;type&quot;: &quot;object&quot;,
+  &quot;additionalProperties&quot;: false
 }</pre></div>
   </details>
 </div>
@@ -231,11 +231,6 @@ never passes, so silence about a tree nobody measured cannot read as a clean tre
     <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
       <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">vlastnost</th><th class="px-3 py-2">typ</th><th class="px-3 py-2">povinné</th><th class="px-3 py-2">popis</th></tr></thead>
       <tbody><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">checked</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">integer</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">How many paths were judged.</td>
-      </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">zjištění</td>
         <td class="px-3 py-2 font-mono text-xs text-body">array</td>
         <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
@@ -251,6 +246,11 @@ never passes, so silence about a tree nobody measured cannot read as a clean tre
         <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
         <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words"><code>true</code> when the halves were read and nothing was found.</td>
       </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">checked</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">integer</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">How many paths were judged.</td>
+      </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">důvod</td>
         <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
         <td class="px-3 py-2 font-mono text-xs text-body">ne</td>
@@ -260,14 +260,12 @@ never passes, so silence about a tree nobody measured cannot read as a clean tre
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
+  &quot;title&quot;: &quot;LayoutReport&quot;,
   &quot;$defs&quot;: {
     &quot;LayoutFinding&quot;: {
+      &quot;type&quot;: &quot;object&quot;,
       &quot;description&quot;: &quot;One misplaced artifact: a path found in a half whose declared layout excludes it, with the\ncontract that excludes it and why, so a refusal names what to move and where it belongs.\n\nIt travels as the JSON of the `layout.check` capability, so its member names are the\nwire contract every projection reads:\n\n```\nuse majordomus_cli::layout::LayoutFinding;\nlet finding = LayoutFinding {\n    path: \&quot;.ai/local/notes/rule.md\&quot;.into(),\n    contract: \&quot;manifest local\&quot;.into(),\n    excludes: \&quot;canonical\&quot;.into(),\n    reason: \&quot;a copy of .ai/repo/rules/rule.md\&quot;.into(),\n};\nlet json = serde_json::to_value(&amp;finding).unwrap();\nassert_eq!(json[\&quot;contract\&quot;], \&quot;manifest local\&quot;);\nassert_eq!(json[\&quot;excludes\&quot;], \&quot;canonical\&quot;);\nlet back: LayoutFinding = serde_json::from_value(json).unwrap();\nassert_eq!(back, finding);\n```&quot;,
       &quot;properties&quot;: {
-        &quot;contract&quot;: {
-          &quot;description&quot;: &quot;The contract it violates: a context document&#39;s id, or `manifest local`.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
         &quot;excludes&quot;: {
           &quot;description&quot;: &quot;What the contract excludes that this path is.&quot;,
           &quot;type&quot;: &quot;string&quot;
@@ -279,6 +277,10 @@ never passes, so silence about a tree nobody measured cannot read as a clean tre
         &quot;reason&quot;: {
           &quot;description&quot;: &quot;What the path was found to be, and how.&quot;,
           &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;contract&quot;: {
+          &quot;description&quot;: &quot;The contract it violates: a context document&#39;s id, or `manifest local`.&quot;,
+          &quot;type&quot;: &quot;string&quot;
         }
       },
       &quot;required&quot;: [
@@ -286,39 +288,38 @@ never passes, so silence about a tree nobody measured cannot read as a clean tre
         &quot;contract&quot;,
         &quot;excludes&quot;,
         &quot;reason&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
+      ]
     }
   },
   &quot;description&quot;: &quot;The answer of the layout check: whether the halves were read, how many paths were\njudged, and every path a contract excludes. A report that could not read the halves\nnever passes, so silence about a tree nobody measured cannot read as a clean tree.\n\n```\nuse majordomus_cli::layout::LayoutReport;\nlet clean = LayoutReport::of(true, None, 12, Vec::new());\nassert!(clean.passes);\nassert_eq!(clean.checked, 12);\nlet unread = LayoutReport::of(false, Some(\&quot;git could not start\&quot;.into()), 0, Vec::new());\nassert!(!unread.passes, \&quot;nothing found because nothing was read\&quot;);\nassert_eq!(unread.reason.as_deref(), Some(\&quot;git could not start\&quot;));\n```&quot;,
   &quot;properties&quot;: {
-    &quot;checked&quot;: {
-      &quot;description&quot;: &quot;How many paths were judged.&quot;,
-      &quot;format&quot;: &quot;uint&quot;,
-      &quot;minimum&quot;: 0,
-      &quot;type&quot;: &quot;integer&quot;
-    },
     &quot;findings&quot;: {
-      &quot;description&quot;: &quot;Every path a contract excludes, in canonical order. Empty is the passing answer.&quot;,
       &quot;items&quot;: {
         &quot;$ref&quot;: &quot;#/$defs/LayoutFinding&quot;
       },
-      &quot;type&quot;: &quot;array&quot;
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;description&quot;: &quot;Every path a contract excludes, in canonical order. Empty is the passing answer.&quot;
     },
     &quot;measured&quot;: {
       &quot;description&quot;: &quot;Whether the halves could be read at all. `false` is not a pass.&quot;,
       &quot;type&quot;: &quot;boolean&quot;
     },
     &quot;passes&quot;: {
-      &quot;description&quot;: &quot;`true` when the halves were read and nothing was found.&quot;,
-      &quot;type&quot;: &quot;boolean&quot;
+      &quot;type&quot;: &quot;boolean&quot;,
+      &quot;description&quot;: &quot;`true` when the halves were read and nothing was found.&quot;
+    },
+    &quot;checked&quot;: {
+      &quot;minimum&quot;: 0,
+      &quot;description&quot;: &quot;How many paths were judged.&quot;,
+      &quot;format&quot;: &quot;uint&quot;,
+      &quot;type&quot;: &quot;integer&quot;
     },
     &quot;reason&quot;: {
-      &quot;description&quot;: &quot;Why they could not, when they could not.&quot;,
       &quot;type&quot;: [
         &quot;string&quot;,
         &quot;null&quot;
-      ]
+      ],
+      &quot;description&quot;: &quot;Why they could not, when they could not.&quot;
     }
   },
   &quot;required&quot;: [
@@ -327,7 +328,6 @@ never passes, so silence about a tree nobody measured cannot read as a clean tre
     &quot;findings&quot;,
     &quot;passes&quot;
   ],
-  &quot;title&quot;: &quot;LayoutReport&quot;,
   &quot;type&quot;: &quot;object&quot;
 }</pre></div>
   </details>
@@ -359,7 +359,7 @@ never passes, so silence about a tree nobody measured cannot read as a clean tre
         <div><dt class="text-body-subtle">modul Rust</dt><dd class="min-w-0 break-all font-mono text-heading">majordomus_cli::capability::builtin::layout</dd></div>
         <div><dt class="text-body-subtle">typ vstupu</dt><dd class="font-mono text-heading">Prázdné</dd></div>
         <div><dt class="text-body-subtle">typ výstupu</dt><dd class="font-mono text-heading">LayoutReport</dd></div>
-        <div><dt class="text-body-subtle">reference na GitHubu</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/1112bace3437ee0d82067b1e8f61813e70190078/docs/generated/modules/layout.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/layout.md</a></dd></div><div><dt class="text-body-subtle">otisk registru</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">5cdbf22cd21589ddbe464d5f0987b6bcf4607d05479004d6f815c3b306fdb08a</dd></div>
+        <div><dt class="text-body-subtle">reference na GitHubu</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/docs/generated/modules/layout.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/layout.md</a></dd></div><div><dt class="text-body-subtle">otisk registru</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">3f734f2faf797f0ca7c39b4cd837e68b6619c41c6f6711f3d3aeca8f341934eb</dd></div>
         <div><dt class="text-body-subtle">vygenerováno nástrojem</dt><dd class="font-mono text-heading">majordomus-cli 1.0.0-alpha.10</dd></div>
       </dl>
     </div>
@@ -415,9 +415,9 @@ never passes, so silence about a tree nobody measured cannot read as a clean tre
       <div class="min-w-0">
         <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">Projekt</h2><ul class="space-y-2 text-sm font-medium text-body">
           <li><a href="https://github.com/korczis/prismatic-majordomus" class="hover:text-heading hover:underline">GitHub</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/1112bace3437ee0d82067b1e8f61813e70190078/LICENSE" class="hover:text-heading hover:underline">Licence MIT</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/1112bace3437ee0d82067b1e8f61813e70190078/SECURITY.md" class="hover:text-heading hover:underline">Bezpečnostní politika</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/1112bace3437ee0d82067b1e8f61813e70190078/CONTRIBUTING.md" class="hover:text-heading hover:underline">Průvodce pro přispěvatele</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/LICENSE" class="hover:text-heading hover:underline">Licence MIT</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/SECURITY.md" class="hover:text-heading hover:underline">Bezpečnostní politika</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/CONTRIBUTING.md" class="hover:text-heading hover:underline">Průvodce pro přispěvatele</a></li>
         </ul>
       </div>
     </div>
@@ -425,7 +425,7 @@ never passes, so silence about a tree nobody measured cannot read as a clean tre
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/cs/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.10</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/1112bace3437ee0d82067b1e8f61813e70190078" class="font-mono underline">1112bac</a> · inputs <span class="font-mono">830f884cc5aa</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/cs/architecture/" class="underline">how this site is derived</a> names them.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.10</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/745db2ea21e02613943face75a2bf95542be1f2e" class="font-mono underline">745db2e</a> · inputs <span class="font-mono">0a58c217d1b7</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/cs/architecture/" class="underline">how this site is derived</a> names them.</p>
     </div>
   </div>
 </footer>

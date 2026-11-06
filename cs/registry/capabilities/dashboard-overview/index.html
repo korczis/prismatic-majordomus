@@ -210,9 +210,9 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
   <h3 class="font-mono text-sm font-semibold text-heading">vstup · Prázdné</h3><div class="mt-1 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">Žádný vstup.</div><p class="mt-2 text-sm text-body-subtle">Žádné vlastnosti: schopnost nebere žádný vstup.</p><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
-  &quot;additionalProperties&quot;: false,
-  &quot;description&quot;: &quot;No input.&quot;,
   &quot;title&quot;: &quot;Empty&quot;,
+  &quot;description&quot;: &quot;No input.&quot;,
+  &quot;additionalProperties&quot;: false,
   &quot;type&quot;: &quot;object&quot;
 }</pre></div>
   </details>
@@ -242,74 +242,22 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
+  &quot;type&quot;: &quot;object&quot;,
   &quot;$defs&quot;: {
-    &quot;DashboardCard&quot;: {
-      &quot;description&quot;: &quot;One fact on a dashboard: a value read out of one capability&#39;s answer, the verdict the\nsource gives it, where a reader drills in, and what acts on it.\n\n```\nuse majordomus_cli::capability::builtin::dashboard::DashboardCard;\nuse serde_json::json;\n\nlet card: DashboardCard = serde_json::from_value(json!({\n    \&quot;id\&quot;: \&quot;health-status\&quot;,\n    \&quot;title\&quot;: \&quot;Health\&quot;,\n    \&quot;value\&quot;: \&quot;ok\&quot;,\n    \&quot;status\&quot;: \&quot;ok\&quot;,\n    \&quot;detail\&quot;: \&quot;the worst of 8 check(s)\&quot;,\n    \&quot;source\&quot;: { \&quot;capability\&quot;: \&quot;health.report\&quot;, \&quot;input\&quot;: {}, \&quot;pointer\&quot;: \&quot;/status\&quot;, \&quot;measure\&quot;: \&quot;exact\&quot; },\n    \&quot;route\&quot;: \&quot;/cockpit/health\&quot;,\n})).unwrap();\n// the value is the source&#39;s: reading the pointer out of its answer gives it back\nassert_eq!(card.source.measure.read(&amp;json!({ \&quot;status\&quot;: \&quot;ok\&quot; }), &amp;card.source.pointer), card.value);\nassert!(card.action.is_none());\n```&quot;,
-      &quot;properties&quot;: {
-        &quot;action&quot;: {
-          &quot;description&quot;: &quot;The command that acts on it, when one does.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;detail&quot;: {
-          &quot;description&quot;: &quot;One line: what the value means, or why the source could not answer.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;id&quot;: {
-          &quot;description&quot;: &quot;A stable id, `[a-z][a-z0-9-]*`, unique across the dashboard.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;route&quot;: {
-          &quot;description&quot;: &quot;The Cockpit page a reader drills into for the evidence.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;source&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/DashboardSource&quot;,
-          &quot;description&quot;: &quot;Where the value came from.&quot;
-        },
-        &quot;status&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/HealthStatus&quot;,
-          &quot;description&quot;: &quot;The source&#39;s verdict on it; `unknown` when the source could not answer.&quot;
-        },
-        &quot;title&quot;: {
-          &quot;description&quot;: &quot;What the value is.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;value&quot;: {
-          &quot;description&quot;: &quot;The value, read out of the source&#39;s answer by the source&#39;s measure: a number, a\nstring or a boolean, or `null` when the source holds none.&quot;
-        }
-      },
+    &quot;DashboardQuestion&quot;: {
       &quot;required&quot;: [
         &quot;id&quot;,
         &quot;title&quot;,
-        &quot;value&quot;,
         &quot;status&quot;,
-        &quot;detail&quot;,
-        &quot;source&quot;,
-        &quot;route&quot;
+        &quot;cards&quot;
       ],
-      &quot;type&quot;: &quot;object&quot;
-    },
-    &quot;DashboardMeasure&quot;: {
-      &quot;description&quot;: &quot;How a card&#39;s value is read out of its source&#39;s answer. Neither reading is arithmetic on\nthe source&#39;s behalf.\n\n```\nuse majordomus_cli::capability::builtin::dashboard::DashboardMeasure;\nuse serde_json::json;\n\nlet answer = json!({ \&quot;status\&quot;: \&quot;warn\&quot;, \&quot;tallies\&quot;: { \&quot;ok\&quot;: 6 }, \&quot;overlaps\&quot;: [1, 2] });\n// exact: the value at the pointer, null when there is none\nassert_eq!(DashboardMeasure::Exact.read(&amp;answer, \&quot;/status\&quot;), json!(\&quot;warn\&quot;));\nassert_eq!(DashboardMeasure::Exact.read(&amp;answer, \&quot;/tallies/fail\&quot;), json!(null));\n// count: a number as it stands, a list or map by its length, and an omitted one is none\nassert_eq!(DashboardMeasure::Count.read(&amp;answer, \&quot;/tallies/ok\&quot;), json!(6));\nassert_eq!(DashboardMeasure::Count.read(&amp;answer, \&quot;/overlaps\&quot;), json!(2));\nassert_eq!(DashboardMeasure::Count.read(&amp;answer, \&quot;/tallies/fail\&quot;), json!(0));\n```&quot;,
-      &quot;oneOf&quot;: [
-        {
-          &quot;const&quot;: &quot;exact&quot;,
-          &quot;description&quot;: &quot;The value at the pointer, exactly; `null` when the pointer resolves to nothing.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;count&quot;,
-          &quot;description&quot;: &quot;The number at the pointer, or the length of the list or map there; `0` when the\nsource left it out, which is how the sources say an empty list or a zero tally.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      ]
-    },
-    &quot;DashboardQuestion&quot;: {
       &quot;description&quot;: &quot;One of the four questions the Overview answers, with the cards that answer it.\n\n```\nuse majordomus_cli::capability::builtin::dashboard::DashboardQuestion;\nuse majordomus_cli::capability::builtin::HealthStatus;\nuse serde_json::json;\n\nlet q: DashboardQuestion = serde_json::from_value(json!({\n    \&quot;id\&quot;: \&quot;healthy\&quot;, \&quot;title\&quot;: \&quot;Is it healthy?\&quot;, \&quot;status\&quot;: \&quot;ok\&quot;, \&quot;cards\&quot;: [],\n})).unwrap();\nassert_eq!(q.status, HealthStatus::Ok);\n```&quot;,
+      &quot;type&quot;: &quot;object&quot;,
       &quot;properties&quot;: {
+        &quot;title&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The question, as a reader asks it.&quot;
+        },
         &quot;cards&quot;: {
           &quot;description&quot;: &quot;The facts that answer it, each read from a capability.&quot;,
           &quot;items&quot;: {
@@ -324,93 +272,145 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
         &quot;status&quot;: {
           &quot;$ref&quot;: &quot;#/$defs/HealthStatus&quot;,
           &quot;description&quot;: &quot;The worst of its cards.&quot;
+        }
+      }
+    },
+    &quot;HealthStatus&quot;: {
+      &quot;oneOf&quot;: [
+        {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;ok&quot;,
+          &quot;description&quot;: &quot;The engine that decides this dimension is satisfied.&quot;
+        },
+        {
+          &quot;description&quot;: &quot;Nothing is broken and something is worth looking at.&quot;,
+          &quot;const&quot;: &quot;warn&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;description&quot;: &quot;The engine that decides this dimension is not satisfied.&quot;,
+          &quot;const&quot;: &quot;fail&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;description&quot;: &quot;This process cannot decide it, and says so rather than reporting `ok`.&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;unknown&quot;
+        }
+      ],
+      &quot;description&quot;: &quot;Where one dimension of the system stands. Ordered by severity, so the worst check\ndecides the whole.&quot;
+    },
+    &quot;DashboardSource&quot;: {
+      &quot;properties&quot;: {
+        &quot;pointer&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;An RFC 6901 JSON pointer into that capability&#39;s answer.&quot;
+        },
+        &quot;input&quot;: {
+          &quot;description&quot;: &quot;The input it was asked with, as its input schema takes it.&quot;
+        },
+        &quot;capability&quot;: {
+          &quot;description&quot;: &quot;The canonical id of the capability the value was read from.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;measure&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/DashboardMeasure&quot;,
+          &quot;description&quot;: &quot;How the value is read at the pointer.&quot;
+        }
+      },
+      &quot;type&quot;: &quot;object&quot;,
+      &quot;description&quot;: &quot;Where a card&#39;s value came from: the capability asked, the input it was asked with, and\nthe pointer into its answer. Asking the capability the same question and reading the\npointer with the same measure yields the card&#39;s value; that is the whole contract.\n\n```\nuse majordomus_cli::capability::builtin::dashboard::{DashboardMeasure, DashboardSource};\nuse serde_json::json;\n\nlet s: DashboardSource = serde_json::from_value(json!({\n    \&quot;capability\&quot;: \&quot;health.report\&quot;,\n    \&quot;input\&quot;: {},\n    \&quot;pointer\&quot;: \&quot;/status\&quot;,\n    \&quot;measure\&quot;: \&quot;exact\&quot;,\n})).unwrap();\nassert_eq!(s.measure, DashboardMeasure::Exact);\nassert_eq!(s.measure.read(&amp;json!({ \&quot;status\&quot;: \&quot;ok\&quot; }), &amp;s.pointer), json!(\&quot;ok\&quot;));\n```&quot;,
+      &quot;required&quot;: [
+        &quot;capability&quot;,
+        &quot;input&quot;,
+        &quot;pointer&quot;,
+        &quot;measure&quot;
+      ]
+    },
+    &quot;DashboardCard&quot;: {
+      &quot;description&quot;: &quot;One fact on a dashboard: a value read out of one capability&#39;s answer, the verdict the\nsource gives it, where a reader drills in, and what acts on it.\n\n```\nuse majordomus_cli::capability::builtin::dashboard::DashboardCard;\nuse serde_json::json;\n\nlet card: DashboardCard = serde_json::from_value(json!({\n    \&quot;id\&quot;: \&quot;health-status\&quot;,\n    \&quot;title\&quot;: \&quot;Health\&quot;,\n    \&quot;value\&quot;: \&quot;ok\&quot;,\n    \&quot;status\&quot;: \&quot;ok\&quot;,\n    \&quot;detail\&quot;: \&quot;the worst of 8 check(s)\&quot;,\n    \&quot;source\&quot;: { \&quot;capability\&quot;: \&quot;health.report\&quot;, \&quot;input\&quot;: {}, \&quot;pointer\&quot;: \&quot;/status\&quot;, \&quot;measure\&quot;: \&quot;exact\&quot; },\n    \&quot;route\&quot;: \&quot;/cockpit/health\&quot;,\n})).unwrap();\n// the value is the source&#39;s: reading the pointer out of its answer gives it back\nassert_eq!(card.source.measure.read(&amp;json!({ \&quot;status\&quot;: \&quot;ok\&quot; }), &amp;card.source.pointer), card.value);\nassert!(card.action.is_none());\n```&quot;,
+      &quot;properties&quot;: {
+        &quot;id&quot;: {
+          &quot;description&quot;: &quot;A stable id, `[a-z][a-z0-9-]*`, unique across the dashboard.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;action&quot;: {
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ],
+          &quot;description&quot;: &quot;The command that acts on it, when one does.&quot;
+        },
+        &quot;value&quot;: {
+          &quot;description&quot;: &quot;The value, read out of the source&#39;s answer by the source&#39;s measure: a number, a\nstring or a boolean, or `null` when the source holds none.&quot;
         },
         &quot;title&quot;: {
-          &quot;description&quot;: &quot;The question, as a reader asks it.&quot;,
+          &quot;description&quot;: &quot;What the value is.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;source&quot;: {
+          &quot;description&quot;: &quot;Where the value came from.&quot;,
+          &quot;$ref&quot;: &quot;#/$defs/DashboardSource&quot;
+        },
+        &quot;route&quot;: {
+          &quot;description&quot;: &quot;The Cockpit page a reader drills into for the evidence.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;status&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/HealthStatus&quot;,
+          &quot;description&quot;: &quot;The source&#39;s verdict on it; `unknown` when the source could not answer.&quot;
+        },
+        &quot;detail&quot;: {
+          &quot;description&quot;: &quot;One line: what the value means, or why the source could not answer.&quot;,
           &quot;type&quot;: &quot;string&quot;
         }
       },
       &quot;required&quot;: [
         &quot;id&quot;,
         &quot;title&quot;,
+        &quot;value&quot;,
         &quot;status&quot;,
-        &quot;cards&quot;
+        &quot;detail&quot;,
+        &quot;source&quot;,
+        &quot;route&quot;
       ],
       &quot;type&quot;: &quot;object&quot;
     },
-    &quot;DashboardSource&quot;: {
-      &quot;description&quot;: &quot;Where a card&#39;s value came from: the capability asked, the input it was asked with, and\nthe pointer into its answer. Asking the capability the same question and reading the\npointer with the same measure yields the card&#39;s value; that is the whole contract.\n\n```\nuse majordomus_cli::capability::builtin::dashboard::{DashboardMeasure, DashboardSource};\nuse serde_json::json;\n\nlet s: DashboardSource = serde_json::from_value(json!({\n    \&quot;capability\&quot;: \&quot;health.report\&quot;,\n    \&quot;input\&quot;: {},\n    \&quot;pointer\&quot;: \&quot;/status\&quot;,\n    \&quot;measure\&quot;: \&quot;exact\&quot;,\n})).unwrap();\nassert_eq!(s.measure, DashboardMeasure::Exact);\nassert_eq!(s.measure.read(&amp;json!({ \&quot;status\&quot;: \&quot;ok\&quot; }), &amp;s.pointer), json!(\&quot;ok\&quot;));\n```&quot;,
-      &quot;properties&quot;: {
-        &quot;capability&quot;: {
-          &quot;description&quot;: &quot;The canonical id of the capability the value was read from.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;input&quot;: {
-          &quot;description&quot;: &quot;The input it was asked with, as its input schema takes it.&quot;
-        },
-        &quot;measure&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/DashboardMeasure&quot;,
-          &quot;description&quot;: &quot;How the value is read at the pointer.&quot;
-        },
-        &quot;pointer&quot;: {
-          &quot;description&quot;: &quot;An RFC 6901 JSON pointer into that capability&#39;s answer.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      },
-      &quot;required&quot;: [
-        &quot;capability&quot;,
-        &quot;input&quot;,
-        &quot;pointer&quot;,
-        &quot;measure&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
-    },
-    &quot;HealthStatus&quot;: {
-      &quot;description&quot;: &quot;Where one dimension of the system stands. Ordered by severity, so the worst check\ndecides the whole.&quot;,
+    &quot;DashboardMeasure&quot;: {
       &quot;oneOf&quot;: [
         {
-          &quot;const&quot;: &quot;ok&quot;,
-          &quot;description&quot;: &quot;The engine that decides this dimension is satisfied.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The value at the pointer, exactly; `null` when the pointer resolves to nothing.&quot;,
+          &quot;const&quot;: &quot;exact&quot;
         },
         {
-          &quot;const&quot;: &quot;warn&quot;,
-          &quot;description&quot;: &quot;Nothing is broken and something is worth looking at.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;fail&quot;,
-          &quot;description&quot;: &quot;The engine that decides this dimension is not satisfied.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;unknown&quot;,
-          &quot;description&quot;: &quot;This process cannot decide it, and says so rather than reporting `ok`.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;description&quot;: &quot;The number at the pointer, or the length of the list or map there; `0` when the\nsource left it out, which is how the sources say an empty list or a zero tally.&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;count&quot;
         }
-      ]
+      ],
+      &quot;description&quot;: &quot;How a card&#39;s value is read out of its source&#39;s answer. Neither reading is arithmetic on\nthe source&#39;s behalf.\n\n```\nuse majordomus_cli::capability::builtin::dashboard::DashboardMeasure;\nuse serde_json::json;\n\nlet answer = json!({ \&quot;status\&quot;: \&quot;warn\&quot;, \&quot;tallies\&quot;: { \&quot;ok\&quot;: 6 }, \&quot;overlaps\&quot;: [1, 2] });\n// exact: the value at the pointer, null when there is none\nassert_eq!(DashboardMeasure::Exact.read(&amp;answer, \&quot;/status\&quot;), json!(\&quot;warn\&quot;));\nassert_eq!(DashboardMeasure::Exact.read(&amp;answer, \&quot;/tallies/fail\&quot;), json!(null));\n// count: a number as it stands, a list or map by its length, and an omitted one is none\nassert_eq!(DashboardMeasure::Count.read(&amp;answer, \&quot;/tallies/ok\&quot;), json!(6));\nassert_eq!(DashboardMeasure::Count.read(&amp;answer, \&quot;/overlaps\&quot;), json!(2));\nassert_eq!(DashboardMeasure::Count.read(&amp;answer, \&quot;/tallies/fail\&quot;), json!(0));\n```&quot;
     }
   },
   &quot;description&quot;: &quot;The Overview: four questions, each answered by facts other capabilities hold.\n\n```\nuse majordomus_cli::capability::builtin::dashboard::DashboardOverview;\nuse majordomus_cli::capability::builtin::HealthStatus;\nuse serde_json::json;\n\nlet o: DashboardOverview = serde_json::from_value(json!({ \&quot;status\&quot;: \&quot;unknown\&quot;, \&quot;questions\&quot;: [] })).unwrap();\nassert_eq!(o.status, HealthStatus::Unknown);\n```&quot;,
   &quot;properties&quot;: {
     &quot;questions&quot;: {
-      &quot;description&quot;: &quot;`healthy`, `changed`, `broken`, `action`, in that order.&quot;,
       &quot;items&quot;: {
         &quot;$ref&quot;: &quot;#/$defs/DashboardQuestion&quot;
       },
-      &quot;type&quot;: &quot;array&quot;
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;description&quot;: &quot;`healthy`, `changed`, `broken`, `action`, in that order.&quot;
     },
     &quot;status&quot;: {
-      &quot;$ref&quot;: &quot;#/$defs/HealthStatus&quot;,
-      &quot;description&quot;: &quot;The worst of the questions: `unknown` outranks `fail`, because an undecided fact is\nnot a healthy one.&quot;
+      &quot;description&quot;: &quot;The worst of the questions: `unknown` outranks `fail`, because an undecided fact is\nnot a healthy one.&quot;,
+      &quot;$ref&quot;: &quot;#/$defs/HealthStatus&quot;
     }
   },
   &quot;required&quot;: [
     &quot;status&quot;,
     &quot;questions&quot;
   ],
-  &quot;title&quot;: &quot;DashboardOverview&quot;,
-  &quot;type&quot;: &quot;object&quot;
+  &quot;title&quot;: &quot;DashboardOverview&quot;
 }</pre></div>
   </details>
 </div>
@@ -441,7 +441,7 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
         <div><dt class="text-body-subtle">modul Rust</dt><dd class="min-w-0 break-all font-mono text-heading">majordomus_cli::capability::builtin::dashboard</dd></div>
         <div><dt class="text-body-subtle">typ vstupu</dt><dd class="font-mono text-heading">Prázdné</dd></div>
         <div><dt class="text-body-subtle">typ výstupu</dt><dd class="font-mono text-heading">DashboardOverview</dd></div>
-        <div><dt class="text-body-subtle">reference na GitHubu</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/1112bace3437ee0d82067b1e8f61813e70190078/docs/generated/modules/dashboard.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/dashboard.md</a></dd></div><div><dt class="text-body-subtle">otisk registru</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">5cdbf22cd21589ddbe464d5f0987b6bcf4607d05479004d6f815c3b306fdb08a</dd></div>
+        <div><dt class="text-body-subtle">reference na GitHubu</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/docs/generated/modules/dashboard.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/dashboard.md</a></dd></div><div><dt class="text-body-subtle">otisk registru</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">3f734f2faf797f0ca7c39b4cd837e68b6619c41c6f6711f3d3aeca8f341934eb</dd></div>
         <div><dt class="text-body-subtle">vygenerováno nástrojem</dt><dd class="font-mono text-heading">majordomus-cli 1.0.0-alpha.10</dd></div>
       </dl>
     </div>
@@ -497,9 +497,9 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
       <div class="min-w-0">
         <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">Projekt</h2><ul class="space-y-2 text-sm font-medium text-body">
           <li><a href="https://github.com/korczis/prismatic-majordomus" class="hover:text-heading hover:underline">GitHub</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/1112bace3437ee0d82067b1e8f61813e70190078/LICENSE" class="hover:text-heading hover:underline">Licence MIT</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/1112bace3437ee0d82067b1e8f61813e70190078/SECURITY.md" class="hover:text-heading hover:underline">Bezpečnostní politika</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/1112bace3437ee0d82067b1e8f61813e70190078/CONTRIBUTING.md" class="hover:text-heading hover:underline">Průvodce pro přispěvatele</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/LICENSE" class="hover:text-heading hover:underline">Licence MIT</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/SECURITY.md" class="hover:text-heading hover:underline">Bezpečnostní politika</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/CONTRIBUTING.md" class="hover:text-heading hover:underline">Průvodce pro přispěvatele</a></li>
         </ul>
       </div>
     </div>
@@ -507,7 +507,7 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/cs/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.10</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/1112bace3437ee0d82067b1e8f61813e70190078" class="font-mono underline">1112bac</a> · inputs <span class="font-mono">830f884cc5aa</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/cs/architecture/" class="underline">how this site is derived</a> names them.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.10</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/745db2ea21e02613943face75a2bf95542be1f2e" class="font-mono underline">745db2e</a> · inputs <span class="font-mono">0a58c217d1b7</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/cs/architecture/" class="underline">how this site is derived</a> names them.</p>
     </div>
   </div>
 </footer>

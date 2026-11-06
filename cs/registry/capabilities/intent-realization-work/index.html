@@ -223,8 +223,8 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
-  &quot;additionalProperties&quot;: false,
   &quot;description&quot;: &quot;Which intent to answer the realization of; every intent when absent.\n\n```\nuse majordomus_cli::capability::builtin::intent_realization::IntentRealizationInput;\nlet all = IntentRealizationInput::default();\nassert!(all.intent.is_none());\n```&quot;,
+  &quot;title&quot;: &quot;IntentRealizationInput&quot;,
   &quot;properties&quot;: {
     &quot;intent&quot;: {
       &quot;description&quot;: &quot;An intent id. When given, only that intent, the work linked to it and its findings are\nanswered; the unlinked work is left out.&quot;,
@@ -234,8 +234,8 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
       ]
     }
   },
-  &quot;title&quot;: &quot;IntentRealizationInput&quot;,
-  &quot;type&quot;: &quot;object&quot;
+  &quot;type&quot;: &quot;object&quot;,
+  &quot;additionalProperties&quot;: false
 }</pre></div>
   </details>
 </div>
@@ -249,6 +249,21 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
     <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
       <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">vlastnost</th><th class="px-3 py-2">typ</th><th class="px-3 py-2">povinné</th><th class="px-3 py-2">popis</th></tr></thead>
       <tbody><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">intenty</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Každý záměr, v pořadí identit.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">osiřelé</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">integer</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">How many units of work serve no intent: the unlinked units of class <code>orphan</code> alone.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">práce</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Každá přečtená jednotka práce, s jejími odkazy.</td>
+      </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">before_intents</td>
         <td class="px-3 py-2 font-mono text-xs text-body">integer</td>
         <td class="px-3 py-2 font-mono text-xs text-body">ne</td>
@@ -265,61 +280,298 @@ read from. <span class="font-mono text-xs text-body-subtle">default 0</span></td
         <td class="px-3 py-2 font-mono text-xs text-body">array</td>
         <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
         <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Každý nález: nejprve odchylka každého záměru, pak živá práce, která neslouží žádnému záměru.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">intenty</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Každý záměr, v pořadí identit.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">osiřelé</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">integer</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">How many units of work serve no intent: the unlinked units of class <code>orphan</code> alone.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">práce</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Každá přečtená jednotka práce, s jejími odkazy.</td>
       </tr></tbody>
     </table>
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
+  &quot;title&quot;: &quot;IntentRealization&quot;,
+  &quot;description&quot;: &quot;Every intent, realised, and every unit of work, joined: what `majordomus intent realization`\nanswers.\n\n```\nuse majordomus_cli::intent_realization::IntentRealization;\nlet r = IntentRealization {\n    intents: vec![], work: vec![], orphans: 0, empty: 0, before_intents: 0, findings: vec![],\n};\nassert_eq!(r.orphans + r.empty + r.before_intents, 0);\n```&quot;,
+  &quot;properties&quot;: {
+    &quot;intents&quot;: {
+      &quot;items&quot;: {
+        &quot;$ref&quot;: &quot;#/$defs/IntentRealizationView&quot;
+      },
+      &quot;description&quot;: &quot;Every intent, in identity order.&quot;,
+      &quot;type&quot;: &quot;array&quot;
+    },
+    &quot;orphans&quot;: {
+      &quot;description&quot;: &quot;How many units of work serve no intent: the unlinked units of class `orphan` alone.&quot;,
+      &quot;type&quot;: &quot;integer&quot;,
+      &quot;minimum&quot;: 0,
+      &quot;format&quot;: &quot;uint&quot;
+    },
+    &quot;work&quot;: {
+      &quot;items&quot;: {
+        &quot;$ref&quot;: &quot;#/$defs/IntentRealizedWork&quot;
+      },
+      &quot;description&quot;: &quot;Every unit of work read, with its links.&quot;,
+      &quot;type&quot;: &quot;array&quot;
+    },
+    &quot;before_intents&quot;: {
+      &quot;minimum&quot;: 0,
+      &quot;default&quot;: 0,
+      &quot;description&quot;: &quot;How many unlinked units are `before_intents`: finished work that started before the\nfirst intent record was written, or while none was declared.&quot;,
+      &quot;type&quot;: &quot;integer&quot;,
+      &quot;format&quot;: &quot;uint&quot;
+    },
+    &quot;empty&quot;: {
+      &quot;description&quot;: &quot;How many unlinked units are `empty`: session records that did no work a link could be\nread from.&quot;,
+      &quot;minimum&quot;: 0,
+      &quot;type&quot;: &quot;integer&quot;,
+      &quot;format&quot;: &quot;uint&quot;,
+      &quot;default&quot;: 0
+    },
+    &quot;findings&quot;: {
+      &quot;description&quot;: &quot;Every finding: each intent&#39;s drift, then the live work that serves no intent.&quot;,
+      &quot;items&quot;: {
+        &quot;$ref&quot;: &quot;#/$defs/IntentFinding&quot;
+      },
+      &quot;type&quot;: &quot;array&quot;
+    }
+  },
+  &quot;required&quot;: [
+    &quot;intents&quot;,
+    &quot;work&quot;,
+    &quot;orphans&quot;,
+    &quot;findings&quot;
+  ],
+  &quot;type&quot;: &quot;object&quot;,
   &quot;$defs&quot;: {
-    &quot;IntentEpisode&quot;: {
-      &quot;description&quot;: &quot;One execution episode of a piece of work, and the provider that ran it when a record says.\nA provider is never guessed: an episode opened by hand has none.\n\n```\nuse majordomus_cli::intent_realization::IntentEpisode;\nlet e = IntentEpisode {\n    session: \&quot;s-1\&quot;.into(),\n    provider: \&quot;codex\&quot;.into(),\n    provider_session: String::new(),\n};\nassert_eq!(e.provider, \&quot;codex\&quot;);\n```&quot;,
+    &quot;IntentWorkUnit&quot;: {
+      &quot;type&quot;: &quot;object&quot;,
+      &quot;required&quot;: [
+        &quot;kind&quot;,
+        &quot;id&quot;
+      ],
+      &quot;description&quot;: &quot;One unit of work as its records describe it, before it is joined to any intent.\n\n```\nuse majordomus_cli::intent_realization::{IntentWorkKind, IntentWorkUnit};\nlet unit = IntentWorkUnit::new(IntentWorkKind::Task, \&quot;t-1\&quot;);\nassert!(unit.episodes.is_empty());\nassert_eq!(unit.id, \&quot;t-1\&quot;);\n```&quot;,
       &quot;properties&quot;: {
-        &quot;provider&quot;: {
-          &quot;description&quot;: &quot;The provider, as its own events or the peer&#39;s client name it; empty when unknown.&quot;,
+        &quot;kind&quot;: {
+          &quot;description&quot;: &quot;Which record it was read from.&quot;,
+          &quot;$ref&quot;: &quot;#/$defs/IntentWorkKind&quot;
+        },
+        &quot;episodes&quot;: {
+          &quot;description&quot;: &quot;Every episode that worked on it, in first-seen order.&quot;,
+          &quot;items&quot;: {
+            &quot;$ref&quot;: &quot;#/$defs/IntentEpisode&quot;
+          },
+          &quot;type&quot;: &quot;array&quot;
+        },
+        &quot;id&quot;: {
+          &quot;description&quot;: &quot;Its identity in that record: a task id, a session id, or `&lt;peer&gt;/&lt;claim&gt;`.&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
-        &quot;provider_session&quot;: {
-          &quot;description&quot;: &quot;The provider&#39;s own session identity, when recorded.&quot;,
+        &quot;named_issues&quot;: {
+          &quot;type&quot;: &quot;array&quot;,
+          &quot;items&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          },
+          &quot;description&quot;: &quot;Issue ids its own words cite.&quot;
+        },
+        &quot;outcome&quot;: {
+          &quot;description&quot;: &quot;Where it stands: a task&#39;s outcome, a session&#39;s, or `attached`/`departed` for a claim.&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
-        &quot;session&quot;: {
-          &quot;description&quot;: &quot;The episode id, `s-...`; empty for a peer&#39;s connection, which is not an episode.&quot;,
+        &quot;moved_issues&quot;: {
+          &quot;items&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          },
+          &quot;description&quot;: &quot;Issue ids a recorded event shows it moving.&quot;,
+          &quot;type&quot;: &quot;array&quot;
+        },
+        &quot;commits&quot;: {
+          &quot;description&quot;: &quot;The commits a session record lists.&quot;,
+          &quot;type&quot;: &quot;array&quot;,
+          &quot;items&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        },
+        &quot;started_at&quot;: {
+          &quot;description&quot;: &quot;When its earliest episode started, as its record says: a session record&#39;s `started_at`,\na task&#39;s first `task.started`, a claim&#39;s `at`. Empty when no record says.&quot;,
           &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;title&quot;: {
+          &quot;description&quot;: &quot;What it says it is, in its own words.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;branches&quot;: {
+          &quot;items&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          },
+          &quot;type&quot;: &quot;array&quot;,
+          &quot;description&quot;: &quot;The branches it ran on, in first-seen order.&quot;
+        },
+        &quot;scope&quot;: {
+          &quot;items&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          },
+          &quot;type&quot;: &quot;array&quot;,
+          &quot;description&quot;: &quot;The paths it claims.&quot;
+        },
+        &quot;handovers&quot;: {
+          &quot;description&quot;: &quot;The handovers that carried it from one episode to the next, repository-relative.&quot;,
+          &quot;items&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          },
+          &quot;type&quot;: &quot;array&quot;
+        }
+      }
+    },
+    &quot;IntentLinkProvenance&quot;: {
+      &quot;description&quot;: &quot;How a link from a piece of work to an issue is known, strongest first.\n\n```\nuse majordomus_cli::intent_realization::IntentLinkProvenance;\nassert_eq!(\n    serde_json::to_string(&amp;IntentLinkProvenance::Inferred).unwrap(),\n    \&quot;\\\&quot;inferred\\\&quot;\&quot;\n);\nassert!(IntentLinkProvenance::Observed &lt; IntentLinkProvenance::Derived);\n```&quot;,
+      &quot;oneOf&quot;: [
+        {
+          &quot;const&quot;: &quot;declared&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The work names the issue itself.&quot;
+        },
+        {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;observed&quot;,
+          &quot;description&quot;: &quot;A recorded event shows the work&#39;s episode moving the issue.&quot;
+        },
+        {
+          &quot;const&quot;: &quot;derived&quot;,
+          &quot;description&quot;: &quot;The branch the work ran on names the issue, by the worktree naming rule.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;Nothing stronger exists, and an open issue&#39;s scope overlaps the work&#39;s scope.&quot;,
+          &quot;const&quot;: &quot;inferred&quot;
+        }
+      ]
+    },
+    &quot;IntentLink&quot;: {
+      &quot;properties&quot;: {
+        &quot;intent&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The intent.&quot;
+        },
+        &quot;provenance&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/IntentLinkProvenance&quot;,
+          &quot;description&quot;: &quot;How the link is known, from `via`.&quot;
+        },
+        &quot;issue&quot;: {
+          &quot;description&quot;: &quot;The issue that links the work to that milestone.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;via&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/IntentLinkVia&quot;,
+          &quot;description&quot;: &quot;The fact the link was read from.&quot;
+        },
+        &quot;milestone&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The milestone that links the issue to it.&quot;
+        },
+        &quot;criteria&quot;: {
+          &quot;type&quot;: &quot;array&quot;,
+          &quot;description&quot;: &quot;The criteria of this intent the issue declares it serves; empty when it declares none.&quot;,
+          &quot;items&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        },
+        &quot;stage&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/IntentStage&quot;,
+          &quot;description&quot;: &quot;Its derived stage.&quot;
         }
       },
+      &quot;required&quot;: [
+        &quot;intent&quot;,
+        &quot;stage&quot;,
+        &quot;milestone&quot;,
+        &quot;issue&quot;,
+        &quot;via&quot;,
+        &quot;provenance&quot;
+      ],
+      &quot;description&quot;: &quot;One link from a piece of work to an intent: through which issue and milestone, serving\nwhich of its criteria, read from which fact, known how.\n\n```\nuse majordomus_cli::intent::IntentStage;\nuse majordomus_cli::intent_realization::{IntentLink, IntentLinkProvenance, IntentLinkVia};\nlet l = IntentLink {\n    intent: \&quot;intent-lifecycle\&quot;.into(), stage: IntentStage::Executing,\n    milestone: \&quot;intent-lifecycle\&quot;.into(), issue: \&quot;I1900\&quot;.into(),\n    criteria: vec![\&quot;stage-is-derived\&quot;.into()],\n    via: IntentLinkVia::BranchIssue, provenance: IntentLinkProvenance::Derived,\n};\nassert_eq!(l.provenance, l.via.provenance());\n```&quot;,
       &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;IntentRealizationView&quot;: {
+      &quot;properties&quot;: {
+        &quot;intent&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The intent.&quot;
+        },
+        &quot;providers&quot;: {
+          &quot;description&quot;: &quot;Every provider that ran work linked to it, each once.&quot;,
+          &quot;items&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          },
+          &quot;type&quot;: &quot;array&quot;
+        },
+        &quot;unmet&quot;: {
+          &quot;type&quot;: &quot;array&quot;,
+          &quot;description&quot;: &quot;Every criterion without current evidence.&quot;,
+          &quot;items&quot;: {
+            &quot;$ref&quot;: &quot;#/$defs/IntentUnmetCriterion&quot;
+          }
+        },
+        &quot;findings&quot;: {
+          &quot;items&quot;: {
+            &quot;$ref&quot;: &quot;#/$defs/IntentFinding&quot;
+          },
+          &quot;type&quot;: &quot;array&quot;,
+          &quot;description&quot;: &quot;Drift between the plan&#39;s closure and the evidence.&quot;
+        },
+        &quot;met&quot;: {
+          &quot;minimum&quot;: 0,
+          &quot;description&quot;: &quot;How many have current evidence.&quot;,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;title&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;Its title.&quot;
+        },
+        &quot;work&quot;: {
+          &quot;items&quot;: {
+            &quot;$ref&quot;: &quot;#/$defs/IntentWorkRef&quot;
+          },
+          &quot;description&quot;: &quot;Every unit of work linked to it, strongest link first.&quot;,
+          &quot;type&quot;: &quot;array&quot;
+        },
+        &quot;criteria&quot;: {
+          &quot;description&quot;: &quot;How many criteria it declares.&quot;,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;type&quot;: &quot;integer&quot;,
+          &quot;minimum&quot;: 0
+        },
+        &quot;stage&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/IntentStage&quot;,
+          &quot;description&quot;: &quot;Its derived stage.&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;intent&quot;,
+        &quot;title&quot;,
+        &quot;stage&quot;,
+        &quot;criteria&quot;,
+        &quot;met&quot;,
+        &quot;unmet&quot;,
+        &quot;work&quot;,
+        &quot;providers&quot;,
+        &quot;findings&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;,
+      &quot;description&quot;: &quot;One intent, realised: how far reality is from it, the work realising it and by whom, and the\ndrift between closed work and current evidence.\n\n```\nuse majordomus_cli::intent::IntentStage;\nuse majordomus_cli::intent_realization::IntentRealizationView;\nlet v = IntentRealizationView {\n    intent: \&quot;x\&quot;.into(), title: \&quot;X\&quot;.into(), stage: IntentStage::Verifying,\n    criteria: 2, met: 1, unmet: vec![], work: vec![], providers: vec![], findings: vec![],\n};\nassert!(v.met &lt; v.criteria);\n```&quot;
     },
     &quot;IntentEvidenceState&quot;: {
       &quot;description&quot;: &quot;What the evidence behind one criterion says, as a word. Only `Current` meets a criterion:\na stale, failing, unrecorded or underivable reference never does, and neither does one that\nresolves to nothing.\n\nWhether a recorded run is current is not decided here. A `test` or `claim` criterion is\njudged by the evidence module&#39;s one truth table (`evidence::freshness()`) at the working\ntree and read through `evidence::current`, the same judgement the claim report and the\nsubject pages make; `IntentEvidenceState::judged` is the whole of the translation. So\nthe state follows the evidence both ways: a criterion met today reads stale or failing\nthe moment the ledger or the tree says so, and met again once a current pass is recorded.\n\n```\nuse majordomus_cli::intent::IntentEvidenceState;\nassert_eq!(serde_json::to_string(&amp;IntentEvidenceState::NotRun).unwrap(), \&quot;\\\&quot;not_run\\\&quot;\&quot;);\nassert_ne!(IntentEvidenceState::Stale, IntentEvidenceState::Current);\n```&quot;,
       &quot;oneOf&quot;: [
         {
+          &quot;type&quot;: &quot;string&quot;,
           &quot;const&quot;: &quot;current&quot;,
-          &quot;description&quot;: &quot;A passing run that is current evidence at the working tree: its commit is in this\nhistory, it measured a tree that was its commit, the test still hashes to what ran,\nand nothing the criterion names has changed since — for a test, its source and the\nsource and implementation of every claim that test proves; for a claim, what the\nclaim names. A change the criterion does not name, the evidence ledger&#39;s own included,\nleaves it current. A test that proves no claim naming an implementation names no code\nunder test, so for it nothing but the ledger may have changed since the run. The only\nstate that meets a criterion; the criterion&#39;s `proof` says whether it rests on\n`proven` or on `inputs_unchanged`.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;description&quot;: &quot;A passing run that is current evidence at the working tree: its commit is in this\nhistory, it measured a tree that was its commit, the test still hashes to what ran,\nand nothing the criterion names has changed since — for a test, its source and the\nsource and implementation of every claim that test proves; for a claim, what the\nclaim names. A change the criterion does not name, the evidence ledger&#39;s own included,\nleaves it current. A test that proves no claim naming an implementation names no code\nunder test, so for it nothing but the ledger may have changed since the run. The only\nstate that meets a criterion; the criterion&#39;s `proof` says whether it rests on\n`proven` or on `inputs_unchanged`.&quot;
         },
         {
           &quot;const&quot;: &quot;stale&quot;,
-          &quot;description&quot;: &quot;A pass that is not current evidence: something the criterion names has changed since\nit, it names no code under test and anything but the ledger and the plan&#39;s own records\nhas changed since, the\ntest no longer hashes to what ran, the run&#39;s commit is not in this history (or git\ncould not compare it), or the run measured a tree that was not its commit — a run on a\ndirty tree, which no later tree can be matched against.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;A pass that is not current evidence: something the criterion names has changed since\nit, it names no code under test and anything but the ledger and the plan&#39;s own records\nhas changed since, the\ntest no longer hashes to what ran, the run&#39;s commit is not in this history (or git\ncould not compare it), or the run measured a tree that was not its commit — a run on a\ndirty tree, which no later tree can be matched against.&quot;
         },
         {
-          &quot;const&quot;: &quot;failing&quot;,
           &quot;description&quot;: &quot;The latest recorded run failed, timed out or errored.&quot;,
+          &quot;const&quot;: &quot;failing&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
         {
@@ -328,23 +580,28 @@ read from. <span class="font-mono text-xs text-body-subtle">default 0</span></td
           &quot;type&quot;: &quot;string&quot;
         },
         {
-          &quot;const&quot;: &quot;not_derivable&quot;,
           &quot;description&quot;: &quot;The reference resolves, and this kind of evidence (`command`, `deployment`) is not\nderivable from the ledger, so it never meets a criterion by itself.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;not_derivable&quot;
         },
         {
-          &quot;const&quot;: &quot;unresolved&quot;,
           &quot;description&quot;: &quot;The reference is empty or names nothing this repository holds.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;unresolved&quot;
         }
       ]
     },
     &quot;IntentFinding&quot;: {
+      &quot;type&quot;: &quot;object&quot;,
       &quot;description&quot;: &quot;One validation finding: its level, a stable code a reader greps for, the intent or milestone\nit is about, one line of what is wrong, and the command that shows it again.\n\n```\nuse majordomus_cli::intent::{IntentFinding, FAIL};\nlet f = IntentFinding {\n    level: FAIL.into(),\n    code: \&quot;unknown_milestone\&quot;.into(),\n    subject: \&quot;intent-lifecycle\&quot;.into(),\n    message: \&quot;`no-such` is not a milestone\&quot;.into(),\n    reproduce: \&quot;majordomus intent validate\&quot;.into(),\n};\nassert_eq!(f.level, \&quot;FAIL\&quot;);\nassert_eq!(f.reproduce, \&quot;majordomus intent validate\&quot;);\n```&quot;,
       &quot;properties&quot;: {
-        &quot;code&quot;: {
-          &quot;description&quot;: &quot;The stable code a reader greps for.&quot;,
+        &quot;reproduce&quot;: {
+          &quot;description&quot;: &quot;The command that shows it again.&quot;,
           &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;code&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The stable code a reader greps for.&quot;
         },
         &quot;level&quot;: {
           &quot;description&quot;: &quot;`FAIL` or `WARN`. A failure means the intent model is invalid.&quot;,
@@ -352,10 +609,6 @@ read from. <span class="font-mono text-xs text-body-subtle">default 0</span></td
         },
         &quot;message&quot;: {
           &quot;description&quot;: &quot;What is wrong, in one line.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;reproduce&quot;: {
-          &quot;description&quot;: &quot;The command that shows it again.&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
         &quot;subject&quot;: {
@@ -369,78 +622,105 @@ read from. <span class="font-mono text-xs text-body-subtle">default 0</span></td
         &quot;subject&quot;,
         &quot;message&quot;,
         &quot;reproduce&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
+      ]
     },
-    &quot;IntentLink&quot;: {
-      &quot;description&quot;: &quot;One link from a piece of work to an intent: through which issue and milestone, serving\nwhich of its criteria, read from which fact, known how.\n\n```\nuse majordomus_cli::intent::IntentStage;\nuse majordomus_cli::intent_realization::{IntentLink, IntentLinkProvenance, IntentLinkVia};\nlet l = IntentLink {\n    intent: \&quot;intent-lifecycle\&quot;.into(), stage: IntentStage::Executing,\n    milestone: \&quot;intent-lifecycle\&quot;.into(), issue: \&quot;I1900\&quot;.into(),\n    criteria: vec![\&quot;stage-is-derived\&quot;.into()],\n    via: IntentLinkVia::BranchIssue, provenance: IntentLinkProvenance::Derived,\n};\nassert_eq!(l.provenance, l.via.provenance());\n```&quot;,
-      &quot;properties&quot;: {
-        &quot;criteria&quot;: {
-          &quot;description&quot;: &quot;The criteria of this intent the issue declares it serves; empty when it declares none.&quot;,
-          &quot;items&quot;: {
-            &quot;type&quot;: &quot;string&quot;
-          },
-          &quot;type&quot;: &quot;array&quot;
-        },
-        &quot;intent&quot;: {
-          &quot;description&quot;: &quot;The intent.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;issue&quot;: {
-          &quot;description&quot;: &quot;The issue that links the work to that milestone.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;milestone&quot;: {
-          &quot;description&quot;: &quot;The milestone that links the issue to it.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;provenance&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/IntentLinkProvenance&quot;,
-          &quot;description&quot;: &quot;How the link is known, from `via`.&quot;
-        },
-        &quot;stage&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/IntentStage&quot;,
-          &quot;description&quot;: &quot;Its derived stage.&quot;
-        },
-        &quot;via&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/IntentLinkVia&quot;,
-          &quot;description&quot;: &quot;The fact the link was read from.&quot;
-        }
-      },
-      &quot;required&quot;: [
-        &quot;intent&quot;,
-        &quot;stage&quot;,
-        &quot;milestone&quot;,
-        &quot;issue&quot;,
-        &quot;via&quot;,
-        &quot;provenance&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
-    },
-    &quot;IntentLinkProvenance&quot;: {
-      &quot;description&quot;: &quot;How a link from a piece of work to an issue is known, strongest first.\n\n```\nuse majordomus_cli::intent_realization::IntentLinkProvenance;\nassert_eq!(\n    serde_json::to_string(&amp;IntentLinkProvenance::Inferred).unwrap(),\n    \&quot;\\\&quot;inferred\\\&quot;\&quot;\n);\nassert!(IntentLinkProvenance::Observed &lt; IntentLinkProvenance::Derived);\n```&quot;,
+    &quot;IntentUnlinkedClass&quot;: {
       &quot;oneOf&quot;: [
         {
-          &quot;const&quot;: &quot;declared&quot;,
-          &quot;description&quot;: &quot;The work names the issue itself.&quot;,
+          &quot;description&quot;: &quot;A session record that lists no issue, no commit and no changed path outside the session\nrecords, and whose own words cite no issue: it did no work a link could be read from.&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;empty&quot;
+        },
+        {
+          &quot;description&quot;: &quot;Not live, not empty, and its earliest episode started before the first intent record\nwas written — or no intent is declared at all.&quot;,
+          &quot;const&quot;: &quot;before_intents&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
         {
-          &quot;const&quot;: &quot;observed&quot;,
-          &quot;description&quot;: &quot;A recorded event shows the work&#39;s episode moving the issue.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;derived&quot;,
-          &quot;description&quot;: &quot;The branch the work ran on names the issue, by the worktree naming rule.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;inferred&quot;,
-          &quot;description&quot;: &quot;Nothing stronger exists, and an open issue&#39;s scope overlaps the work&#39;s scope.&quot;,
+          &quot;const&quot;: &quot;orphan&quot;,
+          &quot;description&quot;: &quot;Anything else unlinked: work done, or being done, while an intent existed, with no fact\nlinking it to one.&quot;,
           &quot;type&quot;: &quot;string&quot;
         }
+      ],
+      &quot;description&quot;: &quot;What a unit of work that realises no intent is, by the facts it records (ADR 0075,\namendment of 2026-10-15). Only `IntentUnlinkedClass::Orphan` is work serving no intent;\nthe other two classes say why a unit is not, and neither is a link.\n\n```\nuse majordomus_cli::intent_realization::IntentUnlinkedClass;\nassert_eq!(\n    serde_json::to_string(&amp;IntentUnlinkedClass::BeforeIntents).unwrap(),\n    \&quot;\\\&quot;before_intents\\\&quot;\&quot;\n);\nassert!(IntentUnlinkedClass::Empty &lt; IntentUnlinkedClass::Orphan);\n```&quot;
+    },
+    &quot;IntentEpisode&quot;: {
+      &quot;type&quot;: &quot;object&quot;,
+      &quot;description&quot;: &quot;One execution episode of a piece of work, and the provider that ran it when a record says.\nA provider is never guessed: an episode opened by hand has none.\n\n```\nuse majordomus_cli::intent_realization::IntentEpisode;\nlet e = IntentEpisode {\n    session: \&quot;s-1\&quot;.into(),\n    provider: \&quot;codex\&quot;.into(),\n    provider_session: String::new(),\n};\nassert_eq!(e.provider, \&quot;codex\&quot;);\n```&quot;,
+      &quot;properties&quot;: {
+        &quot;provider&quot;: {
+          &quot;description&quot;: &quot;The provider, as its own events or the peer&#39;s client name it; empty when unknown.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;provider_session&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The provider&#39;s own session identity, when recorded.&quot;
+        },
+        &quot;session&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The episode id, `s-...`; empty for a peer&#39;s connection, which is not an episode.&quot;
+        }
+      }
+    },
+    &quot;IntentStage&quot;: {
+      &quot;description&quot;: &quot;Where an intent stands, derived on every read and stored nowhere.\n\n```\nuse majordomus_cli::intent::IntentStage;\n// one word every surface prints, and an order that follows the work\nassert_eq!(IntentStage::Executing.as_str(), \&quot;executing\&quot;);\nassert!(IntentStage::Declared &lt; IntentStage::Satisfied);\n```&quot;,
+      &quot;oneOf&quot;: [
+        {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;A named milestone does not resolve, or none is named.&quot;,
+          &quot;const&quot;: &quot;declared&quot;
+        },
+        {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;planned&quot;,
+          &quot;description&quot;: &quot;Every milestone resolves and none has started.&quot;
+        },
+        {
+          &quot;const&quot;: &quot;executing&quot;,
+          &quot;description&quot;: &quot;A milestone is under way.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;verifying&quot;,
+          &quot;description&quot;: &quot;Every milestone that counts is DONE; satisfaction is not yet evidenced.&quot;
+        },
+        {
+          &quot;const&quot;: &quot;satisfied&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;Verifying, and every criterion has current evidence.&quot;
+        },
+        {
+          &quot;const&quot;: &quot;cancelled&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The record says it was abandoned.&quot;
+        },
+        {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;superseded&quot;,
+          &quot;description&quot;: &quot;The record names the intent that replaced it.&quot;
+        }
       ]
+    },
+    &quot;IntentWorkKind&quot;: {
+      &quot;oneOf&quot;: [
+        {
+          &quot;description&quot;: &quot;A task of this checkout&#39;s ledger: the durable unit a handover continues, across every\nepisode that worked on it.&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;task&quot;
+        },
+        {
+          &quot;description&quot;: &quot;A claim a peer announced on the shared server&#39;s board.&quot;,
+          &quot;const&quot;: &quot;peer_claim&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;session_record&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;A closed session record of the shared layer whose episode this checkout&#39;s ledger does\nnot hold — another machine&#39;s or another checkout&#39;s work.&quot;
+        }
+      ],
+      &quot;description&quot;: &quot;Which record a unit of work was read from.\n\n```\nuse majordomus_cli::intent_realization::IntentWorkKind;\nassert_eq!(serde_json::to_string(&amp;IntentWorkKind::PeerClaim).unwrap(), \&quot;\\\&quot;peer_claim\\\&quot;\&quot;);\n```&quot;
     },
     &quot;IntentLinkVia&quot;: {
       &quot;description&quot;: &quot;The fact a link was read from.\n\n```\nuse majordomus_cli::intent_realization::IntentLinkVia;\nassert_eq!(serde_json::to_string(&amp;IntentLinkVia::BranchIssue).unwrap(), \&quot;\\\&quot;branch_issue\\\&quot;\&quot;);\nassert_eq!(IntentLinkVia::ScopeOverlap.provenance().as_str(), \&quot;inferred\&quot;);\n```&quot;,
@@ -456,90 +736,25 @@ read from. <span class="font-mono text-xs text-body-subtle">default 0</span></td
           &quot;type&quot;: &quot;string&quot;
         },
         {
-          &quot;const&quot;: &quot;branch_issue&quot;,
           &quot;description&quot;: &quot;The branch name carries the issue id.&quot;,
+          &quot;const&quot;: &quot;branch_issue&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
         {
-          &quot;const&quot;: &quot;scope_overlap&quot;,
+          &quot;type&quot;: &quot;string&quot;,
           &quot;description&quot;: &quot;An open issue&#39;s scope overlaps the work&#39;s scope.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;const&quot;: &quot;scope_overlap&quot;
         }
       ]
     },
-    &quot;IntentRealizationView&quot;: {
-      &quot;description&quot;: &quot;One intent, realised: how far reality is from it, the work realising it and by whom, and the\ndrift between closed work and current evidence.\n\n```\nuse majordomus_cli::intent::IntentStage;\nuse majordomus_cli::intent_realization::IntentRealizationView;\nlet v = IntentRealizationView {\n    intent: \&quot;x\&quot;.into(), title: \&quot;X\&quot;.into(), stage: IntentStage::Verifying,\n    criteria: 2, met: 1, unmet: vec![], work: vec![], providers: vec![], findings: vec![],\n};\nassert!(v.met &lt; v.criteria);\n```&quot;,
-      &quot;properties&quot;: {
-        &quot;criteria&quot;: {
-          &quot;description&quot;: &quot;How many criteria it declares.&quot;,
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;findings&quot;: {
-          &quot;description&quot;: &quot;Drift between the plan&#39;s closure and the evidence.&quot;,
-          &quot;items&quot;: {
-            &quot;$ref&quot;: &quot;#/$defs/IntentFinding&quot;
-          },
-          &quot;type&quot;: &quot;array&quot;
-        },
-        &quot;intent&quot;: {
-          &quot;description&quot;: &quot;The intent.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;met&quot;: {
-          &quot;description&quot;: &quot;How many have current evidence.&quot;,
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;providers&quot;: {
-          &quot;description&quot;: &quot;Every provider that ran work linked to it, each once.&quot;,
-          &quot;items&quot;: {
-            &quot;type&quot;: &quot;string&quot;
-          },
-          &quot;type&quot;: &quot;array&quot;
-        },
-        &quot;stage&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/IntentStage&quot;,
-          &quot;description&quot;: &quot;Its derived stage.&quot;
-        },
-        &quot;title&quot;: {
-          &quot;description&quot;: &quot;Its title.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;unmet&quot;: {
-          &quot;description&quot;: &quot;Every criterion without current evidence.&quot;,
-          &quot;items&quot;: {
-            &quot;$ref&quot;: &quot;#/$defs/IntentUnmetCriterion&quot;
-          },
-          &quot;type&quot;: &quot;array&quot;
-        },
-        &quot;work&quot;: {
-          &quot;description&quot;: &quot;Every unit of work linked to it, strongest link first.&quot;,
-          &quot;items&quot;: {
-            &quot;$ref&quot;: &quot;#/$defs/IntentWorkRef&quot;
-          },
-          &quot;type&quot;: &quot;array&quot;
-        }
-      },
-      &quot;required&quot;: [
-        &quot;intent&quot;,
-        &quot;title&quot;,
-        &quot;stage&quot;,
-        &quot;criteria&quot;,
-        &quot;met&quot;,
-        &quot;unmet&quot;,
-        &quot;work&quot;,
-        &quot;providers&quot;,
-        &quot;findings&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
-    },
     &quot;IntentRealizedWork&quot;: {
-      &quot;description&quot;: &quot;A unit of work with every intent it realises, or the reason it realises none.\n\n```\nuse majordomus_cli::intent_realization::{IntentRealizedWork, IntentWorkKind, IntentWorkUnit};\nlet w = IntentRealizedWork {\n    work: IntentWorkUnit::new(IntentWorkKind::Task, \&quot;t-1\&quot;),\n    links: vec![],\n    unlinked: Some(\&quot;it names no issue\&quot;.into()),\n    class: None,\n};\nassert!(w.links.is_empty() &amp;&amp; w.unlinked.is_some());\n```&quot;,
       &quot;properties&quot;: {
+        &quot;work&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/IntentWorkUnit&quot;,
+          &quot;description&quot;: &quot;The work, as recorded.&quot;
+        },
         &quot;class&quot;: {
+          &quot;description&quot;: &quot;When it realises none: what it is, by the facts it records. `realize` sets it on every\nunlinked unit; `link` alone, which knows neither liveness nor the first intent, leaves\nit empty.&quot;,
           &quot;anyOf&quot;: [
             {
               &quot;$ref&quot;: &quot;#/$defs/IntentUnlinkedClass&quot;
@@ -547,15 +762,7 @@ read from. <span class="font-mono text-xs text-body-subtle">default 0</span></td
             {
               &quot;type&quot;: &quot;null&quot;
             }
-          ],
-          &quot;description&quot;: &quot;When it realises none: what it is, by the facts it records. `realize` sets it on every\nunlinked unit; `link` alone, which knows neither liveness nor the first intent, leaves\nit empty.&quot;
-        },
-        &quot;links&quot;: {
-          &quot;description&quot;: &quot;Every intent it realises, strongest link per issue.&quot;,
-          &quot;items&quot;: {
-            &quot;$ref&quot;: &quot;#/$defs/IntentLink&quot;
-          },
-          &quot;type&quot;: &quot;array&quot;
+          ]
         },
         &quot;unlinked&quot;: {
           &quot;description&quot;: &quot;When it realises none: the first link that is missing.&quot;,
@@ -564,152 +771,30 @@ read from. <span class="font-mono text-xs text-body-subtle">default 0</span></td
             &quot;null&quot;
           ]
         },
-        &quot;work&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/IntentWorkUnit&quot;,
-          &quot;description&quot;: &quot;The work, as recorded.&quot;
+        &quot;links&quot;: {
+          &quot;type&quot;: &quot;array&quot;,
+          &quot;items&quot;: {
+            &quot;$ref&quot;: &quot;#/$defs/IntentLink&quot;
+          },
+          &quot;description&quot;: &quot;Every intent it realises, strongest link per issue.&quot;
         }
       },
+      &quot;description&quot;: &quot;A unit of work with every intent it realises, or the reason it realises none.\n\n```\nuse majordomus_cli::intent_realization::{IntentRealizedWork, IntentWorkKind, IntentWorkUnit};\nlet w = IntentRealizedWork {\n    work: IntentWorkUnit::new(IntentWorkKind::Task, \&quot;t-1\&quot;),\n    links: vec![],\n    unlinked: Some(\&quot;it names no issue\&quot;.into()),\n    class: None,\n};\nassert!(w.links.is_empty() &amp;&amp; w.unlinked.is_some());\n```&quot;,
       &quot;required&quot;: [
         &quot;work&quot;,
         &quot;links&quot;
       ],
       &quot;type&quot;: &quot;object&quot;
     },
-    &quot;IntentStage&quot;: {
-      &quot;description&quot;: &quot;Where an intent stands, derived on every read and stored nowhere.\n\n```\nuse majordomus_cli::intent::IntentStage;\n// one word every surface prints, and an order that follows the work\nassert_eq!(IntentStage::Executing.as_str(), \&quot;executing\&quot;);\nassert!(IntentStage::Declared &lt; IntentStage::Satisfied);\n```&quot;,
-      &quot;oneOf&quot;: [
-        {
-          &quot;const&quot;: &quot;declared&quot;,
-          &quot;description&quot;: &quot;A named milestone does not resolve, or none is named.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;planned&quot;,
-          &quot;description&quot;: &quot;Every milestone resolves and none has started.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;executing&quot;,
-          &quot;description&quot;: &quot;A milestone is under way.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;verifying&quot;,
-          &quot;description&quot;: &quot;Every milestone that counts is DONE; satisfaction is not yet evidenced.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;satisfied&quot;,
-          &quot;description&quot;: &quot;Verifying, and every criterion has current evidence.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;cancelled&quot;,
-          &quot;description&quot;: &quot;The record says it was abandoned.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;superseded&quot;,
-          &quot;description&quot;: &quot;The record names the intent that replaced it.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      ]
-    },
-    &quot;IntentUnlinkedClass&quot;: {
-      &quot;description&quot;: &quot;What a unit of work that realises no intent is, by the facts it records (ADR 0075,\namendment of 2026-10-15). Only `IntentUnlinkedClass::Orphan` is work serving no intent;\nthe other two classes say why a unit is not, and neither is a link.\n\n```\nuse majordomus_cli::intent_realization::IntentUnlinkedClass;\nassert_eq!(\n    serde_json::to_string(&amp;IntentUnlinkedClass::BeforeIntents).unwrap(),\n    \&quot;\\\&quot;before_intents\\\&quot;\&quot;\n);\nassert!(IntentUnlinkedClass::Empty &lt; IntentUnlinkedClass::Orphan);\n```&quot;,
-      &quot;oneOf&quot;: [
-        {
-          &quot;const&quot;: &quot;empty&quot;,
-          &quot;description&quot;: &quot;A session record that lists no issue, no commit and no changed path outside the session\nrecords, and whose own words cite no issue: it did no work a link could be read from.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;before_intents&quot;,
-          &quot;description&quot;: &quot;Not live, not empty, and its earliest episode started before the first intent record\nwas written — or no intent is declared at all.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;orphan&quot;,
-          &quot;description&quot;: &quot;Anything else unlinked: work done, or being done, while an intent existed, with no fact\nlinking it to one.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      ]
-    },
-    &quot;IntentUnmetCriterion&quot;: {
-      &quot;description&quot;: &quot;A criterion an intent still lacks, with the issues that declare they serve it.\n\n```\nuse majordomus_cli::intent::IntentEvidenceState;\nuse majordomus_cli::intent_realization::IntentUnmetCriterion;\nlet c = IntentUnmetCriterion {\n    id: \&quot;surfaces-agree\&quot;.into(), criterion: \&quot;the surfaces agree\&quot;.into(),\n    evidence: \&quot;test\&quot;.into(), state: IntentEvidenceState::Stale,\n    reproduce: None, issues: vec![\&quot;I1900\&quot;.into()],\n};\nassert_eq!(c.state, IntentEvidenceState::Stale);\n```&quot;,
-      &quot;properties&quot;: {
-        &quot;criterion&quot;: {
-          &quot;description&quot;: &quot;What must be observably true.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;evidence&quot;: {
-          &quot;description&quot;: &quot;The kind of evidence that settles it.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;id&quot;: {
-          &quot;description&quot;: &quot;The criterion id.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;issues&quot;: {
-          &quot;description&quot;: &quot;The issues declaring they serve it, in plan order.&quot;,
-          &quot;items&quot;: {
-            &quot;type&quot;: &quot;string&quot;
-          },
-          &quot;type&quot;: &quot;array&quot;
-        },
-        &quot;reproduce&quot;: {
-          &quot;description&quot;: &quot;The command that produces its evidence, when one is known.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;state&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/IntentEvidenceState&quot;,
-          &quot;description&quot;: &quot;Why it is not met.&quot;
-        }
-      },
-      &quot;required&quot;: [
-        &quot;id&quot;,
-        &quot;criterion&quot;,
-        &quot;evidence&quot;,
-        &quot;state&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
-    },
-    &quot;IntentWorkKind&quot;: {
-      &quot;description&quot;: &quot;Which record a unit of work was read from.\n\n```\nuse majordomus_cli::intent_realization::IntentWorkKind;\nassert_eq!(serde_json::to_string(&amp;IntentWorkKind::PeerClaim).unwrap(), \&quot;\\\&quot;peer_claim\\\&quot;\&quot;);\n```&quot;,
-      &quot;oneOf&quot;: [
-        {
-          &quot;const&quot;: &quot;task&quot;,
-          &quot;description&quot;: &quot;A task of this checkout&#39;s ledger: the durable unit a handover continues, across every\nepisode that worked on it.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;peer_claim&quot;,
-          &quot;description&quot;: &quot;A claim a peer announced on the shared server&#39;s board.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;session_record&quot;,
-          &quot;description&quot;: &quot;A closed session record of the shared layer whose episode this checkout&#39;s ledger does\nnot hold — another machine&#39;s or another checkout&#39;s work.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      ]
-    },
     &quot;IntentWorkRef&quot;: {
       &quot;description&quot;: &quot;A unit of work as one intent sees it: which record, how it stands, and the strongest link.\n\n```\nuse majordomus_cli::intent_realization::{IntentLinkProvenance, IntentWorkKind, IntentWorkRef};\nlet r = IntentWorkRef {\n    kind: IntentWorkKind::Task, id: \&quot;t-1\&quot;.into(), outcome: \&quot;active\&quot;.into(),\n    provenance: IntentLinkProvenance::Observed, providers: vec![\&quot;codex\&quot;.into()],\n    handovers: 1,\n};\nassert_eq!(r.handovers, 1);\n```&quot;,
+      &quot;required&quot;: [
+        &quot;kind&quot;,
+        &quot;id&quot;,
+        &quot;provenance&quot;,
+        &quot;handovers&quot;
+      ],
       &quot;properties&quot;: {
-        &quot;handovers&quot;: {
-          &quot;description&quot;: &quot;How many handovers carried it.&quot;,
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;id&quot;: {
-          &quot;description&quot;: &quot;Its identity there.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
         &quot;kind&quot;: {
           &quot;$ref&quot;: &quot;#/$defs/IntentWorkKind&quot;,
           &quot;description&quot;: &quot;Which record.&quot;
@@ -718,158 +803,73 @@ read from. <span class="font-mono text-xs text-body-subtle">default 0</span></td
           &quot;description&quot;: &quot;Where it stands.&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
+        &quot;id&quot;: {
+          &quot;description&quot;: &quot;Its identity there.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;handovers&quot;: {
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;,
+          &quot;description&quot;: &quot;How many handovers carried it.&quot;,
+          &quot;format&quot;: &quot;uint&quot;
+        },
         &quot;provenance&quot;: {
           &quot;$ref&quot;: &quot;#/$defs/IntentLinkProvenance&quot;,
           &quot;description&quot;: &quot;The strongest of its links to this intent.&quot;
         },
         &quot;providers&quot;: {
           &quot;description&quot;: &quot;The providers that ran it.&quot;,
+          &quot;type&quot;: &quot;array&quot;,
           &quot;items&quot;: {
             &quot;type&quot;: &quot;string&quot;
-          },
-          &quot;type&quot;: &quot;array&quot;
+          }
         }
       },
-      &quot;required&quot;: [
-        &quot;kind&quot;,
-        &quot;id&quot;,
-        &quot;provenance&quot;,
-        &quot;handovers&quot;
-      ],
       &quot;type&quot;: &quot;object&quot;
     },
-    &quot;IntentWorkUnit&quot;: {
-      &quot;description&quot;: &quot;One unit of work as its records describe it, before it is joined to any intent.\n\n```\nuse majordomus_cli::intent_realization::{IntentWorkKind, IntentWorkUnit};\nlet unit = IntentWorkUnit::new(IntentWorkKind::Task, \&quot;t-1\&quot;);\nassert!(unit.episodes.is_empty());\nassert_eq!(unit.id, \&quot;t-1\&quot;);\n```&quot;,
+    &quot;IntentUnmetCriterion&quot;: {
+      &quot;description&quot;: &quot;A criterion an intent still lacks, with the issues that declare they serve it.\n\n```\nuse majordomus_cli::intent::IntentEvidenceState;\nuse majordomus_cli::intent_realization::IntentUnmetCriterion;\nlet c = IntentUnmetCriterion {\n    id: \&quot;surfaces-agree\&quot;.into(), criterion: \&quot;the surfaces agree\&quot;.into(),\n    evidence: \&quot;test\&quot;.into(), state: IntentEvidenceState::Stale,\n    reproduce: None, issues: vec![\&quot;I1900\&quot;.into()],\n};\nassert_eq!(c.state, IntentEvidenceState::Stale);\n```&quot;,
       &quot;properties&quot;: {
-        &quot;branches&quot;: {
-          &quot;description&quot;: &quot;The branches it ran on, in first-seen order.&quot;,
-          &quot;items&quot;: {
-            &quot;type&quot;: &quot;string&quot;
-          },
-          &quot;type&quot;: &quot;array&quot;
-        },
-        &quot;commits&quot;: {
-          &quot;description&quot;: &quot;The commits a session record lists.&quot;,
-          &quot;items&quot;: {
-            &quot;type&quot;: &quot;string&quot;
-          },
-          &quot;type&quot;: &quot;array&quot;
-        },
-        &quot;episodes&quot;: {
-          &quot;description&quot;: &quot;Every episode that worked on it, in first-seen order.&quot;,
-          &quot;items&quot;: {
-            &quot;$ref&quot;: &quot;#/$defs/IntentEpisode&quot;
-          },
-          &quot;type&quot;: &quot;array&quot;
-        },
-        &quot;handovers&quot;: {
-          &quot;description&quot;: &quot;The handovers that carried it from one episode to the next, repository-relative.&quot;,
-          &quot;items&quot;: {
-            &quot;type&quot;: &quot;string&quot;
-          },
-          &quot;type&quot;: &quot;array&quot;
-        },
         &quot;id&quot;: {
-          &quot;description&quot;: &quot;Its identity in that record: a task id, a session id, or `&lt;peer&gt;/&lt;claim&gt;`.&quot;,
+          &quot;description&quot;: &quot;The criterion id.&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
-        &quot;kind&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/IntentWorkKind&quot;,
-          &quot;description&quot;: &quot;Which record it was read from.&quot;
-        },
-        &quot;moved_issues&quot;: {
-          &quot;description&quot;: &quot;Issue ids a recorded event shows it moving.&quot;,
+        &quot;issues&quot;: {
           &quot;items&quot;: {
             &quot;type&quot;: &quot;string&quot;
           },
-          &quot;type&quot;: &quot;array&quot;
+          &quot;type&quot;: &quot;array&quot;,
+          &quot;description&quot;: &quot;The issues declaring they serve it, in plan order.&quot;
         },
-        &quot;named_issues&quot;: {
-          &quot;description&quot;: &quot;Issue ids its own words cite.&quot;,
-          &quot;items&quot;: {
-            &quot;type&quot;: &quot;string&quot;
-          },
-          &quot;type&quot;: &quot;array&quot;
+        &quot;evidence&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The kind of evidence that settles it.&quot;
         },
-        &quot;outcome&quot;: {
-          &quot;description&quot;: &quot;Where it stands: a task&#39;s outcome, a session&#39;s, or `attached`/`departed` for a claim.&quot;,
+        &quot;state&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/IntentEvidenceState&quot;,
+          &quot;description&quot;: &quot;Why it is not met.&quot;
+        },
+        &quot;criterion&quot;: {
+          &quot;description&quot;: &quot;What must be observably true.&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
-        &quot;scope&quot;: {
-          &quot;description&quot;: &quot;The paths it claims.&quot;,
-          &quot;items&quot;: {
-            &quot;type&quot;: &quot;string&quot;
-          },
-          &quot;type&quot;: &quot;array&quot;
-        },
-        &quot;started_at&quot;: {
-          &quot;description&quot;: &quot;When its earliest episode started, as its record says: a session record&#39;s `started_at`,\na task&#39;s first `task.started`, a claim&#39;s `at`. Empty when no record says.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;title&quot;: {
-          &quot;description&quot;: &quot;What it says it is, in its own words.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+        &quot;reproduce&quot;: {
+          &quot;description&quot;: &quot;The command that produces its evidence, when one is known.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
         }
       },
+      &quot;type&quot;: &quot;object&quot;,
       &quot;required&quot;: [
-        &quot;kind&quot;,
-        &quot;id&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
+        &quot;id&quot;,
+        &quot;criterion&quot;,
+        &quot;evidence&quot;,
+        &quot;state&quot;
+      ]
     }
-  },
-  &quot;description&quot;: &quot;Every intent, realised, and every unit of work, joined: what `majordomus intent realization`\nanswers.\n\n```\nuse majordomus_cli::intent_realization::IntentRealization;\nlet r = IntentRealization {\n    intents: vec![], work: vec![], orphans: 0, empty: 0, before_intents: 0, findings: vec![],\n};\nassert_eq!(r.orphans + r.empty + r.before_intents, 0);\n```&quot;,
-  &quot;properties&quot;: {
-    &quot;before_intents&quot;: {
-      &quot;default&quot;: 0,
-      &quot;description&quot;: &quot;How many unlinked units are `before_intents`: finished work that started before the\nfirst intent record was written, or while none was declared.&quot;,
-      &quot;format&quot;: &quot;uint&quot;,
-      &quot;minimum&quot;: 0,
-      &quot;type&quot;: &quot;integer&quot;
-    },
-    &quot;empty&quot;: {
-      &quot;default&quot;: 0,
-      &quot;description&quot;: &quot;How many unlinked units are `empty`: session records that did no work a link could be\nread from.&quot;,
-      &quot;format&quot;: &quot;uint&quot;,
-      &quot;minimum&quot;: 0,
-      &quot;type&quot;: &quot;integer&quot;
-    },
-    &quot;findings&quot;: {
-      &quot;description&quot;: &quot;Every finding: each intent&#39;s drift, then the live work that serves no intent.&quot;,
-      &quot;items&quot;: {
-        &quot;$ref&quot;: &quot;#/$defs/IntentFinding&quot;
-      },
-      &quot;type&quot;: &quot;array&quot;
-    },
-    &quot;intents&quot;: {
-      &quot;description&quot;: &quot;Every intent, in identity order.&quot;,
-      &quot;items&quot;: {
-        &quot;$ref&quot;: &quot;#/$defs/IntentRealizationView&quot;
-      },
-      &quot;type&quot;: &quot;array&quot;
-    },
-    &quot;orphans&quot;: {
-      &quot;description&quot;: &quot;How many units of work serve no intent: the unlinked units of class `orphan` alone.&quot;,
-      &quot;format&quot;: &quot;uint&quot;,
-      &quot;minimum&quot;: 0,
-      &quot;type&quot;: &quot;integer&quot;
-    },
-    &quot;work&quot;: {
-      &quot;description&quot;: &quot;Every unit of work read, with its links.&quot;,
-      &quot;items&quot;: {
-        &quot;$ref&quot;: &quot;#/$defs/IntentRealizedWork&quot;
-      },
-      &quot;type&quot;: &quot;array&quot;
-    }
-  },
-  &quot;required&quot;: [
-    &quot;intents&quot;,
-    &quot;work&quot;,
-    &quot;orphans&quot;,
-    &quot;findings&quot;
-  ],
-  &quot;title&quot;: &quot;IntentRealization&quot;,
-  &quot;type&quot;: &quot;object&quot;
+  }
 }</pre></div>
   </details>
 </div>
@@ -900,7 +900,7 @@ read from. <span class="font-mono text-xs text-body-subtle">default 0</span></td
         <div><dt class="text-body-subtle">modul Rust</dt><dd class="min-w-0 break-all font-mono text-heading">majordomus_cli::capability::builtin::intent_realization</dd></div>
         <div><dt class="text-body-subtle">typ vstupu</dt><dd class="font-mono text-heading">IntentRealizationInput</dd></div>
         <div><dt class="text-body-subtle">typ výstupu</dt><dd class="font-mono text-heading">IntentRealization</dd></div>
-        <div><dt class="text-body-subtle">reference na GitHubu</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/1112bace3437ee0d82067b1e8f61813e70190078/docs/generated/modules/intent_realization.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/intent_realization.md</a></dd></div><div><dt class="text-body-subtle">otisk registru</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">5cdbf22cd21589ddbe464d5f0987b6bcf4607d05479004d6f815c3b306fdb08a</dd></div>
+        <div><dt class="text-body-subtle">reference na GitHubu</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/docs/generated/modules/intent_realization.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/intent_realization.md</a></dd></div><div><dt class="text-body-subtle">otisk registru</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">3f734f2faf797f0ca7c39b4cd837e68b6619c41c6f6711f3d3aeca8f341934eb</dd></div>
         <div><dt class="text-body-subtle">vygenerováno nástrojem</dt><dd class="font-mono text-heading">majordomus-cli 1.0.0-alpha.10</dd></div>
       </dl>
     </div>
@@ -956,9 +956,9 @@ read from. <span class="font-mono text-xs text-body-subtle">default 0</span></td
       <div class="min-w-0">
         <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">Projekt</h2><ul class="space-y-2 text-sm font-medium text-body">
           <li><a href="https://github.com/korczis/prismatic-majordomus" class="hover:text-heading hover:underline">GitHub</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/1112bace3437ee0d82067b1e8f61813e70190078/LICENSE" class="hover:text-heading hover:underline">Licence MIT</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/1112bace3437ee0d82067b1e8f61813e70190078/SECURITY.md" class="hover:text-heading hover:underline">Bezpečnostní politika</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/1112bace3437ee0d82067b1e8f61813e70190078/CONTRIBUTING.md" class="hover:text-heading hover:underline">Průvodce pro přispěvatele</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/LICENSE" class="hover:text-heading hover:underline">Licence MIT</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/SECURITY.md" class="hover:text-heading hover:underline">Bezpečnostní politika</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/CONTRIBUTING.md" class="hover:text-heading hover:underline">Průvodce pro přispěvatele</a></li>
         </ul>
       </div>
     </div>
@@ -966,7 +966,7 @@ read from. <span class="font-mono text-xs text-body-subtle">default 0</span></td
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/cs/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.10</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/1112bace3437ee0d82067b1e8f61813e70190078" class="font-mono underline">1112bac</a> · inputs <span class="font-mono">830f884cc5aa</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/cs/architecture/" class="underline">how this site is derived</a> names them.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.10</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/745db2ea21e02613943face75a2bf95542be1f2e" class="font-mono underline">745db2e</a> · inputs <span class="font-mono">0a58c217d1b7</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/cs/architecture/" class="underline">how this site is derived</a> names them.</p>
     </div>
   </div>
 </footer>

@@ -212,8 +212,8 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
   &quot;additionalProperties&quot;: false,
   &quot;description&quot;: &quot;No input.&quot;,
-  &quot;title&quot;: &quot;Empty&quot;,
-  &quot;type&quot;: &quot;object&quot;
+  &quot;type&quot;: &quot;object&quot;,
+  &quot;title&quot;: &quot;Empty&quot;
 }</pre></div>
   </details>
 </div>
@@ -227,71 +227,214 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
         <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
         <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Adaptéry podle id.</td>
       </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">artefakty</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Projektované soubory podle cesty.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">diagnostika</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Nálezy, podle závažnosti, pak kódu, pak cesty.</td>
-      </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">vstupy</td>
         <td class="px-3 py-2 font-mono text-xs text-body">array</td>
         <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
         <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Vstupy podle cesty.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">osiřelé</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">ne</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Soubory vlastněné generátorem pod promítaným adresářem, které plán už neobsahuje.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">projection_version</td>
         <td class="px-3 py-2 font-mono text-xs text-body">integer</td>
         <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
         <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words"><code>PROJECTION_VERSION</code>.</td>
       </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">diagnostika</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Nálezy, podle závažnosti, pak kódu, pak cesty.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">osiřelé</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">ne</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Soubory vlastněné generátorem pod promítaným adresářem, které plán už neobsahuje.</td>
+      </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">schema</td>
         <td class="px-3 py-2 font-mono text-xs text-body">string</td>
         <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
         <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words"><code>SCHEMA</code>.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">artefakty</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Projektované soubory podle cesty.</td>
       </tr></tbody>
     </table>
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
+  &quot;required&quot;: [
+    &quot;schema&quot;,
+    &quot;projection_version&quot;,
+    &quot;adapters&quot;,
+    &quot;inputs&quot;,
+    &quot;artifacts&quot;,
+    &quot;diagnostics&quot;
+  ],
+  &quot;description&quot;: &quot;`editors.status`: every adapter, every projected file and its state, every finding.&quot;,
+  &quot;title&quot;: &quot;EditorProjection&quot;,
   &quot;$defs&quot;: {
-    &quot;EditorAdapter&quot;: {
-      &quot;description&quot;: &quot;One adapter: the product, the version its claims were verified against, its capabilities.&quot;,
+    &quot;EditorSupport&quot;: {
+      &quot;description&quot;: &quot;What an adapter can do with one capability. Never a boolean: \&quot;we do not know\&quot; is an\nanswer of its own and is not \&quot;no\&quot;.&quot;,
+      &quot;oneOf&quot;: [
+        {
+          &quot;const&quot;: &quot;supported&quot;,
+          &quot;description&quot;: &quot;Projected, from a verified format.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;description&quot;: &quot;The product has no project-level form for it.&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;unsupported&quot;
+        },
+        {
+          &quot;const&quot;: &quot;unknown&quot;,
+          &quot;description&quot;: &quot;A project-level form is claimed somewhere and could not be verified; nothing written.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;description&quot;: &quot;The product reads it, from a form this projection will not write.&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;deprecated&quot;
+        },
+        {
+          &quot;description&quot;: &quot;A person can enable it, outside the repository; the remedy says how.&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;requires_user_action&quot;
+        }
+      ]
+    },
+    &quot;EditorDerivation&quot;: {
+      &quot;type&quot;: &quot;object&quot;,
       &quot;properties&quot;: {
-        &quot;capabilities&quot;: {
-          &quot;description&quot;: &quot;Its capabilities, by id.&quot;,
+        &quot;path&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;Repository-relative path.&quot;
+        },
+        &quot;sha256&quot;: {
+          &quot;description&quot;: &quot;SHA-256 of the projected content.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;adapters&quot;: {
+          &quot;type&quot;: &quot;array&quot;,
+          &quot;description&quot;: &quot;The adapters that read it.&quot;,
           &quot;items&quot;: {
-            &quot;$ref&quot;: &quot;#/$defs/EditorCapability&quot;
+            &quot;type&quot;: &quot;string&quot;
+          }
+        },
+        &quot;key&quot;: {
+          &quot;description&quot;: &quot;The content address of the derivation: the projection version and the fingerprints of\nits sources. The same key always yields the same bytes.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;document&quot;: {
+          &quot;description&quot;: &quot;The document id in the generated-artifact manifest.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;state&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/EditorFileState&quot;,
+          &quot;description&quot;: &quot;The state of the file in this checkout.&quot;
+        },
+        &quot;sources&quot;: {
+          &quot;items&quot;: {
+            &quot;type&quot;: &quot;string&quot;
           },
-          &quot;type&quot;: &quot;array&quot;
+          &quot;type&quot;: &quot;array&quot;,
+          &quot;description&quot;: &quot;The inputs it is derived from, by path.&quot;
+        }
+      },
+      &quot;description&quot;: &quot;One projected file and how it came to be.&quot;,
+      &quot;required&quot;: [
+        &quot;path&quot;,
+        &quot;document&quot;,
+        &quot;adapters&quot;,
+        &quot;sources&quot;,
+        &quot;key&quot;,
+        &quot;sha256&quot;,
+        &quot;state&quot;
+      ]
+    },
+    &quot;EditorInput&quot;: {
+      &quot;type&quot;: &quot;object&quot;,
+      &quot;description&quot;: &quot;One input of the projection: a file, what kind of input it is, and its content address.&quot;,
+      &quot;required&quot;: [
+        &quot;path&quot;,
+        &quot;mutability&quot;,
+        &quot;sha256&quot;
+      ],
+      &quot;properties&quot;: {
+        &quot;mutability&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/EditorInputClass&quot;,
+          &quot;description&quot;: &quot;Tracked content or checkout state.&quot;
         },
-        &quot;id&quot;: {
-          &quot;description&quot;: &quot;`zed` or `antigravity`.&quot;,
+        &quot;path&quot;: {
+          &quot;description&quot;: &quot;Repository-relative path.&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
-        &quot;title&quot;: {
-          &quot;description&quot;: &quot;The product&#39;s name.&quot;,
+        &quot;sha256&quot;: {
+          &quot;description&quot;: &quot;SHA-256 of its content.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      }
+    },
+    &quot;EditorDiagnostic&quot;: {
+      &quot;properties&quot;: {
+        &quot;message&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;What was found.&quot;
+        },
+        &quot;path&quot;: {
+          &quot;description&quot;: &quot;The file it concerns, when it concerns one.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;severity&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/Severity&quot;,
+          &quot;description&quot;: &quot;`info`, `warning` or `error`.&quot;
+        },
+        &quot;remedy&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;What to do about it.&quot;
+        },
+        &quot;code&quot;: {
+          &quot;description&quot;: &quot;Stable identity of the finding.&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
-        &quot;verified_against&quot;: {
-          &quot;description&quot;: &quot;The release the evidence was taken from.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+        &quot;adapter&quot;: {
+          &quot;description&quot;: &quot;The adapter it concerns, when it concerns one.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
         }
       },
       &quot;required&quot;: [
-        &quot;id&quot;,
-        &quot;title&quot;,
-        &quot;verified_against&quot;,
-        &quot;capabilities&quot;
+        &quot;severity&quot;,
+        &quot;code&quot;,
+        &quot;message&quot;,
+        &quot;remedy&quot;
       ],
+      &quot;description&quot;: &quot;Something about the projection worth acting on.&quot;,
       &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;Severity&quot;: {
+      &quot;description&quot;: &quot;How bad a diagnostic is. `Error` excludes the file it concerns from the index and puts\nthe index into the degraded state; `Warning` and `Info` do neither.&quot;,
+      &quot;oneOf&quot;: [
+        {
+          &quot;description&quot;: &quot;Worth knowing; changes nothing.&quot;,
+          &quot;const&quot;: &quot;info&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;description&quot;: &quot;Something to look at; the object is still served.&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;warning&quot;
+        },
+        {
+          &quot;description&quot;: &quot;The file is excluded and the index is degraded.&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;error&quot;
+        }
+      ]
     },
     &quot;EditorCapability&quot;: {
       &quot;description&quot;: &quot;One capability of one adapter.&quot;,
@@ -312,12 +455,12 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
           &quot;type&quot;: &quot;string&quot;
         },
         &quot;note&quot;: {
-          &quot;description&quot;: &quot;What it means here, and what to do when nothing is projected.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;What it means here, and what to do when nothing is projected.&quot;
         },
         &quot;support&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/EditorSupport&quot;,
-          &quot;description&quot;: &quot;What the adapter does with it.&quot;
+          &quot;description&quot;: &quot;What the adapter does with it.&quot;,
+          &quot;$ref&quot;: &quot;#/$defs/EditorSupport&quot;
         }
       },
       &quot;required&quot;: [
@@ -325,97 +468,6 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
         &quot;support&quot;,
         &quot;evidence&quot;,
         &quot;note&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
-    },
-    &quot;EditorDerivation&quot;: {
-      &quot;description&quot;: &quot;One projected file and how it came to be.&quot;,
-      &quot;properties&quot;: {
-        &quot;adapters&quot;: {
-          &quot;description&quot;: &quot;The adapters that read it.&quot;,
-          &quot;items&quot;: {
-            &quot;type&quot;: &quot;string&quot;
-          },
-          &quot;type&quot;: &quot;array&quot;
-        },
-        &quot;document&quot;: {
-          &quot;description&quot;: &quot;The document id in the generated-artifact manifest.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;key&quot;: {
-          &quot;description&quot;: &quot;The content address of the derivation: the projection version and the fingerprints of\nits sources. The same key always yields the same bytes.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;path&quot;: {
-          &quot;description&quot;: &quot;Repository-relative path.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;sha256&quot;: {
-          &quot;description&quot;: &quot;SHA-256 of the projected content.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;sources&quot;: {
-          &quot;description&quot;: &quot;The inputs it is derived from, by path.&quot;,
-          &quot;items&quot;: {
-            &quot;type&quot;: &quot;string&quot;
-          },
-          &quot;type&quot;: &quot;array&quot;
-        },
-        &quot;state&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/EditorFileState&quot;,
-          &quot;description&quot;: &quot;The state of the file in this checkout.&quot;
-        }
-      },
-      &quot;required&quot;: [
-        &quot;path&quot;,
-        &quot;document&quot;,
-        &quot;adapters&quot;,
-        &quot;sources&quot;,
-        &quot;key&quot;,
-        &quot;sha256&quot;,
-        &quot;state&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
-    },
-    &quot;EditorDiagnostic&quot;: {
-      &quot;description&quot;: &quot;Something about the projection worth acting on.&quot;,
-      &quot;properties&quot;: {
-        &quot;adapter&quot;: {
-          &quot;description&quot;: &quot;The adapter it concerns, when it concerns one.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;code&quot;: {
-          &quot;description&quot;: &quot;Stable identity of the finding.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;message&quot;: {
-          &quot;description&quot;: &quot;What was found.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;path&quot;: {
-          &quot;description&quot;: &quot;The file it concerns, when it concerns one.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;remedy&quot;: {
-          &quot;description&quot;: &quot;What to do about it.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;severity&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/Severity&quot;,
-          &quot;description&quot;: &quot;`info`, `warning` or `error`.&quot;
-        }
-      },
-      &quot;required&quot;: [
-        &quot;severity&quot;,
-        &quot;code&quot;,
-        &quot;message&quot;,
-        &quot;remedy&quot;
       ],
       &quot;type&quot;: &quot;object&quot;
     },
@@ -429,13 +481,13 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
         },
         {
           &quot;const&quot;: &quot;stale&quot;,
-          &quot;description&quot;: &quot;Generator-owned and different: `majordomus generate editors` rewrites it.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;Generator-owned and different: `majordomus generate editors` rewrites it.&quot;
         },
         {
-          &quot;const&quot;: &quot;absent&quot;,
           &quot;description&quot;: &quot;Not there: `majordomus generate editors` writes it.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;absent&quot;
         },
         {
           &quot;const&quot;: &quot;conflict&quot;,
@@ -444,147 +496,95 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
         }
       ]
     },
-    &quot;EditorInput&quot;: {
-      &quot;description&quot;: &quot;One input of the projection: a file, what kind of input it is, and its content address.&quot;,
+    &quot;EditorInputClass&quot;: {
+      &quot;oneOf&quot;: [
+        {
+          &quot;description&quot;: &quot;Tracked content of the repository: changes only by a commit. The only class an\ninput has today: what the checkout merely holds (an instruction file, a legacy\ndirectory) changes a finding, never a projected byte.&quot;,
+          &quot;const&quot;: &quot;repository&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      ],
+      &quot;description&quot;: &quot;How far an input may change without the repository changing.&quot;
+    },
+    &quot;EditorAdapter&quot;: {
+      &quot;type&quot;: &quot;object&quot;,
+      &quot;description&quot;: &quot;One adapter: the product, the version its claims were verified against, its capabilities.&quot;,
       &quot;properties&quot;: {
-        &quot;mutability&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/EditorInputClass&quot;,
-          &quot;description&quot;: &quot;Tracked content or checkout state.&quot;
+        &quot;title&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The product&#39;s name.&quot;
         },
-        &quot;path&quot;: {
-          &quot;description&quot;: &quot;Repository-relative path.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+        &quot;capabilities&quot;: {
+          &quot;type&quot;: &quot;array&quot;,
+          &quot;items&quot;: {
+            &quot;$ref&quot;: &quot;#/$defs/EditorCapability&quot;
+          },
+          &quot;description&quot;: &quot;Its capabilities, by id.&quot;
         },
-        &quot;sha256&quot;: {
-          &quot;description&quot;: &quot;SHA-256 of its content.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+        &quot;verified_against&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The release the evidence was taken from.&quot;
+        },
+        &quot;id&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;`zed` or `antigravity`.&quot;
         }
       },
       &quot;required&quot;: [
-        &quot;path&quot;,
-        &quot;mutability&quot;,
-        &quot;sha256&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
-    },
-    &quot;EditorInputClass&quot;: {
-      &quot;description&quot;: &quot;How far an input may change without the repository changing.&quot;,
-      &quot;oneOf&quot;: [
-        {
-          &quot;const&quot;: &quot;repository&quot;,
-          &quot;description&quot;: &quot;Tracked content of the repository: changes only by a commit. The only class an\ninput has today: what the checkout merely holds (an instruction file, a legacy\ndirectory) changes a finding, never a projected byte.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      ]
-    },
-    &quot;EditorSupport&quot;: {
-      &quot;description&quot;: &quot;What an adapter can do with one capability. Never a boolean: \&quot;we do not know\&quot; is an\nanswer of its own and is not \&quot;no\&quot;.&quot;,
-      &quot;oneOf&quot;: [
-        {
-          &quot;const&quot;: &quot;supported&quot;,
-          &quot;description&quot;: &quot;Projected, from a verified format.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;unsupported&quot;,
-          &quot;description&quot;: &quot;The product has no project-level form for it.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;unknown&quot;,
-          &quot;description&quot;: &quot;A project-level form is claimed somewhere and could not be verified; nothing written.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;deprecated&quot;,
-          &quot;description&quot;: &quot;The product reads it, from a form this projection will not write.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;requires_user_action&quot;,
-          &quot;description&quot;: &quot;A person can enable it, outside the repository; the remedy says how.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      ]
-    },
-    &quot;Severity&quot;: {
-      &quot;description&quot;: &quot;How bad a diagnostic is. `Error` excludes the file it concerns from the index and puts\nthe index into the degraded state; `Warning` and `Info` do neither.&quot;,
-      &quot;oneOf&quot;: [
-        {
-          &quot;const&quot;: &quot;info&quot;,
-          &quot;description&quot;: &quot;Worth knowing; changes nothing.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;warning&quot;,
-          &quot;description&quot;: &quot;Something to look at; the object is still served.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;error&quot;,
-          &quot;description&quot;: &quot;The file is excluded and the index is degraded.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
+        &quot;id&quot;,
+        &quot;title&quot;,
+        &quot;verified_against&quot;,
+        &quot;capabilities&quot;
       ]
     }
   },
-  &quot;description&quot;: &quot;`editors.status`: every adapter, every projected file and its state, every finding.&quot;,
   &quot;properties&quot;: {
     &quot;adapters&quot;: {
-      &quot;description&quot;: &quot;The adapters, by id.&quot;,
       &quot;items&quot;: {
         &quot;$ref&quot;: &quot;#/$defs/EditorAdapter&quot;
       },
-      &quot;type&quot;: &quot;array&quot;
-    },
-    &quot;artifacts&quot;: {
-      &quot;description&quot;: &quot;The projected files, by path.&quot;,
-      &quot;items&quot;: {
-        &quot;$ref&quot;: &quot;#/$defs/EditorDerivation&quot;
-      },
-      &quot;type&quot;: &quot;array&quot;
-    },
-    &quot;diagnostics&quot;: {
-      &quot;description&quot;: &quot;The findings, by severity then code then path.&quot;,
-      &quot;items&quot;: {
-        &quot;$ref&quot;: &quot;#/$defs/EditorDiagnostic&quot;
-      },
+      &quot;description&quot;: &quot;The adapters, by id.&quot;,
       &quot;type&quot;: &quot;array&quot;
     },
     &quot;inputs&quot;: {
+      &quot;type&quot;: &quot;array&quot;,
       &quot;description&quot;: &quot;The inputs, by path.&quot;,
       &quot;items&quot;: {
         &quot;$ref&quot;: &quot;#/$defs/EditorInput&quot;
+      }
+    },
+    &quot;projection_version&quot;: {
+      &quot;format&quot;: &quot;uint32&quot;,
+      &quot;minimum&quot;: 0,
+      &quot;type&quot;: &quot;integer&quot;,
+      &quot;description&quot;: &quot;`PROJECTION_VERSION`.&quot;
+    },
+    &quot;diagnostics&quot;: {
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;items&quot;: {
+        &quot;$ref&quot;: &quot;#/$defs/EditorDiagnostic&quot;
       },
-      &quot;type&quot;: &quot;array&quot;
+      &quot;description&quot;: &quot;The findings, by severity then code then path.&quot;
     },
     &quot;orphans&quot;: {
       &quot;description&quot;: &quot;Generator-owned files under a projected directory that the plan no longer contains.&quot;,
+      &quot;type&quot;: &quot;array&quot;,
       &quot;items&quot;: {
         &quot;type&quot;: &quot;string&quot;
-      },
-      &quot;type&quot;: &quot;array&quot;
-    },
-    &quot;projection_version&quot;: {
-      &quot;description&quot;: &quot;`PROJECTION_VERSION`.&quot;,
-      &quot;format&quot;: &quot;uint32&quot;,
-      &quot;minimum&quot;: 0,
-      &quot;type&quot;: &quot;integer&quot;
+      }
     },
     &quot;schema&quot;: {
       &quot;description&quot;: &quot;`SCHEMA`.&quot;,
       &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;artifacts&quot;: {
+      &quot;items&quot;: {
+        &quot;$ref&quot;: &quot;#/$defs/EditorDerivation&quot;
+      },
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;description&quot;: &quot;The projected files, by path.&quot;
     }
   },
-  &quot;required&quot;: [
-    &quot;schema&quot;,
-    &quot;projection_version&quot;,
-    &quot;adapters&quot;,
-    &quot;inputs&quot;,
-    &quot;artifacts&quot;,
-    &quot;diagnostics&quot;
-  ],
-  &quot;title&quot;: &quot;EditorProjection&quot;,
   &quot;type&quot;: &quot;object&quot;
 }</pre></div>
   </details>
@@ -616,7 +616,7 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
         <div><dt class="text-body-subtle">modul Rust</dt><dd class="min-w-0 break-all font-mono text-heading">majordomus_cli::capability::builtin::editors</dd></div>
         <div><dt class="text-body-subtle">typ vstupu</dt><dd class="font-mono text-heading">Prázdné</dd></div>
         <div><dt class="text-body-subtle">typ výstupu</dt><dd class="font-mono text-heading">EditorProjection</dd></div>
-        <div><dt class="text-body-subtle">reference na GitHubu</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/1112bace3437ee0d82067b1e8f61813e70190078/docs/generated/modules/editors.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/editors.md</a></dd></div><div><dt class="text-body-subtle">otisk registru</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">5cdbf22cd21589ddbe464d5f0987b6bcf4607d05479004d6f815c3b306fdb08a</dd></div>
+        <div><dt class="text-body-subtle">reference na GitHubu</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/docs/generated/modules/editors.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/editors.md</a></dd></div><div><dt class="text-body-subtle">otisk registru</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">3f734f2faf797f0ca7c39b4cd837e68b6619c41c6f6711f3d3aeca8f341934eb</dd></div>
         <div><dt class="text-body-subtle">vygenerováno nástrojem</dt><dd class="font-mono text-heading">majordomus-cli 1.0.0-alpha.10</dd></div>
       </dl>
     </div>
@@ -672,9 +672,9 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
       <div class="min-w-0">
         <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">Projekt</h2><ul class="space-y-2 text-sm font-medium text-body">
           <li><a href="https://github.com/korczis/prismatic-majordomus" class="hover:text-heading hover:underline">GitHub</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/1112bace3437ee0d82067b1e8f61813e70190078/LICENSE" class="hover:text-heading hover:underline">Licence MIT</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/1112bace3437ee0d82067b1e8f61813e70190078/SECURITY.md" class="hover:text-heading hover:underline">Bezpečnostní politika</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/1112bace3437ee0d82067b1e8f61813e70190078/CONTRIBUTING.md" class="hover:text-heading hover:underline">Průvodce pro přispěvatele</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/LICENSE" class="hover:text-heading hover:underline">Licence MIT</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/SECURITY.md" class="hover:text-heading hover:underline">Bezpečnostní politika</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/CONTRIBUTING.md" class="hover:text-heading hover:underline">Průvodce pro přispěvatele</a></li>
         </ul>
       </div>
     </div>
@@ -682,7 +682,7 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/cs/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.10</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/1112bace3437ee0d82067b1e8f61813e70190078" class="font-mono underline">1112bac</a> · inputs <span class="font-mono">830f884cc5aa</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/cs/architecture/" class="underline">how this site is derived</a> names them.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.10</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/745db2ea21e02613943face75a2bf95542be1f2e" class="font-mono underline">745db2e</a> · inputs <span class="font-mono">0a58c217d1b7</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/cs/architecture/" class="underline">how this site is derived</a> names them.</p>
     </div>
   </div>
 </footer>

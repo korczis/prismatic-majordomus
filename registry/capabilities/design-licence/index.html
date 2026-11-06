@@ -233,19 +233,19 @@ entries under <code>$HOME</code>.</td>
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
-  &quot;additionalProperties&quot;: false,
   &quot;description&quot;: &quot;The input of `design.licence`: the evidence file, or none to read the policy&#39;s.&quot;,
+  &quot;type&quot;: &quot;object&quot;,
   &quot;properties&quot;: {
     &quot;evidence&quot;: {
-      &quot;description&quot;: &quot;A kit-evidence/v1 file, as the caller names it (CI points this at the file it decoded\n`MAJORDOMUS_KIT_EVIDENCE_&lt;KIT&gt;` into). Absent reads the policy&#39;s `ui.evidence`\nentries under `$HOME`.&quot;,
       &quot;type&quot;: [
         &quot;string&quot;,
         &quot;null&quot;
-      ]
+      ],
+      &quot;description&quot;: &quot;A kit-evidence/v1 file, as the caller names it (CI points this at the file it decoded\n`MAJORDOMUS_KIT_EVIDENCE_&lt;KIT&gt;` into). Absent reads the policy&#39;s `ui.evidence`\nentries under `$HOME`.&quot;
     }
   },
-  &quot;title&quot;: &quot;LicenceInput&quot;,
-  &quot;type&quot;: &quot;object&quot;
+  &quot;additionalProperties&quot;: false,
+  &quot;title&quot;: &quot;LicenceInput&quot;
 }</pre></div>
   </details>
 </div>
@@ -254,37 +254,11 @@ entries under <code>$HOME</code>.</td>
     <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
       <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
       <tbody><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">evidence</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Where the evidence was read from, as it was named: the <code>--evidence</code> file, or each
-<code>ui.evidence</code> entry found on this machine. Empty when none was.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">fails</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">boolean</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Whether the verdict fails the gate (<code>refused</code>, <code>not_judged</code>).</td>
-      </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">files</td>
         <td class="px-3 py-2 font-mono text-xs text-body">integer</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
         <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">How many contents were compared: staged, committed, working and published bytes,
 each distinct one of a path once.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">fingerprints</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">integer</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">How many distinct licensed contents the evidence names.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">has_ui</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">boolean</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Whether the tree tracks a UI file.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">kit</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The declared kit id; empty when none is.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">matches</td>
         <td class="px-3 py-2 font-mono text-xs text-body">array</td>
@@ -296,158 +270,46 @@ each distinct one of a path once.</td>
         <td class="px-3 py-2 font-mono text-xs text-body">no</td>
         <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Why the verdict is inactive or not judged.</td>
       </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">verdict</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
+        <td class="px-3 py-2 font-mono text-heading">fingerprints</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">integer</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words"><code>active</code>, <code>inactive</code>, <code>not_judged</code> or <code>refused</code>.</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">How many distinct licensed contents the evidence names.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">visibility</td>
         <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
         <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The visibility judged, after <code>MAJORDOMUS_VISIBILITY</code> tightened it.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">verdict</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words"><code>active</code>, <code>inactive</code>, <code>not_judged</code> or <code>refused</code>.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">fails</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">boolean</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Whether the verdict fails the gate (<code>refused</code>, <code>not_judged</code>).</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">kit</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The declared kit id; empty when none is.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">has_ui</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">boolean</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Whether the tree tracks a UI file.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">evidence</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Where the evidence was read from, as it was named: the <code>--evidence</code> file, or each
+<code>ui.evidence</code> entry found on this machine. Empty when none was.</td>
       </tr></tbody>
     </table>
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
-  &quot;$defs&quot;: {
-    &quot;Match&quot;: {
-      &quot;description&quot;: &quot;One judged file that holds a licensed file&#39;s bytes.&quot;,
-      &quot;properties&quot;: {
-        &quot;kind&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/MatchKind&quot;,
-          &quot;description&quot;: &quot;Whether the copy is exact or reformatted.&quot;
-        },
-        &quot;path&quot;: {
-          &quot;description&quot;: &quot;Repository-relative path of the file.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;source&quot;: {
-          &quot;description&quot;: &quot;The licensed source it is a copy of, when the evidence names one; the CI form never\ndoes.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        }
-      },
-      &quot;required&quot;: [
-        &quot;path&quot;,
-        &quot;kind&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
-    },
-    &quot;MatchKind&quot;: {
-      &quot;description&quot;: &quot;How a file matched a licensed one.&quot;,
-      &quot;oneOf&quot;: [
-        {
-          &quot;const&quot;: &quot;exact&quot;,
-          &quot;description&quot;: &quot;The same bytes.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;normalised&quot;,
-          &quot;description&quot;: &quot;The same bytes once every run of whitespace is one space: a reformatted copy.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      ]
-    },
-    &quot;Verdict&quot;: {
-      &quot;description&quot;: &quot;The answer&#39;s word.&quot;,
-      &quot;oneOf&quot;: [
-        {
-          &quot;const&quot;: &quot;active&quot;,
-          &quot;description&quot;: &quot;Judged, and nothing licensed is where it may not be.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;inactive&quot;,
-          &quot;description&quot;: &quot;Not judged, and nothing needs to be.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;not_judged&quot;,
-          &quot;description&quot;: &quot;Owed a judgement and not given one: a failure.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;refused&quot;,
-          &quot;description&quot;: &quot;A licensed file is in a public tree: a failure.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      ]
-    },
-    &quot;Visibility&quot;: {
-      &quot;description&quot;: &quot;Whether a tree may be published. Declared by the policy (`ui.visibility`), never read\nfrom a forge; `MAJORDOMUS_VISIBILITY` may tighten it and never loosen it.&quot;,
-      &quot;oneOf&quot;: [
-        {
-          &quot;const&quot;: &quot;public&quot;,
-          &quot;description&quot;: &quot;Anyone may read it: no licensed byte may be in it.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;private&quot;,
-          &quot;description&quot;: &quot;Only the owner reads it: it may hold the licensed sources.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      ]
-    }
-  },
-  &quot;description&quot;: &quot;The answer as every projection carries it.&quot;,
-  &quot;properties&quot;: {
-    &quot;evidence&quot;: {
-      &quot;description&quot;: &quot;Where the evidence was read from, as it was named: the `--evidence` file, or each\n`ui.evidence` entry found on this machine. Empty when none was.&quot;,
-      &quot;items&quot;: {
-        &quot;type&quot;: &quot;string&quot;
-      },
-      &quot;type&quot;: &quot;array&quot;
-    },
-    &quot;fails&quot;: {
-      &quot;description&quot;: &quot;Whether the verdict fails the gate (`refused`, `not_judged`).&quot;,
-      &quot;type&quot;: &quot;boolean&quot;
-    },
-    &quot;files&quot;: {
-      &quot;description&quot;: &quot;How many contents were compared: staged, committed, working and published bytes,\neach distinct one of a path once.&quot;,
-      &quot;format&quot;: &quot;uint&quot;,
-      &quot;minimum&quot;: 0,
-      &quot;type&quot;: &quot;integer&quot;
-    },
-    &quot;fingerprints&quot;: {
-      &quot;description&quot;: &quot;How many distinct licensed contents the evidence names.&quot;,
-      &quot;format&quot;: &quot;uint&quot;,
-      &quot;minimum&quot;: 0,
-      &quot;type&quot;: &quot;integer&quot;
-    },
-    &quot;has_ui&quot;: {
-      &quot;description&quot;: &quot;Whether the tree tracks a UI file.&quot;,
-      &quot;type&quot;: &quot;boolean&quot;
-    },
-    &quot;kit&quot;: {
-      &quot;description&quot;: &quot;The declared kit id; empty when none is.&quot;,
-      &quot;type&quot;: &quot;string&quot;
-    },
-    &quot;matches&quot;: {
-      &quot;description&quot;: &quot;Every file that holds a licensed file&#39;s bytes.&quot;,
-      &quot;items&quot;: {
-        &quot;$ref&quot;: &quot;#/$defs/Match&quot;
-      },
-      &quot;type&quot;: &quot;array&quot;
-    },
-    &quot;reason&quot;: {
-      &quot;description&quot;: &quot;Why the verdict is inactive or not judged.&quot;,
-      &quot;type&quot;: [
-        &quot;string&quot;,
-        &quot;null&quot;
-      ]
-    },
-    &quot;verdict&quot;: {
-      &quot;$ref&quot;: &quot;#/$defs/Verdict&quot;,
-      &quot;description&quot;: &quot;`active`, `inactive`, `not_judged` or `refused`.&quot;
-    },
-    &quot;visibility&quot;: {
-      &quot;$ref&quot;: &quot;#/$defs/Visibility&quot;,
-      &quot;description&quot;: &quot;The visibility judged, after `MAJORDOMUS_VISIBILITY` tightened it.&quot;
-    }
-  },
   &quot;required&quot;: [
     &quot;verdict&quot;,
     &quot;fails&quot;,
@@ -459,8 +321,146 @@ each distinct one of a path once.</td>
     &quot;files&quot;,
     &quot;matches&quot;
   ],
+  &quot;type&quot;: &quot;object&quot;,
+  &quot;description&quot;: &quot;The answer as every projection carries it.&quot;,
   &quot;title&quot;: &quot;LicenceReport&quot;,
-  &quot;type&quot;: &quot;object&quot;
+  &quot;$defs&quot;: {
+    &quot;MatchKind&quot;: {
+      &quot;description&quot;: &quot;How a file matched a licensed one.&quot;,
+      &quot;oneOf&quot;: [
+        {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;exact&quot;,
+          &quot;description&quot;: &quot;The same bytes.&quot;
+        },
+        {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;normalised&quot;,
+          &quot;description&quot;: &quot;The same bytes once every run of whitespace is one space: a reformatted copy.&quot;
+        }
+      ]
+    },
+    &quot;Match&quot;: {
+      &quot;description&quot;: &quot;One judged file that holds a licensed file&#39;s bytes.&quot;,
+      &quot;properties&quot;: {
+        &quot;kind&quot;: {
+          &quot;description&quot;: &quot;Whether the copy is exact or reformatted.&quot;,
+          &quot;$ref&quot;: &quot;#/$defs/MatchKind&quot;
+        },
+        &quot;path&quot;: {
+          &quot;description&quot;: &quot;Repository-relative path of the file.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;source&quot;: {
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ],
+          &quot;description&quot;: &quot;The licensed source it is a copy of, when the evidence names one; the CI form never\ndoes.&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;path&quot;,
+        &quot;kind&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;Verdict&quot;: {
+      &quot;oneOf&quot;: [
+        {
+          &quot;description&quot;: &quot;Judged, and nothing licensed is where it may not be.&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;active&quot;
+        },
+        {
+          &quot;const&quot;: &quot;inactive&quot;,
+          &quot;description&quot;: &quot;Not judged, and nothing needs to be.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;not_judged&quot;,
+          &quot;description&quot;: &quot;Owed a judgement and not given one: a failure.&quot;
+        },
+        {
+          &quot;description&quot;: &quot;A licensed file is in a public tree: a failure.&quot;,
+          &quot;const&quot;: &quot;refused&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      ],
+      &quot;description&quot;: &quot;The answer&#39;s word.&quot;
+    },
+    &quot;Visibility&quot;: {
+      &quot;description&quot;: &quot;Whether a tree may be published. Declared by the policy (`ui.visibility`), never read\nfrom a forge; `MAJORDOMUS_VISIBILITY` may tighten it and never loosen it.&quot;,
+      &quot;oneOf&quot;: [
+        {
+          &quot;description&quot;: &quot;Anyone may read it: no licensed byte may be in it.&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;public&quot;
+        },
+        {
+          &quot;const&quot;: &quot;private&quot;,
+          &quot;description&quot;: &quot;Only the owner reads it: it may hold the licensed sources.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      ]
+    }
+  },
+  &quot;properties&quot;: {
+    &quot;files&quot;: {
+      &quot;description&quot;: &quot;How many contents were compared: staged, committed, working and published bytes,\neach distinct one of a path once.&quot;,
+      &quot;format&quot;: &quot;uint&quot;,
+      &quot;minimum&quot;: 0,
+      &quot;type&quot;: &quot;integer&quot;
+    },
+    &quot;matches&quot;: {
+      &quot;items&quot;: {
+        &quot;$ref&quot;: &quot;#/$defs/Match&quot;
+      },
+      &quot;description&quot;: &quot;Every file that holds a licensed file&#39;s bytes.&quot;,
+      &quot;type&quot;: &quot;array&quot;
+    },
+    &quot;reason&quot;: {
+      &quot;description&quot;: &quot;Why the verdict is inactive or not judged.&quot;,
+      &quot;type&quot;: [
+        &quot;string&quot;,
+        &quot;null&quot;
+      ]
+    },
+    &quot;fingerprints&quot;: {
+      &quot;type&quot;: &quot;integer&quot;,
+      &quot;minimum&quot;: 0,
+      &quot;description&quot;: &quot;How many distinct licensed contents the evidence names.&quot;,
+      &quot;format&quot;: &quot;uint&quot;
+    },
+    &quot;visibility&quot;: {
+      &quot;description&quot;: &quot;The visibility judged, after `MAJORDOMUS_VISIBILITY` tightened it.&quot;,
+      &quot;$ref&quot;: &quot;#/$defs/Visibility&quot;
+    },
+    &quot;verdict&quot;: {
+      &quot;description&quot;: &quot;`active`, `inactive`, `not_judged` or `refused`.&quot;,
+      &quot;$ref&quot;: &quot;#/$defs/Verdict&quot;
+    },
+    &quot;fails&quot;: {
+      &quot;type&quot;: &quot;boolean&quot;,
+      &quot;description&quot;: &quot;Whether the verdict fails the gate (`refused`, `not_judged`).&quot;
+    },
+    &quot;kit&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;description&quot;: &quot;The declared kit id; empty when none is.&quot;
+    },
+    &quot;has_ui&quot;: {
+      &quot;type&quot;: &quot;boolean&quot;,
+      &quot;description&quot;: &quot;Whether the tree tracks a UI file.&quot;
+    },
+    &quot;evidence&quot;: {
+      &quot;description&quot;: &quot;Where the evidence was read from, as it was named: the `--evidence` file, or each\n`ui.evidence` entry found on this machine. Empty when none was.&quot;,
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;string&quot;
+      }
+    }
+  }
 }</pre></div>
   </details>
 </div>
@@ -491,7 +491,7 @@ each distinct one of a path once.</td>
         <div><dt class="text-body-subtle">Rust module</dt><dd class="min-w-0 break-all font-mono text-heading">majordomus_cli::capability::builtin::design</dd></div>
         <div><dt class="text-body-subtle">input type</dt><dd class="font-mono text-heading">LicenceInput</dd></div>
         <div><dt class="text-body-subtle">output type</dt><dd class="font-mono text-heading">LicenceReport</dd></div>
-        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/1112bace3437ee0d82067b1e8f61813e70190078/docs/generated/modules/design.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/design.md</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">5cdbf22cd21589ddbe464d5f0987b6bcf4607d05479004d6f815c3b306fdb08a</dd></div>
+        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/docs/generated/modules/design.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/design.md</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">3f734f2faf797f0ca7c39b4cd837e68b6619c41c6f6711f3d3aeca8f341934eb</dd></div>
         <div><dt class="text-body-subtle">generated by</dt><dd class="font-mono text-heading">majordomus-cli 1.0.0-alpha.10</dd></div>
       </dl>
     </div>
@@ -547,9 +547,9 @@ each distinct one of a path once.</td>
       <div class="min-w-0">
         <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">Project</h2><ul class="space-y-2 text-sm font-medium text-body">
           <li><a href="https://github.com/korczis/prismatic-majordomus" class="hover:text-heading hover:underline">GitHub</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/1112bace3437ee0d82067b1e8f61813e70190078/LICENSE" class="hover:text-heading hover:underline">MIT licence</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/1112bace3437ee0d82067b1e8f61813e70190078/SECURITY.md" class="hover:text-heading hover:underline">Security policy</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/1112bace3437ee0d82067b1e8f61813e70190078/CONTRIBUTING.md" class="hover:text-heading hover:underline">Contributing guide</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/LICENSE" class="hover:text-heading hover:underline">MIT licence</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/SECURITY.md" class="hover:text-heading hover:underline">Security policy</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/CONTRIBUTING.md" class="hover:text-heading hover:underline">Contributing guide</a></li>
         </ul>
       </div>
     </div>
@@ -557,7 +557,7 @@ each distinct one of a path once.</td>
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.10</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/1112bace3437ee0d82067b1e8f61813e70190078" class="font-mono underline">1112bac</a> · inputs <span class="font-mono">830f884cc5aa</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/architecture/" class="underline">how this site is derived</a> names them.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.10</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/745db2ea21e02613943face75a2bf95542be1f2e" class="font-mono underline">745db2e</a> · inputs <span class="font-mono">0a58c217d1b7</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/architecture/" class="underline">how this site is derived</a> names them.</p>
     </div>
   </div>
 </footer>

@@ -224,19 +224,19 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
-  &quot;additionalProperties&quot;: false,
+  &quot;title&quot;: &quot;RuleTestInput&quot;,
   &quot;description&quot;: &quot;One test, by the path a rule names it with or by its canonical identity.\n# Example\n\n```\nuse majordomus_cli::capability::builtin::rules::RuleTestInput;\nlet i = RuleTestInput { test: \&quot;test/cases/125_rule_proof.sh\&quot;.into() };\nassert!(i.test.starts_with(\&quot;test/cases/\&quot;));\n```&quot;,
+  &quot;type&quot;: &quot;object&quot;,
+  &quot;required&quot;: [
+    &quot;test&quot;
+  ],
   &quot;properties&quot;: {
     &quot;test&quot;: {
       &quot;description&quot;: &quot;`test/cases/07_scope.sh`, or `suite:07_scope`, or `crate:product`.&quot;,
       &quot;type&quot;: &quot;string&quot;
     }
   },
-  &quot;required&quot;: [
-    &quot;test&quot;
-  ],
-  &quot;title&quot;: &quot;RuleTestInput&quot;,
-  &quot;type&quot;: &quot;object&quot;
+  &quot;additionalProperties&quot;: false
 }</pre></div>
   </details>
 </div>
@@ -257,11 +257,6 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
     <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
       <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">vlastnost</th><th class="px-3 py-2">typ</th><th class="px-3 py-2">povinné</th><th class="px-3 py-2">popis</th></tr></thead>
       <tbody><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">path</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Cesta tak, jak byla zadána.</td>
-      </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">přítomno</td>
         <td class="px-3 py-2 font-mono text-xs text-body">boolean</td>
         <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
@@ -272,11 +267,6 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
         <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
         <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Každé pravidlo, které tento test jmenuje, se stavem, v němž je.</td>
       </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">reprodukovat</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">ne</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Příkaz, který to spustí znovu.</td>
-      </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">sole_proof_of</td>
         <td class="px-3 py-2 font-mono text-xs text-body">array</td>
         <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
@@ -286,64 +276,88 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
         <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
         <td class="px-3 py-2 font-mono text-xs text-body">ne</td>
         <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Kanonická identita testu, když cestu vlastní runner.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">path</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Cesta tak, jak byla zadána.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">reprodukovat</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">ne</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Příkaz, který to spustí znovu.</td>
       </tr></tbody>
     </table>
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
+  &quot;required&quot;: [
+    &quot;path&quot;,
+    &quot;present&quot;,
+    &quot;proves&quot;,
+    &quot;sole_proof_of&quot;
+  ],
   &quot;$defs&quot;: {
-    &quot;RuleClass&quot;: {
-      &quot;description&quot;: &quot;What a rule declares about how strongly it binds.\n\nThe repository has exactly two, and they are not severities on a scale: `blocking` means\na gate refuses the work, `advisory` means a reader is expected to have read it. A rule\nwhose front matter says neither is reported as `Class::Unknown` rather than defaulted,\nbecause guessing here is how a blocking rule quietly becomes advice.\n# Example\n\n```\nuse majordomus_cli::rules::Class;\nassert_eq!(Class::Blocking.label(), \&quot;blocking\&quot;);\nassert_eq!(Class::parse(\&quot;advisory\&quot;), Class::Advisory);\n```&quot;,
-      &quot;oneOf&quot;: [
-        {
-          &quot;const&quot;: &quot;blocking&quot;,
-          &quot;description&quot;: &quot;A gate refuses work that violates it.&quot;,
+    &quot;RuleSummary&quot;: {
+      &quot;required&quot;: [
+        &quot;id&quot;,
+        &quot;title&quot;,
+        &quot;class&quot;,
+        &quot;state&quot;
+      ],
+      &quot;properties&quot;: {
+        &quot;class&quot;: {
+          &quot;description&quot;: &quot;How strongly it binds.&quot;,
+          &quot;$ref&quot;: &quot;#/$defs/RuleClass&quot;
+        },
+        &quot;id&quot;: {
+          &quot;description&quot;: &quot;The rule id.&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
-        {
-          &quot;const&quot;: &quot;advisory&quot;,
-          &quot;description&quot;: &quot;Normative for whoever reads it; nothing refuses a violation.&quot;,
+        &quot;title&quot;: {
+          &quot;description&quot;: &quot;The title.&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
-        {
-          &quot;const&quot;: &quot;unknown&quot;,
-          &quot;description&quot;: &quot;The front matter declared no class, or one this repository does not know.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+        &quot;state&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/RuleState&quot;,
+          &quot;description&quot;: &quot;What the repository can say about its proof.&quot;
         }
-      ]
+      },
+      &quot;description&quot;: &quot;A rule named from somewhere else, with just enough to decide whether to follow it.\n# Example\n\n```\nuse majordomus_cli::capability::builtin::rules::RuleSummary;\nuse majordomus_cli::rules::{Class, RuleState};\nlet s = RuleSummary {\n    id: \&quot;project.x\&quot;.into(),\n    title: \&quot;X\&quot;.into(),\n    class: Class::Advisory,\n    state: RuleState::Reviewed,\n};\nassert_eq!(s.state, RuleState::Reviewed);\n```&quot;,
+      &quot;type&quot;: &quot;object&quot;
     },
     &quot;RuleState&quot;: {
       &quot;description&quot;: &quot;What the repository can say about one rule&#39;s proof, as a whole.\n\nOrdered strongest to weakest so that a summary sorted by this reads as a ranking. A rule&#39;s\nstate is made from its parts&#39; by `crate::evidence::freshness::aggregate`: a failing part\nmakes it failing, and otherwise the weakest part that can carry proof decides.\n# Example\n\n```\nuse majordomus_cli::rules::RuleState;\nassert!(RuleState::Proven &lt; RuleState::Stale);\nassert!(RuleState::Stale.passing());\nassert!(!RuleState::Dangling.passing());\n```&quot;,
       &quot;oneOf&quot;: [
         {
+          &quot;type&quot;: &quot;string&quot;,
           &quot;const&quot;: &quot;proven&quot;,
-          &quot;description&quot;: &quot;Every artifact it names is present, and every test it names has a passing run that\nnothing has invalidated.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;description&quot;: &quot;Every artifact it names is present, and every test it names has a passing run that\nnothing has invalidated.&quot;
         },
         {
+          &quot;type&quot;: &quot;string&quot;,
           &quot;const&quot;: &quot;inputs_unchanged&quot;,
-          &quot;description&quot;: &quot;Every artifact is present and every test passed, but at least one run is only\nun-invalidated rather than measured against this tree.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;description&quot;: &quot;Every artifact is present and every test passed, but at least one run is only\nun-invalidated rather than measured against this tree.&quot;
         },
         {
+          &quot;type&quot;: &quot;string&quot;,
           &quot;const&quot;: &quot;stale&quot;,
-          &quot;description&quot;: &quot;A passing run exists, but something it is about has changed since.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;description&quot;: &quot;A passing run exists, but something it is about has changed since.&quot;
         },
         {
           &quot;const&quot;: &quot;gated&quot;,
-          &quot;description&quot;: &quot;An executable gate runs what this rule names, on every CI run that selects it. The\nmechanism is in the tree and wired; no verdict for it is recorded here.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;An executable gate runs what this rule names, on every CI run that selects it. The\nmechanism is in the tree and wired; no verdict for it is recorded here.&quot;
         },
         {
-          &quot;const&quot;: &quot;failing&quot;,
           &quot;description&quot;: &quot;The latest run of a test this rule names did not pass.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;failing&quot;
         },
         {
-          &quot;const&quot;: &quot;not_run&quot;,
           &quot;description&quot;: &quot;Every artifact is present, and no run of at least one named test was ever recorded.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;not_run&quot;
         },
         {
           &quot;const&quot;: &quot;reviewed&quot;,
@@ -351,9 +365,9 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
           &quot;type&quot;: &quot;string&quot;
         },
         {
-          &quot;const&quot;: &quot;unrunnable&quot;,
+          &quot;type&quot;: &quot;string&quot;,
           &quot;description&quot;: &quot;The rule names a path no runner in this repository drives.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;const&quot;: &quot;unrunnable&quot;
         },
         {
           &quot;const&quot;: &quot;dangling&quot;,
@@ -367,58 +381,39 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
         }
       ]
     },
-    &quot;RuleSummary&quot;: {
-      &quot;description&quot;: &quot;A rule named from somewhere else, with just enough to decide whether to follow it.\n# Example\n\n```\nuse majordomus_cli::capability::builtin::rules::RuleSummary;\nuse majordomus_cli::rules::{Class, RuleState};\nlet s = RuleSummary {\n    id: \&quot;project.x\&quot;.into(),\n    title: \&quot;X\&quot;.into(),\n    class: Class::Advisory,\n    state: RuleState::Reviewed,\n};\nassert_eq!(s.state, RuleState::Reviewed);\n```&quot;,
-      &quot;properties&quot;: {
-        &quot;class&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/RuleClass&quot;,
-          &quot;description&quot;: &quot;How strongly it binds.&quot;
+    &quot;RuleClass&quot;: {
+      &quot;description&quot;: &quot;What a rule declares about how strongly it binds.\n\nThe repository has exactly two, and they are not severities on a scale: `blocking` means\na gate refuses the work, `advisory` means a reader is expected to have read it. A rule\nwhose front matter says neither is reported as `Class::Unknown` rather than defaulted,\nbecause guessing here is how a blocking rule quietly becomes advice.\n# Example\n\n```\nuse majordomus_cli::rules::Class;\nassert_eq!(Class::Blocking.label(), \&quot;blocking\&quot;);\nassert_eq!(Class::parse(\&quot;advisory\&quot;), Class::Advisory);\n```&quot;,
+      &quot;oneOf&quot;: [
+        {
+          &quot;const&quot;: &quot;blocking&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;A gate refuses work that violates it.&quot;
         },
-        &quot;id&quot;: {
-          &quot;description&quot;: &quot;The rule id.&quot;,
+        {
+          &quot;const&quot;: &quot;advisory&quot;,
+          &quot;description&quot;: &quot;Normative for whoever reads it; nothing refuses a violation.&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
-        &quot;state&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/RuleState&quot;,
-          &quot;description&quot;: &quot;What the repository can say about its proof.&quot;
-        },
-        &quot;title&quot;: {
-          &quot;description&quot;: &quot;The title.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+        {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;unknown&quot;,
+          &quot;description&quot;: &quot;The front matter declared no class, or one this repository does not know.&quot;
         }
-      },
-      &quot;required&quot;: [
-        &quot;id&quot;,
-        &quot;title&quot;,
-        &quot;class&quot;,
-        &quot;state&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
+      ]
     }
   },
   &quot;description&quot;: &quot;What one test proves: the reverse of `RuleDetail`.\n# Example\n\nThe reverse of `rules show`: what a test proves, and which rules would be left with no\nproof at all if it were deleted.\n\n```\nuse majordomus_cli::capability::builtin::rules::TestSubjects;\nlet t = TestSubjects {\n    test: Some(\&quot;suite:07_scope\&quot;.into()),\n    path: \&quot;test/cases/07_scope.sh\&quot;.into(),\n    present: true,\n    reproduce: Some(\&quot;bash test/run.sh 07_scope\&quot;.into()),\n    proves: vec![],\n    sole_proof_of: vec![],\n};\nassert!(t.present);\n```&quot;,
   &quot;properties&quot;: {
-    &quot;path&quot;: {
-      &quot;description&quot;: &quot;The path as given.&quot;,
-      &quot;type&quot;: &quot;string&quot;
-    },
     &quot;present&quot;: {
       &quot;description&quot;: &quot;Whether that path is in the tree.&quot;,
       &quot;type&quot;: &quot;boolean&quot;
     },
     &quot;proves&quot;: {
-      &quot;description&quot;: &quot;Every rule that names this test, with the state it is in.&quot;,
       &quot;items&quot;: {
         &quot;$ref&quot;: &quot;#/$defs/RuleSummary&quot;
       },
+      &quot;description&quot;: &quot;Every rule that names this test, with the state it is in.&quot;,
       &quot;type&quot;: &quot;array&quot;
-    },
-    &quot;reproduce&quot;: {
-      &quot;description&quot;: &quot;The command that runs it again.&quot;,
-      &quot;type&quot;: [
-        &quot;string&quot;,
-        &quot;null&quot;
-      ]
     },
     &quot;sole_proof_of&quot;: {
       &quot;description&quot;: &quot;Every rule that would lose its only proof if this test were deleted. This is the\nquestion the one-way relation could never answer.&quot;,
@@ -433,16 +428,21 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
         &quot;string&quot;,
         &quot;null&quot;
       ]
+    },
+    &quot;path&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;description&quot;: &quot;The path as given.&quot;
+    },
+    &quot;reproduce&quot;: {
+      &quot;description&quot;: &quot;The command that runs it again.&quot;,
+      &quot;type&quot;: [
+        &quot;string&quot;,
+        &quot;null&quot;
+      ]
     }
   },
-  &quot;required&quot;: [
-    &quot;path&quot;,
-    &quot;present&quot;,
-    &quot;proves&quot;,
-    &quot;sole_proof_of&quot;
-  ],
-  &quot;title&quot;: &quot;TestSubjects&quot;,
-  &quot;type&quot;: &quot;object&quot;
+  &quot;type&quot;: &quot;object&quot;,
+  &quot;title&quot;: &quot;TestSubjects&quot;
 }</pre></div>
   </details>
 </div>
@@ -473,7 +473,7 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
         <div><dt class="text-body-subtle">modul Rust</dt><dd class="min-w-0 break-all font-mono text-heading">majordomus_cli::capability::builtin::rules</dd></div>
         <div><dt class="text-body-subtle">typ vstupu</dt><dd class="font-mono text-heading">RuleTestInput</dd></div>
         <div><dt class="text-body-subtle">typ výstupu</dt><dd class="font-mono text-heading">TestSubjects</dd></div>
-        <div><dt class="text-body-subtle">reference na GitHubu</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/1112bace3437ee0d82067b1e8f61813e70190078/docs/generated/modules/rules.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/rules.md</a></dd></div><div><dt class="text-body-subtle">otisk registru</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">5cdbf22cd21589ddbe464d5f0987b6bcf4607d05479004d6f815c3b306fdb08a</dd></div>
+        <div><dt class="text-body-subtle">reference na GitHubu</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/docs/generated/modules/rules.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/rules.md</a></dd></div><div><dt class="text-body-subtle">otisk registru</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">3f734f2faf797f0ca7c39b4cd837e68b6619c41c6f6711f3d3aeca8f341934eb</dd></div>
         <div><dt class="text-body-subtle">vygenerováno nástrojem</dt><dd class="font-mono text-heading">majordomus-cli 1.0.0-alpha.10</dd></div>
       </dl>
     </div>
@@ -529,9 +529,9 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
       <div class="min-w-0">
         <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">Projekt</h2><ul class="space-y-2 text-sm font-medium text-body">
           <li><a href="https://github.com/korczis/prismatic-majordomus" class="hover:text-heading hover:underline">GitHub</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/1112bace3437ee0d82067b1e8f61813e70190078/LICENSE" class="hover:text-heading hover:underline">Licence MIT</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/1112bace3437ee0d82067b1e8f61813e70190078/SECURITY.md" class="hover:text-heading hover:underline">Bezpečnostní politika</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/1112bace3437ee0d82067b1e8f61813e70190078/CONTRIBUTING.md" class="hover:text-heading hover:underline">Průvodce pro přispěvatele</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/LICENSE" class="hover:text-heading hover:underline">Licence MIT</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/SECURITY.md" class="hover:text-heading hover:underline">Bezpečnostní politika</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/CONTRIBUTING.md" class="hover:text-heading hover:underline">Průvodce pro přispěvatele</a></li>
         </ul>
       </div>
     </div>
@@ -539,7 +539,7 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/cs/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.10</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/1112bace3437ee0d82067b1e8f61813e70190078" class="font-mono underline">1112bac</a> · inputs <span class="font-mono">830f884cc5aa</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/cs/architecture/" class="underline">how this site is derived</a> names them.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.10</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/745db2ea21e02613943face75a2bf95542be1f2e" class="font-mono underline">745db2e</a> · inputs <span class="font-mono">0a58c217d1b7</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/cs/architecture/" class="underline">how this site is derived</a> names them.</p>
     </div>
   </div>
 </footer>

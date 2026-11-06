@@ -263,7 +263,9 @@ invents one.</td>
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
   &quot;additionalProperties&quot;: false,
-  &quot;description&quot;: &quot;The input of `recover.orphans`: how old a stray must be, and whether to act.\n\n```\nuse majordomus_cli::capability::builtin::recover::RecoverOrphansInput;\n\n// The wire form the shell tool, an MCP client or an HTTP POST sends.\nlet act: RecoverOrphansInput =\n    serde_json::from_str(r#\&quot;{\&quot;older_than_seconds\&quot;:43200,\&quot;check\&quot;:false}\&quot;#).unwrap();\nassert_eq!(act.older_than_seconds, 43_200);\nassert!(!act.check);\n\n// `check` defaults to true, and that direction is deliberate: this capability deletes\n// files, and a caller that forgets the field gets a plan rather than a sweep.\nlet forgot: RecoverOrphansInput =\n    serde_json::from_str(r#\&quot;{\&quot;older_than_seconds\&quot;:43200}\&quot;#).unwrap();\nassert!(forgot.check, \&quot;the safe value is the default one\&quot;);\n\n// The threshold has no default at all. `session.stranded_after` is a policy value, and\n// a reader that carried its own copy would be a second place the number lives.\nassert!(serde_json::from_str::&lt;RecoverOrphansInput&gt;(r#\&quot;{\&quot;check\&quot;:true}\&quot;#).is_err());\n\n// Unknown fields are refused rather than ignored: a caller that misspells `check` is\n// told so instead of having a sweep silently run.\nassert!(serde_json::from_str::&lt;RecoverOrphansInput&gt;(\n    r#\&quot;{\&quot;older_than_seconds\&quot;:1,\&quot;chek\&quot;:true}\&quot;#).is_err());\n```&quot;,
+  &quot;required&quot;: [
+    &quot;older_than_seconds&quot;
+  ],
   &quot;properties&quot;: {
     &quot;check&quot;: {
       &quot;default&quot;: true,
@@ -272,14 +274,12 @@ invents one.</td>
     },
     &quot;older_than_seconds&quot;: {
       &quot;description&quot;: &quot;How long a stray file must have been untouched before it is a candidate at all, in\nseconds. Required, and refused at zero: the shell tool resolves it from\n`session.stranded_after` with `mj_pol_req`, which fails closed, and nothing here\ninvents one.&quot;,
-      &quot;format&quot;: &quot;uint64&quot;,
+      &quot;type&quot;: &quot;integer&quot;,
       &quot;minimum&quot;: 0,
-      &quot;type&quot;: &quot;integer&quot;
+      &quot;format&quot;: &quot;uint64&quot;
     }
   },
-  &quot;required&quot;: [
-    &quot;older_than_seconds&quot;
-  ],
+  &quot;description&quot;: &quot;The input of `recover.orphans`: how old a stray must be, and whether to act.\n\n```\nuse majordomus_cli::capability::builtin::recover::RecoverOrphansInput;\n\n// The wire form the shell tool, an MCP client or an HTTP POST sends.\nlet act: RecoverOrphansInput =\n    serde_json::from_str(r#\&quot;{\&quot;older_than_seconds\&quot;:43200,\&quot;check\&quot;:false}\&quot;#).unwrap();\nassert_eq!(act.older_than_seconds, 43_200);\nassert!(!act.check);\n\n// `check` defaults to true, and that direction is deliberate: this capability deletes\n// files, and a caller that forgets the field gets a plan rather than a sweep.\nlet forgot: RecoverOrphansInput =\n    serde_json::from_str(r#\&quot;{\&quot;older_than_seconds\&quot;:43200}\&quot;#).unwrap();\nassert!(forgot.check, \&quot;the safe value is the default one\&quot;);\n\n// The threshold has no default at all. `session.stranded_after` is a policy value, and\n// a reader that carried its own copy would be a second place the number lives.\nassert!(serde_json::from_str::&lt;RecoverOrphansInput&gt;(r#\&quot;{\&quot;check\&quot;:true}\&quot;#).is_err());\n\n// Unknown fields are refused rather than ignored: a caller that misspells `check` is\n// told so instead of having a sweep silently run.\nassert!(serde_json::from_str::&lt;RecoverOrphansInput&gt;(\n    r#\&quot;{\&quot;older_than_seconds\&quot;:1,\&quot;chek\&quot;:true}\&quot;#).is_err());\n```&quot;,
   &quot;title&quot;: &quot;RecoverOrphansInput&quot;,
   &quot;type&quot;: &quot;object&quot;
 }</pre></div>
@@ -302,10 +302,15 @@ the surface that renders the total.</p>
     <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
       <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
       <tbody><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">check</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">boolean</td>
+        <td class="px-3 py-2 font-mono text-heading">removable</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">integer</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Whether this was a check. <code>true</code> means nothing was written.</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">How many of them this call would remove, or did.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">strays</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Every stray found, in path order.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">older_than_seconds</td>
         <td class="px-3 py-2 font-mono text-xs text-body">integer</td>
@@ -313,20 +318,15 @@ the surface that renders the total.</p>
         <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The threshold this sweep measured against, echoed back so that a refusal or a verdict
 names the value the caller actually got rather than the one it believes it sent.</td>
       </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">removable</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">integer</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">How many of them this call would remove, or did.</td>
-      </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">removed</td>
         <td class="px-3 py-2 font-mono text-xs text-body">integer</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
         <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">How many it actually removed. Always <code>0</code> on a check.</td>
       </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">strays</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
+        <td class="px-3 py-2 font-mono text-heading">check</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">boolean</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Every stray found, in path order.</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Whether this was a check. <code>true</code> means nothing was written.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">unmeasurable</td>
         <td class="px-3 py-2 font-mono text-xs text-body">integer</td>
@@ -337,18 +337,20 @@ names the value the caller actually got rather than the one it believes it sent.
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
+  &quot;type&quot;: &quot;object&quot;,
+  &quot;description&quot;: &quot;What one sweep found and what it did about it.\n\nThe counts are derived from `strays` rather than accumulated beside it, so a reader can\ncheck the report against itself and a surface that renders the list cannot disagree with\nthe surface that renders the total.\n\n```\nuse majordomus_cli::capability::builtin::recover::RecoverOrphansResult;\n\nlet plan: RecoverOrphansResult = serde_json::from_str(r#\&quot;{\n    \&quot;older_than_seconds\&quot;: 43200, \&quot;check\&quot;: true, \&quot;strays\&quot;: [],\n    \&quot;removable\&quot;: 0, \&quot;removed\&quot;: 0, \&quot;unmeasurable\&quot;: 0\n}\&quot;#).unwrap();\n// a check never removes anything, whatever it found\nassert_eq!(plan.removed, 0);\nassert!(plan.check);\n```&quot;,
   &quot;$defs&quot;: {
     &quot;Stray&quot;: {
+      &quot;type&quot;: &quot;object&quot;,
       &quot;description&quot;: &quot;One stray file, its verdict, and the evidence that produced it.\n\nEvery field that decided something is carried, because the rule this command is shaped\naround requires the value that decided a verdict to be visible before the verdict acts:\na surface that printed \&quot;orphan\&quot; without the age, the episode and the file that already\nholds it would be asking to be trusted rather than read.\n\n```\nuse majordomus_cli::capability::builtin::recover::{Stray, StrayKind, StrayVerdict};\nuse serde_json::json;\n\nlet s: Stray = serde_json::from_value(json!({\n    \&quot;path\&quot;: \&quot;.ai/repo/sessions/.tmp.a1b2c3\&quot;,\n    \&quot;kind\&quot;: \&quot;publish_temp\&quot;,\n    \&quot;verdict\&quot;: \&quot;orphan\&quot;,\n    \&quot;age_seconds\&quot;: 90_000,\n    \&quot;session_id\&quot;: \&quot;s-0007\&quot;,\n    \&quot;published_at\&quot;: \&quot;.ai/repo/sessions/2026-09-11--s-0007.md\&quot;,\n    \&quot;removable\&quot;: true,\n    \&quot;removed\&quot;: false,\n})).unwrap();\nassert_eq!(s.verdict, StrayVerdict::Orphan);\nassert_eq!(s.kind, StrayKind::PublishTemp);\n// removable and removed are different facts: a check run reports the first and never\n// the second, which is what makes `--check` readable as a plan rather than a report.\nassert!(s.removable &amp;&amp; !s.removed);\n\n// and an unmeasurable one carries no age at all, rather than a zero that would read as\n// \&quot;brand new\&quot; to anything that compared it with a threshold\nlet u: Stray = serde_json::from_value(json!({\n    \&quot;path\&quot;: \&quot;.mj-stage.xyz\&quot;, \&quot;kind\&quot;: \&quot;staging_dir\&quot;, \&quot;verdict\&quot;: \&quot;unmeasurable\&quot;,\n    \&quot;removable\&quot;: false, \&quot;removed\&quot;: false,\n})).unwrap();\nassert!(u.age_seconds.is_none());\n```&quot;,
       &quot;properties&quot;: {
-        &quot;age_seconds&quot;: {
-          &quot;description&quot;: &quot;How old it is, in seconds. Absent when the platform could not say, which is the\n`Unmeasurable` verdict and never a zero.&quot;,
-          &quot;format&quot;: &quot;uint64&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: [
-            &quot;integer&quot;,
-            &quot;null&quot;
-          ]
+        &quot;removable&quot;: {
+          &quot;type&quot;: &quot;boolean&quot;,
+          &quot;description&quot;: &quot;Whether this call would remove it. Decided by the verdict and by\n`remove_stray`&#39;s own pattern guard, never by the caller.&quot;
+        },
+        &quot;target&quot;: {
+          &quot;description&quot;: &quot;The file a rename temp was going to become. Its presence is what turns an\n`Incomplete` rename temp into an `Orphan`.&quot;,
+          &quot;type&quot;: &quot;string&quot;
         },
         &quot;kind&quot;: {
           &quot;$ref&quot;: &quot;#/$defs/StrayKind&quot;,
@@ -359,28 +361,29 @@ names the value the caller actually got rather than the one it believes it sent.
           &quot;type&quot;: &quot;string&quot;
         },
         &quot;published_at&quot;: {
-          &quot;description&quot;: &quot;The record that already holds that episode, when one does. Its presence is what turns\nan `Incomplete` publish temp into an `Orphan`.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;removable&quot;: {
-          &quot;description&quot;: &quot;Whether this call would remove it. Decided by the verdict and by\n`remove_stray`&#39;s own pattern guard, never by the caller.&quot;,
-          &quot;type&quot;: &quot;boolean&quot;
-        },
-        &quot;removed&quot;: {
-          &quot;description&quot;: &quot;Whether this call did remove it. Always `false` on a check.&quot;,
-          &quot;type&quot;: &quot;boolean&quot;
-        },
-        &quot;session_id&quot;: {
-          &quot;description&quot;: &quot;The episode this publish temp carries, when it carries one.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;target&quot;: {
-          &quot;description&quot;: &quot;The file a rename temp was going to become. Its presence is what turns an\n`Incomplete` rename temp into an `Orphan`.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The record that already holds that episode, when one does. Its presence is what turns\nan `Incomplete` publish temp into an `Orphan`.&quot;
         },
         &quot;verdict&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/StrayVerdict&quot;,
-          &quot;description&quot;: &quot;What reading it decided.&quot;
+          &quot;description&quot;: &quot;What reading it decided.&quot;,
+          &quot;$ref&quot;: &quot;#/$defs/StrayVerdict&quot;
+        },
+        &quot;age_seconds&quot;: {
+          &quot;description&quot;: &quot;How old it is, in seconds. Absent when the platform could not say, which is the\n`Unmeasurable` verdict and never a zero.&quot;,
+          &quot;type&quot;: [
+            &quot;integer&quot;,
+            &quot;null&quot;
+          ],
+          &quot;minimum&quot;: 0,
+          &quot;format&quot;: &quot;uint64&quot;
+        },
+        &quot;removed&quot;: {
+          &quot;type&quot;: &quot;boolean&quot;,
+          &quot;description&quot;: &quot;Whether this call did remove it. Always `false` on a check.&quot;
+        },
+        &quot;session_id&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The episode this publish temp carries, when it carries one.&quot;
         }
       },
       &quot;required&quot;: [
@@ -389,95 +392,94 @@ names the value the caller actually got rather than the one it believes it sent.
         &quot;verdict&quot;,
         &quot;removable&quot;,
         &quot;removed&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
-    },
-    &quot;StrayKind&quot;: {
-      &quot;description&quot;: &quot;What kind of stray a path is, decided by where it is and how it is named rather than by\nwhat is in it. The content decides the *verdict*; this decides which question to ask.\n\nThe word a kind is reported under is also the word it is read back from, and a word this\nversion does not know is refused rather than read as the nearest kind:\n\n```\nuse majordomus_cli::capability::builtin::recover::StrayKind;\nfor kind in [StrayKind::PublishTemp, StrayKind::RenameTemp, StrayKind::StagingDir] {\n    let word = serde_json::to_value(kind).unwrap();\n    assert_eq!(serde_json::from_value::&lt;StrayKind&gt;(word).unwrap(), kind);\n}\nassert!(serde_json::from_value::&lt;StrayKind&gt;(serde_json::json!(\&quot;temp\&quot;)).is_err());\n```&quot;,
-      &quot;oneOf&quot;: [
-        {
-          &quot;const&quot;: &quot;publish_temp&quot;,
-          &quot;description&quot;: &quot;A `.tmp.XXXXXX` in a record store: `mj_publish_record` makes them, and only a process\nthat died between the `mktemp` and the `rm` leaves one.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;rename_temp&quot;,
-          &quot;description&quot;: &quot;A `&lt;target&gt;.mj-tmp`: written and renamed in one `&amp;&amp;`, so one that exists means the\nwrite failed or the process died mid-write.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;staging_dir&quot;,
-          &quot;description&quot;: &quot;A `.mj-stage.XXXXXX` at the repository root: `scripts/generate-site-data` stages into\none. Always a directory, and therefore never removed here.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
       ]
     },
-    &quot;StrayVerdict&quot;: {
-      &quot;description&quot;: &quot;What this stray is, decided by reading it.\n\nThe five words are `lib/recover.sh`&#39;s, deliberately: a person who has read the command&#39;s\noutput should not have to learn the same five facts twice because a second surface chose\nits own vocabulary.\n\nThat vocabulary is closed. Every verdict reads back as itself, and there is no sixth word:\na surface that invents one gets an error rather than a verdict nobody meant.\n\n```\nuse majordomus_cli::capability::builtin::recover::StrayVerdict::{self, *};\nlet all = [Live, Orphan, Incomplete, Foreign, Unmeasurable];\nlet words: Vec&lt;&amp;str&gt; = all.iter().map(|v| v.as_str()).collect();\nassert_eq!(words, [\&quot;live\&quot;, \&quot;orphan\&quot;, \&quot;incomplete\&quot;, \&quot;foreign\&quot;, \&quot;unmeasurable\&quot;]);\nfor v in all {\n    let word = serde_json::json!(v.as_str());\n    assert_eq!(serde_json::from_value::&lt;StrayVerdict&gt;(word).unwrap(), v);\n}\nassert!(serde_json::from_value::&lt;StrayVerdict&gt;(serde_json::json!(\&quot;stale\&quot;)).is_err());\n```&quot;,
+    &quot;StrayKind&quot;: {
       &quot;oneOf&quot;: [
         {
-          &quot;const&quot;: &quot;live&quot;,
-          &quot;description&quot;: &quot;Younger than the threshold: a `session close` or a `scripts/derive` running right now\nowns it. Measured, reported, never touched.&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;A `.tmp.XXXXXX` in a record store: `mj_publish_record` makes them, and only a process\nthat died between the `mktemp` and the `rm` leaves one.&quot;,
+          &quot;const&quot;: &quot;publish_temp&quot;
+        },
+        {
+          &quot;description&quot;: &quot;A `&lt;target&gt;.mj-tmp`: written and renamed in one `&amp;&amp;`, so one that exists means the\nwrite failed or the process died mid-write.&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;rename_temp&quot;
+        },
+        {
+          &quot;description&quot;: &quot;A `.mj-stage.XXXXXX` at the repository root: `scripts/generate-site-data` stages into\none. Always a directory, and therefore never removed here.&quot;,
+          &quot;const&quot;: &quot;staging_dir&quot;,
           &quot;type&quot;: &quot;string&quot;
+        }
+      ],
+      &quot;description&quot;: &quot;What kind of stray a path is, decided by where it is and how it is named rather than by\nwhat is in it. The content decides the *verdict*; this decides which question to ask.\n\nThe word a kind is reported under is also the word it is read back from, and a word this\nversion does not know is refused rather than read as the nearest kind:\n\n```\nuse majordomus_cli::capability::builtin::recover::StrayKind;\nfor kind in [StrayKind::PublishTemp, StrayKind::RenameTemp, StrayKind::StagingDir] {\n    let word = serde_json::to_value(kind).unwrap();\n    assert_eq!(serde_json::from_value::&lt;StrayKind&gt;(word).unwrap(), kind);\n}\nassert!(serde_json::from_value::&lt;StrayKind&gt;(serde_json::json!(\&quot;temp\&quot;)).is_err());\n```&quot;
+    },
+    &quot;StrayVerdict&quot;: {
+      &quot;oneOf&quot;: [
+        {
+          &quot;description&quot;: &quot;Younger than the threshold: a `session close` or a `scripts/derive` running right now\nowns it. Measured, reported, never touched.&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;live&quot;
         },
         {
           &quot;const&quot;: &quot;orphan&quot;,
-          &quot;description&quot;: &quot;Its work completed, or there was never anything in it. Removable — unless it is a\ndirectory, which this runtime never removes.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;Its work completed, or there was never anything in it. Removable — unless it is a\ndirectory, which this runtime never removes.&quot;
         },
         {
-          &quot;const&quot;: &quot;incomplete&quot;,
+          &quot;type&quot;: &quot;string&quot;,
           &quot;description&quot;: &quot;It holds something no other file holds: a record nobody published, or a write whose\ntarget never arrived. Never removed here; the caller decides.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;const&quot;: &quot;incomplete&quot;
         },
         {
+          &quot;type&quot;: &quot;string&quot;,
           &quot;const&quot;: &quot;foreign&quot;,
-          &quot;description&quot;: &quot;Not written by this tool at all, or written by a version that shaped it differently.\nNever touched; reported with what it is.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;description&quot;: &quot;Not written by this tool at all, or written by a version that shaped it differently.\nNever touched; reported with what it is.&quot;
         },
         {
+          &quot;type&quot;: &quot;string&quot;,
           &quot;const&quot;: &quot;unmeasurable&quot;,
-          &quot;description&quot;: &quot;Its age could not be read on this platform, so nothing here treats it as stale. The\nguard `project.destructive-sweeps-fail-closed` asks for: a predicate that cannot\nmeasure its input is false, never the most extreme value in the set.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;description&quot;: &quot;Its age could not be read on this platform, so nothing here treats it as stale. The\nguard `project.destructive-sweeps-fail-closed` asks for: a predicate that cannot\nmeasure its input is false, never the most extreme value in the set.&quot;
         }
-      ]
+      ],
+      &quot;description&quot;: &quot;What this stray is, decided by reading it.\n\nThe five words are `lib/recover.sh`&#39;s, deliberately: a person who has read the command&#39;s\noutput should not have to learn the same five facts twice because a second surface chose\nits own vocabulary.\n\nThat vocabulary is closed. Every verdict reads back as itself, and there is no sixth word:\na surface that invents one gets an error rather than a verdict nobody meant.\n\n```\nuse majordomus_cli::capability::builtin::recover::StrayVerdict::{self, *};\nlet all = [Live, Orphan, Incomplete, Foreign, Unmeasurable];\nlet words: Vec&lt;&amp;str&gt; = all.iter().map(|v| v.as_str()).collect();\nassert_eq!(words, [\&quot;live\&quot;, \&quot;orphan\&quot;, \&quot;incomplete\&quot;, \&quot;foreign\&quot;, \&quot;unmeasurable\&quot;]);\nfor v in all {\n    let word = serde_json::json!(v.as_str());\n    assert_eq!(serde_json::from_value::&lt;StrayVerdict&gt;(word).unwrap(), v);\n}\nassert!(serde_json::from_value::&lt;StrayVerdict&gt;(serde_json::json!(\&quot;stale\&quot;)).is_err());\n```&quot;
     }
   },
-  &quot;description&quot;: &quot;What one sweep found and what it did about it.\n\nThe counts are derived from `strays` rather than accumulated beside it, so a reader can\ncheck the report against itself and a surface that renders the list cannot disagree with\nthe surface that renders the total.\n\n```\nuse majordomus_cli::capability::builtin::recover::RecoverOrphansResult;\n\nlet plan: RecoverOrphansResult = serde_json::from_str(r#\&quot;{\n    \&quot;older_than_seconds\&quot;: 43200, \&quot;check\&quot;: true, \&quot;strays\&quot;: [],\n    \&quot;removable\&quot;: 0, \&quot;removed\&quot;: 0, \&quot;unmeasurable\&quot;: 0\n}\&quot;#).unwrap();\n// a check never removes anything, whatever it found\nassert_eq!(plan.removed, 0);\nassert!(plan.check);\n```&quot;,
+  &quot;title&quot;: &quot;RecoverOrphansResult&quot;,
   &quot;properties&quot;: {
-    &quot;check&quot;: {
-      &quot;description&quot;: &quot;Whether this was a check. `true` means nothing was written.&quot;,
-      &quot;type&quot;: &quot;boolean&quot;
+    &quot;removable&quot;: {
+      &quot;format&quot;: &quot;uint&quot;,
+      &quot;type&quot;: &quot;integer&quot;,
+      &quot;description&quot;: &quot;How many of them this call would remove, or did.&quot;,
+      &quot;minimum&quot;: 0
+    },
+    &quot;strays&quot;: {
+      &quot;items&quot;: {
+        &quot;$ref&quot;: &quot;#/$defs/Stray&quot;
+      },
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;description&quot;: &quot;Every stray found, in path order.&quot;
     },
     &quot;older_than_seconds&quot;: {
       &quot;description&quot;: &quot;The threshold this sweep measured against, echoed back so that a refusal or a verdict\nnames the value the caller actually got rather than the one it believes it sent.&quot;,
       &quot;format&quot;: &quot;uint64&quot;,
-      &quot;minimum&quot;: 0,
-      &quot;type&quot;: &quot;integer&quot;
-    },
-    &quot;removable&quot;: {
-      &quot;description&quot;: &quot;How many of them this call would remove, or did.&quot;,
-      &quot;format&quot;: &quot;uint&quot;,
-      &quot;minimum&quot;: 0,
-      &quot;type&quot;: &quot;integer&quot;
+      &quot;type&quot;: &quot;integer&quot;,
+      &quot;minimum&quot;: 0
     },
     &quot;removed&quot;: {
-      &quot;description&quot;: &quot;How many it actually removed. Always `0` on a check.&quot;,
       &quot;format&quot;: &quot;uint&quot;,
       &quot;minimum&quot;: 0,
-      &quot;type&quot;: &quot;integer&quot;
+      &quot;type&quot;: &quot;integer&quot;,
+      &quot;description&quot;: &quot;How many it actually removed. Always `0` on a check.&quot;
     },
-    &quot;strays&quot;: {
-      &quot;description&quot;: &quot;Every stray found, in path order.&quot;,
-      &quot;items&quot;: {
-        &quot;$ref&quot;: &quot;#/$defs/Stray&quot;
-      },
-      &quot;type&quot;: &quot;array&quot;
+    &quot;check&quot;: {
+      &quot;type&quot;: &quot;boolean&quot;,
+      &quot;description&quot;: &quot;Whether this was a check. `true` means nothing was written.&quot;
     },
     &quot;unmeasurable&quot;: {
-      &quot;description&quot;: &quot;How many candidates could not be measured and were therefore left alone.&quot;,
       &quot;format&quot;: &quot;uint&quot;,
       &quot;minimum&quot;: 0,
+      &quot;description&quot;: &quot;How many candidates could not be measured and were therefore left alone.&quot;,
       &quot;type&quot;: &quot;integer&quot;
     }
   },
@@ -488,9 +490,7 @@ names the value the caller actually got rather than the one it believes it sent.
     &quot;removable&quot;,
     &quot;removed&quot;,
     &quot;unmeasurable&quot;
-  ],
-  &quot;title&quot;: &quot;RecoverOrphansResult&quot;,
-  &quot;type&quot;: &quot;object&quot;
+  ]
 }</pre></div>
   </details>
 </div>
@@ -521,7 +521,7 @@ names the value the caller actually got rather than the one it believes it sent.
         <div><dt class="text-body-subtle">Rust module</dt><dd class="min-w-0 break-all font-mono text-heading">majordomus_cli::capability::builtin::recover</dd></div>
         <div><dt class="text-body-subtle">input type</dt><dd class="font-mono text-heading">RecoverOrphansInput</dd></div>
         <div><dt class="text-body-subtle">output type</dt><dd class="font-mono text-heading">RecoverOrphansResult</dd></div>
-        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/1112bace3437ee0d82067b1e8f61813e70190078/docs/generated/modules/recover.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/recover.md</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">5cdbf22cd21589ddbe464d5f0987b6bcf4607d05479004d6f815c3b306fdb08a</dd></div>
+        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/docs/generated/modules/recover.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/recover.md</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">3f734f2faf797f0ca7c39b4cd837e68b6619c41c6f6711f3d3aeca8f341934eb</dd></div>
         <div><dt class="text-body-subtle">generated by</dt><dd class="font-mono text-heading">majordomus-cli 1.0.0-alpha.10</dd></div>
       </dl>
     </div>
@@ -577,9 +577,9 @@ names the value the caller actually got rather than the one it believes it sent.
       <div class="min-w-0">
         <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">Project</h2><ul class="space-y-2 text-sm font-medium text-body">
           <li><a href="https://github.com/korczis/prismatic-majordomus" class="hover:text-heading hover:underline">GitHub</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/1112bace3437ee0d82067b1e8f61813e70190078/LICENSE" class="hover:text-heading hover:underline">MIT licence</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/1112bace3437ee0d82067b1e8f61813e70190078/SECURITY.md" class="hover:text-heading hover:underline">Security policy</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/1112bace3437ee0d82067b1e8f61813e70190078/CONTRIBUTING.md" class="hover:text-heading hover:underline">Contributing guide</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/LICENSE" class="hover:text-heading hover:underline">MIT licence</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/SECURITY.md" class="hover:text-heading hover:underline">Security policy</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/CONTRIBUTING.md" class="hover:text-heading hover:underline">Contributing guide</a></li>
         </ul>
       </div>
     </div>
@@ -587,7 +587,7 @@ names the value the caller actually got rather than the one it believes it sent.
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.10</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/1112bace3437ee0d82067b1e8f61813e70190078" class="font-mono underline">1112bac</a> · inputs <span class="font-mono">830f884cc5aa</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/architecture/" class="underline">how this site is derived</a> names them.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.10</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/745db2ea21e02613943face75a2bf95542be1f2e" class="font-mono underline">745db2e</a> · inputs <span class="font-mono">0a58c217d1b7</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/architecture/" class="underline">how this site is derived</a> names them.</p>
     </div>
   </div>
 </footer>

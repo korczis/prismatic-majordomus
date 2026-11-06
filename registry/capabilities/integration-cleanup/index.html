@@ -221,10 +221,10 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
   <h3 class="font-mono text-sm font-semibold text-heading">input · Empty</h3><div class="mt-1 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">No input.</div><p class="mt-2 text-sm text-body-subtle">No properties: the capability takes no input.</p><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
+  &quot;type&quot;: &quot;object&quot;,
   &quot;additionalProperties&quot;: false,
   &quot;description&quot;: &quot;No input.&quot;,
-  &quot;title&quot;: &quot;Empty&quot;,
-  &quot;type&quot;: &quot;object&quot;
+  &quot;title&quot;: &quot;Empty&quot;
 }</pre></div>
   </details>
 </div>
@@ -234,23 +234,23 @@ person, from the recorded observation, and the last branch report <code>prs clea
     <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
       <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
       <tbody><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">branches</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">one of 2</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The branches merged pull requests left on origin, as <code>prs cleanup</code> last read them;
-<code>None</code> when it never ran in this checkout. Never read from the network here.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">branches_age_seconds</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">integer | null</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">How old that report is, in seconds, when its time reads.</td>
-      </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">items</td>
         <td class="px-3 py-2 font-mono text-xs text-body">array</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
         <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The plan, in rank order: <code>would_close</code> for what is provably on master or superseded by
 a successor that landed, <code>left_for_a_person</code> for weak evidence and for what a person
 marked obsolete. Nothing here closes anything.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">branches_age_seconds</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">integer | null</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">How old that report is, in seconds, when its time reads.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">branches</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">one of 2</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The branches merged pull requests left on origin, as <code>prs cleanup</code> last read them;
+<code>None</code> when it never ran in this checkout. Never read from the network here.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">observed</td>
         <td class="px-3 py-2 font-mono text-xs text-body">boolean</td>
@@ -271,24 +271,21 @@ marked obsolete. Nothing here closes anything.</td>
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
+  &quot;required&quot;: [
+    &quot;observed&quot;,
+    &quot;items&quot;
+  ],
   &quot;$defs&quot;: {
     &quot;CleanupItem&quot;: {
+      &quot;type&quot;: &quot;object&quot;,
       &quot;description&quot;: &quot;What cleanup would do, or did, for one pull request.&quot;,
+      &quot;required&quot;: [
+        &quot;pr&quot;,
+        &quot;disposition&quot;,
+        &quot;reasons&quot;,
+        &quot;action&quot;
+      ],
       &quot;properties&quot;: {
-        &quot;action&quot;: {
-          &quot;description&quot;: &quot;`would_close`, `closed`, `left_for_a_person`, or `close_failed: &lt;why&gt;`.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;disposition&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/PullRequestDisposition&quot;,
-          &quot;description&quot;: &quot;Its disposition when decided.&quot;
-        },
-        &quot;pr&quot;: {
-          &quot;description&quot;: &quot;The pull request.&quot;,
-          &quot;format&quot;: &quot;uint64&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
         &quot;reasons&quot;: {
           &quot;description&quot;: &quot;The evidence, as reason codes.&quot;,
           &quot;items&quot;: {
@@ -296,44 +293,50 @@ marked obsolete. Nothing here closes anything.</td>
             &quot;type&quot;: &quot;string&quot;
           },
           &quot;type&quot;: &quot;array&quot;
-        }
-      },
-      &quot;required&quot;: [
-        &quot;pr&quot;,
-        &quot;disposition&quot;,
-        &quot;reasons&quot;,
-        &quot;action&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
-    },
-    &quot;LeftBranch&quot;: {
-      &quot;description&quot;: &quot;A branch a merged pull request left on origin, as cleanup reports it. Reported, never\ndeleted: the forge&#39;s `delete_branch_on_merge` decides deletion (owner decision D4), so the\nexecutor holds no branch-deleting write at all.&quot;,
-      &quot;properties&quot;: {
+        },
+        &quot;disposition&quot;: {
+          &quot;description&quot;: &quot;Its disposition when decided.&quot;,
+          &quot;$ref&quot;: &quot;#/$defs/PullRequestDisposition&quot;
+        },
         &quot;action&quot;: {
-          &quot;description&quot;: &quot;`left_for_a_person`, or `kept: checked out at &lt;path&gt;` when a worktree of this\nrepository has the branch checked out: somebody may still be standing on it.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;branch&quot;: {
-          &quot;description&quot;: &quot;The branch on origin.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;merged_at&quot;: {
-          &quot;description&quot;: &quot;When that pull request merged.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;next_step&quot;: {
-          &quot;description&quot;: &quot;What would clear it, in the setting&#39;s own terms.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;`would_close`, `closed`, `left_for_a_person`, or `close_failed: &lt;why&gt;`.&quot;
         },
         &quot;pr&quot;: {
-          &quot;description&quot;: &quot;The pull request that merged it.&quot;,
+          &quot;type&quot;: &quot;integer&quot;,
           &quot;format&quot;: &quot;uint64&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;description&quot;: &quot;The pull request.&quot;
+        }
+      }
+    },
+    &quot;LeftBranch&quot;: {
+      &quot;properties&quot;: {
+        &quot;next_step&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;What would clear it, in the setting&#39;s own terms.&quot;
+        },
+        &quot;pr&quot;: {
+          &quot;format&quot;: &quot;uint64&quot;,
+          &quot;description&quot;: &quot;The pull request that merged it.&quot;,
           &quot;minimum&quot;: 0,
           &quot;type&quot;: &quot;integer&quot;
         },
         &quot;tip&quot;: {
           &quot;description&quot;: &quot;Its tip: the head that merged.&quot;,
           &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;branch&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The branch on origin.&quot;
+        },
+        &quot;merged_at&quot;: {
+          &quot;description&quot;: &quot;When that pull request merged.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;action&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;`left_for_a_person`, or `kept: checked out at &lt;path&gt;` when a worktree of this\nrepository has the branch checked out: somebody may still be standing on it.&quot;
         }
       },
       &quot;required&quot;: [
@@ -344,65 +347,65 @@ marked obsolete. Nothing here closes anything.</td>
         &quot;action&quot;,
         &quot;next_step&quot;
       ],
+      &quot;description&quot;: &quot;A branch a merged pull request left on origin, as cleanup reports it. Reported, never\ndeleted: the forge&#39;s `delete_branch_on_merge` decides deletion (owner decision D4), so the\nexecutor holds no branch-deleting write at all.&quot;,
       &quot;type&quot;: &quot;object&quot;
     },
     &quot;LeftBranchReport&quot;: {
-      &quot;description&quot;: &quot;The last report of the branches merged pull requests left on origin, as `prs cleanup`\nread it. Written by `prs cleanup` alone — the one place that asks the forge for them —\nand rendered offline, with its age, by every surface that cannot reach the network.&quot;,
       &quot;properties&quot;: {
-        &quot;base&quot;: {
-          &quot;description&quot;: &quot;The base the report excludes.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+        &quot;delete_branch_on_merge&quot;: {
+          &quot;type&quot;: [
+            &quot;boolean&quot;,
+            &quot;null&quot;
+          ],
+          &quot;description&quot;: &quot;The forge&#39;s `delete_branch_on_merge`, from the observation; `None` when unread.&quot;
+        },
+        &quot;read_at&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;When cleanup read origin and the merged pull requests.&quot;
         },
         &quot;branches&quot;: {
-          &quot;description&quot;: &quot;The branches, or `None` when origin or the merged pull requests could not be read:\nunread is not \&quot;nothing left behind\&quot;.&quot;,
           &quot;items&quot;: {
             &quot;$ref&quot;: &quot;#/$defs/LeftBranch&quot;
           },
+          &quot;description&quot;: &quot;The branches, or `None` when origin or the merged pull requests could not be read:\nunread is not \&quot;nothing left behind\&quot;.&quot;,
           &quot;type&quot;: [
             &quot;array&quot;,
             &quot;null&quot;
           ]
         },
-        &quot;delete_branch_on_merge&quot;: {
-          &quot;description&quot;: &quot;The forge&#39;s `delete_branch_on_merge`, from the observation; `None` when unread.&quot;,
-          &quot;type&quot;: [
-            &quot;boolean&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;read_at&quot;: {
-          &quot;description&quot;: &quot;When cleanup read origin and the merged pull requests.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
         &quot;refreshed_by&quot;: {
-          &quot;description&quot;: &quot;The command that reads it afresh.&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The command that reads it afresh.&quot;
+        },
+        &quot;base&quot;: {
+          &quot;description&quot;: &quot;The base the report excludes.&quot;,
           &quot;type&quot;: &quot;string&quot;
         }
       },
+      &quot;description&quot;: &quot;The last report of the branches merged pull requests left on origin, as `prs cleanup`\nread it. Written by `prs cleanup` alone — the one place that asks the forge for them —\nand rendered offline, with its age, by every surface that cannot reach the network.&quot;,
+      &quot;type&quot;: &quot;object&quot;,
       &quot;required&quot;: [
         &quot;read_at&quot;,
         &quot;base&quot;,
         &quot;refreshed_by&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
+      ]
     },
     &quot;PullRequestDisposition&quot;: {
-      &quot;description&quot;: &quot;The one classification of an open pull request. Every value carries a machine-readable\nreason in `PullRequestAssessment::reasons`; there is no `mergeable: bool`.&quot;,
       &quot;oneOf&quot;: [
         {
+          &quot;type&quot;: &quot;string&quot;,
           &quot;const&quot;: &quot;ready&quot;,
-          &quot;description&quot;: &quot;Contains the current master, every required check passed on its head, nothing\nblocks it: the executor may merge it.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;description&quot;: &quot;Contains the current master, every required check passed on its head, nothing\nblocks it: the executor may merge it.&quot;
         },
         {
           &quot;const&quot;: &quot;needs_refresh&quot;,
-          &quot;description&quot;: &quot;Merges cleanly but does not contain master: the executor may bring master in (a\nmerge commit on the branch, never a rewrite), after which CI must run again.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;Merges cleanly but does not contain master: the executor may bring master in (a\nmerge commit on the branch, never a rewrite), after which CI must run again.&quot;
         },
         {
-          &quot;const&quot;: &quot;waiting_for_checks&quot;,
           &quot;description&quot;: &quot;Contains master; a required check has not finished on this head.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;waiting_for_checks&quot;
         },
         {
           &quot;const&quot;: &quot;waiting_for_review&quot;,
@@ -411,28 +414,28 @@ marked obsolete. Nothing here closes anything.</td>
         },
         {
           &quot;const&quot;: &quot;waiting_for_dependency&quot;,
-          &quot;description&quot;: &quot;A declared dependency has not landed.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;A declared dependency has not landed.&quot;
         },
         {
+          &quot;type&quot;: &quot;string&quot;,
           &quot;const&quot;: &quot;draft&quot;,
-          &quot;description&quot;: &quot;A draft.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;description&quot;: &quot;A draft.&quot;
         },
         {
-          &quot;const&quot;: &quot;needs_repair&quot;,
           &quot;description&quot;: &quot;A required check failed on this head.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;needs_repair&quot;
         },
         {
+          &quot;type&quot;: &quot;string&quot;,
           &quot;const&quot;: &quot;conflicting&quot;,
-          &quot;description&quot;: &quot;Conflicts on authored paths: a person resolves them.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;description&quot;: &quot;Conflicts on authored paths: a person resolves them.&quot;
         },
         {
+          &quot;type&quot;: &quot;string&quot;,
           &quot;const&quot;: &quot;blocked&quot;,
-          &quot;description&quot;: &quot;A label whose policy is to hold holds it, or the repository allows no merge commit,\nwhich is the only way the executor merges.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;description&quot;: &quot;A label whose policy is to hold holds it, or the repository allows no merge commit,\nwhich is the only way the executor merges.&quot;
         },
         {
           &quot;const&quot;: &quot;unsafe&quot;,
@@ -440,41 +443,58 @@ marked obsolete. Nothing here closes anything.</td>
           &quot;type&quot;: &quot;string&quot;
         },
         {
+          &quot;type&quot;: &quot;string&quot;,
           &quot;const&quot;: &quot;redundant&quot;,
-          &quot;description&quot;: &quot;Its head already landed, its merge changes nothing, or every one of its commits is on\nmaster as an equal patch: strong evidence from git, eligible for closure under policy.\n(Before 0.13 this was the word `superseded`.)&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;description&quot;: &quot;Its head already landed, its merge changes nothing, or every one of its commits is on\nmaster as an equal patch: strong evidence from git, eligible for closure under policy.\n(Before 0.13 this was the word `superseded`.)&quot;
         },
         {
-          &quot;const&quot;: &quot;superseded&quot;,
           &quot;description&quot;: &quot;A successor was declared for it by someone the repository lets declare one — an owner,\nmember or collaborator, in a pull request of this repository — and that successor\nlanded: git finds its head or its merge commit in master. The successor is\n`PullRequestAssessment::superseded_by`. Eligible for closure under policy.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;superseded&quot;
         },
         {
+          &quot;type&quot;: &quot;string&quot;,
           &quot;const&quot;: &quot;possibly_redundant&quot;,
-          &quot;description&quot;: &quot;Weak evidence: only derived artifacts would change, or its declared successor was merged\nsomewhere master does not contain. Surfaced for a person; never closed automatically.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;description&quot;: &quot;Weak evidence: only derived artifacts would change, or its declared successor was merged\nsomewhere master does not contain. Surfaced for a person; never closed automatically.&quot;
         },
         {
           &quot;const&quot;: &quot;other_base&quot;,
-          &quot;description&quot;: &quot;Targets a branch other than the integration base.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;Targets a branch other than the integration base.&quot;
         },
         {
           &quot;const&quot;: &quot;unknown&quot;,
-          &quot;description&quot;: &quot;Something needed to decide could not be observed.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;Something needed to decide could not be observed.&quot;
         },
         {
           &quot;const&quot;: &quot;obsolete&quot;,
           &quot;description&quot;: &quot;A person marked it obsolete with a label the label policy declares (owner decision\nD3): the only evidence that reaches this word. Listed for a person by cleanup and\nnever closed automatically; age, shared paths or a similar title never make one.&quot;,
           &quot;type&quot;: &quot;string&quot;
         }
-      ]
+      ],
+      &quot;description&quot;: &quot;The one classification of an open pull request. Every value carries a machine-readable\nreason in `PullRequestAssessment::reasons`; there is no `mergeable: bool`.&quot;
     }
   },
-  &quot;description&quot;: &quot;What cleanup would do, decided offline: the pull requests it would close or leave for a\nperson, from the recorded observation, and the last branch report `prs cleanup` recorded.&quot;,
   &quot;properties&quot;: {
+    &quot;items&quot;: {
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;items&quot;: {
+        &quot;$ref&quot;: &quot;#/$defs/CleanupItem&quot;
+      },
+      &quot;description&quot;: &quot;The plan, in rank order: `would_close` for what is provably on master or superseded by\na successor that landed, `left_for_a_person` for weak evidence and for what a person\nmarked obsolete. Nothing here closes anything.&quot;
+    },
+    &quot;branches_age_seconds&quot;: {
+      &quot;description&quot;: &quot;How old that report is, in seconds, when its time reads.&quot;,
+      &quot;type&quot;: [
+        &quot;integer&quot;,
+        &quot;null&quot;
+      ],
+      &quot;minimum&quot;: 0,
+      &quot;format&quot;: &quot;uint64&quot;
+    },
     &quot;branches&quot;: {
+      &quot;description&quot;: &quot;The branches merged pull requests left on origin, as `prs cleanup` last read them;\n`None` when it never ran in this checkout. Never read from the network here.&quot;,
       &quot;anyOf&quot;: [
         {
           &quot;$ref&quot;: &quot;#/$defs/LeftBranchReport&quot;
@@ -482,35 +502,18 @@ marked obsolete. Nothing here closes anything.</td>
         {
           &quot;type&quot;: &quot;null&quot;
         }
-      ],
-      &quot;description&quot;: &quot;The branches merged pull requests left on origin, as `prs cleanup` last read them;\n`None` when it never ran in this checkout. Never read from the network here.&quot;
-    },
-    &quot;branches_age_seconds&quot;: {
-      &quot;description&quot;: &quot;How old that report is, in seconds, when its time reads.&quot;,
-      &quot;format&quot;: &quot;uint64&quot;,
-      &quot;minimum&quot;: 0,
-      &quot;type&quot;: [
-        &quot;integer&quot;,
-        &quot;null&quot;
       ]
-    },
-    &quot;items&quot;: {
-      &quot;description&quot;: &quot;The plan, in rank order: `would_close` for what is provably on master or superseded by\na successor that landed, `left_for_a_person` for weak evidence and for what a person\nmarked obsolete. Nothing here closes anything.&quot;,
-      &quot;items&quot;: {
-        &quot;$ref&quot;: &quot;#/$defs/CleanupItem&quot;
-      },
-      &quot;type&quot;: &quot;array&quot;
     },
     &quot;observed&quot;: {
       &quot;description&quot;: &quot;Whether a forge observation is recorded in this checkout.&quot;,
       &quot;type&quot;: &quot;boolean&quot;
     },
     &quot;observed_at&quot;: {
-      &quot;description&quot;: &quot;When the forge was observed, when it was.&quot;,
       &quot;type&quot;: [
         &quot;string&quot;,
         &quot;null&quot;
-      ]
+      ],
+      &quot;description&quot;: &quot;When the forge was observed, when it was.&quot;
     },
     &quot;reason&quot;: {
       &quot;description&quot;: &quot;Why there is no plan, when there is none.&quot;,
@@ -520,12 +523,9 @@ marked obsolete. Nothing here closes anything.</td>
       ]
     }
   },
-  &quot;required&quot;: [
-    &quot;observed&quot;,
-    &quot;items&quot;
-  ],
   &quot;title&quot;: &quot;IntegrationCleanup&quot;,
-  &quot;type&quot;: &quot;object&quot;
+  &quot;type&quot;: &quot;object&quot;,
+  &quot;description&quot;: &quot;What cleanup would do, decided offline: the pull requests it would close or leave for a\nperson, from the recorded observation, and the last branch report `prs cleanup` recorded.&quot;
 }</pre></div>
   </details>
 </div>
@@ -556,7 +556,7 @@ marked obsolete. Nothing here closes anything.</td>
         <div><dt class="text-body-subtle">Rust module</dt><dd class="min-w-0 break-all font-mono text-heading">majordomus_cli::capability::builtin::integration</dd></div>
         <div><dt class="text-body-subtle">input type</dt><dd class="font-mono text-heading">Empty</dd></div>
         <div><dt class="text-body-subtle">output type</dt><dd class="font-mono text-heading">IntegrationCleanup</dd></div>
-        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/1112bace3437ee0d82067b1e8f61813e70190078/docs/generated/modules/integration.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/integration.md</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">5cdbf22cd21589ddbe464d5f0987b6bcf4607d05479004d6f815c3b306fdb08a</dd></div>
+        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/docs/generated/modules/integration.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/integration.md</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">3f734f2faf797f0ca7c39b4cd837e68b6619c41c6f6711f3d3aeca8f341934eb</dd></div>
         <div><dt class="text-body-subtle">generated by</dt><dd class="font-mono text-heading">majordomus-cli 1.0.0-alpha.10</dd></div>
       </dl>
     </div>
@@ -612,9 +612,9 @@ marked obsolete. Nothing here closes anything.</td>
       <div class="min-w-0">
         <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">Project</h2><ul class="space-y-2 text-sm font-medium text-body">
           <li><a href="https://github.com/korczis/prismatic-majordomus" class="hover:text-heading hover:underline">GitHub</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/1112bace3437ee0d82067b1e8f61813e70190078/LICENSE" class="hover:text-heading hover:underline">MIT licence</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/1112bace3437ee0d82067b1e8f61813e70190078/SECURITY.md" class="hover:text-heading hover:underline">Security policy</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/1112bace3437ee0d82067b1e8f61813e70190078/CONTRIBUTING.md" class="hover:text-heading hover:underline">Contributing guide</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/LICENSE" class="hover:text-heading hover:underline">MIT licence</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/SECURITY.md" class="hover:text-heading hover:underline">Security policy</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/CONTRIBUTING.md" class="hover:text-heading hover:underline">Contributing guide</a></li>
         </ul>
       </div>
     </div>
@@ -622,7 +622,7 @@ marked obsolete. Nothing here closes anything.</td>
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.10</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/1112bace3437ee0d82067b1e8f61813e70190078" class="font-mono underline">1112bac</a> · inputs <span class="font-mono">830f884cc5aa</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/architecture/" class="underline">how this site is derived</a> names them.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.10</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/745db2ea21e02613943face75a2bf95542be1f2e" class="font-mono underline">745db2e</a> · inputs <span class="font-mono">0a58c217d1b7</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/architecture/" class="underline">how this site is derived</a> names them.</p>
     </div>
   </div>
 </footer>

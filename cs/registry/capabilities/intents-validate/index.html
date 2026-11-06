@@ -210,10 +210,10 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
   <h3 class="font-mono text-sm font-semibold text-heading">vstup · Prázdné</h3><div class="mt-1 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">Žádný vstup.</div><p class="mt-2 text-sm text-body-subtle">Žádné vlastnosti: schopnost nebere žádný vstup.</p><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
+  &quot;type&quot;: &quot;object&quot;,
   &quot;additionalProperties&quot;: false,
   &quot;description&quot;: &quot;No input.&quot;,
-  &quot;title&quot;: &quot;Empty&quot;,
-  &quot;type&quot;: &quot;object&quot;
+  &quot;title&quot;: &quot;Empty&quot;
 }</pre></div>
   </details>
 </div>
@@ -232,11 +232,6 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
     <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
       <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">vlastnost</th><th class="px-3 py-2">typ</th><th class="px-3 py-2">povinné</th><th class="px-3 py-2">popis</th></tr></thead>
       <tbody><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">selhání</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">integer</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Kolik nálezů jsou selhání.</td>
-      </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">zjištění</td>
         <td class="px-3 py-2 font-mono text-xs text-body">array</td>
         <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
@@ -256,36 +251,26 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
         <td class="px-3 py-2 font-mono text-xs text-body">integer</td>
         <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
         <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Kolik zjištění jsou varování.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">selhání</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">integer</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Kolik nálezů jsou selhání.</td>
       </tr></tbody>
     </table>
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
+  &quot;required&quot;: [
+    &quot;valid&quot;,
+    &quot;intents&quot;,
+    &quot;failures&quot;,
+    &quot;warnings&quot;,
+    &quot;findings&quot;
+  ],
+  &quot;description&quot;: &quot;What the intent model refuses: whether it is valid, how many intents were examined, and\nevery finding with its level. Warnings are reported and do not make it invalid.\n\n```\nuse majordomus_cli::capability::builtin::intents::IntentValidation;\nlet v = IntentValidation {\n    valid: true,\n    intents: 2,\n    failures: 0,\n    warnings: 20,\n    findings: vec![],\n};\n// twenty warnings and no failure is a valid model\nassert!(v.valid);\n```&quot;,
   &quot;$defs&quot;: {
     &quot;IntentFinding&quot;: {
-      &quot;description&quot;: &quot;One validation finding: its level, a stable code a reader greps for, the intent or milestone\nit is about, one line of what is wrong, and the command that shows it again.\n\n```\nuse majordomus_cli::intent::{IntentFinding, FAIL};\nlet f = IntentFinding {\n    level: FAIL.into(),\n    code: \&quot;unknown_milestone\&quot;.into(),\n    subject: \&quot;intent-lifecycle\&quot;.into(),\n    message: \&quot;`no-such` is not a milestone\&quot;.into(),\n    reproduce: \&quot;majordomus intent validate\&quot;.into(),\n};\nassert_eq!(f.level, \&quot;FAIL\&quot;);\nassert_eq!(f.reproduce, \&quot;majordomus intent validate\&quot;);\n```&quot;,
-      &quot;properties&quot;: {
-        &quot;code&quot;: {
-          &quot;description&quot;: &quot;The stable code a reader greps for.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;level&quot;: {
-          &quot;description&quot;: &quot;`FAIL` or `WARN`. A failure means the intent model is invalid.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;message&quot;: {
-          &quot;description&quot;: &quot;What is wrong, in one line.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;reproduce&quot;: {
-          &quot;description&quot;: &quot;The command that shows it again.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;subject&quot;: {
-          &quot;description&quot;: &quot;The intent or milestone the finding is about.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      },
       &quot;required&quot;: [
         &quot;level&quot;,
         &quot;code&quot;,
@@ -293,23 +278,41 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
         &quot;message&quot;,
         &quot;reproduce&quot;
       ],
-      &quot;type&quot;: &quot;object&quot;
+      &quot;type&quot;: &quot;object&quot;,
+      &quot;properties&quot;: {
+        &quot;reproduce&quot;: {
+          &quot;description&quot;: &quot;The command that shows it again.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;code&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The stable code a reader greps for.&quot;
+        },
+        &quot;message&quot;: {
+          &quot;description&quot;: &quot;What is wrong, in one line.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;subject&quot;: {
+          &quot;description&quot;: &quot;The intent or milestone the finding is about.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;level&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;`FAIL` or `WARN`. A failure means the intent model is invalid.&quot;
+        }
+      },
+      &quot;description&quot;: &quot;One validation finding: its level, a stable code a reader greps for, the intent or milestone\nit is about, one line of what is wrong, and the command that shows it again.\n\n```\nuse majordomus_cli::intent::{IntentFinding, FAIL};\nlet f = IntentFinding {\n    level: FAIL.into(),\n    code: \&quot;unknown_milestone\&quot;.into(),\n    subject: \&quot;intent-lifecycle\&quot;.into(),\n    message: \&quot;`no-such` is not a milestone\&quot;.into(),\n    reproduce: \&quot;majordomus intent validate\&quot;.into(),\n};\nassert_eq!(f.level, \&quot;FAIL\&quot;);\nassert_eq!(f.reproduce, \&quot;majordomus intent validate\&quot;);\n```&quot;
     }
   },
-  &quot;description&quot;: &quot;What the intent model refuses: whether it is valid, how many intents were examined, and\nevery finding with its level. Warnings are reported and do not make it invalid.\n\n```\nuse majordomus_cli::capability::builtin::intents::IntentValidation;\nlet v = IntentValidation {\n    valid: true,\n    intents: 2,\n    failures: 0,\n    warnings: 20,\n    findings: vec![],\n};\n// twenty warnings and no failure is a valid model\nassert!(v.valid);\n```&quot;,
+  &quot;title&quot;: &quot;IntentValidation&quot;,
+  &quot;type&quot;: &quot;object&quot;,
   &quot;properties&quot;: {
-    &quot;failures&quot;: {
-      &quot;description&quot;: &quot;How many findings are failures.&quot;,
-      &quot;format&quot;: &quot;uint&quot;,
-      &quot;minimum&quot;: 0,
-      &quot;type&quot;: &quot;integer&quot;
-    },
     &quot;findings&quot;: {
-      &quot;description&quot;: &quot;Every finding.&quot;,
       &quot;items&quot;: {
         &quot;$ref&quot;: &quot;#/$defs/IntentFinding&quot;
       },
-      &quot;type&quot;: &quot;array&quot;
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;description&quot;: &quot;Every finding.&quot;
     },
     &quot;intents&quot;: {
       &quot;description&quot;: &quot;How many intents were examined.&quot;,
@@ -322,21 +325,18 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
       &quot;type&quot;: &quot;boolean&quot;
     },
     &quot;warnings&quot;: {
-      &quot;description&quot;: &quot;How many findings are warnings.&quot;,
       &quot;format&quot;: &quot;uint&quot;,
       &quot;minimum&quot;: 0,
+      &quot;description&quot;: &quot;How many findings are warnings.&quot;,
       &quot;type&quot;: &quot;integer&quot;
+    },
+    &quot;failures&quot;: {
+      &quot;minimum&quot;: 0,
+      &quot;format&quot;: &quot;uint&quot;,
+      &quot;type&quot;: &quot;integer&quot;,
+      &quot;description&quot;: &quot;How many findings are failures.&quot;
     }
-  },
-  &quot;required&quot;: [
-    &quot;valid&quot;,
-    &quot;intents&quot;,
-    &quot;failures&quot;,
-    &quot;warnings&quot;,
-    &quot;findings&quot;
-  ],
-  &quot;title&quot;: &quot;IntentValidation&quot;,
-  &quot;type&quot;: &quot;object&quot;
+  }
 }</pre></div>
   </details>
 </div>
@@ -367,7 +367,7 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
         <div><dt class="text-body-subtle">modul Rust</dt><dd class="min-w-0 break-all font-mono text-heading">majordomus_cli::capability::builtin::intents</dd></div>
         <div><dt class="text-body-subtle">typ vstupu</dt><dd class="font-mono text-heading">Prázdné</dd></div>
         <div><dt class="text-body-subtle">typ výstupu</dt><dd class="font-mono text-heading">IntentValidation</dd></div>
-        <div><dt class="text-body-subtle">reference na GitHubu</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/1112bace3437ee0d82067b1e8f61813e70190078/docs/generated/modules/intents.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/intents.md</a></dd></div><div><dt class="text-body-subtle">otisk registru</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">5cdbf22cd21589ddbe464d5f0987b6bcf4607d05479004d6f815c3b306fdb08a</dd></div>
+        <div><dt class="text-body-subtle">reference na GitHubu</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/docs/generated/modules/intents.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/intents.md</a></dd></div><div><dt class="text-body-subtle">otisk registru</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">3f734f2faf797f0ca7c39b4cd837e68b6619c41c6f6711f3d3aeca8f341934eb</dd></div>
         <div><dt class="text-body-subtle">vygenerováno nástrojem</dt><dd class="font-mono text-heading">majordomus-cli 1.0.0-alpha.10</dd></div>
       </dl>
     </div>
@@ -423,9 +423,9 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
       <div class="min-w-0">
         <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">Projekt</h2><ul class="space-y-2 text-sm font-medium text-body">
           <li><a href="https://github.com/korczis/prismatic-majordomus" class="hover:text-heading hover:underline">GitHub</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/1112bace3437ee0d82067b1e8f61813e70190078/LICENSE" class="hover:text-heading hover:underline">Licence MIT</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/1112bace3437ee0d82067b1e8f61813e70190078/SECURITY.md" class="hover:text-heading hover:underline">Bezpečnostní politika</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/1112bace3437ee0d82067b1e8f61813e70190078/CONTRIBUTING.md" class="hover:text-heading hover:underline">Průvodce pro přispěvatele</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/LICENSE" class="hover:text-heading hover:underline">Licence MIT</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/SECURITY.md" class="hover:text-heading hover:underline">Bezpečnostní politika</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/CONTRIBUTING.md" class="hover:text-heading hover:underline">Průvodce pro přispěvatele</a></li>
         </ul>
       </div>
     </div>
@@ -433,7 +433,7 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/cs/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.10</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/1112bace3437ee0d82067b1e8f61813e70190078" class="font-mono underline">1112bac</a> · inputs <span class="font-mono">830f884cc5aa</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/cs/architecture/" class="underline">how this site is derived</a> names them.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.10</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/745db2ea21e02613943face75a2bf95542be1f2e" class="font-mono underline">745db2e</a> · inputs <span class="font-mono">0a58c217d1b7</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/cs/architecture/" class="underline">how this site is derived</a> names them.</p>
     </div>
   </div>
 </footer>

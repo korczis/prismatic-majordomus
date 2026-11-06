@@ -238,19 +238,19 @@ is the open task; <code>all</code> is every task the store holds.</p>
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
-  &quot;additionalProperties&quot;: false,
   &quot;description&quot;: &quot;The input of `reasoning.status`: which task&#39;s records to derive the state from. Absent\nis the open task; `all` is every task the store holds.\n\n```\nuse majordomus_cli::capability::builtin::reasoning::ReasoningStatusInput;\n\nlet open: ReasoningStatusInput = serde_json::from_str(\&quot;{}\&quot;).unwrap();\nassert!(open.task.is_none());\nlet all: ReasoningStatusInput = serde_json::from_str(r#\&quot;{\&quot;task\&quot;:\&quot;all\&quot;}\&quot;#).unwrap();\nassert_eq!(all.task.as_deref(), Some(\&quot;all\&quot;));\n```&quot;,
+  &quot;additionalProperties&quot;: false,
+  &quot;title&quot;: &quot;ReasoningStatusInput&quot;,
+  &quot;type&quot;: &quot;object&quot;,
   &quot;properties&quot;: {
     &quot;task&quot;: {
-      &quot;description&quot;: &quot;A task id, or `all`; the open task when absent.&quot;,
       &quot;type&quot;: [
         &quot;string&quot;,
         &quot;null&quot;
-      ]
+      ],
+      &quot;description&quot;: &quot;A task id, or `all`; the open task when absent.&quot;
     }
-  },
-  &quot;title&quot;: &quot;ReasoningStatusInput&quot;,
-  &quot;type&quot;: &quot;object&quot;
+  }
 }</pre></div>
   </details>
 </div>
@@ -266,199 +266,71 @@ records derive, and that state rendered as the Markdown a handover carries.</p>
     <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
       <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
       <tbody><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">state</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The state.</td>
+      </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">advisors_available</td>
         <td class="px-3 py-2 font-mono text-xs text-body">integer</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
         <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Advisors available now.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">advisors_unavailable</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">integer</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Advisors not available now, each optional.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">mode</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The mode in force.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">report</td>
         <td class="px-3 py-2 font-mono text-xs text-body">string</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
         <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The state as Markdown: what a handover carries.</td>
       </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">state</td>
+        <td class="px-3 py-2 font-mono text-heading">mode</td>
         <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The state.</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The mode in force.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">advisors_unavailable</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">integer</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Advisors not available now, each optional.</td>
       </tr></tbody>
     </table>
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
+  &quot;properties&quot;: {
+    &quot;state&quot;: {
+      &quot;$ref&quot;: &quot;#/$defs/ReasoningState&quot;,
+      &quot;description&quot;: &quot;The state.&quot;
+    },
+    &quot;advisors_available&quot;: {
+      &quot;description&quot;: &quot;Advisors available now.&quot;,
+      &quot;type&quot;: &quot;integer&quot;,
+      &quot;format&quot;: &quot;uint&quot;,
+      &quot;minimum&quot;: 0
+    },
+    &quot;report&quot;: {
+      &quot;description&quot;: &quot;The state as Markdown: what a handover carries.&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;mode&quot;: {
+      &quot;description&quot;: &quot;The mode in force.&quot;,
+      &quot;$ref&quot;: &quot;#/$defs/ModeResolution&quot;
+    },
+    &quot;advisors_unavailable&quot;: {
+      &quot;description&quot;: &quot;Advisors not available now, each optional.&quot;,
+      &quot;format&quot;: &quot;uint&quot;,
+      &quot;minimum&quot;: 0,
+      &quot;type&quot;: &quot;integer&quot;
+    }
+  },
+  &quot;title&quot;: &quot;ReasoningStatus&quot;,
+  &quot;description&quot;: &quot;The answer of `reasoning.status`: the mode in force, the advisor counts, the state the\nrecords derive, and that state rendered as the Markdown a handover carries.\n\n```\nuse majordomus_cli::capability::builtin::reasoning::ReasoningStatus;\n\nlet schema = serde_json::to_value(schemars::schema_for!(ReasoningStatus)).unwrap();\nfor field in [\&quot;mode\&quot;, \&quot;advisors_available\&quot;, \&quot;advisors_unavailable\&quot;, \&quot;state\&quot;, \&quot;report\&quot;] {\n    assert!(schema[\&quot;required\&quot;].as_array().unwrap().iter().any(|f| f == field), \&quot;{field}\&quot;);\n}\n```&quot;,
+  &quot;type&quot;: &quot;object&quot;,
   &quot;$defs&quot;: {
-    &quot;AssessmentStanding&quot;: {
-      &quot;description&quot;: &quot;Where an assessment stands, from open through validated.\n\nThe standing is derived, never stored: an unresolved disagreement makes it disputed\nwhatever else is recorded; otherwise its standing conclusion and that conclusion&#39;s\nvalidations decide it, and without a conclusion a recorded plan makes it planned.\n\n```\n# use majordomus_cli::reasoning::record::ReasoningRecord;\n# use serde_json::json;\n# fn rec(id: &amp;str, n: u32, body: serde_json::Value) -&gt; ReasoningRecord {\n#     serde_json::from_value(json!({\n#         \&quot;schema\&quot;: \&quot;majordomus/reasoning-record\&quot;, \&quot;version\&quot;: 1, \&quot;id\&quot;: id, \&quot;task\&quot;: \&quot;t\&quot;,\n#         \&quot;recorded_at\&quot;: format!(\&quot;2026-10-01T00:00:{n:02}Z\&quot;), \&quot;body\&quot;: body,\n#     }))\n#     .unwrap()\n# }\nuse majordomus_cli::reasoning::state::{derive, AssessmentStanding};\nuse majordomus_cli::reasoning::store::Loaded;\n\nlet mut loaded = Loaded::default();\nloaded.records.push(rec(\&quot;assessment-1\&quot;, 1, json!({ \&quot;kind\&quot;: \&quot;assessment\&quot;, \&quot;subject\&quot;: \&quot;s\&quot; })));\nassert_eq!(derive(&amp;loaded, None).assessments[0].standing, AssessmentStanding::Open);\n\nloaded.records.push(rec(\&quot;disagreement-2\&quot;, 2, json!({\n    \&quot;kind\&quot;: \&quot;disagreement\&quot;, \&quot;assessment\&quot;: \&quot;assessment-1\&quot;,\n    \&quot;positions\&quot;: [\n        { \&quot;source\&quot;: \&quot;primary\&quot;, \&quot;position\&quot;: \&quot;A\&quot; },\n        { \&quot;source\&quot;: \&quot;consultation-9\&quot;, \&quot;position\&quot;: \&quot;B\&quot; },\n    ],\n    \&quot;discriminating_question\&quot;: \&quot;do callers retry?\&quot;,\n})));\nassert_eq!(derive(&amp;loaded, None).assessments[0].standing, AssessmentStanding::Disputed);\n```&quot;,
-      &quot;oneOf&quot;: [
-        {
-          &quot;const&quot;: &quot;open&quot;,
-          &quot;description&quot;: &quot;Stated; no plan yet.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;planned&quot;,
-          &quot;description&quot;: &quot;Planned; no conclusion yet.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;disputed&quot;,
-          &quot;description&quot;: &quot;A disagreement on it is unsettled.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;concluded&quot;,
-          &quot;description&quot;: &quot;Concluded; not yet validated.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;validated&quot;,
-          &quot;description&quot;: &quot;Concluded, and every validation recorded passed.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;validation_failed&quot;,
-          &quot;description&quot;: &quot;Concluded, and a validation failed.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      ]
-    },
-    &quot;AssessmentView&quot;: {
-      &quot;description&quot;: &quot;One assessment and where it stands.\n\nThe view carries what a reader needs to pick the work up: the subject, its\nmateriality, its derived standing, the conclusion that stands for it and the\nquestions it left open.\n\n```\n# use majordomus_cli::reasoning::record::ReasoningRecord;\n# use serde_json::json;\n# fn rec(id: &amp;str, n: u32, body: serde_json::Value) -&gt; ReasoningRecord {\n#     serde_json::from_value(json!({\n#         \&quot;schema\&quot;: \&quot;majordomus/reasoning-record\&quot;, \&quot;version\&quot;: 1, \&quot;id\&quot;: id, \&quot;task\&quot;: \&quot;t\&quot;,\n#         \&quot;recorded_at\&quot;: format!(\&quot;2026-10-01T00:00:{n:02}Z\&quot;), \&quot;body\&quot;: body,\n#     }))\n#     .unwrap()\n# }\nuse majordomus_cli::reasoning::policy::Materiality;\nuse majordomus_cli::reasoning::state::{derive, AssessmentView};\nuse majordomus_cli::reasoning::store::Loaded;\n\nlet mut loaded = Loaded::default();\nloaded.records.push(rec(\&quot;assessment-1\&quot;, 1, json!({\n    \&quot;kind\&quot;: \&quot;assessment\&quot;, \&quot;subject\&quot;: \&quot;lock scope\&quot;, \&quot;materiality\&quot;: \&quot;trivial\&quot;,\n    \&quot;questions\&quot;: [\&quot;is it held across an await?\&quot;],\n})));\nlet state = derive(&amp;loaded, None);\nlet view: &amp;AssessmentView = &amp;state.assessments[0];\nassert_eq!((view.id.as_str(), view.task.as_str()), (\&quot;assessment-1\&quot;, \&quot;t\&quot;));\nassert_eq!(view.materiality, Materiality::Trivial);\nassert_eq!(view.conclusion, None);\nassert_eq!(view.questions, [\&quot;is it held across an await?\&quot;]);\n```&quot;,
-      &quot;properties&quot;: {
-        &quot;conclusion&quot;: {
-          &quot;description&quot;: &quot;Its standing conclusion.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;id&quot;: {
-          &quot;description&quot;: &quot;Record id.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;materiality&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/Materiality&quot;,
-          &quot;description&quot;: &quot;How much it matters.&quot;
-        },
-        &quot;questions&quot;: {
-          &quot;description&quot;: &quot;Questions it left open.&quot;,
-          &quot;items&quot;: {
-            &quot;type&quot;: &quot;string&quot;
-          },
-          &quot;type&quot;: &quot;array&quot;
-        },
-        &quot;standing&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/AssessmentStanding&quot;,
-          &quot;description&quot;: &quot;Where it stands.&quot;
-        },
-        &quot;subject&quot;: {
-          &quot;description&quot;: &quot;What is uncertain.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;task&quot;: {
-          &quot;description&quot;: &quot;The task it was recorded under.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      },
-      &quot;required&quot;: [
-        &quot;id&quot;,
-        &quot;task&quot;,
-        &quot;subject&quot;,
-        &quot;materiality&quot;,
-        &quot;standing&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
-    },
-    &quot;ConclusionView&quot;: {
-      &quot;description&quot;: &quot;One conclusion, as the state reports it.\n\nBesides the decision and its computed review, the view counts the validations\nrecorded against the conclusion and names the later conclusion that superseded it,\nif any. A superseded conclusion stays in the list; the report leaves it out.\n\n```\n# use majordomus_cli::reasoning::record::ReasoningRecord;\n# use serde_json::json;\n# fn rec(id: &amp;str, n: u32, body: serde_json::Value) -&gt; ReasoningRecord {\n#     serde_json::from_value(json!({\n#         \&quot;schema\&quot;: \&quot;majordomus/reasoning-record\&quot;, \&quot;version\&quot;: 1, \&quot;id\&quot;: id, \&quot;task\&quot;: \&quot;t\&quot;,\n#         \&quot;recorded_at\&quot;: format!(\&quot;2026-10-01T00:00:{n:02}Z\&quot;), \&quot;body\&quot;: body,\n#     }))\n#     .unwrap()\n# }\nuse majordomus_cli::reasoning::state::{derive, ConclusionView};\nuse majordomus_cli::reasoning::store::Loaded;\n\nlet conclusion = |decision: &amp;str, supersedes: Option&lt;&amp;str&gt;| {\n    json!({\n        \&quot;kind\&quot;: \&quot;conclusion\&quot;, \&quot;assessment\&quot;: \&quot;assessment-0\&quot;, \&quot;decision\&quot;: decision,\n        \&quot;rationale\&quot;: \&quot;r\&quot;, \&quot;supersedes\&quot;: supersedes,\n        \&quot;reviewed_by\&quot;: [], \&quot;independent_review_count\&quot;: 0,\n    })\n};\nlet mut loaded = Loaded::default();\nloaded.records.push(rec(\&quot;conclusion-1\&quot;, 1, conclusion(\&quot;A\&quot;, None)));\nloaded.records.push(rec(\&quot;validation-2\&quot;, 2, json!({\n    \&quot;kind\&quot;: \&quot;validation\&quot;, \&quot;conclusion\&quot;: \&quot;conclusion-1\&quot;, \&quot;check\&quot;: \&quot;x\&quot;, \&quot;outcome\&quot;: \&quot;fail\&quot;,\n})));\nloaded.records.push(rec(\&quot;conclusion-3\&quot;, 3, conclusion(\&quot;B\&quot;, Some(\&quot;conclusion-1\&quot;))));\n\nlet state = derive(&amp;loaded, None);\nlet first: &amp;ConclusionView = &amp;state.conclusions[0];\nassert_eq!((first.validations_passed, first.validations_failed), (0, 1));\nassert_eq!(first.superseded_by.as_deref(), Some(\&quot;conclusion-3\&quot;));\nassert_eq!(state.conclusions[1].superseded_by, None);\n```&quot;,
-      &quot;properties&quot;: {
-        &quot;assessment&quot;: {
-          &quot;description&quot;: &quot;The assessment it concludes.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;decision&quot;: {
-          &quot;description&quot;: &quot;The decision.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;id&quot;: {
-          &quot;description&quot;: &quot;Record id.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;independent_review_count&quot;: {
-          &quot;description&quot;: &quot;How many.&quot;,
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;reviewed_by&quot;: {
-          &quot;description&quot;: &quot;Advisors whose answers it weighed.&quot;,
-          &quot;items&quot;: {
-            &quot;type&quot;: &quot;string&quot;
-          },
-          &quot;type&quot;: &quot;array&quot;
-        },
-        &quot;risks&quot;: {
-          &quot;description&quot;: &quot;Risks that remain.&quot;,
-          &quot;items&quot;: {
-            &quot;type&quot;: &quot;string&quot;
-          },
-          &quot;type&quot;: &quot;array&quot;
-        },
-        &quot;superseded_by&quot;: {
-          &quot;description&quot;: &quot;Superseded by a later conclusion.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;validation_plan&quot;: {
-          &quot;description&quot;: &quot;Its validation plan.&quot;,
-          &quot;items&quot;: {
-            &quot;type&quot;: &quot;string&quot;
-          },
-          &quot;type&quot;: &quot;array&quot;
-        },
-        &quot;validations_failed&quot;: {
-          &quot;description&quot;: &quot;Validations failed.&quot;,
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;validations_passed&quot;: {
-          &quot;description&quot;: &quot;Validations recorded: passed, failed.&quot;,
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        }
-      },
-      &quot;required&quot;: [
-        &quot;id&quot;,
-        &quot;assessment&quot;,
-        &quot;decision&quot;,
-        &quot;reviewed_by&quot;,
-        &quot;independent_review_count&quot;,
-        &quot;validations_passed&quot;,
-        &quot;validations_failed&quot;,
-        &quot;validation_plan&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
-    },
     &quot;ConsultationStatus&quot;: {
-      &quot;description&quot;: &quot;How a consultation ended, as the adapter classified it.\n\nOnly a completed consultation carries advice and counts as review; every other status\nis a degradation that is recorded so the state can report it, never hidden. The wire\nform is the snake_case word that `ConsultationStatus::as_str` returns.\n\n```\nuse majordomus_cli::reasoning::record::ConsultationStatus;\n\nlet s: ConsultationStatus = serde_json::from_str(\&quot;\\\&quot;rate_limited\\\&quot;\&quot;).unwrap();\nassert_eq!(s, ConsultationStatus::RateLimited);\nassert!(!s.is_transient());\nassert!(ConsultationStatus::Timeout.is_transient());\n```&quot;,
       &quot;oneOf&quot;: [
         {
-          &quot;const&quot;: &quot;completed&quot;,
           &quot;description&quot;: &quot;An answer was received and normalised.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;completed&quot;
         },
         {
           &quot;const&quot;: &quot;timeout&quot;,
@@ -466,14 +338,14 @@ records derive, and that state rendered as the Markdown a handover carries.</p>
           &quot;type&quot;: &quot;string&quot;
         },
         {
-          &quot;const&quot;: &quot;rate_limited&quot;,
           &quot;description&quot;: &quot;The advisor refused for rate.&quot;,
+          &quot;const&quot;: &quot;rate_limited&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
         {
+          &quot;type&quot;: &quot;string&quot;,
           &quot;const&quot;: &quot;auth_failed&quot;,
-          &quot;description&quot;: &quot;The credential was refused.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;description&quot;: &quot;The credential was refused.&quot;
         },
         {
           &quot;const&quot;: &quot;malformed&quot;,
@@ -482,39 +354,110 @@ records derive, and that state rendered as the Markdown a handover carries.</p>
         },
         {
           &quot;const&quot;: &quot;empty&quot;,
-          &quot;description&quot;: &quot;An answer arrived with nothing in it.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;An answer arrived with nothing in it.&quot;
         },
         {
+          &quot;type&quot;: &quot;string&quot;,
           &quot;const&quot;: &quot;unavailable&quot;,
-          &quot;description&quot;: &quot;The advisor could not be reached: not running, not answering, gone.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;description&quot;: &quot;The advisor could not be reached: not running, not answering, gone.&quot;
         },
         {
-          &quot;const&quot;: &quot;cancelled&quot;,
           &quot;description&quot;: &quot;The session withdrew the request.&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;cancelled&quot;
+        },
+        {
+          &quot;description&quot;: &quot;Anything else the adapter could not classify.&quot;,
+          &quot;const&quot;: &quot;error&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      ],
+      &quot;description&quot;: &quot;How a consultation ended, as the adapter classified it.\n\nOnly a completed consultation carries advice and counts as review; every other status\nis a degradation that is recorded so the state can report it, never hidden. The wire\nform is the snake_case word that `ConsultationStatus::as_str` returns.\n\n```\nuse majordomus_cli::reasoning::record::ConsultationStatus;\n\nlet s: ConsultationStatus = serde_json::from_str(\&quot;\\\&quot;rate_limited\\\&quot;\&quot;).unwrap();\nassert_eq!(s, ConsultationStatus::RateLimited);\nassert!(!s.is_transient());\nassert!(ConsultationStatus::Timeout.is_transient());\n```&quot;
+    },
+    &quot;Materiality&quot;: {
+      &quot;description&quot;: &quot;How much the uncertain decision could matter. Ordered from `trivial` to `critical`:\nwith the mode it sets the review budget, and from `material` up a decision taken alone\ncarries the structured local review.\n\n```\nuse majordomus_cli::reasoning::policy::Materiality;\n\nassert_eq!(Materiality::default(), Materiality::Low);\nassert!(Materiality::Material &lt; Materiality::Critical);\nlet m: Materiality = serde_json::from_str(\&quot;\\\&quot;high\\\&quot;\&quot;).unwrap();\nassert_eq!(m, Materiality::High);\n```&quot;,
+      &quot;oneOf&quot;: [
+        {
+          &quot;description&quot;: &quot;A name, a format, an obvious convention: never reviewed.&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;trivial&quot;
+        },
+        {
+          &quot;description&quot;: &quot;Local and reversible.&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;low&quot;
+        },
+        {
+          &quot;const&quot;: &quot;material&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;Could affect correctness, an interface, persistent data, concurrency, operations.&quot;
+        },
+        {
+          &quot;const&quot;: &quot;high&quot;,
+          &quot;description&quot;: &quot;Architecture, security, compatibility or a public contract.&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
         {
-          &quot;const&quot;: &quot;error&quot;,
-          &quot;description&quot;: &quot;Anything else the adapter could not classify.&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;Irreversible or destructive, or repository governance itself.&quot;,
+          &quot;const&quot;: &quot;critical&quot;
+        }
+      ]
+    },
+    &quot;AssessmentStanding&quot;: {
+      &quot;description&quot;: &quot;Where an assessment stands, from open through validated.\n\nThe standing is derived, never stored: an unresolved disagreement makes it disputed\nwhatever else is recorded; otherwise its standing conclusion and that conclusion&#39;s\nvalidations decide it, and without a conclusion a recorded plan makes it planned.\n\n```\n# use majordomus_cli::reasoning::record::ReasoningRecord;\n# use serde_json::json;\n# fn rec(id: &amp;str, n: u32, body: serde_json::Value) -&gt; ReasoningRecord {\n#     serde_json::from_value(json!({\n#         \&quot;schema\&quot;: \&quot;majordomus/reasoning-record\&quot;, \&quot;version\&quot;: 1, \&quot;id\&quot;: id, \&quot;task\&quot;: \&quot;t\&quot;,\n#         \&quot;recorded_at\&quot;: format!(\&quot;2026-10-01T00:00:{n:02}Z\&quot;), \&quot;body\&quot;: body,\n#     }))\n#     .unwrap()\n# }\nuse majordomus_cli::reasoning::state::{derive, AssessmentStanding};\nuse majordomus_cli::reasoning::store::Loaded;\n\nlet mut loaded = Loaded::default();\nloaded.records.push(rec(\&quot;assessment-1\&quot;, 1, json!({ \&quot;kind\&quot;: \&quot;assessment\&quot;, \&quot;subject\&quot;: \&quot;s\&quot; })));\nassert_eq!(derive(&amp;loaded, None).assessments[0].standing, AssessmentStanding::Open);\n\nloaded.records.push(rec(\&quot;disagreement-2\&quot;, 2, json!({\n    \&quot;kind\&quot;: \&quot;disagreement\&quot;, \&quot;assessment\&quot;: \&quot;assessment-1\&quot;,\n    \&quot;positions\&quot;: [\n        { \&quot;source\&quot;: \&quot;primary\&quot;, \&quot;position\&quot;: \&quot;A\&quot; },\n        { \&quot;source\&quot;: \&quot;consultation-9\&quot;, \&quot;position\&quot;: \&quot;B\&quot; },\n    ],\n    \&quot;discriminating_question\&quot;: \&quot;do callers retry?\&quot;,\n})));\nassert_eq!(derive(&amp;loaded, None).assessments[0].standing, AssessmentStanding::Disputed);\n```&quot;,
+      &quot;oneOf&quot;: [
+        {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;open&quot;,
+          &quot;description&quot;: &quot;Stated; no plan yet.&quot;
+        },
+        {
+          &quot;const&quot;: &quot;planned&quot;,
+          &quot;description&quot;: &quot;Planned; no conclusion yet.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;description&quot;: &quot;A disagreement on it is unsettled.&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;disputed&quot;
+        },
+        {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;concluded&quot;,
+          &quot;description&quot;: &quot;Concluded; not yet validated.&quot;
+        },
+        {
+          &quot;description&quot;: &quot;Concluded, and every validation recorded passed.&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;validated&quot;
+        },
+        {
+          &quot;description&quot;: &quot;Concluded, and a validation failed.&quot;,
+          &quot;const&quot;: &quot;validation_failed&quot;,
           &quot;type&quot;: &quot;string&quot;
         }
       ]
     },
     &quot;ConsultationView&quot;: {
       &quot;description&quot;: &quot;One consultation, as the state reports it.\n\nA failed consultation is reported as plainly as a completed one: its status and the\nadapter&#39;s diagnostic stand where the advice would, so degradation is visible rather\nthan silently absent.\n\n```\n# use majordomus_cli::reasoning::record::ReasoningRecord;\n# use serde_json::json;\n# fn rec(id: &amp;str, n: u32, body: serde_json::Value) -&gt; ReasoningRecord {\n#     serde_json::from_value(json!({\n#         \&quot;schema\&quot;: \&quot;majordomus/reasoning-record\&quot;, \&quot;version\&quot;: 1, \&quot;id\&quot;: id, \&quot;task\&quot;: \&quot;t\&quot;,\n#         \&quot;recorded_at\&quot;: format!(\&quot;2026-10-01T00:00:{n:02}Z\&quot;), \&quot;body\&quot;: body,\n#     }))\n#     .unwrap()\n# }\nuse majordomus_cli::reasoning::record::ConsultationStatus;\nuse majordomus_cli::reasoning::state::{derive, ConsultationView};\nuse majordomus_cli::reasoning::store::Loaded;\n\nlet mut loaded = Loaded::default();\nloaded.records.push(rec(\&quot;consultation-1\&quot;, 1, json!({\n    \&quot;kind\&quot;: \&quot;consultation\&quot;, \&quot;plan\&quot;: \&quot;plan-0\&quot;, \&quot;advisor\&quot;: \&quot;alpha\&quot;,\n    \&quot;status\&quot;: \&quot;timeout\&quot;, \&quot;diagnostic\&quot;: \&quot;timeout: no answer in 60s\&quot;,\n})));\nlet state = derive(&amp;loaded, None);\nlet view: &amp;ConsultationView = &amp;state.consultations[0];\nassert_eq!(view.status, ConsultationStatus::Timeout);\nassert_eq!(view.conclusion, None);\nassert_eq!(view.diagnostic.as_deref(), Some(\&quot;timeout: no answer in 60s\&quot;));\nassert_eq!(state.totals.consultations_failed, 1);\n```&quot;,
+      &quot;type&quot;: &quot;object&quot;,
       &quot;properties&quot;: {
+        &quot;status&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/ConsultationStatus&quot;,
+          &quot;description&quot;: &quot;How it ended.&quot;
+        },
         &quot;advisor&quot;: {
           &quot;description&quot;: &quot;The advisor.&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
         &quot;conclusion&quot;: {
-          &quot;description&quot;: &quot;The advice, summarised.&quot;,
           &quot;type&quot;: [
             &quot;string&quot;,
             &quot;null&quot;
-          ]
+          ],
+          &quot;description&quot;: &quot;The advice, summarised.&quot;
         },
         &quot;diagnostic&quot;: {
           &quot;description&quot;: &quot;The adapter&#39;s diagnostic, for a failure.&quot;,
@@ -528,10 +471,11 @@ records derive, and that state rendered as the Markdown a handover carries.</p>
           &quot;type&quot;: &quot;string&quot;
         },
         &quot;plan&quot;: {
-          &quot;description&quot;: &quot;The plan that selected it.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The plan that selected it.&quot;
         },
         &quot;stance&quot;: {
+          &quot;description&quot;: &quot;Where the advice stands.&quot;,
           &quot;anyOf&quot;: [
             {
               &quot;$ref&quot;: &quot;#/$defs/Stance&quot;
@@ -539,12 +483,7 @@ records derive, and that state rendered as the Markdown a handover carries.</p>
             {
               &quot;type&quot;: &quot;null&quot;
             }
-          ],
-          &quot;description&quot;: &quot;Where the advice stands.&quot;
-        },
-        &quot;status&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/ConsultationStatus&quot;,
-          &quot;description&quot;: &quot;How it ended.&quot;
+          ]
         }
       },
       &quot;required&quot;: [
@@ -552,122 +491,6 @@ records derive, and that state rendered as the Markdown a handover carries.</p>
         &quot;plan&quot;,
         &quot;advisor&quot;,
         &quot;status&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
-    },
-    &quot;DisagreementView&quot;: {
-      &quot;description&quot;: &quot;One disagreement, as the state reports it.\n\nThe view names the question that decides the disagreement and, once a resolution is\nrecorded, the resolution and the position its evidence favoured. A view without a\nresolution is an unsettled disagreement that blocks its assessment.\n\n```\n# use majordomus_cli::reasoning::record::ReasoningRecord;\n# use serde_json::json;\n# fn rec(id: &amp;str, n: u32, body: serde_json::Value) -&gt; ReasoningRecord {\n#     serde_json::from_value(json!({\n#         \&quot;schema\&quot;: \&quot;majordomus/reasoning-record\&quot;, \&quot;version\&quot;: 1, \&quot;id\&quot;: id, \&quot;task\&quot;: \&quot;t\&quot;,\n#         \&quot;recorded_at\&quot;: format!(\&quot;2026-10-01T00:00:{n:02}Z\&quot;), \&quot;body\&quot;: body,\n#     }))\n#     .unwrap()\n# }\nuse majordomus_cli::reasoning::state::{derive, DisagreementView};\nuse majordomus_cli::reasoning::store::Loaded;\n\nlet mut loaded = Loaded::default();\nloaded.records.push(rec(\&quot;disagreement-1\&quot;, 1, json!({\n    \&quot;kind\&quot;: \&quot;disagreement\&quot;, \&quot;assessment\&quot;: \&quot;assessment-0\&quot;,\n    \&quot;positions\&quot;: [\n        { \&quot;source\&quot;: \&quot;primary\&quot;, \&quot;position\&quot;: \&quot;A\&quot; },\n        { \&quot;source\&quot;: \&quot;consultation-9\&quot;, \&quot;position\&quot;: \&quot;B\&quot; },\n    ],\n    \&quot;discriminating_question\&quot;: \&quot;do callers retry?\&quot;,\n})));\nloaded.records.push(rec(\&quot;resolution-2\&quot;, 2, json!({\n    \&quot;kind\&quot;: \&quot;resolution\&quot;, \&quot;disagreement\&quot;: \&quot;disagreement-1\&quot;,\n    \&quot;experiment\&quot;: \&quot;read the callers\&quot;, \&quot;outcome\&quot;: \&quot;none retries\&quot;,\n    \&quot;favours\&quot;: \&quot;consultation-9\&quot;,\n    \&quot;evidence\&quot;: [{ \&quot;kind\&quot;: \&quot;file\&quot;, \&quot;reference\&quot;: \&quot;src/caller.rs\&quot; }],\n})));\nlet state = derive(&amp;loaded, None);\nlet view: &amp;DisagreementView = &amp;state.disagreements[0];\nassert_eq!(view.discriminating_question, \&quot;do callers retry?\&quot;);\nassert_eq!(view.resolution.as_deref(), Some(\&quot;resolution-2\&quot;));\nassert_eq!(view.favours.as_deref(), Some(\&quot;consultation-9\&quot;));\n```&quot;,
-      &quot;properties&quot;: {
-        &quot;assessment&quot;: {
-          &quot;description&quot;: &quot;The assessment.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;discriminating_question&quot;: {
-          &quot;description&quot;: &quot;The question that decides it.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;favours&quot;: {
-          &quot;description&quot;: &quot;The position the evidence favoured.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;id&quot;: {
-          &quot;description&quot;: &quot;Record id.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;resolution&quot;: {
-          &quot;description&quot;: &quot;The resolution, when settled.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        }
-      },
-      &quot;required&quot;: [
-        &quot;id&quot;,
-        &quot;assessment&quot;,
-        &quot;discriminating_question&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
-    },
-    &quot;Materiality&quot;: {
-      &quot;description&quot;: &quot;How much the uncertain decision could matter. Ordered from `trivial` to `critical`:\nwith the mode it sets the review budget, and from `material` up a decision taken alone\ncarries the structured local review.\n\n```\nuse majordomus_cli::reasoning::policy::Materiality;\n\nassert_eq!(Materiality::default(), Materiality::Low);\nassert!(Materiality::Material &lt; Materiality::Critical);\nlet m: Materiality = serde_json::from_str(\&quot;\\\&quot;high\\\&quot;\&quot;).unwrap();\nassert_eq!(m, Materiality::High);\n```&quot;,
-      &quot;oneOf&quot;: [
-        {
-          &quot;const&quot;: &quot;trivial&quot;,
-          &quot;description&quot;: &quot;A name, a format, an obvious convention: never reviewed.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;low&quot;,
-          &quot;description&quot;: &quot;Local and reversible.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;material&quot;,
-          &quot;description&quot;: &quot;Could affect correctness, an interface, persistent data, concurrency, operations.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;high&quot;,
-          &quot;description&quot;: &quot;Architecture, security, compatibility or a public contract.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;critical&quot;,
-          &quot;description&quot;: &quot;Irreversible or destructive, or repository governance itself.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      ]
-    },
-    &quot;ModeResolution&quot;: {
-      &quot;description&quot;: &quot;The mode in force and what decided it, as `resolve_mode` returns it. A plan and a\nreport carry the source beside the mode, so a reader learns why the mode is what it is.\n\n```\nuse majordomus_cli::reasoning::availability::{resolve_mode, ModeResolution, ReasoningMode};\n\nlet r: ModeResolution = resolve_mode(None, true, None);\nassert_eq!(r, ModeResolution { mode: ReasoningMode::Ci, source: \&quot;CI\&quot;.into() });\n```&quot;,
-      &quot;properties&quot;: {
-        &quot;mode&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/ReasoningMode&quot;,
-          &quot;description&quot;: &quot;The mode.&quot;
-        },
-        &quot;source&quot;: {
-          &quot;description&quot;: &quot;What decided it: `MAJORDOMUS_REASONING_MODE`, `CI`, `profile &lt;name&gt;`, or `default`.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      },
-      &quot;required&quot;: [
-        &quot;mode&quot;,
-        &quot;source&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
-    },
-    &quot;ReasoningMode&quot;: {
-      &quot;description&quot;: &quot;How much independent review a session may use, and where from. The policy reads it\nfor the review budget; availability reads it to leave advisors out (`ci` all of them,\n`offline` every one that leaves the machine). `standard` is the default.\n\n```\nuse majordomus_cli::reasoning::availability::ReasoningMode;\n\nassert_eq!(ReasoningMode::default(), ReasoningMode::Standard);\nassert_eq!(serde_json::to_value(ReasoningMode::Offline).unwrap(), \&quot;offline\&quot;);\nlet m: ReasoningMode = serde_json::from_str(\&quot;\\\&quot;strict\\\&quot;\&quot;).unwrap();\nassert_eq!(m, ReasoningMode::Strict);\n```&quot;,
-      &quot;oneOf&quot;: [
-        {
-          &quot;const&quot;: &quot;offline&quot;,
-          &quot;description&quot;: &quot;No network: only advisors that stay on this machine.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;ci&quot;,
-          &quot;description&quot;: &quot;Deterministic: no advisor at all, whatever is installed.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;fast&quot;,
-          &quot;description&quot;: &quot;Review only where the blast radius is high.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;standard&quot;,
-          &quot;description&quot;: &quot;Review where uncertainty is material.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;strict&quot;,
-          &quot;description&quot;: &quot;Review wider, and complementary review where the stakes are highest.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
       ]
     },
     &quot;ReasoningPhase&quot;: {
@@ -679,64 +502,164 @@ records derive, and that state rendered as the Markdown a handover carries.</p>
           &quot;type&quot;: &quot;string&quot;
         },
         {
-          &quot;const&quot;: &quot;consulting&quot;,
+          &quot;type&quot;: &quot;string&quot;,
           &quot;description&quot;: &quot;Review planned.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;const&quot;: &quot;consulting&quot;
         },
         {
-          &quot;const&quot;: &quot;local&quot;,
           &quot;description&quot;: &quot;Decided locally, by plan.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;local&quot;
         },
         {
           &quot;const&quot;: &quot;reuse&quot;,
-          &quot;description&quot;: &quot;A standing conclusion reused.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;A standing conclusion reused.&quot;
         },
         {
-          &quot;const&quot;: &quot;advisor_response&quot;,
           &quot;description&quot;: &quot;An advisor answered.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;advisor_response&quot;
         },
         {
-          &quot;const&quot;: &quot;degradation&quot;,
           &quot;description&quot;: &quot;An advisor could not answer.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;degradation&quot;
         },
         {
-          &quot;const&quot;: &quot;disagreement&quot;,
           &quot;description&quot;: &quot;Positions diverged.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;disagreement&quot;
         },
         {
-          &quot;const&quot;: &quot;experiment&quot;,
           &quot;description&quot;: &quot;An experiment settled a disagreement.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;experiment&quot;
         },
         {
-          &quot;const&quot;: &quot;conclusion&quot;,
           &quot;description&quot;: &quot;A conclusion.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;conclusion&quot;
         },
         {
+          &quot;type&quot;: &quot;string&quot;,
           &quot;const&quot;: &quot;validation&quot;,
-          &quot;description&quot;: &quot;A validation step.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;description&quot;: &quot;A validation step.&quot;
         },
         {
-          &quot;const&quot;: &quot;attempt&quot;,
+          &quot;type&quot;: &quot;string&quot;,
           &quot;description&quot;: &quot;A failed attempt.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;const&quot;: &quot;attempt&quot;
         }
       ]
     },
-    &quot;ReasoningState&quot;: {
-      &quot;description&quot;: &quot;The reasoning state of a task (or of every task).\n\nIt is what every surface reports: the assessments, consultations, disagreements and\nconclusions of the task, the timeline of every record, the totals, and the store\nfiles that could not be read. Derived by `derive()`, never stored.\n\n```\n# use majordomus_cli::reasoning::record::ReasoningRecord;\n# use serde_json::json;\n# fn rec(id: &amp;str, task: &amp;str, body: serde_json::Value) -&gt; ReasoningRecord {\n#     serde_json::from_value(json!({\n#         \&quot;schema\&quot;: \&quot;majordomus/reasoning-record\&quot;, \&quot;version\&quot;: 1, \&quot;id\&quot;: id, \&quot;task\&quot;: task,\n#         \&quot;recorded_at\&quot;: \&quot;2026-10-01T00:00:00Z\&quot;, \&quot;body\&quot;: body,\n#     }))\n#     .unwrap()\n# }\nuse majordomus_cli::reasoning::state::{derive, ReasoningState};\nuse majordomus_cli::reasoning::store::Loaded;\n\nlet mut loaded = Loaded::default();\nlet assessment = |subject: &amp;str| json!({ \&quot;kind\&quot;: \&quot;assessment\&quot;, \&quot;subject\&quot;: subject });\nloaded.records.push(rec(\&quot;assessment-1\&quot;, \&quot;t1\&quot;, assessment(\&quot;a\&quot;)));\nloaded.records.push(rec(\&quot;assessment-2\&quot;, \&quot;t2\&quot;, assessment(\&quot;b\&quot;)));\nloaded.unreadable.push(\&quot;t2/broken.json\&quot;.into());\n\nlet one: ReasoningState = derive(&amp;loaded, Some(\&quot;t1\&quot;));\nassert_eq!((one.task.as_str(), one.assessments.len()), (\&quot;t1\&quot;, 1));\nlet all = derive(&amp;loaded, None);\nassert_eq!((all.task.as_str(), all.totals.records), (\&quot;all\&quot;, 2));\nassert_eq!(all.unreadable, [\&quot;t2/broken.json\&quot;]);\n```&quot;,
+    &quot;Stance&quot;: {
+      &quot;description&quot;: &quot;Where an advisor&#39;s answer stands relative to the executor&#39;s hypothesis.\n\nA completed consultation must state its stance; the store refuses one without it. The\nstance is a label for the timeline, not a vote: agreement settles nothing.\n\n```\nuse majordomus_cli::reasoning::record::Stance;\n\nlet s: Stance = serde_json::from_str(\&quot;\\\&quot;alternative\\\&quot;\&quot;).unwrap();\nassert_eq!(s, Stance::Alternative);\nassert!(serde_json::from_str::&lt;Stance&gt;(\&quot;\\\&quot;agrees\\\&quot;\&quot;).is_err());\n```&quot;,
+      &quot;oneOf&quot;: [
+        {
+          &quot;description&quot;: &quot;It supports the hypothesis.&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;supports&quot;
+        },
+        {
+          &quot;const&quot;: &quot;opposes&quot;,
+          &quot;description&quot;: &quot;It argues against it.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;alternative&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;It proposes something else.&quot;
+        },
+        {
+          &quot;const&quot;: &quot;inconclusive&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;It does not decide.&quot;
+        }
+      ]
+    },
+    &quot;AssessmentView&quot;: {
+      &quot;description&quot;: &quot;One assessment and where it stands.\n\nThe view carries what a reader needs to pick the work up: the subject, its\nmateriality, its derived standing, the conclusion that stands for it and the\nquestions it left open.\n\n```\n# use majordomus_cli::reasoning::record::ReasoningRecord;\n# use serde_json::json;\n# fn rec(id: &amp;str, n: u32, body: serde_json::Value) -&gt; ReasoningRecord {\n#     serde_json::from_value(json!({\n#         \&quot;schema\&quot;: \&quot;majordomus/reasoning-record\&quot;, \&quot;version\&quot;: 1, \&quot;id\&quot;: id, \&quot;task\&quot;: \&quot;t\&quot;,\n#         \&quot;recorded_at\&quot;: format!(\&quot;2026-10-01T00:00:{n:02}Z\&quot;), \&quot;body\&quot;: body,\n#     }))\n#     .unwrap()\n# }\nuse majordomus_cli::reasoning::policy::Materiality;\nuse majordomus_cli::reasoning::state::{derive, AssessmentView};\nuse majordomus_cli::reasoning::store::Loaded;\n\nlet mut loaded = Loaded::default();\nloaded.records.push(rec(\&quot;assessment-1\&quot;, 1, json!({\n    \&quot;kind\&quot;: \&quot;assessment\&quot;, \&quot;subject\&quot;: \&quot;lock scope\&quot;, \&quot;materiality\&quot;: \&quot;trivial\&quot;,\n    \&quot;questions\&quot;: [\&quot;is it held across an await?\&quot;],\n})));\nlet state = derive(&amp;loaded, None);\nlet view: &amp;AssessmentView = &amp;state.assessments[0];\nassert_eq!((view.id.as_str(), view.task.as_str()), (\&quot;assessment-1\&quot;, \&quot;t\&quot;));\nassert_eq!(view.materiality, Materiality::Trivial);\nassert_eq!(view.conclusion, None);\nassert_eq!(view.questions, [\&quot;is it held across an await?\&quot;]);\n```&quot;,
+      &quot;type&quot;: &quot;object&quot;,
       &quot;properties&quot;: {
-        &quot;assessments&quot;: {
-          &quot;description&quot;: &quot;The assessments.&quot;,
+        &quot;id&quot;: {
+          &quot;description&quot;: &quot;Record id.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;subject&quot;: {
+          &quot;description&quot;: &quot;What is uncertain.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;task&quot;: {
+          &quot;description&quot;: &quot;The task it was recorded under.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;standing&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/AssessmentStanding&quot;,
+          &quot;description&quot;: &quot;Where it stands.&quot;
+        },
+        &quot;conclusion&quot;: {
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ],
+          &quot;description&quot;: &quot;Its standing conclusion.&quot;
+        },
+        &quot;materiality&quot;: {
+          &quot;description&quot;: &quot;How much it matters.&quot;,
+          &quot;$ref&quot;: &quot;#/$defs/Materiality&quot;
+        },
+        &quot;questions&quot;: {
+          &quot;type&quot;: &quot;array&quot;,
+          &quot;description&quot;: &quot;Questions it left open.&quot;,
           &quot;items&quot;: {
-            &quot;$ref&quot;: &quot;#/$defs/AssessmentView&quot;
+            &quot;type&quot;: &quot;string&quot;
+          }
+        }
+      },
+      &quot;required&quot;: [
+        &quot;id&quot;,
+        &quot;task&quot;,
+        &quot;subject&quot;,
+        &quot;materiality&quot;,
+        &quot;standing&quot;
+      ]
+    },
+    &quot;ReasoningState&quot;: {
+      &quot;type&quot;: &quot;object&quot;,
+      &quot;description&quot;: &quot;The reasoning state of a task (or of every task).\n\nIt is what every surface reports: the assessments, consultations, disagreements and\nconclusions of the task, the timeline of every record, the totals, and the store\nfiles that could not be read. Derived by `derive()`, never stored.\n\n```\n# use majordomus_cli::reasoning::record::ReasoningRecord;\n# use serde_json::json;\n# fn rec(id: &amp;str, task: &amp;str, body: serde_json::Value) -&gt; ReasoningRecord {\n#     serde_json::from_value(json!({\n#         \&quot;schema\&quot;: \&quot;majordomus/reasoning-record\&quot;, \&quot;version\&quot;: 1, \&quot;id\&quot;: id, \&quot;task\&quot;: task,\n#         \&quot;recorded_at\&quot;: \&quot;2026-10-01T00:00:00Z\&quot;, \&quot;body\&quot;: body,\n#     }))\n#     .unwrap()\n# }\nuse majordomus_cli::reasoning::state::{derive, ReasoningState};\nuse majordomus_cli::reasoning::store::Loaded;\n\nlet mut loaded = Loaded::default();\nlet assessment = |subject: &amp;str| json!({ \&quot;kind\&quot;: \&quot;assessment\&quot;, \&quot;subject\&quot;: subject });\nloaded.records.push(rec(\&quot;assessment-1\&quot;, \&quot;t1\&quot;, assessment(\&quot;a\&quot;)));\nloaded.records.push(rec(\&quot;assessment-2\&quot;, \&quot;t2\&quot;, assessment(\&quot;b\&quot;)));\nloaded.unreadable.push(\&quot;t2/broken.json\&quot;.into());\n\nlet one: ReasoningState = derive(&amp;loaded, Some(\&quot;t1\&quot;));\nassert_eq!((one.task.as_str(), one.assessments.len()), (\&quot;t1\&quot;, 1));\nlet all = derive(&amp;loaded, None);\nassert_eq!((all.task.as_str(), all.totals.records), (\&quot;all\&quot;, 2));\nassert_eq!(all.unreadable, [\&quot;t2/broken.json\&quot;]);\n```&quot;,
+      &quot;required&quot;: [
+        &quot;task&quot;,
+        &quot;assessments&quot;,
+        &quot;consultations&quot;,
+        &quot;disagreements&quot;,
+        &quot;conclusions&quot;,
+        &quot;timeline&quot;,
+        &quot;totals&quot;
+      ],
+      &quot;properties&quot;: {
+        &quot;disagreements&quot;: {
+          &quot;type&quot;: &quot;array&quot;,
+          &quot;description&quot;: &quot;The disagreements.&quot;,
+          &quot;items&quot;: {
+            &quot;$ref&quot;: &quot;#/$defs/DisagreementView&quot;
+          }
+        },
+        &quot;task&quot;: {
+          &quot;description&quot;: &quot;The task reported, or `all`.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;consultations&quot;: {
+          &quot;description&quot;: &quot;The consultations.&quot;,
+          &quot;items&quot;: {
+            &quot;$ref&quot;: &quot;#/$defs/ConsultationView&quot;
+          },
+          &quot;type&quot;: &quot;array&quot;
+        },
+        &quot;unreadable&quot;: {
+          &quot;description&quot;: &quot;Store files that could not be read.&quot;,
+          &quot;items&quot;: {
+            &quot;type&quot;: &quot;string&quot;
           },
           &quot;type&quot;: &quot;array&quot;
         },
@@ -747,72 +670,43 @@ records derive, and that state rendered as the Markdown a handover carries.</p>
           },
           &quot;type&quot;: &quot;array&quot;
         },
-        &quot;consultations&quot;: {
-          &quot;description&quot;: &quot;The consultations.&quot;,
-          &quot;items&quot;: {
-            &quot;$ref&quot;: &quot;#/$defs/ConsultationView&quot;
-          },
-          &quot;type&quot;: &quot;array&quot;
-        },
-        &quot;disagreements&quot;: {
-          &quot;description&quot;: &quot;The disagreements.&quot;,
-          &quot;items&quot;: {
-            &quot;$ref&quot;: &quot;#/$defs/DisagreementView&quot;
-          },
-          &quot;type&quot;: &quot;array&quot;
-        },
-        &quot;task&quot;: {
-          &quot;description&quot;: &quot;The task reported, or `all`.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
         &quot;timeline&quot;: {
+          &quot;type&quot;: &quot;array&quot;,
           &quot;description&quot;: &quot;The timeline.&quot;,
           &quot;items&quot;: {
             &quot;$ref&quot;: &quot;#/$defs/ReasoningStep&quot;
-          },
-          &quot;type&quot;: &quot;array&quot;
+          }
         },
         &quot;totals&quot;: {
           &quot;$ref&quot;: &quot;#/$defs/ReasoningTotals&quot;,
           &quot;description&quot;: &quot;Totals.&quot;
         },
-        &quot;unreadable&quot;: {
-          &quot;description&quot;: &quot;Store files that could not be read.&quot;,
+        &quot;assessments&quot;: {
           &quot;items&quot;: {
-            &quot;type&quot;: &quot;string&quot;
+            &quot;$ref&quot;: &quot;#/$defs/AssessmentView&quot;
           },
-          &quot;type&quot;: &quot;array&quot;
+          &quot;type&quot;: &quot;array&quot;,
+          &quot;description&quot;: &quot;The assessments.&quot;
         }
-      },
-      &quot;required&quot;: [
-        &quot;task&quot;,
-        &quot;assessments&quot;,
-        &quot;consultations&quot;,
-        &quot;disagreements&quot;,
-        &quot;conclusions&quot;,
-        &quot;timeline&quot;,
-        &quot;totals&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
+      }
     },
     &quot;ReasoningStep&quot;: {
-      &quot;description&quot;: &quot;One step of the timeline: when, which record, which phase, and one line saying what\nhappened.\n\nThe summary is cut to a single line of at most 140 characters, so a timeline renders\nthe same on a terminal, a page and a handover.\n\n```\n# use majordomus_cli::reasoning::record::ReasoningRecord;\n# use serde_json::json;\n# fn rec(id: &amp;str, n: u32, body: serde_json::Value) -&gt; ReasoningRecord {\n#     serde_json::from_value(json!({\n#         \&quot;schema\&quot;: \&quot;majordomus/reasoning-record\&quot;, \&quot;version\&quot;: 1, \&quot;id\&quot;: id, \&quot;task\&quot;: \&quot;t\&quot;,\n#         \&quot;recorded_at\&quot;: format!(\&quot;2026-10-01T00:00:{n:02}Z\&quot;), \&quot;body\&quot;: body,\n#     }))\n#     .unwrap()\n# }\nuse majordomus_cli::reasoning::state::{derive, ReasoningPhase, ReasoningStep};\nuse majordomus_cli::reasoning::store::Loaded;\n\nlet mut loaded = Loaded::default();\nloaded.records.push(rec(\&quot;attempt-1\&quot;, 1, json!({\n    \&quot;kind\&quot;: \&quot;attempt\&quot;, \&quot;attempt\&quot;: \&quot;share the client\\nacross threads\&quot;,\n    \&quot;observed_failure\&quot;: \&quot;the handle is not Sync\&quot;,\n})));\nlet state = derive(&amp;loaded, None);\nlet step: &amp;ReasoningStep = &amp;state.timeline[0];\nassert_eq!(step.at, \&quot;2026-10-01T00:00:01Z\&quot;);\nassert_eq!(step.phase, ReasoningPhase::Attempt);\nassert_eq!(step.summary, \&quot;share the client failed: the handle is not Sync\&quot;);\n```&quot;,
       &quot;properties&quot;: {
-        &quot;at&quot;: {
-          &quot;description&quot;: &quot;When.&quot;,
+        &quot;summary&quot;: {
+          &quot;description&quot;: &quot;One line.&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
         &quot;id&quot;: {
           &quot;description&quot;: &quot;The record.&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
+        &quot;at&quot;: {
+          &quot;description&quot;: &quot;When.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
         &quot;phase&quot;: {
           &quot;$ref&quot;: &quot;#/$defs/ReasoningPhase&quot;,
           &quot;description&quot;: &quot;The phase.&quot;
-        },
-        &quot;summary&quot;: {
-          &quot;description&quot;: &quot;One line.&quot;,
-          &quot;type&quot;: &quot;string&quot;
         }
       },
       &quot;required&quot;: [
@@ -821,48 +715,49 @@ records derive, and that state rendered as the Markdown a handover carries.</p>
         &quot;phase&quot;,
         &quot;summary&quot;
       ],
+      &quot;description&quot;: &quot;One step of the timeline: when, which record, which phase, and one line saying what\nhappened.\n\nThe summary is cut to a single line of at most 140 characters, so a timeline renders\nthe same on a terminal, a page and a handover.\n\n```\n# use majordomus_cli::reasoning::record::ReasoningRecord;\n# use serde_json::json;\n# fn rec(id: &amp;str, n: u32, body: serde_json::Value) -&gt; ReasoningRecord {\n#     serde_json::from_value(json!({\n#         \&quot;schema\&quot;: \&quot;majordomus/reasoning-record\&quot;, \&quot;version\&quot;: 1, \&quot;id\&quot;: id, \&quot;task\&quot;: \&quot;t\&quot;,\n#         \&quot;recorded_at\&quot;: format!(\&quot;2026-10-01T00:00:{n:02}Z\&quot;), \&quot;body\&quot;: body,\n#     }))\n#     .unwrap()\n# }\nuse majordomus_cli::reasoning::state::{derive, ReasoningPhase, ReasoningStep};\nuse majordomus_cli::reasoning::store::Loaded;\n\nlet mut loaded = Loaded::default();\nloaded.records.push(rec(\&quot;attempt-1\&quot;, 1, json!({\n    \&quot;kind\&quot;: \&quot;attempt\&quot;, \&quot;attempt\&quot;: \&quot;share the client\\nacross threads\&quot;,\n    \&quot;observed_failure\&quot;: \&quot;the handle is not Sync\&quot;,\n})));\nlet state = derive(&amp;loaded, None);\nlet step: &amp;ReasoningStep = &amp;state.timeline[0];\nassert_eq!(step.at, \&quot;2026-10-01T00:00:01Z\&quot;);\nassert_eq!(step.phase, ReasoningPhase::Attempt);\nassert_eq!(step.summary, \&quot;share the client failed: the handle is not Sync\&quot;);\n```&quot;,
       &quot;type&quot;: &quot;object&quot;
     },
     &quot;ReasoningTotals&quot;: {
-      &quot;description&quot;: &quot;Totals over the records of the derived task: counts, reviewers and reported tokens.\n\nIndependent reviewers are distinct advisors with at least one completed consultation;\ntoken counts are summed only from what adapters reported, never estimated.\n\n```\n# use majordomus_cli::reasoning::record::ReasoningRecord;\n# use serde_json::json;\n# fn rec(id: &amp;str, n: u32, body: serde_json::Value) -&gt; ReasoningRecord {\n#     serde_json::from_value(json!({\n#         \&quot;schema\&quot;: \&quot;majordomus/reasoning-record\&quot;, \&quot;version\&quot;: 1, \&quot;id\&quot;: id, \&quot;task\&quot;: \&quot;t\&quot;,\n#         \&quot;recorded_at\&quot;: format!(\&quot;2026-10-01T00:00:{n:02}Z\&quot;), \&quot;body\&quot;: body,\n#     }))\n#     .unwrap()\n# }\nuse majordomus_cli::reasoning::state::{derive, ReasoningTotals};\nuse majordomus_cli::reasoning::store::Loaded;\n\nlet answer = |plan: &amp;str| {\n    json!({\n        \&quot;kind\&quot;: \&quot;consultation\&quot;, \&quot;plan\&quot;: plan, \&quot;advisor\&quot;: \&quot;alpha\&quot;, \&quot;status\&quot;: \&quot;completed\&quot;,\n        \&quot;conclusion\&quot;: \&quot;A\&quot;, \&quot;stance\&quot;: \&quot;supports\&quot;,\n        \&quot;usage\&quot;: { \&quot;input_tokens\&quot;: 100, \&quot;output_tokens\&quot;: 20 },\n    })\n};\nlet mut loaded = Loaded::default();\nloaded.records.push(rec(\&quot;consultation-1\&quot;, 1, answer(\&quot;plan-a\&quot;)));\nloaded.records.push(rec(\&quot;consultation-2\&quot;, 2, answer(\&quot;plan-b\&quot;)));\nlet totals: ReasoningTotals = derive(&amp;loaded, None).totals;\nassert_eq!(totals.consultations_completed, 2);\nassert_eq!(totals.independent_reviewers, 1, \&quot;one advisor, however often asked\&quot;);\nassert_eq!((totals.input_tokens, totals.output_tokens), (200, 40));\n```&quot;,
       &quot;properties&quot;: {
-        &quot;consultations_completed&quot;: {
-          &quot;description&quot;: &quot;Consultations that completed.&quot;,
+        &quot;records&quot;: {
+          &quot;type&quot;: &quot;integer&quot;,
+          &quot;description&quot;: &quot;Records.&quot;,
           &quot;format&quot;: &quot;uint&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;consultations_failed&quot;: {
-          &quot;description&quot;: &quot;Consultations that did not.&quot;,
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
+          &quot;minimum&quot;: 0
         },
         &quot;independent_reviewers&quot;: {
           &quot;description&quot;: &quot;Distinct advisors that answered.&quot;,
           &quot;format&quot;: &quot;uint&quot;,
+          &quot;type&quot;: &quot;integer&quot;,
+          &quot;minimum&quot;: 0
+        },
+        &quot;consultations_failed&quot;: {
+          &quot;format&quot;: &quot;uint&quot;,
           &quot;minimum&quot;: 0,
+          &quot;description&quot;: &quot;Consultations that did not.&quot;,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;consultations_completed&quot;: {
+          &quot;minimum&quot;: 0,
+          &quot;description&quot;: &quot;Consultations that completed.&quot;,
+          &quot;format&quot;: &quot;uint&quot;,
           &quot;type&quot;: &quot;integer&quot;
         },
         &quot;input_tokens&quot;: {
-          &quot;description&quot;: &quot;Input tokens the adapters reported.&quot;,
           &quot;format&quot;: &quot;uint64&quot;,
           &quot;minimum&quot;: 0,
+          &quot;description&quot;: &quot;Input tokens the adapters reported.&quot;,
           &quot;type&quot;: &quot;integer&quot;
         },
         &quot;output_tokens&quot;: {
-          &quot;description&quot;: &quot;Output tokens the adapters reported.&quot;,
+          &quot;minimum&quot;: 0,
           &quot;format&quot;: &quot;uint64&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;records&quot;: {
-          &quot;description&quot;: &quot;Records.&quot;,
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;minimum&quot;: 0,
+          &quot;description&quot;: &quot;Output tokens the adapters reported.&quot;,
           &quot;type&quot;: &quot;integer&quot;
         }
       },
+      &quot;type&quot;: &quot;object&quot;,
       &quot;required&quot;: [
         &quot;records&quot;,
         &quot;consultations_completed&quot;,
@@ -871,59 +766,166 @@ records derive, and that state rendered as the Markdown a handover carries.</p>
         &quot;input_tokens&quot;,
         &quot;output_tokens&quot;
       ],
-      &quot;type&quot;: &quot;object&quot;
+      &quot;description&quot;: &quot;Totals over the records of the derived task: counts, reviewers and reported tokens.\n\nIndependent reviewers are distinct advisors with at least one completed consultation;\ntoken counts are summed only from what adapters reported, never estimated.\n\n```\n# use majordomus_cli::reasoning::record::ReasoningRecord;\n# use serde_json::json;\n# fn rec(id: &amp;str, n: u32, body: serde_json::Value) -&gt; ReasoningRecord {\n#     serde_json::from_value(json!({\n#         \&quot;schema\&quot;: \&quot;majordomus/reasoning-record\&quot;, \&quot;version\&quot;: 1, \&quot;id\&quot;: id, \&quot;task\&quot;: \&quot;t\&quot;,\n#         \&quot;recorded_at\&quot;: format!(\&quot;2026-10-01T00:00:{n:02}Z\&quot;), \&quot;body\&quot;: body,\n#     }))\n#     .unwrap()\n# }\nuse majordomus_cli::reasoning::state::{derive, ReasoningTotals};\nuse majordomus_cli::reasoning::store::Loaded;\n\nlet answer = |plan: &amp;str| {\n    json!({\n        \&quot;kind\&quot;: \&quot;consultation\&quot;, \&quot;plan\&quot;: plan, \&quot;advisor\&quot;: \&quot;alpha\&quot;, \&quot;status\&quot;: \&quot;completed\&quot;,\n        \&quot;conclusion\&quot;: \&quot;A\&quot;, \&quot;stance\&quot;: \&quot;supports\&quot;,\n        \&quot;usage\&quot;: { \&quot;input_tokens\&quot;: 100, \&quot;output_tokens\&quot;: 20 },\n    })\n};\nlet mut loaded = Loaded::default();\nloaded.records.push(rec(\&quot;consultation-1\&quot;, 1, answer(\&quot;plan-a\&quot;)));\nloaded.records.push(rec(\&quot;consultation-2\&quot;, 2, answer(\&quot;plan-b\&quot;)));\nlet totals: ReasoningTotals = derive(&amp;loaded, None).totals;\nassert_eq!(totals.consultations_completed, 2);\nassert_eq!(totals.independent_reviewers, 1, \&quot;one advisor, however often asked\&quot;);\nassert_eq!((totals.input_tokens, totals.output_tokens), (200, 40));\n```&quot;
     },
-    &quot;Stance&quot;: {
-      &quot;description&quot;: &quot;Where an advisor&#39;s answer stands relative to the executor&#39;s hypothesis.\n\nA completed consultation must state its stance; the store refuses one without it. The\nstance is a label for the timeline, not a vote: agreement settles nothing.\n\n```\nuse majordomus_cli::reasoning::record::Stance;\n\nlet s: Stance = serde_json::from_str(\&quot;\\\&quot;alternative\\\&quot;\&quot;).unwrap();\nassert_eq!(s, Stance::Alternative);\nassert!(serde_json::from_str::&lt;Stance&gt;(\&quot;\\\&quot;agrees\\\&quot;\&quot;).is_err());\n```&quot;,
-      &quot;oneOf&quot;: [
-        {
-          &quot;const&quot;: &quot;supports&quot;,
-          &quot;description&quot;: &quot;It supports the hypothesis.&quot;,
+    &quot;ConclusionView&quot;: {
+      &quot;type&quot;: &quot;object&quot;,
+      &quot;properties&quot;: {
+        &quot;reviewed_by&quot;: {
+          &quot;items&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          },
+          &quot;type&quot;: &quot;array&quot;,
+          &quot;description&quot;: &quot;Advisors whose answers it weighed.&quot;
+        },
+        &quot;superseded_by&quot;: {
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ],
+          &quot;description&quot;: &quot;Superseded by a later conclusion.&quot;
+        },
+        &quot;independent_review_count&quot;: {
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;,
+          &quot;description&quot;: &quot;How many.&quot;
+        },
+        &quot;validations_failed&quot;: {
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;description&quot;: &quot;Validations failed.&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;validations_passed&quot;: {
+          &quot;type&quot;: &quot;integer&quot;,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;description&quot;: &quot;Validations recorded: passed, failed.&quot;
+        },
+        &quot;id&quot;: {
+          &quot;description&quot;: &quot;Record id.&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
-        {
-          &quot;const&quot;: &quot;opposes&quot;,
-          &quot;description&quot;: &quot;It argues against it.&quot;,
+        &quot;assessment&quot;: {
+          &quot;description&quot;: &quot;The assessment it concludes.&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
-        {
-          &quot;const&quot;: &quot;alternative&quot;,
-          &quot;description&quot;: &quot;It proposes something else.&quot;,
+        &quot;decision&quot;: {
+          &quot;description&quot;: &quot;The decision.&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
-        {
-          &quot;const&quot;: &quot;inconclusive&quot;,
-          &quot;description&quot;: &quot;It does not decide.&quot;,
+        &quot;risks&quot;: {
+          &quot;items&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          },
+          &quot;type&quot;: &quot;array&quot;,
+          &quot;description&quot;: &quot;Risks that remain.&quot;
+        },
+        &quot;validation_plan&quot;: {
+          &quot;description&quot;: &quot;Its validation plan.&quot;,
+          &quot;items&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          },
+          &quot;type&quot;: &quot;array&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;id&quot;,
+        &quot;assessment&quot;,
+        &quot;decision&quot;,
+        &quot;reviewed_by&quot;,
+        &quot;independent_review_count&quot;,
+        &quot;validations_passed&quot;,
+        &quot;validations_failed&quot;,
+        &quot;validation_plan&quot;
+      ],
+      &quot;description&quot;: &quot;One conclusion, as the state reports it.\n\nBesides the decision and its computed review, the view counts the validations\nrecorded against the conclusion and names the later conclusion that superseded it,\nif any. A superseded conclusion stays in the list; the report leaves it out.\n\n```\n# use majordomus_cli::reasoning::record::ReasoningRecord;\n# use serde_json::json;\n# fn rec(id: &amp;str, n: u32, body: serde_json::Value) -&gt; ReasoningRecord {\n#     serde_json::from_value(json!({\n#         \&quot;schema\&quot;: \&quot;majordomus/reasoning-record\&quot;, \&quot;version\&quot;: 1, \&quot;id\&quot;: id, \&quot;task\&quot;: \&quot;t\&quot;,\n#         \&quot;recorded_at\&quot;: format!(\&quot;2026-10-01T00:00:{n:02}Z\&quot;), \&quot;body\&quot;: body,\n#     }))\n#     .unwrap()\n# }\nuse majordomus_cli::reasoning::state::{derive, ConclusionView};\nuse majordomus_cli::reasoning::store::Loaded;\n\nlet conclusion = |decision: &amp;str, supersedes: Option&lt;&amp;str&gt;| {\n    json!({\n        \&quot;kind\&quot;: \&quot;conclusion\&quot;, \&quot;assessment\&quot;: \&quot;assessment-0\&quot;, \&quot;decision\&quot;: decision,\n        \&quot;rationale\&quot;: \&quot;r\&quot;, \&quot;supersedes\&quot;: supersedes,\n        \&quot;reviewed_by\&quot;: [], \&quot;independent_review_count\&quot;: 0,\n    })\n};\nlet mut loaded = Loaded::default();\nloaded.records.push(rec(\&quot;conclusion-1\&quot;, 1, conclusion(\&quot;A\&quot;, None)));\nloaded.records.push(rec(\&quot;validation-2\&quot;, 2, json!({\n    \&quot;kind\&quot;: \&quot;validation\&quot;, \&quot;conclusion\&quot;: \&quot;conclusion-1\&quot;, \&quot;check\&quot;: \&quot;x\&quot;, \&quot;outcome\&quot;: \&quot;fail\&quot;,\n})));\nloaded.records.push(rec(\&quot;conclusion-3\&quot;, 3, conclusion(\&quot;B\&quot;, Some(\&quot;conclusion-1\&quot;))));\n\nlet state = derive(&amp;loaded, None);\nlet first: &amp;ConclusionView = &amp;state.conclusions[0];\nassert_eq!((first.validations_passed, first.validations_failed), (0, 1));\nassert_eq!(first.superseded_by.as_deref(), Some(\&quot;conclusion-3\&quot;));\nassert_eq!(state.conclusions[1].superseded_by, None);\n```&quot;
+    },
+    &quot;DisagreementView&quot;: {
+      &quot;description&quot;: &quot;One disagreement, as the state reports it.\n\nThe view names the question that decides the disagreement and, once a resolution is\nrecorded, the resolution and the position its evidence favoured. A view without a\nresolution is an unsettled disagreement that blocks its assessment.\n\n```\n# use majordomus_cli::reasoning::record::ReasoningRecord;\n# use serde_json::json;\n# fn rec(id: &amp;str, n: u32, body: serde_json::Value) -&gt; ReasoningRecord {\n#     serde_json::from_value(json!({\n#         \&quot;schema\&quot;: \&quot;majordomus/reasoning-record\&quot;, \&quot;version\&quot;: 1, \&quot;id\&quot;: id, \&quot;task\&quot;: \&quot;t\&quot;,\n#         \&quot;recorded_at\&quot;: format!(\&quot;2026-10-01T00:00:{n:02}Z\&quot;), \&quot;body\&quot;: body,\n#     }))\n#     .unwrap()\n# }\nuse majordomus_cli::reasoning::state::{derive, DisagreementView};\nuse majordomus_cli::reasoning::store::Loaded;\n\nlet mut loaded = Loaded::default();\nloaded.records.push(rec(\&quot;disagreement-1\&quot;, 1, json!({\n    \&quot;kind\&quot;: \&quot;disagreement\&quot;, \&quot;assessment\&quot;: \&quot;assessment-0\&quot;,\n    \&quot;positions\&quot;: [\n        { \&quot;source\&quot;: \&quot;primary\&quot;, \&quot;position\&quot;: \&quot;A\&quot; },\n        { \&quot;source\&quot;: \&quot;consultation-9\&quot;, \&quot;position\&quot;: \&quot;B\&quot; },\n    ],\n    \&quot;discriminating_question\&quot;: \&quot;do callers retry?\&quot;,\n})));\nloaded.records.push(rec(\&quot;resolution-2\&quot;, 2, json!({\n    \&quot;kind\&quot;: \&quot;resolution\&quot;, \&quot;disagreement\&quot;: \&quot;disagreement-1\&quot;,\n    \&quot;experiment\&quot;: \&quot;read the callers\&quot;, \&quot;outcome\&quot;: \&quot;none retries\&quot;,\n    \&quot;favours\&quot;: \&quot;consultation-9\&quot;,\n    \&quot;evidence\&quot;: [{ \&quot;kind\&quot;: \&quot;file\&quot;, \&quot;reference\&quot;: \&quot;src/caller.rs\&quot; }],\n})));\nlet state = derive(&amp;loaded, None);\nlet view: &amp;DisagreementView = &amp;state.disagreements[0];\nassert_eq!(view.discriminating_question, \&quot;do callers retry?\&quot;);\nassert_eq!(view.resolution.as_deref(), Some(\&quot;resolution-2\&quot;));\nassert_eq!(view.favours.as_deref(), Some(\&quot;consultation-9\&quot;));\n```&quot;,
+      &quot;properties&quot;: {
+        &quot;discriminating_question&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The question that decides it.&quot;
+        },
+        &quot;id&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;Record id.&quot;
+        },
+        &quot;resolution&quot;: {
+          &quot;description&quot;: &quot;The resolution, when settled.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;favours&quot;: {
+          &quot;description&quot;: &quot;The position the evidence favoured.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;assessment&quot;: {
+          &quot;description&quot;: &quot;The assessment.&quot;,
           &quot;type&quot;: &quot;string&quot;
         }
+      },
+      &quot;required&quot;: [
+        &quot;id&quot;,
+        &quot;assessment&quot;,
+        &quot;discriminating_question&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;ModeResolution&quot;: {
+      &quot;properties&quot;: {
+        &quot;mode&quot;: {
+          &quot;description&quot;: &quot;The mode.&quot;,
+          &quot;$ref&quot;: &quot;#/$defs/ReasoningMode&quot;
+        },
+        &quot;source&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;What decided it: `MAJORDOMUS_REASONING_MODE`, `CI`, `profile &lt;name&gt;`, or `default`.&quot;
+        }
+      },
+      &quot;type&quot;: &quot;object&quot;,
+      &quot;description&quot;: &quot;The mode in force and what decided it, as `resolve_mode` returns it. A plan and a\nreport carry the source beside the mode, so a reader learns why the mode is what it is.\n\n```\nuse majordomus_cli::reasoning::availability::{resolve_mode, ModeResolution, ReasoningMode};\n\nlet r: ModeResolution = resolve_mode(None, true, None);\nassert_eq!(r, ModeResolution { mode: ReasoningMode::Ci, source: \&quot;CI\&quot;.into() });\n```&quot;,
+      &quot;required&quot;: [
+        &quot;mode&quot;,
+        &quot;source&quot;
       ]
-    }
-  },
-  &quot;description&quot;: &quot;The answer of `reasoning.status`: the mode in force, the advisor counts, the state the\nrecords derive, and that state rendered as the Markdown a handover carries.\n\n```\nuse majordomus_cli::capability::builtin::reasoning::ReasoningStatus;\n\nlet schema = serde_json::to_value(schemars::schema_for!(ReasoningStatus)).unwrap();\nfor field in [\&quot;mode\&quot;, \&quot;advisors_available\&quot;, \&quot;advisors_unavailable\&quot;, \&quot;state\&quot;, \&quot;report\&quot;] {\n    assert!(schema[\&quot;required\&quot;].as_array().unwrap().iter().any(|f| f == field), \&quot;{field}\&quot;);\n}\n```&quot;,
-  &quot;properties&quot;: {
-    &quot;advisors_available&quot;: {
-      &quot;description&quot;: &quot;Advisors available now.&quot;,
-      &quot;format&quot;: &quot;uint&quot;,
-      &quot;minimum&quot;: 0,
-      &quot;type&quot;: &quot;integer&quot;
     },
-    &quot;advisors_unavailable&quot;: {
-      &quot;description&quot;: &quot;Advisors not available now, each optional.&quot;,
-      &quot;format&quot;: &quot;uint&quot;,
-      &quot;minimum&quot;: 0,
-      &quot;type&quot;: &quot;integer&quot;
-    },
-    &quot;mode&quot;: {
-      &quot;$ref&quot;: &quot;#/$defs/ModeResolution&quot;,
-      &quot;description&quot;: &quot;The mode in force.&quot;
-    },
-    &quot;report&quot;: {
-      &quot;description&quot;: &quot;The state as Markdown: what a handover carries.&quot;,
-      &quot;type&quot;: &quot;string&quot;
-    },
-    &quot;state&quot;: {
-      &quot;$ref&quot;: &quot;#/$defs/ReasoningState&quot;,
-      &quot;description&quot;: &quot;The state.&quot;
+    &quot;ReasoningMode&quot;: {
+      &quot;oneOf&quot;: [
+        {
+          &quot;const&quot;: &quot;offline&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;No network: only advisors that stay on this machine.&quot;
+        },
+        {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;ci&quot;,
+          &quot;description&quot;: &quot;Deterministic: no advisor at all, whatever is installed.&quot;
+        },
+        {
+          &quot;description&quot;: &quot;Review only where the blast radius is high.&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;fast&quot;
+        },
+        {
+          &quot;description&quot;: &quot;Review where uncertainty is material.&quot;,
+          &quot;const&quot;: &quot;standard&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;strict&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;Review wider, and complementary review where the stakes are highest.&quot;
+        }
+      ],
+      &quot;description&quot;: &quot;How much independent review a session may use, and where from. The policy reads it\nfor the review budget; availability reads it to leave advisors out (`ci` all of them,\n`offline` every one that leaves the machine). `standard` is the default.\n\n```\nuse majordomus_cli::reasoning::availability::ReasoningMode;\n\nassert_eq!(ReasoningMode::default(), ReasoningMode::Standard);\nassert_eq!(serde_json::to_value(ReasoningMode::Offline).unwrap(), \&quot;offline\&quot;);\nlet m: ReasoningMode = serde_json::from_str(\&quot;\\\&quot;strict\\\&quot;\&quot;).unwrap();\nassert_eq!(m, ReasoningMode::Strict);\n```&quot;
     }
   },
   &quot;required&quot;: [
@@ -932,9 +934,7 @@ records derive, and that state rendered as the Markdown a handover carries.</p>
     &quot;advisors_unavailable&quot;,
     &quot;state&quot;,
     &quot;report&quot;
-  ],
-  &quot;title&quot;: &quot;ReasoningStatus&quot;,
-  &quot;type&quot;: &quot;object&quot;
+  ]
 }</pre></div>
   </details>
 </div>
@@ -965,7 +965,7 @@ records derive, and that state rendered as the Markdown a handover carries.</p>
         <div><dt class="text-body-subtle">Rust module</dt><dd class="min-w-0 break-all font-mono text-heading">majordomus_cli::capability::builtin::reasoning</dd></div>
         <div><dt class="text-body-subtle">input type</dt><dd class="font-mono text-heading">ReasoningStatusInput</dd></div>
         <div><dt class="text-body-subtle">output type</dt><dd class="font-mono text-heading">ReasoningStatus</dd></div>
-        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/1112bace3437ee0d82067b1e8f61813e70190078/docs/generated/modules/reasoning.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/reasoning.md</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">5cdbf22cd21589ddbe464d5f0987b6bcf4607d05479004d6f815c3b306fdb08a</dd></div>
+        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/docs/generated/modules/reasoning.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/reasoning.md</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">3f734f2faf797f0ca7c39b4cd837e68b6619c41c6f6711f3d3aeca8f341934eb</dd></div>
         <div><dt class="text-body-subtle">generated by</dt><dd class="font-mono text-heading">majordomus-cli 1.0.0-alpha.10</dd></div>
       </dl>
     </div>
@@ -1021,9 +1021,9 @@ records derive, and that state rendered as the Markdown a handover carries.</p>
       <div class="min-w-0">
         <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">Project</h2><ul class="space-y-2 text-sm font-medium text-body">
           <li><a href="https://github.com/korczis/prismatic-majordomus" class="hover:text-heading hover:underline">GitHub</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/1112bace3437ee0d82067b1e8f61813e70190078/LICENSE" class="hover:text-heading hover:underline">MIT licence</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/1112bace3437ee0d82067b1e8f61813e70190078/SECURITY.md" class="hover:text-heading hover:underline">Security policy</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/1112bace3437ee0d82067b1e8f61813e70190078/CONTRIBUTING.md" class="hover:text-heading hover:underline">Contributing guide</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/LICENSE" class="hover:text-heading hover:underline">MIT licence</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/SECURITY.md" class="hover:text-heading hover:underline">Security policy</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/CONTRIBUTING.md" class="hover:text-heading hover:underline">Contributing guide</a></li>
         </ul>
       </div>
     </div>
@@ -1031,7 +1031,7 @@ records derive, and that state rendered as the Markdown a handover carries.</p>
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.10</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/1112bace3437ee0d82067b1e8f61813e70190078" class="font-mono underline">1112bac</a> · inputs <span class="font-mono">830f884cc5aa</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/architecture/" class="underline">how this site is derived</a> names them.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.10</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/745db2ea21e02613943face75a2bf95542be1f2e" class="font-mono underline">745db2e</a> · inputs <span class="font-mono">0a58c217d1b7</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/architecture/" class="underline">how this site is derived</a> names them.</p>
     </div>
   </div>
 </footer>

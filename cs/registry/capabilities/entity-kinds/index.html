@@ -210,10 +210,10 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
   <h3 class="font-mono text-sm font-semibold text-heading">vstup · Prázdné</h3><div class="mt-1 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">Žádný vstup.</div><p class="mt-2 text-sm text-body-subtle">Žádné vlastnosti: schopnost nebere žádný vstup.</p><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
-  &quot;additionalProperties&quot;: false,
   &quot;description&quot;: &quot;No input.&quot;,
-  &quot;title&quot;: &quot;Empty&quot;,
-  &quot;type&quot;: &quot;object&quot;
+  &quot;type&quot;: &quot;object&quot;,
+  &quot;additionalProperties&quot;: false,
+  &quot;title&quot;: &quot;Empty&quot;
 }</pre></div>
   </details>
 </div>
@@ -236,6 +236,11 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
     <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
       <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">vlastnost</th><th class="px-3 py-2">typ</th><th class="px-3 py-2">povinné</th><th class="px-3 py-2">popis</th></tr></thead>
       <tbody><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">kinds</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Druhy, v pořadí indexu.</td>
+      </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">kolize</td>
         <td class="px-3 py-2 font-mono text-xs text-body">array</td>
         <td class="px-3 py-2 font-mono text-xs text-body">ne</td>
@@ -245,11 +250,6 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
         <td class="px-3 py-2 font-mono text-xs text-body">integer</td>
         <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
         <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Kolik druhů.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">kinds</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Druhy, v pořadí indexu.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">routovatelné</td>
         <td class="px-3 py-2 font-mono text-xs text-body">integer</td>
@@ -261,15 +261,100 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
   &quot;$defs&quot;: {
+    &quot;RouteCollision&quot;: {
+      &quot;description&quot;: &quot;Two objects of one kind whose identities reduce to the same route.\n\nCarries both identities and both files, because the reader who has to fix it needs to\nknow which two things collided and where they are written — a count would tell them\nonly that the tree is refused. `correction` is the sentence `collisions` wrote about\nthis particular pair.\n\n```\n# use majordomus_cli::{Object, Provenance};\n# fn object(kind: &amp;str, identity: &amp;str) -&gt; Object {\n#     Object { kind: kind.into(), identity: identity.into(),\n#         uri: format!(\&quot;majordomus://{kind}/{identity}\&quot;), title: None, description: None,\n#         metadata: serde_json::json!({}), body: String::new(), content: String::new(),\n#         media_type: \&quot;text/markdown\&quot;,\n#         provenance: Provenance { path: format!(\&quot;{identity}.md\&quot;), directory: \&quot;x\&quot;.into(),\n#             source_class: kind.into(), section: None, bytes: 0, member: None } }\n# }\nuse majordomus_cli::entity::{collisions, Collision};\n\n// `a.b` and `a-b` are two identities and one slug\nlet objects = vec![object(\&quot;rule\&quot;, \&quot;a.b\&quot;), object(\&quot;rule\&quot;, \&quot;a-b\&quot;)];\nlet found: Vec&lt;Collision&gt; = collisions(&amp;objects);\n\nassert_eq!(found.len(), 1);\nassert_eq!(found[0].kind, \&quot;rule\&quot;);\nassert_eq!(found[0].slug, \&quot;a-b\&quot;);\nassert_eq!(found[0].identities, [\&quot;a.b\&quot;, \&quot;a-b\&quot;]);\nassert!(!found[0].correction.is_empty());\n```&quot;,
+      &quot;properties&quot;: {
+        &quot;kind&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The kind they share.&quot;
+        },
+        &quot;paths&quot;: {
+          &quot;items&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          },
+          &quot;description&quot;: &quot;The files that declared them.&quot;,
+          &quot;type&quot;: &quot;array&quot;
+        },
+        &quot;identities&quot;: {
+          &quot;description&quot;: &quot;The identities that collide, in index order.&quot;,
+          &quot;type&quot;: &quot;array&quot;,
+          &quot;items&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        },
+        &quot;slug&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The slug they both reduce to; empty when an identity reduces to nothing.&quot;
+        },
+        &quot;correction&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;What to do about it.&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;kind&quot;,
+        &quot;slug&quot;,
+        &quot;identities&quot;,
+        &quot;paths&quot;,
+        &quot;correction&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;ObjectSummary&quot;: {
+      &quot;required&quot;: [
+        &quot;uri&quot;,
+        &quot;id&quot;,
+        &quot;kind&quot;,
+        &quot;identity&quot;,
+        &quot;path&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;,
+      &quot;description&quot;: &quot;One object, summarised for a listing.&quot;,
+      &quot;properties&quot;: {
+        &quot;title&quot;: {
+          &quot;description&quot;: &quot;The title, when the kind&#39;s title rule found one.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;description&quot;: {
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ],
+          &quot;description&quot;: &quot;The one-line description, when the kind holds one.&quot;
+        },
+        &quot;identity&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The identity within the kind.&quot;
+        },
+        &quot;uri&quot;: {
+          &quot;description&quot;: &quot;`majordomus://&lt;kind&gt;/&lt;identity&gt;`.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;path&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;Repository-relative source path.&quot;
+        },
+        &quot;id&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The capability id, `&lt;kind&gt;.&lt;identity&gt;`.&quot;
+        },
+        &quot;kind&quot;: {
+          &quot;description&quot;: &quot;The kind the object was read as.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      }
+    },
     &quot;KindEntry&quot;: {
       &quot;description&quot;: &quot;One kind of the layer, with its address and how many objects it holds.\n\n`example` carries one of the kind&#39;s objects so that a catalogue of kinds is somewhere a\nreader can go from rather than a list of words: a kind with a count and no way in is a\ndead row. It is `None` only for a kind the index holds no object of.\n\n```\nuse majordomus_cli::capability::builtin::entity::KindEntry;\n\nlet e: KindEntry = serde_json::from_value(serde_json::json!({\n    \&quot;kind\&quot;: \&quot;adr\&quot;,\n    \&quot;count\&quot;: 52,\n    \&quot;route\&quot;: \&quot;/cockpit/objects/adr\&quot;,\n}))\n.unwrap();\n\nassert_eq!(e.kind, \&quot;adr\&quot;);\n// the route is the kind&#39;s, derived — never a per-kind entry in a table of routes\nassert_eq!(e.route, majordomus_cli::entity::kind_route(&amp;e.kind));\nassert!(e.example.is_none());\n```&quot;,
+      &quot;required&quot;: [
+        &quot;kind&quot;,
+        &quot;count&quot;,
+        &quot;route&quot;
+      ],
       &quot;properties&quot;: {
-        &quot;count&quot;: {
-          &quot;description&quot;: &quot;How many objects of it the index holds.&quot;,
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
         &quot;example&quot;: {
           &quot;anyOf&quot;: [
             {
@@ -281,136 +366,51 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
           ],
           &quot;description&quot;: &quot;One of its objects, so a reader has somewhere to go.&quot;
         },
+        &quot;count&quot;: {
+          &quot;minimum&quot;: 0,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;type&quot;: &quot;integer&quot;,
+          &quot;description&quot;: &quot;How many objects of it the index holds.&quot;
+        },
+        &quot;route&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;Where its index is served.&quot;
+        },
         &quot;kind&quot;: {
           &quot;description&quot;: &quot;The kind.&quot;,
           &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;route&quot;: {
-          &quot;description&quot;: &quot;Where its index is served.&quot;,
-          &quot;type&quot;: &quot;string&quot;
         }
       },
-      &quot;required&quot;: [
-        &quot;kind&quot;,
-        &quot;count&quot;,
-        &quot;route&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
-    },
-    &quot;ObjectSummary&quot;: {
-      &quot;description&quot;: &quot;One object, summarised for a listing.&quot;,
-      &quot;properties&quot;: {
-        &quot;description&quot;: {
-          &quot;description&quot;: &quot;The one-line description, when the kind holds one.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;id&quot;: {
-          &quot;description&quot;: &quot;The capability id, `&lt;kind&gt;.&lt;identity&gt;`.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;identity&quot;: {
-          &quot;description&quot;: &quot;The identity within the kind.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;kind&quot;: {
-          &quot;description&quot;: &quot;The kind the object was read as.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;path&quot;: {
-          &quot;description&quot;: &quot;Repository-relative source path.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;title&quot;: {
-          &quot;description&quot;: &quot;The title, when the kind&#39;s title rule found one.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;uri&quot;: {
-          &quot;description&quot;: &quot;`majordomus://&lt;kind&gt;/&lt;identity&gt;`.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      },
-      &quot;required&quot;: [
-        &quot;uri&quot;,
-        &quot;id&quot;,
-        &quot;kind&quot;,
-        &quot;identity&quot;,
-        &quot;path&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
-    },
-    &quot;RouteCollision&quot;: {
-      &quot;description&quot;: &quot;Two objects of one kind whose identities reduce to the same route.\n\nCarries both identities and both files, because the reader who has to fix it needs to\nknow which two things collided and where they are written — a count would tell them\nonly that the tree is refused. `correction` is the sentence `collisions` wrote about\nthis particular pair.\n\n```\n# use majordomus_cli::{Object, Provenance};\n# fn object(kind: &amp;str, identity: &amp;str) -&gt; Object {\n#     Object { kind: kind.into(), identity: identity.into(),\n#         uri: format!(\&quot;majordomus://{kind}/{identity}\&quot;), title: None, description: None,\n#         metadata: serde_json::json!({}), body: String::new(), content: String::new(),\n#         media_type: \&quot;text/markdown\&quot;,\n#         provenance: Provenance { path: format!(\&quot;{identity}.md\&quot;), directory: \&quot;x\&quot;.into(),\n#             source_class: kind.into(), section: None, bytes: 0, member: None } }\n# }\nuse majordomus_cli::entity::{collisions, Collision};\n\n// `a.b` and `a-b` are two identities and one slug\nlet objects = vec![object(\&quot;rule\&quot;, \&quot;a.b\&quot;), object(\&quot;rule\&quot;, \&quot;a-b\&quot;)];\nlet found: Vec&lt;Collision&gt; = collisions(&amp;objects);\n\nassert_eq!(found.len(), 1);\nassert_eq!(found[0].kind, \&quot;rule\&quot;);\nassert_eq!(found[0].slug, \&quot;a-b\&quot;);\nassert_eq!(found[0].identities, [\&quot;a.b\&quot;, \&quot;a-b\&quot;]);\nassert!(!found[0].correction.is_empty());\n```&quot;,
-      &quot;properties&quot;: {
-        &quot;correction&quot;: {
-          &quot;description&quot;: &quot;What to do about it.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;identities&quot;: {
-          &quot;description&quot;: &quot;The identities that collide, in index order.&quot;,
-          &quot;items&quot;: {
-            &quot;type&quot;: &quot;string&quot;
-          },
-          &quot;type&quot;: &quot;array&quot;
-        },
-        &quot;kind&quot;: {
-          &quot;description&quot;: &quot;The kind they share.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;paths&quot;: {
-          &quot;description&quot;: &quot;The files that declared them.&quot;,
-          &quot;items&quot;: {
-            &quot;type&quot;: &quot;string&quot;
-          },
-          &quot;type&quot;: &quot;array&quot;
-        },
-        &quot;slug&quot;: {
-          &quot;description&quot;: &quot;The slug they both reduce to; empty when an identity reduces to nothing.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      },
-      &quot;required&quot;: [
-        &quot;kind&quot;,
-        &quot;slug&quot;,
-        &quot;identities&quot;,
-        &quot;paths&quot;,
-        &quot;correction&quot;
-      ],
       &quot;type&quot;: &quot;object&quot;
     }
   },
   &quot;description&quot;: &quot;Every kind of the layer, each with its route, and every route collision there is.\n\nThe two numbers are what `scripts/ci/entity-check` compares: the objects the index holds\nagainst the objects that have an address. They are reported together, in one answer, so\nthat the gate asks one question instead of joining two lists and deciding for itself\nwhat the difference means.\n\n```\nuse majordomus_cli::capability::builtin::entity::KindList;\n\nlet healthy: KindList = serde_json::from_value(serde_json::json!({\n    \&quot;count\&quot;: 1,\n    \&quot;kinds\&quot;: [{ \&quot;kind\&quot;: \&quot;adr\&quot;, \&quot;count\&quot;: 52, \&quot;route\&quot;: \&quot;/cockpit/objects/adr\&quot; }],\n    \&quot;routable\&quot;: 52,\n}))\n.unwrap();\n\nlet held: usize = healthy.kinds.iter().map(|k| k.count).sum();\n// every object addressable, and no collision: the only state the gate accepts\nassert_eq!(held, healthy.routable);\nassert!(healthy.collisions.is_empty());\n```&quot;,
   &quot;properties&quot;: {
-    &quot;collisions&quot;: {
-      &quot;description&quot;: &quot;Two objects of one kind whose identities reduce to one route, which is the only way\nan object can fail to be addressable. Empty is the healthy answer and the only one\n`scripts/ci/entity-check` accepts.&quot;,
-      &quot;items&quot;: {
-        &quot;$ref&quot;: &quot;#/$defs/RouteCollision&quot;
-      },
-      &quot;type&quot;: &quot;array&quot;
-    },
-    &quot;count&quot;: {
-      &quot;description&quot;: &quot;How many kinds.&quot;,
-      &quot;format&quot;: &quot;uint&quot;,
-      &quot;minimum&quot;: 0,
-      &quot;type&quot;: &quot;integer&quot;
-    },
     &quot;kinds&quot;: {
+      &quot;type&quot;: &quot;array&quot;,
       &quot;description&quot;: &quot;The kinds, in the index&#39;s order.&quot;,
       &quot;items&quot;: {
         &quot;$ref&quot;: &quot;#/$defs/KindEntry&quot;
+      }
+    },
+    &quot;collisions&quot;: {
+      &quot;items&quot;: {
+        &quot;$ref&quot;: &quot;#/$defs/RouteCollision&quot;
       },
-      &quot;type&quot;: &quot;array&quot;
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;description&quot;: &quot;Two objects of one kind whose identities reduce to one route, which is the only way\nan object can fail to be addressable. Empty is the healthy answer and the only one\n`scripts/ci/entity-check` accepts.&quot;
+    },
+    &quot;count&quot;: {
+      &quot;type&quot;: &quot;integer&quot;,
+      &quot;minimum&quot;: 0,
+      &quot;format&quot;: &quot;uint&quot;,
+      &quot;description&quot;: &quot;How many kinds.&quot;
     },
     &quot;routable&quot;: {
-      &quot;description&quot;: &quot;How many objects have a route. Every object does, unless it is in `collisions`.&quot;,
       &quot;format&quot;: &quot;uint&quot;,
-      &quot;minimum&quot;: 0,
-      &quot;type&quot;: &quot;integer&quot;
+      &quot;description&quot;: &quot;How many objects have a route. Every object does, unless it is in `collisions`.&quot;,
+      &quot;type&quot;: &quot;integer&quot;,
+      &quot;minimum&quot;: 0
     }
   },
   &quot;required&quot;: [
@@ -450,7 +450,7 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
         <div><dt class="text-body-subtle">modul Rust</dt><dd class="min-w-0 break-all font-mono text-heading">majordomus_cli::capability::builtin::entity</dd></div>
         <div><dt class="text-body-subtle">typ vstupu</dt><dd class="font-mono text-heading">Prázdné</dd></div>
         <div><dt class="text-body-subtle">typ výstupu</dt><dd class="font-mono text-heading">KindList</dd></div>
-        <div><dt class="text-body-subtle">reference na GitHubu</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/1112bace3437ee0d82067b1e8f61813e70190078/docs/generated/modules/entity.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/entity.md</a></dd></div><div><dt class="text-body-subtle">otisk registru</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">5cdbf22cd21589ddbe464d5f0987b6bcf4607d05479004d6f815c3b306fdb08a</dd></div>
+        <div><dt class="text-body-subtle">reference na GitHubu</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/docs/generated/modules/entity.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/entity.md</a></dd></div><div><dt class="text-body-subtle">otisk registru</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">3f734f2faf797f0ca7c39b4cd837e68b6619c41c6f6711f3d3aeca8f341934eb</dd></div>
         <div><dt class="text-body-subtle">vygenerováno nástrojem</dt><dd class="font-mono text-heading">majordomus-cli 1.0.0-alpha.10</dd></div>
       </dl>
     </div>
@@ -506,9 +506,9 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
       <div class="min-w-0">
         <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">Projekt</h2><ul class="space-y-2 text-sm font-medium text-body">
           <li><a href="https://github.com/korczis/prismatic-majordomus" class="hover:text-heading hover:underline">GitHub</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/1112bace3437ee0d82067b1e8f61813e70190078/LICENSE" class="hover:text-heading hover:underline">Licence MIT</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/1112bace3437ee0d82067b1e8f61813e70190078/SECURITY.md" class="hover:text-heading hover:underline">Bezpečnostní politika</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/1112bace3437ee0d82067b1e8f61813e70190078/CONTRIBUTING.md" class="hover:text-heading hover:underline">Průvodce pro přispěvatele</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/LICENSE" class="hover:text-heading hover:underline">Licence MIT</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/SECURITY.md" class="hover:text-heading hover:underline">Bezpečnostní politika</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/CONTRIBUTING.md" class="hover:text-heading hover:underline">Průvodce pro přispěvatele</a></li>
         </ul>
       </div>
     </div>
@@ -516,7 +516,7 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/cs/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.10</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/1112bace3437ee0d82067b1e8f61813e70190078" class="font-mono underline">1112bac</a> · inputs <span class="font-mono">830f884cc5aa</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/cs/architecture/" class="underline">how this site is derived</a> names them.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.10</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/745db2ea21e02613943face75a2bf95542be1f2e" class="font-mono underline">745db2e</a> · inputs <span class="font-mono">0a58c217d1b7</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/cs/architecture/" class="underline">how this site is derived</a> names them.</p>
     </div>
   </div>
 </footer>

@@ -222,40 +222,40 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
     <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
       <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
       <tbody><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">apply</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">boolean</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Carry the plan out. Absent, the capability only plans and changes nothing. Under the
-default root <code>/</code> it needs root and refuses without it. <span class="font-mono text-xs text-body-subtle">default false</span></td>
-      </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">root</td>
         <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
         <td class="px-3 py-2 font-mono text-xs text-body">no</td>
         <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The directory the host's paths are read from and written under; default <code>/</code>. Any other
 root is a staging directory: files only, no privilege, no command.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">apply</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">boolean</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Carry the plan out. Absent, the capability only plans and changes nothing. Under the
+default root <code>/</code> it needs root and refuses without it. <span class="font-mono text-xs text-body-subtle">default false</span></td>
       </tr></tbody>
     </table>
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
-  &quot;additionalProperties&quot;: false,
   &quot;description&quot;: &quot;The input of `mesh.build_cache.provision`.&quot;,
   &quot;properties&quot;: {
-    &quot;apply&quot;: {
-      &quot;default&quot;: false,
-      &quot;description&quot;: &quot;Carry the plan out. Absent, the capability only plans and changes nothing. Under the\ndefault root `/` it needs root and refuses without it.&quot;,
-      &quot;type&quot;: &quot;boolean&quot;
-    },
     &quot;root&quot;: {
-      &quot;description&quot;: &quot;The directory the host&#39;s paths are read from and written under; default `/`. Any other\nroot is a staging directory: files only, no privilege, no command.&quot;,
       &quot;type&quot;: [
         &quot;string&quot;,
         &quot;null&quot;
-      ]
+      ],
+      &quot;description&quot;: &quot;The directory the host&#39;s paths are read from and written under; default `/`. Any other\nroot is a staging directory: files only, no privilege, no command.&quot;
+    },
+    &quot;apply&quot;: {
+      &quot;description&quot;: &quot;Carry the plan out. Absent, the capability only plans and changes nothing. Under the\ndefault root `/` it needs root and refuses without it.&quot;,
+      &quot;default&quot;: false,
+      &quot;type&quot;: &quot;boolean&quot;
     }
   },
   &quot;title&quot;: &quot;ProvisionInput&quot;,
-  &quot;type&quot;: &quot;object&quot;
+  &quot;type&quot;: &quot;object&quot;,
+  &quot;additionalProperties&quot;: false
 }</pre></div>
   </details>
 </div>
@@ -264,350 +264,66 @@ root is a staging directory: files only, no privilege, no command.</td>
     <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
       <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
       <tbody><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">apply</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">one of 2</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">What the apply did; absent for a plan.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">mode</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words"><code>plan</code> or <code>apply</code>.</td>
-      </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">ok</td>
         <td class="px-3 py-2 font-mono text-xs text-body">boolean</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
         <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">A plan always holds; an apply holds when nothing failed and nothing is owed after it.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">root</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The root read.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">plan</td>
         <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
         <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">What the host owed when asked.</td>
       </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">apply</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">one of 2</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">What the apply did; absent for a plan.</td>
+      </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">policy</td>
         <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
         <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The policy in force: declared, not a secret.</td>
       </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">root</td>
+        <td class="px-3 py-2 font-mono text-heading">mode</td>
         <td class="px-3 py-2 font-mono text-xs text-body">string</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The root read.</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words"><code>plan</code> or <code>apply</code>.</td>
       </tr></tbody>
     </table>
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
   &quot;$defs&quot;: {
-    &quot;ApplyReport&quot;: {
-      &quot;description&quot;: &quot;What an apply did.&quot;,
+    &quot;Ran&quot;: {
+      &quot;description&quot;: &quot;One command that ran.&quot;,
+      &quot;type&quot;: &quot;object&quot;,
       &quot;properties&quot;: {
-        &quot;after&quot;: {
-          &quot;anyOf&quot;: [
-            {
-              &quot;$ref&quot;: &quot;#/$defs/Plan&quot;
-            },
-            {
-              &quot;type&quot;: &quot;null&quot;
-            }
-          ],
-          &quot;description&quot;: &quot;The plan after the apply: `changes` is 0 when the host now holds the policy.&quot;
-        },
-        &quot;generated&quot;: {
-          &quot;description&quot;: &quot;Paths of credentials this run generated.&quot;,
-          &quot;items&quot;: {
-            &quot;type&quot;: &quot;string&quot;
-          },
-          &quot;type&quot;: &quot;array&quot;
-        },
         &quot;ok&quot;: {
-          &quot;description&quot;: &quot;Nothing failed and nothing was refused.&quot;,
+          &quot;description&quot;: &quot;It exited zero.&quot;,
           &quot;type&quot;: &quot;boolean&quot;
         },
-        &quot;ran&quot;: {
-          &quot;description&quot;: &quot;The command lines that ran, each with its outcome.&quot;,
-          &quot;items&quot;: {
-            &quot;$ref&quot;: &quot;#/$defs/Ran&quot;
-          },
-          &quot;type&quot;: &quot;array&quot;
-        },
-        &quot;refused&quot;: {
-          &quot;description&quot;: &quot;Why nothing was done, when it was refused.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;root&quot;: {
-          &quot;description&quot;: &quot;The root the files were written under.&quot;,
+        &quot;output&quot;: {
+          &quot;description&quot;: &quot;Its output when it failed (a secret removed).&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
-        &quot;skipped&quot;: {
-          &quot;description&quot;: &quot;Commands that did not run, and why.&quot;,
-          &quot;items&quot;: {
-            &quot;type&quot;: &quot;string&quot;
-          },
-          &quot;type&quot;: &quot;array&quot;
-        },
-        &quot;written&quot;: {
-          &quot;description&quot;: &quot;Paths written or corrected, never their content.&quot;,
-          &quot;items&quot;: {
-            &quot;type&quot;: &quot;string&quot;
-          },
-          &quot;type&quot;: &quot;array&quot;
+        &quot;line&quot;: {
+          &quot;description&quot;: &quot;The line, with a secret as a placeholder.&quot;,
+          &quot;type&quot;: &quot;string&quot;
         }
       },
       &quot;required&quot;: [
+        &quot;line&quot;,
         &quot;ok&quot;,
-        &quot;root&quot;,
-        &quot;written&quot;,
-        &quot;generated&quot;,
-        &quot;ran&quot;,
-        &quot;skipped&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
-    },
-    &quot;EditAction&quot;: {
-      &quot;description&quot;: &quot;A line edit the plan owes: the cargo config of the build user.&quot;,
-      &quot;properties&quot;: {
-        &quot;from&quot;: {
-          &quot;description&quot;: &quot;The line replaced.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;owed&quot;: {
-          &quot;description&quot;: &quot;The edit is still owed.&quot;,
-          &quot;type&quot;: &quot;boolean&quot;
-        },
-        &quot;path&quot;: {
-          &quot;description&quot;: &quot;The file edited.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;to&quot;: {
-          &quot;description&quot;: &quot;The line it becomes.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      },
-      &quot;required&quot;: [
-        &quot;path&quot;,
-        &quot;from&quot;,
-        &quot;to&quot;,
-        &quot;owed&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
-    },
-    &quot;FileAction&quot;: {
-      &quot;description&quot;: &quot;One file of the plan.&quot;,
-      &quot;properties&quot;: {
-        &quot;mode&quot;: {
-          &quot;description&quot;: &quot;The mode it must have, in octal.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;owner&quot;: {
-          &quot;description&quot;: &quot;The owner it must have, when not root.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;path&quot;: {
-          &quot;description&quot;: &quot;The path on the host.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;source&quot;: {
-          &quot;description&quot;: &quot;Where its content comes from: `declared`, `generated` or `copy:&lt;path&gt;`. Never the content.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;state&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/FileState&quot;,
-          &quot;description&quot;: &quot;Where it stands.&quot;
-        }
-      },
-      &quot;required&quot;: [
-        &quot;path&quot;,
-        &quot;mode&quot;,
-        &quot;source&quot;,
-        &quot;state&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
-    },
-    &quot;FileState&quot;: {
-      &quot;description&quot;: &quot;Where a file stands against what the policy wants.&quot;,
-      &quot;oneOf&quot;: [
-        {
-          &quot;const&quot;: &quot;missing&quot;,
-          &quot;description&quot;: &quot;Absent.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;different&quot;,
-          &quot;description&quot;: &quot;Present with other content.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;mode&quot;,
-          &quot;description&quot;: &quot;Right content, wrong mode.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;current&quot;,
-          &quot;description&quot;: &quot;As wanted.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;unobservable&quot;,
-          &quot;description&quot;: &quot;Could not be observed by this process; apply as root decides.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
+        &quot;output&quot;
       ]
-    },
-    &quot;Plan&quot;: {
-      &quot;description&quot;: &quot;The plan: every file, edit and command the host still owes.&quot;,
-      &quot;properties&quot;: {
-        &quot;changes&quot;: {
-          &quot;description&quot;: &quot;How many files are missing, different or of the wrong mode, plus edits owed.&quot;,
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;edits&quot;: {
-          &quot;description&quot;: &quot;The line edits.&quot;,
-          &quot;items&quot;: {
-            &quot;$ref&quot;: &quot;#/$defs/EditAction&quot;
-          },
-          &quot;type&quot;: &quot;array&quot;
-        },
-        &quot;files&quot;: {
-          &quot;description&quot;: &quot;Every file the policy owns.&quot;,
-          &quot;items&quot;: {
-            &quot;$ref&quot;: &quot;#/$defs/FileAction&quot;
-          },
-          &quot;type&quot;: &quot;array&quot;
-        },
-        &quot;runners&quot;: {
-          &quot;description&quot;: &quot;The CI runner units observed on the host, each owed its drop-in and started.&quot;,
-          &quot;items&quot;: {
-            &quot;type&quot;: &quot;string&quot;
-          },
-          &quot;type&quot;: &quot;array&quot;
-        },
-        &quot;steps&quot;: {
-          &quot;description&quot;: &quot;The commands, in the order they run.&quot;,
-          &quot;items&quot;: {
-            &quot;$ref&quot;: &quot;#/$defs/Step&quot;
-          },
-          &quot;type&quot;: &quot;array&quot;
-        },
-        &quot;unobservable&quot;: {
-          &quot;description&quot;: &quot;How many files this process could not observe.&quot;,
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        }
-      },
-      &quot;required&quot;: [
-        &quot;files&quot;,
-        &quot;edits&quot;,
-        &quot;steps&quot;,
-        &quot;runners&quot;,
-        &quot;changes&quot;,
-        &quot;unobservable&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
     },
     &quot;Policy&quot;: {
       &quot;additionalProperties&quot;: false,
-      &quot;description&quot;: &quot;What the provisioning declares: who runs the builds, which store, how bounded, which\nnodes receive an identity.&quot;,
-      &quot;properties&quot;: {
-        &quot;alias&quot;: {
-          &quot;description&quot;: &quot;The `mc` alias of the store.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;bucket&quot;: {
-          &quot;description&quot;: &quot;The cache bucket.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;bucket_quota_gib&quot;: {
-          &quot;description&quot;: &quot;The cache bucket&#39;s hard quota, in GiB.&quot;,
-          &quot;format&quot;: &quot;uint32&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;critical_services&quot;: {
-          &quot;description&quot;: &quot;The services that restart always and are the last the OOM killer takes.&quot;,
-          &quot;items&quot;: {
-            &quot;type&quot;: &quot;string&quot;
-          },
-          &quot;type&quot;: &quot;array&quot;
-        },
-        &quot;expire_days&quot;: {
-          &quot;description&quot;: &quot;Days after which an entry expires.&quot;,
-          &quot;format&quot;: &quot;uint32&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;gitlab_bucket&quot;: {
-          &quot;description&quot;: &quot;The CI cache bucket this host already serves, bounded the same way.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;gitlab_quota_gib&quot;: {
-          &quot;description&quot;: &quot;Its quota, in GiB.&quot;,
-          &quot;format&quot;: &quot;uint32&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;home&quot;: {
-          &quot;description&quot;: &quot;That user&#39;s home directory.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;local_node&quot;: {
-          &quot;description&quot;: &quot;The node this host is: its builds use the loopback endpoint.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;nodes&quot;: {
-          &quot;description&quot;: &quot;Every node that receives an identity.&quot;,
-          &quot;items&quot;: {
-            &quot;type&quot;: &quot;string&quot;
-          },
-          &quot;type&quot;: &quot;array&quot;
-        },
-        &quot;policy_name&quot;: {
-          &quot;description&quot;: &quot;The name of the least-privilege policy every node identity carries.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;port&quot;: {
-          &quot;description&quot;: &quot;The store&#39;s port.&quot;,
-          &quot;format&quot;: &quot;uint16&quot;,
-          &quot;maximum&quot;: 65535,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;region&quot;: {
-          &quot;description&quot;: &quot;The region sccache signs for.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;runner_homes&quot;: {
-          &quot;description&quot;: &quot;The homes of the CI runners&#39; users: the disk guard reclaims the cargo build output\nanywhere under them, with the same safety as under `home`.&quot;,
-          &quot;items&quot;: {
-            &quot;type&quot;: &quot;string&quot;
-          },
-          &quot;type&quot;: &quot;array&quot;
-        },
-        &quot;runner_units&quot;: {
-          &quot;description&quot;: &quot;The CI runner services, as unit name patterns (`*` matches any run of characters):\nevery observed unit that matches one restarts always, without a start limit.&quot;,
-          &quot;items&quot;: {
-            &quot;type&quot;: &quot;string&quot;
-          },
-          &quot;type&quot;: &quot;array&quot;
-        },
-        &quot;tailnet_address&quot;: {
-          &quot;description&quot;: &quot;The address other nodes reach the store at.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;user&quot;: {
-          &quot;description&quot;: &quot;The user whose builds use the cache on this host.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      },
       &quot;required&quot;: [
         &quot;user&quot;,
         &quot;home&quot;,
@@ -627,33 +343,129 @@ root is a staging directory: files only, no privilege, no command.</td>
         &quot;runner_homes&quot;,
         &quot;runner_units&quot;
       ],
-      &quot;type&quot;: &quot;object&quot;
-    },
-    &quot;Ran&quot;: {
-      &quot;description&quot;: &quot;One command that ran.&quot;,
+      &quot;description&quot;: &quot;What the provisioning declares: who runs the builds, which store, how bounded, which\nnodes receive an identity.&quot;,
+      &quot;type&quot;: &quot;object&quot;,
       &quot;properties&quot;: {
-        &quot;line&quot;: {
-          &quot;description&quot;: &quot;The line, with a secret as a placeholder.&quot;,
+        &quot;runner_homes&quot;: {
+          &quot;description&quot;: &quot;The homes of the CI runners&#39; users: the disk guard reclaims the cargo build output\nanywhere under them, with the same safety as under `home`.&quot;,
+          &quot;items&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          },
+          &quot;type&quot;: &quot;array&quot;
+        },
+        &quot;port&quot;: {
+          &quot;maximum&quot;: 65535,
+          &quot;format&quot;: &quot;uint16&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;,
+          &quot;description&quot;: &quot;The store&#39;s port.&quot;
+        },
+        &quot;alias&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The `mc` alias of the store.&quot;
+        },
+        &quot;policy_name&quot;: {
+          &quot;description&quot;: &quot;The name of the least-privilege policy every node identity carries.&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
-        &quot;ok&quot;: {
-          &quot;description&quot;: &quot;It exited zero.&quot;,
+        &quot;runner_units&quot;: {
+          &quot;items&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          },
+          &quot;type&quot;: &quot;array&quot;,
+          &quot;description&quot;: &quot;The CI runner services, as unit name patterns (`*` matches any run of characters):\nevery observed unit that matches one restarts always, without a start limit.&quot;
+        },
+        &quot;tailnet_address&quot;: {
+          &quot;description&quot;: &quot;The address other nodes reach the store at.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;bucket_quota_gib&quot;: {
+          &quot;type&quot;: &quot;integer&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;description&quot;: &quot;The cache bucket&#39;s hard quota, in GiB.&quot;,
+          &quot;format&quot;: &quot;uint32&quot;
+        },
+        &quot;local_node&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The node this host is: its builds use the loopback endpoint.&quot;
+        },
+        &quot;nodes&quot;: {
+          &quot;items&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          },
+          &quot;description&quot;: &quot;Every node that receives an identity.&quot;,
+          &quot;type&quot;: &quot;array&quot;
+        },
+        &quot;user&quot;: {
+          &quot;description&quot;: &quot;The user whose builds use the cache on this host.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;gitlab_quota_gib&quot;: {
+          &quot;minimum&quot;: 0,
+          &quot;format&quot;: &quot;uint32&quot;,
+          &quot;description&quot;: &quot;Its quota, in GiB.&quot;,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;region&quot;: {
+          &quot;description&quot;: &quot;The region sccache signs for.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;bucket&quot;: {
+          &quot;description&quot;: &quot;The cache bucket.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;gitlab_bucket&quot;: {
+          &quot;description&quot;: &quot;The CI cache bucket this host already serves, bounded the same way.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;critical_services&quot;: {
+          &quot;items&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          },
+          &quot;description&quot;: &quot;The services that restart always and are the last the OOM killer takes.&quot;,
+          &quot;type&quot;: &quot;array&quot;
+        },
+        &quot;expire_days&quot;: {
+          &quot;description&quot;: &quot;Days after which an entry expires.&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;format&quot;: &quot;uint32&quot;,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;home&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;That user&#39;s home directory.&quot;
+        }
+      }
+    },
+    &quot;EditAction&quot;: {
+      &quot;required&quot;: [
+        &quot;path&quot;,
+        &quot;from&quot;,
+        &quot;to&quot;,
+        &quot;owed&quot;
+      ],
+      &quot;description&quot;: &quot;A line edit the plan owes: the cargo config of the build user.&quot;,
+      &quot;properties&quot;: {
+        &quot;path&quot;: {
+          &quot;description&quot;: &quot;The file edited.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;from&quot;: {
+          &quot;description&quot;: &quot;The line replaced.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;to&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The line it becomes.&quot;
+        },
+        &quot;owed&quot;: {
+          &quot;description&quot;: &quot;The edit is still owed.&quot;,
           &quot;type&quot;: &quot;boolean&quot;
-        },
-        &quot;output&quot;: {
-          &quot;description&quot;: &quot;Its output when it failed (a secret removed).&quot;,
-          &quot;type&quot;: &quot;string&quot;
         }
       },
-      &quot;required&quot;: [
-        &quot;line&quot;,
-        &quot;ok&quot;,
-        &quot;output&quot;
-      ],
       &quot;type&quot;: &quot;object&quot;
     },
     &quot;Step&quot;: {
-      &quot;description&quot;: &quot;A command the apply runs once the files are in place, as root.&quot;,
       &quot;properties&quot;: {
         &quot;id&quot;: {
           &quot;description&quot;: &quot;A stable name.&quot;,
@@ -668,17 +480,218 @@ root is a staging directory: files only, no privilege, no command.</td>
           &quot;type&quot;: &quot;string&quot;
         }
       },
+      &quot;description&quot;: &quot;A command the apply runs once the files are in place, as root.&quot;,
       &quot;required&quot;: [
         &quot;id&quot;,
         &quot;line&quot;,
         &quot;when&quot;
       ],
       &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;ApplyReport&quot;: {
+      &quot;type&quot;: &quot;object&quot;,
+      &quot;required&quot;: [
+        &quot;ok&quot;,
+        &quot;root&quot;,
+        &quot;written&quot;,
+        &quot;generated&quot;,
+        &quot;ran&quot;,
+        &quot;skipped&quot;
+      ],
+      &quot;description&quot;: &quot;What an apply did.&quot;,
+      &quot;properties&quot;: {
+        &quot;ran&quot;: {
+          &quot;description&quot;: &quot;The command lines that ran, each with its outcome.&quot;,
+          &quot;items&quot;: {
+            &quot;$ref&quot;: &quot;#/$defs/Ran&quot;
+          },
+          &quot;type&quot;: &quot;array&quot;
+        },
+        &quot;ok&quot;: {
+          &quot;type&quot;: &quot;boolean&quot;,
+          &quot;description&quot;: &quot;Nothing failed and nothing was refused.&quot;
+        },
+        &quot;root&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The root the files were written under.&quot;
+        },
+        &quot;written&quot;: {
+          &quot;description&quot;: &quot;Paths written or corrected, never their content.&quot;,
+          &quot;type&quot;: &quot;array&quot;,
+          &quot;items&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        },
+        &quot;after&quot;: {
+          &quot;description&quot;: &quot;The plan after the apply: `changes` is 0 when the host now holds the policy.&quot;,
+          &quot;anyOf&quot;: [
+            {
+              &quot;$ref&quot;: &quot;#/$defs/Plan&quot;
+            },
+            {
+              &quot;type&quot;: &quot;null&quot;
+            }
+          ]
+        },
+        &quot;refused&quot;: {
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ],
+          &quot;description&quot;: &quot;Why nothing was done, when it was refused.&quot;
+        },
+        &quot;generated&quot;: {
+          &quot;items&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          },
+          &quot;description&quot;: &quot;Paths of credentials this run generated.&quot;,
+          &quot;type&quot;: &quot;array&quot;
+        },
+        &quot;skipped&quot;: {
+          &quot;description&quot;: &quot;Commands that did not run, and why.&quot;,
+          &quot;items&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          },
+          &quot;type&quot;: &quot;array&quot;
+        }
+      }
+    },
+    &quot;FileState&quot;: {
+      &quot;oneOf&quot;: [
+        {
+          &quot;description&quot;: &quot;Absent.&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;missing&quot;
+        },
+        {
+          &quot;const&quot;: &quot;different&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;Present with other content.&quot;
+        },
+        {
+          &quot;description&quot;: &quot;Right content, wrong mode.&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;mode&quot;
+        },
+        {
+          &quot;const&quot;: &quot;current&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;As wanted.&quot;
+        },
+        {
+          &quot;const&quot;: &quot;unobservable&quot;,
+          &quot;description&quot;: &quot;Could not be observed by this process; apply as root decides.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      ],
+      &quot;description&quot;: &quot;Where a file stands against what the policy wants.&quot;
+    },
+    &quot;FileAction&quot;: {
+      &quot;description&quot;: &quot;One file of the plan.&quot;,
+      &quot;properties&quot;: {
+        &quot;source&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;Where its content comes from: `declared`, `generated` or `copy:&lt;path&gt;`. Never the content.&quot;
+        },
+        &quot;mode&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The mode it must have, in octal.&quot;
+        },
+        &quot;owner&quot;: {
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ],
+          &quot;description&quot;: &quot;The owner it must have, when not root.&quot;
+        },
+        &quot;state&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/FileState&quot;,
+          &quot;description&quot;: &quot;Where it stands.&quot;
+        },
+        &quot;path&quot;: {
+          &quot;description&quot;: &quot;The path on the host.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;path&quot;,
+        &quot;mode&quot;,
+        &quot;source&quot;,
+        &quot;state&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;Plan&quot;: {
+      &quot;type&quot;: &quot;object&quot;,
+      &quot;required&quot;: [
+        &quot;files&quot;,
+        &quot;edits&quot;,
+        &quot;steps&quot;,
+        &quot;runners&quot;,
+        &quot;changes&quot;,
+        &quot;unobservable&quot;
+      ],
+      &quot;properties&quot;: {
+        &quot;edits&quot;: {
+          &quot;items&quot;: {
+            &quot;$ref&quot;: &quot;#/$defs/EditAction&quot;
+          },
+          &quot;description&quot;: &quot;The line edits.&quot;,
+          &quot;type&quot;: &quot;array&quot;
+        },
+        &quot;steps&quot;: {
+          &quot;items&quot;: {
+            &quot;$ref&quot;: &quot;#/$defs/Step&quot;
+          },
+          &quot;type&quot;: &quot;array&quot;,
+          &quot;description&quot;: &quot;The commands, in the order they run.&quot;
+        },
+        &quot;files&quot;: {
+          &quot;description&quot;: &quot;Every file the policy owns.&quot;,
+          &quot;items&quot;: {
+            &quot;$ref&quot;: &quot;#/$defs/FileAction&quot;
+          },
+          &quot;type&quot;: &quot;array&quot;
+        },
+        &quot;changes&quot;: {
+          &quot;type&quot;: &quot;integer&quot;,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;description&quot;: &quot;How many files are missing, different or of the wrong mode, plus edits owed.&quot;,
+          &quot;minimum&quot;: 0
+        },
+        &quot;runners&quot;: {
+          &quot;items&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          },
+          &quot;type&quot;: &quot;array&quot;,
+          &quot;description&quot;: &quot;The CI runner units observed on the host, each owed its drop-in and started.&quot;
+        },
+        &quot;unobservable&quot;: {
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;,
+          &quot;description&quot;: &quot;How many files this process could not observe.&quot;
+        }
+      },
+      &quot;description&quot;: &quot;The plan: every file, edit and command the host still owes.&quot;
     }
   },
   &quot;description&quot;: &quot;The answer: the plan against the host as observed, and the apply&#39;s report when asked.&quot;,
   &quot;properties&quot;: {
+    &quot;ok&quot;: {
+      &quot;description&quot;: &quot;A plan always holds; an apply holds when nothing failed and nothing is owed after it.&quot;,
+      &quot;type&quot;: &quot;boolean&quot;
+    },
+    &quot;root&quot;: {
+      &quot;description&quot;: &quot;The root read.&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;plan&quot;: {
+      &quot;$ref&quot;: &quot;#/$defs/Plan&quot;,
+      &quot;description&quot;: &quot;What the host owed when asked.&quot;
+    },
     &quot;apply&quot;: {
+      &quot;description&quot;: &quot;What the apply did; absent for a plan.&quot;,
       &quot;anyOf&quot;: [
         {
           &quot;$ref&quot;: &quot;#/$defs/ApplyReport&quot;
@@ -686,28 +699,15 @@ root is a staging directory: files only, no privilege, no command.</td>
         {
           &quot;type&quot;: &quot;null&quot;
         }
-      ],
-      &quot;description&quot;: &quot;What the apply did; absent for a plan.&quot;
-    },
-    &quot;mode&quot;: {
-      &quot;description&quot;: &quot;`plan` or `apply`.&quot;,
-      &quot;type&quot;: &quot;string&quot;
-    },
-    &quot;ok&quot;: {
-      &quot;description&quot;: &quot;A plan always holds; an apply holds when nothing failed and nothing is owed after it.&quot;,
-      &quot;type&quot;: &quot;boolean&quot;
-    },
-    &quot;plan&quot;: {
-      &quot;$ref&quot;: &quot;#/$defs/Plan&quot;,
-      &quot;description&quot;: &quot;What the host owed when asked.&quot;
+      ]
     },
     &quot;policy&quot;: {
-      &quot;$ref&quot;: &quot;#/$defs/Policy&quot;,
-      &quot;description&quot;: &quot;The policy in force: declared, not a secret.&quot;
+      &quot;description&quot;: &quot;The policy in force: declared, not a secret.&quot;,
+      &quot;$ref&quot;: &quot;#/$defs/Policy&quot;
     },
-    &quot;root&quot;: {
-      &quot;description&quot;: &quot;The root read.&quot;,
-      &quot;type&quot;: &quot;string&quot;
+    &quot;mode&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;description&quot;: &quot;`plan` or `apply`.&quot;
     }
   },
   &quot;required&quot;: [
@@ -749,7 +749,7 @@ root is a staging directory: files only, no privilege, no command.</td>
         <div><dt class="text-body-subtle">Rust module</dt><dd class="min-w-0 break-all font-mono text-heading">majordomus_cli::capability::builtin::mesh</dd></div>
         <div><dt class="text-body-subtle">input type</dt><dd class="font-mono text-heading">ProvisionInput</dd></div>
         <div><dt class="text-body-subtle">output type</dt><dd class="font-mono text-heading">ProvisionReport</dd></div>
-        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/1112bace3437ee0d82067b1e8f61813e70190078/docs/generated/modules/mesh.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/mesh.md</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">5cdbf22cd21589ddbe464d5f0987b6bcf4607d05479004d6f815c3b306fdb08a</dd></div>
+        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/docs/generated/modules/mesh.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/mesh.md</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">3f734f2faf797f0ca7c39b4cd837e68b6619c41c6f6711f3d3aeca8f341934eb</dd></div>
         <div><dt class="text-body-subtle">generated by</dt><dd class="font-mono text-heading">majordomus-cli 1.0.0-alpha.10</dd></div>
       </dl>
     </div>
@@ -805,9 +805,9 @@ root is a staging directory: files only, no privilege, no command.</td>
       <div class="min-w-0">
         <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">Project</h2><ul class="space-y-2 text-sm font-medium text-body">
           <li><a href="https://github.com/korczis/prismatic-majordomus" class="hover:text-heading hover:underline">GitHub</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/1112bace3437ee0d82067b1e8f61813e70190078/LICENSE" class="hover:text-heading hover:underline">MIT licence</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/1112bace3437ee0d82067b1e8f61813e70190078/SECURITY.md" class="hover:text-heading hover:underline">Security policy</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/1112bace3437ee0d82067b1e8f61813e70190078/CONTRIBUTING.md" class="hover:text-heading hover:underline">Contributing guide</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/LICENSE" class="hover:text-heading hover:underline">MIT licence</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/SECURITY.md" class="hover:text-heading hover:underline">Security policy</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/CONTRIBUTING.md" class="hover:text-heading hover:underline">Contributing guide</a></li>
         </ul>
       </div>
     </div>
@@ -815,7 +815,7 @@ root is a staging directory: files only, no privilege, no command.</td>
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.10</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/1112bace3437ee0d82067b1e8f61813e70190078" class="font-mono underline">1112bac</a> · inputs <span class="font-mono">830f884cc5aa</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/architecture/" class="underline">how this site is derived</a> names them.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.10</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/745db2ea21e02613943face75a2bf95542be1f2e" class="font-mono underline">745db2e</a> · inputs <span class="font-mono">0a58c217d1b7</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/architecture/" class="underline">how this site is derived</a> names them.</p>
     </div>
   </div>
 </footer>

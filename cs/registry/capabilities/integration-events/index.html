@@ -210,9 +210,9 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
   <h3 class="font-mono text-sm font-semibold text-heading">vstup · Prázdné</h3><div class="mt-1 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">Žádný vstup.</div><p class="mt-2 text-sm text-body-subtle">Žádné vlastnosti: schopnost nebere žádný vstup.</p><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
+  &quot;title&quot;: &quot;Empty&quot;,
   &quot;additionalProperties&quot;: false,
   &quot;description&quot;: &quot;No input.&quot;,
-  &quot;title&quot;: &quot;Empty&quot;,
   &quot;type&quot;: &quot;object&quot;
 }</pre></div>
   </details>
@@ -231,92 +231,42 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
+  &quot;description&quot;: &quot;The audit trail.&quot;,
+  &quot;properties&quot;: {
+    &quot;events&quot;: {
+      &quot;description&quot;: &quot;Every recorded integration action, oldest first.&quot;,
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;items&quot;: {
+        &quot;$ref&quot;: &quot;#/$defs/IntegrationEvent&quot;
+      }
+    }
+  },
+  &quot;required&quot;: [
+    &quot;events&quot;
+  ],
+  &quot;type&quot;: &quot;object&quot;,
+  &quot;title&quot;: &quot;IntegrationEvents&quot;,
   &quot;$defs&quot;: {
-    &quot;EvidenceKind&quot;: {
-      &quot;description&quot;: &quot;What kind of fact a piece of evidence is. The wire words are the ones the evidence carried\nwhile its kind was a string, so a trail written then still reads.&quot;,
-      &quot;oneOf&quot;: [
-        {
-          &quot;const&quot;: &quot;required_check&quot;,
-          &quot;description&quot;: &quot;One required check&#39;s state on the head: one entry per context the base requires.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;required_checks&quot;,
-          &quot;description&quot;: &quot;The required checks together: their verdict, and each context&#39;s state.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;review&quot;,
-          &quot;description&quot;: &quot;The review policy and the forge&#39;s decision, or one reviewer&#39;s latest review.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;relation_to_master&quot;,
-          &quot;description&quot;: &quot;What the head is to master, as git decided it.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;dependency&quot;,
-          &quot;description&quot;: &quot;One declared dependency.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;label&quot;,
-          &quot;description&quot;: &quot;One label whose policy is to hold.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;draft&quot;,
-          &quot;description&quot;: &quot;Whether it is a draft; always emitted.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;base&quot;,
-          &quot;description&quot;: &quot;The branch it targets; always emitted.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;freshness&quot;,
-          &quot;description&quot;: &quot;How old the observation is. Declared so the vocabulary is settled; nothing emits it yet.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;auto_merge&quot;,
-          &quot;description&quot;: &quot;The forge has auto-merge armed; emitted whenever it is.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;supersession&quot;,
-          &quot;description&quot;: &quot;One declared successor: which pull request replaces this one, whose body said so, and\nwhether it landed. One entry per authorised successor (status `open`, `landed`,\n`not_landed` or `unread`), one per declaration nobody entitled made\n(`possible_supersession`), and one when the pull requests that mention it were not all\nread (`references_truncated`, `references_unread`).&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;repository_settings&quot;,
-          &quot;description&quot;: &quot;What the repository&#39;s settings allow the executor; emitted when they allow no merge\ncommit.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      ]
-    },
     &quot;EvidenceSource&quot;: {
       &quot;description&quot;: &quot;Where a piece of evidence was read.&quot;,
       &quot;oneOf&quot;: [
         {
-          &quot;description&quot;: &quot;The forge observation, at its moment.&quot;,
+          &quot;type&quot;: &quot;object&quot;,
           &quot;properties&quot;: {
             &quot;kind&quot;: {
-              &quot;const&quot;: &quot;forge&quot;,
-              &quot;type&quot;: &quot;string&quot;
+              &quot;type&quot;: &quot;string&quot;,
+              &quot;const&quot;: &quot;forge&quot;
             },
             &quot;observed_at&quot;: {
-              &quot;description&quot;: &quot;When the forge was observed, RFC 3339.&quot;,
-              &quot;type&quot;: &quot;string&quot;
+              &quot;type&quot;: &quot;string&quot;,
+              &quot;description&quot;: &quot;When the forge was observed, RFC 3339.&quot;
             }
           },
+          &quot;description&quot;: &quot;The forge observation, at its moment.&quot;,
           &quot;required&quot;: [
             &quot;kind&quot;,
             &quot;observed_at&quot;
-          ],
-          &quot;type&quot;: &quot;object&quot;
+          ]
         },
         {
           &quot;description&quot;: &quot;Git, on this pair of commits.&quot;,
@@ -325,13 +275,13 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
               &quot;description&quot;: &quot;The head commit.&quot;,
               &quot;type&quot;: &quot;string&quot;
             },
-            &quot;kind&quot;: {
-              &quot;const&quot;: &quot;git&quot;,
-              &quot;type&quot;: &quot;string&quot;
-            },
             &quot;master_sha&quot;: {
               &quot;description&quot;: &quot;The master commit.&quot;,
               &quot;type&quot;: &quot;string&quot;
+            },
+            &quot;kind&quot;: {
+              &quot;type&quot;: &quot;string&quot;,
+              &quot;const&quot;: &quot;git&quot;
             }
           },
           &quot;required&quot;: [
@@ -344,12 +294,11 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
       ]
     },
     &quot;FailureClass&quot;: {
-      &quot;description&quot;: &quot;Why an act failed, as one class a person and a retry policy can act on. Every failed act\non the trail carries one (`class`), and the drain decides from it whether the next\ncandidate may be tried (`FailureClass::recoverable`) or the drain must stop.&quot;,
       &quot;oneOf&quot;: [
         {
-          &quot;const&quot;: &quot;stale&quot;,
           &quot;description&quot;: &quot;Master or the head moved since the decision.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;stale&quot;
         },
         {
           &quot;const&quot;: &quot;conflict&quot;,
@@ -357,9 +306,9 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
           &quot;type&quot;: &quot;string&quot;
         },
         {
-          &quot;const&quot;: &quot;new_failing_check&quot;,
           &quot;description&quot;: &quot;A required check failed that had passed.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;new_failing_check&quot;
         },
         {
           &quot;const&quot;: &quot;review_revoked&quot;,
@@ -367,44 +316,45 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
           &quot;type&quot;: &quot;string&quot;
         },
         {
-          &quot;const&quot;: &quot;transient&quot;,
           &quot;description&quot;: &quot;The forge or the network failed in a way that passes.&quot;,
+          &quot;const&quot;: &quot;transient&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
         {
-          &quot;const&quot;: &quot;policy_violation&quot;,
+          &quot;type&quot;: &quot;string&quot;,
           &quot;description&quot;: &quot;The branch protection refused it.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;const&quot;: &quot;policy_violation&quot;
         },
         {
-          &quot;const&quot;: &quot;verification_failed&quot;,
           &quot;description&quot;: &quot;What landed could not be verified.&quot;,
+          &quot;const&quot;: &quot;verification_failed&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
         {
+          &quot;type&quot;: &quot;string&quot;,
           &quot;const&quot;: &quot;unreadable&quot;,
-          &quot;description&quot;: &quot;The forge or git could not be read.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;description&quot;: &quot;The forge or git could not be read.&quot;
         }
-      ]
+      ],
+      &quot;description&quot;: &quot;Why an act failed, as one class a person and a retry policy can act on. Every failed act\non the trail carries one (`class`), and the drain decides from it whether the next\ncandidate may be tried (`FailureClass::recoverable`) or the drain must stop.&quot;
     },
     &quot;IntegrationAction&quot;: {
       &quot;description&quot;: &quot;What one line of the audit trail records. The wire word is the variant&#39;s `snake_case`\nname — the same word each was written as while the action was a string — so every line\nwritten before still parses, and a word nobody writes is not an action.&quot;,
       &quot;oneOf&quot;: [
         {
-          &quot;const&quot;: &quot;lease_acquired&quot;,
+          &quot;type&quot;: &quot;string&quot;,
           &quot;description&quot;: &quot;The executor took the base branch&#39;s lease.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;const&quot;: &quot;lease_acquired&quot;
         },
         {
-          &quot;const&quot;: &quot;lease_released&quot;,
           &quot;description&quot;: &quot;It gave the lease back.&quot;,
+          &quot;const&quot;: &quot;lease_released&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
         {
           &quot;const&quot;: &quot;continuous_started&quot;,
-          &quot;description&quot;: &quot;A continuous drain started.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;A continuous drain started.&quot;
         },
         {
           &quot;const&quot;: &quot;continuous_stopped&quot;,
@@ -417,34 +367,34 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
           &quot;type&quot;: &quot;string&quot;
         },
         {
+          &quot;type&quot;: &quot;string&quot;,
           &quot;const&quot;: &quot;became_actionable&quot;,
-          &quot;description&quot;: &quot;A pull request became actionable (ready or refreshable).&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;description&quot;: &quot;A pull request became actionable (ready or refreshable).&quot;
         },
         {
-          &quot;const&quot;: &quot;left_actionable&quot;,
           &quot;description&quot;: &quot;A pull request stopped being actionable.&quot;,
+          &quot;const&quot;: &quot;left_actionable&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
         {
-          &quot;const&quot;: &quot;selected&quot;,
+          &quot;type&quot;: &quot;string&quot;,
           &quot;description&quot;: &quot;The first ready pull request was chosen to merge.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;const&quot;: &quot;selected&quot;
         },
         {
-          &quot;const&quot;: &quot;refresh_selected&quot;,
           &quot;description&quot;: &quot;The first refreshable pull request was chosen to bring master into.&quot;,
+          &quot;const&quot;: &quot;refresh_selected&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
         {
           &quot;const&quot;: &quot;stale_decision&quot;,
-          &quot;description&quot;: &quot;The decision went stale between planning and acting; nothing was done.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The decision went stale between planning and acting; nothing was done.&quot;
         },
         {
-          &quot;const&quot;: &quot;merge_attempted&quot;,
+          &quot;type&quot;: &quot;string&quot;,
           &quot;description&quot;: &quot;A merge is about to be asked of the forge.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;const&quot;: &quot;merge_attempted&quot;
         },
         {
           &quot;const&quot;: &quot;merge_succeeded&quot;,
@@ -452,8 +402,8 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
           &quot;type&quot;: &quot;string&quot;
         },
         {
-          &quot;const&quot;: &quot;merge_failed&quot;,
           &quot;description&quot;: &quot;The forge refused the merge.&quot;,
+          &quot;const&quot;: &quot;merge_failed&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
         {
@@ -462,29 +412,29 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
           &quot;type&quot;: &quot;string&quot;
         },
         {
-          &quot;const&quot;: &quot;failure_acknowledged&quot;,
           &quot;description&quot;: &quot;A person looked at a merge that could not be verified and lets drains merge again\n(`prs drain --resume-after-failure`).&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;failure_acknowledged&quot;
         },
         {
-          &quot;const&quot;: &quot;refresh_attempted&quot;,
           &quot;description&quot;: &quot;Master is about to be merged into a branch and pushed.&quot;,
+          &quot;const&quot;: &quot;refresh_attempted&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
         {
-          &quot;const&quot;: &quot;refreshed&quot;,
+          &quot;type&quot;: &quot;string&quot;,
           &quot;description&quot;: &quot;Master was brought into the branch and pushed.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;const&quot;: &quot;refreshed&quot;
         },
         {
-          &quot;const&quot;: &quot;refresh_failed&quot;,
           &quot;description&quot;: &quot;Bringing master in failed.&quot;,
+          &quot;const&quot;: &quot;refresh_failed&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
         {
-          &quot;const&quot;: &quot;close_attempted&quot;,
           &quot;description&quot;: &quot;A redundant or superseded pull request is about to be closed.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;close_attempted&quot;
         },
         {
           &quot;const&quot;: &quot;closed_redundant&quot;,
@@ -497,13 +447,13 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
           &quot;type&quot;: &quot;string&quot;
         },
         {
+          &quot;type&quot;: &quot;string&quot;,
           &quot;const&quot;: &quot;close_failed&quot;,
-          &quot;description&quot;: &quot;Closing it failed.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;description&quot;: &quot;Closing it failed.&quot;
         },
         {
-          &quot;const&quot;: &quot;reopen_attempted&quot;,
           &quot;description&quot;: &quot;A record pull request the workflow&#39;s token opened is about to be closed and reopened,\nso that a run of its own starts (`RecordStanding::Reopenable`).&quot;,
+          &quot;const&quot;: &quot;reopen_attempted&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
         {
@@ -512,9 +462,9 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
           &quot;type&quot;: &quot;string&quot;
         },
         {
-          &quot;const&quot;: &quot;reopen_failed&quot;,
           &quot;description&quot;: &quot;Reopening it failed; the detail says whether the pull request was left closed.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;reopen_failed&quot;
         },
         {
           &quot;const&quot;: &quot;repair_selected&quot;,
@@ -527,14 +477,14 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
           &quot;type&quot;: &quot;string&quot;
         },
         {
-          &quot;const&quot;: &quot;repaired&quot;,
           &quot;description&quot;: &quot;Master was brought into the named branch and pushed.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;repaired&quot;
         },
         {
           &quot;const&quot;: &quot;repair_refused&quot;,
-          &quot;description&quot;: &quot;The repair was refused — by the classification (an authored conflict, a fork, armed\nauto-merge, another base, an undecidable relation) or by the act (a merge, derive,\ncommit or push that failed) — and nothing reached the branch; `class` says why.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The repair was refused — by the classification (an authored conflict, a fork, armed\nauto-merge, another base, an undecidable relation) or by the act (a merge, derive,\ncommit or push that failed) — and nothing reached the branch; `class` says why.&quot;
         },
         {
           &quot;const&quot;: &quot;idle&quot;,
@@ -542,67 +492,26 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
           &quot;type&quot;: &quot;string&quot;
         },
         {
-          &quot;const&quot;: &quot;observe_failed&quot;,
           &quot;description&quot;: &quot;A continuous drain&#39;s cycle could not observe the forge, and the outage was short\nenough to wait out (`CONTINUOUS_TRANSIENT_LIMIT`).&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;observe_failed&quot;
         },
         {
-          &quot;const&quot;: &quot;lease_lost&quot;,
           &quot;description&quot;: &quot;The executor no longer holds the lease where it reaches — its mesh claim was suspended,\nreleased or overtaken while it advanced nothing (I3991) — so the act it was about to\ntake was not taken.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;lease_lost&quot;
         }
       ]
     },
     &quot;IntegrationEvent&quot;: {
-      &quot;description&quot;: &quot;One entry of the audit trail.&quot;,
+      &quot;type&quot;: &quot;object&quot;,
       &quot;properties&quot;: {
-        &quot;action&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/IntegrationAction&quot;,
-          &quot;description&quot;: &quot;What (`IntegrationAction`).&quot;
-        },
-        &quot;actor&quot;: {
-          &quot;description&quot;: &quot;Who: the git identity, the process and the machine.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;at&quot;: {
-          &quot;description&quot;: &quot;When, RFC 3339.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;class&quot;: {
-          &quot;anyOf&quot;: [
-            {
-              &quot;$ref&quot;: &quot;#/$defs/FailureClass&quot;
-            },
-            {
-              &quot;type&quot;: &quot;null&quot;
-            }
-          ],
-          &quot;description&quot;: &quot;On a failure: its class, once one is decided.&quot;
-        },
-        &quot;detail&quot;: {
-          &quot;description&quot;: &quot;What happened, for a person.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
         &quot;evidence&quot;: {
-          &quot;description&quot;: &quot;On `merge_attempted`, `merge_succeeded`, `refresh_selected` and the closures:\nthe assessment&#39;s evidence the act was decided on.&quot;,
           &quot;items&quot;: {
             &quot;$ref&quot;: &quot;#/$defs/IntegrationEvidence&quot;
           },
+          &quot;description&quot;: &quot;On `merge_attempted`, `merge_succeeded`, `refresh_selected` and the closures:\nthe assessment&#39;s evidence the act was decided on.&quot;,
           &quot;type&quot;: &quot;array&quot;
-        },
-        &quot;head_after&quot;: {
-          &quot;description&quot;: &quot;On `refreshed`: the head the executor pushed. The refresh pipeline waits only for\nthe checks of a head named here.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;head_sha&quot;: {
-          &quot;description&quot;: &quot;The head acted on.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
         },
         &quot;master_after&quot;: {
           &quot;description&quot;: &quot;Master after.&quot;,
@@ -611,12 +520,12 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
             &quot;null&quot;
           ]
         },
-        &quot;master_before&quot;: {
-          &quot;description&quot;: &quot;Master before.&quot;,
+        &quot;head_sha&quot;: {
           &quot;type&quot;: [
             &quot;string&quot;,
             &quot;null&quot;
-          ]
+          ],
+          &quot;description&quot;: &quot;The head acted on.&quot;
         },
         &quot;merge_commit&quot;: {
           &quot;description&quot;: &quot;On `merge_succeeded`: the merge commit, once it is read; the head itself after a\nfast-forward.&quot;,
@@ -625,31 +534,72 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
             &quot;null&quot;
           ]
         },
+        &quot;actor&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;Who: the git identity, the process and the machine.&quot;
+        },
         &quot;passed_over&quot;: {
-          &quot;description&quot;: &quot;On a selection: the other actionable pull requests the executor chose this one over,\nin rank order. The wait of each is folded from it (`super::wait`).&quot;,
+          &quot;type&quot;: &quot;array&quot;,
           &quot;items&quot;: {
-            &quot;format&quot;: &quot;uint64&quot;,
             &quot;minimum&quot;: 0,
-            &quot;type&quot;: &quot;integer&quot;
+            &quot;type&quot;: &quot;integer&quot;,
+            &quot;format&quot;: &quot;uint64&quot;
           },
+          &quot;description&quot;: &quot;On a selection: the other actionable pull requests the executor chose this one over,\nin rank order. The wait of each is folded from it (`super::wait`).&quot;
+        },
+        &quot;at&quot;: {
+          &quot;description&quot;: &quot;When, RFC 3339.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;detail&quot;: {
+          &quot;description&quot;: &quot;What happened, for a person.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;reasons&quot;: {
+          &quot;items&quot;: {
+            &quot;type&quot;: &quot;string&quot;,
+            &quot;description&quot;: &quot;A reason code, `code` or `code:payload`, one of: `stacked_on:#N`, `base_is:BRANCH`, `draft`, `label:NAME`, `auto_merge_armed`, `merge_commit_not_allowed`, `merge_settings_unread`, `superseded_by:#N`, `successor_open:#N`, `successor_not_landed:#N`, `successor_unread:#N`, `head_reachable_from_master`, `merge_changes_nothing`, `patch_ids_upstream`, `only_derived_artifacts_differ`, `relation_unknown:WHY`, `conflicts_on:COUNT`, `depends_on:#N`, `review:STATE`, `review_policy_unread`, `required_check_failed`, `behind_master:COMMITS`, `fork_head`, `version_unallocated:VERSION`, `required_checks:STATE`, `no_required_checks`, `required_checks_unread`, `contains_master`, `carries_master`, `required_checks_passed`, `required_checks_skipped`, `executor_merge_refused:HEAD`, `executor_refresh_failed:MASTER`, `label_obsolete:NAME`, `dependency_cycle:#N`, `dependency_closed_unmerged:#N`, `dependency_unread:#N`, `declarations_unread`. A code outside this list (an older trail&#39;s) is carried verbatim.&quot;
+          },
+          &quot;description&quot;: &quot;The decision&#39;s reasons; a code an older executor wrote reads back verbatim.&quot;,
           &quot;type&quot;: &quot;array&quot;
+        },
+        &quot;master_before&quot;: {
+          &quot;description&quot;: &quot;Master before.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
         },
         &quot;pr&quot;: {
           &quot;description&quot;: &quot;The pull request, when one.&quot;,
           &quot;format&quot;: &quot;uint64&quot;,
-          &quot;minimum&quot;: 0,
           &quot;type&quot;: [
             &quot;integer&quot;,
             &quot;null&quot;
+          ],
+          &quot;minimum&quot;: 0
+        },
+        &quot;action&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/IntegrationAction&quot;,
+          &quot;description&quot;: &quot;What (`IntegrationAction`).&quot;
+        },
+        &quot;head_after&quot;: {
+          &quot;description&quot;: &quot;On `refreshed`: the head the executor pushed. The refresh pipeline waits only for\nthe checks of a head named here.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
           ]
         },
-        &quot;reasons&quot;: {
-          &quot;description&quot;: &quot;The decision&#39;s reasons; a code an older executor wrote reads back verbatim.&quot;,
-          &quot;items&quot;: {
-            &quot;description&quot;: &quot;A reason code, `code` or `code:payload`, one of: `stacked_on:#N`, `base_is:BRANCH`, `draft`, `label:NAME`, `auto_merge_armed`, `merge_commit_not_allowed`, `merge_settings_unread`, `superseded_by:#N`, `successor_open:#N`, `successor_not_landed:#N`, `successor_unread:#N`, `head_reachable_from_master`, `merge_changes_nothing`, `patch_ids_upstream`, `only_derived_artifacts_differ`, `relation_unknown:WHY`, `conflicts_on:COUNT`, `depends_on:#N`, `review:STATE`, `review_policy_unread`, `required_check_failed`, `behind_master:COMMITS`, `fork_head`, `version_unallocated:VERSION`, `required_checks:STATE`, `no_required_checks`, `required_checks_unread`, `contains_master`, `carries_master`, `required_checks_passed`, `required_checks_skipped`, `executor_merge_refused:HEAD`, `executor_refresh_failed:MASTER`, `label_obsolete:NAME`, `dependency_cycle:#N`, `dependency_closed_unmerged:#N`, `dependency_unread:#N`, `declarations_unread`. A code outside this list (an older trail&#39;s) is carried verbatim.&quot;,
-            &quot;type&quot;: &quot;string&quot;
-          },
-          &quot;type&quot;: &quot;array&quot;
+        &quot;class&quot;: {
+          &quot;description&quot;: &quot;On a failure: its class, once one is decided.&quot;,
+          &quot;anyOf&quot;: [
+            {
+              &quot;$ref&quot;: &quot;#/$defs/FailureClass&quot;
+            },
+            {
+              &quot;type&quot;: &quot;null&quot;
+            }
+          ]
         }
       },
       &quot;required&quot;: [
@@ -659,19 +609,17 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
         &quot;reasons&quot;,
         &quot;detail&quot;
       ],
-      &quot;type&quot;: &quot;object&quot;
+      &quot;description&quot;: &quot;One entry of the audit trail.&quot;
     },
     &quot;IntegrationEvidence&quot;: {
       &quot;description&quot;: &quot;One piece of evidence behind a disposition: what was read, where, and what it said.&quot;,
+      &quot;required&quot;: [
+        &quot;kind&quot;,
+        &quot;status&quot;,
+        &quot;detail&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;,
       &quot;properties&quot;: {
-        &quot;detail&quot;: {
-          &quot;description&quot;: &quot;The detail a person reads.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;kind&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/EvidenceKind&quot;,
-          &quot;description&quot;: &quot;What kind of fact.&quot;
-        },
         &quot;source&quot;: {
           &quot;anyOf&quot;: [
             {
@@ -686,31 +634,83 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
         &quot;status&quot;: {
           &quot;description&quot;: &quot;What it said, as a word.&quot;,
           &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;kind&quot;: {
+          &quot;description&quot;: &quot;What kind of fact.&quot;,
+          &quot;$ref&quot;: &quot;#/$defs/EvidenceKind&quot;
+        },
+        &quot;detail&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The detail a person reads.&quot;
         }
-      },
-      &quot;required&quot;: [
-        &quot;kind&quot;,
-        &quot;status&quot;,
-        &quot;detail&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
+      }
+    },
+    &quot;EvidenceKind&quot;: {
+      &quot;description&quot;: &quot;What kind of fact a piece of evidence is. The wire words are the ones the evidence carried\nwhile its kind was a string, so a trail written then still reads.&quot;,
+      &quot;oneOf&quot;: [
+        {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;required_check&quot;,
+          &quot;description&quot;: &quot;One required check&#39;s state on the head: one entry per context the base requires.&quot;
+        },
+        {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;required_checks&quot;,
+          &quot;description&quot;: &quot;The required checks together: their verdict, and each context&#39;s state.&quot;
+        },
+        {
+          &quot;const&quot;: &quot;review&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The review policy and the forge&#39;s decision, or one reviewer&#39;s latest review.&quot;
+        },
+        {
+          &quot;const&quot;: &quot;relation_to_master&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;What the head is to master, as git decided it.&quot;
+        },
+        {
+          &quot;description&quot;: &quot;One declared dependency.&quot;,
+          &quot;const&quot;: &quot;dependency&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;label&quot;,
+          &quot;description&quot;: &quot;One label whose policy is to hold.&quot;
+        },
+        {
+          &quot;const&quot;: &quot;draft&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;Whether it is a draft; always emitted.&quot;
+        },
+        {
+          &quot;const&quot;: &quot;base&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The branch it targets; always emitted.&quot;
+        },
+        {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;freshness&quot;,
+          &quot;description&quot;: &quot;How old the observation is. Declared so the vocabulary is settled; nothing emits it yet.&quot;
+        },
+        {
+          &quot;const&quot;: &quot;auto_merge&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The forge has auto-merge armed; emitted whenever it is.&quot;
+        },
+        {
+          &quot;description&quot;: &quot;One declared successor: which pull request replaces this one, whose body said so, and\nwhether it landed. One entry per authorised successor (status `open`, `landed`,\n`not_landed` or `unread`), one per declaration nobody entitled made\n(`possible_supersession`), and one when the pull requests that mention it were not all\nread (`references_truncated`, `references_unread`).&quot;,
+          &quot;const&quot;: &quot;supersession&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;repository_settings&quot;,
+          &quot;description&quot;: &quot;What the repository&#39;s settings allow the executor; emitted when they allow no merge\ncommit.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      ]
     }
-  },
-  &quot;description&quot;: &quot;The audit trail.&quot;,
-  &quot;properties&quot;: {
-    &quot;events&quot;: {
-      &quot;description&quot;: &quot;Every recorded integration action, oldest first.&quot;,
-      &quot;items&quot;: {
-        &quot;$ref&quot;: &quot;#/$defs/IntegrationEvent&quot;
-      },
-      &quot;type&quot;: &quot;array&quot;
-    }
-  },
-  &quot;required&quot;: [
-    &quot;events&quot;
-  ],
-  &quot;title&quot;: &quot;IntegrationEvents&quot;,
-  &quot;type&quot;: &quot;object&quot;
+  }
 }</pre></div>
   </details>
 </div>
@@ -741,7 +741,7 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
         <div><dt class="text-body-subtle">modul Rust</dt><dd class="min-w-0 break-all font-mono text-heading">majordomus_cli::capability::builtin::integration</dd></div>
         <div><dt class="text-body-subtle">typ vstupu</dt><dd class="font-mono text-heading">Prázdné</dd></div>
         <div><dt class="text-body-subtle">typ výstupu</dt><dd class="font-mono text-heading">IntegrationEvents</dd></div>
-        <div><dt class="text-body-subtle">reference na GitHubu</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/1112bace3437ee0d82067b1e8f61813e70190078/docs/generated/modules/integration.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/integration.md</a></dd></div><div><dt class="text-body-subtle">otisk registru</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">5cdbf22cd21589ddbe464d5f0987b6bcf4607d05479004d6f815c3b306fdb08a</dd></div>
+        <div><dt class="text-body-subtle">reference na GitHubu</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/docs/generated/modules/integration.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/integration.md</a></dd></div><div><dt class="text-body-subtle">otisk registru</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">3f734f2faf797f0ca7c39b4cd837e68b6619c41c6f6711f3d3aeca8f341934eb</dd></div>
         <div><dt class="text-body-subtle">vygenerováno nástrojem</dt><dd class="font-mono text-heading">majordomus-cli 1.0.0-alpha.10</dd></div>
       </dl>
     </div>
@@ -797,9 +797,9 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
       <div class="min-w-0">
         <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">Projekt</h2><ul class="space-y-2 text-sm font-medium text-body">
           <li><a href="https://github.com/korczis/prismatic-majordomus" class="hover:text-heading hover:underline">GitHub</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/1112bace3437ee0d82067b1e8f61813e70190078/LICENSE" class="hover:text-heading hover:underline">Licence MIT</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/1112bace3437ee0d82067b1e8f61813e70190078/SECURITY.md" class="hover:text-heading hover:underline">Bezpečnostní politika</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/1112bace3437ee0d82067b1e8f61813e70190078/CONTRIBUTING.md" class="hover:text-heading hover:underline">Průvodce pro přispěvatele</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/LICENSE" class="hover:text-heading hover:underline">Licence MIT</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/SECURITY.md" class="hover:text-heading hover:underline">Bezpečnostní politika</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/CONTRIBUTING.md" class="hover:text-heading hover:underline">Průvodce pro přispěvatele</a></li>
         </ul>
       </div>
     </div>
@@ -807,7 +807,7 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/cs/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.10</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/1112bace3437ee0d82067b1e8f61813e70190078" class="font-mono underline">1112bac</a> · inputs <span class="font-mono">830f884cc5aa</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/cs/architecture/" class="underline">how this site is derived</a> names them.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.10</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/745db2ea21e02613943face75a2bf95542be1f2e" class="font-mono underline">745db2e</a> · inputs <span class="font-mono">0a58c217d1b7</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/cs/architecture/" class="underline">how this site is derived</a> names them.</p>
     </div>
   </div>
 </footer>

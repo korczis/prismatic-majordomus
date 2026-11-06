@@ -211,8 +211,8 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
   &quot;additionalProperties&quot;: false,
-  &quot;description&quot;: &quot;No input.&quot;,
   &quot;title&quot;: &quot;Empty&quot;,
+  &quot;description&quot;: &quot;No input.&quot;,
   &quot;type&quot;: &quot;object&quot;
 }</pre></div>
   </details>
@@ -222,6 +222,21 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
     <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
       <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">vlastnost</th><th class="px-3 py-2">typ</th><th class="px-3 py-2">povinné</th><th class="px-3 py-2">popis</th></tr></thead>
       <tbody><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">schema</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words"><code>SCHEMA</code>.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">moduly</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Každý vestavěný modul spustitelného souboru se stabilními funkcemi, které jej jmenují.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">povrchy</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Slovník povrchů.</td>
+      </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">commands</td>
         <td class="px-3 py-2 font-mono text-xs text-body">array</td>
         <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
@@ -232,72 +247,146 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
         <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
         <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Každý druh vrstvy, který může funkce představovat, se stabilními funkcemi, které jej jmenují.</td>
       </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">moduly</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Každý vestavěný modul spustitelného souboru se stabilními funkcemi, které jej jmenují.</td>
-      </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">řádky</td>
         <td class="px-3 py-2 font-mono text-xs text-body">array</td>
         <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
         <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Jeden řádek na funkci s libovolným stavem kromě deprecated, v pořadí prezentace.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">schema</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words"><code>SCHEMA</code>.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">povrchy</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Slovník povrchů.</td>
       </tr></tbody>
     </table>
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
+  &quot;type&quot;: &quot;object&quot;,
   &quot;$defs&quot;: {
-    &quot;MatrixRow&quot;: {
-      &quot;description&quot;: &quot;One row of the matrix: a feature and the surfaces it is exposed through.&quot;,
+    &quot;ProductCoverage&quot;: {
       &quot;properties&quot;: {
-        &quot;claims&quot;: {
-          &quot;description&quot;: &quot;How many claims it names at all, so `proven` has its denominator beside it rather than\nin another table.&quot;,
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
+        &quot;title&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The title.&quot;
         },
-        &quot;exposed&quot;: {
-          &quot;description&quot;: &quot;The surface ids that are true.&quot;,
+        &quot;id&quot;: {
+          &quot;description&quot;: &quot;The id.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;features&quot;: {
           &quot;items&quot;: {
             &quot;type&quot;: &quot;string&quot;
           },
-          &quot;type&quot;: &quot;array&quot;
+          &quot;type&quot;: &quot;array&quot;,
+          &quot;description&quot;: &quot;The stable features that name it.&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;id&quot;,
+        &quot;title&quot;,
+        &quot;features&quot;
+      ],
+      &quot;description&quot;: &quot;One thing of the product — a module, a public command, a kind — and the features that\nname it. Empty means the product page says nothing about it, which is a gap the\nvalidation reports and the matrix shows rather than hides.&quot;,
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;SurfaceInfo&quot;: {
+      &quot;required&quot;: [
+        &quot;id&quot;,
+        &quot;title&quot;,
+        &quot;route&quot;,
+        &quot;features&quot;
+      ],
+      &quot;properties&quot;: {
+        &quot;route&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The route on the website where the surface is documented.&quot;
+        },
+        &quot;features&quot;: {
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;description&quot;: &quot;How many stable features it exposes.&quot;,
+          &quot;type&quot;: &quot;integer&quot;,
+          &quot;minimum&quot;: 0
         },
         &quot;id&quot;: {
-          &quot;description&quot;: &quot;The feature id.&quot;,
+          &quot;description&quot;: &quot;`cli`, `api`, `mcp`, `cockpit` or `docs`.&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
-        &quot;label&quot;: {
-          &quot;description&quot;: &quot;The name a narrow column shows.&quot;,
+        &quot;title&quot;: {
+          &quot;description&quot;: &quot;The name a person reads.&quot;,
           &quot;type&quot;: &quot;string&quot;
+        }
+      },
+      &quot;description&quot;: &quot;One surface of the vocabulary, as a client reads it.&quot;,
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;Surfaces&quot;: {
+      &quot;required&quot;: [
+        &quot;cli&quot;,
+        &quot;api&quot;,
+        &quot;mcp&quot;,
+        &quot;cockpit&quot;,
+        &quot;docs&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;,
+      &quot;properties&quot;: {
+        &quot;api&quot;: {
+          &quot;description&quot;: &quot;The HTTP routes under `/api/v1/`, and the OpenAPI document over them.&quot;,
+          &quot;type&quot;: &quot;boolean&quot;
         },
-        &quot;proven&quot;: {
-          &quot;description&quot;: &quot;How many of the claims this feature names are guaranteed *and* name the test that\nsettles them. A surface column says where a feature is reachable; this says what of it\nis proven, which is the question a reader of a compliance table is actually asking.&quot;,
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
+        &quot;cockpit&quot;: {
+          &quot;type&quot;: &quot;boolean&quot;,
+          &quot;description&quot;: &quot;The Cockpit.&quot;
         },
-        &quot;route&quot;: {
-          &quot;description&quot;: &quot;`/features/&lt;id&gt;/`.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+        &quot;docs&quot;: {
+          &quot;type&quot;: &quot;boolean&quot;,
+          &quot;description&quot;: &quot;The documentation.&quot;
         },
-        &quot;status&quot;: {
-          &quot;description&quot;: &quot;`stable` or `draft`.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+        &quot;mcp&quot;: {
+          &quot;type&quot;: &quot;boolean&quot;,
+          &quot;description&quot;: &quot;MCP: a tool, or a resource.&quot;
+        },
+        &quot;cli&quot;: {
+          &quot;type&quot;: &quot;boolean&quot;,
+          &quot;description&quot;: &quot;The command line: the executable&#39;s own, or the shell tool&#39;s.&quot;
+        }
+      },
+      &quot;description&quot;: &quot;The interfaces a feature is exposed through, decided from what its references project\nand from nothing a file says. Each is a fact with a reason a reader can check: `cli` is\ntrue when a module of the feature has a capability with a command-line path or the\nfeature names a shell command; `api` when a module has an HTTP route; `mcp` when a module\nhas an MCP tool or resource, or the feature names a kind, since every object of the layer\nis an MCP resource; `cockpit` when the feature names a Cockpit area or a module, since\nevery capability has a Cockpit page; `docs` when it names a document.&quot;
+    },
+    &quot;MatrixRow&quot;: {
+      &quot;properties&quot;: {
+        &quot;exposed&quot;: {
+          &quot;items&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          },
+          &quot;type&quot;: &quot;array&quot;,
+          &quot;description&quot;: &quot;The surface ids that are true.&quot;
         },
         &quot;surfaces&quot;: {
           &quot;$ref&quot;: &quot;#/$defs/Surfaces&quot;,
           &quot;description&quot;: &quot;The surfaces, by id, in the vocabulary&#39;s order.&quot;
+        },
+        &quot;proven&quot;: {
+          &quot;description&quot;: &quot;How many of the claims this feature names are guaranteed *and* name the test that\nsettles them. A surface column says where a feature is reachable; this says what of it\nis proven, which is the question a reader of a compliance table is actually asking.&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;,
+          &quot;format&quot;: &quot;uint&quot;
+        },
+        &quot;label&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The name a narrow column shows.&quot;
+        },
+        &quot;route&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;`/features/&lt;id&gt;/`.&quot;
+        },
+        &quot;claims&quot;: {
+          &quot;minimum&quot;: 0,
+          &quot;description&quot;: &quot;How many claims it names at all, so `proven` has its denominator beside it rather than\nin another table.&quot;,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;status&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;`stable` or `draft`.&quot;
+        },
+        &quot;id&quot;: {
+          &quot;description&quot;: &quot;The feature id.&quot;,
+          &quot;type&quot;: &quot;string&quot;
         }
       },
       &quot;required&quot;: [
@@ -310,113 +399,15 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
         &quot;proven&quot;,
         &quot;claims&quot;
       ],
-      &quot;type&quot;: &quot;object&quot;
-    },
-    &quot;ProductCoverage&quot;: {
-      &quot;description&quot;: &quot;One thing of the product — a module, a public command, a kind — and the features that\nname it. Empty means the product page says nothing about it, which is a gap the\nvalidation reports and the matrix shows rather than hides.&quot;,
-      &quot;properties&quot;: {
-        &quot;features&quot;: {
-          &quot;description&quot;: &quot;The stable features that name it.&quot;,
-          &quot;items&quot;: {
-            &quot;type&quot;: &quot;string&quot;
-          },
-          &quot;type&quot;: &quot;array&quot;
-        },
-        &quot;id&quot;: {
-          &quot;description&quot;: &quot;The id.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;title&quot;: {
-          &quot;description&quot;: &quot;The title.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      },
-      &quot;required&quot;: [
-        &quot;id&quot;,
-        &quot;title&quot;,
-        &quot;features&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
-    },
-    &quot;SurfaceInfo&quot;: {
-      &quot;description&quot;: &quot;One surface of the vocabulary, as a client reads it.&quot;,
-      &quot;properties&quot;: {
-        &quot;features&quot;: {
-          &quot;description&quot;: &quot;How many stable features it exposes.&quot;,
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;id&quot;: {
-          &quot;description&quot;: &quot;`cli`, `api`, `mcp`, `cockpit` or `docs`.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;route&quot;: {
-          &quot;description&quot;: &quot;The route on the website where the surface is documented.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;title&quot;: {
-          &quot;description&quot;: &quot;The name a person reads.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      },
-      &quot;required&quot;: [
-        &quot;id&quot;,
-        &quot;title&quot;,
-        &quot;route&quot;,
-        &quot;features&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
-    },
-    &quot;Surfaces&quot;: {
-      &quot;description&quot;: &quot;The interfaces a feature is exposed through, decided from what its references project\nand from nothing a file says. Each is a fact with a reason a reader can check: `cli` is\ntrue when a module of the feature has a capability with a command-line path or the\nfeature names a shell command; `api` when a module has an HTTP route; `mcp` when a module\nhas an MCP tool or resource, or the feature names a kind, since every object of the layer\nis an MCP resource; `cockpit` when the feature names a Cockpit area or a module, since\nevery capability has a Cockpit page; `docs` when it names a document.&quot;,
-      &quot;properties&quot;: {
-        &quot;api&quot;: {
-          &quot;description&quot;: &quot;The HTTP routes under `/api/v1/`, and the OpenAPI document over them.&quot;,
-          &quot;type&quot;: &quot;boolean&quot;
-        },
-        &quot;cli&quot;: {
-          &quot;description&quot;: &quot;The command line: the executable&#39;s own, or the shell tool&#39;s.&quot;,
-          &quot;type&quot;: &quot;boolean&quot;
-        },
-        &quot;cockpit&quot;: {
-          &quot;description&quot;: &quot;The Cockpit.&quot;,
-          &quot;type&quot;: &quot;boolean&quot;
-        },
-        &quot;docs&quot;: {
-          &quot;description&quot;: &quot;The documentation.&quot;,
-          &quot;type&quot;: &quot;boolean&quot;
-        },
-        &quot;mcp&quot;: {
-          &quot;description&quot;: &quot;MCP: a tool, or a resource.&quot;,
-          &quot;type&quot;: &quot;boolean&quot;
-        }
-      },
-      &quot;required&quot;: [
-        &quot;cli&quot;,
-        &quot;api&quot;,
-        &quot;mcp&quot;,
-        &quot;cockpit&quot;,
-        &quot;docs&quot;
-      ],
+      &quot;description&quot;: &quot;One row of the matrix: a feature and the surfaces it is exposed through.&quot;,
       &quot;type&quot;: &quot;object&quot;
     }
   },
-  &quot;description&quot;: &quot;Every feature against every interface, and every module, command and kind against the\nfeatures that name it.&quot;,
+  &quot;title&quot;: &quot;Matrix&quot;,
   &quot;properties&quot;: {
-    &quot;commands&quot;: {
-      &quot;description&quot;: &quot;Every public command of the shell tool with the stable features that name it.&quot;,
-      &quot;items&quot;: {
-        &quot;$ref&quot;: &quot;#/$defs/ProductCoverage&quot;
-      },
-      &quot;type&quot;: &quot;array&quot;
-    },
-    &quot;kinds&quot;: {
-      &quot;description&quot;: &quot;Every kind of the layer a feature can present, with the stable features that name it.&quot;,
-      &quot;items&quot;: {
-        &quot;$ref&quot;: &quot;#/$defs/ProductCoverage&quot;
-      },
-      &quot;type&quot;: &quot;array&quot;
+    &quot;schema&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;description&quot;: &quot;`SCHEMA`.&quot;
     },
     &quot;modules&quot;: {
       &quot;description&quot;: &quot;Every builtin module of the executable with the stable features that name it.&quot;,
@@ -425,21 +416,31 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
       },
       &quot;type&quot;: &quot;array&quot;
     },
+    &quot;surfaces&quot;: {
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;items&quot;: {
+        &quot;$ref&quot;: &quot;#/$defs/SurfaceInfo&quot;
+      },
+      &quot;description&quot;: &quot;The surface vocabulary.&quot;
+    },
+    &quot;commands&quot;: {
+      &quot;items&quot;: {
+        &quot;$ref&quot;: &quot;#/$defs/ProductCoverage&quot;
+      },
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;description&quot;: &quot;Every public command of the shell tool with the stable features that name it.&quot;
+    },
+    &quot;kinds&quot;: {
+      &quot;items&quot;: {
+        &quot;$ref&quot;: &quot;#/$defs/ProductCoverage&quot;
+      },
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;description&quot;: &quot;Every kind of the layer a feature can present, with the stable features that name it.&quot;
+    },
     &quot;rows&quot;: {
       &quot;description&quot;: &quot;One row per feature of any status but deprecated, in presentation order.&quot;,
       &quot;items&quot;: {
         &quot;$ref&quot;: &quot;#/$defs/MatrixRow&quot;
-      },
-      &quot;type&quot;: &quot;array&quot;
-    },
-    &quot;schema&quot;: {
-      &quot;description&quot;: &quot;`SCHEMA`.&quot;,
-      &quot;type&quot;: &quot;string&quot;
-    },
-    &quot;surfaces&quot;: {
-      &quot;description&quot;: &quot;The surface vocabulary.&quot;,
-      &quot;items&quot;: {
-        &quot;$ref&quot;: &quot;#/$defs/SurfaceInfo&quot;
       },
       &quot;type&quot;: &quot;array&quot;
     }
@@ -452,8 +453,7 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
     &quot;commands&quot;,
     &quot;kinds&quot;
   ],
-  &quot;title&quot;: &quot;Matrix&quot;,
-  &quot;type&quot;: &quot;object&quot;
+  &quot;description&quot;: &quot;Every feature against every interface, and every module, command and kind against the\nfeatures that name it.&quot;
 }</pre></div>
   </details>
 </div>
@@ -484,7 +484,7 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
         <div><dt class="text-body-subtle">modul Rust</dt><dd class="min-w-0 break-all font-mono text-heading">majordomus_cli::capability::builtin::product</dd></div>
         <div><dt class="text-body-subtle">typ vstupu</dt><dd class="font-mono text-heading">Prázdné</dd></div>
         <div><dt class="text-body-subtle">typ výstupu</dt><dd class="font-mono text-heading">Matice</dd></div>
-        <div><dt class="text-body-subtle">reference na GitHubu</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/1112bace3437ee0d82067b1e8f61813e70190078/docs/generated/modules/product.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/product.md</a></dd></div><div><dt class="text-body-subtle">otisk registru</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">5cdbf22cd21589ddbe464d5f0987b6bcf4607d05479004d6f815c3b306fdb08a</dd></div>
+        <div><dt class="text-body-subtle">reference na GitHubu</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/docs/generated/modules/product.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/product.md</a></dd></div><div><dt class="text-body-subtle">otisk registru</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">3f734f2faf797f0ca7c39b4cd837e68b6619c41c6f6711f3d3aeca8f341934eb</dd></div>
         <div><dt class="text-body-subtle">vygenerováno nástrojem</dt><dd class="font-mono text-heading">majordomus-cli 1.0.0-alpha.10</dd></div>
       </dl>
     </div>
@@ -540,9 +540,9 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
       <div class="min-w-0">
         <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">Projekt</h2><ul class="space-y-2 text-sm font-medium text-body">
           <li><a href="https://github.com/korczis/prismatic-majordomus" class="hover:text-heading hover:underline">GitHub</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/1112bace3437ee0d82067b1e8f61813e70190078/LICENSE" class="hover:text-heading hover:underline">Licence MIT</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/1112bace3437ee0d82067b1e8f61813e70190078/SECURITY.md" class="hover:text-heading hover:underline">Bezpečnostní politika</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/1112bace3437ee0d82067b1e8f61813e70190078/CONTRIBUTING.md" class="hover:text-heading hover:underline">Průvodce pro přispěvatele</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/LICENSE" class="hover:text-heading hover:underline">Licence MIT</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/SECURITY.md" class="hover:text-heading hover:underline">Bezpečnostní politika</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/CONTRIBUTING.md" class="hover:text-heading hover:underline">Průvodce pro přispěvatele</a></li>
         </ul>
       </div>
     </div>
@@ -550,7 +550,7 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/cs/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.10</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/1112bace3437ee0d82067b1e8f61813e70190078" class="font-mono underline">1112bac</a> · inputs <span class="font-mono">830f884cc5aa</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/cs/architecture/" class="underline">how this site is derived</a> names them.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.10</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/745db2ea21e02613943face75a2bf95542be1f2e" class="font-mono underline">745db2e</a> · inputs <span class="font-mono">0a58c217d1b7</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/cs/architecture/" class="underline">how this site is derived</a> names them.</p>
     </div>
   </div>
 </footer>

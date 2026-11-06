@@ -222,56 +222,56 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
     <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
       <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
       <tbody><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">after</td>
+        <td class="px-3 py-2 font-mono text-heading">limit</td>
         <td class="px-3 py-2 font-mono text-xs text-body">integer | null</td>
         <td class="px-3 py-2 font-mono text-xs text-body">no</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Only events after this sequence number: the cursor a reconnecting client holds.</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">How many, oldest first; the default and the bound are both <code>500</code>.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">id</td>
         <td class="px-3 py-2 font-mono text-xs text-body">string</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
         <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The execution's id.</td>
       </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">limit</td>
+        <td class="px-3 py-2 font-mono text-heading">after</td>
         <td class="px-3 py-2 font-mono text-xs text-body">integer | null</td>
         <td class="px-3 py-2 font-mono text-xs text-body">no</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">How many, oldest first; the default and the bound are both <code>500</code>.</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Only events after this sequence number: the cursor a reconnecting client holds.</td>
       </tr></tbody>
     </table>
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
-  &quot;additionalProperties&quot;: false,
+  &quot;title&quot;: &quot;EventsInput&quot;,
+  &quot;type&quot;: &quot;object&quot;,
   &quot;description&quot;: &quot;The input of `executions.events`.&quot;,
   &quot;properties&quot;: {
-    &quot;after&quot;: {
-      &quot;description&quot;: &quot;Only events after this sequence number: the cursor a reconnecting client holds.&quot;,
-      &quot;format&quot;: &quot;uint64&quot;,
+    &quot;limit&quot;: {
+      &quot;format&quot;: &quot;uint&quot;,
       &quot;minimum&quot;: 0,
+      &quot;description&quot;: &quot;How many, oldest first; the default and the bound are both `500`.&quot;,
       &quot;type&quot;: [
         &quot;integer&quot;,
         &quot;null&quot;
       ]
     },
     &quot;id&quot;: {
-      &quot;description&quot;: &quot;The execution&#39;s id.&quot;,
-      &quot;type&quot;: &quot;string&quot;
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;description&quot;: &quot;The execution&#39;s id.&quot;
     },
-    &quot;limit&quot;: {
-      &quot;description&quot;: &quot;How many, oldest first; the default and the bound are both `500`.&quot;,
-      &quot;format&quot;: &quot;uint&quot;,
-      &quot;minimum&quot;: 0,
+    &quot;after&quot;: {
       &quot;type&quot;: [
         &quot;integer&quot;,
         &quot;null&quot;
-      ]
+      ],
+      &quot;description&quot;: &quot;Only events after this sequence number: the cursor a reconnecting client holds.&quot;,
+      &quot;format&quot;: &quot;uint64&quot;,
+      &quot;minimum&quot;: 0
     }
   },
+  &quot;additionalProperties&quot;: false,
   &quot;required&quot;: [
     &quot;id&quot;
-  ],
-  &quot;title&quot;: &quot;EventsInput&quot;,
-  &quot;type&quot;: &quot;object&quot;
+  ]
 }</pre></div>
   </details>
 </div>
@@ -280,706 +280,47 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
     <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
       <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
       <tbody><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">events</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The events, oldest first.</td>
-      </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">execution_id</td>
         <td class="px-3 py-2 font-mono text-xs text-body">string</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
         <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The execution the events belong to.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">last_sequence</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">integer</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The sequence of the last event here: the cursor for the next page, and the one to
-open the live channel with.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">more</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">boolean</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Whether more events follow this page right now.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">state</td>
         <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
         <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Where the execution stands now, so a client needs one request rather than two.</td>
       </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">events</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The events, oldest first.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">more</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">boolean</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Whether more events follow this page right now.</td>
+      </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">truncated</td>
         <td class="px-3 py-2 font-mono text-xs text-body">boolean</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
         <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Whether events before this page had already been dropped by the store's bound.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">last_sequence</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">integer</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The sequence of the last event here: the cursor for the next page, and the one to
+open the live channel with.</td>
       </tr></tbody>
     </table>
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
+  &quot;type&quot;: &quot;object&quot;,
+  &quot;title&quot;: &quot;EventHistory&quot;,
+  &quot;description&quot;: &quot;The answer of `executions.events`: one page of an execution&#39;s retained history.&quot;,
   &quot;$defs&quot;: {
-    &quot;ClaimStanding&quot;: {
-      &quot;description&quot;: &quot;Where the mesh claim of an execution started for an issue stands (I4004).\n\n```text\n  wanted ──► held ──► released            the run reached a final state\n                 └──► kept                its outcome is not known: the claim stays\n         ──► unclaimed                    no mesh runs here: it ran without a claim\n         ──► refused                      another session holds the scope: nothing ran\n```\n\n```\nuse majordomus_cli::execution::ClaimStanding;\nlet word = serde_json::to_value(ClaimStanding::Kept).unwrap();\nassert_eq!(word, \&quot;kept\&quot;);\nlet back: ClaimStanding = serde_json::from_value(\&quot;unclaimed\&quot;.into()).unwrap();\nassert_eq!(back, ClaimStanding::Unclaimed);\n```&quot;,
-      &quot;oneOf&quot;: [
-        {
-          &quot;const&quot;: &quot;wanted&quot;,
-          &quot;description&quot;: &quot;Started for an issue; the claim is taken when a worker picks it up.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;held&quot;,
-          &quot;description&quot;: &quot;The exclusive claim is held, and the handler runs under it.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;released&quot;,
-          &quot;description&quot;: &quot;The claim was given back when the execution reached its final state.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;kept&quot;,
-          &quot;description&quot;: &quot;The outcome is not known, so the claim is kept: whether the work happened is still\nto be read, and the scope is not free until it has been.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;unclaimed&quot;,
-          &quot;description&quot;: &quot;No mesh cooperation runs in this process, so it ran without a claim. Said, never a\nfailure.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;refused&quot;,
-          &quot;description&quot;: &quot;Another session holds an exclusive claim on the scope; the execution was refused and\nnothing ran.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      ]
-    },
-    &quot;ExecutionDiagnostic&quot;: {
-      &quot;description&quot;: &quot;A structured finding an execution reported on its way, distinct from its outcome.&quot;,
-      &quot;properties&quot;: {
-        &quot;code&quot;: {
-          &quot;description&quot;: &quot;A stable machine-readable code.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;detail&quot;: {
-          &quot;description&quot;: &quot;The rest, when there is more.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;severity&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/Severity&quot;,
-          &quot;description&quot;: &quot;How bad.&quot;
-        },
-        &quot;suggestion&quot;: {
-          &quot;description&quot;: &quot;What to do about it, when there is something.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;summary&quot;: {
-          &quot;description&quot;: &quot;One line, for a person.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      },
-      &quot;required&quot;: [
-        &quot;severity&quot;,
-        &quot;code&quot;,
-        &quot;summary&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
-    },
-    &quot;ExecutionError&quot;: {
-      &quot;description&quot;: &quot;Why an execution ended badly, in the repository&#39;s diagnostic vocabulary rather than in\nRust&#39;s: a code a program branches on, a sentence a person reads, and where to look.\n\nA panic message and a backtrace are never in here. The engine catches a panicking\nhandler and reports `internal` with the execution&#39;s correlation id; the panic itself is\non the process&#39;s own error stream, where the operator running the server can read it.&quot;,
-      &quot;properties&quot;: {
-        &quot;code&quot;: {
-          &quot;description&quot;: &quot;`invalid_input`, `not_found`, `refused`, `forbidden`, `conflict`, `internal`, `cancelled`,\n`unavailable`.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;correlation_id&quot;: {
-          &quot;description&quot;: &quot;The execution this failure belongs to, so a log line and a UI agree.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;message&quot;: {
-          &quot;description&quot;: &quot;What went wrong, for a person.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;suggestion&quot;: {
-          &quot;description&quot;: &quot;What to do about it, when there is something.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        }
-      },
-      &quot;required&quot;: [
-        &quot;code&quot;,
-        &quot;message&quot;,
-        &quot;correlation_id&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
-    },
-    &quot;ExecutionEvent&quot;: {
-      &quot;description&quot;: &quot;One event about one execution.\n\n`sequence` is dense and starts at 1 within an execution: a client that has seen\nsequence `n` knows it has missed something when the next event it reads is not `n + 1`,\nand asks for the gap by cursor rather than reloading the world.&quot;,
-      &quot;oneOf&quot;: [
-        {
-          &quot;description&quot;: &quot;The execution was accepted and exists. Carries what it will run and with what,\nredacted, so a client that joins at the first event needs nothing else to render a\nheading.&quot;,
-          &quot;properties&quot;: {
-            &quot;data&quot;: {
-              &quot;properties&quot;: {
-                &quot;capability&quot;: {
-                  &quot;description&quot;: &quot;The capability&#39;s canonical id.&quot;,
-                  &quot;type&quot;: &quot;string&quot;
-                },
-                &quot;input&quot;: {
-                  &quot;description&quot;: &quot;The input, with sensitive values already replaced.&quot;
-                },
-                &quot;title&quot;: {
-                  &quot;description&quot;: &quot;Its title.&quot;,
-                  &quot;type&quot;: &quot;string&quot;
-                }
-              },
-              &quot;required&quot;: [
-                &quot;capability&quot;,
-                &quot;title&quot;,
-                &quot;input&quot;
-              ],
-              &quot;type&quot;: &quot;object&quot;
-            },
-            &quot;type&quot;: {
-              &quot;const&quot;: &quot;execution.created&quot;,
-              &quot;type&quot;: &quot;string&quot;
-            }
-          },
-          &quot;required&quot;: [
-            &quot;type&quot;,
-            &quot;data&quot;
-          ],
-          &quot;type&quot;: &quot;object&quot;
-        },
-        {
-          &quot;description&quot;: &quot;A policy decision on whether it may run is being taken.&quot;,
-          &quot;properties&quot;: {
-            &quot;type&quot;: {
-              &quot;const&quot;: &quot;execution.authorizing&quot;,
-              &quot;type&quot;: &quot;string&quot;
-            }
-          },
-          &quot;required&quot;: [
-            &quot;type&quot;
-          ],
-          &quot;type&quot;: &quot;object&quot;
-        },
-        {
-          &quot;description&quot;: &quot;It is waiting for a worker.&quot;,
-          &quot;properties&quot;: {
-            &quot;data&quot;: {
-              &quot;properties&quot;: {
-                &quot;ahead&quot;: {
-                  &quot;description&quot;: &quot;How many executions are ahead of it.&quot;,
-                  &quot;format&quot;: &quot;uint&quot;,
-                  &quot;minimum&quot;: 0,
-                  &quot;type&quot;: &quot;integer&quot;
-                }
-              },
-              &quot;required&quot;: [
-                &quot;ahead&quot;
-              ],
-              &quot;type&quot;: &quot;object&quot;
-            },
-            &quot;type&quot;: {
-              &quot;const&quot;: &quot;execution.queued&quot;,
-              &quot;type&quot;: &quot;string&quot;
-            }
-          },
-          &quot;required&quot;: [
-            &quot;type&quot;,
-            &quot;data&quot;
-          ],
-          &quot;type&quot;: &quot;object&quot;
-        },
-        {
-          &quot;description&quot;: &quot;A worker holds it and has not entered the handler yet.&quot;,
-          &quot;properties&quot;: {
-            &quot;data&quot;: {
-              &quot;properties&quot;: {
-                &quot;holder&quot;: {
-                  &quot;description&quot;: &quot;Who holds it, in the holder&#39;s own words: a worker, a node, a session.&quot;,
-                  &quot;type&quot;: &quot;string&quot;
-                }
-              },
-              &quot;required&quot;: [
-                &quot;holder&quot;
-              ],
-              &quot;type&quot;: &quot;object&quot;
-            },
-            &quot;type&quot;: {
-              &quot;const&quot;: &quot;execution.claimed&quot;,
-              &quot;type&quot;: &quot;string&quot;
-            }
-          },
-          &quot;required&quot;: [
-            &quot;type&quot;,
-            &quot;data&quot;
-          ],
-          &quot;type&quot;: &quot;object&quot;
-        },
-        {
-          &quot;description&quot;: &quot;Where the mesh claim of an execution started for an issue stands (I4004): wanted at\nthe start, then held, unclaimed or refused when a worker takes it up, and released\nor kept as it ends. Moves no state: the `claimed`, `refused` and final events that\nfollow it do.&quot;,
-          &quot;properties&quot;: {
-            &quot;data&quot;: {
-              &quot;$ref&quot;: &quot;#/$defs/IssueClaim&quot;
-            },
-            &quot;type&quot;: {
-              &quot;const&quot;: &quot;execution.issue_claim&quot;,
-              &quot;type&quot;: &quot;string&quot;
-            }
-          },
-          &quot;required&quot;: [
-            &quot;type&quot;,
-            &quot;data&quot;
-          ],
-          &quot;type&quot;: &quot;object&quot;
-        },
-        {
-          &quot;description&quot;: &quot;A worker picked it up and is about to enter the handler.&quot;,
-          &quot;properties&quot;: {
-            &quot;type&quot;: {
-              &quot;const&quot;: &quot;execution.started&quot;,
-              &quot;type&quot;: &quot;string&quot;
-            }
-          },
-          &quot;required&quot;: [
-            &quot;type&quot;
-          ],
-          &quot;type&quot;: &quot;object&quot;
-        },
-        {
-          &quot;description&quot;: &quot;The handler returned, and what it produced is being checked.&quot;,
-          &quot;properties&quot;: {
-            &quot;type&quot;: {
-              &quot;const&quot;: &quot;execution.verifying&quot;,
-              &quot;type&quot;: &quot;string&quot;
-            }
-          },
-          &quot;required&quot;: [
-            &quot;type&quot;
-          ],
-          &quot;type&quot;: &quot;object&quot;
-        },
-        {
-          &quot;description&quot;: &quot;How far along it is.&quot;,
-          &quot;properties&quot;: {
-            &quot;data&quot;: {
-              &quot;$ref&quot;: &quot;#/$defs/ProgressView&quot;
-            },
-            &quot;type&quot;: {
-              &quot;const&quot;: &quot;execution.progress&quot;,
-              &quot;type&quot;: &quot;string&quot;
-            }
-          },
-          &quot;required&quot;: [
-            &quot;type&quot;,
-            &quot;data&quot;
-          ],
-          &quot;type&quot;: &quot;object&quot;
-        },
-        {
-          &quot;description&quot;: &quot;A named phase was entered.&quot;,
-          &quot;properties&quot;: {
-            &quot;data&quot;: {
-              &quot;properties&quot;: {
-                &quot;name&quot;: {
-                  &quot;description&quot;: &quot;The step&#39;s stable name.&quot;,
-                  &quot;type&quot;: &quot;string&quot;
-                },
-                &quot;title&quot;: {
-                  &quot;description&quot;: &quot;One line for a reader.&quot;,
-                  &quot;type&quot;: &quot;string&quot;
-                }
-              },
-              &quot;required&quot;: [
-                &quot;name&quot;,
-                &quot;title&quot;
-              ],
-              &quot;type&quot;: &quot;object&quot;
-            },
-            &quot;type&quot;: {
-              &quot;const&quot;: &quot;execution.step.started&quot;,
-              &quot;type&quot;: &quot;string&quot;
-            }
-          },
-          &quot;required&quot;: [
-            &quot;type&quot;,
-            &quot;data&quot;
-          ],
-          &quot;type&quot;: &quot;object&quot;
-        },
-        {
-          &quot;description&quot;: &quot;A named phase finished.&quot;,
-          &quot;properties&quot;: {
-            &quot;data&quot;: {
-              &quot;properties&quot;: {
-                &quot;detail&quot;: {
-                  &quot;description&quot;: &quot;What it said, when it said anything.&quot;,
-                  &quot;type&quot;: [
-                    &quot;string&quot;,
-                    &quot;null&quot;
-                  ]
-                },
-                &quot;name&quot;: {
-                  &quot;description&quot;: &quot;The step&#39;s stable name.&quot;,
-                  &quot;type&quot;: &quot;string&quot;
-                },
-                &quot;ok&quot;: {
-                  &quot;description&quot;: &quot;Whether what it was asked to do happened.&quot;,
-                  &quot;type&quot;: &quot;boolean&quot;
-                }
-              },
-              &quot;required&quot;: [
-                &quot;name&quot;,
-                &quot;ok&quot;
-              ],
-              &quot;type&quot;: &quot;object&quot;
-            },
-            &quot;type&quot;: {
-              &quot;const&quot;: &quot;execution.step.completed&quot;,
-              &quot;type&quot;: &quot;string&quot;
-            }
-          },
-          &quot;required&quot;: [
-            &quot;type&quot;,
-            &quot;data&quot;
-          ],
-          &quot;type&quot;: &quot;object&quot;
-        },
-        {
-          &quot;description&quot;: &quot;A line of output.&quot;,
-          &quot;properties&quot;: {
-            &quot;data&quot;: {
-              &quot;properties&quot;: {
-                &quot;message&quot;: {
-                  &quot;description&quot;: &quot;The text, with control characters and terminal escapes already removed.&quot;,
-                  &quot;type&quot;: &quot;string&quot;
-                },
-                &quot;stream&quot;: {
-                  &quot;$ref&quot;: &quot;#/$defs/LogStream&quot;,
-                  &quot;description&quot;: &quot;Which stream it came from.&quot;
-                }
-              },
-              &quot;required&quot;: [
-                &quot;stream&quot;,
-                &quot;message&quot;
-              ],
-              &quot;type&quot;: &quot;object&quot;
-            },
-            &quot;type&quot;: {
-              &quot;const&quot;: &quot;execution.log&quot;,
-              &quot;type&quot;: &quot;string&quot;
-            }
-          },
-          &quot;required&quot;: [
-            &quot;type&quot;,
-            &quot;data&quot;
-          ],
-          &quot;type&quot;: &quot;object&quot;
-        },
-        {
-          &quot;description&quot;: &quot;A structured finding, distinct from the outcome.&quot;,
-          &quot;properties&quot;: {
-            &quot;data&quot;: {
-              &quot;$ref&quot;: &quot;#/$defs/ExecutionDiagnostic&quot;
-            },
-            &quot;type&quot;: {
-              &quot;const&quot;: &quot;execution.diagnostic&quot;,
-              &quot;type&quot;: &quot;string&quot;
-            }
-          },
-          &quot;required&quot;: [
-            &quot;type&quot;,
-            &quot;data&quot;
-          ],
-          &quot;type&quot;: &quot;object&quot;
-        },
-        {
-          &quot;description&quot;: &quot;Cancellation was asked for; the handler has not stopped yet.&quot;,
-          &quot;properties&quot;: {
-            &quot;data&quot;: {
-              &quot;properties&quot;: {
-                &quot;by&quot;: {
-                  &quot;description&quot;: &quot;Who asked, in one word.&quot;,
-                  &quot;type&quot;: &quot;string&quot;
-                }
-              },
-              &quot;required&quot;: [
-                &quot;by&quot;
-              ],
-              &quot;type&quot;: &quot;object&quot;
-            },
-            &quot;type&quot;: {
-              &quot;const&quot;: &quot;execution.cancelling&quot;,
-              &quot;type&quot;: &quot;string&quot;
-            }
-          },
-          &quot;required&quot;: [
-            &quot;type&quot;,
-            &quot;data&quot;
-          ],
-          &quot;type&quot;: &quot;object&quot;
-        },
-        {
-          &quot;description&quot;: &quot;It stopped because it was asked to.&quot;,
-          &quot;properties&quot;: {
-            &quot;type&quot;: {
-              &quot;const&quot;: &quot;execution.cancelled&quot;,
-              &quot;type&quot;: &quot;string&quot;
-            }
-          },
-          &quot;required&quot;: [
-            &quot;type&quot;
-          ],
-          &quot;type&quot;: &quot;object&quot;
-        },
-        {
-          &quot;description&quot;: &quot;It finished, and the handler returned an output.\n\nThe output is on this event and not on one of its own, because a client must never\nbe able to read \&quot;succeeded\&quot; and find no result: the state and the value it produced\nare one fact and travel together.&quot;,
-          &quot;properties&quot;: {
-            &quot;data&quot;: {
-              &quot;properties&quot;: {
-                &quot;output&quot;: {
-                  &quot;description&quot;: &quot;What the handler returned.&quot;
-                }
-              },
-              &quot;required&quot;: [
-                &quot;output&quot;
-              ],
-              &quot;type&quot;: &quot;object&quot;
-            },
-            &quot;type&quot;: {
-              &quot;const&quot;: &quot;execution.completed&quot;,
-              &quot;type&quot;: &quot;string&quot;
-            }
-          },
-          &quot;required&quot;: [
-            &quot;type&quot;,
-            &quot;data&quot;
-          ],
-          &quot;type&quot;: &quot;object&quot;
-        },
-        {
-          &quot;description&quot;: &quot;It finished, and it did not.&quot;,
-          &quot;properties&quot;: {
-            &quot;data&quot;: {
-              &quot;properties&quot;: {
-                &quot;error&quot;: {
-                  &quot;$ref&quot;: &quot;#/$defs/ExecutionError&quot;,
-                  &quot;description&quot;: &quot;Why.&quot;
-                }
-              },
-              &quot;required&quot;: [
-                &quot;error&quot;
-              ],
-              &quot;type&quot;: &quot;object&quot;
-            },
-            &quot;type&quot;: {
-              &quot;const&quot;: &quot;execution.failed&quot;,
-              &quot;type&quot;: &quot;string&quot;
-            }
-          },
-          &quot;required&quot;: [
-            &quot;type&quot;,
-            &quot;data&quot;
-          ],
-          &quot;type&quot;: &quot;object&quot;
-        },
-        {
-          &quot;description&quot;: &quot;A policy refused it before it ran: at the request, or when a worker claimed it.&quot;,
-          &quot;properties&quot;: {
-            &quot;data&quot;: {
-              &quot;properties&quot;: {
-                &quot;error&quot;: {
-                  &quot;$ref&quot;: &quot;#/$defs/ExecutionError&quot;,
-                  &quot;description&quot;: &quot;Why, with the code `refused` or `forbidden`.&quot;
-                },
-                &quot;policy&quot;: {
-                  &quot;description&quot;: &quot;The policy that decided, when one can be named.&quot;,
-                  &quot;type&quot;: [
-                    &quot;string&quot;,
-                    &quot;null&quot;
-                  ]
-                }
-              },
-              &quot;required&quot;: [
-                &quot;error&quot;
-              ],
-              &quot;type&quot;: &quot;object&quot;
-            },
-            &quot;type&quot;: {
-              &quot;const&quot;: &quot;execution.refused&quot;,
-              &quot;type&quot;: &quot;string&quot;
-            }
-          },
-          &quot;required&quot;: [
-            &quot;type&quot;,
-            &quot;data&quot;
-          ],
-          &quot;type&quot;: &quot;object&quot;
-        },
-        {
-          &quot;description&quot;: &quot;Whether the work happened is not known: the worker went silent, or its answer could\nnot be read. Not the last event: a reconciliation that reads evidence follows it.&quot;,
-          &quot;properties&quot;: {
-            &quot;data&quot;: {
-              &quot;properties&quot;: {
-                &quot;error&quot;: {
-                  &quot;$ref&quot;: &quot;#/$defs/ExecutionError&quot;,
-                  &quot;description&quot;: &quot;What is known about why the outcome is not.&quot;
-                }
-              },
-              &quot;required&quot;: [
-                &quot;error&quot;
-              ],
-              &quot;type&quot;: &quot;object&quot;
-            },
-            &quot;type&quot;: {
-              &quot;const&quot;: &quot;execution.unknown_outcome&quot;,
-              &quot;type&quot;: &quot;string&quot;
-            }
-          },
-          &quot;required&quot;: [
-            &quot;type&quot;,
-            &quot;data&quot;
-          ],
-          &quot;type&quot;: &quot;object&quot;
-        }
-      ],
-      &quot;properties&quot;: {
-        &quot;correlation_id&quot;: {
-          &quot;default&quot;: &quot;&quot;,
-          &quot;description&quot;: &quot;The id this execution&#39;s log lines and tracing spans carry: the execution id, under\nthe name a reader of a log expects, as the snapshot&#39;s own `correlation_id` is. Absent\nfrom an event an older writer produced, and read as empty there.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;event_id&quot;: {
-          &quot;description&quot;: &quot;The identity of this event: the execution&#39;s id and the sequence, so a client that\ndeduplicates needs no composite key of its own.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;execution_id&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/ExecutionId&quot;,
-          &quot;description&quot;: &quot;The execution it is about.&quot;
-        },
-        &quot;schema_version&quot;: {
-          &quot;description&quot;: &quot;The protocol version, `PROTOCOL_VERSION`. A reader refuses a newer one by name.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;sequence&quot;: {
-          &quot;description&quot;: &quot;Its position in that execution&#39;s stream, from 1, without gaps.&quot;,
-          &quot;format&quot;: &quot;uint64&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;timestamp&quot;: {
-          &quot;description&quot;: &quot;When the event was produced, RFC 3339 in UTC.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      },
-      &quot;required&quot;: [
-        &quot;schema_version&quot;,
-        &quot;event_id&quot;,
-        &quot;execution_id&quot;,
-        &quot;sequence&quot;,
-        &quot;timestamp&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
-    },
-    &quot;ExecutionId&quot;: {
-      &quot;description&quot;: &quot;The identity of one execution: `x-&lt;UTC timestamp&gt;-&lt;8 hex&gt;`.\n\nThe shape is the layer&#39;s own — a task is `t-20260905034523-a9f1` — so that an id read\nin a log, a URL or a browser tab is recognisable as this repository&#39;s without a\ndependency on a UUID crate. The timestamp orders ids by creation for a reader; the\nsuffix, not the timestamp, is what makes two ids created in the same second differ.&quot;,
-      &quot;type&quot;: &quot;string&quot;
-    },
-    &quot;ExecutionState&quot;: {
-      &quot;description&quot;: &quot;Where an execution is in its life.\n\nThe transitions are the whole contract, and `ExecutionState::EDGES` is the one place\nthey are written down: `ExecutionState::may_move_to` reads it, the engine asks before\nevery change, the store refuses a move it does not allow, and a client that reads a\nfinal state never sees it move again.\n\n```text\n  authorizing     ──► queued | refused | failed | cancelled\n  queued          ──► running | claimed | refused | failed | cancelled\n  claimed         ──► running | queued | refused | failed | cancelling | unknown_outcome\n  running         ──► verifying | succeeded | failed | cancelling | unknown_outcome\n  verifying       ──► succeeded | failed | cancelling | unknown_outcome\n  cancelling      ──► cancelled | succeeded | failed | unknown_outcome\n  unknown_outcome ──► verifying | succeeded | failed | cancelled        (never running)\n  succeeded, failed, cancelled, refused: final\n```\n\nThe in-process engine moves `queued ──► running` directly: it claims an execution and\nenters its handler in the same instant, so `claimed` would be a state no client could\nobserve. `authorizing`, `claimed`, `verifying`, `refused` and `unknown_outcome` are\nentered by a worker that decides, holds, checks or loses an execution in its own time\n(Mission Control B3): a policy decision before the queue, a lease on a queued ticket, a\ncheck of what the handler produced, a refusal, and a run whose outcome cannot be read.\n\n`unknown_outcome` is the one state a retry may not leave by running again. Whether the\nwork happened is not known, so the next move is a reconciliation that reads evidence\n— to `verifying`, or straight to the outcome it found — and never `running`.&quot;,
-      &quot;oneOf&quot;: [
-        {
-          &quot;const&quot;: &quot;authorizing&quot;,
-          &quot;description&quot;: &quot;Accepted, and a policy decision on whether it may run has not been taken yet.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;queued&quot;,
-          &quot;description&quot;: &quot;Accepted, and no worker has picked it up.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;claimed&quot;,
-          &quot;description&quot;: &quot;A worker holds it and has not entered the handler yet.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;running&quot;,
-          &quot;description&quot;: &quot;The handler is running.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;verifying&quot;,
-          &quot;description&quot;: &quot;The handler returned, and what it produced is being checked.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;cancelling&quot;,
-          &quot;description&quot;: &quot;Cancellation was asked for and the handler has not stopped yet.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;unknown_outcome&quot;,
-          &quot;description&quot;: &quot;Whether the work happened is not known: the worker that ran it went silent or its\nanswer could not be read. Only a reconciliation moves it on, never a rerun.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;succeeded&quot;,
-          &quot;description&quot;: &quot;The handler returned an output.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;failed&quot;,
-          &quot;description&quot;: &quot;The handler returned an error, or the worker could not run it.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;cancelled&quot;,
-          &quot;description&quot;: &quot;It stopped because it was asked to.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;refused&quot;,
-          &quot;description&quot;: &quot;A policy refused it before it ran, at the request or when a worker claimed it.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      ]
-    },
     &quot;IssueClaim&quot;: {
-      &quot;description&quot;: &quot;The issue an execution works for and the mesh claim it holds for it (I4004): the issue,\nthe scope claimed, the claim&#39;s key while there is one, and where it stands.\n\n```\nuse majordomus_cli::execution::{ClaimStanding, IssueClaim};\nlet wanted = IssueClaim::wanted(\&quot;I4004\&quot;);\nassert_eq!(wanted.standing, ClaimStanding::Wanted);\nassert!(wanted.scope.is_empty() &amp;&amp; wanted.key.is_none());\nlet json = serde_json::to_value(&amp;wanted).unwrap();\nassert_eq!(json, serde_json::json!({ \&quot;issue\&quot;: \&quot;I4004\&quot;, \&quot;standing\&quot;: \&quot;wanted\&quot; }));\n```&quot;,
       &quot;properties&quot;: {
-        &quot;detail&quot;: {
-          &quot;description&quot;: &quot;What there is to say: why it ran unclaimed, who holds the scope it was refused, why\nthe claim is kept, or that a release did not go through.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;issue&quot;: {
-          &quot;description&quot;: &quot;The issue, as the start named it.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;key&quot;: {
-          &quot;description&quot;: &quot;The mesh claim&#39;s key, `&lt;stream&gt;/&lt;claim&gt;`, once one was taken.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;scope&quot;: {
-          &quot;description&quot;: &quot;The repository paths claimed: the issue record&#39;s `scope`, or `issue/&lt;id&gt;` when the\nrecord declares none or is not in this checkout.&quot;,
-          &quot;items&quot;: {
-            &quot;type&quot;: &quot;string&quot;
-          },
-          &quot;type&quot;: &quot;array&quot;
-        },
         &quot;session&quot;: {
           &quot;description&quot;: &quot;The mesh session the claim belongs to, once one was opened: `execution-&lt;id&gt;`.&quot;,
           &quot;type&quot;: [
@@ -990,35 +331,72 @@ open the live channel with.</td>
         &quot;standing&quot;: {
           &quot;$ref&quot;: &quot;#/$defs/ClaimStanding&quot;,
           &quot;description&quot;: &quot;Where the claim stands.&quot;
+        },
+        &quot;scope&quot;: {
+          &quot;description&quot;: &quot;The repository paths claimed: the issue record&#39;s `scope`, or `issue/&lt;id&gt;` when the\nrecord declares none or is not in this checkout.&quot;,
+          &quot;type&quot;: &quot;array&quot;,
+          &quot;items&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        },
+        &quot;key&quot;: {
+          &quot;description&quot;: &quot;The mesh claim&#39;s key, `&lt;stream&gt;/&lt;claim&gt;`, once one was taken.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;issue&quot;: {
+          &quot;description&quot;: &quot;The issue, as the start named it.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;detail&quot;: {
+          &quot;description&quot;: &quot;What there is to say: why it ran unclaimed, who holds the scope it was refused, why\nthe claim is kept, or that a release did not go through.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
         }
       },
       &quot;required&quot;: [
         &quot;issue&quot;,
         &quot;standing&quot;
       ],
+      &quot;description&quot;: &quot;The issue an execution works for and the mesh claim it holds for it (I4004): the issue,\nthe scope claimed, the claim&#39;s key while there is one, and where it stands.\n\n```\nuse majordomus_cli::execution::{ClaimStanding, IssueClaim};\nlet wanted = IssueClaim::wanted(\&quot;I4004\&quot;);\nassert_eq!(wanted.standing, ClaimStanding::Wanted);\nassert!(wanted.scope.is_empty() &amp;&amp; wanted.key.is_none());\nlet json = serde_json::to_value(&amp;wanted).unwrap();\nassert_eq!(json, serde_json::json!({ \&quot;issue\&quot;: \&quot;I4004\&quot;, \&quot;standing\&quot;: \&quot;wanted\&quot; }));\n```&quot;,
       &quot;type&quot;: &quot;object&quot;
     },
-    &quot;LogStream&quot;: {
-      &quot;description&quot;: &quot;Which stream a log line came from.&quot;,
-      &quot;oneOf&quot;: [
-        {
-          &quot;const&quot;: &quot;stdout&quot;,
-          &quot;description&quot;: &quot;The standard output of a child process the handler ran.&quot;,
+    &quot;ExecutionError&quot;: {
+      &quot;description&quot;: &quot;Why an execution ended badly, in the repository&#39;s diagnostic vocabulary rather than in\nRust&#39;s: a code a program branches on, a sentence a person reads, and where to look.\n\nA panic message and a backtrace are never in here. The engine catches a panicking\nhandler and reports `internal` with the execution&#39;s correlation id; the panic itself is\non the process&#39;s own error stream, where the operator running the server can read it.&quot;,
+      &quot;properties&quot;: {
+        &quot;correlation_id&quot;: {
+          &quot;description&quot;: &quot;The execution this failure belongs to, so a log line and a UI agree.&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
-        {
-          &quot;const&quot;: &quot;stderr&quot;,
-          &quot;description&quot;: &quot;Its standard error.&quot;,
+        &quot;suggestion&quot;: {
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ],
+          &quot;description&quot;: &quot;What to do about it, when there is something.&quot;
+        },
+        &quot;message&quot;: {
+          &quot;description&quot;: &quot;What went wrong, for a person.&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
-        {
-          &quot;const&quot;: &quot;handler&quot;,
-          &quot;description&quot;: &quot;The handler itself, saying something it wants a reader to see.&quot;,
+        &quot;code&quot;: {
+          &quot;description&quot;: &quot;`invalid_input`, `not_found`, `refused`, `forbidden`, `conflict`, `internal`, `cancelled`,\n`unavailable`.&quot;,
           &quot;type&quot;: &quot;string&quot;
         }
+      },
+      &quot;type&quot;: &quot;object&quot;,
+      &quot;required&quot;: [
+        &quot;code&quot;,
+        &quot;message&quot;,
+        &quot;correlation_id&quot;
       ]
     },
     &quot;ProgressView&quot;: {
+      &quot;type&quot;: &quot;object&quot;,
       &quot;description&quot;: &quot;How far along an execution is.&quot;,
       &quot;properties&quot;: {
         &quot;current&quot;: {
@@ -1035,9 +413,9 @@ open the live channel with.</td>
           ]
         },
         &quot;total&quot;: {
-          &quot;description&quot;: &quot;Units in total, when the handler knows how many.&quot;,
           &quot;format&quot;: &quot;uint64&quot;,
           &quot;minimum&quot;: 0,
+          &quot;description&quot;: &quot;Units in total, when the handler knows how many.&quot;,
           &quot;type&quot;: [
             &quot;integer&quot;,
             &quot;null&quot;
@@ -1046,60 +424,684 @@ open the live channel with.</td>
       },
       &quot;required&quot;: [
         &quot;current&quot;
+      ]
+    },
+    &quot;ExecutionEvent&quot;: {
+      &quot;type&quot;: &quot;object&quot;,
+      &quot;description&quot;: &quot;One event about one execution.\n\n`sequence` is dense and starts at 1 within an execution: a client that has seen\nsequence `n` knows it has missed something when the next event it reads is not `n + 1`,\nand asks for the gap by cursor rather than reloading the world.&quot;,
+      &quot;oneOf&quot;: [
+        {
+          &quot;properties&quot;: {
+            &quot;type&quot;: {
+              &quot;const&quot;: &quot;execution.created&quot;,
+              &quot;type&quot;: &quot;string&quot;
+            },
+            &quot;data&quot;: {
+              &quot;type&quot;: &quot;object&quot;,
+              &quot;required&quot;: [
+                &quot;capability&quot;,
+                &quot;title&quot;,
+                &quot;input&quot;
+              ],
+              &quot;properties&quot;: {
+                &quot;capability&quot;: {
+                  &quot;description&quot;: &quot;The capability&#39;s canonical id.&quot;,
+                  &quot;type&quot;: &quot;string&quot;
+                },
+                &quot;input&quot;: {
+                  &quot;description&quot;: &quot;The input, with sensitive values already replaced.&quot;
+                },
+                &quot;title&quot;: {
+                  &quot;description&quot;: &quot;Its title.&quot;,
+                  &quot;type&quot;: &quot;string&quot;
+                }
+              }
+            }
+          },
+          &quot;type&quot;: &quot;object&quot;,
+          &quot;description&quot;: &quot;The execution was accepted and exists. Carries what it will run and with what,\nredacted, so a client that joins at the first event needs nothing else to render a\nheading.&quot;,
+          &quot;required&quot;: [
+            &quot;type&quot;,
+            &quot;data&quot;
+          ]
+        },
+        {
+          &quot;required&quot;: [
+            &quot;type&quot;
+          ],
+          &quot;type&quot;: &quot;object&quot;,
+          &quot;description&quot;: &quot;A policy decision on whether it may run is being taken.&quot;,
+          &quot;properties&quot;: {
+            &quot;type&quot;: {
+              &quot;const&quot;: &quot;execution.authorizing&quot;,
+              &quot;type&quot;: &quot;string&quot;
+            }
+          }
+        },
+        {
+          &quot;properties&quot;: {
+            &quot;type&quot;: {
+              &quot;type&quot;: &quot;string&quot;,
+              &quot;const&quot;: &quot;execution.queued&quot;
+            },
+            &quot;data&quot;: {
+              &quot;required&quot;: [
+                &quot;ahead&quot;
+              ],
+              &quot;type&quot;: &quot;object&quot;,
+              &quot;properties&quot;: {
+                &quot;ahead&quot;: {
+                  &quot;description&quot;: &quot;How many executions are ahead of it.&quot;,
+                  &quot;type&quot;: &quot;integer&quot;,
+                  &quot;format&quot;: &quot;uint&quot;,
+                  &quot;minimum&quot;: 0
+                }
+              }
+            }
+          },
+          &quot;description&quot;: &quot;It is waiting for a worker.&quot;,
+          &quot;type&quot;: &quot;object&quot;,
+          &quot;required&quot;: [
+            &quot;type&quot;,
+            &quot;data&quot;
+          ]
+        },
+        {
+          &quot;description&quot;: &quot;A worker holds it and has not entered the handler yet.&quot;,
+          &quot;properties&quot;: {
+            &quot;data&quot;: {
+              &quot;properties&quot;: {
+                &quot;holder&quot;: {
+                  &quot;description&quot;: &quot;Who holds it, in the holder&#39;s own words: a worker, a node, a session.&quot;,
+                  &quot;type&quot;: &quot;string&quot;
+                }
+              },
+              &quot;type&quot;: &quot;object&quot;,
+              &quot;required&quot;: [
+                &quot;holder&quot;
+              ]
+            },
+            &quot;type&quot;: {
+              &quot;const&quot;: &quot;execution.claimed&quot;,
+              &quot;type&quot;: &quot;string&quot;
+            }
+          },
+          &quot;type&quot;: &quot;object&quot;,
+          &quot;required&quot;: [
+            &quot;type&quot;,
+            &quot;data&quot;
+          ]
+        },
+        {
+          &quot;required&quot;: [
+            &quot;type&quot;,
+            &quot;data&quot;
+          ],
+          &quot;description&quot;: &quot;Where the mesh claim of an execution started for an issue stands (I4004): wanted at\nthe start, then held, unclaimed or refused when a worker takes it up, and released\nor kept as it ends. Moves no state: the `claimed`, `refused` and final events that\nfollow it do.&quot;,
+          &quot;type&quot;: &quot;object&quot;,
+          &quot;properties&quot;: {
+            &quot;data&quot;: {
+              &quot;$ref&quot;: &quot;#/$defs/IssueClaim&quot;
+            },
+            &quot;type&quot;: {
+              &quot;const&quot;: &quot;execution.issue_claim&quot;,
+              &quot;type&quot;: &quot;string&quot;
+            }
+          }
+        },
+        {
+          &quot;properties&quot;: {
+            &quot;type&quot;: {
+              &quot;const&quot;: &quot;execution.started&quot;,
+              &quot;type&quot;: &quot;string&quot;
+            }
+          },
+          &quot;type&quot;: &quot;object&quot;,
+          &quot;required&quot;: [
+            &quot;type&quot;
+          ],
+          &quot;description&quot;: &quot;A worker picked it up and is about to enter the handler.&quot;
+        },
+        {
+          &quot;required&quot;: [
+            &quot;type&quot;
+          ],
+          &quot;description&quot;: &quot;The handler returned, and what it produced is being checked.&quot;,
+          &quot;type&quot;: &quot;object&quot;,
+          &quot;properties&quot;: {
+            &quot;type&quot;: {
+              &quot;const&quot;: &quot;execution.verifying&quot;,
+              &quot;type&quot;: &quot;string&quot;
+            }
+          }
+        },
+        {
+          &quot;properties&quot;: {
+            &quot;data&quot;: {
+              &quot;$ref&quot;: &quot;#/$defs/ProgressView&quot;
+            },
+            &quot;type&quot;: {
+              &quot;type&quot;: &quot;string&quot;,
+              &quot;const&quot;: &quot;execution.progress&quot;
+            }
+          },
+          &quot;required&quot;: [
+            &quot;type&quot;,
+            &quot;data&quot;
+          ],
+          &quot;description&quot;: &quot;How far along it is.&quot;,
+          &quot;type&quot;: &quot;object&quot;
+        },
+        {
+          &quot;properties&quot;: {
+            &quot;data&quot;: {
+              &quot;properties&quot;: {
+                &quot;name&quot;: {
+                  &quot;type&quot;: &quot;string&quot;,
+                  &quot;description&quot;: &quot;The step&#39;s stable name.&quot;
+                },
+                &quot;title&quot;: {
+                  &quot;description&quot;: &quot;One line for a reader.&quot;,
+                  &quot;type&quot;: &quot;string&quot;
+                }
+              },
+              &quot;required&quot;: [
+                &quot;name&quot;,
+                &quot;title&quot;
+              ],
+              &quot;type&quot;: &quot;object&quot;
+            },
+            &quot;type&quot;: {
+              &quot;type&quot;: &quot;string&quot;,
+              &quot;const&quot;: &quot;execution.step.started&quot;
+            }
+          },
+          &quot;required&quot;: [
+            &quot;type&quot;,
+            &quot;data&quot;
+          ],
+          &quot;description&quot;: &quot;A named phase was entered.&quot;,
+          &quot;type&quot;: &quot;object&quot;
+        },
+        {
+          &quot;description&quot;: &quot;A named phase finished.&quot;,
+          &quot;properties&quot;: {
+            &quot;data&quot;: {
+              &quot;type&quot;: &quot;object&quot;,
+              &quot;properties&quot;: {
+                &quot;detail&quot;: {
+                  &quot;type&quot;: [
+                    &quot;string&quot;,
+                    &quot;null&quot;
+                  ],
+                  &quot;description&quot;: &quot;What it said, when it said anything.&quot;
+                },
+                &quot;name&quot;: {
+                  &quot;type&quot;: &quot;string&quot;,
+                  &quot;description&quot;: &quot;The step&#39;s stable name.&quot;
+                },
+                &quot;ok&quot;: {
+                  &quot;type&quot;: &quot;boolean&quot;,
+                  &quot;description&quot;: &quot;Whether what it was asked to do happened.&quot;
+                }
+              },
+              &quot;required&quot;: [
+                &quot;name&quot;,
+                &quot;ok&quot;
+              ]
+            },
+            &quot;type&quot;: {
+              &quot;const&quot;: &quot;execution.step.completed&quot;,
+              &quot;type&quot;: &quot;string&quot;
+            }
+          },
+          &quot;required&quot;: [
+            &quot;type&quot;,
+            &quot;data&quot;
+          ],
+          &quot;type&quot;: &quot;object&quot;
+        },
+        {
+          &quot;description&quot;: &quot;A line of output.&quot;,
+          &quot;required&quot;: [
+            &quot;type&quot;,
+            &quot;data&quot;
+          ],
+          &quot;type&quot;: &quot;object&quot;,
+          &quot;properties&quot;: {
+            &quot;data&quot;: {
+              &quot;required&quot;: [
+                &quot;stream&quot;,
+                &quot;message&quot;
+              ],
+              &quot;type&quot;: &quot;object&quot;,
+              &quot;properties&quot;: {
+                &quot;stream&quot;: {
+                  &quot;description&quot;: &quot;Which stream it came from.&quot;,
+                  &quot;$ref&quot;: &quot;#/$defs/LogStream&quot;
+                },
+                &quot;message&quot;: {
+                  &quot;description&quot;: &quot;The text, with control characters and terminal escapes already removed.&quot;,
+                  &quot;type&quot;: &quot;string&quot;
+                }
+              }
+            },
+            &quot;type&quot;: {
+              &quot;type&quot;: &quot;string&quot;,
+              &quot;const&quot;: &quot;execution.log&quot;
+            }
+          }
+        },
+        {
+          &quot;required&quot;: [
+            &quot;type&quot;,
+            &quot;data&quot;
+          ],
+          &quot;description&quot;: &quot;A structured finding, distinct from the outcome.&quot;,
+          &quot;type&quot;: &quot;object&quot;,
+          &quot;properties&quot;: {
+            &quot;type&quot;: {
+              &quot;const&quot;: &quot;execution.diagnostic&quot;,
+              &quot;type&quot;: &quot;string&quot;
+            },
+            &quot;data&quot;: {
+              &quot;$ref&quot;: &quot;#/$defs/ExecutionDiagnostic&quot;
+            }
+          }
+        },
+        {
+          &quot;required&quot;: [
+            &quot;type&quot;,
+            &quot;data&quot;
+          ],
+          &quot;type&quot;: &quot;object&quot;,
+          &quot;description&quot;: &quot;Cancellation was asked for; the handler has not stopped yet.&quot;,
+          &quot;properties&quot;: {
+            &quot;data&quot;: {
+              &quot;required&quot;: [
+                &quot;by&quot;
+              ],
+              &quot;properties&quot;: {
+                &quot;by&quot;: {
+                  &quot;description&quot;: &quot;Who asked, in one word.&quot;,
+                  &quot;type&quot;: &quot;string&quot;
+                }
+              },
+              &quot;type&quot;: &quot;object&quot;
+            },
+            &quot;type&quot;: {
+              &quot;const&quot;: &quot;execution.cancelling&quot;,
+              &quot;type&quot;: &quot;string&quot;
+            }
+          }
+        },
+        {
+          &quot;required&quot;: [
+            &quot;type&quot;
+          ],
+          &quot;description&quot;: &quot;It stopped because it was asked to.&quot;,
+          &quot;type&quot;: &quot;object&quot;,
+          &quot;properties&quot;: {
+            &quot;type&quot;: {
+              &quot;type&quot;: &quot;string&quot;,
+              &quot;const&quot;: &quot;execution.cancelled&quot;
+            }
+          }
+        },
+        {
+          &quot;description&quot;: &quot;It finished, and the handler returned an output.\n\nThe output is on this event and not on one of its own, because a client must never\nbe able to read \&quot;succeeded\&quot; and find no result: the state and the value it produced\nare one fact and travel together.&quot;,
+          &quot;properties&quot;: {
+            &quot;type&quot;: {
+              &quot;const&quot;: &quot;execution.completed&quot;,
+              &quot;type&quot;: &quot;string&quot;
+            },
+            &quot;data&quot;: {
+              &quot;type&quot;: &quot;object&quot;,
+              &quot;properties&quot;: {
+                &quot;output&quot;: {
+                  &quot;description&quot;: &quot;What the handler returned.&quot;
+                }
+              },
+              &quot;required&quot;: [
+                &quot;output&quot;
+              ]
+            }
+          },
+          &quot;type&quot;: &quot;object&quot;,
+          &quot;required&quot;: [
+            &quot;type&quot;,
+            &quot;data&quot;
+          ]
+        },
+        {
+          &quot;type&quot;: &quot;object&quot;,
+          &quot;properties&quot;: {
+            &quot;type&quot;: {
+              &quot;const&quot;: &quot;execution.failed&quot;,
+              &quot;type&quot;: &quot;string&quot;
+            },
+            &quot;data&quot;: {
+              &quot;properties&quot;: {
+                &quot;error&quot;: {
+                  &quot;description&quot;: &quot;Why.&quot;,
+                  &quot;$ref&quot;: &quot;#/$defs/ExecutionError&quot;
+                }
+              },
+              &quot;required&quot;: [
+                &quot;error&quot;
+              ],
+              &quot;type&quot;: &quot;object&quot;
+            }
+          },
+          &quot;required&quot;: [
+            &quot;type&quot;,
+            &quot;data&quot;
+          ],
+          &quot;description&quot;: &quot;It finished, and it did not.&quot;
+        },
+        {
+          &quot;required&quot;: [
+            &quot;type&quot;,
+            &quot;data&quot;
+          ],
+          &quot;description&quot;: &quot;A policy refused it before it ran: at the request, or when a worker claimed it.&quot;,
+          &quot;properties&quot;: {
+            &quot;type&quot;: {
+              &quot;const&quot;: &quot;execution.refused&quot;,
+              &quot;type&quot;: &quot;string&quot;
+            },
+            &quot;data&quot;: {
+              &quot;properties&quot;: {
+                &quot;error&quot;: {
+                  &quot;$ref&quot;: &quot;#/$defs/ExecutionError&quot;,
+                  &quot;description&quot;: &quot;Why, with the code `refused` or `forbidden`.&quot;
+                },
+                &quot;policy&quot;: {
+                  &quot;description&quot;: &quot;The policy that decided, when one can be named.&quot;,
+                  &quot;type&quot;: [
+                    &quot;string&quot;,
+                    &quot;null&quot;
+                  ]
+                }
+              },
+              &quot;type&quot;: &quot;object&quot;,
+              &quot;required&quot;: [
+                &quot;error&quot;
+              ]
+            }
+          },
+          &quot;type&quot;: &quot;object&quot;
+        },
+        {
+          &quot;type&quot;: &quot;object&quot;,
+          &quot;description&quot;: &quot;Whether the work happened is not known: the worker went silent, or its answer could\nnot be read. Not the last event: a reconciliation that reads evidence follows it.&quot;,
+          &quot;properties&quot;: {
+            &quot;type&quot;: {
+              &quot;type&quot;: &quot;string&quot;,
+              &quot;const&quot;: &quot;execution.unknown_outcome&quot;
+            },
+            &quot;data&quot;: {
+              &quot;properties&quot;: {
+                &quot;error&quot;: {
+                  &quot;$ref&quot;: &quot;#/$defs/ExecutionError&quot;,
+                  &quot;description&quot;: &quot;What is known about why the outcome is not.&quot;
+                }
+              },
+              &quot;required&quot;: [
+                &quot;error&quot;
+              ],
+              &quot;type&quot;: &quot;object&quot;
+            }
+          },
+          &quot;required&quot;: [
+            &quot;type&quot;,
+            &quot;data&quot;
+          ]
+        }
       ],
-      &quot;type&quot;: &quot;object&quot;
+      &quot;properties&quot;: {
+        &quot;correlation_id&quot;: {
+          &quot;default&quot;: &quot;&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The id this execution&#39;s log lines and tracing spans carry: the execution id, under\nthe name a reader of a log expects, as the snapshot&#39;s own `correlation_id` is. Absent\nfrom an event an older writer produced, and read as empty there.&quot;
+        },
+        &quot;sequence&quot;: {
+          &quot;format&quot;: &quot;uint64&quot;,
+          &quot;type&quot;: &quot;integer&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;description&quot;: &quot;Its position in that execution&#39;s stream, from 1, without gaps.&quot;
+        },
+        &quot;execution_id&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/ExecutionId&quot;,
+          &quot;description&quot;: &quot;The execution it is about.&quot;
+        },
+        &quot;schema_version&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The protocol version, `PROTOCOL_VERSION`. A reader refuses a newer one by name.&quot;
+        },
+        &quot;timestamp&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;When the event was produced, RFC 3339 in UTC.&quot;
+        },
+        &quot;event_id&quot;: {
+          &quot;description&quot;: &quot;The identity of this event: the execution&#39;s id and the sequence, so a client that\ndeduplicates needs no composite key of its own.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;schema_version&quot;,
+        &quot;event_id&quot;,
+        &quot;execution_id&quot;,
+        &quot;sequence&quot;,
+        &quot;timestamp&quot;
+      ]
+    },
+    &quot;ExecutionId&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;description&quot;: &quot;The identity of one execution: `x-&lt;UTC timestamp&gt;-&lt;8 hex&gt;`.\n\nThe shape is the layer&#39;s own — a task is `t-20260905034523-a9f1` — so that an id read\nin a log, a URL or a browser tab is recognisable as this repository&#39;s without a\ndependency on a UUID crate. The timestamp orders ids by creation for a reader; the\nsuffix, not the timestamp, is what makes two ids created in the same second differ.&quot;
     },
     &quot;Severity&quot;: {
       &quot;description&quot;: &quot;How bad a diagnostic is. `Error` excludes the file it concerns from the index and puts\nthe index into the degraded state; `Warning` and `Info` do neither.&quot;,
       &quot;oneOf&quot;: [
         {
-          &quot;const&quot;: &quot;info&quot;,
           &quot;description&quot;: &quot;Worth knowing; changes nothing.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;info&quot;
         },
         {
-          &quot;const&quot;: &quot;warning&quot;,
+          &quot;type&quot;: &quot;string&quot;,
           &quot;description&quot;: &quot;Something to look at; the object is still served.&quot;,
+          &quot;const&quot;: &quot;warning&quot;
+        },
+        {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;error&quot;,
+          &quot;description&quot;: &quot;The file is excluded and the index is degraded.&quot;
+        }
+      ]
+    },
+    &quot;ExecutionState&quot;: {
+      &quot;oneOf&quot;: [
+        {
+          &quot;const&quot;: &quot;authorizing&quot;,
+          &quot;description&quot;: &quot;Accepted, and a policy decision on whether it may run has not been taken yet.&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
         {
-          &quot;const&quot;: &quot;error&quot;,
-          &quot;description&quot;: &quot;The file is excluded and the index is degraded.&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;Accepted, and no worker has picked it up.&quot;,
+          &quot;const&quot;: &quot;queued&quot;
+        },
+        {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;claimed&quot;,
+          &quot;description&quot;: &quot;A worker holds it and has not entered the handler yet.&quot;
+        },
+        {
+          &quot;const&quot;: &quot;running&quot;,
+          &quot;description&quot;: &quot;The handler is running.&quot;,
           &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;verifying&quot;,
+          &quot;description&quot;: &quot;The handler returned, and what it produced is being checked.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;cancelling&quot;,
+          &quot;description&quot;: &quot;Cancellation was asked for and the handler has not stopped yet.&quot;
+        },
+        {
+          &quot;description&quot;: &quot;Whether the work happened is not known: the worker that ran it went silent or its\nanswer could not be read. Only a reconciliation moves it on, never a rerun.&quot;,
+          &quot;const&quot;: &quot;unknown_outcome&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;description&quot;: &quot;The handler returned an output.&quot;,
+          &quot;const&quot;: &quot;succeeded&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;failed&quot;,
+          &quot;description&quot;: &quot;The handler returned an error, or the worker could not run it.&quot;
+        },
+        {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;It stopped because it was asked to.&quot;,
+          &quot;const&quot;: &quot;cancelled&quot;
+        },
+        {
+          &quot;description&quot;: &quot;A policy refused it before it ran, at the request or when a worker claimed it.&quot;,
+          &quot;const&quot;: &quot;refused&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      ],
+      &quot;description&quot;: &quot;Where an execution is in its life.\n\nThe transitions are the whole contract, and `ExecutionState::EDGES` is the one place\nthey are written down: `ExecutionState::may_move_to` reads it, the engine asks before\nevery change, the store refuses a move it does not allow, and a client that reads a\nfinal state never sees it move again.\n\n```text\n  authorizing     ──► queued | refused | failed | cancelled\n  queued          ──► running | claimed | refused | failed | cancelled\n  claimed         ──► running | queued | refused | failed | cancelling | unknown_outcome\n  running         ──► verifying | succeeded | failed | cancelling | unknown_outcome\n  verifying       ──► succeeded | failed | cancelling | unknown_outcome\n  cancelling      ──► cancelled | succeeded | failed | unknown_outcome\n  unknown_outcome ──► verifying | succeeded | failed | cancelled        (never running)\n  succeeded, failed, cancelled, refused: final\n```\n\nThe in-process engine moves `queued ──► running` directly: it claims an execution and\nenters its handler in the same instant, so `claimed` would be a state no client could\nobserve. `authorizing`, `claimed`, `verifying`, `refused` and `unknown_outcome` are\nentered by a worker that decides, holds, checks or loses an execution in its own time\n(Mission Control B3): a policy decision before the queue, a lease on a queued ticket, a\ncheck of what the handler produced, a refusal, and a run whose outcome cannot be read.\n\n`unknown_outcome` is the one state a retry may not leave by running again. Whether the\nwork happened is not known, so the next move is a reconciliation that reads evidence\n— to `verifying`, or straight to the outcome it found — and never `running`.&quot;
+    },
+    &quot;ExecutionDiagnostic&quot;: {
+      &quot;properties&quot;: {
+        &quot;code&quot;: {
+          &quot;description&quot;: &quot;A stable machine-readable code.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;suggestion&quot;: {
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ],
+          &quot;description&quot;: &quot;What to do about it, when there is something.&quot;
+        },
+        &quot;severity&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/Severity&quot;,
+          &quot;description&quot;: &quot;How bad.&quot;
+        },
+        &quot;detail&quot;: {
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ],
+          &quot;description&quot;: &quot;The rest, when there is more.&quot;
+        },
+        &quot;summary&quot;: {
+          &quot;description&quot;: &quot;One line, for a person.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      },
+      &quot;description&quot;: &quot;A structured finding an execution reported on its way, distinct from its outcome.&quot;,
+      &quot;type&quot;: &quot;object&quot;,
+      &quot;required&quot;: [
+        &quot;severity&quot;,
+        &quot;code&quot;,
+        &quot;summary&quot;
+      ]
+    },
+    &quot;LogStream&quot;: {
+      &quot;description&quot;: &quot;Which stream a log line came from.&quot;,
+      &quot;oneOf&quot;: [
+        {
+          &quot;const&quot;: &quot;stdout&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The standard output of a child process the handler ran.&quot;
+        },
+        {
+          &quot;const&quot;: &quot;stderr&quot;,
+          &quot;description&quot;: &quot;Its standard error.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;handler&quot;,
+          &quot;description&quot;: &quot;The handler itself, saying something it wants a reader to see.&quot;
+        }
+      ]
+    },
+    &quot;ClaimStanding&quot;: {
+      &quot;description&quot;: &quot;Where the mesh claim of an execution started for an issue stands (I4004).\n\n```text\n  wanted ──► held ──► released            the run reached a final state\n                 └──► kept                its outcome is not known: the claim stays\n         ──► unclaimed                    no mesh runs here: it ran without a claim\n         ──► refused                      another session holds the scope: nothing ran\n```\n\n```\nuse majordomus_cli::execution::ClaimStanding;\nlet word = serde_json::to_value(ClaimStanding::Kept).unwrap();\nassert_eq!(word, \&quot;kept\&quot;);\nlet back: ClaimStanding = serde_json::from_value(\&quot;unclaimed\&quot;.into()).unwrap();\nassert_eq!(back, ClaimStanding::Unclaimed);\n```&quot;,
+      &quot;oneOf&quot;: [
+        {
+          &quot;const&quot;: &quot;wanted&quot;,
+          &quot;description&quot;: &quot;Started for an issue; the claim is taken when a worker picks it up.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;held&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The exclusive claim is held, and the handler runs under it.&quot;
+        },
+        {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;released&quot;,
+          &quot;description&quot;: &quot;The claim was given back when the execution reached its final state.&quot;
+        },
+        {
+          &quot;const&quot;: &quot;kept&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The outcome is not known, so the claim is kept: whether the work happened is still\nto be read, and the scope is not free until it has been.&quot;
+        },
+        {
+          &quot;const&quot;: &quot;unclaimed&quot;,
+          &quot;description&quot;: &quot;No mesh cooperation runs in this process, so it ran without a claim. Said, never a\nfailure.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;description&quot;: &quot;Another session holds an exclusive claim on the scope; the execution was refused and\nnothing ran.&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;refused&quot;
         }
       ]
     }
   },
-  &quot;description&quot;: &quot;The answer of `executions.events`: one page of an execution&#39;s retained history.&quot;,
   &quot;properties&quot;: {
-    &quot;events&quot;: {
-      &quot;description&quot;: &quot;The events, oldest first.&quot;,
-      &quot;items&quot;: {
-        &quot;$ref&quot;: &quot;#/$defs/ExecutionEvent&quot;
-      },
-      &quot;type&quot;: &quot;array&quot;
-    },
     &quot;execution_id&quot;: {
-      &quot;description&quot;: &quot;The execution the events belong to.&quot;,
-      &quot;type&quot;: &quot;string&quot;
-    },
-    &quot;last_sequence&quot;: {
-      &quot;description&quot;: &quot;The sequence of the last event here: the cursor for the next page, and the one to\nopen the live channel with.&quot;,
-      &quot;format&quot;: &quot;uint64&quot;,
-      &quot;minimum&quot;: 0,
-      &quot;type&quot;: &quot;integer&quot;
-    },
-    &quot;more&quot;: {
-      &quot;description&quot;: &quot;Whether more events follow this page right now.&quot;,
-      &quot;type&quot;: &quot;boolean&quot;
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;description&quot;: &quot;The execution the events belong to.&quot;
     },
     &quot;state&quot;: {
       &quot;$ref&quot;: &quot;#/$defs/ExecutionState&quot;,
       &quot;description&quot;: &quot;Where the execution stands now, so a client needs one request rather than two.&quot;
     },
+    &quot;events&quot;: {
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;description&quot;: &quot;The events, oldest first.&quot;,
+      &quot;items&quot;: {
+        &quot;$ref&quot;: &quot;#/$defs/ExecutionEvent&quot;
+      }
+    },
+    &quot;more&quot;: {
+      &quot;description&quot;: &quot;Whether more events follow this page right now.&quot;,
+      &quot;type&quot;: &quot;boolean&quot;
+    },
     &quot;truncated&quot;: {
       &quot;description&quot;: &quot;Whether events before this page had already been dropped by the store&#39;s bound.&quot;,
       &quot;type&quot;: &quot;boolean&quot;
+    },
+    &quot;last_sequence&quot;: {
+      &quot;minimum&quot;: 0,
+      &quot;format&quot;: &quot;uint64&quot;,
+      &quot;type&quot;: &quot;integer&quot;,
+      &quot;description&quot;: &quot;The sequence of the last event here: the cursor for the next page, and the one to\nopen the live channel with.&quot;
     }
   },
   &quot;required&quot;: [
@@ -1109,9 +1111,7 @@ open the live channel with.</td>
     &quot;last_sequence&quot;,
     &quot;more&quot;,
     &quot;truncated&quot;
-  ],
-  &quot;title&quot;: &quot;EventHistory&quot;,
-  &quot;type&quot;: &quot;object&quot;
+  ]
 }</pre></div>
   </details>
 </div>
@@ -1142,7 +1142,7 @@ open the live channel with.</td>
         <div><dt class="text-body-subtle">Rust module</dt><dd class="min-w-0 break-all font-mono text-heading">majordomus_cli::capability::builtin::executions</dd></div>
         <div><dt class="text-body-subtle">input type</dt><dd class="font-mono text-heading">EventsInput</dd></div>
         <div><dt class="text-body-subtle">output type</dt><dd class="font-mono text-heading">EventHistory</dd></div>
-        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/1112bace3437ee0d82067b1e8f61813e70190078/docs/generated/modules/executions.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/executions.md</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">5cdbf22cd21589ddbe464d5f0987b6bcf4607d05479004d6f815c3b306fdb08a</dd></div>
+        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/docs/generated/modules/executions.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/executions.md</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">3f734f2faf797f0ca7c39b4cd837e68b6619c41c6f6711f3d3aeca8f341934eb</dd></div>
         <div><dt class="text-body-subtle">generated by</dt><dd class="font-mono text-heading">majordomus-cli 1.0.0-alpha.10</dd></div>
       </dl>
     </div>
@@ -1198,9 +1198,9 @@ open the live channel with.</td>
       <div class="min-w-0">
         <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">Project</h2><ul class="space-y-2 text-sm font-medium text-body">
           <li><a href="https://github.com/korczis/prismatic-majordomus" class="hover:text-heading hover:underline">GitHub</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/1112bace3437ee0d82067b1e8f61813e70190078/LICENSE" class="hover:text-heading hover:underline">MIT licence</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/1112bace3437ee0d82067b1e8f61813e70190078/SECURITY.md" class="hover:text-heading hover:underline">Security policy</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/1112bace3437ee0d82067b1e8f61813e70190078/CONTRIBUTING.md" class="hover:text-heading hover:underline">Contributing guide</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/LICENSE" class="hover:text-heading hover:underline">MIT licence</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/SECURITY.md" class="hover:text-heading hover:underline">Security policy</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/CONTRIBUTING.md" class="hover:text-heading hover:underline">Contributing guide</a></li>
         </ul>
       </div>
     </div>
@@ -1208,7 +1208,7 @@ open the live channel with.</td>
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.10</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/1112bace3437ee0d82067b1e8f61813e70190078" class="font-mono underline">1112bac</a> · inputs <span class="font-mono">830f884cc5aa</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/architecture/" class="underline">how this site is derived</a> names them.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.10</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/745db2ea21e02613943face75a2bf95542be1f2e" class="font-mono underline">745db2e</a> · inputs <span class="font-mono">0a58c217d1b7</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/architecture/" class="underline">how this site is derived</a> names them.</p>
     </div>
   </div>
 </footer>

@@ -244,26 +244,26 @@ with no start line in the ledgers read is answered only when no window is given.
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
-  &quot;additionalProperties&quot;: false,
-  &quot;description&quot;: &quot;Which tasks to answer. A window filters by each task&#39;s `task.started` time, so a task\nwith no start line in the ledgers read is answered only when no window is given.\n\n```\nuse majordomus_cli::economics::tasks::TaskEconomicsQuery;\nlet q: TaskEconomicsQuery = serde_json::from_str(r#\&quot;{\&quot;since\&quot;:\&quot;2026-10-21T00:00:00Z\&quot;}\&quot;#).unwrap();\nassert_eq!(q.since.as_deref(), Some(\&quot;2026-10-21T00:00:00Z\&quot;));\nassert!(q.until.is_none());\nassert_eq!(serde_json::from_str::&lt;TaskEconomicsQuery&gt;(\&quot;{}\&quot;).unwrap(), TaskEconomicsQuery::default());\n// a misspelt bound is refused, never read as no bound\nassert!(serde_json::from_str::&lt;TaskEconomicsQuery&gt;(r#\&quot;{\&quot;after\&quot;:\&quot;x\&quot;}\&quot;#).is_err());\n```&quot;,
+  &quot;type&quot;: &quot;object&quot;,
   &quot;properties&quot;: {
     &quot;since&quot;: {
-      &quot;description&quot;: &quot;Answer only tasks started at or after this time (`YYYY-MM-DDTHH:MM:SSZ`).&quot;,
       &quot;type&quot;: [
         &quot;string&quot;,
         &quot;null&quot;
-      ]
+      ],
+      &quot;description&quot;: &quot;Answer only tasks started at or after this time (`YYYY-MM-DDTHH:MM:SSZ`).&quot;
     },
     &quot;until&quot;: {
-      &quot;description&quot;: &quot;Answer only tasks started before this time (`YYYY-MM-DDTHH:MM:SSZ`).&quot;,
       &quot;type&quot;: [
         &quot;string&quot;,
         &quot;null&quot;
-      ]
+      ],
+      &quot;description&quot;: &quot;Answer only tasks started before this time (`YYYY-MM-DDTHH:MM:SSZ`).&quot;
     }
   },
-  &quot;title&quot;: &quot;TaskEconomicsQuery&quot;,
-  &quot;type&quot;: &quot;object&quot;
+  &quot;additionalProperties&quot;: false,
+  &quot;description&quot;: &quot;Which tasks to answer. A window filters by each task&#39;s `task.started` time, so a task\nwith no start line in the ledgers read is answered only when no window is given.\n\n```\nuse majordomus_cli::economics::tasks::TaskEconomicsQuery;\nlet q: TaskEconomicsQuery = serde_json::from_str(r#\&quot;{\&quot;since\&quot;:\&quot;2026-10-21T00:00:00Z\&quot;}\&quot;#).unwrap();\nassert_eq!(q.since.as_deref(), Some(\&quot;2026-10-21T00:00:00Z\&quot;));\nassert!(q.until.is_none());\nassert_eq!(serde_json::from_str::&lt;TaskEconomicsQuery&gt;(\&quot;{}\&quot;).unwrap(), TaskEconomicsQuery::default());\n// a misspelt bound is refused, never read as no bound\nassert!(serde_json::from_str::&lt;TaskEconomicsQuery&gt;(r#\&quot;{\&quot;after\&quot;:\&quot;x\&quot;}\&quot;#).is_err());\n```&quot;,
+  &quot;title&quot;: &quot;TaskEconomicsQuery&quot;
 }</pre></div>
   </details>
 </div>
@@ -279,6 +279,11 @@ with no start line in the ledgers read is answered only when no window is given.
     <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
       <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
       <tbody><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">tasks</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">One record per task, in the order the tasks started.</td>
+      </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">count</td>
         <td class="px-3 py-2 font-mono text-xs text-body">integer</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
@@ -289,29 +294,70 @@ with no start line in the ledgers read is answered only when no window is given.
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
         <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Every ledger file read, with its line and skipped-line counts.</td>
       </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">tasks</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
+        <td class="px-3 py-2 font-mono text-heading">window</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">One record per task, in the order the tasks started.</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The window the tasks were filtered by, as given.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">unread</td>
         <td class="px-3 py-2 font-mono text-xs text-body">array</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
         <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Every checkout whose ledger could not be read, and why.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">window</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The window the tasks were filtered by, as given.</td>
       </tr></tbody>
     </table>
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
+  &quot;type&quot;: &quot;object&quot;,
+  &quot;required&quot;: [
+    &quot;count&quot;,
+    &quot;window&quot;,
+    &quot;tasks&quot;,
+    &quot;ledgers&quot;,
+    &quot;unread&quot;
+  ],
+  &quot;description&quot;: &quot;Every task the ledgers read carry, and what was read to answer it.\n\n```\nuse majordomus_cli::economics::tasks::{fold, TaskEconomicsList, TaskEconomicsQuery, TaskEconomicsSource};\nlet text = r#\&quot;{\&quot;ts\&quot;:\&quot;2026-10-21T10:00:00Z\&quot;,\&quot;event\&quot;:\&quot;task.started\&quot;,\&quot;head\&quot;:\&quot;h\&quot;,\&quot;branch\&quot;:\&quot;b\&quot;,\&quot;by\&quot;:\&quot;me\&quot;,\&quot;session\&quot;:\&quot;s-1\&quot;,\&quot;task_id\&quot;:\&quot;t-1\&quot;}\&quot;#;\nlet source = TaskEconomicsSource::parse(\&quot;repo\&quot;, \&quot;ledger.jsonl\&quot;, text);\nlet list: TaskEconomicsList = fold(vec![source], &amp;TaskEconomicsQuery::default());\nassert_eq!((list.count, list.tasks.len()), (1, 1));\nassert_eq!(list.ledgers[0].path, \&quot;ledger.jsonl\&quot;);\nassert!(list.unread.is_empty(), \&quot;fold reads no checkout, so it names none unread\&quot;);\n```&quot;,
+  &quot;title&quot;: &quot;TaskEconomicsList&quot;,
+  &quot;properties&quot;: {
+    &quot;tasks&quot;: {
+      &quot;description&quot;: &quot;One record per task, in the order the tasks started.&quot;,
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;items&quot;: {
+        &quot;$ref&quot;: &quot;#/$defs/TaskEconomicsRecord&quot;
+      }
+    },
+    &quot;count&quot;: {
+      &quot;minimum&quot;: 0,
+      &quot;format&quot;: &quot;uint&quot;,
+      &quot;type&quot;: &quot;integer&quot;,
+      &quot;description&quot;: &quot;How many tasks are answered: the number of distinct task ids within the window.&quot;
+    },
+    &quot;ledgers&quot;: {
+      &quot;items&quot;: {
+        &quot;$ref&quot;: &quot;#/$defs/TaskEconomicsLedger&quot;
+      },
+      &quot;description&quot;: &quot;Every ledger file read, with its line and skipped-line counts.&quot;,
+      &quot;type&quot;: &quot;array&quot;
+    },
+    &quot;window&quot;: {
+      &quot;$ref&quot;: &quot;#/$defs/TaskEconomicsQuery&quot;,
+      &quot;description&quot;: &quot;The window the tasks were filtered by, as given.&quot;
+    },
+    &quot;unread&quot;: {
+      &quot;description&quot;: &quot;Every checkout whose ledger could not be read, and why.&quot;,
+      &quot;items&quot;: {
+        &quot;$ref&quot;: &quot;#/$defs/TaskEconomicsUnread&quot;
+      },
+      &quot;type&quot;: &quot;array&quot;
+    }
+  },
   &quot;$defs&quot;: {
     &quot;TaskEconomicsEpisode&quot;: {
-      &quot;description&quot;: &quot;One episode that carried a task, with the span of the lines it wrote about it.\n\n```\nuse majordomus_cli::economics::tasks::{fold, TaskEconomicsEpisode, TaskEconomicsSource};\nlet line = |ts: &amp;str, event: &amp;str, session: &amp;str| {\n    format!(r#\&quot;{{\&quot;ts\&quot;:\&quot;{ts}\&quot;,\&quot;event\&quot;:\&quot;{event}\&quot;,\&quot;head\&quot;:\&quot;h\&quot;,\&quot;branch\&quot;:\&quot;b\&quot;,\&quot;by\&quot;:\&quot;me\&quot;,\&quot;session\&quot;:\&quot;{session}\&quot;,\&quot;task_id\&quot;:\&quot;t-1\&quot;}}\&quot;#)\n};\nlet text = [\n    line(\&quot;2026-10-21T10:00:00Z\&quot;, \&quot;task.started\&quot;, \&quot;s-1\&quot;),\n    line(\&quot;2026-10-21T11:00:00Z\&quot;, \&quot;task.finished\&quot;, \&quot;s-2\&quot;),\n]\n.join(\&quot;\\n\&quot;);\nlet list = fold(vec![TaskEconomicsSource::parse(\&quot;repo\&quot;, \&quot;ledger.jsonl\&quot;, &amp;text)], &amp;Default::default());\nlet episodes: &amp;[TaskEconomicsEpisode] = &amp;list.tasks[0].episodes;\nassert_eq!(episodes.len(), 2, \&quot;two session stamps are two episodes\&quot;);\nassert_eq!((episodes[1].session.as_str(), episodes[1].lines), (\&quot;s-2\&quot;, 1));\nassert_eq!(episodes[1].first_at, \&quot;2026-10-21T11:00:00Z\&quot;);\n```&quot;,
       &quot;properties&quot;: {
+        &quot;session&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The episode&#39;s session id.&quot;
+        },
         &quot;first_at&quot;: {
           &quot;description&quot;: &quot;The time of the episode&#39;s first line about the task.&quot;,
           &quot;type&quot;: &quot;string&quot;
@@ -321,18 +367,14 @@ with no start line in the ledgers read is answered only when no window is given.
           &quot;type&quot;: &quot;string&quot;
         },
         &quot;lines&quot;: {
-          &quot;description&quot;: &quot;How many of the episode&#39;s lines are about the task.&quot;,
           &quot;format&quot;: &quot;uint&quot;,
+          &quot;description&quot;: &quot;How many of the episode&#39;s lines are about the task.&quot;,
           &quot;minimum&quot;: 0,
           &quot;type&quot;: &quot;integer&quot;
         },
         &quot;provider&quot;: {
-          &quot;description&quot;: &quot;The provider that ran the episode, when the ledger names it. Left out of the answer\nwhen it does not, so it reads back as empty: without `default` the text form, which\nreads the capability&#39;s JSON, refused every episode whose provider is unknown.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;session&quot;: {
-          &quot;description&quot;: &quot;The episode&#39;s session id.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The provider that ran the episode, when the ledger names it. Left out of the answer\nwhen it does not, so it reads back as empty: without `default` the text form, which\nreads the capability&#39;s JSON, refused every episode whose provider is unknown.&quot;
         }
       },
       &quot;required&quot;: [
@@ -341,178 +383,125 @@ with no start line in the ledgers read is answered only when no window is given.
         &quot;last_at&quot;,
         &quot;lines&quot;
       ],
-      &quot;type&quot;: &quot;object&quot;
-    },
-    &quot;TaskEconomicsField&quot;: {
-      &quot;description&quot;: &quot;A field of the record that nothing observes yet, carrying the reason and the issue that\nwill supply it in place of a value.\n\n```\nuse majordomus_cli::economics::tasks::{fold, TaskEconomicsField, TaskEconomicsSource};\nlet text = r#\&quot;{\&quot;ts\&quot;:\&quot;2026-10-21T10:00:00Z\&quot;,\&quot;event\&quot;:\&quot;task.started\&quot;,\&quot;head\&quot;:\&quot;h\&quot;,\&quot;branch\&quot;:\&quot;b\&quot;,\&quot;by\&quot;:\&quot;me\&quot;,\&quot;task_id\&quot;:\&quot;t-1\&quot;}\&quot;#;\nlet list = fold(vec![TaskEconomicsSource::parse(\&quot;repo\&quot;, \&quot;ledger.jsonl\&quot;, text)], &amp;Default::default());\nlet field: &amp;TaskEconomicsField = &amp;list.tasks[0].ci_reruns;\nlet v = serde_json::to_value(field).unwrap();\nassert_eq!(v[\&quot;status\&quot;], \&quot;not_observed\&quot;);\nassert!(field.reason.contains(\&quot;I3378\&quot;), \&quot;{}\&quot;, field.reason);\n```&quot;,
-      &quot;properties&quot;: {
-        &quot;reason&quot;: {
-          &quot;description&quot;: &quot;Why there is no value, naming what will supply it.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;status&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/TaskEconomicsFieldStatus&quot;,
-          &quot;description&quot;: &quot;Always `not_observed` until the field&#39;s supplier lands.&quot;
-        }
-      },
-      &quot;required&quot;: [
-        &quot;status&quot;,
-        &quot;reason&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
-    },
-    &quot;TaskEconomicsFieldStatus&quot;: {
-      &quot;description&quot;: &quot;Whether a field holds an observation. Its one variant says there is none, which is not a\nzero.\n\n```\nuse majordomus_cli::economics::tasks::TaskEconomicsFieldStatus;\nlet v = serde_json::to_value(TaskEconomicsFieldStatus::NotObserved).unwrap();\nassert_eq!(v, \&quot;not_observed\&quot;);\n```&quot;,
-      &quot;oneOf&quot;: [
-        {
-          &quot;const&quot;: &quot;not_observed&quot;,
-          &quot;description&quot;: &quot;Nothing observes the field yet: there is no value, which is not a zero.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      ]
+      &quot;type&quot;: &quot;object&quot;,
+      &quot;description&quot;: &quot;One episode that carried a task, with the span of the lines it wrote about it.\n\n```\nuse majordomus_cli::economics::tasks::{fold, TaskEconomicsEpisode, TaskEconomicsSource};\nlet line = |ts: &amp;str, event: &amp;str, session: &amp;str| {\n    format!(r#\&quot;{{\&quot;ts\&quot;:\&quot;{ts}\&quot;,\&quot;event\&quot;:\&quot;{event}\&quot;,\&quot;head\&quot;:\&quot;h\&quot;,\&quot;branch\&quot;:\&quot;b\&quot;,\&quot;by\&quot;:\&quot;me\&quot;,\&quot;session\&quot;:\&quot;{session}\&quot;,\&quot;task_id\&quot;:\&quot;t-1\&quot;}}\&quot;#)\n};\nlet text = [\n    line(\&quot;2026-10-21T10:00:00Z\&quot;, \&quot;task.started\&quot;, \&quot;s-1\&quot;),\n    line(\&quot;2026-10-21T11:00:00Z\&quot;, \&quot;task.finished\&quot;, \&quot;s-2\&quot;),\n]\n.join(\&quot;\\n\&quot;);\nlet list = fold(vec![TaskEconomicsSource::parse(\&quot;repo\&quot;, \&quot;ledger.jsonl\&quot;, &amp;text)], &amp;Default::default());\nlet episodes: &amp;[TaskEconomicsEpisode] = &amp;list.tasks[0].episodes;\nassert_eq!(episodes.len(), 2, \&quot;two session stamps are two episodes\&quot;);\nassert_eq!((episodes[1].session.as_str(), episodes[1].lines), (\&quot;s-2\&quot;, 1));\nassert_eq!(episodes[1].first_at, \&quot;2026-10-21T11:00:00Z\&quot;);\n```&quot;
     },
     &quot;TaskEconomicsLedger&quot;: {
-      &quot;description&quot;: &quot;One ledger file that was read, with how many of its lines were entries and how many\ncould not be read as one.\n\n```\nuse majordomus_cli::economics::tasks::{TaskEconomicsLedger, TaskEconomicsSource};\nlet s = TaskEconomicsSource::parse(\&quot;repo\&quot;, \&quot;.ai/local/state/ledger.jsonl\&quot;, \&quot;{}\\nnot json\\n\&quot;);\nlet ledger: &amp;TaskEconomicsLedger = &amp;s.ledgers[0];\nassert_eq!(ledger.checkout, \&quot;repo\&quot;);\nassert_eq!(ledger.path, \&quot;.ai/local/state/ledger.jsonl\&quot;);\nassert_eq!((ledger.lines, ledger.skipped), (0, 2), \&quot;neither line is a ledger entry\&quot;);\n```&quot;,
-      &quot;properties&quot;: {
-        &quot;checkout&quot;: {
-          &quot;description&quot;: &quot;The checkout the ledger belongs to.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;lines&quot;: {
-          &quot;description&quot;: &quot;How many lines were read as ledger entries.&quot;,
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;path&quot;: {
-          &quot;description&quot;: &quot;The file, relative to the checkout.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;skipped&quot;: {
-          &quot;description&quot;: &quot;How many non-empty lines could not be read as ledger entries.&quot;,
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        }
-      },
       &quot;required&quot;: [
         &quot;checkout&quot;,
         &quot;path&quot;,
         &quot;lines&quot;,
         &quot;skipped&quot;
       ],
+      &quot;description&quot;: &quot;One ledger file that was read, with how many of its lines were entries and how many\ncould not be read as one.\n\n```\nuse majordomus_cli::economics::tasks::{TaskEconomicsLedger, TaskEconomicsSource};\nlet s = TaskEconomicsSource::parse(\&quot;repo\&quot;, \&quot;.ai/local/state/ledger.jsonl\&quot;, \&quot;{}\\nnot json\\n\&quot;);\nlet ledger: &amp;TaskEconomicsLedger = &amp;s.ledgers[0];\nassert_eq!(ledger.checkout, \&quot;repo\&quot;);\nassert_eq!(ledger.path, \&quot;.ai/local/state/ledger.jsonl\&quot;);\nassert_eq!((ledger.lines, ledger.skipped), (0, 2), \&quot;neither line is a ledger entry\&quot;);\n```&quot;,
+      &quot;properties&quot;: {
+        &quot;path&quot;: {
+          &quot;description&quot;: &quot;The file, relative to the checkout.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;skipped&quot;: {
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;,
+          &quot;description&quot;: &quot;How many non-empty lines could not be read as ledger entries.&quot;,
+          &quot;format&quot;: &quot;uint&quot;
+        },
+        &quot;lines&quot;: {
+          &quot;type&quot;: &quot;integer&quot;,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;description&quot;: &quot;How many lines were read as ledger entries.&quot;,
+          &quot;minimum&quot;: 0
+        },
+        &quot;checkout&quot;: {
+          &quot;description&quot;: &quot;The checkout the ledger belongs to.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      },
       &quot;type&quot;: &quot;object&quot;
     },
     &quot;TaskEconomicsQuery&quot;: {
       &quot;additionalProperties&quot;: false,
-      &quot;description&quot;: &quot;Which tasks to answer. A window filters by each task&#39;s `task.started` time, so a task\nwith no start line in the ledgers read is answered only when no window is given.\n\n```\nuse majordomus_cli::economics::tasks::TaskEconomicsQuery;\nlet q: TaskEconomicsQuery = serde_json::from_str(r#\&quot;{\&quot;since\&quot;:\&quot;2026-10-21T00:00:00Z\&quot;}\&quot;#).unwrap();\nassert_eq!(q.since.as_deref(), Some(\&quot;2026-10-21T00:00:00Z\&quot;));\nassert!(q.until.is_none());\nassert_eq!(serde_json::from_str::&lt;TaskEconomicsQuery&gt;(\&quot;{}\&quot;).unwrap(), TaskEconomicsQuery::default());\n// a misspelt bound is refused, never read as no bound\nassert!(serde_json::from_str::&lt;TaskEconomicsQuery&gt;(r#\&quot;{\&quot;after\&quot;:\&quot;x\&quot;}\&quot;#).is_err());\n```&quot;,
       &quot;properties&quot;: {
-        &quot;since&quot;: {
-          &quot;description&quot;: &quot;Answer only tasks started at or after this time (`YYYY-MM-DDTHH:MM:SSZ`).&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        },
         &quot;until&quot;: {
           &quot;description&quot;: &quot;Answer only tasks started before this time (`YYYY-MM-DDTHH:MM:SSZ`).&quot;,
           &quot;type&quot;: [
             &quot;string&quot;,
             &quot;null&quot;
           ]
+        },
+        &quot;since&quot;: {
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ],
+          &quot;description&quot;: &quot;Answer only tasks started at or after this time (`YYYY-MM-DDTHH:MM:SSZ`).&quot;
+        }
+      },
+      &quot;description&quot;: &quot;Which tasks to answer. A window filters by each task&#39;s `task.started` time, so a task\nwith no start line in the ledgers read is answered only when no window is given.\n\n```\nuse majordomus_cli::economics::tasks::TaskEconomicsQuery;\nlet q: TaskEconomicsQuery = serde_json::from_str(r#\&quot;{\&quot;since\&quot;:\&quot;2026-10-21T00:00:00Z\&quot;}\&quot;#).unwrap();\nassert_eq!(q.since.as_deref(), Some(\&quot;2026-10-21T00:00:00Z\&quot;));\nassert!(q.until.is_none());\nassert_eq!(serde_json::from_str::&lt;TaskEconomicsQuery&gt;(\&quot;{}\&quot;).unwrap(), TaskEconomicsQuery::default());\n// a misspelt bound is refused, never read as no bound\nassert!(serde_json::from_str::&lt;TaskEconomicsQuery&gt;(r#\&quot;{\&quot;after\&quot;:\&quot;x\&quot;}\&quot;#).is_err());\n```&quot;,
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;TaskEconomicsUnread&quot;: {
+      &quot;description&quot;: &quot;A checkout whose ledger was not read, and the reason, so a missing ledger is never read\nas a checkout with no tasks.\n\n```\nuse majordomus_cli::economics::tasks::{tasks, TaskEconomicsQuery, TaskEconomicsUnread};\nlet dir = tempfile::tempdir().unwrap();\nlet list = tasks(dir.path(), &amp;TaskEconomicsQuery::default());\nlet unread: &amp;TaskEconomicsUnread = &amp;list.unread[0];\nassert_eq!(unread.checkout, dir.path().display().to_string());\nassert_eq!(unread.reason, \&quot;no ledger under .ai/local/state\&quot;);\n```&quot;,
+      &quot;type&quot;: &quot;object&quot;,
+      &quot;properties&quot;: {
+        &quot;reason&quot;: {
+          &quot;description&quot;: &quot;Why its ledger was not read.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;checkout&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The checkout.&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;checkout&quot;,
+        &quot;reason&quot;
+      ]
+    },
+    &quot;TaskEconomicsState&quot;: {
+      &quot;oneOf&quot;: [
+        {
+          &quot;description&quot;: &quot;No `task.finished` line was read for the task.&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;open&quot;
+        },
+        {
+          &quot;description&quot;: &quot;A `task.finished` line was read for the task.&quot;,
+          &quot;const&quot;: &quot;finished&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      ],
+      &quot;description&quot;: &quot;Whether a task has finished, as the command line, MCP and HTTP spell it.\n\n```\nuse majordomus_cli::economics::tasks::TaskEconomicsState;\nassert_eq!(serde_json::to_value(TaskEconomicsState::Open).unwrap(), \&quot;open\&quot;);\nassert_eq!(serde_json::to_value(TaskEconomicsState::Finished).unwrap(), \&quot;finished\&quot;);\n```&quot;
+    },
+    &quot;TaskEconomicsFieldStatus&quot;: {
+      &quot;oneOf&quot;: [
+        {
+          &quot;const&quot;: &quot;not_observed&quot;,
+          &quot;description&quot;: &quot;Nothing observes the field yet: there is no value, which is not a zero.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      ],
+      &quot;description&quot;: &quot;Whether a field holds an observation. Its one variant says there is none, which is not a\nzero.\n\n```\nuse majordomus_cli::economics::tasks::TaskEconomicsFieldStatus;\nlet v = serde_json::to_value(TaskEconomicsFieldStatus::NotObserved).unwrap();\nassert_eq!(v, \&quot;not_observed\&quot;);\n```&quot;
+    },
+    &quot;TaskEconomicsField&quot;: {
+      &quot;required&quot;: [
+        &quot;status&quot;,
+        &quot;reason&quot;
+      ],
+      &quot;description&quot;: &quot;A field of the record that nothing observes yet, carrying the reason and the issue that\nwill supply it in place of a value.\n\n```\nuse majordomus_cli::economics::tasks::{fold, TaskEconomicsField, TaskEconomicsSource};\nlet text = r#\&quot;{\&quot;ts\&quot;:\&quot;2026-10-21T10:00:00Z\&quot;,\&quot;event\&quot;:\&quot;task.started\&quot;,\&quot;head\&quot;:\&quot;h\&quot;,\&quot;branch\&quot;:\&quot;b\&quot;,\&quot;by\&quot;:\&quot;me\&quot;,\&quot;task_id\&quot;:\&quot;t-1\&quot;}\&quot;#;\nlet list = fold(vec![TaskEconomicsSource::parse(\&quot;repo\&quot;, \&quot;ledger.jsonl\&quot;, text)], &amp;Default::default());\nlet field: &amp;TaskEconomicsField = &amp;list.tasks[0].ci_reruns;\nlet v = serde_json::to_value(field).unwrap();\nassert_eq!(v[\&quot;status\&quot;], \&quot;not_observed\&quot;);\nassert!(field.reason.contains(\&quot;I3378\&quot;), \&quot;{}\&quot;, field.reason);\n```&quot;,
+      &quot;properties&quot;: {
+        &quot;reason&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;Why there is no value, naming what will supply it.&quot;
+        },
+        &quot;status&quot;: {
+          &quot;description&quot;: &quot;Always `not_observed` until the field&#39;s supplier lands.&quot;,
+          &quot;$ref&quot;: &quot;#/$defs/TaskEconomicsFieldStatus&quot;
         }
       },
       &quot;type&quot;: &quot;object&quot;
     },
     &quot;TaskEconomicsRecord&quot;: {
       &quot;description&quot;: &quot;One task&#39;s delivery economics: who carried it, when, how often `finish` refused it, and\nthe fields nothing observes yet, each saying why it has no value.\n\n```\nuse majordomus_cli::economics::tasks::{\n    fold, TaskEconomicsRecord, TaskEconomicsSource, TaskEconomicsState,\n};\nlet text = r#\&quot;{\&quot;ts\&quot;:\&quot;2026-10-21T10:00:00Z\&quot;,\&quot;event\&quot;:\&quot;task.started\&quot;,\&quot;head\&quot;:\&quot;h\&quot;,\&quot;branch\&quot;:\&quot;b\&quot;,\n    \&quot;by\&quot;:\&quot;me\&quot;,\&quot;session\&quot;:\&quot;s-1\&quot;,\&quot;task_id\&quot;:\&quot;t-1\&quot;,\&quot;issue\&quot;:\&quot;I3376\&quot;}\&quot;#;\nlet source = TaskEconomicsSource::parse(\&quot;repo\&quot;, \&quot;ledger.jsonl\&quot;, &amp;text.replace(&#39;\\n&#39;, \&quot;\&quot;));\nlet list = fold(vec![source], &amp;Default::default());\nlet r: &amp;TaskEconomicsRecord = &amp;list.tasks[0];\nassert_eq!((r.task_id.as_str(), r.branch.as_str()), (\&quot;t-1\&quot;, \&quot;b\&quot;));\nassert_eq!(r.state, TaskEconomicsState::Open);\nassert_eq!(r.outcome, \&quot;active\&quot;);\nassert_eq!(r.wall_seconds, None, \&quot;an open task with no refusal has no end\&quot;);\nassert_eq!(r.issue.as_deref(), Some(\&quot;I3376\&quot;));\nassert!(r.spend.reason.contains(\&quot;I3379\&quot;));\n```&quot;,
-      &quot;properties&quot;: {
-        &quot;accepted&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/TaskEconomicsField&quot;,
-          &quot;description&quot;: &quot;Whether the task&#39;s result was accepted.&quot;
-        },
-        &quot;branch&quot;: {
-          &quot;description&quot;: &quot;The branch the task started on.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;checkout&quot;: {
-          &quot;description&quot;: &quot;The checkout whose ledger carries the task.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;ci_reruns&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/TaskEconomicsField&quot;,
-          &quot;description&quot;: &quot;CI runs of the task&#39;s work that were rerun.&quot;
-        },
-        &quot;ended_at&quot;: {
-          &quot;description&quot;: &quot;The time of the task&#39;s last `task.finished` line, or of its last `task.refused` line\nwhile it has none.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;episodes&quot;: {
-          &quot;description&quot;: &quot;The episodes that carried the task, each with the span of its lines about it.&quot;,
-          &quot;items&quot;: {
-            &quot;$ref&quot;: &quot;#/$defs/TaskEconomicsEpisode&quot;
-          },
-          &quot;type&quot;: &quot;array&quot;
-        },
-        &quot;intent&quot;: {
-          &quot;description&quot;: &quot;The intent the task was started under, when it named one.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;interventions&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/TaskEconomicsField&quot;,
-          &quot;description&quot;: &quot;Human interventions during the task.&quot;
-        },
-        &quot;issue&quot;: {
-          &quot;description&quot;: &quot;The issue the task was started under, when it named one.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;outcome&quot;: {
-          &quot;description&quot;: &quot;The outcome as recorded: the finish&#39;s outcome, or `active` / `handed_over` while open.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;refusals&quot;: {
-          &quot;description&quot;: &quot;How many times `finish` refused the task.&quot;,
-          &quot;format&quot;: &quot;uint32&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;spend&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/TaskEconomicsField&quot;,
-          &quot;description&quot;: &quot;What the task cost.&quot;
-        },
-        &quot;started_at&quot;: {
-          &quot;description&quot;: &quot;The time of the task&#39;s first `task.started` line.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;state&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/TaskEconomicsState&quot;,
-          &quot;description&quot;: &quot;`finished` once a `task.finished` line is read, `open` otherwise.&quot;
-        },
-        &quot;task_id&quot;: {
-          &quot;description&quot;: &quot;The task&#39;s id, as `start` wrote it.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;wall_seconds&quot;: {
-          &quot;description&quot;: &quot;Seconds from `started_at` to `ended_at`; absent while either is.&quot;,
-          &quot;format&quot;: &quot;int64&quot;,
-          &quot;type&quot;: [
-            &quot;integer&quot;,
-            &quot;null&quot;
-          ]
-        }
-      },
       &quot;required&quot;: [
         &quot;task_id&quot;,
         &quot;checkout&quot;,
@@ -526,85 +515,96 @@ with no start line in the ledgers read is answered only when no window is given.
         &quot;spend&quot;,
         &quot;accepted&quot;
       ],
-      &quot;type&quot;: &quot;object&quot;
-    },
-    &quot;TaskEconomicsState&quot;: {
-      &quot;description&quot;: &quot;Whether a task has finished, as the command line, MCP and HTTP spell it.\n\n```\nuse majordomus_cli::economics::tasks::TaskEconomicsState;\nassert_eq!(serde_json::to_value(TaskEconomicsState::Open).unwrap(), \&quot;open\&quot;);\nassert_eq!(serde_json::to_value(TaskEconomicsState::Finished).unwrap(), \&quot;finished\&quot;);\n```&quot;,
-      &quot;oneOf&quot;: [
-        {
-          &quot;const&quot;: &quot;open&quot;,
-          &quot;description&quot;: &quot;No `task.finished` line was read for the task.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;finished&quot;,
-          &quot;description&quot;: &quot;A `task.finished` line was read for the task.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      ]
-    },
-    &quot;TaskEconomicsUnread&quot;: {
-      &quot;description&quot;: &quot;A checkout whose ledger was not read, and the reason, so a missing ledger is never read\nas a checkout with no tasks.\n\n```\nuse majordomus_cli::economics::tasks::{tasks, TaskEconomicsQuery, TaskEconomicsUnread};\nlet dir = tempfile::tempdir().unwrap();\nlet list = tasks(dir.path(), &amp;TaskEconomicsQuery::default());\nlet unread: &amp;TaskEconomicsUnread = &amp;list.unread[0];\nassert_eq!(unread.checkout, dir.path().display().to_string());\nassert_eq!(unread.reason, \&quot;no ledger under .ai/local/state\&quot;);\n```&quot;,
+      &quot;type&quot;: &quot;object&quot;,
       &quot;properties&quot;: {
         &quot;checkout&quot;: {
-          &quot;description&quot;: &quot;The checkout.&quot;,
+          &quot;description&quot;: &quot;The checkout whose ledger carries the task.&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
-        &quot;reason&quot;: {
-          &quot;description&quot;: &quot;Why its ledger was not read.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+        &quot;outcome&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The outcome as recorded: the finish&#39;s outcome, or `active` / `handed_over` while open.&quot;
+        },
+        &quot;branch&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The branch the task started on.&quot;
+        },
+        &quot;spend&quot;: {
+          &quot;description&quot;: &quot;What the task cost.&quot;,
+          &quot;$ref&quot;: &quot;#/$defs/TaskEconomicsField&quot;
+        },
+        &quot;ci_reruns&quot;: {
+          &quot;description&quot;: &quot;CI runs of the task&#39;s work that were rerun.&quot;,
+          &quot;$ref&quot;: &quot;#/$defs/TaskEconomicsField&quot;
+        },
+        &quot;issue&quot;: {
+          &quot;description&quot;: &quot;The issue the task was started under, when it named one.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;task_id&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The task&#39;s id, as `start` wrote it.&quot;
+        },
+        &quot;wall_seconds&quot;: {
+          &quot;type&quot;: [
+            &quot;integer&quot;,
+            &quot;null&quot;
+          ],
+          &quot;description&quot;: &quot;Seconds from `started_at` to `ended_at`; absent while either is.&quot;,
+          &quot;format&quot;: &quot;int64&quot;
+        },
+        &quot;ended_at&quot;: {
+          &quot;description&quot;: &quot;The time of the task&#39;s last `task.finished` line, or of its last `task.refused` line\nwhile it has none.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;accepted&quot;: {
+          &quot;description&quot;: &quot;Whether the task&#39;s result was accepted.&quot;,
+          &quot;$ref&quot;: &quot;#/$defs/TaskEconomicsField&quot;
+        },
+        &quot;refusals&quot;: {
+          &quot;format&quot;: &quot;uint32&quot;,
+          &quot;description&quot;: &quot;How many times `finish` refused the task.&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;interventions&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/TaskEconomicsField&quot;,
+          &quot;description&quot;: &quot;Human interventions during the task.&quot;
+        },
+        &quot;episodes&quot;: {
+          &quot;items&quot;: {
+            &quot;$ref&quot;: &quot;#/$defs/TaskEconomicsEpisode&quot;
+          },
+          &quot;type&quot;: &quot;array&quot;,
+          &quot;description&quot;: &quot;The episodes that carried the task, each with the span of its lines about it.&quot;
+        },
+        &quot;intent&quot;: {
+          &quot;description&quot;: &quot;The intent the task was started under, when it named one.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;state&quot;: {
+          &quot;description&quot;: &quot;`finished` once a `task.finished` line is read, `open` otherwise.&quot;,
+          &quot;$ref&quot;: &quot;#/$defs/TaskEconomicsState&quot;
+        },
+        &quot;started_at&quot;: {
+          &quot;description&quot;: &quot;The time of the task&#39;s first `task.started` line.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
         }
-      },
-      &quot;required&quot;: [
-        &quot;checkout&quot;,
-        &quot;reason&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
+      }
     }
-  },
-  &quot;description&quot;: &quot;Every task the ledgers read carry, and what was read to answer it.\n\n```\nuse majordomus_cli::economics::tasks::{fold, TaskEconomicsList, TaskEconomicsQuery, TaskEconomicsSource};\nlet text = r#\&quot;{\&quot;ts\&quot;:\&quot;2026-10-21T10:00:00Z\&quot;,\&quot;event\&quot;:\&quot;task.started\&quot;,\&quot;head\&quot;:\&quot;h\&quot;,\&quot;branch\&quot;:\&quot;b\&quot;,\&quot;by\&quot;:\&quot;me\&quot;,\&quot;session\&quot;:\&quot;s-1\&quot;,\&quot;task_id\&quot;:\&quot;t-1\&quot;}\&quot;#;\nlet source = TaskEconomicsSource::parse(\&quot;repo\&quot;, \&quot;ledger.jsonl\&quot;, text);\nlet list: TaskEconomicsList = fold(vec![source], &amp;TaskEconomicsQuery::default());\nassert_eq!((list.count, list.tasks.len()), (1, 1));\nassert_eq!(list.ledgers[0].path, \&quot;ledger.jsonl\&quot;);\nassert!(list.unread.is_empty(), \&quot;fold reads no checkout, so it names none unread\&quot;);\n```&quot;,
-  &quot;properties&quot;: {
-    &quot;count&quot;: {
-      &quot;description&quot;: &quot;How many tasks are answered: the number of distinct task ids within the window.&quot;,
-      &quot;format&quot;: &quot;uint&quot;,
-      &quot;minimum&quot;: 0,
-      &quot;type&quot;: &quot;integer&quot;
-    },
-    &quot;ledgers&quot;: {
-      &quot;description&quot;: &quot;Every ledger file read, with its line and skipped-line counts.&quot;,
-      &quot;items&quot;: {
-        &quot;$ref&quot;: &quot;#/$defs/TaskEconomicsLedger&quot;
-      },
-      &quot;type&quot;: &quot;array&quot;
-    },
-    &quot;tasks&quot;: {
-      &quot;description&quot;: &quot;One record per task, in the order the tasks started.&quot;,
-      &quot;items&quot;: {
-        &quot;$ref&quot;: &quot;#/$defs/TaskEconomicsRecord&quot;
-      },
-      &quot;type&quot;: &quot;array&quot;
-    },
-    &quot;unread&quot;: {
-      &quot;description&quot;: &quot;Every checkout whose ledger could not be read, and why.&quot;,
-      &quot;items&quot;: {
-        &quot;$ref&quot;: &quot;#/$defs/TaskEconomicsUnread&quot;
-      },
-      &quot;type&quot;: &quot;array&quot;
-    },
-    &quot;window&quot;: {
-      &quot;$ref&quot;: &quot;#/$defs/TaskEconomicsQuery&quot;,
-      &quot;description&quot;: &quot;The window the tasks were filtered by, as given.&quot;
-    }
-  },
-  &quot;required&quot;: [
-    &quot;count&quot;,
-    &quot;window&quot;,
-    &quot;tasks&quot;,
-    &quot;ledgers&quot;,
-    &quot;unread&quot;
-  ],
-  &quot;title&quot;: &quot;TaskEconomicsList&quot;,
-  &quot;type&quot;: &quot;object&quot;
+  }
 }</pre></div>
   </details>
 </div>
@@ -635,7 +635,7 @@ with no start line in the ledgers read is answered only when no window is given.
         <div><dt class="text-body-subtle">Rust module</dt><dd class="min-w-0 break-all font-mono text-heading">majordomus_cli::capability::builtin::economics</dd></div>
         <div><dt class="text-body-subtle">input type</dt><dd class="font-mono text-heading">TaskEconomicsQuery</dd></div>
         <div><dt class="text-body-subtle">output type</dt><dd class="font-mono text-heading">TaskEconomicsList</dd></div>
-        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/1112bace3437ee0d82067b1e8f61813e70190078/docs/generated/modules/economics.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/economics.md</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">5cdbf22cd21589ddbe464d5f0987b6bcf4607d05479004d6f815c3b306fdb08a</dd></div>
+        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/docs/generated/modules/economics.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/economics.md</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">3f734f2faf797f0ca7c39b4cd837e68b6619c41c6f6711f3d3aeca8f341934eb</dd></div>
         <div><dt class="text-body-subtle">generated by</dt><dd class="font-mono text-heading">majordomus-cli 1.0.0-alpha.10</dd></div>
       </dl>
     </div>
@@ -691,9 +691,9 @@ with no start line in the ledgers read is answered only when no window is given.
       <div class="min-w-0">
         <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">Project</h2><ul class="space-y-2 text-sm font-medium text-body">
           <li><a href="https://github.com/korczis/prismatic-majordomus" class="hover:text-heading hover:underline">GitHub</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/1112bace3437ee0d82067b1e8f61813e70190078/LICENSE" class="hover:text-heading hover:underline">MIT licence</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/1112bace3437ee0d82067b1e8f61813e70190078/SECURITY.md" class="hover:text-heading hover:underline">Security policy</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/1112bace3437ee0d82067b1e8f61813e70190078/CONTRIBUTING.md" class="hover:text-heading hover:underline">Contributing guide</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/LICENSE" class="hover:text-heading hover:underline">MIT licence</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/SECURITY.md" class="hover:text-heading hover:underline">Security policy</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/CONTRIBUTING.md" class="hover:text-heading hover:underline">Contributing guide</a></li>
         </ul>
       </div>
     </div>
@@ -701,7 +701,7 @@ with no start line in the ledgers read is answered only when no window is given.
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.10</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/1112bace3437ee0d82067b1e8f61813e70190078" class="font-mono underline">1112bac</a> · inputs <span class="font-mono">830f884cc5aa</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/architecture/" class="underline">how this site is derived</a> names them.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.10</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/745db2ea21e02613943face75a2bf95542be1f2e" class="font-mono underline">745db2e</a> · inputs <span class="font-mono">0a58c217d1b7</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/architecture/" class="underline">how this site is derived</a> names them.</p>
     </div>
   </div>
 </footer>

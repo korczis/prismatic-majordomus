@@ -232,19 +232,19 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
-  &quot;additionalProperties&quot;: false,
-  &quot;description&quot;: &quot;Which path to judge.&quot;,
-  &quot;properties&quot;: {
-    &quot;path&quot;: {
-      &quot;description&quot;: &quot;Repository-relative, forward slashes; `./` is stripped. An absolute path or a\n`..` segment is an invalid input.&quot;,
-      &quot;type&quot;: &quot;string&quot;
-    }
-  },
   &quot;required&quot;: [
     &quot;path&quot;
   ],
   &quot;title&quot;: &quot;ClassifyInput&quot;,
-  &quot;type&quot;: &quot;object&quot;
+  &quot;additionalProperties&quot;: false,
+  &quot;properties&quot;: {
+    &quot;path&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;description&quot;: &quot;Repository-relative, forward slashes; `./` is stripped. An absolute path or a\n`..` segment is an invalid input.&quot;
+    }
+  },
+  &quot;type&quot;: &quot;object&quot;,
+  &quot;description&quot;: &quot;Which path to judge.&quot;
 }</pre></div>
   </details>
 </div>
@@ -253,25 +253,25 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
     <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
       <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
       <tbody><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">bytes</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">integer | null</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The size, when the path is an existing file.</td>
-      </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">directory</td>
         <td class="px-3 py-2 font-mono text-xs text-body">boolean</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
         <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Whether the path is a directory; a directory is in when something beneath it can be.</td>
       </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">verdict</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">In or out.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">bytes</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">integer | null</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The size, when the path is an existing file.</td>
+      </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">exists</td>
         <td class="px-3 py-2 font-mono text-xs text-body">boolean</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
         <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Whether the path exists in the work tree; a path that does not is judged by name.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">path</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The path, repository-relative, as judged.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">reason</td>
         <td class="px-3 py-2 font-mono text-xs text-body">one of 2</td>
@@ -284,23 +284,31 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
         <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The pattern or limit that decided: the <code>in</code> pathspec, the <code>out</code> pattern, <code>binary</code>,
 <code>max_bytes</code> or <code>fixtures.max_bytes</code>; absent for <code>undeclared</code>.</td>
       </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">verdict</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
+        <td class="px-3 py-2 font-mono text-heading">path</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">In or out.</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The path, repository-relative, as judged.</td>
       </tr></tbody>
     </table>
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
+  &quot;title&quot;: &quot;Classification&quot;,
+  &quot;type&quot;: &quot;object&quot;,
+  &quot;required&quot;: [
+    &quot;path&quot;,
+    &quot;verdict&quot;,
+    &quot;exists&quot;,
+    &quot;directory&quot;
+  ],
   &quot;$defs&quot;: {
     &quot;Reason&quot;: {
       &quot;description&quot;: &quot;Why a path is out. The order is the order the rules decide in.&quot;,
       &quot;oneOf&quot;: [
         {
+          &quot;type&quot;: &quot;string&quot;,
           &quot;const&quot;: &quot;path&quot;,
-          &quot;description&quot;: &quot;Named under `out.paths`.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;description&quot;: &quot;Named under `out.paths`.&quot;
         },
         {
           &quot;const&quot;: &quot;secret&quot;,
@@ -314,27 +322,27 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
         },
         {
           &quot;const&quot;: &quot;archive&quot;,
-          &quot;description&quot;: &quot;An archive.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;An archive.&quot;
         },
         {
           &quot;const&quot;: &quot;image&quot;,
-          &quot;description&quot;: &quot;An image.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;An image.&quot;
         },
         {
-          &quot;const&quot;: &quot;video&quot;,
           &quot;description&quot;: &quot;Video.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;video&quot;
         },
         {
-          &quot;const&quot;: &quot;pdf&quot;,
+          &quot;type&quot;: &quot;string&quot;,
           &quot;description&quot;: &quot;A PDF document.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;const&quot;: &quot;pdf&quot;
         },
         {
-          &quot;const&quot;: &quot;database_dump&quot;,
           &quot;description&quot;: &quot;A database dump.&quot;,
+          &quot;const&quot;: &quot;database_dump&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
         {
@@ -343,60 +351,60 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
           &quot;type&quot;: &quot;string&quot;
         },
         {
-          &quot;const&quot;: &quot;fixture_over_limit&quot;,
+          &quot;type&quot;: &quot;string&quot;,
           &quot;description&quot;: &quot;A fixture over `out.fixtures.max_bytes`.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;const&quot;: &quot;fixture_over_limit&quot;
         },
         {
+          &quot;type&quot;: &quot;string&quot;,
           &quot;const&quot;: &quot;over_limit&quot;,
-          &quot;description&quot;: &quot;Over `out.max_bytes`.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;description&quot;: &quot;Over `out.max_bytes`.&quot;
         },
         {
-          &quot;const&quot;: &quot;binary&quot;,
           &quot;description&quot;: &quot;Content with a NUL byte in its first `SNIFF_BYTES`: not text.&quot;,
+          &quot;const&quot;: &quot;binary&quot;,
           &quot;type&quot;: &quot;string&quot;
         }
       ]
     },
     &quot;Verdict&quot;: {
-      &quot;description&quot;: &quot;In or out.&quot;,
       &quot;oneOf&quot;: [
         {
-          &quot;const&quot;: &quot;in&quot;,
           &quot;description&quot;: &quot;Read.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;in&quot;
         },
         {
-          &quot;const&quot;: &quot;out&quot;,
           &quot;description&quot;: &quot;Never read; the reason says why.&quot;,
+          &quot;const&quot;: &quot;out&quot;,
           &quot;type&quot;: &quot;string&quot;
         }
-      ]
+      ],
+      &quot;description&quot;: &quot;In or out.&quot;
     }
   },
   &quot;description&quot;: &quot;One path, judged.&quot;,
   &quot;properties&quot;: {
-    &quot;bytes&quot;: {
-      &quot;description&quot;: &quot;The size, when the path is an existing file.&quot;,
-      &quot;format&quot;: &quot;uint64&quot;,
-      &quot;minimum&quot;: 0,
-      &quot;type&quot;: [
-        &quot;integer&quot;,
-        &quot;null&quot;
-      ]
-    },
     &quot;directory&quot;: {
       &quot;description&quot;: &quot;Whether the path is a directory; a directory is in when something beneath it can be.&quot;,
       &quot;type&quot;: &quot;boolean&quot;
     },
-    &quot;exists&quot;: {
-      &quot;description&quot;: &quot;Whether the path exists in the work tree; a path that does not is judged by name.&quot;,
-      &quot;type&quot;: &quot;boolean&quot;
+    &quot;verdict&quot;: {
+      &quot;$ref&quot;: &quot;#/$defs/Verdict&quot;,
+      &quot;description&quot;: &quot;In or out.&quot;
     },
-    &quot;path&quot;: {
-      &quot;description&quot;: &quot;The path, repository-relative, as judged.&quot;,
-      &quot;type&quot;: &quot;string&quot;
+    &quot;bytes&quot;: {
+      &quot;type&quot;: [
+        &quot;integer&quot;,
+        &quot;null&quot;
+      ],
+      &quot;description&quot;: &quot;The size, when the path is an existing file.&quot;,
+      &quot;format&quot;: &quot;uint64&quot;,
+      &quot;minimum&quot;: 0
+    },
+    &quot;exists&quot;: {
+      &quot;type&quot;: &quot;boolean&quot;,
+      &quot;description&quot;: &quot;Whether the path exists in the work tree; a path that does not is judged by name.&quot;
     },
     &quot;reason&quot;: {
       &quot;anyOf&quot;: [
@@ -416,19 +424,11 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
         &quot;null&quot;
       ]
     },
-    &quot;verdict&quot;: {
-      &quot;$ref&quot;: &quot;#/$defs/Verdict&quot;,
-      &quot;description&quot;: &quot;In or out.&quot;
+    &quot;path&quot;: {
+      &quot;description&quot;: &quot;The path, repository-relative, as judged.&quot;,
+      &quot;type&quot;: &quot;string&quot;
     }
-  },
-  &quot;required&quot;: [
-    &quot;path&quot;,
-    &quot;verdict&quot;,
-    &quot;exists&quot;,
-    &quot;directory&quot;
-  ],
-  &quot;title&quot;: &quot;Classification&quot;,
-  &quot;type&quot;: &quot;object&quot;
+  }
 }</pre></div>
   </details>
 </div>
@@ -459,7 +459,7 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
         <div><dt class="text-body-subtle">Rust module</dt><dd class="min-w-0 break-all font-mono text-heading">majordomus_cli::capability::builtin::repository</dd></div>
         <div><dt class="text-body-subtle">input type</dt><dd class="font-mono text-heading">ClassifyInput</dd></div>
         <div><dt class="text-body-subtle">output type</dt><dd class="font-mono text-heading">Classification</dd></div>
-        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/1112bace3437ee0d82067b1e8f61813e70190078/docs/generated/modules/repository.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/repository.md</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">5cdbf22cd21589ddbe464d5f0987b6bcf4607d05479004d6f815c3b306fdb08a</dd></div>
+        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/docs/generated/modules/repository.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/repository.md</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">3f734f2faf797f0ca7c39b4cd837e68b6619c41c6f6711f3d3aeca8f341934eb</dd></div>
         <div><dt class="text-body-subtle">generated by</dt><dd class="font-mono text-heading">majordomus-cli 1.0.0-alpha.10</dd></div>
       </dl>
     </div>
@@ -530,9 +530,9 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
       <div class="min-w-0">
         <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">Project</h2><ul class="space-y-2 text-sm font-medium text-body">
           <li><a href="https://github.com/korczis/prismatic-majordomus" class="hover:text-heading hover:underline">GitHub</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/1112bace3437ee0d82067b1e8f61813e70190078/LICENSE" class="hover:text-heading hover:underline">MIT licence</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/1112bace3437ee0d82067b1e8f61813e70190078/SECURITY.md" class="hover:text-heading hover:underline">Security policy</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/1112bace3437ee0d82067b1e8f61813e70190078/CONTRIBUTING.md" class="hover:text-heading hover:underline">Contributing guide</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/LICENSE" class="hover:text-heading hover:underline">MIT licence</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/SECURITY.md" class="hover:text-heading hover:underline">Security policy</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/CONTRIBUTING.md" class="hover:text-heading hover:underline">Contributing guide</a></li>
         </ul>
       </div>
     </div>
@@ -540,7 +540,7 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.10</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/1112bace3437ee0d82067b1e8f61813e70190078" class="font-mono underline">1112bac</a> · inputs <span class="font-mono">830f884cc5aa</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/architecture/" class="underline">how this site is derived</a> names them.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.10</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/745db2ea21e02613943face75a2bf95542be1f2e" class="font-mono underline">745db2e</a> · inputs <span class="font-mono">0a58c217d1b7</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/architecture/" class="underline">how this site is derived</a> names them.</p>
     </div>
   </div>
 </footer>

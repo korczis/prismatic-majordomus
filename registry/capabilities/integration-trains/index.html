@@ -222,9 +222,9 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
   &quot;additionalProperties&quot;: false,
+  &quot;type&quot;: &quot;object&quot;,
   &quot;description&quot;: &quot;No input.&quot;,
-  &quot;title&quot;: &quot;Empty&quot;,
-  &quot;type&quot;: &quot;object&quot;
+  &quot;title&quot;: &quot;Empty&quot;
 }</pre></div>
   </details>
 </div>
@@ -233,42 +233,6 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
     <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
       <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
       <tbody><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">base</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The integration base.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">diagnostics</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">What makes this answer less than a full one: the queue's own diagnostics (a stale
-observation first), and a dependency cycle when one is found.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">master_sha</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The master commit every link's relation was decided against.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">observed</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">boolean</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Whether a forge observation is recorded in this checkout.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">observed_at</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">When the forge was observed.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">reason</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Why there are no trains to show, when nothing is observed.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">repository</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words"><code>owner/name</code>, when observed.</td>
-      </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">tallies</td>
         <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
@@ -279,459 +243,107 @@ observation first), and a dependency cycle when one is found.</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
         <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Every train, the one whose next link ranks highest in the queue first.</td>
       </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">observed</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">boolean</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Whether a forge observation is recorded in this checkout.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">reason</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Why there are no trains to show, when nothing is observed.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">observed_at</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">When the forge was observed.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">repository</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words"><code>owner/name</code>, when observed.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">master_sha</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The master commit every link's relation was decided against.</td>
+      </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">unattached_prep</td>
         <td class="px-3 py-2 font-mono text-xs text-body">array</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
         <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Prepared heads under <code>refs/prep/</code> whose pull request is no link of any train: open
 and stacked on nothing, or not open at all (landed, closed).</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">base</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The integration base.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">diagnostics</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">What makes this answer less than a full one: the queue's own diagnostics (a stale
+observation first), and a dependency cycle when one is found.</td>
       </tr></tbody>
     </table>
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
+  &quot;description&quot;: &quot;Every train of the observed queue, and why there is none when there is none.&quot;,
   &quot;$defs&quot;: {
-    &quot;BeneathLink&quot;: {
-      &quot;description&quot;: &quot;A pull request below a train that is not open any more.&quot;,
+    &quot;TrainEdgeKind&quot;: {
+      &quot;description&quot;: &quot;How a dependency between two links is declared.&quot;,
+      &quot;oneOf&quot;: [
+        {
+          &quot;const&quot;: &quot;stacked_on&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;Its base branch is the other&#39;s head, or its body says `Stacked on #N`.&quot;
+        },
+        {
+          &quot;description&quot;: &quot;Its body says `Depends on #N`, `Requires #N` or `Land after #N`.&quot;,
+          &quot;const&quot;: &quot;depends_on&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      ]
+    },
+    &quot;TrainTallies&quot;: {
       &quot;properties&quot;: {
-        &quot;number&quot;: {
-          &quot;description&quot;: &quot;Its number.&quot;,
-          &quot;format&quot;: &quot;uint64&quot;,
+        &quot;by_disposition&quot;: {
+          &quot;description&quot;: &quot;Links by disposition word.&quot;,
+          &quot;additionalProperties&quot;: {
+            &quot;type&quot;: &quot;integer&quot;,
+            &quot;format&quot;: &quot;uint&quot;,
+            &quot;minimum&quot;: 0
+          },
+          &quot;type&quot;: &quot;object&quot;
+        },
+        &quot;pending_prep&quot;: {
+          &quot;type&quot;: &quot;integer&quot;,
+          &quot;description&quot;: &quot;Links whose prepared head is not the head the forge serves.&quot;,
           &quot;minimum&quot;: 0,
+          &quot;format&quot;: &quot;uint&quot;
+        },
+        &quot;links&quot;: {
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;,
+          &quot;description&quot;: &quot;Open links across every train.&quot;
+        },
+        &quot;trains&quot;: {
+          &quot;minimum&quot;: 0,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;description&quot;: &quot;Trains.&quot;,
           &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;state&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/DependencyState&quot;,
-          &quot;description&quot;: &quot;What the forge says became of it.&quot;
-        },
-        &quot;url&quot;: {
-          &quot;description&quot;: &quot;The pull request on the forge, when the repository is known.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
         }
       },
       &quot;required&quot;: [
-        &quot;number&quot;,
-        &quot;state&quot;
+        &quot;trains&quot;,
+        &quot;links&quot;,
+        &quot;pending_prep&quot;,
+        &quot;by_disposition&quot;
       ],
-      &quot;type&quot;: &quot;object&quot;
-    },
-    &quot;CheckRunState&quot;: {
-      &quot;description&quot;: &quot;Where one check run stands.&quot;,
-      &quot;oneOf&quot;: [
-        {
-          &quot;const&quot;: &quot;passed&quot;,
-          &quot;description&quot;: &quot;Completed and passed.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;failed&quot;,
-          &quot;description&quot;: &quot;Completed and failed (failure, timed out, cancelled, action required).&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;pending&quot;,
-          &quot;description&quot;: &quot;Queued or running; also what a report that says nothing is taken to be, so a\ndefault is never a pass.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;skipped&quot;,
-          &quot;description&quot;: &quot;Completed as skipped or neutral.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      ]
-    },
-    &quot;DependencyState&quot;: {
-      &quot;description&quot;: &quot;What became of a pull request another one depends on.&quot;,
-      &quot;oneOf&quot;: [
-        {
-          &quot;const&quot;: &quot;open&quot;,
-          &quot;description&quot;: &quot;Still open.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;merged&quot;,
-          &quot;description&quot;: &quot;Merged: the only state that satisfies it.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;closed_unmerged&quot;,
-          &quot;description&quot;: &quot;Closed without a merge: its work never landed, so a person decides.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;unread&quot;,
-          &quot;description&quot;: &quot;Not open, and the forge could not say what became of it — refused, or not a pull\nrequest at all: unknown, never satisfied.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      ]
-    },
-    &quot;IntegrationLane&quot;: {
-      &quot;description&quot;: &quot;The queues the Cockpit and the status table group pull requests into.&quot;,
-      &quot;oneOf&quot;: [
-        {
-          &quot;const&quot;: &quot;ready&quot;,
-          &quot;description&quot;: &quot;The executor may merge it now.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;waiting&quot;,
-          &quot;description&quot;: &quot;Something will happen without a person: a refresh, a check, a dependency.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;repair&quot;,
-          &quot;description&quot;: &quot;A person must change the branch.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;cleanup&quot;,
-          &quot;description&quot;: &quot;Its work is on master already, or a successor that landed replaced it.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;held&quot;,
-          &quot;description&quot;: &quot;Not asking to be merged, held by a label or a setting, unsafe for the executor, or\nundecidable.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      ]
-    },
-    &quot;LinkCheck&quot;: {
-      &quot;description&quot;: &quot;One check run on a link&#39;s head.&quot;,
-      &quot;properties&quot;: {
-        &quot;name&quot;: {
-          &quot;description&quot;: &quot;The check&#39;s name.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;state&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/CheckRunState&quot;,
-          &quot;description&quot;: &quot;Where it stands.&quot;
-        }
-      },
-      &quot;required&quot;: [
-        &quot;name&quot;,
-        &quot;state&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
-    },
-    &quot;PrepState&quot;: {
-      &quot;description&quot;: &quot;Whether a prepared head has reached the forge.&quot;,
-      &quot;oneOf&quot;: [
-        {
-          &quot;const&quot;: &quot;pushed&quot;,
-          &quot;description&quot;: &quot;The prepared head is the pull request&#39;s head: it was pushed.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;pending&quot;,
-          &quot;description&quot;: &quot;The prepared head is another commit: it waits for its turn to be pushed.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      ]
-    },
-    &quot;PreparedHead&quot;: {
-      &quot;description&quot;: &quot;The head the executor prepared for a link under `refs/prep/&lt;n&gt;`.&quot;,
-      &quot;properties&quot;: {
-        &quot;reference&quot;: {
-          &quot;description&quot;: &quot;The ref.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;sha&quot;: {
-          &quot;description&quot;: &quot;The commit it names.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;state&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/PrepState&quot;,
-          &quot;description&quot;: &quot;Whether that commit is the head the forge serves.&quot;
-        }
-      },
-      &quot;required&quot;: [
-        &quot;reference&quot;,
-        &quot;sha&quot;,
-        &quot;state&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
-    },
-    &quot;PullRequestDisposition&quot;: {
-      &quot;description&quot;: &quot;The one classification of an open pull request. Every value carries a machine-readable\nreason in `PullRequestAssessment::reasons`; there is no `mergeable: bool`.&quot;,
-      &quot;oneOf&quot;: [
-        {
-          &quot;const&quot;: &quot;ready&quot;,
-          &quot;description&quot;: &quot;Contains the current master, every required check passed on its head, nothing\nblocks it: the executor may merge it.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;needs_refresh&quot;,
-          &quot;description&quot;: &quot;Merges cleanly but does not contain master: the executor may bring master in (a\nmerge commit on the branch, never a rewrite), after which CI must run again.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;waiting_for_checks&quot;,
-          &quot;description&quot;: &quot;Contains master; a required check has not finished on this head.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;waiting_for_review&quot;,
-          &quot;description&quot;: &quot;A required review is missing or changes were requested.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;waiting_for_dependency&quot;,
-          &quot;description&quot;: &quot;A declared dependency has not landed.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;draft&quot;,
-          &quot;description&quot;: &quot;A draft.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;needs_repair&quot;,
-          &quot;description&quot;: &quot;A required check failed on this head.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;conflicting&quot;,
-          &quot;description&quot;: &quot;Conflicts on authored paths: a person resolves them.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;blocked&quot;,
-          &quot;description&quot;: &quot;A label whose policy is to hold holds it, or the repository allows no merge commit,\nwhich is the only way the executor merges.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;unsafe&quot;,
-          &quot;description&quot;: &quot;The forge has auto-merge armed on it: the forge would merge it on its own, outside the\nexecutor and against whatever master is then. Held until a person disarms it.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;redundant&quot;,
-          &quot;description&quot;: &quot;Its head already landed, its merge changes nothing, or every one of its commits is on\nmaster as an equal patch: strong evidence from git, eligible for closure under policy.\n(Before 0.13 this was the word `superseded`.)&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;superseded&quot;,
-          &quot;description&quot;: &quot;A successor was declared for it by someone the repository lets declare one — an owner,\nmember or collaborator, in a pull request of this repository — and that successor\nlanded: git finds its head or its merge commit in master. The successor is\n`PullRequestAssessment::superseded_by`. Eligible for closure under policy.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;possibly_redundant&quot;,
-          &quot;description&quot;: &quot;Weak evidence: only derived artifacts would change, or its declared successor was merged\nsomewhere master does not contain. Surfaced for a person; never closed automatically.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;other_base&quot;,
-          &quot;description&quot;: &quot;Targets a branch other than the integration base.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;unknown&quot;,
-          &quot;description&quot;: &quot;Something needed to decide could not be observed.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;obsolete&quot;,
-          &quot;description&quot;: &quot;A person marked it obsolete with a label the label policy declares (owner decision\nD3): the only evidence that reaches this word. Listed for a person by cleanup and\nnever closed automatically; age, shared paths or a similar title never make one.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      ]
-    },
-    &quot;RelationToMaster&quot;: {
-      &quot;description&quot;: &quot;What the pull request&#39;s head is to the current master, decided locally by git with\nthis repository&#39;s own merge drivers — never by the forge&#39;s `mergeable`, which cannot\nrun the derived-file driver and calls nearly every pull request here conflicting.&quot;,
-      &quot;oneOf&quot;: [
-        {
-          &quot;description&quot;: &quot;The head is an ancestor of master: every commit already landed.&quot;,
-          &quot;properties&quot;: {
-            &quot;kind&quot;: {
-              &quot;const&quot;: &quot;contained&quot;,
-              &quot;type&quot;: &quot;string&quot;
-            }
-          },
-          &quot;required&quot;: [
-            &quot;kind&quot;
-          ],
-          &quot;type&quot;: &quot;object&quot;
-        },
-        {
-          &quot;description&quot;: &quot;Merging the head into master changes nothing: its patch is already fully there.&quot;,
-          &quot;properties&quot;: {
-            &quot;kind&quot;: {
-              &quot;const&quot;: &quot;superseded&quot;,
-              &quot;type&quot;: &quot;string&quot;
-            }
-          },
-          &quot;required&quot;: [
-            &quot;kind&quot;
-          ],
-          &quot;type&quot;: &quot;object&quot;
-        },
-        {
-          &quot;description&quot;: &quot;The merge would conflict or change only derived output, but every commit the head has\nand master lacks is on master already as an equal patch (`git cherry` marks each `-`):\nthe change landed, and master moved on past it. Never a partial match, and never a\nhead that carries a merge commit of its own, whose resolution has no patch to compare.&quot;,
-          &quot;properties&quot;: {
-            &quot;commits&quot;: {
-              &quot;description&quot;: &quot;How many commits, every one of them already on master.&quot;,
-              &quot;format&quot;: &quot;uint64&quot;,
-              &quot;minimum&quot;: 0,
-              &quot;type&quot;: &quot;integer&quot;
-            },
-            &quot;kind&quot;: {
-              &quot;const&quot;: &quot;patch_ids_upstream&quot;,
-              &quot;type&quot;: &quot;string&quot;
-            }
-          },
-          &quot;required&quot;: [
-            &quot;kind&quot;,
-            &quot;commits&quot;
-          ],
-          &quot;type&quot;: &quot;object&quot;
-        },
-        {
-          &quot;description&quot;: &quot;Merging changes only derived artifacts: the authored change is already on master,\nand what differs is output the generators rewrite.&quot;,
-          &quot;properties&quot;: {
-            &quot;kind&quot;: {
-              &quot;const&quot;: &quot;derived_only&quot;,
-              &quot;type&quot;: &quot;string&quot;
-            },
-            &quot;paths&quot;: {
-              &quot;description&quot;: &quot;The derived paths that would change.&quot;,
-              &quot;items&quot;: {
-                &quot;type&quot;: &quot;string&quot;
-              },
-              &quot;type&quot;: &quot;array&quot;
-            }
-          },
-          &quot;required&quot;: [
-            &quot;kind&quot;,
-            &quot;paths&quot;
-          ],
-          &quot;type&quot;: &quot;object&quot;
-        },
-        {
-          &quot;description&quot;: &quot;The head already contains master and merges cleanly.&quot;,
-          &quot;properties&quot;: {
-            &quot;authored&quot;: {
-              &quot;description&quot;: &quot;Authored (non-derived) paths the merge changes.&quot;,
-              &quot;items&quot;: {
-                &quot;type&quot;: &quot;string&quot;
-              },
-              &quot;type&quot;: &quot;array&quot;
-            },
-            &quot;kind&quot;: {
-              &quot;const&quot;: &quot;up_to_date&quot;,
-              &quot;type&quot;: &quot;string&quot;
-            },
-            &quot;owes_version&quot;: {
-              &quot;description&quot;: &quot;The version a landing of this head allocates, when master allocates at landing\n(ADR 0134) and the head does not carry it: the head owes a refresh even though it\ncontains master. Absent when the policy does not allocate, or the head carries it.&quot;,
-              &quot;type&quot;: [
-                &quot;string&quot;,
-                &quot;null&quot;
-              ]
-            }
-          },
-          &quot;required&quot;: [
-            &quot;kind&quot;,
-            &quot;authored&quot;
-          ],
-          &quot;type&quot;: &quot;object&quot;
-        },
-        {
-          &quot;description&quot;: &quot;The head does not contain master, yet master holds nothing the head lacks: merging it\nwrites the head&#39;s own tree, and every commit master has beyond it is a merge commit.\nThat is a head stacked on a pull request that has since landed. A verdict on the head\nis then a verdict on what master becomes, tree and listed history alike, exactly as\nwhen the head contains master; and no path is merged at all, so the forge needs no\ndriver for it.&quot;,
-          &quot;properties&quot;: {
-            &quot;authored&quot;: {
-              &quot;description&quot;: &quot;Authored (non-derived) paths the merge changes.&quot;,
-              &quot;items&quot;: {
-                &quot;type&quot;: &quot;string&quot;
-              },
-              &quot;type&quot;: &quot;array&quot;
-            },
-            &quot;behind&quot;: {
-              &quot;description&quot;: &quot;Commits on master the head does not have.&quot;,
-              &quot;format&quot;: &quot;uint64&quot;,
-              &quot;minimum&quot;: 0,
-              &quot;type&quot;: &quot;integer&quot;
-            },
-            &quot;kind&quot;: {
-              &quot;const&quot;: &quot;carries_master&quot;,
-              &quot;type&quot;: &quot;string&quot;
-            }
-          },
-          &quot;required&quot;: [
-            &quot;kind&quot;,
-            &quot;behind&quot;,
-            &quot;authored&quot;
-          ],
-          &quot;type&quot;: &quot;object&quot;
-        },
-        {
-          &quot;description&quot;: &quot;The head does not contain master, but the merge is clean with the derived driver.&quot;,
-          &quot;properties&quot;: {
-            &quot;authored&quot;: {
-              &quot;description&quot;: &quot;Authored paths the merge changes.&quot;,
-              &quot;items&quot;: {
-                &quot;type&quot;: &quot;string&quot;
-              },
-              &quot;type&quot;: &quot;array&quot;
-            },
-            &quot;behind&quot;: {
-              &quot;description&quot;: &quot;Commits on master the head does not have.&quot;,
-              &quot;format&quot;: &quot;uint64&quot;,
-              &quot;minimum&quot;: 0,
-              &quot;type&quot;: &quot;integer&quot;
-            },
-            &quot;kind&quot;: {
-              &quot;const&quot;: &quot;behind&quot;,
-              &quot;type&quot;: &quot;string&quot;
-            }
-          },
-          &quot;required&quot;: [
-            &quot;kind&quot;,
-            &quot;behind&quot;,
-            &quot;authored&quot;
-          ],
-          &quot;type&quot;: &quot;object&quot;
-        },
-        {
-          &quot;description&quot;: &quot;Merging conflicts on authored paths: a person must resolve it.&quot;,
-          &quot;properties&quot;: {
-            &quot;kind&quot;: {
-              &quot;const&quot;: &quot;conflicting&quot;,
-              &quot;type&quot;: &quot;string&quot;
-            },
-            &quot;paths&quot;: {
-              &quot;description&quot;: &quot;The conflicting authored paths.&quot;,
-              &quot;items&quot;: {
-                &quot;type&quot;: &quot;string&quot;
-              },
-              &quot;type&quot;: &quot;array&quot;
-            }
-          },
-          &quot;required&quot;: [
-            &quot;kind&quot;,
-            &quot;paths&quot;
-          ],
-          &quot;type&quot;: &quot;object&quot;
-        },
-        {
-          &quot;description&quot;: &quot;Git could not answer (the head is not fetched, or git failed); the reason.&quot;,
-          &quot;properties&quot;: {
-            &quot;kind&quot;: {
-              &quot;const&quot;: &quot;unknown&quot;,
-              &quot;type&quot;: &quot;string&quot;
-            },
-            &quot;reason&quot;: {
-              &quot;description&quot;: &quot;Why.&quot;,
-              &quot;type&quot;: &quot;string&quot;
-            }
-          },
-          &quot;required&quot;: [
-            &quot;kind&quot;,
-            &quot;reason&quot;
-          ],
-          &quot;type&quot;: &quot;object&quot;
-        }
-      ]
+      &quot;type&quot;: &quot;object&quot;,
+      &quot;description&quot;: &quot;Counts over every train.&quot;
     },
     &quot;RequiredCheckState&quot;: {
       &quot;description&quot;: &quot;The state of the repository&#39;s *required* checks on one head, which is the only check\nstate a merge decision reads. A visible green check that is not required proves nothing,\nand a required check that is absent is not a pass.&quot;,
@@ -742,223 +354,63 @@ and stacked on nothing, or not open at all (landed, closed).</td>
           &quot;type&quot;: &quot;string&quot;
         },
         {
+          &quot;type&quot;: &quot;string&quot;,
           &quot;const&quot;: &quot;skipped&quot;,
-          &quot;description&quot;: &quot;Every required check passed, at least one of them by a skip the policy permits for\nthat context. A skip the policy does not permit is not a pass: it is `missing`.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;description&quot;: &quot;Every required check passed, at least one of them by a skip the policy permits for\nthat context. A skip the policy does not permit is not a pass: it is `missing`.&quot;
         },
         {
           &quot;const&quot;: &quot;pending&quot;,
-          &quot;description&quot;: &quot;A required check is queued or running.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;A required check is queued or running.&quot;
         },
         {
-          &quot;const&quot;: &quot;failed&quot;,
+          &quot;type&quot;: &quot;string&quot;,
           &quot;description&quot;: &quot;A required check failed.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;const&quot;: &quot;failed&quot;
         },
         {
           &quot;const&quot;: &quot;missing&quot;,
-          &quot;description&quot;: &quot;A required check has not reported on this head at all.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;A required check has not reported on this head at all.&quot;
         },
         {
-          &quot;const&quot;: &quot;unknown&quot;,
           &quot;description&quot;: &quot;The repository&#39;s required checks could not be read.&quot;,
+          &quot;const&quot;: &quot;unknown&quot;,
           &quot;type&quot;: &quot;string&quot;
         }
       ]
     },
-    &quot;Train&quot;: {
-      &quot;description&quot;: &quot;One train: open pull requests joined by confirmed dependencies, in the order they land.&quot;,
-      &quot;properties&quot;: {
-        &quot;beneath&quot;: {
-          &quot;description&quot;: &quot;The pull requests below the train that are no longer open — landed, closed without a\nmerge, or unread — which a link still declares.&quot;,
-          &quot;items&quot;: {
-            &quot;$ref&quot;: &quot;#/$defs/BeneathLink&quot;
-          },
-          &quot;type&quot;: &quot;array&quot;
-        },
-        &quot;by_disposition&quot;: {
-          &quot;additionalProperties&quot;: {
-            &quot;format&quot;: &quot;uint&quot;,
-            &quot;minimum&quot;: 0,
-            &quot;type&quot;: &quot;integer&quot;
-          },
-          &quot;description&quot;: &quot;Links by disposition word.&quot;,
-          &quot;type&quot;: &quot;object&quot;
-        },
-        &quot;edges&quot;: {
-          &quot;description&quot;: &quot;Every confirmed dependency of a link, upper link first.&quot;,
-          &quot;items&quot;: {
-            &quot;$ref&quot;: &quot;#/$defs/TrainEdge&quot;
-          },
-          &quot;type&quot;: &quot;array&quot;
-        },
-        &quot;id&quot;: {
-          &quot;description&quot;: &quot;`train-&lt;n&gt;`, after the first root in turn order: stable while that link is open.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;links&quot;: {
-          &quot;description&quot;: &quot;Every open link, in turn order — `TrainLink::position` 1 first.&quot;,
-          &quot;items&quot;: {
-            &quot;$ref&quot;: &quot;#/$defs/TrainLink&quot;
-          },
-          &quot;type&quot;: &quot;array&quot;
-        },
-        &quot;next&quot;: {
-          &quot;description&quot;: &quot;The first link, in turn order, whose every dependency has landed: the train&#39;s next\nmerge as far as order is concerned (its disposition says whether it can merge now).&quot;,
-          &quot;format&quot;: &quot;uint64&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: [
-            &quot;integer&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;roots&quot;: {
-          &quot;description&quot;: &quot;The links that land first: no open link of the train is below them.&quot;,
-          &quot;items&quot;: {
-            &quot;format&quot;: &quot;uint64&quot;,
-            &quot;minimum&quot;: 0,
-            &quot;type&quot;: &quot;integer&quot;
-          },
-          &quot;type&quot;: &quot;array&quot;
-        },
-        &quot;tops&quot;: {
-          &quot;description&quot;: &quot;The links at the top: no link of the train is stacked on them.&quot;,
-          &quot;items&quot;: {
-            &quot;format&quot;: &quot;uint64&quot;,
-            &quot;minimum&quot;: 0,
-            &quot;type&quot;: &quot;integer&quot;
-          },
-          &quot;type&quot;: &quot;array&quot;
-        }
-      },
-      &quot;required&quot;: [
-        &quot;id&quot;,
-        &quot;roots&quot;,
-        &quot;tops&quot;,
-        &quot;links&quot;,
-        &quot;edges&quot;,
-        &quot;beneath&quot;,
-        &quot;by_disposition&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
-    },
-    &quot;TrainEdge&quot;: {
-      &quot;description&quot;: &quot;A confirmed dependency between two pull requests of a train.&quot;,
-      &quot;properties&quot;: {
-        &quot;from&quot;: {
-          &quot;description&quot;: &quot;The upper link: the one that depends.&quot;,
-          &quot;format&quot;: &quot;uint64&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;kind&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/TrainEdgeKind&quot;,
-          &quot;description&quot;: &quot;How the dependency is declared.&quot;
-        },
-        &quot;satisfied&quot;: {
-          &quot;description&quot;: &quot;Whether it is satisfied: the pull request below landed.&quot;,
-          &quot;type&quot;: &quot;boolean&quot;
-        },
-        &quot;to&quot;: {
-          &quot;description&quot;: &quot;The pull request it stands on.&quot;,
-          &quot;format&quot;: &quot;uint64&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        }
-      },
-      &quot;required&quot;: [
-        &quot;from&quot;,
-        &quot;to&quot;,
-        &quot;kind&quot;,
-        &quot;satisfied&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
-    },
-    &quot;TrainEdgeKind&quot;: {
-      &quot;description&quot;: &quot;How a dependency between two links is declared.&quot;,
+    &quot;DependencyState&quot;: {
+      &quot;description&quot;: &quot;What became of a pull request another one depends on.&quot;,
       &quot;oneOf&quot;: [
         {
-          &quot;const&quot;: &quot;stacked_on&quot;,
-          &quot;description&quot;: &quot;Its base branch is the other&#39;s head, or its body says `Stacked on #N`.&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;open&quot;,
+          &quot;description&quot;: &quot;Still open.&quot;
+        },
+        {
+          &quot;description&quot;: &quot;Merged: the only state that satisfies it.&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;merged&quot;
+        },
+        {
+          &quot;const&quot;: &quot;closed_unmerged&quot;,
+          &quot;description&quot;: &quot;Closed without a merge: its work never landed, so a person decides.&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
         {
-          &quot;const&quot;: &quot;depends_on&quot;,
-          &quot;description&quot;: &quot;Its body says `Depends on #N`, `Requires #N` or `Land after #N`.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;const&quot;: &quot;unread&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;Not open, and the forge could not say what became of it — refused, or not a pull\nrequest at all: unknown, never satisfied.&quot;
         }
       ]
     },
     &quot;TrainLink&quot;: {
       &quot;description&quot;: &quot;One open pull request as a link of a train.&quot;,
       &quot;properties&quot;: {
-        &quot;at_turn&quot;: {
-          &quot;description&quot;: &quot;Every dependency it declares has landed: it is the link the order allows next.&quot;,
-          &quot;type&quot;: &quot;boolean&quot;
-        },
-        &quot;author&quot;: {
-          &quot;description&quot;: &quot;Its author&#39;s login.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;base_ref&quot;: {
-          &quot;description&quot;: &quot;The branch it targets: the integration base, or the head of the link below.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;behind&quot;: {
-          &quot;description&quot;: &quot;How many master commits its head lacks, when the relation counts them.&quot;,
-          &quot;format&quot;: &quot;uint64&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: [
-            &quot;integer&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;carries&quot;: {
-          &quot;description&quot;: &quot;The links stacked on it.&quot;,
-          &quot;items&quot;: {
-            &quot;format&quot;: &quot;uint64&quot;,
-            &quot;minimum&quot;: 0,
-            &quot;type&quot;: &quot;integer&quot;
-          },
-          &quot;type&quot;: &quot;array&quot;
-        },
-        &quot;carries_master&quot;: {
-          &quot;description&quot;: &quot;Whether its head carries master by a merge of its own (ADR 0129) — read from the\nrelation&#39;s word, so an executable that does not know that relation says `false`.&quot;,
-          &quot;type&quot;: &quot;boolean&quot;
-        },
-        &quot;checks&quot;: {
-          &quot;description&quot;: &quot;Every check the forge reported on its head, required or not.&quot;,
-          &quot;items&quot;: {
-            &quot;$ref&quot;: &quot;#/$defs/LinkCheck&quot;
-          },
-          &quot;type&quot;: &quot;array&quot;
-        },
-        &quot;checks_url&quot;: {
-          &quot;description&quot;: &quot;Its checks on the forge, when the repository is known.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;depth&quot;: {
-          &quot;description&quot;: &quot;How many links are below it on its longest path to master; a root is 0.&quot;,
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;disposition&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/PullRequestDisposition&quot;,
-          &quot;description&quot;: &quot;The executor&#39;s classification.&quot;
-        },
-        &quot;head_ref&quot;: {
-          &quot;description&quot;: &quot;Its head branch.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;head_sha&quot;: {
-          &quot;description&quot;: &quot;The head commit it was assessed at, as the forge served it.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+        &quot;relation&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/RelationToMaster&quot;,
+          &quot;description&quot;: &quot;What its head is to master, decided by git.&quot;
         },
         &quot;in_cycle&quot;: {
           &quot;description&quot;: &quot;Caught in a cycle of confirmed dependencies: no link of the cycle can land first.&quot;,
@@ -968,33 +420,131 @@ and stacked on nothing, or not open at all (landed, closed).</td>
           &quot;$ref&quot;: &quot;#/$defs/IntegrationLane&quot;,
           &quot;description&quot;: &quot;The lane that disposition belongs to.&quot;
         },
-        &quot;next_action&quot;: {
-          &quot;description&quot;: &quot;What happens next, in words, when anything does.&quot;,
+        &quot;base_ref&quot;: {
+          &quot;description&quot;: &quot;The branch it targets: the integration base, or the head of the link below.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;checks&quot;: {
+          &quot;description&quot;: &quot;Every check the forge reported on its head, required or not.&quot;,
+          &quot;type&quot;: &quot;array&quot;,
+          &quot;items&quot;: {
+            &quot;$ref&quot;: &quot;#/$defs/LinkCheck&quot;
+          }
+        },
+        &quot;checks_url&quot;: {
+          &quot;description&quot;: &quot;Its checks on the forge, when the repository is known.&quot;,
           &quot;type&quot;: [
             &quot;string&quot;,
             &quot;null&quot;
           ]
         },
-        &quot;number&quot;: {
-          &quot;description&quot;: &quot;The pull request number.&quot;,
-          &quot;format&quot;: &quot;uint64&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
+        &quot;carries_master&quot;: {
+          &quot;type&quot;: &quot;boolean&quot;,
+          &quot;description&quot;: &quot;Whether its head carries master by a merge of its own (ADR 0129) — read from the\nrelation&#39;s word, so an executable that does not know that relation says `false`.&quot;
+        },
+        &quot;disposition&quot;: {
+          &quot;description&quot;: &quot;The executor&#39;s classification.&quot;,
+          &quot;$ref&quot;: &quot;#/$defs/PullRequestDisposition&quot;
         },
         &quot;on&quot;: {
-          &quot;description&quot;: &quot;The pull requests it stands on, open links and those beneath alike.&quot;,
           &quot;items&quot;: {
+            &quot;type&quot;: &quot;integer&quot;,
             &quot;format&quot;: &quot;uint64&quot;,
-            &quot;minimum&quot;: 0,
-            &quot;type&quot;: &quot;integer&quot;
+            &quot;minimum&quot;: 0
           },
+          &quot;description&quot;: &quot;The pull requests it stands on, open links and those beneath alike.&quot;,
           &quot;type&quot;: &quot;array&quot;
         },
         &quot;position&quot;: {
+          &quot;type&quot;: &quot;integer&quot;,
+          &quot;minimum&quot;: 0,
           &quot;description&quot;: &quot;Its turn in the train, 1-based: every link below it comes earlier.&quot;,
-          &quot;format&quot;: &quot;uint&quot;,
+          &quot;format&quot;: &quot;uint&quot;
+        },
+        &quot;rank&quot;: {
+          &quot;type&quot;: &quot;integer&quot;,
+          &quot;description&quot;: &quot;Its rank in the queue, 1-based.&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;format&quot;: &quot;uint&quot;
+        },
+        &quot;at_turn&quot;: {
+          &quot;type&quot;: &quot;boolean&quot;,
+          &quot;description&quot;: &quot;Every dependency it declares has landed: it is the link the order allows next.&quot;
+        },
+        &quot;relation_kind&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;That relation&#39;s word (`behind`, `up_to_date`, `carries_master`, ...).&quot;
+        },
+        &quot;title&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;Its title.&quot;
+        },
+        &quot;carries&quot;: {
+          &quot;type&quot;: &quot;array&quot;,
+          &quot;description&quot;: &quot;The links stacked on it.&quot;,
+          &quot;items&quot;: {
+            &quot;minimum&quot;: 0,
+            &quot;format&quot;: &quot;uint64&quot;,
+            &quot;type&quot;: &quot;integer&quot;
+          }
+        },
+        &quot;number&quot;: {
+          &quot;format&quot;: &quot;uint64&quot;,
+          &quot;description&quot;: &quot;The pull request number.&quot;,
           &quot;minimum&quot;: 0,
           &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;head_ref&quot;: {
+          &quot;description&quot;: &quot;Its head branch.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;depth&quot;: {
+          &quot;type&quot;: &quot;integer&quot;,
+          &quot;description&quot;: &quot;How many links are below it on its longest path to master; a root is 0.&quot;,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;minimum&quot;: 0
+        },
+        &quot;behind&quot;: {
+          &quot;type&quot;: [
+            &quot;integer&quot;,
+            &quot;null&quot;
+          ],
+          &quot;description&quot;: &quot;How many master commits its head lacks, when the relation counts them.&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;format&quot;: &quot;uint64&quot;
+        },
+        &quot;head_sha&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The head commit it was assessed at, as the forge served it.&quot;
+        },
+        &quot;required_checks&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/RequiredCheckState&quot;,
+          &quot;description&quot;: &quot;The required checks on its head.&quot;
+        },
+        &quot;reasons&quot;: {
+          &quot;description&quot;: &quot;The machine-readable reasons, as every surface spells them (`stacked_on:#&lt;number&gt;`).&quot;,
+          &quot;type&quot;: &quot;array&quot;,
+          &quot;items&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        },
+        &quot;next_action&quot;: {
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ],
+          &quot;description&quot;: &quot;What happens next, in words, when anything does.&quot;
+        },
+        &quot;url&quot;: {
+          &quot;description&quot;: &quot;The pull request on the forge, when the repository is known.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;author&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;Its author&#39;s login.&quot;
         },
         &quot;prep&quot;: {
           &quot;anyOf&quot;: [
@@ -1006,44 +556,9 @@ and stacked on nothing, or not open at all (landed, closed).</td>
             }
           ],
           &quot;description&quot;: &quot;The head the executor prepared for it, when `refs/prep/&lt;n&gt;` exists.&quot;
-        },
-        &quot;rank&quot;: {
-          &quot;description&quot;: &quot;Its rank in the queue, 1-based.&quot;,
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;reasons&quot;: {
-          &quot;description&quot;: &quot;The machine-readable reasons, as every surface spells them (`stacked_on:#&lt;number&gt;`).&quot;,
-          &quot;items&quot;: {
-            &quot;type&quot;: &quot;string&quot;
-          },
-          &quot;type&quot;: &quot;array&quot;
-        },
-        &quot;relation&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/RelationToMaster&quot;,
-          &quot;description&quot;: &quot;What its head is to master, decided by git.&quot;
-        },
-        &quot;relation_kind&quot;: {
-          &quot;description&quot;: &quot;That relation&#39;s word (`behind`, `up_to_date`, `carries_master`, ...).&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;required_checks&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/RequiredCheckState&quot;,
-          &quot;description&quot;: &quot;The required checks on its head.&quot;
-        },
-        &quot;title&quot;: {
-          &quot;description&quot;: &quot;Its title.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;url&quot;: {
-          &quot;description&quot;: &quot;The pull request on the forge, when the repository is known.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
         }
       },
+      &quot;type&quot;: &quot;object&quot;,
       &quot;required&quot;: [
         &quot;number&quot;,
         &quot;title&quot;,
@@ -1066,64 +581,24 @@ and stacked on nothing, or not open at all (landed, closed).</td>
         &quot;carries&quot;,
         &quot;rank&quot;,
         &quot;in_cycle&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
-    },
-    &quot;TrainTallies&quot;: {
-      &quot;description&quot;: &quot;Counts over every train.&quot;,
-      &quot;properties&quot;: {
-        &quot;by_disposition&quot;: {
-          &quot;additionalProperties&quot;: {
-            &quot;format&quot;: &quot;uint&quot;,
-            &quot;minimum&quot;: 0,
-            &quot;type&quot;: &quot;integer&quot;
-          },
-          &quot;description&quot;: &quot;Links by disposition word.&quot;,
-          &quot;type&quot;: &quot;object&quot;
-        },
-        &quot;links&quot;: {
-          &quot;description&quot;: &quot;Open links across every train.&quot;,
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;pending_prep&quot;: {
-          &quot;description&quot;: &quot;Links whose prepared head is not the head the forge serves.&quot;,
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;trains&quot;: {
-          &quot;description&quot;: &quot;Trains.&quot;,
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        }
-      },
-      &quot;required&quot;: [
-        &quot;trains&quot;,
-        &quot;links&quot;,
-        &quot;pending_prep&quot;,
-        &quot;by_disposition&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
+      ]
     },
     &quot;UnattachedPrep&quot;: {
       &quot;description&quot;: &quot;A prepared head whose pull request is no link of any train.&quot;,
       &quot;properties&quot;: {
-        &quot;number&quot;: {
-          &quot;description&quot;: &quot;The pull request the ref is named for.&quot;,
-          &quot;format&quot;: &quot;uint64&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
         &quot;open&quot;: {
           &quot;description&quot;: &quot;Whether that pull request is open.&quot;,
           &quot;type&quot;: &quot;boolean&quot;
         },
         &quot;sha&quot;: {
-          &quot;description&quot;: &quot;The commit it names.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The commit it names.&quot;
+        },
+        &quot;number&quot;: {
+          &quot;type&quot;: &quot;integer&quot;,
+          &quot;format&quot;: &quot;uint64&quot;,
+          &quot;description&quot;: &quot;The pull request the ref is named for.&quot;,
+          &quot;minimum&quot;: 0
         }
       },
       &quot;required&quot;: [
@@ -1132,56 +607,535 @@ and stacked on nothing, or not open at all (landed, closed).</td>
         &quot;open&quot;
       ],
       &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;PreparedHead&quot;: {
+      &quot;description&quot;: &quot;The head the executor prepared for a link under `refs/prep/&lt;n&gt;`.&quot;,
+      &quot;type&quot;: &quot;object&quot;,
+      &quot;required&quot;: [
+        &quot;reference&quot;,
+        &quot;sha&quot;,
+        &quot;state&quot;
+      ],
+      &quot;properties&quot;: {
+        &quot;sha&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The commit it names.&quot;
+        },
+        &quot;state&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/PrepState&quot;,
+          &quot;description&quot;: &quot;Whether that commit is the head the forge serves.&quot;
+        },
+        &quot;reference&quot;: {
+          &quot;description&quot;: &quot;The ref.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      }
+    },
+    &quot;TrainEdge&quot;: {
+      &quot;type&quot;: &quot;object&quot;,
+      &quot;required&quot;: [
+        &quot;from&quot;,
+        &quot;to&quot;,
+        &quot;kind&quot;,
+        &quot;satisfied&quot;
+      ],
+      &quot;properties&quot;: {
+        &quot;to&quot;: {
+          &quot;type&quot;: &quot;integer&quot;,
+          &quot;description&quot;: &quot;The pull request it stands on.&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;format&quot;: &quot;uint64&quot;
+        },
+        &quot;satisfied&quot;: {
+          &quot;type&quot;: &quot;boolean&quot;,
+          &quot;description&quot;: &quot;Whether it is satisfied: the pull request below landed.&quot;
+        },
+        &quot;kind&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/TrainEdgeKind&quot;,
+          &quot;description&quot;: &quot;How the dependency is declared.&quot;
+        },
+        &quot;from&quot;: {
+          &quot;description&quot;: &quot;The upper link: the one that depends.&quot;,
+          &quot;format&quot;: &quot;uint64&quot;,
+          &quot;type&quot;: &quot;integer&quot;,
+          &quot;minimum&quot;: 0
+        }
+      },
+      &quot;description&quot;: &quot;A confirmed dependency between two pull requests of a train.&quot;
+    },
+    &quot;BeneathLink&quot;: {
+      &quot;properties&quot;: {
+        &quot;number&quot;: {
+          &quot;type&quot;: &quot;integer&quot;,
+          &quot;description&quot;: &quot;Its number.&quot;,
+          &quot;format&quot;: &quot;uint64&quot;,
+          &quot;minimum&quot;: 0
+        },
+        &quot;url&quot;: {
+          &quot;description&quot;: &quot;The pull request on the forge, when the repository is known.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;state&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/DependencyState&quot;,
+          &quot;description&quot;: &quot;What the forge says became of it.&quot;
+        }
+      },
+      &quot;type&quot;: &quot;object&quot;,
+      &quot;description&quot;: &quot;A pull request below a train that is not open any more.&quot;,
+      &quot;required&quot;: [
+        &quot;number&quot;,
+        &quot;state&quot;
+      ]
+    },
+    &quot;Train&quot;: {
+      &quot;properties&quot;: {
+        &quot;id&quot;: {
+          &quot;description&quot;: &quot;`train-&lt;n&gt;`, after the first root in turn order: stable while that link is open.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;next&quot;: {
+          &quot;minimum&quot;: 0,
+          &quot;format&quot;: &quot;uint64&quot;,
+          &quot;description&quot;: &quot;The first link, in turn order, whose every dependency has landed: the train&#39;s next\nmerge as far as order is concerned (its disposition says whether it can merge now).&quot;,
+          &quot;type&quot;: [
+            &quot;integer&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;roots&quot;: {
+          &quot;items&quot;: {
+            &quot;format&quot;: &quot;uint64&quot;,
+            &quot;minimum&quot;: 0,
+            &quot;type&quot;: &quot;integer&quot;
+          },
+          &quot;type&quot;: &quot;array&quot;,
+          &quot;description&quot;: &quot;The links that land first: no open link of the train is below them.&quot;
+        },
+        &quot;beneath&quot;: {
+          &quot;items&quot;: {
+            &quot;$ref&quot;: &quot;#/$defs/BeneathLink&quot;
+          },
+          &quot;type&quot;: &quot;array&quot;,
+          &quot;description&quot;: &quot;The pull requests below the train that are no longer open — landed, closed without a\nmerge, or unread — which a link still declares.&quot;
+        },
+        &quot;by_disposition&quot;: {
+          &quot;additionalProperties&quot;: {
+            &quot;format&quot;: &quot;uint&quot;,
+            &quot;minimum&quot;: 0,
+            &quot;type&quot;: &quot;integer&quot;
+          },
+          &quot;type&quot;: &quot;object&quot;,
+          &quot;description&quot;: &quot;Links by disposition word.&quot;
+        },
+        &quot;edges&quot;: {
+          &quot;type&quot;: &quot;array&quot;,
+          &quot;description&quot;: &quot;Every confirmed dependency of a link, upper link first.&quot;,
+          &quot;items&quot;: {
+            &quot;$ref&quot;: &quot;#/$defs/TrainEdge&quot;
+          }
+        },
+        &quot;links&quot;: {
+          &quot;description&quot;: &quot;Every open link, in turn order — `TrainLink::position` 1 first.&quot;,
+          &quot;items&quot;: {
+            &quot;$ref&quot;: &quot;#/$defs/TrainLink&quot;
+          },
+          &quot;type&quot;: &quot;array&quot;
+        },
+        &quot;tops&quot;: {
+          &quot;type&quot;: &quot;array&quot;,
+          &quot;description&quot;: &quot;The links at the top: no link of the train is stacked on them.&quot;,
+          &quot;items&quot;: {
+            &quot;format&quot;: &quot;uint64&quot;,
+            &quot;minimum&quot;: 0,
+            &quot;type&quot;: &quot;integer&quot;
+          }
+        }
+      },
+      &quot;required&quot;: [
+        &quot;id&quot;,
+        &quot;roots&quot;,
+        &quot;tops&quot;,
+        &quot;links&quot;,
+        &quot;edges&quot;,
+        &quot;beneath&quot;,
+        &quot;by_disposition&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;,
+      &quot;description&quot;: &quot;One train: open pull requests joined by confirmed dependencies, in the order they land.&quot;
+    },
+    &quot;CheckRunState&quot;: {
+      &quot;description&quot;: &quot;Where one check run stands.&quot;,
+      &quot;oneOf&quot;: [
+        {
+          &quot;description&quot;: &quot;Completed and passed.&quot;,
+          &quot;const&quot;: &quot;passed&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;failed&quot;,
+          &quot;description&quot;: &quot;Completed and failed (failure, timed out, cancelled, action required).&quot;
+        },
+        {
+          &quot;const&quot;: &quot;pending&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;Queued or running; also what a report that says nothing is taken to be, so a\ndefault is never a pass.&quot;
+        },
+        {
+          &quot;description&quot;: &quot;Completed as skipped or neutral.&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;skipped&quot;
+        }
+      ]
+    },
+    &quot;IntegrationLane&quot;: {
+      &quot;oneOf&quot;: [
+        {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;ready&quot;,
+          &quot;description&quot;: &quot;The executor may merge it now.&quot;
+        },
+        {
+          &quot;description&quot;: &quot;Something will happen without a person: a refresh, a check, a dependency.&quot;,
+          &quot;const&quot;: &quot;waiting&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;repair&quot;,
+          &quot;description&quot;: &quot;A person must change the branch.&quot;
+        },
+        {
+          &quot;const&quot;: &quot;cleanup&quot;,
+          &quot;description&quot;: &quot;Its work is on master already, or a successor that landed replaced it.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;held&quot;,
+          &quot;description&quot;: &quot;Not asking to be merged, held by a label or a setting, unsafe for the executor, or\nundecidable.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      ],
+      &quot;description&quot;: &quot;The queues the Cockpit and the status table group pull requests into.&quot;
+    },
+    &quot;PrepState&quot;: {
+      &quot;oneOf&quot;: [
+        {
+          &quot;description&quot;: &quot;The prepared head is the pull request&#39;s head: it was pushed.&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;pushed&quot;
+        },
+        {
+          &quot;description&quot;: &quot;The prepared head is another commit: it waits for its turn to be pushed.&quot;,
+          &quot;const&quot;: &quot;pending&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      ],
+      &quot;description&quot;: &quot;Whether a prepared head has reached the forge.&quot;
+    },
+    &quot;PullRequestDisposition&quot;: {
+      &quot;oneOf&quot;: [
+        {
+          &quot;description&quot;: &quot;Contains the current master, every required check passed on its head, nothing\nblocks it: the executor may merge it.&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;ready&quot;
+        },
+        {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;Merges cleanly but does not contain master: the executor may bring master in (a\nmerge commit on the branch, never a rewrite), after which CI must run again.&quot;,
+          &quot;const&quot;: &quot;needs_refresh&quot;
+        },
+        {
+          &quot;const&quot;: &quot;waiting_for_checks&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;Contains master; a required check has not finished on this head.&quot;
+        },
+        {
+          &quot;description&quot;: &quot;A required review is missing or changes were requested.&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;waiting_for_review&quot;
+        },
+        {
+          &quot;const&quot;: &quot;waiting_for_dependency&quot;,
+          &quot;description&quot;: &quot;A declared dependency has not landed.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;description&quot;: &quot;A draft.&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;draft&quot;
+        },
+        {
+          &quot;description&quot;: &quot;A required check failed on this head.&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;needs_repair&quot;
+        },
+        {
+          &quot;const&quot;: &quot;conflicting&quot;,
+          &quot;description&quot;: &quot;Conflicts on authored paths: a person resolves them.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;blocked&quot;,
+          &quot;description&quot;: &quot;A label whose policy is to hold holds it, or the repository allows no merge commit,\nwhich is the only way the executor merges.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;unsafe&quot;,
+          &quot;description&quot;: &quot;The forge has auto-merge armed on it: the forge would merge it on its own, outside the\nexecutor and against whatever master is then. Held until a person disarms it.&quot;
+        },
+        {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;Its head already landed, its merge changes nothing, or every one of its commits is on\nmaster as an equal patch: strong evidence from git, eligible for closure under policy.\n(Before 0.13 this was the word `superseded`.)&quot;,
+          &quot;const&quot;: &quot;redundant&quot;
+        },
+        {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;superseded&quot;,
+          &quot;description&quot;: &quot;A successor was declared for it by someone the repository lets declare one — an owner,\nmember or collaborator, in a pull request of this repository — and that successor\nlanded: git finds its head or its merge commit in master. The successor is\n`PullRequestAssessment::superseded_by`. Eligible for closure under policy.&quot;
+        },
+        {
+          &quot;const&quot;: &quot;possibly_redundant&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;Weak evidence: only derived artifacts would change, or its declared successor was merged\nsomewhere master does not contain. Surfaced for a person; never closed automatically.&quot;
+        },
+        {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;Targets a branch other than the integration base.&quot;,
+          &quot;const&quot;: &quot;other_base&quot;
+        },
+        {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;unknown&quot;,
+          &quot;description&quot;: &quot;Something needed to decide could not be observed.&quot;
+        },
+        {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;A person marked it obsolete with a label the label policy declares (owner decision\nD3): the only evidence that reaches this word. Listed for a person by cleanup and\nnever closed automatically; age, shared paths or a similar title never make one.&quot;,
+          &quot;const&quot;: &quot;obsolete&quot;
+        }
+      ],
+      &quot;description&quot;: &quot;The one classification of an open pull request. Every value carries a machine-readable\nreason in `PullRequestAssessment::reasons`; there is no `mergeable: bool`.&quot;
+    },
+    &quot;RelationToMaster&quot;: {
+      &quot;oneOf&quot;: [
+        {
+          &quot;description&quot;: &quot;The head is an ancestor of master: every commit already landed.&quot;,
+          &quot;required&quot;: [
+            &quot;kind&quot;
+          ],
+          &quot;properties&quot;: {
+            &quot;kind&quot;: {
+              &quot;const&quot;: &quot;contained&quot;,
+              &quot;type&quot;: &quot;string&quot;
+            }
+          },
+          &quot;type&quot;: &quot;object&quot;
+        },
+        {
+          &quot;description&quot;: &quot;Merging the head into master changes nothing: its patch is already fully there.&quot;,
+          &quot;type&quot;: &quot;object&quot;,
+          &quot;properties&quot;: {
+            &quot;kind&quot;: {
+              &quot;const&quot;: &quot;superseded&quot;,
+              &quot;type&quot;: &quot;string&quot;
+            }
+          },
+          &quot;required&quot;: [
+            &quot;kind&quot;
+          ]
+        },
+        {
+          &quot;description&quot;: &quot;The merge would conflict or change only derived output, but every commit the head has\nand master lacks is on master already as an equal patch (`git cherry` marks each `-`):\nthe change landed, and master moved on past it. Never a partial match, and never a\nhead that carries a merge commit of its own, whose resolution has no patch to compare.&quot;,
+          &quot;type&quot;: &quot;object&quot;,
+          &quot;required&quot;: [
+            &quot;kind&quot;,
+            &quot;commits&quot;
+          ],
+          &quot;properties&quot;: {
+            &quot;kind&quot;: {
+              &quot;type&quot;: &quot;string&quot;,
+              &quot;const&quot;: &quot;patch_ids_upstream&quot;
+            },
+            &quot;commits&quot;: {
+              &quot;format&quot;: &quot;uint64&quot;,
+              &quot;minimum&quot;: 0,
+              &quot;type&quot;: &quot;integer&quot;,
+              &quot;description&quot;: &quot;How many commits, every one of them already on master.&quot;
+            }
+          }
+        },
+        {
+          &quot;type&quot;: &quot;object&quot;,
+          &quot;description&quot;: &quot;Merging changes only derived artifacts: the authored change is already on master,\nand what differs is output the generators rewrite.&quot;,
+          &quot;required&quot;: [
+            &quot;kind&quot;,
+            &quot;paths&quot;
+          ],
+          &quot;properties&quot;: {
+            &quot;kind&quot;: {
+              &quot;const&quot;: &quot;derived_only&quot;,
+              &quot;type&quot;: &quot;string&quot;
+            },
+            &quot;paths&quot;: {
+              &quot;items&quot;: {
+                &quot;type&quot;: &quot;string&quot;
+              },
+              &quot;description&quot;: &quot;The derived paths that would change.&quot;,
+              &quot;type&quot;: &quot;array&quot;
+            }
+          }
+        },
+        {
+          &quot;required&quot;: [
+            &quot;kind&quot;,
+            &quot;authored&quot;
+          ],
+          &quot;type&quot;: &quot;object&quot;,
+          &quot;properties&quot;: {
+            &quot;owes_version&quot;: {
+              &quot;description&quot;: &quot;The version a landing of this head allocates, when master allocates at landing\n(ADR 0134) and the head does not carry it: the head owes a refresh even though it\ncontains master. Absent when the policy does not allocate, or the head carries it.&quot;,
+              &quot;type&quot;: [
+                &quot;string&quot;,
+                &quot;null&quot;
+              ]
+            },
+            &quot;authored&quot;: {
+              &quot;description&quot;: &quot;Authored (non-derived) paths the merge changes.&quot;,
+              &quot;items&quot;: {
+                &quot;type&quot;: &quot;string&quot;
+              },
+              &quot;type&quot;: &quot;array&quot;
+            },
+            &quot;kind&quot;: {
+              &quot;const&quot;: &quot;up_to_date&quot;,
+              &quot;type&quot;: &quot;string&quot;
+            }
+          },
+          &quot;description&quot;: &quot;The head already contains master and merges cleanly.&quot;
+        },
+        {
+          &quot;required&quot;: [
+            &quot;kind&quot;,
+            &quot;behind&quot;,
+            &quot;authored&quot;
+          ],
+          &quot;properties&quot;: {
+            &quot;authored&quot;: {
+              &quot;type&quot;: &quot;array&quot;,
+              &quot;description&quot;: &quot;Authored (non-derived) paths the merge changes.&quot;,
+              &quot;items&quot;: {
+                &quot;type&quot;: &quot;string&quot;
+              }
+            },
+            &quot;kind&quot;: {
+              &quot;const&quot;: &quot;carries_master&quot;,
+              &quot;type&quot;: &quot;string&quot;
+            },
+            &quot;behind&quot;: {
+              &quot;format&quot;: &quot;uint64&quot;,
+              &quot;minimum&quot;: 0,
+              &quot;type&quot;: &quot;integer&quot;,
+              &quot;description&quot;: &quot;Commits on master the head does not have.&quot;
+            }
+          },
+          &quot;description&quot;: &quot;The head does not contain master, yet master holds nothing the head lacks: merging it\nwrites the head&#39;s own tree, and every commit master has beyond it is a merge commit.\nThat is a head stacked on a pull request that has since landed. A verdict on the head\nis then a verdict on what master becomes, tree and listed history alike, exactly as\nwhen the head contains master; and no path is merged at all, so the forge needs no\ndriver for it.&quot;,
+          &quot;type&quot;: &quot;object&quot;
+        },
+        {
+          &quot;properties&quot;: {
+            &quot;behind&quot;: {
+              &quot;description&quot;: &quot;Commits on master the head does not have.&quot;,
+              &quot;minimum&quot;: 0,
+              &quot;format&quot;: &quot;uint64&quot;,
+              &quot;type&quot;: &quot;integer&quot;
+            },
+            &quot;authored&quot;: {
+              &quot;type&quot;: &quot;array&quot;,
+              &quot;description&quot;: &quot;Authored paths the merge changes.&quot;,
+              &quot;items&quot;: {
+                &quot;type&quot;: &quot;string&quot;
+              }
+            },
+            &quot;kind&quot;: {
+              &quot;type&quot;: &quot;string&quot;,
+              &quot;const&quot;: &quot;behind&quot;
+            }
+          },
+          &quot;description&quot;: &quot;The head does not contain master, but the merge is clean with the derived driver.&quot;,
+          &quot;required&quot;: [
+            &quot;kind&quot;,
+            &quot;behind&quot;,
+            &quot;authored&quot;
+          ],
+          &quot;type&quot;: &quot;object&quot;
+        },
+        {
+          &quot;properties&quot;: {
+            &quot;paths&quot;: {
+              &quot;type&quot;: &quot;array&quot;,
+              &quot;description&quot;: &quot;The conflicting authored paths.&quot;,
+              &quot;items&quot;: {
+                &quot;type&quot;: &quot;string&quot;
+              }
+            },
+            &quot;kind&quot;: {
+              &quot;const&quot;: &quot;conflicting&quot;,
+              &quot;type&quot;: &quot;string&quot;
+            }
+          },
+          &quot;description&quot;: &quot;Merging conflicts on authored paths: a person must resolve it.&quot;,
+          &quot;type&quot;: &quot;object&quot;,
+          &quot;required&quot;: [
+            &quot;kind&quot;,
+            &quot;paths&quot;
+          ]
+        },
+        {
+          &quot;type&quot;: &quot;object&quot;,
+          &quot;description&quot;: &quot;Git could not answer (the head is not fetched, or git failed); the reason.&quot;,
+          &quot;properties&quot;: {
+            &quot;kind&quot;: {
+              &quot;type&quot;: &quot;string&quot;,
+              &quot;const&quot;: &quot;unknown&quot;
+            },
+            &quot;reason&quot;: {
+              &quot;description&quot;: &quot;Why.&quot;,
+              &quot;type&quot;: &quot;string&quot;
+            }
+          },
+          &quot;required&quot;: [
+            &quot;kind&quot;,
+            &quot;reason&quot;
+          ]
+        }
+      ],
+      &quot;description&quot;: &quot;What the pull request&#39;s head is to the current master, decided locally by git with\nthis repository&#39;s own merge drivers — never by the forge&#39;s `mergeable`, which cannot\nrun the derived-file driver and calls nearly every pull request here conflicting.&quot;
+    },
+    &quot;LinkCheck&quot;: {
+      &quot;properties&quot;: {
+        &quot;name&quot;: {
+          &quot;description&quot;: &quot;The check&#39;s name.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;state&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/CheckRunState&quot;,
+          &quot;description&quot;: &quot;Where it stands.&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;name&quot;,
+        &quot;state&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;,
+      &quot;description&quot;: &quot;One check run on a link&#39;s head.&quot;
     }
   },
-  &quot;description&quot;: &quot;Every train of the observed queue, and why there is none when there is none.&quot;,
   &quot;properties&quot;: {
-    &quot;base&quot;: {
-      &quot;description&quot;: &quot;The integration base.&quot;,
-      &quot;type&quot;: [
-        &quot;string&quot;,
-        &quot;null&quot;
-      ]
-    },
-    &quot;diagnostics&quot;: {
-      &quot;description&quot;: &quot;What makes this answer less than a full one: the queue&#39;s own diagnostics (a stale\nobservation first), and a dependency cycle when one is found.&quot;,
-      &quot;items&quot;: {
-        &quot;type&quot;: &quot;string&quot;
-      },
-      &quot;type&quot;: &quot;array&quot;
-    },
-    &quot;master_sha&quot;: {
-      &quot;description&quot;: &quot;The master commit every link&#39;s relation was decided against.&quot;,
-      &quot;type&quot;: [
-        &quot;string&quot;,
-        &quot;null&quot;
-      ]
-    },
-    &quot;observed&quot;: {
-      &quot;description&quot;: &quot;Whether a forge observation is recorded in this checkout.&quot;,
-      &quot;type&quot;: &quot;boolean&quot;
-    },
-    &quot;observed_at&quot;: {
-      &quot;description&quot;: &quot;When the forge was observed.&quot;,
-      &quot;type&quot;: [
-        &quot;string&quot;,
-        &quot;null&quot;
-      ]
-    },
-    &quot;reason&quot;: {
-      &quot;description&quot;: &quot;Why there are no trains to show, when nothing is observed.&quot;,
-      &quot;type&quot;: [
-        &quot;string&quot;,
-        &quot;null&quot;
-      ]
-    },
-    &quot;repository&quot;: {
-      &quot;description&quot;: &quot;`owner/name`, when observed.&quot;,
-      &quot;type&quot;: [
-        &quot;string&quot;,
-        &quot;null&quot;
-      ]
-    },
     &quot;tallies&quot;: {
       &quot;$ref&quot;: &quot;#/$defs/TrainTallies&quot;,
       &quot;description&quot;: &quot;Counts over every train.&quot;
@@ -1193,11 +1147,57 @@ and stacked on nothing, or not open at all (landed, closed).</td>
       },
       &quot;type&quot;: &quot;array&quot;
     },
+    &quot;observed&quot;: {
+      &quot;description&quot;: &quot;Whether a forge observation is recorded in this checkout.&quot;,
+      &quot;type&quot;: &quot;boolean&quot;
+    },
+    &quot;reason&quot;: {
+      &quot;description&quot;: &quot;Why there are no trains to show, when nothing is observed.&quot;,
+      &quot;type&quot;: [
+        &quot;string&quot;,
+        &quot;null&quot;
+      ]
+    },
+    &quot;observed_at&quot;: {
+      &quot;type&quot;: [
+        &quot;string&quot;,
+        &quot;null&quot;
+      ],
+      &quot;description&quot;: &quot;When the forge was observed.&quot;
+    },
+    &quot;repository&quot;: {
+      &quot;description&quot;: &quot;`owner/name`, when observed.&quot;,
+      &quot;type&quot;: [
+        &quot;string&quot;,
+        &quot;null&quot;
+      ]
+    },
+    &quot;master_sha&quot;: {
+      &quot;description&quot;: &quot;The master commit every link&#39;s relation was decided against.&quot;,
+      &quot;type&quot;: [
+        &quot;string&quot;,
+        &quot;null&quot;
+      ]
+    },
     &quot;unattached_prep&quot;: {
+      &quot;type&quot;: &quot;array&quot;,
       &quot;description&quot;: &quot;Prepared heads under `refs/prep/` whose pull request is no link of any train: open\nand stacked on nothing, or not open at all (landed, closed).&quot;,
       &quot;items&quot;: {
         &quot;$ref&quot;: &quot;#/$defs/UnattachedPrep&quot;
+      }
+    },
+    &quot;base&quot;: {
+      &quot;type&quot;: [
+        &quot;string&quot;,
+        &quot;null&quot;
+      ],
+      &quot;description&quot;: &quot;The integration base.&quot;
+    },
+    &quot;diagnostics&quot;: {
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;string&quot;
       },
+      &quot;description&quot;: &quot;What makes this answer less than a full one: the queue&#39;s own diagnostics (a stale\nobservation first), and a dependency cycle when one is found.&quot;,
       &quot;type&quot;: &quot;array&quot;
     }
   },
@@ -1208,8 +1208,8 @@ and stacked on nothing, or not open at all (landed, closed).</td>
     &quot;tallies&quot;,
     &quot;diagnostics&quot;
   ],
-  &quot;title&quot;: &quot;TrainsView&quot;,
-  &quot;type&quot;: &quot;object&quot;
+  &quot;type&quot;: &quot;object&quot;,
+  &quot;title&quot;: &quot;TrainsView&quot;
 }</pre></div>
   </details>
 </div>
@@ -1240,7 +1240,7 @@ and stacked on nothing, or not open at all (landed, closed).</td>
         <div><dt class="text-body-subtle">Rust module</dt><dd class="min-w-0 break-all font-mono text-heading">majordomus_cli::capability::builtin::integration</dd></div>
         <div><dt class="text-body-subtle">input type</dt><dd class="font-mono text-heading">Empty</dd></div>
         <div><dt class="text-body-subtle">output type</dt><dd class="font-mono text-heading">TrainsView</dd></div>
-        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/1112bace3437ee0d82067b1e8f61813e70190078/docs/generated/modules/integration.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/integration.md</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">5cdbf22cd21589ddbe464d5f0987b6bcf4607d05479004d6f815c3b306fdb08a</dd></div>
+        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/docs/generated/modules/integration.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/integration.md</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">3f734f2faf797f0ca7c39b4cd837e68b6619c41c6f6711f3d3aeca8f341934eb</dd></div>
         <div><dt class="text-body-subtle">generated by</dt><dd class="font-mono text-heading">majordomus-cli 1.0.0-alpha.10</dd></div>
       </dl>
     </div>
@@ -1296,9 +1296,9 @@ and stacked on nothing, or not open at all (landed, closed).</td>
       <div class="min-w-0">
         <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">Project</h2><ul class="space-y-2 text-sm font-medium text-body">
           <li><a href="https://github.com/korczis/prismatic-majordomus" class="hover:text-heading hover:underline">GitHub</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/1112bace3437ee0d82067b1e8f61813e70190078/LICENSE" class="hover:text-heading hover:underline">MIT licence</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/1112bace3437ee0d82067b1e8f61813e70190078/SECURITY.md" class="hover:text-heading hover:underline">Security policy</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/1112bace3437ee0d82067b1e8f61813e70190078/CONTRIBUTING.md" class="hover:text-heading hover:underline">Contributing guide</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/LICENSE" class="hover:text-heading hover:underline">MIT licence</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/SECURITY.md" class="hover:text-heading hover:underline">Security policy</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/CONTRIBUTING.md" class="hover:text-heading hover:underline">Contributing guide</a></li>
         </ul>
       </div>
     </div>
@@ -1306,7 +1306,7 @@ and stacked on nothing, or not open at all (landed, closed).</td>
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.10</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/1112bace3437ee0d82067b1e8f61813e70190078" class="font-mono underline">1112bac</a> · inputs <span class="font-mono">830f884cc5aa</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/architecture/" class="underline">how this site is derived</a> names them.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.10</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/745db2ea21e02613943face75a2bf95542be1f2e" class="font-mono underline">745db2e</a> · inputs <span class="font-mono">0a58c217d1b7</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/architecture/" class="underline">how this site is derived</a> names them.</p>
     </div>
   </div>
 </footer>

@@ -223,16 +223,16 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
-  &quot;additionalProperties&quot;: false,
   &quot;description&quot;: &quot;What a served preflight may cost.\n\n```\nuse majordomus_cli::capability::builtin::environment::PreflightInput;\nlet input: PreflightInput = serde_json::from_str(\&quot;{}\&quot;).unwrap();\nassert!(!input.probe, \&quot;a served request asks no other process by default\&quot;);\n```&quot;,
+  &quot;title&quot;: &quot;PreflightInput&quot;,
   &quot;properties&quot;: {
     &quot;probe&quot;: {
+      &quot;type&quot;: &quot;boolean&quot;,
       &quot;default&quot;: false,
-      &quot;description&quot;: &quot;Ask the loopback address a server of this checkout published, and its peer board.\nOff by default: a served request answers from what this process can see, and when\nthis process holds the checkout&#39;s lease that is itself the evidence.&quot;,
-      &quot;type&quot;: &quot;boolean&quot;
+      &quot;description&quot;: &quot;Ask the loopback address a server of this checkout published, and its peer board.\nOff by default: a served request answers from what this process can see, and when\nthis process holds the checkout&#39;s lease that is itself the evidence.&quot;
     }
   },
-  &quot;title&quot;: &quot;PreflightInput&quot;,
+  &quot;additionalProperties&quot;: false,
   &quot;type&quot;: &quot;object&quot;
 }</pre></div>
   </details>
@@ -246,60 +246,168 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
     <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
       <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">vlastnost</th><th class="px-3 py-2">typ</th><th class="px-3 py-2">povinné</th><th class="px-3 py-2">popis</th></tr></thead>
       <tbody><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">pozornost</td>
+        <td class="px-3 py-2 font-mono text-heading">sekce</td>
         <td class="px-3 py-2 font-mono text-xs text-body">array</td>
         <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Id všech kontrol, které vyžadují pozornost, od nejnaléhavější.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">větev</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">ne</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Větev, když ji git pojmenoval.</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Skupiny kontrol.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">generated_at</td>
         <td class="px-3 py-2 font-mono text-xs text-body">string</td>
         <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
         <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Kdy byla pozorování pořízena, RFC 3339 v UTC.</td>
       </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">head</td>
+        <td class="px-3 py-2 font-mono text-heading">schema</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words"><code>majordomus/preflight/v1</code>.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">větev</td>
         <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
         <td class="px-3 py-2 font-mono text-xs text-body">ne</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Commit, který pojmenovává HEAD.</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Větev, když ji git pojmenoval.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">repozitář</td>
         <td class="px-3 py-2 font-mono text-xs text-body">string</td>
         <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
         <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Název repozitáře.</td>
       </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">head</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">ne</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Commit, který pojmenovává HEAD.</td>
+      </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">rozlišení</td>
         <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
         <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
         <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Jak bylo určeno prostředí za ní.</td>
       </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">schema</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words"><code>majordomus/preflight/v1</code>.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">sekce</td>
+        <td class="px-3 py-2 font-mono text-heading">pozornost</td>
         <td class="px-3 py-2 font-mono text-xs text-body">array</td>
         <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Skupiny kontrol.</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Id všech kontrol, které vyžadují pozornost, od nejnaléhavější.</td>
       </tr></tbody>
     </table>
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
+  &quot;required&quot;: [
+    &quot;schema&quot;,
+    &quot;generated_at&quot;,
+    &quot;resolution&quot;,
+    &quot;repository&quot;,
+    &quot;sections&quot;,
+    &quot;attention&quot;
+  ],
+  &quot;type&quot;: &quot;object&quot;,
+  &quot;properties&quot;: {
+    &quot;sections&quot;: {
+      &quot;description&quot;: &quot;The groups of checks.&quot;,
+      &quot;items&quot;: {
+        &quot;$ref&quot;: &quot;#/$defs/PreflightSection&quot;
+      },
+      &quot;type&quot;: &quot;array&quot;
+    },
+    &quot;generated_at&quot;: {
+      &quot;description&quot;: &quot;When the observations were taken, RFC 3339 in UTC.&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;schema&quot;: {
+      &quot;description&quot;: &quot;`majordomus/preflight/v1`.&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;branch&quot;: {
+      &quot;description&quot;: &quot;The branch, when git named one.&quot;,
+      &quot;type&quot;: [
+        &quot;string&quot;,
+        &quot;null&quot;
+      ]
+    },
+    &quot;repository&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;description&quot;: &quot;The repository&#39;s name.&quot;
+    },
+    &quot;head&quot;: {
+      &quot;type&quot;: [
+        &quot;string&quot;,
+        &quot;null&quot;
+      ],
+      &quot;description&quot;: &quot;The commit HEAD names.&quot;
+    },
+    &quot;resolution&quot;: {
+      &quot;$ref&quot;: &quot;#/$defs/Resolution&quot;,
+      &quot;description&quot;: &quot;How the environment behind it was resolved.&quot;
+    },
+    &quot;attention&quot;: {
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;string&quot;
+      },
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;description&quot;: &quot;The ids of every check that needs a look, most urgent first.&quot;
+    }
+  },
+  &quot;description&quot;: &quot;Whether Majordomus is in force in this checkout, claim by claim, with the evidence.\n\n```\nuse majordomus_cli::environment::preflight::{derive, Observations, Preflight};\nlet p = derive(&amp;Observations::empty(\&quot;demo\&quot;, 0));\nassert_eq!(p.schema, Preflight::schema_id());\nassert_eq!(p.verdicts().len(), p.sections.iter().map(|s| s.checks.len()).sum::&lt;usize&gt;());\n```&quot;,
   &quot;$defs&quot;: {
-    &quot;PreflightCheck&quot;: {
-      &quot;description&quot;: &quot;One claim, its verdict, and what the verdict rests on.\n\n```\nuse majordomus_cli::environment::preflight::{Check, Evidence, Verdict};\n\n// a claim of something in force without evidence is not accepted as one\nlet bare = Check::new(\&quot;integration.mcp\&quot;, \&quot;MCP\&quot;, Verdict::Verified, \&quot;healthy\&quot;, vec![]);\nassert_eq!(bare.verdict, Verdict::Unknown);\nassert!(bare.summary.contains(\&quot;no evidence\&quot;));\n\nlet backed = Check::new(\n    \&quot;integration.mcp\&quot;, \&quot;MCP\&quot;, Verdict::Verified, \&quot;served\&quot;,\n    vec![Evidence::new(\&quot;GET /\&quot;, \&quot;surface mcp ready\&quot;)],\n);\nassert_eq!(backed.verdict, Verdict::Verified);\n```&quot;,
+    &quot;PreflightSection&quot;: {
+      &quot;description&quot;: &quot;A group of checks: repository, session, governance, integration, verification.\n\n```\nuse majordomus_cli::environment::preflight::{derive, Observations, Section};\nlet p = derive(&amp;Observations::empty(\&quot;demo\&quot;, 0));\nlet ids: Vec&lt;&amp;str&gt; = p.sections.iter().map(|s| s.id.as_str()).collect();\nassert_eq!(ids, [\&quot;repository\&quot;, \&quot;session\&quot;, \&quot;governance\&quot;, \&quot;integration\&quot;, \&quot;verification\&quot;]);\n// every check in a section carries the section&#39;s id as its prefix\nlet session: &amp;Section = &amp;p.sections[1];\nassert!(session.checks.iter().all(|c| c.id.starts_with(\&quot;session.\&quot;)));\n```&quot;,
       &quot;properties&quot;: {
-        &quot;evidence&quot;: {
-          &quot;description&quot;: &quot;Everything the verdict rests on. Never empty for a verdict that proves something.&quot;,
+        &quot;checks&quot;: {
+          &quot;type&quot;: &quot;array&quot;,
+          &quot;description&quot;: &quot;The checks, in the order they are rendered.&quot;,
           &quot;items&quot;: {
-            &quot;$ref&quot;: &quot;#/$defs/PreflightEvidence&quot;
-          },
-          &quot;type&quot;: &quot;array&quot;
+            &quot;$ref&quot;: &quot;#/$defs/PreflightCheck&quot;
+          }
+        },
+        &quot;id&quot;: {
+          &quot;description&quot;: &quot;A stable id, the prefix of every check in it.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;title&quot;: {
+          &quot;description&quot;: &quot;The heading a person reads.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      },
+      &quot;type&quot;: &quot;object&quot;,
+      &quot;required&quot;: [
+        &quot;id&quot;,
+        &quot;title&quot;,
+        &quot;checks&quot;
+      ]
+    },
+    &quot;PreflightEvidence&quot;: {
+      &quot;description&quot;: &quot;One thing a verdict rests on: where it was read and what was seen there.\n\n```\nuse majordomus_cli::environment::preflight::Evidence;\nlet e = Evidence::new(\&quot;.ai/repo/evidence/ledger.json\&quot;, \&quot;6 recorded runs\&quot;);\nassert_eq!(e.source, \&quot;.ai/repo/evidence/ledger.json\&quot;);\n```&quot;,
+      &quot;required&quot;: [
+        &quot;source&quot;,
+        &quot;observed&quot;
+      ],
+      &quot;properties&quot;: {
+        &quot;observed&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;What it said, in one phrase.&quot;
+        },
+        &quot;source&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The file, command, route or capability that was read.&quot;
+        }
+      },
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;PreflightCheck&quot;: {
+      &quot;type&quot;: &quot;object&quot;,
+      &quot;description&quot;: &quot;One claim, its verdict, and what the verdict rests on.\n\n```\nuse majordomus_cli::environment::preflight::{Check, Evidence, Verdict};\n\n// a claim of something in force without evidence is not accepted as one\nlet bare = Check::new(\&quot;integration.mcp\&quot;, \&quot;MCP\&quot;, Verdict::Verified, \&quot;healthy\&quot;, vec![]);\nassert_eq!(bare.verdict, Verdict::Unknown);\nassert!(bare.summary.contains(\&quot;no evidence\&quot;));\n\nlet backed = Check::new(\n    \&quot;integration.mcp\&quot;, \&quot;MCP\&quot;, Verdict::Verified, \&quot;served\&quot;,\n    vec![Evidence::new(\&quot;GET /\&quot;, \&quot;surface mcp ready\&quot;)],\n);\nassert_eq!(backed.verdict, Verdict::Verified);\n```&quot;,
+      &quot;required&quot;: [
+        &quot;id&quot;,
+        &quot;title&quot;,
+        &quot;verdict&quot;,
+        &quot;summary&quot;
+      ],
+      &quot;properties&quot;: {
+        &quot;title&quot;: {
+          &quot;description&quot;: &quot;The short name a person reads.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;verdict&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/PreflightVerdict&quot;,
+          &quot;description&quot;: &quot;What the repository can show.&quot;
         },
         &quot;id&quot;: {
           &quot;description&quot;: &quot;A stable dotted id, `&lt;section&gt;.&lt;claim&gt;`.&quot;,
@@ -312,82 +420,45 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
             &quot;null&quot;
           ]
         },
-        &quot;summary&quot;: {
-          &quot;description&quot;: &quot;The verdict in one sentence, with the numbers that decided it.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;title&quot;: {
-          &quot;description&quot;: &quot;The short name a person reads.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;verdict&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/PreflightVerdict&quot;,
-          &quot;description&quot;: &quot;What the repository can show.&quot;
-        }
-      },
-      &quot;required&quot;: [
-        &quot;id&quot;,
-        &quot;title&quot;,
-        &quot;verdict&quot;,
-        &quot;summary&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
-    },
-    &quot;PreflightEvidence&quot;: {
-      &quot;description&quot;: &quot;One thing a verdict rests on: where it was read and what was seen there.\n\n```\nuse majordomus_cli::environment::preflight::Evidence;\nlet e = Evidence::new(\&quot;.ai/repo/evidence/ledger.json\&quot;, \&quot;6 recorded runs\&quot;);\nassert_eq!(e.source, \&quot;.ai/repo/evidence/ledger.json\&quot;);\n```&quot;,
-      &quot;properties&quot;: {
-        &quot;observed&quot;: {
-          &quot;description&quot;: &quot;What it said, in one phrase.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;source&quot;: {
-          &quot;description&quot;: &quot;The file, command, route or capability that was read.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      },
-      &quot;required&quot;: [
-        &quot;source&quot;,
-        &quot;observed&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
-    },
-    &quot;PreflightSection&quot;: {
-      &quot;description&quot;: &quot;A group of checks: repository, session, governance, integration, verification.\n\n```\nuse majordomus_cli::environment::preflight::{derive, Observations, Section};\nlet p = derive(&amp;Observations::empty(\&quot;demo\&quot;, 0));\nlet ids: Vec&lt;&amp;str&gt; = p.sections.iter().map(|s| s.id.as_str()).collect();\nassert_eq!(ids, [\&quot;repository\&quot;, \&quot;session\&quot;, \&quot;governance\&quot;, \&quot;integration\&quot;, \&quot;verification\&quot;]);\n// every check in a section carries the section&#39;s id as its prefix\nlet session: &amp;Section = &amp;p.sections[1];\nassert!(session.checks.iter().all(|c| c.id.starts_with(\&quot;session.\&quot;)));\n```&quot;,
-      &quot;properties&quot;: {
-        &quot;checks&quot;: {
-          &quot;description&quot;: &quot;The checks, in the order they are rendered.&quot;,
+        &quot;evidence&quot;: {
+          &quot;description&quot;: &quot;Everything the verdict rests on. Never empty for a verdict that proves something.&quot;,
+          &quot;type&quot;: &quot;array&quot;,
           &quot;items&quot;: {
-            &quot;$ref&quot;: &quot;#/$defs/PreflightCheck&quot;
-          },
-          &quot;type&quot;: &quot;array&quot;
+            &quot;$ref&quot;: &quot;#/$defs/PreflightEvidence&quot;
+          }
         },
-        &quot;id&quot;: {
-          &quot;description&quot;: &quot;A stable id, the prefix of every check in it.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+        &quot;summary&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The verdict in one sentence, with the numbers that decided it.&quot;
+        }
+      }
+    },
+    &quot;Resolution&quot;: {
+      &quot;description&quot;: &quot;How completely a snapshot was resolved. Carried in the snapshot because a consumer must\nbe able to tell \&quot;there is no server running\&quot; from \&quot;nobody looked\&quot;.&quot;,
+      &quot;oneOf&quot;: [
+        {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;fast&quot;,
+          &quot;description&quot;: &quot;Only what is cheap enough for a shell prompt; the rest from the cache.&quot;
         },
-        &quot;title&quot;: {
-          &quot;description&quot;: &quot;The heading a person reads.&quot;,
+        {
+          &quot;const&quot;: &quot;full&quot;,
+          &quot;description&quot;: &quot;Everything, including the index. Writes the cache.&quot;,
           &quot;type&quot;: &quot;string&quot;
         }
-      },
-      &quot;required&quot;: [
-        &quot;id&quot;,
-        &quot;title&quot;,
-        &quot;checks&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
+      ]
     },
     &quot;PreflightVerdict&quot;: {
       &quot;description&quot;: &quot;What the repository can show about one claim.\n\nNine words, not a boolean, because the actions they call for differ: `stale` is re-run\nthe proof, `unavailable` is nothing is there, `unknown` is nobody looked, and\n`not_applicable` is there is nothing to look for.\n\n```\nuse majordomus_cli::environment::preflight::Verdict;\nassert!(Verdict::Verified.proves() &amp;&amp; Verdict::Active.proves() &amp;&amp; Verdict::Fresh.proves());\nassert!(!Verdict::Stale.proves() &amp;&amp; !Verdict::NotApplicable.proves());\nassert_eq!(Verdict::NotApplicable.as_str(), \&quot;not_applicable\&quot;);\n// the most urgent first: a failure outranks a stale proof, which outranks an absence\nassert!(Verdict::Failed.urgency() &lt; Verdict::Stale.urgency());\nassert_eq!(Verdict::Verified.urgency(), None);\n```&quot;,
       &quot;oneOf&quot;: [
         {
-          &quot;const&quot;: &quot;verified&quot;,
           &quot;description&quot;: &quot;Proven against this tree by a recorded result or a direct answer.&quot;,
+          &quot;const&quot;: &quot;verified&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
         {
-          &quot;const&quot;: &quot;active&quot;,
           &quot;description&quot;: &quot;In force now, observed directly, with nothing recorded to verify.&quot;,
+          &quot;const&quot;: &quot;active&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
         {
@@ -396,8 +467,8 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
           &quot;type&quot;: &quot;string&quot;
         },
         {
-          &quot;const&quot;: &quot;stale&quot;,
           &quot;description&quot;: &quot;Evidence exists, but it is about another commit, tree or moment.&quot;,
+          &quot;const&quot;: &quot;stale&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
         {
@@ -406,100 +477,29 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
           &quot;type&quot;: &quot;string&quot;
         },
         {
-          &quot;const&quot;: &quot;unavailable&quot;,
           &quot;description&quot;: &quot;Nothing is there to observe.&quot;,
+          &quot;const&quot;: &quot;unavailable&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
         {
-          &quot;const&quot;: &quot;failed&quot;,
+          &quot;type&quot;: &quot;string&quot;,
           &quot;description&quot;: &quot;Observed, and it did not hold.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;const&quot;: &quot;failed&quot;
         },
         {
-          &quot;const&quot;: &quot;unknown&quot;,
+          &quot;type&quot;: &quot;string&quot;,
           &quot;description&quot;: &quot;Nobody looked, or the looking did not finish.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;const&quot;: &quot;unknown&quot;
         },
         {
+          &quot;type&quot;: &quot;string&quot;,
           &quot;const&quot;: &quot;not_applicable&quot;,
-          &quot;description&quot;: &quot;There is nothing here to judge.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      ]
-    },
-    &quot;Resolution&quot;: {
-      &quot;description&quot;: &quot;How completely a snapshot was resolved. Carried in the snapshot because a consumer must\nbe able to tell \&quot;there is no server running\&quot; from \&quot;nobody looked\&quot;.&quot;,
-      &quot;oneOf&quot;: [
-        {
-          &quot;const&quot;: &quot;fast&quot;,
-          &quot;description&quot;: &quot;Only what is cheap enough for a shell prompt; the rest from the cache.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;full&quot;,
-          &quot;description&quot;: &quot;Everything, including the index. Writes the cache.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;description&quot;: &quot;There is nothing here to judge.&quot;
         }
       ]
     }
   },
-  &quot;description&quot;: &quot;Whether Majordomus is in force in this checkout, claim by claim, with the evidence.\n\n```\nuse majordomus_cli::environment::preflight::{derive, Observations, Preflight};\nlet p = derive(&amp;Observations::empty(\&quot;demo\&quot;, 0));\nassert_eq!(p.schema, Preflight::schema_id());\nassert_eq!(p.verdicts().len(), p.sections.iter().map(|s| s.checks.len()).sum::&lt;usize&gt;());\n```&quot;,
-  &quot;properties&quot;: {
-    &quot;attention&quot;: {
-      &quot;description&quot;: &quot;The ids of every check that needs a look, most urgent first.&quot;,
-      &quot;items&quot;: {
-        &quot;type&quot;: &quot;string&quot;
-      },
-      &quot;type&quot;: &quot;array&quot;
-    },
-    &quot;branch&quot;: {
-      &quot;description&quot;: &quot;The branch, when git named one.&quot;,
-      &quot;type&quot;: [
-        &quot;string&quot;,
-        &quot;null&quot;
-      ]
-    },
-    &quot;generated_at&quot;: {
-      &quot;description&quot;: &quot;When the observations were taken, RFC 3339 in UTC.&quot;,
-      &quot;type&quot;: &quot;string&quot;
-    },
-    &quot;head&quot;: {
-      &quot;description&quot;: &quot;The commit HEAD names.&quot;,
-      &quot;type&quot;: [
-        &quot;string&quot;,
-        &quot;null&quot;
-      ]
-    },
-    &quot;repository&quot;: {
-      &quot;description&quot;: &quot;The repository&#39;s name.&quot;,
-      &quot;type&quot;: &quot;string&quot;
-    },
-    &quot;resolution&quot;: {
-      &quot;$ref&quot;: &quot;#/$defs/Resolution&quot;,
-      &quot;description&quot;: &quot;How the environment behind it was resolved.&quot;
-    },
-    &quot;schema&quot;: {
-      &quot;description&quot;: &quot;`majordomus/preflight/v1`.&quot;,
-      &quot;type&quot;: &quot;string&quot;
-    },
-    &quot;sections&quot;: {
-      &quot;description&quot;: &quot;The groups of checks.&quot;,
-      &quot;items&quot;: {
-        &quot;$ref&quot;: &quot;#/$defs/PreflightSection&quot;
-      },
-      &quot;type&quot;: &quot;array&quot;
-    }
-  },
-  &quot;required&quot;: [
-    &quot;schema&quot;,
-    &quot;generated_at&quot;,
-    &quot;resolution&quot;,
-    &quot;repository&quot;,
-    &quot;sections&quot;,
-    &quot;attention&quot;
-  ],
-  &quot;title&quot;: &quot;Preflight&quot;,
-  &quot;type&quot;: &quot;object&quot;
+  &quot;title&quot;: &quot;Preflight&quot;
 }</pre></div>
   </details>
 </div>
@@ -530,7 +530,7 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
         <div><dt class="text-body-subtle">modul Rust</dt><dd class="min-w-0 break-all font-mono text-heading">majordomus_cli::capability::builtin::environment</dd></div>
         <div><dt class="text-body-subtle">typ vstupu</dt><dd class="font-mono text-heading">PreflightInput</dd></div>
         <div><dt class="text-body-subtle">typ výstupu</dt><dd class="font-mono text-heading">Preflight</dd></div>
-        <div><dt class="text-body-subtle">reference na GitHubu</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/1112bace3437ee0d82067b1e8f61813e70190078/docs/generated/modules/environment.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/environment.md</a></dd></div><div><dt class="text-body-subtle">otisk registru</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">5cdbf22cd21589ddbe464d5f0987b6bcf4607d05479004d6f815c3b306fdb08a</dd></div>
+        <div><dt class="text-body-subtle">reference na GitHubu</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/docs/generated/modules/environment.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/environment.md</a></dd></div><div><dt class="text-body-subtle">otisk registru</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">3f734f2faf797f0ca7c39b4cd837e68b6619c41c6f6711f3d3aeca8f341934eb</dd></div>
         <div><dt class="text-body-subtle">vygenerováno nástrojem</dt><dd class="font-mono text-heading">majordomus-cli 1.0.0-alpha.10</dd></div>
       </dl>
     </div>
@@ -586,9 +586,9 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
       <div class="min-w-0">
         <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">Projekt</h2><ul class="space-y-2 text-sm font-medium text-body">
           <li><a href="https://github.com/korczis/prismatic-majordomus" class="hover:text-heading hover:underline">GitHub</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/1112bace3437ee0d82067b1e8f61813e70190078/LICENSE" class="hover:text-heading hover:underline">Licence MIT</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/1112bace3437ee0d82067b1e8f61813e70190078/SECURITY.md" class="hover:text-heading hover:underline">Bezpečnostní politika</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/1112bace3437ee0d82067b1e8f61813e70190078/CONTRIBUTING.md" class="hover:text-heading hover:underline">Průvodce pro přispěvatele</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/LICENSE" class="hover:text-heading hover:underline">Licence MIT</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/SECURITY.md" class="hover:text-heading hover:underline">Bezpečnostní politika</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/CONTRIBUTING.md" class="hover:text-heading hover:underline">Průvodce pro přispěvatele</a></li>
         </ul>
       </div>
     </div>
@@ -596,7 +596,7 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/cs/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.10</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/1112bace3437ee0d82067b1e8f61813e70190078" class="font-mono underline">1112bac</a> · inputs <span class="font-mono">830f884cc5aa</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/cs/architecture/" class="underline">how this site is derived</a> names them.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.10</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/745db2ea21e02613943face75a2bf95542be1f2e" class="font-mono underline">745db2e</a> · inputs <span class="font-mono">0a58c217d1b7</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/cs/architecture/" class="underline">how this site is derived</a> names them.</p>
     </div>
   </div>
 </footer>
