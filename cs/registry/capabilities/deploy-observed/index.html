@@ -210,10 +210,10 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
   <h3 class="font-mono text-sm font-semibold text-heading">vstup · Prázdné</h3><div class="mt-1 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">Žádný vstup.</div><p class="mt-2 text-sm text-body-subtle">Žádné vlastnosti: schopnost nebere žádný vstup.</p><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
+  &quot;additionalProperties&quot;: false,
   &quot;description&quot;: &quot;No input.&quot;,
   &quot;title&quot;: &quot;Empty&quot;,
-  &quot;type&quot;: &quot;object&quot;,
-  &quot;additionalProperties&quot;: false
+  &quot;type&quot;: &quot;object&quot;
 }</pre></div>
   </details>
 </div>
@@ -227,35 +227,35 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
         <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
         <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Pozorovaná nasazení, nejnovější první.</td>
       </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">důvod</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">ne</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Proč ne a co spustit, když žádný nedrží nebo ho nelze přečíst.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">observed_at</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">ne</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Kdy se forge ptalo, když bylo pozorováno.</td>
+        <td class="px-3 py-2 font-mono text-heading">prostředí</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Každé prostředí, do kterého se cokoli nasadilo, podle jména.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">pozorováno</td>
         <td class="px-3 py-2 font-mono text-xs text-body">boolean</td>
         <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
         <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Zda tento checkout vůbec drží nějaké pozorování.</td>
       </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">prostředí</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Každé prostředí, do kterého se cokoli nasadilo, podle jména.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">repozitář</td>
+        <td class="px-3 py-2 font-mono text-heading">observed_at</td>
         <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
         <td class="px-3 py-2 font-mono text-xs text-body">ne</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words"><code>owner/name</code>, pokud bylo pozorováno.</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Kdy se forge ptalo, když bylo pozorováno.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">důvod</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">ne</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Proč ne a co spustit, když žádný nedrží nebo ho nelze přečíst.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">releases</td>
         <td class="px-3 py-2 font-mono text-xs text-body">array</td>
         <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
         <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Pozorované releasy, nejnovější první.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">repozitář</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">ne</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words"><code>owner/name</code>, pokud bylo pozorováno.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">repository_url</td>
         <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
@@ -267,49 +267,43 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
   &quot;$defs&quot;: {
-    &quot;ObservedRelease&quot;: {
-      &quot;description&quot;: &quot;One release the forge published.&quot;,
+    &quot;EnvironmentSummary&quot;: {
+      &quot;description&quot;: &quot;One environment, as its deployments describe it.&quot;,
       &quot;properties&quot;: {
-        &quot;tag&quot;: {
-          &quot;description&quot;: &quot;The tag.&quot;,
+        &quot;activity_url&quot;: {
+          &quot;description&quot;: &quot;The environment&#39;s activity on the forge.&quot;,
           &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;deployed_at&quot;: {
+          &quot;description&quot;: &quot;When that was.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;deployments&quot;: {
+          &quot;description&quot;: &quot;How many of the observed deployments went to it.&quot;,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
         },
         &quot;name&quot;: {
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ],
-          &quot;description&quot;: &quot;The release&#39;s title, when it has one.&quot;
-        },
-        &quot;url&quot;: {
-          &quot;description&quot;: &quot;Its page on the forge.&quot;,
+          &quot;description&quot;: &quot;The environment.&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
-        &quot;published_at&quot;: {
+        &quot;sha&quot;: {
+          &quot;description&quot;: &quot;The commit its newest deployment put there.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;state&quot;: {
+          &quot;description&quot;: &quot;The state of its newest deployment.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;url&quot;: {
+          &quot;description&quot;: &quot;Where it is served, when its newest deployment says.&quot;,
           &quot;type&quot;: [
             &quot;string&quot;,
             &quot;null&quot;
-          ],
-          &quot;description&quot;: &quot;When it was published; absent for a draft.&quot;
-        },
-        &quot;draft&quot;: {
-          &quot;description&quot;: &quot;Whether it is still a draft.&quot;,
-          &quot;type&quot;: &quot;boolean&quot;
-        },
-        &quot;prerelease&quot;: {
-          &quot;type&quot;: &quot;boolean&quot;,
-          &quot;description&quot;: &quot;Whether the forge marks it a pre-release.&quot;
+          ]
         }
       },
-      &quot;required&quot;: [
-        &quot;tag&quot;,
-        &quot;url&quot;,
-        &quot;prerelease&quot;,
-        &quot;draft&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
-    },
-    &quot;EnvironmentSummary&quot;: {
       &quot;required&quot;: [
         &quot;name&quot;,
         &quot;deployments&quot;,
@@ -318,64 +312,42 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
         &quot;deployed_at&quot;,
         &quot;activity_url&quot;
       ],
-      &quot;type&quot;: &quot;object&quot;,
-      &quot;description&quot;: &quot;One environment, as its deployments describe it.&quot;,
-      &quot;properties&quot;: {
-        &quot;activity_url&quot;: {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;The environment&#39;s activity on the forge.&quot;
-        },
-        &quot;deployed_at&quot;: {
-          &quot;description&quot;: &quot;When that was.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;deployments&quot;: {
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;,
-          &quot;description&quot;: &quot;How many of the observed deployments went to it.&quot;,
-          &quot;format&quot;: &quot;uint&quot;
-        },
-        &quot;sha&quot;: {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;The commit its newest deployment put there.&quot;
-        },
-        &quot;url&quot;: {
-          &quot;description&quot;: &quot;Where it is served, when its newest deployment says.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;name&quot;: {
-          &quot;description&quot;: &quot;The environment.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;state&quot;: {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;The state of its newest deployment.&quot;
-        }
-      }
+      &quot;type&quot;: &quot;object&quot;
     },
     &quot;ObservedDeployment&quot;: {
-      &quot;required&quot;: [
-        &quot;id&quot;,
-        &quot;environment&quot;,
-        &quot;sha&quot;,
-        &quot;created_at&quot;,
-        &quot;state&quot;
-      ],
       &quot;description&quot;: &quot;One deployment the forge recorded.&quot;,
       &quot;properties&quot;: {
         &quot;created_at&quot;: {
           &quot;description&quot;: &quot;When it was created, RFC 3339.&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
+        &quot;creator&quot;: {
+          &quot;description&quot;: &quot;Who or what created it.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
         &quot;environment&quot;: {
           &quot;description&quot;: &quot;The environment it went to, in the forge&#39;s words (`github-pages`, `production`, ...).&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
-        &quot;state&quot;: {
-          &quot;description&quot;: &quot;How it ended, lower case as the forge states it (`success`, `failure`, `in_progress`,\n...); `unknown` when the forge reported no status at all.&quot;,
+        &quot;environment_url&quot;: {
+          &quot;description&quot;: &quot;Where the environment is served, when the deployment says.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;git_ref&quot;: {
+          &quot;description&quot;: &quot;The ref it was deployed from, when the forge still names one.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;id&quot;: {
+          &quot;description&quot;: &quot;The forge&#39;s identity of the deployment.&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
         &quot;log_url&quot;: {
@@ -385,71 +357,75 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
             &quot;null&quot;
           ]
         },
-        &quot;creator&quot;: {
-          &quot;description&quot;: &quot;Who or what created it.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;environment_url&quot;: {
-          &quot;description&quot;: &quot;Where the environment is served, when the deployment says.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;id&quot;: {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;The forge&#39;s identity of the deployment.&quot;
-        },
-        &quot;git_ref&quot;: {
-          &quot;description&quot;: &quot;The ref it was deployed from, when the forge still names one.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        },
         &quot;sha&quot;: {
           &quot;description&quot;: &quot;The commit that was deployed.&quot;,
           &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;state&quot;: {
+          &quot;description&quot;: &quot;How it ended, lower case as the forge states it (`success`, `failure`, `in_progress`,\n...); `unknown` when the forge reported no status at all.&quot;,
+          &quot;type&quot;: &quot;string&quot;
         }
       },
+      &quot;required&quot;: [
+        &quot;id&quot;,
+        &quot;environment&quot;,
+        &quot;sha&quot;,
+        &quot;created_at&quot;,
+        &quot;state&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;ObservedRelease&quot;: {
+      &quot;description&quot;: &quot;One release the forge published.&quot;,
+      &quot;properties&quot;: {
+        &quot;draft&quot;: {
+          &quot;description&quot;: &quot;Whether it is still a draft.&quot;,
+          &quot;type&quot;: &quot;boolean&quot;
+        },
+        &quot;name&quot;: {
+          &quot;description&quot;: &quot;The release&#39;s title, when it has one.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;prerelease&quot;: {
+          &quot;description&quot;: &quot;Whether the forge marks it a pre-release.&quot;,
+          &quot;type&quot;: &quot;boolean&quot;
+        },
+        &quot;published_at&quot;: {
+          &quot;description&quot;: &quot;When it was published; absent for a draft.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;tag&quot;: {
+          &quot;description&quot;: &quot;The tag.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;url&quot;: {
+          &quot;description&quot;: &quot;Its page on the forge.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;tag&quot;,
+        &quot;url&quot;,
+        &quot;prerelease&quot;,
+        &quot;draft&quot;
+      ],
       &quot;type&quot;: &quot;object&quot;
     }
   },
   &quot;description&quot;: &quot;`deploy.observed`: what was deployed where, or that nothing has been observed here.&quot;,
-  &quot;required&quot;: [
-    &quot;observed&quot;,
-    &quot;environments&quot;,
-    &quot;deployments&quot;,
-    &quot;releases&quot;
-  ],
   &quot;properties&quot;: {
     &quot;deployments&quot;: {
       &quot;description&quot;: &quot;The observed deployments, newest first.&quot;,
-      &quot;type&quot;: &quot;array&quot;,
       &quot;items&quot;: {
         &quot;$ref&quot;: &quot;#/$defs/ObservedDeployment&quot;
-      }
-    },
-    &quot;reason&quot;: {
-      &quot;description&quot;: &quot;Why not, and what to run, when it holds none or cannot read it.&quot;,
-      &quot;type&quot;: [
-        &quot;string&quot;,
-        &quot;null&quot;
-      ]
-    },
-    &quot;observed_at&quot;: {
-      &quot;type&quot;: [
-        &quot;string&quot;,
-        &quot;null&quot;
-      ],
-      &quot;description&quot;: &quot;When the forge was asked, when observed.&quot;
-    },
-    &quot;observed&quot;: {
-      &quot;description&quot;: &quot;Whether this checkout holds an observation at all.&quot;,
-      &quot;type&quot;: &quot;boolean&quot;
+      },
+      &quot;type&quot;: &quot;array&quot;
     },
     &quot;environments&quot;: {
       &quot;description&quot;: &quot;Every environment something was deployed to, by name.&quot;,
@@ -458,12 +434,23 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
       },
       &quot;type&quot;: &quot;array&quot;
     },
-    &quot;repository&quot;: {
+    &quot;observed&quot;: {
+      &quot;description&quot;: &quot;Whether this checkout holds an observation at all.&quot;,
+      &quot;type&quot;: &quot;boolean&quot;
+    },
+    &quot;observed_at&quot;: {
+      &quot;description&quot;: &quot;When the forge was asked, when observed.&quot;,
       &quot;type&quot;: [
         &quot;string&quot;,
         &quot;null&quot;
-      ],
-      &quot;description&quot;: &quot;`owner/name`, when observed.&quot;
+      ]
+    },
+    &quot;reason&quot;: {
+      &quot;description&quot;: &quot;Why not, and what to run, when it holds none or cannot read it.&quot;,
+      &quot;type&quot;: [
+        &quot;string&quot;,
+        &quot;null&quot;
+      ]
     },
     &quot;releases&quot;: {
       &quot;description&quot;: &quot;The observed releases, newest first.&quot;,
@@ -471,6 +458,13 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
         &quot;$ref&quot;: &quot;#/$defs/ObservedRelease&quot;
       },
       &quot;type&quot;: &quot;array&quot;
+    },
+    &quot;repository&quot;: {
+      &quot;description&quot;: &quot;`owner/name`, when observed.&quot;,
+      &quot;type&quot;: [
+        &quot;string&quot;,
+        &quot;null&quot;
+      ]
     },
     &quot;repository_url&quot;: {
       &quot;description&quot;: &quot;The repository&#39;s address on the forge, when observed.&quot;,
@@ -480,8 +474,14 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
       ]
     }
   },
-  &quot;type&quot;: &quot;object&quot;,
-  &quot;title&quot;: &quot;ObservedDeployments&quot;
+  &quot;required&quot;: [
+    &quot;observed&quot;,
+    &quot;environments&quot;,
+    &quot;deployments&quot;,
+    &quot;releases&quot;
+  ],
+  &quot;title&quot;: &quot;ObservedDeployments&quot;,
+  &quot;type&quot;: &quot;object&quot;
 }</pre></div>
   </details>
 </div>
@@ -512,7 +512,7 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
         <div><dt class="text-body-subtle">modul Rust</dt><dd class="min-w-0 break-all font-mono text-heading">majordomus_cli::capability::builtin::deploy</dd></div>
         <div><dt class="text-body-subtle">typ vstupu</dt><dd class="font-mono text-heading">Prázdné</dd></div>
         <div><dt class="text-body-subtle">typ výstupu</dt><dd class="font-mono text-heading">ObservedDeployments</dd></div>
-        <div><dt class="text-body-subtle">reference na GitHubu</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/docs/generated/modules/deploy.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/deploy.md</a></dd></div><div><dt class="text-body-subtle">otisk registru</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">3f734f2faf797f0ca7c39b4cd837e68b6619c41c6f6711f3d3aeca8f341934eb</dd></div>
+        <div><dt class="text-body-subtle">reference na GitHubu</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/1112bace3437ee0d82067b1e8f61813e70190078/docs/generated/modules/deploy.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/deploy.md</a></dd></div><div><dt class="text-body-subtle">otisk registru</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">5cdbf22cd21589ddbe464d5f0987b6bcf4607d05479004d6f815c3b306fdb08a</dd></div>
         <div><dt class="text-body-subtle">vygenerováno nástrojem</dt><dd class="font-mono text-heading">majordomus-cli 1.0.0-alpha.10</dd></div>
       </dl>
     </div>
@@ -568,9 +568,9 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
       <div class="min-w-0">
         <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">Projekt</h2><ul class="space-y-2 text-sm font-medium text-body">
           <li><a href="https://github.com/korczis/prismatic-majordomus" class="hover:text-heading hover:underline">GitHub</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/LICENSE" class="hover:text-heading hover:underline">Licence MIT</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/SECURITY.md" class="hover:text-heading hover:underline">Bezpečnostní politika</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/CONTRIBUTING.md" class="hover:text-heading hover:underline">Průvodce pro přispěvatele</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/1112bace3437ee0d82067b1e8f61813e70190078/LICENSE" class="hover:text-heading hover:underline">Licence MIT</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/1112bace3437ee0d82067b1e8f61813e70190078/SECURITY.md" class="hover:text-heading hover:underline">Bezpečnostní politika</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/1112bace3437ee0d82067b1e8f61813e70190078/CONTRIBUTING.md" class="hover:text-heading hover:underline">Průvodce pro přispěvatele</a></li>
         </ul>
       </div>
     </div>
@@ -578,7 +578,7 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/cs/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.10</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/745db2ea21e02613943face75a2bf95542be1f2e" class="font-mono underline">745db2e</a> · inputs <span class="font-mono">0a58c217d1b7</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/cs/architecture/" class="underline">how this site is derived</a> names them.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.10</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/1112bace3437ee0d82067b1e8f61813e70190078" class="font-mono underline">1112bac</a> · inputs <span class="font-mono">830f884cc5aa</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/cs/architecture/" class="underline">how this site is derived</a> names them.</p>
     </div>
   </div>
 </footer>

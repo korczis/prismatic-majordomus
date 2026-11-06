@@ -222,63 +222,63 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
     <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
       <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
       <tbody><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">session</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
+        <td class="px-3 py-2 font-mono text-heading">checkouts</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
         <td class="px-3 py-2 font-mono text-xs text-body">no</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The provider's own session identity (Claude Code's session id): the brief names the open episode that session owns. Absent, the episode the pointer resolves to.</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Which checkouts the peers section covers: <code>repository</code> (every board, the default) or <code>this</code>. <span class="font-mono text-xs text-body-subtle">default &quot;repository&quot;</span></td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">local</td>
         <td class="px-3 py-2 font-mono text-xs text-body">boolean</td>
         <td class="px-3 py-2 font-mono text-xs text-body">no</td>
         <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Compose in the process that answers and never ask the checkout's leaseholder: what a forwarded request says, so that it is never forwarded again. <span class="font-mono text-xs text-body-subtle">default false</span></td>
       </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">checkouts</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
+        <td class="px-3 py-2 font-mono text-heading">session</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
         <td class="px-3 py-2 font-mono text-xs text-body">no</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Which checkouts the peers section covers: <code>repository</code> (every board, the default) or <code>this</code>. <span class="font-mono text-xs text-body-subtle">default &quot;repository&quot;</span></td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The provider's own session identity (Claude Code's session id): the brief names the open episode that session owns. Absent, the episode the pointer resolves to.</td>
       </tr></tbody>
     </table>
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
-  &quot;title&quot;: &quot;BriefInput&quot;,
   &quot;$defs&quot;: {
     &quot;Checkouts&quot;: {
+      &quot;description&quot;: &quot;Which checkouts a reading of the server status covers.\n\nThe two answers cost differently and that is the whole reason the choice exists: the\nrepository&#39;s checkouts are read from git&#39;s registry of them and each one costs a lease\nread and a probe, while this checkout alone costs one of each and enumerates nothing.\nThe word each variant serialises to is the word the query parameter, the tool input and\nthe command-line flag all take.\n\n```\nuse majordomus_cli::capability::builtin::server::Checkouts;\nassert_eq!(serde_json::to_value(Checkouts::This).unwrap(), \&quot;this\&quot;);\nassert_eq!(serde_json::to_value(Checkouts::Repository).unwrap(), \&quot;repository\&quot;);\nassert_eq!(Checkouts::default(), Checkouts::Repository, \&quot;the wide answer is what a caller who says nothing has always got\&quot;);\n```&quot;,
       &quot;oneOf&quot;: [
         {
-          &quot;type&quot;: &quot;string&quot;,
           &quot;const&quot;: &quot;repository&quot;,
-          &quot;description&quot;: &quot;Every checkout git registers for the repository, the primary first — a lease read\nand a probe each. The default, because it is the answer this capability gave before\nthere was anything to ask.&quot;
+          &quot;description&quot;: &quot;Every checkout git registers for the repository, the primary first — a lease read\nand a probe each. The default, because it is the answer this capability gave before\nthere was anything to ask.&quot;,
+          &quot;type&quot;: &quot;string&quot;
         },
         {
-          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;this&quot;,
           &quot;description&quot;: &quot;This checkout alone. No other checkout is enumerated, no other lease is read and no\nother server is probed; `servers` holds the one entry, and it is this one.&quot;,
-          &quot;const&quot;: &quot;this&quot;
+          &quot;type&quot;: &quot;string&quot;
         }
-      ],
-      &quot;description&quot;: &quot;Which checkouts a reading of the server status covers.\n\nThe two answers cost differently and that is the whole reason the choice exists: the\nrepository&#39;s checkouts are read from git&#39;s registry of them and each one costs a lease\nread and a probe, while this checkout alone costs one of each and enumerates nothing.\nThe word each variant serialises to is the word the query parameter, the tool input and\nthe command-line flag all take.\n\n```\nuse majordomus_cli::capability::builtin::server::Checkouts;\nassert_eq!(serde_json::to_value(Checkouts::This).unwrap(), \&quot;this\&quot;);\nassert_eq!(serde_json::to_value(Checkouts::Repository).unwrap(), \&quot;repository\&quot;);\nassert_eq!(Checkouts::default(), Checkouts::Repository, \&quot;the wide answer is what a caller who says nothing has always got\&quot;);\n```&quot;
+      ]
     }
   },
+  &quot;description&quot;: &quot;What to ask of `brief.session`.&quot;,
   &quot;properties&quot;: {
+    &quot;checkouts&quot;: {
+      &quot;$ref&quot;: &quot;#/$defs/Checkouts&quot;,
+      &quot;default&quot;: &quot;repository&quot;,
+      &quot;description&quot;: &quot;Which checkouts the peers section covers: `repository` (every board, the default) or `this`.&quot;
+    },
+    &quot;local&quot;: {
+      &quot;default&quot;: false,
+      &quot;description&quot;: &quot;Compose in the process that answers and never ask the checkout&#39;s leaseholder: what a forwarded request says, so that it is never forwarded again.&quot;,
+      &quot;type&quot;: &quot;boolean&quot;
+    },
     &quot;session&quot;: {
       &quot;description&quot;: &quot;The provider&#39;s own session identity (Claude Code&#39;s session id): the brief names the open episode that session owns. Absent, the episode the pointer resolves to.&quot;,
       &quot;type&quot;: [
         &quot;string&quot;,
         &quot;null&quot;
       ]
-    },
-    &quot;local&quot;: {
-      &quot;type&quot;: &quot;boolean&quot;,
-      &quot;description&quot;: &quot;Compose in the process that answers and never ask the checkout&#39;s leaseholder: what a forwarded request says, so that it is never forwarded again.&quot;,
-      &quot;default&quot;: false
-    },
-    &quot;checkouts&quot;: {
-      &quot;description&quot;: &quot;Which checkouts the peers section covers: `repository` (every board, the default) or `this`.&quot;,
-      &quot;$ref&quot;: &quot;#/$defs/Checkouts&quot;,
-      &quot;default&quot;: &quot;repository&quot;
     }
   },
-  &quot;description&quot;: &quot;What to ask of `brief.session`.&quot;,
+  &quot;title&quot;: &quot;BriefInput&quot;,
   &quot;type&quot;: &quot;object&quot;
 }</pre></div>
   </details>
@@ -288,23 +288,6 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
     <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
       <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
       <tbody><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">runtime</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">one of 2</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Where this checkout's runtime stands, and its last recorded transition, as
-<code>server.status</code> derives it (I3179). Absent from the answer of a server older than the
-field.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">derive</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The derive queue.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">session</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">This session: its episode and task.</td>
-      </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">answered_by</td>
         <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
@@ -315,20 +298,30 @@ field.</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
         <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">When it was composed, RFC 3339.</td>
       </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">derive</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The derive queue.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">integration</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The integration queue.</td>
+      </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">interval_minutes</td>
         <td class="px-3 py-2 font-mono text-xs text-body">integer</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
         <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">How often a session reports on itself, in minutes (<code>session.brief_interval_minutes</code>).</td>
       </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">line</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The brief in one line: the status line's text.</td>
-      </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">keep_awake</td>
         <td class="px-3 py-2 font-mono text-xs text-body">string</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
         <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">What a session is told at its start about keeping itself awake.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">line</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The brief in one line: the status line's text.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">lines</td>
         <td class="px-3 py-2 font-mono text-xs text-body">array</td>
@@ -340,11 +333,6 @@ field.</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
         <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The mesh.</td>
       </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">integration</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The integration queue.</td>
-      </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">peers</td>
         <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
@@ -354,310 +342,41 @@ field.</td>
         <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
         <td class="px-3 py-2 font-mono text-xs text-body">no</td>
         <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Whether the trunk's landed work is released. Absent from the answer of a server older
-than this section, which leaves it unread rather than failing the whole brief. <span class="font-mono text-xs text-body-subtle">default {&quot;landed&quot;:0,&quot;summary&quot;:&quot;the server that composed this brief does not measure the release&quot;,&quot;state&quot;:&quot;unread&quot;}</span></td>
+than this section, which leaves it unread rather than failing the whole brief. <span class="font-mono text-xs text-body-subtle">default {&quot;landed&quot;:0,&quot;state&quot;:&quot;unread&quot;,&quot;summary&quot;:&quot;the server that composed this brief does not measure the release&quot;}</span></td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">runtime</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">one of 2</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Where this checkout's runtime stands, and its last recorded transition, as
+<code>server.status</code> derives it (I3179). Absent from the answer of a server older than the
+field.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">session</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">This session: its episode and task.</td>
       </tr></tbody>
     </table>
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
   &quot;$defs&quot;: {
-    &quot;BriefSessionSection&quot;: {
-      &quot;properties&quot;: {
-        &quot;head&quot;: {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;The checkout&#39;s head, abbreviated.&quot;
-        },
-        &quot;provider_session&quot;: {
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ],
-          &quot;description&quot;: &quot;The provider session that owns it.&quot;
-        },
-        &quot;branch&quot;: {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;The checkout&#39;s branch.&quot;
-        },
-        &quot;summary&quot;: {
-          &quot;description&quot;: &quot;The section in words.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;task&quot;: {
-          &quot;description&quot;: &quot;The active task&#39;s words.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;episode&quot;: {
-          &quot;description&quot;: &quot;The open episode, when one is found.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;task_id&quot;: {
-          &quot;description&quot;: &quot;The active task&#39;s id, when one is active.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;caller&quot;: {
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ],
-          &quot;description&quot;: &quot;The calling MCP session&#39;s place on this board, when the call came through one.&quot;
-        },
-        &quot;state&quot;: {
-          &quot;description&quot;: &quot;Whether it could be read.&quot;,
-          &quot;$ref&quot;: &quot;#/$defs/BriefSectionState&quot;
-        }
-      },
-      &quot;type&quot;: &quot;object&quot;,
-      &quot;description&quot;: &quot;The session the brief is about.&quot;,
-      &quot;required&quot;: [
-        &quot;state&quot;,
-        &quot;branch&quot;,
-        &quot;head&quot;,
-        &quot;summary&quot;
-      ]
-    },
-    &quot;RuntimeTransition&quot;: {
-      &quot;properties&quot;: {
-        &quot;at&quot;: {
-          &quot;description&quot;: &quot;When, RFC 3339.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;pid&quot;: {
-          &quot;type&quot;: [
-            &quot;integer&quot;,
-            &quot;null&quot;
-          ],
-          &quot;format&quot;: &quot;uint32&quot;,
-          &quot;description&quot;: &quot;The server process the transition is about, when there is one.&quot;,
-          &quot;minimum&quot;: 0
-        },
-        &quot;reason&quot;: {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;Why, in the recorder&#39;s words.&quot;
-        },
-        &quot;by&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/RuntimeWriter&quot;,
-          &quot;description&quot;: &quot;Who recorded it.&quot;
-        },
-        &quot;from&quot;: {
-          &quot;description&quot;: &quot;What it was, by the previous record; absent for the first.&quot;,
-          &quot;anyOf&quot;: [
-            {
-              &quot;$ref&quot;: &quot;#/$defs/ServerStanding&quot;
-            },
-            {
-              &quot;type&quot;: &quot;null&quot;
-            }
-          ]
-        },
-        &quot;schema&quot;: {
-          &quot;description&quot;: &quot;`RUNTIME_SCHEMA`.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;state&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/ServerStanding&quot;,
-          &quot;description&quot;: &quot;What the runtime became.&quot;
-        }
-      },
-      &quot;required&quot;: [
-        &quot;schema&quot;,
-        &quot;state&quot;,
-        &quot;at&quot;,
-        &quot;reason&quot;,
-        &quot;by&quot;
-      ],
-      &quot;description&quot;: &quot;The last transition of a checkout&#39;s runtime: what it became, from what, when, why, who\nrecorded it and which process it is about. The record under `RUNTIME_PATH`.\n\n```\nuse majordomus_cli::capability::builtin::server::{RuntimeTransition, RuntimeWriter, ServerStanding};\nlet t = RuntimeTransition::new(ServerStanding::Ready, None, \&quot;published\&quot;, RuntimeWriter::Server, Some(7));\nlet v = serde_json::to_value(&amp;t).unwrap();\nassert_eq!(v[\&quot;state\&quot;], \&quot;ready\&quot;);\nassert_eq!(v[\&quot;by\&quot;], \&quot;server\&quot;);\nassert!(v.get(\&quot;from\&quot;).is_none(), \&quot;a first record came from nothing it can name\&quot;);\n```&quot;,
-      &quot;type&quot;: &quot;object&quot;
-    },
-    &quot;RuntimeWriter&quot;: {
-      &quot;description&quot;: &quot;Who recorded a transition. Each state has its one kind of writer: the serving process\nrecords its own `starting`, `ready` and `stopping`, because only it knows them; a reader\nthat finds the server gone records `stopped` or `failed`, because a dead process records\nnothing.\n\n```\nuse majordomus_cli::capability::builtin::server::RuntimeWriter;\nassert_eq!(serde_json::to_value(RuntimeWriter::ServeEnsure).unwrap(), \&quot;serve_ensure\&quot;);\nassert_eq!(RuntimeWriter::reader_named(Some(\&quot;reap_orphans\&quot;)), RuntimeWriter::ReapOrphans);\nassert_eq!(RuntimeWriter::reader_named(Some(\&quot;server\&quot;)), RuntimeWriter::ServerStatus);\nassert_eq!(RuntimeWriter::reader_named(None), RuntimeWriter::ServerStatus);\n```&quot;,
-      &quot;oneOf&quot;: [
-        {
-          &quot;const&quot;: &quot;server&quot;,
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;The serving process, about itself.&quot;
-        },
-        {
-          &quot;description&quot;: &quot;`serve ensure`, which found the lease stale.&quot;,
-          &quot;const&quot;: &quot;serve_ensure&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;reap_orphans&quot;,
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;`scripts/reap-orphans`, through `serve status` after its sweep.&quot;
-        },
-        {
-          &quot;description&quot;: &quot;`server.status`, on any surface.&quot;,
-          &quot;const&quot;: &quot;server_status&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      ]
-    },
-    &quot;ServerStanding&quot;: {
-      &quot;description&quot;: &quot;Where a checkout&#39;s server stands, decided from its lease, whether the server the lease\nnames answers for that checkout, and whether what answers is this executable&#39;s code —\nand, refined by the readiness report, the mesh runtime and the last recorded transition,\nwhere its runtime stands (I3179).\n\nThe first five words are the lease&#39;s standing, decided by `standing_of`, and they are\nwhat `standing` carries on every surface: shells compare them, so they never change. The\nother seven are the runtime&#39;s refinements, decided by `runtime_of` and carried by\n`runtime.state` alone; `ServerStanding::refines` names the lease word each refines.\n\n```\nuse majordomus_cli::capability::builtin::server::ServerStanding;\nlet all = [ServerStanding::Absent, ServerStanding::Starting, ServerStanding::Ready,\n           ServerStanding::Outdated, ServerStanding::Stale];\nlet words: Vec&lt;&amp;str&gt; = all.iter().map(|s| s.as_str()).collect();\nassert_eq!(words, [\&quot;absent\&quot;, \&quot;starting\&quot;, \&quot;ready\&quot;, \&quot;outdated\&quot;, \&quot;stale\&quot;]);\nassert_eq!(serde_json::from_str::&lt;ServerStanding&gt;(\&quot;\\\&quot;stale\\\&quot;\&quot;).unwrap(), ServerStanding::Stale);\n// the runtime&#39;s words, in the same snake case the JSON carries\nassert_eq!(serde_json::to_value(ServerStanding::MeshAttaching).unwrap(), \&quot;mesh_attaching\&quot;);\nassert_eq!(ServerStanding::MeshAttaching.as_str(), \&quot;mesh_attaching\&quot;);\n```&quot;,
-      &quot;oneOf&quot;: [
-        {
-          &quot;description&quot;: &quot;No lease: nothing serves this checkout.&quot;,
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;const&quot;: &quot;absent&quot;
-        },
-        {
-          &quot;const&quot;: &quot;starting&quot;,
-          &quot;description&quot;: &quot;A lease without an address, young enough that its owner is still binding.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;description&quot;: &quot;The server the lease names answers for this checkout, from the code on disk, at\nthis executable&#39;s version.&quot;,
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;const&quot;: &quot;ready&quot;
-        },
-        {
-          &quot;const&quot;: &quot;outdated&quot;,
-          &quot;description&quot;: &quot;The server answers, but from older code than this executable, or from a file that\nhas been replaced since it started: everything it says is yesterday&#39;s.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;description&quot;: &quot;The lease names a server that does not answer, or is not a lease at all.&quot;,
-          &quot;const&quot;: &quot;stale&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;building&quot;,
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;No lease yet, and the executable a server would run is being built: recorded by the\nbuilder (I3180), and believed only while the process that recorded it is alive.&quot;
-        },
-        {
-          &quot;description&quot;: &quot;The server is ready, the repository declares its mesh enabled, and the server has not\nyet decided whether the mesh runs.&quot;,
-          &quot;const&quot;: &quot;mesh_attaching&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;description&quot;: &quot;The server is ready, says so itself, and its mesh runs or is not declared.&quot;,
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;const&quot;: &quot;operational&quot;
-        },
-        {
-          &quot;const&quot;: &quot;degraded&quot;,
-          &quot;description&quot;: &quot;The server answers, current, but its own readiness report or its mesh says it is not\nwhole: it lost the lease, serves replaced code, read a degraded layer, or its declared\nmesh is not running.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;stopping&quot;,
-          &quot;description&quot;: &quot;The process that holds the lease recorded that it is stopping, and it is still alive.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;stopped&quot;,
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;The server is gone after it recorded that it was stopping.&quot;
-        },
-        {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;const&quot;: &quot;failed&quot;,
-          &quot;description&quot;: &quot;The server is gone without having recorded that it was stopping: its lease names a\nprocess that no longer exists.&quot;
-        }
-      ]
-    },
-    &quot;BriefIntegrationSection&quot;: {
-      &quot;description&quot;: &quot;The integration queue, as `majordomus prs brief` says it.&quot;,
-      &quot;properties&quot;: {
-        &quot;summary&quot;: {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;The section in words.&quot;
-        },
-        &quot;state&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/BriefSectionState&quot;,
-          &quot;description&quot;: &quot;Whether this checkout ever observed the forge.&quot;
-        }
-      },
-      &quot;type&quot;: &quot;object&quot;,
-      &quot;required&quot;: [
-        &quot;state&quot;,
-        &quot;summary&quot;
-      ]
-    },
-    &quot;BriefPeersSection&quot;: {
-      &quot;required&quot;: [
-        &quot;state&quot;,
-        &quot;attached&quot;,
-        &quot;boards&quot;,
-        &quot;overlaps&quot;,
-        &quot;named&quot;,
-        &quot;summary&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;,
-      &quot;properties&quot;: {
-        &quot;named&quot;: {
-          &quot;description&quot;: &quot;The attached peers, one short line each, at most a bounded number.&quot;,
-          &quot;items&quot;: {
-            &quot;type&quot;: &quot;string&quot;
-          },
-          &quot;type&quot;: &quot;array&quot;
-        },
-        &quot;overlaps&quot;: {
-          &quot;description&quot;: &quot;Pairs of peers whose claimed scopes meet.&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;,
-          &quot;format&quot;: &quot;uint&quot;
-        },
-        &quot;boards&quot;: {
-          &quot;description&quot;: &quot;How many boards the answer covers.&quot;,
-          &quot;type&quot;: &quot;integer&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;format&quot;: &quot;uint&quot;
-        },
-        &quot;attached&quot;: {
-          &quot;type&quot;: &quot;integer&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;description&quot;: &quot;Attached peers across the boards read, the caller included.&quot;,
-          &quot;format&quot;: &quot;uint&quot;
-        },
-        &quot;state&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/BriefSectionState&quot;,
-          &quot;description&quot;: &quot;Whether every board could be read.&quot;
-        },
-        &quot;superseded&quot;: {
-          &quot;description&quot;: &quot;Set when the composing server is superseded: its own board is unreachable by the repository&#39;s gather.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;unread&quot;: {
-          &quot;description&quot;: &quot;Every board that could not be read, as `&lt;worktree&gt;: &lt;reason&gt;`.&quot;,
-          &quot;items&quot;: {
-            &quot;type&quot;: &quot;string&quot;
-          },
-          &quot;type&quot;: &quot;array&quot;
-        },
-        &quot;summary&quot;: {
-          &quot;description&quot;: &quot;The section in words.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      },
-      &quot;description&quot;: &quot;The workers of this repository, from every board the brief could read.&quot;
-    },
     &quot;BriefDeriveSection&quot;: {
-      &quot;required&quot;: [
-        &quot;state&quot;,
-        &quot;summary&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;,
       &quot;description&quot;: &quot;The machine&#39;s derive queue: its lock and its priority marker (`lib/machine_lock.sh`).&quot;,
       &quot;properties&quot;: {
-        &quot;priority&quot;: {
-          &quot;description&quot;: &quot;The branches the priority marker names, when it is present.&quot;,
+        &quot;alive&quot;: {
+          &quot;description&quot;: &quot;Whether that process is running on this machine.&quot;,
           &quot;type&quot;: [
-            &quot;string&quot;,
+            &quot;boolean&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;held_seconds&quot;: {
+          &quot;description&quot;: &quot;Seconds since the lock was taken.&quot;,
+          &quot;format&quot;: &quot;uint64&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: [
+            &quot;integer&quot;,
             &quot;null&quot;
           ]
         },
@@ -668,166 +387,124 @@ than this section, which leaves it unread rather than failing the whole brief. <
             &quot;null&quot;
           ]
         },
-        &quot;alive&quot;: {
+        &quot;pid&quot;: {
+          &quot;description&quot;: &quot;The holder&#39;s process id, when its line names one.&quot;,
+          &quot;format&quot;: &quot;uint32&quot;,
+          &quot;minimum&quot;: 0,
           &quot;type&quot;: [
-            &quot;boolean&quot;,
+            &quot;integer&quot;,
             &quot;null&quot;
-          ],
-          &quot;description&quot;: &quot;Whether that process is running on this machine.&quot;
+          ]
+        },
+        &quot;priority&quot;: {
+          &quot;description&quot;: &quot;The branches the priority marker names, when it is present.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
         },
         &quot;state&quot;: {
-          &quot;description&quot;: &quot;`undeclared` when the repository ships no derive lock.&quot;,
-          &quot;$ref&quot;: &quot;#/$defs/BriefSectionState&quot;
-        },
-        &quot;held_seconds&quot;: {
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: [
-            &quot;integer&quot;,
-            &quot;null&quot;
-          ],
-          &quot;format&quot;: &quot;uint64&quot;,
-          &quot;description&quot;: &quot;Seconds since the lock was taken.&quot;
-        },
-        &quot;pid&quot;: {
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: [
-            &quot;integer&quot;,
-            &quot;null&quot;
-          ],
-          &quot;format&quot;: &quot;uint32&quot;,
-          &quot;description&quot;: &quot;The holder&#39;s process id, when its line names one.&quot;
+          &quot;$ref&quot;: &quot;#/$defs/BriefSectionState&quot;,
+          &quot;description&quot;: &quot;`undeclared` when the repository ships no derive lock.&quot;
         },
         &quot;summary&quot;: {
           &quot;description&quot;: &quot;The section in words.&quot;,
           &quot;type&quot;: &quot;string&quot;
         }
-      }
-    },
-    &quot;ReleaseCurrencyStance&quot;: {
-      &quot;oneOf&quot;: [
-        {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;Nothing has landed past the last release.&quot;,
-          &quot;const&quot;: &quot;current&quot;
-        },
-        {
-          &quot;description&quot;: &quot;Work has landed past it, and has waited less than `OVERDUE_AFTER`.&quot;,
-          &quot;const&quot;: &quot;owed&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;overdue&quot;,
-          &quot;description&quot;: &quot;Work has landed past it, and has waited at least `OVERDUE_AFTER`.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;It could not be measured: no trunk, no release, or a release this clone cannot read.&quot;,
-          &quot;const&quot;: &quot;unknown&quot;
-        }
+      },
+      &quot;required&quot;: [
+        &quot;state&quot;,
+        &quot;summary&quot;
       ],
-      &quot;description&quot;: &quot;Whether the trunk&#39;s landed work is released.\n\n```\nuse majordomus_cli::release::currency::{Stance, OVERDUE_AFTER};\nuse std::time::Duration;\nassert_eq!(Stance::of(0, OVERDUE_AFTER), Stance::Current, \&quot;nothing landed, nothing owed\&quot;);\nassert_eq!(Stance::of(2, Duration::from_secs(60)), Stance::Owed);\nassert_eq!(Stance::of(2, OVERDUE_AFTER), Stance::Overdue);\nassert_eq!(Stance::Overdue.as_str(), \&quot;overdue\&quot;);\n```&quot;
+      &quot;type&quot;: &quot;object&quot;
     },
-    &quot;RuntimeState&quot;: {
+    &quot;BriefIntegrationSection&quot;: {
+      &quot;description&quot;: &quot;The integration queue, as `majordomus prs brief` says it.&quot;,
       &quot;properties&quot;: {
         &quot;state&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/ServerStanding&quot;,
-          &quot;description&quot;: &quot;The state, derived on this reading from the lease, the server&#39;s readiness report (its\nmesh verdict included) and the last recorded transition.&quot;
+          &quot;$ref&quot;: &quot;#/$defs/BriefSectionState&quot;,
+          &quot;description&quot;: &quot;Whether this checkout ever observed the forge.&quot;
         },
-        &quot;transition&quot;: {
-          &quot;description&quot;: &quot;The last transition recorded under `RUNTIME_PATH`, when one ever was. The derived\nstate may be newer than it: only the writers named on `RuntimeWriter` record.&quot;,
-          &quot;anyOf&quot;: [
-            {
-              &quot;$ref&quot;: &quot;#/$defs/RuntimeTransition&quot;
-            },
-            {
-              &quot;type&quot;: &quot;null&quot;
-            }
-          ]
-        },
-        &quot;reason&quot;: {
-          &quot;description&quot;: &quot;Why, when the state is not `operational`.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
+        &quot;summary&quot;: {
+          &quot;description&quot;: &quot;The section in words.&quot;,
+          &quot;type&quot;: &quot;string&quot;
         }
       },
-      &quot;description&quot;: &quot;Where a checkout&#39;s runtime stands now, and the last transition recorded for it.\n\n```\nuse majordomus_cli::capability::builtin::server::{RuntimeState, ServerStanding};\nlet r = RuntimeState { state: ServerStanding::Operational, reason: None, transition: None };\nassert_eq!(serde_json::to_value(&amp;r).unwrap(), serde_json::json!({ \&quot;state\&quot;: \&quot;operational\&quot; }));\n```&quot;,
-      &quot;type&quot;: &quot;object&quot;,
       &quot;required&quot;: [
-        &quot;state&quot;
-      ]
+        &quot;state&quot;,
+        &quot;summary&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
     },
     &quot;BriefMeshSection&quot;: {
       &quot;description&quot;: &quot;The mesh: the links of this runtime and what the journal addresses to it.&quot;,
       &quot;properties&quot;: {
-        &quot;failing&quot;: {
-          &quot;type&quot;: &quot;integer&quot;,
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;description&quot;: &quot;Of them, degraded, unreachable or expired.&quot;,
-          &quot;minimum&quot;: 0
-        },
         &quot;active&quot;: {
-          &quot;type&quot;: &quot;boolean&quot;,
-          &quot;description&quot;: &quot;Whether cooperation runs in the composing process.&quot;
-        },
-        &quot;reason&quot;: {
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ],
-          &quot;description&quot;: &quot;Why it does not, when it does not.&quot;
-        },
-        &quot;summary&quot;: {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;The section in words.&quot;
-        },
-        &quot;own_claims&quot;: {
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;,
-          &quot;description&quot;: &quot;Of them, held by this runtime.&quot;
-        },
-        &quot;links&quot;: {
-          &quot;description&quot;: &quot;Links to other runtimes.&quot;,
-          &quot;type&quot;: &quot;integer&quot;,
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;minimum&quot;: 0
-        },
-        &quot;overlaps_for_you&quot;: {
-          &quot;description&quot;: &quot;Overlaps between a claim of this runtime and another&#39;s.&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;reviews_for_you&quot;: {
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;description&quot;: &quot;Open review requests that name this runtime as the reviewer.&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
+          &quot;description&quot;: &quot;Whether cooperation runs in the composing process.&quot;,
+          &quot;type&quot;: &quot;boolean&quot;
         },
         &quot;claims_held&quot;: {
+          &quot;description&quot;: &quot;Claims held across the mesh.&quot;,
           &quot;format&quot;: &quot;uint&quot;,
-          &quot;type&quot;: &quot;integer&quot;,
           &quot;minimum&quot;: 0,
-          &quot;description&quot;: &quot;Claims held across the mesh.&quot;
+          &quot;type&quot;: &quot;integer&quot;
         },
         &quot;connected&quot;: {
-          &quot;minimum&quot;: 0,
-          &quot;format&quot;: &quot;uint&quot;,
           &quot;description&quot;: &quot;Of them, connected.&quot;,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;failing&quot;: {
+          &quot;description&quot;: &quot;Of them, degraded, unreachable or expired.&quot;,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;minimum&quot;: 0,
           &quot;type&quot;: &quot;integer&quot;
         },
         &quot;handovers_waiting&quot;: {
-          &quot;format&quot;: &quot;uint&quot;,
           &quot;description&quot;: &quot;Handovers another runtime published that nobody has consumed.&quot;,
-          &quot;type&quot;: &quot;integer&quot;,
-          &quot;minimum&quot;: 0
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;links&quot;: {
+          &quot;description&quot;: &quot;Links to other runtimes.&quot;,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;overlaps_for_you&quot;: {
+          &quot;description&quot;: &quot;Overlaps between a claim of this runtime and another&#39;s.&quot;,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;own_claims&quot;: {
+          &quot;description&quot;: &quot;Of them, held by this runtime.&quot;,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;reason&quot;: {
+          &quot;description&quot;: &quot;Why it does not, when it does not.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;reviews_for_you&quot;: {
+          &quot;description&quot;: &quot;Open review requests that name this runtime as the reviewer.&quot;,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
         },
         &quot;state&quot;: {
           &quot;$ref&quot;: &quot;#/$defs/BriefSectionState&quot;,
           &quot;description&quot;: &quot;Whether cooperation could be read.&quot;
+        },
+        &quot;summary&quot;: {
+          &quot;description&quot;: &quot;The section in words.&quot;,
+          &quot;type&quot;: &quot;string&quot;
         }
       },
       &quot;required&quot;: [
@@ -845,48 +522,8 @@ than this section, which leaves it unread rather than failing the whole brief. <
       ],
       &quot;type&quot;: &quot;object&quot;
     },
-    &quot;BriefReleaseSection&quot;: {
-      &quot;description&quot;: &quot;Whether the trunk&#39;s landed work is released, as `release.currency` says it (I3070).&quot;,
-      &quot;required&quot;: [
-        &quot;state&quot;,
-        &quot;summary&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;,
-      &quot;properties&quot;: {
-        &quot;state&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/BriefSectionState&quot;,
-          &quot;description&quot;: &quot;`read` when it was measured, `unread` when it could not be, with the summary saying why.&quot;
-        },
-        &quot;summary&quot;: {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;The section in words.&quot;
-        },
-        &quot;landed&quot;: {
-          &quot;default&quot;: 0,
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;,
-          &quot;description&quot;: &quot;Landed commits past the last release.&quot;
-        },
-        &quot;stance&quot;: {
-          &quot;anyOf&quot;: [
-            {
-              &quot;$ref&quot;: &quot;#/$defs/ReleaseCurrencyStance&quot;
-            },
-            {
-              &quot;type&quot;: &quot;null&quot;
-            }
-          ],
-          &quot;description&quot;: &quot;Current, owed, overdue or unknown, when the capability answered.&quot;
-        }
-      }
-    },
     &quot;BriefOrigin&quot;: {
-      &quot;required&quot;: [
-        &quot;process&quot;
-      ],
       &quot;description&quot;: &quot;Which process composed the brief, and why that one.&quot;,
-      &quot;type&quot;: &quot;object&quot;,
       &quot;properties&quot;: {
         &quot;note&quot;: {
           &quot;description&quot;: &quot;Why this process and not the leaseholder, when it is not the leaseholder.&quot;,
@@ -906,19 +543,121 @@ than this section, which leaves it unread rather than failing the whole brief. <
             &quot;null&quot;
           ]
         }
-      }
+      },
+      &quot;required&quot;: [
+        &quot;process&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;BriefPeersSection&quot;: {
+      &quot;description&quot;: &quot;The workers of this repository, from every board the brief could read.&quot;,
+      &quot;properties&quot;: {
+        &quot;attached&quot;: {
+          &quot;description&quot;: &quot;Attached peers across the boards read, the caller included.&quot;,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;boards&quot;: {
+          &quot;description&quot;: &quot;How many boards the answer covers.&quot;,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;named&quot;: {
+          &quot;description&quot;: &quot;The attached peers, one short line each, at most a bounded number.&quot;,
+          &quot;items&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          },
+          &quot;type&quot;: &quot;array&quot;
+        },
+        &quot;overlaps&quot;: {
+          &quot;description&quot;: &quot;Pairs of peers whose claimed scopes meet.&quot;,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;state&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/BriefSectionState&quot;,
+          &quot;description&quot;: &quot;Whether every board could be read.&quot;
+        },
+        &quot;summary&quot;: {
+          &quot;description&quot;: &quot;The section in words.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;superseded&quot;: {
+          &quot;description&quot;: &quot;Set when the composing server is superseded: its own board is unreachable by the repository&#39;s gather.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;unread&quot;: {
+          &quot;description&quot;: &quot;Every board that could not be read, as `&lt;worktree&gt;: &lt;reason&gt;`.&quot;,
+          &quot;items&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          },
+          &quot;type&quot;: &quot;array&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;state&quot;,
+        &quot;attached&quot;,
+        &quot;boards&quot;,
+        &quot;overlaps&quot;,
+        &quot;named&quot;,
+        &quot;summary&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;BriefReleaseSection&quot;: {
+      &quot;description&quot;: &quot;Whether the trunk&#39;s landed work is released, as `release.currency` says it (I3070).&quot;,
+      &quot;properties&quot;: {
+        &quot;landed&quot;: {
+          &quot;default&quot;: 0,
+          &quot;description&quot;: &quot;Landed commits past the last release.&quot;,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;stance&quot;: {
+          &quot;anyOf&quot;: [
+            {
+              &quot;$ref&quot;: &quot;#/$defs/ReleaseCurrencyStance&quot;
+            },
+            {
+              &quot;type&quot;: &quot;null&quot;
+            }
+          ],
+          &quot;description&quot;: &quot;Current, owed, overdue or unknown, when the capability answered.&quot;
+        },
+        &quot;state&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/BriefSectionState&quot;,
+          &quot;description&quot;: &quot;`read` when it was measured, `unread` when it could not be, with the summary saying why.&quot;
+        },
+        &quot;summary&quot;: {
+          &quot;description&quot;: &quot;The section in words.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;state&quot;,
+        &quot;summary&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
     },
     &quot;BriefSectionState&quot;: {
+      &quot;description&quot;: &quot;Whether a section of the brief could be read.&quot;,
       &quot;oneOf&quot;: [
         {
+          &quot;const&quot;: &quot;read&quot;,
           &quot;description&quot;: &quot;Its owner answered in full.&quot;,
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;const&quot;: &quot;read&quot;
+          &quot;type&quot;: &quot;string&quot;
         },
         {
-          &quot;type&quot;: &quot;string&quot;,
           &quot;const&quot;: &quot;partial&quot;,
-          &quot;description&quot;: &quot;Its owner answered, and part of what it covers could not be asked; the summary says which.&quot;
+          &quot;description&quot;: &quot;Its owner answered, and part of what it covers could not be asked; the summary says which.&quot;,
+          &quot;type&quot;: &quot;string&quot;
         },
         {
           &quot;const&quot;: &quot;unread&quot;,
@@ -927,11 +666,344 @@ than this section, which leaves it unread rather than failing the whole brief. <
         },
         {
           &quot;const&quot;: &quot;undeclared&quot;,
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;The repository declares nothing for it (no derive lock, a mesh switched off).&quot;
+          &quot;description&quot;: &quot;The repository declares nothing for it (no derive lock, a mesh switched off).&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      ]
+    },
+    &quot;BriefSessionSection&quot;: {
+      &quot;description&quot;: &quot;The session the brief is about.&quot;,
+      &quot;properties&quot;: {
+        &quot;branch&quot;: {
+          &quot;description&quot;: &quot;The checkout&#39;s branch.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;caller&quot;: {
+          &quot;description&quot;: &quot;The calling MCP session&#39;s place on this board, when the call came through one.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;episode&quot;: {
+          &quot;description&quot;: &quot;The open episode, when one is found.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;head&quot;: {
+          &quot;description&quot;: &quot;The checkout&#39;s head, abbreviated.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;provider_session&quot;: {
+          &quot;description&quot;: &quot;The provider session that owns it.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;state&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/BriefSectionState&quot;,
+          &quot;description&quot;: &quot;Whether it could be read.&quot;
+        },
+        &quot;summary&quot;: {
+          &quot;description&quot;: &quot;The section in words.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;task&quot;: {
+          &quot;description&quot;: &quot;The active task&#39;s words.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;task_id&quot;: {
+          &quot;description&quot;: &quot;The active task&#39;s id, when one is active.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        }
+      },
+      &quot;required&quot;: [
+        &quot;state&quot;,
+        &quot;branch&quot;,
+        &quot;head&quot;,
+        &quot;summary&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;ReleaseCurrencyStance&quot;: {
+      &quot;description&quot;: &quot;Whether the trunk&#39;s landed work is released.\n\n```\nuse majordomus_cli::release::currency::{Stance, OVERDUE_AFTER};\nuse std::time::Duration;\nassert_eq!(Stance::of(0, OVERDUE_AFTER), Stance::Current, \&quot;nothing landed, nothing owed\&quot;);\nassert_eq!(Stance::of(2, Duration::from_secs(60)), Stance::Owed);\nassert_eq!(Stance::of(2, OVERDUE_AFTER), Stance::Overdue);\nassert_eq!(Stance::Overdue.as_str(), \&quot;overdue\&quot;);\n```&quot;,
+      &quot;oneOf&quot;: [
+        {
+          &quot;const&quot;: &quot;current&quot;,
+          &quot;description&quot;: &quot;Nothing has landed past the last release.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;owed&quot;,
+          &quot;description&quot;: &quot;Work has landed past it, and has waited less than `OVERDUE_AFTER`.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;overdue&quot;,
+          &quot;description&quot;: &quot;Work has landed past it, and has waited at least `OVERDUE_AFTER`.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;unknown&quot;,
+          &quot;description&quot;: &quot;It could not be measured: no trunk, no release, or a release this clone cannot read.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      ]
+    },
+    &quot;RuntimeState&quot;: {
+      &quot;description&quot;: &quot;Where a checkout&#39;s runtime stands now, and the last transition recorded for it.\n\n```\nuse majordomus_cli::capability::builtin::server::{RuntimeState, ServerStanding};\nlet r = RuntimeState { state: ServerStanding::Operational, reason: None, transition: None };\nassert_eq!(serde_json::to_value(&amp;r).unwrap(), serde_json::json!({ \&quot;state\&quot;: \&quot;operational\&quot; }));\n```&quot;,
+      &quot;properties&quot;: {
+        &quot;reason&quot;: {
+          &quot;description&quot;: &quot;Why, when the state is not `operational`.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;state&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/ServerStanding&quot;,
+          &quot;description&quot;: &quot;The state, derived on this reading from the lease, the server&#39;s readiness report (its\nmesh verdict included) and the last recorded transition.&quot;
+        },
+        &quot;transition&quot;: {
+          &quot;anyOf&quot;: [
+            {
+              &quot;$ref&quot;: &quot;#/$defs/RuntimeTransition&quot;
+            },
+            {
+              &quot;type&quot;: &quot;null&quot;
+            }
+          ],
+          &quot;description&quot;: &quot;The last transition recorded under `RUNTIME_PATH`, when one ever was. The derived\nstate may be newer than it: only the writers named on `RuntimeWriter` record.&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;state&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;RuntimeTransition&quot;: {
+      &quot;description&quot;: &quot;The last transition of a checkout&#39;s runtime: what it became, from what, when, why, who\nrecorded it and which process it is about. The record under `RUNTIME_PATH`.\n\n```\nuse majordomus_cli::capability::builtin::server::{RuntimeTransition, RuntimeWriter, ServerStanding};\nlet t = RuntimeTransition::new(ServerStanding::Ready, None, \&quot;published\&quot;, RuntimeWriter::Server, Some(7));\nlet v = serde_json::to_value(&amp;t).unwrap();\nassert_eq!(v[\&quot;state\&quot;], \&quot;ready\&quot;);\nassert_eq!(v[\&quot;by\&quot;], \&quot;server\&quot;);\nassert!(v.get(\&quot;from\&quot;).is_none(), \&quot;a first record came from nothing it can name\&quot;);\n```&quot;,
+      &quot;properties&quot;: {
+        &quot;at&quot;: {
+          &quot;description&quot;: &quot;When, RFC 3339.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;by&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/RuntimeWriter&quot;,
+          &quot;description&quot;: &quot;Who recorded it.&quot;
+        },
+        &quot;from&quot;: {
+          &quot;anyOf&quot;: [
+            {
+              &quot;$ref&quot;: &quot;#/$defs/ServerStanding&quot;
+            },
+            {
+              &quot;type&quot;: &quot;null&quot;
+            }
+          ],
+          &quot;description&quot;: &quot;What it was, by the previous record; absent for the first.&quot;
+        },
+        &quot;pid&quot;: {
+          &quot;description&quot;: &quot;The server process the transition is about, when there is one.&quot;,
+          &quot;format&quot;: &quot;uint32&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: [
+            &quot;integer&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;reason&quot;: {
+          &quot;description&quot;: &quot;Why, in the recorder&#39;s words.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;schema&quot;: {
+          &quot;description&quot;: &quot;`RUNTIME_SCHEMA`.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;state&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/ServerStanding&quot;,
+          &quot;description&quot;: &quot;What the runtime became.&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;schema&quot;,
+        &quot;state&quot;,
+        &quot;at&quot;,
+        &quot;reason&quot;,
+        &quot;by&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;RuntimeWriter&quot;: {
+      &quot;description&quot;: &quot;Who recorded a transition. Each state has its one kind of writer: the serving process\nrecords its own `starting`, `ready` and `stopping`, because only it knows them; a reader\nthat finds the server gone records `stopped` or `failed`, because a dead process records\nnothing.\n\n```\nuse majordomus_cli::capability::builtin::server::RuntimeWriter;\nassert_eq!(serde_json::to_value(RuntimeWriter::ServeEnsure).unwrap(), \&quot;serve_ensure\&quot;);\nassert_eq!(RuntimeWriter::reader_named(Some(\&quot;reap_orphans\&quot;)), RuntimeWriter::ReapOrphans);\nassert_eq!(RuntimeWriter::reader_named(Some(\&quot;server\&quot;)), RuntimeWriter::ServerStatus);\nassert_eq!(RuntimeWriter::reader_named(None), RuntimeWriter::ServerStatus);\n```&quot;,
+      &quot;oneOf&quot;: [
+        {
+          &quot;const&quot;: &quot;server&quot;,
+          &quot;description&quot;: &quot;The serving process, about itself.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;serve_ensure&quot;,
+          &quot;description&quot;: &quot;`serve ensure`, which found the lease stale.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;reap_orphans&quot;,
+          &quot;description&quot;: &quot;`scripts/reap-orphans`, through `serve status` after its sweep.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;server_status&quot;,
+          &quot;description&quot;: &quot;`server.status`, on any surface.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      ]
+    },
+    &quot;ServerStanding&quot;: {
+      &quot;description&quot;: &quot;Where a checkout&#39;s server stands, decided from its lease, whether the server the lease\nnames answers for that checkout, and whether what answers is this executable&#39;s code —\nand, refined by the readiness report, the mesh runtime and the last recorded transition,\nwhere its runtime stands (I3179).\n\nThe first five words are the lease&#39;s standing, decided by `standing_of`, and they are\nwhat `standing` carries on every surface: shells compare them, so they never change. The\nother seven are the runtime&#39;s refinements, decided by `runtime_of` and carried by\n`runtime.state` alone; `ServerStanding::refines` names the lease word each refines.\n\n```\nuse majordomus_cli::capability::builtin::server::ServerStanding;\nlet all = [ServerStanding::Absent, ServerStanding::Starting, ServerStanding::Ready,\n           ServerStanding::Outdated, ServerStanding::Stale];\nlet words: Vec&lt;&amp;str&gt; = all.iter().map(|s| s.as_str()).collect();\nassert_eq!(words, [\&quot;absent\&quot;, \&quot;starting\&quot;, \&quot;ready\&quot;, \&quot;outdated\&quot;, \&quot;stale\&quot;]);\nassert_eq!(serde_json::from_str::&lt;ServerStanding&gt;(\&quot;\\\&quot;stale\\\&quot;\&quot;).unwrap(), ServerStanding::Stale);\n// the runtime&#39;s words, in the same snake case the JSON carries\nassert_eq!(serde_json::to_value(ServerStanding::MeshAttaching).unwrap(), \&quot;mesh_attaching\&quot;);\nassert_eq!(ServerStanding::MeshAttaching.as_str(), \&quot;mesh_attaching\&quot;);\n```&quot;,
+      &quot;oneOf&quot;: [
+        {
+          &quot;const&quot;: &quot;absent&quot;,
+          &quot;description&quot;: &quot;No lease: nothing serves this checkout.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;starting&quot;,
+          &quot;description&quot;: &quot;A lease without an address, young enough that its owner is still binding.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;ready&quot;,
+          &quot;description&quot;: &quot;The server the lease names answers for this checkout, from the code on disk, at\nthis executable&#39;s version.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;outdated&quot;,
+          &quot;description&quot;: &quot;The server answers, but from older code than this executable, or from a file that\nhas been replaced since it started: everything it says is yesterday&#39;s.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;stale&quot;,
+          &quot;description&quot;: &quot;The lease names a server that does not answer, or is not a lease at all.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;building&quot;,
+          &quot;description&quot;: &quot;No lease yet, and the executable a server would run is being built: recorded by the\nbuilder (I3180), and believed only while the process that recorded it is alive.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;mesh_attaching&quot;,
+          &quot;description&quot;: &quot;The server is ready, the repository declares its mesh enabled, and the server has not\nyet decided whether the mesh runs.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;operational&quot;,
+          &quot;description&quot;: &quot;The server is ready, says so itself, and its mesh runs or is not declared.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;degraded&quot;,
+          &quot;description&quot;: &quot;The server answers, current, but its own readiness report or its mesh says it is not\nwhole: it lost the lease, serves replaced code, read a degraded layer, or its declared\nmesh is not running.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;stopping&quot;,
+          &quot;description&quot;: &quot;The process that holds the lease recorded that it is stopping, and it is still alive.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;stopped&quot;,
+          &quot;description&quot;: &quot;The server is gone after it recorded that it was stopping.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;failed&quot;,
+          &quot;description&quot;: &quot;The server is gone without having recorded that it was stopping: its lease names a\nprocess that no longer exists.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      ]
+    }
+  },
+  &quot;description&quot;: &quot;The answer of `brief.session`: what surrounds one session, in one line and in a few.&quot;,
+  &quot;properties&quot;: {
+    &quot;answered_by&quot;: {
+      &quot;$ref&quot;: &quot;#/$defs/BriefOrigin&quot;,
+      &quot;description&quot;: &quot;Which process composed it.&quot;
+    },
+    &quot;at&quot;: {
+      &quot;description&quot;: &quot;When it was composed, RFC 3339.&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;derive&quot;: {
+      &quot;$ref&quot;: &quot;#/$defs/BriefDeriveSection&quot;,
+      &quot;description&quot;: &quot;The derive queue.&quot;
+    },
+    &quot;integration&quot;: {
+      &quot;$ref&quot;: &quot;#/$defs/BriefIntegrationSection&quot;,
+      &quot;description&quot;: &quot;The integration queue.&quot;
+    },
+    &quot;interval_minutes&quot;: {
+      &quot;description&quot;: &quot;How often a session reports on itself, in minutes (`session.brief_interval_minutes`).&quot;,
+      &quot;format&quot;: &quot;uint64&quot;,
+      &quot;minimum&quot;: 0,
+      &quot;type&quot;: &quot;integer&quot;
+    },
+    &quot;keep_awake&quot;: {
+      &quot;description&quot;: &quot;What a session is told at its start about keeping itself awake.&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;line&quot;: {
+      &quot;description&quot;: &quot;The brief in one line: the status line&#39;s text.&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;lines&quot;: {
+      &quot;description&quot;: &quot;The brief in a few lines: one per section, then the peers it names.&quot;,
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;string&quot;
+      },
+      &quot;type&quot;: &quot;array&quot;
+    },
+    &quot;mesh&quot;: {
+      &quot;$ref&quot;: &quot;#/$defs/BriefMeshSection&quot;,
+      &quot;description&quot;: &quot;The mesh.&quot;
+    },
+    &quot;peers&quot;: {
+      &quot;$ref&quot;: &quot;#/$defs/BriefPeersSection&quot;,
+      &quot;description&quot;: &quot;The workers of every board.&quot;
+    },
+    &quot;release&quot;: {
+      &quot;$ref&quot;: &quot;#/$defs/BriefReleaseSection&quot;,
+      &quot;default&quot;: {
+        &quot;landed&quot;: 0,
+        &quot;state&quot;: &quot;unread&quot;,
+        &quot;summary&quot;: &quot;the server that composed this brief does not measure the release&quot;
+      },
+      &quot;description&quot;: &quot;Whether the trunk&#39;s landed work is released. Absent from the answer of a server older\nthan this section, which leaves it unread rather than failing the whole brief.&quot;
+    },
+    &quot;runtime&quot;: {
+      &quot;anyOf&quot;: [
+        {
+          &quot;$ref&quot;: &quot;#/$defs/RuntimeState&quot;
+        },
+        {
+          &quot;type&quot;: &quot;null&quot;
         }
       ],
-      &quot;description&quot;: &quot;Whether a section of the brief could be read.&quot;
+      &quot;description&quot;: &quot;Where this checkout&#39;s runtime stands, and its last recorded transition, as\n`server.status` derives it (I3179). Absent from the answer of a server older than the\nfield.&quot;
+    },
+    &quot;session&quot;: {
+      &quot;$ref&quot;: &quot;#/$defs/BriefSessionSection&quot;,
+      &quot;description&quot;: &quot;This session: its episode and task.&quot;
     }
   },
   &quot;required&quot;: [
@@ -948,79 +1020,7 @@ than this section, which leaves it unread rather than failing the whole brief. <
     &quot;derive&quot;
   ],
   &quot;title&quot;: &quot;SessionBrief&quot;,
-  &quot;description&quot;: &quot;The answer of `brief.session`: what surrounds one session, in one line and in a few.&quot;,
-  &quot;type&quot;: &quot;object&quot;,
-  &quot;properties&quot;: {
-    &quot;runtime&quot;: {
-      &quot;description&quot;: &quot;Where this checkout&#39;s runtime stands, and its last recorded transition, as\n`server.status` derives it (I3179). Absent from the answer of a server older than the\nfield.&quot;,
-      &quot;anyOf&quot;: [
-        {
-          &quot;$ref&quot;: &quot;#/$defs/RuntimeState&quot;
-        },
-        {
-          &quot;type&quot;: &quot;null&quot;
-        }
-      ]
-    },
-    &quot;derive&quot;: {
-      &quot;description&quot;: &quot;The derive queue.&quot;,
-      &quot;$ref&quot;: &quot;#/$defs/BriefDeriveSection&quot;
-    },
-    &quot;session&quot;: {
-      &quot;$ref&quot;: &quot;#/$defs/BriefSessionSection&quot;,
-      &quot;description&quot;: &quot;This session: its episode and task.&quot;
-    },
-    &quot;answered_by&quot;: {
-      &quot;$ref&quot;: &quot;#/$defs/BriefOrigin&quot;,
-      &quot;description&quot;: &quot;Which process composed it.&quot;
-    },
-    &quot;at&quot;: {
-      &quot;description&quot;: &quot;When it was composed, RFC 3339.&quot;,
-      &quot;type&quot;: &quot;string&quot;
-    },
-    &quot;interval_minutes&quot;: {
-      &quot;type&quot;: &quot;integer&quot;,
-      &quot;format&quot;: &quot;uint64&quot;,
-      &quot;description&quot;: &quot;How often a session reports on itself, in minutes (`session.brief_interval_minutes`).&quot;,
-      &quot;minimum&quot;: 0
-    },
-    &quot;line&quot;: {
-      &quot;type&quot;: &quot;string&quot;,
-      &quot;description&quot;: &quot;The brief in one line: the status line&#39;s text.&quot;
-    },
-    &quot;keep_awake&quot;: {
-      &quot;description&quot;: &quot;What a session is told at its start about keeping itself awake.&quot;,
-      &quot;type&quot;: &quot;string&quot;
-    },
-    &quot;lines&quot;: {
-      &quot;description&quot;: &quot;The brief in a few lines: one per section, then the peers it names.&quot;,
-      &quot;type&quot;: &quot;array&quot;,
-      &quot;items&quot;: {
-        &quot;type&quot;: &quot;string&quot;
-      }
-    },
-    &quot;mesh&quot;: {
-      &quot;$ref&quot;: &quot;#/$defs/BriefMeshSection&quot;,
-      &quot;description&quot;: &quot;The mesh.&quot;
-    },
-    &quot;integration&quot;: {
-      &quot;description&quot;: &quot;The integration queue.&quot;,
-      &quot;$ref&quot;: &quot;#/$defs/BriefIntegrationSection&quot;
-    },
-    &quot;peers&quot;: {
-      &quot;description&quot;: &quot;The workers of every board.&quot;,
-      &quot;$ref&quot;: &quot;#/$defs/BriefPeersSection&quot;
-    },
-    &quot;release&quot;: {
-      &quot;$ref&quot;: &quot;#/$defs/BriefReleaseSection&quot;,
-      &quot;default&quot;: {
-        &quot;landed&quot;: 0,
-        &quot;summary&quot;: &quot;the server that composed this brief does not measure the release&quot;,
-        &quot;state&quot;: &quot;unread&quot;
-      },
-      &quot;description&quot;: &quot;Whether the trunk&#39;s landed work is released. Absent from the answer of a server older\nthan this section, which leaves it unread rather than failing the whole brief.&quot;
-    }
-  }
+  &quot;type&quot;: &quot;object&quot;
 }</pre></div>
   </details>
 </div>
@@ -1051,7 +1051,7 @@ than this section, which leaves it unread rather than failing the whole brief. <
         <div><dt class="text-body-subtle">Rust module</dt><dd class="min-w-0 break-all font-mono text-heading">majordomus_cli::capability::builtin::brief</dd></div>
         <div><dt class="text-body-subtle">input type</dt><dd class="font-mono text-heading">BriefInput</dd></div>
         <div><dt class="text-body-subtle">output type</dt><dd class="font-mono text-heading">SessionBrief</dd></div>
-        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/docs/generated/modules/brief.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/brief.md</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">3f734f2faf797f0ca7c39b4cd837e68b6619c41c6f6711f3d3aeca8f341934eb</dd></div>
+        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/1112bace3437ee0d82067b1e8f61813e70190078/docs/generated/modules/brief.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/brief.md</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">5cdbf22cd21589ddbe464d5f0987b6bcf4607d05479004d6f815c3b306fdb08a</dd></div>
         <div><dt class="text-body-subtle">generated by</dt><dd class="font-mono text-heading">majordomus-cli 1.0.0-alpha.10</dd></div>
       </dl>
     </div>
@@ -1107,9 +1107,9 @@ than this section, which leaves it unread rather than failing the whole brief. <
       <div class="min-w-0">
         <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">Project</h2><ul class="space-y-2 text-sm font-medium text-body">
           <li><a href="https://github.com/korczis/prismatic-majordomus" class="hover:text-heading hover:underline">GitHub</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/LICENSE" class="hover:text-heading hover:underline">MIT licence</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/SECURITY.md" class="hover:text-heading hover:underline">Security policy</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/CONTRIBUTING.md" class="hover:text-heading hover:underline">Contributing guide</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/1112bace3437ee0d82067b1e8f61813e70190078/LICENSE" class="hover:text-heading hover:underline">MIT licence</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/1112bace3437ee0d82067b1e8f61813e70190078/SECURITY.md" class="hover:text-heading hover:underline">Security policy</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/1112bace3437ee0d82067b1e8f61813e70190078/CONTRIBUTING.md" class="hover:text-heading hover:underline">Contributing guide</a></li>
         </ul>
       </div>
     </div>
@@ -1117,7 +1117,7 @@ than this section, which leaves it unread rather than failing the whole brief. <
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.10</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/745db2ea21e02613943face75a2bf95542be1f2e" class="font-mono underline">745db2e</a> · inputs <span class="font-mono">0a58c217d1b7</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/architecture/" class="underline">how this site is derived</a> names them.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.10</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/1112bace3437ee0d82067b1e8f61813e70190078" class="font-mono underline">1112bac</a> · inputs <span class="font-mono">830f884cc5aa</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/architecture/" class="underline">how this site is derived</a> names them.</p>
     </div>
   </div>
 </footer>

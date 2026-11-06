@@ -223,8 +223,8 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
   &quot;additionalProperties&quot;: false,
   &quot;description&quot;: &quot;No input.&quot;,
-  &quot;type&quot;: &quot;object&quot;,
-  &quot;title&quot;: &quot;Empty&quot;
+  &quot;title&quot;: &quot;Empty&quot;,
+  &quot;type&quot;: &quot;object&quot;
 }</pre></div>
   </details>
 </div>
@@ -255,6 +255,28 @@ with the derived fields beside them.</p>
     <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
       <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
       <tbody><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">outline</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The definition of done in a dozen lines: one per stage that asks anything, its
+questions after a colon.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">problems</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">What does not resolve against the vocabulary the policy is shipped beside: a token
+<code>share/obligations.yaml</code> lacks. Empty in a coherent distribution, and never silently so.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">questions</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Every question, in declaration order.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">source</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Where it was read from.</td>
+      </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">stages</td>
         <td class="px-3 py-2 font-mono text-xs text-body">array</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
@@ -267,46 +289,97 @@ with the derived fields beside them.</p>
 <code>question:gate</code>. Not a problem of the policy — the model is the repository's — but a
 question this repository never gets a verdict for, listed so that it is seen.</td>
       </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">questions</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Every question, in declaration order.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">outline</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The definition of done in a dozen lines: one per stage that asks anything, its
-questions after a colon.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">source</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Where it was read from.</td>
-      </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">version</td>
         <td class="px-3 py-2 font-mono text-xs text-body">integer</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
         <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The format version the file states.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">problems</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">What does not resolve against the vocabulary the policy is shipped beside: a token
-<code>share/obligations.yaml</code> lacks. Empty in a coherent distribution, and never silently so.</td>
       </tr></tbody>
     </table>
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
-  &quot;title&quot;: &quot;CompletionPolicyReport&quot;,
-  &quot;required&quot;: [
-    &quot;version&quot;,
-    &quot;source&quot;,
-    &quot;stages&quot;,
-    &quot;questions&quot;,
-    &quot;outline&quot;
-  ],
+  &quot;$defs&quot;: {
+    &quot;QuestionDecl&quot;: {
+      &quot;description&quot;: &quot;One question of the policy, as declared.\n\n`source` is carried as the text the file states (`obligation:tests`, `gates`,\n`closing:debt`), never as a structure: the policy file, `gates.policy` and the\nquestions of the completion report then state the same bytes for the same question,\nand a reader compares them by eye. `Self::kind`\nparses it; `CompletionPolicy::parse` has already refused a text nothing answers.\n\n```\nuse majordomus_cli::gates::{QuestionDecl, QuestionSource};\n\nlet decl = QuestionDecl {\n    id: \&quot;pushed\&quot;.into(),\n    stage: \&quot;commit\&quot;.into(),\n    question: \&quot;Has the commit reached the remote?\&quot;.into(),\n    source: \&quot;obligation:push\&quot;.into(),\n    remediation: \&quot;git push\&quot;.into(),\n};\nassert_eq!(decl.kind(), QuestionSource::Obligation(\&quot;push\&quot;.into()));\n// the source is carried as text, and serialises as the text the file stated\nassert_eq!(serde_json::to_value(&amp;decl).unwrap()[\&quot;source\&quot;], \&quot;obligation:push\&quot;);\n```&quot;,
+      &quot;properties&quot;: {
+        &quot;id&quot;: {
+          &quot;description&quot;: &quot;The question&#39;s identity, stable across reports.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;question&quot;: {
+          &quot;description&quot;: &quot;The question, as a person would ask it.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;remediation&quot;: {
+          &quot;description&quot;: &quot;What would settle it, as a command.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;source&quot;: {
+          &quot;description&quot;: &quot;What answers it, as the policy states it.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;stage&quot;: {
+          &quot;description&quot;: &quot;The stage it belongs to.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;id&quot;,
+        &quot;stage&quot;,
+        &quot;question&quot;,
+        &quot;source&quot;,
+        &quot;remediation&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;StageDecl&quot;: {
+      &quot;description&quot;: &quot;One stage of the lifecycle, in the order the policy states them. A stage carries no\nquestion of its own: the questions name it by `id`, and\n`CompletionPolicy::questions_of` gathers them back, so a stage is a heading over\nwhatever the policy hangs under it.\n\n```\nuse majordomus_cli::gates::StageDecl;\n\nlet stage = StageDecl {\n    id: \&quot;commit\&quot;.into(),\n    title: \&quot;Commit and push\&quot;.into(),\n    summary: \&quot;The work is in the branch&#39;s history.\&quot;.into(),\n};\n// the same shape the file carries, so a report and the policy agree byte for byte\nlet json = serde_json::to_value(&amp;stage).unwrap();\nassert_eq!(json[\&quot;id\&quot;], \&quot;commit\&quot;);\nassert_eq!(serde_json::from_value::&lt;StageDecl&gt;(json).unwrap(), stage);\n```&quot;,
+      &quot;properties&quot;: {
+        &quot;id&quot;: {
+          &quot;description&quot;: &quot;The stage&#39;s identity, stable across reports.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;summary&quot;: {
+          &quot;description&quot;: &quot;What it means for the stage to be complete.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;title&quot;: {
+          &quot;description&quot;: &quot;The stage as a heading.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;id&quot;,
+        &quot;title&quot;,
+        &quot;summary&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    }
+  },
+  &quot;description&quot;: &quot;The completion policy, as `gates.policy` serves it: the stages, the questions and the\nsource each is answered from, with what the policy resolves to in this repository.\nThe policy is flattened into the report, so a reader sees the keys the file carries\nwith the derived fields beside them.\n\n```\nuse majordomus_cli::capability::builtin::gates::CompletionPolicyReport;\nuse majordomus_cli::gates::CompletionPolicy;\n\nlet policy = CompletionPolicy::parse(\n    \&quot;version: 1\\nstages:\\n  - id: a\\n    title: Alpha\\n    summary: s\\nquestions:\\n  - id: q\\n    stage: a\\n    question: Is it?\\n    source: gate:site-check\\n    remediation: run it\\n\&quot;,\n    \&quot;share/completion.yaml\&quot;,\n)\n.unwrap();\nlet report = CompletionPolicyReport {\n    outline: policy.outline(),\n    problems: policy.validate(&amp;[]),\n    unanswered_gates: policy.unanswered_gates(&amp;[]),\n    policy,\n};\nassert_eq!(report.outline, \&quot;- Alpha: q\\n\&quot;);\nassert_eq!(report.unanswered_gates, [\&quot;q:site-check\&quot;]);\nlet json = serde_json::to_value(&amp;report).unwrap();\nassert_eq!(json[\&quot;stages\&quot;][0][\&quot;id\&quot;], \&quot;a\&quot;, \&quot;the policy&#39;s own keys, flattened\&quot;);\nassert!(json.get(\&quot;problems\&quot;).is_none(), \&quot;a coherent distribution writes no problems\&quot;);\n```&quot;,
   &quot;properties&quot;: {
+    &quot;outline&quot;: {
+      &quot;description&quot;: &quot;The definition of done in a dozen lines: one per stage that asks anything, its\nquestions after a colon.&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;problems&quot;: {
+      &quot;description&quot;: &quot;What does not resolve against the vocabulary the policy is shipped beside: a token\n`share/obligations.yaml` lacks. Empty in a coherent distribution, and never silently so.&quot;,
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;string&quot;
+      },
+      &quot;type&quot;: &quot;array&quot;
+    },
+    &quot;questions&quot;: {
+      &quot;description&quot;: &quot;Every question, in declaration order.&quot;,
+      &quot;items&quot;: {
+        &quot;$ref&quot;: &quot;#/$defs/QuestionDecl&quot;
+      },
+      &quot;type&quot;: &quot;array&quot;
+    },
+    &quot;source&quot;: {
+      &quot;description&quot;: &quot;Where it was read from.&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
     &quot;stages&quot;: {
       &quot;description&quot;: &quot;The lifecycle, in order.&quot;,
       &quot;items&quot;: {
@@ -321,95 +394,22 @@ questions after a colon.</td>
       },
       &quot;type&quot;: &quot;array&quot;
     },
-    &quot;questions&quot;: {
-      &quot;description&quot;: &quot;Every question, in declaration order.&quot;,
-      &quot;items&quot;: {
-        &quot;$ref&quot;: &quot;#/$defs/QuestionDecl&quot;
-      },
-      &quot;type&quot;: &quot;array&quot;
-    },
-    &quot;outline&quot;: {
-      &quot;type&quot;: &quot;string&quot;,
-      &quot;description&quot;: &quot;The definition of done in a dozen lines: one per stage that asks anything, its\nquestions after a colon.&quot;
-    },
-    &quot;source&quot;: {
-      &quot;description&quot;: &quot;Where it was read from.&quot;,
-      &quot;type&quot;: &quot;string&quot;
-    },
     &quot;version&quot;: {
-      &quot;format&quot;: &quot;uint32&quot;,
       &quot;description&quot;: &quot;The format version the file states.&quot;,
+      &quot;format&quot;: &quot;uint32&quot;,
       &quot;minimum&quot;: 0,
       &quot;type&quot;: &quot;integer&quot;
-    },
-    &quot;problems&quot;: {
-      &quot;description&quot;: &quot;What does not resolve against the vocabulary the policy is shipped beside: a token\n`share/obligations.yaml` lacks. Empty in a coherent distribution, and never silently so.&quot;,
-      &quot;items&quot;: {
-        &quot;type&quot;: &quot;string&quot;
-      },
-      &quot;type&quot;: &quot;array&quot;
     }
   },
-  &quot;type&quot;: &quot;object&quot;,
-  &quot;description&quot;: &quot;The completion policy, as `gates.policy` serves it: the stages, the questions and the\nsource each is answered from, with what the policy resolves to in this repository.\nThe policy is flattened into the report, so a reader sees the keys the file carries\nwith the derived fields beside them.\n\n```\nuse majordomus_cli::capability::builtin::gates::CompletionPolicyReport;\nuse majordomus_cli::gates::CompletionPolicy;\n\nlet policy = CompletionPolicy::parse(\n    \&quot;version: 1\\nstages:\\n  - id: a\\n    title: Alpha\\n    summary: s\\nquestions:\\n  - id: q\\n    stage: a\\n    question: Is it?\\n    source: gate:site-check\\n    remediation: run it\\n\&quot;,\n    \&quot;share/completion.yaml\&quot;,\n)\n.unwrap();\nlet report = CompletionPolicyReport {\n    outline: policy.outline(),\n    problems: policy.validate(&amp;[]),\n    unanswered_gates: policy.unanswered_gates(&amp;[]),\n    policy,\n};\nassert_eq!(report.outline, \&quot;- Alpha: q\\n\&quot;);\nassert_eq!(report.unanswered_gates, [\&quot;q:site-check\&quot;]);\nlet json = serde_json::to_value(&amp;report).unwrap();\nassert_eq!(json[\&quot;stages\&quot;][0][\&quot;id\&quot;], \&quot;a\&quot;, \&quot;the policy&#39;s own keys, flattened\&quot;);\nassert!(json.get(\&quot;problems\&quot;).is_none(), \&quot;a coherent distribution writes no problems\&quot;);\n```&quot;,
-  &quot;$defs&quot;: {
-    &quot;QuestionDecl&quot;: {
-      &quot;required&quot;: [
-        &quot;id&quot;,
-        &quot;stage&quot;,
-        &quot;question&quot;,
-        &quot;source&quot;,
-        &quot;remediation&quot;
-      ],
-      &quot;description&quot;: &quot;One question of the policy, as declared.\n\n`source` is carried as the text the file states (`obligation:tests`, `gates`,\n`closing:debt`), never as a structure: the policy file, `gates.policy` and the\nquestions of the completion report then state the same bytes for the same question,\nand a reader compares them by eye. `Self::kind`\nparses it; `CompletionPolicy::parse` has already refused a text nothing answers.\n\n```\nuse majordomus_cli::gates::{QuestionDecl, QuestionSource};\n\nlet decl = QuestionDecl {\n    id: \&quot;pushed\&quot;.into(),\n    stage: \&quot;commit\&quot;.into(),\n    question: \&quot;Has the commit reached the remote?\&quot;.into(),\n    source: \&quot;obligation:push\&quot;.into(),\n    remediation: \&quot;git push\&quot;.into(),\n};\nassert_eq!(decl.kind(), QuestionSource::Obligation(\&quot;push\&quot;.into()));\n// the source is carried as text, and serialises as the text the file stated\nassert_eq!(serde_json::to_value(&amp;decl).unwrap()[\&quot;source\&quot;], \&quot;obligation:push\&quot;);\n```&quot;,
-      &quot;properties&quot;: {
-        &quot;question&quot;: {
-          &quot;description&quot;: &quot;The question, as a person would ask it.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;remediation&quot;: {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;What would settle it, as a command.&quot;
-        },
-        &quot;id&quot;: {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;The question&#39;s identity, stable across reports.&quot;
-        },
-        &quot;source&quot;: {
-          &quot;description&quot;: &quot;What answers it, as the policy states it.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;stage&quot;: {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;The stage it belongs to.&quot;
-        }
-      },
-      &quot;type&quot;: &quot;object&quot;
-    },
-    &quot;StageDecl&quot;: {
-      &quot;description&quot;: &quot;One stage of the lifecycle, in the order the policy states them. A stage carries no\nquestion of its own: the questions name it by `id`, and\n`CompletionPolicy::questions_of` gathers them back, so a stage is a heading over\nwhatever the policy hangs under it.\n\n```\nuse majordomus_cli::gates::StageDecl;\n\nlet stage = StageDecl {\n    id: \&quot;commit\&quot;.into(),\n    title: \&quot;Commit and push\&quot;.into(),\n    summary: \&quot;The work is in the branch&#39;s history.\&quot;.into(),\n};\n// the same shape the file carries, so a report and the policy agree byte for byte\nlet json = serde_json::to_value(&amp;stage).unwrap();\nassert_eq!(json[\&quot;id\&quot;], \&quot;commit\&quot;);\nassert_eq!(serde_json::from_value::&lt;StageDecl&gt;(json).unwrap(), stage);\n```&quot;,
-      &quot;required&quot;: [
-        &quot;id&quot;,
-        &quot;title&quot;,
-        &quot;summary&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;,
-      &quot;properties&quot;: {
-        &quot;summary&quot;: {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;What it means for the stage to be complete.&quot;
-        },
-        &quot;title&quot;: {
-          &quot;description&quot;: &quot;The stage as a heading.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;id&quot;: {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;The stage&#39;s identity, stable across reports.&quot;
-        }
-      }
-    }
-  }
+  &quot;required&quot;: [
+    &quot;version&quot;,
+    &quot;source&quot;,
+    &quot;stages&quot;,
+    &quot;questions&quot;,
+    &quot;outline&quot;
+  ],
+  &quot;title&quot;: &quot;CompletionPolicyReport&quot;,
+  &quot;type&quot;: &quot;object&quot;
 }</pre></div>
   </details>
 </div>
@@ -440,7 +440,7 @@ questions after a colon.</td>
         <div><dt class="text-body-subtle">Rust module</dt><dd class="min-w-0 break-all font-mono text-heading">majordomus_cli::capability::builtin::gates</dd></div>
         <div><dt class="text-body-subtle">input type</dt><dd class="font-mono text-heading">Empty</dd></div>
         <div><dt class="text-body-subtle">output type</dt><dd class="font-mono text-heading">CompletionPolicyReport</dd></div>
-        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/docs/generated/modules/gates.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/gates.md</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">3f734f2faf797f0ca7c39b4cd837e68b6619c41c6f6711f3d3aeca8f341934eb</dd></div>
+        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/1112bace3437ee0d82067b1e8f61813e70190078/docs/generated/modules/gates.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/gates.md</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">5cdbf22cd21589ddbe464d5f0987b6bcf4607d05479004d6f815c3b306fdb08a</dd></div>
         <div><dt class="text-body-subtle">generated by</dt><dd class="font-mono text-heading">majordomus-cli 1.0.0-alpha.10</dd></div>
       </dl>
     </div>
@@ -496,9 +496,9 @@ questions after a colon.</td>
       <div class="min-w-0">
         <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">Project</h2><ul class="space-y-2 text-sm font-medium text-body">
           <li><a href="https://github.com/korczis/prismatic-majordomus" class="hover:text-heading hover:underline">GitHub</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/LICENSE" class="hover:text-heading hover:underline">MIT licence</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/SECURITY.md" class="hover:text-heading hover:underline">Security policy</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/CONTRIBUTING.md" class="hover:text-heading hover:underline">Contributing guide</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/1112bace3437ee0d82067b1e8f61813e70190078/LICENSE" class="hover:text-heading hover:underline">MIT licence</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/1112bace3437ee0d82067b1e8f61813e70190078/SECURITY.md" class="hover:text-heading hover:underline">Security policy</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/1112bace3437ee0d82067b1e8f61813e70190078/CONTRIBUTING.md" class="hover:text-heading hover:underline">Contributing guide</a></li>
         </ul>
       </div>
     </div>
@@ -506,7 +506,7 @@ questions after a colon.</td>
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.10</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/745db2ea21e02613943face75a2bf95542be1f2e" class="font-mono underline">745db2e</a> · inputs <span class="font-mono">0a58c217d1b7</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/architecture/" class="underline">how this site is derived</a> names them.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.10</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/1112bace3437ee0d82067b1e8f61813e70190078" class="font-mono underline">1112bac</a> · inputs <span class="font-mono">830f884cc5aa</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/architecture/" class="underline">how this site is derived</a> names them.</p>
     </div>
   </div>
 </footer>

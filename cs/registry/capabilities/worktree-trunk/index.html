@@ -220,6 +220,8 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
+  &quot;additionalProperties&quot;: false,
+  &quot;description&quot;: &quot;Where to answer from.&quot;,
   &quot;properties&quot;: {
     &quot;path&quot;: {
       &quot;description&quot;: &quot;A directory inside one of this repository&#39;s worktrees; the answer is about that\nworktree. Relative to the primary checkout when relative (`.` is the primary\ncheckout itself). Default: the repository the server was started for. A path in\nanother repository is refused: the topology answers only about its own.&quot;,
@@ -229,10 +231,8 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
       ]
     }
   },
-  &quot;description&quot;: &quot;Where to answer from.&quot;,
-  &quot;type&quot;: &quot;object&quot;,
   &quot;title&quot;: &quot;StatusInput&quot;,
-  &quot;additionalProperties&quot;: false
+  &quot;type&quot;: &quot;object&quot;
 }</pre></div>
   </details>
 </div>
@@ -253,50 +253,10 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
     <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
       <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">vlastnost</th><th class="px-3 py-2">typ</th><th class="px-3 py-2">povinné</th><th class="px-3 py-2">popis</th></tr></thead>
       <tbody><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">náprava</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
+        <td class="px-3 py-2 font-mono text-heading">checkout</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">jedno ze 2</td>
         <td class="px-3 py-2 font-mono text-xs text-body">ne</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Příkazy, které přivedou checkout a lokální trunk na aktuální stav, když je kterýkoli pozadu. Navrhované, nikdy nespouštěné.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">remote_trunk</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">ne</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Remote-tracking kmen, proti němuž se počítá (<code>origin/master</code>).</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">postavení</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Kde checkout stojí: jeho <code>HEAD</code> — s commitem, který přináší probíhající merge — posouzeno podle prahových hodnot. To je to, co jeho server poskytuje.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">trunk</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">ne</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Větev kmene, zkráceně.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">worktree</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Změřený pracovní strom.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">local_trunk_standing</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Kde stojí místní větev trunku, posuzováno stejným způsobem: z čeho vychází větev z ní vytvořená. Totéž jako <code>standing</code>, když checkout drží trunk.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">zpráva</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Co postavení znamená zde, v jednom řádku.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">prahy</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Prahy, vůči nimž se posuzovalo, tak jak je deklaruje <code>checkout.trunk_distance</code>.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">on_trunk</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">boolean</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Pracovní strom drží samotnou hlavní větev.</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words"><code>HEAD</code> checkoutu vůči vzdálenému trunku. Zatímco probíhá merge, commity, které přináší, se počítají jako přítomné: vytvářený commit je bude obsahovat, takže merge, který přivádí checkout do aktuálního stavu, se nikdy neposuzuje podle stromu, který nahrazuje.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">fetched_at</td>
         <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
@@ -308,84 +268,63 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
         <td class="px-3 py-2 font-mono text-xs text-body">ne</td>
         <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Lokální větev trunku proti vzdálenému trunku: z čeho vychází větev vytvořená z lokálního trunku.</td>
       </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">local_trunk_standing</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Kde stojí místní větev trunku, posuzováno stejným způsobem: z čeho vychází větev z ní vytvořená. Totéž jako <code>standing</code>, když checkout drží trunk.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">zpráva</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Co postavení znamená zde, v jednom řádku.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">on_trunk</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">boolean</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Pracovní strom drží samotnou hlavní větev.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">náprava</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">ne</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Příkazy, které přivedou checkout a lokální trunk na aktuální stav, když je kterýkoli pozadu. Navrhované, nikdy nespouštěné.</td>
+      </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">remote_head</td>
         <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
         <td class="px-3 py-2 font-mono text-xs text-body">ne</td>
         <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Commit, který pojmenovává sledovací trunk na remotu.</td>
       </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">checkout</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">jedno ze 2</td>
+        <td class="px-3 py-2 font-mono text-heading">remote_trunk</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
         <td class="px-3 py-2 font-mono text-xs text-body">ne</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words"><code>HEAD</code> checkoutu vůči vzdálenému trunku. Zatímco probíhá merge, commity, které přináší, se počítají jako přítomné: vytvářený commit je bude obsahovat, takže merge, který přivádí checkout do aktuálního stavu, se nikdy neposuzuje podle stromu, který nahrazuje.</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Remote-tracking kmen, proti němuž se počítá (<code>origin/master</code>).</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">postavení</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Kde checkout stojí: jeho <code>HEAD</code> — s commitem, který přináší probíhající merge — posouzeno podle prahových hodnot. To je to, co jeho server poskytuje.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">prahy</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Prahy, vůči nimž se posuzovalo, tak jak je deklaruje <code>checkout.trunk_distance</code>.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">trunk</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">ne</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Větev kmene, zkráceně.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">worktree</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Změřený pracovní strom.</td>
       </tr></tbody>
     </table>
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
-  &quot;required&quot;: [
-    &quot;standing&quot;,
-    &quot;local_trunk_standing&quot;,
-    &quot;worktree&quot;,
-    &quot;on_trunk&quot;,
-    &quot;thresholds&quot;,
-    &quot;message&quot;
-  ],
   &quot;$defs&quot;: {
-    &quot;TrunkStanding&quot;: {
-      &quot;description&quot;: &quot;Where a checkout stands against the remote trunk.\n\n```\nuse majordomus_cli::worktree::trunk::TrunkStanding;\nlet s: TrunkStanding = serde_json::from_str(r#\&quot;\&quot;lagging\&quot;\&quot;#).unwrap();\nassert_eq!(s, TrunkStanding::Lagging);\nassert_eq!(serde_json::to_value(TrunkStanding::Unmeasured).unwrap(), \&quot;unmeasured\&quot;);\n```&quot;,
-      &quot;oneOf&quot;: [
-        {
-          &quot;description&quot;: &quot;Behind by less than the warn threshold, or not behind at all.&quot;,
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;const&quot;: &quot;current&quot;
-        },
-        {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;const&quot;: &quot;lagging&quot;,
-          &quot;description&quot;: &quot;At or past the warn threshold: what it serves is old enough to mislead.&quot;
-        },
-        {
-          &quot;const&quot;: &quot;stale&quot;,
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;At or past the fail threshold: what it serves is the wrong tree.&quot;
-        },
-        {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;const&quot;: &quot;unjudged&quot;,
-          &quot;description&quot;: &quot;Behind, and the policy declares no threshold to judge the distance by.&quot;
-        },
-        {
-          &quot;description&quot;: &quot;The distance could not be measured: no trunk, no remote-tracking trunk, no `HEAD`.&quot;,
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;const&quot;: &quot;unmeasured&quot;
-        }
-      ]
-    },
-    &quot;TrunkThresholds&quot;: {
-      &quot;type&quot;: &quot;object&quot;,
-      &quot;properties&quot;: {
-        &quot;fail_behind&quot;: {
-          &quot;format&quot;: &quot;uint64&quot;,
-          &quot;description&quot;: &quot;At or past this many commits behind, the checkout is `stale`: a failure.&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: [
-            &quot;integer&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;warn_behind&quot;: {
-          &quot;description&quot;: &quot;At or past this many commits behind, the checkout is `lagging`: a warning.&quot;,
-          &quot;format&quot;: &quot;uint64&quot;,
-          &quot;type&quot;: [
-            &quot;integer&quot;,
-            &quot;null&quot;
-          ],
-          &quot;minimum&quot;: 0
-        }
-      },
-      &quot;description&quot;: &quot;The thresholds `checkout.trunk_distance` declares, in commits behind the remote trunk.\nAbsent is absent: the reader supplies no default, and a distance with nothing to judge\nit against is reported as `unjudged`.\n\n```\nuse majordomus_cli::worktree::trunk::TrunkThresholds;\nlet t: TrunkThresholds = serde_json::from_str(r#\&quot;{\&quot;warn_behind\&quot;: 50, \&quot;fail_behind\&quot;: 300}\&quot;#).unwrap();\nassert_eq!((t.warn_behind, t.fail_behind), (Some(50), Some(300)));\nassert_eq!(TrunkThresholds::default().warn_behind, None, \&quot;absent is not a default\&quot;);\n```&quot;
-    },
     &quot;Distance&quot;: {
+      &quot;description&quot;: &quot;How many commits two refs have that the other lacks.\n\n```\nuse majordomus_cli::worktree::trunk::Distance;\nlet d = Distance { behind: 779, ahead: 0 };\nassert_eq!(serde_json::to_value(d).unwrap(), serde_json::json!({\&quot;behind\&quot;: 779, \&quot;ahead\&quot;: 0}));\n```&quot;,
       &quot;properties&quot;: {
         &quot;ahead&quot;: {
           &quot;description&quot;: &quot;Commits of this ref the remote trunk lacks.&quot;,
@@ -395,23 +334,124 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
         },
         &quot;behind&quot;: {
           &quot;description&quot;: &quot;Commits of the remote trunk this ref lacks.&quot;,
-          &quot;type&quot;: &quot;integer&quot;,
+          &quot;format&quot;: &quot;uint64&quot;,
           &quot;minimum&quot;: 0,
-          &quot;format&quot;: &quot;uint64&quot;
+          &quot;type&quot;: &quot;integer&quot;
         }
       },
       &quot;required&quot;: [
         &quot;behind&quot;,
         &quot;ahead&quot;
       ],
-      &quot;type&quot;: &quot;object&quot;,
-      &quot;description&quot;: &quot;How many commits two refs have that the other lacks.\n\n```\nuse majordomus_cli::worktree::trunk::Distance;\nlet d = Distance { behind: 779, ahead: 0 };\nassert_eq!(serde_json::to_value(d).unwrap(), serde_json::json!({\&quot;behind\&quot;: 779, \&quot;ahead\&quot;: 0}));\n```&quot;
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;TrunkStanding&quot;: {
+      &quot;description&quot;: &quot;Where a checkout stands against the remote trunk.\n\n```\nuse majordomus_cli::worktree::trunk::TrunkStanding;\nlet s: TrunkStanding = serde_json::from_str(r#\&quot;\&quot;lagging\&quot;\&quot;#).unwrap();\nassert_eq!(s, TrunkStanding::Lagging);\nassert_eq!(serde_json::to_value(TrunkStanding::Unmeasured).unwrap(), \&quot;unmeasured\&quot;);\n```&quot;,
+      &quot;oneOf&quot;: [
+        {
+          &quot;const&quot;: &quot;current&quot;,
+          &quot;description&quot;: &quot;Behind by less than the warn threshold, or not behind at all.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;lagging&quot;,
+          &quot;description&quot;: &quot;At or past the warn threshold: what it serves is old enough to mislead.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;stale&quot;,
+          &quot;description&quot;: &quot;At or past the fail threshold: what it serves is the wrong tree.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;unjudged&quot;,
+          &quot;description&quot;: &quot;Behind, and the policy declares no threshold to judge the distance by.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;unmeasured&quot;,
+          &quot;description&quot;: &quot;The distance could not be measured: no trunk, no remote-tracking trunk, no `HEAD`.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      ]
+    },
+    &quot;TrunkThresholds&quot;: {
+      &quot;description&quot;: &quot;The thresholds `checkout.trunk_distance` declares, in commits behind the remote trunk.\nAbsent is absent: the reader supplies no default, and a distance with nothing to judge\nit against is reported as `unjudged`.\n\n```\nuse majordomus_cli::worktree::trunk::TrunkThresholds;\nlet t: TrunkThresholds = serde_json::from_str(r#\&quot;{\&quot;warn_behind\&quot;: 50, \&quot;fail_behind\&quot;: 300}\&quot;#).unwrap();\nassert_eq!((t.warn_behind, t.fail_behind), (Some(50), Some(300)));\nassert_eq!(TrunkThresholds::default().warn_behind, None, \&quot;absent is not a default\&quot;);\n```&quot;,
+      &quot;properties&quot;: {
+        &quot;fail_behind&quot;: {
+          &quot;description&quot;: &quot;At or past this many commits behind, the checkout is `stale`: a failure.&quot;,
+          &quot;format&quot;: &quot;uint64&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: [
+            &quot;integer&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;warn_behind&quot;: {
+          &quot;description&quot;: &quot;At or past this many commits behind, the checkout is `lagging`: a warning.&quot;,
+          &quot;format&quot;: &quot;uint64&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: [
+            &quot;integer&quot;,
+            &quot;null&quot;
+          ]
+        }
+      },
+      &quot;type&quot;: &quot;object&quot;
     }
   },
   &quot;description&quot;: &quot;A checkout&#39;s distance from the remote trunk, judged.\n\n```\nuse majordomus_cli::worktree::trunk::{Distance, TrunkDistance, TrunkStanding};\nlet d: TrunkDistance = serde_json::from_value(serde_json::json!({\n    \&quot;standing\&quot;: \&quot;stale\&quot;, \&quot;local_trunk_standing\&quot;: \&quot;stale\&quot;,\n    \&quot;worktree\&quot;: \&quot;/repo\&quot;, \&quot;on_trunk\&quot;: true,\n    \&quot;checkout\&quot;: {\&quot;behind\&quot;: 779, \&quot;ahead\&quot;: 0},\n    \&quot;thresholds\&quot;: {\&quot;warn_behind\&quot;: 50, \&quot;fail_behind\&quot;: 300},\n    \&quot;message\&quot;: \&quot;779 commits behind origin/master\&quot;,\n})).unwrap();\nassert_eq!(d.standing, TrunkStanding::Stale);\nassert_eq!(d.checkout, Some(Distance { behind: 779, ahead: 0 }));\n// what is absent stays absent in the answer\nassert!(serde_json::to_value(&amp;d).unwrap().get(\&quot;remedy\&quot;).is_none());\n```&quot;,
   &quot;properties&quot;: {
+    &quot;checkout&quot;: {
+      &quot;anyOf&quot;: [
+        {
+          &quot;$ref&quot;: &quot;#/$defs/Distance&quot;
+        },
+        {
+          &quot;type&quot;: &quot;null&quot;
+        }
+      ],
+      &quot;description&quot;: &quot;The checkout&#39;s `HEAD` against the remote trunk. While a merge is in progress, the\ncommits it brings in count as present: the commit being made will hold them, so the\nmerge that brings a checkout current is never judged by the tree it is replacing.&quot;
+    },
+    &quot;fetched_at&quot;: {
+      &quot;description&quot;: &quot;When the repository last fetched (the time of `FETCH_HEAD`), RFC 3339: the moment\nthis answer is true as of. Absent when it never fetched.&quot;,
+      &quot;type&quot;: [
+        &quot;string&quot;,
+        &quot;null&quot;
+      ]
+    },
+    &quot;local_trunk&quot;: {
+      &quot;anyOf&quot;: [
+        {
+          &quot;$ref&quot;: &quot;#/$defs/Distance&quot;
+        },
+        {
+          &quot;type&quot;: &quot;null&quot;
+        }
+      ],
+      &quot;description&quot;: &quot;The local trunk branch against the remote trunk: what a branch made from the local\ntrunk starts from.&quot;
+    },
+    &quot;local_trunk_standing&quot;: {
+      &quot;$ref&quot;: &quot;#/$defs/TrunkStanding&quot;,
+      &quot;description&quot;: &quot;Where the local trunk branch stands, judged the same way: what a branch made from it\nstarts from. The same as `standing` when the checkout holds the trunk.&quot;
+    },
+    &quot;message&quot;: {
+      &quot;description&quot;: &quot;What the standing means here, in one line.&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;on_trunk&quot;: {
+      &quot;description&quot;: &quot;The work tree holds the trunk branch itself.&quot;,
+      &quot;type&quot;: &quot;boolean&quot;
+    },
     &quot;remedy&quot;: {
       &quot;description&quot;: &quot;The commands that bring the checkout and the local trunk current, when either is\nbehind. Suggested, never run.&quot;,
+      &quot;type&quot;: [
+        &quot;string&quot;,
+        &quot;null&quot;
+      ]
+    },
+    &quot;remote_head&quot;: {
+      &quot;description&quot;: &quot;The commit the remote-tracking trunk names.&quot;,
       &quot;type&quot;: [
         &quot;string&quot;,
         &quot;null&quot;
@@ -428,6 +468,10 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
       &quot;$ref&quot;: &quot;#/$defs/TrunkStanding&quot;,
       &quot;description&quot;: &quot;Where the checkout stands: its `HEAD` — with the commit a merge in progress brings\nin — judged against the thresholds. This is what its server serves.&quot;
     },
+    &quot;thresholds&quot;: {
+      &quot;$ref&quot;: &quot;#/$defs/TrunkThresholds&quot;,
+      &quot;description&quot;: &quot;The thresholds judged against, as `checkout.trunk_distance` declares them.&quot;
+    },
     &quot;trunk&quot;: {
       &quot;description&quot;: &quot;The trunk branch, short.&quot;,
       &quot;type&quot;: [
@@ -436,64 +480,20 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
       ]
     },
     &quot;worktree&quot;: {
-      &quot;type&quot;: &quot;string&quot;,
-      &quot;description&quot;: &quot;The work tree measured.&quot;
-    },
-    &quot;local_trunk_standing&quot;: {
-      &quot;description&quot;: &quot;Where the local trunk branch stands, judged the same way: what a branch made from it\nstarts from. The same as `standing` when the checkout holds the trunk.&quot;,
-      &quot;$ref&quot;: &quot;#/$defs/TrunkStanding&quot;
-    },
-    &quot;message&quot;: {
-      &quot;type&quot;: &quot;string&quot;,
-      &quot;description&quot;: &quot;What the standing means here, in one line.&quot;
-    },
-    &quot;thresholds&quot;: {
-      &quot;$ref&quot;: &quot;#/$defs/TrunkThresholds&quot;,
-      &quot;description&quot;: &quot;The thresholds judged against, as `checkout.trunk_distance` declares them.&quot;
-    },
-    &quot;on_trunk&quot;: {
-      &quot;description&quot;: &quot;The work tree holds the trunk branch itself.&quot;,
-      &quot;type&quot;: &quot;boolean&quot;
-    },
-    &quot;fetched_at&quot;: {
-      &quot;description&quot;: &quot;When the repository last fetched (the time of `FETCH_HEAD`), RFC 3339: the moment\nthis answer is true as of. Absent when it never fetched.&quot;,
-      &quot;type&quot;: [
-        &quot;string&quot;,
-        &quot;null&quot;
-      ]
-    },
-    &quot;local_trunk&quot;: {
-      &quot;description&quot;: &quot;The local trunk branch against the remote trunk: what a branch made from the local\ntrunk starts from.&quot;,
-      &quot;anyOf&quot;: [
-        {
-          &quot;$ref&quot;: &quot;#/$defs/Distance&quot;
-        },
-        {
-          &quot;type&quot;: &quot;null&quot;
-        }
-      ]
-    },
-    &quot;remote_head&quot;: {
-      &quot;type&quot;: [
-        &quot;string&quot;,
-        &quot;null&quot;
-      ],
-      &quot;description&quot;: &quot;The commit the remote-tracking trunk names.&quot;
-    },
-    &quot;checkout&quot;: {
-      &quot;description&quot;: &quot;The checkout&#39;s `HEAD` against the remote trunk. While a merge is in progress, the\ncommits it brings in count as present: the commit being made will hold them, so the\nmerge that brings a checkout current is never judged by the tree it is replacing.&quot;,
-      &quot;anyOf&quot;: [
-        {
-          &quot;$ref&quot;: &quot;#/$defs/Distance&quot;
-        },
-        {
-          &quot;type&quot;: &quot;null&quot;
-        }
-      ]
+      &quot;description&quot;: &quot;The work tree measured.&quot;,
+      &quot;type&quot;: &quot;string&quot;
     }
   },
-  &quot;type&quot;: &quot;object&quot;,
-  &quot;title&quot;: &quot;TrunkDistance&quot;
+  &quot;required&quot;: [
+    &quot;standing&quot;,
+    &quot;local_trunk_standing&quot;,
+    &quot;worktree&quot;,
+    &quot;on_trunk&quot;,
+    &quot;thresholds&quot;,
+    &quot;message&quot;
+  ],
+  &quot;title&quot;: &quot;TrunkDistance&quot;,
+  &quot;type&quot;: &quot;object&quot;
 }</pre></div>
   </details>
 </div>
@@ -524,7 +524,7 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
         <div><dt class="text-body-subtle">modul Rust</dt><dd class="min-w-0 break-all font-mono text-heading">majordomus_cli::capability::builtin::worktree</dd></div>
         <div><dt class="text-body-subtle">typ vstupu</dt><dd class="font-mono text-heading">StatusInput</dd></div>
         <div><dt class="text-body-subtle">typ výstupu</dt><dd class="font-mono text-heading">TrunkDistance</dd></div>
-        <div><dt class="text-body-subtle">reference na GitHubu</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/docs/generated/modules/worktree.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/worktree.md</a></dd></div><div><dt class="text-body-subtle">otisk registru</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">3f734f2faf797f0ca7c39b4cd837e68b6619c41c6f6711f3d3aeca8f341934eb</dd></div>
+        <div><dt class="text-body-subtle">reference na GitHubu</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/1112bace3437ee0d82067b1e8f61813e70190078/docs/generated/modules/worktree.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/worktree.md</a></dd></div><div><dt class="text-body-subtle">otisk registru</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">5cdbf22cd21589ddbe464d5f0987b6bcf4607d05479004d6f815c3b306fdb08a</dd></div>
         <div><dt class="text-body-subtle">vygenerováno nástrojem</dt><dd class="font-mono text-heading">majordomus-cli 1.0.0-alpha.10</dd></div>
       </dl>
     </div>
@@ -580,9 +580,9 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
       <div class="min-w-0">
         <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">Projekt</h2><ul class="space-y-2 text-sm font-medium text-body">
           <li><a href="https://github.com/korczis/prismatic-majordomus" class="hover:text-heading hover:underline">GitHub</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/LICENSE" class="hover:text-heading hover:underline">Licence MIT</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/SECURITY.md" class="hover:text-heading hover:underline">Bezpečnostní politika</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/CONTRIBUTING.md" class="hover:text-heading hover:underline">Průvodce pro přispěvatele</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/1112bace3437ee0d82067b1e8f61813e70190078/LICENSE" class="hover:text-heading hover:underline">Licence MIT</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/1112bace3437ee0d82067b1e8f61813e70190078/SECURITY.md" class="hover:text-heading hover:underline">Bezpečnostní politika</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/1112bace3437ee0d82067b1e8f61813e70190078/CONTRIBUTING.md" class="hover:text-heading hover:underline">Průvodce pro přispěvatele</a></li>
         </ul>
       </div>
     </div>
@@ -590,7 +590,7 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/cs/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.10</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/745db2ea21e02613943face75a2bf95542be1f2e" class="font-mono underline">745db2e</a> · inputs <span class="font-mono">0a58c217d1b7</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/cs/architecture/" class="underline">how this site is derived</a> names them.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.10</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/1112bace3437ee0d82067b1e8f61813e70190078" class="font-mono underline">1112bac</a> · inputs <span class="font-mono">830f884cc5aa</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/cs/architecture/" class="underline">how this site is derived</a> names them.</p>
     </div>
   </div>
 </footer>

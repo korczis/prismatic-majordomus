@@ -229,16 +229,15 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
-  &quot;type&quot;: &quot;object&quot;,
-  &quot;description&quot;: &quot;The input of `release.next`: the landing it is asked about.\n\n```\nuse majordomus_cli::capability::builtin::release::NextInput;\n// nothing named is the landing the executor performs: this branch onto the trunk\nlet input = NextInput::default();\nassert_eq!((input.base.as_deref(), input.head()), (None, \&quot;HEAD\&quot;));\n```&quot;,
   &quot;additionalProperties&quot;: false,
+  &quot;description&quot;: &quot;The input of `release.next`: the landing it is asked about.\n\n```\nuse majordomus_cli::capability::builtin::release::NextInput;\n// nothing named is the landing the executor performs: this branch onto the trunk\nlet input = NextInput::default();\nassert_eq!((input.base.as_deref(), input.head()), (None, \&quot;HEAD\&quot;));\n```&quot;,
   &quot;properties&quot;: {
     &quot;base&quot;: {
+      &quot;description&quot;: &quot;The trunk the landing raises from; when absent, the remote-tracking ref of the trunk\nthis repository names (its remote&#39;s default branch, else its own trunk).&quot;,
       &quot;type&quot;: [
         &quot;string&quot;,
         &quot;null&quot;
-      ],
-      &quot;description&quot;: &quot;The trunk the landing raises from; when absent, the remote-tracking ref of the trunk\nthis repository names (its remote&#39;s default branch, else its own trunk).&quot;
+      ]
     },
     &quot;head&quot;: {
       &quot;description&quot;: &quot;What lands; `HEAD` when absent.&quot;,
@@ -248,7 +247,8 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
       ]
     }
   },
-  &quot;title&quot;: &quot;ReleaseNextInput&quot;
+  &quot;title&quot;: &quot;ReleaseNextInput&quot;,
+  &quot;type&quot;: &quot;object&quot;
 }</pre></div>
   </details>
 </div>
@@ -263,50 +263,45 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
     <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
       <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">vlastnost</th><th class="px-3 py-2">typ</th><th class="px-3 py-2">povinné</th><th class="px-3 py-2">popis</th></tr></thead>
       <tbody><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">trunk_version</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
+        <td class="px-3 py-2 font-mono text-heading">alokace</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
         <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Co deklaruje hlavní větev: číslo, od něhož se zvedá to další.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">vysvětlení</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Jedna věta na krok, v pořadí, v jakém bylo rozhodnuto.</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Zda politika alokuje při přistání; rozhodnutí se počítá tak či tak.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">výjimka</td>
         <td class="px-3 py-2 font-mono text-xs text-body">jedno ze 2</td>
         <td class="px-3 py-2 font-mono text-xs text-body">ne</td>
         <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Výjimka, která snížila práh, pokud nějaká byla.</td>
       </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">alokace</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
+        <td class="px-3 py-2 font-mono text-heading">vysvětlení</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
         <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Zda politika alokuje při přistání; rozhodnutí se počítá tak či tak.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">next_version</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Verze kmene zvýšená o <code>selected</code>.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">required_by_compatibility</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Co tento posun vyžaduje podle režimu verze.</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Jedna věta na krok, v pořadí, v jakém bylo rozhodnuto.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">spodní mez</td>
         <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
         <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
         <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Spodní mez politiky, nebo <code>none</code>, když se uplatnila výjimka.</td>
       </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">režim</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Režim kompatibility, který verze trunku uvádí v platnost.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">next_version</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Verze kmene zvýšená o <code>selected</code>.</td>
+      </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">pozorováno</td>
         <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
         <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
         <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Jak daleko změna posouvá veřejný kontrakt, změřeno (ADR 0051).</td>
       </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">režim</td>
+        <td class="px-3 py-2 font-mono text-heading">required_by_compatibility</td>
         <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
         <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Režim kompatibility, který verze trunku uvádí v platnost.</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Co tento posun vyžaduje podle režimu verze.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">schema</td>
         <td class="px-3 py-2 font-mono text-xs text-body">string</td>
@@ -317,44 +312,77 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
         <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
         <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
         <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Větší z požadavku a spodní meze.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">trunk_version</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Co deklaruje hlavní větev: číslo, od něhož se zvedá to další.</td>
       </tr></tbody>
     </table>
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
-  &quot;type&quot;: &quot;object&quot;,
-  &quot;required&quot;: [
-    &quot;schema&quot;,
-    &quot;trunk_version&quot;,
-    &quot;observed&quot;,
-    &quot;required_by_compatibility&quot;,
-    &quot;floor&quot;,
-    &quot;selected&quot;,
-    &quot;next_version&quot;,
-    &quot;allocation&quot;,
-    &quot;mode&quot;,
-    &quot;explanation&quot;
-  ],
   &quot;$defs&quot;: {
     &quot;AppliedExemption&quot;: {
-      &quot;required&quot;: [
-        &quot;id&quot;,
-        &quot;reason&quot;
-      ],
       &quot;description&quot;: &quot;The exemption a decision applied, by class.\n\n```\nuse majordomus_cli::release::landing::AppliedExemption;\nlet e = AppliedExemption { id: \&quot;plan-records\&quot;.into(), reason: \&quot;plan records\&quot;.into() };\nassert_eq!(e.id, \&quot;plan-records\&quot;);\n```&quot;,
       &quot;properties&quot;: {
         &quot;id&quot;: {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;The class&#39;s id.&quot;
+          &quot;description&quot;: &quot;The class&#39;s id.&quot;,
+          &quot;type&quot;: &quot;string&quot;
         },
         &quot;reason&quot;: {
           &quot;description&quot;: &quot;The class&#39;s description, which is the reason the floor did not apply.&quot;,
           &quot;type&quot;: &quot;string&quot;
         }
       },
+      &quot;required&quot;: [
+        &quot;id&quot;,
+        &quot;reason&quot;
+      ],
       &quot;type&quot;: &quot;object&quot;
     },
+    &quot;ReleaseAllocation&quot;: {
+      &quot;description&quot;: &quot;Whether the integration executor allocates the version when it lands a pull request.\n\n```\nuse majordomus_cli::release::landing::Allocation;\n// a policy that says nothing changes nothing: a pull request raises its own version\nassert_eq!(Allocation::default(), Allocation::Off);\nlet a: Allocation = serde_json::from_str(\&quot;\\\&quot;landing\\\&quot;\&quot;).unwrap();\nassert_eq!(a.as_str(), \&quot;landing\&quot;);\n```&quot;,
+      &quot;oneOf&quot;: [
+        {
+          &quot;const&quot;: &quot;off&quot;,
+          &quot;description&quot;: &quot;The version is raised by whoever changes the contract, as before ADR 0134.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;landing&quot;,
+          &quot;description&quot;: &quot;The integration executor raises it at landing; a pull request does not.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      ]
+    },
+    &quot;ReleaseImpact&quot;: {
+      &quot;description&quot;: &quot;How much a change moves the contract.\n\nOrdered, so that \&quot;the declared bump covers what is required\&quot; is a comparison rather than\na table:\n\n```\nuse majordomus_cli::release::compat::Impact;\nassert!(Impact::Major &gt; Impact::Minor);\nassert!(Impact::Minor &gt; Impact::Patch);\nassert!(Impact::Patch &gt; Impact::None);\n```&quot;,
+      &quot;oneOf&quot;: [
+        {
+          &quot;const&quot;: &quot;none&quot;,
+          &quot;description&quot;: &quot;The contract did not move.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;patch&quot;,
+          &quot;description&quot;: &quot;It moved behind the boundary: a caller cannot tell.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;minor&quot;,
+          &quot;description&quot;: &quot;Something arrived; every existing caller still works.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;major&quot;,
+          &quot;description&quot;: &quot;Something a caller could hold is gone or changed under it.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      ]
+    },
     &quot;ReleasePolicyMode&quot;: {
+      &quot;description&quot;: &quot;How this project turns a measured impact into the version it owes.\n\nSemantic versioning hands `0.y.z` a blanket exemption — \&quot;anything MAY change at any\ntime\&quot; — and Elm refuses the exemption by starting every package at `1.0.0`, because a\nrule with an escape hatch is a rule about when to use the hatch. This repository is `0.x`\nand has not earned `1.0.0`, so neither answer is available: demanding `major` would\ndemand `1.0.0` for a single removal, and granting the exemption would let a breaking\nchange ship as a patch.\n\nSo below `1.0.0` the floor is a minor. Any movement of the surface, gone or new, is at\nleast a minor release; only an unchanged surface owes nothing. That is the strongest\nsignal `0.x` has, and a removal is still *named* as breaking whatever the verdict, so the\nevidence does not quietly become a minor along with the number.\n\nAt `1.0.0` the shift ends: `Mode::Semver` is the ordinary rule, and the transition is\none line of `Policy::required_of`.\n\n```\nuse majordomus_cli::release::compat::{Mode, Policy};\nuse majordomus_cli::release::version::Version;\nassert_eq!(Policy::for_version(Version::parse(\&quot;0.9.0\&quot;).unwrap()).mode, Mode::Pre1_0Strict);\nassert_eq!(Policy::for_version(Version::parse(\&quot;1.0.0\&quot;).unwrap()).mode, Mode::Semver);\n```&quot;,
       &quot;oneOf&quot;: [
         {
           &quot;const&quot;: &quot;pre1-0-strict&quot;,
@@ -366,61 +394,14 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
           &quot;description&quot;: &quot;At or above `1.0.0`: the impact is the requirement.&quot;,
           &quot;type&quot;: &quot;string&quot;
         }
-      ],
-      &quot;description&quot;: &quot;How this project turns a measured impact into the version it owes.\n\nSemantic versioning hands `0.y.z` a blanket exemption — \&quot;anything MAY change at any\ntime\&quot; — and Elm refuses the exemption by starting every package at `1.0.0`, because a\nrule with an escape hatch is a rule about when to use the hatch. This repository is `0.x`\nand has not earned `1.0.0`, so neither answer is available: demanding `major` would\ndemand `1.0.0` for a single removal, and granting the exemption would let a breaking\nchange ship as a patch.\n\nSo below `1.0.0` the floor is a minor. Any movement of the surface, gone or new, is at\nleast a minor release; only an unchanged surface owes nothing. That is the strongest\nsignal `0.x` has, and a removal is still *named* as breaking whatever the verdict, so the\nevidence does not quietly become a minor along with the number.\n\nAt `1.0.0` the shift ends: `Mode::Semver` is the ordinary rule, and the transition is\none line of `Policy::required_of`.\n\n```\nuse majordomus_cli::release::compat::{Mode, Policy};\nuse majordomus_cli::release::version::Version;\nassert_eq!(Policy::for_version(Version::parse(\&quot;0.9.0\&quot;).unwrap()).mode, Mode::Pre1_0Strict);\nassert_eq!(Policy::for_version(Version::parse(\&quot;1.0.0\&quot;).unwrap()).mode, Mode::Semver);\n```&quot;
-    },
-    &quot;ReleaseImpact&quot;: {
-      &quot;description&quot;: &quot;How much a change moves the contract.\n\nOrdered, so that \&quot;the declared bump covers what is required\&quot; is a comparison rather than\na table:\n\n```\nuse majordomus_cli::release::compat::Impact;\nassert!(Impact::Major &gt; Impact::Minor);\nassert!(Impact::Minor &gt; Impact::Patch);\nassert!(Impact::Patch &gt; Impact::None);\n```&quot;,
-      &quot;oneOf&quot;: [
-        {
-          &quot;const&quot;: &quot;none&quot;,
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;The contract did not move.&quot;
-        },
-        {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;It moved behind the boundary: a caller cannot tell.&quot;,
-          &quot;const&quot;: &quot;patch&quot;
-        },
-        {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;const&quot;: &quot;minor&quot;,
-          &quot;description&quot;: &quot;Something arrived; every existing caller still works.&quot;
-        },
-        {
-          &quot;const&quot;: &quot;major&quot;,
-          &quot;description&quot;: &quot;Something a caller could hold is gone or changed under it.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
       ]
-    },
-    &quot;ReleaseAllocation&quot;: {
-      &quot;oneOf&quot;: [
-        {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;const&quot;: &quot;off&quot;,
-          &quot;description&quot;: &quot;The version is raised by whoever changes the contract, as before ADR 0134.&quot;
-        },
-        {
-          &quot;const&quot;: &quot;landing&quot;,
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;The integration executor raises it at landing; a pull request does not.&quot;
-        }
-      ],
-      &quot;description&quot;: &quot;Whether the integration executor allocates the version when it lands a pull request.\n\n```\nuse majordomus_cli::release::landing::Allocation;\n// a policy that says nothing changes nothing: a pull request raises its own version\nassert_eq!(Allocation::default(), Allocation::Off);\nlet a: Allocation = serde_json::from_str(\&quot;\\\&quot;landing\\\&quot;\&quot;).unwrap();\nassert_eq!(a.as_str(), \&quot;landing\&quot;);\n```&quot;
     }
   },
+  &quot;description&quot;: &quot;What a landing allocates, and why, step by step.\n\n```\nuse majordomus_cli::release::compat::Impact;\nuse majordomus_cli::release::landing::{decide, LandingDecision, ReleasePolicy, DECISION_SCHEMA};\nuse majordomus_cli::release::version::Version;\nlet d: LandingDecision = decide(Version::parse(\&quot;1.2.3\&quot;).unwrap(), Impact::None, &amp;ReleasePolicy::default(), &amp;[]);\nassert_eq!(d.schema, DECISION_SCHEMA);\nassert_eq!(d.next_version, \&quot;1.2.3\&quot;, \&quot;nothing moved and nothing is owed\&quot;);\n```&quot;,
   &quot;properties&quot;: {
-    &quot;trunk_version&quot;: {
-      &quot;type&quot;: &quot;string&quot;,
-      &quot;description&quot;: &quot;What the trunk declares: the number the next one is raised from.&quot;
-    },
-    &quot;explanation&quot;: {
-      &quot;type&quot;: &quot;array&quot;,
-      &quot;description&quot;: &quot;One sentence per step, in the order the decision was made.&quot;,
-      &quot;items&quot;: {
-        &quot;type&quot;: &quot;string&quot;
-      }
+    &quot;allocation&quot;: {
+      &quot;$ref&quot;: &quot;#/$defs/ReleaseAllocation&quot;,
+      &quot;description&quot;: &quot;Whether the policy allocates at landing; the decision is computed either way.&quot;
     },
     &quot;exemption&quot;: {
       &quot;anyOf&quot;: [
@@ -433,29 +414,32 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
       ],
       &quot;description&quot;: &quot;The exemption that lowered the floor, if one did.&quot;
     },
-    &quot;allocation&quot;: {
-      &quot;description&quot;: &quot;Whether the policy allocates at landing; the decision is computed either way.&quot;,
-      &quot;$ref&quot;: &quot;#/$defs/ReleaseAllocation&quot;
+    &quot;explanation&quot;: {
+      &quot;description&quot;: &quot;One sentence per step, in the order the decision was made.&quot;,
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;string&quot;
+      },
+      &quot;type&quot;: &quot;array&quot;
+    },
+    &quot;floor&quot;: {
+      &quot;$ref&quot;: &quot;#/$defs/ReleaseImpact&quot;,
+      &quot;description&quot;: &quot;The policy&#39;s floor, or `none` when an exemption applied.&quot;
+    },
+    &quot;mode&quot;: {
+      &quot;$ref&quot;: &quot;#/$defs/ReleasePolicyMode&quot;,
+      &quot;description&quot;: &quot;The compatibility mode the trunk&#39;s version puts in force.&quot;
     },
     &quot;next_version&quot;: {
       &quot;description&quot;: &quot;The trunk&#39;s version raised by `selected`.&quot;,
       &quot;type&quot;: &quot;string&quot;
     },
-    &quot;required_by_compatibility&quot;: {
-      &quot;$ref&quot;: &quot;#/$defs/ReleaseImpact&quot;,
-      &quot;description&quot;: &quot;What that movement requires under the version&#39;s mode.&quot;
-    },
-    &quot;floor&quot;: {
-      &quot;description&quot;: &quot;The policy&#39;s floor, or `none` when an exemption applied.&quot;,
-      &quot;$ref&quot;: &quot;#/$defs/ReleaseImpact&quot;
-    },
     &quot;observed&quot;: {
       &quot;$ref&quot;: &quot;#/$defs/ReleaseImpact&quot;,
       &quot;description&quot;: &quot;How far the change moves the public contract, measured (ADR 0051).&quot;
     },
-    &quot;mode&quot;: {
-      &quot;description&quot;: &quot;The compatibility mode the trunk&#39;s version puts in force.&quot;,
-      &quot;$ref&quot;: &quot;#/$defs/ReleasePolicyMode&quot;
+    &quot;required_by_compatibility&quot;: {
+      &quot;$ref&quot;: &quot;#/$defs/ReleaseImpact&quot;,
+      &quot;description&quot;: &quot;What that movement requires under the version&#39;s mode.&quot;
     },
     &quot;schema&quot;: {
       &quot;description&quot;: &quot;`DECISION_SCHEMA`.&quot;,
@@ -464,10 +448,26 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
     &quot;selected&quot;: {
       &quot;$ref&quot;: &quot;#/$defs/ReleaseImpact&quot;,
       &quot;description&quot;: &quot;The larger of the requirement and the floor.&quot;
+    },
+    &quot;trunk_version&quot;: {
+      &quot;description&quot;: &quot;What the trunk declares: the number the next one is raised from.&quot;,
+      &quot;type&quot;: &quot;string&quot;
     }
   },
+  &quot;required&quot;: [
+    &quot;schema&quot;,
+    &quot;trunk_version&quot;,
+    &quot;observed&quot;,
+    &quot;required_by_compatibility&quot;,
+    &quot;floor&quot;,
+    &quot;selected&quot;,
+    &quot;next_version&quot;,
+    &quot;allocation&quot;,
+    &quot;mode&quot;,
+    &quot;explanation&quot;
+  ],
   &quot;title&quot;: &quot;LandingDecision&quot;,
-  &quot;description&quot;: &quot;What a landing allocates, and why, step by step.\n\n```\nuse majordomus_cli::release::compat::Impact;\nuse majordomus_cli::release::landing::{decide, LandingDecision, ReleasePolicy, DECISION_SCHEMA};\nuse majordomus_cli::release::version::Version;\nlet d: LandingDecision = decide(Version::parse(\&quot;1.2.3\&quot;).unwrap(), Impact::None, &amp;ReleasePolicy::default(), &amp;[]);\nassert_eq!(d.schema, DECISION_SCHEMA);\nassert_eq!(d.next_version, \&quot;1.2.3\&quot;, \&quot;nothing moved and nothing is owed\&quot;);\n```&quot;
+  &quot;type&quot;: &quot;object&quot;
 }</pre></div>
   </details>
 </div>
@@ -498,7 +498,7 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
         <div><dt class="text-body-subtle">modul Rust</dt><dd class="min-w-0 break-all font-mono text-heading">majordomus_cli::capability::builtin::release</dd></div>
         <div><dt class="text-body-subtle">typ vstupu</dt><dd class="font-mono text-heading">ReleaseNextInput</dd></div>
         <div><dt class="text-body-subtle">typ výstupu</dt><dd class="font-mono text-heading">LandingDecision</dd></div>
-        <div><dt class="text-body-subtle">reference na GitHubu</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/docs/generated/modules/release.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/release.md</a></dd></div><div><dt class="text-body-subtle">otisk registru</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">3f734f2faf797f0ca7c39b4cd837e68b6619c41c6f6711f3d3aeca8f341934eb</dd></div>
+        <div><dt class="text-body-subtle">reference na GitHubu</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/1112bace3437ee0d82067b1e8f61813e70190078/docs/generated/modules/release.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/release.md</a></dd></div><div><dt class="text-body-subtle">otisk registru</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">5cdbf22cd21589ddbe464d5f0987b6bcf4607d05479004d6f815c3b306fdb08a</dd></div>
         <div><dt class="text-body-subtle">vygenerováno nástrojem</dt><dd class="font-mono text-heading">majordomus-cli 1.0.0-alpha.10</dd></div>
       </dl>
     </div>
@@ -554,9 +554,9 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
       <div class="min-w-0">
         <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">Projekt</h2><ul class="space-y-2 text-sm font-medium text-body">
           <li><a href="https://github.com/korczis/prismatic-majordomus" class="hover:text-heading hover:underline">GitHub</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/LICENSE" class="hover:text-heading hover:underline">Licence MIT</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/SECURITY.md" class="hover:text-heading hover:underline">Bezpečnostní politika</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/CONTRIBUTING.md" class="hover:text-heading hover:underline">Průvodce pro přispěvatele</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/1112bace3437ee0d82067b1e8f61813e70190078/LICENSE" class="hover:text-heading hover:underline">Licence MIT</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/1112bace3437ee0d82067b1e8f61813e70190078/SECURITY.md" class="hover:text-heading hover:underline">Bezpečnostní politika</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/1112bace3437ee0d82067b1e8f61813e70190078/CONTRIBUTING.md" class="hover:text-heading hover:underline">Průvodce pro přispěvatele</a></li>
         </ul>
       </div>
     </div>
@@ -564,7 +564,7 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/cs/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.10</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/745db2ea21e02613943face75a2bf95542be1f2e" class="font-mono underline">745db2e</a> · inputs <span class="font-mono">0a58c217d1b7</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/cs/architecture/" class="underline">how this site is derived</a> names them.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.10</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/1112bace3437ee0d82067b1e8f61813e70190078" class="font-mono underline">1112bac</a> · inputs <span class="font-mono">830f884cc5aa</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/cs/architecture/" class="underline">how this site is derived</a> names them.</p>
     </div>
   </div>
 </footer>

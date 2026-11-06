@@ -225,24 +225,24 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
-  &quot;title&quot;: &quot;KitAdoptInput&quot;,
-  &quot;description&quot;: &quot;The input of `design.kit.adopt`: which kit profile to declare in the repository.&quot;,
-  &quot;type&quot;: &quot;object&quot;,
   &quot;additionalProperties&quot;: false,
+  &quot;description&quot;: &quot;The input of `design.kit.adopt`: which kit profile to declare in the repository.&quot;,
+  &quot;properties&quot;: {
+    &quot;dry_run&quot;: {
+      &quot;default&quot;: false,
+      &quot;description&quot;: &quot;Report what would be written, and write nothing.&quot;,
+      &quot;type&quot;: &quot;boolean&quot;
+    },
+    &quot;profile&quot;: {
+      &quot;description&quot;: &quot;A kit profile of the distribution, `share/design/kits/&lt;profile&gt;.yaml`.&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    }
+  },
   &quot;required&quot;: [
     &quot;profile&quot;
   ],
-  &quot;properties&quot;: {
-    &quot;dry_run&quot;: {
-      &quot;description&quot;: &quot;Report what would be written, and write nothing.&quot;,
-      &quot;type&quot;: &quot;boolean&quot;,
-      &quot;default&quot;: false
-    },
-    &quot;profile&quot;: {
-      &quot;type&quot;: &quot;string&quot;,
-      &quot;description&quot;: &quot;A kit profile of the distribution, `share/design/kits/&lt;profile&gt;.yaml`.&quot;
-    }
-  }
+  &quot;title&quot;: &quot;KitAdoptInput&quot;,
+  &quot;type&quot;: &quot;object&quot;
 }</pre></div>
   </details>
 </div>
@@ -251,20 +251,10 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
     <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
       <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">vlastnost</th><th class="px-3 py-2">typ</th><th class="px-3 py-2">povinné</th><th class="px-3 py-2">popis</th></tr></thead>
       <tbody><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">pravidlo</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The rule it enforces.</td>
-      </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">ci_workflow</td>
         <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
         <td class="px-3 py-2 font-mono text-xs text-body">ne</td>
         <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The CI workflow the <code>design-kit</code> entry names, when the repository has one.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">zapisuje</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Every file adoption touches, in the order they are written.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">dry_run</td>
         <td class="px-3 py-2 font-mono text-xs text-body">boolean</td>
@@ -280,35 +270,22 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
         <td class="px-3 py-2 font-mono text-xs text-body">string</td>
         <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
         <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The profile adopted.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">pravidlo</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The rule it enforces.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">zapisuje</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Every file adoption touches, in the order they are written.</td>
       </tr></tbody>
     </table>
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
   &quot;$defs&quot;: {
-    &quot;AdoptWrite&quot;: {
-      &quot;description&quot;: &quot;One file adoption touches.&quot;,
-      &quot;properties&quot;: {
-        &quot;detail&quot;: {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;What was written or found.&quot;
-        },
-        &quot;path&quot;: {
-          &quot;description&quot;: &quot;Repository-relative.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;action&quot;: {
-          &quot;description&quot;: &quot;What happened to it.&quot;,
-          &quot;$ref&quot;: &quot;#/$defs/AdoptAction&quot;
-        }
-      },
-      &quot;required&quot;: [
-        &quot;path&quot;,
-        &quot;action&quot;,
-        &quot;detail&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
-    },
     &quot;AdoptAction&quot;: {
       &quot;description&quot;: &quot;What adoption did, or would do, to one file.&quot;,
       &quot;oneOf&quot;: [
@@ -324,8 +301,8 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
         },
         {
           &quot;const&quot;: &quot;unchanged&quot;,
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;The file already says what adoption would write.&quot;
+          &quot;description&quot;: &quot;The file already says what adoption would write.&quot;,
+          &quot;type&quot;: &quot;string&quot;
         },
         {
           &quot;const&quot;: &quot;kept&quot;,
@@ -333,10 +310,67 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
           &quot;type&quot;: &quot;string&quot;
         }
       ]
+    },
+    &quot;AdoptWrite&quot;: {
+      &quot;description&quot;: &quot;One file adoption touches.&quot;,
+      &quot;properties&quot;: {
+        &quot;action&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/AdoptAction&quot;,
+          &quot;description&quot;: &quot;What happened to it.&quot;
+        },
+        &quot;detail&quot;: {
+          &quot;description&quot;: &quot;What was written or found.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;path&quot;: {
+          &quot;description&quot;: &quot;Repository-relative.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;path&quot;,
+        &quot;action&quot;,
+        &quot;detail&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
     }
   },
-  &quot;title&quot;: &quot;AdoptReport&quot;,
-  &quot;type&quot;: &quot;object&quot;,
+  &quot;description&quot;: &quot;What `design.kit.adopt` answers.&quot;,
+  &quot;properties&quot;: {
+    &quot;ci_workflow&quot;: {
+      &quot;description&quot;: &quot;The CI workflow the `design-kit` entry names, when the repository has one.&quot;,
+      &quot;type&quot;: [
+        &quot;string&quot;,
+        &quot;null&quot;
+      ]
+    },
+    &quot;dry_run&quot;: {
+      &quot;description&quot;: &quot;Whether nothing was written.&quot;,
+      &quot;type&quot;: &quot;boolean&quot;
+    },
+    &quot;notes&quot;: {
+      &quot;description&quot;: &quot;What is left for a person: the hook and workflow steps doctor will ask for.&quot;,
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;string&quot;
+      },
+      &quot;type&quot;: &quot;array&quot;
+    },
+    &quot;profile&quot;: {
+      &quot;description&quot;: &quot;The profile adopted.&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;rule&quot;: {
+      &quot;description&quot;: &quot;The rule it enforces.&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;writes&quot;: {
+      &quot;description&quot;: &quot;Every file adoption touches, in the order they are written.&quot;,
+      &quot;items&quot;: {
+        &quot;$ref&quot;: &quot;#/$defs/AdoptWrite&quot;
+      },
+      &quot;type&quot;: &quot;array&quot;
+    }
+  },
   &quot;required&quot;: [
     &quot;profile&quot;,
     &quot;rule&quot;,
@@ -344,42 +378,8 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
     &quot;writes&quot;,
     &quot;notes&quot;
   ],
-  &quot;description&quot;: &quot;What `design.kit.adopt` answers.&quot;,
-  &quot;properties&quot;: {
-    &quot;rule&quot;: {
-      &quot;description&quot;: &quot;The rule it enforces.&quot;,
-      &quot;type&quot;: &quot;string&quot;
-    },
-    &quot;ci_workflow&quot;: {
-      &quot;type&quot;: [
-        &quot;string&quot;,
-        &quot;null&quot;
-      ],
-      &quot;description&quot;: &quot;The CI workflow the `design-kit` entry names, when the repository has one.&quot;
-    },
-    &quot;writes&quot;: {
-      &quot;description&quot;: &quot;Every file adoption touches, in the order they are written.&quot;,
-      &quot;type&quot;: &quot;array&quot;,
-      &quot;items&quot;: {
-        &quot;$ref&quot;: &quot;#/$defs/AdoptWrite&quot;
-      }
-    },
-    &quot;dry_run&quot;: {
-      &quot;description&quot;: &quot;Whether nothing was written.&quot;,
-      &quot;type&quot;: &quot;boolean&quot;
-    },
-    &quot;notes&quot;: {
-      &quot;items&quot;: {
-        &quot;type&quot;: &quot;string&quot;
-      },
-      &quot;type&quot;: &quot;array&quot;,
-      &quot;description&quot;: &quot;What is left for a person: the hook and workflow steps doctor will ask for.&quot;
-    },
-    &quot;profile&quot;: {
-      &quot;description&quot;: &quot;The profile adopted.&quot;,
-      &quot;type&quot;: &quot;string&quot;
-    }
-  }
+  &quot;title&quot;: &quot;AdoptReport&quot;,
+  &quot;type&quot;: &quot;object&quot;
 }</pre></div>
   </details>
 </div>
@@ -410,7 +410,7 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
         <div><dt class="text-body-subtle">modul Rust</dt><dd class="min-w-0 break-all font-mono text-heading">majordomus_cli::capability::builtin::design</dd></div>
         <div><dt class="text-body-subtle">typ vstupu</dt><dd class="font-mono text-heading">KitAdoptInput</dd></div>
         <div><dt class="text-body-subtle">typ výstupu</dt><dd class="font-mono text-heading">AdoptReport</dd></div>
-        <div><dt class="text-body-subtle">reference na GitHubu</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/docs/generated/modules/design.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/design.md</a></dd></div><div><dt class="text-body-subtle">otisk registru</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">3f734f2faf797f0ca7c39b4cd837e68b6619c41c6f6711f3d3aeca8f341934eb</dd></div>
+        <div><dt class="text-body-subtle">reference na GitHubu</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/1112bace3437ee0d82067b1e8f61813e70190078/docs/generated/modules/design.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/design.md</a></dd></div><div><dt class="text-body-subtle">otisk registru</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">5cdbf22cd21589ddbe464d5f0987b6bcf4607d05479004d6f815c3b306fdb08a</dd></div>
         <div><dt class="text-body-subtle">vygenerováno nástrojem</dt><dd class="font-mono text-heading">majordomus-cli 1.0.0-alpha.10</dd></div>
       </dl>
     </div>
@@ -466,9 +466,9 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
       <div class="min-w-0">
         <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">Projekt</h2><ul class="space-y-2 text-sm font-medium text-body">
           <li><a href="https://github.com/korczis/prismatic-majordomus" class="hover:text-heading hover:underline">GitHub</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/LICENSE" class="hover:text-heading hover:underline">Licence MIT</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/SECURITY.md" class="hover:text-heading hover:underline">Bezpečnostní politika</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/CONTRIBUTING.md" class="hover:text-heading hover:underline">Průvodce pro přispěvatele</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/1112bace3437ee0d82067b1e8f61813e70190078/LICENSE" class="hover:text-heading hover:underline">Licence MIT</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/1112bace3437ee0d82067b1e8f61813e70190078/SECURITY.md" class="hover:text-heading hover:underline">Bezpečnostní politika</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/1112bace3437ee0d82067b1e8f61813e70190078/CONTRIBUTING.md" class="hover:text-heading hover:underline">Průvodce pro přispěvatele</a></li>
         </ul>
       </div>
     </div>
@@ -476,7 +476,7 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/cs/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.10</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/745db2ea21e02613943face75a2bf95542be1f2e" class="font-mono underline">745db2e</a> · inputs <span class="font-mono">0a58c217d1b7</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/cs/architecture/" class="underline">how this site is derived</a> names them.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.10</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/1112bace3437ee0d82067b1e8f61813e70190078" class="font-mono underline">1112bac</a> · inputs <span class="font-mono">830f884cc5aa</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/cs/architecture/" class="underline">how this site is derived</a> names them.</p>
     </div>
   </div>
 </footer>

@@ -256,33 +256,33 @@ capability resolves either, so neither caller has to know the other's spelling.<
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
+  &quot;additionalProperties&quot;: false,
+  &quot;description&quot;: &quot;Which entity: by URI, or by the address it is served at.\n\nTwo spellings of one question, because two kinds of caller ask it: MCP and the API hold\nthe `majordomus://` URI the index is keyed by, and the Cockpit&#39;s router has a `kind` and\na `slug` out of a path. Nothing converts one form into the other at the edge — the\ncapability resolves either, so neither caller has to know the other&#39;s spelling.\n\n```\nuse majordomus_cli::capability::builtin::entity::EntityInput;\n\nlet by_route: EntityInput =\n    serde_json::from_value(serde_json::json!({ \&quot;kind\&quot;: \&quot;adr\&quot;, \&quot;slug\&quot;: \&quot;adr-0056\&quot; }))\n        .unwrap();\nassert_eq!(by_route.kind.as_deref(), Some(\&quot;adr\&quot;));\nassert_eq!(by_route.slug.as_deref(), Some(\&quot;adr-0056\&quot;));\nassert_eq!(by_route.uri, None);\n\n// absent is a shape, not an error: which fields are required is the handler&#39;s question\nassert_eq!(EntityInput::default().kind, None);\n```&quot;,
   &quot;properties&quot;: {
     &quot;kind&quot;: {
+      &quot;description&quot;: &quot;The kind, when addressing by route.&quot;,
       &quot;type&quot;: [
         &quot;string&quot;,
         &quot;null&quot;
-      ],
-      &quot;description&quot;: &quot;The kind, when addressing by route.&quot;
+      ]
     },
     &quot;slug&quot;: {
+      &quot;description&quot;: &quot;The last segment of the entity&#39;s route, when addressing by route.&quot;,
       &quot;type&quot;: [
         &quot;string&quot;,
         &quot;null&quot;
-      ],
-      &quot;description&quot;: &quot;The last segment of the entity&#39;s route, when addressing by route.&quot;
+      ]
     },
     &quot;uri&quot;: {
+      &quot;description&quot;: &quot;`majordomus://&lt;kind&gt;/&lt;identity&gt;`. Either this, or `kind` and `slug` together.&quot;,
       &quot;type&quot;: [
         &quot;string&quot;,
         &quot;null&quot;
-      ],
-      &quot;description&quot;: &quot;`majordomus://&lt;kind&gt;/&lt;identity&gt;`. Either this, or `kind` and `slug` together.&quot;
+      ]
     }
   },
-  &quot;type&quot;: &quot;object&quot;,
-  &quot;additionalProperties&quot;: false,
   &quot;title&quot;: &quot;EntityInput&quot;,
-  &quot;description&quot;: &quot;Which entity: by URI, or by the address it is served at.\n\nTwo spellings of one question, because two kinds of caller ask it: MCP and the API hold\nthe `majordomus://` URI the index is keyed by, and the Cockpit&#39;s router has a `kind` and\na `slug` out of a path. Nothing converts one form into the other at the edge — the\ncapability resolves either, so neither caller has to know the other&#39;s spelling.\n\n```\nuse majordomus_cli::capability::builtin::entity::EntityInput;\n\nlet by_route: EntityInput =\n    serde_json::from_value(serde_json::json!({ \&quot;kind\&quot;: \&quot;adr\&quot;, \&quot;slug\&quot;: \&quot;adr-0056\&quot; }))\n        .unwrap();\nassert_eq!(by_route.kind.as_deref(), Some(\&quot;adr\&quot;));\nassert_eq!(by_route.slug.as_deref(), Some(\&quot;adr-0056\&quot;));\nassert_eq!(by_route.uri, None);\n\n// absent is a shape, not an error: which fields are required is the handler&#39;s question\nassert_eq!(EntityInput::default().kind, None);\n```&quot;
+  &quot;type&quot;: &quot;object&quot;
 }</pre></div>
   </details>
 </div>
@@ -335,26 +335,10 @@ forecloses.</p>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
         <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The file as read.</td>
       </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">metadata</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">object</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The parsed front matter or YAML, keys in the file's order.</td>
-      </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">description</td>
         <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
         <td class="px-3 py-2 font-mono text-xs text-body">no</td>
         <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The one-line description, when the kind holds one.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">history</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The commits that changed its file, read from git when it is read and never stored in
-the index (I3314). <span class="font-mono text-xs text-body-subtle">default {&quot;bound&quot;:0,&quot;commits&quot;:[],&quot;cut&quot;:false,&quot;applicable&quot;:false}</span></td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">route</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Its route in the Cockpit.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">documentation</td>
         <td class="px-3 py-2 font-mono text-xs text-body">one of 2</td>
@@ -369,6 +353,22 @@ does not declare this kind; a kind declared as not published carries the reason.
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
         <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">What can be said about its enforcement without running anything.</td>
       </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">history</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The commits that changed its file, read from git when it is read and never stored in
+the index (I3314). <span class="font-mono text-xs text-body-subtle">default {&quot;applicable&quot;:false,&quot;bound&quot;:0,&quot;commits&quot;:[],&quot;cut&quot;:false}</span></td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">id</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The capability id, <code>&lt;kind&gt;.&lt;identity&gt;</code>.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">identity</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The identity within the kind.</td>
+      </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">kind</td>
         <td class="px-3 py-2 font-mono text-xs text-body">string</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
@@ -379,62 +379,418 @@ does not declare this kind; a kind declared as not published carries the reason.
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
         <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The route of its kind's index.</td>
       </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">relations</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The references it declares, and the references that resolve to it.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">identity</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The identity within the kind.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">slug</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The last segment of its route, derived from the identity.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">id</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The capability id, <code>&lt;kind&gt;.&lt;identity&gt;</code>.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">uri</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words"><code>majordomus://&lt;kind&gt;/&lt;identity&gt;</code>.</td>
-      </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">media_type</td>
         <td class="px-3 py-2 font-mono text-xs text-body">string</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
         <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">IANA media type of <code>content</code>.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">metadata</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">object</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The parsed front matter or YAML, keys in the file's order.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">provenance</td>
         <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
         <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Where it came from.</td>
       </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">title</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The title, when the kind's title rule found one.</td>
+        <td class="px-3 py-2 font-mono text-heading">relations</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The references it declares, and the references that resolve to it.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">route</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Its route in the Cockpit.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">slug</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The last segment of its route, derived from the identity.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">surfaces</td>
         <td class="px-3 py-2 font-mono text-xs text-body">array</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
         <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Every surface that answers for it.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">title</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The title, when the kind's title rule found one.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">uri</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words"><code>majordomus://&lt;kind&gt;/&lt;identity&gt;</code>.</td>
       </tr></tbody>
     </table>
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
+  &quot;$defs&quot;: {
+    &quot;ClaimedArtifact&quot;: {
+      &quot;description&quot;: &quot;One executable artefact an object names, and whether the tree holds it.\n\n`field` is kept beside the path because the same object can name artefacts under several\nkeys, and a reader fixing a dangling one needs to know which line of the front matter to\nlook at rather than which file is missing.\n\n```\nuse majordomus_cli::capability::builtin::entity::ClaimedArtifact;\n\nlet a = ClaimedArtifact {\n    field: \&quot;x-majordomus.tests\&quot;.into(),\n    path: \&quot;test/cases/277_entities_are_routable.sh\&quot;.into(),\n    present: true,\n};\nlet wire = serde_json::to_value(&amp;a).unwrap();\nassert_eq!(wire[\&quot;field\&quot;], serde_json::json!(\&quot;x-majordomus.tests\&quot;));\nassert_eq!(wire[\&quot;present\&quot;], serde_json::json!(true));\n```&quot;,
+      &quot;properties&quot;: {
+        &quot;field&quot;: {
+          &quot;description&quot;: &quot;The front matter key it was named under (`x-majordomus.tests`, `test`, ...).&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;path&quot;: {
+          &quot;description&quot;: &quot;The repository-relative path as named.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;present&quot;: {
+          &quot;description&quot;: &quot;Whether the tree holds it.&quot;,
+          &quot;type&quot;: &quot;boolean&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;field&quot;,
+        &quot;path&quot;,
+        &quot;present&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;EntityDocumentation&quot;: {
+      &quot;description&quot;: &quot;The public documentation page of one entity, as its kind&#39;s publication decision derives\nit. Every surface that shows an entity carries this value and renders it; none of them\nderives a public address of its own.\n\n```\nuse majordomus_cli::entity::Documentation;\n\nlet d = Documentation {\n    projection: \&quot;entity\&quot;.into(),\n    route: Some(\&quot;/adrs/adr-0056/\&quot;.into()),\n    url: Some(\&quot;https://majordomus.dev/adrs/adr-0056/\&quot;.into()),\n    reason: None,\n    declared_in: \&quot;site/data/publication.toml\&quot;.into(),\n};\nlet wire = serde_json::to_value(&amp;d).unwrap();\nassert_eq!(wire[\&quot;url\&quot;], serde_json::json!(\&quot;https://majordomus.dev/adrs/adr-0056/\&quot;));\n// a field that does not apply is absent, not an empty string\nassert!(wire.get(\&quot;reason\&quot;).is_none());\n```&quot;,
+      &quot;properties&quot;: {
+        &quot;declared_in&quot;: {
+          &quot;description&quot;: &quot;The file the decision is read from.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;projection&quot;: {
+          &quot;description&quot;: &quot;The kind&#39;s projection: `entity`, `section` or `none`.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;reason&quot;: {
+          &quot;description&quot;: &quot;Why the kind is not published, for `none`.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;route&quot;: {
+          &quot;description&quot;: &quot;The public route of the page, site-relative: the entity&#39;s own page for an `entity`\nkind, the kind&#39;s section for a `section` kind, absent for `none`.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;url&quot;: {
+          &quot;description&quot;: &quot;The route under the site&#39;s `base_url`, when the site configuration names one.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        }
+      },
+      &quot;required&quot;: [
+        &quot;projection&quot;,
+        &quot;declared_in&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;EntityEdge&quot;: {
+      &quot;description&quot;: &quot;One edge, as an entity page reads it.\n\nEverything a reader needs about the other end is here — what to show, what kind of thing\nit is, and the address to send them to — so the page renders a relation without going\nback to the index for it. `route` is `None` exactly when `external` is true: a `file`, a\n`test` or a `command` is named by the layer and is not an object of it, so there is no\nentity page to link to and the template shows plain text instead of a dead link.\n\n```\nuse majordomus_cli::entity::{Direction, Edge};\nuse majordomus_cli::order::Ordered;\n\nlet edge = Edge {\n    direction: Direction::Incoming,\n    edge: \&quot;depends_on\&quot;.into(),\n    field: \&quot;depends_on\&quot;.into(),\n    uri: Some(\&quot;majordomus://rule/project.x@1\&quot;.into()),\n    kind: \&quot;rule\&quot;.into(),\n    label: \&quot;project.x@1\&quot;.into(),\n    title: Some(\&quot;A rule\&quot;.into()),\n    route: Some(\&quot;/cockpit/objects/rule/project-x-1\&quot;.into()),\n    external: false,\n};\n\n// the relation is the group and the direction ranks inside it; see the `Ordered` impl\nlet key = edge.order_key();\nassert_eq!(key.group, Some(\&quot;depends_on\&quot;));\nassert_eq!(key.rank, Direction::Incoming as i64);\nassert_eq!(key.identity, \&quot;majordomus://rule/project.x@1\&quot;);\n```&quot;,
+      &quot;properties&quot;: {
+        &quot;direction&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/RelationDirection&quot;,
+          &quot;description&quot;: &quot;Which way it runs from the entity that was asked for.&quot;
+        },
+        &quot;edge&quot;: {
+          &quot;description&quot;: &quot;The relationship, in the graph&#39;s vocabulary (`depends_on`, `put_in_force`, ...).&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;external&quot;: {
+          &quot;description&quot;: &quot;True when the other end is not an object of this index.&quot;,
+          &quot;type&quot;: &quot;boolean&quot;
+        },
+        &quot;field&quot;: {
+          &quot;description&quot;: &quot;The front matter key the reference was declared under.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;kind&quot;: {
+          &quot;description&quot;: &quot;Its kind — of the layer, or the external vocabulary (`file`, `test`, `command`).&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;label&quot;: {
+          &quot;description&quot;: &quot;What to show: the identity of an object, or the name of something outside.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;route&quot;: {
+          &quot;description&quot;: &quot;Its entity route, when it has one; absent for something outside the layer.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;title&quot;: {
+          &quot;description&quot;: &quot;Its title, when it is an object that has one.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;uri&quot;: {
+          &quot;description&quot;: &quot;The object at the other end: its URI when the layer holds it.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        }
+      },
+      &quot;required&quot;: [
+        &quot;direction&quot;,
+        &quot;edge&quot;,
+        &quot;field&quot;,
+        &quot;kind&quot;,
+        &quot;label&quot;,
+        &quot;external&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;EntityEvidence&quot;: {
+      &quot;description&quot;: &quot;What can be said about an object&#39;s enforcement without running anything.\n\n`meaning` travels with `state` so that every surface shows the same sentence about it:\na badge alone invites each renderer to write its own gloss, and the gloss is where a\n\&quot;resolved\&quot; quietly becomes a \&quot;passing\&quot;. A kind that names no artefact is `Unclaimed`\nwith an empty `artifacts`, which is an answer and not an omission.\n\n```\nuse majordomus_cli::capability::builtin::entity::{Evidence, EvidenceState};\n\nlet e = Evidence {\n    state: EvidenceState::Unclaimed,\n    meaning: \&quot;This object names no executable artefact.\&quot;.into(),\n    artifacts: Vec::new(),\n    proof: None,\n};\n\n// the empty collections are omitted from the wire, so absence reads as absence\nlet wire = serde_json::to_value(&amp;e).unwrap();\nassert_eq!(wire[\&quot;state\&quot;], serde_json::json!(\&quot;unclaimed\&quot;));\nassert!(wire.get(\&quot;artifacts\&quot;).is_none());\nassert!(wire.get(\&quot;proof\&quot;).is_none());\n```&quot;,
+      &quot;properties&quot;: {
+        &quot;artifacts&quot;: {
+          &quot;description&quot;: &quot;Every artefact named, with whether the tree holds it.&quot;,
+          &quot;items&quot;: {
+            &quot;$ref&quot;: &quot;#/$defs/ClaimedArtifact&quot;
+          },
+          &quot;type&quot;: &quot;array&quot;
+        },
+        &quot;meaning&quot;: {
+          &quot;description&quot;: &quot;That state in one sentence, for a reader.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;proof&quot;: {
+          &quot;anyOf&quot;: [
+            {
+              &quot;$ref&quot;: &quot;#/$defs/EntityProofRef&quot;
+            },
+            {
+              &quot;type&quot;: &quot;null&quot;
+            }
+          ],
+          &quot;description&quot;: &quot;The capability that can say more, when this kind has one.&quot;
+        },
+        &quot;state&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/EntityEvidenceState&quot;,
+          &quot;description&quot;: &quot;The state, which is never rounded up.&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;state&quot;,
+        &quot;meaning&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;EntityEvidenceState&quot;: {
+      &quot;description&quot;: &quot;What this repository can say about the executable artefacts an object names, and only\nthat. The word is chosen so that no reader can mistake it for a run.\n\nThe three states are ordered by how much they permit a reader to conclude, and the\nstrongest of them still concludes nothing about a run: `Resolved` means the files an\nobject points at exist. `proof` on `Evidence` is where \&quot;did it ever pass\&quot; is asked.\n\n```\nuse majordomus_cli::capability::builtin::entity::EvidenceState;\n\n// the wire spellings, which the Cockpit badge and the site template both read\nfor (state, word) in [\n    (EvidenceState::Unclaimed, \&quot;unclaimed\&quot;),\n    (EvidenceState::Dangling, \&quot;dangling\&quot;),\n    (EvidenceState::Resolved, \&quot;resolved\&quot;),\n] {\n    assert_eq!(serde_json::to_value(state).unwrap(), serde_json::json!(word));\n}\n```&quot;,
+      &quot;oneOf&quot;: [
+        {
+          &quot;const&quot;: &quot;unclaimed&quot;,
+          &quot;description&quot;: &quot;The object names no executable artefact. Most kinds name none, and that is not a\ndefect: a prompt is not enforced by anything.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;dangling&quot;,
+          &quot;description&quot;: &quot;It names artefacts and at least one of them is not in the tree. A claim that points\nat nothing is worse than no claim, because it reads as enforcement.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;resolved&quot;,
+          &quot;description&quot;: &quot;Every artefact it names is in the tree. This says the claim resolves — never that it\npassed. Whether it ever ran is a different question, and `proof` is where it is\nasked.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      ]
+    },
+    &quot;EntityProofRef&quot;: {
+      &quot;description&quot;: &quot;Where a fuller answer about this entity&#39;s enforcement lives.\n\nA pointer, never an answer. This module states what it can see in the tree and then\nnames the capability that can say more, so that an entity page does not grow a second,\nweaker implementation of proof beside the one that already exists.\n\n```\nuse majordomus_cli::capability::builtin::entity::ProofRef;\n\nlet p = ProofRef {\n    capability: \&quot;rule.proves\&quot;.into(),\n    title: \&quot;What proves a rule\&quot;.into(),\n    address: \&quot;majordomus rule proves project.entities-are-routable@1\&quot;.into(),\n};\nassert_eq!(\n    serde_json::to_value(&amp;p).unwrap()[\&quot;capability\&quot;],\n    serde_json::json!(\&quot;rule.proves\&quot;)\n);\n```&quot;,
+      &quot;properties&quot;: {
+        &quot;address&quot;: {
+          &quot;description&quot;: &quot;How to ask it here.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;capability&quot;: {
+          &quot;description&quot;: &quot;The capability that answers it.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;title&quot;: {
+          &quot;description&quot;: &quot;Its title.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;capability&quot;,
+        &quot;title&quot;,
+        &quot;address&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;EntitySurface&quot;: {
+      &quot;description&quot;: &quot;One place this entity can be reached, and how.\n\nA row of the \&quot;where else this is answered\&quot; table on an entity page. `surface` is the\ninterface&#39;s own name, so a reader who works on the command line and a reader who works\nover MCP each find their own line rather than a route they have to translate.\n\n```\nuse majordomus_cli::entity::Surface;\n\nlet s = Surface {\n    surface: \&quot;mcp\&quot;.into(),\n    address: \&quot;majordomus://rule/project.x@1\&quot;.into(),\n    detail: \&quot;the file as read\&quot;.into(),\n};\nassert_eq!(\n    serde_json::to_value(&amp;s).unwrap()[\&quot;surface\&quot;],\n    serde_json::json!(\&quot;mcp\&quot;)\n);\n```&quot;,
+      &quot;properties&quot;: {
+        &quot;address&quot;: {
+          &quot;description&quot;: &quot;The address on it: a URI, a route, a command line.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;detail&quot;: {
+          &quot;description&quot;: &quot;What a reader does with it.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;surface&quot;: {
+          &quot;description&quot;: &quot;Which surface: `mcp`, `http`, `cli`, `cockpit`, `site`.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;surface&quot;,
+        &quot;address&quot;,
+        &quot;detail&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;History&quot;: {
+      &quot;description&quot;: &quot;The commits that changed an object&#39;s file, newest first (I3314). An object that is one\nmember of a collection file has the file&#39;s history.\n\nA history that does not apply says why rather than reading as an empty one, and the\nmembers it has no value for are left out of its JSON:\n\n```\nuse majordomus_cli::capability::builtin::entity::{History, HistoryCommit};\nlet none = History {\n    reason: Some(\&quot;no commit has changed this file yet\&quot;.into()),\n    bound: 20,\n    ..History::default()\n};\nlet json = serde_json::to_value(&amp;none).unwrap();\nassert_eq!(json[\&quot;applicable\&quot;], false);\nassert_eq!(json[\&quot;reason\&quot;], \&quot;no commit has changed this file yet\&quot;);\nassert!(json.get(\&quot;last\&quot;).is_none(), \&quot;no last commit is written, not a null\&quot;);\n\nlet commit = HistoryCommit {\n    commit: \&quot;0123456789abcdef0123456789abcdef01234567\&quot;.into(),\n    date: \&quot;2026-10-21T12:00:00+00:00\&quot;.into(),\n    subject: \&quot;feat(entity): the entity page lists its history\&quot;.into(),\n};\nlet some = History {\n    applicable: true,\n    last: Some(commit.clone()),\n    commits: vec![commit],\n    bound: 20,\n    ..History::default()\n};\nlet back: History = serde_json::from_value(serde_json::to_value(&amp;some).unwrap()).unwrap();\nassert_eq!(back.last, back.commits.first().cloned());\nassert!(back.reason.is_none() &amp;&amp; !back.cut);\n```&quot;,
+      &quot;properties&quot;: {
+        &quot;applicable&quot;: {
+          &quot;description&quot;: &quot;Whether a history applies. False when git cannot answer for the file or no commit\nhas touched it yet; `reason` says which. Never an empty history that reads as none.&quot;,
+          &quot;type&quot;: &quot;boolean&quot;
+        },
+        &quot;bound&quot;: {
+          &quot;description&quot;: &quot;The most commits listed.&quot;,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;commits&quot;: {
+          &quot;default&quot;: [],
+          &quot;description&quot;: &quot;The commits that changed it, newest first, at most `bound`.&quot;,
+          &quot;items&quot;: {
+            &quot;$ref&quot;: &quot;#/$defs/HistoryCommit&quot;
+          },
+          &quot;type&quot;: &quot;array&quot;
+        },
+        &quot;cut&quot;: {
+          &quot;description&quot;: &quot;Whether more commits changed the file than `bound` lets through.&quot;,
+          &quot;type&quot;: &quot;boolean&quot;
+        },
+        &quot;last&quot;: {
+          &quot;anyOf&quot;: [
+            {
+              &quot;$ref&quot;: &quot;#/$defs/HistoryCommit&quot;
+            },
+            {
+              &quot;type&quot;: &quot;null&quot;
+            }
+          ],
+          &quot;description&quot;: &quot;The commit that last changed the file: the first of `commits`.&quot;
+        },
+        &quot;reason&quot;: {
+          &quot;description&quot;: &quot;Why no history applies, when none does.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        }
+      },
+      &quot;required&quot;: [
+        &quot;applicable&quot;,
+        &quot;bound&quot;,
+        &quot;cut&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;HistoryCommit&quot;: {
+      &quot;description&quot;: &quot;One commit that changed an entity&#39;s file, as `git log --follow` named it: what a reader\nfollows from the entity page to the change itself, newest first in `History::commits`.\n\n```\nuse majordomus_cli::capability::builtin::entity::HistoryCommit;\nlet c: HistoryCommit = serde_json::from_str(\n    r#\&quot;{\&quot;commit\&quot;:\&quot;0123456789abcdef0123456789abcdef01234567\&quot;,\n        \&quot;date\&quot;:\&quot;2026-10-21T12:00:00+00:00\&quot;,\n        \&quot;subject\&quot;:\&quot;fix(layout): a copy is named with its original\&quot;}\&quot;#,\n)\n.unwrap();\nassert_eq!(c.subject, \&quot;fix(layout): a copy is named with its original\&quot;);\n// every member is required: a commit without its date or subject is not one\nassert!(serde_json::from_str::&lt;HistoryCommit&gt;(r#\&quot;{\&quot;commit\&quot;:\&quot;0123\&quot;}\&quot;#).is_err());\n```&quot;,
+      &quot;properties&quot;: {
+        &quot;commit&quot;: {
+          &quot;description&quot;: &quot;The full commit id.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;date&quot;: {
+          &quot;description&quot;: &quot;The committer date, ISO 8601.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;subject&quot;: {
+          &quot;description&quot;: &quot;The first line of its message.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;commit&quot;,
+        &quot;date&quot;,
+        &quot;subject&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;ObjectProvenance&quot;: {
+      &quot;description&quot;: &quot;Where an object came from. Every field is computed from the repository, never authored.&quot;,
+      &quot;properties&quot;: {
+        &quot;bytes&quot;: {
+          &quot;description&quot;: &quot;Size of the file in bytes.&quot;,
+          &quot;format&quot;: &quot;uint64&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;directory&quot;: {
+          &quot;description&quot;: &quot;The directory the path sits in, repository-relative; `.` for the root. This is the\nhierarchy position a client orders by; no merge semantics are implied.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;member&quot;: {
+          &quot;description&quot;: &quot;For an object that is one member of a collection file: the member&#39;s key path in\nthe file (`claims.3`).&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;path&quot;: {
+          &quot;description&quot;: &quot;Repository-relative path, forward slashes, as the version-control index names it.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;section&quot;: {
+          &quot;description&quot;: &quot;The manifest section the path falls under (`rules`, `prompts`, ...), when it falls\nunder one; a root `README.md` falls under none.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;source_class&quot;: {
+          &quot;description&quot;: &quot;The `sources.yaml` class that discovered the file (`rule`, `readme`, ...).&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;path&quot;,
+        &quot;directory&quot;,
+        &quot;source_class&quot;,
+        &quot;bytes&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;RelationDirection&quot;: {
+      &quot;description&quot;: &quot;Which way a relation runs from the entity being read.\n\nThe direction is a property of the *reading*, not of the relation: one edge in\n`graph::RELATIONS` is outgoing on the page of the object that declared it and incoming\non the page of the object it names. Nothing in the layer writes `Incoming` down.\n\n```\nuse majordomus_cli::entity::Direction;\n\n// the wire spelling, which every surface shows and the site template reads\nassert_eq!(\n    serde_json::to_string(&amp;Direction::Outgoing).unwrap(),\n    \&quot;\\\&quot;outgoing\\\&quot;\&quot;\n);\nassert_eq!(\n    serde_json::to_string(&amp;Direction::Incoming).unwrap(),\n    \&quot;\\\&quot;incoming\\\&quot;\&quot;\n);\n// declared before derived, which is the order an entity page renders the two sections\nassert!((Direction::Outgoing as u8) &lt; (Direction::Incoming as u8));\n```&quot;,
+      &quot;oneOf&quot;: [
+        {
+          &quot;const&quot;: &quot;outgoing&quot;,
+          &quot;description&quot;: &quot;This entity declared the reference.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;incoming&quot;,
+          &quot;description&quot;: &quot;Another entity named this one. Never declared: derived by reading every other\nobject&#39;s references and keeping the ones that resolve here.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      ]
+    }
+  },
+  &quot;description&quot;: &quot;One object of the layer as an addressable node: what it is, where it is served, what it\nis joined to, and what can be said about its enforcement.\n\nThe whole answer in one value, because it is one question: every surface that shows an\nentity — the Cockpit page, `GET /api/v1/entity`, `majordomus_entity`, `majordomus entity\nshow` — renders this and composes nothing of its own. A field a reader sees on one\nsurface and not another would be a surface holding an opinion, which is what ADR 0004\nforecloses.\n\n```\nuse majordomus_cli::capability::builtin::entity::EntityView;\n\n// it round-trips through the wire shape every projection reads it as\nlet view: EntityView = serde_json::from_value(serde_json::json!({\n    \&quot;uri\&quot;: \&quot;majordomus://adr/adr-0056\&quot;,\n    \&quot;id\&quot;: \&quot;adr.adr-0056\&quot;,\n    \&quot;kind\&quot;: \&quot;adr\&quot;,\n    \&quot;identity\&quot;: \&quot;adr-0056\&quot;,\n    \&quot;slug\&quot;: \&quot;adr-0056\&quot;,\n    \&quot;route\&quot;: \&quot;/cockpit/objects/adr/adr-0056\&quot;,\n    \&quot;kind_route\&quot;: \&quot;/cockpit/objects/adr\&quot;,\n    \&quot;title\&quot;: \&quot;Every object of the layer has a derived address\&quot;,\n    \&quot;provenance\&quot;: { \&quot;path\&quot;: \&quot;x.md\&quot;, \&quot;directory\&quot;: \&quot;x\&quot;, \&quot;source_class\&quot;: \&quot;adr\&quot;, \&quot;bytes\&quot;: 0 },\n    \&quot;metadata\&quot;: {},\n    \&quot;media_type\&quot;: \&quot;text/markdown\&quot;,\n    \&quot;content\&quot;: \&quot;\&quot;,\n    \&quot;relations\&quot;: [],\n    \&quot;surfaces\&quot;: [],\n    \&quot;evidence\&quot;: { \&quot;state\&quot;: \&quot;unclaimed\&quot;, \&quot;meaning\&quot;: \&quot;nothing named\&quot; },\n    \&quot;documentation\&quot;: {\n        \&quot;projection\&quot;: \&quot;entity\&quot;,\n        \&quot;route\&quot;: \&quot;/adrs/adr-0056/\&quot;,\n        \&quot;url\&quot;: \&quot;https://majordomus.dev/adrs/adr-0056/\&quot;,\n        \&quot;declared_in\&quot;: \&quot;site/data/publication.toml\&quot;,\n    },\n}))\n.unwrap();\n\nassert_eq!(view.route, \&quot;/cockpit/objects/adr/adr-0056\&quot;);\n// the Cockpit route is the object&#39;s; the public page is the site&#39;s, and both are named\nlet public = view.documentation.as_ref().and_then(|d| d.url.as_deref());\nassert_eq!(public, Some(\&quot;https://majordomus.dev/adrs/adr-0056/\&quot;));\n// the kind&#39;s index is the entity&#39;s route with the last segment removed\nassert!(view.route.starts_with(&amp;view.kind_route));\n```&quot;,
   &quot;properties&quot;: {
     &quot;content&quot;: {
       &quot;description&quot;: &quot;The file as read.&quot;,
       &quot;type&quot;: &quot;string&quot;
-    },
-    &quot;metadata&quot;: {
-      &quot;description&quot;: &quot;The parsed front matter or YAML, keys in the file&#39;s order.&quot;
     },
     &quot;description&quot;: {
       &quot;description&quot;: &quot;The one-line description, when the kind holds one.&quot;,
@@ -443,23 +799,7 @@ does not declare this kind; a kind declared as not published carries the reason.
         &quot;null&quot;
       ]
     },
-    &quot;history&quot;: {
-      &quot;$ref&quot;: &quot;#/$defs/History&quot;,
-      &quot;default&quot;: {
-        &quot;bound&quot;: 0,
-        &quot;commits&quot;: [],
-        &quot;cut&quot;: false,
-        &quot;applicable&quot;: false
-      },
-      &quot;description&quot;: &quot;The commits that changed its file, read from git when it is read and never stored in\nthe index (I3314).&quot;
-    },
-    &quot;route&quot;: {
-      &quot;type&quot;: &quot;string&quot;,
-      &quot;description&quot;: &quot;Its route in the Cockpit.&quot;
-    },
     &quot;documentation&quot;: {
-      &quot;default&quot;: null,
-      &quot;description&quot;: &quot;Its public documentation page, derived from the repository&#39;s publication declaration\n(`site/data/publication.toml`) and the site&#39;s `base_url` by the same function the site\ngenerator writes the page with. Null when the repository declares no publication or\ndoes not declare this kind; a kind declared as not published carries the reason.&quot;,
       &quot;anyOf&quot;: [
         {
           &quot;$ref&quot;: &quot;#/$defs/EntityDocumentation&quot;
@@ -467,11 +807,31 @@ does not declare this kind; a kind declared as not published carries the reason.
         {
           &quot;type&quot;: &quot;null&quot;
         }
-      ]
+      ],
+      &quot;default&quot;: null,
+      &quot;description&quot;: &quot;Its public documentation page, derived from the repository&#39;s publication declaration\n(`site/data/publication.toml`) and the site&#39;s `base_url` by the same function the site\ngenerator writes the page with. Null when the repository declares no publication or\ndoes not declare this kind; a kind declared as not published carries the reason.&quot;
     },
     &quot;evidence&quot;: {
       &quot;$ref&quot;: &quot;#/$defs/EntityEvidence&quot;,
       &quot;description&quot;: &quot;What can be said about its enforcement without running anything.&quot;
+    },
+    &quot;history&quot;: {
+      &quot;$ref&quot;: &quot;#/$defs/History&quot;,
+      &quot;default&quot;: {
+        &quot;applicable&quot;: false,
+        &quot;bound&quot;: 0,
+        &quot;commits&quot;: [],
+        &quot;cut&quot;: false
+      },
+      &quot;description&quot;: &quot;The commits that changed its file, read from git when it is read and never stored in\nthe index (I3314).&quot;
+    },
+    &quot;id&quot;: {
+      &quot;description&quot;: &quot;The capability id, `&lt;kind&gt;.&lt;identity&gt;`.&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;identity&quot;: {
+      &quot;description&quot;: &quot;The identity within the kind.&quot;,
+      &quot;type&quot;: &quot;string&quot;
     },
     &quot;kind&quot;: {
       &quot;description&quot;: &quot;The kind.&quot;,
@@ -481,36 +841,38 @@ does not declare this kind; a kind declared as not published carries the reason.
       &quot;description&quot;: &quot;The route of its kind&#39;s index.&quot;,
       &quot;type&quot;: &quot;string&quot;
     },
+    &quot;media_type&quot;: {
+      &quot;description&quot;: &quot;IANA media type of `content`.&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;metadata&quot;: {
+      &quot;description&quot;: &quot;The parsed front matter or YAML, keys in the file&#39;s order.&quot;
+    },
+    &quot;provenance&quot;: {
+      &quot;$ref&quot;: &quot;#/$defs/ObjectProvenance&quot;,
+      &quot;description&quot;: &quot;Where it came from.&quot;
+    },
     &quot;relations&quot;: {
       &quot;description&quot;: &quot;The references it declares, and the references that resolve to it.&quot;,
-      &quot;type&quot;: &quot;array&quot;,
       &quot;items&quot;: {
         &quot;$ref&quot;: &quot;#/$defs/EntityEdge&quot;
-      }
+      },
+      &quot;type&quot;: &quot;array&quot;
     },
-    &quot;identity&quot;: {
-      &quot;type&quot;: &quot;string&quot;,
-      &quot;description&quot;: &quot;The identity within the kind.&quot;
+    &quot;route&quot;: {
+      &quot;description&quot;: &quot;Its route in the Cockpit.&quot;,
+      &quot;type&quot;: &quot;string&quot;
     },
     &quot;slug&quot;: {
       &quot;description&quot;: &quot;The last segment of its route, derived from the identity.&quot;,
       &quot;type&quot;: &quot;string&quot;
     },
-    &quot;id&quot;: {
-      &quot;type&quot;: &quot;string&quot;,
-      &quot;description&quot;: &quot;The capability id, `&lt;kind&gt;.&lt;identity&gt;`.&quot;
-    },
-    &quot;uri&quot;: {
-      &quot;type&quot;: &quot;string&quot;,
-      &quot;description&quot;: &quot;`majordomus://&lt;kind&gt;/&lt;identity&gt;`.&quot;
-    },
-    &quot;media_type&quot;: {
-      &quot;description&quot;: &quot;IANA media type of `content`.&quot;,
-      &quot;type&quot;: &quot;string&quot;
-    },
-    &quot;provenance&quot;: {
-      &quot;$ref&quot;: &quot;#/$defs/ObjectProvenance&quot;,
-      &quot;description&quot;: &quot;Where it came from.&quot;
+    &quot;surfaces&quot;: {
+      &quot;description&quot;: &quot;Every surface that answers for it.&quot;,
+      &quot;items&quot;: {
+        &quot;$ref&quot;: &quot;#/$defs/EntitySurface&quot;
+      },
+      &quot;type&quot;: &quot;array&quot;
     },
     &quot;title&quot;: {
       &quot;description&quot;: &quot;The title, when the kind&#39;s title rule found one.&quot;,
@@ -519,12 +881,9 @@ does not declare this kind; a kind declared as not published carries the reason.
         &quot;null&quot;
       ]
     },
-    &quot;surfaces&quot;: {
-      &quot;description&quot;: &quot;Every surface that answers for it.&quot;,
-      &quot;items&quot;: {
-        &quot;$ref&quot;: &quot;#/$defs/EntitySurface&quot;
-      },
-      &quot;type&quot;: &quot;array&quot;
+    &quot;uri&quot;: {
+      &quot;description&quot;: &quot;`majordomus://&lt;kind&gt;/&lt;identity&gt;`.&quot;,
+      &quot;type&quot;: &quot;string&quot;
     }
   },
   &quot;required&quot;: [
@@ -543,367 +902,8 @@ does not declare this kind; a kind declared as not published carries the reason.
     &quot;surfaces&quot;,
     &quot;evidence&quot;
   ],
-  &quot;$defs&quot;: {
-    &quot;ClaimedArtifact&quot;: {
-      &quot;type&quot;: &quot;object&quot;,
-      &quot;properties&quot;: {
-        &quot;path&quot;: {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;The repository-relative path as named.&quot;
-        },
-        &quot;present&quot;: {
-          &quot;type&quot;: &quot;boolean&quot;,
-          &quot;description&quot;: &quot;Whether the tree holds it.&quot;
-        },
-        &quot;field&quot;: {
-          &quot;description&quot;: &quot;The front matter key it was named under (`x-majordomus.tests`, `test`, ...).&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      },
-      &quot;description&quot;: &quot;One executable artefact an object names, and whether the tree holds it.\n\n`field` is kept beside the path because the same object can name artefacts under several\nkeys, and a reader fixing a dangling one needs to know which line of the front matter to\nlook at rather than which file is missing.\n\n```\nuse majordomus_cli::capability::builtin::entity::ClaimedArtifact;\n\nlet a = ClaimedArtifact {\n    field: \&quot;x-majordomus.tests\&quot;.into(),\n    path: \&quot;test/cases/277_entities_are_routable.sh\&quot;.into(),\n    present: true,\n};\nlet wire = serde_json::to_value(&amp;a).unwrap();\nassert_eq!(wire[\&quot;field\&quot;], serde_json::json!(\&quot;x-majordomus.tests\&quot;));\nassert_eq!(wire[\&quot;present\&quot;], serde_json::json!(true));\n```&quot;,
-      &quot;required&quot;: [
-        &quot;field&quot;,
-        &quot;path&quot;,
-        &quot;present&quot;
-      ]
-    },
-    &quot;EntityEvidence&quot;: {
-      &quot;required&quot;: [
-        &quot;state&quot;,
-        &quot;meaning&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;,
-      &quot;description&quot;: &quot;What can be said about an object&#39;s enforcement without running anything.\n\n`meaning` travels with `state` so that every surface shows the same sentence about it:\na badge alone invites each renderer to write its own gloss, and the gloss is where a\n\&quot;resolved\&quot; quietly becomes a \&quot;passing\&quot;. A kind that names no artefact is `Unclaimed`\nwith an empty `artifacts`, which is an answer and not an omission.\n\n```\nuse majordomus_cli::capability::builtin::entity::{Evidence, EvidenceState};\n\nlet e = Evidence {\n    state: EvidenceState::Unclaimed,\n    meaning: \&quot;This object names no executable artefact.\&quot;.into(),\n    artifacts: Vec::new(),\n    proof: None,\n};\n\n// the empty collections are omitted from the wire, so absence reads as absence\nlet wire = serde_json::to_value(&amp;e).unwrap();\nassert_eq!(wire[\&quot;state\&quot;], serde_json::json!(\&quot;unclaimed\&quot;));\nassert!(wire.get(\&quot;artifacts\&quot;).is_none());\nassert!(wire.get(\&quot;proof\&quot;).is_none());\n```&quot;,
-      &quot;properties&quot;: {
-        &quot;proof&quot;: {
-          &quot;description&quot;: &quot;The capability that can say more, when this kind has one.&quot;,
-          &quot;anyOf&quot;: [
-            {
-              &quot;$ref&quot;: &quot;#/$defs/EntityProofRef&quot;
-            },
-            {
-              &quot;type&quot;: &quot;null&quot;
-            }
-          ]
-        },
-        &quot;state&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/EntityEvidenceState&quot;,
-          &quot;description&quot;: &quot;The state, which is never rounded up.&quot;
-        },
-        &quot;artifacts&quot;: {
-          &quot;type&quot;: &quot;array&quot;,
-          &quot;items&quot;: {
-            &quot;$ref&quot;: &quot;#/$defs/ClaimedArtifact&quot;
-          },
-          &quot;description&quot;: &quot;Every artefact named, with whether the tree holds it.&quot;
-        },
-        &quot;meaning&quot;: {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;That state in one sentence, for a reader.&quot;
-        }
-      }
-    },
-    &quot;EntityProofRef&quot;: {
-      &quot;description&quot;: &quot;Where a fuller answer about this entity&#39;s enforcement lives.\n\nA pointer, never an answer. This module states what it can see in the tree and then\nnames the capability that can say more, so that an entity page does not grow a second,\nweaker implementation of proof beside the one that already exists.\n\n```\nuse majordomus_cli::capability::builtin::entity::ProofRef;\n\nlet p = ProofRef {\n    capability: \&quot;rule.proves\&quot;.into(),\n    title: \&quot;What proves a rule\&quot;.into(),\n    address: \&quot;majordomus rule proves project.entities-are-routable@1\&quot;.into(),\n};\nassert_eq!(\n    serde_json::to_value(&amp;p).unwrap()[\&quot;capability\&quot;],\n    serde_json::json!(\&quot;rule.proves\&quot;)\n);\n```&quot;,
-      &quot;required&quot;: [
-        &quot;capability&quot;,
-        &quot;title&quot;,
-        &quot;address&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;,
-      &quot;properties&quot;: {
-        &quot;title&quot;: {
-          &quot;description&quot;: &quot;Its title.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;address&quot;: {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;How to ask it here.&quot;
-        },
-        &quot;capability&quot;: {
-          &quot;description&quot;: &quot;The capability that answers it.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      }
-    },
-    &quot;EntitySurface&quot;: {
-      &quot;description&quot;: &quot;One place this entity can be reached, and how.\n\nA row of the \&quot;where else this is answered\&quot; table on an entity page. `surface` is the\ninterface&#39;s own name, so a reader who works on the command line and a reader who works\nover MCP each find their own line rather than a route they have to translate.\n\n```\nuse majordomus_cli::entity::Surface;\n\nlet s = Surface {\n    surface: \&quot;mcp\&quot;.into(),\n    address: \&quot;majordomus://rule/project.x@1\&quot;.into(),\n    detail: \&quot;the file as read\&quot;.into(),\n};\nassert_eq!(\n    serde_json::to_value(&amp;s).unwrap()[\&quot;surface\&quot;],\n    serde_json::json!(\&quot;mcp\&quot;)\n);\n```&quot;,
-      &quot;properties&quot;: {
-        &quot;detail&quot;: {
-          &quot;description&quot;: &quot;What a reader does with it.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;surface&quot;: {
-          &quot;description&quot;: &quot;Which surface: `mcp`, `http`, `cli`, `cockpit`, `site`.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;address&quot;: {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;The address on it: a URI, a route, a command line.&quot;
-        }
-      },
-      &quot;type&quot;: &quot;object&quot;,
-      &quot;required&quot;: [
-        &quot;surface&quot;,
-        &quot;address&quot;,
-        &quot;detail&quot;
-      ]
-    },
-    &quot;EntityEdge&quot;: {
-      &quot;properties&quot;: {
-        &quot;title&quot;: {
-          &quot;description&quot;: &quot;Its title, when it is an object that has one.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;edge&quot;: {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;The relationship, in the graph&#39;s vocabulary (`depends_on`, `put_in_force`, ...).&quot;
-        },
-        &quot;kind&quot;: {
-          &quot;description&quot;: &quot;Its kind — of the layer, or the external vocabulary (`file`, `test`, `command`).&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;direction&quot;: {
-          &quot;description&quot;: &quot;Which way it runs from the entity that was asked for.&quot;,
-          &quot;$ref&quot;: &quot;#/$defs/RelationDirection&quot;
-        },
-        &quot;uri&quot;: {
-          &quot;description&quot;: &quot;The object at the other end: its URI when the layer holds it.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;external&quot;: {
-          &quot;description&quot;: &quot;True when the other end is not an object of this index.&quot;,
-          &quot;type&quot;: &quot;boolean&quot;
-        },
-        &quot;field&quot;: {
-          &quot;description&quot;: &quot;The front matter key the reference was declared under.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;label&quot;: {
-          &quot;description&quot;: &quot;What to show: the identity of an object, or the name of something outside.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;route&quot;: {
-          &quot;description&quot;: &quot;Its entity route, when it has one; absent for something outside the layer.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        }
-      },
-      &quot;required&quot;: [
-        &quot;direction&quot;,
-        &quot;edge&quot;,
-        &quot;field&quot;,
-        &quot;kind&quot;,
-        &quot;label&quot;,
-        &quot;external&quot;
-      ],
-      &quot;description&quot;: &quot;One edge, as an entity page reads it.\n\nEverything a reader needs about the other end is here — what to show, what kind of thing\nit is, and the address to send them to — so the page renders a relation without going\nback to the index for it. `route` is `None` exactly when `external` is true: a `file`, a\n`test` or a `command` is named by the layer and is not an object of it, so there is no\nentity page to link to and the template shows plain text instead of a dead link.\n\n```\nuse majordomus_cli::entity::{Direction, Edge};\nuse majordomus_cli::order::Ordered;\n\nlet edge = Edge {\n    direction: Direction::Incoming,\n    edge: \&quot;depends_on\&quot;.into(),\n    field: \&quot;depends_on\&quot;.into(),\n    uri: Some(\&quot;majordomus://rule/project.x@1\&quot;.into()),\n    kind: \&quot;rule\&quot;.into(),\n    label: \&quot;project.x@1\&quot;.into(),\n    title: Some(\&quot;A rule\&quot;.into()),\n    route: Some(\&quot;/cockpit/objects/rule/project-x-1\&quot;.into()),\n    external: false,\n};\n\n// the relation is the group and the direction ranks inside it; see the `Ordered` impl\nlet key = edge.order_key();\nassert_eq!(key.group, Some(\&quot;depends_on\&quot;));\nassert_eq!(key.rank, Direction::Incoming as i64);\nassert_eq!(key.identity, \&quot;majordomus://rule/project.x@1\&quot;);\n```&quot;,
-      &quot;type&quot;: &quot;object&quot;
-    },
-    &quot;ObjectProvenance&quot;: {
-      &quot;properties&quot;: {
-        &quot;path&quot;: {
-          &quot;description&quot;: &quot;Repository-relative path, forward slashes, as the version-control index names it.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;bytes&quot;: {
-          &quot;format&quot;: &quot;uint64&quot;,
-          &quot;description&quot;: &quot;Size of the file in bytes.&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;section&quot;: {
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ],
-          &quot;description&quot;: &quot;The manifest section the path falls under (`rules`, `prompts`, ...), when it falls\nunder one; a root `README.md` falls under none.&quot;
-        },
-        &quot;source_class&quot;: {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;The `sources.yaml` class that discovered the file (`rule`, `readme`, ...).&quot;
-        },
-        &quot;directory&quot;: {
-          &quot;description&quot;: &quot;The directory the path sits in, repository-relative; `.` for the root. This is the\nhierarchy position a client orders by; no merge semantics are implied.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;member&quot;: {
-          &quot;description&quot;: &quot;For an object that is one member of a collection file: the member&#39;s key path in\nthe file (`claims.3`).&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        }
-      },
-      &quot;description&quot;: &quot;Where an object came from. Every field is computed from the repository, never authored.&quot;,
-      &quot;required&quot;: [
-        &quot;path&quot;,
-        &quot;directory&quot;,
-        &quot;source_class&quot;,
-        &quot;bytes&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
-    },
-    &quot;History&quot;: {
-      &quot;properties&quot;: {
-        &quot;last&quot;: {
-          &quot;description&quot;: &quot;The commit that last changed the file: the first of `commits`.&quot;,
-          &quot;anyOf&quot;: [
-            {
-              &quot;$ref&quot;: &quot;#/$defs/HistoryCommit&quot;
-            },
-            {
-              &quot;type&quot;: &quot;null&quot;
-            }
-          ]
-        },
-        &quot;bound&quot;: {
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;description&quot;: &quot;The most commits listed.&quot;,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;cut&quot;: {
-          &quot;type&quot;: &quot;boolean&quot;,
-          &quot;description&quot;: &quot;Whether more commits changed the file than `bound` lets through.&quot;
-        },
-        &quot;commits&quot;: {
-          &quot;type&quot;: &quot;array&quot;,
-          &quot;default&quot;: [],
-          &quot;description&quot;: &quot;The commits that changed it, newest first, at most `bound`.&quot;,
-          &quot;items&quot;: {
-            &quot;$ref&quot;: &quot;#/$defs/HistoryCommit&quot;
-          }
-        },
-        &quot;applicable&quot;: {
-          &quot;description&quot;: &quot;Whether a history applies. False when git cannot answer for the file or no commit\nhas touched it yet; `reason` says which. Never an empty history that reads as none.&quot;,
-          &quot;type&quot;: &quot;boolean&quot;
-        },
-        &quot;reason&quot;: {
-          &quot;description&quot;: &quot;Why no history applies, when none does.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        }
-      },
-      &quot;required&quot;: [
-        &quot;applicable&quot;,
-        &quot;bound&quot;,
-        &quot;cut&quot;
-      ],
-      &quot;description&quot;: &quot;The commits that changed an object&#39;s file, newest first (I3314). An object that is one\nmember of a collection file has the file&#39;s history.\n\nA history that does not apply says why rather than reading as an empty one, and the\nmembers it has no value for are left out of its JSON:\n\n```\nuse majordomus_cli::capability::builtin::entity::{History, HistoryCommit};\nlet none = History {\n    reason: Some(\&quot;no commit has changed this file yet\&quot;.into()),\n    bound: 20,\n    ..History::default()\n};\nlet json = serde_json::to_value(&amp;none).unwrap();\nassert_eq!(json[\&quot;applicable\&quot;], false);\nassert_eq!(json[\&quot;reason\&quot;], \&quot;no commit has changed this file yet\&quot;);\nassert!(json.get(\&quot;last\&quot;).is_none(), \&quot;no last commit is written, not a null\&quot;);\n\nlet commit = HistoryCommit {\n    commit: \&quot;0123456789abcdef0123456789abcdef01234567\&quot;.into(),\n    date: \&quot;2026-10-21T12:00:00+00:00\&quot;.into(),\n    subject: \&quot;feat(entity): the entity page lists its history\&quot;.into(),\n};\nlet some = History {\n    applicable: true,\n    last: Some(commit.clone()),\n    commits: vec![commit],\n    bound: 20,\n    ..History::default()\n};\nlet back: History = serde_json::from_value(serde_json::to_value(&amp;some).unwrap()).unwrap();\nassert_eq!(back.last, back.commits.first().cloned());\nassert!(back.reason.is_none() &amp;&amp; !back.cut);\n```&quot;,
-      &quot;type&quot;: &quot;object&quot;
-    },
-    &quot;HistoryCommit&quot;: {
-      &quot;type&quot;: &quot;object&quot;,
-      &quot;properties&quot;: {
-        &quot;subject&quot;: {
-          &quot;description&quot;: &quot;The first line of its message.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;commit&quot;: {
-          &quot;description&quot;: &quot;The full commit id.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;date&quot;: {
-          &quot;description&quot;: &quot;The committer date, ISO 8601.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      },
-      &quot;description&quot;: &quot;One commit that changed an entity&#39;s file, as `git log --follow` named it: what a reader\nfollows from the entity page to the change itself, newest first in `History::commits`.\n\n```\nuse majordomus_cli::capability::builtin::entity::HistoryCommit;\nlet c: HistoryCommit = serde_json::from_str(\n    r#\&quot;{\&quot;commit\&quot;:\&quot;0123456789abcdef0123456789abcdef01234567\&quot;,\n        \&quot;date\&quot;:\&quot;2026-10-21T12:00:00+00:00\&quot;,\n        \&quot;subject\&quot;:\&quot;fix(layout): a copy is named with its original\&quot;}\&quot;#,\n)\n.unwrap();\nassert_eq!(c.subject, \&quot;fix(layout): a copy is named with its original\&quot;);\n// every member is required: a commit without its date or subject is not one\nassert!(serde_json::from_str::&lt;HistoryCommit&gt;(r#\&quot;{\&quot;commit\&quot;:\&quot;0123\&quot;}\&quot;#).is_err());\n```&quot;,
-      &quot;required&quot;: [
-        &quot;commit&quot;,
-        &quot;date&quot;,
-        &quot;subject&quot;
-      ]
-    },
-    &quot;RelationDirection&quot;: {
-      &quot;oneOf&quot;: [
-        {
-          &quot;const&quot;: &quot;outgoing&quot;,
-          &quot;description&quot;: &quot;This entity declared the reference.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;const&quot;: &quot;incoming&quot;,
-          &quot;description&quot;: &quot;Another entity named this one. Never declared: derived by reading every other\nobject&#39;s references and keeping the ones that resolve here.&quot;
-        }
-      ],
-      &quot;description&quot;: &quot;Which way a relation runs from the entity being read.\n\nThe direction is a property of the *reading*, not of the relation: one edge in\n`graph::RELATIONS` is outgoing on the page of the object that declared it and incoming\non the page of the object it names. Nothing in the layer writes `Incoming` down.\n\n```\nuse majordomus_cli::entity::Direction;\n\n// the wire spelling, which every surface shows and the site template reads\nassert_eq!(\n    serde_json::to_string(&amp;Direction::Outgoing).unwrap(),\n    \&quot;\\\&quot;outgoing\\\&quot;\&quot;\n);\nassert_eq!(\n    serde_json::to_string(&amp;Direction::Incoming).unwrap(),\n    \&quot;\\\&quot;incoming\\\&quot;\&quot;\n);\n// declared before derived, which is the order an entity page renders the two sections\nassert!((Direction::Outgoing as u8) &lt; (Direction::Incoming as u8));\n```&quot;
-    },
-    &quot;EntityEvidenceState&quot;: {
-      &quot;description&quot;: &quot;What this repository can say about the executable artefacts an object names, and only\nthat. The word is chosen so that no reader can mistake it for a run.\n\nThe three states are ordered by how much they permit a reader to conclude, and the\nstrongest of them still concludes nothing about a run: `Resolved` means the files an\nobject points at exist. `proof` on `Evidence` is where \&quot;did it ever pass\&quot; is asked.\n\n```\nuse majordomus_cli::capability::builtin::entity::EvidenceState;\n\n// the wire spellings, which the Cockpit badge and the site template both read\nfor (state, word) in [\n    (EvidenceState::Unclaimed, \&quot;unclaimed\&quot;),\n    (EvidenceState::Dangling, \&quot;dangling\&quot;),\n    (EvidenceState::Resolved, \&quot;resolved\&quot;),\n] {\n    assert_eq!(serde_json::to_value(state).unwrap(), serde_json::json!(word));\n}\n```&quot;,
-      &quot;oneOf&quot;: [
-        {
-          &quot;const&quot;: &quot;unclaimed&quot;,
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;The object names no executable artefact. Most kinds name none, and that is not a\ndefect: a prompt is not enforced by anything.&quot;
-        },
-        {
-          &quot;description&quot;: &quot;It names artefacts and at least one of them is not in the tree. A claim that points\nat nothing is worse than no claim, because it reads as enforcement.&quot;,
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;const&quot;: &quot;dangling&quot;
-        },
-        {
-          &quot;const&quot;: &quot;resolved&quot;,
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;Every artefact it names is in the tree. This says the claim resolves — never that it\npassed. Whether it ever ran is a different question, and `proof` is where it is\nasked.&quot;
-        }
-      ]
-    },
-    &quot;EntityDocumentation&quot;: {
-      &quot;properties&quot;: {
-        &quot;route&quot;: {
-          &quot;description&quot;: &quot;The public route of the page, site-relative: the entity&#39;s own page for an `entity`\nkind, the kind&#39;s section for a `section` kind, absent for `none`.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;projection&quot;: {
-          &quot;description&quot;: &quot;The kind&#39;s projection: `entity`, `section` or `none`.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;declared_in&quot;: {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;The file the decision is read from.&quot;
-        },
-        &quot;reason&quot;: {
-          &quot;description&quot;: &quot;Why the kind is not published, for `none`.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;url&quot;: {
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ],
-          &quot;description&quot;: &quot;The route under the site&#39;s `base_url`, when the site configuration names one.&quot;
-        }
-      },
-      &quot;required&quot;: [
-        &quot;projection&quot;,
-        &quot;declared_in&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;,
-      &quot;description&quot;: &quot;The public documentation page of one entity, as its kind&#39;s publication decision derives\nit. Every surface that shows an entity carries this value and renders it; none of them\nderives a public address of its own.\n\n```\nuse majordomus_cli::entity::Documentation;\n\nlet d = Documentation {\n    projection: \&quot;entity\&quot;.into(),\n    route: Some(\&quot;/adrs/adr-0056/\&quot;.into()),\n    url: Some(\&quot;https://majordomus.dev/adrs/adr-0056/\&quot;.into()),\n    reason: None,\n    declared_in: \&quot;site/data/publication.toml\&quot;.into(),\n};\nlet wire = serde_json::to_value(&amp;d).unwrap();\nassert_eq!(wire[\&quot;url\&quot;], serde_json::json!(\&quot;https://majordomus.dev/adrs/adr-0056/\&quot;));\n// a field that does not apply is absent, not an empty string\nassert!(wire.get(\&quot;reason\&quot;).is_none());\n```&quot;
-    }
-  },
   &quot;title&quot;: &quot;EntityView&quot;,
-  &quot;type&quot;: &quot;object&quot;,
-  &quot;description&quot;: &quot;One object of the layer as an addressable node: what it is, where it is served, what it\nis joined to, and what can be said about its enforcement.\n\nThe whole answer in one value, because it is one question: every surface that shows an\nentity — the Cockpit page, `GET /api/v1/entity`, `majordomus_entity`, `majordomus entity\nshow` — renders this and composes nothing of its own. A field a reader sees on one\nsurface and not another would be a surface holding an opinion, which is what ADR 0004\nforecloses.\n\n```\nuse majordomus_cli::capability::builtin::entity::EntityView;\n\n// it round-trips through the wire shape every projection reads it as\nlet view: EntityView = serde_json::from_value(serde_json::json!({\n    \&quot;uri\&quot;: \&quot;majordomus://adr/adr-0056\&quot;,\n    \&quot;id\&quot;: \&quot;adr.adr-0056\&quot;,\n    \&quot;kind\&quot;: \&quot;adr\&quot;,\n    \&quot;identity\&quot;: \&quot;adr-0056\&quot;,\n    \&quot;slug\&quot;: \&quot;adr-0056\&quot;,\n    \&quot;route\&quot;: \&quot;/cockpit/objects/adr/adr-0056\&quot;,\n    \&quot;kind_route\&quot;: \&quot;/cockpit/objects/adr\&quot;,\n    \&quot;title\&quot;: \&quot;Every object of the layer has a derived address\&quot;,\n    \&quot;provenance\&quot;: { \&quot;path\&quot;: \&quot;x.md\&quot;, \&quot;directory\&quot;: \&quot;x\&quot;, \&quot;source_class\&quot;: \&quot;adr\&quot;, \&quot;bytes\&quot;: 0 },\n    \&quot;metadata\&quot;: {},\n    \&quot;media_type\&quot;: \&quot;text/markdown\&quot;,\n    \&quot;content\&quot;: \&quot;\&quot;,\n    \&quot;relations\&quot;: [],\n    \&quot;surfaces\&quot;: [],\n    \&quot;evidence\&quot;: { \&quot;state\&quot;: \&quot;unclaimed\&quot;, \&quot;meaning\&quot;: \&quot;nothing named\&quot; },\n    \&quot;documentation\&quot;: {\n        \&quot;projection\&quot;: \&quot;entity\&quot;,\n        \&quot;route\&quot;: \&quot;/adrs/adr-0056/\&quot;,\n        \&quot;url\&quot;: \&quot;https://majordomus.dev/adrs/adr-0056/\&quot;,\n        \&quot;declared_in\&quot;: \&quot;site/data/publication.toml\&quot;,\n    },\n}))\n.unwrap();\n\nassert_eq!(view.route, \&quot;/cockpit/objects/adr/adr-0056\&quot;);\n// the Cockpit route is the object&#39;s; the public page is the site&#39;s, and both are named\nlet public = view.documentation.as_ref().and_then(|d| d.url.as_deref());\nassert_eq!(public, Some(\&quot;https://majordomus.dev/adrs/adr-0056/\&quot;));\n// the kind&#39;s index is the entity&#39;s route with the last segment removed\nassert!(view.route.starts_with(&amp;view.kind_route));\n```&quot;
+  &quot;type&quot;: &quot;object&quot;
 }</pre></div>
   </details>
 </div>
@@ -934,7 +934,7 @@ does not declare this kind; a kind declared as not published carries the reason.
         <div><dt class="text-body-subtle">Rust module</dt><dd class="min-w-0 break-all font-mono text-heading">majordomus_cli::capability::builtin::entity</dd></div>
         <div><dt class="text-body-subtle">input type</dt><dd class="font-mono text-heading">EntityInput</dd></div>
         <div><dt class="text-body-subtle">output type</dt><dd class="font-mono text-heading">EntityView</dd></div>
-        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/docs/generated/modules/entity.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/entity.md</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">3f734f2faf797f0ca7c39b4cd837e68b6619c41c6f6711f3d3aeca8f341934eb</dd></div>
+        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/1112bace3437ee0d82067b1e8f61813e70190078/docs/generated/modules/entity.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/entity.md</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">5cdbf22cd21589ddbe464d5f0987b6bcf4607d05479004d6f815c3b306fdb08a</dd></div>
         <div><dt class="text-body-subtle">generated by</dt><dd class="font-mono text-heading">majordomus-cli 1.0.0-alpha.10</dd></div>
       </dl>
     </div>
@@ -990,9 +990,9 @@ does not declare this kind; a kind declared as not published carries the reason.
       <div class="min-w-0">
         <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">Project</h2><ul class="space-y-2 text-sm font-medium text-body">
           <li><a href="https://github.com/korczis/prismatic-majordomus" class="hover:text-heading hover:underline">GitHub</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/LICENSE" class="hover:text-heading hover:underline">MIT licence</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/SECURITY.md" class="hover:text-heading hover:underline">Security policy</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/CONTRIBUTING.md" class="hover:text-heading hover:underline">Contributing guide</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/1112bace3437ee0d82067b1e8f61813e70190078/LICENSE" class="hover:text-heading hover:underline">MIT licence</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/1112bace3437ee0d82067b1e8f61813e70190078/SECURITY.md" class="hover:text-heading hover:underline">Security policy</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/1112bace3437ee0d82067b1e8f61813e70190078/CONTRIBUTING.md" class="hover:text-heading hover:underline">Contributing guide</a></li>
         </ul>
       </div>
     </div>
@@ -1000,7 +1000,7 @@ does not declare this kind; a kind declared as not published carries the reason.
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.10</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/745db2ea21e02613943face75a2bf95542be1f2e" class="font-mono underline">745db2e</a> · inputs <span class="font-mono">0a58c217d1b7</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/architecture/" class="underline">how this site is derived</a> names them.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.10</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/1112bace3437ee0d82067b1e8f61813e70190078" class="font-mono underline">1112bac</a> · inputs <span class="font-mono">830f884cc5aa</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/architecture/" class="underline">how this site is derived</a> names them.</p>
     </div>
   </div>
 </footer>

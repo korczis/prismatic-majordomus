@@ -223,15 +223,15 @@ what happened it carries.</div><div class="mt-3 overflow-x-auto rounded-base bor
     <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
       <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
       <tbody><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">for</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Comma-separated names of the reader — a worker (<code>1b</code>), a role, a login — so that the signals addressed to it are marked <code>for_you</code>. An MCP caller is also its own board session.</td>
-      </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">checkouts</td>
         <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
         <td class="px-3 py-2 font-mono text-xs text-body">no</td>
         <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Which checkouts' boards it covers: <code>repository</code> (every one, the default) or <code>this</code>. <span class="font-mono text-xs text-body-subtle">default &quot;repository&quot;</span></td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">for</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Comma-separated names of the reader — a worker (<code>1b</code>), a role, a login — so that the signals addressed to it are marked <code>for_you</code>. An MCP caller is also its own board session.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">signals</td>
         <td class="px-3 py-2 font-mono text-xs text-body">integer | null</td>
@@ -247,15 +247,14 @@ what happened it carries.</div><div class="mt-3 overflow-x-auto rounded-base bor
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
-  &quot;type&quot;: &quot;object&quot;,
   &quot;$defs&quot;: {
     &quot;Checkouts&quot;: {
       &quot;description&quot;: &quot;Which checkouts a reading of the server status covers.\n\nThe two answers cost differently and that is the whole reason the choice exists: the\nrepository&#39;s checkouts are read from git&#39;s registry of them and each one costs a lease\nread and a probe, while this checkout alone costs one of each and enumerates nothing.\nThe word each variant serialises to is the word the query parameter, the tool input and\nthe command-line flag all take.\n\n```\nuse majordomus_cli::capability::builtin::server::Checkouts;\nassert_eq!(serde_json::to_value(Checkouts::This).unwrap(), \&quot;this\&quot;);\nassert_eq!(serde_json::to_value(Checkouts::Repository).unwrap(), \&quot;repository\&quot;);\nassert_eq!(Checkouts::default(), Checkouts::Repository, \&quot;the wide answer is what a caller who says nothing has always got\&quot;);\n```&quot;,
       &quot;oneOf&quot;: [
         {
           &quot;const&quot;: &quot;repository&quot;,
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;Every checkout git registers for the repository, the primary first — a lease read\nand a probe each. The default, because it is the answer this capability gave before\nthere was anything to ask.&quot;
+          &quot;description&quot;: &quot;Every checkout git registers for the repository, the primary first — a lease read\nand a probe each. The default, because it is the answer this capability gave before\nthere was anything to ask.&quot;,
+          &quot;type&quot;: &quot;string&quot;
         },
         {
           &quot;const&quot;: &quot;this&quot;,
@@ -265,39 +264,40 @@ what happened it carries.</div><div class="mt-3 overflow-x-auto rounded-base bor
       ]
     }
   },
+  &quot;additionalProperties&quot;: false,
   &quot;description&quot;: &quot;The input of `blackboard.snapshot`: how wide the board is, who reads it, and how much of\nwhat happened it carries.&quot;,
   &quot;properties&quot;: {
+    &quot;checkouts&quot;: {
+      &quot;$ref&quot;: &quot;#/$defs/Checkouts&quot;,
+      &quot;default&quot;: &quot;repository&quot;,
+      &quot;description&quot;: &quot;Which checkouts&#39; boards it covers: `repository` (every one, the default) or `this`.&quot;
+    },
     &quot;for&quot;: {
+      &quot;description&quot;: &quot;Comma-separated names of the reader — a worker (`1b`), a role, a login — so that the signals addressed to it are marked `for_you`. An MCP caller is also its own board session.&quot;,
       &quot;type&quot;: [
         &quot;string&quot;,
         &quot;null&quot;
-      ],
-      &quot;description&quot;: &quot;Comma-separated names of the reader — a worker (`1b`), a role, a login — so that the signals addressed to it are marked `for_you`. An MCP caller is also its own board session.&quot;
-    },
-    &quot;checkouts&quot;: {
-      &quot;description&quot;: &quot;Which checkouts&#39; boards it covers: `repository` (every one, the default) or `this`.&quot;,
-      &quot;$ref&quot;: &quot;#/$defs/Checkouts&quot;,
-      &quot;default&quot;: &quot;repository&quot;
+      ]
     },
     &quot;signals&quot;: {
+      &quot;description&quot;: &quot;How many of the newest signals of the last hour it carries (default 30, at most 200); 0 reads no signals at all, for a follower that reads them by its own cursor.&quot;,
+      &quot;format&quot;: &quot;uint64&quot;,
+      &quot;minimum&quot;: 0,
       &quot;type&quot;: [
         &quot;integer&quot;,
         &quot;null&quot;
-      ],
-      &quot;minimum&quot;: 0,
-      &quot;format&quot;: &quot;uint64&quot;,
-      &quot;description&quot;: &quot;How many of the newest signals of the last hour it carries (default 30, at most 200); 0 reads no signals at all, for a follower that reads them by its own cursor.&quot;
+      ]
     },
     &quot;sources&quot;: {
+      &quot;description&quot;: &quot;A comma-separated subset of the monitor&#39;s sources, `mesh`, `executor` and `github` (default: `mesh,executor`).&quot;,
       &quot;type&quot;: [
         &quot;string&quot;,
         &quot;null&quot;
-      ],
-      &quot;description&quot;: &quot;A comma-separated subset of the monitor&#39;s sources, `mesh`, `executor` and `github` (default: `mesh,executor`).&quot;
+      ]
     }
   },
-  &quot;additionalProperties&quot;: false,
-  &quot;title&quot;: &quot;BlackboardInput&quot;
+  &quot;title&quot;: &quot;BlackboardInput&quot;,
+  &quot;type&quot;: &quot;object&quot;
 }</pre></div>
   </details>
 </div>
@@ -308,15 +308,29 @@ know it.</div><div class="mt-3 overflow-x-auto rounded-base border border-defaul
     <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
       <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
       <tbody><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">for_you</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">integer</td>
+        <td class="px-3 py-2 font-mono text-heading">at</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">How many of them are for the reader.</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">When it was read (RFC 3339).</td>
       </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">head</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">That checkout's HEAD, when it has one.</td>
+        <td class="px-3 py-2 font-mono text-heading">boards</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Each checkout's board the summary lists: reached or not, with a server or a worker.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">checkout</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The identity of the checkout whose server answered.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">complete</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">boolean</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Whether every board was read and the mesh, when the repository declares one, could be
+asked. <code>false</code> names its reason in <code>sources</code>, so that "nobody is here" is never what
+"I could not ask" reads as. The monitor's sources are reported in <code>sources</code> with their
+state and do not decide it: an empty executor trail or an absent <code>gh</code> is no board that
+could not be read.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">conflicts</td>
         <td class="px-3 py-2 font-mono text-xs text-body">array</td>
@@ -328,39 +342,36 @@ know it.</div><div class="mt-3 overflow-x-auto rounded-base border border-defaul
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
         <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">How many conflicts there are in all.</td>
       </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">complete</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">boolean</td>
+        <td class="px-3 py-2 font-mono text-heading">covered</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">integer</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Whether every board was read and the mesh, when the repository declares one, could be
-asked. <code>false</code> names its reason in <code>sources</code>, so that "nobody is here" is never what
-"I could not ask" reads as. The monitor's sources are reported in <code>sources</code> with their
-state and do not decide it: an empty executor trail or an absent <code>gh</code> is no board that
-could not be read.</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">How many checkouts the answer covers, listed in <code>boards</code> or counted in <code>omitted</code>.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">cursor</td>
         <td class="px-3 py-2 font-mono text-xs text-body">string</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
         <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The monitor's cursor after these signals: where a follower resumes.</td>
       </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">covered</td>
+        <td class="px-3 py-2 font-mono text-heading">for_you</td>
         <td class="px-3 py-2 font-mono text-xs text-body">integer</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">How many checkouts the answer covers, listed in <code>boards</code> or counted in <code>omitted</code>.</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">How many of them are for the reader.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">handovers</td>
         <td class="px-3 py-2 font-mono text-xs text-body">array</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
         <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The handovers nobody has taken, at most fifty.</td>
       </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">at</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">When it was read (RFC 3339).</td>
+        <td class="px-3 py-2 font-mono text-heading">head</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">That checkout's HEAD, when it has one.</td>
       </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">checkout</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The identity of the checkout whose server answered.</td>
+        <td class="px-3 py-2 font-mono text-heading">omitted</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">object</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The covered checkouts <code>boards</code> does not list, counted by standing (<code>absent</code>, <code>stale</code>):
+no server, nobody attached, no board.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">present</td>
         <td class="px-3 py-2 font-mono text-xs text-body">integer</td>
@@ -372,43 +383,370 @@ could not be read.</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
         <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The typed relations between workers.</td>
       </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">reviews</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The review requests nobody has answered, at most fifty.</td>
+      </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">signals</td>
         <td class="px-3 py-2 font-mono text-xs text-body">array</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
         <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The newest signals of the last hour, oldest first.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">workers</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Every worker, this checkout's board first, then the other boards, then the mesh.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">sources</td>
         <td class="px-3 py-2 font-mono text-xs text-body">array</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
         <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Each source and how it was read.</td>
       </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">reviews</td>
+        <td class="px-3 py-2 font-mono text-heading">workers</td>
         <td class="px-3 py-2 font-mono text-xs text-body">array</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The review requests nobody has answered, at most fifty.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">omitted</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">object</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The covered checkouts <code>boards</code> does not list, counted by standing (<code>absent</code>, <code>stale</code>):
-no server, nobody attached, no board.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">boards</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Each checkout's board the summary lists: reached or not, with a server or a worker.</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Every worker, this checkout's board first, then the other boards, then the mesh.</td>
       </tr></tbody>
     </table>
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
-  &quot;type&quot;: &quot;object&quot;,
   &quot;$defs&quot;: {
+    &quot;BlackboardCertainty&quot;: {
+      &quot;description&quot;: &quot;How sure a conflict is.&quot;,
+      &quot;oneOf&quot;: [
+        {
+          &quot;const&quot;: &quot;potential&quot;,
+          &quot;description&quot;: &quot;Two claims meet and at least one of them is advisory: two workers about to touch the\nsame paths, told and not stopped.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;confirmed&quot;,
+          &quot;description&quot;: &quot;Two exclusive claims meet, or the mesh marked one conflicted: what an exclusive claim\nexists to prevent has happened.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      ]
+    },
+    &quot;BlackboardClaim&quot;: {
+      &quot;description&quot;: &quot;One claim a worker holds.&quot;,
+      &quot;properties&quot;: {
+        &quot;conflicted&quot;: {
+          &quot;description&quot;: &quot;Whether the mesh found it conflicting with another live claim.&quot;,
+          &quot;type&quot;: &quot;boolean&quot;
+        },
+        &quot;intent&quot;: {
+          &quot;description&quot;: &quot;What it is for, in the worker&#39;s words.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;issue&quot;: {
+          &quot;description&quot;: &quot;The issue it is for, when the claim names one.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;mode&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/ClaimMode&quot;,
+          &quot;description&quot;: &quot;`advisory` (an announcement: overlaps are reported) or `exclusive` (a second exclusive\nclaim meeting it is refused while it lives). A board announcement is advisory.&quot;
+        },
+        &quot;name&quot;: {
+          &quot;description&quot;: &quot;The claim&#39;s name, when its worker holds several.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;record&quot;: {
+          &quot;description&quot;: &quot;The mesh claim&#39;s key, when it is a journal record; a board announcement has none.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;scope&quot;: {
+          &quot;description&quot;: &quot;The repository paths it names.&quot;,
+          &quot;items&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          },
+          &quot;type&quot;: &quot;array&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;scope&quot;,
+        &quot;mode&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;BlackboardClaimRef&quot;: {
+      &quot;description&quot;: &quot;One side of a conflict: a worker and which of its claims.&quot;,
+      &quot;properties&quot;: {
+        &quot;claim&quot;: {
+          &quot;description&quot;: &quot;The claim&#39;s name, when it has one.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;record&quot;: {
+          &quot;description&quot;: &quot;The mesh claim&#39;s key, when it is a journal record.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;worker&quot;: {
+          &quot;description&quot;: &quot;The worker&#39;s key.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;worker&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;BlackboardConflict&quot;: {
+      &quot;description&quot;: &quot;Two claims of two different workers whose scopes meet.&quot;,
+      &quot;properties&quot;: {
+        &quot;certainty&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/BlackboardCertainty&quot;,
+          &quot;description&quot;: &quot;Potential or confirmed.&quot;
+        },
+        &quot;first&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/BlackboardClaimRef&quot;,
+          &quot;description&quot;: &quot;The claim that came first in the answer&#39;s order.&quot;
+        },
+        &quot;paths&quot;: {
+          &quot;description&quot;: &quot;The paths that meet, `yours` the first&#39;s and `theirs` the second&#39;s.&quot;,
+          &quot;items&quot;: {
+            &quot;$ref&quot;: &quot;#/$defs/OverlapPath&quot;
+          },
+          &quot;type&quot;: &quot;array&quot;
+        },
+        &quot;second&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/BlackboardClaimRef&quot;,
+          &quot;description&quot;: &quot;The claim that meets it.&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;certainty&quot;,
+        &quot;first&quot;,
+        &quot;second&quot;,
+        &quot;paths&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;BlackboardEvidence&quot;: {
+      &quot;description&quot;: &quot;What a relation rests on.&quot;,
+      &quot;oneOf&quot;: [
+        {
+          &quot;const&quot;: &quot;verified&quot;,
+          &quot;description&quot;: &quot;An explicit identifier or a journal record joins the two ends.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;candidate&quot;,
+          &quot;description&quot;: &quot;The ends could be joined and nothing proves it: more than one record fits.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      ]
+    },
+    &quot;BlackboardHandover&quot;: {
+      &quot;description&quot;: &quot;A handover published to the mesh that nobody has taken. Its body is not repeated here:\n`mesh.state` holds it. The journal names no recipient for a handover — whoever takes it\nis its addressee — so none is inferred here.&quot;,
+      &quot;properties&quot;: {
+        &quot;branch&quot;: {
+          &quot;description&quot;: &quot;The branch it continues.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;created_at&quot;: {
+          &quot;description&quot;: &quot;When it was written.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;id&quot;: {
+          &quot;description&quot;: &quot;The handover&#39;s id.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;issue&quot;: {
+          &quot;description&quot;: &quot;The issue it continues.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;name&quot;: {
+          &quot;description&quot;: &quot;Its name, when it has one.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;runtime&quot;: {
+          &quot;description&quot;: &quot;The runtime that published it.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;task&quot;: {
+          &quot;description&quot;: &quot;The task it continues.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        }
+      },
+      &quot;required&quot;: [
+        &quot;id&quot;,
+        &quot;runtime&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;BlackboardOrigin&quot;: {
+      &quot;description&quot;: &quot;Where a worker of the blackboard was found.&quot;,
+      &quot;oneOf&quot;: [
+        {
+          &quot;const&quot;: &quot;board&quot;,
+          &quot;description&quot;: &quot;On a checkout&#39;s board: an MCP client attached to that checkout&#39;s server.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;mesh&quot;,
+          &quot;description&quot;: &quot;In the mesh journal only: a session no board of this repository holds — another\nmachine&#39;s, a task&#39;s, or a client&#39;s own.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      ]
+    },
+    &quot;BlackboardPresence&quot;: {
+      &quot;description&quot;: &quot;Whether a worker is here now.&quot;,
+      &quot;oneOf&quot;: [
+        {
+          &quot;const&quot;: &quot;attached&quot;,
+          &quot;description&quot;: &quot;Attached to its board now.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;departed&quot;,
+          &quot;description&quot;: &quot;Gone from its board, kept because it still holds an announcement.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;active&quot;,
+          &quot;description&quot;: &quot;An open mesh session whose runtime still beats.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      ]
+    },
+    &quot;BlackboardRelation&quot;: {
+      &quot;description&quot;: &quot;A typed relation between two workers, or a worker and the addressee a record names.&quot;,
+      &quot;properties&quot;: {
+        &quot;evidence&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/BlackboardEvidence&quot;,
+          &quot;description&quot;: &quot;What it rests on.&quot;
+        },
+        &quot;from&quot;: {
+          &quot;description&quot;: &quot;A worker&#39;s key.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;kind&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/BlackboardRelationKind&quot;,
+          &quot;description&quot;: &quot;What it is.&quot;
+        },
+        &quot;record&quot;: {
+          &quot;description&quot;: &quot;The record it rests on: a session or a review key.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;to&quot;: {
+          &quot;description&quot;: &quot;A worker&#39;s key, or the addressee as the record names it when no worker is it.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;kind&quot;,
+        &quot;evidence&quot;,
+        &quot;from&quot;,
+        &quot;to&quot;,
+        &quot;record&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;BlackboardRelationKind&quot;: {
+      &quot;description&quot;: &quot;What a relation between two workers is.&quot;,
+      &quot;oneOf&quot;: [
+        {
+          &quot;const&quot;: &quot;same_worker&quot;,
+          &quot;description&quot;: &quot;A board peer and a mesh session that may be one worker.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;review&quot;,
+          &quot;description&quot;: &quot;One worker asked another for a review.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      ]
+    },
+    &quot;BlackboardReview&quot;: {
+      &quot;description&quot;: &quot;A review request nobody has answered.&quot;,
+      &quot;properties&quot;: {
+        &quot;from&quot;: {
+          &quot;description&quot;: &quot;The requesting worker&#39;s key, or its session key when no worker holds it.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;issue&quot;: {
+          &quot;description&quot;: &quot;The issue it names.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;key&quot;: {
+          &quot;description&quot;: &quot;The review&#39;s key in the journal.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;reviewer&quot;: {
+          &quot;description&quot;: &quot;Whom it asks, as the request names it; absent means anyone.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;subject&quot;: {
+          &quot;description&quot;: &quot;What it asks about.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;key&quot;,
+        &quot;from&quot;,
+        &quot;subject&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;BlackboardSource&quot;: {
+      &quot;description&quot;: &quot;One source of the blackboard and how it was read.&quot;,
+      &quot;properties&quot;: {
+        &quot;reason&quot;: {
+          &quot;description&quot;: &quot;Why it is not `ok`.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;source&quot;: {
+          &quot;description&quot;: &quot;`board`, `mesh`, or a monitor source as `monitor.&lt;name&gt;`.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;state&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/BlackboardSourceState&quot;,
+          &quot;description&quot;: &quot;How it was read.&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;source&quot;,
+        &quot;state&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    },
     &quot;BlackboardSourceState&quot;: {
       &quot;description&quot;: &quot;How one source of the blackboard was read.&quot;,
       &quot;oneOf&quot;: [
@@ -423,144 +761,119 @@ no server, nobody attached, no board.</td>
           &quot;type&quot;: &quot;string&quot;
         },
         {
-          &quot;description&quot;: &quot;Not read; the reason says why.&quot;,
           &quot;const&quot;: &quot;absent&quot;,
+          &quot;description&quot;: &quot;Not read; the reason says why.&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
         {
-          &quot;description&quot;: &quot;Not asked for.&quot;,
           &quot;const&quot;: &quot;skipped&quot;,
+          &quot;description&quot;: &quot;Not asked for.&quot;,
           &quot;type&quot;: &quot;string&quot;
         }
       ]
-    },
-    &quot;BlackboardConflict&quot;: {
-      &quot;properties&quot;: {
-        &quot;certainty&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/BlackboardCertainty&quot;,
-          &quot;description&quot;: &quot;Potential or confirmed.&quot;
-        },
-        &quot;first&quot;: {
-          &quot;description&quot;: &quot;The claim that came first in the answer&#39;s order.&quot;,
-          &quot;$ref&quot;: &quot;#/$defs/BlackboardClaimRef&quot;
-        },
-        &quot;second&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/BlackboardClaimRef&quot;,
-          &quot;description&quot;: &quot;The claim that meets it.&quot;
-        },
-        &quot;paths&quot;: {
-          &quot;items&quot;: {
-            &quot;$ref&quot;: &quot;#/$defs/OverlapPath&quot;
-          },
-          &quot;type&quot;: &quot;array&quot;,
-          &quot;description&quot;: &quot;The paths that meet, `yours` the first&#39;s and `theirs` the second&#39;s.&quot;
-        }
-      },
-      &quot;required&quot;: [
-        &quot;certainty&quot;,
-        &quot;first&quot;,
-        &quot;second&quot;,
-        &quot;paths&quot;
-      ],
-      &quot;description&quot;: &quot;Two claims of two different workers whose scopes meet.&quot;,
-      &quot;type&quot;: &quot;object&quot;
-    },
-    &quot;MonitorSource&quot;: {
-      &quot;oneOf&quot;: [
-        {
-          &quot;description&quot;: &quot;The mesh journal: sessions on every linked machine (this checkout&#39;s board among\nthem), their claims, handovers and reviews.&quot;,
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;const&quot;: &quot;mesh&quot;
-        },
-        {
-          &quot;description&quot;: &quot;The executor&#39;s trail: the pull-request lane&#39;s merges, refreshes, repairs, closures\nand failures.&quot;,
-          &quot;const&quot;: &quot;executor&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;description&quot;: &quot;GitHub: pull requests opened, merged and closed, and finished workflow runs.&quot;,
-          &quot;const&quot;: &quot;github&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      ],
-      &quot;description&quot;: &quot;Where a signal comes from.&quot;
-    },
-    &quot;BlackboardCertainty&quot;: {
-      &quot;description&quot;: &quot;How sure a conflict is.&quot;,
-      &quot;oneOf&quot;: [
-        {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;Two claims meet and at least one of them is advisory: two workers about to touch the\nsame paths, told and not stopped.&quot;,
-          &quot;const&quot;: &quot;potential&quot;
-        },
-        {
-          &quot;description&quot;: &quot;Two exclusive claims meet, or the mesh marked one conflicted: what an exclusive claim\nexists to prevent has happened.&quot;,
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;const&quot;: &quot;confirmed&quot;
-        }
-      ]
-    },
-    &quot;BlackboardRelationKind&quot;: {
-      &quot;description&quot;: &quot;What a relation between two workers is.&quot;,
-      &quot;oneOf&quot;: [
-        {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;A board peer and a mesh session that may be one worker.&quot;,
-          &quot;const&quot;: &quot;same_worker&quot;
-        },
-        {
-          &quot;const&quot;: &quot;review&quot;,
-          &quot;description&quot;: &quot;One worker asked another for a review.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      ]
-    },
-    &quot;OverlapPath&quot;: {
-      &quot;description&quot;: &quot;One pair of claims that contain one another.&quot;,
-      &quot;type&quot;: &quot;object&quot;,
-      &quot;required&quot;: [
-        &quot;yours&quot;,
-        &quot;theirs&quot;
-      ],
-      &quot;properties&quot;: {
-        &quot;yours&quot;: {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;The path the announcing peer claimed.&quot;
-        },
-        &quot;theirs&quot;: {
-          &quot;description&quot;: &quot;The path the other peer claimed.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      }
     },
     &quot;BlackboardWorker&quot;: {
-      &quot;type&quot;: &quot;object&quot;,
       &quot;description&quot;: &quot;One worker of the repository: a board peer, a mesh session, or one of each that an\nexplicit identifier joins.&quot;,
       &quot;properties&quot;: {
-        &quot;client&quot;: {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;The client&#39;s own name, from its MCP initialize or its mesh session.&quot;
+        &quot;board_peer&quot;: {
+          &quot;description&quot;: &quot;Its position on its board (`p3`): meaningful on that board only.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;branch&quot;: {
+          &quot;description&quot;: &quot;The branch it works on.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
         },
         &quot;checkout&quot;: {
+          &quot;description&quot;: &quot;The checkout&#39;s identity.&quot;,
           &quot;type&quot;: [
             &quot;string&quot;,
             &quot;null&quot;
-          ],
-          &quot;description&quot;: &quot;The checkout&#39;s identity.&quot;
+          ]
+        },
+        &quot;claims&quot;: {
+          &quot;description&quot;: &quot;Its claims, board announcements and live mesh claims alike.&quot;,
+          &quot;items&quot;: {
+            &quot;$ref&quot;: &quot;#/$defs/BlackboardClaim&quot;
+          },
+          &quot;type&quot;: &quot;array&quot;
+        },
+        &quot;client&quot;: {
+          &quot;description&quot;: &quot;The client&#39;s own name, from its MCP initialize or its mesh session.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;connected_at&quot;: {
+          &quot;description&quot;: &quot;When it attached to its board.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;intent&quot;: {
+          &quot;description&quot;: &quot;What it said it is doing; absent means it announced nothing.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;issue&quot;: {
+          &quot;description&quot;: &quot;The issue its mesh session names.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;key&quot;: {
+          &quot;description&quot;: &quot;Stable for as long as the worker is here: `board:&lt;checkout&gt;/&lt;peer&gt;` or\n`mesh:&lt;stream&gt;/&lt;session&gt;`. Never a bare peer id.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;last_beat_ms&quot;: {
+          &quot;description&quot;: &quot;Milliseconds since its runtime last beat. A beat is liveness, not work done.&quot;,
+          &quot;format&quot;: &quot;uint64&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: [
+            &quot;integer&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;last_seen_seconds_ago&quot;: {
+          &quot;description&quot;: &quot;Seconds since its board last heard from it.&quot;,
+          &quot;format&quot;: &quot;uint64&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: [
+            &quot;integer&quot;,
+            &quot;null&quot;
+          ]
         },
         &quot;machine&quot;: {
+          &quot;description&quot;: &quot;The machine&#39;s display name.&quot;,
           &quot;type&quot;: [
             &quot;string&quot;,
             &quot;null&quot;
-          ],
-          &quot;description&quot;: &quot;The machine&#39;s display name.&quot;
+          ]
         },
         &quot;origin&quot;: {
           &quot;$ref&quot;: &quot;#/$defs/BlackboardOrigin&quot;,
           &quot;description&quot;: &quot;Where it was found.&quot;
         },
+        &quot;presence&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/BlackboardPresence&quot;,
+          &quot;description&quot;: &quot;Whether it is here now.&quot;
+        },
         &quot;runtime&quot;: {
           &quot;description&quot;: &quot;The runtime (`&lt;node&gt;-&lt;runtime&gt;`) its mesh session belongs to.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;session&quot;: {
+          &quot;description&quot;: &quot;Its mesh session&#39;s key, when it has one.&quot;,
           &quot;type&quot;: [
             &quot;string&quot;,
             &quot;null&quot;
@@ -580,87 +893,12 @@ no server, nobody attached, no board.</td>
             &quot;null&quot;
           ]
         },
-        &quot;branch&quot;: {
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ],
-          &quot;description&quot;: &quot;The branch it works on.&quot;
-        },
-        &quot;issue&quot;: {
-          &quot;description&quot;: &quot;The issue its mesh session names.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;last_beat_ms&quot;: {
-          &quot;minimum&quot;: 0,
-          &quot;format&quot;: &quot;uint64&quot;,
-          &quot;type&quot;: [
-            &quot;integer&quot;,
-            &quot;null&quot;
-          ],
-          &quot;description&quot;: &quot;Milliseconds since its runtime last beat. A beat is liveness, not work done.&quot;
-        },
         &quot;version&quot;: {
           &quot;description&quot;: &quot;The client&#39;s version, from its initialize.&quot;,
           &quot;type&quot;: [
             &quot;string&quot;,
             &quot;null&quot;
           ]
-        },
-        &quot;claims&quot;: {
-          &quot;items&quot;: {
-            &quot;$ref&quot;: &quot;#/$defs/BlackboardClaim&quot;
-          },
-          &quot;description&quot;: &quot;Its claims, board announcements and live mesh claims alike.&quot;,
-          &quot;type&quot;: &quot;array&quot;
-        },
-        &quot;connected_at&quot;: {
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ],
-          &quot;description&quot;: &quot;When it attached to its board.&quot;
-        },
-        &quot;session&quot;: {
-          &quot;description&quot;: &quot;Its mesh session&#39;s key, when it has one.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;presence&quot;: {
-          &quot;description&quot;: &quot;Whether it is here now.&quot;,
-          &quot;$ref&quot;: &quot;#/$defs/BlackboardPresence&quot;
-        },
-        &quot;last_seen_seconds_ago&quot;: {
-          &quot;description&quot;: &quot;Seconds since its board last heard from it.&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: [
-            &quot;integer&quot;,
-            &quot;null&quot;
-          ],
-          &quot;format&quot;: &quot;uint64&quot;
-        },
-        &quot;intent&quot;: {
-          &quot;description&quot;: &quot;What it said it is doing; absent means it announced nothing.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;board_peer&quot;: {
-          &quot;description&quot;: &quot;Its position on its board (`p3`): meaningful on that board only.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;key&quot;: {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;Stable for as long as the worker is here: `board:&lt;checkout&gt;/&lt;peer&gt;` or\n`mesh:&lt;stream&gt;/&lt;session&gt;`. Never a bare peer id.&quot;
         },
         &quot;worktree&quot;: {
           &quot;description&quot;: &quot;The checkout&#39;s path on its machine.&quot;,
@@ -675,211 +913,134 @@ no server, nobody attached, no board.</td>
         &quot;origin&quot;,
         &quot;presence&quot;,
         &quot;client&quot;
-      ]
-    },
-    &quot;BlackboardOrigin&quot;: {
-      &quot;description&quot;: &quot;Where a worker of the blackboard was found.&quot;,
-      &quot;oneOf&quot;: [
-        {
-          &quot;description&quot;: &quot;On a checkout&#39;s board: an MCP client attached to that checkout&#39;s server.&quot;,
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;const&quot;: &quot;board&quot;
-        },
-        {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;const&quot;: &quot;mesh&quot;,
-          &quot;description&quot;: &quot;In the mesh journal only: a session no board of this repository holds — another\nmachine&#39;s, a task&#39;s, or a client&#39;s own.&quot;
-        }
-      ]
-    },
-    &quot;BlackboardReview&quot;: {
-      &quot;required&quot;: [
-        &quot;key&quot;,
-        &quot;from&quot;,
-        &quot;subject&quot;
       ],
-      &quot;description&quot;: &quot;A review request nobody has answered.&quot;,
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;BoardView&quot;: {
+      &quot;description&quot;: &quot;One checkout&#39;s board, as the gather found it.\n\nPresent for every checkout the answer covers, whether or not its board could be read,\nbecause a listing that silently drops the checkouts it could not reach is the shape of\nanswer that made this capability wrong in the first place: a reader would see a short\nboard and conclude nobody else is working here.&quot;,
       &quot;properties&quot;: {
-        &quot;issue&quot;: {
-          &quot;description&quot;: &quot;The issue it names.&quot;,
+        &quot;attached&quot;: {
+          &quot;description&quot;: &quot;How many of this board&#39;s peers are attached.&quot;,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;branch&quot;: {
+          &quot;description&quot;: &quot;The branch checked out there, when it could be read.&quot;,
           &quot;type&quot;: [
             &quot;string&quot;,
             &quot;null&quot;
           ]
         },
-        &quot;reviewer&quot;: {
+        &quot;id&quot;: {
+          &quot;description&quot;: &quot;The checkout&#39;s identity digest, the same value `server.status` reports as\n`checkout_id`. One per checkout, never a path, and stable across a restart.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;reason&quot;: {
+          &quot;description&quot;: &quot;Why this board is not in the answer. `None` when it is.&quot;,
           &quot;type&quot;: [
             &quot;string&quot;,
             &quot;null&quot;
-          ],
-          &quot;description&quot;: &quot;Whom it asks, as the request names it; absent means anyone.&quot;
+          ]
         },
-        &quot;from&quot;: {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;The requesting worker&#39;s key, or its session key when no worker holds it.&quot;
+        &quot;standing&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/ServerStanding&quot;,
+          &quot;description&quot;: &quot;Where its server stands, by the same reading `server.status` reports.&quot;
         },
-        &quot;subject&quot;: {
-          &quot;description&quot;: &quot;What it asks about.&quot;,
+        &quot;stream&quot;: {
+          &quot;description&quot;: &quot;The mesh stream of the server whose memory holds this board, when its mesh runs: the\nstream it projects the board&#39;s peers into as `board-pN` sessions. A position such as\n`p1` is that server&#39;s alone, so only this stream ties a board peer to its session.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;this_checkout&quot;: {
+          &quot;description&quot;: &quot;Whether this is the checkout of the server answering the call.&quot;,
+          &quot;type&quot;: &quot;boolean&quot;
+        },
+        &quot;url&quot;: {
+          &quot;description&quot;: &quot;The address its lease names, when it has one.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;worktree&quot;: {
+          &quot;description&quot;: &quot;Where the checkout is. The one thing on this board that a human can act on\ndirectly, and the one thing that survives a reconnect.&quot;,
           &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;key&quot;: {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;The review&#39;s key in the journal.&quot;
         }
       },
+      &quot;required&quot;: [
+        &quot;id&quot;,
+        &quot;worktree&quot;,
+        &quot;this_checkout&quot;,
+        &quot;standing&quot;,
+        &quot;attached&quot;
+      ],
       &quot;type&quot;: &quot;object&quot;
     },
-    &quot;ServerStanding&quot;: {
+    &quot;ClaimMode&quot;: {
+      &quot;description&quot;: &quot;Whether a claim excludes others or only tells them. Both are useful and they answer\ndifferent questions: an exclusive claim is a worker saying \&quot;do not edit this while I\nam\&quot;, an advisory one is saying \&quot;I am here\&quot;. Exclusive is the default because a claim\ntaken without a thought about the mode is a claim somebody expects to be respected.\n\n```\nuse majordomus_cli::mesh::journal::ClaimMode;\n\nassert_eq!(ClaimMode::default(), ClaimMode::Exclusive);\nassert_eq!(serde_json::to_value(ClaimMode::Advisory).unwrap(), serde_json::json!(\&quot;advisory\&quot;));\n```&quot;,
       &quot;oneOf&quot;: [
         {
-          &quot;description&quot;: &quot;No lease: nothing serves this checkout.&quot;,
-          &quot;const&quot;: &quot;absent&quot;,
+          &quot;const&quot;: &quot;exclusive&quot;,
+          &quot;description&quot;: &quot;Exclusive: a second exclusive claim meeting this scope is refused while this one\nlives, on every runtime that knows of it.&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
         {
-          &quot;description&quot;: &quot;A lease without an address, young enough that its owner is still binding.&quot;,
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;const&quot;: &quot;starting&quot;
-        },
-        {
-          &quot;description&quot;: &quot;The server the lease names answers for this checkout, from the code on disk, at\nthis executable&#39;s version.&quot;,
-          &quot;const&quot;: &quot;ready&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;description&quot;: &quot;The server answers, but from older code than this executable, or from a file that\nhas been replaced since it started: everything it says is yesterday&#39;s.&quot;,
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;const&quot;: &quot;outdated&quot;
-        },
-        {
-          &quot;const&quot;: &quot;stale&quot;,
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;The lease names a server that does not answer, or is not a lease at all.&quot;
-        },
-        {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;const&quot;: &quot;building&quot;,
-          &quot;description&quot;: &quot;No lease yet, and the executable a server would run is being built: recorded by the\nbuilder (I3180), and believed only while the process that recorded it is alive.&quot;
-        },
-        {
-          &quot;description&quot;: &quot;The server is ready, the repository declares its mesh enabled, and the server has not\nyet decided whether the mesh runs.&quot;,
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;const&quot;: &quot;mesh_attaching&quot;
-        },
-        {
-          &quot;description&quot;: &quot;The server is ready, says so itself, and its mesh runs or is not declared.&quot;,
-          &quot;const&quot;: &quot;operational&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;degraded&quot;,
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;The server answers, current, but its own readiness report or its mesh says it is not\nwhole: it lost the lease, serves replaced code, read a degraded layer, or its declared\nmesh is not running.&quot;
-        },
-        {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;const&quot;: &quot;stopping&quot;,
-          &quot;description&quot;: &quot;The process that holds the lease recorded that it is stopping, and it is still alive.&quot;
-        },
-        {
-          &quot;const&quot;: &quot;stopped&quot;,
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;The server is gone after it recorded that it was stopping.&quot;
-        },
-        {
-          &quot;description&quot;: &quot;The server is gone without having recorded that it was stopping: its lease names a\nprocess that no longer exists.&quot;,
-          &quot;const&quot;: &quot;failed&quot;,
+          &quot;const&quot;: &quot;advisory&quot;,
+          &quot;description&quot;: &quot;Advisory: an announcement, like the peer board&#39;s. Overlaps are reported, never\nrefused.&quot;,
           &quot;type&quot;: &quot;string&quot;
         }
-      ],
-      &quot;description&quot;: &quot;Where a checkout&#39;s server stands, decided from its lease, whether the server the lease\nnames answers for that checkout, and whether what answers is this executable&#39;s code —\nand, refined by the readiness report, the mesh runtime and the last recorded transition,\nwhere its runtime stands (I3179).\n\nThe first five words are the lease&#39;s standing, decided by `standing_of`, and they are\nwhat `standing` carries on every surface: shells compare them, so they never change. The\nother seven are the runtime&#39;s refinements, decided by `runtime_of` and carried by\n`runtime.state` alone; `ServerStanding::refines` names the lease word each refines.\n\n```\nuse majordomus_cli::capability::builtin::server::ServerStanding;\nlet all = [ServerStanding::Absent, ServerStanding::Starting, ServerStanding::Ready,\n           ServerStanding::Outdated, ServerStanding::Stale];\nlet words: Vec&lt;&amp;str&gt; = all.iter().map(|s| s.as_str()).collect();\nassert_eq!(words, [\&quot;absent\&quot;, \&quot;starting\&quot;, \&quot;ready\&quot;, \&quot;outdated\&quot;, \&quot;stale\&quot;]);\nassert_eq!(serde_json::from_str::&lt;ServerStanding&gt;(\&quot;\\\&quot;stale\\\&quot;\&quot;).unwrap(), ServerStanding::Stale);\n// the runtime&#39;s words, in the same snake case the JSON carries\nassert_eq!(serde_json::to_value(ServerStanding::MeshAttaching).unwrap(), \&quot;mesh_attaching\&quot;);\nassert_eq!(ServerStanding::MeshAttaching.as_str(), \&quot;mesh_attaching\&quot;);\n```&quot;
+      ]
     },
     &quot;MonitorSeverity&quot;: {
+      &quot;description&quot;: &quot;How much a signal asks of its reader.&quot;,
       &quot;oneOf&quot;: [
         {
+          &quot;const&quot;: &quot;info&quot;,
           &quot;description&quot;: &quot;Something happened; nothing is asked.&quot;,
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;const&quot;: &quot;info&quot;
-        },
-        {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;const&quot;: &quot;attention&quot;,
-          &quot;description&quot;: &quot;Something failed or waits for someone: worth a look.&quot;
-        },
-        {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;const&quot;: &quot;action&quot;,
-          &quot;description&quot;: &quot;Something waits for the reader: a review asked of them, a handover for them.&quot;
-        }
-      ],
-      &quot;description&quot;: &quot;How much a signal asks of its reader.&quot;
-    },
-    &quot;BlackboardClaimRef&quot;: {
-      &quot;description&quot;: &quot;One side of a conflict: a worker and which of its claims.&quot;,
-      &quot;properties&quot;: {
-        &quot;claim&quot;: {
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ],
-          &quot;description&quot;: &quot;The claim&#39;s name, when it has one.&quot;
-        },
-        &quot;record&quot;: {
-          &quot;description&quot;: &quot;The mesh claim&#39;s key, when it is a journal record.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;worker&quot;: {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;The worker&#39;s key.&quot;
-        }
-      },
-      &quot;required&quot;: [
-        &quot;worker&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
-    },
-    &quot;BlackboardEvidence&quot;: {
-      &quot;description&quot;: &quot;What a relation rests on.&quot;,
-      &quot;oneOf&quot;: [
-        {
-          &quot;const&quot;: &quot;verified&quot;,
-          &quot;description&quot;: &quot;An explicit identifier or a journal record joins the two ends.&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
         {
-          &quot;description&quot;: &quot;The ends could be joined and nothing proves it: more than one record fits.&quot;,
-          &quot;const&quot;: &quot;candidate&quot;,
+          &quot;const&quot;: &quot;attention&quot;,
+          &quot;description&quot;: &quot;Something failed or waits for someone: worth a look.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;action&quot;,
+          &quot;description&quot;: &quot;Something waits for the reader: a review asked of them, a handover for them.&quot;,
           &quot;type&quot;: &quot;string&quot;
         }
       ]
     },
     &quot;MonitorSignal&quot;: {
-      &quot;required&quot;: [
-        &quot;at&quot;,
-        &quot;source&quot;,
-        &quot;kind&quot;,
-        &quot;severity&quot;,
-        &quot;summary&quot;
-      ],
+      &quot;description&quot;: &quot;One thing that happened, as one line a person or an agent can act on.&quot;,
       &quot;properties&quot;: {
+        &quot;actor&quot;: {
+          &quot;description&quot;: &quot;Who did it: a session&#39;s worker or client, the executor&#39;s actor, a GitHub login.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;at&quot;: {
+          &quot;description&quot;: &quot;When it happened, in Unix seconds, on the clock of whoever recorded it.&quot;,
+          &quot;format&quot;: &quot;uint64&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;branch&quot;: {
+          &quot;description&quot;: &quot;The branch it is about.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
         &quot;for_you&quot;: {
-          &quot;type&quot;: &quot;boolean&quot;,
           &quot;default&quot;: false,
-          &quot;description&quot;: &quot;Whether it names the reader: a review asked of them, an answer to their request, a\nhandover or a text that names them.&quot;
-        },
-        &quot;paths&quot;: {
-          &quot;items&quot;: {
-            &quot;type&quot;: &quot;string&quot;
-          },
-          &quot;description&quot;: &quot;The repository paths it is about.&quot;,
-          &quot;type&quot;: &quot;array&quot;
-        },
-        &quot;kind&quot;: {
-          &quot;description&quot;: &quot;What happened, e.g. `session_joined`, `review_requested`, `merged`, `run_failed`.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;description&quot;: &quot;Whether it names the reader: a review asked of them, an answer to their request, a\nhandover or a text that names them.&quot;,
+          &quot;type&quot;: &quot;boolean&quot;
         },
         &quot;issue&quot;: {
           &quot;description&quot;: &quot;The issue it is about.&quot;,
@@ -887,6 +1048,31 @@ no server, nobody attached, no board.</td>
             &quot;string&quot;,
             &quot;null&quot;
           ]
+        },
+        &quot;kind&quot;: {
+          &quot;description&quot;: &quot;What happened, e.g. `session_joined`, `review_requested`, `merged`, `run_failed`.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;link&quot;: {
+          &quot;description&quot;: &quot;Where to read more, when there is a page for it.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;machine&quot;: {
+          &quot;description&quot;: &quot;The machine it happened on, by its display name when the mesh knows it.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;paths&quot;: {
+          &quot;description&quot;: &quot;The repository paths it is about.&quot;,
+          &quot;items&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          },
+          &quot;type&quot;: &quot;array&quot;
         },
         &quot;pr&quot;: {
           &quot;description&quot;: &quot;The pull request it is about.&quot;,
@@ -897,38 +1083,6 @@ no server, nobody attached, no board.</td>
             &quot;null&quot;
           ]
         },
-        &quot;machine&quot;: {
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ],
-          &quot;description&quot;: &quot;The machine it happened on, by its display name when the mesh knows it.&quot;
-        },
-        &quot;severity&quot;: {
-          &quot;description&quot;: &quot;How much it asks of the reader.&quot;,
-          &quot;$ref&quot;: &quot;#/$defs/MonitorSeverity&quot;
-        },
-        &quot;source&quot;: {
-          &quot;description&quot;: &quot;Which record it comes from.&quot;,
-          &quot;$ref&quot;: &quot;#/$defs/MonitorSource&quot;
-        },
-        &quot;summary&quot;: {
-          &quot;description&quot;: &quot;What happened, in one line of at most 200 characters.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;at&quot;: {
-          &quot;description&quot;: &quot;When it happened, in Unix seconds, on the clock of whoever recorded it.&quot;,
-          &quot;format&quot;: &quot;uint64&quot;,
-          &quot;type&quot;: &quot;integer&quot;,
-          &quot;minimum&quot;: 0
-        },
-        &quot;link&quot;: {
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ],
-          &quot;description&quot;: &quot;Where to read more, when there is a page for it.&quot;
-        },
         &quot;session&quot;: {
           &quot;description&quot;: &quot;The session that did it.&quot;,
           &quot;type&quot;: [
@@ -936,307 +1090,159 @@ no server, nobody attached, no board.</td>
             &quot;null&quot;
           ]
         },
-        &quot;branch&quot;: {
-          &quot;description&quot;: &quot;The branch it is about.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
+        &quot;severity&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/MonitorSeverity&quot;,
+          &quot;description&quot;: &quot;How much it asks of the reader.&quot;
         },
-        &quot;actor&quot;: {
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ],
-          &quot;description&quot;: &quot;Who did it: a session&#39;s worker or client, the executor&#39;s actor, a GitHub login.&quot;
-        }
-      },
-      &quot;description&quot;: &quot;One thing that happened, as one line a person or an agent can act on.&quot;,
-      &quot;type&quot;: &quot;object&quot;
-    },
-    &quot;BlackboardHandover&quot;: {
-      &quot;type&quot;: &quot;object&quot;,
-      &quot;description&quot;: &quot;A handover published to the mesh that nobody has taken. Its body is not repeated here:\n`mesh.state` holds it. The journal names no recipient for a handover — whoever takes it\nis its addressee — so none is inferred here.&quot;,
-      &quot;required&quot;: [
-        &quot;id&quot;,
-        &quot;runtime&quot;
-      ],
-      &quot;properties&quot;: {
-        &quot;issue&quot;: {
-          &quot;description&quot;: &quot;The issue it continues.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;name&quot;: {
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ],
-          &quot;description&quot;: &quot;Its name, when it has one.&quot;
-        },
-        &quot;task&quot;: {
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ],
-          &quot;description&quot;: &quot;The task it continues.&quot;
-        },
-        &quot;branch&quot;: {
-          &quot;description&quot;: &quot;The branch it continues.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;runtime&quot;: {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;The runtime that published it.&quot;
-        },
-        &quot;id&quot;: {
-          &quot;description&quot;: &quot;The handover&#39;s id.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;created_at&quot;: {
-          &quot;description&quot;: &quot;When it was written.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        }
-      }
-    },
-    &quot;BlackboardSource&quot;: {
-      &quot;required&quot;: [
-        &quot;source&quot;,
-        &quot;state&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;,
-      &quot;properties&quot;: {
         &quot;source&quot;: {
-          &quot;description&quot;: &quot;`board`, `mesh`, or a monitor source as `monitor.&lt;name&gt;`.&quot;,
+          &quot;$ref&quot;: &quot;#/$defs/MonitorSource&quot;,
+          &quot;description&quot;: &quot;Which record it comes from.&quot;
+        },
+        &quot;summary&quot;: {
+          &quot;description&quot;: &quot;What happened, in one line of at most 200 characters.&quot;,
           &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;state&quot;: {
-          &quot;description&quot;: &quot;How it was read.&quot;,
-          &quot;$ref&quot;: &quot;#/$defs/BlackboardSourceState&quot;
-        },
-        &quot;reason&quot;: {
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ],
-          &quot;description&quot;: &quot;Why it is not `ok`.&quot;
         }
       },
-      &quot;description&quot;: &quot;One source of the blackboard and how it was read.&quot;
-    },
-    &quot;BlackboardClaim&quot;: {
-      &quot;description&quot;: &quot;One claim a worker holds.&quot;,
       &quot;required&quot;: [
-        &quot;scope&quot;,
-        &quot;mode&quot;
+        &quot;at&quot;,
+        &quot;source&quot;,
+        &quot;kind&quot;,
+        &quot;severity&quot;,
+        &quot;summary&quot;
       ],
-      &quot;properties&quot;: {
-        &quot;conflicted&quot;: {
-          &quot;description&quot;: &quot;Whether the mesh found it conflicting with another live claim.&quot;,
-          &quot;type&quot;: &quot;boolean&quot;
-        },
-        &quot;issue&quot;: {
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ],
-          &quot;description&quot;: &quot;The issue it is for, when the claim names one.&quot;
-        },
-        &quot;scope&quot;: {
-          &quot;items&quot;: {
-            &quot;type&quot;: &quot;string&quot;
-          },
-          &quot;type&quot;: &quot;array&quot;,
-          &quot;description&quot;: &quot;The repository paths it names.&quot;
-        },
-        &quot;mode&quot;: {
-          &quot;description&quot;: &quot;`advisory` (an announcement: overlaps are reported) or `exclusive` (a second exclusive\nclaim meeting it is refused while it lives). A board announcement is advisory.&quot;,
-          &quot;$ref&quot;: &quot;#/$defs/ClaimMode&quot;
-        },
-        &quot;name&quot;: {
-          &quot;description&quot;: &quot;The claim&#39;s name, when its worker holds several.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;intent&quot;: {
-          &quot;description&quot;: &quot;What it is for, in the worker&#39;s words.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;record&quot;: {
-          &quot;description&quot;: &quot;The mesh claim&#39;s key, when it is a journal record; a board announcement has none.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        }
-      },
       &quot;type&quot;: &quot;object&quot;
     },
-    &quot;BoardView&quot;: {
-      &quot;description&quot;: &quot;One checkout&#39;s board, as the gather found it.\n\nPresent for every checkout the answer covers, whether or not its board could be read,\nbecause a listing that silently drops the checkouts it could not reach is the shape of\nanswer that made this capability wrong in the first place: a reader would see a short\nboard and conclude nobody else is working here.&quot;,
-      &quot;required&quot;: [
-        &quot;id&quot;,
-        &quot;worktree&quot;,
-        &quot;this_checkout&quot;,
-        &quot;standing&quot;,
-        &quot;attached&quot;
-      ],
-      &quot;properties&quot;: {
-        &quot;this_checkout&quot;: {
-          &quot;type&quot;: &quot;boolean&quot;,
-          &quot;description&quot;: &quot;Whether this is the checkout of the server answering the call.&quot;
-        },
-        &quot;branch&quot;: {
-          &quot;description&quot;: &quot;The branch checked out there, when it could be read.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;reason&quot;: {
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ],
-          &quot;description&quot;: &quot;Why this board is not in the answer. `None` when it is.&quot;
-        },
-        &quot;url&quot;: {
-          &quot;description&quot;: &quot;The address its lease names, when it has one.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;worktree&quot;: {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;Where the checkout is. The one thing on this board that a human can act on\ndirectly, and the one thing that survives a reconnect.&quot;
-        },
-        &quot;stream&quot;: {
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ],
-          &quot;description&quot;: &quot;The mesh stream of the server whose memory holds this board, when its mesh runs: the\nstream it projects the board&#39;s peers into as `board-pN` sessions. A position such as\n`p1` is that server&#39;s alone, so only this stream ties a board peer to its session.&quot;
-        },
-        &quot;standing&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/ServerStanding&quot;,
-          &quot;description&quot;: &quot;Where its server stands, by the same reading `server.status` reports.&quot;
-        },
-        &quot;attached&quot;: {
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;description&quot;: &quot;How many of this board&#39;s peers are attached.&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;id&quot;: {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;The checkout&#39;s identity digest, the same value `server.status` reports as\n`checkout_id`. One per checkout, never a path, and stable across a restart.&quot;
-        }
-      },
-      &quot;type&quot;: &quot;object&quot;
-    },
-    &quot;BlackboardPresence&quot;: {
+    &quot;MonitorSource&quot;: {
+      &quot;description&quot;: &quot;Where a signal comes from.&quot;,
       &quot;oneOf&quot;: [
         {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;const&quot;: &quot;attached&quot;,
-          &quot;description&quot;: &quot;Attached to its board now.&quot;
-        },
-        {
-          &quot;const&quot;: &quot;departed&quot;,
-          &quot;description&quot;: &quot;Gone from its board, kept because it still holds an announcement.&quot;,
+          &quot;const&quot;: &quot;mesh&quot;,
+          &quot;description&quot;: &quot;The mesh journal: sessions on every linked machine (this checkout&#39;s board among\nthem), their claims, handovers and reviews.&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
         {
-          &quot;description&quot;: &quot;An open mesh session whose runtime still beats.&quot;,
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;const&quot;: &quot;active&quot;
-        }
-      ],
-      &quot;description&quot;: &quot;Whether a worker is here now.&quot;
-    },
-    &quot;ClaimMode&quot;: {
-      &quot;description&quot;: &quot;Whether a claim excludes others or only tells them. Both are useful and they answer\ndifferent questions: an exclusive claim is a worker saying \&quot;do not edit this while I\nam\&quot;, an advisory one is saying \&quot;I am here\&quot;. Exclusive is the default because a claim\ntaken without a thought about the mode is a claim somebody expects to be respected.\n\n```\nuse majordomus_cli::mesh::journal::ClaimMode;\n\nassert_eq!(ClaimMode::default(), ClaimMode::Exclusive);\nassert_eq!(serde_json::to_value(ClaimMode::Advisory).unwrap(), serde_json::json!(\&quot;advisory\&quot;));\n```&quot;,
-      &quot;oneOf&quot;: [
-        {
-          &quot;description&quot;: &quot;Exclusive: a second exclusive claim meeting this scope is refused while this one\nlives, on every runtime that knows of it.&quot;,
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;const&quot;: &quot;exclusive&quot;
+          &quot;const&quot;: &quot;executor&quot;,
+          &quot;description&quot;: &quot;The executor&#39;s trail: the pull-request lane&#39;s merges, refreshes, repairs, closures\nand failures.&quot;,
+          &quot;type&quot;: &quot;string&quot;
         },
         {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;Advisory: an announcement, like the peer board&#39;s. Overlaps are reported, never\nrefused.&quot;,
-          &quot;const&quot;: &quot;advisory&quot;
+          &quot;const&quot;: &quot;github&quot;,
+          &quot;description&quot;: &quot;GitHub: pull requests opened, merged and closed, and finished workflow runs.&quot;,
+          &quot;type&quot;: &quot;string&quot;
         }
       ]
     },
-    &quot;BlackboardRelation&quot;: {
-      &quot;description&quot;: &quot;A typed relation between two workers, or a worker and the addressee a record names.&quot;,
-      &quot;type&quot;: &quot;object&quot;,
-      &quot;required&quot;: [
-        &quot;kind&quot;,
-        &quot;evidence&quot;,
-        &quot;from&quot;,
-        &quot;to&quot;,
-        &quot;record&quot;
-      ],
+    &quot;OverlapPath&quot;: {
+      &quot;description&quot;: &quot;One pair of claims that contain one another.&quot;,
       &quot;properties&quot;: {
-        &quot;evidence&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/BlackboardEvidence&quot;,
-          &quot;description&quot;: &quot;What it rests on.&quot;
-        },
-        &quot;from&quot;: {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;A worker&#39;s key.&quot;
-        },
-        &quot;kind&quot;: {
-          &quot;description&quot;: &quot;What it is.&quot;,
-          &quot;$ref&quot;: &quot;#/$defs/BlackboardRelationKind&quot;
-        },
-        &quot;record&quot;: {
-          &quot;description&quot;: &quot;The record it rests on: a session or a review key.&quot;,
+        &quot;theirs&quot;: {
+          &quot;description&quot;: &quot;The path the other peer claimed.&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
-        &quot;to&quot;: {
-          &quot;description&quot;: &quot;A worker&#39;s key, or the addressee as the record names it when no worker is it.&quot;,
+        &quot;yours&quot;: {
+          &quot;description&quot;: &quot;The path the announcing peer claimed.&quot;,
           &quot;type&quot;: &quot;string&quot;
         }
-      }
+      },
+      &quot;required&quot;: [
+        &quot;yours&quot;,
+        &quot;theirs&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;ServerStanding&quot;: {
+      &quot;description&quot;: &quot;Where a checkout&#39;s server stands, decided from its lease, whether the server the lease\nnames answers for that checkout, and whether what answers is this executable&#39;s code —\nand, refined by the readiness report, the mesh runtime and the last recorded transition,\nwhere its runtime stands (I3179).\n\nThe first five words are the lease&#39;s standing, decided by `standing_of`, and they are\nwhat `standing` carries on every surface: shells compare them, so they never change. The\nother seven are the runtime&#39;s refinements, decided by `runtime_of` and carried by\n`runtime.state` alone; `ServerStanding::refines` names the lease word each refines.\n\n```\nuse majordomus_cli::capability::builtin::server::ServerStanding;\nlet all = [ServerStanding::Absent, ServerStanding::Starting, ServerStanding::Ready,\n           ServerStanding::Outdated, ServerStanding::Stale];\nlet words: Vec&lt;&amp;str&gt; = all.iter().map(|s| s.as_str()).collect();\nassert_eq!(words, [\&quot;absent\&quot;, \&quot;starting\&quot;, \&quot;ready\&quot;, \&quot;outdated\&quot;, \&quot;stale\&quot;]);\nassert_eq!(serde_json::from_str::&lt;ServerStanding&gt;(\&quot;\\\&quot;stale\\\&quot;\&quot;).unwrap(), ServerStanding::Stale);\n// the runtime&#39;s words, in the same snake case the JSON carries\nassert_eq!(serde_json::to_value(ServerStanding::MeshAttaching).unwrap(), \&quot;mesh_attaching\&quot;);\nassert_eq!(ServerStanding::MeshAttaching.as_str(), \&quot;mesh_attaching\&quot;);\n```&quot;,
+      &quot;oneOf&quot;: [
+        {
+          &quot;const&quot;: &quot;absent&quot;,
+          &quot;description&quot;: &quot;No lease: nothing serves this checkout.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;starting&quot;,
+          &quot;description&quot;: &quot;A lease without an address, young enough that its owner is still binding.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;ready&quot;,
+          &quot;description&quot;: &quot;The server the lease names answers for this checkout, from the code on disk, at\nthis executable&#39;s version.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;outdated&quot;,
+          &quot;description&quot;: &quot;The server answers, but from older code than this executable, or from a file that\nhas been replaced since it started: everything it says is yesterday&#39;s.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;stale&quot;,
+          &quot;description&quot;: &quot;The lease names a server that does not answer, or is not a lease at all.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;building&quot;,
+          &quot;description&quot;: &quot;No lease yet, and the executable a server would run is being built: recorded by the\nbuilder (I3180), and believed only while the process that recorded it is alive.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;mesh_attaching&quot;,
+          &quot;description&quot;: &quot;The server is ready, the repository declares its mesh enabled, and the server has not\nyet decided whether the mesh runs.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;operational&quot;,
+          &quot;description&quot;: &quot;The server is ready, says so itself, and its mesh runs or is not declared.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;degraded&quot;,
+          &quot;description&quot;: &quot;The server answers, current, but its own readiness report or its mesh says it is not\nwhole: it lost the lease, serves replaced code, read a degraded layer, or its declared\nmesh is not running.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;stopping&quot;,
+          &quot;description&quot;: &quot;The process that holds the lease recorded that it is stopping, and it is still alive.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;stopped&quot;,
+          &quot;description&quot;: &quot;The server is gone after it recorded that it was stopping.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;failed&quot;,
+          &quot;description&quot;: &quot;The server is gone without having recorded that it was stopping: its lease names a\nprocess that no longer exists.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      ]
     }
   },
+  &quot;description&quot;: &quot;The answer of `blackboard.snapshot`: who works on what in this repository, on every board\nand every linked machine, with what meets and what waits, read once from the records that\nknow it.&quot;,
   &quot;properties&quot;: {
-    &quot;for_you&quot;: {
-      &quot;minimum&quot;: 0,
-      &quot;format&quot;: &quot;uint&quot;,
-      &quot;description&quot;: &quot;How many of them are for the reader.&quot;,
-      &quot;type&quot;: &quot;integer&quot;
+    &quot;at&quot;: {
+      &quot;description&quot;: &quot;When it was read (RFC 3339).&quot;,
+      &quot;type&quot;: &quot;string&quot;
     },
-    &quot;head&quot;: {
-      &quot;type&quot;: [
-        &quot;string&quot;,
-        &quot;null&quot;
-      ],
-      &quot;description&quot;: &quot;That checkout&#39;s HEAD, when it has one.&quot;
+    &quot;boards&quot;: {
+      &quot;description&quot;: &quot;Each checkout&#39;s board the summary lists: reached or not, with a server or a worker.&quot;,
+      &quot;items&quot;: {
+        &quot;$ref&quot;: &quot;#/$defs/BoardView&quot;
+      },
+      &quot;type&quot;: &quot;array&quot;
+    },
+    &quot;checkout&quot;: {
+      &quot;description&quot;: &quot;The identity of the checkout whose server answered.&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;complete&quot;: {
+      &quot;description&quot;: &quot;Whether every board was read and the mesh, when the repository declares one, could be\nasked. `false` names its reason in `sources`, so that \&quot;nobody is here\&quot; is never what\n\&quot;I could not ask\&quot; reads as. The monitor&#39;s sources are reported in `sources` with their\nstate and do not decide it: an empty executor trail or an absent `gh` is no board that\ncould not be read.&quot;,
+      &quot;type&quot;: &quot;boolean&quot;
     },
     &quot;conflicts&quot;: {
-      &quot;type&quot;: &quot;array&quot;,
+      &quot;description&quot;: &quot;The claims that meet, at most a hundred, confirmed first.&quot;,
       &quot;items&quot;: {
         &quot;$ref&quot;: &quot;#/$defs/BlackboardConflict&quot;
       },
-      &quot;description&quot;: &quot;The claims that meet, at most a hundred, confirmed first.&quot;
+      &quot;type&quot;: &quot;array&quot;
     },
     &quot;conflicts_total&quot;: {
       &quot;description&quot;: &quot;How many conflicts there are in all.&quot;,
@@ -1244,61 +1250,71 @@ no server, nobody attached, no board.</td>
       &quot;minimum&quot;: 0,
       &quot;type&quot;: &quot;integer&quot;
     },
-    &quot;complete&quot;: {
-      &quot;description&quot;: &quot;Whether every board was read and the mesh, when the repository declares one, could be\nasked. `false` names its reason in `sources`, so that \&quot;nobody is here\&quot; is never what\n\&quot;I could not ask\&quot; reads as. The monitor&#39;s sources are reported in `sources` with their\nstate and do not decide it: an empty executor trail or an absent `gh` is no board that\ncould not be read.&quot;,
-      &quot;type&quot;: &quot;boolean&quot;
+    &quot;covered&quot;: {
+      &quot;description&quot;: &quot;How many checkouts the answer covers, listed in `boards` or counted in `omitted`.&quot;,
+      &quot;format&quot;: &quot;uint&quot;,
+      &quot;minimum&quot;: 0,
+      &quot;type&quot;: &quot;integer&quot;
     },
     &quot;cursor&quot;: {
       &quot;description&quot;: &quot;The monitor&#39;s cursor after these signals: where a follower resumes.&quot;,
       &quot;type&quot;: &quot;string&quot;
     },
-    &quot;covered&quot;: {
+    &quot;for_you&quot;: {
+      &quot;description&quot;: &quot;How many of them are for the reader.&quot;,
       &quot;format&quot;: &quot;uint&quot;,
-      &quot;description&quot;: &quot;How many checkouts the answer covers, listed in `boards` or counted in `omitted`.&quot;,
       &quot;minimum&quot;: 0,
       &quot;type&quot;: &quot;integer&quot;
     },
     &quot;handovers&quot;: {
+      &quot;description&quot;: &quot;The handovers nobody has taken, at most fifty.&quot;,
       &quot;items&quot;: {
         &quot;$ref&quot;: &quot;#/$defs/BlackboardHandover&quot;
       },
-      &quot;type&quot;: &quot;array&quot;,
-      &quot;description&quot;: &quot;The handovers nobody has taken, at most fifty.&quot;
+      &quot;type&quot;: &quot;array&quot;
     },
-    &quot;at&quot;: {
-      &quot;description&quot;: &quot;When it was read (RFC 3339).&quot;,
-      &quot;type&quot;: &quot;string&quot;
+    &quot;head&quot;: {
+      &quot;description&quot;: &quot;That checkout&#39;s HEAD, when it has one.&quot;,
+      &quot;type&quot;: [
+        &quot;string&quot;,
+        &quot;null&quot;
+      ]
     },
-    &quot;checkout&quot;: {
-      &quot;type&quot;: &quot;string&quot;,
-      &quot;description&quot;: &quot;The identity of the checkout whose server answered.&quot;
+    &quot;omitted&quot;: {
+      &quot;additionalProperties&quot;: {
+        &quot;format&quot;: &quot;uint&quot;,
+        &quot;minimum&quot;: 0,
+        &quot;type&quot;: &quot;integer&quot;
+      },
+      &quot;description&quot;: &quot;The covered checkouts `boards` does not list, counted by standing (`absent`, `stale`):\nno server, nobody attached, no board.&quot;,
+      &quot;type&quot;: &quot;object&quot;
     },
     &quot;present&quot;: {
+      &quot;description&quot;: &quot;How many workers are here now: attached to a board or in an active mesh session.&quot;,
       &quot;format&quot;: &quot;uint&quot;,
       &quot;minimum&quot;: 0,
-      &quot;description&quot;: &quot;How many workers are here now: attached to a board or in an active mesh session.&quot;,
       &quot;type&quot;: &quot;integer&quot;
     },
     &quot;relations&quot;: {
-      &quot;type&quot;: &quot;array&quot;,
       &quot;description&quot;: &quot;The typed relations between workers.&quot;,
       &quot;items&quot;: {
         &quot;$ref&quot;: &quot;#/$defs/BlackboardRelation&quot;
-      }
+      },
+      &quot;type&quot;: &quot;array&quot;
+    },
+    &quot;reviews&quot;: {
+      &quot;description&quot;: &quot;The review requests nobody has answered, at most fifty.&quot;,
+      &quot;items&quot;: {
+        &quot;$ref&quot;: &quot;#/$defs/BlackboardReview&quot;
+      },
+      &quot;type&quot;: &quot;array&quot;
     },
     &quot;signals&quot;: {
+      &quot;description&quot;: &quot;The newest signals of the last hour, oldest first.&quot;,
       &quot;items&quot;: {
         &quot;$ref&quot;: &quot;#/$defs/MonitorSignal&quot;
       },
-      &quot;type&quot;: &quot;array&quot;,
-      &quot;description&quot;: &quot;The newest signals of the last hour, oldest first.&quot;
-    },
-    &quot;workers&quot;: {
-      &quot;items&quot;: {
-        &quot;$ref&quot;: &quot;#/$defs/BlackboardWorker&quot;
-      },
-      &quot;type&quot;: &quot;array&quot;,
-      &quot;description&quot;: &quot;Every worker, this checkout&#39;s board first, then the other boards, then the mesh.&quot;
+      &quot;type&quot;: &quot;array&quot;
     },
     &quot;sources&quot;: {
       &quot;description&quot;: &quot;Each source and how it was read.&quot;,
@@ -1307,28 +1323,12 @@ no server, nobody attached, no board.</td>
       },
       &quot;type&quot;: &quot;array&quot;
     },
-    &quot;reviews&quot;: {
-      &quot;description&quot;: &quot;The review requests nobody has answered, at most fifty.&quot;,
-      &quot;type&quot;: &quot;array&quot;,
+    &quot;workers&quot;: {
+      &quot;description&quot;: &quot;Every worker, this checkout&#39;s board first, then the other boards, then the mesh.&quot;,
       &quot;items&quot;: {
-        &quot;$ref&quot;: &quot;#/$defs/BlackboardReview&quot;
-      }
-    },
-    &quot;omitted&quot;: {
-      &quot;additionalProperties&quot;: {
-        &quot;type&quot;: &quot;integer&quot;,
-        &quot;format&quot;: &quot;uint&quot;,
-        &quot;minimum&quot;: 0
+        &quot;$ref&quot;: &quot;#/$defs/BlackboardWorker&quot;
       },
-      &quot;description&quot;: &quot;The covered checkouts `boards` does not list, counted by standing (`absent`, `stale`):\nno server, nobody attached, no board.&quot;,
-      &quot;type&quot;: &quot;object&quot;
-    },
-    &quot;boards&quot;: {
-      &quot;description&quot;: &quot;Each checkout&#39;s board the summary lists: reached or not, with a server or a worker.&quot;,
-      &quot;type&quot;: &quot;array&quot;,
-      &quot;items&quot;: {
-        &quot;$ref&quot;: &quot;#/$defs/BoardView&quot;
-      }
+      &quot;type&quot;: &quot;array&quot;
     }
   },
   &quot;required&quot;: [
@@ -1349,8 +1349,8 @@ no server, nobody attached, no board.</td>
     &quot;for_you&quot;,
     &quot;cursor&quot;
   ],
-  &quot;description&quot;: &quot;The answer of `blackboard.snapshot`: who works on what in this repository, on every board\nand every linked machine, with what meets and what waits, read once from the records that\nknow it.&quot;,
-  &quot;title&quot;: &quot;Blackboard&quot;
+  &quot;title&quot;: &quot;Blackboard&quot;,
+  &quot;type&quot;: &quot;object&quot;
 }</pre></div>
   </details>
 </div>
@@ -1381,7 +1381,7 @@ no server, nobody attached, no board.</td>
         <div><dt class="text-body-subtle">Rust module</dt><dd class="min-w-0 break-all font-mono text-heading">majordomus_cli::capability::builtin::blackboard</dd></div>
         <div><dt class="text-body-subtle">input type</dt><dd class="font-mono text-heading">BlackboardInput</dd></div>
         <div><dt class="text-body-subtle">output type</dt><dd class="font-mono text-heading">Blackboard</dd></div>
-        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/docs/generated/modules/blackboard.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/blackboard.md</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">3f734f2faf797f0ca7c39b4cd837e68b6619c41c6f6711f3d3aeca8f341934eb</dd></div>
+        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/1112bace3437ee0d82067b1e8f61813e70190078/docs/generated/modules/blackboard.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/blackboard.md</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">5cdbf22cd21589ddbe464d5f0987b6bcf4607d05479004d6f815c3b306fdb08a</dd></div>
         <div><dt class="text-body-subtle">generated by</dt><dd class="font-mono text-heading">majordomus-cli 1.0.0-alpha.10</dd></div>
       </dl>
     </div>
@@ -1437,9 +1437,9 @@ no server, nobody attached, no board.</td>
       <div class="min-w-0">
         <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">Project</h2><ul class="space-y-2 text-sm font-medium text-body">
           <li><a href="https://github.com/korczis/prismatic-majordomus" class="hover:text-heading hover:underline">GitHub</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/LICENSE" class="hover:text-heading hover:underline">MIT licence</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/SECURITY.md" class="hover:text-heading hover:underline">Security policy</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/CONTRIBUTING.md" class="hover:text-heading hover:underline">Contributing guide</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/1112bace3437ee0d82067b1e8f61813e70190078/LICENSE" class="hover:text-heading hover:underline">MIT licence</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/1112bace3437ee0d82067b1e8f61813e70190078/SECURITY.md" class="hover:text-heading hover:underline">Security policy</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/1112bace3437ee0d82067b1e8f61813e70190078/CONTRIBUTING.md" class="hover:text-heading hover:underline">Contributing guide</a></li>
         </ul>
       </div>
     </div>
@@ -1447,7 +1447,7 @@ no server, nobody attached, no board.</td>
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.10</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/745db2ea21e02613943face75a2bf95542be1f2e" class="font-mono underline">745db2e</a> · inputs <span class="font-mono">0a58c217d1b7</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/architecture/" class="underline">how this site is derived</a> names them.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.10</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/1112bace3437ee0d82067b1e8f61813e70190078" class="font-mono underline">1112bac</a> · inputs <span class="font-mono">830f884cc5aa</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/architecture/" class="underline">how this site is derived</a> names them.</p>
     </div>
   </div>
 </footer>

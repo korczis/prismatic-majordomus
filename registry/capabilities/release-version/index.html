@@ -221,10 +221,10 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
   <h3 class="font-mono text-sm font-semibold text-heading">input · Empty</h3><div class="mt-1 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">No input.</div><p class="mt-2 text-sm text-body-subtle">No properties: the capability takes no input.</p><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
+  &quot;additionalProperties&quot;: false,
   &quot;description&quot;: &quot;No input.&quot;,
   &quot;title&quot;: &quot;Empty&quot;,
-  &quot;type&quot;: &quot;object&quot;,
-  &quot;additionalProperties&quot;: false
+  &quot;type&quot;: &quot;object&quot;
 }</pre></div>
   </details>
 </div>
@@ -240,22 +240,6 @@ one function <code>release bump</code> also takes its default target from.</div>
     <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
       <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
       <tbody><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">declared</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The version the crate manifest declares — the one place it is authored.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">tool</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The version <code>bin/majordomus</code> prints: what its projection, <code>share/version.txt</code>, states.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">commits_imply</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The version that bump would produce from the last release (from the declared version
-when nothing was released yet). Evidence only, even when the contract cannot answer.</td>
-      </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">agree</td>
         <td class="px-3 py-2 font-mono text-xs text-body">boolean</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
@@ -276,6 +260,12 @@ disagree.</td>
         <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">How many commits since the last release, and of what kind — the evidence for the
 bump, so that a surprising answer can be checked rather than believed.</td>
       </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">commits_imply</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The version that bump would produce from the last release (from the declared version
+when nothing was released yet). Evidence only, even when the contract cannot answer.</td>
+      </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">contract_unreadable</td>
         <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
         <td class="px-3 py-2 font-mono text-xs text-body">no</td>
@@ -285,6 +275,11 @@ bump, so that a surprising answer can be checked rather than believed.</td>
         <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
         <td class="px-3 py-2 font-mono text-xs text-body">no</td>
         <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Who answered <code>next</code>. <span class="font-mono text-xs text-body-subtle">default &quot;undecided&quot;</span></td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">declared</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The version the crate manifest declares — the one place it is authored.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">last_release</td>
         <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
@@ -301,34 +296,88 @@ declared version when that already satisfies it, otherwise the smallest one it a
 — and, when that is the last release itself, the smallest release above it. Absent
 when nothing would be released, and when the contract could not be measured
 (<code>decided_by: undecided</code>): an unmeasurable baseline is refused, not guessed.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">tool</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The version <code>bin/majordomus</code> prints: what its projection, <code>share/version.txt</code>, states.</td>
       </tr></tbody>
     </table>
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
   &quot;$defs&quot;: {
+    &quot;ReleaseChange&quot;: {
+      &quot;description&quot;: &quot;One change, from one commit.&quot;,
+      &quot;properties&quot;: {
+        &quot;breaking&quot;: {
+          &quot;description&quot;: &quot;Whether the commit marked itself breaking, with `!` or a `BREAKING CHANGE:` trailer.&quot;,
+          &quot;type&quot;: &quot;boolean&quot;
+        },
+        &quot;commit&quot;: {
+          &quot;description&quot;: &quot;The abbreviated commit.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;kind&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/ReleaseChangeKind&quot;,
+          &quot;description&quot;: &quot;What it did.&quot;
+        },
+        &quot;references&quot;: {
+          &quot;description&quot;: &quot;The records of the layer this commit names — issues, milestones — resolved against\nwhat the layer actually holds.&quot;,
+          &quot;items&quot;: {
+            &quot;$ref&quot;: &quot;#/$defs/ReleaseReference&quot;
+          },
+          &quot;type&quot;: &quot;array&quot;
+        },
+        &quot;scope&quot;: {
+          &quot;description&quot;: &quot;The area it did it in, when the subject named one: `commands`, `ci`, `site`.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;subject&quot;: {
+          &quot;description&quot;: &quot;The subject, without the type and scope that prefixed it.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;url&quot;: {
+          &quot;description&quot;: &quot;Where that commit can be read, when the repository&#39;s own URL is known. Derived from\n`about::REPOSITORY`, never written beside each entry.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        }
+      },
+      &quot;required&quot;: [
+        &quot;kind&quot;,
+        &quot;subject&quot;,
+        &quot;breaking&quot;,
+        &quot;commit&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    },
     &quot;ReleaseChangeKind&quot;: {
       &quot;description&quot;: &quot;What a conventional commit says it did.\n\nThe set is the one the repository&#39;s own commit convention uses; a commit whose subject\ndoes not parse is `ChangeKind::Other` and still appears, because a changelog that\nsilently drops what it cannot classify is a changelog that lies by omission.&quot;,
       &quot;oneOf&quot;: [
         {
-          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;feat&quot;,
           &quot;description&quot;: &quot;A capability a person did not have before.&quot;,
-          &quot;const&quot;: &quot;feat&quot;
+          &quot;type&quot;: &quot;string&quot;
         },
         {
+          &quot;const&quot;: &quot;fix&quot;,
           &quot;description&quot;: &quot;Behaviour that was wrong and is not any more.&quot;,
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;const&quot;: &quot;fix&quot;
+          &quot;type&quot;: &quot;string&quot;
         },
         {
           &quot;const&quot;: &quot;perf&quot;,
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;Performance, with the behaviour unchanged.&quot;
+          &quot;description&quot;: &quot;Performance, with the behaviour unchanged.&quot;,
+          &quot;type&quot;: &quot;string&quot;
         },
         {
           &quot;const&quot;: &quot;refactor&quot;,
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;Structure, with the behaviour unchanged.&quot;
+          &quot;description&quot;: &quot;Structure, with the behaviour unchanged.&quot;,
+          &quot;type&quot;: &quot;string&quot;
         },
         {
           &quot;const&quot;: &quot;docs&quot;,
@@ -336,9 +385,9 @@ when nothing would be released, and when the contract could not be measured
           &quot;type&quot;: &quot;string&quot;
         },
         {
-          &quot;type&quot;: &quot;string&quot;,
           &quot;const&quot;: &quot;test&quot;,
-          &quot;description&quot;: &quot;Tests.&quot;
+          &quot;description&quot;: &quot;Tests.&quot;,
+          &quot;type&quot;: &quot;string&quot;
         },
         {
           &quot;const&quot;: &quot;chore&quot;,
@@ -346,46 +395,48 @@ when nothing would be released, and when the contract could not be measured
           &quot;type&quot;: &quot;string&quot;
         },
         {
+          &quot;const&quot;: &quot;ci&quot;,
           &quot;description&quot;: &quot;Continuous integration.&quot;,
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;const&quot;: &quot;ci&quot;
+          &quot;type&quot;: &quot;string&quot;
         },
         {
-          &quot;description&quot;: &quot;Formatting, with the behaviour unchanged.&quot;,
           &quot;const&quot;: &quot;style&quot;,
+          &quot;description&quot;: &quot;Formatting, with the behaviour unchanged.&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
         {
           &quot;const&quot;: &quot;build&quot;,
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;The build system or its dependencies.&quot;
-        },
-        {
-          &quot;description&quot;: &quot;A change that undoes another.&quot;,
-          &quot;const&quot;: &quot;revert&quot;,
+          &quot;description&quot;: &quot;The build system or its dependencies.&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
         {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;An integration: one line of work brought into another.\n\nNot in the conventional-commit specification, and in this repository&#39;s history 38\ntimes and counting, because integration here is a deliberate act with a subject\nsomebody writes — `merge: bring origin/master into feature/x` — and not the sentence\n`git merge` composes. Declaring it is what lets the validator hold those subjects to\nthe same width and the same references as every other commit, instead of either\nrefusing a convention this project practises or exempting it from being checked at\nall. The changelog never renders it: `commits::in_range` reads the log with\n`--no-merges`, so a merge commit is not a release entry however its subject is\nspelled.&quot;,
-          &quot;const&quot;: &quot;merge&quot;
+          &quot;const&quot;: &quot;revert&quot;,
+          &quot;description&quot;: &quot;A change that undoes another.&quot;,
+          &quot;type&quot;: &quot;string&quot;
         },
         {
+          &quot;const&quot;: &quot;merge&quot;,
+          &quot;description&quot;: &quot;An integration: one line of work brought into another.\n\nNot in the conventional-commit specification, and in this repository&#39;s history 38\ntimes and counting, because integration here is a deliberate act with a subject\nsomebody writes — `merge: bring origin/master into feature/x` — and not the sentence\n`git merge` composes. Declaring it is what lets the validator hold those subjects to\nthe same width and the same references as every other commit, instead of either\nrefusing a convention this project practises or exempting it from being checked at\nall. The changelog never renders it: `commits::in_range` reads the log with\n`--no-merges`, so a merge commit is not a release entry however its subject is\nspelled.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;other&quot;,
           &quot;description&quot;: &quot;A commit whose subject does not parse as a conventional commit.&quot;,
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;const&quot;: &quot;other&quot;
+          &quot;type&quot;: &quot;string&quot;
         }
       ]
     },
     &quot;ReleaseReference&quot;: {
       &quot;description&quot;: &quot;A record of the layer that a commit names in its own text.\n\nInferred, never declared beside the commit: an issue id or a milestone id appearing in a\nsubject or a body is a reference, and the layer already holds the object it refers to. A\nreference to something the layer does not have is not carried — a link to a record that\ndoes not exist is worse than no link, because the reader cannot tell until they follow it.\n\n```\nuse majordomus_cli::release::model::Reference;\nlet r = Reference {\n    kind: \&quot;issue\&quot;.into(),\n    id: \&quot;I1305\&quot;.into(),\n    title: \&quot;An observed contract has a fingerprint\&quot;.into(),\n    route: Some(\&quot;/plan/i1305/\&quot;.into()),\n};\nlet json = serde_json::to_value(&amp;r).unwrap();\nassert_eq!(json[\&quot;id\&quot;], \&quot;I1305\&quot;);\nassert_eq!(json[\&quot;route\&quot;], \&quot;/plan/i1305/\&quot;);\n// a reference the site has no page for carries no route rather than an invented one\nlet bare = Reference { route: None, ..r };\nassert!(serde_json::to_value(&amp;bare).unwrap().get(\&quot;route\&quot;).is_none());\n```&quot;,
-      &quot;type&quot;: &quot;object&quot;,
-      &quot;required&quot;: [
-        &quot;kind&quot;,
-        &quot;id&quot;,
-        &quot;title&quot;
-      ],
       &quot;properties&quot;: {
+        &quot;id&quot;: {
+          &quot;description&quot;: &quot;`I1305`, `M000`.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;kind&quot;: {
+          &quot;description&quot;: &quot;`issue` or `milestone`.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
         &quot;route&quot;: {
           &quot;description&quot;: &quot;Where it is published on this site, when it has a page.&quot;,
           &quot;type&quot;: [
@@ -393,142 +444,78 @@ when nothing would be released, and when the contract could not be measured
             &quot;null&quot;
           ]
         },
-        &quot;kind&quot;: {
-          &quot;description&quot;: &quot;`issue` or `milestone`.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
         &quot;title&quot;: {
           &quot;description&quot;: &quot;What it is, from the record itself.&quot;,
           &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;id&quot;: {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;`I1305`, `M000`.&quot;
-        }
-      }
-    },
-    &quot;ReleaseChange&quot;: {
-      &quot;type&quot;: &quot;object&quot;,
-      &quot;properties&quot;: {
-        &quot;kind&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/ReleaseChangeKind&quot;,
-          &quot;description&quot;: &quot;What it did.&quot;
-        },
-        &quot;scope&quot;: {
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ],
-          &quot;description&quot;: &quot;The area it did it in, when the subject named one: `commands`, `ci`, `site`.&quot;
-        },
-        &quot;subject&quot;: {
-          &quot;description&quot;: &quot;The subject, without the type and scope that prefixed it.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;url&quot;: {
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ],
-          &quot;description&quot;: &quot;Where that commit can be read, when the repository&#39;s own URL is known. Derived from\n`about::REPOSITORY`, never written beside each entry.&quot;
-        },
-        &quot;breaking&quot;: {
-          &quot;description&quot;: &quot;Whether the commit marked itself breaking, with `!` or a `BREAKING CHANGE:` trailer.&quot;,
-          &quot;type&quot;: &quot;boolean&quot;
-        },
-        &quot;commit&quot;: {
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;The abbreviated commit.&quot;
-        },
-        &quot;references&quot;: {
-          &quot;items&quot;: {
-            &quot;$ref&quot;: &quot;#/$defs/ReleaseReference&quot;
-          },
-          &quot;description&quot;: &quot;The records of the layer this commit names — issues, milestones — resolved against\nwhat the layer actually holds.&quot;,
-          &quot;type&quot;: &quot;array&quot;
         }
       },
-      &quot;description&quot;: &quot;One change, from one commit.&quot;,
       &quot;required&quot;: [
         &quot;kind&quot;,
-        &quot;subject&quot;,
-        &quot;breaking&quot;,
-        &quot;commit&quot;
-      ]
+        &quot;id&quot;,
+        &quot;title&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
     },
     &quot;ReleaseVersionDecidedBy&quot;: {
+      &quot;description&quot;: &quot;Who answered a version report&#39;s `next`: the public contract, the contract with the\ncommits — or no one, because the contract could not be measured.\n\nADR 0051 makes the contract the authority and demotes conventional commits to evidence,\nso `DecidedBy::Contract` is the normal answer. An unmeasurable contract is refused, not\nguessed: `DecidedBy::Undecided` leaves `next` absent and carries the reason, and the\ncommit inference stays what it always is, evidence — never the answer in its place.\n\n```\nuse majordomus_cli::release::model::DecidedBy;\nassert_eq!(serde_json::to_value(DecidedBy::Contract).unwrap(), \&quot;contract\&quot;);\nassert_eq!(DecidedBy::Undecided.as_str(), \&quot;undecided\&quot;);\nassert_eq!(DecidedBy::default(), DecidedBy::Undecided);\n```&quot;,
       &quot;oneOf&quot;: [
         {
           &quot;const&quot;: &quot;contract&quot;,
-          &quot;type&quot;: &quot;string&quot;,
-          &quot;description&quot;: &quot;`release analyze` measured the public contract against the last release, and `next`\nis the version it requires: the declared version when that already satisfies the\ncontract, otherwise the smallest one it allows.&quot;
+          &quot;description&quot;: &quot;`release analyze` measured the public contract against the last release, and `next`\nis the version it requires: the declared version when that already satisfies the\ncontract, otherwise the smallest one it allows.&quot;,
+          &quot;type&quot;: &quot;string&quot;
         },
         {
-          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;contract_and_commits&quot;,
           &quot;description&quot;: &quot;The contract was measured and requires no release over the last one — only behaviour\nbehind the public boundary changed — while the commits carry changes: `next` is the\nsmallest release above the last, a patch, however much the commit subjects claim.&quot;,
-          &quot;const&quot;: &quot;contract_and_commits&quot;
+          &quot;type&quot;: &quot;string&quot;
         },
         {
-          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;undecided&quot;,
           &quot;description&quot;: &quot;The contract could not be measured — no published baseline carries a registry, or a\nversion is not three numbers — so nothing decides `next`: it is absent, the reason is\nin `contract_unreadable`, and `release bump` without an explicit target refuses.&quot;,
-          &quot;const&quot;: &quot;undecided&quot;
+          &quot;type&quot;: &quot;string&quot;
         }
-      ],
-      &quot;description&quot;: &quot;Who answered a version report&#39;s `next`: the public contract, the contract with the\ncommits — or no one, because the contract could not be measured.\n\nADR 0051 makes the contract the authority and demotes conventional commits to evidence,\nso `DecidedBy::Contract` is the normal answer. An unmeasurable contract is refused, not\nguessed: `DecidedBy::Undecided` leaves `next` absent and carries the reason, and the\ncommit inference stays what it always is, evidence — never the answer in its place.\n\n```\nuse majordomus_cli::release::model::DecidedBy;\nassert_eq!(serde_json::to_value(DecidedBy::Contract).unwrap(), \&quot;contract\&quot;);\nassert_eq!(DecidedBy::Undecided.as_str(), \&quot;undecided\&quot;);\nassert_eq!(DecidedBy::default(), DecidedBy::Undecided);\n```&quot;
+      ]
     }
   },
   &quot;description&quot;: &quot;What the version is, what the public contract requires it to become, and what the\ncommits since the last release say about themselves.\n\n`next` is the contract&#39;s answer (ADR 0051): the analysis&#39; `required_version`, or the\nsmallest release above the last when that requirement is the last release itself. The\ncommit inference is evidence — `bump` and `commits_imply` — and never the answer: when the\ncontract cannot be measured `next` is absent, `decided_by` is `undecided` and\n`contract_unreadable` says why. The selection is `crate::release::version::select`, the\none function `release bump` also takes its default target from.&quot;,
-  &quot;required&quot;: [
-    &quot;declared&quot;,
-    &quot;tool&quot;,
-    &quot;agree&quot;,
-    &quot;bump&quot;,
-    &quot;changes&quot;
-  ],
-  &quot;title&quot;: &quot;ReleaseVersionReport&quot;,
-  &quot;type&quot;: &quot;object&quot;,
   &quot;properties&quot;: {
-    &quot;declared&quot;: {
-      &quot;description&quot;: &quot;The version the crate manifest declares — the one place it is authored.&quot;,
-      &quot;type&quot;: &quot;string&quot;
-    },
-    &quot;tool&quot;: {
-      &quot;description&quot;: &quot;The version `bin/majordomus` prints: what its projection, `share/version.txt`, states.&quot;,
-      &quot;type&quot;: &quot;string&quot;
-    },
-    &quot;commits_imply&quot;: {
-      &quot;type&quot;: [
-        &quot;string&quot;,
-        &quot;null&quot;
-      ],
-      &quot;description&quot;: &quot;The version that bump would produce from the last release (from the declared version\nwhen nothing was released yet). Evidence only, even when the contract cannot answer.&quot;
-    },
     &quot;agree&quot;: {
-      &quot;type&quot;: &quot;boolean&quot;,
-      &quot;description&quot;: &quot;Whether that projection is current. `generate --check` refuses a stale one and\n`scripts/release-version --check` proves the tool prints it; this is the same question\nasked by the executable, so every surface can show the answer.&quot;
+      &quot;description&quot;: &quot;Whether that projection is current. `generate --check` refuses a stale one and\n`scripts/release-version --check` proves the tool prints it; this is the same question\nasked by the executable, so every surface can show the answer.&quot;,
+      &quot;type&quot;: &quot;boolean&quot;
     },
     &quot;bump&quot;: {
-      &quot;type&quot;: &quot;string&quot;,
-      &quot;description&quot;: &quot;What the commit subjects since it imply: `major`, `minor`, `patch`, or `none`.\nEvidence only — the contract decides `next`; `release analyze` reports where the two\ndisagree.&quot;
+      &quot;description&quot;: &quot;What the commit subjects since it imply: `major`, `minor`, `patch`, or `none`.\nEvidence only — the contract decides `next`; `release analyze` reports where the two\ndisagree.&quot;,
+      &quot;type&quot;: &quot;string&quot;
     },
     &quot;changes&quot;: {
       &quot;description&quot;: &quot;How many commits since the last release, and of what kind — the evidence for the\nbump, so that a surprising answer can be checked rather than believed.&quot;,
-      &quot;type&quot;: &quot;array&quot;,
       &quot;items&quot;: {
         &quot;$ref&quot;: &quot;#/$defs/ReleaseChange&quot;
-      }
+      },
+      &quot;type&quot;: &quot;array&quot;
     },
-    &quot;contract_unreadable&quot;: {
+    &quot;commits_imply&quot;: {
+      &quot;description&quot;: &quot;The version that bump would produce from the last release (from the declared version\nwhen nothing was released yet). Evidence only, even when the contract cannot answer.&quot;,
       &quot;type&quot;: [
         &quot;string&quot;,
         &quot;null&quot;
-      ],
-      &quot;description&quot;: &quot;Why the contract could not answer, when `decided_by` is `undecided`.&quot;
+      ]
+    },
+    &quot;contract_unreadable&quot;: {
+      &quot;description&quot;: &quot;Why the contract could not answer, when `decided_by` is `undecided`.&quot;,
+      &quot;type&quot;: [
+        &quot;string&quot;,
+        &quot;null&quot;
+      ]
     },
     &quot;decided_by&quot;: {
       &quot;$ref&quot;: &quot;#/$defs/ReleaseVersionDecidedBy&quot;,
-      &quot;description&quot;: &quot;Who answered `next`.&quot;,
-      &quot;default&quot;: &quot;undecided&quot;
+      &quot;default&quot;: &quot;undecided&quot;,
+      &quot;description&quot;: &quot;Who answered `next`.&quot;
+    },
+    &quot;declared&quot;: {
+      &quot;description&quot;: &quot;The version the crate manifest declares — the one place it is authored.&quot;,
+      &quot;type&quot;: &quot;string&quot;
     },
     &quot;last_release&quot;: {
       &quot;description&quot;: &quot;The last release: the highest version the layer records (the newest version tag when\nit records none) — the baseline `release analyze` measures the contract from, so the\ncontract and the commit evidence describe one window.&quot;,
@@ -543,8 +530,21 @@ when nothing would be released, and when the contract could not be measured
         &quot;string&quot;,
         &quot;null&quot;
       ]
+    },
+    &quot;tool&quot;: {
+      &quot;description&quot;: &quot;The version `bin/majordomus` prints: what its projection, `share/version.txt`, states.&quot;,
+      &quot;type&quot;: &quot;string&quot;
     }
-  }
+  },
+  &quot;required&quot;: [
+    &quot;declared&quot;,
+    &quot;tool&quot;,
+    &quot;agree&quot;,
+    &quot;bump&quot;,
+    &quot;changes&quot;
+  ],
+  &quot;title&quot;: &quot;ReleaseVersionReport&quot;,
+  &quot;type&quot;: &quot;object&quot;
 }</pre></div>
   </details>
 </div>
@@ -575,7 +575,7 @@ when nothing would be released, and when the contract could not be measured
         <div><dt class="text-body-subtle">Rust module</dt><dd class="min-w-0 break-all font-mono text-heading">majordomus_cli::capability::builtin::release</dd></div>
         <div><dt class="text-body-subtle">input type</dt><dd class="font-mono text-heading">Empty</dd></div>
         <div><dt class="text-body-subtle">output type</dt><dd class="font-mono text-heading">ReleaseVersionReport</dd></div>
-        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/docs/generated/modules/release.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/release.md</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">3f734f2faf797f0ca7c39b4cd837e68b6619c41c6f6711f3d3aeca8f341934eb</dd></div>
+        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/1112bace3437ee0d82067b1e8f61813e70190078/docs/generated/modules/release.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/release.md</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">5cdbf22cd21589ddbe464d5f0987b6bcf4607d05479004d6f815c3b306fdb08a</dd></div>
         <div><dt class="text-body-subtle">generated by</dt><dd class="font-mono text-heading">majordomus-cli 1.0.0-alpha.10</dd></div>
       </dl>
     </div>
@@ -631,9 +631,9 @@ when nothing would be released, and when the contract could not be measured
       <div class="min-w-0">
         <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">Project</h2><ul class="space-y-2 text-sm font-medium text-body">
           <li><a href="https://github.com/korczis/prismatic-majordomus" class="hover:text-heading hover:underline">GitHub</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/LICENSE" class="hover:text-heading hover:underline">MIT licence</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/SECURITY.md" class="hover:text-heading hover:underline">Security policy</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/CONTRIBUTING.md" class="hover:text-heading hover:underline">Contributing guide</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/1112bace3437ee0d82067b1e8f61813e70190078/LICENSE" class="hover:text-heading hover:underline">MIT licence</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/1112bace3437ee0d82067b1e8f61813e70190078/SECURITY.md" class="hover:text-heading hover:underline">Security policy</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/1112bace3437ee0d82067b1e8f61813e70190078/CONTRIBUTING.md" class="hover:text-heading hover:underline">Contributing guide</a></li>
         </ul>
       </div>
     </div>
@@ -641,7 +641,7 @@ when nothing would be released, and when the contract could not be measured
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.10</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/745db2ea21e02613943face75a2bf95542be1f2e" class="font-mono underline">745db2e</a> · inputs <span class="font-mono">0a58c217d1b7</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/architecture/" class="underline">how this site is derived</a> names them.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.10</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/1112bace3437ee0d82067b1e8f61813e70190078" class="font-mono underline">1112bac</a> · inputs <span class="font-mono">830f884cc5aa</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/architecture/" class="underline">how this site is derived</a> names them.</p>
     </div>
   </div>
 </footer>
