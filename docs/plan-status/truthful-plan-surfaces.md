@@ -352,3 +352,4 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I4315` | shares docs/MAJORDOMUS_UI.md with I4494; they may not run concurrently |
 | WARN | `scope_conflict` | `I4315` | shares docs/MAJORDOMUS_UI.md with I4495; they may not run concurrently |
 | WARN | `scope_conflict` | `I4315` | shares .ai/repo/adrs with I4500; they may not run concurrently |
+| WARN | `scope_conflict` | `I4315` | shares .github/workflows/pages.yml with I4530; they may not run concurrently |

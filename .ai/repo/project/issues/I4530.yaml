@@ -1,0 +1,40 @@
+id: I4530
+milestone: a-visitor-understands-and-checks-majordomus
+title: "The live site is probed in a real browser after every deploy and release, and the deploy is held to what it shows"
+slug: the-live-site-is-probed-in-a-real-browser
+priority: p0
+profile: implementation
+parallel_safe: true
+objective: "scripts/release-probe renders the published homepage in Chromium with its cache bypassed and holds it to what was published: the trust strip's data-release, /releases/latest.json and GitHub's newest release name one version and the navbar badge names it; the hero names the newest published pre-release ahead of it and no other; the footer names /build.json's commit; with --expect, the tag just published is GitHub's newest and the page names it. It writes a screenshot and result.json, runs in the pages deploy after `the release it offers` and in release.yml after publish with the screenshot as the run's artifact, and the deploy and release skills end with it."
+why: "On 2026-11-06 the owner read majordomus.dev and saw the hero name 1.0.0-alpha.9 hours after 1.0.0-alpha.10 was published, while every check was green. The only live reading was scripts/pages release-live: curl and sed over the stable channel, inside the pages deploy only; nothing rendered the page, nothing read the hero or the footer, and nothing ran after a release. A release that a person cannot see on the site is not released (project.the-site-offers-the-release-it-published)."
+current_state: "Measured at 1112bace343: scripts/pages release-live compares data-release, /build.json and /releases/latest.json with GitHub's latest non-pre-release by curl, in pages.yml's deploy job only; release.yml's smoke matrix waits for releases/<tag>.json with curl; no step renders the page, reads the hero's data-prerelease, the navbar badge or the footer's commit, or keeps a picture of what was served. Evidence, 2026-11-06T21:35Z, scripts/release-probe --expect v1.0.0-alpha.10 against https://majordomus.dev/ right after master's push deploy 42275718101 (1112bace343) republished the site: trust strip 0.30.2 = /releases/latest.json = GitHub v0.30.2, footer 1112bace343 = /build.json, and FAIL the hero names the pre-release 1.0.0-alpha.9 while the newest published pre-release ahead of 0.30.2 is v1.0.0-alpha.10 (the trust strip the same; the superseded 1.0.0-alpha.9 named on the hero; the page names 1.0.0-alpha.9 where v1.0.0-alpha.10 was published): exit 10. The same probe read ok at 21:15Z while the alpha.10 record's preview (745db2e) was served. The pages named the superseded pre-release because site-build reads pre-releases from the tree's records only (I4531)."
+desired_state: "scripts/release-probe (Playwright from node_modules through scripts/lib/browser.mjs, CHROME_BIN honoured, SKIP without a browser outside CI and 12 under it) reads the page as a browser renders it and exits 0 when the homepage, its JSON and GitHub agree, 10 naming both sides of each disagreement, 12 when a surface could not be read; --public serves a built directory at the site's origin and --github reads the releases from a file, so a case proves it without the network; pages.yml's deploy runs it after `the release it offers` and uploads home.png and result.json; release.yml runs it in a `live` job after publish with --expect <tag>; .ai/repo/skills/deploy-site and integrator end a hand deploy and a release with the probe and its screenshot."
+scope:
+  - "scripts/release-probe"
+  - ".github/workflows/pages.yml"
+  - ".github/workflows/release.yml"
+  - "test/cases/4563_the_live_site_is_probed_in_a_real_browser.sh"
+  - ".ai/repo/skills/deploy-site/SKILL.md"
+  - ".ai/repo/skills/integrator/SKILL.md"
+  - ".ai/repo/project/issues/I4530.yaml"
+non_scope:
+  - "Why the pages name a superseded pre-release between a release and the landing of its record (root cause A, I4531: scripts/site-build's release_prerelease reads the tree's records only)"
+  - "scripts/pages release-live, which keeps its curl reading of the stable channel"
+  - "pages-check's live section, which reads the served commit and stays as it is"
+acceptance_criteria:
+  - "Over a fixture served at the site's origin with GitHub answered from a file: a page that agrees passes and home.png and result.json are written; a hero naming a superseded pre-release, a footer naming another commit than /build.json, a trust strip behind /releases/latest.json and --expect of an unpublished tag are each refused naming both sides; an unreadable GitHub listing is not determined (12), never a pass; a draft release is never counted as published"
+  - "pages.yml's deploy job runs the probe after `the release it offers` and uploads its directory as an artifact; the job's bound still exceeds the sum of its steps' (case 26)"
+  - "release.yml has a job after publish that runs the probe with --expect <tag> and uploads the artifact"
+  - "The deploy-site and integrator skills end a hand deploy and a release with the probe's verdict and screenshot"
+  - "Against https://majordomus.dev/ the probe reads the trust strip, the navbar badge, the hero's pre-release, the footer commit, /releases/latest.json, /build.json and GitHub, and its verdict and screenshot are recorded in the pull request"
+validation:
+  - "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 4563_the_live_site_is_probed_in_a_real_browser"
+  - "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 26_ci_wiring 08_no_forbidden_constructs"
+  - "scripts/release-probe --out target/release-probe"
+evidence_required:
+  - "the_live_site_is_probed_in_a_real_browser"
+depends_on: []
+created_at: 2026-11-06
+updated_at: 2026-11-06T21:27:47Z
+started_at: 2026-11-06T21:27:47Z
+started_event: sha256:082b9de8ba8055b6859ca03d077bfce63538d0c50216918d4f988086afa825b9

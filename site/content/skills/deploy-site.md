@@ -115,6 +115,21 @@ its snapshot names that commit and every page it lists answers;
 `scripts/pages verify-ui --surface cockpit --commit "$(git rev-parse HEAD)"` asks it of the
 Cockpit.
 
+Then the page as a person sees it, in a real browser, held to what was published:
+
+```bash
+scripts/release-probe --wait 120 --out target/release-probe     # exit 0 agree, 10 a disagreement, 12 unread
+```
+
+It renders the homepage in Chromium with the cache bypassed and holds it to the facts: the trust
+strip's release, the navbar badge, `/releases/latest.json` and GitHub's newest release name one
+version; the hero names the newest published pre-release ahead of it and no other; the footer
+names `/build.json`'s commit. It writes `home.png` and `result.json` under `--out`. A hand
+deploy is not reported until this says `ok`, and the report carries its lines and the
+screenshot; a `FAIL` line names both sides, and the source — not the output — is what gets
+fixed (I4530). Until 2026-11-06 the only live reading was curl over the stable channel, and the
+hero named a superseded pre-release for hours with every check green.
+
 Then open the page you changed.
 
 To read it the other way — you are looking at the live site and want to know what it is —

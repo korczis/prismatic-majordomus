@@ -6,23 +6,23 @@
     "version": "1.0.0"
   },
   "registry": {
-    "fingerprint": "42bb75668bfcccbb5415475289bb87dfbba2cfed4186341ebf95cc9308aaa049",
+    "fingerprint": "e425e75bf8e414751070b6b4feffa8107a09b1fd1b51133aafeb5f9491db5ee7",
     "summary": {
-      "total": 3922,
+      "total": 3924,
       "builtin": 231,
-      "declarative": 3691,
+      "declarative": 3693,
       "by_kind": {
         "command": 41,
         "query": 190,
-        "resource": 3691
+        "resource": 3693
       },
       "by_stability": {
         "behaviorally_verified": 153,
         "experimental": 68,
-        "implemented": 3701
+        "implemented": 3703
       },
       "mcp_tools": 215,
-      "mcp_resources": 3748,
+      "mcp_resources": 3750,
       "http_routes": 219,
       "cli_commands": 128,
       "modules": 96,
@@ -97172,7 +97172,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 1221,
+        "capabilities": 1222,
         "capability_ids": []
       },
       {
@@ -97785,7 +97785,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 695,
+        "capabilities": 696,
         "capability_ids": []
       },
       {
@@ -97878,7 +97878,7 @@
     ]
   },
   "index": {
-    "fingerprint": "89e2f9d49c837069c793cfe6b99e6718012cafc8f563256bdfb8d2d378767644",
+    "fingerprint": "48d7fef3cbf1635a5051cd31d946a943c39206721846f0b4d105b367c564739e",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -97918,7 +97918,7 @@
       "gap": 5,
       "implementation": 54,
       "intent": 45,
-      "issue": 1221,
+      "issue": 1222,
       "knowledge": 163,
       "mesh-declaration": 1,
       "milestone": 117,
@@ -97932,7 +97932,7 @@
       "session": 95,
       "skill": 10,
       "taxonomy": 10,
-      "test": 695,
+      "test": 696,
       "use-case": 49,
       "workspace": 1
     },
@@ -105475,7 +105475,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 132227
+        "bytes": 132234
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -122882,6 +122882,17 @@
         "bytes": 3705
       },
       {
+        "uri": "majordomus://issue/I4530",
+        "kind": "issue",
+        "identity": "I4530",
+        "title": "The live site is probed in a real browser after every deploy and release, and the deploy is held to what it shows",
+        "description": "scripts/release-probe renders the published homepage in Chromium with its cache bypassed and holds it to what was published: the trust strip's data-release, /releases/latest.json and GitHub's newest release name one version and the navbar badge names it; the hero names the newest published pre-release ahead of it and no other; the footer names /build.json's commit; with --expect, the tag just published is GitHub's newest and the page names it. It writes a screenshot and result.json, runs in the pages deploy after `the release it offers` and in release.yml after publish with the screenshot as the run's artifact, and the deploy and release skills end with it.",
+        "path": ".ai/repo/project/issues/I4530.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 5797
+      },
+      {
         "uri": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "identity": "a-brief-is-reconciled-not-transcribed",
@@ -131919,7 +131930,7 @@
         "path": ".ai/repo/skills/deploy-site/SKILL.md",
         "section": "skills",
         "source_class": "skill",
-        "bytes": 7121,
+        "bytes": 8149,
         "tags": [
           "site",
           "deploy",
@@ -131969,7 +131980,7 @@
         "path": ".ai/repo/skills/integrator/SKILL.md",
         "section": "skills",
         "source_class": "skill",
-        "bytes": 14444,
+        "bytes": 15382,
         "tags": [
           "integration",
           "landing",
@@ -135934,6 +135945,14 @@
         "bytes": 5446
       },
       {
+        "uri": "majordomus://test/test/cases/4563_the_live_site_is_probed_in_a_real_browser.sh",
+        "kind": "test",
+        "identity": "test/cases/4563_the_live_site_is_probed_in_a_real_browser.sh",
+        "path": "test/cases/4563_the_live_site_is_probed_in_a_real_browser.sh",
+        "source_class": "case",
+        "bytes": 6846
+      },
+      {
         "uri": "majordomus://test/test/cases/45_github_projection.sh",
         "kind": "test",
         "identity": "test/cases/45_github_projection.sh",
@@ -138456,7 +138475,7 @@
       "identity": [
         "id"
       ],
-      "objects": 1221
+      "objects": 1222
     },
     {
       "name": "knowledge",
@@ -138618,7 +138637,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 695
+      "objects": 696
     },
     {
       "name": "use-case",
