@@ -232,18 +232,18 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
   &quot;additionalProperties&quot;: false,
-  &quot;description&quot;: &quot;The input of `delivery.feature`: which feature.&quot;,
   &quot;properties&quot;: {
     &quot;id&quot;: {
       &quot;description&quot;: &quot;The feature&#39;s id, as `product.features` gives it.&quot;,
       &quot;type&quot;: &quot;string&quot;
     }
   },
+  &quot;title&quot;: &quot;DeliveryFeatureInput&quot;,
+  &quot;type&quot;: &quot;object&quot;,
+  &quot;description&quot;: &quot;The input of `delivery.feature`: which feature.&quot;,
   &quot;required&quot;: [
     &quot;id&quot;
-  ],
-  &quot;title&quot;: &quot;DeliveryFeatureInput&quot;,
-  &quot;type&quot;: &quot;object&quot;
+  ]
 }</pre></div>
   </details>
 </div>
@@ -252,31 +252,6 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
     <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
       <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
       <tbody><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">delivery</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Delivered, or the development stage and what blocks it.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">dimensions</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Every dimension, in the order of the conjunction.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">exists</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">boolean</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The conjunction: true only when every dimension passes.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">id</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The feature's id.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">implementation</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">What it is implemented by.</td>
-      </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">status</td>
         <td class="px-3 py-2 font-mono text-xs text-body">string</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
@@ -286,58 +261,73 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
         <td class="px-3 py-2 font-mono text-xs text-body">string</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
         <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Its title.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">delivery</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Delivered, or the development stage and what blocks it.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">id</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The feature's id.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">exists</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">boolean</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The conjunction: true only when every dimension passes.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">dimensions</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Every dimension, in the order of the conjunction.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">implementation</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">What it is implemented by.</td>
       </tr></tbody>
     </table>
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
-  &quot;$defs&quot;: {
-    &quot;DeliveryState&quot;: {
-      &quot;description&quot;: &quot;Delivered, or not — and when not, how far development got and which dimensions stand in\nthe way. Two variants of one type rather than a flag beside a stage: a delivered feature\nhas no stage to report, and a stage can never be read as delivery.&quot;,
-      &quot;oneOf&quot;: [
-        {
-          &quot;description&quot;: &quot;Every dimension passes.&quot;,
-          &quot;properties&quot;: {
-            &quot;state&quot;: {
-              &quot;const&quot;: &quot;delivered&quot;,
-              &quot;type&quot;: &quot;string&quot;
-            }
-          },
-          &quot;required&quot;: [
-            &quot;state&quot;
-          ],
-          &quot;type&quot;: &quot;object&quot;
-        },
-        {
-          &quot;description&quot;: &quot;At least one dimension does not pass.&quot;,
-          &quot;properties&quot;: {
-            &quot;blocking&quot;: {
-              &quot;description&quot;: &quot;The dimensions that do not pass, in the order of the conjunction.&quot;,
-              &quot;items&quot;: {
-                &quot;$ref&quot;: &quot;#/$defs/DimensionId&quot;
-              },
-              &quot;type&quot;: &quot;array&quot;
-            },
-            &quot;stage&quot;: {
-              &quot;$ref&quot;: &quot;#/$defs/DevelopmentStage&quot;,
-              &quot;description&quot;: &quot;How far development has carried it.&quot;
-            },
-            &quot;state&quot;: {
-              &quot;const&quot;: &quot;not_delivered&quot;,
-              &quot;type&quot;: &quot;string&quot;
-            }
-          },
-          &quot;required&quot;: [
-            &quot;state&quot;,
-            &quot;stage&quot;,
-            &quot;blocking&quot;
-          ],
-          &quot;type&quot;: &quot;object&quot;
-        }
-      ]
+  &quot;description&quot;: &quot;One feature against the invariant.&quot;,
+  &quot;properties&quot;: {
+    &quot;status&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;description&quot;: &quot;The status its file declares. Editorial, and not one of the dimensions.&quot;
     },
+    &quot;title&quot;: {
+      &quot;description&quot;: &quot;Its title.&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;delivery&quot;: {
+      &quot;$ref&quot;: &quot;#/$defs/DeliveryState&quot;,
+      &quot;description&quot;: &quot;Delivered, or the development stage and what blocks it.&quot;
+    },
+    &quot;id&quot;: {
+      &quot;description&quot;: &quot;The feature&#39;s id.&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;exists&quot;: {
+      &quot;description&quot;: &quot;The conjunction: true only when every dimension passes.&quot;,
+      &quot;type&quot;: &quot;boolean&quot;
+    },
+    &quot;dimensions&quot;: {
+      &quot;description&quot;: &quot;Every dimension, in the order of the conjunction.&quot;,
+      &quot;items&quot;: {
+        &quot;$ref&quot;: &quot;#/$defs/Dimension&quot;
+      },
+      &quot;type&quot;: &quot;array&quot;
+    },
+    &quot;implementation&quot;: {
+      &quot;$ref&quot;: &quot;#/$defs/Implementation&quot;,
+      &quot;description&quot;: &quot;What it is implemented by.&quot;
+    }
+  },
+  &quot;title&quot;: &quot;FeatureDelivery&quot;,
+  &quot;$defs&quot;: {
     &quot;DeliveryVerdict&quot;: {
-      &quot;description&quot;: &quot;One dimension&#39;s answer. Three values and never two: a question that could not be asked\nis not a question answered yes, and it is not one answered no either.&quot;,
       &quot;oneOf&quot;: [
         {
           &quot;const&quot;: &quot;pass&quot;,
@@ -354,10 +344,105 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
           &quot;description&quot;: &quot;The dimension could not be measured. Not a pass.&quot;,
           &quot;type&quot;: &quot;string&quot;
         }
+      ],
+      &quot;description&quot;: &quot;One dimension&#39;s answer. Three values and never two: a question that could not be asked\nis not a question answered yes, and it is not one answered no either.&quot;
+    },
+    &quot;Implementation&quot;: {
+      &quot;properties&quot;: {
+        &quot;head_revision&quot;: {
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ],
+          &quot;description&quot;: &quot;The latest commit touching them reachable from `HEAD`.&quot;
+        },
+        &quot;paths&quot;: {
+          &quot;items&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          },
+          &quot;description&quot;: &quot;Repository-relative paths, derived from what the feature names: the source file of\nevery capability module, `lib/&lt;command&gt;.sh` of every shell command the dispatcher\nsources, and the `implementation` of every claim.&quot;,
+          &quot;type&quot;: &quot;array&quot;
+        },
+        &quot;master_revision&quot;: {
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ],
+          &quot;description&quot;: &quot;The latest commit touching them reachable from the trunk.&quot;
+        }
+      },
+      &quot;type&quot;: &quot;object&quot;,
+      &quot;required&quot;: [
+        &quot;paths&quot;
+      ],
+      &quot;description&quot;: &quot;The paths a feature is implemented by and the revisions that last touched them.&quot;
+    },
+    &quot;Dimension&quot;: {
+      &quot;type&quot;: &quot;object&quot;,
+      &quot;description&quot;: &quot;One dimension, decided: the verdict, the sentence that decided it, and what would move it.&quot;,
+      &quot;properties&quot;: {
+        &quot;remediation&quot;: {
+          &quot;description&quot;: &quot;What would change the verdict; absent on a pass.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;dimension&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/DimensionId&quot;,
+          &quot;description&quot;: &quot;Which dimension.&quot;
+        },
+        &quot;reason&quot;: {
+          &quot;description&quot;: &quot;What was observed, in one sentence.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;verdict&quot;: {
+          &quot;description&quot;: &quot;Pass, fail or unknown.&quot;,
+          &quot;$ref&quot;: &quot;#/$defs/DeliveryVerdict&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;dimension&quot;,
+        &quot;verdict&quot;,
+        &quot;reason&quot;
       ]
     },
+    &quot;DimensionId&quot;: {
+      &quot;oneOf&quot;: [
+        {
+          &quot;const&quot;: &quot;on_master&quot;,
+          &quot;description&quot;: &quot;The feature&#39;s latest implementation revision is reachable from the trunk.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The public site&#39;s identity commit contains that revision.&quot;,
+          &quot;const&quot;: &quot;deployed&quot;
+        },
+        {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;publicly_verified&quot;,
+          &quot;description&quot;: &quot;The publication was verified from outside: the site answers with a clean identity,\na second probe agrees, and GitHub&#39;s own build of the published branch succeeded.&quot;
+        },
+        {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;required_tests_current&quot;,
+          &quot;description&quot;: &quot;Every test the feature requires has a current passing execution.&quot;
+        },
+        {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;test_evidence_published&quot;,
+          &quot;description&quot;: &quot;The evidence of those executions is published.&quot;
+        },
+        {
+          &quot;description&quot;: &quot;The feature is linked from the user interface.&quot;,
+          &quot;const&quot;: &quot;ui_linked&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      ],
+      &quot;description&quot;: &quot;The six dimensions of the delivery invariant, in the order the conjunction is written.&quot;
+    },
     &quot;DevelopmentStage&quot;: {
-      &quot;description&quot;: &quot;How far development has carried a feature that does not exist yet. A ladder: a rung is\nreached only when every rung below it passes, so a feature whose tests are unknown is\n`on_master` even when the site already serves it.&quot;,
       &quot;oneOf&quot;: [
         {
           &quot;const&quot;: &quot;unknown&quot;,
@@ -370,157 +455,74 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
           &quot;type&quot;: &quot;string&quot;
         },
         {
-          &quot;const&quot;: &quot;implemented_on_branch&quot;,
           &quot;description&quot;: &quot;Its latest implementation revision is on a branch and not on the trunk.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;implemented_on_branch&quot;
         },
         {
-          &quot;const&quot;: &quot;on_master&quot;,
           &quot;description&quot;: &quot;Its implementation is on the trunk.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;on_master&quot;
         },
         {
-          &quot;const&quot;: &quot;tested&quot;,
           &quot;description&quot;: &quot;On the trunk, with every required test current.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;tested&quot;
         },
         {
+          &quot;type&quot;: &quot;string&quot;,
           &quot;const&quot;: &quot;deployed&quot;,
-          &quot;description&quot;: &quot;Tested, and contained in what the public site serves.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;description&quot;: &quot;Tested, and contained in what the public site serves.&quot;
         }
-      ]
-    },
-    &quot;Dimension&quot;: {
-      &quot;description&quot;: &quot;One dimension, decided: the verdict, the sentence that decided it, and what would move it.&quot;,
-      &quot;properties&quot;: {
-        &quot;dimension&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/DimensionId&quot;,
-          &quot;description&quot;: &quot;Which dimension.&quot;
-        },
-        &quot;reason&quot;: {
-          &quot;description&quot;: &quot;What was observed, in one sentence.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;remediation&quot;: {
-          &quot;description&quot;: &quot;What would change the verdict; absent on a pass.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;verdict&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/DeliveryVerdict&quot;,
-          &quot;description&quot;: &quot;Pass, fail or unknown.&quot;
-        }
-      },
-      &quot;required&quot;: [
-        &quot;dimension&quot;,
-        &quot;verdict&quot;,
-        &quot;reason&quot;
       ],
-      &quot;type&quot;: &quot;object&quot;
+      &quot;description&quot;: &quot;How far development has carried a feature that does not exist yet. A ladder: a rung is\nreached only when every rung below it passes, so a feature whose tests are unknown is\n`on_master` even when the site already serves it.&quot;
     },
-    &quot;DimensionId&quot;: {
-      &quot;description&quot;: &quot;The six dimensions of the delivery invariant, in the order the conjunction is written.&quot;,
+    &quot;DeliveryState&quot;: {
+      &quot;description&quot;: &quot;Delivered, or not — and when not, how far development got and which dimensions stand in\nthe way. Two variants of one type rather than a flag beside a stage: a delivered feature\nhas no stage to report, and a stage can never be read as delivery.&quot;,
       &quot;oneOf&quot;: [
         {
-          &quot;const&quot;: &quot;on_master&quot;,
-          &quot;description&quot;: &quot;The feature&#39;s latest implementation revision is reachable from the trunk.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;type&quot;: &quot;object&quot;,
+          &quot;properties&quot;: {
+            &quot;state&quot;: {
+              &quot;const&quot;: &quot;delivered&quot;,
+              &quot;type&quot;: &quot;string&quot;
+            }
+          },
+          &quot;description&quot;: &quot;Every dimension passes.&quot;,
+          &quot;required&quot;: [
+            &quot;state&quot;
+          ]
         },
         {
-          &quot;const&quot;: &quot;deployed&quot;,
-          &quot;description&quot;: &quot;The public site&#39;s identity commit contains that revision.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;publicly_verified&quot;,
-          &quot;description&quot;: &quot;The publication was verified from outside: the site answers with a clean identity,\na second probe agrees, and GitHub&#39;s own build of the published branch succeeded.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;required_tests_current&quot;,
-          &quot;description&quot;: &quot;Every test the feature requires has a current passing execution.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;test_evidence_published&quot;,
-          &quot;description&quot;: &quot;The evidence of those executions is published.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;ui_linked&quot;,
-          &quot;description&quot;: &quot;The feature is linked from the user interface.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;description&quot;: &quot;At least one dimension does not pass.&quot;,
+          &quot;properties&quot;: {
+            &quot;state&quot;: {
+              &quot;const&quot;: &quot;not_delivered&quot;,
+              &quot;type&quot;: &quot;string&quot;
+            },
+            &quot;stage&quot;: {
+              &quot;description&quot;: &quot;How far development has carried it.&quot;,
+              &quot;$ref&quot;: &quot;#/$defs/DevelopmentStage&quot;
+            },
+            &quot;blocking&quot;: {
+              &quot;description&quot;: &quot;The dimensions that do not pass, in the order of the conjunction.&quot;,
+              &quot;items&quot;: {
+                &quot;$ref&quot;: &quot;#/$defs/DimensionId&quot;
+              },
+              &quot;type&quot;: &quot;array&quot;
+            }
+          },
+          &quot;required&quot;: [
+            &quot;state&quot;,
+            &quot;stage&quot;,
+            &quot;blocking&quot;
+          ],
+          &quot;type&quot;: &quot;object&quot;
         }
       ]
-    },
-    &quot;Implementation&quot;: {
-      &quot;description&quot;: &quot;The paths a feature is implemented by and the revisions that last touched them.&quot;,
-      &quot;properties&quot;: {
-        &quot;head_revision&quot;: {
-          &quot;description&quot;: &quot;The latest commit touching them reachable from `HEAD`.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;master_revision&quot;: {
-          &quot;description&quot;: &quot;The latest commit touching them reachable from the trunk.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;paths&quot;: {
-          &quot;description&quot;: &quot;Repository-relative paths, derived from what the feature names: the source file of\nevery capability module, `lib/&lt;command&gt;.sh` of every shell command the dispatcher\nsources, and the `implementation` of every claim.&quot;,
-          &quot;items&quot;: {
-            &quot;type&quot;: &quot;string&quot;
-          },
-          &quot;type&quot;: &quot;array&quot;
-        }
-      },
-      &quot;required&quot;: [
-        &quot;paths&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
     }
   },
-  &quot;description&quot;: &quot;One feature against the invariant.&quot;,
-  &quot;properties&quot;: {
-    &quot;delivery&quot;: {
-      &quot;$ref&quot;: &quot;#/$defs/DeliveryState&quot;,
-      &quot;description&quot;: &quot;Delivered, or the development stage and what blocks it.&quot;
-    },
-    &quot;dimensions&quot;: {
-      &quot;description&quot;: &quot;Every dimension, in the order of the conjunction.&quot;,
-      &quot;items&quot;: {
-        &quot;$ref&quot;: &quot;#/$defs/Dimension&quot;
-      },
-      &quot;type&quot;: &quot;array&quot;
-    },
-    &quot;exists&quot;: {
-      &quot;description&quot;: &quot;The conjunction: true only when every dimension passes.&quot;,
-      &quot;type&quot;: &quot;boolean&quot;
-    },
-    &quot;id&quot;: {
-      &quot;description&quot;: &quot;The feature&#39;s id.&quot;,
-      &quot;type&quot;: &quot;string&quot;
-    },
-    &quot;implementation&quot;: {
-      &quot;$ref&quot;: &quot;#/$defs/Implementation&quot;,
-      &quot;description&quot;: &quot;What it is implemented by.&quot;
-    },
-    &quot;status&quot;: {
-      &quot;description&quot;: &quot;The status its file declares. Editorial, and not one of the dimensions.&quot;,
-      &quot;type&quot;: &quot;string&quot;
-    },
-    &quot;title&quot;: {
-      &quot;description&quot;: &quot;Its title.&quot;,
-      &quot;type&quot;: &quot;string&quot;
-    }
-  },
+  &quot;type&quot;: &quot;object&quot;,
   &quot;required&quot;: [
     &quot;id&quot;,
     &quot;title&quot;,
@@ -529,9 +531,7 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
     &quot;delivery&quot;,
     &quot;dimensions&quot;,
     &quot;implementation&quot;
-  ],
-  &quot;title&quot;: &quot;FeatureDelivery&quot;,
-  &quot;type&quot;: &quot;object&quot;
+  ]
 }</pre></div>
   </details>
 </div>
@@ -562,7 +562,7 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
         <div><dt class="text-body-subtle">Rust module</dt><dd class="min-w-0 break-all font-mono text-heading">majordomus_cli::capability::builtin::delivery</dd></div>
         <div><dt class="text-body-subtle">input type</dt><dd class="font-mono text-heading">DeliveryFeatureInput</dd></div>
         <div><dt class="text-body-subtle">output type</dt><dd class="font-mono text-heading">FeatureDelivery</dd></div>
-        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/aa9f816f8673880ab4beb6dbebff688f9da5bb65/docs/generated/modules/delivery.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/delivery.md</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">c514db707bb1f5f7557f2a1629d42c4bdc05eb7ef58464c288e42bafcd3d8720</dd></div>
+        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/docs/generated/modules/delivery.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/delivery.md</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">3f734f2faf797f0ca7c39b4cd837e68b6619c41c6f6711f3d3aeca8f341934eb</dd></div>
         <div><dt class="text-body-subtle">generated by</dt><dd class="font-mono text-heading">majordomus-cli 1.0.0-alpha.10</dd></div>
       </dl>
     </div>
@@ -618,9 +618,9 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
       <div class="min-w-0">
         <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">Project</h2><ul class="space-y-2 text-sm font-medium text-body">
           <li><a href="https://github.com/korczis/prismatic-majordomus" class="hover:text-heading hover:underline">GitHub</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/aa9f816f8673880ab4beb6dbebff688f9da5bb65/LICENSE" class="hover:text-heading hover:underline">MIT licence</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/aa9f816f8673880ab4beb6dbebff688f9da5bb65/SECURITY.md" class="hover:text-heading hover:underline">Security policy</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/aa9f816f8673880ab4beb6dbebff688f9da5bb65/CONTRIBUTING.md" class="hover:text-heading hover:underline">Contributing guide</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/LICENSE" class="hover:text-heading hover:underline">MIT licence</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/SECURITY.md" class="hover:text-heading hover:underline">Security policy</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/CONTRIBUTING.md" class="hover:text-heading hover:underline">Contributing guide</a></li>
         </ul>
       </div>
     </div>
@@ -628,7 +628,7 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.10</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/aa9f816f8673880ab4beb6dbebff688f9da5bb65" class="font-mono underline">aa9f816</a> · inputs <span class="font-mono">a64b981ed16e</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/architecture/" class="underline">how this site is derived</a> names them.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.10</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/745db2ea21e02613943face75a2bf95542be1f2e" class="font-mono underline">745db2e</a> · inputs <span class="font-mono">0a58c217d1b7</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/architecture/" class="underline">how this site is derived</a> names them.</p>
     </div>
   </div>
 </footer>

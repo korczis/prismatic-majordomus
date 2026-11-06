@@ -227,19 +227,19 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
-  &quot;additionalProperties&quot;: false,
+  &quot;title&quot;: &quot;EconomicsExplainInput&quot;,
   &quot;description&quot;: &quot;The input of `economics.explain`: the id of the one metric to explain. Nothing else is\naccepted, so a misspelt field is refused rather than silently ignored.\n\n```\nuse majordomus_cli::economics::model::EconomicsExplainInput;\nlet i: EconomicsExplainInput =\n    serde_json::from_value(serde_json::json!({ \&quot;metric\&quot;: \&quot;context_reduction_ratio\&quot; })).unwrap();\nassert_eq!(i.metric, \&quot;context_reduction_ratio\&quot;);\nassert!(serde_json::from_value::&lt;EconomicsExplainInput&gt;(serde_json::json!({})).is_err());\nlet extra = serde_json::json!({ \&quot;metric\&quot;: \&quot;context_reduction_ratio\&quot;, \&quot;suite\&quot;: \&quot;context\&quot; });\nassert!(serde_json::from_value::&lt;EconomicsExplainInput&gt;(extra).is_err());\n```&quot;,
-  &quot;properties&quot;: {
-    &quot;metric&quot;: {
-      &quot;description&quot;: &quot;The metric&#39;s id, as `economics.summary` lists it.&quot;,
-      &quot;type&quot;: &quot;string&quot;
-    }
-  },
+  &quot;type&quot;: &quot;object&quot;,
   &quot;required&quot;: [
     &quot;metric&quot;
   ],
-  &quot;title&quot;: &quot;EconomicsExplainInput&quot;,
-  &quot;type&quot;: &quot;object&quot;
+  &quot;additionalProperties&quot;: false,
+  &quot;properties&quot;: {
+    &quot;metric&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;description&quot;: &quot;The metric&#39;s id, as `economics.summary` lists it.&quot;
+    }
+  }
 }</pre></div>
   </details>
 </div>
@@ -271,31 +271,6 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
     <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
       <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">vlastnost</th><th class="px-3 py-2">typ</th><th class="px-3 py-2">povinné</th><th class="px-3 py-2">popis</th></tr></thead>
       <tbody><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">class_meaning</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Co jeho třída znamená, slovy metodiky.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">vyloučeno</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Běhy vyloučené podle pravidla odlehlých hodnot.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">metodika</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">integer | null</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">ne</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Verze metodiky; chybí, pokud žádná není deklarována.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">metrika</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">jedno ze 2</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">ne</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Metrika; chybí, když není deklarována žádná metodika.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">dvojice</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Dvojice, na kterých stojí, platné či ne, pokud stojí na dvojicích.</td>
-      </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">přítomno</td>
         <td class="px-3 py-2 font-mono text-xs text-body">boolean</td>
         <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
@@ -306,20 +281,45 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
         <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
         <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Jak to reprodukovat.</td>
       </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">metrika</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">jedno ze 2</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">ne</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Metrika; chybí, když není deklarována žádná metodika.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">class_meaning</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Co jeho třída znamená, slovy metodiky.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">dvojice</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Dvojice, na kterých stojí, platné či ne, pokud stojí na dvojicích.</td>
+      </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">výrok</td>
         <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
         <td class="px-3 py-2 font-mono text-xs text-body">ne</td>
         <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Proč není co vysvětlovat, když je <code>present</code> false.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">varianty</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Porovnávané varianty.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">metodika</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">integer | null</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">ne</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Verze metodiky; chybí, pokud žádná není deklarována.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">sady</td>
         <td class="px-3 py-2 font-mono text-xs text-body">array</td>
         <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
         <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Sady, ze kterých čerpá.</td>
       </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">varianty</td>
+        <td class="px-3 py-2 font-mono text-heading">vyloučeno</td>
         <td class="px-3 py-2 font-mono text-xs text-body">array</td>
         <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Porovnávané varianty.</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Běhy vyloučené podle pravidla odlehlých hodnot.</td>
       </tr></tbody>
     </table>
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
@@ -330,18 +330,18 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
       &quot;description&quot;: &quot;How a number came to be. The classes are ordered from strongest to weakest, and a value\ncomputed from several inputs is never stronger than the weakest of them.\n\n```\nuse majordomus_cli::economics::model::EconomicsClass;\nassert_eq!(serde_json::to_value(EconomicsClass::Counterfactual).unwrap(), \&quot;counterfactual\&quot;);\nlet parsed: EconomicsClass = serde_json::from_value(\&quot;observed\&quot;.into()).unwrap();\nassert!(parsed &lt; EconomicsClass::Estimated, \&quot;a stronger class sorts first\&quot;);\n```&quot;,
       &quot;oneOf&quot;: [
         {
-          &quot;const&quot;: &quot;observed&quot;,
           &quot;description&quot;: &quot;Returned by the provider or its harness at run time and recorded unmodified.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;observed&quot;
         },
         {
-          &quot;const&quot;: &quot;counted&quot;,
           &quot;description&quot;: &quot;Computed deterministically from bytes on disk with a named, pinned tokenizer.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;counted&quot;
         },
         {
-          &quot;const&quot;: &quot;derived&quot;,
           &quot;description&quot;: &quot;Arithmetic over observed or counted values.&quot;,
+          &quot;const&quot;: &quot;derived&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
         {
@@ -350,282 +350,13 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
           &quot;type&quot;: &quot;string&quot;
         },
         {
-          &quot;const&quot;: &quot;counterfactual&quot;,
           &quot;description&quot;: &quot;What a mechanism would have avoided, modelled rather than observed.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;counterfactual&quot;
         }
       ]
-    },
-    &quot;EconomicsDistribution&quot;: {
-      &quot;description&quot;: &quot;The shape of a set of per-pair values.\n\n```\nuse majordomus_cli::economics::model::EconomicsDistribution;\nlet d: EconomicsDistribution = serde_json::from_value(serde_json::json!({\n    \&quot;n\&quot;: 1, \&quot;mean\&quot;: 0.4, \&quot;median\&quot;: 0.4, \&quot;p25\&quot;: 0.4, \&quot;p75\&quot;: 0.4, \&quot;p95\&quot;: 0.4,\n    \&quot;min\&quot;: 0.4, \&quot;max\&quot;: 0.4\n}))\n.unwrap();\nassert!(d.sd.is_none(), \&quot;one value has no sample standard deviation\&quot;);\nassert!(d.min &lt;= d.p25 &amp;&amp; d.p25 &lt;= d.median &amp;&amp; d.median &lt;= d.p75 &amp;&amp; d.p75 &lt;= d.max);\n```&quot;,
-      &quot;properties&quot;: {
-        &quot;max&quot;: {
-          &quot;description&quot;: &quot;Largest.&quot;,
-          &quot;format&quot;: &quot;double&quot;,
-          &quot;type&quot;: &quot;number&quot;
-        },
-        &quot;mean&quot;: {
-          &quot;description&quot;: &quot;Arithmetic mean.&quot;,
-          &quot;format&quot;: &quot;double&quot;,
-          &quot;type&quot;: &quot;number&quot;
-        },
-        &quot;median&quot;: {
-          &quot;description&quot;: &quot;Median.&quot;,
-          &quot;format&quot;: &quot;double&quot;,
-          &quot;type&quot;: &quot;number&quot;
-        },
-        &quot;min&quot;: {
-          &quot;description&quot;: &quot;Smallest.&quot;,
-          &quot;format&quot;: &quot;double&quot;,
-          &quot;type&quot;: &quot;number&quot;
-        },
-        &quot;n&quot;: {
-          &quot;description&quot;: &quot;How many values.&quot;,
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;p25&quot;: {
-          &quot;description&quot;: &quot;25th percentile.&quot;,
-          &quot;format&quot;: &quot;double&quot;,
-          &quot;type&quot;: &quot;number&quot;
-        },
-        &quot;p75&quot;: {
-          &quot;description&quot;: &quot;75th percentile.&quot;,
-          &quot;format&quot;: &quot;double&quot;,
-          &quot;type&quot;: &quot;number&quot;
-        },
-        &quot;p95&quot;: {
-          &quot;description&quot;: &quot;95th percentile.&quot;,
-          &quot;format&quot;: &quot;double&quot;,
-          &quot;type&quot;: &quot;number&quot;
-        },
-        &quot;sd&quot;: {
-          &quot;description&quot;: &quot;Sample standard deviation; absent for one value.&quot;,
-          &quot;format&quot;: &quot;double&quot;,
-          &quot;type&quot;: [
-            &quot;number&quot;,
-            &quot;null&quot;
-          ]
-        }
-      },
-      &quot;required&quot;: [
-        &quot;n&quot;,
-        &quot;mean&quot;,
-        &quot;median&quot;,
-        &quot;p25&quot;,
-        &quot;p75&quot;,
-        &quot;p95&quot;,
-        &quot;min&quot;,
-        &quot;max&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
-    },
-    &quot;EconomicsExclusion&quot;: {
-      &quot;description&quot;: &quot;One run excluded under the outlier rule.\n\n```\nuse majordomus_cli::economics::model::{EconomicsExclusion, EconomicsOutlierPolicy};\nlet o: EconomicsOutlierPolicy = serde_json::from_value(serde_json::json!({\n    \&quot;rule\&quot;: \&quot;A run is excluded only by naming it here with a reason.\&quot;,\n    \&quot;excluded\&quot;: [{ \&quot;run\&quot;: \&quot;vat-rounding--baseline--r2\&quot;, \&quot;reason\&quot;: \&quot;provider outage\&quot; }]\n}))\n.unwrap();\nlet first: &amp;EconomicsExclusion = &amp;o.excluded[0];\nassert_eq!(first.run, \&quot;vat-rounding--baseline--r2\&quot;);\nlet unexplained = serde_json::json!({ \&quot;run\&quot;: \&quot;vat-rounding--baseline--r1\&quot; });\nassert!(serde_json::from_value::&lt;EconomicsExclusion&gt;(unexplained).is_err());\n```&quot;,
-      &quot;properties&quot;: {
-        &quot;reason&quot;: {
-          &quot;description&quot;: &quot;Why.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;run&quot;: {
-          &quot;description&quot;: &quot;The run&#39;s id.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      },
-      &quot;required&quot;: [
-        &quot;run&quot;,
-        &quot;reason&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
-    },
-    &quot;EconomicsFreshness&quot;: {
-      &quot;description&quot;: &quot;How recorded evidence stands against the repository as it is now.\n\n```\nuse majordomus_cli::economics::model::EconomicsFreshness;\nassert_eq!(serde_json::to_value(EconomicsFreshness::NoEvidence).unwrap(), \&quot;no_evidence\&quot;);\nlet f: EconomicsFreshness = serde_json::from_value(\&quot;incompatible\&quot;.into()).unwrap();\nassert_eq!(f, EconomicsFreshness::Incompatible);\n```&quot;,
-      &quot;oneOf&quot;: [
-        {
-          &quot;const&quot;: &quot;current&quot;,
-          &quot;description&quot;: &quot;Recorded under this methodology, and nothing it depends on changed since.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;stale&quot;,
-          &quot;description&quot;: &quot;Recorded under this methodology, but a mechanism it measured changed since.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;incompatible&quot;,
-          &quot;description&quot;: &quot;Recorded under another methodology version: not comparable at all.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;no_evidence&quot;,
-          &quot;description&quot;: &quot;Nothing recorded.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      ]
-    },
-    &quot;EconomicsInterval&quot;: {
-      &quot;description&quot;: &quot;A bootstrap interval, with everything needed to reproduce it.\n\n```\nuse majordomus_cli::economics::model::EconomicsInterval;\nlet i: EconomicsInterval = serde_json::from_value(serde_json::json!({\n    \&quot;level_bp\&quot;: 9500, \&quot;low\&quot;: 0.21, \&quot;high\&quot;: 0.38,\n    \&quot;method\&quot;: \&quot;bootstrap percentile of the median\&quot;, \&quot;resamples\&quot;: 10000, \&quot;seed\&quot;: 20260924\n}))\n.unwrap();\nassert!(i.low &lt;= i.high);\nassert_eq!(serde_json::to_value(&amp;i).unwrap()[\&quot;seed\&quot;], 20260924, \&quot;the seed travels with it\&quot;);\n```&quot;,
-      &quot;properties&quot;: {
-        &quot;high&quot;: {
-          &quot;description&quot;: &quot;Upper bound.&quot;,
-          &quot;format&quot;: &quot;double&quot;,
-          &quot;type&quot;: &quot;number&quot;
-        },
-        &quot;level_bp&quot;: {
-          &quot;description&quot;: &quot;Confidence in basis points.&quot;,
-          &quot;format&quot;: &quot;uint32&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;low&quot;: {
-          &quot;description&quot;: &quot;Lower bound.&quot;,
-          &quot;format&quot;: &quot;double&quot;,
-          &quot;type&quot;: &quot;number&quot;
-        },
-        &quot;method&quot;: {
-          &quot;description&quot;: &quot;How it was computed: a cluster bootstrap over tasks for every metric over pairs or\nruns, whose repetitions of one task are not independent, and an independent\nbootstrap over seeds for the context suite.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;resamples&quot;: {
-          &quot;description&quot;: &quot;Resamples.&quot;,
-          &quot;format&quot;: &quot;uint32&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;seed&quot;: {
-          &quot;description&quot;: &quot;Generator seed.&quot;,
-          &quot;format&quot;: &quot;uint64&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        }
-      },
-      &quot;required&quot;: [
-        &quot;level_bp&quot;,
-        &quot;low&quot;,
-        &quot;high&quot;,
-        &quot;method&quot;,
-        &quot;resamples&quot;,
-        &quot;seed&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
-    },
-    &quot;EconomicsMetric&quot;: {
-      &quot;description&quot;: &quot;One metric: its value, where it comes from, and how much it can bear.\n\n```\nuse majordomus_cli::economics::model::{EconomicsClass, EconomicsMetric, EconomicsMetricStatus};\nlet m: EconomicsMetric = serde_json::from_value(serde_json::json!({\n    \&quot;id\&quot;: \&quot;effective_token_reduction\&quot;, \&quot;title\&quot;: \&quot;Effective token reduction\&quot;,\n    \&quot;class\&quot;: \&quot;derived\&quot;, \&quot;inputs\&quot;: \&quot;observed\&quot;, \&quot;unit\&quot;: \&quot;ratio\&quot;,\n    \&quot;formula\&quot;: \&quot;median of 1 - treatment / control\&quot;, \&quot;status\&quot;: \&quot;not_measured\&quot;, \&quot;n\&quot;: 0,\n    \&quot;suite\&quot;: \&quot;pilot\&quot;\n}))\n.unwrap();\nassert_eq!(m.inputs, Some(EconomicsClass::Observed));\nassert!(m.value.is_none() &amp;&amp; m.status == EconomicsMetricStatus::NotMeasured);\nassert!(serde_json::to_value(&amp;m).unwrap().get(\&quot;value\&quot;).is_none(), \&quot;no value, not a zero\&quot;);\n```&quot;,
-      &quot;properties&quot;: {
-        &quot;class&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/EconomicsClass&quot;,
-          &quot;description&quot;: &quot;The measurement class.&quot;
-        },
-        &quot;distribution&quot;: {
-          &quot;anyOf&quot;: [
-            {
-              &quot;$ref&quot;: &quot;#/$defs/EconomicsDistribution&quot;
-            },
-            {
-              &quot;type&quot;: &quot;null&quot;
-            }
-          ],
-          &quot;description&quot;: &quot;Their distribution.&quot;
-        },
-        &quot;evidence&quot;: {
-          &quot;default&quot;: [],
-          &quot;description&quot;: &quot;The runs, pairs or seeds it rests on.&quot;,
-          &quot;items&quot;: {
-            &quot;type&quot;: &quot;string&quot;
-          },
-          &quot;type&quot;: &quot;array&quot;
-        },
-        &quot;formula&quot;: {
-          &quot;description&quot;: &quot;The formula, in words.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;id&quot;: {
-          &quot;description&quot;: &quot;The metric&#39;s id.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;inputs&quot;: {
-          &quot;anyOf&quot;: [
-            {
-              &quot;$ref&quot;: &quot;#/$defs/EconomicsClass&quot;
-            },
-            {
-              &quot;type&quot;: &quot;null&quot;
-            }
-          ],
-          &quot;description&quot;: &quot;For a derived metric, the class of what it was derived from: a reduction derived from\nobserved usage is not the same evidence as one derived from counted bytes.&quot;
-        },
-        &quot;interval&quot;: {
-          &quot;anyOf&quot;: [
-            {
-              &quot;$ref&quot;: &quot;#/$defs/EconomicsInterval&quot;
-            },
-            {
-              &quot;type&quot;: &quot;null&quot;
-            }
-          ],
-          &quot;description&quot;: &quot;The interval, when enough values exist.&quot;
-        },
-        &quot;n&quot;: {
-          &quot;description&quot;: &quot;How many values it rests on.&quot;,
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;not&quot;: {
-          &quot;description&quot;: &quot;What the metric is not, where it is easily mistaken for something else.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;status&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/EconomicsMetricStatus&quot;,
-          &quot;description&quot;: &quot;Where it stands.&quot;
-        },
-        &quot;suite&quot;: {
-          &quot;description&quot;: &quot;The suite.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;title&quot;: {
-          &quot;description&quot;: &quot;A name.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;unit&quot;: {
-          &quot;description&quot;: &quot;`ratio`, `tokens`, `calls`.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;value&quot;: {
-          &quot;description&quot;: &quot;The headline value; absent when nothing was measured.&quot;,
-          &quot;format&quot;: &quot;double&quot;,
-          &quot;type&quot;: [
-            &quot;number&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;warnings&quot;: {
-          &quot;default&quot;: [],
-          &quot;description&quot;: &quot;What a reader must know before using it.&quot;,
-          &quot;items&quot;: {
-            &quot;type&quot;: &quot;string&quot;
-          },
-          &quot;type&quot;: &quot;array&quot;
-        }
-      },
-      &quot;required&quot;: [
-        &quot;id&quot;,
-        &quot;title&quot;,
-        &quot;class&quot;,
-        &quot;unit&quot;,
-        &quot;formula&quot;,
-        &quot;status&quot;,
-        &quot;n&quot;,
-        &quot;suite&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
     },
     &quot;EconomicsMetricStatus&quot;: {
-      &quot;description&quot;: &quot;Where a metric stands against the publication rule: whether its value may back a claim,\nis a result too thin to claim anything, or was never measured at all.\n\n```\nuse majordomus_cli::economics::model::EconomicsMetricStatus;\nassert_eq!(serde_json::to_value(EconomicsMetricStatus::NotMeasured).unwrap(), \&quot;not_measured\&quot;);\nlet s: EconomicsMetricStatus = serde_json::from_value(\&quot;preliminary\&quot;.into()).unwrap();\nassert_ne!(s, EconomicsMetricStatus::Verified, \&quot;a preliminary result is not a claim\&quot;);\n```&quot;,
       &quot;oneOf&quot;: [
         {
           &quot;const&quot;: &quot;verified&quot;,
@@ -638,31 +369,28 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
           &quot;type&quot;: &quot;string&quot;
         },
         {
+          &quot;type&quot;: &quot;string&quot;,
           &quot;const&quot;: &quot;measured&quot;,
-          &quot;description&quot;: &quot;Measured deterministically; the publication rule for sampled data does not apply.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;description&quot;: &quot;Measured deterministically; the publication rule for sampled data does not apply.&quot;
         },
         {
-          &quot;const&quot;: &quot;not_measured&quot;,
           &quot;description&quot;: &quot;Nothing recorded to compute it from.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;not_measured&quot;
         }
-      ]
+      ],
+      &quot;description&quot;: &quot;Where a metric stands against the publication rule: whether its value may back a claim,\nis a result too thin to claim anything, or was never measured at all.\n\n```\nuse majordomus_cli::economics::model::EconomicsMetricStatus;\nassert_eq!(serde_json::to_value(EconomicsMetricStatus::NotMeasured).unwrap(), \&quot;not_measured\&quot;);\nlet s: EconomicsMetricStatus = serde_json::from_value(\&quot;preliminary\&quot;.into()).unwrap();\nassert_ne!(s, EconomicsMetricStatus::Verified, \&quot;a preliminary result is not a claim\&quot;);\n```&quot;
     },
     &quot;EconomicsPair&quot;: {
-      &quot;description&quot;: &quot;A control run and its treatment run, and what follows from them.\n\n```\nuse majordomus_cli::economics::model::{EconomicsPair, EconomicsPairStatus};\nlet p: EconomicsPair = serde_json::from_value(serde_json::json!({\n    \&quot;suite\&quot;: \&quot;pilot\&quot;, \&quot;task\&quot;: \&quot;vat-rounding\&quot;, \&quot;category\&quot;: \&quot;bugfix\&quot;, \&quot;sessions\&quot;: 1,\n    \&quot;repetition\&quot;: 2, \&quot;control\&quot;: \&quot;vat-rounding--baseline--r2\&quot;, \&quot;status\&quot;: \&quot;missing\&quot;,\n    \&quot;reasons\&quot;: [\&quot;no treatment run recorded\&quot;]\n}))\n.unwrap();\nassert_eq!(p.status, EconomicsPairStatus::Missing);\nassert!(p.treatment.is_none() &amp;&amp; p.token_reduction.is_none(), \&quot;no side, no reduction\&quot;);\n```&quot;,
+      &quot;type&quot;: &quot;object&quot;,
       &quot;properties&quot;: {
-        &quot;category&quot;: {
-          &quot;description&quot;: &quot;The task&#39;s category.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;continuation_reduction&quot;: {
-          &quot;description&quot;: &quot;The same on the tokens of the last session only: what continuing cost.&quot;,
-          &quot;format&quot;: &quot;double&quot;,
+        &quot;cost_reduction&quot;: {
           &quot;type&quot;: [
             &quot;number&quot;,
             &quot;null&quot;
-          ]
+          ],
+          &quot;description&quot;: &quot;The same on the harness&#39;s cost projection.&quot;,
+          &quot;format&quot;: &quot;double&quot;
         },
         &quot;control&quot;: {
           &quot;description&quot;: &quot;The control run&#39;s id, when recorded.&quot;,
@@ -671,7 +399,14 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
             &quot;null&quot;
           ]
         },
+        &quot;repetition&quot;: {
+          &quot;format&quot;: &quot;uint32&quot;,
+          &quot;type&quot;: &quot;integer&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;description&quot;: &quot;The repetition.&quot;
+        },
         &quot;control_usage&quot;: {
+          &quot;description&quot;: &quot;The control&#39;s totals.&quot;,
           &quot;anyOf&quot;: [
             {
               &quot;$ref&quot;: &quot;#/$defs/EconomicsUsage&quot;
@@ -679,55 +414,32 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
             {
               &quot;type&quot;: &quot;null&quot;
             }
-          ],
-          &quot;description&quot;: &quot;The control&#39;s totals.&quot;
-        },
-        &quot;cost_reduction&quot;: {
-          &quot;description&quot;: &quot;The same on the harness&#39;s cost projection.&quot;,
-          &quot;format&quot;: &quot;double&quot;,
-          &quot;type&quot;: [
-            &quot;number&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;first_request_overhead&quot;: {
-          &quot;description&quot;: &quot;First-request input of the treatment minus that of the control: what the treatment\nadds before the model has done anything.&quot;,
-          &quot;format&quot;: &quot;int64&quot;,
-          &quot;type&quot;: [
-            &quot;integer&quot;,
-            &quot;null&quot;
           ]
         },
         &quot;reasons&quot;: {
-          &quot;default&quot;: [],
-          &quot;description&quot;: &quot;Why not, when it does not.&quot;,
           &quot;items&quot;: {
             &quot;type&quot;: &quot;string&quot;
           },
+          &quot;default&quot;: [],
+          &quot;description&quot;: &quot;Why not, when it does not.&quot;,
           &quot;type&quot;: &quot;array&quot;
-        },
-        &quot;repetition&quot;: {
-          &quot;description&quot;: &quot;The repetition.&quot;,
-          &quot;format&quot;: &quot;uint32&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
         },
         &quot;sessions&quot;: {
           &quot;description&quot;: &quot;Sessions the task spans.&quot;,
           &quot;format&quot;: &quot;uint&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;status&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/EconomicsPairStatus&quot;,
-          &quot;description&quot;: &quot;Whether it counts.&quot;
+          &quot;type&quot;: &quot;integer&quot;,
+          &quot;minimum&quot;: 0
         },
         &quot;suite&quot;: {
           &quot;description&quot;: &quot;The suite.&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
         &quot;task&quot;: {
-          &quot;description&quot;: &quot;The task.&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The task.&quot;
+        },
+        &quot;category&quot;: {
+          &quot;description&quot;: &quot;The task&#39;s category.&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
         &quot;token_reduction&quot;: {
@@ -738,6 +450,22 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
             &quot;null&quot;
           ]
         },
+        &quot;continuation_reduction&quot;: {
+          &quot;description&quot;: &quot;The same on the tokens of the last session only: what continuing cost.&quot;,
+          &quot;format&quot;: &quot;double&quot;,
+          &quot;type&quot;: [
+            &quot;number&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;first_request_overhead&quot;: {
+          &quot;type&quot;: [
+            &quot;integer&quot;,
+            &quot;null&quot;
+          ],
+          &quot;description&quot;: &quot;First-request input of the treatment minus that of the control: what the treatment\nadds before the model has done anything.&quot;,
+          &quot;format&quot;: &quot;int64&quot;
+        },
         &quot;tool_call_reduction&quot;: {
           &quot;description&quot;: &quot;The same on tool calls.&quot;,
           &quot;format&quot;: &quot;double&quot;,
@@ -746,12 +474,16 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
             &quot;null&quot;
           ]
         },
+        &quot;status&quot;: {
+          &quot;description&quot;: &quot;Whether it counts.&quot;,
+          &quot;$ref&quot;: &quot;#/$defs/EconomicsPairStatus&quot;
+        },
         &quot;treatment&quot;: {
-          &quot;description&quot;: &quot;The treatment run&#39;s id, when recorded.&quot;,
           &quot;type&quot;: [
             &quot;string&quot;,
             &quot;null&quot;
-          ]
+          ],
+          &quot;description&quot;: &quot;The treatment run&#39;s id, when recorded.&quot;
         },
         &quot;treatment_usage&quot;: {
           &quot;anyOf&quot;: [
@@ -765,6 +497,7 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
           &quot;description&quot;: &quot;The treatment&#39;s totals.&quot;
         }
       },
+      &quot;description&quot;: &quot;A control run and its treatment run, and what follows from them.\n\n```\nuse majordomus_cli::economics::model::{EconomicsPair, EconomicsPairStatus};\nlet p: EconomicsPair = serde_json::from_value(serde_json::json!({\n    \&quot;suite\&quot;: \&quot;pilot\&quot;, \&quot;task\&quot;: \&quot;vat-rounding\&quot;, \&quot;category\&quot;: \&quot;bugfix\&quot;, \&quot;sessions\&quot;: 1,\n    \&quot;repetition\&quot;: 2, \&quot;control\&quot;: \&quot;vat-rounding--baseline--r2\&quot;, \&quot;status\&quot;: \&quot;missing\&quot;,\n    \&quot;reasons\&quot;: [\&quot;no treatment run recorded\&quot;]\n}))\n.unwrap();\nassert_eq!(p.status, EconomicsPairStatus::Missing);\nassert!(p.treatment.is_none() &amp;&amp; p.token_reduction.is_none(), \&quot;no side, no reduction\&quot;);\n```&quot;,
       &quot;required&quot;: [
         &quot;suite&quot;,
         &quot;task&quot;,
@@ -772,118 +505,67 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
         &quot;sessions&quot;,
         &quot;repetition&quot;,
         &quot;status&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
-    },
-    &quot;EconomicsPairCounts&quot;: {
-      &quot;description&quot;: &quot;Pair counts of a suite, so that nothing is dropped out of sight.\n\n```\nuse majordomus_cli::economics::model::EconomicsPairCounts;\nlet c = EconomicsPairCounts {\n    declared: 14, attempted: 12, valid: 9, control_failed: 1,\n    treatment_failed: 1, both_failed: 0, other: 1,\n};\nlet accounted = c.valid + c.control_failed + c.treatment_failed + c.both_failed + c.other;\nassert_eq!(accounted, c.attempted, \&quot;every attempted pair is in exactly one bucket\&quot;);\nassert_eq!(EconomicsPairCounts::default().declared, 0);\n```&quot;,
-      &quot;properties&quot;: {
-        &quot;attempted&quot;: {
-          &quot;description&quot;: &quot;Pairs with at least one run recorded.&quot;,
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;both_failed&quot;: {
-          &quot;description&quot;: &quot;Pairs where both failed.&quot;,
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;control_failed&quot;: {
-          &quot;description&quot;: &quot;Pairs whose control failed.&quot;,
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;declared&quot;: {
-          &quot;description&quot;: &quot;Pairs the suite declares.&quot;,
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;other&quot;: {
-          &quot;description&quot;: &quot;Pairs not comparable, missing a side, lacking usage, or excluded.&quot;,
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;treatment_failed&quot;: {
-          &quot;description&quot;: &quot;Pairs whose treatment failed.&quot;,
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;valid&quot;: {
-          &quot;description&quot;: &quot;Pairs that count.&quot;,
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        }
-      },
-      &quot;required&quot;: [
-        &quot;declared&quot;,
-        &quot;attempted&quot;,
-        &quot;valid&quot;,
-        &quot;control_failed&quot;,
-        &quot;treatment_failed&quot;,
-        &quot;both_failed&quot;,
-        &quot;other&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
-    },
-    &quot;EconomicsPairStatus&quot;: {
-      &quot;description&quot;: &quot;Why a pair does or does not count.\n\n```\nuse majordomus_cli::economics::model::EconomicsPairStatus;\nassert_eq!(serde_json::to_value(EconomicsPairStatus::ControlFailed).unwrap(), \&quot;control_failed\&quot;);\nlet s: EconomicsPairStatus = serde_json::from_value(\&quot;usage_unavailable\&quot;.into()).unwrap();\nassert_ne!(s, EconomicsPairStatus::Valid);\n```&quot;,
-      &quot;oneOf&quot;: [
-        {
-          &quot;const&quot;: &quot;valid&quot;,
-          &quot;description&quot;: &quot;Both runs succeeded, are comparable and report usage.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;control_failed&quot;,
-          &quot;description&quot;: &quot;The control run failed a success gate.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;treatment_failed&quot;,
-          &quot;description&quot;: &quot;The treatment run failed a success gate.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;both_failed&quot;,
-          &quot;description&quot;: &quot;Both failed.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;usage_unavailable&quot;,
-          &quot;description&quot;: &quot;A run reports no usage to compare.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;incomparable&quot;,
-          &quot;description&quot;: &quot;The runs differ in something the methodology requires them to share.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;missing&quot;,
-          &quot;description&quot;: &quot;One side was never recorded.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;excluded&quot;,
-          &quot;description&quot;: &quot;A run is excluded under the outlier rule.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
       ]
+    },
+    &quot;EconomicsInterval&quot;: {
+      &quot;required&quot;: [
+        &quot;level_bp&quot;,
+        &quot;low&quot;,
+        &quot;high&quot;,
+        &quot;method&quot;,
+        &quot;resamples&quot;,
+        &quot;seed&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;,
+      &quot;description&quot;: &quot;A bootstrap interval, with everything needed to reproduce it.\n\n```\nuse majordomus_cli::economics::model::EconomicsInterval;\nlet i: EconomicsInterval = serde_json::from_value(serde_json::json!({\n    \&quot;level_bp\&quot;: 9500, \&quot;low\&quot;: 0.21, \&quot;high\&quot;: 0.38,\n    \&quot;method\&quot;: \&quot;bootstrap percentile of the median\&quot;, \&quot;resamples\&quot;: 10000, \&quot;seed\&quot;: 20260924\n}))\n.unwrap();\nassert!(i.low &lt;= i.high);\nassert_eq!(serde_json::to_value(&amp;i).unwrap()[\&quot;seed\&quot;], 20260924, \&quot;the seed travels with it\&quot;);\n```&quot;,
+      &quot;properties&quot;: {
+        &quot;high&quot;: {
+          &quot;type&quot;: &quot;number&quot;,
+          &quot;description&quot;: &quot;Upper bound.&quot;,
+          &quot;format&quot;: &quot;double&quot;
+        },
+        &quot;low&quot;: {
+          &quot;format&quot;: &quot;double&quot;,
+          &quot;type&quot;: &quot;number&quot;,
+          &quot;description&quot;: &quot;Lower bound.&quot;
+        },
+        &quot;method&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;How it was computed: a cluster bootstrap over tasks for every metric over pairs or\nruns, whose repetitions of one task are not independent, and an independent\nbootstrap over seeds for the context suite.&quot;
+        },
+        &quot;level_bp&quot;: {
+          &quot;format&quot;: &quot;uint32&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;description&quot;: &quot;Confidence in basis points.&quot;,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;seed&quot;: {
+          &quot;description&quot;: &quot;Generator seed.&quot;,
+          &quot;type&quot;: &quot;integer&quot;,
+          &quot;format&quot;: &quot;uint64&quot;,
+          &quot;minimum&quot;: 0
+        },
+        &quot;resamples&quot;: {
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;,
+          &quot;description&quot;: &quot;Resamples.&quot;,
+          &quot;format&quot;: &quot;uint32&quot;
+        }
+      }
     },
     &quot;EconomicsSuiteView&quot;: {
       &quot;description&quot;: &quot;A suite and the state of its evidence.\n\n```\nuse majordomus_cli::economics::model::{\n    EconomicsFreshness, EconomicsPairCounts, EconomicsSuiteView,\n};\nlet v = EconomicsSuiteView {\n    id: \&quot;pilot\&quot;.into(), kind: \&quot;live\&quot;.into(), version: 1, title: \&quot;Pilot\&quot;.into(),\n    model: Some(\&quot;claude-sonnet-5\&quot;.into()), freshness: EconomicsFreshness::NoEvidence,\n    freshness_detail: Some(\&quot;no run recorded\&quot;.into()), runs: 0,\n    pairs: EconomicsPairCounts { declared: 14, ..EconomicsPairCounts::default() },\n    revisions: vec![], harnesses: vec![], models_reported: vec![],\n};\nlet json = serde_json::to_value(&amp;v).unwrap();\nassert_eq!(json[\&quot;freshness\&quot;], \&quot;no_evidence\&quot;);\nassert_eq!(json[\&quot;pairs\&quot;][\&quot;declared\&quot;], 14, \&quot;declared pairs show even when none ran\&quot;);\n```&quot;,
+      &quot;required&quot;: [
+        &quot;id&quot;,
+        &quot;kind&quot;,
+        &quot;version&quot;,
+        &quot;title&quot;,
+        &quot;freshness&quot;,
+        &quot;runs&quot;,
+        &quot;pairs&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;,
       &quot;properties&quot;: {
-        &quot;freshness&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/EconomicsFreshness&quot;,
-          &quot;description&quot;: &quot;Where its evidence stands.&quot;
-        },
         &quot;freshness_detail&quot;: {
           &quot;description&quot;: &quot;Why, when not current.&quot;,
           &quot;type&quot;: [
@@ -891,13 +573,19 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
             &quot;null&quot;
           ]
         },
-        &quot;harnesses&quot;: {
-          &quot;default&quot;: [],
-          &quot;description&quot;: &quot;The harness versions that ran it.&quot;,
-          &quot;items&quot;: {
-            &quot;type&quot;: &quot;string&quot;
-          },
-          &quot;type&quot;: &quot;array&quot;
+        &quot;version&quot;: {
+          &quot;format&quot;: &quot;uint32&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;,
+          &quot;description&quot;: &quot;Its version.&quot;
+        },
+        &quot;pairs&quot;: {
+          &quot;description&quot;: &quot;Pair counts.&quot;,
+          &quot;$ref&quot;: &quot;#/$defs/EconomicsPairCounts&quot;
+        },
+        &quot;freshness&quot;: {
+          &quot;description&quot;: &quot;Where its evidence stands.&quot;,
+          &quot;$ref&quot;: &quot;#/$defs/EconomicsFreshness&quot;
         },
         &quot;id&quot;: {
           &quot;description&quot;: &quot;The suite.&quot;,
@@ -914,6 +602,14 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
             &quot;null&quot;
           ]
         },
+        &quot;harnesses&quot;: {
+          &quot;default&quot;: [],
+          &quot;type&quot;: &quot;array&quot;,
+          &quot;description&quot;: &quot;The harness versions that ran it.&quot;,
+          &quot;items&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        },
         &quot;models_reported&quot;: {
           &quot;default&quot;: [],
           &quot;description&quot;: &quot;The models the harness reported.&quot;,
@@ -922,116 +618,115 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
           },
           &quot;type&quot;: &quot;array&quot;
         },
-        &quot;pairs&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/EconomicsPairCounts&quot;,
-          &quot;description&quot;: &quot;Pair counts.&quot;
-        },
         &quot;revisions&quot;: {
           &quot;default&quot;: [],
           &quot;description&quot;: &quot;The revisions the evidence was recorded at.&quot;,
+          &quot;type&quot;: &quot;array&quot;,
           &quot;items&quot;: {
             &quot;type&quot;: &quot;string&quot;
-          },
-          &quot;type&quot;: &quot;array&quot;
+          }
         },
         &quot;runs&quot;: {
+          &quot;type&quot;: &quot;integer&quot;,
           &quot;description&quot;: &quot;Runs recorded.&quot;,
-          &quot;format&quot;: &quot;uint&quot;,
           &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
+          &quot;format&quot;: &quot;uint&quot;
         },
         &quot;title&quot;: {
           &quot;description&quot;: &quot;A name.&quot;,
           &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;version&quot;: {
-          &quot;description&quot;: &quot;Its version.&quot;,
-          &quot;format&quot;: &quot;uint32&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
         }
-      },
+      }
+    },
+    &quot;EconomicsExclusion&quot;: {
+      &quot;type&quot;: &quot;object&quot;,
+      &quot;description&quot;: &quot;One run excluded under the outlier rule.\n\n```\nuse majordomus_cli::economics::model::{EconomicsExclusion, EconomicsOutlierPolicy};\nlet o: EconomicsOutlierPolicy = serde_json::from_value(serde_json::json!({\n    \&quot;rule\&quot;: \&quot;A run is excluded only by naming it here with a reason.\&quot;,\n    \&quot;excluded\&quot;: [{ \&quot;run\&quot;: \&quot;vat-rounding--baseline--r2\&quot;, \&quot;reason\&quot;: \&quot;provider outage\&quot; }]\n}))\n.unwrap();\nlet first: &amp;EconomicsExclusion = &amp;o.excluded[0];\nassert_eq!(first.run, \&quot;vat-rounding--baseline--r2\&quot;);\nlet unexplained = serde_json::json!({ \&quot;run\&quot;: \&quot;vat-rounding--baseline--r1\&quot; });\nassert!(serde_json::from_value::&lt;EconomicsExclusion&gt;(unexplained).is_err());\n```&quot;,
       &quot;required&quot;: [
-        &quot;id&quot;,
-        &quot;kind&quot;,
-        &quot;version&quot;,
-        &quot;title&quot;,
-        &quot;freshness&quot;,
-        &quot;runs&quot;,
-        &quot;pairs&quot;
+        &quot;run&quot;,
+        &quot;reason&quot;
       ],
-      &quot;type&quot;: &quot;object&quot;
+      &quot;properties&quot;: {
+        &quot;run&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The run&#39;s id.&quot;
+        },
+        &quot;reason&quot;: {
+          &quot;description&quot;: &quot;Why.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      }
     },
     &quot;EconomicsUsage&quot;: {
       &quot;description&quot;: &quot;A run&#39;s totals, derived from its raw usage.\n\n```\nuse majordomus_cli::economics::model::EconomicsUsage;\nlet u = EconomicsUsage {\n    input_uncached: 10, cache_write: 90, cache_read: 900, output: 50,\n    total_input: 1000, total: 1050, requests: 3, ..EconomicsUsage::default()\n};\nassert_eq!(u.total_input, u.input_uncached + u.cache_write + u.cache_read);\nlet json = serde_json::to_value(&amp;u).unwrap();\nassert!(json.get(\&quot;reasoning\&quot;).is_none() &amp;&amp; json.get(\&quot;cost_microusd\&quot;).is_none());\n```&quot;,
       &quot;properties&quot;: {
         &quot;cache_read&quot;: {
           &quot;description&quot;: &quot;Input read from the cache.&quot;,
-          &quot;format&quot;: &quot;uint64&quot;,
           &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
+          &quot;type&quot;: &quot;integer&quot;,
+          &quot;format&quot;: &quot;uint64&quot;
         },
-        &quot;cache_write&quot;: {
-          &quot;description&quot;: &quot;Input written to the cache.&quot;,
+        &quot;requests&quot;: {
           &quot;format&quot;: &quot;uint64&quot;,
+          &quot;type&quot;: &quot;integer&quot;,
           &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;cost_microusd&quot;: {
-          &quot;description&quot;: &quot;The harness&#39;s cost projection, in millionths of a dollar, when every session had one.&quot;,
-          &quot;format&quot;: &quot;uint64&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: [
-            &quot;integer&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;input_uncached&quot;: {
-          &quot;description&quot;: &quot;Input neither read from nor written to the cache.&quot;,
-          &quot;format&quot;: &quot;uint64&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;output&quot;: {
-          &quot;description&quot;: &quot;Output, reasoning included.&quot;,
-          &quot;format&quot;: &quot;uint64&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
+          &quot;description&quot;: &quot;Provider requests.&quot;
         },
         &quot;reasoning&quot;: {
           &quot;description&quot;: &quot;Reasoning tokens, when every request reported them.&quot;,
-          &quot;format&quot;: &quot;uint64&quot;,
           &quot;minimum&quot;: 0,
           &quot;type&quot;: [
             &quot;integer&quot;,
             &quot;null&quot;
-          ]
+          ],
+          &quot;format&quot;: &quot;uint64&quot;
         },
-        &quot;requests&quot;: {
-          &quot;description&quot;: &quot;Provider requests.&quot;,
+        &quot;total_input&quot;: {
+          &quot;description&quot;: &quot;All input.&quot;,
+          &quot;type&quot;: &quot;integer&quot;,
           &quot;format&quot;: &quot;uint64&quot;,
+          &quot;minimum&quot;: 0
+        },
+        &quot;input_uncached&quot;: {
+          &quot;description&quot;: &quot;Input neither read from nor written to the cache.&quot;,
           &quot;minimum&quot;: 0,
+          &quot;format&quot;: &quot;uint64&quot;,
           &quot;type&quot;: &quot;integer&quot;
         },
-        &quot;tool_calls&quot;: {
-          &quot;description&quot;: &quot;Tool calls.&quot;,
+        &quot;output&quot;: {
           &quot;format&quot;: &quot;uint64&quot;,
+          &quot;description&quot;: &quot;Output, reasoning included.&quot;,
           &quot;minimum&quot;: 0,
           &quot;type&quot;: &quot;integer&quot;
         },
         &quot;total&quot;: {
           &quot;description&quot;: &quot;All input and output.&quot;,
+          &quot;type&quot;: &quot;integer&quot;,
           &quot;format&quot;: &quot;uint64&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
+          &quot;minimum&quot;: 0
         },
-        &quot;total_input&quot;: {
-          &quot;description&quot;: &quot;All input.&quot;,
+        &quot;cost_microusd&quot;: {
+          &quot;type&quot;: [
+            &quot;integer&quot;,
+            &quot;null&quot;
+          ],
           &quot;format&quot;: &quot;uint64&quot;,
+          &quot;description&quot;: &quot;The harness&#39;s cost projection, in millionths of a dollar, when every session had one.&quot;,
+          &quot;minimum&quot;: 0
+        },
+        &quot;tool_calls&quot;: {
+          &quot;description&quot;: &quot;Tool calls.&quot;,
           &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;,
+          &quot;format&quot;: &quot;uint64&quot;
+        },
+        &quot;cache_write&quot;: {
+          &quot;minimum&quot;: 0,
+          &quot;format&quot;: &quot;uint64&quot;,
+          &quot;description&quot;: &quot;Input written to the cache.&quot;,
           &quot;type&quot;: &quot;integer&quot;
         }
       },
+      &quot;type&quot;: &quot;object&quot;,
       &quot;required&quot;: [
         &quot;input_uncached&quot;,
         &quot;cache_write&quot;,
@@ -1041,34 +736,313 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
         &quot;total&quot;,
         &quot;requests&quot;,
         &quot;tool_calls&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
+      ]
     },
-    &quot;EconomicsVariant&quot;: {
-      &quot;description&quot;: &quot;One arm of the experiment: what the session runs with, and what it runs without.\n\n```\nuse majordomus_cli::economics::model::EconomicsVariant;\nlet v: EconomicsVariant = serde_json::from_value(serde_json::json!({\n    \&quot;id\&quot;: \&quot;baseline\&quot;, \&quot;role\&quot;: \&quot;control\&quot;, \&quot;title\&quot;: \&quot;Without Majordomus\&quot;,\n    \&quot;description\&quot;: \&quot;The fixture repository as a competent team keeps it.\&quot;\n}))\n.unwrap();\nassert_eq!(v.role, \&quot;control\&quot;);\nassert!(v.excludes.is_empty(), \&quot;an arm that names no exclusion excludes nothing\&quot;);\n```&quot;,
+    &quot;EconomicsDistribution&quot;: {
+      &quot;description&quot;: &quot;The shape of a set of per-pair values.\n\n```\nuse majordomus_cli::economics::model::EconomicsDistribution;\nlet d: EconomicsDistribution = serde_json::from_value(serde_json::json!({\n    \&quot;n\&quot;: 1, \&quot;mean\&quot;: 0.4, \&quot;median\&quot;: 0.4, \&quot;p25\&quot;: 0.4, \&quot;p75\&quot;: 0.4, \&quot;p95\&quot;: 0.4,\n    \&quot;min\&quot;: 0.4, \&quot;max\&quot;: 0.4\n}))\n.unwrap();\nassert!(d.sd.is_none(), \&quot;one value has no sample standard deviation\&quot;);\nassert!(d.min &lt;= d.p25 &amp;&amp; d.p25 &lt;= d.median &amp;&amp; d.median &lt;= d.p75 &amp;&amp; d.p75 &lt;= d.max);\n```&quot;,
+      &quot;required&quot;: [
+        &quot;n&quot;,
+        &quot;mean&quot;,
+        &quot;median&quot;,
+        &quot;p25&quot;,
+        &quot;p75&quot;,
+        &quot;p95&quot;,
+        &quot;min&quot;,
+        &quot;max&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;,
       &quot;properties&quot;: {
-        &quot;description&quot;: {
-          &quot;description&quot;: &quot;Exactly what the arm consists of.&quot;,
+        &quot;p25&quot;: {
+          &quot;format&quot;: &quot;double&quot;,
+          &quot;type&quot;: &quot;number&quot;,
+          &quot;description&quot;: &quot;25th percentile.&quot;
+        },
+        &quot;median&quot;: {
+          &quot;description&quot;: &quot;Median.&quot;,
+          &quot;type&quot;: &quot;number&quot;,
+          &quot;format&quot;: &quot;double&quot;
+        },
+        &quot;min&quot;: {
+          &quot;type&quot;: &quot;number&quot;,
+          &quot;description&quot;: &quot;Smallest.&quot;,
+          &quot;format&quot;: &quot;double&quot;
+        },
+        &quot;p75&quot;: {
+          &quot;description&quot;: &quot;75th percentile.&quot;,
+          &quot;type&quot;: &quot;number&quot;,
+          &quot;format&quot;: &quot;double&quot;
+        },
+        &quot;sd&quot;: {
+          &quot;type&quot;: [
+            &quot;number&quot;,
+            &quot;null&quot;
+          ],
+          &quot;description&quot;: &quot;Sample standard deviation; absent for one value.&quot;,
+          &quot;format&quot;: &quot;double&quot;
+        },
+        &quot;max&quot;: {
+          &quot;type&quot;: &quot;number&quot;,
+          &quot;format&quot;: &quot;double&quot;,
+          &quot;description&quot;: &quot;Largest.&quot;
+        },
+        &quot;mean&quot;: {
+          &quot;format&quot;: &quot;double&quot;,
+          &quot;description&quot;: &quot;Arithmetic mean.&quot;,
+          &quot;type&quot;: &quot;number&quot;
+        },
+        &quot;n&quot;: {
+          &quot;minimum&quot;: 0,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;type&quot;: &quot;integer&quot;,
+          &quot;description&quot;: &quot;How many values.&quot;
+        },
+        &quot;p95&quot;: {
+          &quot;description&quot;: &quot;95th percentile.&quot;,
+          &quot;type&quot;: &quot;number&quot;,
+          &quot;format&quot;: &quot;double&quot;
+        }
+      }
+    },
+    &quot;EconomicsMetric&quot;: {
+      &quot;description&quot;: &quot;One metric: its value, where it comes from, and how much it can bear.\n\n```\nuse majordomus_cli::economics::model::{EconomicsClass, EconomicsMetric, EconomicsMetricStatus};\nlet m: EconomicsMetric = serde_json::from_value(serde_json::json!({\n    \&quot;id\&quot;: \&quot;effective_token_reduction\&quot;, \&quot;title\&quot;: \&quot;Effective token reduction\&quot;,\n    \&quot;class\&quot;: \&quot;derived\&quot;, \&quot;inputs\&quot;: \&quot;observed\&quot;, \&quot;unit\&quot;: \&quot;ratio\&quot;,\n    \&quot;formula\&quot;: \&quot;median of 1 - treatment / control\&quot;, \&quot;status\&quot;: \&quot;not_measured\&quot;, \&quot;n\&quot;: 0,\n    \&quot;suite\&quot;: \&quot;pilot\&quot;\n}))\n.unwrap();\nassert_eq!(m.inputs, Some(EconomicsClass::Observed));\nassert!(m.value.is_none() &amp;&amp; m.status == EconomicsMetricStatus::NotMeasured);\nassert!(serde_json::to_value(&amp;m).unwrap().get(\&quot;value\&quot;).is_none(), \&quot;no value, not a zero\&quot;);\n```&quot;,
+      &quot;required&quot;: [
+        &quot;id&quot;,
+        &quot;title&quot;,
+        &quot;class&quot;,
+        &quot;unit&quot;,
+        &quot;formula&quot;,
+        &quot;status&quot;,
+        &quot;n&quot;,
+        &quot;suite&quot;
+      ],
+      &quot;properties&quot;: {
+        &quot;not&quot;: {
+          &quot;description&quot;: &quot;What the metric is not, where it is easily mistaken for something else.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;interval&quot;: {
+          &quot;anyOf&quot;: [
+            {
+              &quot;$ref&quot;: &quot;#/$defs/EconomicsInterval&quot;
+            },
+            {
+              &quot;type&quot;: &quot;null&quot;
+            }
+          ],
+          &quot;description&quot;: &quot;The interval, when enough values exist.&quot;
+        },
+        &quot;suite&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The suite.&quot;
+        },
+        &quot;class&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/EconomicsClass&quot;,
+          &quot;description&quot;: &quot;The measurement class.&quot;
+        },
+        &quot;distribution&quot;: {
+          &quot;anyOf&quot;: [
+            {
+              &quot;$ref&quot;: &quot;#/$defs/EconomicsDistribution&quot;
+            },
+            {
+              &quot;type&quot;: &quot;null&quot;
+            }
+          ],
+          &quot;description&quot;: &quot;Their distribution.&quot;
+        },
+        &quot;status&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/EconomicsMetricStatus&quot;,
+          &quot;description&quot;: &quot;Where it stands.&quot;
+        },
+        &quot;n&quot;: {
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;description&quot;: &quot;How many values it rests on.&quot;
+        },
+        &quot;unit&quot;: {
+          &quot;description&quot;: &quot;`ratio`, `tokens`, `calls`.&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
-        &quot;excludes&quot;: {
+        &quot;evidence&quot;: {
+          &quot;type&quot;: &quot;array&quot;,
+          &quot;description&quot;: &quot;The runs, pairs or seeds it rests on.&quot;,
           &quot;default&quot;: [],
-          &quot;description&quot;: &quot;What the arm deliberately does not include.&quot;,
+          &quot;items&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        },
+        &quot;formula&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The formula, in words.&quot;
+        },
+        &quot;id&quot;: {
+          &quot;description&quot;: &quot;The metric&#39;s id.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;title&quot;: {
+          &quot;description&quot;: &quot;A name.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;value&quot;: {
+          &quot;description&quot;: &quot;The headline value; absent when nothing was measured.&quot;,
+          &quot;type&quot;: [
+            &quot;number&quot;,
+            &quot;null&quot;
+          ],
+          &quot;format&quot;: &quot;double&quot;
+        },
+        &quot;inputs&quot;: {
+          &quot;description&quot;: &quot;For a derived metric, the class of what it was derived from: a reduction derived from\nobserved usage is not the same evidence as one derived from counted bytes.&quot;,
+          &quot;anyOf&quot;: [
+            {
+              &quot;$ref&quot;: &quot;#/$defs/EconomicsClass&quot;
+            },
+            {
+              &quot;type&quot;: &quot;null&quot;
+            }
+          ]
+        },
+        &quot;warnings&quot;: {
+          &quot;default&quot;: [],
+          &quot;description&quot;: &quot;What a reader must know before using it.&quot;,
           &quot;items&quot;: {
             &quot;type&quot;: &quot;string&quot;
           },
           &quot;type&quot;: &quot;array&quot;
+        }
+      },
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;EconomicsPairCounts&quot;: {
+      &quot;type&quot;: &quot;object&quot;,
+      &quot;description&quot;: &quot;Pair counts of a suite, so that nothing is dropped out of sight.\n\n```\nuse majordomus_cli::economics::model::EconomicsPairCounts;\nlet c = EconomicsPairCounts {\n    declared: 14, attempted: 12, valid: 9, control_failed: 1,\n    treatment_failed: 1, both_failed: 0, other: 1,\n};\nlet accounted = c.valid + c.control_failed + c.treatment_failed + c.both_failed + c.other;\nassert_eq!(accounted, c.attempted, \&quot;every attempted pair is in exactly one bucket\&quot;);\nassert_eq!(EconomicsPairCounts::default().declared, 0);\n```&quot;,
+      &quot;required&quot;: [
+        &quot;declared&quot;,
+        &quot;attempted&quot;,
+        &quot;valid&quot;,
+        &quot;control_failed&quot;,
+        &quot;treatment_failed&quot;,
+        &quot;both_failed&quot;,
+        &quot;other&quot;
+      ],
+      &quot;properties&quot;: {
+        &quot;treatment_failed&quot;: {
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;description&quot;: &quot;Pairs whose treatment failed.&quot;,
+          &quot;type&quot;: &quot;integer&quot;,
+          &quot;minimum&quot;: 0
         },
-        &quot;id&quot;: {
-          &quot;description&quot;: &quot;`baseline`, `majordomus`, ...&quot;,
+        &quot;both_failed&quot;: {
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;,
+          &quot;description&quot;: &quot;Pairs where both failed.&quot;
+        },
+        &quot;control_failed&quot;: {
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;type&quot;: &quot;integer&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;description&quot;: &quot;Pairs whose control failed.&quot;
+        },
+        &quot;valid&quot;: {
+          &quot;minimum&quot;: 0,
+          &quot;description&quot;: &quot;Pairs that count.&quot;,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;attempted&quot;: {
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;type&quot;: &quot;integer&quot;,
+          &quot;description&quot;: &quot;Pairs with at least one run recorded.&quot;,
+          &quot;minimum&quot;: 0
+        },
+        &quot;declared&quot;: {
+          &quot;description&quot;: &quot;Pairs the suite declares.&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;other&quot;: {
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;,
+          &quot;description&quot;: &quot;Pairs not comparable, missing a side, lacking usage, or excluded.&quot;,
+          &quot;format&quot;: &quot;uint&quot;
+        }
+      }
+    },
+    &quot;EconomicsPairStatus&quot;: {
+      &quot;description&quot;: &quot;Why a pair does or does not count.\n\n```\nuse majordomus_cli::economics::model::EconomicsPairStatus;\nassert_eq!(serde_json::to_value(EconomicsPairStatus::ControlFailed).unwrap(), \&quot;control_failed\&quot;);\nlet s: EconomicsPairStatus = serde_json::from_value(\&quot;usage_unavailable\&quot;.into()).unwrap();\nassert_ne!(s, EconomicsPairStatus::Valid);\n```&quot;,
+      &quot;oneOf&quot;: [
+        {
+          &quot;description&quot;: &quot;Both runs succeeded, are comparable and report usage.&quot;,
+          &quot;const&quot;: &quot;valid&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
+        {
+          &quot;description&quot;: &quot;The control run failed a success gate.&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;control_failed&quot;
+        },
+        {
+          &quot;const&quot;: &quot;treatment_failed&quot;,
+          &quot;description&quot;: &quot;The treatment run failed a success gate.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;both_failed&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;Both failed.&quot;
+        },
+        {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;A run reports no usage to compare.&quot;,
+          &quot;const&quot;: &quot;usage_unavailable&quot;
+        },
+        {
+          &quot;const&quot;: &quot;incomparable&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The runs differ in something the methodology requires them to share.&quot;
+        },
+        {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;missing&quot;,
+          &quot;description&quot;: &quot;One side was never recorded.&quot;
+        },
+        {
+          &quot;description&quot;: &quot;A run is excluded under the outlier rule.&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;excluded&quot;
+        }
+      ]
+    },
+    &quot;EconomicsVariant&quot;: {
+      &quot;properties&quot;: {
         &quot;role&quot;: {
           &quot;description&quot;: &quot;`control` or `treatment`.&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
+        &quot;description&quot;: {
+          &quot;description&quot;: &quot;Exactly what the arm consists of.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
         &quot;title&quot;: {
           &quot;description&quot;: &quot;A short name.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;excludes&quot;: {
+          &quot;items&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          },
+          &quot;description&quot;: &quot;What the arm deliberately does not include.&quot;,
+          &quot;type&quot;: &quot;array&quot;,
+          &quot;default&quot;: []
+        },
+        &quot;id&quot;: {
+          &quot;description&quot;: &quot;`baseline`, `majordomus`, ...&quot;,
           &quot;type&quot;: &quot;string&quot;
         }
       },
@@ -1078,30 +1052,48 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
         &quot;title&quot;,
         &quot;description&quot;
       ],
+      &quot;description&quot;: &quot;One arm of the experiment: what the session runs with, and what it runs without.\n\n```\nuse majordomus_cli::economics::model::EconomicsVariant;\nlet v: EconomicsVariant = serde_json::from_value(serde_json::json!({\n    \&quot;id\&quot;: \&quot;baseline\&quot;, \&quot;role\&quot;: \&quot;control\&quot;, \&quot;title\&quot;: \&quot;Without Majordomus\&quot;,\n    \&quot;description\&quot;: \&quot;The fixture repository as a competent team keeps it.\&quot;\n}))\n.unwrap();\nassert_eq!(v.role, \&quot;control\&quot;);\nassert!(v.excludes.is_empty(), \&quot;an arm that names no exclusion excludes nothing\&quot;);\n```&quot;,
       &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;EconomicsFreshness&quot;: {
+      &quot;description&quot;: &quot;How recorded evidence stands against the repository as it is now.\n\n```\nuse majordomus_cli::economics::model::EconomicsFreshness;\nassert_eq!(serde_json::to_value(EconomicsFreshness::NoEvidence).unwrap(), \&quot;no_evidence\&quot;);\nlet f: EconomicsFreshness = serde_json::from_value(\&quot;incompatible\&quot;.into()).unwrap();\nassert_eq!(f, EconomicsFreshness::Incompatible);\n```&quot;,
+      &quot;oneOf&quot;: [
+        {
+          &quot;const&quot;: &quot;current&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;Recorded under this methodology, and nothing it depends on changed since.&quot;
+        },
+        {
+          &quot;description&quot;: &quot;Recorded under this methodology, but a mechanism it measured changed since.&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;stale&quot;
+        },
+        {
+          &quot;const&quot;: &quot;incompatible&quot;,
+          &quot;description&quot;: &quot;Recorded under another methodology version: not comparable at all.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;no_evidence&quot;,
+          &quot;description&quot;: &quot;Nothing recorded.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      ]
     }
   },
-  &quot;description&quot;: &quot;The answer of `economics.explain`: one metric, and everything it rests on.\n\nA repository that declares no benchmark methodology measures nothing, so it has no\nmetric to explain: it is answered as `economics.summary` answers it — `present: false`,\nthe statement why, no metric and no number — rather than refused, because a repository\nthat does not benchmark itself is not a malformed request. A metric id that a declared\nmethodology does not have is still refused.\n\n```\nuse majordomus_cli::economics::model::{EconomicsClass, EconomicsExplanation};\nlet e: EconomicsExplanation = serde_json::from_value(serde_json::json!({\n    \&quot;present\&quot;: true,\n    \&quot;metric\&quot;: { \&quot;id\&quot;: \&quot;context_reduction_ratio\&quot;, \&quot;title\&quot;: \&quot;Context reduction\&quot;,\n        \&quot;class\&quot;: \&quot;derived\&quot;, \&quot;inputs\&quot;: \&quot;counted\&quot;, \&quot;unit\&quot;: \&quot;ratio\&quot;,\n        \&quot;formula\&quot;: \&quot;median over seeds of 1 - selected_tokens / candidate_tokens\&quot;,\n        \&quot;status\&quot;: \&quot;not_measured\&quot;, \&quot;n\&quot;: 0, \&quot;suite\&quot;: \&quot;context\&quot; },\n    \&quot;class_meaning\&quot;: \&quot;Arithmetic over observed or counted values.\&quot;, \&quot;methodology\&quot;: 1,\n    \&quot;suites\&quot;: [], \&quot;pairs\&quot;: [], \&quot;excluded\&quot;: [], \&quot;variants\&quot;: [],\n    \&quot;reproduce\&quot;: [\&quot;majordomus economics measure --suite context\&quot;]\n}))\n.unwrap();\nassert_eq!(e.metric.unwrap().inputs, Some(EconomicsClass::Counted));\nassert!(e.pairs.is_empty(), \&quot;a counted metric rests on seeds, not on pairs\&quot;);\n\nlet none: EconomicsExplanation = serde_json::from_value(serde_json::json!({\n    \&quot;present\&quot;: false, \&quot;statement\&quot;: \&quot;No verified total-token-savings claim is available\&quot;,\n    \&quot;class_meaning\&quot;: \&quot;\&quot;, \&quot;suites\&quot;: [], \&quot;pairs\&quot;: [], \&quot;excluded\&quot;: [], \&quot;variants\&quot;: [],\n    \&quot;reproduce\&quot;: []\n}))\n.unwrap();\nassert!(none.metric.is_none() &amp;&amp; none.methodology.is_none(), \&quot;nothing declared, no number\&quot;);\n```&quot;,
+  &quot;title&quot;: &quot;EconomicsExplanation&quot;,
+  &quot;type&quot;: &quot;object&quot;,
   &quot;properties&quot;: {
-    &quot;class_meaning&quot;: {
-      &quot;description&quot;: &quot;What its class means, in the methodology&#39;s words.&quot;,
-      &quot;type&quot;: &quot;string&quot;
+    &quot;present&quot;: {
+      &quot;type&quot;: &quot;boolean&quot;,
+      &quot;description&quot;: &quot;Whether a methodology is declared here at all.&quot;
     },
-    &quot;excluded&quot;: {
-      &quot;description&quot;: &quot;Runs excluded under the outlier rule.&quot;,
+    &quot;reproduce&quot;: {
       &quot;items&quot;: {
-        &quot;$ref&quot;: &quot;#/$defs/EconomicsExclusion&quot;
+        &quot;type&quot;: &quot;string&quot;
       },
+      &quot;description&quot;: &quot;How to reproduce it.&quot;,
       &quot;type&quot;: &quot;array&quot;
-    },
-    &quot;methodology&quot;: {
-      &quot;description&quot;: &quot;The methodology version; absent when none is declared.&quot;,
-      &quot;format&quot;: &quot;uint32&quot;,
-      &quot;minimum&quot;: 0,
-      &quot;type&quot;: [
-        &quot;integer&quot;,
-        &quot;null&quot;
-      ]
     },
     &quot;metric&quot;: {
       &quot;anyOf&quot;: [
@@ -1114,23 +1106,16 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
       ],
       &quot;description&quot;: &quot;The metric; absent when no methodology is declared.&quot;
     },
+    &quot;class_meaning&quot;: {
+      &quot;description&quot;: &quot;What its class means, in the methodology&#39;s words.&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
     &quot;pairs&quot;: {
-      &quot;description&quot;: &quot;The pairs it rests on, valid or not, when it rests on pairs.&quot;,
+      &quot;type&quot;: &quot;array&quot;,
       &quot;items&quot;: {
         &quot;$ref&quot;: &quot;#/$defs/EconomicsPair&quot;
       },
-      &quot;type&quot;: &quot;array&quot;
-    },
-    &quot;present&quot;: {
-      &quot;description&quot;: &quot;Whether a methodology is declared here at all.&quot;,
-      &quot;type&quot;: &quot;boolean&quot;
-    },
-    &quot;reproduce&quot;: {
-      &quot;description&quot;: &quot;How to reproduce it.&quot;,
-      &quot;items&quot;: {
-        &quot;type&quot;: &quot;string&quot;
-      },
-      &quot;type&quot;: &quot;array&quot;
+      &quot;description&quot;: &quot;The pairs it rests on, valid or not, when it rests on pairs.&quot;
     },
     &quot;statement&quot;: {
       &quot;description&quot;: &quot;Why there is nothing to explain, when `present` is false.&quot;,
@@ -1139,21 +1124,38 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
         &quot;null&quot;
       ]
     },
-    &quot;suites&quot;: {
-      &quot;description&quot;: &quot;The suites it draws on.&quot;,
-      &quot;items&quot;: {
-        &quot;$ref&quot;: &quot;#/$defs/EconomicsSuiteView&quot;
-      },
-      &quot;type&quot;: &quot;array&quot;
-    },
     &quot;variants&quot;: {
+      &quot;type&quot;: &quot;array&quot;,
       &quot;description&quot;: &quot;The arms compared.&quot;,
       &quot;items&quot;: {
         &quot;$ref&quot;: &quot;#/$defs/EconomicsVariant&quot;
-      },
-      &quot;type&quot;: &quot;array&quot;
+      }
+    },
+    &quot;methodology&quot;: {
+      &quot;type&quot;: [
+        &quot;integer&quot;,
+        &quot;null&quot;
+      ],
+      &quot;minimum&quot;: 0,
+      &quot;description&quot;: &quot;The methodology version; absent when none is declared.&quot;,
+      &quot;format&quot;: &quot;uint32&quot;
+    },
+    &quot;suites&quot;: {
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;description&quot;: &quot;The suites it draws on.&quot;,
+      &quot;items&quot;: {
+        &quot;$ref&quot;: &quot;#/$defs/EconomicsSuiteView&quot;
+      }
+    },
+    &quot;excluded&quot;: {
+      &quot;description&quot;: &quot;Runs excluded under the outlier rule.&quot;,
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;items&quot;: {
+        &quot;$ref&quot;: &quot;#/$defs/EconomicsExclusion&quot;
+      }
     }
   },
+  &quot;description&quot;: &quot;The answer of `economics.explain`: one metric, and everything it rests on.\n\nA repository that declares no benchmark methodology measures nothing, so it has no\nmetric to explain: it is answered as `economics.summary` answers it — `present: false`,\nthe statement why, no metric and no number — rather than refused, because a repository\nthat does not benchmark itself is not a malformed request. A metric id that a declared\nmethodology does not have is still refused.\n\n```\nuse majordomus_cli::economics::model::{EconomicsClass, EconomicsExplanation};\nlet e: EconomicsExplanation = serde_json::from_value(serde_json::json!({\n    \&quot;present\&quot;: true,\n    \&quot;metric\&quot;: { \&quot;id\&quot;: \&quot;context_reduction_ratio\&quot;, \&quot;title\&quot;: \&quot;Context reduction\&quot;,\n        \&quot;class\&quot;: \&quot;derived\&quot;, \&quot;inputs\&quot;: \&quot;counted\&quot;, \&quot;unit\&quot;: \&quot;ratio\&quot;,\n        \&quot;formula\&quot;: \&quot;median over seeds of 1 - selected_tokens / candidate_tokens\&quot;,\n        \&quot;status\&quot;: \&quot;not_measured\&quot;, \&quot;n\&quot;: 0, \&quot;suite\&quot;: \&quot;context\&quot; },\n    \&quot;class_meaning\&quot;: \&quot;Arithmetic over observed or counted values.\&quot;, \&quot;methodology\&quot;: 1,\n    \&quot;suites\&quot;: [], \&quot;pairs\&quot;: [], \&quot;excluded\&quot;: [], \&quot;variants\&quot;: [],\n    \&quot;reproduce\&quot;: [\&quot;majordomus economics measure --suite context\&quot;]\n}))\n.unwrap();\nassert_eq!(e.metric.unwrap().inputs, Some(EconomicsClass::Counted));\nassert!(e.pairs.is_empty(), \&quot;a counted metric rests on seeds, not on pairs\&quot;);\n\nlet none: EconomicsExplanation = serde_json::from_value(serde_json::json!({\n    \&quot;present\&quot;: false, \&quot;statement\&quot;: \&quot;No verified total-token-savings claim is available\&quot;,\n    \&quot;class_meaning\&quot;: \&quot;\&quot;, \&quot;suites\&quot;: [], \&quot;pairs\&quot;: [], \&quot;excluded\&quot;: [], \&quot;variants\&quot;: [],\n    \&quot;reproduce\&quot;: []\n}))\n.unwrap();\nassert!(none.metric.is_none() &amp;&amp; none.methodology.is_none(), \&quot;nothing declared, no number\&quot;);\n```&quot;,
   &quot;required&quot;: [
     &quot;present&quot;,
     &quot;class_meaning&quot;,
@@ -1162,9 +1164,7 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
     &quot;excluded&quot;,
     &quot;variants&quot;,
     &quot;reproduce&quot;
-  ],
-  &quot;title&quot;: &quot;EconomicsExplanation&quot;,
-  &quot;type&quot;: &quot;object&quot;
+  ]
 }</pre></div>
   </details>
 </div>
@@ -1195,7 +1195,7 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
         <div><dt class="text-body-subtle">modul Rust</dt><dd class="min-w-0 break-all font-mono text-heading">majordomus_cli::capability::builtin::economics</dd></div>
         <div><dt class="text-body-subtle">typ vstupu</dt><dd class="font-mono text-heading">EconomicsExplainInput</dd></div>
         <div><dt class="text-body-subtle">typ výstupu</dt><dd class="font-mono text-heading">EconomicsExplanation</dd></div>
-        <div><dt class="text-body-subtle">reference na GitHubu</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/aa9f816f8673880ab4beb6dbebff688f9da5bb65/docs/generated/modules/economics.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/economics.md</a></dd></div><div><dt class="text-body-subtle">otisk registru</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">c514db707bb1f5f7557f2a1629d42c4bdc05eb7ef58464c288e42bafcd3d8720</dd></div>
+        <div><dt class="text-body-subtle">reference na GitHubu</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/docs/generated/modules/economics.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/economics.md</a></dd></div><div><dt class="text-body-subtle">otisk registru</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">3f734f2faf797f0ca7c39b4cd837e68b6619c41c6f6711f3d3aeca8f341934eb</dd></div>
         <div><dt class="text-body-subtle">vygenerováno nástrojem</dt><dd class="font-mono text-heading">majordomus-cli 1.0.0-alpha.10</dd></div>
       </dl>
     </div>
@@ -1251,9 +1251,9 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
       <div class="min-w-0">
         <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">Projekt</h2><ul class="space-y-2 text-sm font-medium text-body">
           <li><a href="https://github.com/korczis/prismatic-majordomus" class="hover:text-heading hover:underline">GitHub</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/aa9f816f8673880ab4beb6dbebff688f9da5bb65/LICENSE" class="hover:text-heading hover:underline">Licence MIT</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/aa9f816f8673880ab4beb6dbebff688f9da5bb65/SECURITY.md" class="hover:text-heading hover:underline">Bezpečnostní politika</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/aa9f816f8673880ab4beb6dbebff688f9da5bb65/CONTRIBUTING.md" class="hover:text-heading hover:underline">Průvodce pro přispěvatele</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/LICENSE" class="hover:text-heading hover:underline">Licence MIT</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/SECURITY.md" class="hover:text-heading hover:underline">Bezpečnostní politika</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/CONTRIBUTING.md" class="hover:text-heading hover:underline">Průvodce pro přispěvatele</a></li>
         </ul>
       </div>
     </div>
@@ -1261,7 +1261,7 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/cs/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.10</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/aa9f816f8673880ab4beb6dbebff688f9da5bb65" class="font-mono underline">aa9f816</a> · inputs <span class="font-mono">a64b981ed16e</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/cs/architecture/" class="underline">how this site is derived</a> names them.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.10</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/745db2ea21e02613943face75a2bf95542be1f2e" class="font-mono underline">745db2e</a> · inputs <span class="font-mono">0a58c217d1b7</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/cs/architecture/" class="underline">how this site is derived</a> names them.</p>
     </div>
   </div>
 </footer>

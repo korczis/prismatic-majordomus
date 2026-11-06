@@ -220,8 +220,6 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
-  &quot;additionalProperties&quot;: false,
-  &quot;description&quot;: &quot;The input of `mesh.firewall` and `mesh.firewall.apply`.&quot;,
   &quot;properties&quot;: {
     &quot;port&quot;: {
       &quot;description&quot;: &quot;The port this checkout&#39;s server listens on beyond loopback, when it does: a peer\ndials it there on the link protocol, so it needs admitting too. Omitted, the plan\nholds the discovery ports and the hub ports the declaration gives this machine.&quot;,
@@ -235,7 +233,9 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
     }
   },
   &quot;title&quot;: &quot;FirewallInput&quot;,
-  &quot;type&quot;: &quot;object&quot;
+  &quot;type&quot;: &quot;object&quot;,
+  &quot;additionalProperties&quot;: false,
+  &quot;description&quot;: &quot;The input of `mesh.firewall` and `mesh.firewall.apply`.&quot;
 }</pre></div>
   </details>
 </div>
@@ -249,10 +249,10 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
     <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
       <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">vlastnost</th><th class="px-3 py-2">typ</th><th class="px-3 py-2">povinné</th><th class="px-3 py-2">popis</th></tr></thead>
       <tbody><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">aplikováno</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
+        <td class="px-3 py-2 font-mono text-heading">ok</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">boolean</td>
         <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Příkazy v pořadí, s jejich exitem a výstupem.</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Zda se spustil každý příkaz a firewall poté plán připouští.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">před</td>
         <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
@@ -264,38 +264,97 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
         <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
         <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Slovo firewallu po provedení příkazů.</td>
       </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">ok</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">boolean</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Zda se spustil každý příkaz a firewall poté plán připouští.</td>
-      </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">odmítnuto</td>
         <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
         <td class="px-3 py-2 font-mono text-xs text-body">ne</td>
         <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Odmítnutí, když nic neběželo: ne root, nebo žádný backend.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">aplikováno</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Příkazy v pořadí, s jejich exitem a výstupem.</td>
       </tr></tbody>
     </table>
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
+  &quot;properties&quot;: {
+    &quot;ok&quot;: {
+      &quot;description&quot;: &quot;Whether every command ran and the firewall admits the plan afterwards.&quot;,
+      &quot;type&quot;: &quot;boolean&quot;
+    },
+    &quot;before&quot;: {
+      &quot;$ref&quot;: &quot;#/$defs/FirewallReport&quot;,
+      &quot;description&quot;: &quot;The report the commands came from.&quot;
+    },
+    &quot;observation&quot;: {
+      &quot;$ref&quot;: &quot;#/$defs/FirewallObservation&quot;,
+      &quot;description&quot;: &quot;The firewall&#39;s word after the commands ran.&quot;
+    },
+    &quot;refused&quot;: {
+      &quot;description&quot;: &quot;The refusal, when nothing ran: not root, or no backend.&quot;,
+      &quot;type&quot;: [
+        &quot;string&quot;,
+        &quot;null&quot;
+      ]
+    },
+    &quot;applied&quot;: {
+      &quot;description&quot;: &quot;The commands, in order, with their exit and output.&quot;,
+      &quot;items&quot;: {
+        &quot;$ref&quot;: &quot;#/$defs/Applied&quot;
+      },
+      &quot;type&quot;: &quot;array&quot;
+    }
+  },
+  &quot;description&quot;: &quot;What `apply` did: the refusal when nothing ran, every command that ran with its\noutcome, the firewall&#39;s word afterwards, and the report the commands came from. `ok`\nis the firewall&#39;s verdict after the run, never the commands&#39; exit codes alone.\n\n```\nuse majordomus_cli::mesh::firewall::{apply, report, FirewallApplyReport};\n\nlet a: FirewallApplyReport = apply(report(None, &amp;[], None));\nassert!(!a.ok &amp;&amp; a.applied.is_empty());\nassert!(a.refused.as_deref().unwrap().contains(\&quot;nothing to apply\&quot;));\n```&quot;,
+  &quot;required&quot;: [
+    &quot;ok&quot;,
+    &quot;applied&quot;,
+    &quot;observation&quot;,
+    &quot;before&quot;
+  ],
+  &quot;title&quot;: &quot;FirewallApplyReport&quot;,
   &quot;$defs&quot;: {
+    &quot;Applied&quot;: {
+      &quot;type&quot;: &quot;object&quot;,
+      &quot;properties&quot;: {
+        &quot;output&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;What it printed.&quot;
+        },
+        &quot;line&quot;: {
+          &quot;description&quot;: &quot;The line that ran.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;ok&quot;: {
+          &quot;description&quot;: &quot;Whether it exited 0.&quot;,
+          &quot;type&quot;: &quot;boolean&quot;
+        }
+      },
+      &quot;description&quot;: &quot;One command `apply` ran: the line, whether it exited 0 without printing an error,\nand everything it printed, so a refusal by the tool is read in the report and not in\na log.\n\n```\nuse majordomus_cli::mesh::firewall::Applied;\n\nlet a: Applied = serde_json::from_value(serde_json::json!({\n    \&quot;line\&quot;: \&quot;ufw allow in proto udp to 239.255.77.77 port 7741\&quot;, \&quot;ok\&quot;: true, \&quot;output\&quot;: \&quot;Rule added\&quot;,\n})).unwrap();\nassert!(a.ok &amp;&amp; a.output == \&quot;Rule added\&quot;);\n```&quot;,
+      &quot;required&quot;: [
+        &quot;line&quot;,
+        &quot;ok&quot;,
+        &quot;output&quot;
+      ]
+    },
     &quot;AdmitCommand&quot;: {
       &quot;description&quot;: &quot;One command that admits a rule: the rule&#39;s label, its argument vector exactly as\n`apply` executes it, and the same quoted as one line a person pastes into a root\nshell. The two are projections of one vector, so what the report shows is what runs.\n\n```\nuse std::net::Ipv4Addr;\nuse majordomus_cli::mesh::firewall::{plan, render, AdmitCommand, Backend};\nuse majordomus_cli::mesh::MeshConfig;\n\nlet config: MeshConfig = serde_json::from_value(serde_json::json!({\n    \&quot;schema\&quot;: \&quot;mesh/v1\&quot;, \&quot;kind\&quot;: \&quot;mesh-declaration\&quot;, \&quot;id\&quot;: \&quot;doc\&quot;, \&quot;enabled\&quot;: true,\n})).unwrap();\nlet p = plan(Some(&amp;config), &amp;[Ipv4Addr::new(10, 0, 0, 2)], None);\nlet commands: Vec&lt;AdmitCommand&gt; = render(Backend::Ufw, &amp;p, None);\nassert_eq!(commands[0].argv[0], \&quot;ufw\&quot;);\nassert_eq!(commands[0].rule, \&quot;udp/7741 to 239.255.77.77 from any\&quot;);\nassert_eq!(commands[0].line, \&quot;ufw allow in proto udp to 239.255.77.77 port 7741 comment &#39;majordomus mesh: multicast discovery&#39;\&quot;);\n```&quot;,
       &quot;properties&quot;: {
-        &quot;argv&quot;: {
-          &quot;description&quot;: &quot;The program and its arguments, as executed.&quot;,
-          &quot;items&quot;: {
-            &quot;type&quot;: &quot;string&quot;
-          },
-          &quot;type&quot;: &quot;array&quot;
-        },
-        &quot;line&quot;: {
-          &quot;description&quot;: &quot;The same, quoted for a shell.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
         &quot;rule&quot;: {
           &quot;description&quot;: &quot;The rule it admits.&quot;,
           &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;line&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The same, quoted for a shell.&quot;
+        },
+        &quot;argv&quot;: {
+          &quot;items&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          },
+          &quot;description&quot;: &quot;The program and its arguments, as executed.&quot;,
+          &quot;type&quot;: &quot;array&quot;
         }
       },
       &quot;required&quot;: [
@@ -305,96 +364,47 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
       ],
       &quot;type&quot;: &quot;object&quot;
     },
-    &quot;Applied&quot;: {
-      &quot;description&quot;: &quot;One command `apply` ran: the line, whether it exited 0 without printing an error,\nand everything it printed, so a refusal by the tool is read in the report and not in\na log.\n\n```\nuse majordomus_cli::mesh::firewall::Applied;\n\nlet a: Applied = serde_json::from_value(serde_json::json!({\n    \&quot;line\&quot;: \&quot;ufw allow in proto udp to 239.255.77.77 port 7741\&quot;, \&quot;ok\&quot;: true, \&quot;output\&quot;: \&quot;Rule added\&quot;,\n})).unwrap();\nassert!(a.ok &amp;&amp; a.output == \&quot;Rule added\&quot;);\n```&quot;,
-      &quot;properties&quot;: {
-        &quot;line&quot;: {
-          &quot;description&quot;: &quot;The line that ran.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;ok&quot;: {
-          &quot;description&quot;: &quot;Whether it exited 0.&quot;,
-          &quot;type&quot;: &quot;boolean&quot;
-        },
-        &quot;output&quot;: {
-          &quot;description&quot;: &quot;What it printed.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      },
-      &quot;required&quot;: [
-        &quot;line&quot;,
-        &quot;ok&quot;,
-        &quot;output&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
-    },
-    &quot;Backend&quot;: {
-      &quot;description&quot;: &quot;The firewall front this host runs, as far as the executable can tell without privilege:\ndecided by `detect` from the platform and the path, and the thing `render`,\n`observe` and `apply` are specific to.\n\n```\nuse majordomus_cli::mesh::firewall::Backend;\n\nassert_eq!(serde_json::to_value(Backend::ApplicationFirewall).unwrap(), \&quot;application_firewall\&quot;);\nassert_eq!(Backend::None.as_str(), \&quot;none\&quot;);\n```&quot;,
-      &quot;oneOf&quot;: [
-        {
-          &quot;const&quot;: &quot;ufw&quot;,
-          &quot;description&quot;: &quot;Uncomplicated Firewall, the Debian and Ubuntu front: `ufw` is on the path.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;nftables&quot;,
-          &quot;description&quot;: &quot;nftables without ufw in front: `nft` is on the path.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;application_firewall&quot;,
-          &quot;description&quot;: &quot;macOS: the application firewall (`socketfilterfw`), which admits executables, not ports.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;none&quot;,
-          &quot;description&quot;: &quot;No firewall front this executable knows; nothing is observed and nothing is applied.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      ]
-    },
     &quot;FirewallObservation&quot;: {
       &quot;description&quot;: &quot;The firewall&#39;s own word, judged against the plan: the state, the evidence behind it,\nand the labels of the rules not admitted when the state is `missing`.\n\n```\nuse majordomus_cli::mesh::firewall::{judge_ufw, plan, FirewallObservation, FirewallObservationState};\n\nlet o: FirewallObservation = judge_ufw(\&quot;Status: inactive\\n\&quot;, &amp;plan(None, &amp;[], None));\nassert_eq!(o.state, FirewallObservationState::Inactive);\nassert!(o.missing.is_empty() &amp;&amp; o.detail.contains(\&quot;inactive\&quot;));\n```&quot;,
       &quot;properties&quot;: {
+        &quot;state&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/FirewallObservationState&quot;,
+          &quot;description&quot;: &quot;The verdict.&quot;
+        },
         &quot;detail&quot;: {
           &quot;description&quot;: &quot;The evidence: the status line, the rules found, or the refusal.&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
         &quot;missing&quot;: {
           &quot;description&quot;: &quot;The rules not admitted, by label, when `state` is `missing`.&quot;,
+          &quot;type&quot;: &quot;array&quot;,
           &quot;items&quot;: {
             &quot;type&quot;: &quot;string&quot;
-          },
-          &quot;type&quot;: &quot;array&quot;
-        },
-        &quot;state&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/FirewallObservationState&quot;,
-          &quot;description&quot;: &quot;The verdict.&quot;
+          }
         }
       },
+      &quot;type&quot;: &quot;object&quot;,
       &quot;required&quot;: [
         &quot;state&quot;,
         &quot;detail&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
+      ]
     },
     &quot;FirewallObservationState&quot;: {
-      &quot;description&quot;: &quot;What the host&#39;s firewall says about the plan, as one word. Only `missing` is a failure\non its own; `unobservable` is an absence that the kernel log may still turn into one.\n\n```\nuse majordomus_cli::mesh::firewall::FirewallObservationState;\n\nassert_eq!(serde_json::to_value(FirewallObservationState::Unobservable).unwrap(), \&quot;unobservable\&quot;);\n```&quot;,
       &quot;oneOf&quot;: [
         {
-          &quot;const&quot;: &quot;no_backend&quot;,
+          &quot;type&quot;: &quot;string&quot;,
           &quot;description&quot;: &quot;No backend to ask.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;const&quot;: &quot;no_backend&quot;
         },
         {
-          &quot;const&quot;: &quot;inactive&quot;,
           &quot;description&quot;: &quot;The firewall is off: nothing filters, nothing is needed.&quot;,
+          &quot;const&quot;: &quot;inactive&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
         {
           &quot;const&quot;: &quot;present&quot;,
-          &quot;description&quot;: &quot;Every rule of the plan is admitted.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;Every rule of the plan is admitted.&quot;
         },
         {
           &quot;const&quot;: &quot;missing&quot;,
@@ -402,43 +412,44 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
           &quot;type&quot;: &quot;string&quot;
         },
         {
-          &quot;const&quot;: &quot;unobservable&quot;,
           &quot;description&quot;: &quot;The firewall could not be asked from this process — it needs root.&quot;,
+          &quot;const&quot;: &quot;unobservable&quot;,
           &quot;type&quot;: &quot;string&quot;
         }
-      ]
+      ],
+      &quot;description&quot;: &quot;What the host&#39;s firewall says about the plan, as one word. Only `missing` is a failure\non its own; `unobservable` is an absence that the kernel log may still turn into one.\n\n```\nuse majordomus_cli::mesh::firewall::FirewallObservationState;\n\nassert_eq!(serde_json::to_value(FirewallObservationState::Unobservable).unwrap(), \&quot;unobservable\&quot;);\n```&quot;
     },
     &quot;FirewallPlan&quot;: {
       &quot;description&quot;: &quot;What the declaration implies this host must admit: the rules, the networks they admit\nfrom, the hub ports this machine is listed for, and the addresses the plan saw. The\nanswer of `plan`; an empty `rules` is \&quot;nothing is needed\&quot;, which is the answer for no\ndeclaration and for a disabled one.\n\n```\nuse majordomus_cli::mesh::firewall::{plan, FirewallPlan};\n\nlet nothing: FirewallPlan = plan(None, &amp;[], None);\nassert!(nothing.rules.is_empty() &amp;&amp; nothing.hub_ports.is_empty() &amp;&amp; nothing.networks.is_empty());\n```&quot;,
       &quot;properties&quot;: {
-        &quot;hub_ports&quot;: {
-          &quot;description&quot;: &quot;The ports of the declared hubs this machine is.&quot;,
-          &quot;items&quot;: {
-            &quot;format&quot;: &quot;uint16&quot;,
-            &quot;maximum&quot;: 65535,
-            &quot;minimum&quot;: 0,
-            &quot;type&quot;: &quot;integer&quot;
-          },
-          &quot;type&quot;: &quot;array&quot;
-        },
         &quot;local_addresses&quot;: {
-          &quot;description&quot;: &quot;This machine&#39;s addresses, as the plan saw them.&quot;,
           &quot;items&quot;: {
             &quot;type&quot;: &quot;string&quot;
           },
-          &quot;type&quot;: &quot;array&quot;
+          &quot;type&quot;: &quot;array&quot;,
+          &quot;description&quot;: &quot;This machine&#39;s addresses, as the plan saw them.&quot;
+        },
+        &quot;rules&quot;: {
+          &quot;type&quot;: &quot;array&quot;,
+          &quot;items&quot;: {
+            &quot;$ref&quot;: &quot;#/$defs/FirewallRule&quot;
+          },
+          &quot;description&quot;: &quot;The admissions, in a fixed order.&quot;
         },
         &quot;networks&quot;: {
+          &quot;type&quot;: &quot;array&quot;,
           &quot;description&quot;: &quot;The private networks peers come from: the enclosing ranges of every address the\ndeclaration names, or of this machine&#39;s own when it names none.&quot;,
           &quot;items&quot;: {
             &quot;type&quot;: &quot;string&quot;
-          },
-          &quot;type&quot;: &quot;array&quot;
+          }
         },
-        &quot;rules&quot;: {
-          &quot;description&quot;: &quot;The admissions, in a fixed order.&quot;,
+        &quot;hub_ports&quot;: {
+          &quot;description&quot;: &quot;The ports of the declared hubs this machine is.&quot;,
           &quot;items&quot;: {
-            &quot;$ref&quot;: &quot;#/$defs/FirewallRule&quot;
+            &quot;maximum&quot;: 65535,
+            &quot;type&quot;: &quot;integer&quot;,
+            &quot;minimum&quot;: 0,
+            &quot;format&quot;: &quot;uint16&quot;
           },
           &quot;type&quot;: &quot;array&quot;
         }
@@ -451,31 +462,153 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
       ],
       &quot;type&quot;: &quot;object&quot;
     },
-    &quot;FirewallReport&quot;: {
-      &quot;description&quot;: &quot;The whole report: the plan, the backend, the commands, the firewall&#39;s word and the\nkernel&#39;s, with one verdict sentence and one `ok`. What `mesh.firewall` answers and\nwhat the doctor&#39;s `firewall` check reads.\n\n```\nuse majordomus_cli::mesh::firewall::{report, FirewallReport, BLOCK_WINDOW_SECONDS};\n\nlet r: FirewallReport = report(None, &amp;[], None);\nassert!(r.ok &amp;&amp; r.commands.is_empty());\nassert_eq!(r.window_seconds, BLOCK_WINDOW_SECONDS);\nassert_eq!(r.platform, std::env::consts::OS);\n```&quot;,
+    &quot;FirewallRule&quot;: {
+      &quot;required&quot;: [
+        &quot;role&quot;,
+        &quot;protocol&quot;,
+        &quot;port&quot;,
+        &quot;sources&quot;,
+        &quot;reason&quot;
+      ],
+      &quot;description&quot;: &quot;One inbound admission the mesh needs on this host: a protocol and a port, the group it is\naddressed to when it is multicast, the networks it may come from, and the sentence that\nsays why. A rule is derived, never written by hand; `FirewallRule::label` is how a\nverdict names it.\n\n```\nuse majordomus_cli::mesh::firewall::{FirewallRule, Protocol, Role};\n\nlet rule = FirewallRule {\n    role: Role::Hub,\n    protocol: Protocol::Tcp,\n    port: 8791,\n    destination: None,\n    sources: vec![\&quot;192.168.7.0/24\&quot;.into()],\n    reason: \&quot;this machine is a declared rendezvous hub\&quot;.into(),\n};\nassert_eq!(rule.label(), \&quot;tcp/8791 from 192.168.7.0/24\&quot;);\n```&quot;,
       &quot;properties&quot;: {
-        &quot;backend&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/Backend&quot;,
-          &quot;description&quot;: &quot;The firewall front found.&quot;
+        &quot;reason&quot;: {
+          &quot;description&quot;: &quot;The sentence a person reads beside the rule.&quot;,
+          &quot;type&quot;: &quot;string&quot;
         },
-        &quot;blocked_recently&quot;: {
-          &quot;additionalProperties&quot;: {
-            &quot;format&quot;: &quot;uint64&quot;,
-            &quot;minimum&quot;: 0,
-            &quot;type&quot;: &quot;integer&quot;
+        &quot;role&quot;: {
+          &quot;description&quot;: &quot;Why.&quot;,
+          &quot;$ref&quot;: &quot;#/$defs/Role&quot;
+        },
+        &quot;sources&quot;: {
+          &quot;items&quot;: {
+            &quot;type&quot;: &quot;string&quot;
           },
-          &quot;description&quot;: &quot;Drops the kernel logged toward the plan&#39;s ports within the window, per port;\nabsent when the log could not be read.&quot;,
+          &quot;description&quot;: &quot;The networks the traffic may come from, as CIDR; empty admits any source, which is\nonly ever the case for the multicast group, whose TTL keeps it on the segment.&quot;,
+          &quot;type&quot;: &quot;array&quot;
+        },
+        &quot;destination&quot;: {
+          &quot;description&quot;: &quot;The destination address when it is a multicast group; `None` for this host&#39;s own.&quot;,
           &quot;type&quot;: [
-            &quot;object&quot;,
+            &quot;string&quot;,
             &quot;null&quot;
           ]
         },
+        &quot;port&quot;: {
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;,
+          &quot;maximum&quot;: 65535,
+          &quot;description&quot;: &quot;The destination port.&quot;,
+          &quot;format&quot;: &quot;uint16&quot;
+        },
+        &quot;protocol&quot;: {
+          &quot;description&quot;: &quot;The transport protocol.&quot;,
+          &quot;$ref&quot;: &quot;#/$defs/Protocol&quot;
+        }
+      },
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;Role&quot;: {
+      &quot;oneOf&quot;: [
+        {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;multicast&quot;,
+          &quot;description&quot;: &quot;The declared multicast group: every runtime of the segment advertises to it.&quot;
+        },
+        {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The declared broadcast port, when broadcast is a permitted fallback.&quot;,
+          &quot;const&quot;: &quot;broadcast&quot;
+        },
+        {
+          &quot;description&quot;: &quot;This machine is a declared rendezvous hub: the fleet registers here.&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;hub&quot;
+        },
+        {
+          &quot;description&quot;: &quot;This machine&#39;s server is dialed by peers on the link protocol.&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;link&quot;
+        }
+      ],
+      &quot;description&quot;: &quot;Why a rule exists: which part of the declaration implied it. The role is what a person\nreads beside the rule and what a verdict names, and it is serialised in snake case.\n\n```\nuse majordomus_cli::mesh::firewall::Role;\n\nassert_eq!(serde_json::to_value(Role::Hub).unwrap(), \&quot;hub\&quot;);\nlet back: Role = serde_json::from_value(serde_json::json!(\&quot;multicast\&quot;)).unwrap();\nassert_eq!(back, Role::Multicast);\n```&quot;
+    },
+    &quot;Backend&quot;: {
+      &quot;oneOf&quot;: [
+        {
+          &quot;const&quot;: &quot;ufw&quot;,
+          &quot;description&quot;: &quot;Uncomplicated Firewall, the Debian and Ubuntu front: `ufw` is on the path.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;nftables&quot;,
+          &quot;description&quot;: &quot;nftables without ufw in front: `nft` is on the path.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;application_firewall&quot;,
+          &quot;description&quot;: &quot;macOS: the application firewall (`socketfilterfw`), which admits executables, not ports.&quot;
+        },
+        {
+          &quot;const&quot;: &quot;none&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;No firewall front this executable knows; nothing is observed and nothing is applied.&quot;
+        }
+      ],
+      &quot;description&quot;: &quot;The firewall front this host runs, as far as the executable can tell without privilege:\ndecided by `detect` from the platform and the path, and the thing `render`,\n`observe` and `apply` are specific to.\n\n```\nuse majordomus_cli::mesh::firewall::Backend;\n\nassert_eq!(serde_json::to_value(Backend::ApplicationFirewall).unwrap(), \&quot;application_firewall\&quot;);\nassert_eq!(Backend::None.as_str(), \&quot;none\&quot;);\n```&quot;
+    },
+    &quot;Protocol&quot;: {
+      &quot;description&quot;: &quot;The transport protocol of a rule: discovery is datagrams, registration and the link\nprotocol are connections. Serialised as the word a firewall front takes.\n\n```\nuse majordomus_cli::mesh::firewall::Protocol;\n\nassert_eq!(serde_json::to_value(Protocol::Udp).unwrap(), \&quot;udp\&quot;);\nassert_eq!(serde_json::to_value(Protocol::Tcp).unwrap(), \&quot;tcp\&quot;);\n```&quot;,
+      &quot;oneOf&quot;: [
+        {
+          &quot;const&quot;: &quot;udp&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;Datagrams: discovery.&quot;
+        },
+        {
+          &quot;description&quot;: &quot;Connections: the hub&#39;s registrations and the link protocol.&quot;,
+          &quot;const&quot;: &quot;tcp&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      ]
+    },
+    &quot;FirewallReport&quot;: {
+      &quot;properties&quot;: {
         &quot;commands&quot;: {
           &quot;description&quot;: &quot;The commands that admit it on this backend; what `apply` runs.&quot;,
           &quot;items&quot;: {
             &quot;$ref&quot;: &quot;#/$defs/AdmitCommand&quot;
           },
           &quot;type&quot;: &quot;array&quot;
+        },
+        &quot;backend&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/Backend&quot;,
+          &quot;description&quot;: &quot;The firewall front found.&quot;
+        },
+        &quot;blocked_recently&quot;: {
+          &quot;description&quot;: &quot;Drops the kernel logged toward the plan&#39;s ports within the window, per port;\nabsent when the log could not be read.&quot;,
+          &quot;type&quot;: [
+            &quot;object&quot;,
+            &quot;null&quot;
+          ],
+          &quot;additionalProperties&quot;: {
+            &quot;type&quot;: &quot;integer&quot;,
+            &quot;minimum&quot;: 0,
+            &quot;format&quot;: &quot;uint64&quot;
+          }
+        },
+        &quot;observation&quot;: {
+          &quot;description&quot;: &quot;The firewall&#39;s own word about the plan.&quot;,
+          &quot;$ref&quot;: &quot;#/$defs/FirewallObservation&quot;
+        },
+        &quot;plan&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/FirewallPlan&quot;,
+          &quot;description&quot;: &quot;What the declaration implies this host must admit.&quot;
+        },
+        &quot;verdict&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The sentence a person reads.&quot;
         },
         &quot;executable&quot;: {
           &quot;description&quot;: &quot;The executable the server runs as, which is what the macOS firewall admits.&quot;,
@@ -484,31 +617,19 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
             &quot;null&quot;
           ]
         },
-        &quot;observation&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/FirewallObservation&quot;,
-          &quot;description&quot;: &quot;The firewall&#39;s own word about the plan.&quot;
-        },
         &quot;ok&quot;: {
           &quot;description&quot;: &quot;Whether the host admits the mesh as far as it can be observed: nothing missing, and\nnothing logged as dropped.&quot;,
           &quot;type&quot;: &quot;boolean&quot;
         },
-        &quot;plan&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/FirewallPlan&quot;,
-          &quot;description&quot;: &quot;What the declaration implies this host must admit.&quot;
-        },
-        &quot;platform&quot;: {
-          &quot;description&quot;: &quot;The platform (`linux`, `macos`, …).&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;verdict&quot;: {
-          &quot;description&quot;: &quot;The sentence a person reads.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
         &quot;window_seconds&quot;: {
           &quot;description&quot;: &quot;The window `blocked_recently` covers, in seconds.&quot;,
           &quot;format&quot;: &quot;uint64&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
+          &quot;type&quot;: &quot;integer&quot;,
+          &quot;minimum&quot;: 0
+        },
+        &quot;platform&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The platform (`linux`, `macos`, …).&quot;
         }
       },
       &quot;required&quot;: [
@@ -521,131 +642,10 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
         &quot;window_seconds&quot;,
         &quot;verdict&quot;
       ],
-      &quot;type&quot;: &quot;object&quot;
-    },
-    &quot;FirewallRule&quot;: {
-      &quot;description&quot;: &quot;One inbound admission the mesh needs on this host: a protocol and a port, the group it is\naddressed to when it is multicast, the networks it may come from, and the sentence that\nsays why. A rule is derived, never written by hand; `FirewallRule::label` is how a\nverdict names it.\n\n```\nuse majordomus_cli::mesh::firewall::{FirewallRule, Protocol, Role};\n\nlet rule = FirewallRule {\n    role: Role::Hub,\n    protocol: Protocol::Tcp,\n    port: 8791,\n    destination: None,\n    sources: vec![\&quot;192.168.7.0/24\&quot;.into()],\n    reason: \&quot;this machine is a declared rendezvous hub\&quot;.into(),\n};\nassert_eq!(rule.label(), \&quot;tcp/8791 from 192.168.7.0/24\&quot;);\n```&quot;,
-      &quot;properties&quot;: {
-        &quot;destination&quot;: {
-          &quot;description&quot;: &quot;The destination address when it is a multicast group; `None` for this host&#39;s own.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;port&quot;: {
-          &quot;description&quot;: &quot;The destination port.&quot;,
-          &quot;format&quot;: &quot;uint16&quot;,
-          &quot;maximum&quot;: 65535,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;protocol&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/Protocol&quot;,
-          &quot;description&quot;: &quot;The transport protocol.&quot;
-        },
-        &quot;reason&quot;: {
-          &quot;description&quot;: &quot;The sentence a person reads beside the rule.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;role&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/Role&quot;,
-          &quot;description&quot;: &quot;Why.&quot;
-        },
-        &quot;sources&quot;: {
-          &quot;description&quot;: &quot;The networks the traffic may come from, as CIDR; empty admits any source, which is\nonly ever the case for the multicast group, whose TTL keeps it on the segment.&quot;,
-          &quot;items&quot;: {
-            &quot;type&quot;: &quot;string&quot;
-          },
-          &quot;type&quot;: &quot;array&quot;
-        }
-      },
-      &quot;required&quot;: [
-        &quot;role&quot;,
-        &quot;protocol&quot;,
-        &quot;port&quot;,
-        &quot;sources&quot;,
-        &quot;reason&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
-    },
-    &quot;Protocol&quot;: {
-      &quot;description&quot;: &quot;The transport protocol of a rule: discovery is datagrams, registration and the link\nprotocol are connections. Serialised as the word a firewall front takes.\n\n```\nuse majordomus_cli::mesh::firewall::Protocol;\n\nassert_eq!(serde_json::to_value(Protocol::Udp).unwrap(), \&quot;udp\&quot;);\nassert_eq!(serde_json::to_value(Protocol::Tcp).unwrap(), \&quot;tcp\&quot;);\n```&quot;,
-      &quot;oneOf&quot;: [
-        {
-          &quot;const&quot;: &quot;udp&quot;,
-          &quot;description&quot;: &quot;Datagrams: discovery.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;tcp&quot;,
-          &quot;description&quot;: &quot;Connections: the hub&#39;s registrations and the link protocol.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      ]
-    },
-    &quot;Role&quot;: {
-      &quot;description&quot;: &quot;Why a rule exists: which part of the declaration implied it. The role is what a person\nreads beside the rule and what a verdict names, and it is serialised in snake case.\n\n```\nuse majordomus_cli::mesh::firewall::Role;\n\nassert_eq!(serde_json::to_value(Role::Hub).unwrap(), \&quot;hub\&quot;);\nlet back: Role = serde_json::from_value(serde_json::json!(\&quot;multicast\&quot;)).unwrap();\nassert_eq!(back, Role::Multicast);\n```&quot;,
-      &quot;oneOf&quot;: [
-        {
-          &quot;const&quot;: &quot;multicast&quot;,
-          &quot;description&quot;: &quot;The declared multicast group: every runtime of the segment advertises to it.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;broadcast&quot;,
-          &quot;description&quot;: &quot;The declared broadcast port, when broadcast is a permitted fallback.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;hub&quot;,
-          &quot;description&quot;: &quot;This machine is a declared rendezvous hub: the fleet registers here.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;link&quot;,
-          &quot;description&quot;: &quot;This machine&#39;s server is dialed by peers on the link protocol.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      ]
+      &quot;type&quot;: &quot;object&quot;,
+      &quot;description&quot;: &quot;The whole report: the plan, the backend, the commands, the firewall&#39;s word and the\nkernel&#39;s, with one verdict sentence and one `ok`. What `mesh.firewall` answers and\nwhat the doctor&#39;s `firewall` check reads.\n\n```\nuse majordomus_cli::mesh::firewall::{report, FirewallReport, BLOCK_WINDOW_SECONDS};\n\nlet r: FirewallReport = report(None, &amp;[], None);\nassert!(r.ok &amp;&amp; r.commands.is_empty());\nassert_eq!(r.window_seconds, BLOCK_WINDOW_SECONDS);\nassert_eq!(r.platform, std::env::consts::OS);\n```&quot;
     }
   },
-  &quot;description&quot;: &quot;What `apply` did: the refusal when nothing ran, every command that ran with its\noutcome, the firewall&#39;s word afterwards, and the report the commands came from. `ok`\nis the firewall&#39;s verdict after the run, never the commands&#39; exit codes alone.\n\n```\nuse majordomus_cli::mesh::firewall::{apply, report, FirewallApplyReport};\n\nlet a: FirewallApplyReport = apply(report(None, &amp;[], None));\nassert!(!a.ok &amp;&amp; a.applied.is_empty());\nassert!(a.refused.as_deref().unwrap().contains(\&quot;nothing to apply\&quot;));\n```&quot;,
-  &quot;properties&quot;: {
-    &quot;applied&quot;: {
-      &quot;description&quot;: &quot;The commands, in order, with their exit and output.&quot;,
-      &quot;items&quot;: {
-        &quot;$ref&quot;: &quot;#/$defs/Applied&quot;
-      },
-      &quot;type&quot;: &quot;array&quot;
-    },
-    &quot;before&quot;: {
-      &quot;$ref&quot;: &quot;#/$defs/FirewallReport&quot;,
-      &quot;description&quot;: &quot;The report the commands came from.&quot;
-    },
-    &quot;observation&quot;: {
-      &quot;$ref&quot;: &quot;#/$defs/FirewallObservation&quot;,
-      &quot;description&quot;: &quot;The firewall&#39;s word after the commands ran.&quot;
-    },
-    &quot;ok&quot;: {
-      &quot;description&quot;: &quot;Whether every command ran and the firewall admits the plan afterwards.&quot;,
-      &quot;type&quot;: &quot;boolean&quot;
-    },
-    &quot;refused&quot;: {
-      &quot;description&quot;: &quot;The refusal, when nothing ran: not root, or no backend.&quot;,
-      &quot;type&quot;: [
-        &quot;string&quot;,
-        &quot;null&quot;
-      ]
-    }
-  },
-  &quot;required&quot;: [
-    &quot;ok&quot;,
-    &quot;applied&quot;,
-    &quot;observation&quot;,
-    &quot;before&quot;
-  ],
-  &quot;title&quot;: &quot;FirewallApplyReport&quot;,
   &quot;type&quot;: &quot;object&quot;
 }</pre></div>
   </details>
@@ -677,7 +677,7 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
         <div><dt class="text-body-subtle">modul Rust</dt><dd class="min-w-0 break-all font-mono text-heading">majordomus_cli::capability::builtin::mesh</dd></div>
         <div><dt class="text-body-subtle">typ vstupu</dt><dd class="font-mono text-heading">FirewallInput</dd></div>
         <div><dt class="text-body-subtle">typ výstupu</dt><dd class="font-mono text-heading">FirewallApplyReport</dd></div>
-        <div><dt class="text-body-subtle">reference na GitHubu</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/aa9f816f8673880ab4beb6dbebff688f9da5bb65/docs/generated/modules/mesh.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/mesh.md</a></dd></div><div><dt class="text-body-subtle">otisk registru</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">c514db707bb1f5f7557f2a1629d42c4bdc05eb7ef58464c288e42bafcd3d8720</dd></div>
+        <div><dt class="text-body-subtle">reference na GitHubu</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/docs/generated/modules/mesh.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/mesh.md</a></dd></div><div><dt class="text-body-subtle">otisk registru</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">3f734f2faf797f0ca7c39b4cd837e68b6619c41c6f6711f3d3aeca8f341934eb</dd></div>
         <div><dt class="text-body-subtle">vygenerováno nástrojem</dt><dd class="font-mono text-heading">majordomus-cli 1.0.0-alpha.10</dd></div>
       </dl>
     </div>
@@ -733,9 +733,9 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
       <div class="min-w-0">
         <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">Projekt</h2><ul class="space-y-2 text-sm font-medium text-body">
           <li><a href="https://github.com/korczis/prismatic-majordomus" class="hover:text-heading hover:underline">GitHub</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/aa9f816f8673880ab4beb6dbebff688f9da5bb65/LICENSE" class="hover:text-heading hover:underline">Licence MIT</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/aa9f816f8673880ab4beb6dbebff688f9da5bb65/SECURITY.md" class="hover:text-heading hover:underline">Bezpečnostní politika</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/aa9f816f8673880ab4beb6dbebff688f9da5bb65/CONTRIBUTING.md" class="hover:text-heading hover:underline">Průvodce pro přispěvatele</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/LICENSE" class="hover:text-heading hover:underline">Licence MIT</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/SECURITY.md" class="hover:text-heading hover:underline">Bezpečnostní politika</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/CONTRIBUTING.md" class="hover:text-heading hover:underline">Průvodce pro přispěvatele</a></li>
         </ul>
       </div>
     </div>
@@ -743,7 +743,7 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/cs/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.10</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/aa9f816f8673880ab4beb6dbebff688f9da5bb65" class="font-mono underline">aa9f816</a> · inputs <span class="font-mono">a64b981ed16e</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/cs/architecture/" class="underline">how this site is derived</a> names them.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.10</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/745db2ea21e02613943face75a2bf95542be1f2e" class="font-mono underline">745db2e</a> · inputs <span class="font-mono">0a58c217d1b7</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/cs/architecture/" class="underline">how this site is derived</a> names them.</p>
     </div>
   </div>
 </footer>

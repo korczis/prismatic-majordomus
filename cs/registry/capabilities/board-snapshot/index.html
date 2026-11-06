@@ -221,8 +221,7 @@ Left out of the digest.</td>
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
-  &quot;additionalProperties&quot;: false,
-  &quot;description&quot;: &quot;The input of `board.snapshot`.&quot;,
+  &quot;type&quot;: &quot;object&quot;,
   &quot;properties&quot;: {
     &quot;by&quot;: {
       &quot;description&quot;: &quot;Who takes the snapshot, as `meta.syncedBy` names it; `board.snapshot` when absent.\nLeft out of the digest.&quot;,
@@ -233,7 +232,8 @@ Left out of the digest.</td>
     }
   },
   &quot;title&quot;: &quot;BoardSnapshotInput&quot;,
-  &quot;type&quot;: &quot;object&quot;
+  &quot;description&quot;: &quot;The input of `board.snapshot`.&quot;,
+  &quot;additionalProperties&quot;: false
 }</pre></div>
   </details>
 </div>
@@ -243,12 +243,6 @@ says whether two snapshots describe the same state.</div><div class="mt-3 overfl
     <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
       <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">vlastnost</th><th class="px-3 py-2">typ</th><th class="px-3 py-2">povinné</th><th class="px-3 py-2">popis</th></tr></thead>
       <tbody><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">diagnostika</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">ne</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">What could not be read, in words: an unobserved pull request queue, a lane naming a
-milestone the plan lacks. Empty is the ordinary case.</td>
-      </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">otisk</td>
         <td class="px-3 py-2 font-mono text-xs text-body">string</td>
         <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
@@ -271,71 +265,31 @@ milestone the plan lacks. Empty is the ordinary case.</td>
         <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
         <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Its committer time, RFC 3339.</td>
       </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">master_ref</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The ref it was read from: <code>refs/remotes/origin/master</code>, else <code>HEAD</code>.</td>
-      </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">master_sha</td>
         <td class="px-3 py-2 font-mono text-xs text-body">string</td>
         <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
         <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The commit described, empty when the checkout has none.</td>
       </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">master_ref</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The ref it was read from: <code>refs/remotes/origin/master</code>, else <code>HEAD</code>.</td>
+      </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">sizes</td>
         <td class="px-3 py-2 font-mono text-xs text-body">object</td>
         <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
         <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Each document's compact size, in bytes, by id.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">diagnostika</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">ne</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">What could not be read, in words: an unobserved pull request queue, a lane naming a
+milestone the plan lacks. Empty is the ordinary case.</td>
       </tr></tbody>
     </table>
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
-  &quot;description&quot;: &quot;The answer of `board.snapshot`: every document of the board by id, and the digest that\nsays whether two snapshots describe the same state.&quot;,
-  &quot;properties&quot;: {
-    &quot;diagnostics&quot;: {
-      &quot;description&quot;: &quot;What could not be read, in words: an unobserved pull request queue, a lane naming a\nmilestone the plan lacks. Empty is the ordinary case.&quot;,
-      &quot;items&quot;: {
-        &quot;type&quot;: &quot;string&quot;
-      },
-      &quot;type&quot;: &quot;array&quot;
-    },
-    &quot;digest&quot;: {
-      &quot;description&quot;: &quot;`sha256:&lt;hex&gt;` over the canonical JSON of the documents, `meta.syncedAt` and\n`meta.syncedBy` left out: equal state, equal digest.&quot;,
-      &quot;type&quot;: &quot;string&quot;
-    },
-    &quot;document_limit&quot;: {
-      &quot;description&quot;: &quot;The bound every document is under, in bytes of compact JSON.&quot;,
-      &quot;format&quot;: &quot;uint&quot;,
-      &quot;minimum&quot;: 0,
-      &quot;type&quot;: &quot;integer&quot;
-    },
-    &quot;documents&quot;: {
-      &quot;additionalProperties&quot;: true,
-      &quot;description&quot;: &quot;The documents, by id: `meta`, `milestones`, `intents`, `prs`, and `issues-&lt;lane&gt;`\n(then `issues-&lt;lane&gt;-2`, ...) for each lane with open work.&quot;,
-      &quot;type&quot;: &quot;object&quot;
-    },
-    &quot;master_committed_at&quot;: {
-      &quot;description&quot;: &quot;Its committer time, RFC 3339.&quot;,
-      &quot;type&quot;: &quot;string&quot;
-    },
-    &quot;master_ref&quot;: {
-      &quot;description&quot;: &quot;The ref it was read from: `refs/remotes/origin/master`, else `HEAD`.&quot;,
-      &quot;type&quot;: &quot;string&quot;
-    },
-    &quot;master_sha&quot;: {
-      &quot;description&quot;: &quot;The commit described, empty when the checkout has none.&quot;,
-      &quot;type&quot;: &quot;string&quot;
-    },
-    &quot;sizes&quot;: {
-      &quot;additionalProperties&quot;: {
-        &quot;format&quot;: &quot;uint&quot;,
-        &quot;minimum&quot;: 0,
-        &quot;type&quot;: &quot;integer&quot;
-      },
-      &quot;description&quot;: &quot;Each document&#39;s compact size, in bytes, by id.&quot;,
-      &quot;type&quot;: &quot;object&quot;
-    }
-  },
   &quot;required&quot;: [
     &quot;digest&quot;,
     &quot;master_sha&quot;,
@@ -345,8 +299,54 @@ milestone the plan lacks. Empty is the ordinary case.</td>
     &quot;sizes&quot;,
     &quot;documents&quot;
   ],
+  &quot;description&quot;: &quot;The answer of `board.snapshot`: every document of the board by id, and the digest that\nsays whether two snapshots describe the same state.&quot;,
+  &quot;type&quot;: &quot;object&quot;,
   &quot;title&quot;: &quot;BoardSnapshot&quot;,
-  &quot;type&quot;: &quot;object&quot;
+  &quot;properties&quot;: {
+    &quot;digest&quot;: {
+      &quot;description&quot;: &quot;`sha256:&lt;hex&gt;` over the canonical JSON of the documents, `meta.syncedAt` and\n`meta.syncedBy` left out: equal state, equal digest.&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;document_limit&quot;: {
+      &quot;minimum&quot;: 0,
+      &quot;type&quot;: &quot;integer&quot;,
+      &quot;format&quot;: &quot;uint&quot;,
+      &quot;description&quot;: &quot;The bound every document is under, in bytes of compact JSON.&quot;
+    },
+    &quot;documents&quot;: {
+      &quot;description&quot;: &quot;The documents, by id: `meta`, `milestones`, `intents`, `prs`, and `issues-&lt;lane&gt;`\n(then `issues-&lt;lane&gt;-2`, ...) for each lane with open work.&quot;,
+      &quot;type&quot;: &quot;object&quot;,
+      &quot;additionalProperties&quot;: true
+    },
+    &quot;master_committed_at&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;description&quot;: &quot;Its committer time, RFC 3339.&quot;
+    },
+    &quot;master_sha&quot;: {
+      &quot;description&quot;: &quot;The commit described, empty when the checkout has none.&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;master_ref&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;description&quot;: &quot;The ref it was read from: `refs/remotes/origin/master`, else `HEAD`.&quot;
+    },
+    &quot;sizes&quot;: {
+      &quot;type&quot;: &quot;object&quot;,
+      &quot;description&quot;: &quot;Each document&#39;s compact size, in bytes, by id.&quot;,
+      &quot;additionalProperties&quot;: {
+        &quot;type&quot;: &quot;integer&quot;,
+        &quot;format&quot;: &quot;uint&quot;,
+        &quot;minimum&quot;: 0
+      }
+    },
+    &quot;diagnostics&quot;: {
+      &quot;description&quot;: &quot;What could not be read, in words: an unobserved pull request queue, a lane naming a\nmilestone the plan lacks. Empty is the ordinary case.&quot;,
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;string&quot;
+      },
+      &quot;type&quot;: &quot;array&quot;
+    }
+  }
 }</pre></div>
   </details>
 </div>
@@ -377,7 +377,7 @@ milestone the plan lacks. Empty is the ordinary case.</td>
         <div><dt class="text-body-subtle">modul Rust</dt><dd class="min-w-0 break-all font-mono text-heading">majordomus_cli::capability::builtin::board</dd></div>
         <div><dt class="text-body-subtle">typ vstupu</dt><dd class="font-mono text-heading">BoardSnapshotInput</dd></div>
         <div><dt class="text-body-subtle">typ výstupu</dt><dd class="font-mono text-heading">BoardSnapshot</dd></div>
-        <div><dt class="text-body-subtle">reference na GitHubu</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/aa9f816f8673880ab4beb6dbebff688f9da5bb65/docs/generated/modules/board.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/board.md</a></dd></div><div><dt class="text-body-subtle">otisk registru</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">c514db707bb1f5f7557f2a1629d42c4bdc05eb7ef58464c288e42bafcd3d8720</dd></div>
+        <div><dt class="text-body-subtle">reference na GitHubu</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/docs/generated/modules/board.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/board.md</a></dd></div><div><dt class="text-body-subtle">otisk registru</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">3f734f2faf797f0ca7c39b4cd837e68b6619c41c6f6711f3d3aeca8f341934eb</dd></div>
         <div><dt class="text-body-subtle">vygenerováno nástrojem</dt><dd class="font-mono text-heading">majordomus-cli 1.0.0-alpha.10</dd></div>
       </dl>
     </div>
@@ -433,9 +433,9 @@ milestone the plan lacks. Empty is the ordinary case.</td>
       <div class="min-w-0">
         <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">Projekt</h2><ul class="space-y-2 text-sm font-medium text-body">
           <li><a href="https://github.com/korczis/prismatic-majordomus" class="hover:text-heading hover:underline">GitHub</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/aa9f816f8673880ab4beb6dbebff688f9da5bb65/LICENSE" class="hover:text-heading hover:underline">Licence MIT</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/aa9f816f8673880ab4beb6dbebff688f9da5bb65/SECURITY.md" class="hover:text-heading hover:underline">Bezpečnostní politika</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/aa9f816f8673880ab4beb6dbebff688f9da5bb65/CONTRIBUTING.md" class="hover:text-heading hover:underline">Průvodce pro přispěvatele</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/LICENSE" class="hover:text-heading hover:underline">Licence MIT</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/SECURITY.md" class="hover:text-heading hover:underline">Bezpečnostní politika</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/CONTRIBUTING.md" class="hover:text-heading hover:underline">Průvodce pro přispěvatele</a></li>
         </ul>
       </div>
     </div>
@@ -443,7 +443,7 @@ milestone the plan lacks. Empty is the ordinary case.</td>
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/cs/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.10</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/aa9f816f8673880ab4beb6dbebff688f9da5bb65" class="font-mono underline">aa9f816</a> · inputs <span class="font-mono">a64b981ed16e</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/cs/architecture/" class="underline">how this site is derived</a> names them.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.10</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/745db2ea21e02613943face75a2bf95542be1f2e" class="font-mono underline">745db2e</a> · inputs <span class="font-mono">0a58c217d1b7</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/cs/architecture/" class="underline">how this site is derived</a> names them.</p>
     </div>
   </div>
 </footer>

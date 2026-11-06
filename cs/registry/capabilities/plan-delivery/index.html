@@ -220,40 +220,40 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
     <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
       <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">vlastnost</th><th class="px-3 py-2">typ</th><th class="px-3 py-2">povinné</th><th class="px-3 py-2">popis</th></tr></thead>
       <tbody><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">v</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">ne</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Pozorovat k tomuto commitu (<code>HEAD</code>, sha, ref): jeho historie a záznamy releasů stromu, nic živého — žádná větev, forge, nasazení ani hodiny. Výchozí: živě.</td>
-      </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">issue</td>
         <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
         <td class="px-3 py-2 font-mono text-xs text-body">ne</td>
         <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Jedno id úkolu (<code>I2740</code>). Výchozí: každý úkol plánu. Id, které plán nedeklaruje, se nenajde, nikdy se neodpoví jako <code>none</code>.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">v</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">ne</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Pozorovat k tomuto commitu (<code>HEAD</code>, sha, ref): jeho historie a záznamy releasů stromu, nic živého — žádná větev, forge, nasazení ani hodiny. Výchozí: živě.</td>
       </tr></tbody>
     </table>
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
-  &quot;additionalProperties&quot;: false,
-  &quot;description&quot;: &quot;Which issues, and as of when: the input of `plan.delivery`.\n\nBoth fields are optional, and an unknown one is refused rather than ignored, so a caller\nwho misspells `at` is not silently answered live.\n\n```\nuse majordomus_cli::capability::builtin::plan::PlanDeliveryInput;\n\nlet every: PlanDeliveryInput = serde_json::from_str(\&quot;{}\&quot;).unwrap();\nassert!(every.issue.is_none() &amp;&amp; every.at.is_none(), \&quot;live, every issue\&quot;);\nlet one: PlanDeliveryInput =\n    serde_json::from_value(serde_json::json!({ \&quot;issue\&quot;: \&quot;I2740\&quot;, \&quot;at\&quot;: \&quot;HEAD\&quot; })).unwrap();\nassert_eq!((one.issue.as_deref(), one.at.as_deref()), (Some(\&quot;I2740\&quot;), Some(\&quot;HEAD\&quot;)));\nassert!(serde_json::from_str::&lt;PlanDeliveryInput&gt;(r#\&quot;{\&quot;commit\&quot;:\&quot;HEAD\&quot;}\&quot;#).is_err());\n```&quot;,
+  &quot;title&quot;: &quot;PlanDeliveryInput&quot;,
+  &quot;type&quot;: &quot;object&quot;,
   &quot;properties&quot;: {
+    &quot;issue&quot;: {
+      &quot;type&quot;: [
+        &quot;string&quot;,
+        &quot;null&quot;
+      ],
+      &quot;description&quot;: &quot;One issue id (`I2740`). Default: every issue of the plan. An id the plan does not\ndeclare is not found, never answered as `none`.&quot;
+    },
     &quot;at&quot;: {
       &quot;description&quot;: &quot;Observe as of this commit (`HEAD`, a sha, a ref): its history and the tree&#39;s release\nrecords, and nothing live — no branch, forge, deployment or clock. Default: live.&quot;,
       &quot;type&quot;: [
         &quot;string&quot;,
         &quot;null&quot;
       ]
-    },
-    &quot;issue&quot;: {
-      &quot;description&quot;: &quot;One issue id (`I2740`). Default: every issue of the plan. An id the plan does not\ndeclare is not found, never answered as `none`.&quot;,
-      &quot;type&quot;: [
-        &quot;string&quot;,
-        &quot;null&quot;
-      ]
     }
   },
-  &quot;title&quot;: &quot;PlanDeliveryInput&quot;,
-  &quot;type&quot;: &quot;object&quot;
+  &quot;description&quot;: &quot;Which issues, and as of when: the input of `plan.delivery`.\n\nBoth fields are optional, and an unknown one is refused rather than ignored, so a caller\nwho misspells `at` is not silently answered live.\n\n```\nuse majordomus_cli::capability::builtin::plan::PlanDeliveryInput;\n\nlet every: PlanDeliveryInput = serde_json::from_str(\&quot;{}\&quot;).unwrap();\nassert!(every.issue.is_none() &amp;&amp; every.at.is_none(), \&quot;live, every issue\&quot;);\nlet one: PlanDeliveryInput =\n    serde_json::from_value(serde_json::json!({ \&quot;issue\&quot;: \&quot;I2740\&quot;, \&quot;at\&quot;: \&quot;HEAD\&quot; })).unwrap();\nassert_eq!((one.issue.as_deref(), one.at.as_deref()), (Some(\&quot;I2740\&quot;), Some(\&quot;HEAD\&quot;)));\nassert!(serde_json::from_str::&lt;PlanDeliveryInput&gt;(r#\&quot;{\&quot;commit\&quot;:\&quot;HEAD\&quot;}\&quot;#).is_err());\n```&quot;,
+  &quot;additionalProperties&quot;: false
 }</pre></div>
   </details>
 </div>
@@ -262,6 +262,21 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
     <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
       <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">vlastnost</th><th class="px-3 py-2">typ</th><th class="px-3 py-2">povinné</th><th class="px-3 py-2">popis</th></tr></thead>
       <tbody><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">nevyřešeno</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">integer</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Kolik úkolů mohl nepřečtený zdroj posunout dál.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">zdroje</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Každý zdroj, přečtený i nepřečtený.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">součty</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">object</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Kolik úkolů je v které fázi, podle každé fáze slovníku.</td>
+      </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">úkoly</td>
         <td class="px-3 py-2 font-mono text-xs text-body">array</td>
         <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
@@ -277,203 +292,29 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
         <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
         <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Verze tohoto tvaru.</td>
       </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">zdroje</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Každý zdroj, přečtený i nepřečtený.</td>
-      </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">fáze</td>
         <td class="px-3 py-2 font-mono text-xs text-body">array</td>
         <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
         <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Slovník fází, v pořadí.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">součty</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">object</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Kolik úkolů je v které fázi, podle každé fáze slovníku.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">nevyřešeno</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">integer</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Kolik úkolů mohl nepřečtený zdroj posunout dál.</td>
       </tr></tbody>
     </table>
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
+  &quot;required&quot;: [
+    &quot;schema&quot;,
+    &quot;observed&quot;,
+    &quot;stages&quot;,
+    &quot;sources&quot;,
+    &quot;tallies&quot;,
+    &quot;unsettled&quot;,
+    &quot;issues&quot;
+  ],
+  &quot;type&quot;: &quot;object&quot;,
+  &quot;description&quot;: &quot;Every issue&#39;s delivery, with what it was read from.&quot;,
   &quot;$defs&quot;: {
-    &quot;DeliveryBranch&quot;: {
-      &quot;description&quot;: &quot;A branch that names the issue.&quot;,
-      &quot;properties&quot;: {
-        &quot;head&quot;: {
-          &quot;description&quot;: &quot;The commit it points at.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;name&quot;: {
-          &quot;description&quot;: &quot;The ref, short: `feature/x`, or `origin/feature/x` for a remote-tracking one.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;observed_at&quot;: {
-          &quot;description&quot;: &quot;When the refs were read.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;remote&quot;: {
-          &quot;description&quot;: &quot;True for a remote-tracking ref.&quot;,
-          &quot;type&quot;: &quot;boolean&quot;
-        },
-        &quot;via&quot;: {
-          &quot;description&quot;: &quot;How the name names the issue: `id` or `slug`.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      },
-      &quot;required&quot;: [
-        &quot;name&quot;,
-        &quot;head&quot;,
-        &quot;remote&quot;,
-        &quot;via&quot;,
-        &quot;observed_at&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
-    },
-    &quot;DeliveryDeployment&quot;: {
-      &quot;description&quot;: &quot;The published release pointer that covers the issue&#39;s release.&quot;,
-      &quot;properties&quot;: {
-        &quot;latest_json&quot;: {
-          &quot;description&quot;: &quot;Where that `latest.json` was read: `&lt;commit&gt;:releases/latest.json` when the observed\nPages deployment published a gh-pages commit (the built site),\n`&lt;commit&gt;:site/static/releases/latest.json` when it published a source commit.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;observed_at&quot;: {
-          &quot;description&quot;: &quot;When the publication was observed.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;version&quot;: {
-          &quot;description&quot;: &quot;The version `latest.json` names.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      },
-      &quot;required&quot;: [
-        &quot;version&quot;,
-        &quot;latest_json&quot;,
-        &quot;observed_at&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
-    },
-    &quot;DeliveryMerge&quot;: {
-      &quot;description&quot;: &quot;The newest commit in the trunk&#39;s history that names the issue: a merge, by its pull\nrequest&#39;s title or its branch, or a commit whose subject names it the way this\nrepository&#39;s commits do (`type(scope): description (I2740)`).&quot;,
-      &quot;properties&quot;: {
-        &quot;branch&quot;: {
-          &quot;description&quot;: &quot;The branch it merged, when its subject names one.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;commit&quot;: {
-          &quot;description&quot;: &quot;The commit: a merge commit, or a commit whose subject names the issue.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;merged_at&quot;: {
-          &quot;description&quot;: &quot;When it was committed, RFC 3339.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;merges&quot;: {
-          &quot;description&quot;: &quot;How many commits in the history name the issue; this one is the newest.&quot;,
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;observed_at&quot;: {
-          &quot;description&quot;: &quot;When the history was read.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;pull_request&quot;: {
-          &quot;description&quot;: &quot;The pull request it merged, when its subject names one.&quot;,
-          &quot;format&quot;: &quot;uint64&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: [
-            &quot;integer&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;title&quot;: {
-          &quot;description&quot;: &quot;The pull request&#39;s title, when the merge carries one, or the commit&#39;s subject.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;via&quot;: {
-          &quot;description&quot;: &quot;How it names the issue: `title_or_branch` or `slug` for a merge, `subject` for a\ncommit, `forge_title` for a merged pull request&#39;s title as the forge recorded it.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      },
-      &quot;required&quot;: [
-        &quot;commit&quot;,
-        &quot;via&quot;,
-        &quot;merged_at&quot;,
-        &quot;merges&quot;,
-        &quot;observed_at&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
-    },
-    &quot;DeliveryObservation&quot;: {
-      &quot;description&quot;: &quot;Where and when the answer was observed.&quot;,
-      &quot;properties&quot;: {
-        &quot;commit&quot;: {
-          &quot;description&quot;: &quot;The commit that history ends at.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;mode&quot;: {
-          &quot;description&quot;: &quot;`live`, or `at` a named commit.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;observed_at&quot;: {
-          &quot;description&quot;: &quot;When: the clock in live mode, the commit&#39;s committer time at a commit.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;trunk&quot;: {
-          &quot;description&quot;: &quot;The history read: the trunk ref in live mode, the commit asked for otherwise.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      },
-      &quot;required&quot;: [
-        &quot;mode&quot;,
-        &quot;trunk&quot;,
-        &quot;commit&quot;,
-        &quot;observed_at&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
-    },
     &quot;DeliveryPullRequest&quot;: {
       &quot;description&quot;: &quot;An open pull request that names the issue.&quot;,
-      &quot;properties&quot;: {
-        &quot;draft&quot;: {
-          &quot;description&quot;: &quot;True for a draft.&quot;,
-          &quot;type&quot;: &quot;boolean&quot;
-        },
-        &quot;head_ref&quot;: {
-          &quot;description&quot;: &quot;The branch it asks to merge.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;number&quot;: {
-          &quot;description&quot;: &quot;The number.&quot;,
-          &quot;format&quot;: &quot;uint64&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;observed_at&quot;: {
-          &quot;description&quot;: &quot;When the forge was observed.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;title&quot;: {
-          &quot;description&quot;: &quot;The title.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;via&quot;: {
-          &quot;description&quot;: &quot;How it names the issue: `title_or_branch` or `slug`.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      },
       &quot;required&quot;: [
         &quot;number&quot;,
         &quot;title&quot;,
@@ -482,53 +323,59 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
         &quot;via&quot;,
         &quot;observed_at&quot;
       ],
+      &quot;properties&quot;: {
+        &quot;observed_at&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;When the forge was observed.&quot;
+        },
+        &quot;head_ref&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The branch it asks to merge.&quot;
+        },
+        &quot;draft&quot;: {
+          &quot;description&quot;: &quot;True for a draft.&quot;,
+          &quot;type&quot;: &quot;boolean&quot;
+        },
+        &quot;number&quot;: {
+          &quot;format&quot;: &quot;uint64&quot;,
+          &quot;type&quot;: &quot;integer&quot;,
+          &quot;description&quot;: &quot;The number.&quot;,
+          &quot;minimum&quot;: 0
+        },
+        &quot;title&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The title.&quot;
+        },
+        &quot;via&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;How it names the issue: `title_or_branch` or `slug`.&quot;
+        }
+      },
       &quot;type&quot;: &quot;object&quot;
     },
     &quot;DeliveryReading&quot;: {
       &quot;description&quot;: &quot;Whether one source of the answer was read.&quot;,
       &quot;oneOf&quot;: [
         {
-          &quot;const&quot;: &quot;read&quot;,
           &quot;description&quot;: &quot;It was read; what it holds is in the answer.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;read&quot;
         },
         {
           &quot;const&quot;: &quot;unread&quot;,
-          &quot;description&quot;: &quot;It was not read, and `reason` says why. Nothing it could have proved is claimed or\ndenied.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;It was not read, and `reason` says why. Nothing it could have proved is claimed or\ndenied.&quot;
         }
       ]
     },
-    &quot;DeliveryRelease&quot;: {
-      &quot;description&quot;: &quot;The first release that contains the issue&#39;s newest merge.&quot;,
-      &quot;properties&quot;: {
-        &quot;commit&quot;: {
-          &quot;description&quot;: &quot;The commit the tag names.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;observed_at&quot;: {
-          &quot;description&quot;: &quot;When the releases were read.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;tag&quot;: {
-          &quot;description&quot;: &quot;The tag: `v0.27.0`.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      },
-      &quot;required&quot;: [
-        &quot;tag&quot;,
-        &quot;commit&quot;,
-        &quot;observed_at&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
-    },
     &quot;DeliverySource&quot;: {
-      &quot;description&quot;: &quot;One source the answer is built from, and whether it was read.&quot;,
+      &quot;type&quot;: &quot;object&quot;,
+      &quot;required&quot;: [
+        &quot;name&quot;,
+        &quot;state&quot;,
+        &quot;detail&quot;
+      ],
       &quot;properties&quot;: {
-        &quot;detail&quot;: {
-          &quot;description&quot;: &quot;What was read, or why nothing was: the ref, the file, the command that would record\nit.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
         &quot;name&quot;: {
           &quot;description&quot;: &quot;`branches`, `forge`, `history`, `releases` or `publication`.&quot;,
           &quot;type&quot;: &quot;string&quot;
@@ -540,66 +387,29 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
             &quot;null&quot;
           ]
         },
+        &quot;detail&quot;: {
+          &quot;description&quot;: &quot;What was read, or why nothing was: the ref, the file, the command that would record\nit.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
         &quot;state&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/DeliveryReading&quot;,
-          &quot;description&quot;: &quot;Read or unread.&quot;
+          &quot;description&quot;: &quot;Read or unread.&quot;,
+          &quot;$ref&quot;: &quot;#/$defs/DeliveryReading&quot;
         }
       },
-      &quot;required&quot;: [
-        &quot;name&quot;,
-        &quot;state&quot;,
-        &quot;detail&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
-    },
-    &quot;DeliveryStage&quot;: {
-      &quot;description&quot;: &quot;How far one issue&#39;s work has travelled, in order: each stage implies every one before it\nhas been passed through, so the furthest one proved is the issue&#39;s stage.&quot;,
-      &quot;oneOf&quot;: [
-        {
-          &quot;const&quot;: &quot;none&quot;,
-          &quot;description&quot;: &quot;Nothing that was read names the issue.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;branch&quot;,
-          &quot;description&quot;: &quot;A branch names it.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;pr_open&quot;,
-          &quot;description&quot;: &quot;An open pull request names it.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;merged&quot;,
-          &quot;description&quot;: &quot;A merge in the trunk&#39;s history names it.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;released&quot;,
-          &quot;description&quot;: &quot;A `v*` release contains its newest merge.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;deployed&quot;,
-          &quot;description&quot;: &quot;The published `latest.json` names that release or a later one.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      ]
+      &quot;description&quot;: &quot;One source the answer is built from, and whether it was read.&quot;
     },
     &quot;IssueDelivery&quot;: {
-      &quot;description&quot;: &quot;One issue&#39;s delivery.&quot;,
       &quot;properties&quot;: {
-        &quot;branch&quot;: {
+        &quot;merged&quot;: {
           &quot;anyOf&quot;: [
             {
-              &quot;$ref&quot;: &quot;#/$defs/DeliveryBranch&quot;
+              &quot;$ref&quot;: &quot;#/$defs/DeliveryMerge&quot;
             },
             {
               &quot;type&quot;: &quot;null&quot;
             }
           ],
-          &quot;description&quot;: &quot;The branch that names it, local first.&quot;
+          &quot;description&quot;: &quot;The newest merge that names it.&quot;
         },
         &quot;deployed&quot;: {
           &quot;anyOf&quot;: [
@@ -612,37 +422,34 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
           ],
           &quot;description&quot;: &quot;The publication that covers that release.&quot;
         },
-        &quot;issue&quot;: {
-          &quot;description&quot;: &quot;The issue id.&quot;,
+        &quot;stage&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/DeliveryStage&quot;,
+          &quot;description&quot;: &quot;The furthest stage proved.&quot;
+        },
+        &quot;title&quot;: {
+          &quot;description&quot;: &quot;Its title.&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
-        &quot;merged&quot;: {
+        &quot;branch&quot;: {
           &quot;anyOf&quot;: [
             {
-              &quot;$ref&quot;: &quot;#/$defs/DeliveryMerge&quot;
+              &quot;$ref&quot;: &quot;#/$defs/DeliveryBranch&quot;
             },
             {
               &quot;type&quot;: &quot;null&quot;
             }
           ],
-          &quot;description&quot;: &quot;The newest merge that names it.&quot;
+          &quot;description&quot;: &quot;The branch that names it, local first.&quot;
         },
-        &quot;milestone&quot;: {
-          &quot;description&quot;: &quot;Its milestone.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;planned&quot;: {
-          &quot;anyOf&quot;: [
-            {
-              &quot;$ref&quot;: &quot;#/$defs/DeliveryMerge&quot;
-            },
-            {
-              &quot;type&quot;: &quot;null&quot;
-            }
-          ],
-          &quot;description&quot;: &quot;The newest commit that names it while changing only plan records and their\nprojections: passed over as a merge proof, and said so.&quot;
+        &quot;unread&quot;: {
+          &quot;items&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          },
+          &quot;type&quot;: &quot;array&quot;,
+          &quot;description&quot;: &quot;The sources that were not read and could have proved a further stage.&quot;
         },
         &quot;pr_open&quot;: {
+          &quot;description&quot;: &quot;The open pull request that names it, newest first.&quot;,
           &quot;anyOf&quot;: [
             {
               &quot;$ref&quot;: &quot;#/$defs/DeliveryPullRequest&quot;
@@ -650,8 +457,11 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
             {
               &quot;type&quot;: &quot;null&quot;
             }
-          ],
-          &quot;description&quot;: &quot;The open pull request that names it, newest first.&quot;
+          ]
+        },
+        &quot;settled&quot;: {
+          &quot;description&quot;: &quot;True when no unread source could have proved a further stage.&quot;,
+          &quot;type&quot;: &quot;boolean&quot;
         },
         &quot;released&quot;: {
           &quot;anyOf&quot;: [
@@ -664,30 +474,32 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
           ],
           &quot;description&quot;: &quot;The first release containing that merge.&quot;
         },
-        &quot;settled&quot;: {
-          &quot;description&quot;: &quot;True when no unread source could have proved a further stage.&quot;,
-          &quot;type&quot;: &quot;boolean&quot;
+        &quot;milestone&quot;: {
+          &quot;description&quot;: &quot;Its milestone.&quot;,
+          &quot;type&quot;: &quot;string&quot;
         },
-        &quot;stage&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/DeliveryStage&quot;,
-          &quot;description&quot;: &quot;The furthest stage proved.&quot;
+        &quot;planned&quot;: {
+          &quot;description&quot;: &quot;The newest commit that names it while changing only plan records and their\nprojections: passed over as a merge proof, and said so.&quot;,
+          &quot;anyOf&quot;: [
+            {
+              &quot;$ref&quot;: &quot;#/$defs/DeliveryMerge&quot;
+            },
+            {
+              &quot;type&quot;: &quot;null&quot;
+            }
+          ]
         },
         &quot;status&quot;: {
           &quot;description&quot;: &quot;Its declared status, as the plan derives it from the stamps: the other half of the\ncomparison this answer exists for.&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
-        &quot;title&quot;: {
-          &quot;description&quot;: &quot;Its title.&quot;,
+        &quot;issue&quot;: {
+          &quot;description&quot;: &quot;The issue id.&quot;,
           &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;unread&quot;: {
-          &quot;description&quot;: &quot;The sources that were not read and could have proved a further stage.&quot;,
-          &quot;items&quot;: {
-            &quot;type&quot;: &quot;string&quot;
-          },
-          &quot;type&quot;: &quot;array&quot;
         }
       },
+      &quot;description&quot;: &quot;One issue&#39;s delivery.&quot;,
+      &quot;type&quot;: &quot;object&quot;,
       &quot;required&quot;: [
         &quot;issue&quot;,
         &quot;title&quot;,
@@ -696,28 +508,215 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
         &quot;stage&quot;,
         &quot;settled&quot;,
         &quot;unread&quot;
+      ]
+    },
+    &quot;DeliveryDeployment&quot;: {
+      &quot;type&quot;: &quot;object&quot;,
+      &quot;description&quot;: &quot;The published release pointer that covers the issue&#39;s release.&quot;,
+      &quot;properties&quot;: {
+        &quot;latest_json&quot;: {
+          &quot;description&quot;: &quot;Where that `latest.json` was read: `&lt;commit&gt;:releases/latest.json` when the observed\nPages deployment published a gh-pages commit (the built site),\n`&lt;commit&gt;:site/static/releases/latest.json` when it published a source commit.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;observed_at&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;When the publication was observed.&quot;
+        },
+        &quot;version&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The version `latest.json` names.&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;version&quot;,
+        &quot;latest_json&quot;,
+        &quot;observed_at&quot;
+      ]
+    },
+    &quot;DeliveryRelease&quot;: {
+      &quot;description&quot;: &quot;The first release that contains the issue&#39;s newest merge.&quot;,
+      &quot;properties&quot;: {
+        &quot;commit&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The commit the tag names.&quot;
+        },
+        &quot;observed_at&quot;: {
+          &quot;description&quot;: &quot;When the releases were read.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;tag&quot;: {
+          &quot;description&quot;: &quot;The tag: `v0.27.0`.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      },
+      &quot;type&quot;: &quot;object&quot;,
+      &quot;required&quot;: [
+        &quot;tag&quot;,
+        &quot;commit&quot;,
+        &quot;observed_at&quot;
+      ]
+    },
+    &quot;DeliveryStage&quot;: {
+      &quot;oneOf&quot;: [
+        {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;Nothing that was read names the issue.&quot;,
+          &quot;const&quot;: &quot;none&quot;
+        },
+        {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;A branch names it.&quot;,
+          &quot;const&quot;: &quot;branch&quot;
+        },
+        {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;An open pull request names it.&quot;,
+          &quot;const&quot;: &quot;pr_open&quot;
+        },
+        {
+          &quot;const&quot;: &quot;merged&quot;,
+          &quot;description&quot;: &quot;A merge in the trunk&#39;s history names it.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;description&quot;: &quot;A `v*` release contains its newest merge.&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;released&quot;
+        },
+        {
+          &quot;description&quot;: &quot;The published `latest.json` names that release or a later one.&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;deployed&quot;
+        }
       ],
+      &quot;description&quot;: &quot;How far one issue&#39;s work has travelled, in order: each stage implies every one before it\nhas been passed through, so the furthest one proved is the issue&#39;s stage.&quot;
+    },
+    &quot;DeliveryMerge&quot;: {
+      &quot;required&quot;: [
+        &quot;commit&quot;,
+        &quot;via&quot;,
+        &quot;merged_at&quot;,
+        &quot;merges&quot;,
+        &quot;observed_at&quot;
+      ],
+      &quot;description&quot;: &quot;The newest commit in the trunk&#39;s history that names the issue: a merge, by its pull\nrequest&#39;s title or its branch, or a commit whose subject names it the way this\nrepository&#39;s commits do (`type(scope): description (I2740)`).&quot;,
+      &quot;type&quot;: &quot;object&quot;,
+      &quot;properties&quot;: {
+        &quot;merged_at&quot;: {
+          &quot;description&quot;: &quot;When it was committed, RFC 3339.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;via&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;How it names the issue: `title_or_branch` or `slug` for a merge, `subject` for a\ncommit, `forge_title` for a merged pull request&#39;s title as the forge recorded it.&quot;
+        },
+        &quot;commit&quot;: {
+          &quot;description&quot;: &quot;The commit: a merge commit, or a commit whose subject names the issue.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;observed_at&quot;: {
+          &quot;description&quot;: &quot;When the history was read.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;pull_request&quot;: {
+          &quot;type&quot;: [
+            &quot;integer&quot;,
+            &quot;null&quot;
+          ],
+          &quot;minimum&quot;: 0,
+          &quot;description&quot;: &quot;The pull request it merged, when its subject names one.&quot;,
+          &quot;format&quot;: &quot;uint64&quot;
+        },
+        &quot;merges&quot;: {
+          &quot;description&quot;: &quot;How many commits in the history name the issue; this one is the newest.&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;,
+          &quot;format&quot;: &quot;uint&quot;
+        },
+        &quot;title&quot;: {
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ],
+          &quot;description&quot;: &quot;The pull request&#39;s title, when the merge carries one, or the commit&#39;s subject.&quot;
+        },
+        &quot;branch&quot;: {
+          &quot;description&quot;: &quot;The branch it merged, when its subject names one.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        }
+      }
+    },
+    &quot;DeliveryObservation&quot;: {
+      &quot;required&quot;: [
+        &quot;mode&quot;,
+        &quot;trunk&quot;,
+        &quot;commit&quot;,
+        &quot;observed_at&quot;
+      ],
+      &quot;properties&quot;: {
+        &quot;commit&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The commit that history ends at.&quot;
+        },
+        &quot;trunk&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The history read: the trunk ref in live mode, the commit asked for otherwise.&quot;
+        },
+        &quot;mode&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;`live`, or `at` a named commit.&quot;
+        },
+        &quot;observed_at&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;When: the clock in live mode, the commit&#39;s committer time at a commit.&quot;
+        }
+      },
+      &quot;description&quot;: &quot;Where and when the answer was observed.&quot;,
       &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;DeliveryBranch&quot;: {
+      &quot;type&quot;: &quot;object&quot;,
+      &quot;properties&quot;: {
+        &quot;name&quot;: {
+          &quot;description&quot;: &quot;The ref, short: `feature/x`, or `origin/feature/x` for a remote-tracking one.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;observed_at&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;When the refs were read.&quot;
+        },
+        &quot;remote&quot;: {
+          &quot;description&quot;: &quot;True for a remote-tracking ref.&quot;,
+          &quot;type&quot;: &quot;boolean&quot;
+        },
+        &quot;via&quot;: {
+          &quot;description&quot;: &quot;How the name names the issue: `id` or `slug`.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;head&quot;: {
+          &quot;description&quot;: &quot;The commit it points at.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      },
+      &quot;description&quot;: &quot;A branch that names the issue.&quot;,
+      &quot;required&quot;: [
+        &quot;name&quot;,
+        &quot;head&quot;,
+        &quot;remote&quot;,
+        &quot;via&quot;,
+        &quot;observed_at&quot;
+      ]
     }
   },
-  &quot;description&quot;: &quot;Every issue&#39;s delivery, with what it was read from.&quot;,
   &quot;properties&quot;: {
-    &quot;issues&quot;: {
-      &quot;description&quot;: &quot;The issues, in id order.&quot;,
-      &quot;items&quot;: {
-        &quot;$ref&quot;: &quot;#/$defs/IssueDelivery&quot;
-      },
-      &quot;type&quot;: &quot;array&quot;
-    },
-    &quot;observed&quot;: {
-      &quot;$ref&quot;: &quot;#/$defs/DeliveryObservation&quot;,
-      &quot;description&quot;: &quot;Where and when.&quot;
-    },
-    &quot;schema&quot;: {
-      &quot;description&quot;: &quot;The version of this shape.&quot;,
-      &quot;format&quot;: &quot;uint32&quot;,
+    &quot;unsettled&quot;: {
+      &quot;description&quot;: &quot;How many issues an unread source could have moved further.&quot;,
+      &quot;type&quot;: &quot;integer&quot;,
       &quot;minimum&quot;: 0,
-      &quot;type&quot;: &quot;integer&quot;
+      &quot;format&quot;: &quot;uint&quot;
     },
     &quot;sources&quot;: {
       &quot;description&quot;: &quot;Every source, read or not.&quot;,
@@ -726,40 +725,41 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
       },
       &quot;type&quot;: &quot;array&quot;
     },
-    &quot;stages&quot;: {
-      &quot;description&quot;: &quot;The stage vocabulary, in order.&quot;,
-      &quot;items&quot;: {
-        &quot;$ref&quot;: &quot;#/$defs/DeliveryStage&quot;
-      },
-      &quot;type&quot;: &quot;array&quot;
-    },
     &quot;tallies&quot;: {
       &quot;additionalProperties&quot;: {
-        &quot;format&quot;: &quot;uint&quot;,
         &quot;minimum&quot;: 0,
-        &quot;type&quot;: &quot;integer&quot;
+        &quot;type&quot;: &quot;integer&quot;,
+        &quot;format&quot;: &quot;uint&quot;
       },
       &quot;description&quot;: &quot;How many issues are at each stage, keyed by every stage of the vocabulary.&quot;,
       &quot;type&quot;: &quot;object&quot;
     },
-    &quot;unsettled&quot;: {
-      &quot;description&quot;: &quot;How many issues an unread source could have moved further.&quot;,
-      &quot;format&quot;: &quot;uint&quot;,
-      &quot;minimum&quot;: 0,
-      &quot;type&quot;: &quot;integer&quot;
+    &quot;issues&quot;: {
+      &quot;items&quot;: {
+        &quot;$ref&quot;: &quot;#/$defs/IssueDelivery&quot;
+      },
+      &quot;description&quot;: &quot;The issues, in id order.&quot;,
+      &quot;type&quot;: &quot;array&quot;
+    },
+    &quot;observed&quot;: {
+      &quot;$ref&quot;: &quot;#/$defs/DeliveryObservation&quot;,
+      &quot;description&quot;: &quot;Where and when.&quot;
+    },
+    &quot;schema&quot;: {
+      &quot;description&quot;: &quot;The version of this shape.&quot;,
+      &quot;type&quot;: &quot;integer&quot;,
+      &quot;format&quot;: &quot;uint32&quot;,
+      &quot;minimum&quot;: 0
+    },
+    &quot;stages&quot;: {
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;description&quot;: &quot;The stage vocabulary, in order.&quot;,
+      &quot;items&quot;: {
+        &quot;$ref&quot;: &quot;#/$defs/DeliveryStage&quot;
+      }
     }
   },
-  &quot;required&quot;: [
-    &quot;schema&quot;,
-    &quot;observed&quot;,
-    &quot;stages&quot;,
-    &quot;sources&quot;,
-    &quot;tallies&quot;,
-    &quot;unsettled&quot;,
-    &quot;issues&quot;
-  ],
-  &quot;title&quot;: &quot;IssueDeliveryReport&quot;,
-  &quot;type&quot;: &quot;object&quot;
+  &quot;title&quot;: &quot;IssueDeliveryReport&quot;
 }</pre></div>
   </details>
 </div>
@@ -790,7 +790,7 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
         <div><dt class="text-body-subtle">modul Rust</dt><dd class="min-w-0 break-all font-mono text-heading">majordomus_cli::capability::builtin::plan</dd></div>
         <div><dt class="text-body-subtle">typ vstupu</dt><dd class="font-mono text-heading">PlanDeliveryInput</dd></div>
         <div><dt class="text-body-subtle">typ výstupu</dt><dd class="font-mono text-heading">IssueDeliveryReport</dd></div>
-        <div><dt class="text-body-subtle">reference na GitHubu</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/aa9f816f8673880ab4beb6dbebff688f9da5bb65/docs/generated/modules/plan.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/plan.md</a></dd></div><div><dt class="text-body-subtle">otisk registru</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">c514db707bb1f5f7557f2a1629d42c4bdc05eb7ef58464c288e42bafcd3d8720</dd></div>
+        <div><dt class="text-body-subtle">reference na GitHubu</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/docs/generated/modules/plan.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/plan.md</a></dd></div><div><dt class="text-body-subtle">otisk registru</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">3f734f2faf797f0ca7c39b4cd837e68b6619c41c6f6711f3d3aeca8f341934eb</dd></div>
         <div><dt class="text-body-subtle">vygenerováno nástrojem</dt><dd class="font-mono text-heading">majordomus-cli 1.0.0-alpha.10</dd></div>
       </dl>
     </div>
@@ -846,9 +846,9 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
       <div class="min-w-0">
         <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">Projekt</h2><ul class="space-y-2 text-sm font-medium text-body">
           <li><a href="https://github.com/korczis/prismatic-majordomus" class="hover:text-heading hover:underline">GitHub</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/aa9f816f8673880ab4beb6dbebff688f9da5bb65/LICENSE" class="hover:text-heading hover:underline">Licence MIT</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/aa9f816f8673880ab4beb6dbebff688f9da5bb65/SECURITY.md" class="hover:text-heading hover:underline">Bezpečnostní politika</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/aa9f816f8673880ab4beb6dbebff688f9da5bb65/CONTRIBUTING.md" class="hover:text-heading hover:underline">Průvodce pro přispěvatele</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/LICENSE" class="hover:text-heading hover:underline">Licence MIT</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/SECURITY.md" class="hover:text-heading hover:underline">Bezpečnostní politika</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/CONTRIBUTING.md" class="hover:text-heading hover:underline">Průvodce pro přispěvatele</a></li>
         </ul>
       </div>
     </div>
@@ -856,7 +856,7 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/cs/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.10</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/aa9f816f8673880ab4beb6dbebff688f9da5bb65" class="font-mono underline">aa9f816</a> · inputs <span class="font-mono">a64b981ed16e</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/cs/architecture/" class="underline">how this site is derived</a> names them.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.10</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/745db2ea21e02613943face75a2bf95542be1f2e" class="font-mono underline">745db2e</a> · inputs <span class="font-mono">0a58c217d1b7</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/cs/architecture/" class="underline">how this site is derived</a> names them.</p>
     </div>
   </div>
 </footer>

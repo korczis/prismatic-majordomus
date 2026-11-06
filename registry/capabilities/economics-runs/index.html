@@ -249,7 +249,6 @@ must match. An empty query lists every recorded run, and an unknown field is ref
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
-  &quot;additionalProperties&quot;: false,
   &quot;description&quot;: &quot;The input of `economics.runs`: optional filters on suite, task and variant, all of which\nmust match. An empty query lists every recorded run, and an unknown field is refused.\n\n```\nuse majordomus_cli::economics::model::EconomicsRunsQuery;\nlet wire = serde_json::json!({ \&quot;suite\&quot;: \&quot;pilot\&quot;, \&quot;variant\&quot;: \&quot;baseline\&quot; });\nlet q: EconomicsRunsQuery = serde_json::from_value(wire.clone()).unwrap();\nassert!(q.task.is_none(), \&quot;an absent filter matches every task\&quot;);\nassert_eq!(serde_json::to_value(&amp;q).unwrap(), wire, \&quot;absent filters are not written back\&quot;);\nlet by_model = serde_json::json!({ \&quot;model\&quot;: \&quot;claude-sonnet-5\&quot; });\nassert!(serde_json::from_value::&lt;EconomicsRunsQuery&gt;(by_model).is_err());\n```&quot;,
   &quot;properties&quot;: {
     &quot;suite&quot;: {
@@ -260,11 +259,11 @@ must match. An empty query lists every recorded run, and an unknown field is ref
       ]
     },
     &quot;task&quot;: {
-      &quot;description&quot;: &quot;Only this task.&quot;,
       &quot;type&quot;: [
         &quot;string&quot;,
         &quot;null&quot;
-      ]
+      ],
+      &quot;description&quot;: &quot;Only this task.&quot;
     },
     &quot;variant&quot;: {
       &quot;description&quot;: &quot;Only this variant.&quot;,
@@ -274,8 +273,9 @@ must match. An empty query lists every recorded run, and an unknown field is ref
       ]
     }
   },
+  &quot;type&quot;: &quot;object&quot;,
   &quot;title&quot;: &quot;EconomicsRunsQuery&quot;,
-  &quot;type&quot;: &quot;object&quot;
+  &quot;additionalProperties&quot;: false
 }</pre></div>
   </details>
 </div>
@@ -289,15 +289,15 @@ must match. An empty query lists every recorded run, and an unknown field is ref
     <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
       <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
       <tbody><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">count</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">integer</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">How many.</td>
-      </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">diagnostics</td>
         <td class="px-3 py-2 font-mono text-xs text-body">array</td>
         <td class="px-3 py-2 font-mono text-xs text-body">no</td>
         <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Records that could not be read. <span class="font-mono text-xs text-body-subtle">default []</span></td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">count</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">integer</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">How many.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">runs</td>
         <td class="px-3 py-2 font-mono text-xs text-body">array</td>
@@ -313,28 +313,118 @@ must match. An empty query lists every recorded run, and an unknown field is ref
       &quot;description&quot;: &quot;One success gate&#39;s verdict on a run.\n\n```\nuse majordomus_cli::economics::model::EconomicsCheck;\nlet c = EconomicsCheck { id: \&quot;tests_kept\&quot;.into(), passed: true, detail: \&quot;0 deleted\&quot;.into() };\nlet back: EconomicsCheck = serde_json::from_value(serde_json::to_value(&amp;c).unwrap()).unwrap();\nassert_eq!(back, c);\n```&quot;,
       &quot;properties&quot;: {
         &quot;detail&quot;: {
-          &quot;description&quot;: &quot;What was found.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;id&quot;: {
-          &quot;description&quot;: &quot;The gate&#39;s id.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;What was found.&quot;
         },
         &quot;passed&quot;: {
           &quot;description&quot;: &quot;Whether it passed.&quot;,
           &quot;type&quot;: &quot;boolean&quot;
+        },
+        &quot;id&quot;: {
+          &quot;description&quot;: &quot;The gate&#39;s id.&quot;,
+          &quot;type&quot;: &quot;string&quot;
         }
       },
+      &quot;type&quot;: &quot;object&quot;,
       &quot;required&quot;: [
         &quot;id&quot;,
         &quot;passed&quot;,
         &quot;detail&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
+      ]
+    },
+    &quot;EconomicsUsage&quot;: {
+      &quot;description&quot;: &quot;A run&#39;s totals, derived from its raw usage.\n\n```\nuse majordomus_cli::economics::model::EconomicsUsage;\nlet u = EconomicsUsage {\n    input_uncached: 10, cache_write: 90, cache_read: 900, output: 50,\n    total_input: 1000, total: 1050, requests: 3, ..EconomicsUsage::default()\n};\nassert_eq!(u.total_input, u.input_uncached + u.cache_write + u.cache_read);\nlet json = serde_json::to_value(&amp;u).unwrap();\nassert!(json.get(\&quot;reasoning\&quot;).is_none() &amp;&amp; json.get(\&quot;cost_microusd\&quot;).is_none());\n```&quot;,
+      &quot;properties&quot;: {
+        &quot;cache_write&quot;: {
+          &quot;format&quot;: &quot;uint64&quot;,
+          &quot;description&quot;: &quot;Input written to the cache.&quot;,
+          &quot;type&quot;: &quot;integer&quot;,
+          &quot;minimum&quot;: 0
+        },
+        &quot;total_input&quot;: {
+          &quot;format&quot;: &quot;uint64&quot;,
+          &quot;description&quot;: &quot;All input.&quot;,
+          &quot;type&quot;: &quot;integer&quot;,
+          &quot;minimum&quot;: 0
+        },
+        &quot;cache_read&quot;: {
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;,
+          &quot;description&quot;: &quot;Input read from the cache.&quot;,
+          &quot;format&quot;: &quot;uint64&quot;
+        },
+        &quot;total&quot;: {
+          &quot;type&quot;: &quot;integer&quot;,
+          &quot;format&quot;: &quot;uint64&quot;,
+          &quot;description&quot;: &quot;All input and output.&quot;,
+          &quot;minimum&quot;: 0
+        },
+        &quot;cost_microusd&quot;: {
+          &quot;format&quot;: &quot;uint64&quot;,
+          &quot;description&quot;: &quot;The harness&#39;s cost projection, in millionths of a dollar, when every session had one.&quot;,
+          &quot;type&quot;: [
+            &quot;integer&quot;,
+            &quot;null&quot;
+          ],
+          &quot;minimum&quot;: 0
+        },
+        &quot;reasoning&quot;: {
+          &quot;type&quot;: [
+            &quot;integer&quot;,
+            &quot;null&quot;
+          ],
+          &quot;format&quot;: &quot;uint64&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;description&quot;: &quot;Reasoning tokens, when every request reported them.&quot;
+        },
+        &quot;requests&quot;: {
+          &quot;type&quot;: &quot;integer&quot;,
+          &quot;description&quot;: &quot;Provider requests.&quot;,
+          &quot;format&quot;: &quot;uint64&quot;,
+          &quot;minimum&quot;: 0
+        },
+        &quot;input_uncached&quot;: {
+          &quot;minimum&quot;: 0,
+          &quot;format&quot;: &quot;uint64&quot;,
+          &quot;type&quot;: &quot;integer&quot;,
+          &quot;description&quot;: &quot;Input neither read from nor written to the cache.&quot;
+        },
+        &quot;output&quot;: {
+          &quot;type&quot;: &quot;integer&quot;,
+          &quot;description&quot;: &quot;Output, reasoning included.&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;format&quot;: &quot;uint64&quot;
+        },
+        &quot;tool_calls&quot;: {
+          &quot;type&quot;: &quot;integer&quot;,
+          &quot;format&quot;: &quot;uint64&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;description&quot;: &quot;Tool calls.&quot;
+        }
+      },
+      &quot;type&quot;: &quot;object&quot;,
+      &quot;required&quot;: [
+        &quot;input_uncached&quot;,
+        &quot;cache_write&quot;,
+        &quot;cache_read&quot;,
+        &quot;output&quot;,
+        &quot;total_input&quot;,
+        &quot;total&quot;,
+        &quot;requests&quot;,
+        &quot;tool_calls&quot;
+      ]
     },
     &quot;EconomicsRunView&quot;: {
       &quot;description&quot;: &quot;One run in brief, with its derived totals.\n\n```\nuse majordomus_cli::economics::model::EconomicsRunView;\nlet v: EconomicsRunView = serde_json::from_value(serde_json::json!({\n    \&quot;id\&quot;: \&quot;vat-rounding--majordomus--r1\&quot;, \&quot;suite\&quot;: \&quot;pilot\&quot;, \&quot;task\&quot;: \&quot;vat-rounding\&quot;,\n    \&quot;variant\&quot;: \&quot;majordomus\&quot;, \&quot;repetition\&quot;: 1, \&quot;model\&quot;: \&quot;claude-sonnet-5\&quot;,\n    \&quot;revision\&quot;: \&quot;8d37d011ef\&quot;, \&quot;completed\&quot;: false, \&quot;checks\&quot;: [], \&quot;sessions\&quot;: 1,\n    \&quot;path\&quot;: \&quot;.ai/repo/benchmarks/economics/runs/pilot/vat-rounding--majordomus--r1.json\&quot;\n}))\n.unwrap();\nassert!(v.usage.is_none(), \&quot;a run whose provider reported no usage has no totals\&quot;);\nassert!(v.path.ends_with(&amp;format!(\&quot;{}.json\&quot;, v.id)));\n```&quot;,
       &quot;properties&quot;: {
+        &quot;variant&quot;: {
+          &quot;description&quot;: &quot;The variant.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;revision&quot;: {
+          &quot;description&quot;: &quot;The revision.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
         &quot;checks&quot;: {
           &quot;description&quot;: &quot;Each gate&#39;s verdict.&quot;,
           &quot;items&quot;: {
@@ -342,41 +432,27 @@ must match. An empty query lists every recorded run, and an unknown field is ref
           },
           &quot;type&quot;: &quot;array&quot;
         },
-        &quot;completed&quot;: {
-          &quot;description&quot;: &quot;Whether every success gate passed.&quot;,
-          &quot;type&quot;: &quot;boolean&quot;
-        },
-        &quot;id&quot;: {
-          &quot;description&quot;: &quot;The run&#39;s id.&quot;,
+        &quot;path&quot;: {
+          &quot;description&quot;: &quot;Where the raw record is.&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
         &quot;model&quot;: {
           &quot;description&quot;: &quot;The model requested.&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
-        &quot;path&quot;: {
-          &quot;description&quot;: &quot;Where the raw record is.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;repetition&quot;: {
-          &quot;description&quot;: &quot;The repetition.&quot;,
-          &quot;format&quot;: &quot;uint32&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;revision&quot;: {
-          &quot;description&quot;: &quot;The revision.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
         &quot;sessions&quot;: {
+          &quot;minimum&quot;: 0,
           &quot;description&quot;: &quot;Sessions.&quot;,
           &quot;format&quot;: &quot;uint&quot;,
-          &quot;minimum&quot;: 0,
           &quot;type&quot;: &quot;integer&quot;
         },
+        &quot;id&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The run&#39;s id.&quot;
+        },
         &quot;suite&quot;: {
-          &quot;description&quot;: &quot;The suite.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The suite.&quot;
         },
         &quot;task&quot;: {
           &quot;description&quot;: &quot;The task.&quot;,
@@ -393,9 +469,15 @@ must match. An empty query lists every recorded run, and an unknown field is ref
           ],
           &quot;description&quot;: &quot;Totals, when the provider reported usage.&quot;
         },
-        &quot;variant&quot;: {
-          &quot;description&quot;: &quot;The variant.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+        &quot;completed&quot;: {
+          &quot;description&quot;: &quot;Whether every success gate passed.&quot;,
+          &quot;type&quot;: &quot;boolean&quot;
+        },
+        &quot;repetition&quot;: {
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;,
+          &quot;description&quot;: &quot;The repetition.&quot;,
+          &quot;format&quot;: &quot;uint32&quot;
         }
       },
       &quot;required&quot;: [
@@ -412,98 +494,16 @@ must match. An empty query lists every recorded run, and an unknown field is ref
         &quot;path&quot;
       ],
       &quot;type&quot;: &quot;object&quot;
-    },
-    &quot;EconomicsUsage&quot;: {
-      &quot;description&quot;: &quot;A run&#39;s totals, derived from its raw usage.\n\n```\nuse majordomus_cli::economics::model::EconomicsUsage;\nlet u = EconomicsUsage {\n    input_uncached: 10, cache_write: 90, cache_read: 900, output: 50,\n    total_input: 1000, total: 1050, requests: 3, ..EconomicsUsage::default()\n};\nassert_eq!(u.total_input, u.input_uncached + u.cache_write + u.cache_read);\nlet json = serde_json::to_value(&amp;u).unwrap();\nassert!(json.get(\&quot;reasoning\&quot;).is_none() &amp;&amp; json.get(\&quot;cost_microusd\&quot;).is_none());\n```&quot;,
-      &quot;properties&quot;: {
-        &quot;cache_read&quot;: {
-          &quot;description&quot;: &quot;Input read from the cache.&quot;,
-          &quot;format&quot;: &quot;uint64&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;cache_write&quot;: {
-          &quot;description&quot;: &quot;Input written to the cache.&quot;,
-          &quot;format&quot;: &quot;uint64&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;cost_microusd&quot;: {
-          &quot;description&quot;: &quot;The harness&#39;s cost projection, in millionths of a dollar, when every session had one.&quot;,
-          &quot;format&quot;: &quot;uint64&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: [
-            &quot;integer&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;input_uncached&quot;: {
-          &quot;description&quot;: &quot;Input neither read from nor written to the cache.&quot;,
-          &quot;format&quot;: &quot;uint64&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;output&quot;: {
-          &quot;description&quot;: &quot;Output, reasoning included.&quot;,
-          &quot;format&quot;: &quot;uint64&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;reasoning&quot;: {
-          &quot;description&quot;: &quot;Reasoning tokens, when every request reported them.&quot;,
-          &quot;format&quot;: &quot;uint64&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: [
-            &quot;integer&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;requests&quot;: {
-          &quot;description&quot;: &quot;Provider requests.&quot;,
-          &quot;format&quot;: &quot;uint64&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;tool_calls&quot;: {
-          &quot;description&quot;: &quot;Tool calls.&quot;,
-          &quot;format&quot;: &quot;uint64&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;total&quot;: {
-          &quot;description&quot;: &quot;All input and output.&quot;,
-          &quot;format&quot;: &quot;uint64&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;total_input&quot;: {
-          &quot;description&quot;: &quot;All input.&quot;,
-          &quot;format&quot;: &quot;uint64&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        }
-      },
-      &quot;required&quot;: [
-        &quot;input_uncached&quot;,
-        &quot;cache_write&quot;,
-        &quot;cache_read&quot;,
-        &quot;output&quot;,
-        &quot;total_input&quot;,
-        &quot;total&quot;,
-        &quot;requests&quot;,
-        &quot;tool_calls&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
     }
   },
   &quot;description&quot;: &quot;The answer of `economics.runs`: the raw facts every metric is computed from.\n\n```\nuse majordomus_cli::economics::model::EconomicsRunList;\nlet l: EconomicsRunList =\n    serde_json::from_value(serde_json::json!({ \&quot;count\&quot;: 0, \&quot;runs\&quot;: [] })).unwrap();\nassert_eq!(l.count, l.runs.len());\nassert!(l.diagnostics.is_empty(), \&quot;no diagnostics listed means none\&quot;);\n```&quot;,
+  &quot;required&quot;: [
+    &quot;count&quot;,
+    &quot;runs&quot;
+  ],
+  &quot;title&quot;: &quot;EconomicsRunList&quot;,
+  &quot;type&quot;: &quot;object&quot;,
   &quot;properties&quot;: {
-    &quot;count&quot;: {
-      &quot;description&quot;: &quot;How many.&quot;,
-      &quot;format&quot;: &quot;uint&quot;,
-      &quot;minimum&quot;: 0,
-      &quot;type&quot;: &quot;integer&quot;
-    },
     &quot;diagnostics&quot;: {
       &quot;default&quot;: [],
       &quot;description&quot;: &quot;Records that could not be read.&quot;,
@@ -512,20 +512,20 @@ must match. An empty query lists every recorded run, and an unknown field is ref
       },
       &quot;type&quot;: &quot;array&quot;
     },
+    &quot;count&quot;: {
+      &quot;format&quot;: &quot;uint&quot;,
+      &quot;minimum&quot;: 0,
+      &quot;type&quot;: &quot;integer&quot;,
+      &quot;description&quot;: &quot;How many.&quot;
+    },
     &quot;runs&quot;: {
-      &quot;description&quot;: &quot;The runs, sorted by id.&quot;,
       &quot;items&quot;: {
         &quot;$ref&quot;: &quot;#/$defs/EconomicsRunView&quot;
       },
-      &quot;type&quot;: &quot;array&quot;
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;description&quot;: &quot;The runs, sorted by id.&quot;
     }
-  },
-  &quot;required&quot;: [
-    &quot;count&quot;,
-    &quot;runs&quot;
-  ],
-  &quot;title&quot;: &quot;EconomicsRunList&quot;,
-  &quot;type&quot;: &quot;object&quot;
+  }
 }</pre></div>
   </details>
 </div>
@@ -556,7 +556,7 @@ must match. An empty query lists every recorded run, and an unknown field is ref
         <div><dt class="text-body-subtle">Rust module</dt><dd class="min-w-0 break-all font-mono text-heading">majordomus_cli::capability::builtin::economics</dd></div>
         <div><dt class="text-body-subtle">input type</dt><dd class="font-mono text-heading">EconomicsRunsQuery</dd></div>
         <div><dt class="text-body-subtle">output type</dt><dd class="font-mono text-heading">EconomicsRunList</dd></div>
-        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/aa9f816f8673880ab4beb6dbebff688f9da5bb65/docs/generated/modules/economics.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/economics.md</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">c514db707bb1f5f7557f2a1629d42c4bdc05eb7ef58464c288e42bafcd3d8720</dd></div>
+        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/docs/generated/modules/economics.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/economics.md</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">3f734f2faf797f0ca7c39b4cd837e68b6619c41c6f6711f3d3aeca8f341934eb</dd></div>
         <div><dt class="text-body-subtle">generated by</dt><dd class="font-mono text-heading">majordomus-cli 1.0.0-alpha.10</dd></div>
       </dl>
     </div>
@@ -612,9 +612,9 @@ must match. An empty query lists every recorded run, and an unknown field is ref
       <div class="min-w-0">
         <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">Project</h2><ul class="space-y-2 text-sm font-medium text-body">
           <li><a href="https://github.com/korczis/prismatic-majordomus" class="hover:text-heading hover:underline">GitHub</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/aa9f816f8673880ab4beb6dbebff688f9da5bb65/LICENSE" class="hover:text-heading hover:underline">MIT licence</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/aa9f816f8673880ab4beb6dbebff688f9da5bb65/SECURITY.md" class="hover:text-heading hover:underline">Security policy</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/aa9f816f8673880ab4beb6dbebff688f9da5bb65/CONTRIBUTING.md" class="hover:text-heading hover:underline">Contributing guide</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/LICENSE" class="hover:text-heading hover:underline">MIT licence</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/SECURITY.md" class="hover:text-heading hover:underline">Security policy</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/CONTRIBUTING.md" class="hover:text-heading hover:underline">Contributing guide</a></li>
         </ul>
       </div>
     </div>
@@ -622,7 +622,7 @@ must match. An empty query lists every recorded run, and an unknown field is ref
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.10</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/aa9f816f8673880ab4beb6dbebff688f9da5bb65" class="font-mono underline">aa9f816</a> · inputs <span class="font-mono">a64b981ed16e</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/architecture/" class="underline">how this site is derived</a> names them.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.10</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/745db2ea21e02613943face75a2bf95542be1f2e" class="font-mono underline">745db2e</a> · inputs <span class="font-mono">0a58c217d1b7</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/architecture/" class="underline">how this site is derived</a> names them.</p>
     </div>
   </div>
 </footer>

@@ -226,18 +226,18 @@ reads the last release's registry: yes when absent. The brief and doctor say no.
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
   &quot;additionalProperties&quot;: false,
-  &quot;description&quot;: &quot;The input of `release.currency`: whether to decide the version as well.\n\n```\nuse majordomus_cli::capability::builtin::release::CurrencyInput;\n// the version is decided unless the caller says it does not need it\nassert!(CurrencyInput::default().next());\nassert!(!CurrencyInput { next: Some(false) }.next());\n```&quot;,
+  &quot;type&quot;: &quot;object&quot;,
   &quot;properties&quot;: {
     &quot;next&quot;: {
-      &quot;description&quot;: &quot;Whether to decide the version the public contract requires for the landed work, which\nreads the last release&#39;s registry: yes when absent. The brief and doctor say no.&quot;,
       &quot;type&quot;: [
         &quot;boolean&quot;,
         &quot;null&quot;
-      ]
+      ],
+      &quot;description&quot;: &quot;Whether to decide the version the public contract requires for the landed work, which\nreads the last release&#39;s registry: yes when absent. The brief and doctor say no.&quot;
     }
   },
   &quot;title&quot;: &quot;ReleaseCurrencyInput&quot;,
-  &quot;type&quot;: &quot;object&quot;
+  &quot;description&quot;: &quot;The input of `release.currency`: whether to decide the version as well.\n\n```\nuse majordomus_cli::capability::builtin::release::CurrencyInput;\n// the version is decided unless the caller says it does not need it\nassert!(CurrencyInput::default().next());\nassert!(!CurrencyInput { next: Some(false) }.next());\n```&quot;
 }</pre></div>
   </details>
 </div>
@@ -252,21 +252,36 @@ reads the last release's registry: yes when absent. The brief and doctor say no.
     <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
       <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">vlastnost</th><th class="px-3 py-2">typ</th><th class="px-3 py-2">povinné</th><th class="px-3 py-2">popis</th></tr></thead>
       <tbody><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">změny</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
+        <td class="px-3 py-2 font-mono text-heading">waited_seconds</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">integer | null</td>
         <td class="px-3 py-2 font-mono text-xs text-body">ne</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The landed changes, newest first, at most <code>LISTED</code>.</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">How long the work has waited since then, in seconds.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">landed</td>
         <td class="px-3 py-2 font-mono text-xs text-body">integer</td>
         <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
         <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Landed commits past the last release, merges and release commits left out.</td>
       </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">next_unmeasured</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">ne</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Why that version was not decided, when it was asked for and could not be.</td>
+      </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">landed_at</td>
         <td class="px-3 py-2 font-mono text-xs text-body">jedno ze 2</td>
         <td class="px-3 py-2 font-mono text-xs text-body">ne</td>
         <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">How <code>oldest_landing</code> was dated: when this clone saw it arrive
 on the trunk, or its commit time as an upper bound on the wait.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">overdue_after_seconds</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">integer</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">How long it may wait before it is overdue (<code>OVERDUE_AFTER</code>).</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">změny</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">ne</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The landed changes, newest first, at most <code>LISTED</code>.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">landings</td>
         <td class="px-3 py-2 font-mono text-xs text-body">integer</td>
@@ -278,22 +293,6 @@ on the trunk, or its commit time as an upper bound on the wait.</td>
         <td class="px-3 py-2 font-mono text-xs text-body">ne</td>
         <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The version the public contract requires for the landed work (ADR 0051), when it was
 decided.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">next_unmeasured</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">ne</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Why that version was not decided, when it was asked for and could not be.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">oldest_landing</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">ne</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">When the oldest of those landings landed, RFC 3339, dated as <code>landed_at</code>
-says.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">overdue_after_seconds</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">integer</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">How long it may wait before it is overdue (<code>OVERDUE_AFTER</code>).</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">release</td>
         <td class="px-3 py-2 font-mono text-xs text-body">jedno ze 2</td>
@@ -310,42 +309,135 @@ says.</td>
         <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
         <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The answer in one sentence: the brief's and doctor's line.</td>
       </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">oldest_landing</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">ne</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">When the oldest of those landings landed, RFC 3339, dated as <code>landed_at</code>
+says.</td>
+      </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">trunk</td>
         <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
         <td class="px-3 py-2 font-mono text-xs text-body">ne</td>
         <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The remote-tracking ref of the trunk it was measured on (<code>origin/master</code>).</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">waited_seconds</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">integer | null</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">ne</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">How long the work has waited since then, in seconds.</td>
       </tr></tbody>
     </table>
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
+  &quot;required&quot;: [
+    &quot;stance&quot;,
+    &quot;summary&quot;,
+    &quot;landed&quot;,
+    &quot;landings&quot;,
+    &quot;overdue_after_seconds&quot;
+  ],
+  &quot;description&quot;: &quot;The answer of `release.currency`: whether the trunk&#39;s landed work is released.\n\n```\nuse majordomus_cli::release::currency::{measure, Currency, Stance};\nlet nowhere = tempfile::tempdir().unwrap();\nlet answer: Currency = measure(nowhere.path(), &amp;[], std::time::SystemTime::now());\n// a directory with no trunk is not measured, and says why\nassert_eq!(answer.stance, Stance::Unknown);\nassert!(answer.summary.contains(\&quot;trunk\&quot;), \&quot;{}\&quot;, answer.summary);\n```&quot;,
+  &quot;properties&quot;: {
+    &quot;waited_seconds&quot;: {
+      &quot;format&quot;: &quot;uint64&quot;,
+      &quot;type&quot;: [
+        &quot;integer&quot;,
+        &quot;null&quot;
+      ],
+      &quot;description&quot;: &quot;How long the work has waited since then, in seconds.&quot;,
+      &quot;minimum&quot;: 0
+    },
+    &quot;landed&quot;: {
+      &quot;type&quot;: &quot;integer&quot;,
+      &quot;minimum&quot;: 0,
+      &quot;format&quot;: &quot;uint&quot;,
+      &quot;description&quot;: &quot;Landed commits past the last release, merges and release commits left out.&quot;
+    },
+    &quot;next_unmeasured&quot;: {
+      &quot;type&quot;: [
+        &quot;string&quot;,
+        &quot;null&quot;
+      ],
+      &quot;description&quot;: &quot;Why that version was not decided, when it was asked for and could not be.&quot;
+    },
+    &quot;landed_at&quot;: {
+      &quot;description&quot;: &quot;How `oldest_landing` was dated: when this clone saw it arrive\non the trunk, or its commit time as an upper bound on the wait.&quot;,
+      &quot;anyOf&quot;: [
+        {
+          &quot;$ref&quot;: &quot;#/$defs/ReleaseCurrencyLandedAt&quot;
+        },
+        {
+          &quot;type&quot;: &quot;null&quot;
+        }
+      ]
+    },
+    &quot;overdue_after_seconds&quot;: {
+      &quot;format&quot;: &quot;uint64&quot;,
+      &quot;minimum&quot;: 0,
+      &quot;description&quot;: &quot;How long it may wait before it is overdue (`OVERDUE_AFTER`).&quot;,
+      &quot;type&quot;: &quot;integer&quot;
+    },
+    &quot;changes&quot;: {
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;description&quot;: &quot;The landed changes, newest first, at most `LISTED`.&quot;,
+      &quot;items&quot;: {
+        &quot;$ref&quot;: &quot;#/$defs/ReleaseChange&quot;
+      }
+    },
+    &quot;landings&quot;: {
+      &quot;format&quot;: &quot;uint&quot;,
+      &quot;minimum&quot;: 0,
+      &quot;type&quot;: &quot;integer&quot;,
+      &quot;description&quot;: &quot;The landings of the trunk&#39;s first-parent history that brought them.&quot;
+    },
+    &quot;next&quot;: {
+      &quot;description&quot;: &quot;The version the public contract requires for the landed work (ADR 0051), when it was\ndecided.&quot;,
+      &quot;type&quot;: [
+        &quot;string&quot;,
+        &quot;null&quot;
+      ]
+    },
+    &quot;release&quot;: {
+      &quot;description&quot;: &quot;The last release.&quot;,
+      &quot;anyOf&quot;: [
+        {
+          &quot;$ref&quot;: &quot;#/$defs/ReleaseCurrencyRelease&quot;
+        },
+        {
+          &quot;type&quot;: &quot;null&quot;
+        }
+      ]
+    },
+    &quot;stance&quot;: {
+      &quot;description&quot;: &quot;Whether the landed work is released.&quot;,
+      &quot;$ref&quot;: &quot;#/$defs/ReleaseCurrencyStance&quot;
+    },
+    &quot;summary&quot;: {
+      &quot;description&quot;: &quot;The answer in one sentence: the brief&#39;s and doctor&#39;s line.&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;oldest_landing&quot;: {
+      &quot;type&quot;: [
+        &quot;string&quot;,
+        &quot;null&quot;
+      ],
+      &quot;description&quot;: &quot;When the oldest of those landings landed, RFC 3339, dated as `landed_at`\nsays.&quot;
+    },
+    &quot;trunk&quot;: {
+      &quot;type&quot;: [
+        &quot;string&quot;,
+        &quot;null&quot;
+      ],
+      &quot;description&quot;: &quot;The remote-tracking ref of the trunk it was measured on (`origin/master`).&quot;
+    }
+  },
+  &quot;title&quot;: &quot;ReleaseCurrency&quot;,
+  &quot;type&quot;: &quot;object&quot;,
   &quot;$defs&quot;: {
     &quot;ReleaseChange&quot;: {
       &quot;description&quot;: &quot;One change, from one commit.&quot;,
       &quot;properties&quot;: {
-        &quot;breaking&quot;: {
-          &quot;description&quot;: &quot;Whether the commit marked itself breaking, with `!` or a `BREAKING CHANGE:` trailer.&quot;,
-          &quot;type&quot;: &quot;boolean&quot;
-        },
-        &quot;commit&quot;: {
-          &quot;description&quot;: &quot;The abbreviated commit.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;kind&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/ReleaseChangeKind&quot;,
-          &quot;description&quot;: &quot;What it did.&quot;
-        },
-        &quot;references&quot;: {
-          &quot;description&quot;: &quot;The records of the layer this commit names — issues, milestones — resolved against\nwhat the layer actually holds.&quot;,
-          &quot;items&quot;: {
-            &quot;$ref&quot;: &quot;#/$defs/ReleaseReference&quot;
-          },
-          &quot;type&quot;: &quot;array&quot;
+        &quot;url&quot;: {
+          &quot;description&quot;: &quot;Where that commit can be read, when the repository&#39;s own URL is known. Derived from\n`about::REPOSITORY`, never written beside each entry.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
         },
         &quot;scope&quot;: {
           &quot;description&quot;: &quot;The area it did it in, when the subject named one: `commands`, `ci`, `site`.&quot;,
@@ -354,121 +446,49 @@ says.</td>
             &quot;null&quot;
           ]
         },
-        &quot;subject&quot;: {
-          &quot;description&quot;: &quot;The subject, without the type and scope that prefixed it.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+        &quot;kind&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/ReleaseChangeKind&quot;,
+          &quot;description&quot;: &quot;What it did.&quot;
         },
-        &quot;url&quot;: {
-          &quot;description&quot;: &quot;Where that commit can be read, when the repository&#39;s own URL is known. Derived from\n`about::REPOSITORY`, never written beside each entry.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
+        &quot;breaking&quot;: {
+          &quot;description&quot;: &quot;Whether the commit marked itself breaking, with `!` or a `BREAKING CHANGE:` trailer.&quot;,
+          &quot;type&quot;: &quot;boolean&quot;
+        },
+        &quot;references&quot;: {
+          &quot;description&quot;: &quot;The records of the layer this commit names — issues, milestones — resolved against\nwhat the layer actually holds.&quot;,
+          &quot;items&quot;: {
+            &quot;$ref&quot;: &quot;#/$defs/ReleaseReference&quot;
+          },
+          &quot;type&quot;: &quot;array&quot;
+        },
+        &quot;subject&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The subject, without the type and scope that prefixed it.&quot;
+        },
+        &quot;commit&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The abbreviated commit.&quot;
         }
       },
+      &quot;type&quot;: &quot;object&quot;,
       &quot;required&quot;: [
         &quot;kind&quot;,
         &quot;subject&quot;,
         &quot;breaking&quot;,
         &quot;commit&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
-    },
-    &quot;ReleaseChangeKind&quot;: {
-      &quot;description&quot;: &quot;What a conventional commit says it did.\n\nThe set is the one the repository&#39;s own commit convention uses; a commit whose subject\ndoes not parse is `ChangeKind::Other` and still appears, because a changelog that\nsilently drops what it cannot classify is a changelog that lies by omission.&quot;,
-      &quot;oneOf&quot;: [
-        {
-          &quot;const&quot;: &quot;feat&quot;,
-          &quot;description&quot;: &quot;A capability a person did not have before.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;fix&quot;,
-          &quot;description&quot;: &quot;Behaviour that was wrong and is not any more.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;perf&quot;,
-          &quot;description&quot;: &quot;Performance, with the behaviour unchanged.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;refactor&quot;,
-          &quot;description&quot;: &quot;Structure, with the behaviour unchanged.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;docs&quot;,
-          &quot;description&quot;: &quot;Documentation.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;test&quot;,
-          &quot;description&quot;: &quot;Tests.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;chore&quot;,
-          &quot;description&quot;: &quot;The build, the pipeline, the tooling.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;ci&quot;,
-          &quot;description&quot;: &quot;Continuous integration.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;style&quot;,
-          &quot;description&quot;: &quot;Formatting, with the behaviour unchanged.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;build&quot;,
-          &quot;description&quot;: &quot;The build system or its dependencies.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;revert&quot;,
-          &quot;description&quot;: &quot;A change that undoes another.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;merge&quot;,
-          &quot;description&quot;: &quot;An integration: one line of work brought into another.\n\nNot in the conventional-commit specification, and in this repository&#39;s history 38\ntimes and counting, because integration here is a deliberate act with a subject\nsomebody writes — `merge: bring origin/master into feature/x` — and not the sentence\n`git merge` composes. Declaring it is what lets the validator hold those subjects to\nthe same width and the same references as every other commit, instead of either\nrefusing a convention this project practises or exempting it from being checked at\nall. The changelog never renders it: `commits::in_range` reads the log with\n`--no-merges`, so a merge commit is not a release entry however its subject is\nspelled.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;other&quot;,
-          &quot;description&quot;: &quot;A commit whose subject does not parse as a conventional commit.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      ]
-    },
-    &quot;ReleaseCurrencyLandedAt&quot;: {
-      &quot;description&quot;: &quot;How the oldest landing was dated, and so which way its wait may be wrong (the plan\ncritique of 2026-10-19: a top lands by a fast-forward push hours after its commits).\n\n```\nuse majordomus_cli::release::currency::LandedAt;\nassert_eq!(serde_json::to_value(LandedAt::Reflog).unwrap(), \&quot;reflog\&quot;);\nassert_eq!(serde_json::to_value(LandedAt::Commit).unwrap(), \&quot;commit\&quot;);\n```&quot;,
-      &quot;oneOf&quot;: [
-        {
-          &quot;const&quot;: &quot;reflog&quot;,
-          &quot;description&quot;: &quot;When this clone&#39;s remote-tracking trunk first held it, from that ref&#39;s reflog. A landing\nis seen no earlier than it lands, so the wait counted from here is a lower bound, and it\nis the one date that can make the stance overdue.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;commit&quot;,
-          &quot;description&quot;: &quot;Its commit time, where the reflog does not show it arrive: a commit lands no earlier than\nit is made, so the wait counted from here is an upper bound, and it never makes the\nstance overdue by itself.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
       ]
     },
     &quot;ReleaseCurrencyRelease&quot;: {
+      &quot;type&quot;: &quot;object&quot;,
       &quot;description&quot;: &quot;The release the trunk is measured from.\n\n```\nuse majordomus_cli::release::currency::Released;\nlet tagged = Released {\n    version: \&quot;0.30.1\&quot;.into(),\n    reference: \&quot;v0.30.1\&quot;.into(),\n    at: \&quot;v0.30.1\&quot;.into(),\n    recorded: false,\n};\n// a tag pushed before its record landed is read at the tag itself\nassert_eq!(tagged.at, tagged.reference);\n```&quot;,
       &quot;properties&quot;: {
+        &quot;recorded&quot;: {
+          &quot;type&quot;: &quot;boolean&quot;,
+          &quot;description&quot;: &quot;Whether the layer holds a record for it yet.&quot;
+        },
         &quot;at&quot;: {
           &quot;description&quot;: &quot;What the trunk is measured from: the commit its record names, else its tag.&quot;,
           &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;recorded&quot;: {
-          &quot;description&quot;: &quot;Whether the layer holds a record for it yet.&quot;,
-          &quot;type&quot;: &quot;boolean&quot;
         },
         &quot;reference&quot;: {
           &quot;description&quot;: &quot;`v0.30.1`: the release as a reader recognises it.&quot;,
@@ -484,20 +504,33 @@ says.</td>
         &quot;reference&quot;,
         &quot;at&quot;,
         &quot;recorded&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
+      ]
     },
-    &quot;ReleaseCurrencyStance&quot;: {
-      &quot;description&quot;: &quot;Whether the trunk&#39;s landed work is released.\n\n```\nuse majordomus_cli::release::currency::{Stance, OVERDUE_AFTER};\nuse std::time::Duration;\nassert_eq!(Stance::of(0, OVERDUE_AFTER), Stance::Current, \&quot;nothing landed, nothing owed\&quot;);\nassert_eq!(Stance::of(2, Duration::from_secs(60)), Stance::Owed);\nassert_eq!(Stance::of(2, OVERDUE_AFTER), Stance::Overdue);\nassert_eq!(Stance::Overdue.as_str(), \&quot;overdue\&quot;);\n```&quot;,
+    &quot;ReleaseCurrencyLandedAt&quot;: {
       &quot;oneOf&quot;: [
         {
-          &quot;const&quot;: &quot;current&quot;,
-          &quot;description&quot;: &quot;Nothing has landed past the last release.&quot;,
+          &quot;const&quot;: &quot;reflog&quot;,
+          &quot;description&quot;: &quot;When this clone&#39;s remote-tracking trunk first held it, from that ref&#39;s reflog. A landing\nis seen no earlier than it lands, so the wait counted from here is a lower bound, and it\nis the one date that can make the stance overdue.&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
         {
-          &quot;const&quot;: &quot;owed&quot;,
+          &quot;const&quot;: &quot;commit&quot;,
+          &quot;description&quot;: &quot;Its commit time, where the reflog does not show it arrive: a commit lands no earlier than\nit is made, so the wait counted from here is an upper bound, and it never makes the\nstance overdue by itself.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      ],
+      &quot;description&quot;: &quot;How the oldest landing was dated, and so which way its wait may be wrong (the plan\ncritique of 2026-10-19: a top lands by a fast-forward push hours after its commits).\n\n```\nuse majordomus_cli::release::currency::LandedAt;\nassert_eq!(serde_json::to_value(LandedAt::Reflog).unwrap(), \&quot;reflog\&quot;);\nassert_eq!(serde_json::to_value(LandedAt::Commit).unwrap(), \&quot;commit\&quot;);\n```&quot;
+    },
+    &quot;ReleaseCurrencyStance&quot;: {
+      &quot;oneOf&quot;: [
+        {
+          &quot;description&quot;: &quot;Nothing has landed past the last release.&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;current&quot;
+        },
+        {
           &quot;description&quot;: &quot;Work has landed past it, and has waited less than `OVERDUE_AFTER`.&quot;,
+          &quot;const&quot;: &quot;owed&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
         {
@@ -507,146 +540,113 @@ says.</td>
         },
         {
           &quot;const&quot;: &quot;unknown&quot;,
-          &quot;description&quot;: &quot;It could not be measured: no trunk, no release, or a release this clone cannot read.&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;It could not be measured: no trunk, no release, or a release this clone cannot read.&quot;
+        }
+      ],
+      &quot;description&quot;: &quot;Whether the trunk&#39;s landed work is released.\n\n```\nuse majordomus_cli::release::currency::{Stance, OVERDUE_AFTER};\nuse std::time::Duration;\nassert_eq!(Stance::of(0, OVERDUE_AFTER), Stance::Current, \&quot;nothing landed, nothing owed\&quot;);\nassert_eq!(Stance::of(2, Duration::from_secs(60)), Stance::Owed);\nassert_eq!(Stance::of(2, OVERDUE_AFTER), Stance::Overdue);\nassert_eq!(Stance::Overdue.as_str(), \&quot;overdue\&quot;);\n```&quot;
+    },
+    &quot;ReleaseChangeKind&quot;: {
+      &quot;description&quot;: &quot;What a conventional commit says it did.\n\nThe set is the one the repository&#39;s own commit convention uses; a commit whose subject\ndoes not parse is `ChangeKind::Other` and still appears, because a changelog that\nsilently drops what it cannot classify is a changelog that lies by omission.&quot;,
+      &quot;oneOf&quot;: [
+        {
+          &quot;const&quot;: &quot;feat&quot;,
+          &quot;description&quot;: &quot;A capability a person did not have before.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;fix&quot;,
+          &quot;description&quot;: &quot;Behaviour that was wrong and is not any more.&quot;
+        },
+        {
+          &quot;const&quot;: &quot;perf&quot;,
+          &quot;description&quot;: &quot;Performance, with the behaviour unchanged.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;Structure, with the behaviour unchanged.&quot;,
+          &quot;const&quot;: &quot;refactor&quot;
+        },
+        {
+          &quot;const&quot;: &quot;docs&quot;,
+          &quot;description&quot;: &quot;Documentation.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;test&quot;,
+          &quot;description&quot;: &quot;Tests.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;description&quot;: &quot;The build, the pipeline, the tooling.&quot;,
+          &quot;const&quot;: &quot;chore&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;ci&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;Continuous integration.&quot;
+        },
+        {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;Formatting, with the behaviour unchanged.&quot;,
+          &quot;const&quot;: &quot;style&quot;
+        },
+        {
+          &quot;description&quot;: &quot;The build system or its dependencies.&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;build&quot;
+        },
+        {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;A change that undoes another.&quot;,
+          &quot;const&quot;: &quot;revert&quot;
+        },
+        {
+          &quot;description&quot;: &quot;An integration: one line of work brought into another.\n\nNot in the conventional-commit specification, and in this repository&#39;s history 38\ntimes and counting, because integration here is a deliberate act with a subject\nsomebody writes — `merge: bring origin/master into feature/x` — and not the sentence\n`git merge` composes. Declaring it is what lets the validator hold those subjects to\nthe same width and the same references as every other commit, instead of either\nrefusing a convention this project practises or exempting it from being checked at\nall. The changelog never renders it: `commits::in_range` reads the log with\n`--no-merges`, so a merge commit is not a release entry however its subject is\nspelled.&quot;,
+          &quot;const&quot;: &quot;merge&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;other&quot;,
+          &quot;description&quot;: &quot;A commit whose subject does not parse as a conventional commit.&quot;,
           &quot;type&quot;: &quot;string&quot;
         }
       ]
     },
     &quot;ReleaseReference&quot;: {
+      &quot;type&quot;: &quot;object&quot;,
       &quot;description&quot;: &quot;A record of the layer that a commit names in its own text.\n\nInferred, never declared beside the commit: an issue id or a milestone id appearing in a\nsubject or a body is a reference, and the layer already holds the object it refers to. A\nreference to something the layer does not have is not carried — a link to a record that\ndoes not exist is worse than no link, because the reader cannot tell until they follow it.\n\n```\nuse majordomus_cli::release::model::Reference;\nlet r = Reference {\n    kind: \&quot;issue\&quot;.into(),\n    id: \&quot;I1305\&quot;.into(),\n    title: \&quot;An observed contract has a fingerprint\&quot;.into(),\n    route: Some(\&quot;/plan/i1305/\&quot;.into()),\n};\nlet json = serde_json::to_value(&amp;r).unwrap();\nassert_eq!(json[\&quot;id\&quot;], \&quot;I1305\&quot;);\nassert_eq!(json[\&quot;route\&quot;], \&quot;/plan/i1305/\&quot;);\n// a reference the site has no page for carries no route rather than an invented one\nlet bare = Reference { route: None, ..r };\nassert!(serde_json::to_value(&amp;bare).unwrap().get(\&quot;route\&quot;).is_none());\n```&quot;,
-      &quot;properties&quot;: {
-        &quot;id&quot;: {
-          &quot;description&quot;: &quot;`I1305`, `M000`.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;kind&quot;: {
-          &quot;description&quot;: &quot;`issue` or `milestone`.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;route&quot;: {
-          &quot;description&quot;: &quot;Where it is published on this site, when it has a page.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;title&quot;: {
-          &quot;description&quot;: &quot;What it is, from the record itself.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      },
       &quot;required&quot;: [
         &quot;kind&quot;,
         &quot;id&quot;,
         &quot;title&quot;
       ],
-      &quot;type&quot;: &quot;object&quot;
-    }
-  },
-  &quot;description&quot;: &quot;The answer of `release.currency`: whether the trunk&#39;s landed work is released.\n\n```\nuse majordomus_cli::release::currency::{measure, Currency, Stance};\nlet nowhere = tempfile::tempdir().unwrap();\nlet answer: Currency = measure(nowhere.path(), &amp;[], std::time::SystemTime::now());\n// a directory with no trunk is not measured, and says why\nassert_eq!(answer.stance, Stance::Unknown);\nassert!(answer.summary.contains(\&quot;trunk\&quot;), \&quot;{}\&quot;, answer.summary);\n```&quot;,
-  &quot;properties&quot;: {
-    &quot;changes&quot;: {
-      &quot;description&quot;: &quot;The landed changes, newest first, at most `LISTED`.&quot;,
-      &quot;items&quot;: {
-        &quot;$ref&quot;: &quot;#/$defs/ReleaseChange&quot;
-      },
-      &quot;type&quot;: &quot;array&quot;
-    },
-    &quot;landed&quot;: {
-      &quot;description&quot;: &quot;Landed commits past the last release, merges and release commits left out.&quot;,
-      &quot;format&quot;: &quot;uint&quot;,
-      &quot;minimum&quot;: 0,
-      &quot;type&quot;: &quot;integer&quot;
-    },
-    &quot;landed_at&quot;: {
-      &quot;anyOf&quot;: [
-        {
-          &quot;$ref&quot;: &quot;#/$defs/ReleaseCurrencyLandedAt&quot;
+      &quot;properties&quot;: {
+        &quot;route&quot;: {
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ],
+          &quot;description&quot;: &quot;Where it is published on this site, when it has a page.&quot;
         },
-        {
-          &quot;type&quot;: &quot;null&quot;
-        }
-      ],
-      &quot;description&quot;: &quot;How `oldest_landing` was dated: when this clone saw it arrive\non the trunk, or its commit time as an upper bound on the wait.&quot;
-    },
-    &quot;landings&quot;: {
-      &quot;description&quot;: &quot;The landings of the trunk&#39;s first-parent history that brought them.&quot;,
-      &quot;format&quot;: &quot;uint&quot;,
-      &quot;minimum&quot;: 0,
-      &quot;type&quot;: &quot;integer&quot;
-    },
-    &quot;next&quot;: {
-      &quot;description&quot;: &quot;The version the public contract requires for the landed work (ADR 0051), when it was\ndecided.&quot;,
-      &quot;type&quot;: [
-        &quot;string&quot;,
-        &quot;null&quot;
-      ]
-    },
-    &quot;next_unmeasured&quot;: {
-      &quot;description&quot;: &quot;Why that version was not decided, when it was asked for and could not be.&quot;,
-      &quot;type&quot;: [
-        &quot;string&quot;,
-        &quot;null&quot;
-      ]
-    },
-    &quot;oldest_landing&quot;: {
-      &quot;description&quot;: &quot;When the oldest of those landings landed, RFC 3339, dated as `landed_at`\nsays.&quot;,
-      &quot;type&quot;: [
-        &quot;string&quot;,
-        &quot;null&quot;
-      ]
-    },
-    &quot;overdue_after_seconds&quot;: {
-      &quot;description&quot;: &quot;How long it may wait before it is overdue (`OVERDUE_AFTER`).&quot;,
-      &quot;format&quot;: &quot;uint64&quot;,
-      &quot;minimum&quot;: 0,
-      &quot;type&quot;: &quot;integer&quot;
-    },
-    &quot;release&quot;: {
-      &quot;anyOf&quot;: [
-        {
-          &quot;$ref&quot;: &quot;#/$defs/ReleaseCurrencyRelease&quot;
+        &quot;title&quot;: {
+          &quot;description&quot;: &quot;What it is, from the record itself.&quot;,
+          &quot;type&quot;: &quot;string&quot;
         },
-        {
-          &quot;type&quot;: &quot;null&quot;
+        &quot;id&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;`I1305`, `M000`.&quot;
+        },
+        &quot;kind&quot;: {
+          &quot;description&quot;: &quot;`issue` or `milestone`.&quot;,
+          &quot;type&quot;: &quot;string&quot;
         }
-      ],
-      &quot;description&quot;: &quot;The last release.&quot;
-    },
-    &quot;stance&quot;: {
-      &quot;$ref&quot;: &quot;#/$defs/ReleaseCurrencyStance&quot;,
-      &quot;description&quot;: &quot;Whether the landed work is released.&quot;
-    },
-    &quot;summary&quot;: {
-      &quot;description&quot;: &quot;The answer in one sentence: the brief&#39;s and doctor&#39;s line.&quot;,
-      &quot;type&quot;: &quot;string&quot;
-    },
-    &quot;trunk&quot;: {
-      &quot;description&quot;: &quot;The remote-tracking ref of the trunk it was measured on (`origin/master`).&quot;,
-      &quot;type&quot;: [
-        &quot;string&quot;,
-        &quot;null&quot;
-      ]
-    },
-    &quot;waited_seconds&quot;: {
-      &quot;description&quot;: &quot;How long the work has waited since then, in seconds.&quot;,
-      &quot;format&quot;: &quot;uint64&quot;,
-      &quot;minimum&quot;: 0,
-      &quot;type&quot;: [
-        &quot;integer&quot;,
-        &quot;null&quot;
-      ]
+      }
     }
-  },
-  &quot;required&quot;: [
-    &quot;stance&quot;,
-    &quot;summary&quot;,
-    &quot;landed&quot;,
-    &quot;landings&quot;,
-    &quot;overdue_after_seconds&quot;
-  ],
-  &quot;title&quot;: &quot;ReleaseCurrency&quot;,
-  &quot;type&quot;: &quot;object&quot;
+  }
 }</pre></div>
   </details>
 </div>
@@ -677,7 +677,7 @@ says.</td>
         <div><dt class="text-body-subtle">modul Rust</dt><dd class="min-w-0 break-all font-mono text-heading">majordomus_cli::capability::builtin::release</dd></div>
         <div><dt class="text-body-subtle">typ vstupu</dt><dd class="font-mono text-heading">ReleaseCurrencyInput</dd></div>
         <div><dt class="text-body-subtle">typ výstupu</dt><dd class="font-mono text-heading">ReleaseCurrency</dd></div>
-        <div><dt class="text-body-subtle">reference na GitHubu</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/aa9f816f8673880ab4beb6dbebff688f9da5bb65/docs/generated/modules/release.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/release.md</a></dd></div><div><dt class="text-body-subtle">otisk registru</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">c514db707bb1f5f7557f2a1629d42c4bdc05eb7ef58464c288e42bafcd3d8720</dd></div>
+        <div><dt class="text-body-subtle">reference na GitHubu</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/docs/generated/modules/release.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/release.md</a></dd></div><div><dt class="text-body-subtle">otisk registru</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">3f734f2faf797f0ca7c39b4cd837e68b6619c41c6f6711f3d3aeca8f341934eb</dd></div>
         <div><dt class="text-body-subtle">vygenerováno nástrojem</dt><dd class="font-mono text-heading">majordomus-cli 1.0.0-alpha.10</dd></div>
       </dl>
     </div>
@@ -733,9 +733,9 @@ says.</td>
       <div class="min-w-0">
         <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">Projekt</h2><ul class="space-y-2 text-sm font-medium text-body">
           <li><a href="https://github.com/korczis/prismatic-majordomus" class="hover:text-heading hover:underline">GitHub</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/aa9f816f8673880ab4beb6dbebff688f9da5bb65/LICENSE" class="hover:text-heading hover:underline">Licence MIT</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/aa9f816f8673880ab4beb6dbebff688f9da5bb65/SECURITY.md" class="hover:text-heading hover:underline">Bezpečnostní politika</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/aa9f816f8673880ab4beb6dbebff688f9da5bb65/CONTRIBUTING.md" class="hover:text-heading hover:underline">Průvodce pro přispěvatele</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/LICENSE" class="hover:text-heading hover:underline">Licence MIT</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/SECURITY.md" class="hover:text-heading hover:underline">Bezpečnostní politika</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/CONTRIBUTING.md" class="hover:text-heading hover:underline">Průvodce pro přispěvatele</a></li>
         </ul>
       </div>
     </div>
@@ -743,7 +743,7 @@ says.</td>
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/cs/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.10</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/aa9f816f8673880ab4beb6dbebff688f9da5bb65" class="font-mono underline">aa9f816</a> · inputs <span class="font-mono">a64b981ed16e</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/cs/architecture/" class="underline">how this site is derived</a> names them.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.10</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/745db2ea21e02613943face75a2bf95542be1f2e" class="font-mono underline">745db2e</a> · inputs <span class="font-mono">0a58c217d1b7</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/cs/architecture/" class="underline">how this site is derived</a> names them.</p>
     </div>
   </div>
 </footer>

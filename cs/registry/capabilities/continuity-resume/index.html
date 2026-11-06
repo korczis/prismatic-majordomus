@@ -220,19 +220,19 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
+  &quot;title&quot;: &quot;RecordInput&quot;,
+  &quot;type&quot;: &quot;object&quot;,
   &quot;additionalProperties&quot;: false,
   &quot;description&quot;: &quot;The input of `continuity.plan` and `continuity.resume`: which record, by id or a prefix\nof one. Absent, the one handover another device published that this checkout has not\nresumed — on this branch when there is one there.&quot;,
   &quot;properties&quot;: {
     &quot;record&quot;: {
-      &quot;description&quot;: &quot;A record id, or a unique prefix of one.&quot;,
       &quot;type&quot;: [
         &quot;string&quot;,
         &quot;null&quot;
-      ]
+      ],
+      &quot;description&quot;: &quot;A record id, or a unique prefix of one.&quot;
     }
-  },
-  &quot;title&quot;: &quot;RecordInput&quot;,
-  &quot;type&quot;: &quot;object&quot;
+  }
 }</pre></div>
   </details>
 </div>
@@ -271,378 +271,40 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
   &quot;$defs&quot;: {
-    &quot;Component&quot;: {
-      &quot;description&quot;: &quot;What a resume writes, recomputes or leaves.&quot;,
-      &quot;oneOf&quot;: [
-        {
-          &quot;const&quot;: &quot;handover&quot;,
-          &quot;description&quot;: &quot;The handover, into this checkout&#39;s handovers.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;intent&quot;,
-          &quot;description&quot;: &quot;The task&#39;s title and scope, offered as the `start` to run.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;issue&quot;,
-          &quot;description&quot;: &quot;The issue and milestone.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;decisions&quot;,
-          &quot;description&quot;: &quot;The decisions the task recorded, into this checkout&#39;s decision log.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;next_action&quot;,
-          &quot;description&quot;: &quot;The handover&#39;s next action.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;lineage&quot;,
-          &quot;description&quot;: &quot;The record this checkout continues: the parent of its next publication.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;provenance&quot;,
-          &quot;description&quot;: &quot;Who published it, where, when, from which source state.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;worktree&quot;,
-          &quot;description&quot;: &quot;This checkout&#39;s path, recomputed rather than copied.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;repository_id&quot;,
-          &quot;description&quot;: &quot;The repository id the shell compares, recomputed.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;episode&quot;,
-          &quot;description&quot;: &quot;The episode, opened here by the provider&#39;s hooks.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;working_context&quot;,
-          &quot;description&quot;: &quot;The working context, compiled here from the restored records and this git.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;source_state&quot;,
-          &quot;description&quot;: &quot;The source state, from this checkout&#39;s git.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      ]
-    },
-    &quot;Device&quot;: {
-      &quot;description&quot;: &quot;The device a record was written on: the mesh node key&#39;s id and the label its identity\nfile carries. The label is presentation; the node id is identity.&quot;,
-      &quot;properties&quot;: {
-        &quot;label&quot;: {
-          &quot;description&quot;: &quot;The display label of the device&#39;s identity file (`macbook-pro`), or the first eight\nhex of its node id when it has none.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;node&quot;: {
-          &quot;description&quot;: &quot;The node id: the first 32 hex of the SHA-256 of the device&#39;s Ed25519 public key.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      },
-      &quot;required&quot;: [
-        &quot;node&quot;,
-        &quot;label&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
-    },
-    &quot;PlanItem&quot;: {
-      &quot;description&quot;: &quot;One thing a plan says about itself.&quot;,
-      &quot;properties&quot;: {
-        &quot;code&quot;: {
-          &quot;description&quot;: &quot;A stable code: `source_incomplete`, `line_diverged`, `origin_untrusted`, …&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;message&quot;: {
-          &quot;description&quot;: &quot;What it means here.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      },
-      &quot;required&quot;: [
-        &quot;code&quot;,
-        &quot;message&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
-    },
-    &quot;PlanStatus&quot;: {
-      &quot;description&quot;: &quot;The verdict of a resume plan.&quot;,
-      &quot;oneOf&quot;: [
-        {
-          &quot;const&quot;: &quot;ready&quot;,
-          &quot;description&quot;: &quot;Resume restores everything; nothing needs attention.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;ready_with_warnings&quot;,
-          &quot;description&quot;: &quot;Resume restores everything; the warnings say what is not what it was at the origin.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;requires_source_update&quot;,
-          &quot;description&quot;: &quot;The local source does not hold what the record was written against: update git\nfirst, as the actions say.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;conflict&quot;,
-          &quot;description&quot;: &quot;The same work was continued twice, or the source histories diverged: a person\nchooses.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;choose_record&quot;,
-          &quot;description&quot;: &quot;More than one record could be meant: name one with `--record`.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;nothing_to_resume&quot;,
-          &quot;description&quot;: &quot;Nothing to resume.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;refused&quot;,
-          &quot;description&quot;: &quot;The record is not one this checkout may resume from (an untrusted signer).&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      ]
-    },
-    &quot;Position&quot;: {
-      &quot;description&quot;: &quot;The record this checkout continues on one branch.&quot;,
-      &quot;properties&quot;: {
-        &quot;at&quot;: {
-          &quot;description&quot;: &quot;When, by this machine&#39;s clock.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;line&quot;: {
-          &quot;description&quot;: &quot;The line.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;record&quot;: {
-          &quot;description&quot;: &quot;The record: the parent of this checkout&#39;s next publication on the branch.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;via&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/Via&quot;,
-          &quot;description&quot;: &quot;Published here or resumed here.&quot;
-        }
-      },
-      &quot;required&quot;: [
-        &quot;line&quot;,
-        &quot;record&quot;,
-        &quot;via&quot;,
-        &quot;at&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
-    },
-    &quot;RecordView&quot;: {
-      &quot;description&quot;: &quot;One record as every surface shows it.&quot;,
-      &quot;properties&quot;: {
-        &quot;age_minutes&quot;: {
-          &quot;description&quot;: &quot;Minutes since then, by this machine&#39;s clock; absent when either clock&#39;s reading is\nunusable.&quot;,
-          &quot;format&quot;: &quot;int64&quot;,
-          &quot;type&quot;: [
-            &quot;integer&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;branch&quot;: {
-          &quot;description&quot;: &quot;The branch it was written on.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;changed_total&quot;: {
-          &quot;description&quot;: &quot;How many paths differed from HEAD at the origin.&quot;,
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;device&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/Device&quot;,
-          &quot;description&quot;: &quot;The device that published it.&quot;
-        },
-        &quot;head&quot;: {
-          &quot;description&quot;: &quot;The commit it was written at.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;id&quot;: {
-          &quot;description&quot;: &quot;The record id.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;issue&quot;: {
-          &quot;description&quot;: &quot;The issue.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;line&quot;: {
-          &quot;description&quot;: &quot;Its line.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;objective&quot;: {
-          &quot;description&quot;: &quot;The handover&#39;s `# Objective`, first line.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;parent&quot;: {
-          &quot;description&quot;: &quot;The record it continues.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;published_at&quot;: {
-          &quot;description&quot;: &quot;When it was published, by the publisher&#39;s clock.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;session&quot;: {
-          &quot;description&quot;: &quot;The episode it was published from.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;task&quot;: {
-          &quot;description&quot;: &quot;The task&#39;s title: the intent.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;this_device&quot;: {
-          &quot;description&quot;: &quot;Whether that device is this one.&quot;,
-          &quot;type&quot;: &quot;boolean&quot;
-        },
-        &quot;trust&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/Trust&quot;,
-          &quot;description&quot;: &quot;Whether its signer is trusted here.&quot;
-        },
-        &quot;working_tree&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/WorkingTree&quot;,
-          &quot;description&quot;: &quot;Clean or dirty at the origin.&quot;
-        }
-      },
-      &quot;required&quot;: [
-        &quot;id&quot;,
-        &quot;line&quot;,
-        &quot;device&quot;,
-        &quot;this_device&quot;,
-        &quot;trust&quot;,
-        &quot;working_tree&quot;,
-        &quot;changed_total&quot;,
-        &quot;published_at&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
-    },
-    &quot;Relation&quot;: {
-      &quot;description&quot;: &quot;What one record is to another.&quot;,
-      &quot;oneOf&quot;: [
-        {
-          &quot;const&quot;: &quot;equal&quot;,
-          &quot;description&quot;: &quot;The same record.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;newer&quot;,
-          &quot;description&quot;: &quot;The second descends from the first: the second is newer.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;older&quot;,
-          &quot;description&quot;: &quot;The first descends from the second: the second is older.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;diverged&quot;,
-          &quot;description&quot;: &quot;Same line, neither descends from the other: the work was continued twice.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;independent&quot;,
-          &quot;description&quot;: &quot;Different lines: separate work.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      ]
-    },
     &quot;ResumePlan&quot;: {
-      &quot;description&quot;: &quot;The answer of `continuity plan`, and the plan `continuity resume` acts on.&quot;,
+      &quot;type&quot;: &quot;object&quot;,
       &quot;properties&quot;: {
-        &quot;actions&quot;: {
-          &quot;description&quot;: &quot;The commands that resolve the blockers or follow the resume. Recommended, never run:\nnothing a record says is executed.&quot;,
-          &quot;items&quot;: {
-            &quot;type&quot;: &quot;string&quot;
-          },
-          &quot;type&quot;: &quot;array&quot;
-        },
         &quot;blockers&quot;: {
-          &quot;description&quot;: &quot;What stops a resume.&quot;,
+          &quot;type&quot;: &quot;array&quot;,
           &quot;items&quot;: {
             &quot;$ref&quot;: &quot;#/$defs/PlanItem&quot;
           },
-          &quot;type&quot;: &quot;array&quot;
+          &quot;description&quot;: &quot;What stops a resume.&quot;
         },
         &quot;candidates&quot;: {
-          &quot;description&quot;: &quot;When the record is not decided: the records that could be meant.&quot;,
           &quot;items&quot;: {
             &quot;$ref&quot;: &quot;#/$defs/RecordView&quot;
           },
+          &quot;description&quot;: &quot;When the record is not decided: the records that could be meant.&quot;,
           &quot;type&quot;: &quot;array&quot;
         },
-        &quot;current_state&quot;: {
-          &quot;description&quot;: &quot;The handover&#39;s `# Current State`.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;decisions&quot;: {
-          &quot;description&quot;: &quot;The headings of the decisions a resume carries.&quot;,
+        &quot;actions&quot;: {
           &quot;items&quot;: {
             &quot;type&quot;: &quot;string&quot;
           },
-          &quot;type&quot;: &quot;array&quot;
+          &quot;type&quot;: &quot;array&quot;,
+          &quot;description&quot;: &quot;The commands that resolve the blockers or follow the resume. Recommended, never run:\nnothing a record says is executed.&quot;
         },
-        &quot;lineage&quot;: {
-          &quot;anyOf&quot;: [
-            {
-              &quot;$ref&quot;: &quot;#/$defs/Relation&quot;
-            },
-            {
-              &quot;type&quot;: &quot;null&quot;
-            }
-          ],
-          &quot;description&quot;: &quot;What the record is to the record this checkout stands on, when it stands on one.&quot;
-        },
-        &quot;milestone&quot;: {
-          &quot;description&quot;: &quot;The milestone.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;next_action&quot;: {
-          &quot;description&quot;: &quot;The handover&#39;s `# Next Action`.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+        &quot;current_state&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The handover&#39;s `# Current State`.&quot;
         },
         &quot;objective&quot;: {
           &quot;description&quot;: &quot;The handover&#39;s `# Objective`.&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
-        &quot;recomputes&quot;: {
-          &quot;description&quot;: &quot;What this checkout computes for itself instead of copying.&quot;,
-          &quot;items&quot;: {
-            &quot;$ref&quot;: &quot;#/$defs/Component&quot;
-          },
-          &quot;type&quot;: &quot;array&quot;
-        },
         &quot;record&quot;: {
+          &quot;description&quot;: &quot;The record it is about.&quot;,
           &quot;anyOf&quot;: [
             {
               &quot;$ref&quot;: &quot;#/$defs/RecordView&quot;
@@ -650,15 +312,14 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
             {
               &quot;type&quot;: &quot;null&quot;
             }
-          ],
-          &quot;description&quot;: &quot;The record it is about.&quot;
+          ]
         },
         &quot;restores&quot;: {
-          &quot;description&quot;: &quot;What a resume writes into this checkout.&quot;,
+          &quot;type&quot;: &quot;array&quot;,
           &quot;items&quot;: {
             &quot;$ref&quot;: &quot;#/$defs/Component&quot;
           },
-          &quot;type&quot;: &quot;array&quot;
+          &quot;description&quot;: &quot;What a resume writes into this checkout.&quot;
         },
         &quot;source&quot;: {
           &quot;anyOf&quot;: [
@@ -671,11 +332,41 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
           ],
           &quot;description&quot;: &quot;The source check.&quot;
         },
+        &quot;next_action&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The handover&#39;s `# Next Action`.&quot;
+        },
+        &quot;lineage&quot;: {
+          &quot;description&quot;: &quot;What the record is to the record this checkout stands on, when it stands on one.&quot;,
+          &quot;anyOf&quot;: [
+            {
+              &quot;$ref&quot;: &quot;#/$defs/Relation&quot;
+            },
+            {
+              &quot;type&quot;: &quot;null&quot;
+            }
+          ]
+        },
+        &quot;warnings&quot;: {
+          &quot;items&quot;: {
+            &quot;$ref&quot;: &quot;#/$defs/PlanItem&quot;
+          },
+          &quot;description&quot;: &quot;What a resume proceeds past and a person should know.&quot;,
+          &quot;type&quot;: &quot;array&quot;
+        },
+        &quot;milestone&quot;: {
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ],
+          &quot;description&quot;: &quot;The milestone.&quot;
+        },
         &quot;status&quot;: {
           &quot;$ref&quot;: &quot;#/$defs/PlanStatus&quot;,
           &quot;description&quot;: &quot;The verdict.&quot;
         },
         &quot;task&quot;: {
+          &quot;description&quot;: &quot;The task, as published: the intent.&quot;,
           &quot;anyOf&quot;: [
             {
               &quot;$ref&quot;: &quot;#/$defs/TaskRef&quot;
@@ -683,15 +374,21 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
             {
               &quot;type&quot;: &quot;null&quot;
             }
-          ],
-          &quot;description&quot;: &quot;The task, as published: the intent.&quot;
+          ]
         },
-        &quot;warnings&quot;: {
-          &quot;description&quot;: &quot;What a resume proceeds past and a person should know.&quot;,
+        &quot;decisions&quot;: {
           &quot;items&quot;: {
-            &quot;$ref&quot;: &quot;#/$defs/PlanItem&quot;
+            &quot;type&quot;: &quot;string&quot;
           },
-          &quot;type&quot;: &quot;array&quot;
+          &quot;type&quot;: &quot;array&quot;,
+          &quot;description&quot;: &quot;The headings of the decisions a resume carries.&quot;
+        },
+        &quot;recomputes&quot;: {
+          &quot;type&quot;: &quot;array&quot;,
+          &quot;description&quot;: &quot;What this checkout computes for itself instead of copying.&quot;,
+          &quot;items&quot;: {
+            &quot;$ref&quot;: &quot;#/$defs/Component&quot;
+          }
         }
       },
       &quot;required&quot;: [
@@ -702,102 +399,95 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
         &quot;restores&quot;,
         &quot;recomputes&quot;
       ],
-      &quot;type&quot;: &quot;object&quot;
+      &quot;description&quot;: &quot;The answer of `continuity plan`, and the plan `continuity resume` acts on.&quot;
     },
-    &quot;SourceCheck&quot;: {
-      &quot;description&quot;: &quot;The source half of a plan.&quot;,
-      &quot;properties&quot;: {
-        &quot;expected_branch&quot;: {
-          &quot;description&quot;: &quot;The branch the record was written on.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
+    &quot;Component&quot;: {
+      &quot;description&quot;: &quot;What a resume writes, recomputes or leaves.&quot;,
+      &quot;oneOf&quot;: [
+        {
+          &quot;description&quot;: &quot;The handover, into this checkout&#39;s handovers.&quot;,
+          &quot;const&quot;: &quot;handover&quot;,
+          &quot;type&quot;: &quot;string&quot;
         },
-        &quot;expected_head&quot;: {
-          &quot;description&quot;: &quot;The commit it was written at.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
+        {
+          &quot;description&quot;: &quot;The task&#39;s title and scope, offered as the `start` to run.&quot;,
+          &quot;const&quot;: &quot;intent&quot;,
+          &quot;type&quot;: &quot;string&quot;
         },
-        &quot;local_branch&quot;: {
-          &quot;description&quot;: &quot;This checkout&#39;s branch.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
+        {
+          &quot;const&quot;: &quot;issue&quot;,
+          &quot;description&quot;: &quot;The issue and milestone.&quot;,
+          &quot;type&quot;: &quot;string&quot;
         },
-        &quot;local_dirty&quot;: {
-          &quot;description&quot;: &quot;Whether this checkout&#39;s tree is dirty.&quot;,
-          &quot;type&quot;: &quot;boolean&quot;
+        {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The decisions the task recorded, into this checkout&#39;s decision log.&quot;,
+          &quot;const&quot;: &quot;decisions&quot;
         },
-        &quot;local_head&quot;: {
-          &quot;description&quot;: &quot;This checkout&#39;s commit.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
+        {
+          &quot;description&quot;: &quot;The handover&#39;s next action.&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;next_action&quot;
         },
-        &quot;origin_changed&quot;: {
-          &quot;description&quot;: &quot;The paths that were uncommitted at the origin, as listed.&quot;,
-          &quot;items&quot;: {
-            &quot;type&quot;: &quot;string&quot;
-          },
-          &quot;type&quot;: &quot;array&quot;
+        {
+          &quot;const&quot;: &quot;lineage&quot;,
+          &quot;description&quot;: &quot;The record this checkout continues: the parent of its next publication.&quot;,
+          &quot;type&quot;: &quot;string&quot;
         },
-        &quot;origin_changed_total&quot;: {
-          &quot;description&quot;: &quot;How many were uncommitted.&quot;,
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
+        {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;Who published it, where, when, from which source state.&quot;,
+          &quot;const&quot;: &quot;provenance&quot;
         },
-        &quot;origin_dirty&quot;: {
-          &quot;description&quot;: &quot;Whether the origin&#39;s tree was dirty.&quot;,
-          &quot;type&quot;: &quot;boolean&quot;
+        {
+          &quot;const&quot;: &quot;worktree&quot;,
+          &quot;description&quot;: &quot;This checkout&#39;s path, recomputed rather than copied.&quot;,
+          &quot;type&quot;: &quot;string&quot;
         },
-        &quot;relation&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/SourceRelation&quot;,
-          &quot;description&quot;: &quot;How they stand.&quot;
+        {
+          &quot;const&quot;: &quot;repository_id&quot;,
+          &quot;description&quot;: &quot;The repository id the shell compares, recomputed.&quot;,
+          &quot;type&quot;: &quot;string&quot;
         },
-        &quot;same_uncommitted_work&quot;: {
-          &quot;description&quot;: &quot;Whether this checkout holds the very uncommitted work the origin held (their\nfingerprints agree); absent when either side is clean.&quot;,
-          &quot;type&quot;: [
-            &quot;boolean&quot;,
-            &quot;null&quot;
-          ]
+        {
+          &quot;description&quot;: &quot;The episode, opened here by the provider&#39;s hooks.&quot;,
+          &quot;const&quot;: &quot;episode&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;working_context&quot;,
+          &quot;description&quot;: &quot;The working context, compiled here from the restored records and this git.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;description&quot;: &quot;The source state, from this checkout&#39;s git.&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;source_state&quot;
         }
-      },
-      &quot;required&quot;: [
-        &quot;relation&quot;,
-        &quot;origin_dirty&quot;,
-        &quot;origin_changed_total&quot;,
-        &quot;local_dirty&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
+      ]
     },
     &quot;SourceRelation&quot;: {
       &quot;description&quot;: &quot;How the local source stands towards the record&#39;s.&quot;,
       &quot;oneOf&quot;: [
         {
-          &quot;const&quot;: &quot;exact&quot;,
           &quot;description&quot;: &quot;Same branch, same commit.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;exact&quot;
         },
         {
-          &quot;const&quot;: &quot;local_ahead&quot;,
           &quot;description&quot;: &quot;Same branch; the local branch has commits the record did not see.&quot;,
+          &quot;const&quot;: &quot;local_ahead&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
         {
+          &quot;type&quot;: &quot;string&quot;,
           &quot;const&quot;: &quot;local_behind&quot;,
-          &quot;description&quot;: &quot;Same branch; the record&#39;s commit is ahead of the local one.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;description&quot;: &quot;Same branch; the record&#39;s commit is ahead of the local one.&quot;
         },
         {
           &quot;const&quot;: &quot;diverged&quot;,
-          &quot;description&quot;: &quot;Same branch; neither commit contains the other.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;Same branch; neither commit contains the other.&quot;
         },
         {
           &quot;const&quot;: &quot;head_missing&quot;,
@@ -805,8 +495,8 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
           &quot;type&quot;: &quot;string&quot;
         },
         {
-          &quot;const&quot;: &quot;branch_differs&quot;,
           &quot;description&quot;: &quot;This checkout is on another branch.&quot;,
+          &quot;const&quot;: &quot;branch_differs&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
         {
@@ -816,43 +506,112 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
         }
       ]
     },
-    &quot;TaskRef&quot;: {
-      &quot;description&quot;: &quot;The task the handover was written under, as the task record named it.&quot;,
+    &quot;Device&quot;: {
+      &quot;required&quot;: [
+        &quot;node&quot;,
+        &quot;label&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;,
+      &quot;description&quot;: &quot;The device a record was written on: the mesh node key&#39;s id and the label its identity\nfile carries. The label is presentation; the node id is identity.&quot;,
       &quot;properties&quot;: {
-        &quot;id&quot;: {
-          &quot;description&quot;: &quot;The task id, `t-&lt;stamp&gt;-&lt;hex&gt;`.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+        &quot;node&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The node id: the first 32 hex of the SHA-256 of the device&#39;s Ed25519 public key.&quot;
         },
-        &quot;outcome&quot;: {
-          &quot;description&quot;: &quot;The outcome the task record held when the handover was published.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
+        &quot;label&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The display label of the device&#39;s identity file (`macbook-pro`), or the first eight\nhex of its node id when it has none.&quot;
+        }
+      }
+    },
+    &quot;PlanItem&quot;: {
+      &quot;properties&quot;: {
+        &quot;code&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;A stable code: `source_incomplete`, `line_diverged`, `origin_untrusted`, …&quot;
         },
-        &quot;profile&quot;: {
-          &quot;description&quot;: &quot;The profile it ran under.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;scope&quot;: {
-          &quot;description&quot;: &quot;The repository paths it may touch.&quot;,
-          &quot;items&quot;: {
-            &quot;type&quot;: &quot;string&quot;
-          },
-          &quot;type&quot;: &quot;array&quot;
-        },
-        &quot;title&quot;: {
-          &quot;description&quot;: &quot;What the task is, in its author&#39;s words: the intent.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+        &quot;message&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;What it means here.&quot;
         }
       },
+      &quot;description&quot;: &quot;One thing a plan says about itself.&quot;,
       &quot;required&quot;: [
-        &quot;id&quot;,
-        &quot;title&quot;
+        &quot;code&quot;,
+        &quot;message&quot;
       ],
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;SourceCheck&quot;: {
+      &quot;description&quot;: &quot;The source half of a plan.&quot;,
+      &quot;required&quot;: [
+        &quot;relation&quot;,
+        &quot;origin_dirty&quot;,
+        &quot;origin_changed_total&quot;,
+        &quot;local_dirty&quot;
+      ],
+      &quot;properties&quot;: {
+        &quot;expected_head&quot;: {
+          &quot;description&quot;: &quot;The commit it was written at.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;local_dirty&quot;: {
+          &quot;description&quot;: &quot;Whether this checkout&#39;s tree is dirty.&quot;,
+          &quot;type&quot;: &quot;boolean&quot;
+        },
+        &quot;origin_dirty&quot;: {
+          &quot;description&quot;: &quot;Whether the origin&#39;s tree was dirty.&quot;,
+          &quot;type&quot;: &quot;boolean&quot;
+        },
+        &quot;local_branch&quot;: {
+          &quot;description&quot;: &quot;This checkout&#39;s branch.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;expected_branch&quot;: {
+          &quot;description&quot;: &quot;The branch the record was written on.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;relation&quot;: {
+          &quot;description&quot;: &quot;How they stand.&quot;,
+          &quot;$ref&quot;: &quot;#/$defs/SourceRelation&quot;
+        },
+        &quot;local_head&quot;: {
+          &quot;description&quot;: &quot;This checkout&#39;s commit.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;origin_changed&quot;: {
+          &quot;type&quot;: &quot;array&quot;,
+          &quot;description&quot;: &quot;The paths that were uncommitted at the origin, as listed.&quot;,
+          &quot;items&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        },
+        &quot;origin_changed_total&quot;: {
+          &quot;type&quot;: &quot;integer&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;description&quot;: &quot;How many were uncommitted.&quot;,
+          &quot;format&quot;: &quot;uint&quot;
+        },
+        &quot;same_uncommitted_work&quot;: {
+          &quot;type&quot;: [
+            &quot;boolean&quot;,
+            &quot;null&quot;
+          ],
+          &quot;description&quot;: &quot;Whether this checkout holds the very uncommitted work the origin held (their\nfingerprints agree); absent when either side is clean.&quot;
+        }
+      },
       &quot;type&quot;: &quot;object&quot;
     },
     &quot;Trust&quot;: {
@@ -860,18 +619,18 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
       &quot;oneOf&quot;: [
         {
           &quot;const&quot;: &quot;this_device&quot;,
-          &quot;description&quot;: &quot;This device signed it.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;This device signed it.&quot;
         },
         {
-          &quot;const&quot;: &quot;trusted&quot;,
           &quot;description&quot;: &quot;The mesh declaration&#39;s trust list admits the key.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;trusted&quot;
         },
         {
-          &quot;const&quot;: &quot;untrusted&quot;,
           &quot;description&quot;: &quot;The mesh declaration exists and does not admit the key: never resumed from.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;untrusted&quot;
         },
         {
           &quot;const&quot;: &quot;undeclared&quot;,
@@ -880,13 +639,202 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
         }
       ]
     },
+    &quot;WorkingTree&quot;: {
+      &quot;oneOf&quot;: [
+        {
+          &quot;description&quot;: &quot;Nothing outside HEAD.&quot;,
+          &quot;const&quot;: &quot;clean&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;description&quot;: &quot;Modified, staged or untracked files that HEAD does not hold.&quot;,
+          &quot;const&quot;: &quot;dirty&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      ],
+      &quot;description&quot;: &quot;Whether the working tree had changes git does not hold in a commit.&quot;
+    },
+    &quot;PlanStatus&quot;: {
+      &quot;oneOf&quot;: [
+        {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;Resume restores everything; nothing needs attention.&quot;,
+          &quot;const&quot;: &quot;ready&quot;
+        },
+        {
+          &quot;description&quot;: &quot;Resume restores everything; the warnings say what is not what it was at the origin.&quot;,
+          &quot;const&quot;: &quot;ready_with_warnings&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;description&quot;: &quot;The local source does not hold what the record was written against: update git\nfirst, as the actions say.&quot;,
+          &quot;const&quot;: &quot;requires_source_update&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;conflict&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The same work was continued twice, or the source histories diverged: a person\nchooses.&quot;
+        },
+        {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;choose_record&quot;,
+          &quot;description&quot;: &quot;More than one record could be meant: name one with `--record`.&quot;
+        },
+        {
+          &quot;const&quot;: &quot;nothing_to_resume&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;Nothing to resume.&quot;
+        },
+        {
+          &quot;description&quot;: &quot;The record is not one this checkout may resume from (an untrusted signer).&quot;,
+          &quot;const&quot;: &quot;refused&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      ],
+      &quot;description&quot;: &quot;The verdict of a resume plan.&quot;
+    },
+    &quot;RecordView&quot;: {
+      &quot;required&quot;: [
+        &quot;id&quot;,
+        &quot;line&quot;,
+        &quot;device&quot;,
+        &quot;this_device&quot;,
+        &quot;trust&quot;,
+        &quot;working_tree&quot;,
+        &quot;changed_total&quot;,
+        &quot;published_at&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;,
+      &quot;properties&quot;: {
+        &quot;parent&quot;: {
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ],
+          &quot;description&quot;: &quot;The record it continues.&quot;
+        },
+        &quot;working_tree&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/WorkingTree&quot;,
+          &quot;description&quot;: &quot;Clean or dirty at the origin.&quot;
+        },
+        &quot;branch&quot;: {
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ],
+          &quot;description&quot;: &quot;The branch it was written on.&quot;
+        },
+        &quot;line&quot;: {
+          &quot;description&quot;: &quot;Its line.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;head&quot;: {
+          &quot;description&quot;: &quot;The commit it was written at.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;this_device&quot;: {
+          &quot;description&quot;: &quot;Whether that device is this one.&quot;,
+          &quot;type&quot;: &quot;boolean&quot;
+        },
+        &quot;id&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The record id.&quot;
+        },
+        &quot;age_minutes&quot;: {
+          &quot;description&quot;: &quot;Minutes since then, by this machine&#39;s clock; absent when either clock&#39;s reading is\nunusable.&quot;,
+          &quot;type&quot;: [
+            &quot;integer&quot;,
+            &quot;null&quot;
+          ],
+          &quot;format&quot;: &quot;int64&quot;
+        },
+        &quot;objective&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The handover&#39;s `# Objective`, first line.&quot;
+        },
+        &quot;session&quot;: {
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ],
+          &quot;description&quot;: &quot;The episode it was published from.&quot;
+        },
+        &quot;published_at&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;When it was published, by the publisher&#39;s clock.&quot;
+        },
+        &quot;issue&quot;: {
+          &quot;description&quot;: &quot;The issue.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;trust&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/Trust&quot;,
+          &quot;description&quot;: &quot;Whether its signer is trusted here.&quot;
+        },
+        &quot;device&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/Device&quot;,
+          &quot;description&quot;: &quot;The device that published it.&quot;
+        },
+        &quot;changed_total&quot;: {
+          &quot;type&quot;: &quot;integer&quot;,
+          &quot;description&quot;: &quot;How many paths differed from HEAD at the origin.&quot;,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;minimum&quot;: 0
+        },
+        &quot;task&quot;: {
+          &quot;description&quot;: &quot;The task&#39;s title: the intent.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        }
+      },
+      &quot;description&quot;: &quot;One record as every surface shows it.&quot;
+    },
+    &quot;Relation&quot;: {
+      &quot;description&quot;: &quot;What one record is to another.&quot;,
+      &quot;oneOf&quot;: [
+        {
+          &quot;description&quot;: &quot;The same record.&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;equal&quot;
+        },
+        {
+          &quot;const&quot;: &quot;newer&quot;,
+          &quot;description&quot;: &quot;The second descends from the first: the second is newer.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;older&quot;,
+          &quot;description&quot;: &quot;The first descends from the second: the second is older.&quot;
+        },
+        {
+          &quot;const&quot;: &quot;diverged&quot;,
+          &quot;description&quot;: &quot;Same line, neither descends from the other: the work was continued twice.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;Different lines: separate work.&quot;,
+          &quot;const&quot;: &quot;independent&quot;
+        }
+      ]
+    },
     &quot;Via&quot;: {
       &quot;description&quot;: &quot;How this checkout came to stand on a record.&quot;,
       &quot;oneOf&quot;: [
         {
-          &quot;const&quot;: &quot;published&quot;,
           &quot;description&quot;: &quot;This checkout published it.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;published&quot;
         },
         {
           &quot;const&quot;: &quot;resumed&quot;,
@@ -895,40 +843,97 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
         }
       ]
     },
-    &quot;WorkingTree&quot;: {
-      &quot;description&quot;: &quot;Whether the working tree had changes git does not hold in a commit.&quot;,
-      &quot;oneOf&quot;: [
-        {
-          &quot;const&quot;: &quot;clean&quot;,
-          &quot;description&quot;: &quot;Nothing outside HEAD.&quot;,
+    &quot;TaskRef&quot;: {
+      &quot;type&quot;: &quot;object&quot;,
+      &quot;description&quot;: &quot;The task the handover was written under, as the task record named it.&quot;,
+      &quot;required&quot;: [
+        &quot;id&quot;,
+        &quot;title&quot;
+      ],
+      &quot;properties&quot;: {
+        &quot;title&quot;: {
+          &quot;description&quot;: &quot;What the task is, in its author&#39;s words: the intent.&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
-        {
-          &quot;const&quot;: &quot;dirty&quot;,
-          &quot;description&quot;: &quot;Modified, staged or untracked files that HEAD does not hold.&quot;,
+        &quot;id&quot;: {
+          &quot;description&quot;: &quot;The task id, `t-&lt;stamp&gt;-&lt;hex&gt;`.&quot;,
           &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;profile&quot;: {
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ],
+          &quot;description&quot;: &quot;The profile it ran under.&quot;
+        },
+        &quot;scope&quot;: {
+          &quot;type&quot;: &quot;array&quot;,
+          &quot;description&quot;: &quot;The repository paths it may touch.&quot;,
+          &quot;items&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        },
+        &quot;outcome&quot;: {
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ],
+          &quot;description&quot;: &quot;The outcome the task record held when the handover was published.&quot;
         }
-      ]
+      }
+    },
+    &quot;Position&quot;: {
+      &quot;type&quot;: &quot;object&quot;,
+      &quot;required&quot;: [
+        &quot;line&quot;,
+        &quot;record&quot;,
+        &quot;via&quot;,
+        &quot;at&quot;
+      ],
+      &quot;description&quot;: &quot;The record this checkout continues on one branch.&quot;,
+      &quot;properties&quot;: {
+        &quot;via&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/Via&quot;,
+          &quot;description&quot;: &quot;Published here or resumed here.&quot;
+        },
+        &quot;at&quot;: {
+          &quot;description&quot;: &quot;When, by this machine&#39;s clock.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;line&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The line.&quot;
+        },
+        &quot;record&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The record: the parent of this checkout&#39;s next publication on the branch.&quot;
+        }
+      }
     }
   },
-  &quot;description&quot;: &quot;The answer of `continuity resume`.&quot;,
+  &quot;required&quot;: [
+    &quot;resumed&quot;,
+    &quot;plan&quot;,
+    &quot;decisions_carried&quot;
+  ],
+  &quot;title&quot;: &quot;Resumed&quot;,
   &quot;properties&quot;: {
     &quot;decisions_carried&quot;: {
+      &quot;minimum&quot;: 0,
       &quot;description&quot;: &quot;How many decisions were appended to this checkout&#39;s log.&quot;,
       &quot;format&quot;: &quot;uint&quot;,
-      &quot;minimum&quot;: 0,
       &quot;type&quot;: &quot;integer&quot;
     },
     &quot;handover&quot;: {
-      &quot;description&quot;: &quot;The handover record written into this checkout, relative to it.&quot;,
       &quot;type&quot;: [
         &quot;string&quot;,
         &quot;null&quot;
-      ]
+      ],
+      &quot;description&quot;: &quot;The handover record written into this checkout, relative to it.&quot;
     },
     &quot;plan&quot;: {
-      &quot;$ref&quot;: &quot;#/$defs/ResumePlan&quot;,
-      &quot;description&quot;: &quot;The plan it acted on, or declined on.&quot;
+      &quot;description&quot;: &quot;The plan it acted on, or declined on.&quot;,
+      &quot;$ref&quot;: &quot;#/$defs/ResumePlan&quot;
     },
     &quot;position&quot;: {
       &quot;anyOf&quot;: [
@@ -946,12 +951,7 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
       &quot;type&quot;: &quot;boolean&quot;
     }
   },
-  &quot;required&quot;: [
-    &quot;resumed&quot;,
-    &quot;plan&quot;,
-    &quot;decisions_carried&quot;
-  ],
-  &quot;title&quot;: &quot;Resumed&quot;,
+  &quot;description&quot;: &quot;The answer of `continuity resume`.&quot;,
   &quot;type&quot;: &quot;object&quot;
 }</pre></div>
   </details>
@@ -983,7 +983,7 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
         <div><dt class="text-body-subtle">modul Rust</dt><dd class="min-w-0 break-all font-mono text-heading">majordomus_cli::capability::builtin::continuity</dd></div>
         <div><dt class="text-body-subtle">typ vstupu</dt><dd class="font-mono text-heading">RecordInput</dd></div>
         <div><dt class="text-body-subtle">typ výstupu</dt><dd class="font-mono text-heading">Obnoveno</dd></div>
-        <div><dt class="text-body-subtle">reference na GitHubu</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/aa9f816f8673880ab4beb6dbebff688f9da5bb65/docs/generated/modules/continuity.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/continuity.md</a></dd></div><div><dt class="text-body-subtle">otisk registru</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">c514db707bb1f5f7557f2a1629d42c4bdc05eb7ef58464c288e42bafcd3d8720</dd></div>
+        <div><dt class="text-body-subtle">reference na GitHubu</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/docs/generated/modules/continuity.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/continuity.md</a></dd></div><div><dt class="text-body-subtle">otisk registru</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">3f734f2faf797f0ca7c39b4cd837e68b6619c41c6f6711f3d3aeca8f341934eb</dd></div>
         <div><dt class="text-body-subtle">vygenerováno nástrojem</dt><dd class="font-mono text-heading">majordomus-cli 1.0.0-alpha.10</dd></div>
       </dl>
     </div>
@@ -1039,9 +1039,9 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
       <div class="min-w-0">
         <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">Projekt</h2><ul class="space-y-2 text-sm font-medium text-body">
           <li><a href="https://github.com/korczis/prismatic-majordomus" class="hover:text-heading hover:underline">GitHub</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/aa9f816f8673880ab4beb6dbebff688f9da5bb65/LICENSE" class="hover:text-heading hover:underline">Licence MIT</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/aa9f816f8673880ab4beb6dbebff688f9da5bb65/SECURITY.md" class="hover:text-heading hover:underline">Bezpečnostní politika</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/aa9f816f8673880ab4beb6dbebff688f9da5bb65/CONTRIBUTING.md" class="hover:text-heading hover:underline">Průvodce pro přispěvatele</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/LICENSE" class="hover:text-heading hover:underline">Licence MIT</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/SECURITY.md" class="hover:text-heading hover:underline">Bezpečnostní politika</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/CONTRIBUTING.md" class="hover:text-heading hover:underline">Průvodce pro přispěvatele</a></li>
         </ul>
       </div>
     </div>
@@ -1049,7 +1049,7 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/cs/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.10</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/aa9f816f8673880ab4beb6dbebff688f9da5bb65" class="font-mono underline">aa9f816</a> · inputs <span class="font-mono">a64b981ed16e</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/cs/architecture/" class="underline">how this site is derived</a> names them.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.10</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/745db2ea21e02613943face75a2bf95542be1f2e" class="font-mono underline">745db2e</a> · inputs <span class="font-mono">0a58c217d1b7</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/cs/architecture/" class="underline">how this site is derived</a> names them.</p>
     </div>
   </div>
 </footer>

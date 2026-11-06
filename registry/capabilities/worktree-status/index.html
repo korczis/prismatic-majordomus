@@ -234,7 +234,9 @@ another repository is refused: the topology answers only about its own.</td>
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
+  &quot;title&quot;: &quot;StatusInput&quot;,
   &quot;additionalProperties&quot;: false,
+  &quot;type&quot;: &quot;object&quot;,
   &quot;description&quot;: &quot;Where to answer from.&quot;,
   &quot;properties&quot;: {
     &quot;path&quot;: {
@@ -244,9 +246,7 @@ another repository is refused: the topology answers only about its own.</td>
         &quot;null&quot;
       ]
     }
-  },
-  &quot;title&quot;: &quot;StatusInput&quot;,
-  &quot;type&quot;: &quot;object&quot;
+  }
 }</pre></div>
   </details>
 </div>
@@ -255,21 +255,16 @@ another repository is refused: the topology answers only about its own.</td>
     <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
       <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
       <tbody><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">repository</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The repository.</td>
+      </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">canonical</td>
         <td class="px-3 py-2 font-mono text-xs text-body">boolean</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
         <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Whether this work tree is where it belongs: canonical, or the primary checkout on
 the trunk, or detached.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">container</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The container.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">repository</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The repository.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">repository_errors</td>
         <td class="px-3 py-2 font-mono text-xs text-body">integer</td>
@@ -281,6 +276,16 @@ the trunk, or detached.</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
         <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words"><code>SCHEMA</code>.</td>
       </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">worktree</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The work tree the call came from, with its uncommitted work counted.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">container</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The container.</td>
+      </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">trunk</td>
         <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
@@ -291,502 +296,76 @@ the trunk, or detached.</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
         <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">How far this work tree and the local trunk are from the remote trunk, judged against
 the policy's <code>checkout.trunk_distance</code>: what it would serve, and how old that is.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">worktree</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The work tree the call came from, with its uncommitted work counted.</td>
       </tr></tbody>
     </table>
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
+  &quot;required&quot;: [
+    &quot;schema&quot;,
+    &quot;repository&quot;,
+    &quot;container&quot;,
+    &quot;trunk&quot;,
+    &quot;worktree&quot;,
+    &quot;canonical&quot;,
+    &quot;repository_errors&quot;,
+    &quot;trunk_distance&quot;
+  ],
+  &quot;properties&quot;: {
+    &quot;repository&quot;: {
+      &quot;$ref&quot;: &quot;#/$defs/RepositoryView&quot;,
+      &quot;description&quot;: &quot;The repository.&quot;
+    },
+    &quot;canonical&quot;: {
+      &quot;description&quot;: &quot;Whether this work tree is where it belongs: canonical, or the primary checkout on\nthe trunk, or detached.&quot;,
+      &quot;type&quot;: &quot;boolean&quot;
+    },
+    &quot;repository_errors&quot;: {
+      &quot;format&quot;: &quot;uint&quot;,
+      &quot;description&quot;: &quot;How many error-level diagnostics the whole topology carries.&quot;,
+      &quot;type&quot;: &quot;integer&quot;,
+      &quot;minimum&quot;: 0
+    },
+    &quot;schema&quot;: {
+      &quot;description&quot;: &quot;`SCHEMA`.&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;worktree&quot;: {
+      &quot;description&quot;: &quot;The work tree the call came from, with its uncommitted work counted.&quot;,
+      &quot;$ref&quot;: &quot;#/$defs/WorktreeState&quot;
+    },
+    &quot;container&quot;: {
+      &quot;$ref&quot;: &quot;#/$defs/ContainerView&quot;,
+      &quot;description&quot;: &quot;The container.&quot;
+    },
+    &quot;trunk&quot;: {
+      &quot;$ref&quot;: &quot;#/$defs/TrunkView&quot;,
+      &quot;description&quot;: &quot;The trunk.&quot;
+    },
+    &quot;trunk_distance&quot;: {
+      &quot;$ref&quot;: &quot;#/$defs/TrunkDistance&quot;,
+      &quot;description&quot;: &quot;How far this work tree and the local trunk are from the remote trunk, judged against\nthe policy&#39;s `checkout.trunk_distance`: what it would serve, and how old that is.&quot;
+    }
+  },
+  &quot;title&quot;: &quot;StatusReport&quot;,
+  &quot;type&quot;: &quot;object&quot;,
+  &quot;description&quot;: &quot;The answer to \&quot;where am I, and is that where I belong\&quot;.&quot;,
   &quot;$defs&quot;: {
-    &quot;ContainerView&quot;: {
-      &quot;description&quot;: &quot;The container, as the topology reports it.&quot;,
-      &quot;properties&quot;: {
-        &quot;exists&quot;: {
-          &quot;description&quot;: &quot;It exists on disk. Created by the first worktree that needs it.&quot;,
-          &quot;type&quot;: &quot;boolean&quot;
-        },
-        &quot;path&quot;: {
-          &quot;description&quot;: &quot;The derived path.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;suffix&quot;: {
-          &quot;description&quot;: &quot;The suffix it was derived with.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      },
-      &quot;required&quot;: [
-        &quot;path&quot;,
-        &quot;suffix&quot;,
-        &quot;exists&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
-    },
-    &quot;DiagnosticCode&quot;: {
-      &quot;description&quot;: &quot;The stable machine name of everything that can be wrong with the topology. One code per\ncondition, reused by the command line, the API, MCP, the Cockpit, the tests and the\ndocumentation; the prose beside a code is rendered from the typed state.&quot;,
-      &quot;oneOf&quot;: [
-        {
-          &quot;const&quot;: &quot;worktree.path_mismatch&quot;,
-          &quot;description&quot;: &quot;A linked work tree is not at its branch&#39;s canonical path.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;worktree.container_occupied&quot;,
-          &quot;description&quot;: &quot;A linked work tree occupies the container path itself.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;worktree.nested&quot;,
-          &quot;description&quot;: &quot;A linked work tree sits inside the primary checkout or inside another work tree.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;worktree.destination_conflict&quot;,
-          &quot;description&quot;: &quot;The canonical path of a branch is occupied by something that is not its work tree.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;worktree.missing&quot;,
-          &quot;description&quot;: &quot;A registered work tree&#39;s directory does not exist.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;worktree.stale_registration&quot;,
-          &quot;description&quot;: &quot;Git reports the registration as prunable.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;worktree.branch_already_checked_out&quot;,
-          &quot;description&quot;: &quot;A branch is checked out somewhere other than its canonical path.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;worktree.detached&quot;,
-          &quot;description&quot;: &quot;A linked work tree has no branch.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;worktree.ephemeral&quot;,
-          &quot;description&quot;: &quot;A linked work tree is a session&#39;s scratch checkout: under the temporary directory or\nunder the primary checkout&#39;s `.claude/worktrees/`.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;worktree.primary_on_non_trunk&quot;,
-          &quot;description&quot;: &quot;The primary checkout holds a branch that is not the trunk.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;worktree.trunk_in_linked_worktree&quot;,
-          &quot;description&quot;: &quot;The trunk is checked out in a linked work tree rather than the primary checkout.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;worktree.path_escape&quot;,
-          &quot;description&quot;: &quot;A derived path would leave the container. Cannot happen for a valid branch name.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;worktree.invalid_branch_name&quot;,
-          &quot;description&quot;: &quot;A branch name git accepted that this executable cannot derive a path for.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;worktree.locked&quot;,
-          &quot;description&quot;: &quot;A work tree is locked, so it cannot be moved until it is unlocked.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;worktree.migration_verification_failed&quot;,
-          &quot;description&quot;: &quot;A move happened and the fingerprint after it differs from the one before.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;worktree.trunk_unknown&quot;,
-          &quot;description&quot;: &quot;The trunk could not be determined.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;worktree.case_collision&quot;,
-          &quot;description&quot;: &quot;Two branch names map to one directory on a case-insensitive filesystem.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;worktree.cross_device&quot;,
-          &quot;description&quot;: &quot;A move crossed devices and was made by copy, repair and verification.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      ]
-    },
-    &quot;DirtyState&quot;: {
-      &quot;description&quot;: &quot;Uncommitted work in a work tree, counted from `git status --porcelain`. Untracked\ncontent counts: it is exactly what a careless move loses.&quot;,
-      &quot;properties&quot;: {
-        &quot;clean&quot;: {
-          &quot;description&quot;: &quot;Nothing above is non-zero.&quot;,
-          &quot;type&quot;: &quot;boolean&quot;
-        },
-        &quot;conflicted&quot;: {
-          &quot;description&quot;: &quot;Entries with an unresolved merge conflict.&quot;,
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;in_progress&quot;: {
-          &quot;description&quot;: &quot;A merge, rebase, cherry-pick, revert or bisect is in progress here.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;staged&quot;: {
-          &quot;description&quot;: &quot;Entries with a change in the index.&quot;,
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;unstaged&quot;: {
-          &quot;description&quot;: &quot;Entries with a change in the work tree that is not in the index.&quot;,
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;untracked&quot;: {
-          &quot;description&quot;: &quot;Untracked, not ignored, files.&quot;,
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        }
-      },
-      &quot;required&quot;: [
-        &quot;staged&quot;,
-        &quot;unstaged&quot;,
-        &quot;untracked&quot;,
-        &quot;conflicted&quot;,
-        &quot;clean&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
-    },
-    &quot;Distance&quot;: {
-      &quot;description&quot;: &quot;How many commits two refs have that the other lacks.\n\n```\nuse majordomus_cli::worktree::trunk::Distance;\nlet d = Distance { behind: 779, ahead: 0 };\nassert_eq!(serde_json::to_value(d).unwrap(), serde_json::json!({\&quot;behind\&quot;: 779, \&quot;ahead\&quot;: 0}));\n```&quot;,
-      &quot;properties&quot;: {
-        &quot;ahead&quot;: {
-          &quot;description&quot;: &quot;Commits of this ref the remote trunk lacks.&quot;,
-          &quot;format&quot;: &quot;uint64&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;behind&quot;: {
-          &quot;description&quot;: &quot;Commits of the remote trunk this ref lacks.&quot;,
-          &quot;format&quot;: &quot;uint64&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        }
-      },
-      &quot;required&quot;: [
-        &quot;behind&quot;,
-        &quot;ahead&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
-    },
-    &quot;RepositoryView&quot;: {
-      &quot;description&quot;: &quot;The repository&#39;s identity, as the topology reports it.&quot;,
-      &quot;properties&quot;: {
-        &quot;git_common_dir&quot;: {
-          &quot;description&quot;: &quot;The common git directory: the repository&#39;s identity.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;name&quot;: {
-          &quot;description&quot;: &quot;The primary checkout&#39;s directory name.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;primary_worktree&quot;: {
-          &quot;description&quot;: &quot;The primary checkout: what the container is named after.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      },
-      &quot;required&quot;: [
-        &quot;primary_worktree&quot;,
-        &quot;git_common_dir&quot;,
-        &quot;name&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
-    },
-    &quot;Severity&quot;: {
-      &quot;description&quot;: &quot;How bad a diagnostic is. `Error` excludes the file it concerns from the index and puts\nthe index into the degraded state; `Warning` and `Info` do neither.&quot;,
-      &quot;oneOf&quot;: [
-        {
-          &quot;const&quot;: &quot;info&quot;,
-          &quot;description&quot;: &quot;Worth knowing; changes nothing.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;warning&quot;,
-          &quot;description&quot;: &quot;Something to look at; the object is still served.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;error&quot;,
-          &quot;description&quot;: &quot;The file is excluded and the index is degraded.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      ]
-    },
-    &quot;Standing&quot;: {
-      &quot;description&quot;: &quot;Where a work tree stands against the topology.&quot;,
-      &quot;oneOf&quot;: [
-        {
-          &quot;const&quot;: &quot;primary&quot;,
-          &quot;description&quot;: &quot;The primary checkout: exempt from the path rule, held to the trunk rule.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;canonical&quot;,
-          &quot;description&quot;: &quot;A linked work tree at exactly its branch&#39;s canonical path.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;misplaced&quot;,
-          &quot;description&quot;: &quot;A linked work tree somewhere else. Migration brings it home.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;detached&quot;,
-          &quot;description&quot;: &quot;A linked work tree with no branch. It has no canonical path and is never moved.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;ephemeral&quot;,
-          &quot;description&quot;: &quot;A linked work tree under the operating system&#39;s temporary directory or under the\nprimary checkout&#39;s `.claude/worktrees/`: a session&#39;s scratch checkout, owned and\nremoved by the harness that made it. Reported; migrated only on request.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;missing&quot;,
-          &quot;description&quot;: &quot;A registration whose directory is gone. Repair drops it.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      ]
-    },
-    &quot;TopologyDiagnostic&quot;: {
-      &quot;description&quot;: &quot;One thing wrong with, or worth knowing about, the topology.&quot;,
-      &quot;properties&quot;: {
-        &quot;branch&quot;: {
-          &quot;description&quot;: &quot;The branch involved.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;code&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/DiagnosticCode&quot;,
-          &quot;description&quot;: &quot;The stable code.&quot;
-        },
-        &quot;expected&quot;: {
-          &quot;description&quot;: &quot;Where the work tree belongs.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;message&quot;: {
-          &quot;description&quot;: &quot;What is wrong, in one line.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;path&quot;: {
-          &quot;description&quot;: &quot;The work tree involved.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;remedy&quot;: {
-          &quot;description&quot;: &quot;The command that addresses it.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;severity&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/Severity&quot;,
-          &quot;description&quot;: &quot;How serious it is.&quot;
-        }
-      },
-      &quot;required&quot;: [
-        &quot;code&quot;,
-        &quot;severity&quot;,
-        &quot;message&quot;,
-        &quot;remedy&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
-    },
-    &quot;TrunkDistance&quot;: {
-      &quot;description&quot;: &quot;A checkout&#39;s distance from the remote trunk, judged.\n\n```\nuse majordomus_cli::worktree::trunk::{Distance, TrunkDistance, TrunkStanding};\nlet d: TrunkDistance = serde_json::from_value(serde_json::json!({\n    \&quot;standing\&quot;: \&quot;stale\&quot;, \&quot;local_trunk_standing\&quot;: \&quot;stale\&quot;,\n    \&quot;worktree\&quot;: \&quot;/repo\&quot;, \&quot;on_trunk\&quot;: true,\n    \&quot;checkout\&quot;: {\&quot;behind\&quot;: 779, \&quot;ahead\&quot;: 0},\n    \&quot;thresholds\&quot;: {\&quot;warn_behind\&quot;: 50, \&quot;fail_behind\&quot;: 300},\n    \&quot;message\&quot;: \&quot;779 commits behind origin/master\&quot;,\n})).unwrap();\nassert_eq!(d.standing, TrunkStanding::Stale);\nassert_eq!(d.checkout, Some(Distance { behind: 779, ahead: 0 }));\n// what is absent stays absent in the answer\nassert!(serde_json::to_value(&amp;d).unwrap().get(\&quot;remedy\&quot;).is_none());\n```&quot;,
-      &quot;properties&quot;: {
-        &quot;checkout&quot;: {
-          &quot;anyOf&quot;: [
-            {
-              &quot;$ref&quot;: &quot;#/$defs/Distance&quot;
-            },
-            {
-              &quot;type&quot;: &quot;null&quot;
-            }
-          ],
-          &quot;description&quot;: &quot;The checkout&#39;s `HEAD` against the remote trunk. While a merge is in progress, the\ncommits it brings in count as present: the commit being made will hold them, so the\nmerge that brings a checkout current is never judged by the tree it is replacing.&quot;
-        },
-        &quot;fetched_at&quot;: {
-          &quot;description&quot;: &quot;When the repository last fetched (the time of `FETCH_HEAD`), RFC 3339: the moment\nthis answer is true as of. Absent when it never fetched.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;local_trunk&quot;: {
-          &quot;anyOf&quot;: [
-            {
-              &quot;$ref&quot;: &quot;#/$defs/Distance&quot;
-            },
-            {
-              &quot;type&quot;: &quot;null&quot;
-            }
-          ],
-          &quot;description&quot;: &quot;The local trunk branch against the remote trunk: what a branch made from the local\ntrunk starts from.&quot;
-        },
-        &quot;local_trunk_standing&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/TrunkStanding&quot;,
-          &quot;description&quot;: &quot;Where the local trunk branch stands, judged the same way: what a branch made from it\nstarts from. The same as `standing` when the checkout holds the trunk.&quot;
-        },
-        &quot;message&quot;: {
-          &quot;description&quot;: &quot;What the standing means here, in one line.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;on_trunk&quot;: {
-          &quot;description&quot;: &quot;The work tree holds the trunk branch itself.&quot;,
-          &quot;type&quot;: &quot;boolean&quot;
-        },
-        &quot;remedy&quot;: {
-          &quot;description&quot;: &quot;The commands that bring the checkout and the local trunk current, when either is\nbehind. Suggested, never run.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;remote_head&quot;: {
-          &quot;description&quot;: &quot;The commit the remote-tracking trunk names.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;remote_trunk&quot;: {
-          &quot;description&quot;: &quot;The remote-tracking trunk counted against (`origin/master`).&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;standing&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/TrunkStanding&quot;,
-          &quot;description&quot;: &quot;Where the checkout stands: its `HEAD` — with the commit a merge in progress brings\nin — judged against the thresholds. This is what its server serves.&quot;
-        },
-        &quot;thresholds&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/TrunkThresholds&quot;,
-          &quot;description&quot;: &quot;The thresholds judged against, as `checkout.trunk_distance` declares them.&quot;
-        },
-        &quot;trunk&quot;: {
-          &quot;description&quot;: &quot;The trunk branch, short.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;worktree&quot;: {
-          &quot;description&quot;: &quot;The work tree measured.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      },
-      &quot;required&quot;: [
-        &quot;standing&quot;,
-        &quot;local_trunk_standing&quot;,
-        &quot;worktree&quot;,
-        &quot;on_trunk&quot;,
-        &quot;thresholds&quot;,
-        &quot;message&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
-    },
-    &quot;TrunkSource&quot;: {
-      &quot;description&quot;: &quot;Where the trunk was learned from, in the order it is looked for.&quot;,
-      &quot;oneOf&quot;: [
-        {
-          &quot;const&quot;: &quot;remote_head&quot;,
-          &quot;description&quot;: &quot;`refs/remotes/&lt;remote&gt;/HEAD`: what the remote calls its default branch.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;default_branch_config&quot;,
-          &quot;description&quot;: &quot;`init.defaultBranch` in the git configuration, and that branch exists locally.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;conventional_name&quot;,
-          &quot;description&quot;: &quot;Exactly one of `main` and `master` exists locally.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;primary_checkout&quot;,
-          &quot;description&quot;: &quot;The branch the primary checkout holds, because nothing else said.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;unknown&quot;,
-          &quot;description&quot;: &quot;Nothing said; the trunk is unknown and every check that needs it says so.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      ]
-    },
-    &quot;TrunkStanding&quot;: {
-      &quot;description&quot;: &quot;Where a checkout stands against the remote trunk.\n\n```\nuse majordomus_cli::worktree::trunk::TrunkStanding;\nlet s: TrunkStanding = serde_json::from_str(r#\&quot;\&quot;lagging\&quot;\&quot;#).unwrap();\nassert_eq!(s, TrunkStanding::Lagging);\nassert_eq!(serde_json::to_value(TrunkStanding::Unmeasured).unwrap(), \&quot;unmeasured\&quot;);\n```&quot;,
-      &quot;oneOf&quot;: [
-        {
-          &quot;const&quot;: &quot;current&quot;,
-          &quot;description&quot;: &quot;Behind by less than the warn threshold, or not behind at all.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;lagging&quot;,
-          &quot;description&quot;: &quot;At or past the warn threshold: what it serves is old enough to mislead.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;stale&quot;,
-          &quot;description&quot;: &quot;At or past the fail threshold: what it serves is the wrong tree.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;unjudged&quot;,
-          &quot;description&quot;: &quot;Behind, and the policy declares no threshold to judge the distance by.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;unmeasured&quot;,
-          &quot;description&quot;: &quot;The distance could not be measured: no trunk, no remote-tracking trunk, no `HEAD`.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      ]
-    },
     &quot;TrunkThresholds&quot;: {
       &quot;description&quot;: &quot;The thresholds `checkout.trunk_distance` declares, in commits behind the remote trunk.\nAbsent is absent: the reader supplies no default, and a distance with nothing to judge\nit against is reported as `unjudged`.\n\n```\nuse majordomus_cli::worktree::trunk::TrunkThresholds;\nlet t: TrunkThresholds = serde_json::from_str(r#\&quot;{\&quot;warn_behind\&quot;: 50, \&quot;fail_behind\&quot;: 300}\&quot;#).unwrap();\nassert_eq!((t.warn_behind, t.fail_behind), (Some(50), Some(300)));\nassert_eq!(TrunkThresholds::default().warn_behind, None, \&quot;absent is not a default\&quot;);\n```&quot;,
       &quot;properties&quot;: {
-        &quot;fail_behind&quot;: {
-          &quot;description&quot;: &quot;At or past this many commits behind, the checkout is `stale`: a failure.&quot;,
-          &quot;format&quot;: &quot;uint64&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: [
-            &quot;integer&quot;,
-            &quot;null&quot;
-          ]
-        },
         &quot;warn_behind&quot;: {
+          &quot;minimum&quot;: 0,
           &quot;description&quot;: &quot;At or past this many commits behind, the checkout is `lagging`: a warning.&quot;,
           &quot;format&quot;: &quot;uint64&quot;,
+          &quot;type&quot;: [
+            &quot;integer&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;fail_behind&quot;: {
+          &quot;format&quot;: &quot;uint64&quot;,
+          &quot;description&quot;: &quot;At or past this many commits behind, the checkout is `stale`: a failure.&quot;,
           &quot;minimum&quot;: 0,
           &quot;type&quot;: [
             &quot;integer&quot;,
@@ -794,47 +373,16 @@ the policy's <code>checkout.trunk_distance</code>: what it would serve, and how 
           ]
         }
       },
-      &quot;type&quot;: &quot;object&quot;
-    },
-    &quot;TrunkView&quot;: {
-      &quot;description&quot;: &quot;The trunk, as the topology reports it.&quot;,
-      &quot;properties&quot;: {
-        &quot;branch&quot;: {
-          &quot;description&quot;: &quot;The branch, when known.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;checked_out_at&quot;: {
-          &quot;description&quot;: &quot;Where it is checked out.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;source&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/TrunkSource&quot;,
-          &quot;description&quot;: &quot;How it was decided.&quot;
-        }
-      },
-      &quot;required&quot;: [
-        &quot;source&quot;
-      ],
       &quot;type&quot;: &quot;object&quot;
     },
     &quot;UpstreamState&quot;: {
+      &quot;type&quot;: &quot;object&quot;,
+      &quot;required&quot;: [
+        &quot;name&quot;,
+        &quot;gone&quot;
+      ],
       &quot;description&quot;: &quot;A branch&#39;s upstream and how far the two have moved apart, from `for-each-ref` in one\nsubprocess for every branch, never a fetch.&quot;,
       &quot;properties&quot;: {
-        &quot;ahead&quot;: {
-          &quot;description&quot;: &quot;Commits here that the upstream lacks.&quot;,
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: [
-            &quot;integer&quot;,
-            &quot;null&quot;
-          ]
-        },
         &quot;behind&quot;: {
           &quot;description&quot;: &quot;Commits upstream that this branch lacks.&quot;,
           &quot;format&quot;: &quot;uint&quot;,
@@ -848,16 +396,259 @@ the policy's <code>checkout.trunk_distance</code>: what it would serve, and how 
           &quot;description&quot;: &quot;The upstream ref no longer exists.&quot;,
           &quot;type&quot;: &quot;boolean&quot;
         },
+        &quot;ahead&quot;: {
+          &quot;type&quot;: [
+            &quot;integer&quot;,
+            &quot;null&quot;
+          ],
+          &quot;description&quot;: &quot;Commits here that the upstream lacks.&quot;,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;minimum&quot;: 0
+        },
         &quot;name&quot;: {
           &quot;description&quot;: &quot;The upstream ref, short (`origin/master`).&quot;,
           &quot;type&quot;: &quot;string&quot;
         }
+      }
+    },
+    &quot;DirtyState&quot;: {
+      &quot;type&quot;: &quot;object&quot;,
+      &quot;description&quot;: &quot;Uncommitted work in a work tree, counted from `git status --porcelain`. Untracked\ncontent counts: it is exactly what a careless move loses.&quot;,
+      &quot;properties&quot;: {
+        &quot;in_progress&quot;: {
+          &quot;description&quot;: &quot;A merge, rebase, cherry-pick, revert or bisect is in progress here.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;clean&quot;: {
+          &quot;description&quot;: &quot;Nothing above is non-zero.&quot;,
+          &quot;type&quot;: &quot;boolean&quot;
+        },
+        &quot;unstaged&quot;: {
+          &quot;type&quot;: &quot;integer&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;description&quot;: &quot;Entries with a change in the work tree that is not in the index.&quot;
+        },
+        &quot;untracked&quot;: {
+          &quot;type&quot;: &quot;integer&quot;,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;description&quot;: &quot;Untracked, not ignored, files.&quot;
+        },
+        &quot;staged&quot;: {
+          &quot;minimum&quot;: 0,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;description&quot;: &quot;Entries with a change in the index.&quot;,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;conflicted&quot;: {
+          &quot;description&quot;: &quot;Entries with an unresolved merge conflict.&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;type&quot;: &quot;integer&quot;
+        }
       },
       &quot;required&quot;: [
-        &quot;name&quot;,
-        &quot;gone&quot;
+        &quot;staged&quot;,
+        &quot;unstaged&quot;,
+        &quot;untracked&quot;,
+        &quot;conflicted&quot;,
+        &quot;clean&quot;
+      ]
+    },
+    &quot;DiagnosticCode&quot;: {
+      &quot;description&quot;: &quot;The stable machine name of everything that can be wrong with the topology. One code per\ncondition, reused by the command line, the API, MCP, the Cockpit, the tests and the\ndocumentation; the prose beside a code is rendered from the typed state.&quot;,
+      &quot;oneOf&quot;: [
+        {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;worktree.path_mismatch&quot;,
+          &quot;description&quot;: &quot;A linked work tree is not at its branch&#39;s canonical path.&quot;
+        },
+        {
+          &quot;const&quot;: &quot;worktree.container_occupied&quot;,
+          &quot;description&quot;: &quot;A linked work tree occupies the container path itself.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;worktree.nested&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;A linked work tree sits inside the primary checkout or inside another work tree.&quot;
+        },
+        {
+          &quot;const&quot;: &quot;worktree.destination_conflict&quot;,
+          &quot;description&quot;: &quot;The canonical path of a branch is occupied by something that is not its work tree.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;A registered work tree&#39;s directory does not exist.&quot;,
+          &quot;const&quot;: &quot;worktree.missing&quot;
+        },
+        {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;Git reports the registration as prunable.&quot;,
+          &quot;const&quot;: &quot;worktree.stale_registration&quot;
+        },
+        {
+          &quot;const&quot;: &quot;worktree.branch_already_checked_out&quot;,
+          &quot;description&quot;: &quot;A branch is checked out somewhere other than its canonical path.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;description&quot;: &quot;A linked work tree has no branch.&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;worktree.detached&quot;
+        },
+        {
+          &quot;description&quot;: &quot;A linked work tree is a session&#39;s scratch checkout: under the temporary directory or\nunder the primary checkout&#39;s `.claude/worktrees/`.&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;worktree.ephemeral&quot;
+        },
+        {
+          &quot;const&quot;: &quot;worktree.primary_on_non_trunk&quot;,
+          &quot;description&quot;: &quot;The primary checkout holds a branch that is not the trunk.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;description&quot;: &quot;The trunk is checked out in a linked work tree rather than the primary checkout.&quot;,
+          &quot;const&quot;: &quot;worktree.trunk_in_linked_worktree&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;description&quot;: &quot;A derived path would leave the container. Cannot happen for a valid branch name.&quot;,
+          &quot;const&quot;: &quot;worktree.path_escape&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;description&quot;: &quot;A branch name git accepted that this executable cannot derive a path for.&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;worktree.invalid_branch_name&quot;
+        },
+        {
+          &quot;description&quot;: &quot;A work tree is locked, so it cannot be moved until it is unlocked.&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;worktree.locked&quot;
+        },
+        {
+          &quot;const&quot;: &quot;worktree.migration_verification_failed&quot;,
+          &quot;description&quot;: &quot;A move happened and the fingerprint after it differs from the one before.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;description&quot;: &quot;The trunk could not be determined.&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;worktree.trunk_unknown&quot;
+        },
+        {
+          &quot;const&quot;: &quot;worktree.case_collision&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;Two branch names map to one directory on a case-insensitive filesystem.&quot;
+        },
+        {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;A move crossed devices and was made by copy, repair and verification.&quot;,
+          &quot;const&quot;: &quot;worktree.cross_device&quot;
+        }
+      ]
+    },
+    &quot;TrunkView&quot;: {
+      &quot;properties&quot;: {
+        &quot;branch&quot;: {
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ],
+          &quot;description&quot;: &quot;The branch, when known.&quot;
+        },
+        &quot;checked_out_at&quot;: {
+          &quot;description&quot;: &quot;Where it is checked out.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;source&quot;: {
+          &quot;description&quot;: &quot;How it was decided.&quot;,
+          &quot;$ref&quot;: &quot;#/$defs/TrunkSource&quot;
+        }
+      },
+      &quot;description&quot;: &quot;The trunk, as the topology reports it.&quot;,
+      &quot;type&quot;: &quot;object&quot;,
+      &quot;required&quot;: [
+        &quot;source&quot;
+      ]
+    },
+    &quot;TopologyDiagnostic&quot;: {
+      &quot;required&quot;: [
+        &quot;code&quot;,
+        &quot;severity&quot;,
+        &quot;message&quot;,
+        &quot;remedy&quot;
       ],
-      &quot;type&quot;: &quot;object&quot;
+      &quot;type&quot;: &quot;object&quot;,
+      &quot;properties&quot;: {
+        &quot;expected&quot;: {
+          &quot;description&quot;: &quot;Where the work tree belongs.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;path&quot;: {
+          &quot;description&quot;: &quot;The work tree involved.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;branch&quot;: {
+          &quot;description&quot;: &quot;The branch involved.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;remedy&quot;: {
+          &quot;description&quot;: &quot;The command that addresses it.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;code&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/DiagnosticCode&quot;,
+          &quot;description&quot;: &quot;The stable code.&quot;
+        },
+        &quot;severity&quot;: {
+          &quot;description&quot;: &quot;How serious it is.&quot;,
+          &quot;$ref&quot;: &quot;#/$defs/Severity&quot;
+        },
+        &quot;message&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;What is wrong, in one line.&quot;
+        }
+      },
+      &quot;description&quot;: &quot;One thing wrong with, or worth knowing about, the topology.&quot;
+    },
+    &quot;Severity&quot;: {
+      &quot;oneOf&quot;: [
+        {
+          &quot;const&quot;: &quot;info&quot;,
+          &quot;description&quot;: &quot;Worth knowing; changes nothing.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;warning&quot;,
+          &quot;description&quot;: &quot;Something to look at; the object is still served.&quot;
+        },
+        {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The file is excluded and the index is degraded.&quot;,
+          &quot;const&quot;: &quot;error&quot;
+        }
+      ],
+      &quot;description&quot;: &quot;How bad a diagnostic is. `Error` excludes the file it concerns from the index and puts\nthe index into the degraded state; `Warning` and `Info` do neither.&quot;
     },
     &quot;WorktreeKind&quot;: {
       &quot;description&quot;: &quot;Whether a work tree is the repository&#39;s own checkout or one linked to it.&quot;,
@@ -868,36 +659,36 @@ the policy's <code>checkout.trunk_distance</code>: what it would serve, and how 
           &quot;type&quot;: &quot;string&quot;
         },
         {
-          &quot;const&quot;: &quot;linked&quot;,
           &quot;description&quot;: &quot;A linked work tree. Belongs at its branch&#39;s canonical path.&quot;,
+          &quot;const&quot;: &quot;linked&quot;,
           &quot;type&quot;: &quot;string&quot;
         }
       ]
     },
     &quot;WorktreeState&quot;: {
+      &quot;required&quot;: [
+        &quot;path&quot;,
+        &quot;kind&quot;,
+        &quot;standing&quot;,
+        &quot;label&quot;,
+        &quot;detached&quot;,
+        &quot;exists&quot;,
+        &quot;current&quot;,
+        &quot;diagnostics&quot;
+      ],
       &quot;description&quot;: &quot;One work tree, as the topology sees it.&quot;,
       &quot;properties&quot;: {
-        &quot;branch&quot;: {
-          &quot;description&quot;: &quot;The branch checked out here, short. Absent when detached.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
+        &quot;label&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The name it is shown under: the branch, or `detached/&lt;short commit&gt;`.&quot;
         },
-        &quot;current&quot;: {
-          &quot;description&quot;: &quot;The call came from inside this work tree.&quot;,
+        &quot;exists&quot;: {
+          &quot;description&quot;: &quot;The directory git registered still exists on disk.&quot;,
           &quot;type&quot;: &quot;boolean&quot;
         },
         &quot;detached&quot;: {
-          &quot;description&quot;: &quot;HEAD is detached here.&quot;,
-          &quot;type&quot;: &quot;boolean&quot;
-        },
-        &quot;diagnostics&quot;: {
-          &quot;description&quot;: &quot;What is wrong with this work tree, if anything.&quot;,
-          &quot;items&quot;: {
-            &quot;$ref&quot;: &quot;#/$defs/TopologyDiagnostic&quot;
-          },
-          &quot;type&quot;: &quot;array&quot;
+          &quot;type&quot;: &quot;boolean&quot;,
+          &quot;description&quot;: &quot;HEAD is detached here.&quot;
         },
         &quot;dirty&quot;: {
           &quot;anyOf&quot;: [
@@ -910,16 +701,52 @@ the policy's <code>checkout.trunk_distance</code>: what it would serve, and how 
           ],
           &quot;description&quot;: &quot;Uncommitted work here. Absent when it was not asked for: it costs one subprocess per\nwork tree, and a topology check does not need it.&quot;
         },
-        &quot;exists&quot;: {
-          &quot;description&quot;: &quot;The directory git registered still exists on disk.&quot;,
-          &quot;type&quot;: &quot;boolean&quot;
+        &quot;standing&quot;: {
+          &quot;description&quot;: &quot;Where it stands against the topology.&quot;,
+          &quot;$ref&quot;: &quot;#/$defs/Standing&quot;
         },
-        &quot;expected_path&quot;: {
-          &quot;description&quot;: &quot;Where this branch&#39;s work tree belongs. Absent when detached, or for the primary\ncheckout on the trunk.&quot;,
+        &quot;diagnostics&quot;: {
+          &quot;description&quot;: &quot;What is wrong with this work tree, if anything.&quot;,
+          &quot;items&quot;: {
+            &quot;$ref&quot;: &quot;#/$defs/TopologyDiagnostic&quot;
+          },
+          &quot;type&quot;: &quot;array&quot;
+        },
+        &quot;prunable&quot;: {
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ],
+          &quot;description&quot;: &quot;Prunable, with git&#39;s reason.&quot;
+        },
+        &quot;locked&quot;: {
+          &quot;description&quot;: &quot;Locked, with git&#39;s reason; an empty string when it recorded none.&quot;,
           &quot;type&quot;: [
             &quot;string&quot;,
             &quot;null&quot;
           ]
+        },
+        &quot;current&quot;: {
+          &quot;type&quot;: &quot;boolean&quot;,
+          &quot;description&quot;: &quot;The call came from inside this work tree.&quot;
+        },
+        &quot;path&quot;: {
+          &quot;description&quot;: &quot;Absolute, as git holds it.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;branch&quot;: {
+          &quot;description&quot;: &quot;The branch checked out here, short. Absent when detached.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;expected_path&quot;: {
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ],
+          &quot;description&quot;: &quot;Where this branch&#39;s work tree belongs. Absent when detached, or for the primary\ncheckout on the trunk.&quot;
         },
         &quot;head&quot;: {
           &quot;description&quot;: &quot;The commit checked out here.&quot;,
@@ -936,34 +763,8 @@ the policy's <code>checkout.trunk_distance</code>: what it would serve, and how 
           ]
         },
         &quot;kind&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/WorktreeKind&quot;,
-          &quot;description&quot;: &quot;Primary or linked.&quot;
-        },
-        &quot;label&quot;: {
-          &quot;description&quot;: &quot;The name it is shown under: the branch, or `detached/&lt;short commit&gt;`.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;locked&quot;: {
-          &quot;description&quot;: &quot;Locked, with git&#39;s reason; an empty string when it recorded none.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;path&quot;: {
-          &quot;description&quot;: &quot;Absolute, as git holds it.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;prunable&quot;: {
-          &quot;description&quot;: &quot;Prunable, with git&#39;s reason.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;standing&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/Standing&quot;,
-          &quot;description&quot;: &quot;Where it stands against the topology.&quot;
+          &quot;description&quot;: &quot;Primary or linked.&quot;,
+          &quot;$ref&quot;: &quot;#/$defs/WorktreeKind&quot;
         },
         &quot;upstream&quot;: {
           &quot;anyOf&quot;: [
@@ -977,68 +778,267 @@ the policy's <code>checkout.trunk_distance</code>: what it would serve, and how 
           &quot;description&quot;: &quot;The branch&#39;s upstream and its distance from it.&quot;
         }
       },
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;RepositoryView&quot;: {
+      &quot;required&quot;: [
+        &quot;primary_worktree&quot;,
+        &quot;git_common_dir&quot;,
+        &quot;name&quot;
+      ],
+      &quot;properties&quot;: {
+        &quot;primary_worktree&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The primary checkout: what the container is named after.&quot;
+        },
+        &quot;git_common_dir&quot;: {
+          &quot;description&quot;: &quot;The common git directory: the repository&#39;s identity.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;name&quot;: {
+          &quot;description&quot;: &quot;The primary checkout&#39;s directory name.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      },
+      &quot;type&quot;: &quot;object&quot;,
+      &quot;description&quot;: &quot;The repository&#39;s identity, as the topology reports it.&quot;
+    },
+    &quot;Distance&quot;: {
+      &quot;required&quot;: [
+        &quot;behind&quot;,
+        &quot;ahead&quot;
+      ],
+      &quot;description&quot;: &quot;How many commits two refs have that the other lacks.\n\n```\nuse majordomus_cli::worktree::trunk::Distance;\nlet d = Distance { behind: 779, ahead: 0 };\nassert_eq!(serde_json::to_value(d).unwrap(), serde_json::json!({\&quot;behind\&quot;: 779, \&quot;ahead\&quot;: 0}));\n```&quot;,
+      &quot;properties&quot;: {
+        &quot;ahead&quot;: {
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;,
+          &quot;description&quot;: &quot;Commits of this ref the remote trunk lacks.&quot;,
+          &quot;format&quot;: &quot;uint64&quot;
+        },
+        &quot;behind&quot;: {
+          &quot;description&quot;: &quot;Commits of the remote trunk this ref lacks.&quot;,
+          &quot;format&quot;: &quot;uint64&quot;,
+          &quot;type&quot;: &quot;integer&quot;,
+          &quot;minimum&quot;: 0
+        }
+      },
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;Standing&quot;: {
+      &quot;description&quot;: &quot;Where a work tree stands against the topology.&quot;,
+      &quot;oneOf&quot;: [
+        {
+          &quot;description&quot;: &quot;The primary checkout: exempt from the path rule, held to the trunk rule.&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;primary&quot;
+        },
+        {
+          &quot;const&quot;: &quot;canonical&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;A linked work tree at exactly its branch&#39;s canonical path.&quot;
+        },
+        {
+          &quot;description&quot;: &quot;A linked work tree somewhere else. Migration brings it home.&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;misplaced&quot;
+        },
+        {
+          &quot;const&quot;: &quot;detached&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;A linked work tree with no branch. It has no canonical path and is never moved.&quot;
+        },
+        {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;ephemeral&quot;,
+          &quot;description&quot;: &quot;A linked work tree under the operating system&#39;s temporary directory or under the\nprimary checkout&#39;s `.claude/worktrees/`: a session&#39;s scratch checkout, owned and\nremoved by the harness that made it. Reported; migrated only on request.&quot;
+        },
+        {
+          &quot;const&quot;: &quot;missing&quot;,
+          &quot;description&quot;: &quot;A registration whose directory is gone. Repair drops it.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      ]
+    },
+    &quot;TrunkSource&quot;: {
+      &quot;oneOf&quot;: [
+        {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;`refs/remotes/&lt;remote&gt;/HEAD`: what the remote calls its default branch.&quot;,
+          &quot;const&quot;: &quot;remote_head&quot;
+        },
+        {
+          &quot;const&quot;: &quot;default_branch_config&quot;,
+          &quot;description&quot;: &quot;`init.defaultBranch` in the git configuration, and that branch exists locally.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;conventional_name&quot;,
+          &quot;description&quot;: &quot;Exactly one of `main` and `master` exists locally.&quot;
+        },
+        {
+          &quot;description&quot;: &quot;The branch the primary checkout holds, because nothing else said.&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;primary_checkout&quot;
+        },
+        {
+          &quot;const&quot;: &quot;unknown&quot;,
+          &quot;description&quot;: &quot;Nothing said; the trunk is unknown and every check that needs it says so.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      ],
+      &quot;description&quot;: &quot;Where the trunk was learned from, in the order it is looked for.&quot;
+    },
+    &quot;ContainerView&quot;: {
       &quot;required&quot;: [
         &quot;path&quot;,
-        &quot;kind&quot;,
-        &quot;standing&quot;,
-        &quot;label&quot;,
-        &quot;detached&quot;,
-        &quot;exists&quot;,
-        &quot;current&quot;,
-        &quot;diagnostics&quot;
+        &quot;suffix&quot;,
+        &quot;exists&quot;
       ],
-      &quot;type&quot;: &quot;object&quot;
+      &quot;description&quot;: &quot;The container, as the topology reports it.&quot;,
+      &quot;type&quot;: &quot;object&quot;,
+      &quot;properties&quot;: {
+        &quot;suffix&quot;: {
+          &quot;description&quot;: &quot;The suffix it was derived with.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;exists&quot;: {
+          &quot;description&quot;: &quot;It exists on disk. Created by the first worktree that needs it.&quot;,
+          &quot;type&quot;: &quot;boolean&quot;
+        },
+        &quot;path&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The derived path.&quot;
+        }
+      }
+    },
+    &quot;TrunkDistance&quot;: {
+      &quot;description&quot;: &quot;A checkout&#39;s distance from the remote trunk, judged.\n\n```\nuse majordomus_cli::worktree::trunk::{Distance, TrunkDistance, TrunkStanding};\nlet d: TrunkDistance = serde_json::from_value(serde_json::json!({\n    \&quot;standing\&quot;: \&quot;stale\&quot;, \&quot;local_trunk_standing\&quot;: \&quot;stale\&quot;,\n    \&quot;worktree\&quot;: \&quot;/repo\&quot;, \&quot;on_trunk\&quot;: true,\n    \&quot;checkout\&quot;: {\&quot;behind\&quot;: 779, \&quot;ahead\&quot;: 0},\n    \&quot;thresholds\&quot;: {\&quot;warn_behind\&quot;: 50, \&quot;fail_behind\&quot;: 300},\n    \&quot;message\&quot;: \&quot;779 commits behind origin/master\&quot;,\n})).unwrap();\nassert_eq!(d.standing, TrunkStanding::Stale);\nassert_eq!(d.checkout, Some(Distance { behind: 779, ahead: 0 }));\n// what is absent stays absent in the answer\nassert!(serde_json::to_value(&amp;d).unwrap().get(\&quot;remedy\&quot;).is_none());\n```&quot;,
+      &quot;required&quot;: [
+        &quot;standing&quot;,
+        &quot;local_trunk_standing&quot;,
+        &quot;worktree&quot;,
+        &quot;on_trunk&quot;,
+        &quot;thresholds&quot;,
+        &quot;message&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;,
+      &quot;properties&quot;: {
+        &quot;on_trunk&quot;: {
+          &quot;type&quot;: &quot;boolean&quot;,
+          &quot;description&quot;: &quot;The work tree holds the trunk branch itself.&quot;
+        },
+        &quot;local_trunk_standing&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/TrunkStanding&quot;,
+          &quot;description&quot;: &quot;Where the local trunk branch stands, judged the same way: what a branch made from it\nstarts from. The same as `standing` when the checkout holds the trunk.&quot;
+        },
+        &quot;remote_trunk&quot;: {
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ],
+          &quot;description&quot;: &quot;The remote-tracking trunk counted against (`origin/master`).&quot;
+        },
+        &quot;fetched_at&quot;: {
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ],
+          &quot;description&quot;: &quot;When the repository last fetched (the time of `FETCH_HEAD`), RFC 3339: the moment\nthis answer is true as of. Absent when it never fetched.&quot;
+        },
+        &quot;checkout&quot;: {
+          &quot;anyOf&quot;: [
+            {
+              &quot;$ref&quot;: &quot;#/$defs/Distance&quot;
+            },
+            {
+              &quot;type&quot;: &quot;null&quot;
+            }
+          ],
+          &quot;description&quot;: &quot;The checkout&#39;s `HEAD` against the remote trunk. While a merge is in progress, the\ncommits it brings in count as present: the commit being made will hold them, so the\nmerge that brings a checkout current is never judged by the tree it is replacing.&quot;
+        },
+        &quot;trunk&quot;: {
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ],
+          &quot;description&quot;: &quot;The trunk branch, short.&quot;
+        },
+        &quot;local_trunk&quot;: {
+          &quot;anyOf&quot;: [
+            {
+              &quot;$ref&quot;: &quot;#/$defs/Distance&quot;
+            },
+            {
+              &quot;type&quot;: &quot;null&quot;
+            }
+          ],
+          &quot;description&quot;: &quot;The local trunk branch against the remote trunk: what a branch made from the local\ntrunk starts from.&quot;
+        },
+        &quot;remote_head&quot;: {
+          &quot;description&quot;: &quot;The commit the remote-tracking trunk names.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;worktree&quot;: {
+          &quot;description&quot;: &quot;The work tree measured.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;thresholds&quot;: {
+          &quot;description&quot;: &quot;The thresholds judged against, as `checkout.trunk_distance` declares them.&quot;,
+          &quot;$ref&quot;: &quot;#/$defs/TrunkThresholds&quot;
+        },
+        &quot;remedy&quot;: {
+          &quot;description&quot;: &quot;The commands that bring the checkout and the local trunk current, when either is\nbehind. Suggested, never run.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;standing&quot;: {
+          &quot;description&quot;: &quot;Where the checkout stands: its `HEAD` — with the commit a merge in progress brings\nin — judged against the thresholds. This is what its server serves.&quot;,
+          &quot;$ref&quot;: &quot;#/$defs/TrunkStanding&quot;
+        },
+        &quot;message&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;What the standing means here, in one line.&quot;
+        }
+      }
+    },
+    &quot;TrunkStanding&quot;: {
+      &quot;description&quot;: &quot;Where a checkout stands against the remote trunk.\n\n```\nuse majordomus_cli::worktree::trunk::TrunkStanding;\nlet s: TrunkStanding = serde_json::from_str(r#\&quot;\&quot;lagging\&quot;\&quot;#).unwrap();\nassert_eq!(s, TrunkStanding::Lagging);\nassert_eq!(serde_json::to_value(TrunkStanding::Unmeasured).unwrap(), \&quot;unmeasured\&quot;);\n```&quot;,
+      &quot;oneOf&quot;: [
+        {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;current&quot;,
+          &quot;description&quot;: &quot;Behind by less than the warn threshold, or not behind at all.&quot;
+        },
+        {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;lagging&quot;,
+          &quot;description&quot;: &quot;At or past the warn threshold: what it serves is old enough to mislead.&quot;
+        },
+        {
+          &quot;description&quot;: &quot;At or past the fail threshold: what it serves is the wrong tree.&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;stale&quot;
+        },
+        {
+          &quot;const&quot;: &quot;unjudged&quot;,
+          &quot;description&quot;: &quot;Behind, and the policy declares no threshold to judge the distance by.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;unmeasured&quot;,
+          &quot;description&quot;: &quot;The distance could not be measured: no trunk, no remote-tracking trunk, no `HEAD`.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      ]
     }
-  },
-  &quot;description&quot;: &quot;The answer to \&quot;where am I, and is that where I belong\&quot;.&quot;,
-  &quot;properties&quot;: {
-    &quot;canonical&quot;: {
-      &quot;description&quot;: &quot;Whether this work tree is where it belongs: canonical, or the primary checkout on\nthe trunk, or detached.&quot;,
-      &quot;type&quot;: &quot;boolean&quot;
-    },
-    &quot;container&quot;: {
-      &quot;$ref&quot;: &quot;#/$defs/ContainerView&quot;,
-      &quot;description&quot;: &quot;The container.&quot;
-    },
-    &quot;repository&quot;: {
-      &quot;$ref&quot;: &quot;#/$defs/RepositoryView&quot;,
-      &quot;description&quot;: &quot;The repository.&quot;
-    },
-    &quot;repository_errors&quot;: {
-      &quot;description&quot;: &quot;How many error-level diagnostics the whole topology carries.&quot;,
-      &quot;format&quot;: &quot;uint&quot;,
-      &quot;minimum&quot;: 0,
-      &quot;type&quot;: &quot;integer&quot;
-    },
-    &quot;schema&quot;: {
-      &quot;description&quot;: &quot;`SCHEMA`.&quot;,
-      &quot;type&quot;: &quot;string&quot;
-    },
-    &quot;trunk&quot;: {
-      &quot;$ref&quot;: &quot;#/$defs/TrunkView&quot;,
-      &quot;description&quot;: &quot;The trunk.&quot;
-    },
-    &quot;trunk_distance&quot;: {
-      &quot;$ref&quot;: &quot;#/$defs/TrunkDistance&quot;,
-      &quot;description&quot;: &quot;How far this work tree and the local trunk are from the remote trunk, judged against\nthe policy&#39;s `checkout.trunk_distance`: what it would serve, and how old that is.&quot;
-    },
-    &quot;worktree&quot;: {
-      &quot;$ref&quot;: &quot;#/$defs/WorktreeState&quot;,
-      &quot;description&quot;: &quot;The work tree the call came from, with its uncommitted work counted.&quot;
-    }
-  },
-  &quot;required&quot;: [
-    &quot;schema&quot;,
-    &quot;repository&quot;,
-    &quot;container&quot;,
-    &quot;trunk&quot;,
-    &quot;worktree&quot;,
-    &quot;canonical&quot;,
-    &quot;repository_errors&quot;,
-    &quot;trunk_distance&quot;
-  ],
-  &quot;title&quot;: &quot;StatusReport&quot;,
-  &quot;type&quot;: &quot;object&quot;
+  }
 }</pre></div>
   </details>
 </div>
@@ -1069,7 +1069,7 @@ the policy's <code>checkout.trunk_distance</code>: what it would serve, and how 
         <div><dt class="text-body-subtle">Rust module</dt><dd class="min-w-0 break-all font-mono text-heading">majordomus_cli::capability::builtin::worktree</dd></div>
         <div><dt class="text-body-subtle">input type</dt><dd class="font-mono text-heading">StatusInput</dd></div>
         <div><dt class="text-body-subtle">output type</dt><dd class="font-mono text-heading">StatusReport</dd></div>
-        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/aa9f816f8673880ab4beb6dbebff688f9da5bb65/docs/generated/modules/worktree.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/worktree.md</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">c514db707bb1f5f7557f2a1629d42c4bdc05eb7ef58464c288e42bafcd3d8720</dd></div>
+        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/docs/generated/modules/worktree.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/worktree.md</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">3f734f2faf797f0ca7c39b4cd837e68b6619c41c6f6711f3d3aeca8f341934eb</dd></div>
         <div><dt class="text-body-subtle">generated by</dt><dd class="font-mono text-heading">majordomus-cli 1.0.0-alpha.10</dd></div>
       </dl>
     </div>
@@ -1125,9 +1125,9 @@ the policy's <code>checkout.trunk_distance</code>: what it would serve, and how 
       <div class="min-w-0">
         <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">Project</h2><ul class="space-y-2 text-sm font-medium text-body">
           <li><a href="https://github.com/korczis/prismatic-majordomus" class="hover:text-heading hover:underline">GitHub</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/aa9f816f8673880ab4beb6dbebff688f9da5bb65/LICENSE" class="hover:text-heading hover:underline">MIT licence</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/aa9f816f8673880ab4beb6dbebff688f9da5bb65/SECURITY.md" class="hover:text-heading hover:underline">Security policy</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/aa9f816f8673880ab4beb6dbebff688f9da5bb65/CONTRIBUTING.md" class="hover:text-heading hover:underline">Contributing guide</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/LICENSE" class="hover:text-heading hover:underline">MIT licence</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/SECURITY.md" class="hover:text-heading hover:underline">Security policy</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/CONTRIBUTING.md" class="hover:text-heading hover:underline">Contributing guide</a></li>
         </ul>
       </div>
     </div>
@@ -1135,7 +1135,7 @@ the policy's <code>checkout.trunk_distance</code>: what it would serve, and how 
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.10</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/aa9f816f8673880ab4beb6dbebff688f9da5bb65" class="font-mono underline">aa9f816</a> · inputs <span class="font-mono">a64b981ed16e</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/architecture/" class="underline">how this site is derived</a> names them.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.10</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/745db2ea21e02613943face75a2bf95542be1f2e" class="font-mono underline">745db2e</a> · inputs <span class="font-mono">0a58c217d1b7</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/architecture/" class="underline">how this site is derived</a> names them.</p>
     </div>
   </div>
 </footer>

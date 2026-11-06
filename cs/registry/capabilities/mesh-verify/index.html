@@ -248,70 +248,158 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
         <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
         <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Kontroly v pořadí, v jakém proběhly.</td>
       </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">runtime</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">ne</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Tento runtime.</td>
+      </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">otisk</td>
         <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
         <td class="px-3 py-2 font-mono text-xs text-body">ne</td>
         <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Digest stavu po kolech.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">ok</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">boolean</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Zda platí každá kontrola a uspělo každé kolo.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">peers</td>
         <td class="px-3 py-2 font-mono text-xs text-body">array</td>
         <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
         <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Verdikt každého propojeného peera.</td>
       </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">runtime</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">ne</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Tento runtime.</td>
+        <td class="px-3 py-2 font-mono text-heading">ok</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">boolean</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Zda platí každá kontrola a uspělo každé kolo.</td>
       </tr></tbody>
     </table>
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
+  &quot;properties&quot;: {
+    &quot;checks&quot;: {
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;description&quot;: &quot;The checks, in the order they ran.&quot;,
+      &quot;items&quot;: {
+        &quot;$ref&quot;: &quot;#/$defs/MeshVerifyCheck&quot;
+      }
+    },
+    &quot;runtime&quot;: {
+      &quot;description&quot;: &quot;This runtime.&quot;,
+      &quot;type&quot;: [
+        &quot;string&quot;,
+        &quot;null&quot;
+      ]
+    },
+    &quot;digest&quot;: {
+      &quot;type&quot;: [
+        &quot;string&quot;,
+        &quot;null&quot;
+      ],
+      &quot;description&quot;: &quot;The state digest after the rounds.&quot;
+    },
+    &quot;peers&quot;: {
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;description&quot;: &quot;Every linked peer&#39;s verdict.&quot;,
+      &quot;items&quot;: {
+        &quot;$ref&quot;: &quot;#/$defs/PeerVerdict&quot;
+      }
+    },
+    &quot;ok&quot;: {
+      &quot;description&quot;: &quot;Whether every check holds and every round succeeded.&quot;,
+      &quot;type&quot;: &quot;boolean&quot;
+    }
+  },
+  &quot;type&quot;: &quot;object&quot;,
+  &quot;title&quot;: &quot;MeshVerifyReport&quot;,
+  &quot;required&quot;: [
+    &quot;ok&quot;,
+    &quot;checks&quot;,
+    &quot;peers&quot;
+  ],
+  &quot;description&quot;: &quot;What `mesh verify` found: the local checks, every peer&#39;s round, and the state digest\nafterwards. The digest is what makes the report worth running on two machines — two\nruntimes that print the same digest have the same sessions, claims, handovers and\nreviews, and two that do not have something to reconcile, whatever their links say.\n\n`ok` is the conjunction of everything below it, so a caller may act on the one field\nand a person may read the rest to find out which part of it was false.\n\n```\n# use std::sync::Arc;\n# use majordomus_cli::mesh::config::{CooperationConfig, TrustConfig};\n# use majordomus_cli::mesh::cooperation::{CheckoutFacts, Cooperation, CooperationSetup};\n# use majordomus_cli::mesh::identity::NodeIdentity;\n# use majordomus_cli::mesh::link::HttpTransport;\n# use majordomus_cli::mesh::registry::MeshRegistry;\n# use majordomus_cli::mesh::repository::of_root_commits;\n# let cooperation = Cooperation::new(CooperationSetup {\n#     identity: Arc::new(NodeIdentity::ephemeral().unwrap()), runtime: \&quot;0000000000000001\&quot;.into(),\n#     repository: of_root_commits(&amp;[\&quot;root\&quot;.into()]), endpoints: vec![\&quot;127.0.0.1:9\&quot;.into()],\n#     version: \&quot;doc\&quot;.into(), config: CooperationConfig::default(), trust: TrustConfig::default(),\n#     journal_path: None, registry: Arc::new(MeshRegistry::new()),\n#     transport: Arc::new(HttpTransport), board: None, checkout: CheckoutFacts::default(),\n# }).unwrap();\nuse majordomus_cli::mesh::cooperation::MeshVerifyReport;\n\nlet report: MeshVerifyReport = cooperation.verify();\nassert_eq!(report.runtime.as_deref(), Some(cooperation.runtime_key()));\nassert_eq!(report.digest, Some(cooperation.state().digest), \&quot;what a peer is compared to\&quot;);\nassert_eq!(report.ok, report.checks.iter().all(|c| c.ok), \&quot;one field for every check\&quot;);\n```&quot;,
   &quot;$defs&quot;: {
+    &quot;PeerVerdict&quot;: {
+      &quot;description&quot;: &quot;What one sync round, run now rather than remembered, said about one peer. Verification\ndoes not report the link&#39;s standing and stop there: it exchanges with the peer and says\nwhether the exchange worked and whether both sides ended holding the same marks, which\nis the difference between a peer that answers and a peer that agrees.\n\n`round_trip` and `converged` are optional because a peer this runtime does not dial is\nnot asked — an absent answer is not a failed one, and reporting `false` there would\nmake an inbound-only link look broken every time.\n\n```\n# use std::collections::BTreeMap;\n# use std::sync::{Arc, Mutex, Weak};\n# use majordomus_cli::mesh::config::{CooperationConfig, TrustConfig};\n# use majordomus_cli::mesh::cooperation::*;\n# use majordomus_cli::mesh::identity::NodeIdentity;\n# use majordomus_cli::mesh::link::{LinkReply, LinkTransport, Signed, HELLO_PATH};\n# use majordomus_cli::mesh::registry::MeshRegistry;\n# use majordomus_cli::mesh::repository::{of_root_commits, runtime_id};\n# use majordomus_cli::mesh::trust::TrustPolicy;\n# #[derive(Default)] struct Net(Mutex&lt;BTreeMap&lt;String, Weak&lt;Cooperation&gt;&gt;&gt;);\n# impl LinkTransport for Net {\n#   fn post(&amp;self, e: &amp;str, p: &amp;str, m: &amp;Signed) -&gt; Result&lt;LinkReply, String&gt; {\n#     let peer = (self.0.lock().unwrap().get(e).and_then(Weak::upgrade))\n#         .ok_or_else(|| format!(\&quot;{e}: nobody there\&quot;))?;\n#     Ok(if p == HELLO_PATH { peer.accept_hello(m) } else { peer.accept_sync(m) }) } }\n# let net = Arc::new(Net::default());\n# let runtime = |endpoint: &amp;str| { let c = Cooperation::new(CooperationSetup {\n#     identity: Arc::new(NodeIdentity::ephemeral().unwrap()), runtime: runtime_id(endpoint),\n#     repository: of_root_commits(&amp;[\&quot;root\&quot;.into()]), endpoints: vec![endpoint.into()],\n#     version: \&quot;doc\&quot;.into(), config: CooperationConfig::default(),\n#     trust: TrustConfig { policy: TrustPolicy::Tofu, allow: vec![] }, journal_path: None,\n#     registry: Arc::new(MeshRegistry::new()),\n#     transport: Arc::clone(&amp;net) as Arc&lt;dyn LinkTransport&gt;, board: None,\n#     checkout: CheckoutFacts::default() }).unwrap();\n#   net.0.lock().unwrap().insert(endpoint.into(), Arc::downgrade(&amp;c)); c };\n# let (a, b) = (runtime(\&quot;a:1\&quot;), runtime(\&quot;b:1\&quot;));\na.dial(&amp;[\&quot;b:1\&quot;.into()]).unwrap();\n\nlet dialer: &amp;PeerVerdict = &amp;a.verify().peers[0];\nassert_eq!(dialer.round_trip, Some(true), \&quot;asked, and answered\&quot;);\n\nlet answerer = &amp;b.verify().peers[0];\nassert!(!answerer.dialed, \&quot;B does not dial A, so B asks nothing of it\&quot;);\nassert_eq!(answerer.round_trip, None, \&quot;and reports no verdict it did not earn\&quot;);\n```&quot;,
+      &quot;properties&quot;: {
+        &quot;runtime&quot;: {
+          &quot;description&quot;: &quot;The peer&#39;s runtime key.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;converged&quot;: {
+          &quot;type&quot;: [
+            &quot;boolean&quot;,
+            &quot;null&quot;
+          ],
+          &quot;description&quot;: &quot;Whether both sides hold the same high-water mark of every stream after the round.&quot;
+        },
+        &quot;dialed&quot;: {
+          &quot;description&quot;: &quot;Whether this runtime dials the peer (and so ran a round with it now).&quot;,
+          &quot;type&quot;: &quot;boolean&quot;
+        },
+        &quot;round_trip&quot;: {
+          &quot;description&quot;: &quot;Whether the round succeeded; `None` when the peer dials this runtime instead.&quot;,
+          &quot;type&quot;: [
+            &quot;boolean&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;detail&quot;: {
+          &quot;description&quot;: &quot;What happened.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;rtt_ms&quot;: {
+          &quot;type&quot;: [
+            &quot;integer&quot;,
+            &quot;null&quot;
+          ],
+          &quot;format&quot;: &quot;uint64&quot;,
+          &quot;description&quot;: &quot;The round trip, milliseconds.&quot;,
+          &quot;minimum&quot;: 0
+        },
+        &quot;state&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/LinkState&quot;,
+          &quot;description&quot;: &quot;The link&#39;s standing after the round.&quot;
+        }
+      },
+      &quot;type&quot;: &quot;object&quot;,
+      &quot;required&quot;: [
+        &quot;runtime&quot;,
+        &quot;state&quot;,
+        &quot;dialed&quot;,
+        &quot;detail&quot;
+      ]
+    },
     &quot;LinkState&quot;: {
       &quot;description&quot;: &quot;A link&#39;s standing, from this runtime&#39;s side. It is a statement about a connection and\nnever about the peer: a runtime reachable only through a third party is `Expired` here\nwhile its streams beat on everywhere, which is why claims follow streams and not this.\n\nThe variants are ordered by how far the link has fallen, so the worst link in a table\nis the maximum and a reader never has to rank them by hand.\n\n```\nuse majordomus_cli::mesh::cooperation::LinkState;\n\nlet table = [LinkState::Connected, LinkState::Unreachable, LinkState::Degraded];\nassert_eq!(table.iter().max(), Some(&amp;LinkState::Unreachable), \&quot;the worst link shows\&quot;);\nassert_eq!(serde_json::to_value(LinkState::Connected).unwrap(), \&quot;connected\&quot;);\n```&quot;,
       &quot;oneOf&quot;: [
         {
+          &quot;type&quot;: &quot;string&quot;,
           &quot;const&quot;: &quot;connecting&quot;,
-          &quot;description&quot;: &quot;Handshaking, or never yet exchanged.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;description&quot;: &quot;Handshaking, or never yet exchanged.&quot;
         },
         {
+          &quot;type&quot;: &quot;string&quot;,
           &quot;const&quot;: &quot;connected&quot;,
-          &quot;description&quot;: &quot;An exchange within two heartbeats.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;description&quot;: &quot;An exchange within two heartbeats.&quot;
         },
         {
+          &quot;type&quot;: &quot;string&quot;,
           &quot;const&quot;: &quot;degraded&quot;,
-          &quot;description&quot;: &quot;Rounds are failing; the last exchange is under half the expiry old.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;description&quot;: &quot;Rounds are failing; the last exchange is under half the expiry old.&quot;
         },
         {
+          &quot;type&quot;: &quot;string&quot;,
           &quot;const&quot;: &quot;unreachable&quot;,
-          &quot;description&quot;: &quot;The last exchange is over half the expiry old; the link is about to expire.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;description&quot;: &quot;The last exchange is over half the expiry old; the link is about to expire.&quot;
         },
         {
           &quot;const&quot;: &quot;expired&quot;,
-          &quot;description&quot;: &quot;No exchange within the expiry: the link is dropped and will be re-dialed.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;No exchange within the expiry: the link is dropped and will be re-dialed.&quot;
         }
       ]
     },
     &quot;MeshVerifyCheck&quot;: {
-      &quot;description&quot;: &quot;One verification check: what was checked, whether it holds, the evidence, and — when\nsomething is wrong or limited — the impact and what to do about it.\n\nThe impact and the remedy are carried with the verdict rather than left to whoever\nrenders it, so that a failing check is actionable wherever it is read — in a terminal,\nin a JSON answer, or by an agent that has never seen the mesh before. A check that\nholds carries neither, because there is nothing to do.\n\n```\n# use std::sync::Arc;\n# use majordomus_cli::mesh::config::{CooperationConfig, TrustConfig};\n# use majordomus_cli::mesh::cooperation::{CheckoutFacts, Cooperation, CooperationSetup};\n# use majordomus_cli::mesh::identity::NodeIdentity;\n# use majordomus_cli::mesh::link::HttpTransport;\n# use majordomus_cli::mesh::registry::MeshRegistry;\n# use majordomus_cli::mesh::repository::of_root_commits;\n# let cooperation = Cooperation::new(CooperationSetup {\n#     identity: Arc::new(NodeIdentity::ephemeral().unwrap()), runtime: \&quot;0000000000000001\&quot;.into(),\n#     repository: of_root_commits(&amp;[\&quot;root\&quot;.into()]), endpoints: vec![\&quot;127.0.0.1:9\&quot;.into()],\n#     version: \&quot;doc\&quot;.into(), config: CooperationConfig::default(), trust: TrustConfig::default(),\n#     journal_path: None, registry: Arc::new(MeshRegistry::new()),\n#     transport: Arc::new(HttpTransport), board: None, checkout: CheckoutFacts::default(),\n# }).unwrap();\nuse majordomus_cli::mesh::cooperation::MeshVerifyCheck;\n\nlet report = cooperation.verify();\nlet first: &amp;MeshVerifyCheck = &amp;report.checks[0];\nassert_eq!(first.check, \&quot;cooperation\&quot;);\nassert!(first.detail.contains(cooperation.runtime_key()), \&quot;the evidence, not a verdict\&quot;);\nassert!(first.remediation.is_none(), \&quot;a check that holds asks for nothing\&quot;);\n```&quot;,
       &quot;properties&quot;: {
         &quot;check&quot;: {
           &quot;description&quot;: &quot;What was checked.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;detail&quot;: {
-          &quot;description&quot;: &quot;The evidence.&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
         &quot;impact&quot;: {
@@ -322,8 +410,12 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
           ]
         },
         &quot;ok&quot;: {
-          &quot;description&quot;: &quot;Whether it holds.&quot;,
-          &quot;type&quot;: &quot;boolean&quot;
+          &quot;type&quot;: &quot;boolean&quot;,
+          &quot;description&quot;: &quot;Whether it holds.&quot;
+        },
+        &quot;detail&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The evidence.&quot;
         },
         &quot;remediation&quot;: {
           &quot;description&quot;: &quot;What to do.&quot;,
@@ -338,102 +430,10 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
         &quot;ok&quot;,
         &quot;detail&quot;
       ],
-      &quot;type&quot;: &quot;object&quot;
-    },
-    &quot;PeerVerdict&quot;: {
-      &quot;description&quot;: &quot;What one sync round, run now rather than remembered, said about one peer. Verification\ndoes not report the link&#39;s standing and stop there: it exchanges with the peer and says\nwhether the exchange worked and whether both sides ended holding the same marks, which\nis the difference between a peer that answers and a peer that agrees.\n\n`round_trip` and `converged` are optional because a peer this runtime does not dial is\nnot asked — an absent answer is not a failed one, and reporting `false` there would\nmake an inbound-only link look broken every time.\n\n```\n# use std::collections::BTreeMap;\n# use std::sync::{Arc, Mutex, Weak};\n# use majordomus_cli::mesh::config::{CooperationConfig, TrustConfig};\n# use majordomus_cli::mesh::cooperation::*;\n# use majordomus_cli::mesh::identity::NodeIdentity;\n# use majordomus_cli::mesh::link::{LinkReply, LinkTransport, Signed, HELLO_PATH};\n# use majordomus_cli::mesh::registry::MeshRegistry;\n# use majordomus_cli::mesh::repository::{of_root_commits, runtime_id};\n# use majordomus_cli::mesh::trust::TrustPolicy;\n# #[derive(Default)] struct Net(Mutex&lt;BTreeMap&lt;String, Weak&lt;Cooperation&gt;&gt;&gt;);\n# impl LinkTransport for Net {\n#   fn post(&amp;self, e: &amp;str, p: &amp;str, m: &amp;Signed) -&gt; Result&lt;LinkReply, String&gt; {\n#     let peer = (self.0.lock().unwrap().get(e).and_then(Weak::upgrade))\n#         .ok_or_else(|| format!(\&quot;{e}: nobody there\&quot;))?;\n#     Ok(if p == HELLO_PATH { peer.accept_hello(m) } else { peer.accept_sync(m) }) } }\n# let net = Arc::new(Net::default());\n# let runtime = |endpoint: &amp;str| { let c = Cooperation::new(CooperationSetup {\n#     identity: Arc::new(NodeIdentity::ephemeral().unwrap()), runtime: runtime_id(endpoint),\n#     repository: of_root_commits(&amp;[\&quot;root\&quot;.into()]), endpoints: vec![endpoint.into()],\n#     version: \&quot;doc\&quot;.into(), config: CooperationConfig::default(),\n#     trust: TrustConfig { policy: TrustPolicy::Tofu, allow: vec![] }, journal_path: None,\n#     registry: Arc::new(MeshRegistry::new()),\n#     transport: Arc::clone(&amp;net) as Arc&lt;dyn LinkTransport&gt;, board: None,\n#     checkout: CheckoutFacts::default() }).unwrap();\n#   net.0.lock().unwrap().insert(endpoint.into(), Arc::downgrade(&amp;c)); c };\n# let (a, b) = (runtime(\&quot;a:1\&quot;), runtime(\&quot;b:1\&quot;));\na.dial(&amp;[\&quot;b:1\&quot;.into()]).unwrap();\n\nlet dialer: &amp;PeerVerdict = &amp;a.verify().peers[0];\nassert_eq!(dialer.round_trip, Some(true), \&quot;asked, and answered\&quot;);\n\nlet answerer = &amp;b.verify().peers[0];\nassert!(!answerer.dialed, \&quot;B does not dial A, so B asks nothing of it\&quot;);\nassert_eq!(answerer.round_trip, None, \&quot;and reports no verdict it did not earn\&quot;);\n```&quot;,
-      &quot;properties&quot;: {
-        &quot;converged&quot;: {
-          &quot;description&quot;: &quot;Whether both sides hold the same high-water mark of every stream after the round.&quot;,
-          &quot;type&quot;: [
-            &quot;boolean&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;detail&quot;: {
-          &quot;description&quot;: &quot;What happened.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;dialed&quot;: {
-          &quot;description&quot;: &quot;Whether this runtime dials the peer (and so ran a round with it now).&quot;,
-          &quot;type&quot;: &quot;boolean&quot;
-        },
-        &quot;round_trip&quot;: {
-          &quot;description&quot;: &quot;Whether the round succeeded; `None` when the peer dials this runtime instead.&quot;,
-          &quot;type&quot;: [
-            &quot;boolean&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;rtt_ms&quot;: {
-          &quot;description&quot;: &quot;The round trip, milliseconds.&quot;,
-          &quot;format&quot;: &quot;uint64&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: [
-            &quot;integer&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;runtime&quot;: {
-          &quot;description&quot;: &quot;The peer&#39;s runtime key.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;state&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/LinkState&quot;,
-          &quot;description&quot;: &quot;The link&#39;s standing after the round.&quot;
-        }
-      },
-      &quot;required&quot;: [
-        &quot;runtime&quot;,
-        &quot;state&quot;,
-        &quot;dialed&quot;,
-        &quot;detail&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
+      &quot;type&quot;: &quot;object&quot;,
+      &quot;description&quot;: &quot;One verification check: what was checked, whether it holds, the evidence, and — when\nsomething is wrong or limited — the impact and what to do about it.\n\nThe impact and the remedy are carried with the verdict rather than left to whoever\nrenders it, so that a failing check is actionable wherever it is read — in a terminal,\nin a JSON answer, or by an agent that has never seen the mesh before. A check that\nholds carries neither, because there is nothing to do.\n\n```\n# use std::sync::Arc;\n# use majordomus_cli::mesh::config::{CooperationConfig, TrustConfig};\n# use majordomus_cli::mesh::cooperation::{CheckoutFacts, Cooperation, CooperationSetup};\n# use majordomus_cli::mesh::identity::NodeIdentity;\n# use majordomus_cli::mesh::link::HttpTransport;\n# use majordomus_cli::mesh::registry::MeshRegistry;\n# use majordomus_cli::mesh::repository::of_root_commits;\n# let cooperation = Cooperation::new(CooperationSetup {\n#     identity: Arc::new(NodeIdentity::ephemeral().unwrap()), runtime: \&quot;0000000000000001\&quot;.into(),\n#     repository: of_root_commits(&amp;[\&quot;root\&quot;.into()]), endpoints: vec![\&quot;127.0.0.1:9\&quot;.into()],\n#     version: \&quot;doc\&quot;.into(), config: CooperationConfig::default(), trust: TrustConfig::default(),\n#     journal_path: None, registry: Arc::new(MeshRegistry::new()),\n#     transport: Arc::new(HttpTransport), board: None, checkout: CheckoutFacts::default(),\n# }).unwrap();\nuse majordomus_cli::mesh::cooperation::MeshVerifyCheck;\n\nlet report = cooperation.verify();\nlet first: &amp;MeshVerifyCheck = &amp;report.checks[0];\nassert_eq!(first.check, \&quot;cooperation\&quot;);\nassert!(first.detail.contains(cooperation.runtime_key()), \&quot;the evidence, not a verdict\&quot;);\nassert!(first.remediation.is_none(), \&quot;a check that holds asks for nothing\&quot;);\n```&quot;
     }
-  },
-  &quot;description&quot;: &quot;What `mesh verify` found: the local checks, every peer&#39;s round, and the state digest\nafterwards. The digest is what makes the report worth running on two machines — two\nruntimes that print the same digest have the same sessions, claims, handovers and\nreviews, and two that do not have something to reconcile, whatever their links say.\n\n`ok` is the conjunction of everything below it, so a caller may act on the one field\nand a person may read the rest to find out which part of it was false.\n\n```\n# use std::sync::Arc;\n# use majordomus_cli::mesh::config::{CooperationConfig, TrustConfig};\n# use majordomus_cli::mesh::cooperation::{CheckoutFacts, Cooperation, CooperationSetup};\n# use majordomus_cli::mesh::identity::NodeIdentity;\n# use majordomus_cli::mesh::link::HttpTransport;\n# use majordomus_cli::mesh::registry::MeshRegistry;\n# use majordomus_cli::mesh::repository::of_root_commits;\n# let cooperation = Cooperation::new(CooperationSetup {\n#     identity: Arc::new(NodeIdentity::ephemeral().unwrap()), runtime: \&quot;0000000000000001\&quot;.into(),\n#     repository: of_root_commits(&amp;[\&quot;root\&quot;.into()]), endpoints: vec![\&quot;127.0.0.1:9\&quot;.into()],\n#     version: \&quot;doc\&quot;.into(), config: CooperationConfig::default(), trust: TrustConfig::default(),\n#     journal_path: None, registry: Arc::new(MeshRegistry::new()),\n#     transport: Arc::new(HttpTransport), board: None, checkout: CheckoutFacts::default(),\n# }).unwrap();\nuse majordomus_cli::mesh::cooperation::MeshVerifyReport;\n\nlet report: MeshVerifyReport = cooperation.verify();\nassert_eq!(report.runtime.as_deref(), Some(cooperation.runtime_key()));\nassert_eq!(report.digest, Some(cooperation.state().digest), \&quot;what a peer is compared to\&quot;);\nassert_eq!(report.ok, report.checks.iter().all(|c| c.ok), \&quot;one field for every check\&quot;);\n```&quot;,
-  &quot;properties&quot;: {
-    &quot;checks&quot;: {
-      &quot;description&quot;: &quot;The checks, in the order they ran.&quot;,
-      &quot;items&quot;: {
-        &quot;$ref&quot;: &quot;#/$defs/MeshVerifyCheck&quot;
-      },
-      &quot;type&quot;: &quot;array&quot;
-    },
-    &quot;digest&quot;: {
-      &quot;description&quot;: &quot;The state digest after the rounds.&quot;,
-      &quot;type&quot;: [
-        &quot;string&quot;,
-        &quot;null&quot;
-      ]
-    },
-    &quot;ok&quot;: {
-      &quot;description&quot;: &quot;Whether every check holds and every round succeeded.&quot;,
-      &quot;type&quot;: &quot;boolean&quot;
-    },
-    &quot;peers&quot;: {
-      &quot;description&quot;: &quot;Every linked peer&#39;s verdict.&quot;,
-      &quot;items&quot;: {
-        &quot;$ref&quot;: &quot;#/$defs/PeerVerdict&quot;
-      },
-      &quot;type&quot;: &quot;array&quot;
-    },
-    &quot;runtime&quot;: {
-      &quot;description&quot;: &quot;This runtime.&quot;,
-      &quot;type&quot;: [
-        &quot;string&quot;,
-        &quot;null&quot;
-      ]
-    }
-  },
-  &quot;required&quot;: [
-    &quot;ok&quot;,
-    &quot;checks&quot;,
-    &quot;peers&quot;
-  ],
-  &quot;title&quot;: &quot;MeshVerifyReport&quot;,
-  &quot;type&quot;: &quot;object&quot;
+  }
 }</pre></div>
   </details>
 </div>
@@ -464,7 +464,7 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
         <div><dt class="text-body-subtle">modul Rust</dt><dd class="min-w-0 break-all font-mono text-heading">majordomus_cli::capability::builtin::mesh</dd></div>
         <div><dt class="text-body-subtle">typ vstupu</dt><dd class="font-mono text-heading">Prázdné</dd></div>
         <div><dt class="text-body-subtle">typ výstupu</dt><dd class="font-mono text-heading">MeshVerifyReport</dd></div>
-        <div><dt class="text-body-subtle">reference na GitHubu</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/aa9f816f8673880ab4beb6dbebff688f9da5bb65/docs/generated/modules/mesh.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/mesh.md</a></dd></div><div><dt class="text-body-subtle">otisk registru</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">c514db707bb1f5f7557f2a1629d42c4bdc05eb7ef58464c288e42bafcd3d8720</dd></div>
+        <div><dt class="text-body-subtle">reference na GitHubu</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/docs/generated/modules/mesh.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/mesh.md</a></dd></div><div><dt class="text-body-subtle">otisk registru</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">3f734f2faf797f0ca7c39b4cd837e68b6619c41c6f6711f3d3aeca8f341934eb</dd></div>
         <div><dt class="text-body-subtle">vygenerováno nástrojem</dt><dd class="font-mono text-heading">majordomus-cli 1.0.0-alpha.10</dd></div>
       </dl>
     </div>
@@ -520,9 +520,9 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
       <div class="min-w-0">
         <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">Projekt</h2><ul class="space-y-2 text-sm font-medium text-body">
           <li><a href="https://github.com/korczis/prismatic-majordomus" class="hover:text-heading hover:underline">GitHub</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/aa9f816f8673880ab4beb6dbebff688f9da5bb65/LICENSE" class="hover:text-heading hover:underline">Licence MIT</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/aa9f816f8673880ab4beb6dbebff688f9da5bb65/SECURITY.md" class="hover:text-heading hover:underline">Bezpečnostní politika</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/aa9f816f8673880ab4beb6dbebff688f9da5bb65/CONTRIBUTING.md" class="hover:text-heading hover:underline">Průvodce pro přispěvatele</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/LICENSE" class="hover:text-heading hover:underline">Licence MIT</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/SECURITY.md" class="hover:text-heading hover:underline">Bezpečnostní politika</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/CONTRIBUTING.md" class="hover:text-heading hover:underline">Průvodce pro přispěvatele</a></li>
         </ul>
       </div>
     </div>
@@ -530,7 +530,7 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/cs/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.10</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/aa9f816f8673880ab4beb6dbebff688f9da5bb65" class="font-mono underline">aa9f816</a> · inputs <span class="font-mono">a64b981ed16e</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/cs/architecture/" class="underline">how this site is derived</a> names them.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.10</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/745db2ea21e02613943face75a2bf95542be1f2e" class="font-mono underline">745db2e</a> · inputs <span class="font-mono">0a58c217d1b7</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/cs/architecture/" class="underline">how this site is derived</a> names them.</p>
     </div>
   </div>
 </footer>

@@ -226,8 +226,9 @@ nothing.</td>
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
-  &quot;additionalProperties&quot;: false,
   &quot;description&quot;: &quot;The input of `design.kit`: the licence evidence a licensed marker is judged by, or none\nto read the policy&#39;s.&quot;,
+  &quot;title&quot;: &quot;KitInput&quot;,
+  &quot;additionalProperties&quot;: false,
   &quot;properties&quot;: {
     &quot;evidence&quot;: {
       &quot;description&quot;: &quot;A kit-evidence/v1 file, as the caller names it: in CI the file the launcher decoded\n`MAJORDOMUS_KIT_EVIDENCE_&lt;KIT&gt;` into, through the shell&#39;s `mj_fleet_design_judge`.\nAbsent reads the policy&#39;s `ui.evidence` entries under `$HOME`. Taken on the command\nline and over MCP only: a file this process opens is never named over HTTP.\nA file whose first line `# kit: &lt;id&gt;` names another kit than the profile judges\nnothing.&quot;,
@@ -237,7 +238,6 @@ nothing.</td>
       ]
     }
   },
-  &quot;title&quot;: &quot;KitInput&quot;,
   &quot;type&quot;: &quot;object&quot;
 }</pre></div>
   </details>
@@ -247,30 +247,70 @@ nothing.</td>
     <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
       <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">vlastnost</th><th class="px-3 py-2">typ</th><th class="px-3 py-2">povinné</th><th class="px-3 py-2">popis</th></tr></thead>
       <tbody><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">exempted</td>
+        <td class="px-3 py-2 font-mono text-heading">policy_errors</td>
         <td class="px-3 py-2 font-mono text-xs text-body">array</td>
         <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Every finding an exemption covers.</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Why the policy cannot be read; non-empty only for <code>bad_policy</code>.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">výjimky</td>
         <td class="px-3 py-2 font-mono text-xs text-body">array</td>
         <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
         <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The policy's exemptions, each with how many findings it covered.</td>
       </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">zjištění</td>
+        <td class="px-3 py-2 font-mono text-heading">reported</td>
         <td class="px-3 py-2 font-mono text-xs text-body">array</td>
         <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Every finding that stands.</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">What is reported and never refused, such as Alpine.js.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">layouts</td>
         <td class="px-3 py-2 font-mono text-xs text-body">array</td>
         <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
         <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The root layouts S5 judged.</td>
       </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">zjištění</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Every finding that stands.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">profile_source</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Where the profile lives in the distribution.</td>
+      </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">licence</td>
         <td class="px-3 py-2 font-mono text-xs text-body">jedno ze 2</td>
         <td class="px-3 py-2 font-mono text-xs text-body">ne</td>
         <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">How the tree stands against a licensed kit's licence; absent for a free kit.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">stacks</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The stacks recognised: <code>tailwind-4</code>, <code>tailwind-3</code>, <code>react</code>, <code>phoenix</code>.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">průchody</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">boolean</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Whether the rule holds: <code>no_ui</code> or <code>clean</code>.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">profil</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The profile judged.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">ui_evidence</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">What showed it.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">exempted</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Every finding an exemption covers.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">verdikt</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Verdikt.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">notices</td>
         <td class="px-3 py-2 font-mono text-xs text-body">array</td>
@@ -278,165 +318,140 @@ nothing.</td>
         <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">What S0 left out and a reader should know: a manifest with UI packages that is no
 surface, pages that are no interface. Never a finding.</td>
       </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">průchody</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">boolean</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Whether the rule holds: <code>no_ui</code> or <code>clean</code>.</td>
-      </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">policy_declared</td>
         <td class="px-3 py-2 font-mono text-xs text-body">boolean</td>
         <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
         <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Whether the repository's policy declares the kit's block.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">policy_errors</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Why the policy cannot be read; non-empty only for <code>bad_policy</code>.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">profil</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The profile judged.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">profile_source</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Where the profile lives in the distribution.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">reported</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">What is reported and never refused, such as Alpine.js.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">pravidlo</td>
         <td class="px-3 py-2 font-mono text-xs text-body">string</td>
         <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
         <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The rule the profile enforces.</td>
       </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">stacks</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
+        <td class="px-3 py-2 font-mono text-heading">název</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
         <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The stacks recognised: <code>tailwind-4</code>, <code>tailwind-3</code>, <code>react</code>, <code>phoenix</code>.</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">What the profile is, for a person.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">povrchy</td>
         <td class="px-3 py-2 font-mono text-xs text-body">array</td>
         <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
         <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The surfaces S1 to S3 judged, each with the usage markers its own files carry.</td>
       </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">název</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">What the profile is, for a person.</td>
-      </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">ui</td>
         <td class="px-3 py-2 font-mono text-xs text-body">boolean</td>
         <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
         <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Whether the repository has a user interface (S0).</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">ui_evidence</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">What showed it.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">verdikt</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Verdikt.</td>
       </tr></tbody>
     </table>
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
+  &quot;type&quot;: &quot;object&quot;,
   &quot;$defs&quot;: {
-    &quot;KitExempted&quot;: {
-      &quot;description&quot;: &quot;A finding a policy exemption covers, with the reason.&quot;,
-      &quot;properties&quot;: {
-        &quot;because&quot;: {
-          &quot;description&quot;: &quot;The exemption&#39;s reason.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;exemption&quot;: {
-          &quot;description&quot;: &quot;The exemption&#39;s path.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;finding&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/KitFinding&quot;,
-          &quot;description&quot;: &quot;The finding.&quot;
-        }
-      },
-      &quot;required&quot;: [
-        &quot;finding&quot;,
-        &quot;exemption&quot;,
-        &quot;because&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
-    },
     &quot;KitExemption&quot;: {
-      &quot;description&quot;: &quot;One exemption of the policy: `ui.exempt[n]`, exactly `{path, because}`.&quot;,
-      &quot;properties&quot;: {
-        &quot;because&quot;: {
-          &quot;description&quot;: &quot;Why the path is not held to the kit.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;matched&quot;: {
-          &quot;default&quot;: 0,
-          &quot;description&quot;: &quot;How many findings it moved to the exempted list.&quot;,
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;path&quot;: {
-          &quot;description&quot;: &quot;The path or glob a finding&#39;s path matches.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      },
       &quot;required&quot;: [
         &quot;path&quot;,
         &quot;because&quot;
       ],
-      &quot;type&quot;: &quot;object&quot;
-    },
-    &quot;KitFinding&quot;: {
-      &quot;description&quot;: &quot;One finding: the signal, the path it is about, what was seen and what to do.&quot;,
       &quot;properties&quot;: {
-        &quot;evidence&quot;: {
-          &quot;description&quot;: &quot;What was seen, with the line where there is one.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
         &quot;path&quot;: {
-          &quot;description&quot;: &quot;The path, repository-relative; empty for the repository as a whole.&quot;,
+          &quot;description&quot;: &quot;The path or glob a finding&#39;s path matches.&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
-        &quot;remedy&quot;: {
-          &quot;description&quot;: &quot;What to do.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+        &quot;because&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;Why the path is not held to the kit.&quot;
         },
-        &quot;signal&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/KitSignal&quot;,
-          &quot;description&quot;: &quot;The signal.&quot;
+        &quot;matched&quot;: {
+          &quot;description&quot;: &quot;How many findings it moved to the exempted list.&quot;,
+          &quot;default&quot;: 0,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
         }
       },
+      &quot;type&quot;: &quot;object&quot;,
+      &quot;description&quot;: &quot;One exemption of the policy: `ui.exempt[n]`, exactly `{path, because}`.&quot;
+    },
+    &quot;KitFinding&quot;: {
       &quot;required&quot;: [
         &quot;signal&quot;,
         &quot;path&quot;,
         &quot;evidence&quot;,
         &quot;remedy&quot;
       ],
-      &quot;type&quot;: &quot;object&quot;
-    },
-    &quot;KitLicence&quot;: {
-      &quot;description&quot;: &quot;How the tree stands against a licensed kit&#39;s licence.&quot;,
       &quot;properties&quot;: {
-        &quot;evidence&quot;: {
-          &quot;description&quot;: &quot;The evidence format the profile names.&quot;,
+        &quot;signal&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/KitSignal&quot;,
+          &quot;description&quot;: &quot;The signal.&quot;
+        },
+        &quot;remedy&quot;: {
+          &quot;description&quot;: &quot;What to do.&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
-        &quot;markers&quot;: {
-          &quot;description&quot;: &quot;Where each licensed marker was seen, with its name.&quot;,
+        &quot;evidence&quot;: {
+          &quot;description&quot;: &quot;What was seen, with the line where there is one.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;path&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The path, repository-relative; empty for the repository as a whole.&quot;
+        }
+      },
+      &quot;type&quot;: &quot;object&quot;,
+      &quot;description&quot;: &quot;One finding: the signal, the path it is about, what was seen and what to do.&quot;
+    },
+    &quot;KitSurface&quot;: {
+      &quot;description&quot;: &quot;One surface S1 to S3 judged.&quot;,
+      &quot;properties&quot;: {
+        &quot;usage&quot;: {
           &quot;items&quot;: {
             &quot;type&quot;: &quot;string&quot;
           },
+          &quot;description&quot;: &quot;The first usage markers its own files carry; empty is a finding.&quot;,
           &quot;type&quot;: &quot;array&quot;
+        },
+        &quot;dir&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;Its directory, repository-relative; empty for the root.&quot;
+        },
+        &quot;kind&quot;: {
+          &quot;description&quot;: &quot;How it was found.&quot;,
+          &quot;$ref&quot;: &quot;#/$defs/KitSurfaceKind&quot;
+        },
+        &quot;manifests&quot;: {
+          &quot;type&quot;: &quot;array&quot;,
+          &quot;items&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          },
+          &quot;description&quot;: &quot;Its manifests.&quot;
+        }
+      },
+      &quot;type&quot;: &quot;object&quot;,
+      &quot;required&quot;: [
+        &quot;dir&quot;,
+        &quot;kind&quot;,
+        &quot;manifests&quot;,
+        &quot;usage&quot;
+      ]
+    },
+    &quot;KitLicence&quot;: {
+      &quot;properties&quot;: {
+        &quot;state&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/LicenceState&quot;,
+          &quot;description&quot;: &quot;What the licence evidence said.&quot;
+        },
+        &quot;markers&quot;: {
+          &quot;items&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          },
+          &quot;type&quot;: &quot;array&quot;,
+          &quot;description&quot;: &quot;Where each licensed marker was seen, with its name.&quot;
+        },
+        &quot;variant&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/KitVariant&quot;,
+          &quot;description&quot;: &quot;What the judge decided.&quot;
         },
         &quot;reason&quot;: {
           &quot;description&quot;: &quot;Why the design licence answered as it did, when it says: the reason of an inactive\nor unjudged licence, or what stopped it. It names a file and a line at most, never\nwhat the evidence holds.&quot;,
@@ -445,13 +460,9 @@ surface, pages that are no interface. Never a finding.</td>
             &quot;null&quot;
           ]
         },
-        &quot;state&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/LicenceState&quot;,
-          &quot;description&quot;: &quot;What the licence evidence said.&quot;
-        },
-        &quot;variant&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/KitVariant&quot;,
-          &quot;description&quot;: &quot;What the judge decided.&quot;
+        &quot;evidence&quot;: {
+          &quot;description&quot;: &quot;The evidence format the profile names.&quot;,
+          &quot;type&quot;: &quot;string&quot;
         }
       },
       &quot;required&quot;: [
@@ -460,15 +471,16 @@ surface, pages that are no interface. Never a finding.</td>
         &quot;variant&quot;,
         &quot;markers&quot;
       ],
-      &quot;type&quot;: &quot;object&quot;
+      &quot;type&quot;: &quot;object&quot;,
+      &quot;description&quot;: &quot;How the tree stands against a licensed kit&#39;s licence.&quot;
     },
     &quot;KitSignal&quot;: {
       &quot;description&quot;: &quot;A signal of the profile.&quot;,
       &quot;oneOf&quot;: [
         {
-          &quot;const&quot;: &quot;S0&quot;,
+          &quot;type&quot;: &quot;string&quot;,
           &quot;description&quot;: &quot;The user interface exists.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;const&quot;: &quot;S0&quot;
         },
         {
           &quot;const&quot;: &quot;S1&quot;,
@@ -476,63 +488,78 @@ surface, pages that are no interface. Never a finding.</td>
           &quot;type&quot;: &quot;string&quot;
         },
         {
-          &quot;const&quot;: &quot;S2&quot;,
           &quot;description&quot;: &quot;The plugin and the source.&quot;,
+          &quot;const&quot;: &quot;S2&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
         {
           &quot;const&quot;: &quot;S3&quot;,
-          &quot;description&quot;: &quot;The kit&#39;s JavaScript.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The kit&#39;s JavaScript.&quot;
         },
         {
+          &quot;type&quot;: &quot;string&quot;,
           &quot;const&quot;: &quot;S4&quot;,
-          &quot;description&quot;: &quot;No other kit.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;description&quot;: &quot;No other kit.&quot;
         },
         {
+          &quot;type&quot;: &quot;string&quot;,
           &quot;const&quot;: &quot;S5&quot;,
-          &quot;description&quot;: &quot;The shell on each root layout.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;description&quot;: &quot;The shell on each root layout.&quot;
         }
       ]
     },
-    &quot;KitSurface&quot;: {
-      &quot;description&quot;: &quot;One surface S1 to S3 judged.&quot;,
-      &quot;properties&quot;: {
-        &quot;dir&quot;: {
-          &quot;description&quot;: &quot;Its directory, repository-relative; empty for the root.&quot;,
+    &quot;KitVariant&quot;: {
+      &quot;oneOf&quot;: [
+        {
+          &quot;const&quot;: &quot;not_used&quot;,
+          &quot;description&quot;: &quot;The tree carries no licensed marker: nothing the licence covers is used.&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
-        &quot;kind&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/KitSurfaceKind&quot;,
-          &quot;description&quot;: &quot;How it was found.&quot;
+        {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;licensed&quot;,
+          &quot;description&quot;: &quot;Licensed markers, and the licence is active.&quot;
         },
-        &quot;manifests&quot;: {
-          &quot;description&quot;: &quot;Its manifests.&quot;,
-          &quot;items&quot;: {
-            &quot;type&quot;: &quot;string&quot;
-          },
-          &quot;type&quot;: &quot;array&quot;
+        {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;unlicensed&quot;,
+          &quot;description&quot;: &quot;Licensed markers, and the licence is inactive or the design licence refused the\ntree: a finding.&quot;
         },
-        &quot;usage&quot;: {
-          &quot;description&quot;: &quot;The first usage markers its own files carry; empty is a finding.&quot;,
-          &quot;items&quot;: {
-            &quot;type&quot;: &quot;string&quot;
-          },
-          &quot;type&quot;: &quot;array&quot;
+        {
+          &quot;description&quot;: &quot;Licensed markers, and a licence nobody could judge: the judge cannot decide, and that\nis a finding, never a pass.&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;undecided&quot;
         }
-      },
-      &quot;required&quot;: [
-        &quot;dir&quot;,
-        &quot;kind&quot;,
-        &quot;manifests&quot;,
-        &quot;usage&quot;
       ],
-      &quot;type&quot;: &quot;object&quot;
+      &quot;description&quot;: &quot;Which variant of a licensed kit the tree is, as the judge decides it.&quot;
+    },
+    &quot;KitVerdict&quot;: {
+      &quot;description&quot;: &quot;How the tree stands against the profile.&quot;,
+      &quot;oneOf&quot;: [
+        {
+          &quot;const&quot;: &quot;no_ui&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;No user interface: the rule holds vacuously.&quot;
+        },
+        {
+          &quot;description&quot;: &quot;A user interface, and no finding stands.&quot;,
+          &quot;const&quot;: &quot;clean&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;findings&quot;,
+          &quot;description&quot;: &quot;At least one finding stands.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;description&quot;: &quot;The policy cannot be read; nothing was judged.&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;bad_policy&quot;
+        }
+      ]
     },
     &quot;KitSurfaceKind&quot;: {
-      &quot;description&quot;: &quot;How a surface was found.&quot;,
       &quot;oneOf&quot;: [
         {
           &quot;const&quot;: &quot;root&quot;,
@@ -549,60 +576,10 @@ surface, pages that are no interface. Never a finding.</td>
           &quot;description&quot;: &quot;A nested manifest with markup in its own subtree.&quot;,
           &quot;type&quot;: &quot;string&quot;
         }
-      ]
-    },
-    &quot;KitVariant&quot;: {
-      &quot;description&quot;: &quot;Which variant of a licensed kit the tree is, as the judge decides it.&quot;,
-      &quot;oneOf&quot;: [
-        {
-          &quot;const&quot;: &quot;not_used&quot;,
-          &quot;description&quot;: &quot;The tree carries no licensed marker: nothing the licence covers is used.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;licensed&quot;,
-          &quot;description&quot;: &quot;Licensed markers, and the licence is active.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;unlicensed&quot;,
-          &quot;description&quot;: &quot;Licensed markers, and the licence is inactive or the design licence refused the\ntree: a finding.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;undecided&quot;,
-          &quot;description&quot;: &quot;Licensed markers, and a licence nobody could judge: the judge cannot decide, and that\nis a finding, never a pass.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      ]
-    },
-    &quot;KitVerdict&quot;: {
-      &quot;description&quot;: &quot;How the tree stands against the profile.&quot;,
-      &quot;oneOf&quot;: [
-        {
-          &quot;const&quot;: &quot;no_ui&quot;,
-          &quot;description&quot;: &quot;No user interface: the rule holds vacuously.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;clean&quot;,
-          &quot;description&quot;: &quot;A user interface, and no finding stands.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;findings&quot;,
-          &quot;description&quot;: &quot;At least one finding stands.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;bad_policy&quot;,
-          &quot;description&quot;: &quot;The policy cannot be read; nothing was judged.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      ]
+      ],
+      &quot;description&quot;: &quot;How a surface was found.&quot;
     },
     &quot;LicenceState&quot;: {
-      &quot;description&quot;: &quot;What the design licence (I4336, `crate::design::licence`) says about a repository,\nas the judge of a licensed kit&#39;s markers reads it. `licence_answer` maps its verdict.&quot;,
       &quot;oneOf&quot;: [
         {
           &quot;const&quot;: &quot;active&quot;,
@@ -611,138 +588,47 @@ surface, pages that are no interface. Never a finding.</td>
         },
         {
           &quot;const&quot;: &quot;inactive&quot;,
-          &quot;description&quot;: &quot;The design licence judged nothing and needed to judge nothing: no kit is declared, a\nprivate tree without evidence, or no UI file. Licensed markers there are unlicensed.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The design licence judged nothing and needed to judge nothing: no kit is declared, a\nprivate tree without evidence, or no UI file. Licensed markers there are unlicensed.&quot;
         },
         {
-          &quot;const&quot;: &quot;not_judged&quot;,
           &quot;description&quot;: &quot;The design licence owed a judgement and could not give one, or could not be asked:\nno evidence where a public tree owes it, a `ui:` block it cannot use, a tree it\ncannot list.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;not_judged&quot;
         },
         {
           &quot;const&quot;: &quot;refused&quot;,
           &quot;description&quot;: &quot;The design licence refused the tree: a public tree holds a licensed file&#39;s bytes.&quot;,
           &quot;type&quot;: &quot;string&quot;
         }
+      ],
+      &quot;description&quot;: &quot;What the design licence (I4336, `crate::design::licence`) says about a repository,\nas the judge of a licensed kit&#39;s markers reads it. `licence_answer` maps its verdict.&quot;
+    },
+    &quot;KitExempted&quot;: {
+      &quot;description&quot;: &quot;A finding a policy exemption covers, with the reason.&quot;,
+      &quot;type&quot;: &quot;object&quot;,
+      &quot;properties&quot;: {
+        &quot;because&quot;: {
+          &quot;description&quot;: &quot;The exemption&#39;s reason.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;finding&quot;: {
+          &quot;description&quot;: &quot;The finding.&quot;,
+          &quot;$ref&quot;: &quot;#/$defs/KitFinding&quot;
+        },
+        &quot;exemption&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The exemption&#39;s path.&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;finding&quot;,
+        &quot;exemption&quot;,
+        &quot;because&quot;
       ]
     }
   },
   &quot;description&quot;: &quot;What `design.kit` answers.&quot;,
-  &quot;properties&quot;: {
-    &quot;exempted&quot;: {
-      &quot;description&quot;: &quot;Every finding an exemption covers.&quot;,
-      &quot;items&quot;: {
-        &quot;$ref&quot;: &quot;#/$defs/KitExempted&quot;
-      },
-      &quot;type&quot;: &quot;array&quot;
-    },
-    &quot;exemptions&quot;: {
-      &quot;description&quot;: &quot;The policy&#39;s exemptions, each with how many findings it covered.&quot;,
-      &quot;items&quot;: {
-        &quot;$ref&quot;: &quot;#/$defs/KitExemption&quot;
-      },
-      &quot;type&quot;: &quot;array&quot;
-    },
-    &quot;findings&quot;: {
-      &quot;description&quot;: &quot;Every finding that stands.&quot;,
-      &quot;items&quot;: {
-        &quot;$ref&quot;: &quot;#/$defs/KitFinding&quot;
-      },
-      &quot;type&quot;: &quot;array&quot;
-    },
-    &quot;layouts&quot;: {
-      &quot;description&quot;: &quot;The root layouts S5 judged.&quot;,
-      &quot;items&quot;: {
-        &quot;type&quot;: &quot;string&quot;
-      },
-      &quot;type&quot;: &quot;array&quot;
-    },
-    &quot;licence&quot;: {
-      &quot;anyOf&quot;: [
-        {
-          &quot;$ref&quot;: &quot;#/$defs/KitLicence&quot;
-        },
-        {
-          &quot;type&quot;: &quot;null&quot;
-        }
-      ],
-      &quot;description&quot;: &quot;How the tree stands against a licensed kit&#39;s licence; absent for a free kit.&quot;
-    },
-    &quot;notices&quot;: {
-      &quot;description&quot;: &quot;What S0 left out and a reader should know: a manifest with UI packages that is no\nsurface, pages that are no interface. Never a finding.&quot;,
-      &quot;items&quot;: {
-        &quot;type&quot;: &quot;string&quot;
-      },
-      &quot;type&quot;: &quot;array&quot;
-    },
-    &quot;passes&quot;: {
-      &quot;description&quot;: &quot;Whether the rule holds: `no_ui` or `clean`.&quot;,
-      &quot;type&quot;: &quot;boolean&quot;
-    },
-    &quot;policy_declared&quot;: {
-      &quot;description&quot;: &quot;Whether the repository&#39;s policy declares the kit&#39;s block.&quot;,
-      &quot;type&quot;: &quot;boolean&quot;
-    },
-    &quot;policy_errors&quot;: {
-      &quot;description&quot;: &quot;Why the policy cannot be read; non-empty only for `bad_policy`.&quot;,
-      &quot;items&quot;: {
-        &quot;type&quot;: &quot;string&quot;
-      },
-      &quot;type&quot;: &quot;array&quot;
-    },
-    &quot;profile&quot;: {
-      &quot;description&quot;: &quot;The profile judged.&quot;,
-      &quot;type&quot;: &quot;string&quot;
-    },
-    &quot;profile_source&quot;: {
-      &quot;description&quot;: &quot;Where the profile lives in the distribution.&quot;,
-      &quot;type&quot;: &quot;string&quot;
-    },
-    &quot;reported&quot;: {
-      &quot;description&quot;: &quot;What is reported and never refused, such as Alpine.js.&quot;,
-      &quot;items&quot;: {
-        &quot;type&quot;: &quot;string&quot;
-      },
-      &quot;type&quot;: &quot;array&quot;
-    },
-    &quot;rule&quot;: {
-      &quot;description&quot;: &quot;The rule the profile enforces.&quot;,
-      &quot;type&quot;: &quot;string&quot;
-    },
-    &quot;stacks&quot;: {
-      &quot;description&quot;: &quot;The stacks recognised: `tailwind-4`, `tailwind-3`, `react`, `phoenix`.&quot;,
-      &quot;items&quot;: {
-        &quot;type&quot;: &quot;string&quot;
-      },
-      &quot;type&quot;: &quot;array&quot;
-    },
-    &quot;surfaces&quot;: {
-      &quot;description&quot;: &quot;The surfaces S1 to S3 judged, each with the usage markers its own files carry.&quot;,
-      &quot;items&quot;: {
-        &quot;$ref&quot;: &quot;#/$defs/KitSurface&quot;
-      },
-      &quot;type&quot;: &quot;array&quot;
-    },
-    &quot;title&quot;: {
-      &quot;description&quot;: &quot;What the profile is, for a person.&quot;,
-      &quot;type&quot;: &quot;string&quot;
-    },
-    &quot;ui&quot;: {
-      &quot;description&quot;: &quot;Whether the repository has a user interface (S0).&quot;,
-      &quot;type&quot;: &quot;boolean&quot;
-    },
-    &quot;ui_evidence&quot;: {
-      &quot;description&quot;: &quot;What showed it.&quot;,
-      &quot;items&quot;: {
-        &quot;type&quot;: &quot;string&quot;
-      },
-      &quot;type&quot;: &quot;array&quot;
-    },
-    &quot;verdict&quot;: {
-      &quot;$ref&quot;: &quot;#/$defs/KitVerdict&quot;,
-      &quot;description&quot;: &quot;The verdict.&quot;
-    }
-  },
   &quot;required&quot;: [
     &quot;profile&quot;,
     &quot;title&quot;,
@@ -763,8 +649,122 @@ surface, pages that are no interface. Never a finding.</td>
     &quot;verdict&quot;,
     &quot;passes&quot;
   ],
-  &quot;title&quot;: &quot;KitReport&quot;,
-  &quot;type&quot;: &quot;object&quot;
+  &quot;properties&quot;: {
+    &quot;policy_errors&quot;: {
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;string&quot;
+      },
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;description&quot;: &quot;Why the policy cannot be read; non-empty only for `bad_policy`.&quot;
+    },
+    &quot;exemptions&quot;: {
+      &quot;description&quot;: &quot;The policy&#39;s exemptions, each with how many findings it covered.&quot;,
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;items&quot;: {
+        &quot;$ref&quot;: &quot;#/$defs/KitExemption&quot;
+      }
+    },
+    &quot;reported&quot;: {
+      &quot;description&quot;: &quot;What is reported and never refused, such as Alpine.js.&quot;,
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;string&quot;
+      },
+      &quot;type&quot;: &quot;array&quot;
+    },
+    &quot;layouts&quot;: {
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;description&quot;: &quot;The root layouts S5 judged.&quot;,
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;string&quot;
+      }
+    },
+    &quot;findings&quot;: {
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;description&quot;: &quot;Every finding that stands.&quot;,
+      &quot;items&quot;: {
+        &quot;$ref&quot;: &quot;#/$defs/KitFinding&quot;
+      }
+    },
+    &quot;profile_source&quot;: {
+      &quot;description&quot;: &quot;Where the profile lives in the distribution.&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;licence&quot;: {
+      &quot;anyOf&quot;: [
+        {
+          &quot;$ref&quot;: &quot;#/$defs/KitLicence&quot;
+        },
+        {
+          &quot;type&quot;: &quot;null&quot;
+        }
+      ],
+      &quot;description&quot;: &quot;How the tree stands against a licensed kit&#39;s licence; absent for a free kit.&quot;
+    },
+    &quot;stacks&quot;: {
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;description&quot;: &quot;The stacks recognised: `tailwind-4`, `tailwind-3`, `react`, `phoenix`.&quot;,
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;string&quot;
+      }
+    },
+    &quot;passes&quot;: {
+      &quot;type&quot;: &quot;boolean&quot;,
+      &quot;description&quot;: &quot;Whether the rule holds: `no_ui` or `clean`.&quot;
+    },
+    &quot;profile&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;description&quot;: &quot;The profile judged.&quot;
+    },
+    &quot;ui_evidence&quot;: {
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;description&quot;: &quot;What showed it.&quot;,
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;string&quot;
+      }
+    },
+    &quot;exempted&quot;: {
+      &quot;description&quot;: &quot;Every finding an exemption covers.&quot;,
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;items&quot;: {
+        &quot;$ref&quot;: &quot;#/$defs/KitExempted&quot;
+      }
+    },
+    &quot;verdict&quot;: {
+      &quot;$ref&quot;: &quot;#/$defs/KitVerdict&quot;,
+      &quot;description&quot;: &quot;The verdict.&quot;
+    },
+    &quot;notices&quot;: {
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;string&quot;
+      },
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;description&quot;: &quot;What S0 left out and a reader should know: a manifest with UI packages that is no\nsurface, pages that are no interface. Never a finding.&quot;
+    },
+    &quot;policy_declared&quot;: {
+      &quot;description&quot;: &quot;Whether the repository&#39;s policy declares the kit&#39;s block.&quot;,
+      &quot;type&quot;: &quot;boolean&quot;
+    },
+    &quot;rule&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;description&quot;: &quot;The rule the profile enforces.&quot;
+    },
+    &quot;title&quot;: {
+      &quot;description&quot;: &quot;What the profile is, for a person.&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;surfaces&quot;: {
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;description&quot;: &quot;The surfaces S1 to S3 judged, each with the usage markers its own files carry.&quot;,
+      &quot;items&quot;: {
+        &quot;$ref&quot;: &quot;#/$defs/KitSurface&quot;
+      }
+    },
+    &quot;ui&quot;: {
+      &quot;type&quot;: &quot;boolean&quot;,
+      &quot;description&quot;: &quot;Whether the repository has a user interface (S0).&quot;
+    }
+  },
+  &quot;title&quot;: &quot;KitReport&quot;
 }</pre></div>
   </details>
 </div>
@@ -795,7 +795,7 @@ surface, pages that are no interface. Never a finding.</td>
         <div><dt class="text-body-subtle">modul Rust</dt><dd class="min-w-0 break-all font-mono text-heading">majordomus_cli::capability::builtin::design</dd></div>
         <div><dt class="text-body-subtle">typ vstupu</dt><dd class="font-mono text-heading">KitInput</dd></div>
         <div><dt class="text-body-subtle">typ výstupu</dt><dd class="font-mono text-heading">KitReport</dd></div>
-        <div><dt class="text-body-subtle">reference na GitHubu</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/aa9f816f8673880ab4beb6dbebff688f9da5bb65/docs/generated/modules/design.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/design.md</a></dd></div><div><dt class="text-body-subtle">otisk registru</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">c514db707bb1f5f7557f2a1629d42c4bdc05eb7ef58464c288e42bafcd3d8720</dd></div>
+        <div><dt class="text-body-subtle">reference na GitHubu</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/docs/generated/modules/design.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/design.md</a></dd></div><div><dt class="text-body-subtle">otisk registru</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">3f734f2faf797f0ca7c39b4cd837e68b6619c41c6f6711f3d3aeca8f341934eb</dd></div>
         <div><dt class="text-body-subtle">vygenerováno nástrojem</dt><dd class="font-mono text-heading">majordomus-cli 1.0.0-alpha.10</dd></div>
       </dl>
     </div>
@@ -851,9 +851,9 @@ surface, pages that are no interface. Never a finding.</td>
       <div class="min-w-0">
         <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">Projekt</h2><ul class="space-y-2 text-sm font-medium text-body">
           <li><a href="https://github.com/korczis/prismatic-majordomus" class="hover:text-heading hover:underline">GitHub</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/aa9f816f8673880ab4beb6dbebff688f9da5bb65/LICENSE" class="hover:text-heading hover:underline">Licence MIT</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/aa9f816f8673880ab4beb6dbebff688f9da5bb65/SECURITY.md" class="hover:text-heading hover:underline">Bezpečnostní politika</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/aa9f816f8673880ab4beb6dbebff688f9da5bb65/CONTRIBUTING.md" class="hover:text-heading hover:underline">Průvodce pro přispěvatele</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/LICENSE" class="hover:text-heading hover:underline">Licence MIT</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/SECURITY.md" class="hover:text-heading hover:underline">Bezpečnostní politika</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/CONTRIBUTING.md" class="hover:text-heading hover:underline">Průvodce pro přispěvatele</a></li>
         </ul>
       </div>
     </div>
@@ -861,7 +861,7 @@ surface, pages that are no interface. Never a finding.</td>
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/cs/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.10</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/aa9f816f8673880ab4beb6dbebff688f9da5bb65" class="font-mono underline">aa9f816</a> · inputs <span class="font-mono">a64b981ed16e</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/cs/architecture/" class="underline">how this site is derived</a> names them.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.10</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/745db2ea21e02613943face75a2bf95542be1f2e" class="font-mono underline">745db2e</a> · inputs <span class="font-mono">0a58c217d1b7</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/cs/architecture/" class="underline">how this site is derived</a> names them.</p>
     </div>
   </div>
 </footer>

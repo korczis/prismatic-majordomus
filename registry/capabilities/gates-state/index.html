@@ -221,8 +221,8 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
   <h3 class="font-mono text-sm font-semibold text-heading">input · Empty</h3><div class="mt-1 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">No input.</div><p class="mt-2 text-sm text-body-subtle">No properties: the capability takes no input.</p><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
-  &quot;additionalProperties&quot;: false,
   &quot;description&quot;: &quot;No input.&quot;,
+  &quot;additionalProperties&quot;: false,
   &quot;title&quot;: &quot;Empty&quot;,
   &quot;type&quot;: &quot;object&quot;
 }</pre></div>
@@ -252,15 +252,25 @@ and <code>unreached</code> always names what was not consulted.</p>
     <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
       <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
       <tbody><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">count</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">integer</td>
+        <td class="px-3 py-2 font-mono text-heading">source</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">How many gates the model declares; measured.</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Where the gate set was read from, repository-relative.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">evaluated_at</td>
         <td class="px-3 py-2 font-mono text-xs text-body">string</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
         <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">When this answer was taken, RFC 3339 UTC.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">ledger</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Where the recorded runs were read from, repository-relative.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">count</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">integer</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">How many gates the model declares; measured.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">findings</td>
         <td class="px-3 py-2 font-mono text-xs text-body">array</td>
@@ -272,25 +282,10 @@ and <code>unreached</code> always names what was not consulted.</p>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
         <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Every declared gate, in declaration order.</td>
       </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">head</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The commit this checkout is at, when git could say.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">ledger</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Where the recorded runs were read from, repository-relative.</td>
-      </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">never_reported</td>
         <td class="px-3 py-2 font-mono text-xs text-body">array</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
         <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The gates no run has ever reported, in declaration order.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">source</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Where the gate set was read from, repository-relative.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">tallies</td>
         <td class="px-3 py-2 font-mono text-xs text-body">object</td>
@@ -301,67 +296,139 @@ and <code>unreached</code> always names what was not consulted.</p>
         <td class="px-3 py-2 font-mono text-xs text-body">array</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
         <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">What this answer did not consult, so its silence about it is not read as a verdict.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">head</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The commit this checkout is at, when git could say.</td>
       </tr></tbody>
     </table>
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
+  &quot;required&quot;: [
+    &quot;source&quot;,
+    &quot;ledger&quot;,
+    &quot;count&quot;,
+    &quot;tallies&quot;,
+    &quot;never_reported&quot;,
+    &quot;gates&quot;,
+    &quot;unreached&quot;,
+    &quot;findings&quot;,
+    &quot;evaluated_at&quot;
+  ],
   &quot;$defs&quot;: {
     &quot;GateRun&quot;: {
       &quot;description&quot;: &quot;```\nuse majordomus_cli::gates::GateRun;\n\n// what `majordomus evidence --gate` writes: a run, and the tree it was taken over\nlet run = GateRun {\n    recorded_at: \&quot;2026-01-01T00:00:00Z\&quot;.into(),\n    head: \&quot;9b1e2d4\&quot;.into(),\n    branch: \&quot;master\&quot;.into(),\n    exit: 0,\n    command: \&quot;scripts/rust-check --ci\&quot;.into(),\n    inputs_hash: \&quot;3f0a\&quot;.into(),\n    session: \&quot;s-1\&quot;.into(),\n};\n// the hash is what makes a run go stale rather than merely old: the same run read\n// against a different tree is evidence about a tree that no longer exists\nassert_eq!(run.exit, 0);\nassert_ne!(run.inputs_hash, \&quot;0000\&quot;);\n```\nThe `task.gate` ledger line that last reported a gate, as the ledger holds it.&quot;,
       &quot;properties&quot;: {
         &quot;branch&quot;: {
-          &quot;description&quot;: &quot;The branch it was recorded on.&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The branch it was recorded on.&quot;
+        },
+        &quot;recorded_at&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;When it was recorded, RFC 3339 UTC.&quot;
+        },
+        &quot;session&quot;: {
+          &quot;description&quot;: &quot;The session that recorded it.&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
         &quot;command&quot;: {
-          &quot;description&quot;: &quot;The command that produced it — narrative is not evidence.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;exit&quot;: {
-          &quot;description&quot;: &quot;The exit status the gate reported. `0` is a pass.&quot;,
-          &quot;format&quot;: &quot;int64&quot;,
-          &quot;type&quot;: &quot;integer&quot;
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The command that produced it — narrative is not evidence.&quot;
         },
         &quot;head&quot;: {
           &quot;description&quot;: &quot;The commit the ledger&#39;s envelope stamped on it.&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
         &quot;inputs_hash&quot;: {
-          &quot;description&quot;: &quot;The hash of the files that select the gate, as they stood when it ran.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The hash of the files that select the gate, as they stood when it ran.&quot;
         },
-        &quot;recorded_at&quot;: {
-          &quot;description&quot;: &quot;When it was recorded, RFC 3339 UTC.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;session&quot;: {
-          &quot;description&quot;: &quot;The session that recorded it.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+        &quot;exit&quot;: {
+          &quot;description&quot;: &quot;The exit status the gate reported. `0` is a pass.&quot;,
+          &quot;type&quot;: &quot;integer&quot;,
+          &quot;format&quot;: &quot;int64&quot;
         }
       },
+      &quot;type&quot;: &quot;object&quot;,
       &quot;required&quot;: [
         &quot;recorded_at&quot;,
         &quot;head&quot;,
         &quot;branch&quot;,
         &quot;exit&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
+      ]
+    },
+    &quot;GateStatus&quot;: {
+      &quot;description&quot;: &quot;```\nuse majordomus_cli::gates::GateStatus;\n\n// the three answers a reader is entitled to, and they are different answers\nassert!(GateStatus::Fail.refuses(), \&quot;a run that failed refuses\&quot;);\nassert!(GateStatus::Queued.unverified(), \&quot;asked and unanswered is a debt\&quot;);\nassert!(!GateStatus::Exempt.refuses() &amp;&amp; !GateStatus::Exempt.unverified());\n\n// and the one that is neither: a run whose tree has moved proves nothing about this one\nassert!(GateStatus::Stale.refuses());\nassert_eq!(GateStatus::Stale.as_str(), \&quot;stale\&quot;);\n```\nWhat is known about one gate. Every word is one this repository&#39;s design tokens already\ncarry (`share/design/tokens.yaml`, `status.states`), so a surface renders it without\nbeing taught a sixth vocabulary and the design gate does not refuse it.&quot;,
+      &quot;oneOf&quot;: [
+        {
+          &quot;description&quot;: &quot;It ran over these inputs and succeeded. The only word that discharges anything.&quot;,
+          &quot;const&quot;: &quot;pass&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;description&quot;: &quot;It ran over these inputs and failed. Completion is refused.&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;fail&quot;
+        },
+        {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;stale&quot;,
+          &quot;description&quot;: &quot;It ran, and the files that select it have changed since; what it proved is about a\ntree that no longer exists. Completion is refused, because the alternative is\ntreating a claim about the past as a claim about the present.&quot;
+        },
+        {
+          &quot;description&quot;: &quot;Something it cannot run without has not passed, so its own silence means nothing.&quot;,
+          &quot;const&quot;: &quot;blocked&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;queued&quot;,
+          &quot;description&quot;: &quot;The plan selects it and no run has ever reported. Not `unknown`: the question was\nasked and no answer came, which is a debt somebody owes, and not `pass`, which is\nthe mistake this word exists to make impossible.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;exempt&quot;,
+          &quot;description&quot;: &quot;The plan does not select it: nothing the task changed can make it true or false.&quot;
+        },
+        {
+          &quot;description&quot;: &quot;It cannot be judged here at all — no model, no git, a ledger that would not read.\nAn honest gap, and never a pass.&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;unknown&quot;
+        }
+      ]
     },
     &quot;GateState&quot;: {
+      &quot;required&quot;: [
+        &quot;id&quot;,
+        &quot;job&quot;,
+        &quot;always&quot;,
+        &quot;on_demand&quot;,
+        &quot;status&quot;,
+        &quot;reason&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;,
       &quot;description&quot;: &quot;One declared gate and the standing of its last recorded run.\n\n```\nuse majordomus_cli::gates::{GateState, GateStatus};\n\nlet never: GateState = serde_json::from_value(serde_json::json!({\n    \&quot;id\&quot;: \&quot;rust-check\&quot;,\n    \&quot;job\&quot;: \&quot;rust\&quot;,\n    \&quot;always\&quot;: true,\n    \&quot;on_demand\&quot;: false,\n    \&quot;status\&quot;: \&quot;queued\&quot;,\n    \&quot;reason\&quot;: \&quot;no run of this gate has ever been recorded in this checkout\&quot;,\n}))\n.unwrap();\n// no run, no head, and a word that is not `pass`\nassert!(never.last_run.is_none() &amp;&amp; never.on_head.is_none());\nassert_eq!(never.status, GateStatus::Queued);\n```&quot;,
       &quot;properties&quot;: {
+        &quot;on_head&quot;: {
+          &quot;type&quot;: [
+            &quot;boolean&quot;,
+            &quot;null&quot;
+          ],
+          &quot;description&quot;: &quot;Whether that run was taken at the commit this checkout is at now. Absent when there\nis no run or when the current commit could not be read.&quot;
+        },
+        &quot;reason&quot;: {
+          &quot;description&quot;: &quot;Why it is in that status, in words a person can act on.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;status&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/GateStatus&quot;,
+          &quot;description&quot;: &quot;What is known about its last run: `pass`, `fail`, `stale`, `queued` (never\nreported) or `unknown` (a run exists and cannot be checked against this tree).&quot;
+        },
         &quot;always&quot;: {
-          &quot;description&quot;: &quot;Whether every plan selects it.&quot;,
-          &quot;type&quot;: &quot;boolean&quot;
-        },
-        &quot;id&quot;: {
-          &quot;description&quot;: &quot;The gate&#39;s identity in the model.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;inputs_hash&quot;: {
-          &quot;description&quot;: &quot;The hash of the gate&#39;s inputs as they stand now, when it could be taken.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;type&quot;: &quot;boolean&quot;,
+          &quot;description&quot;: &quot;Whether every plan selects it.&quot;
         },
         &quot;job&quot;: {
           &quot;description&quot;: &quot;The CI job that runs it.&quot;,
@@ -382,129 +449,68 @@ and <code>unreached</code> always names what was not consulted.</p>
           &quot;description&quot;: &quot;Whether its runner can be had only on demand, so no routine plan runs it.&quot;,
           &quot;type&quot;: &quot;boolean&quot;
         },
-        &quot;on_head&quot;: {
-          &quot;description&quot;: &quot;Whether that run was taken at the commit this checkout is at now. Absent when there\nis no run or when the current commit could not be read.&quot;,
-          &quot;type&quot;: [
-            &quot;boolean&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;reason&quot;: {
-          &quot;description&quot;: &quot;Why it is in that status, in words a person can act on.&quot;,
+        &quot;inputs_hash&quot;: {
+          &quot;description&quot;: &quot;The hash of the gate&#39;s inputs as they stand now, when it could be taken.&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
-        &quot;status&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/GateStatus&quot;,
-          &quot;description&quot;: &quot;What is known about its last run: `pass`, `fail`, `stale`, `queued` (never\nreported) or `unknown` (a run exists and cannot be checked against this tree).&quot;
-        }
-      },
-      &quot;required&quot;: [
-        &quot;id&quot;,
-        &quot;job&quot;,
-        &quot;always&quot;,
-        &quot;on_demand&quot;,
-        &quot;status&quot;,
-        &quot;reason&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
-    },
-    &quot;GateStatus&quot;: {
-      &quot;description&quot;: &quot;```\nuse majordomus_cli::gates::GateStatus;\n\n// the three answers a reader is entitled to, and they are different answers\nassert!(GateStatus::Fail.refuses(), \&quot;a run that failed refuses\&quot;);\nassert!(GateStatus::Queued.unverified(), \&quot;asked and unanswered is a debt\&quot;);\nassert!(!GateStatus::Exempt.refuses() &amp;&amp; !GateStatus::Exempt.unverified());\n\n// and the one that is neither: a run whose tree has moved proves nothing about this one\nassert!(GateStatus::Stale.refuses());\nassert_eq!(GateStatus::Stale.as_str(), \&quot;stale\&quot;);\n```\nWhat is known about one gate. Every word is one this repository&#39;s design tokens already\ncarry (`share/design/tokens.yaml`, `status.states`), so a surface renders it without\nbeing taught a sixth vocabulary and the design gate does not refuse it.&quot;,
-      &quot;oneOf&quot;: [
-        {
-          &quot;const&quot;: &quot;pass&quot;,
-          &quot;description&quot;: &quot;It ran over these inputs and succeeded. The only word that discharges anything.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;fail&quot;,
-          &quot;description&quot;: &quot;It ran over these inputs and failed. Completion is refused.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;stale&quot;,
-          &quot;description&quot;: &quot;It ran, and the files that select it have changed since; what it proved is about a\ntree that no longer exists. Completion is refused, because the alternative is\ntreating a claim about the past as a claim about the present.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;blocked&quot;,
-          &quot;description&quot;: &quot;Something it cannot run without has not passed, so its own silence means nothing.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;queued&quot;,
-          &quot;description&quot;: &quot;The plan selects it and no run has ever reported. Not `unknown`: the question was\nasked and no answer came, which is a debt somebody owes, and not `pass`, which is\nthe mistake this word exists to make impossible.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;exempt&quot;,
-          &quot;description&quot;: &quot;The plan does not select it: nothing the task changed can make it true or false.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;unknown&quot;,
-          &quot;description&quot;: &quot;It cannot be judged here at all — no model, no git, a ledger that would not read.\nAn honest gap, and never a pass.&quot;,
+        &quot;id&quot;: {
+          &quot;description&quot;: &quot;The gate&#39;s identity in the model.&quot;,
           &quot;type&quot;: &quot;string&quot;
         }
-      ]
+      }
     }
   },
+  &quot;title&quot;: &quot;GateStateReport&quot;,
+  &quot;type&quot;: &quot;object&quot;,
   &quot;description&quot;: &quot;The declared gate set and the standing of each gate&#39;s last recorded run.\n\n`count`, `tallies` and `never_reported` are measured from `gates`, never written down,\nand `unreached` always names what was not consulted.\n\n```\nuse majordomus_cli::gates::GateStateReport;\n\nlet r: GateStateReport = serde_json::from_value(serde_json::json!({\n    \&quot;source\&quot;: \&quot;.ai/repo/ci/gates.yaml\&quot;,\n    \&quot;ledger\&quot;: \&quot;.ai/local/state/ledger.jsonl\&quot;,\n    \&quot;count\&quot;: 0,\n    \&quot;tallies\&quot;: {},\n    \&quot;never_reported\&quot;: [],\n    \&quot;gates\&quot;: [],\n    \&quot;unreached\&quot;: [\&quot;the forge&#39;s CI runs were not consulted\&quot;],\n    \&quot;findings\&quot;: [],\n    \&quot;evaluated_at\&quot;: \&quot;2026-10-15T00:00:00Z\&quot;,\n}))\n.unwrap();\nassert_eq!(r.count, r.gates.len());\nassert!(r.head.is_none(), \&quot;a checkout without git still answers, and says so\&quot;);\nassert!(!r.unreached.is_empty());\n```&quot;,
   &quot;properties&quot;: {
+    &quot;source&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;description&quot;: &quot;Where the gate set was read from, repository-relative.&quot;
+    },
+    &quot;evaluated_at&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;description&quot;: &quot;When this answer was taken, RFC 3339 UTC.&quot;
+    },
+    &quot;ledger&quot;: {
+      &quot;description&quot;: &quot;Where the recorded runs were read from, repository-relative.&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
     &quot;count&quot;: {
       &quot;description&quot;: &quot;How many gates the model declares; measured.&quot;,
       &quot;format&quot;: &quot;uint&quot;,
       &quot;minimum&quot;: 0,
       &quot;type&quot;: &quot;integer&quot;
     },
-    &quot;evaluated_at&quot;: {
-      &quot;description&quot;: &quot;When this answer was taken, RFC 3339 UTC.&quot;,
-      &quot;type&quot;: &quot;string&quot;
-    },
     &quot;findings&quot;: {
-      &quot;description&quot;: &quot;What could not be read, and what that means for the answer.&quot;,
       &quot;items&quot;: {
         &quot;type&quot;: &quot;string&quot;
       },
+      &quot;description&quot;: &quot;What could not be read, and what that means for the answer.&quot;,
       &quot;type&quot;: &quot;array&quot;
     },
     &quot;gates&quot;: {
+      &quot;type&quot;: &quot;array&quot;,
       &quot;description&quot;: &quot;Every declared gate, in declaration order.&quot;,
       &quot;items&quot;: {
         &quot;$ref&quot;: &quot;#/$defs/GateState&quot;
-      },
-      &quot;type&quot;: &quot;array&quot;
-    },
-    &quot;head&quot;: {
-      &quot;description&quot;: &quot;The commit this checkout is at, when git could say.&quot;,
-      &quot;type&quot;: [
-        &quot;string&quot;,
-        &quot;null&quot;
-      ]
-    },
-    &quot;ledger&quot;: {
-      &quot;description&quot;: &quot;Where the recorded runs were read from, repository-relative.&quot;,
-      &quot;type&quot;: &quot;string&quot;
+      }
     },
     &quot;never_reported&quot;: {
-      &quot;description&quot;: &quot;The gates no run has ever reported, in declaration order.&quot;,
+      &quot;type&quot;: &quot;array&quot;,
       &quot;items&quot;: {
         &quot;type&quot;: &quot;string&quot;
       },
-      &quot;type&quot;: &quot;array&quot;
-    },
-    &quot;source&quot;: {
-      &quot;description&quot;: &quot;Where the gate set was read from, repository-relative.&quot;,
-      &quot;type&quot;: &quot;string&quot;
+      &quot;description&quot;: &quot;The gates no run has ever reported, in declaration order.&quot;
     },
     &quot;tallies&quot;: {
       &quot;additionalProperties&quot;: {
-        &quot;format&quot;: &quot;uint&quot;,
         &quot;minimum&quot;: 0,
-        &quot;type&quot;: &quot;integer&quot;
+        &quot;type&quot;: &quot;integer&quot;,
+        &quot;format&quot;: &quot;uint&quot;
       },
-      &quot;description&quot;: &quot;How many gates stand in each status, by the status word.&quot;,
-      &quot;type&quot;: &quot;object&quot;
+      &quot;type&quot;: &quot;object&quot;,
+      &quot;description&quot;: &quot;How many gates stand in each status, by the status word.&quot;
     },
     &quot;unreached&quot;: {
       &quot;description&quot;: &quot;What this answer did not consult, so its silence about it is not read as a verdict.&quot;,
@@ -512,21 +518,15 @@ and <code>unreached</code> always names what was not consulted.</p>
         &quot;type&quot;: &quot;string&quot;
       },
       &quot;type&quot;: &quot;array&quot;
+    },
+    &quot;head&quot;: {
+      &quot;type&quot;: [
+        &quot;string&quot;,
+        &quot;null&quot;
+      ],
+      &quot;description&quot;: &quot;The commit this checkout is at, when git could say.&quot;
     }
-  },
-  &quot;required&quot;: [
-    &quot;source&quot;,
-    &quot;ledger&quot;,
-    &quot;count&quot;,
-    &quot;tallies&quot;,
-    &quot;never_reported&quot;,
-    &quot;gates&quot;,
-    &quot;unreached&quot;,
-    &quot;findings&quot;,
-    &quot;evaluated_at&quot;
-  ],
-  &quot;title&quot;: &quot;GateStateReport&quot;,
-  &quot;type&quot;: &quot;object&quot;
+  }
 }</pre></div>
   </details>
 </div>
@@ -557,7 +557,7 @@ and <code>unreached</code> always names what was not consulted.</p>
         <div><dt class="text-body-subtle">Rust module</dt><dd class="min-w-0 break-all font-mono text-heading">majordomus_cli::capability::builtin::gates</dd></div>
         <div><dt class="text-body-subtle">input type</dt><dd class="font-mono text-heading">Empty</dd></div>
         <div><dt class="text-body-subtle">output type</dt><dd class="font-mono text-heading">GateStateReport</dd></div>
-        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/aa9f816f8673880ab4beb6dbebff688f9da5bb65/docs/generated/modules/gates.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/gates.md</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">c514db707bb1f5f7557f2a1629d42c4bdc05eb7ef58464c288e42bafcd3d8720</dd></div>
+        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/docs/generated/modules/gates.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/gates.md</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">3f734f2faf797f0ca7c39b4cd837e68b6619c41c6f6711f3d3aeca8f341934eb</dd></div>
         <div><dt class="text-body-subtle">generated by</dt><dd class="font-mono text-heading">majordomus-cli 1.0.0-alpha.10</dd></div>
       </dl>
     </div>
@@ -613,9 +613,9 @@ and <code>unreached</code> always names what was not consulted.</p>
       <div class="min-w-0">
         <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">Project</h2><ul class="space-y-2 text-sm font-medium text-body">
           <li><a href="https://github.com/korczis/prismatic-majordomus" class="hover:text-heading hover:underline">GitHub</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/aa9f816f8673880ab4beb6dbebff688f9da5bb65/LICENSE" class="hover:text-heading hover:underline">MIT licence</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/aa9f816f8673880ab4beb6dbebff688f9da5bb65/SECURITY.md" class="hover:text-heading hover:underline">Security policy</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/aa9f816f8673880ab4beb6dbebff688f9da5bb65/CONTRIBUTING.md" class="hover:text-heading hover:underline">Contributing guide</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/LICENSE" class="hover:text-heading hover:underline">MIT licence</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/SECURITY.md" class="hover:text-heading hover:underline">Security policy</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/CONTRIBUTING.md" class="hover:text-heading hover:underline">Contributing guide</a></li>
         </ul>
       </div>
     </div>
@@ -623,7 +623,7 @@ and <code>unreached</code> always names what was not consulted.</p>
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.10</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/aa9f816f8673880ab4beb6dbebff688f9da5bb65" class="font-mono underline">aa9f816</a> · inputs <span class="font-mono">a64b981ed16e</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/architecture/" class="underline">how this site is derived</a> names them.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.10</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/745db2ea21e02613943face75a2bf95542be1f2e" class="font-mono underline">745db2e</a> · inputs <span class="font-mono">0a58c217d1b7</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/architecture/" class="underline">how this site is derived</a> names them.</p>
     </div>
   </div>
 </footer>

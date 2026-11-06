@@ -212,8 +212,8 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
   &quot;additionalProperties&quot;: false,
   &quot;description&quot;: &quot;No input.&quot;,
-  &quot;title&quot;: &quot;Empty&quot;,
-  &quot;type&quot;: &quot;object&quot;
+  &quot;type&quot;: &quot;object&quot;,
+  &quot;title&quot;: &quot;Empty&quot;
 }</pre></div>
   </details>
 </div>
@@ -222,86 +222,128 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
     <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
       <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">vlastnost</th><th class="px-3 py-2">typ</th><th class="px-3 py-2">povinné</th><th class="px-3 py-2">popis</th></tr></thead>
       <tbody><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">binárka</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Příkaz, který člověk zadá po instalaci.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">kontrolní součet</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Algoritmus digestu, který instalátor ověřuje.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">install_and_init_command</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Totéž, s následnou inicializací repozitáře.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">install_command</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Jednořádkový instalační příkaz, složený ze svých částí.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">install_dir</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Kam se launchery ukládají ve výchozím stavu.</td>
-      </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">installer_url</td>
         <td class="px-3 py-2 font-mono text-xs text-body">string</td>
         <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
         <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Kanonická URL instalátoru.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">latest_url</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Kde se publikují metadata stabilního release.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">next_command</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Co člověk spustí dál.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">prefix</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Kam se verzované stromy ukládají ve výchozím stavu.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">repozitář</td>
         <td class="px-3 py-2 font-mono text-xs text-body">string</td>
         <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
         <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words"><code>owner/name</code>, jediný hostitel, odkud pocházejí assety release.</td>
       </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">podporováno</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">integer</td>
+        <td class="px-3 py-2 font-mono text-heading">install_and_init_command</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
         <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Kolik cílů release buildí.</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Totéž, s následnou inicializací repozitáře.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">targets</td>
         <td class="px-3 py-2 font-mono text-xs text-body">array</td>
         <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
         <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Každý deklarovaný cíl v pořadí modelu.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">next_command</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Co člověk spustí dál.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">kontrolní součet</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Algoritmus digestu, který instalátor ověřuje.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">install_dir</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Kam se launchery ukládají ve výchozím stavu.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">prefix</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Kam se verzované stromy ukládají ve výchozím stavu.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">install_command</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Jednořádkový instalační příkaz, složený ze svých částí.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">latest_url</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Kde se publikují metadata stabilního release.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">binárka</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Příkaz, který člověk zadá po instalaci.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">podporováno</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">integer</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Kolik cílů release buildí.</td>
       </tr></tbody>
     </table>
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
-  &quot;$defs&quot;: {
-    &quot;Arch&quot;: {
-      &quot;description&quot;: &quot;A processor architecture.&quot;,
-      &quot;oneOf&quot;: [
-        {
-          &quot;const&quot;: &quot;x86_64&quot;,
-          &quot;description&quot;: &quot;64-bit x86, detected as `x86_64` or `amd64`.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;aarch64&quot;,
-          &quot;description&quot;: &quot;64-bit ARM, detected as `aarch64` or `arm64`.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      ]
+  &quot;type&quot;: &quot;object&quot;,
+  &quot;properties&quot;: {
+    &quot;installer_url&quot;: {
+      &quot;description&quot;: &quot;The installer&#39;s canonical URL.&quot;,
+      &quot;type&quot;: &quot;string&quot;
     },
+    &quot;repository&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;description&quot;: &quot;`owner/name`, the only host release assets come from.&quot;
+    },
+    &quot;install_and_init_command&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;description&quot;: &quot;The same, initialising the repository afterwards.&quot;
+    },
+    &quot;targets&quot;: {
+      &quot;items&quot;: {
+        &quot;$ref&quot;: &quot;#/$defs/TargetView&quot;
+      },
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;description&quot;: &quot;Every declared target, in the model&#39;s order.&quot;
+    },
+    &quot;next_command&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;description&quot;: &quot;What a person runs next.&quot;
+    },
+    &quot;checksum&quot;: {
+      &quot;description&quot;: &quot;The digest algorithm the installer verifies.&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;install_dir&quot;: {
+      &quot;description&quot;: &quot;Where the launchers go by default.&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;prefix&quot;: {
+      &quot;description&quot;: &quot;Where the versioned trees go by default.&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;install_command&quot;: {
+      &quot;description&quot;: &quot;The one-line install command, composed from its parts.&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;latest_url&quot;: {
+      &quot;description&quot;: &quot;Where the stable release metadata is published.&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;binary&quot;: {
+      &quot;description&quot;: &quot;The command a person types after installing.&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;supported&quot;: {
+      &quot;format&quot;: &quot;uint&quot;,
+      &quot;type&quot;: &quot;integer&quot;,
+      &quot;description&quot;: &quot;How many targets a release builds.&quot;,
+      &quot;minimum&quot;: 0
+    }
+  },
+  &quot;description&quot;: &quot;The distribution, as a person or a script asks for it.&quot;,
+  &quot;$defs&quot;: {
     &quot;Libc&quot;: {
       &quot;description&quot;: &quot;The C library a Linux artifact is linked against.&quot;,
       &quot;oneOf&quot;: [
@@ -312,30 +354,25 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
         },
         {
           &quot;const&quot;: &quot;musl&quot;,
-          &quot;description&quot;: &quot;musl: Alpine, and any statically linked artifact.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;musl: Alpine, and any statically linked artifact.&quot;
         }
       ]
     },
-    &quot;Os&quot;: {
-      &quot;description&quot;: &quot;An operating system a target runs on.&quot;,
+    &quot;Arch&quot;: {
       &quot;oneOf&quot;: [
         {
-          &quot;const&quot;: &quot;macos&quot;,
-          &quot;description&quot;: &quot;Apple&#39;s, detected as `Darwin`.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;x86_64&quot;,
+          &quot;description&quot;: &quot;64-bit x86, detected as `x86_64` or `amd64`.&quot;
         },
         {
-          &quot;const&quot;: &quot;linux&quot;,
-          &quot;description&quot;: &quot;Linux, detected as `Linux`, and the only one where the C library matters.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;windows&quot;,
-          &quot;description&quot;: &quot;Windows; representable, and not built today.&quot;,
+          &quot;const&quot;: &quot;aarch64&quot;,
+          &quot;description&quot;: &quot;64-bit ARM, detected as `aarch64` or `arm64`.&quot;,
           &quot;type&quot;: &quot;string&quot;
         }
-      ]
+      ],
+      &quot;description&quot;: &quot;A processor architecture.&quot;
     },
     &quot;TargetStatus&quot;: {
       &quot;description&quot;: &quot;What the project promises about a target.\n\nSee `crate::deploy::Status`: both are `Status` in their own module and neither is in\nthe one component namespace the schema document has.&quot;,
@@ -351,28 +388,63 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
           &quot;type&quot;: &quot;string&quot;
         },
         {
-          &quot;const&quot;: &quot;unavailable&quot;,
           &quot;description&quot;: &quot;Documented, never built, refused by the installer with its recorded reason.&quot;,
+          &quot;const&quot;: &quot;unavailable&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      ]
+    },
+    &quot;Os&quot;: {
+      &quot;description&quot;: &quot;An operating system a target runs on.&quot;,
+      &quot;oneOf&quot;: [
+        {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;macos&quot;,
+          &quot;description&quot;: &quot;Apple&#39;s, detected as `Darwin`.&quot;
+        },
+        {
+          &quot;const&quot;: &quot;linux&quot;,
+          &quot;description&quot;: &quot;Linux, detected as `Linux`, and the only one where the C library matters.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;description&quot;: &quot;Windows; representable, and not built today.&quot;,
+          &quot;const&quot;: &quot;windows&quot;,
           &quot;type&quot;: &quot;string&quot;
         }
       ]
     },
     &quot;TargetView&quot;: {
-      &quot;description&quot;: &quot;One target, as every projection shows it: what it is, what it is called in prose, and\nthe artifact name the naming function derives for a tag yet to be chosen.&quot;,
       &quot;properties&quot;: {
-        &quot;arch&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/Arch&quot;,
-          &quot;description&quot;: &quot;The architecture.&quot;
-        },
         &quot;artifact&quot;: {
-          &quot;description&quot;: &quot;The artifact name, with `{tag}` where a release&#39;s tag goes.&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The artifact name, with `{tag}` where a release&#39;s tag goes.&quot;
+        },
+        &quot;reason&quot;: {
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ],
+          &quot;description&quot;: &quot;Why, when it is not built.&quot;
+        },
+        &quot;title&quot;: {
+          &quot;description&quot;: &quot;How it is written in prose: `Linux x86_64 musl`.&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
         &quot;id&quot;: {
           &quot;description&quot;: &quot;The target&#39;s id in the model.&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
+        &quot;rust_target&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The Rust target triple.&quot;
+        },
+        &quot;arch&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/Arch&quot;,
+          &quot;description&quot;: &quot;The architecture.&quot;
+        },
         &quot;libc&quot;: {
+          &quot;description&quot;: &quot;The C library, on Linux.&quot;,
           &quot;anyOf&quot;: [
             {
               &quot;$ref&quot;: &quot;#/$defs/Libc&quot;
@@ -380,33 +452,18 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
             {
               &quot;type&quot;: &quot;null&quot;
             }
-          ],
-          &quot;description&quot;: &quot;The C library, on Linux.&quot;
+          ]
         },
         &quot;os&quot;: {
           &quot;$ref&quot;: &quot;#/$defs/Os&quot;,
           &quot;description&quot;: &quot;The operating system.&quot;
         },
-        &quot;reason&quot;: {
-          &quot;description&quot;: &quot;Why, when it is not built.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;rust_target&quot;: {
-          &quot;description&quot;: &quot;The Rust target triple.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
         &quot;status&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/TargetStatus&quot;,
-          &quot;description&quot;: &quot;What the project promises about it.&quot;
-        },
-        &quot;title&quot;: {
-          &quot;description&quot;: &quot;How it is written in prose: `Linux x86_64 musl`.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;description&quot;: &quot;What the project promises about it.&quot;,
+          &quot;$ref&quot;: &quot;#/$defs/TargetStatus&quot;
         }
       },
+      &quot;type&quot;: &quot;object&quot;,
       &quot;required&quot;: [
         &quot;id&quot;,
         &quot;title&quot;,
@@ -416,63 +473,7 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
         &quot;status&quot;,
         &quot;artifact&quot;
       ],
-      &quot;type&quot;: &quot;object&quot;
-    }
-  },
-  &quot;description&quot;: &quot;The distribution, as a person or a script asks for it.&quot;,
-  &quot;properties&quot;: {
-    &quot;binary&quot;: {
-      &quot;description&quot;: &quot;The command a person types after installing.&quot;,
-      &quot;type&quot;: &quot;string&quot;
-    },
-    &quot;checksum&quot;: {
-      &quot;description&quot;: &quot;The digest algorithm the installer verifies.&quot;,
-      &quot;type&quot;: &quot;string&quot;
-    },
-    &quot;install_and_init_command&quot;: {
-      &quot;description&quot;: &quot;The same, initialising the repository afterwards.&quot;,
-      &quot;type&quot;: &quot;string&quot;
-    },
-    &quot;install_command&quot;: {
-      &quot;description&quot;: &quot;The one-line install command, composed from its parts.&quot;,
-      &quot;type&quot;: &quot;string&quot;
-    },
-    &quot;install_dir&quot;: {
-      &quot;description&quot;: &quot;Where the launchers go by default.&quot;,
-      &quot;type&quot;: &quot;string&quot;
-    },
-    &quot;installer_url&quot;: {
-      &quot;description&quot;: &quot;The installer&#39;s canonical URL.&quot;,
-      &quot;type&quot;: &quot;string&quot;
-    },
-    &quot;latest_url&quot;: {
-      &quot;description&quot;: &quot;Where the stable release metadata is published.&quot;,
-      &quot;type&quot;: &quot;string&quot;
-    },
-    &quot;next_command&quot;: {
-      &quot;description&quot;: &quot;What a person runs next.&quot;,
-      &quot;type&quot;: &quot;string&quot;
-    },
-    &quot;prefix&quot;: {
-      &quot;description&quot;: &quot;Where the versioned trees go by default.&quot;,
-      &quot;type&quot;: &quot;string&quot;
-    },
-    &quot;repository&quot;: {
-      &quot;description&quot;: &quot;`owner/name`, the only host release assets come from.&quot;,
-      &quot;type&quot;: &quot;string&quot;
-    },
-    &quot;supported&quot;: {
-      &quot;description&quot;: &quot;How many targets a release builds.&quot;,
-      &quot;format&quot;: &quot;uint&quot;,
-      &quot;minimum&quot;: 0,
-      &quot;type&quot;: &quot;integer&quot;
-    },
-    &quot;targets&quot;: {
-      &quot;description&quot;: &quot;Every declared target, in the model&#39;s order.&quot;,
-      &quot;items&quot;: {
-        &quot;$ref&quot;: &quot;#/$defs/TargetView&quot;
-      },
-      &quot;type&quot;: &quot;array&quot;
+      &quot;description&quot;: &quot;One target, as every projection shows it: what it is, what it is called in prose, and\nthe artifact name the naming function derives for a tag yet to be chosen.&quot;
     }
   },
   &quot;required&quot;: [
@@ -489,8 +490,7 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
     &quot;supported&quot;,
     &quot;targets&quot;
   ],
-  &quot;title&quot;: &quot;DistributionReport&quot;,
-  &quot;type&quot;: &quot;object&quot;
+  &quot;title&quot;: &quot;DistributionReport&quot;
 }</pre></div>
   </details>
 </div>
@@ -521,7 +521,7 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
         <div><dt class="text-body-subtle">modul Rust</dt><dd class="min-w-0 break-all font-mono text-heading">majordomus_cli::capability::builtin::distribution</dd></div>
         <div><dt class="text-body-subtle">typ vstupu</dt><dd class="font-mono text-heading">Prázdné</dd></div>
         <div><dt class="text-body-subtle">typ výstupu</dt><dd class="font-mono text-heading">DistributionReport</dd></div>
-        <div><dt class="text-body-subtle">reference na GitHubu</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/aa9f816f8673880ab4beb6dbebff688f9da5bb65/docs/generated/modules/distribution.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/distribution.md</a></dd></div><div><dt class="text-body-subtle">otisk registru</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">c514db707bb1f5f7557f2a1629d42c4bdc05eb7ef58464c288e42bafcd3d8720</dd></div>
+        <div><dt class="text-body-subtle">reference na GitHubu</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/docs/generated/modules/distribution.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/distribution.md</a></dd></div><div><dt class="text-body-subtle">otisk registru</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">3f734f2faf797f0ca7c39b4cd837e68b6619c41c6f6711f3d3aeca8f341934eb</dd></div>
         <div><dt class="text-body-subtle">vygenerováno nástrojem</dt><dd class="font-mono text-heading">majordomus-cli 1.0.0-alpha.10</dd></div>
       </dl>
     </div>
@@ -577,9 +577,9 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
       <div class="min-w-0">
         <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">Projekt</h2><ul class="space-y-2 text-sm font-medium text-body">
           <li><a href="https://github.com/korczis/prismatic-majordomus" class="hover:text-heading hover:underline">GitHub</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/aa9f816f8673880ab4beb6dbebff688f9da5bb65/LICENSE" class="hover:text-heading hover:underline">Licence MIT</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/aa9f816f8673880ab4beb6dbebff688f9da5bb65/SECURITY.md" class="hover:text-heading hover:underline">Bezpečnostní politika</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/aa9f816f8673880ab4beb6dbebff688f9da5bb65/CONTRIBUTING.md" class="hover:text-heading hover:underline">Průvodce pro přispěvatele</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/LICENSE" class="hover:text-heading hover:underline">Licence MIT</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/SECURITY.md" class="hover:text-heading hover:underline">Bezpečnostní politika</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/CONTRIBUTING.md" class="hover:text-heading hover:underline">Průvodce pro přispěvatele</a></li>
         </ul>
       </div>
     </div>
@@ -587,7 +587,7 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/cs/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.10</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/aa9f816f8673880ab4beb6dbebff688f9da5bb65" class="font-mono underline">aa9f816</a> · inputs <span class="font-mono">a64b981ed16e</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/cs/architecture/" class="underline">how this site is derived</a> names them.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.10</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/745db2ea21e02613943face75a2bf95542be1f2e" class="font-mono underline">745db2e</a> · inputs <span class="font-mono">0a58c217d1b7</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/cs/architecture/" class="underline">how this site is derived</a> names them.</p>
     </div>
   </div>
 </footer>

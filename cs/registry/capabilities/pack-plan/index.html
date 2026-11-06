@@ -225,18 +225,18 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
   &quot;additionalProperties&quot;: false,
   &quot;description&quot;: &quot;The input of `pack.plan`: which profile of `share/archive.yaml` to plan, or the\ndistribution&#39;s default one when none is named.\n\n```\nuse majordomus_cli::capability::builtin::pack::PackPlanInput;\nlet input = PackPlanInput { profile: Some(\&quot;chatgpt\&quot;.into()) };\nassert_eq!(input.profile.as_deref(), Some(\&quot;chatgpt\&quot;));\n```&quot;,
+  &quot;type&quot;: &quot;object&quot;,
   &quot;properties&quot;: {
     &quot;profile&quot;: {
-      &quot;default&quot;: null,
       &quot;description&quot;: &quot;A profile of `share/archive.yaml`; its `default` when absent.&quot;,
+      &quot;default&quot;: null,
       &quot;type&quot;: [
         &quot;string&quot;,
         &quot;null&quot;
       ]
     }
   },
-  &quot;title&quot;: &quot;PackPlanInput&quot;,
-  &quot;type&quot;: &quot;object&quot;
+  &quot;title&quot;: &quot;PackPlanInput&quot;
 }</pre></div>
   </details>
 </div>
@@ -268,248 +268,137 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
     <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
       <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">vlastnost</th><th class="px-3 py-2">typ</th><th class="px-3 py-2">povinné</th><th class="px-3 py-2">popis</th></tr></thead>
       <tbody><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">bajty</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">integer</td>
+        <td class="px-3 py-2 font-mono text-heading">tokenizér</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
         <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Bajty nesoucího obsahu.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">commit</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">ne</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Commit, který jmenuje <code>HEAD</code>; obsah je obsahem indexu, který se mu rovná, když je <code>index_matches_head</code> pravda.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">zahozeno</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">object</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Kolik souborů bylo vynecháno, podle důvodu.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">dropped_files</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Každý soubor vynechaný z jiného důvodu než <code>derived</code>.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">zjištění</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Každý důvod, proč balík nelze sestavit. Prázdný výpis je úspěšná odpověď.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">index_matches_head</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">boolean</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Zda index drží přesně to, co drží <code>HEAD</code>. <code>false</code> znamená, že připravené změny cestují s balíčkem pod id commitu, který je neobsahuje.</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Tokenizér, ve kterém jsou počty vyjádřeny.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">limity</td>
         <td class="px-3 py-2 font-mono text-xs text-body">jedno ze 2</td>
         <td class="px-3 py-2 font-mono text-xs text-body">ne</td>
         <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Uplatněné limity.</td>
       </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">naměřeno</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">boolean</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Zda šlo strom vůbec přečíst. <code>false</code> není úspěch.</td>
-      </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">průchody</td>
         <td class="px-3 py-2 font-mono text-xs text-body">boolean</td>
         <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
         <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words"><code>true</code>, když byl strom změřen a nic se nenašlo.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">profil</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Plánovaný profil.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">důvod</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">ne</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Proč to nešlo, když to nešlo.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">vybráno</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">integer</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Kolik jich pack nese.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">shardy</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Shardy v pořadí; index mezi ně nepatří.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">tokenizér</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Tokenizér, ve kterém jsou počty vyjádřeny.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">tokeny</td>
         <td class="px-3 py-2 font-mono text-xs text-body">integer</td>
         <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
         <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Tokeny přeneseného obsahu v <code>o200k_base</code>.</td>
       </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">index_matches_head</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">boolean</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Zda index drží přesně to, co drží <code>HEAD</code>. <code>false</code> znamená, že připravené změny cestují s balíčkem pod id commitu, který je neobsahuje.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">naměřeno</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">boolean</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Zda šlo strom vůbec přečíst. <code>false</code> není úspěch.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">důvod</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">ne</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Proč to nešlo, když to nešlo.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">shardy</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Shardy v pořadí; index mezi ně nepatří.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">commit</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">ne</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Commit, který jmenuje <code>HEAD</code>; obsah je obsahem indexu, který se mu rovná, když je <code>index_matches_head</code> pravda.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">vybráno</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">integer</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Kolik jich pack nese.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">zjištění</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Každý důvod, proč balík nelze sestavit. Prázdný výpis je úspěšná odpověď.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">dropped_files</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Každý soubor vynechaný z jiného důvodu než <code>derived</code>.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">profil</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Plánovaný profil.</td>
+      </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">sledováno</td>
         <td class="px-3 py-2 font-mono text-xs text-body">integer</td>
         <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
         <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Kolik souborů index sleduje.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">zahozeno</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">object</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Kolik souborů bylo vynecháno, podle důvodu.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">bajty</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">integer</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Bajty nesoucího obsahu.</td>
       </tr></tbody>
     </table>
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
-  &quot;$defs&quot;: {
-    &quot;DropReason&quot;: {
-      &quot;description&quot;: &quot;Why a tracked file is not in the pack. Every reason but `derived` and `excluded` is\nfinal: no `include` of a profile re-admits a link, a gitlink, an artifact or a binary.\n\n```\nuse majordomus_cli::pack::DropReason;\nassert_eq!(DropReason::Binary.as_str(), \&quot;binary\&quot;);\nlet json = serde_json::to_string(&amp;DropReason::Artifact).unwrap();\nassert_eq!(json, \&quot;\\\&quot;artifact\\\&quot;\&quot;);\n```&quot;,
-      &quot;oneOf&quot;: [
+  &quot;properties&quot;: {
+    &quot;tokenizer&quot;: {
+      &quot;description&quot;: &quot;The tokenizer the counts are in.&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;limits&quot;: {
+      &quot;description&quot;: &quot;The limits applied.&quot;,
+      &quot;anyOf&quot;: [
         {
-          &quot;const&quot;: &quot;worktree&quot;,
-          &quot;description&quot;: &quot;A gitlink: a nested repository or worktree whose content is not in this index.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;$ref&quot;: &quot;#/$defs/ShardLimits&quot;
         },
         {
-          &quot;const&quot;: &quot;link&quot;,
-          &quot;description&quot;: &quot;A symbolic link, whose content is a path on the machine that committed it.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;artifact&quot;,
-          &quot;description&quot;: &quot;A path the distribution names as build output, a cache or a worktree container.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;binary&quot;,
-          &quot;description&quot;: &quot;Not text: a NUL byte, content that is not UTF-8, or an extension on the binary list.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;derived&quot;,
-          &quot;description&quot;: &quot;Marked `merge=derived` in `.gitattributes`: a projection of a file that is here.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;excluded&quot;,
-          &quot;description&quot;: &quot;Matched by the profile&#39;s `exclude`.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;type&quot;: &quot;null&quot;
         }
       ]
     },
-    &quot;DroppedFile&quot;: {
-      &quot;description&quot;: &quot;One dropped file the report names. Derived files are counted, not listed: they are a\nfunction of files that are in the pack.\n\nThe examples below plan a repository holding `main.rs` and a `logo.png` whose content is\nbinary, with a distribution whose `chat` profile has limits and whose `bare` one has none.\n\n```\nuse majordomus_cli::pack::{plan, DropReason, DroppedFile};\n# use std::process::Command;\n# let dir = tempfile::tempdir().unwrap();\n# let (root, share) = (dir.path().join(\&quot;repo\&quot;), dir.path().join(\&quot;share\&quot;));\n# std::fs::create_dir_all(&amp;root).unwrap();\n# std::fs::create_dir_all(&amp;share).unwrap();\n# std::fs::write(share.join(\&quot;archive.yaml\&quot;), \&quot;default: chat\\nprofiles:\\n  - id: chat\\n    binary: drop\\n    artifacts: drop\\n    shards:\\n      max_count: 5\\n      max_tokens: 4000\\n  - id: bare\\n    binary: drop\\n\&quot;).unwrap();\n# let git = |a: &amp;[&amp;str]| assert!(Command::new(\&quot;git\&quot;).arg(\&quot;-C\&quot;).arg(&amp;root)\n#     .args([\&quot;-c\&quot;, \&quot;user.email=t@example.com\&quot;, \&quot;-c\&quot;, \&quot;user.name=t\&quot;]).args(a)\n#     .status().unwrap().success());\n# git(&amp;[\&quot;init\&quot;, \&quot;-q\&quot;]);\n# std::fs::write(root.join(\&quot;main.rs\&quot;), \&quot;fn main() {}\\n\&quot;).unwrap();\n# std::fs::write(root.join(\&quot;logo.png\&quot;), b\&quot;\\x89PNG\\0\\x01\&quot;).unwrap();\n# git(&amp;[\&quot;add\&quot;, \&quot;-A\&quot;]);\n# git(&amp;[\&quot;commit\&quot;, \&quot;-q\&quot;, \&quot;-m\&quot;, \&quot;one\&quot;]);\nlet dropped = plan(&amp;root, &amp;share, None).plan.dropped_files;\nlet want = DroppedFile { path: \&quot;logo.png\&quot;.into(), reason: DropReason::Binary };\nassert_eq!(dropped, [want]);\n```&quot;,
-      &quot;properties&quot;: {
-        &quot;path&quot;: {
-          &quot;description&quot;: &quot;The path.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;reason&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/DropReason&quot;,
-          &quot;description&quot;: &quot;Why.&quot;
-        }
-      },
-      &quot;required&quot;: [
-        &quot;path&quot;,
-        &quot;reason&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
+    &quot;passes&quot;: {
+      &quot;type&quot;: &quot;boolean&quot;,
+      &quot;description&quot;: &quot;`true` when the tree was measured and nothing was found.&quot;
     },
-    &quot;PackFinding&quot;: {
-      &quot;description&quot;: &quot;A reason the pack cannot be built as planned, or a written pack is not what its\nmanifest says: a stable code, the path when there is one, and the remedy.\n\nThe examples below plan a repository holding `main.rs` and a `logo.png` whose content is\nbinary, with a distribution whose `chat` profile has limits and whose `bare` one has none.\n\n```\nuse majordomus_cli::pack::{plan, PackFinding};\n# use std::process::Command;\n# let dir = tempfile::tempdir().unwrap();\n# let (root, share) = (dir.path().join(\&quot;repo\&quot;), dir.path().join(\&quot;share\&quot;));\n# std::fs::create_dir_all(&amp;root).unwrap();\n# std::fs::create_dir_all(&amp;share).unwrap();\n# std::fs::write(share.join(\&quot;archive.yaml\&quot;), \&quot;default: chat\\nprofiles:\\n  - id: chat\\n    binary: drop\\n    artifacts: drop\\n    shards:\\n      max_count: 5\\n      max_tokens: 4000\\n  - id: bare\\n    binary: drop\\n\&quot;).unwrap();\n# let git = |a: &amp;[&amp;str]| assert!(Command::new(\&quot;git\&quot;).arg(\&quot;-C\&quot;).arg(&amp;root)\n#     .args([\&quot;-c\&quot;, \&quot;user.email=t@example.com\&quot;, \&quot;-c\&quot;, \&quot;user.name=t\&quot;]).args(a)\n#     .status().unwrap().success());\n# git(&amp;[\&quot;init\&quot;, \&quot;-q\&quot;]);\n# std::fs::write(root.join(\&quot;main.rs\&quot;), \&quot;fn main() {}\\n\&quot;).unwrap();\n# std::fs::write(root.join(\&quot;logo.png\&quot;), b\&quot;\\x89PNG\\0\\x01\&quot;).unwrap();\n# git(&amp;[\&quot;add\&quot;, \&quot;-A\&quot;]);\n# git(&amp;[\&quot;commit\&quot;, \&quot;-q\&quot;, \&quot;-m\&quot;, \&quot;one\&quot;]);\nlet findings: Vec&lt;PackFinding&gt; = plan(&amp;root, &amp;share, Some(\&quot;bare\&quot;)).plan.findings;\nassert_eq!(findings[0].code, \&quot;pack.no_limits\&quot;);\nassert!(findings[0].path.is_none() &amp;&amp; !findings[0].remedy.is_empty());\n```&quot;,
-      &quot;properties&quot;: {
-        &quot;code&quot;: {
-          &quot;description&quot;: &quot;A stable code: `pack.file_too_large`, `pack.too_many_shards`, `pack.index_too_large`, `pack.leak`,\n`pack.empty`, `pack.no_limits`, and from verification `pack.tampered`,\n`pack.not_text`, `pack.forbidden_path`, `pack.missing`, `pack.stray`,\n`pack.over_budget`, `pack.manifest`.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;message&quot;: {
-          &quot;description&quot;: &quot;What is wrong.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;path&quot;: {
-          &quot;description&quot;: &quot;The path the finding is about, when it is about one.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;remedy&quot;: {
-          &quot;description&quot;: &quot;What settles it.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      },
-      &quot;required&quot;: [
-        &quot;code&quot;,
-        &quot;message&quot;,
-        &quot;remedy&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
-    },
-    &quot;ShardLimits&quot;: {
-      &quot;description&quot;: &quot;The shard limits of a profile: the reader&#39;s own limits on what it can index, the file\ncount of a project and the tokens one file of it may hold.\n\n```\nuse majordomus_cli::pack::{Profiles, ShardLimits};\nlet p = Profiles::parse(\n    \&quot;default: a\\nprofiles:\\n  - id: a\\n    shards:\\n      max_count: 20\\n      max_tokens: 900\\n\&quot;,\n)\n.unwrap();\nlet want = ShardLimits { max_count: 20, max_tokens: 900 };\nassert_eq!(p.profile(None).unwrap().shards, Some(want));\n```&quot;,
-      &quot;properties&quot;: {
-        &quot;max_count&quot;: {
-          &quot;description&quot;: &quot;The most files the pack may hold, the index included.&quot;,
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;max_tokens&quot;: {
-          &quot;description&quot;: &quot;The most tokens one file of the pack may hold, counted with `o200k_base`.&quot;,
-          &quot;format&quot;: &quot;uint64&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        }
-      },
-      &quot;required&quot;: [
-        &quot;max_count&quot;,
-        &quot;max_tokens&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
-    },
-    &quot;ShardPlan&quot;: {
-      &quot;description&quot;: &quot;One planned shard: a Markdown file of the pack, the paths it carries from first to last,\nand what it weighs in bytes and in tokens.\n\nThe examples below plan a repository holding `main.rs` and a `logo.png` whose content is\nbinary, with a distribution whose `chat` profile has limits and whose `bare` one has none.\n\n```\nuse majordomus_cli::pack::{plan, ShardPlan};\n# use std::process::Command;\n# let dir = tempfile::tempdir().unwrap();\n# let (root, share) = (dir.path().join(\&quot;repo\&quot;), dir.path().join(\&quot;share\&quot;));\n# std::fs::create_dir_all(&amp;root).unwrap();\n# std::fs::create_dir_all(&amp;share).unwrap();\n# std::fs::write(share.join(\&quot;archive.yaml\&quot;), \&quot;default: chat\\nprofiles:\\n  - id: chat\\n    binary: drop\\n    artifacts: drop\\n    shards:\\n      max_count: 5\\n      max_tokens: 4000\\n  - id: bare\\n    binary: drop\\n\&quot;).unwrap();\n# let git = |a: &amp;[&amp;str]| assert!(Command::new(\&quot;git\&quot;).arg(\&quot;-C\&quot;).arg(&amp;root)\n#     .args([\&quot;-c\&quot;, \&quot;user.email=t@example.com\&quot;, \&quot;-c\&quot;, \&quot;user.name=t\&quot;]).args(a)\n#     .status().unwrap().success());\n# git(&amp;[\&quot;init\&quot;, \&quot;-q\&quot;]);\n# std::fs::write(root.join(\&quot;main.rs\&quot;), \&quot;fn main() {}\\n\&quot;).unwrap();\n# std::fs::write(root.join(\&quot;logo.png\&quot;), b\&quot;\\x89PNG\\0\\x01\&quot;).unwrap();\n# git(&amp;[\&quot;add\&quot;, \&quot;-A\&quot;]);\n# git(&amp;[\&quot;commit\&quot;, \&quot;-q\&quot;, \&quot;-m\&quot;, \&quot;one\&quot;]);\nlet planned = plan(&amp;root, &amp;share, None);\nlet first: &amp;ShardPlan = &amp;planned.plan.shards[0];\nassert_eq!((first.files, first.first.as_str(), first.last.as_str()), (1, \&quot;main.rs\&quot;, \&quot;main.rs\&quot;));\nassert!(first.file.ends_with(\&quot;.md\&quot;) &amp;&amp; first.tokens &gt; 0);\n```&quot;,
-      &quot;properties&quot;: {
-        &quot;bytes&quot;: {
-          &quot;description&quot;: &quot;The bytes of the content it carries.&quot;,
-          &quot;format&quot;: &quot;uint64&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;file&quot;: {
-          &quot;description&quot;: &quot;The file name inside the pack.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;files&quot;: {
-          &quot;description&quot;: &quot;How many files it carries.&quot;,
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;first&quot;: {
-          &quot;description&quot;: &quot;The first path it carries.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;last&quot;: {
-          &quot;description&quot;: &quot;The last path it carries.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;tokens&quot;: {
-          &quot;description&quot;: &quot;The tokens of the blocks it carries.&quot;,
-          &quot;format&quot;: &quot;uint64&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        }
-      },
-      &quot;required&quot;: [
-        &quot;file&quot;,
-        &quot;files&quot;,
-        &quot;first&quot;,
-        &quot;last&quot;,
-        &quot;bytes&quot;,
-        &quot;tokens&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
-    }
-  },
-  &quot;description&quot;: &quot;The plan of one pack: what it carries, what it leaves out and why, how it is cut into\nshards, and whether it may be built.\n\nThe examples below plan a repository holding `main.rs` and a `logo.png` whose content is\nbinary, with a distribution whose `chat` profile has limits and whose `bare` one has none.\n\n```\nuse majordomus_cli::pack::{plan, PackPlan};\n# use std::process::Command;\n# let dir = tempfile::tempdir().unwrap();\n# let (root, share) = (dir.path().join(\&quot;repo\&quot;), dir.path().join(\&quot;share\&quot;));\n# std::fs::create_dir_all(&amp;root).unwrap();\n# std::fs::create_dir_all(&amp;share).unwrap();\n# std::fs::write(share.join(\&quot;archive.yaml\&quot;), \&quot;default: chat\\nprofiles:\\n  - id: chat\\n    binary: drop\\n    artifacts: drop\\n    shards:\\n      max_count: 5\\n      max_tokens: 4000\\n  - id: bare\\n    binary: drop\\n\&quot;).unwrap();\n# let git = |a: &amp;[&amp;str]| assert!(Command::new(\&quot;git\&quot;).arg(\&quot;-C\&quot;).arg(&amp;root)\n#     .args([\&quot;-c\&quot;, \&quot;user.email=t@example.com\&quot;, \&quot;-c\&quot;, \&quot;user.name=t\&quot;]).args(a)\n#     .status().unwrap().success());\n# git(&amp;[\&quot;init\&quot;, \&quot;-q\&quot;]);\n# std::fs::write(root.join(\&quot;main.rs\&quot;), \&quot;fn main() {}\\n\&quot;).unwrap();\n# std::fs::write(root.join(\&quot;logo.png\&quot;), b\&quot;\\x89PNG\\0\\x01\&quot;).unwrap();\n# git(&amp;[\&quot;add\&quot;, \&quot;-A\&quot;]);\n# git(&amp;[\&quot;commit\&quot;, \&quot;-q\&quot;, \&quot;-m\&quot;, \&quot;one\&quot;]);\nlet p: PackPlan = plan(&amp;root, &amp;share, None).plan;\nassert!(p.measured &amp;&amp; p.passes &amp;&amp; p.index_matches_head);\nassert_eq!((p.tracked, p.selected), (2, 1));\nassert_eq!(p.dropped[\&quot;binary\&quot;], 1);\n// an unknown profile is not measured, and not measured is never a pass\nlet p: PackPlan = plan(&amp;root, &amp;share, Some(\&quot;nope\&quot;)).plan;\nassert!(!p.measured &amp;&amp; !p.passes);\n```&quot;,
-  &quot;properties&quot;: {
-    &quot;bytes&quot;: {
-      &quot;description&quot;: &quot;The bytes of the content carried.&quot;,
-      &quot;format&quot;: &quot;uint64&quot;,
+    &quot;tokens&quot;: {
+      &quot;type&quot;: &quot;integer&quot;,
       &quot;minimum&quot;: 0,
-      &quot;type&quot;: &quot;integer&quot;
+      &quot;format&quot;: &quot;uint64&quot;,
+      &quot;description&quot;: &quot;The tokens of the content carried, in `o200k_base`.&quot;
+    },
+    &quot;index_matches_head&quot;: {
+      &quot;type&quot;: &quot;boolean&quot;,
+      &quot;description&quot;: &quot;Whether the index holds exactly what `HEAD` holds. `false` means staged changes\ntravel with the pack under a commit id that does not contain them.&quot;
+    },
+    &quot;measured&quot;: {
+      &quot;type&quot;: &quot;boolean&quot;,
+      &quot;description&quot;: &quot;Whether the tree could be read at all. `false` is not a pass.&quot;
+    },
+    &quot;reason&quot;: {
+      &quot;type&quot;: [
+        &quot;string&quot;,
+        &quot;null&quot;
+      ],
+      &quot;description&quot;: &quot;Why it could not, when it could not.&quot;
+    },
+    &quot;shards&quot;: {
+      &quot;items&quot;: {
+        &quot;$ref&quot;: &quot;#/$defs/ShardPlan&quot;
+      },
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;description&quot;: &quot;The shards, in order; the index is not one of them.&quot;
     },
     &quot;commit&quot;: {
       &quot;description&quot;: &quot;The commit `HEAD` names; the content is the index&#39;s, which equals it when\n`index_matches_head` is true.&quot;,
@@ -517,6 +406,36 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
         &quot;string&quot;,
         &quot;null&quot;
       ]
+    },
+    &quot;selected&quot;: {
+      &quot;format&quot;: &quot;uint&quot;,
+      &quot;minimum&quot;: 0,
+      &quot;type&quot;: &quot;integer&quot;,
+      &quot;description&quot;: &quot;How many the pack carries.&quot;
+    },
+    &quot;findings&quot;: {
+      &quot;description&quot;: &quot;Every reason the pack cannot be built. Empty is the passing answer.&quot;,
+      &quot;items&quot;: {
+        &quot;$ref&quot;: &quot;#/$defs/PackFinding&quot;
+      },
+      &quot;type&quot;: &quot;array&quot;
+    },
+    &quot;dropped_files&quot;: {
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;items&quot;: {
+        &quot;$ref&quot;: &quot;#/$defs/DroppedFile&quot;
+      },
+      &quot;description&quot;: &quot;Every file left out for a reason other than `derived`.&quot;
+    },
+    &quot;profile&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;description&quot;: &quot;The profile planned.&quot;
+    },
+    &quot;tracked&quot;: {
+      &quot;description&quot;: &quot;How many files the index tracks.&quot;,
+      &quot;type&quot;: &quot;integer&quot;,
+      &quot;minimum&quot;: 0,
+      &quot;format&quot;: &quot;uint&quot;
     },
     &quot;dropped&quot;: {
       &quot;additionalProperties&quot;: {
@@ -527,84 +446,14 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
       &quot;description&quot;: &quot;How many files were left out, by reason.&quot;,
       &quot;type&quot;: &quot;object&quot;
     },
-    &quot;dropped_files&quot;: {
-      &quot;description&quot;: &quot;Every file left out for a reason other than `derived`.&quot;,
-      &quot;items&quot;: {
-        &quot;$ref&quot;: &quot;#/$defs/DroppedFile&quot;
-      },
-      &quot;type&quot;: &quot;array&quot;
-    },
-    &quot;findings&quot;: {
-      &quot;description&quot;: &quot;Every reason the pack cannot be built. Empty is the passing answer.&quot;,
-      &quot;items&quot;: {
-        &quot;$ref&quot;: &quot;#/$defs/PackFinding&quot;
-      },
-      &quot;type&quot;: &quot;array&quot;
-    },
-    &quot;index_matches_head&quot;: {
-      &quot;description&quot;: &quot;Whether the index holds exactly what `HEAD` holds. `false` means staged changes\ntravel with the pack under a commit id that does not contain them.&quot;,
-      &quot;type&quot;: &quot;boolean&quot;
-    },
-    &quot;limits&quot;: {
-      &quot;anyOf&quot;: [
-        {
-          &quot;$ref&quot;: &quot;#/$defs/ShardLimits&quot;
-        },
-        {
-          &quot;type&quot;: &quot;null&quot;
-        }
-      ],
-      &quot;description&quot;: &quot;The limits applied.&quot;
-    },
-    &quot;measured&quot;: {
-      &quot;description&quot;: &quot;Whether the tree could be read at all. `false` is not a pass.&quot;,
-      &quot;type&quot;: &quot;boolean&quot;
-    },
-    &quot;passes&quot;: {
-      &quot;description&quot;: &quot;`true` when the tree was measured and nothing was found.&quot;,
-      &quot;type&quot;: &quot;boolean&quot;
-    },
-    &quot;profile&quot;: {
-      &quot;description&quot;: &quot;The profile planned.&quot;,
-      &quot;type&quot;: &quot;string&quot;
-    },
-    &quot;reason&quot;: {
-      &quot;description&quot;: &quot;Why it could not, when it could not.&quot;,
-      &quot;type&quot;: [
-        &quot;string&quot;,
-        &quot;null&quot;
-      ]
-    },
-    &quot;selected&quot;: {
-      &quot;description&quot;: &quot;How many the pack carries.&quot;,
-      &quot;format&quot;: &quot;uint&quot;,
+    &quot;bytes&quot;: {
       &quot;minimum&quot;: 0,
-      &quot;type&quot;: &quot;integer&quot;
-    },
-    &quot;shards&quot;: {
-      &quot;description&quot;: &quot;The shards, in order; the index is not one of them.&quot;,
-      &quot;items&quot;: {
-        &quot;$ref&quot;: &quot;#/$defs/ShardPlan&quot;
-      },
-      &quot;type&quot;: &quot;array&quot;
-    },
-    &quot;tokenizer&quot;: {
-      &quot;description&quot;: &quot;The tokenizer the counts are in.&quot;,
-      &quot;type&quot;: &quot;string&quot;
-    },
-    &quot;tokens&quot;: {
-      &quot;description&quot;: &quot;The tokens of the content carried, in `o200k_base`.&quot;,
+      &quot;description&quot;: &quot;The bytes of the content carried.&quot;,
       &quot;format&quot;: &quot;uint64&quot;,
-      &quot;minimum&quot;: 0,
-      &quot;type&quot;: &quot;integer&quot;
-    },
-    &quot;tracked&quot;: {
-      &quot;description&quot;: &quot;How many files the index tracks.&quot;,
-      &quot;format&quot;: &quot;uint&quot;,
-      &quot;minimum&quot;: 0,
       &quot;type&quot;: &quot;integer&quot;
     }
   },
+  &quot;title&quot;: &quot;PackPlan&quot;,
   &quot;required&quot;: [
     &quot;measured&quot;,
     &quot;profile&quot;,
@@ -620,7 +469,158 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
     &quot;findings&quot;,
     &quot;passes&quot;
   ],
-  &quot;title&quot;: &quot;PackPlan&quot;,
+  &quot;$defs&quot;: {
+    &quot;DropReason&quot;: {
+      &quot;oneOf&quot;: [
+        {
+          &quot;description&quot;: &quot;A gitlink: a nested repository or worktree whose content is not in this index.&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;worktree&quot;
+        },
+        {
+          &quot;const&quot;: &quot;link&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;A symbolic link, whose content is a path on the machine that committed it.&quot;
+        },
+        {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;artifact&quot;,
+          &quot;description&quot;: &quot;A path the distribution names as build output, a cache or a worktree container.&quot;
+        },
+        {
+          &quot;description&quot;: &quot;Not text: a NUL byte, content that is not UTF-8, or an extension on the binary list.&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;binary&quot;
+        },
+        {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;Marked `merge=derived` in `.gitattributes`: a projection of a file that is here.&quot;,
+          &quot;const&quot;: &quot;derived&quot;
+        },
+        {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;excluded&quot;,
+          &quot;description&quot;: &quot;Matched by the profile&#39;s `exclude`.&quot;
+        }
+      ],
+      &quot;description&quot;: &quot;Why a tracked file is not in the pack. Every reason but `derived` and `excluded` is\nfinal: no `include` of a profile re-admits a link, a gitlink, an artifact or a binary.\n\n```\nuse majordomus_cli::pack::DropReason;\nassert_eq!(DropReason::Binary.as_str(), \&quot;binary\&quot;);\nlet json = serde_json::to_string(&amp;DropReason::Artifact).unwrap();\nassert_eq!(json, \&quot;\\\&quot;artifact\\\&quot;\&quot;);\n```&quot;
+    },
+    &quot;DroppedFile&quot;: {
+      &quot;type&quot;: &quot;object&quot;,
+      &quot;description&quot;: &quot;One dropped file the report names. Derived files are counted, not listed: they are a\nfunction of files that are in the pack.\n\nThe examples below plan a repository holding `main.rs` and a `logo.png` whose content is\nbinary, with a distribution whose `chat` profile has limits and whose `bare` one has none.\n\n```\nuse majordomus_cli::pack::{plan, DropReason, DroppedFile};\n# use std::process::Command;\n# let dir = tempfile::tempdir().unwrap();\n# let (root, share) = (dir.path().join(\&quot;repo\&quot;), dir.path().join(\&quot;share\&quot;));\n# std::fs::create_dir_all(&amp;root).unwrap();\n# std::fs::create_dir_all(&amp;share).unwrap();\n# std::fs::write(share.join(\&quot;archive.yaml\&quot;), \&quot;default: chat\\nprofiles:\\n  - id: chat\\n    binary: drop\\n    artifacts: drop\\n    shards:\\n      max_count: 5\\n      max_tokens: 4000\\n  - id: bare\\n    binary: drop\\n\&quot;).unwrap();\n# let git = |a: &amp;[&amp;str]| assert!(Command::new(\&quot;git\&quot;).arg(\&quot;-C\&quot;).arg(&amp;root)\n#     .args([\&quot;-c\&quot;, \&quot;user.email=t@example.com\&quot;, \&quot;-c\&quot;, \&quot;user.name=t\&quot;]).args(a)\n#     .status().unwrap().success());\n# git(&amp;[\&quot;init\&quot;, \&quot;-q\&quot;]);\n# std::fs::write(root.join(\&quot;main.rs\&quot;), \&quot;fn main() {}\\n\&quot;).unwrap();\n# std::fs::write(root.join(\&quot;logo.png\&quot;), b\&quot;\\x89PNG\\0\\x01\&quot;).unwrap();\n# git(&amp;[\&quot;add\&quot;, \&quot;-A\&quot;]);\n# git(&amp;[\&quot;commit\&quot;, \&quot;-q\&quot;, \&quot;-m\&quot;, \&quot;one\&quot;]);\nlet dropped = plan(&amp;root, &amp;share, None).plan.dropped_files;\nlet want = DroppedFile { path: \&quot;logo.png\&quot;.into(), reason: DropReason::Binary };\nassert_eq!(dropped, [want]);\n```&quot;,
+      &quot;properties&quot;: {
+        &quot;reason&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/DropReason&quot;,
+          &quot;description&quot;: &quot;Why.&quot;
+        },
+        &quot;path&quot;: {
+          &quot;description&quot;: &quot;The path.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;path&quot;,
+        &quot;reason&quot;
+      ]
+    },
+    &quot;PackFinding&quot;: {
+      &quot;required&quot;: [
+        &quot;code&quot;,
+        &quot;message&quot;,
+        &quot;remedy&quot;
+      ],
+      &quot;properties&quot;: {
+        &quot;code&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;A stable code: `pack.file_too_large`, `pack.too_many_shards`, `pack.index_too_large`, `pack.leak`,\n`pack.empty`, `pack.no_limits`, and from verification `pack.tampered`,\n`pack.not_text`, `pack.forbidden_path`, `pack.missing`, `pack.stray`,\n`pack.over_budget`, `pack.manifest`.&quot;
+        },
+        &quot;message&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;What is wrong.&quot;
+        },
+        &quot;path&quot;: {
+          &quot;description&quot;: &quot;The path the finding is about, when it is about one.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;remedy&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;What settles it.&quot;
+        }
+      },
+      &quot;type&quot;: &quot;object&quot;,
+      &quot;description&quot;: &quot;A reason the pack cannot be built as planned, or a written pack is not what its\nmanifest says: a stable code, the path when there is one, and the remedy.\n\nThe examples below plan a repository holding `main.rs` and a `logo.png` whose content is\nbinary, with a distribution whose `chat` profile has limits and whose `bare` one has none.\n\n```\nuse majordomus_cli::pack::{plan, PackFinding};\n# use std::process::Command;\n# let dir = tempfile::tempdir().unwrap();\n# let (root, share) = (dir.path().join(\&quot;repo\&quot;), dir.path().join(\&quot;share\&quot;));\n# std::fs::create_dir_all(&amp;root).unwrap();\n# std::fs::create_dir_all(&amp;share).unwrap();\n# std::fs::write(share.join(\&quot;archive.yaml\&quot;), \&quot;default: chat\\nprofiles:\\n  - id: chat\\n    binary: drop\\n    artifacts: drop\\n    shards:\\n      max_count: 5\\n      max_tokens: 4000\\n  - id: bare\\n    binary: drop\\n\&quot;).unwrap();\n# let git = |a: &amp;[&amp;str]| assert!(Command::new(\&quot;git\&quot;).arg(\&quot;-C\&quot;).arg(&amp;root)\n#     .args([\&quot;-c\&quot;, \&quot;user.email=t@example.com\&quot;, \&quot;-c\&quot;, \&quot;user.name=t\&quot;]).args(a)\n#     .status().unwrap().success());\n# git(&amp;[\&quot;init\&quot;, \&quot;-q\&quot;]);\n# std::fs::write(root.join(\&quot;main.rs\&quot;), \&quot;fn main() {}\\n\&quot;).unwrap();\n# std::fs::write(root.join(\&quot;logo.png\&quot;), b\&quot;\\x89PNG\\0\\x01\&quot;).unwrap();\n# git(&amp;[\&quot;add\&quot;, \&quot;-A\&quot;]);\n# git(&amp;[\&quot;commit\&quot;, \&quot;-q\&quot;, \&quot;-m\&quot;, \&quot;one\&quot;]);\nlet findings: Vec&lt;PackFinding&gt; = plan(&amp;root, &amp;share, Some(\&quot;bare\&quot;)).plan.findings;\nassert_eq!(findings[0].code, \&quot;pack.no_limits\&quot;);\nassert!(findings[0].path.is_none() &amp;&amp; !findings[0].remedy.is_empty());\n```&quot;
+    },
+    &quot;ShardLimits&quot;: {
+      &quot;properties&quot;: {
+        &quot;max_tokens&quot;: {
+          &quot;description&quot;: &quot;The most tokens one file of the pack may hold, counted with `o200k_base`.&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;format&quot;: &quot;uint64&quot;,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;max_count&quot;: {
+          &quot;description&quot;: &quot;The most files the pack may hold, the index included.&quot;,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
+        }
+      },
+      &quot;description&quot;: &quot;The shard limits of a profile: the reader&#39;s own limits on what it can index, the file\ncount of a project and the tokens one file of it may hold.\n\n```\nuse majordomus_cli::pack::{Profiles, ShardLimits};\nlet p = Profiles::parse(\n    \&quot;default: a\\nprofiles:\\n  - id: a\\n    shards:\\n      max_count: 20\\n      max_tokens: 900\\n\&quot;,\n)\n.unwrap();\nlet want = ShardLimits { max_count: 20, max_tokens: 900 };\nassert_eq!(p.profile(None).unwrap().shards, Some(want));\n```&quot;,
+      &quot;required&quot;: [
+        &quot;max_count&quot;,
+        &quot;max_tokens&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;ShardPlan&quot;: {
+      &quot;type&quot;: &quot;object&quot;,
+      &quot;description&quot;: &quot;One planned shard: a Markdown file of the pack, the paths it carries from first to last,\nand what it weighs in bytes and in tokens.\n\nThe examples below plan a repository holding `main.rs` and a `logo.png` whose content is\nbinary, with a distribution whose `chat` profile has limits and whose `bare` one has none.\n\n```\nuse majordomus_cli::pack::{plan, ShardPlan};\n# use std::process::Command;\n# let dir = tempfile::tempdir().unwrap();\n# let (root, share) = (dir.path().join(\&quot;repo\&quot;), dir.path().join(\&quot;share\&quot;));\n# std::fs::create_dir_all(&amp;root).unwrap();\n# std::fs::create_dir_all(&amp;share).unwrap();\n# std::fs::write(share.join(\&quot;archive.yaml\&quot;), \&quot;default: chat\\nprofiles:\\n  - id: chat\\n    binary: drop\\n    artifacts: drop\\n    shards:\\n      max_count: 5\\n      max_tokens: 4000\\n  - id: bare\\n    binary: drop\\n\&quot;).unwrap();\n# let git = |a: &amp;[&amp;str]| assert!(Command::new(\&quot;git\&quot;).arg(\&quot;-C\&quot;).arg(&amp;root)\n#     .args([\&quot;-c\&quot;, \&quot;user.email=t@example.com\&quot;, \&quot;-c\&quot;, \&quot;user.name=t\&quot;]).args(a)\n#     .status().unwrap().success());\n# git(&amp;[\&quot;init\&quot;, \&quot;-q\&quot;]);\n# std::fs::write(root.join(\&quot;main.rs\&quot;), \&quot;fn main() {}\\n\&quot;).unwrap();\n# std::fs::write(root.join(\&quot;logo.png\&quot;), b\&quot;\\x89PNG\\0\\x01\&quot;).unwrap();\n# git(&amp;[\&quot;add\&quot;, \&quot;-A\&quot;]);\n# git(&amp;[\&quot;commit\&quot;, \&quot;-q\&quot;, \&quot;-m\&quot;, \&quot;one\&quot;]);\nlet planned = plan(&amp;root, &amp;share, None);\nlet first: &amp;ShardPlan = &amp;planned.plan.shards[0];\nassert_eq!((first.files, first.first.as_str(), first.last.as_str()), (1, \&quot;main.rs\&quot;, \&quot;main.rs\&quot;));\nassert!(first.file.ends_with(\&quot;.md\&quot;) &amp;&amp; first.tokens &gt; 0);\n```&quot;,
+      &quot;properties&quot;: {
+        &quot;last&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The last path it carries.&quot;
+        },
+        &quot;bytes&quot;: {
+          &quot;minimum&quot;: 0,
+          &quot;format&quot;: &quot;uint64&quot;,
+          &quot;type&quot;: &quot;integer&quot;,
+          &quot;description&quot;: &quot;The bytes of the content it carries.&quot;
+        },
+        &quot;tokens&quot;: {
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;,
+          &quot;description&quot;: &quot;The tokens of the blocks it carries.&quot;,
+          &quot;format&quot;: &quot;uint64&quot;
+        },
+        &quot;first&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The first path it carries.&quot;
+        },
+        &quot;file&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The file name inside the pack.&quot;
+        },
+        &quot;files&quot;: {
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;description&quot;: &quot;How many files it carries.&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;file&quot;,
+        &quot;files&quot;,
+        &quot;first&quot;,
+        &quot;last&quot;,
+        &quot;bytes&quot;,
+        &quot;tokens&quot;
+      ]
+    }
+  },
+  &quot;description&quot;: &quot;The plan of one pack: what it carries, what it leaves out and why, how it is cut into\nshards, and whether it may be built.\n\nThe examples below plan a repository holding `main.rs` and a `logo.png` whose content is\nbinary, with a distribution whose `chat` profile has limits and whose `bare` one has none.\n\n```\nuse majordomus_cli::pack::{plan, PackPlan};\n# use std::process::Command;\n# let dir = tempfile::tempdir().unwrap();\n# let (root, share) = (dir.path().join(\&quot;repo\&quot;), dir.path().join(\&quot;share\&quot;));\n# std::fs::create_dir_all(&amp;root).unwrap();\n# std::fs::create_dir_all(&amp;share).unwrap();\n# std::fs::write(share.join(\&quot;archive.yaml\&quot;), \&quot;default: chat\\nprofiles:\\n  - id: chat\\n    binary: drop\\n    artifacts: drop\\n    shards:\\n      max_count: 5\\n      max_tokens: 4000\\n  - id: bare\\n    binary: drop\\n\&quot;).unwrap();\n# let git = |a: &amp;[&amp;str]| assert!(Command::new(\&quot;git\&quot;).arg(\&quot;-C\&quot;).arg(&amp;root)\n#     .args([\&quot;-c\&quot;, \&quot;user.email=t@example.com\&quot;, \&quot;-c\&quot;, \&quot;user.name=t\&quot;]).args(a)\n#     .status().unwrap().success());\n# git(&amp;[\&quot;init\&quot;, \&quot;-q\&quot;]);\n# std::fs::write(root.join(\&quot;main.rs\&quot;), \&quot;fn main() {}\\n\&quot;).unwrap();\n# std::fs::write(root.join(\&quot;logo.png\&quot;), b\&quot;\\x89PNG\\0\\x01\&quot;).unwrap();\n# git(&amp;[\&quot;add\&quot;, \&quot;-A\&quot;]);\n# git(&amp;[\&quot;commit\&quot;, \&quot;-q\&quot;, \&quot;-m\&quot;, \&quot;one\&quot;]);\nlet p: PackPlan = plan(&amp;root, &amp;share, None).plan;\nassert!(p.measured &amp;&amp; p.passes &amp;&amp; p.index_matches_head);\nassert_eq!((p.tracked, p.selected), (2, 1));\nassert_eq!(p.dropped[\&quot;binary\&quot;], 1);\n// an unknown profile is not measured, and not measured is never a pass\nlet p: PackPlan = plan(&amp;root, &amp;share, Some(\&quot;nope\&quot;)).plan;\nassert!(!p.measured &amp;&amp; !p.passes);\n```&quot;,
   &quot;type&quot;: &quot;object&quot;
 }</pre></div>
   </details>
@@ -652,7 +652,7 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
         <div><dt class="text-body-subtle">modul Rust</dt><dd class="min-w-0 break-all font-mono text-heading">majordomus_cli::capability::builtin::pack</dd></div>
         <div><dt class="text-body-subtle">typ vstupu</dt><dd class="font-mono text-heading">PackPlanInput</dd></div>
         <div><dt class="text-body-subtle">typ výstupu</dt><dd class="font-mono text-heading">PackPlan</dd></div>
-        <div><dt class="text-body-subtle">reference na GitHubu</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/aa9f816f8673880ab4beb6dbebff688f9da5bb65/docs/generated/modules/pack.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/pack.md</a></dd></div><div><dt class="text-body-subtle">otisk registru</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">c514db707bb1f5f7557f2a1629d42c4bdc05eb7ef58464c288e42bafcd3d8720</dd></div>
+        <div><dt class="text-body-subtle">reference na GitHubu</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/docs/generated/modules/pack.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/pack.md</a></dd></div><div><dt class="text-body-subtle">otisk registru</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">3f734f2faf797f0ca7c39b4cd837e68b6619c41c6f6711f3d3aeca8f341934eb</dd></div>
         <div><dt class="text-body-subtle">vygenerováno nástrojem</dt><dd class="font-mono text-heading">majordomus-cli 1.0.0-alpha.10</dd></div>
       </dl>
     </div>
@@ -708,9 +708,9 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
       <div class="min-w-0">
         <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">Projekt</h2><ul class="space-y-2 text-sm font-medium text-body">
           <li><a href="https://github.com/korczis/prismatic-majordomus" class="hover:text-heading hover:underline">GitHub</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/aa9f816f8673880ab4beb6dbebff688f9da5bb65/LICENSE" class="hover:text-heading hover:underline">Licence MIT</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/aa9f816f8673880ab4beb6dbebff688f9da5bb65/SECURITY.md" class="hover:text-heading hover:underline">Bezpečnostní politika</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/aa9f816f8673880ab4beb6dbebff688f9da5bb65/CONTRIBUTING.md" class="hover:text-heading hover:underline">Průvodce pro přispěvatele</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/LICENSE" class="hover:text-heading hover:underline">Licence MIT</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/SECURITY.md" class="hover:text-heading hover:underline">Bezpečnostní politika</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/CONTRIBUTING.md" class="hover:text-heading hover:underline">Průvodce pro přispěvatele</a></li>
         </ul>
       </div>
     </div>
@@ -718,7 +718,7 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/cs/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.10</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/aa9f816f8673880ab4beb6dbebff688f9da5bb65" class="font-mono underline">aa9f816</a> · inputs <span class="font-mono">a64b981ed16e</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/cs/architecture/" class="underline">how this site is derived</a> names them.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.10</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/745db2ea21e02613943face75a2bf95542be1f2e" class="font-mono underline">745db2e</a> · inputs <span class="font-mono">0a58c217d1b7</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/cs/architecture/" class="underline">how this site is derived</a> names them.</p>
     </div>
   </div>
 </footer>

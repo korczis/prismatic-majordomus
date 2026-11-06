@@ -211,6 +211,11 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
     <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
       <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">vlastnost</th><th class="px-3 py-2">typ</th><th class="px-3 py-2">povinné</th><th class="px-3 py-2">popis</th></tr></thead>
       <tbody><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">scope</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">ne</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Cesty relativní k repozitáři, kterých se peer očekává dotknout. Informativní: ostatní peeři to čtou, aby se vyhnuli kolizi; nic zde to nevynucuje. <span class="font-mono text-xs text-body-subtle">výchozí []</span></td>
+      </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">claim</td>
         <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
         <td class="px-3 py-2 font-mono text-xs text-body">ne</td>
@@ -221,19 +226,25 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
         <td class="px-3 py-2 font-mono text-xs text-body">string</td>
         <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
         <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Jeden řádek slovy peera: úloha, otázka, záměr.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">scope</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">ne</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Cesty relativní k repozitáři, kterých se peer očekává dotknout. Informativní: ostatní peeři to čtou, aby se vyhnuli kolizi; nic zde to nevynucuje. <span class="font-mono text-xs text-body-subtle">výchozí []</span></td>
       </tr></tbody>
     </table>
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
   &quot;additionalProperties&quot;: false,
+  &quot;required&quot;: [
+    &quot;intent&quot;
+  ],
   &quot;description&quot;: &quot;The input of `peers.announce`: what the calling peer is working on.&quot;,
   &quot;properties&quot;: {
+    &quot;scope&quot;: {
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;string&quot;
+      },
+      &quot;description&quot;: &quot;Repository-relative paths the peer expects to touch. Informational: other peers\nread it to avoid a collision; nothing here enforces it.&quot;,
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;default&quot;: []
+    },
     &quot;claim&quot;: {
       &quot;description&quot;: &quot;Which of this peer&#39;s claims this is, when the peer holds more than one.\n\nOne MCP session is not always one piece of work — a client that fans work out to\nsubagents shares its session with all of them — and without a name every\nannouncement replaces the last, so the board ends up describing whichever worker\nspoke most recently and the rest of the scope silently stops being claimed. Name a\nclaim and it stands beside the others; announce under that name again and it is\nupdated. Leave it out and this is the peer&#39;s one unnamed claim, which is what a\nsingle session announcing about itself wants.&quot;,
       &quot;type&quot;: [
@@ -244,19 +255,8 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
     &quot;intent&quot;: {
       &quot;description&quot;: &quot;One line, in the peer&#39;s words: the task, the question, the intent.&quot;,
       &quot;type&quot;: &quot;string&quot;
-    },
-    &quot;scope&quot;: {
-      &quot;default&quot;: [],
-      &quot;description&quot;: &quot;Repository-relative paths the peer expects to touch. Informational: other peers\nread it to avoid a collision; nothing here enforces it.&quot;,
-      &quot;items&quot;: {
-        &quot;type&quot;: &quot;string&quot;
-      },
-      &quot;type&quot;: &quot;array&quot;
     }
   },
-  &quot;required&quot;: [
-    &quot;intent&quot;
-  ],
   &quot;title&quot;: &quot;AnnounceInput&quot;,
   &quot;type&quot;: &quot;object&quot;
 }</pre></div>
@@ -267,61 +267,6 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
     <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
       <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">vlastnost</th><th class="px-3 py-2">typ</th><th class="px-3 py-2">povinné</th><th class="px-3 py-2">popis</th></tr></thead>
       <tbody><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">adresa</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">jedno ze 2</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">ne</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Where the worker behind this peer can be reached from outside its connection: its
-machine, its process, its provider session and the socket other sessions message it
-on; see <code>PeerAddress</code>. Derived when the peer attached, never announced by hand.
-Absent for a client that exposes none of it.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">oznámení</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">jedno ze 2</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">ne</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Nejnověji vytvořený z <code>Peer::claims</code>, pro čtenáře, který chce jeden řádek místo všech. Odvozeno z <code>claims</code> a nikdy ne druhý účet téhož: peer držící jeden nárok hlásí totéž v obou, což hlásí každý peer, který své nároky nejmenuje.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">připojeno</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">boolean</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Zda je relace stále připojena. Peer, který něco oznámil a pak odešel, se uchová a vypíše s <code>attached: false</code>: to, na čem řekl, že pracuje, přežije spojení, které to řeklo, protože práce přežije také.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">checkout</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">jedno ze 2</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">ne</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Ke kterému checkoutu repozitáře je tento peer připojen; viz <code>PeerCheckout</code>.</p>
-<p>Nástěnka ho sama nikdy nenastavuje — nástěnka neví, kde je — a razítkuje ho čtečka, která tohoto peera shromáždila, protože jediná ví, na server kterého checkoutu se ptala.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">tvrzení</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">ne</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Každý claim, který tento peer drží, v pořadí podle jména, nepojmenovaný první. Prázdné u peera, který nic neoznámil.</p>
-<p>Jedno spojení může dělat několik věcí najednou — relace, která rozdělí práci mezi subagenty, s nimi všemi sdílí svou relaci MCP — a před tímto polem mohla nástěnka držet jen poslední řečené, takže každé oznámení tiše smazalo to předchozí a ostatní peery přestaly vidět zbytek rozsahu.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">klient</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Klient za ním.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">connected_at</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Kdy se připojil, RFC 3339, UTC.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">id</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words"><code>p1</code>, <code>p2</code>, ...</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">last_seen_seconds_ago</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">integer</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Sekundy od její poslední zprávy.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">překryvy</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">ne</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Každý další peer, jehož nárokovaný rozsah se s tímto střetává. Prázdné je běžný případ.</td>
-      </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">progress_seconds_ago</td>
         <td class="px-3 py-2 font-mono text-xs text-body">integer | null</td>
         <td class="px-3 py-2 font-mono text-xs text-body">ne</td>
@@ -337,6 +282,61 @@ mesh claims live by.</td>
         <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Cesty, které měl nárok, jejž tento nahradil, a tento je nemá.</p>
 <p>Oznámení pod jménem, které peer už použil, nahradí onen nárok, což je smysl aktualizace. Když je náhrada užší, peer právě přestal nárokovat půdu, kterou o chvíli dřív držel, a ostatní peeři přestanou být před ní varováni. Občas je to záměr, jindy chyba, kterou by nikdo nikdy neviděl, a proto se to říká tady, ve chvíli, kdy k tomu dojde, místo aby se to objevilo až v pozdější kolizi. Prázdné je běžný případ.</td>
       </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">connected_at</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Kdy se připojil, RFC 3339, UTC.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">adresa</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">jedno ze 2</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">ne</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Where the worker behind this peer can be reached from outside its connection: its
+machine, its process, its provider session and the socket other sessions message it
+on; see <code>PeerAddress</code>. Derived when the peer attached, never announced by hand.
+Absent for a client that exposes none of it.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">id</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words"><code>p1</code>, <code>p2</code>, ...</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">oznámení</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">jedno ze 2</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">ne</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Nejnověji vytvořený z <code>Peer::claims</code>, pro čtenáře, který chce jeden řádek místo všech. Odvozeno z <code>claims</code> a nikdy ne druhý účet téhož: peer držící jeden nárok hlásí totéž v obou, což hlásí každý peer, který své nároky nejmenuje.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">připojeno</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">boolean</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Zda je relace stále připojena. Peer, který něco oznámil a pak odešel, se uchová a vypíše s <code>attached: false</code>: to, na čem řekl, že pracuje, přežije spojení, které to řeklo, protože práce přežije také.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">překryvy</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">ne</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Každý další peer, jehož nárokovaný rozsah se s tímto střetává. Prázdné je běžný případ.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">klient</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Klient za ním.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">checkout</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">jedno ze 2</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">ne</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Ke kterému checkoutu repozitáře je tento peer připojen; viz <code>PeerCheckout</code>.</p>
+<p>Nástěnka ho sama nikdy nenastavuje — nástěnka neví, kde je — a razítkuje ho čtečka, která tohoto peera shromáždila, protože jediná ví, na server kterého checkoutu se ptala.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">tvrzení</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">ne</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Každý claim, který tento peer drží, v pořadí podle jména, nepojmenovaný první. Prázdné u peera, který nic neoznámil.</p>
+<p>Jedno spojení může dělat několik věcí najednou — relace, která rozdělí práci mezi subagenty, s nimi všemi sdílí svou relaci MCP — a před tímto polem mohla nástěnka držet jen poslední řečené, takže každé oznámení tiše smazalo to předchozí a ostatní peery přestaly vidět zbytek rozsahu.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">last_seen_seconds_ago</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">integer</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Sekundy od její poslední zprávy.</td>
+      </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">transport</td>
         <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
         <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
@@ -346,71 +346,126 @@ mesh claims live by.</td>
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
+  &quot;description&quot;: &quot;What `announce` answers: the peer as recorded, and who else is on that ground.&quot;,
   &quot;$defs&quot;: {
-    &quot;Announcement&quot;: {
-      &quot;description&quot;: &quot;One claim a peer has made: what it is working on, and where.\n\nA peer may hold several. The `name` is what tells them apart and what makes announcing\nagain an update rather than a second claim: announce under the same name and the claim\nis replaced, announce under a new one and the peer now holds both. A peer that never\nnames anything holds exactly one claim, the unnamed one, which is what a single session\nannouncing about itself has always had.&quot;,
+    &quot;PeerCheckout&quot;: {
+      &quot;description&quot;: &quot;Which checkout of the repository a peer is attached to.\n\nA board is one process&#39;s memory and a server serves one checkout, so a peer read from\na sibling checkout&#39;s server and a peer of this one are otherwise indistinguishable —\nand worse than indistinguishable, because the ids collide: `p1` is the first session\nof *every* board, so a repository-wide listing without this field would hold several\npeers called `p1` and no way to tell them apart. This is the qualification. The\nworktree path is the durable half of a worker&#39;s identity: the peer id is a position on\none board and is handed out again after a reconnect (`p3` this morning, `p1` after the\nbridge re-attached), while the checkout a worker is working in outlives its connection.\n\nAbsent on a peer a server reports about its own board without being asked which\ncheckout that is — `peers.announce` answers about the announcing session and the\nanswer is this server&#39;s by construction. The repository-wide listing stamps every\npeer it gathers, its own included, so that no entry of that answer is unqualified.\n\n```\nuse majordomus_cli::peers::PeerCheckout;\nlet c = PeerCheckout {\n    id: \&quot;b8293f11\&quot;.into(),\n    worktree: \&quot;/repo-wt/feature/x\&quot;.into(),\n    branch: Some(\&quot;feature/x\&quot;.into()),\n    this_checkout: false,\n};\nlet v = serde_json::to_value(&amp;c).unwrap();\nassert_eq!(v[\&quot;branch\&quot;], \&quot;feature/x\&quot;);\nassert_eq!(v[\&quot;this_checkout\&quot;], false);\n```&quot;,
+      &quot;type&quot;: &quot;object&quot;,
+      &quot;required&quot;: [
+        &quot;id&quot;,
+        &quot;worktree&quot;,
+        &quot;this_checkout&quot;
+      ],
       &quot;properties&quot;: {
-        &quot;at&quot;: {
-          &quot;description&quot;: &quot;When it was announced, RFC 3339, UTC.&quot;,
+        &quot;worktree&quot;: {
+          &quot;description&quot;: &quot;Where the checkout is. The one thing on this board that a human can act on\ndirectly, and the one thing that survives a reconnect.&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
-        &quot;intent&quot;: {
-          &quot;description&quot;: &quot;One line: the task or intent, in the peer&#39;s words.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+        &quot;this_checkout&quot;: {
+          &quot;description&quot;: &quot;Whether this is the checkout of the server answering the call.&quot;,
+          &quot;type&quot;: &quot;boolean&quot;
         },
-        &quot;name&quot;: {
-          &quot;description&quot;: &quot;What this claim is called, when the peer named it. Absent for a peer&#39;s unnamed claim.&quot;,
+        &quot;branch&quot;: {
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ],
+          &quot;description&quot;: &quot;The branch checked out there, when it could be read.&quot;
+        },
+        &quot;id&quot;: {
+          &quot;description&quot;: &quot;The checkout&#39;s identity digest, the same value `server.status` reports as\n`checkout_id`. One per checkout, never a path, and stable across a restart.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      }
+    },
+    &quot;PeerAddress&quot;: {
+      &quot;required&quot;: [
+        &quot;host&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;,
+      &quot;properties&quot;: {
+        &quot;host&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The machine the worker runs on.&quot;
+        },
+        &quot;socket&quot;: {
+          &quot;description&quot;: &quot;The socket other sessions on the same machine message this one through.&quot;,
           &quot;type&quot;: [
             &quot;string&quot;,
             &quot;null&quot;
           ]
         },
-        &quot;scope&quot;: {
-          &quot;description&quot;: &quot;Repository-relative paths the peer expects to touch; informational, never enforced here.&quot;,
-          &quot;items&quot;: {
-            &quot;type&quot;: &quot;string&quot;
-          },
-          &quot;type&quot;: &quot;array&quot;
+        &quot;session&quot;: {
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ],
+          &quot;description&quot;: &quot;The provider&#39;s id for the session, the one its lifecycle hooks are given.&quot;
+        },
+        &quot;pid&quot;: {
+          &quot;format&quot;: &quot;uint32&quot;,
+          &quot;type&quot;: [
+            &quot;integer&quot;,
+            &quot;null&quot;
+          ],
+          &quot;description&quot;: &quot;The worker&#39;s own process: the provider&#39;s pid, not the MCP bridge it started.&quot;,
+          &quot;minimum&quot;: 0
+        },
+        &quot;provider&quot;: {
+          &quot;description&quot;: &quot;The provider whose session this is (`claude-code`), when its environment says so.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
         }
       },
-      &quot;required&quot;: [
-        &quot;intent&quot;,
-        &quot;scope&quot;,
-        &quot;at&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
+      &quot;description&quot;: &quot;Where the worker behind a peer can be reached from outside its MCP connection.\n\nA board row named a client and a version, and nothing a person or another session could\nact on: on 2026-10-22 the session running a 33-minute remote `cargo test --doc` could be\nfound only by walking an ssh client&#39;s parent chain to a provider pid, its messaging\nsocket, and a start time matched by hand. Every one of those facts is in the environment\nthe provider hands the processes it starts — the MCP server among them — so the address\nis read from there when the peer attaches, and never asked of the model.\n\nThe provider&#39;s messaging *token* is a credential and is never read: the address is where\nto knock, not the key.\n\n```\nuse majordomus_cli::peers::PeerAddress;\n// a client that exposes nothing still has a machine and a parent process\nlet bare = PeerAddress::from_env(|_| None, Some(4242), \&quot;lundra\&quot;).unwrap();\nassert_eq!((bare.host.as_str(), bare.pid), (\&quot;lundra\&quot;, Some(4242)));\nassert!(bare.provider.is_none() &amp;&amp; bare.mesh_session().is_none());\n```&quot;
     },
     &quot;ClientInfo&quot;: {
-      &quot;description&quot;: &quot;What a client said about itself in `initialize`.&quot;,
       &quot;properties&quot;: {
-        &quot;name&quot;: {
-          &quot;description&quot;: &quot;`clientInfo.name`: `claude-code`, `codex`, `gemini-cli`, whatever the client sends.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
         &quot;title&quot;: {
-          &quot;description&quot;: &quot;`clientInfo.title`, when the client sends one.&quot;,
           &quot;type&quot;: [
             &quot;string&quot;,
             &quot;null&quot;
-          ]
+          ],
+          &quot;description&quot;: &quot;`clientInfo.title`, when the client sends one.&quot;
+        },
+        &quot;name&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;`clientInfo.name`: `claude-code`, `codex`, `gemini-cli`, whatever the client sends.&quot;
         },
         &quot;version&quot;: {
           &quot;description&quot;: &quot;`clientInfo.version`.&quot;,
           &quot;type&quot;: &quot;string&quot;
         }
       },
+      &quot;type&quot;: &quot;object&quot;,
+      &quot;description&quot;: &quot;What a client said about itself in `initialize`.&quot;,
       &quot;required&quot;: [
         &quot;name&quot;,
         &quot;version&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
+      ]
     },
     &quot;Overlap&quot;: {
-      &quot;description&quot;: &quot;Two peers that claimed the same ground.\n\nReported when the second of them announces, so that a collision is known at the moment\nit is created rather than discovered afterwards in the history of a branch.&quot;,
       &quot;properties&quot;: {
+        &quot;intent&quot;: {
+          &quot;description&quot;: &quot;What it said it was doing.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;peer&quot;: {
+          &quot;description&quot;: &quot;The other peer.&quot;,
+          &quot;$ref&quot;: &quot;#/$defs/PeerId&quot;
+        },
+        &quot;paths&quot;: {
+          &quot;type&quot;: &quot;array&quot;,
+          &quot;items&quot;: {
+            &quot;$ref&quot;: &quot;#/$defs/OverlapPath&quot;
+          },
+          &quot;description&quot;: &quot;The claims that meet: one line per pair, `yours` and `theirs`.&quot;
+        },
         &quot;attached&quot;: {
-          &quot;description&quot;: &quot;Whether that peer is still attached. An overlap with a departed peer is a weaker\nsignal than one with a live session, and the reader is told which it is.&quot;,
-          &quot;type&quot;: &quot;boolean&quot;
+          &quot;type&quot;: &quot;boolean&quot;,
+          &quot;description&quot;: &quot;Whether that peer is still attached. An overlap with a departed peer is a weaker\nsignal than one with a live session, and the reader is told which it is.&quot;
         },
         &quot;checkout&quot;: {
           &quot;anyOf&quot;: [
@@ -422,23 +477,9 @@ mesh claims live by.</td>
             }
           ],
           &quot;description&quot;: &quot;Which checkout the other peer is attached to, when the reader knew.\n\nThe overlap that matters most is the one nobody could see before: two workers in\ntwo worktrees of one repository, each reading a board that held only itself, both\nclaiming `apps/majordomus-cli/src`. Naming the checkout is what turns \&quot;p1 is on\nyour ground\&quot; into something a reader can act on when `p1` is not on this board.&quot;
-        },
-        &quot;intent&quot;: {
-          &quot;description&quot;: &quot;What it said it was doing.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;paths&quot;: {
-          &quot;description&quot;: &quot;The claims that meet: one line per pair, `yours` and `theirs`.&quot;,
-          &quot;items&quot;: {
-            &quot;$ref&quot;: &quot;#/$defs/OverlapPath&quot;
-          },
-          &quot;type&quot;: &quot;array&quot;
-        },
-        &quot;peer&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/PeerId&quot;,
-          &quot;description&quot;: &quot;The other peer.&quot;
         }
       },
+      &quot;description&quot;: &quot;Two peers that claimed the same ground.\n\nReported when the second of them announces, so that a collision is known at the moment\nit is created rather than discovered afterwards in the history of a branch.&quot;,
       &quot;required&quot;: [
         &quot;peer&quot;,
         &quot;attached&quot;,
@@ -447,107 +488,12 @@ mesh claims live by.</td>
       ],
       &quot;type&quot;: &quot;object&quot;
     },
-    &quot;OverlapPath&quot;: {
-      &quot;description&quot;: &quot;One pair of claims that contain one another.&quot;,
-      &quot;properties&quot;: {
-        &quot;theirs&quot;: {
-          &quot;description&quot;: &quot;The path the other peer claimed.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;yours&quot;: {
-          &quot;description&quot;: &quot;The path the announcing peer claimed.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      },
-      &quot;required&quot;: [
-        &quot;yours&quot;,
-        &quot;theirs&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
-    },
-    &quot;PeerAddress&quot;: {
-      &quot;description&quot;: &quot;Where the worker behind a peer can be reached from outside its MCP connection.\n\nA board row named a client and a version, and nothing a person or another session could\nact on: on 2026-10-22 the session running a 33-minute remote `cargo test --doc` could be\nfound only by walking an ssh client&#39;s parent chain to a provider pid, its messaging\nsocket, and a start time matched by hand. Every one of those facts is in the environment\nthe provider hands the processes it starts — the MCP server among them — so the address\nis read from there when the peer attaches, and never asked of the model.\n\nThe provider&#39;s messaging *token* is a credential and is never read: the address is where\nto knock, not the key.\n\n```\nuse majordomus_cli::peers::PeerAddress;\n// a client that exposes nothing still has a machine and a parent process\nlet bare = PeerAddress::from_env(|_| None, Some(4242), \&quot;lundra\&quot;).unwrap();\nassert_eq!((bare.host.as_str(), bare.pid), (\&quot;lundra\&quot;, Some(4242)));\nassert!(bare.provider.is_none() &amp;&amp; bare.mesh_session().is_none());\n```&quot;,
-      &quot;properties&quot;: {
-        &quot;host&quot;: {
-          &quot;description&quot;: &quot;The machine the worker runs on.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;pid&quot;: {
-          &quot;description&quot;: &quot;The worker&#39;s own process: the provider&#39;s pid, not the MCP bridge it started.&quot;,
-          &quot;format&quot;: &quot;uint32&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: [
-            &quot;integer&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;provider&quot;: {
-          &quot;description&quot;: &quot;The provider whose session this is (`claude-code`), when its environment says so.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;session&quot;: {
-          &quot;description&quot;: &quot;The provider&#39;s id for the session, the one its lifecycle hooks are given.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;socket&quot;: {
-          &quot;description&quot;: &quot;The socket other sessions on the same machine message this one through.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        }
-      },
-      &quot;required&quot;: [
-        &quot;host&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
-    },
-    &quot;PeerCheckout&quot;: {
-      &quot;description&quot;: &quot;Which checkout of the repository a peer is attached to.\n\nA board is one process&#39;s memory and a server serves one checkout, so a peer read from\na sibling checkout&#39;s server and a peer of this one are otherwise indistinguishable —\nand worse than indistinguishable, because the ids collide: `p1` is the first session\nof *every* board, so a repository-wide listing without this field would hold several\npeers called `p1` and no way to tell them apart. This is the qualification. The\nworktree path is the durable half of a worker&#39;s identity: the peer id is a position on\none board and is handed out again after a reconnect (`p3` this morning, `p1` after the\nbridge re-attached), while the checkout a worker is working in outlives its connection.\n\nAbsent on a peer a server reports about its own board without being asked which\ncheckout that is — `peers.announce` answers about the announcing session and the\nanswer is this server&#39;s by construction. The repository-wide listing stamps every\npeer it gathers, its own included, so that no entry of that answer is unqualified.\n\n```\nuse majordomus_cli::peers::PeerCheckout;\nlet c = PeerCheckout {\n    id: \&quot;b8293f11\&quot;.into(),\n    worktree: \&quot;/repo-wt/feature/x\&quot;.into(),\n    branch: Some(\&quot;feature/x\&quot;.into()),\n    this_checkout: false,\n};\nlet v = serde_json::to_value(&amp;c).unwrap();\nassert_eq!(v[\&quot;branch\&quot;], \&quot;feature/x\&quot;);\nassert_eq!(v[\&quot;this_checkout\&quot;], false);\n```&quot;,
-      &quot;properties&quot;: {
-        &quot;branch&quot;: {
-          &quot;description&quot;: &quot;The branch checked out there, when it could be read.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;id&quot;: {
-          &quot;description&quot;: &quot;The checkout&#39;s identity digest, the same value `server.status` reports as\n`checkout_id`. One per checkout, never a path, and stable across a restart.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;this_checkout&quot;: {
-          &quot;description&quot;: &quot;Whether this is the checkout of the server answering the call.&quot;,
-          &quot;type&quot;: &quot;boolean&quot;
-        },
-        &quot;worktree&quot;: {
-          &quot;description&quot;: &quot;Where the checkout is. The one thing on this board that a human can act on\ndirectly, and the one thing that survives a reconnect.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      },
-      &quot;required&quot;: [
-        &quot;id&quot;,
-        &quot;worktree&quot;,
-        &quot;this_checkout&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
-    },
-    &quot;PeerId&quot;: {
-      &quot;description&quot;: &quot;A peer&#39;s identity for the life of the server: `p1`, `p2`, ... in attachment order.\n`p1` is the session that started the server.&quot;,
-      &quot;type&quot;: &quot;string&quot;
-    },
     &quot;Transport&quot;: {
       &quot;description&quot;: &quot;How a peer reached the server.&quot;,
       &quot;oneOf&quot;: [
         {
-          &quot;const&quot;: &quot;stdio&quot;,
           &quot;description&quot;: &quot;The owner&#39;s own client, on the process&#39;s stdin and stdout.&quot;,
+          &quot;const&quot;: &quot;stdio&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
         {
@@ -556,10 +502,85 @@ mesh claims live by.</td>
           &quot;type&quot;: &quot;string&quot;
         }
       ]
+    },
+    &quot;Announcement&quot;: {
+      &quot;type&quot;: &quot;object&quot;,
+      &quot;description&quot;: &quot;One claim a peer has made: what it is working on, and where.\n\nA peer may hold several. The `name` is what tells them apart and what makes announcing\nagain an update rather than a second claim: announce under the same name and the claim\nis replaced, announce under a new one and the peer now holds both. A peer that never\nnames anything holds exactly one claim, the unnamed one, which is what a single session\nannouncing about itself has always had.&quot;,
+      &quot;properties&quot;: {
+        &quot;scope&quot;: {
+          &quot;items&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          },
+          &quot;type&quot;: &quot;array&quot;,
+          &quot;description&quot;: &quot;Repository-relative paths the peer expects to touch; informational, never enforced here.&quot;
+        },
+        &quot;name&quot;: {
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ],
+          &quot;description&quot;: &quot;What this claim is called, when the peer named it. Absent for a peer&#39;s unnamed claim.&quot;
+        },
+        &quot;at&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;When it was announced, RFC 3339, UTC.&quot;
+        },
+        &quot;intent&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;One line: the task or intent, in the peer&#39;s words.&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;intent&quot;,
+        &quot;scope&quot;,
+        &quot;at&quot;
+      ]
+    },
+    &quot;PeerId&quot;: {
+      &quot;description&quot;: &quot;A peer&#39;s identity for the life of the server: `p1`, `p2`, ... in attachment order.\n`p1` is the session that started the server.&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;OverlapPath&quot;: {
+      &quot;description&quot;: &quot;One pair of claims that contain one another.&quot;,
+      &quot;properties&quot;: {
+        &quot;yours&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The path the announcing peer claimed.&quot;
+        },
+        &quot;theirs&quot;: {
+          &quot;description&quot;: &quot;The path the other peer claimed.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      },
+      &quot;type&quot;: &quot;object&quot;,
+      &quot;required&quot;: [
+        &quot;yours&quot;,
+        &quot;theirs&quot;
+      ]
     }
   },
-  &quot;description&quot;: &quot;What `announce` answers: the peer as recorded, and who else is on that ground.&quot;,
+  &quot;title&quot;: &quot;Announced&quot;,
   &quot;properties&quot;: {
+    &quot;progress_seconds_ago&quot;: {
+      &quot;description&quot;: &quot;Seconds since it last did real work — a request other than `ping`, or an\nannouncement — or absent when it has done none (I3990). `last_seen_seconds_ago`\ncounts a keep-alive ping as a message, so a session stuck on a permission dialog\nbehind a bridge that pings every 20 s looks seen forever; this is the number its\nmesh claims live by.&quot;,
+      &quot;format&quot;: &quot;uint64&quot;,
+      &quot;minimum&quot;: 0,
+      &quot;type&quot;: [
+        &quot;integer&quot;,
+        &quot;null&quot;
+      ]
+    },
+    &quot;released&quot;: {
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;string&quot;
+      },
+      &quot;description&quot;: &quot;Paths the claim this one replaced had, and this one does not.\n\nAnnouncing under a name a peer already used replaces that claim, which is what an\nupdate is. When the replacement is narrower, the peer has just stopped claiming\nground it held a moment ago, and the other peers stop being warned off it. That is\noccasionally what was meant and is otherwise a mistake nobody would ever see, so it\nis said here, at the moment it happens, rather than left to be discovered in a\ncollision later. Empty is the ordinary case.&quot;
+    },
+    &quot;connected_at&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;description&quot;: &quot;When it attached, RFC 3339, UTC.&quot;
+    },
     &quot;address&quot;: {
       &quot;anyOf&quot;: [
         {
@@ -570,6 +591,10 @@ mesh claims live by.</td>
         }
       ],
       &quot;description&quot;: &quot;Where the worker behind this peer can be reached from outside its connection: its\nmachine, its process, its provider session and the socket other sessions message it\non; see `PeerAddress`. Derived when the peer attached, never announced by hand.\nAbsent for a client that exposes none of it.&quot;
+    },
+    &quot;id&quot;: {
+      &quot;$ref&quot;: &quot;#/$defs/PeerId&quot;,
+      &quot;description&quot;: &quot;`p1`, `p2`, ...&quot;
     },
     &quot;announcement&quot;: {
       &quot;anyOf&quot;: [
@@ -583,8 +608,19 @@ mesh claims live by.</td>
       &quot;description&quot;: &quot;The most recently made of `Peer::claims`, for a reader that wants one line rather\nthan all of them. Derived from `claims` and never a second account of it: a peer\nholding one claim reports the same thing in both, which is what every peer that does\nnot name its claims reports.&quot;
     },
     &quot;attached&quot;: {
-      &quot;description&quot;: &quot;Whether the session is still attached. A peer that announced something and then\nwent away is kept and listed with `attached: false`: what it said it was working on\noutlives the connection that said it, because the work does.&quot;,
-      &quot;type&quot;: &quot;boolean&quot;
+      &quot;type&quot;: &quot;boolean&quot;,
+      &quot;description&quot;: &quot;Whether the session is still attached. A peer that announced something and then\nwent away is kept and listed with `attached: false`: what it said it was working on\noutlives the connection that said it, because the work does.&quot;
+    },
+    &quot;overlaps&quot;: {
+      &quot;description&quot;: &quot;Every other peer whose claimed scope meets this one. Empty is the ordinary case.&quot;,
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;items&quot;: {
+        &quot;$ref&quot;: &quot;#/$defs/Overlap&quot;
+      }
+    },
+    &quot;client&quot;: {
+      &quot;$ref&quot;: &quot;#/$defs/ClientInfo&quot;,
+      &quot;description&quot;: &quot;The client behind it.&quot;
     },
     &quot;checkout&quot;: {
       &quot;anyOf&quot;: [
@@ -598,52 +634,17 @@ mesh claims live by.</td>
       &quot;description&quot;: &quot;Which checkout of the repository this peer is attached to; see `PeerCheckout`.\n\nThe board itself never sets it — a board does not know where it is — and it is\nstamped by the reader that gathered this peer, which is the one thing that knows\nwhich checkout&#39;s server it asked.&quot;
     },
     &quot;claims&quot;: {
-      &quot;description&quot;: &quot;Every claim this peer holds, in name order, the unnamed one first. Empty for a peer\nthat has announced nothing.\n\nOne connection may be doing several things at once — a session that fans work out to\nsubagents shares its MCP session with all of them — and before this field the board\ncould hold only the last thing said, so each announcement silently erased the one\nbefore it and the other peers stopped seeing the rest of the scope.&quot;,
       &quot;items&quot;: {
         &quot;$ref&quot;: &quot;#/$defs/Announcement&quot;
       },
+      &quot;description&quot;: &quot;Every claim this peer holds, in name order, the unnamed one first. Empty for a peer\nthat has announced nothing.\n\nOne connection may be doing several things at once — a session that fans work out to\nsubagents shares its MCP session with all of them — and before this field the board\ncould hold only the last thing said, so each announcement silently erased the one\nbefore it and the other peers stopped seeing the rest of the scope.&quot;,
       &quot;type&quot;: &quot;array&quot;
-    },
-    &quot;client&quot;: {
-      &quot;$ref&quot;: &quot;#/$defs/ClientInfo&quot;,
-      &quot;description&quot;: &quot;The client behind it.&quot;
-    },
-    &quot;connected_at&quot;: {
-      &quot;description&quot;: &quot;When it attached, RFC 3339, UTC.&quot;,
-      &quot;type&quot;: &quot;string&quot;
-    },
-    &quot;id&quot;: {
-      &quot;$ref&quot;: &quot;#/$defs/PeerId&quot;,
-      &quot;description&quot;: &quot;`p1`, `p2`, ...&quot;
     },
     &quot;last_seen_seconds_ago&quot;: {
       &quot;description&quot;: &quot;Seconds since its last message.&quot;,
       &quot;format&quot;: &quot;uint64&quot;,
       &quot;minimum&quot;: 0,
       &quot;type&quot;: &quot;integer&quot;
-    },
-    &quot;overlaps&quot;: {
-      &quot;description&quot;: &quot;Every other peer whose claimed scope meets this one. Empty is the ordinary case.&quot;,
-      &quot;items&quot;: {
-        &quot;$ref&quot;: &quot;#/$defs/Overlap&quot;
-      },
-      &quot;type&quot;: &quot;array&quot;
-    },
-    &quot;progress_seconds_ago&quot;: {
-      &quot;description&quot;: &quot;Seconds since it last did real work — a request other than `ping`, or an\nannouncement — or absent when it has done none (I3990). `last_seen_seconds_ago`\ncounts a keep-alive ping as a message, so a session stuck on a permission dialog\nbehind a bridge that pings every 20 s looks seen forever; this is the number its\nmesh claims live by.&quot;,
-      &quot;format&quot;: &quot;uint64&quot;,
-      &quot;minimum&quot;: 0,
-      &quot;type&quot;: [
-        &quot;integer&quot;,
-        &quot;null&quot;
-      ]
-    },
-    &quot;released&quot;: {
-      &quot;description&quot;: &quot;Paths the claim this one replaced had, and this one does not.\n\nAnnouncing under a name a peer already used replaces that claim, which is what an\nupdate is. When the replacement is narrower, the peer has just stopped claiming\nground it held a moment ago, and the other peers stop being warned off it. That is\noccasionally what was meant and is otherwise a mistake nobody would ever see, so it\nis said here, at the moment it happens, rather than left to be discovered in a\ncollision later. Empty is the ordinary case.&quot;,
-      &quot;items&quot;: {
-        &quot;type&quot;: &quot;string&quot;
-      },
-      &quot;type&quot;: &quot;array&quot;
     },
     &quot;transport&quot;: {
       &quot;$ref&quot;: &quot;#/$defs/Transport&quot;,
@@ -658,7 +659,6 @@ mesh claims live by.</td>
     &quot;last_seen_seconds_ago&quot;,
     &quot;attached&quot;
   ],
-  &quot;title&quot;: &quot;Announced&quot;,
   &quot;type&quot;: &quot;object&quot;
 }</pre></div>
   </details>
@@ -690,7 +690,7 @@ mesh claims live by.</td>
         <div><dt class="text-body-subtle">modul Rust</dt><dd class="min-w-0 break-all font-mono text-heading">majordomus_cli::capability::builtin::peers</dd></div>
         <div><dt class="text-body-subtle">typ vstupu</dt><dd class="font-mono text-heading">AnnounceInput</dd></div>
         <div><dt class="text-body-subtle">typ výstupu</dt><dd class="font-mono text-heading">Oznámeno</dd></div>
-        <div><dt class="text-body-subtle">reference na GitHubu</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/aa9f816f8673880ab4beb6dbebff688f9da5bb65/docs/generated/modules/peers.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/peers.md</a></dd></div><div><dt class="text-body-subtle">otisk registru</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">c514db707bb1f5f7557f2a1629d42c4bdc05eb7ef58464c288e42bafcd3d8720</dd></div>
+        <div><dt class="text-body-subtle">reference na GitHubu</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/docs/generated/modules/peers.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/peers.md</a></dd></div><div><dt class="text-body-subtle">otisk registru</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">3f734f2faf797f0ca7c39b4cd837e68b6619c41c6f6711f3d3aeca8f341934eb</dd></div>
         <div><dt class="text-body-subtle">vygenerováno nástrojem</dt><dd class="font-mono text-heading">majordomus-cli 1.0.0-alpha.10</dd></div>
       </dl>
     </div>
@@ -751,9 +751,9 @@ mesh claims live by.</td>
       <div class="min-w-0">
         <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">Projekt</h2><ul class="space-y-2 text-sm font-medium text-body">
           <li><a href="https://github.com/korczis/prismatic-majordomus" class="hover:text-heading hover:underline">GitHub</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/aa9f816f8673880ab4beb6dbebff688f9da5bb65/LICENSE" class="hover:text-heading hover:underline">Licence MIT</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/aa9f816f8673880ab4beb6dbebff688f9da5bb65/SECURITY.md" class="hover:text-heading hover:underline">Bezpečnostní politika</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/aa9f816f8673880ab4beb6dbebff688f9da5bb65/CONTRIBUTING.md" class="hover:text-heading hover:underline">Průvodce pro přispěvatele</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/LICENSE" class="hover:text-heading hover:underline">Licence MIT</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/SECURITY.md" class="hover:text-heading hover:underline">Bezpečnostní politika</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/CONTRIBUTING.md" class="hover:text-heading hover:underline">Průvodce pro přispěvatele</a></li>
         </ul>
       </div>
     </div>
@@ -761,7 +761,7 @@ mesh claims live by.</td>
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/cs/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.10</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/aa9f816f8673880ab4beb6dbebff688f9da5bb65" class="font-mono underline">aa9f816</a> · inputs <span class="font-mono">a64b981ed16e</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/cs/architecture/" class="underline">how this site is derived</a> names them.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.10</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/745db2ea21e02613943face75a2bf95542be1f2e" class="font-mono underline">745db2e</a> · inputs <span class="font-mono">0a58c217d1b7</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/cs/architecture/" class="underline">how this site is derived</a> names them.</p>
     </div>
   </div>
 </footer>

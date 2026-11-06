@@ -220,8 +220,7 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
-  &quot;additionalProperties&quot;: false,
-  &quot;description&quot;: &quot;The input of `continuity.sync`.&quot;,
+  &quot;title&quot;: &quot;SyncInput&quot;,
   &quot;properties&quot;: {
     &quot;remote&quot;: {
       &quot;description&quot;: &quot;The git remote; the current branch&#39;s, else `origin`, when absent.&quot;,
@@ -231,8 +230,9 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
       ]
     }
   },
-  &quot;title&quot;: &quot;SyncInput&quot;,
-  &quot;type&quot;: &quot;object&quot;
+  &quot;description&quot;: &quot;The input of `continuity.sync`.&quot;,
+  &quot;type&quot;: &quot;object&quot;,
+  &quot;additionalProperties&quot;: false
 }</pre></div>
   </details>
 </div>
@@ -241,35 +241,15 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
     <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
       <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">vlastnost</th><th class="px-3 py-2">typ</th><th class="px-3 py-2">povinné</th><th class="px-3 py-2">popis</th></tr></thead>
       <tbody><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">akce</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Co se stalo.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">diagnostika</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Odmítnuté soubory, kolize, rozešlé řádky, nedosažitelný remote.</td>
+        <td class="px-3 py-2 font-mono text-heading">remote</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">ne</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Remote, pokud nějaký je.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">staženo</td>
         <td class="px-3 py-2 font-mono text-xs text-body">integer</td>
         <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
         <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Záznamy, které lokální úložiště získalo.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">řádky</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Každý řádek, který drží kterákoli strana, porovnaný.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">publikováno</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">integer</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Zaznamenává záznamy, které remote získal.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">remote</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">ne</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Remote, pokud nějaký je.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">obnovitelné</td>
         <td class="px-3 py-2 font-mono text-xs text-body">array</td>
@@ -280,379 +260,99 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
         <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
         <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
         <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Úložiště po synchronizaci.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">publikováno</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">integer</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Zaznamenává záznamy, které remote získal.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">akce</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Co se stalo.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">diagnostika</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Odmítnuté soubory, kolize, rozešlé řádky, nedosažitelný remote.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">řádky</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Každý řádek, který drží kterákoli strana, porovnaný.</td>
       </tr></tbody>
     </table>
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
+  &quot;required&quot;: [
+    &quot;action&quot;,
+    &quot;fetched&quot;,
+    &quot;published&quot;,
+    &quot;lines&quot;,
+    &quot;store&quot;,
+    &quot;resumable&quot;,
+    &quot;diagnostics&quot;
+  ],
+  &quot;title&quot;: &quot;Synced&quot;,
+  &quot;type&quot;: &quot;object&quot;,
+  &quot;properties&quot;: {
+    &quot;remote&quot;: {
+      &quot;description&quot;: &quot;The remote, when there is one.&quot;,
+      &quot;type&quot;: [
+        &quot;string&quot;,
+        &quot;null&quot;
+      ]
+    },
+    &quot;fetched&quot;: {
+      &quot;type&quot;: &quot;integer&quot;,
+      &quot;minimum&quot;: 0,
+      &quot;format&quot;: &quot;uint&quot;,
+      &quot;description&quot;: &quot;Records the local store gained.&quot;
+    },
+    &quot;resumable&quot;: {
+      &quot;items&quot;: {
+        &quot;$ref&quot;: &quot;#/$defs/RecordView&quot;
+      },
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;description&quot;: &quot;What other devices published that this checkout could resume.&quot;
+    },
+    &quot;store&quot;: {
+      &quot;$ref&quot;: &quot;#/$defs/StoreView&quot;,
+      &quot;description&quot;: &quot;The store after the sync.&quot;
+    },
+    &quot;published&quot;: {
+      &quot;type&quot;: &quot;integer&quot;,
+      &quot;minimum&quot;: 0,
+      &quot;format&quot;: &quot;uint&quot;,
+      &quot;description&quot;: &quot;Records the remote gained.&quot;
+    },
+    &quot;action&quot;: {
+      &quot;description&quot;: &quot;What happened.&quot;,
+      &quot;$ref&quot;: &quot;#/$defs/SyncAction&quot;
+    },
+    &quot;diagnostics&quot;: {
+      &quot;items&quot;: {
+        &quot;$ref&quot;: &quot;#/$defs/Diagnostic&quot;
+      },
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;description&quot;: &quot;Refused files, collisions, diverged lines, an unreachable remote.&quot;
+    },
+    &quot;lines&quot;: {
+      &quot;items&quot;: {
+        &quot;$ref&quot;: &quot;#/$defs/LineSyncView&quot;
+      },
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;description&quot;: &quot;Every line either side holds, compared.&quot;
+    }
+  },
   &quot;$defs&quot;: {
-    &quot;Device&quot;: {
-      &quot;description&quot;: &quot;The device a record was written on: the mesh node key&#39;s id and the label its identity\nfile carries. The label is presentation; the node id is identity.&quot;,
-      &quot;properties&quot;: {
-        &quot;label&quot;: {
-          &quot;description&quot;: &quot;The display label of the device&#39;s identity file (`macbook-pro`), or the first eight\nhex of its node id when it has none.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;node&quot;: {
-          &quot;description&quot;: &quot;The node id: the first 32 hex of the SHA-256 of the device&#39;s Ed25519 public key.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      },
-      &quot;required&quot;: [
-        &quot;node&quot;,
-        &quot;label&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
-    },
-    &quot;Diagnostic&quot;: {
-      &quot;description&quot;: &quot;One finding about the declarative state, named by a stable code, tied to a path where\nthere is one, and carrying the command that reproduces it where there is one.&quot;,
-      &quot;properties&quot;: {
-        &quot;code&quot;: {
-          &quot;description&quot;: &quot;A stable machine-readable code, e.g. `unknown_key`, `duplicate_identity`.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;message&quot;: {
-          &quot;description&quot;: &quot;What is wrong, for a person; the code is for a program.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;path&quot;: {
-          &quot;description&quot;: &quot;Repository-relative path of the file concerned, when there is one.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;severity&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/Severity&quot;,
-          &quot;description&quot;: &quot;How bad.&quot;
-        }
-      },
-      &quot;required&quot;: [
-        &quot;severity&quot;,
-        &quot;code&quot;,
-        &quot;message&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
-    },
-    &quot;LineSync&quot;: {
-      &quot;description&quot;: &quot;How the local store and a remote&#39;s stand towards each other, for one line.&quot;,
-      &quot;oneOf&quot;: [
-        {
-          &quot;const&quot;: &quot;equal&quot;,
-          &quot;description&quot;: &quot;Both hold the same heads.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;remote_newer&quot;,
-          &quot;description&quot;: &quot;The remote holds records that continue the local heads: fetching brings them.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;local_newer&quot;,
-          &quot;description&quot;: &quot;The local store holds records that continue the remote&#39;s: publishing sends them.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;diverged&quot;,
-          &quot;description&quot;: &quot;Each holds a continuation the other lacks: after merging, the line has two heads.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;local_only&quot;,
-          &quot;description&quot;: &quot;Only the local store holds the line.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;remote_only&quot;,
-          &quot;description&quot;: &quot;Only the remote holds the line.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      ]
-    },
-    &quot;LineSyncView&quot;: {
-      &quot;description&quot;: &quot;One line&#39;s comparison in a sync.&quot;,
-      &quot;properties&quot;: {
-        &quot;heads&quot;: {
-          &quot;description&quot;: &quot;The line&#39;s heads after the merge.&quot;,
-          &quot;items&quot;: {
-            &quot;type&quot;: &quot;string&quot;
-          },
-          &quot;type&quot;: &quot;array&quot;
-        },
-        &quot;line&quot;: {
-          &quot;description&quot;: &quot;The line.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;relation&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/LineSync&quot;,
-          &quot;description&quot;: &quot;How the local store and the remote&#39;s stood before the merge.&quot;
-        }
-      },
-      &quot;required&quot;: [
-        &quot;line&quot;,
-        &quot;relation&quot;,
-        &quot;heads&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
-    },
-    &quot;RecordView&quot;: {
-      &quot;description&quot;: &quot;One record as every surface shows it.&quot;,
-      &quot;properties&quot;: {
-        &quot;age_minutes&quot;: {
-          &quot;description&quot;: &quot;Minutes since then, by this machine&#39;s clock; absent when either clock&#39;s reading is\nunusable.&quot;,
-          &quot;format&quot;: &quot;int64&quot;,
-          &quot;type&quot;: [
-            &quot;integer&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;branch&quot;: {
-          &quot;description&quot;: &quot;The branch it was written on.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;changed_total&quot;: {
-          &quot;description&quot;: &quot;How many paths differed from HEAD at the origin.&quot;,
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;device&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/Device&quot;,
-          &quot;description&quot;: &quot;The device that published it.&quot;
-        },
-        &quot;head&quot;: {
-          &quot;description&quot;: &quot;The commit it was written at.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;id&quot;: {
-          &quot;description&quot;: &quot;The record id.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;issue&quot;: {
-          &quot;description&quot;: &quot;The issue.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;line&quot;: {
-          &quot;description&quot;: &quot;Its line.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;objective&quot;: {
-          &quot;description&quot;: &quot;The handover&#39;s `# Objective`, first line.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;parent&quot;: {
-          &quot;description&quot;: &quot;The record it continues.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;published_at&quot;: {
-          &quot;description&quot;: &quot;When it was published, by the publisher&#39;s clock.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;session&quot;: {
-          &quot;description&quot;: &quot;The episode it was published from.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;task&quot;: {
-          &quot;description&quot;: &quot;The task&#39;s title: the intent.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;this_device&quot;: {
-          &quot;description&quot;: &quot;Whether that device is this one.&quot;,
-          &quot;type&quot;: &quot;boolean&quot;
-        },
-        &quot;trust&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/Trust&quot;,
-          &quot;description&quot;: &quot;Whether its signer is trusted here.&quot;
-        },
-        &quot;working_tree&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/WorkingTree&quot;,
-          &quot;description&quot;: &quot;Clean or dirty at the origin.&quot;
-        }
-      },
-      &quot;required&quot;: [
-        &quot;id&quot;,
-        &quot;line&quot;,
-        &quot;device&quot;,
-        &quot;this_device&quot;,
-        &quot;trust&quot;,
-        &quot;working_tree&quot;,
-        &quot;changed_total&quot;,
-        &quot;published_at&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
-    },
-    &quot;Severity&quot;: {
-      &quot;description&quot;: &quot;How bad a diagnostic is. `Error` excludes the file it concerns from the index and puts\nthe index into the degraded state; `Warning` and `Info` do neither.&quot;,
-      &quot;oneOf&quot;: [
-        {
-          &quot;const&quot;: &quot;info&quot;,
-          &quot;description&quot;: &quot;Worth knowing; changes nothing.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;warning&quot;,
-          &quot;description&quot;: &quot;Something to look at; the object is still served.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;error&quot;,
-          &quot;description&quot;: &quot;The file is excluded and the index is degraded.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      ]
-    },
-    &quot;StoreView&quot;: {
-      &quot;description&quot;: &quot;The two stores, as refs.&quot;,
-      &quot;properties&quot;: {
-        &quot;records&quot;: {
-          &quot;description&quot;: &quot;Records admitted.&quot;,
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;reference&quot;: {
-          &quot;description&quot;: &quot;The local ref.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;refused&quot;: {
-          &quot;description&quot;: &quot;Files refused.&quot;,
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;remote&quot;: {
-          &quot;description&quot;: &quot;The remote `sync` uses.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;remote_tip&quot;: {
-          &quot;description&quot;: &quot;The commit last fetched from or pushed to it.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;sync&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/SyncState&quot;,
-          &quot;description&quot;: &quot;How they stand.&quot;
-        },
-        &quot;tip&quot;: {
-          &quot;description&quot;: &quot;Its commit.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        }
-      },
-      &quot;required&quot;: [
-        &quot;reference&quot;,
-        &quot;sync&quot;,
-        &quot;records&quot;,
-        &quot;refused&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
-    },
-    &quot;SyncAction&quot;: {
-      &quot;description&quot;: &quot;What a sync did.&quot;,
-      &quot;oneOf&quot;: [
-        {
-          &quot;const&quot;: &quot;none&quot;,
-          &quot;description&quot;: &quot;Nothing to move: both held the same records.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;fetched&quot;,
-          &quot;description&quot;: &quot;Records were fetched.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;published&quot;,
-          &quot;description&quot;: &quot;Records were published.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;exchanged&quot;,
-          &quot;description&quot;: &quot;Both.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;unreachable&quot;,
-          &quot;description&quot;: &quot;The remote could not be reached; nothing local changed, and what is pending stays\npending.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;no_remote&quot;,
-          &quot;description&quot;: &quot;No remote is configured.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      ]
-    },
-    &quot;SyncState&quot;: {
-      &quot;description&quot;: &quot;How the local store stands towards the remote&#39;s, from the refs alone — no network.&quot;,
-      &quot;oneOf&quot;: [
-        {
-          &quot;const&quot;: &quot;no_remote&quot;,
-          &quot;description&quot;: &quot;No remote is configured: the store is local, and that is a valid answer.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;never_synced&quot;,
-          &quot;description&quot;: &quot;Never synced with the remote.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;in_sync&quot;,
-          &quot;description&quot;: &quot;Both hold the same records.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;pending&quot;,
-          &quot;description&quot;: &quot;This store holds records the remote has not received: a sync publishes them.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;behind&quot;,
-          &quot;description&quot;: &quot;The last fetch brought records not merged yet.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;diverged&quot;,
-          &quot;description&quot;: &quot;Both of the above.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;empty&quot;,
-          &quot;description&quot;: &quot;The store is empty and nothing was ever fetched.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      ]
-    },
     &quot;Trust&quot;: {
       &quot;description&quot;: &quot;Whether the device that signed a record is one this repository trusts.&quot;,
       &quot;oneOf&quot;: [
         {
-          &quot;const&quot;: &quot;this_device&quot;,
           &quot;description&quot;: &quot;This device signed it.&quot;,
+          &quot;const&quot;: &quot;this_device&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
         {
@@ -666,90 +366,390 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
           &quot;type&quot;: &quot;string&quot;
         },
         {
-          &quot;const&quot;: &quot;undeclared&quot;,
+          &quot;type&quot;: &quot;string&quot;,
           &quot;description&quot;: &quot;The repository declares no mesh, so no list exists to check the key against. The\nsignature still binds the record to its key; the plan warns.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;const&quot;: &quot;undeclared&quot;
         }
       ]
     },
-    &quot;WorkingTree&quot;: {
-      &quot;description&quot;: &quot;Whether the working tree had changes git does not hold in a commit.&quot;,
+    &quot;Diagnostic&quot;: {
+      &quot;required&quot;: [
+        &quot;severity&quot;,
+        &quot;code&quot;,
+        &quot;message&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;,
+      &quot;properties&quot;: {
+        &quot;message&quot;: {
+          &quot;description&quot;: &quot;What is wrong, for a person; the code is for a program.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;code&quot;: {
+          &quot;description&quot;: &quot;A stable machine-readable code, e.g. `unknown_key`, `duplicate_identity`.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;path&quot;: {
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ],
+          &quot;description&quot;: &quot;Repository-relative path of the file concerned, when there is one.&quot;
+        },
+        &quot;severity&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/Severity&quot;,
+          &quot;description&quot;: &quot;How bad.&quot;
+        }
+      },
+      &quot;description&quot;: &quot;One finding about the declarative state, named by a stable code, tied to a path where\nthere is one, and carrying the command that reproduces it where there is one.&quot;
+    },
+    &quot;LineSync&quot;: {
       &quot;oneOf&quot;: [
         {
-          &quot;const&quot;: &quot;clean&quot;,
-          &quot;description&quot;: &quot;Nothing outside HEAD.&quot;,
+          &quot;const&quot;: &quot;equal&quot;,
+          &quot;description&quot;: &quot;Both hold the same heads.&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
         {
-          &quot;const&quot;: &quot;dirty&quot;,
-          &quot;description&quot;: &quot;Modified, staged or untracked files that HEAD does not hold.&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;remote_newer&quot;,
+          &quot;description&quot;: &quot;The remote holds records that continue the local heads: fetching brings them.&quot;
+        },
+        {
+          &quot;const&quot;: &quot;local_newer&quot;,
+          &quot;description&quot;: &quot;The local store holds records that continue the remote&#39;s: publishing sends them.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;diverged&quot;,
+          &quot;description&quot;: &quot;Each holds a continuation the other lacks: after merging, the line has two heads.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;local_only&quot;,
+          &quot;description&quot;: &quot;Only the local store holds the line.&quot;
+        },
+        {
+          &quot;const&quot;: &quot;remote_only&quot;,
+          &quot;description&quot;: &quot;Only the remote holds the line.&quot;,
           &quot;type&quot;: &quot;string&quot;
         }
-      ]
-    }
-  },
-  &quot;description&quot;: &quot;The answer of `continuity sync`.&quot;,
-  &quot;properties&quot;: {
-    &quot;action&quot;: {
-      &quot;$ref&quot;: &quot;#/$defs/SyncAction&quot;,
-      &quot;description&quot;: &quot;What happened.&quot;
+      ],
+      &quot;description&quot;: &quot;How the local store and a remote&#39;s stand towards each other, for one line.&quot;
     },
-    &quot;diagnostics&quot;: {
-      &quot;description&quot;: &quot;Refused files, collisions, diverged lines, an unreachable remote.&quot;,
-      &quot;items&quot;: {
-        &quot;$ref&quot;: &quot;#/$defs/Diagnostic&quot;
+    &quot;Device&quot;: {
+      &quot;type&quot;: &quot;object&quot;,
+      &quot;properties&quot;: {
+        &quot;label&quot;: {
+          &quot;description&quot;: &quot;The display label of the device&#39;s identity file (`macbook-pro`), or the first eight\nhex of its node id when it has none.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;node&quot;: {
+          &quot;description&quot;: &quot;The node id: the first 32 hex of the SHA-256 of the device&#39;s Ed25519 public key.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
       },
-      &quot;type&quot;: &quot;array&quot;
-    },
-    &quot;fetched&quot;: {
-      &quot;description&quot;: &quot;Records the local store gained.&quot;,
-      &quot;format&quot;: &quot;uint&quot;,
-      &quot;minimum&quot;: 0,
-      &quot;type&quot;: &quot;integer&quot;
-    },
-    &quot;lines&quot;: {
-      &quot;description&quot;: &quot;Every line either side holds, compared.&quot;,
-      &quot;items&quot;: {
-        &quot;$ref&quot;: &quot;#/$defs/LineSyncView&quot;
-      },
-      &quot;type&quot;: &quot;array&quot;
-    },
-    &quot;published&quot;: {
-      &quot;description&quot;: &quot;Records the remote gained.&quot;,
-      &quot;format&quot;: &quot;uint&quot;,
-      &quot;minimum&quot;: 0,
-      &quot;type&quot;: &quot;integer&quot;
-    },
-    &quot;remote&quot;: {
-      &quot;description&quot;: &quot;The remote, when there is one.&quot;,
-      &quot;type&quot;: [
-        &quot;string&quot;,
-        &quot;null&quot;
+      &quot;description&quot;: &quot;The device a record was written on: the mesh node key&#39;s id and the label its identity\nfile carries. The label is presentation; the node id is identity.&quot;,
+      &quot;required&quot;: [
+        &quot;node&quot;,
+        &quot;label&quot;
       ]
     },
-    &quot;resumable&quot;: {
-      &quot;description&quot;: &quot;What other devices published that this checkout could resume.&quot;,
-      &quot;items&quot;: {
-        &quot;$ref&quot;: &quot;#/$defs/RecordView&quot;
-      },
-      &quot;type&quot;: &quot;array&quot;
+    &quot;WorkingTree&quot;: {
+      &quot;oneOf&quot;: [
+        {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;clean&quot;,
+          &quot;description&quot;: &quot;Nothing outside HEAD.&quot;
+        },
+        {
+          &quot;const&quot;: &quot;dirty&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;Modified, staged or untracked files that HEAD does not hold.&quot;
+        }
+      ],
+      &quot;description&quot;: &quot;Whether the working tree had changes git does not hold in a commit.&quot;
     },
-    &quot;store&quot;: {
-      &quot;$ref&quot;: &quot;#/$defs/StoreView&quot;,
-      &quot;description&quot;: &quot;The store after the sync.&quot;
+    &quot;StoreView&quot;: {
+      &quot;required&quot;: [
+        &quot;reference&quot;,
+        &quot;sync&quot;,
+        &quot;records&quot;,
+        &quot;refused&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;,
+      &quot;description&quot;: &quot;The two stores, as refs.&quot;,
+      &quot;properties&quot;: {
+        &quot;remote_tip&quot;: {
+          &quot;description&quot;: &quot;The commit last fetched from or pushed to it.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;tip&quot;: {
+          &quot;description&quot;: &quot;Its commit.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;reference&quot;: {
+          &quot;description&quot;: &quot;The local ref.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;records&quot;: {
+          &quot;minimum&quot;: 0,
+          &quot;description&quot;: &quot;Records admitted.&quot;,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;sync&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/SyncState&quot;,
+          &quot;description&quot;: &quot;How they stand.&quot;
+        },
+        &quot;refused&quot;: {
+          &quot;minimum&quot;: 0,
+          &quot;description&quot;: &quot;Files refused.&quot;,
+          &quot;type&quot;: &quot;integer&quot;,
+          &quot;format&quot;: &quot;uint&quot;
+        },
+        &quot;remote&quot;: {
+          &quot;description&quot;: &quot;The remote `sync` uses.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        }
+      }
+    },
+    &quot;Severity&quot;: {
+      &quot;description&quot;: &quot;How bad a diagnostic is. `Error` excludes the file it concerns from the index and puts\nthe index into the degraded state; `Warning` and `Info` do neither.&quot;,
+      &quot;oneOf&quot;: [
+        {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;Worth knowing; changes nothing.&quot;,
+          &quot;const&quot;: &quot;info&quot;
+        },
+        {
+          &quot;description&quot;: &quot;Something to look at; the object is still served.&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;warning&quot;
+        },
+        {
+          &quot;const&quot;: &quot;error&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The file is excluded and the index is degraded.&quot;
+        }
+      ]
+    },
+    &quot;LineSyncView&quot;: {
+      &quot;description&quot;: &quot;One line&#39;s comparison in a sync.&quot;,
+      &quot;required&quot;: [
+        &quot;line&quot;,
+        &quot;relation&quot;,
+        &quot;heads&quot;
+      ],
+      &quot;properties&quot;: {
+        &quot;line&quot;: {
+          &quot;description&quot;: &quot;The line.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;heads&quot;: {
+          &quot;description&quot;: &quot;The line&#39;s heads after the merge.&quot;,
+          &quot;items&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          },
+          &quot;type&quot;: &quot;array&quot;
+        },
+        &quot;relation&quot;: {
+          &quot;description&quot;: &quot;How the local store and the remote&#39;s stood before the merge.&quot;,
+          &quot;$ref&quot;: &quot;#/$defs/LineSync&quot;
+        }
+      },
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;RecordView&quot;: {
+      &quot;properties&quot;: {
+        &quot;parent&quot;: {
+          &quot;description&quot;: &quot;The record it continues.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;changed_total&quot;: {
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;,
+          &quot;description&quot;: &quot;How many paths differed from HEAD at the origin.&quot;,
+          &quot;format&quot;: &quot;uint&quot;
+        },
+        &quot;working_tree&quot;: {
+          &quot;description&quot;: &quot;Clean or dirty at the origin.&quot;,
+          &quot;$ref&quot;: &quot;#/$defs/WorkingTree&quot;
+        },
+        &quot;session&quot;: {
+          &quot;description&quot;: &quot;The episode it was published from.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;device&quot;: {
+          &quot;description&quot;: &quot;The device that published it.&quot;,
+          &quot;$ref&quot;: &quot;#/$defs/Device&quot;
+        },
+        &quot;age_minutes&quot;: {
+          &quot;description&quot;: &quot;Minutes since then, by this machine&#39;s clock; absent when either clock&#39;s reading is\nunusable.&quot;,
+          &quot;format&quot;: &quot;int64&quot;,
+          &quot;type&quot;: [
+            &quot;integer&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;trust&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/Trust&quot;,
+          &quot;description&quot;: &quot;Whether its signer is trusted here.&quot;
+        },
+        &quot;branch&quot;: {
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ],
+          &quot;description&quot;: &quot;The branch it was written on.&quot;
+        },
+        &quot;line&quot;: {
+          &quot;description&quot;: &quot;Its line.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;objective&quot;: {
+          &quot;description&quot;: &quot;The handover&#39;s `# Objective`, first line.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;id&quot;: {
+          &quot;description&quot;: &quot;The record id.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;this_device&quot;: {
+          &quot;description&quot;: &quot;Whether that device is this one.&quot;,
+          &quot;type&quot;: &quot;boolean&quot;
+        },
+        &quot;published_at&quot;: {
+          &quot;description&quot;: &quot;When it was published, by the publisher&#39;s clock.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;task&quot;: {
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ],
+          &quot;description&quot;: &quot;The task&#39;s title: the intent.&quot;
+        },
+        &quot;issue&quot;: {
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ],
+          &quot;description&quot;: &quot;The issue.&quot;
+        },
+        &quot;head&quot;: {
+          &quot;description&quot;: &quot;The commit it was written at.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        }
+      },
+      &quot;required&quot;: [
+        &quot;id&quot;,
+        &quot;line&quot;,
+        &quot;device&quot;,
+        &quot;this_device&quot;,
+        &quot;trust&quot;,
+        &quot;working_tree&quot;,
+        &quot;changed_total&quot;,
+        &quot;published_at&quot;
+      ],
+      &quot;description&quot;: &quot;One record as every surface shows it.&quot;,
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;SyncAction&quot;: {
+      &quot;description&quot;: &quot;What a sync did.&quot;,
+      &quot;oneOf&quot;: [
+        {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;none&quot;,
+          &quot;description&quot;: &quot;Nothing to move: both held the same records.&quot;
+        },
+        {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;Records were fetched.&quot;,
+          &quot;const&quot;: &quot;fetched&quot;
+        },
+        {
+          &quot;const&quot;: &quot;published&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;Records were published.&quot;
+        },
+        {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;Both.&quot;,
+          &quot;const&quot;: &quot;exchanged&quot;
+        },
+        {
+          &quot;description&quot;: &quot;The remote could not be reached; nothing local changed, and what is pending stays\npending.&quot;,
+          &quot;const&quot;: &quot;unreachable&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;no_remote&quot;,
+          &quot;description&quot;: &quot;No remote is configured.&quot;
+        }
+      ]
+    },
+    &quot;SyncState&quot;: {
+      &quot;oneOf&quot;: [
+        {
+          &quot;description&quot;: &quot;No remote is configured: the store is local, and that is a valid answer.&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;no_remote&quot;
+        },
+        {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;Never synced with the remote.&quot;,
+          &quot;const&quot;: &quot;never_synced&quot;
+        },
+        {
+          &quot;const&quot;: &quot;in_sync&quot;,
+          &quot;description&quot;: &quot;Both hold the same records.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;description&quot;: &quot;This store holds records the remote has not received: a sync publishes them.&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;pending&quot;
+        },
+        {
+          &quot;description&quot;: &quot;The last fetch brought records not merged yet.&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;behind&quot;
+        },
+        {
+          &quot;description&quot;: &quot;Both of the above.&quot;,
+          &quot;const&quot;: &quot;diverged&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;empty&quot;,
+          &quot;description&quot;: &quot;The store is empty and nothing was ever fetched.&quot;
+        }
+      ],
+      &quot;description&quot;: &quot;How the local store stands towards the remote&#39;s, from the refs alone — no network.&quot;
     }
   },
-  &quot;required&quot;: [
-    &quot;action&quot;,
-    &quot;fetched&quot;,
-    &quot;published&quot;,
-    &quot;lines&quot;,
-    &quot;store&quot;,
-    &quot;resumable&quot;,
-    &quot;diagnostics&quot;
-  ],
-  &quot;title&quot;: &quot;Synced&quot;,
-  &quot;type&quot;: &quot;object&quot;
+  &quot;description&quot;: &quot;The answer of `continuity sync`.&quot;
 }</pre></div>
   </details>
 </div>
@@ -780,7 +780,7 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
         <div><dt class="text-body-subtle">modul Rust</dt><dd class="min-w-0 break-all font-mono text-heading">majordomus_cli::capability::builtin::continuity</dd></div>
         <div><dt class="text-body-subtle">typ vstupu</dt><dd class="font-mono text-heading">SyncInput</dd></div>
         <div><dt class="text-body-subtle">typ výstupu</dt><dd class="font-mono text-heading">Synchronizováno</dd></div>
-        <div><dt class="text-body-subtle">reference na GitHubu</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/aa9f816f8673880ab4beb6dbebff688f9da5bb65/docs/generated/modules/continuity.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/continuity.md</a></dd></div><div><dt class="text-body-subtle">otisk registru</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">c514db707bb1f5f7557f2a1629d42c4bdc05eb7ef58464c288e42bafcd3d8720</dd></div>
+        <div><dt class="text-body-subtle">reference na GitHubu</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/docs/generated/modules/continuity.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/continuity.md</a></dd></div><div><dt class="text-body-subtle">otisk registru</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">3f734f2faf797f0ca7c39b4cd837e68b6619c41c6f6711f3d3aeca8f341934eb</dd></div>
         <div><dt class="text-body-subtle">vygenerováno nástrojem</dt><dd class="font-mono text-heading">majordomus-cli 1.0.0-alpha.10</dd></div>
       </dl>
     </div>
@@ -836,9 +836,9 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
       <div class="min-w-0">
         <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">Projekt</h2><ul class="space-y-2 text-sm font-medium text-body">
           <li><a href="https://github.com/korczis/prismatic-majordomus" class="hover:text-heading hover:underline">GitHub</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/aa9f816f8673880ab4beb6dbebff688f9da5bb65/LICENSE" class="hover:text-heading hover:underline">Licence MIT</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/aa9f816f8673880ab4beb6dbebff688f9da5bb65/SECURITY.md" class="hover:text-heading hover:underline">Bezpečnostní politika</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/aa9f816f8673880ab4beb6dbebff688f9da5bb65/CONTRIBUTING.md" class="hover:text-heading hover:underline">Průvodce pro přispěvatele</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/LICENSE" class="hover:text-heading hover:underline">Licence MIT</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/SECURITY.md" class="hover:text-heading hover:underline">Bezpečnostní politika</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/CONTRIBUTING.md" class="hover:text-heading hover:underline">Průvodce pro přispěvatele</a></li>
         </ul>
       </div>
     </div>
@@ -846,7 +846,7 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/cs/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.10</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/aa9f816f8673880ab4beb6dbebff688f9da5bb65" class="font-mono underline">aa9f816</a> · inputs <span class="font-mono">a64b981ed16e</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/cs/architecture/" class="underline">how this site is derived</a> names them.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.10</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/745db2ea21e02613943face75a2bf95542be1f2e" class="font-mono underline">745db2e</a> · inputs <span class="font-mono">0a58c217d1b7</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/cs/architecture/" class="underline">how this site is derived</a> names them.</p>
     </div>
   </div>
 </footer>

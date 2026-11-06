@@ -222,12 +222,25 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
     <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
       <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
       <tbody><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">limit</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">integer | null</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">At most this many (default 100, at most 1000).</td>
+      </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">after</td>
         <td class="px-3 py-2 font-mono text-xs text-body">integer | null</td>
         <td class="px-3 py-2 font-mono text-xs text-body">no</td>
         <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Only events whose Lamport stamp is above this: a walk by stamp, which never returns
 an event a partitioned runtime stamped at or below it and delivered later. Prefer
 <code>cursor</code>, which returns those too.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">newest</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">boolean | null</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The newest <code>limit</code> events above <code>after</code> instead of the first ones: what a reader who
+wants the journal as it stands now asks for. Still in Lamport order, and <code>lamport</code> is
+then the newest stamp the journal holds, so resuming after it reads only what comes
+next. Without it the journal is read forward from <code>after</code>, a page at a time.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">beats</td>
         <td class="px-3 py-2 font-mono text-xs text-body">boolean | null</td>
@@ -246,42 +259,44 @@ Paging misses nothing either way.</td>
 runtime applied after it, every event exactly once across the whole walk, a late one
 from a healed partition included (I2733). A cursor another run issued is refused as
 <code>stale_cursor</code>. Without <code>cursor</code> and <code>after</code> the walk starts at the beginning.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">limit</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">integer | null</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">At most this many (default 100, at most 1000).</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">newest</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">boolean | null</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The newest <code>limit</code> events above <code>after</code> instead of the first ones: what a reader who
-wants the journal as it stands now asks for. Still in Lamport order, and <code>lamport</code> is
-then the newest stamp the journal holds, so resuming after it reads only what comes
-next. Without it the journal is read forward from <code>after</code>, a page at a time.</td>
       </tr></tbody>
     </table>
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
-  &quot;additionalProperties&quot;: false,
   &quot;description&quot;: &quot;The input of `mesh.events`.&quot;,
   &quot;properties&quot;: {
-    &quot;after&quot;: {
-      &quot;description&quot;: &quot;Only events whose Lamport stamp is above this: a walk by stamp, which never returns\nan event a partitioned runtime stamped at or below it and delivered later. Prefer\n`cursor`, which returns those too.&quot;,
+    &quot;limit&quot;: {
       &quot;format&quot;: &quot;uint64&quot;,
       &quot;minimum&quot;: 0,
       &quot;type&quot;: [
         &quot;integer&quot;,
         &quot;null&quot;
-      ]
+      ],
+      &quot;description&quot;: &quot;At most this many (default 100, at most 1000).&quot;
     },
-    &quot;beats&quot;: {
-      &quot;description&quot;: &quot;Include the `session_beat` events, which are left out by default: a working session&#39;s\nruntime writes one every few minutes to keep its claims alive (I3990), and a reader\nof the journal wants what sessions did rather than that they are still doing it.\nA walk by `after` cuts its page before the beats leave it, so its `lamport` resumes\nafter them; a walk by `cursor` passes them over without counting them toward `limit`.\nPaging misses nothing either way.&quot;,
+    &quot;after&quot;: {
+      &quot;format&quot;: &quot;uint64&quot;,
+      &quot;type&quot;: [
+        &quot;integer&quot;,
+        &quot;null&quot;
+      ],
+      &quot;description&quot;: &quot;Only events whose Lamport stamp is above this: a walk by stamp, which never returns\nan event a partitioned runtime stamped at or below it and delivered later. Prefer\n`cursor`, which returns those too.&quot;,
+      &quot;minimum&quot;: 0
+    },
+    &quot;newest&quot;: {
       &quot;type&quot;: [
         &quot;boolean&quot;,
         &quot;null&quot;
-      ]
+      ],
+      &quot;description&quot;: &quot;The newest `limit` events above `after` instead of the first ones: what a reader who\nwants the journal as it stands now asks for. Still in Lamport order, and `lamport` is\nthen the newest stamp the journal holds, so resuming after it reads only what comes\nnext. Without it the journal is read forward from `after`, a page at a time.&quot;
+    },
+    &quot;beats&quot;: {
+      &quot;type&quot;: [
+        &quot;boolean&quot;,
+        &quot;null&quot;
+      ],
+      &quot;description&quot;: &quot;Include the `session_beat` events, which are left out by default: a working session&#39;s\nruntime writes one every few minutes to keep its claims alive (I3990), and a reader\nof the journal wants what sessions did rather than that they are still doing it.\nA walk by `after` cuts its page before the beats leave it, so its `lamport` resumes\nafter them; a walk by `cursor` passes them over without counting them toward `limit`.\nPaging misses nothing either way.&quot;
     },
     &quot;cursor&quot;: {
       &quot;description&quot;: &quot;The `cursor` the previous page answered: the next page is what this run of the\nruntime applied after it, every event exactly once across the whole walk, a late one\nfrom a healed partition included (I2733). A cursor another run issued is refused as\n`stale_cursor`. Without `cursor` and `after` the walk starts at the beginning.&quot;,
@@ -289,25 +304,10 @@ next. Without it the journal is read forward from <code>after</code>, a page at 
         &quot;string&quot;,
         &quot;null&quot;
       ]
-    },
-    &quot;limit&quot;: {
-      &quot;description&quot;: &quot;At most this many (default 100, at most 1000).&quot;,
-      &quot;format&quot;: &quot;uint64&quot;,
-      &quot;minimum&quot;: 0,
-      &quot;type&quot;: [
-        &quot;integer&quot;,
-        &quot;null&quot;
-      ]
-    },
-    &quot;newest&quot;: {
-      &quot;description&quot;: &quot;The newest `limit` events above `after` instead of the first ones: what a reader who\nwants the journal as it stands now asks for. Still in Lamport order, and `lamport` is\nthen the newest stamp the journal holds, so resuming after it reads only what comes\nnext. Without it the journal is read forward from `after`, a page at a time.&quot;,
-      &quot;type&quot;: [
-        &quot;boolean&quot;,
-        &quot;null&quot;
-      ]
     }
   },
   &quot;title&quot;: &quot;MeshEventsInput&quot;,
+  &quot;additionalProperties&quot;: false,
   &quot;type&quot;: &quot;object&quot;
 }</pre></div>
   </details>
@@ -317,15 +317,10 @@ next. Without it the journal is read forward from <code>after</code>, a page at 
     <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
       <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
       <tbody><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">active</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">boolean</td>
+        <td class="px-3 py-2 font-mono text-heading">events</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Whether cooperation runs.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">count</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">integer</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">How many events this answer carries.</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The events, in Lamport order.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">cursor</td>
         <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
@@ -333,70 +328,31 @@ next. Without it the journal is read forward from <code>after</code>, a page at 
         <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The <code>cursor</code> of the next page: pass it back as <code>cursor</code> and the walk resumes exactly
 after what this page returned (I2733). Absent from an answer to a walk by <code>after</code>.</td>
       </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">events</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The events, in Lamport order.</td>
-      </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">lamport</td>
         <td class="px-3 py-2 font-mono text-xs text-body">integer</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
         <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The <code>after</code> of the next page of a walk by stamp: the stamp of the last event this
 page read — carried, or a session beat it left out — or the <code>after</code> that was asked
 when it read none. A page never ends inside a run of equal stamps (I2140).</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">count</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">integer</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">How many events this answer carries.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">active</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">boolean</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Whether cooperation runs.</td>
       </tr></tbody>
     </table>
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
+  &quot;description&quot;: &quot;The answer of `mesh.events`.&quot;,
+  &quot;type&quot;: &quot;object&quot;,
   &quot;$defs&quot;: {
     &quot;MeshEvent&quot;: {
-      &quot;description&quot;: &quot;One event as the wire and the store carry it. The body is kept as JSON so that an\nevent of an unknown kind survives storage and relay byte-for-byte; `MeshEvent::body`\ninterprets it.\n\nEvery field above the signature is covered by it, which is what makes a relay harmless:\na runtime that forwards an event cannot alter its stream, its sequence, its repository\nor its body without the next reader noticing, and so vouches for nothing. The wall\nclock is the one field nothing is decided by — freshness is measured with beats and\nmonotonic clocks, never by comparing two machines&#39; idea of the time.\n\n```\nuse std::sync::Arc;\nuse majordomus_cli::mesh::identity::NodeIdentity;\nuse majordomus_cli::mesh::journal::{EventBody, Journal, MeshEvent};\n\nlet j = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), \&quot;0000000000000001\&quot;,\n    \&quot;repo\&quot;.into(), None).unwrap();\nj.append_own(EventBody::SessionClosed { session: \&quot;s1\&quot;.into() }).unwrap();\n\nlet event: &amp;MeshEvent = &amp;j.events()[0];\nassert_eq!(event.seq, 1, \&quot;dense from 1 within its stream\&quot;);\nassert_eq!(event.kind(), \&quot;session_closed\&quot;);\nassert_eq!(event.id(), format!(\&quot;{}/1\&quot;, event.stream));\n\n// a relayed byte changed anywhere under the signature is a different event\nlet mut tampered = event.clone();\ntampered.repo = \&quot;another-repository\&quot;.into();\nassert_ne!(tampered.signing_bytes(), event.signing_bytes());\n```&quot;,
-      &quot;properties&quot;: {
-        &quot;at&quot;: {
-          &quot;description&quot;: &quot;The writer&#39;s wall clock, seconds since the Unix epoch. Informational only: nothing\nis decided by comparing it with another machine&#39;s clock.&quot;,
-          &quot;format&quot;: &quot;uint64&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;body&quot;: {
-          &quot;description&quot;: &quot;The body, `kind` tagged.&quot;
-        },
-        &quot;lamport&quot;: {
-          &quot;description&quot;: &quot;The Lamport stamp: above every stamp its writer had seen.&quot;,
-          &quot;format&quot;: &quot;uint64&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;pk&quot;: {
-          &quot;description&quot;: &quot;The writer&#39;s Ed25519 public key, hex; its digest is the stream&#39;s node.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;repo&quot;: {
-          &quot;description&quot;: &quot;The mesh repository id the event belongs to.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;seq&quot;: {
-          &quot;description&quot;: &quot;Dense from 1 within the stream.&quot;,
-          &quot;format&quot;: &quot;uint64&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;sig&quot;: {
-          &quot;description&quot;: &quot;Ed25519 over the canonical bytes of everything above, hex.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;stream&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/StreamId&quot;,
-          &quot;description&quot;: &quot;The stream that wrote it.&quot;
-        },
-        &quot;v&quot;: {
-          &quot;description&quot;: &quot;The event format version.&quot;,
-          &quot;format&quot;: &quot;uint32&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        }
-      },
       &quot;required&quot;: [
         &quot;v&quot;,
         &quot;stream&quot;,
@@ -408,24 +364,66 @@ when it read none. A page never ends inside a run of equal stamps (I2140).</td>
         &quot;body&quot;,
         &quot;sig&quot;
       ],
-      &quot;type&quot;: &quot;object&quot;
+      &quot;type&quot;: &quot;object&quot;,
+      &quot;properties&quot;: {
+        &quot;at&quot;: {
+          &quot;format&quot;: &quot;uint64&quot;,
+          &quot;type&quot;: &quot;integer&quot;,
+          &quot;description&quot;: &quot;The writer&#39;s wall clock, seconds since the Unix epoch. Informational only: nothing\nis decided by comparing it with another machine&#39;s clock.&quot;,
+          &quot;minimum&quot;: 0
+        },
+        &quot;lamport&quot;: {
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;,
+          &quot;format&quot;: &quot;uint64&quot;,
+          &quot;description&quot;: &quot;The Lamport stamp: above every stamp its writer had seen.&quot;
+        },
+        &quot;stream&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/StreamId&quot;,
+          &quot;description&quot;: &quot;The stream that wrote it.&quot;
+        },
+        &quot;v&quot;: {
+          &quot;type&quot;: &quot;integer&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;description&quot;: &quot;The event format version.&quot;,
+          &quot;format&quot;: &quot;uint32&quot;
+        },
+        &quot;repo&quot;: {
+          &quot;description&quot;: &quot;The mesh repository id the event belongs to.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;sig&quot;: {
+          &quot;description&quot;: &quot;Ed25519 over the canonical bytes of everything above, hex.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;body&quot;: {
+          &quot;description&quot;: &quot;The body, `kind` tagged.&quot;
+        },
+        &quot;pk&quot;: {
+          &quot;description&quot;: &quot;The writer&#39;s Ed25519 public key, hex; its digest is the stream&#39;s node.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;seq&quot;: {
+          &quot;type&quot;: &quot;integer&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;description&quot;: &quot;Dense from 1 within the stream.&quot;,
+          &quot;format&quot;: &quot;uint64&quot;
+        }
+      },
+      &quot;description&quot;: &quot;One event as the wire and the store carry it. The body is kept as JSON so that an\nevent of an unknown kind survives storage and relay byte-for-byte; `MeshEvent::body`\ninterprets it.\n\nEvery field above the signature is covered by it, which is what makes a relay harmless:\na runtime that forwards an event cannot alter its stream, its sequence, its repository\nor its body without the next reader noticing, and so vouches for nothing. The wall\nclock is the one field nothing is decided by — freshness is measured with beats and\nmonotonic clocks, never by comparing two machines&#39; idea of the time.\n\n```\nuse std::sync::Arc;\nuse majordomus_cli::mesh::identity::NodeIdentity;\nuse majordomus_cli::mesh::journal::{EventBody, Journal, MeshEvent};\n\nlet j = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), \&quot;0000000000000001\&quot;,\n    \&quot;repo\&quot;.into(), None).unwrap();\nj.append_own(EventBody::SessionClosed { session: \&quot;s1\&quot;.into() }).unwrap();\n\nlet event: &amp;MeshEvent = &amp;j.events()[0];\nassert_eq!(event.seq, 1, \&quot;dense from 1 within its stream\&quot;);\nassert_eq!(event.kind(), \&quot;session_closed\&quot;);\nassert_eq!(event.id(), format!(\&quot;{}/1\&quot;, event.stream));\n\n// a relayed byte changed anywhere under the signature is a different event\nlet mut tampered = event.clone();\ntampered.repo = \&quot;another-repository\&quot;.into();\nassert_ne!(tampered.signing_bytes(), event.signing_bytes());\n```&quot;
     },
     &quot;StreamId&quot;: {
       &quot;description&quot;: &quot;One stream: a run of one runtime of one node. `&lt;node 32 hex&gt;-&lt;runtime 16 hex&gt;-&lt;instance\n16 hex&gt;`. The node is the machine&#39;s key, the runtime is one checkout&#39;s server on that\nmachine, the instance is one process run of that server — so two worktrees on one\nmachine are two streams, and a restart is a new stream of the same runtime.\n\nNumbering events within a stream rather than globally is what makes replication cheap\nand unambiguous: a gap in one stream is visible without coordinating with anyone, and\n`(stream, seq)` identifies an event on every machine that holds it.\n\n```\nuse majordomus_cli::mesh::journal::StreamId;\n\nlet id = StreamId::new(&amp;\&quot;a\&quot;.repeat(32), &amp;\&quot;b\&quot;.repeat(16), &amp;\&quot;c\&quot;.repeat(16)).unwrap();\nassert_eq!(id.node(), \&quot;a\&quot;.repeat(32));\nassert_eq!(id.runtime(), \&quot;b\&quot;.repeat(16));\n\n// a restart is a new stream, and the same runtime\nlet after = StreamId::new(&amp;\&quot;a\&quot;.repeat(32), &amp;\&quot;b\&quot;.repeat(16), &amp;\&quot;d\&quot;.repeat(16)).unwrap();\nassert_ne!(after, id);\nassert_eq!(after.runtime_key(), id.runtime_key());\n```&quot;,
       &quot;type&quot;: &quot;string&quot;
     }
   },
-  &quot;description&quot;: &quot;The answer of `mesh.events`.&quot;,
   &quot;properties&quot;: {
-    &quot;active&quot;: {
-      &quot;description&quot;: &quot;Whether cooperation runs.&quot;,
-      &quot;type&quot;: &quot;boolean&quot;
-    },
-    &quot;count&quot;: {
-      &quot;description&quot;: &quot;How many events this answer carries.&quot;,
-      &quot;format&quot;: &quot;uint&quot;,
-      &quot;minimum&quot;: 0,
-      &quot;type&quot;: &quot;integer&quot;
+    &quot;events&quot;: {
+      &quot;items&quot;: {
+        &quot;$ref&quot;: &quot;#/$defs/MeshEvent&quot;
+      },
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;description&quot;: &quot;The events, in Lamport order.&quot;
     },
     &quot;cursor&quot;: {
       &quot;description&quot;: &quot;The `cursor` of the next page: pass it back as `cursor` and the walk resumes exactly\nafter what this page returned (I2733). Absent from an answer to a walk by `after`.&quot;,
@@ -434,18 +432,21 @@ when it read none. A page never ends inside a run of equal stamps (I2140).</td>
         &quot;null&quot;
       ]
     },
-    &quot;events&quot;: {
-      &quot;description&quot;: &quot;The events, in Lamport order.&quot;,
-      &quot;items&quot;: {
-        &quot;$ref&quot;: &quot;#/$defs/MeshEvent&quot;
-      },
-      &quot;type&quot;: &quot;array&quot;
-    },
     &quot;lamport&quot;: {
-      &quot;description&quot;: &quot;The `after` of the next page of a walk by stamp: the stamp of the last event this\npage read — carried, or a session beat it left out — or the `after` that was asked\nwhen it read none. A page never ends inside a run of equal stamps (I2140).&quot;,
       &quot;format&quot;: &quot;uint64&quot;,
-      &quot;minimum&quot;: 0,
-      &quot;type&quot;: &quot;integer&quot;
+      &quot;description&quot;: &quot;The `after` of the next page of a walk by stamp: the stamp of the last event this\npage read — carried, or a session beat it left out — or the `after` that was asked\nwhen it read none. A page never ends inside a run of equal stamps (I2140).&quot;,
+      &quot;type&quot;: &quot;integer&quot;,
+      &quot;minimum&quot;: 0
+    },
+    &quot;count&quot;: {
+      &quot;format&quot;: &quot;uint&quot;,
+      &quot;type&quot;: &quot;integer&quot;,
+      &quot;description&quot;: &quot;How many events this answer carries.&quot;,
+      &quot;minimum&quot;: 0
+    },
+    &quot;active&quot;: {
+      &quot;description&quot;: &quot;Whether cooperation runs.&quot;,
+      &quot;type&quot;: &quot;boolean&quot;
     }
   },
   &quot;required&quot;: [
@@ -454,8 +455,7 @@ when it read none. A page never ends inside a run of equal stamps (I2140).</td>
     &quot;lamport&quot;,
     &quot;events&quot;
   ],
-  &quot;title&quot;: &quot;EventList&quot;,
-  &quot;type&quot;: &quot;object&quot;
+  &quot;title&quot;: &quot;EventList&quot;
 }</pre></div>
   </details>
 </div>
@@ -486,7 +486,7 @@ when it read none. A page never ends inside a run of equal stamps (I2140).</td>
         <div><dt class="text-body-subtle">Rust module</dt><dd class="min-w-0 break-all font-mono text-heading">majordomus_cli::capability::builtin::mesh</dd></div>
         <div><dt class="text-body-subtle">input type</dt><dd class="font-mono text-heading">MeshEventsInput</dd></div>
         <div><dt class="text-body-subtle">output type</dt><dd class="font-mono text-heading">EventList</dd></div>
-        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/aa9f816f8673880ab4beb6dbebff688f9da5bb65/docs/generated/modules/mesh.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/mesh.md</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">c514db707bb1f5f7557f2a1629d42c4bdc05eb7ef58464c288e42bafcd3d8720</dd></div>
+        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/docs/generated/modules/mesh.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/mesh.md</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">3f734f2faf797f0ca7c39b4cd837e68b6619c41c6f6711f3d3aeca8f341934eb</dd></div>
         <div><dt class="text-body-subtle">generated by</dt><dd class="font-mono text-heading">majordomus-cli 1.0.0-alpha.10</dd></div>
       </dl>
     </div>
@@ -542,9 +542,9 @@ when it read none. A page never ends inside a run of equal stamps (I2140).</td>
       <div class="min-w-0">
         <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">Project</h2><ul class="space-y-2 text-sm font-medium text-body">
           <li><a href="https://github.com/korczis/prismatic-majordomus" class="hover:text-heading hover:underline">GitHub</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/aa9f816f8673880ab4beb6dbebff688f9da5bb65/LICENSE" class="hover:text-heading hover:underline">MIT licence</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/aa9f816f8673880ab4beb6dbebff688f9da5bb65/SECURITY.md" class="hover:text-heading hover:underline">Security policy</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/aa9f816f8673880ab4beb6dbebff688f9da5bb65/CONTRIBUTING.md" class="hover:text-heading hover:underline">Contributing guide</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/LICENSE" class="hover:text-heading hover:underline">MIT licence</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/SECURITY.md" class="hover:text-heading hover:underline">Security policy</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/CONTRIBUTING.md" class="hover:text-heading hover:underline">Contributing guide</a></li>
         </ul>
       </div>
     </div>
@@ -552,7 +552,7 @@ when it read none. A page never ends inside a run of equal stamps (I2140).</td>
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.10</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/aa9f816f8673880ab4beb6dbebff688f9da5bb65" class="font-mono underline">aa9f816</a> · inputs <span class="font-mono">a64b981ed16e</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/architecture/" class="underline">how this site is derived</a> names them.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.10</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/745db2ea21e02613943face75a2bf95542be1f2e" class="font-mono underline">745db2e</a> · inputs <span class="font-mono">0a58c217d1b7</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/architecture/" class="underline">how this site is derived</a> names them.</p>
     </div>
   </div>
 </footer>

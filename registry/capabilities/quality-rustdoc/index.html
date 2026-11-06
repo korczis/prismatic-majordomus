@@ -254,9 +254,9 @@ out. <span class="font-mono text-xs text-body-subtle">default false</span></td>
           &quot;type&quot;: &quot;string&quot;
         },
         {
+          &quot;type&quot;: &quot;string&quot;,
           &quot;const&quot;: &quot;orphan-page&quot;,
-          &quot;description&quot;: &quot;An item page no item of the crate derives: a leftover, or a route rule this check\nhas wrong.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;description&quot;: &quot;An item page no item of the crate derives: a leftover, or a route rule this check\nhas wrong.&quot;
         },
         {
           &quot;const&quot;: &quot;stale&quot;,
@@ -264,29 +264,29 @@ out. <span class="font-mono text-xs text-body-subtle">default false</span></td>
           &quot;type&quot;: &quot;string&quot;
         },
         {
+          &quot;type&quot;: &quot;string&quot;,
           &quot;const&quot;: &quot;undeclared&quot;,
-          &quot;description&quot;: &quot;The tree carries no declaration of what it is or what it was built from.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;description&quot;: &quot;The tree carries no declaration of what it is or what it was built from.&quot;
         },
         {
+          &quot;type&quot;: &quot;string&quot;,
           &quot;const&quot;: &quot;crate-index&quot;,
-          &quot;description&quot;: &quot;The library&#39;s index page is absent, or does not say it is the library&#39;s.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;description&quot;: &quot;The library&#39;s index page is absent, or does not say it is the library&#39;s.&quot;
         },
         {
-          &quot;const&quot;: &quot;asset&quot;,
           &quot;description&quot;: &quot;A stylesheet, script, font or search file the library&#39;s index page needs is absent.&quot;,
+          &quot;const&quot;: &quot;asset&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
         {
-          &quot;const&quot;: &quot;link&quot;,
           &quot;description&quot;: &quot;A relative link of a page resolves to no file of the tree.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;link&quot;
         },
         {
-          &quot;const&quot;: &quot;machine-path&quot;,
           &quot;description&quot;: &quot;A file names a path of the machine it was built on.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;machine-path&quot;
         },
         {
           &quot;const&quot;: &quot;secret&quot;,
@@ -296,9 +296,10 @@ out. <span class="font-mono text-xs text-body-subtle">default false</span></td>
       ]
     }
   },
-  &quot;description&quot;: &quot;The input of `quality.rustdoc`: which findings to answer with.\n\nThere is deliberately no field naming the tree. The subject is the `rustdoc` surface&#39;s\nartifact as the repository&#39;s web topology resolves it, so a caller over HTTP or MCP can\nask about the one tree the repository publishes and about no other directory of the\nmachine; the command line&#39;s `--tree` is a local affordance of a person at their own\nterminal, and never reaches this input.&quot;,
+  &quot;type&quot;: &quot;object&quot;,
   &quot;properties&quot;: {
     &quot;kind&quot;: {
+      &quot;description&quot;: &quot;Only findings of this kind (`missing-page`, `link`, `stale`). All of them when\nabsent. The verdict and the counts are never narrowed: a filter that changed the\nverdict would be a way of passing a tree with a missing page.&quot;,
       &quot;anyOf&quot;: [
         {
           &quot;$ref&quot;: &quot;#/$defs/RustdocFindingKind&quot;
@@ -306,17 +307,16 @@ out. <span class="font-mono text-xs text-body-subtle">default false</span></td>
         {
           &quot;type&quot;: &quot;null&quot;
         }
-      ],
-      &quot;description&quot;: &quot;Only findings of this kind (`missing-page`, `link`, `stale`). All of them when\nabsent. The verdict and the counts are never narrowed: a filter that changed the\nverdict would be a way of passing a tree with a missing page.&quot;
+      ]
     },
     &quot;summary_only&quot;: {
+      &quot;type&quot;: &quot;boolean&quot;,
       &quot;default&quot;: false,
-      &quot;description&quot;: &quot;Answer with the verdict, the counts and the module routes, and leave the findings\nout.&quot;,
-      &quot;type&quot;: &quot;boolean&quot;
+      &quot;description&quot;: &quot;Answer with the verdict, the counts and the module routes, and leave the findings\nout.&quot;
     }
   },
   &quot;title&quot;: &quot;RustdocInput&quot;,
-  &quot;type&quot;: &quot;object&quot;
+  &quot;description&quot;: &quot;The input of `quality.rustdoc`: which findings to answer with.\n\nThere is deliberately no field naming the tree. The subject is the `rustdoc` surface&#39;s\nartifact as the repository&#39;s web topology resolves it, so a caller over HTTP or MCP can\nask about the one tree the repository publishes and about no other directory of the\nmachine; the command line&#39;s `--tree` is a local affordance of a person at their own\nterminal, and never reaches this input.&quot;
 }</pre></div>
   </details>
 </div>
@@ -325,43 +325,10 @@ out. <span class="font-mono text-xs text-body-subtle">default false</span></td>
     <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
       <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
       <tbody><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">built_from</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The revision the tree declares it was built from.</td>
-      </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">counts</td>
         <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
         <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">What was counted.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">crate</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The library's crate name: the directory of the tree it is documented in. Empty when
-the repository has no crate.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">findings</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Every finding, in canonical order.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">head</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The repository's HEAD when it was judged.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">modules</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Every exported module of the library with its page, in canonical order: the one
-module-to-route mapping every consumer reads. Derived from the crate, so it is
-answered even when the tree is absent.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">mount</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The mount the tree is published at, from the web topology.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">reason</td>
         <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
@@ -373,6 +340,11 @@ answered even when the tree is absent.</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
         <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words"><code>SCHEMA</code>.</td>
       </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">mount</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The mount the tree is published at, from the web topology.</td>
+      </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">tree</td>
         <td class="px-3 py-2 font-mono text-xs text-body">string</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
@@ -382,250 +354,125 @@ answered even when the tree is absent.</td>
         <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
         <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The verdict.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">findings</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Every finding, in canonical order.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">modules</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Every exported module of the library with its page, in canonical order: the one
+module-to-route mapping every consumer reads. Derived from the crate, so it is
+answered even when the tree is absent.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">built_from</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The revision the tree declares it was built from.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">head</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The repository's HEAD when it was judged.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">crate</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The library's crate name: the directory of the tree it is documented in. Empty when
+the repository has no crate.</td>
       </tr></tbody>
     </table>
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
-  &quot;$defs&quot;: {
-    &quot;RustdocAcceptedLinks&quot;: {
-      &quot;description&quot;: &quot;The unresolved references of one `RustdocLinkClass`: how many, on how many pages, and\nevery distinct one as the pages write it. Every class is listed, with zeros when the\ntree has none, so that \&quot;none\&quot; is an answer and not an omission.&quot;,
-      &quot;properties&quot;: {
-        &quot;class&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/RustdocLinkClass&quot;,
-          &quot;description&quot;: &quot;The class.&quot;
-        },
-        &quot;links&quot;: {
-          &quot;description&quot;: &quot;References of the class, across every page.&quot;,
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;pages&quot;: {
-          &quot;description&quot;: &quot;Pages carrying at least one.&quot;,
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;written&quot;: {
-          &quot;description&quot;: &quot;Every distinct reference as written, fragment included, in canonical order.&quot;,
-          &quot;items&quot;: {
-            &quot;type&quot;: &quot;string&quot;
-          },
-          &quot;type&quot;: &quot;array&quot;
-        }
-      },
-      &quot;required&quot;: [
-        &quot;class&quot;,
-        &quot;links&quot;,
-        &quot;pages&quot;,
-        &quot;written&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
+  &quot;description&quot;: &quot;One judgement of one rustdoc tree against the crate it documents.&quot;,
+  &quot;properties&quot;: {
+    &quot;counts&quot;: {
+      &quot;$ref&quot;: &quot;#/$defs/RustdocCounts&quot;,
+      &quot;description&quot;: &quot;What was counted.&quot;
     },
-    &quot;RustdocCounts&quot;: {
-      &quot;description&quot;: &quot;What the check counted, so a reader can see what was joined and not only what failed.&quot;,
-      &quot;properties&quot;: {
-        &quot;accepted_links&quot;: {
-          &quot;description&quot;: &quot;The unresolved references that are rustdoc&#39;s own, by class; every class is listed.&quot;,
-          &quot;items&quot;: {
-            &quot;$ref&quot;: &quot;#/$defs/RustdocAcceptedLinks&quot;
-          },
-          &quot;type&quot;: &quot;array&quot;
-        },
-        &quot;derived_pages&quot;: {
-          &quot;description&quot;: &quot;Pages those items derive; more than the items when a re-export documents one twice.&quot;,
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;exported_items&quot;: {
-          &quot;description&quot;: &quot;Items the library exports, of every kind.&quot;,
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;external_links&quot;: {
-          &quot;description&quot;: &quot;External links, by host.&quot;,
-          &quot;items&quot;: {
-            &quot;$ref&quot;: &quot;#/$defs/RustdocHostLinks&quot;
-          },
-          &quot;type&quot;: &quot;array&quot;
-        },
-        &quot;files&quot;: {
-          &quot;description&quot;: &quot;Every file of the tree.&quot;,
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;html_files&quot;: {
-          &quot;description&quot;: &quot;Every HTML file of the tree, whatever it is.&quot;,
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;item_pages&quot;: {
-          &quot;description&quot;: &quot;Item pages found in the tree: every page under a crate directory that is neither a\nredirect stub nor a system file.&quot;,
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;page_owning_items&quot;: {
-          &quot;description&quot;: &quot;Of every documented target, the items that own a page: modules, types, traits, free\nfunctions, constants, statics, aliases, macros.&quot;,
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;redirect_stubs&quot;: {
-          &quot;description&quot;: &quot;Pages that only redirect to where an item is documented.&quot;,
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;relative_links&quot;: {
-          &quot;description&quot;: &quot;Relative links followed, across every page: resolved, broken and accepted alike.&quot;,
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;system_files&quot;: {
-          &quot;description&quot;: &quot;rustdoc&#39;s own files: static assets, the search index, source pages, implementor\nlists, the settings and help pages, every crate&#39;s all-items page and sidebar.&quot;,
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        }
-      },
-      &quot;required&quot;: [
-        &quot;exported_items&quot;,
-        &quot;page_owning_items&quot;,
-        &quot;derived_pages&quot;,
-        &quot;item_pages&quot;,
-        &quot;redirect_stubs&quot;,
-        &quot;system_files&quot;,
-        &quot;html_files&quot;,
-        &quot;files&quot;,
-        &quot;relative_links&quot;,
-        &quot;accepted_links&quot;,
-        &quot;external_links&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
-    },
-    &quot;RustdocFinding&quot;: {
-      &quot;description&quot;: &quot;One finding about the tree.&quot;,
-      &quot;properties&quot;: {
-        &quot;file&quot;: {
-          &quot;description&quot;: &quot;The file of the tree it is about, tree-relative; empty when it is about the tree as a\nwhole.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;kind&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/RustdocFindingKind&quot;,
-          &quot;description&quot;: &quot;What is wrong.&quot;
-        },
-        &quot;message&quot;: {
-          &quot;description&quot;: &quot;One sentence, specific to this occurrence.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;remedy&quot;: {
-          &quot;description&quot;: &quot;What to do, from the kind.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;subject&quot;: {
-          &quot;description&quot;: &quot;What exactly: the item path of a missing page, the target of a broken link, the\npattern that matched.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      },
-      &quot;required&quot;: [
-        &quot;kind&quot;,
-        &quot;file&quot;,
-        &quot;subject&quot;,
-        &quot;message&quot;,
-        &quot;remedy&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
-    },
-    &quot;RustdocFindingKind&quot;: {
-      &quot;description&quot;: &quot;What is wrong with the tree, as a stable code.&quot;,
-      &quot;oneOf&quot;: [
-        {
-          &quot;const&quot;: &quot;missing-page&quot;,
-          &quot;description&quot;: &quot;An exported item that owns a page has no page at its derived route.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;orphan-page&quot;,
-          &quot;description&quot;: &quot;An item page no item of the crate derives: a leftover, or a route rule this check\nhas wrong.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;stale&quot;,
-          &quot;description&quot;: &quot;The tree declares it was built from a revision other than the repository&#39;s HEAD.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;undeclared&quot;,
-          &quot;description&quot;: &quot;The tree carries no declaration of what it is or what it was built from.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;crate-index&quot;,
-          &quot;description&quot;: &quot;The library&#39;s index page is absent, or does not say it is the library&#39;s.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;asset&quot;,
-          &quot;description&quot;: &quot;A stylesheet, script, font or search file the library&#39;s index page needs is absent.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;link&quot;,
-          &quot;description&quot;: &quot;A relative link of a page resolves to no file of the tree.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;machine-path&quot;,
-          &quot;description&quot;: &quot;A file names a path of the machine it was built on.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;secret&quot;,
-          &quot;description&quot;: &quot;A file carries the shape of a credential.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
+    &quot;reason&quot;: {
+      &quot;description&quot;: &quot;Why nothing was judged, when nothing was.&quot;,
+      &quot;type&quot;: [
+        &quot;string&quot;,
+        &quot;null&quot;
       ]
     },
+    &quot;schema&quot;: {
+      &quot;description&quot;: &quot;`SCHEMA`.&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;mount&quot;: {
+      &quot;description&quot;: &quot;The mount the tree is published at, from the web topology.&quot;,
+      &quot;type&quot;: [
+        &quot;string&quot;,
+        &quot;null&quot;
+      ]
+    },
+    &quot;tree&quot;: {
+      &quot;description&quot;: &quot;The tree judged, repository-relative when it is inside the repository.&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;verdict&quot;: {
+      &quot;description&quot;: &quot;The verdict.&quot;,
+      &quot;$ref&quot;: &quot;#/$defs/RustdocVerdict&quot;
+    },
+    &quot;findings&quot;: {
+      &quot;items&quot;: {
+        &quot;$ref&quot;: &quot;#/$defs/RustdocFinding&quot;
+      },
+      &quot;description&quot;: &quot;Every finding, in canonical order.&quot;,
+      &quot;type&quot;: &quot;array&quot;
+    },
+    &quot;modules&quot;: {
+      &quot;items&quot;: {
+        &quot;$ref&quot;: &quot;#/$defs/RustdocModuleRoute&quot;
+      },
+      &quot;description&quot;: &quot;Every exported module of the library with its page, in canonical order: the one\nmodule-to-route mapping every consumer reads. Derived from the crate, so it is\nanswered even when the tree is absent.&quot;,
+      &quot;type&quot;: &quot;array&quot;
+    },
+    &quot;built_from&quot;: {
+      &quot;type&quot;: [
+        &quot;string&quot;,
+        &quot;null&quot;
+      ],
+      &quot;description&quot;: &quot;The revision the tree declares it was built from.&quot;
+    },
+    &quot;head&quot;: {
+      &quot;type&quot;: [
+        &quot;string&quot;,
+        &quot;null&quot;
+      ],
+      &quot;description&quot;: &quot;The repository&#39;s HEAD when it was judged.&quot;
+    },
+    &quot;crate&quot;: {
+      &quot;description&quot;: &quot;The library&#39;s crate name: the directory of the tree it is documented in. Empty when\nthe repository has no crate.&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    }
+  },
+  &quot;type&quot;: &quot;object&quot;,
+  &quot;title&quot;: &quot;RustdocReport&quot;,
+  &quot;$defs&quot;: {
     &quot;RustdocHostLinks&quot;: {
       &quot;description&quot;: &quot;How many external links the tree carries to one host. Counted, never fetched: a check\nthat went to the network would be a check whose verdict depended on it.&quot;,
       &quot;properties&quot;: {
-        &quot;host&quot;: {
-          &quot;description&quot;: &quot;The host: `doc.rust-lang.org`.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
         &quot;links&quot;: {
-          &quot;description&quot;: &quot;How many links point at it, across every page.&quot;,
+          &quot;type&quot;: &quot;integer&quot;,
           &quot;format&quot;: &quot;uint&quot;,
           &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
+          &quot;description&quot;: &quot;How many links point at it, across every page.&quot;
+        },
+        &quot;host&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The host: `doc.rust-lang.org`.&quot;
         }
       },
+      &quot;type&quot;: &quot;object&quot;,
       &quot;required&quot;: [
         &quot;host&quot;,
         &quot;links&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
-    },
-    &quot;RustdocLinkClass&quot;: {
-      &quot;description&quot;: &quot;A kind of unresolved reference that is rustdoc&#39;s and not the crate&#39;s: decided by where\nit sits on its page, counted, and never a finding.&quot;,
-      &quot;oneOf&quot;: [
-        {
-          &quot;const&quot;: &quot;inherited-documentation&quot;,
-          &quot;description&quot;: &quot;A relative link inside a docblock that rustdoc copied from another crate: the\ndocumentation of an implementation listed under *Auto Trait Implementations* or\n*Blanket Implementations* of a trait no page of this tree documents (the impl&#39;s\nheader links no trait page of the tree). The text is the other crate&#39;s, written\nrelative to that crate&#39;s own pages — tracing&#39;s `dispatcher#setting-the-default-subscriber`\n— so it resolves nowhere under this tree and nothing in this crate can change it.\nThe same link anywhere else, or under an implementation of a trait of this crate,\nis a `link` finding.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;unwritten-implementors&quot;,
-          &quot;description&quot;: &quot;The implementors script a trait&#39;s page loads —\n`trait.impl/&lt;crate&gt;/&lt;path&gt;/trait.&lt;Name&gt;.js`, for the trait the page documents — when\nrustdoc wrote none. rustdoc references it from every trait page and writes it only\nwhen it has implementors to list from the documented crates; the page renders its\nown crate&#39;s implementors inline and is complete without it. Any other absent script\nis a `link` finding.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
       ]
     },
     &quot;RustdocModuleRoute&quot;: {
@@ -640,96 +487,251 @@ answered even when the tree is absent.</td>
           &quot;type&quot;: &quot;string&quot;
         }
       },
+      &quot;type&quot;: &quot;object&quot;,
       &quot;required&quot;: [
         &quot;path&quot;,
         &quot;route&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
+      ]
     },
     &quot;RustdocVerdict&quot;: {
-      &quot;description&quot;: &quot;What the tree was judged to be.&quot;,
       &quot;oneOf&quot;: [
         {
           &quot;const&quot;: &quot;clean&quot;,
-          &quot;description&quot;: &quot;The tree holds every page the crate derives and nothing wrong was found.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The tree holds every page the crate derives and nothing wrong was found.&quot;
         },
         {
-          &quot;const&quot;: &quot;findings&quot;,
+          &quot;type&quot;: &quot;string&quot;,
           &quot;description&quot;: &quot;At least one finding stands.&quot;,
+          &quot;const&quot;: &quot;findings&quot;
+        },
+        {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;Nothing could be judged: the tree, or the crate that documents it, is absent. Never\na pass — the producer has not run, and a check that cannot see its subject says so.&quot;,
+          &quot;const&quot;: &quot;no_tree&quot;
+        }
+      ],
+      &quot;description&quot;: &quot;What the tree was judged to be.&quot;
+    },
+    &quot;RustdocFindingKind&quot;: {
+      &quot;description&quot;: &quot;What is wrong with the tree, as a stable code.&quot;,
+      &quot;oneOf&quot;: [
+        {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;missing-page&quot;,
+          &quot;description&quot;: &quot;An exported item that owns a page has no page at its derived route.&quot;
+        },
+        {
+          &quot;description&quot;: &quot;An item page no item of the crate derives: a leftover, or a route rule this check\nhas wrong.&quot;,
+          &quot;const&quot;: &quot;orphan-page&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
         {
-          &quot;const&quot;: &quot;no_tree&quot;,
-          &quot;description&quot;: &quot;Nothing could be judged: the tree, or the crate that documents it, is absent. Never\na pass — the producer has not run, and a check that cannot see its subject says so.&quot;,
+          &quot;const&quot;: &quot;stale&quot;,
+          &quot;description&quot;: &quot;The tree declares it was built from a revision other than the repository&#39;s HEAD.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;description&quot;: &quot;The tree carries no declaration of what it is or what it was built from.&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;undeclared&quot;
+        },
+        {
+          &quot;description&quot;: &quot;The library&#39;s index page is absent, or does not say it is the library&#39;s.&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;crate-index&quot;
+        },
+        {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;asset&quot;,
+          &quot;description&quot;: &quot;A stylesheet, script, font or search file the library&#39;s index page needs is absent.&quot;
+        },
+        {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;link&quot;,
+          &quot;description&quot;: &quot;A relative link of a page resolves to no file of the tree.&quot;
+        },
+        {
+          &quot;const&quot;: &quot;machine-path&quot;,
+          &quot;description&quot;: &quot;A file names a path of the machine it was built on.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;A file carries the shape of a credential.&quot;,
+          &quot;const&quot;: &quot;secret&quot;
+        }
+      ]
+    },
+    &quot;RustdocAcceptedLinks&quot;: {
+      &quot;required&quot;: [
+        &quot;class&quot;,
+        &quot;links&quot;,
+        &quot;pages&quot;,
+        &quot;written&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;,
+      &quot;description&quot;: &quot;The unresolved references of one `RustdocLinkClass`: how many, on how many pages, and\nevery distinct one as the pages write it. Every class is listed, with zeros when the\ntree has none, so that \&quot;none\&quot; is an answer and not an omission.&quot;,
+      &quot;properties&quot;: {
+        &quot;links&quot;: {
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;description&quot;: &quot;References of the class, across every page.&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;class&quot;: {
+          &quot;description&quot;: &quot;The class.&quot;,
+          &quot;$ref&quot;: &quot;#/$defs/RustdocLinkClass&quot;
+        },
+        &quot;pages&quot;: {
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;description&quot;: &quot;Pages carrying at least one.&quot;,
+          &quot;type&quot;: &quot;integer&quot;,
+          &quot;minimum&quot;: 0
+        },
+        &quot;written&quot;: {
+          &quot;items&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          },
+          &quot;description&quot;: &quot;Every distinct reference as written, fragment included, in canonical order.&quot;,
+          &quot;type&quot;: &quot;array&quot;
+        }
+      }
+    },
+    &quot;RustdocFinding&quot;: {
+      &quot;description&quot;: &quot;One finding about the tree.&quot;,
+      &quot;properties&quot;: {
+        &quot;file&quot;: {
+          &quot;description&quot;: &quot;The file of the tree it is about, tree-relative; empty when it is about the tree as a\nwhole.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;kind&quot;: {
+          &quot;description&quot;: &quot;What is wrong.&quot;,
+          &quot;$ref&quot;: &quot;#/$defs/RustdocFindingKind&quot;
+        },
+        &quot;subject&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;What exactly: the item path of a missing page, the target of a broken link, the\npattern that matched.&quot;
+        },
+        &quot;message&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;One sentence, specific to this occurrence.&quot;
+        },
+        &quot;remedy&quot;: {
+          &quot;description&quot;: &quot;What to do, from the kind.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;kind&quot;,
+        &quot;file&quot;,
+        &quot;subject&quot;,
+        &quot;message&quot;,
+        &quot;remedy&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;RustdocLinkClass&quot;: {
+      &quot;description&quot;: &quot;A kind of unresolved reference that is rustdoc&#39;s and not the crate&#39;s: decided by where\nit sits on its page, counted, and never a finding.&quot;,
+      &quot;oneOf&quot;: [
+        {
+          &quot;description&quot;: &quot;A relative link inside a docblock that rustdoc copied from another crate: the\ndocumentation of an implementation listed under *Auto Trait Implementations* or\n*Blanket Implementations* of a trait no page of this tree documents (the impl&#39;s\nheader links no trait page of the tree). The text is the other crate&#39;s, written\nrelative to that crate&#39;s own pages — tracing&#39;s `dispatcher#setting-the-default-subscriber`\n— so it resolves nowhere under this tree and nothing in this crate can change it.\nThe same link anywhere else, or under an implementation of a trait of this crate,\nis a `link` finding.&quot;,
+          &quot;const&quot;: &quot;inherited-documentation&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;unwritten-implementors&quot;,
+          &quot;description&quot;: &quot;The implementors script a trait&#39;s page loads —\n`trait.impl/&lt;crate&gt;/&lt;path&gt;/trait.&lt;Name&gt;.js`, for the trait the page documents — when\nrustdoc wrote none. rustdoc references it from every trait page and writes it only\nwhen it has implementors to list from the documented crates; the page renders its\nown crate&#39;s implementors inline and is complete without it. Any other absent script\nis a `link` finding.&quot;,
           &quot;type&quot;: &quot;string&quot;
         }
       ]
-    }
-  },
-  &quot;description&quot;: &quot;One judgement of one rustdoc tree against the crate it documents.&quot;,
-  &quot;properties&quot;: {
-    &quot;built_from&quot;: {
-      &quot;description&quot;: &quot;The revision the tree declares it was built from.&quot;,
-      &quot;type&quot;: [
-        &quot;string&quot;,
-        &quot;null&quot;
-      ]
     },
-    &quot;counts&quot;: {
-      &quot;$ref&quot;: &quot;#/$defs/RustdocCounts&quot;,
-      &quot;description&quot;: &quot;What was counted.&quot;
-    },
-    &quot;crate&quot;: {
-      &quot;description&quot;: &quot;The library&#39;s crate name: the directory of the tree it is documented in. Empty when\nthe repository has no crate.&quot;,
-      &quot;type&quot;: &quot;string&quot;
-    },
-    &quot;findings&quot;: {
-      &quot;description&quot;: &quot;Every finding, in canonical order.&quot;,
-      &quot;items&quot;: {
-        &quot;$ref&quot;: &quot;#/$defs/RustdocFinding&quot;
+    &quot;RustdocCounts&quot;: {
+      &quot;properties&quot;: {
+        &quot;derived_pages&quot;: {
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;description&quot;: &quot;Pages those items derive; more than the items when a re-export documents one twice.&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;external_links&quot;: {
+          &quot;description&quot;: &quot;External links, by host.&quot;,
+          &quot;items&quot;: {
+            &quot;$ref&quot;: &quot;#/$defs/RustdocHostLinks&quot;
+          },
+          &quot;type&quot;: &quot;array&quot;
+        },
+        &quot;item_pages&quot;: {
+          &quot;minimum&quot;: 0,
+          &quot;description&quot;: &quot;Item pages found in the tree: every page under a crate directory that is neither a\nredirect stub nor a system file.&quot;,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;exported_items&quot;: {
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;description&quot;: &quot;Items the library exports, of every kind.&quot;,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;relative_links&quot;: {
+          &quot;minimum&quot;: 0,
+          &quot;description&quot;: &quot;Relative links followed, across every page: resolved, broken and accepted alike.&quot;,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;system_files&quot;: {
+          &quot;minimum&quot;: 0,
+          &quot;description&quot;: &quot;rustdoc&#39;s own files: static assets, the search index, source pages, implementor\nlists, the settings and help pages, every crate&#39;s all-items page and sidebar.&quot;,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;accepted_links&quot;: {
+          &quot;description&quot;: &quot;The unresolved references that are rustdoc&#39;s own, by class; every class is listed.&quot;,
+          &quot;items&quot;: {
+            &quot;$ref&quot;: &quot;#/$defs/RustdocAcceptedLinks&quot;
+          },
+          &quot;type&quot;: &quot;array&quot;
+        },
+        &quot;redirect_stubs&quot;: {
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;description&quot;: &quot;Pages that only redirect to where an item is documented.&quot;,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;html_files&quot;: {
+          &quot;minimum&quot;: 0,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;type&quot;: &quot;integer&quot;,
+          &quot;description&quot;: &quot;Every HTML file of the tree, whatever it is.&quot;
+        },
+        &quot;page_owning_items&quot;: {
+          &quot;type&quot;: &quot;integer&quot;,
+          &quot;description&quot;: &quot;Of every documented target, the items that own a page: modules, types, traits, free\nfunctions, constants, statics, aliases, macros.&quot;,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;minimum&quot;: 0
+        },
+        &quot;files&quot;: {
+          &quot;type&quot;: &quot;integer&quot;,
+          &quot;description&quot;: &quot;Every file of the tree.&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;format&quot;: &quot;uint&quot;
+        }
       },
-      &quot;type&quot;: &quot;array&quot;
-    },
-    &quot;head&quot;: {
-      &quot;description&quot;: &quot;The repository&#39;s HEAD when it was judged.&quot;,
-      &quot;type&quot;: [
-        &quot;string&quot;,
-        &quot;null&quot;
+      &quot;description&quot;: &quot;What the check counted, so a reader can see what was joined and not only what failed.&quot;,
+      &quot;type&quot;: &quot;object&quot;,
+      &quot;required&quot;: [
+        &quot;exported_items&quot;,
+        &quot;page_owning_items&quot;,
+        &quot;derived_pages&quot;,
+        &quot;item_pages&quot;,
+        &quot;redirect_stubs&quot;,
+        &quot;system_files&quot;,
+        &quot;html_files&quot;,
+        &quot;files&quot;,
+        &quot;relative_links&quot;,
+        &quot;accepted_links&quot;,
+        &quot;external_links&quot;
       ]
-    },
-    &quot;modules&quot;: {
-      &quot;description&quot;: &quot;Every exported module of the library with its page, in canonical order: the one\nmodule-to-route mapping every consumer reads. Derived from the crate, so it is\nanswered even when the tree is absent.&quot;,
-      &quot;items&quot;: {
-        &quot;$ref&quot;: &quot;#/$defs/RustdocModuleRoute&quot;
-      },
-      &quot;type&quot;: &quot;array&quot;
-    },
-    &quot;mount&quot;: {
-      &quot;description&quot;: &quot;The mount the tree is published at, from the web topology.&quot;,
-      &quot;type&quot;: [
-        &quot;string&quot;,
-        &quot;null&quot;
-      ]
-    },
-    &quot;reason&quot;: {
-      &quot;description&quot;: &quot;Why nothing was judged, when nothing was.&quot;,
-      &quot;type&quot;: [
-        &quot;string&quot;,
-        &quot;null&quot;
-      ]
-    },
-    &quot;schema&quot;: {
-      &quot;description&quot;: &quot;`SCHEMA`.&quot;,
-      &quot;type&quot;: &quot;string&quot;
-    },
-    &quot;tree&quot;: {
-      &quot;description&quot;: &quot;The tree judged, repository-relative when it is inside the repository.&quot;,
-      &quot;type&quot;: &quot;string&quot;
-    },
-    &quot;verdict&quot;: {
-      &quot;$ref&quot;: &quot;#/$defs/RustdocVerdict&quot;,
-      &quot;description&quot;: &quot;The verdict.&quot;
     }
   },
   &quot;required&quot;: [
@@ -740,9 +742,7 @@ answered even when the tree is absent.</td>
     &quot;counts&quot;,
     &quot;modules&quot;,
     &quot;findings&quot;
-  ],
-  &quot;title&quot;: &quot;RustdocReport&quot;,
-  &quot;type&quot;: &quot;object&quot;
+  ]
 }</pre></div>
   </details>
 </div>
@@ -773,7 +773,7 @@ answered even when the tree is absent.</td>
         <div><dt class="text-body-subtle">Rust module</dt><dd class="min-w-0 break-all font-mono text-heading">majordomus_cli::capability::builtin::quality</dd></div>
         <div><dt class="text-body-subtle">input type</dt><dd class="font-mono text-heading">RustdocInput</dd></div>
         <div><dt class="text-body-subtle">output type</dt><dd class="font-mono text-heading">RustdocReport</dd></div>
-        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/aa9f816f8673880ab4beb6dbebff688f9da5bb65/docs/generated/modules/quality.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/quality.md</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">c514db707bb1f5f7557f2a1629d42c4bdc05eb7ef58464c288e42bafcd3d8720</dd></div>
+        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/docs/generated/modules/quality.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/quality.md</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">3f734f2faf797f0ca7c39b4cd837e68b6619c41c6f6711f3d3aeca8f341934eb</dd></div>
         <div><dt class="text-body-subtle">generated by</dt><dd class="font-mono text-heading">majordomus-cli 1.0.0-alpha.10</dd></div>
       </dl>
     </div>
@@ -829,9 +829,9 @@ answered even when the tree is absent.</td>
       <div class="min-w-0">
         <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">Project</h2><ul class="space-y-2 text-sm font-medium text-body">
           <li><a href="https://github.com/korczis/prismatic-majordomus" class="hover:text-heading hover:underline">GitHub</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/aa9f816f8673880ab4beb6dbebff688f9da5bb65/LICENSE" class="hover:text-heading hover:underline">MIT licence</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/aa9f816f8673880ab4beb6dbebff688f9da5bb65/SECURITY.md" class="hover:text-heading hover:underline">Security policy</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/aa9f816f8673880ab4beb6dbebff688f9da5bb65/CONTRIBUTING.md" class="hover:text-heading hover:underline">Contributing guide</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/LICENSE" class="hover:text-heading hover:underline">MIT licence</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/SECURITY.md" class="hover:text-heading hover:underline">Security policy</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/CONTRIBUTING.md" class="hover:text-heading hover:underline">Contributing guide</a></li>
         </ul>
       </div>
     </div>
@@ -839,7 +839,7 @@ answered even when the tree is absent.</td>
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.10</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/aa9f816f8673880ab4beb6dbebff688f9da5bb65" class="font-mono underline">aa9f816</a> · inputs <span class="font-mono">a64b981ed16e</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/architecture/" class="underline">how this site is derived</a> names them.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.10</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/745db2ea21e02613943face75a2bf95542be1f2e" class="font-mono underline">745db2e</a> · inputs <span class="font-mono">0a58c217d1b7</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/architecture/" class="underline">how this site is derived</a> names them.</p>
     </div>
   </div>
 </footer>

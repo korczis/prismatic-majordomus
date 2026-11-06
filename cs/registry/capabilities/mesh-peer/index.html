@@ -220,19 +220,19 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
-  &quot;additionalProperties&quot;: false,
+  &quot;type&quot;: &quot;object&quot;,
   &quot;description&quot;: &quot;The input of `mesh.peer`.&quot;,
+  &quot;required&quot;: [
+    &quot;runtime&quot;
+  ],
   &quot;properties&quot;: {
     &quot;runtime&quot;: {
       &quot;description&quot;: &quot;The runtime, `&lt;node&gt;-&lt;runtime&gt;` (a node id alone matches its first runtime).&quot;,
       &quot;type&quot;: &quot;string&quot;
     }
   },
-  &quot;required&quot;: [
-    &quot;runtime&quot;
-  ],
   &quot;title&quot;: &quot;PeerInput&quot;,
-  &quot;type&quot;: &quot;object&quot;
+  &quot;additionalProperties&quot;: false
 }</pre></div>
   </details>
 </div>
@@ -241,15 +241,15 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
     <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
       <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">vlastnost</th><th class="px-3 py-2">typ</th><th class="px-3 py-2">povinné</th><th class="px-3 py-2">popis</th></tr></thead>
       <tbody><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">nalezeno</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">boolean</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Zda je runtime zde znám.</td>
-      </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">machine</td>
         <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
         <td class="px-3 py-2 font-mono text-xs text-body">ne</td>
         <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Stroj, na kterém běží.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">nalezeno</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">boolean</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Zda je runtime zde znám.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">důvod</td>
         <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
@@ -271,414 +271,7 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
   &quot;$defs&quot;: {
-    &quot;ClaimMode&quot;: {
-      &quot;description&quot;: &quot;Whether a claim excludes others or only tells them. Both are useful and they answer\ndifferent questions: an exclusive claim is a worker saying \&quot;do not edit this while I\nam\&quot;, an advisory one is saying \&quot;I am here\&quot;. Exclusive is the default because a claim\ntaken without a thought about the mode is a claim somebody expects to be respected.\n\n```\nuse majordomus_cli::mesh::journal::ClaimMode;\n\nassert_eq!(ClaimMode::default(), ClaimMode::Exclusive);\nassert_eq!(serde_json::to_value(ClaimMode::Advisory).unwrap(), serde_json::json!(\&quot;advisory\&quot;));\n```&quot;,
-      &quot;oneOf&quot;: [
-        {
-          &quot;const&quot;: &quot;exclusive&quot;,
-          &quot;description&quot;: &quot;Exclusive: a second exclusive claim meeting this scope is refused while this one\nlives, on every runtime that knows of it.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;advisory&quot;,
-          &quot;description&quot;: &quot;Advisory: an announcement, like the peer board&#39;s. Overlaps are reported, never\nrefused.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      ]
-    },
-    &quot;ClaimState&quot;: {
-      &quot;description&quot;: &quot;A claim&#39;s standing, and — where it ended, lost or was suspended — why. The variants that\ncarry a string exist because the bare verdict is not actionable: a worker told its claim\nexpired needs to know whether its session closed or its runtime stopped beating, one told\nits claim is conflicted needs the key of the claim that beat it, which is the same key on\nevery runtime, and one told its claim is suspended needs the ttl its holder missed.\n\n```\nuse majordomus_cli::mesh::state::ClaimState;\n\nassert!(ClaimState::Held.is_live());\nassert!(ClaimState::Conflicted(\&quot;s/c1\&quot;.into()).is_live(), \&quot;still held, and not the winner\&quot;);\nassert!(!ClaimState::Released.is_live());\n\n// the detail travels with the verdict, so a reader is never left asking who won\nlet value = serde_json::to_value(ClaimState::Conflicted(\&quot;s/c1\&quot;.into())).unwrap();\nassert_eq!(value[\&quot;state\&quot;], \&quot;conflicted\&quot;);\nassert_eq!(value[\&quot;detail\&quot;], \&quot;s/c1\&quot;);\n```&quot;,
-      &quot;oneOf&quot;: [
-        {
-          &quot;description&quot;: &quot;Live; for an exclusive claim, the winner of its scope.&quot;,
-          &quot;properties&quot;: {
-            &quot;state&quot;: {
-              &quot;const&quot;: &quot;held&quot;,
-              &quot;type&quot;: &quot;string&quot;
-            }
-          },
-          &quot;required&quot;: [
-            &quot;state&quot;
-          ],
-          &quot;type&quot;: &quot;object&quot;
-        },
-        {
-          &quot;description&quot;: &quot;Released by its holder.&quot;,
-          &quot;properties&quot;: {
-            &quot;state&quot;: {
-              &quot;const&quot;: &quot;released&quot;,
-              &quot;type&quot;: &quot;string&quot;
-            }
-          },
-          &quot;required&quot;: [
-            &quot;state&quot;
-          ],
-          &quot;type&quot;: &quot;object&quot;
-        },
-        {
-          &quot;description&quot;: &quot;Ended without a release: the holder&#39;s session closed or its runtime expired.&quot;,
-          &quot;properties&quot;: {
-            &quot;detail&quot;: {
-              &quot;type&quot;: &quot;string&quot;
-            },
-            &quot;state&quot;: {
-              &quot;const&quot;: &quot;expired&quot;,
-              &quot;type&quot;: &quot;string&quot;
-            }
-          },
-          &quot;required&quot;: [
-            &quot;state&quot;,
-            &quot;detail&quot;
-          ],
-          &quot;type&quot;: &quot;object&quot;
-        },
-        {
-          &quot;description&quot;: &quot;Live, exclusive, and beaten to its scope by the claim whose key this names.&quot;,
-          &quot;properties&quot;: {
-            &quot;detail&quot;: {
-              &quot;type&quot;: &quot;string&quot;
-            },
-            &quot;state&quot;: {
-              &quot;const&quot;: &quot;conflicted&quot;,
-              &quot;type&quot;: &quot;string&quot;
-            }
-          },
-          &quot;required&quot;: [
-            &quot;state&quot;,
-            &quot;detail&quot;
-          ],
-          &quot;type&quot;: &quot;object&quot;
-        },
-        {
-          &quot;description&quot;: &quot;Exclusive, unreleased and of an open session on a beating runtime, but its holder\nstopped making progress: no session beat within its ttl (I3990). It refuses nobody\nwhile it reads so, and holds again the moment its session beats. Suspension only\nstops the refusal and says so — nobody takes the scope over and nothing is fenced;\nthat waits for an epoch a resumed holder can be told it lost (I3174).&quot;,
-          &quot;properties&quot;: {
-            &quot;detail&quot;: {
-              &quot;type&quot;: &quot;string&quot;
-            },
-            &quot;state&quot;: {
-              &quot;const&quot;: &quot;suspended&quot;,
-              &quot;type&quot;: &quot;string&quot;
-            }
-          },
-          &quot;required&quot;: [
-            &quot;state&quot;,
-            &quot;detail&quot;
-          ],
-          &quot;type&quot;: &quot;object&quot;
-        }
-      ]
-    },
-    &quot;ClaimView&quot;: {
-      &quot;description&quot;: &quot;One claim anywhere in the mesh: who took what, for what, and where it stands. The\nacquisition&#39;s Lamport stamp and sequence are carried rather than derived on demand,\nbecause they are what exclusivity is decided by — every runtime ranks two competing\nclaims by the same triple and so names the same winner, with no message passing and no\n\&quot;last packet wins\&quot;.\n\n```\nuse std::sync::Arc;\nuse majordomus_cli::mesh::identity::NodeIdentity;\nuse majordomus_cli::mesh::journal::{ClaimMode, EventBody, Journal, StreamLiveness};\nuse majordomus_cli::mesh::state::{fold, ClaimState, ClaimView};\n\nlet j = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), \&quot;0000000000000001\&quot;,\n    \&quot;repo\&quot;.into(), None).unwrap();\nj.append_own(EventBody::ClaimAcquired { claim: \&quot;c1\&quot;.into(), session: \&quot;s1\&quot;.into(),\n    scope: vec![\&quot;apps/majordomus-cli\&quot;.into()], intent: Some(\&quot;document the mesh\&quot;.into()),\n    mode: ClaimMode::Exclusive, issue: Some(\&quot;#184\&quot;.into()) }).unwrap();\n\nlet state = fold(&amp;j.events(), &amp;|_| StreamLiveness::Own);\nlet claim: &amp;ClaimView = &amp;state.claims[0];\nassert_eq!(claim.scope, [\&quot;apps/majordomus-cli\&quot;]);\nassert_eq!(claim.state, ClaimState::Held);\nassert!(claim.acquired_lamport &gt; 0, \&quot;the order exclusivity is decided in\&quot;);\n```&quot;,
-      &quot;properties&quot;: {
-        &quot;acquired_lamport&quot;: {
-          &quot;description&quot;: &quot;The Lamport stamp of the acquisition.&quot;,
-          &quot;format&quot;: &quot;uint64&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;acquired_seq&quot;: {
-          &quot;description&quot;: &quot;The sequence of the acquisition within its stream: with the stamp and the stream,\nthe total order in which exclusivity is decided.&quot;,
-          &quot;format&quot;: &quot;uint64&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;intent&quot;: {
-          &quot;description&quot;: &quot;What it is for.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;issue&quot;: {
-          &quot;description&quot;: &quot;The issue it is for.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;key&quot;: {
-          &quot;description&quot;: &quot;`&lt;stream&gt;/&lt;claim&gt;`.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;mode&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/ClaimMode&quot;,
-          &quot;description&quot;: &quot;Exclusive or advisory.&quot;
-        },
-        &quot;runtime&quot;: {
-          &quot;description&quot;: &quot;`&lt;node&gt;-&lt;runtime&gt;`.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;scope&quot;: {
-          &quot;description&quot;: &quot;The claimed paths.&quot;,
-          &quot;items&quot;: {
-            &quot;type&quot;: &quot;string&quot;
-          },
-          &quot;type&quot;: &quot;array&quot;
-        },
-        &quot;session&quot;: {
-          &quot;description&quot;: &quot;The holding session&#39;s key.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;state&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/ClaimState&quot;,
-          &quot;description&quot;: &quot;Its standing.&quot;
-        },
-        &quot;stream&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/StreamId&quot;,
-          &quot;description&quot;: &quot;The writing stream.&quot;
-        }
-      },
-      &quot;required&quot;: [
-        &quot;key&quot;,
-        &quot;stream&quot;,
-        &quot;runtime&quot;,
-        &quot;session&quot;,
-        &quot;scope&quot;,
-        &quot;mode&quot;,
-        &quot;acquired_lamport&quot;,
-        &quot;acquired_seq&quot;,
-        &quot;state&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
-    },
-    &quot;LinkRefusal&quot;: {
-      &quot;description&quot;: &quot;A refusal: the code, the reason in words, and the protocol range of the refuser so a\nversion mismatch is diagnosable from either end.\n\nCarrying the refuser&#39;s protocol range in every refusal, not only in the one about\nprotocols, is what makes a version problem visible from the side that has the log: the\ndialer sees what the answerer speaks without anyone having to read the other machine.\n\n```\nuse majordomus_cli::mesh::link::{LinkRefusal, RefusalCode, LINK_PROTOCOL_MAX};\n\nlet refusal = LinkRefusal::new(RefusalCode::Untrusted, \&quot;the key is not in the allowlist\&quot;);\nassert_eq!(refusal.code, RefusalCode::Untrusted);\nassert_eq!(refusal.proto_max, LINK_PROTOCOL_MAX);\nassert_eq!(refusal.to_string(), \&quot;untrusted: the key is not in the allowlist\&quot;);\n```&quot;,
-      &quot;properties&quot;: {
-        &quot;code&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/RefusalCode&quot;,
-          &quot;description&quot;: &quot;The rule that refused.&quot;
-        },
-        &quot;detail&quot;: {
-          &quot;description&quot;: &quot;Why, in words.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;proto_max&quot;: {
-          &quot;description&quot;: &quot;The refuser&#39;s newest protocol.&quot;,
-          &quot;format&quot;: &quot;uint32&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;proto_min&quot;: {
-          &quot;description&quot;: &quot;The refuser&#39;s oldest protocol.&quot;,
-          &quot;format&quot;: &quot;uint32&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        }
-      },
-      &quot;required&quot;: [
-        &quot;code&quot;,
-        &quot;detail&quot;,
-        &quot;proto_min&quot;,
-        &quot;proto_max&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
-    },
-    &quot;LinkState&quot;: {
-      &quot;description&quot;: &quot;A link&#39;s standing, from this runtime&#39;s side. It is a statement about a connection and\nnever about the peer: a runtime reachable only through a third party is `Expired` here\nwhile its streams beat on everywhere, which is why claims follow streams and not this.\n\nThe variants are ordered by how far the link has fallen, so the worst link in a table\nis the maximum and a reader never has to rank them by hand.\n\n```\nuse majordomus_cli::mesh::cooperation::LinkState;\n\nlet table = [LinkState::Connected, LinkState::Unreachable, LinkState::Degraded];\nassert_eq!(table.iter().max(), Some(&amp;LinkState::Unreachable), \&quot;the worst link shows\&quot;);\nassert_eq!(serde_json::to_value(LinkState::Connected).unwrap(), \&quot;connected\&quot;);\n```&quot;,
-      &quot;oneOf&quot;: [
-        {
-          &quot;const&quot;: &quot;connecting&quot;,
-          &quot;description&quot;: &quot;Handshaking, or never yet exchanged.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;connected&quot;,
-          &quot;description&quot;: &quot;An exchange within two heartbeats.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;degraded&quot;,
-          &quot;description&quot;: &quot;Rounds are failing; the last exchange is under half the expiry old.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;unreachable&quot;,
-          &quot;description&quot;: &quot;The last exchange is over half the expiry old; the link is about to expire.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;expired&quot;,
-          &quot;description&quot;: &quot;No exchange within the expiry: the link is dropped and will be re-dialed.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      ]
-    },
-    &quot;MeshClaimBrief&quot;: {
-      &quot;description&quot;: &quot;One live claim, told briefly: whose it is, what it is for and how many paths it holds,\nwith its intent cut to `SUMMARY_TEXT` characters — enough to know whom to ask.\n\n```\nuse std::sync::Arc;\nuse majordomus_cli::mesh::identity::NodeIdentity;\nuse majordomus_cli::mesh::journal::{ClaimMode, EventBody, Journal, SessionInfo, StreamLiveness};\nuse majordomus_cli::mesh::state::fold;\n\nlet j = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), \&quot;0000000000000001\&quot;,\n    \&quot;repo\&quot;.into(), None).unwrap();\nj.append_own(EventBody::SessionOpened { info: SessionInfo::named(\&quot;s1\&quot;, \&quot;claude-code\&quot;) })\n    .unwrap();\nfor (claim, path) in [(\&quot;c1\&quot;, \&quot;apps/a\&quot;), (\&quot;c2\&quot;, \&quot;apps/b\&quot;)] {\n    j.append_own(EventBody::ClaimAcquired { claim: claim.into(), session: \&quot;s1\&quot;.into(),\n        scope: vec![path.into()], intent: Some(\&quot;work\&quot;.into()), mode: ClaimMode::Exclusive,\n        issue: Some(\&quot;#1\&quot;.into()) }).unwrap();\n}\nj.append_own(EventBody::ClaimReleased { claim: \&quot;c1\&quot;.into(), reason: None }).unwrap();\nlet state = fold(&amp;j.events(), &amp;|_| StreamLiveness::Own);\nuse majordomus_cli::mesh::page::{summarize, ClaimBrief};\n\nlet summary = summarize(&amp;state, &amp;[]);\nlet newest: &amp;ClaimBrief = summary.runtimes[0].newest_claim.as_ref().unwrap();\nassert_eq!((newest.issue.as_deref(), newest.paths), (Some(\&quot;#1\&quot;), 1));\n```&quot;,
-      &quot;properties&quot;: {
-        &quot;acquired_lamport&quot;: {
-          &quot;description&quot;: &quot;The Lamport stamp of the acquisition.&quot;,
-          &quot;format&quot;: &quot;uint64&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;intent&quot;: {
-          &quot;description&quot;: &quot;What it is for, cut to `SUMMARY_TEXT` characters.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;issue&quot;: {
-          &quot;description&quot;: &quot;The issue it is for.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;key&quot;: {
-          &quot;description&quot;: &quot;`&lt;stream&gt;/&lt;claim&gt;`.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;mode&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/ClaimMode&quot;,
-          &quot;description&quot;: &quot;Exclusive or advisory.&quot;
-        },
-        &quot;paths&quot;: {
-          &quot;description&quot;: &quot;How many paths it claims.&quot;,
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;session&quot;: {
-          &quot;description&quot;: &quot;The holding session&#39;s key.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      },
-      &quot;required&quot;: [
-        &quot;key&quot;,
-        &quot;session&quot;,
-        &quot;paths&quot;,
-        &quot;mode&quot;,
-        &quot;acquired_lamport&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
-    },
     &quot;PeerView&quot;: {
-      &quot;description&quot;: &quot;One peer as every surface shows it: who it is, how this runtime reaches it, and what\nthe link has been through. The counters are carried per peer rather than only in the\ntotals because the question a person asks of a flapping mesh is which peer is flapping,\nand `restarts` answers a different one from `reconnects` — a peer whose process keeps\ndying, against a link that keeps dropping under a process that never did.\n\n```\n# use std::collections::BTreeMap;\n# use std::sync::{Arc, Mutex, Weak};\n# use majordomus_cli::mesh::config::{CooperationConfig, TrustConfig};\n# use majordomus_cli::mesh::cooperation::*;\n# use majordomus_cli::mesh::identity::NodeIdentity;\n# use majordomus_cli::mesh::link::{LinkReply, LinkTransport, Signed, HELLO_PATH};\n# use majordomus_cli::mesh::registry::MeshRegistry;\n# use majordomus_cli::mesh::repository::{of_root_commits, runtime_id};\n# use majordomus_cli::mesh::trust::TrustPolicy;\n# #[derive(Default)] struct Net(Mutex&lt;BTreeMap&lt;String, Weak&lt;Cooperation&gt;&gt;&gt;);\n# impl LinkTransport for Net {\n#   fn post(&amp;self, e: &amp;str, p: &amp;str, m: &amp;Signed) -&gt; Result&lt;LinkReply, String&gt; {\n#     let peer = (self.0.lock().unwrap().get(e).and_then(Weak::upgrade))\n#         .ok_or_else(|| format!(\&quot;{e}: nobody there\&quot;))?;\n#     Ok(if p == HELLO_PATH { peer.accept_hello(m) } else { peer.accept_sync(m) }) } }\n# let net = Arc::new(Net::default());\n# let runtime = |endpoint: &amp;str| { let c = Cooperation::new(CooperationSetup {\n#     identity: Arc::new(NodeIdentity::ephemeral().unwrap()), runtime: runtime_id(endpoint),\n#     repository: of_root_commits(&amp;[\&quot;root\&quot;.into()]), endpoints: vec![endpoint.into()],\n#     version: \&quot;doc\&quot;.into(), config: CooperationConfig::default(),\n#     trust: TrustConfig { policy: TrustPolicy::Tofu, allow: vec![] }, journal_path: None,\n#     registry: Arc::new(MeshRegistry::new()),\n#     transport: Arc::clone(&amp;net) as Arc&lt;dyn LinkTransport&gt;, board: None,\n#     checkout: CheckoutFacts::default() }).unwrap();\n#   net.0.lock().unwrap().insert(endpoint.into(), Arc::downgrade(&amp;c)); c };\n# let (a, b) = (runtime(\&quot;a:1\&quot;), runtime(\&quot;b:1\&quot;));\na.dial(&amp;[\&quot;b:1\&quot;.into()]).unwrap();\n\nlet peer: &amp;PeerView = &amp;a.peers()[0];\nassert_eq!(peer.runtime, b.runtime_key(), \&quot;the durable identity, not the endpoint\&quot;);\nassert!(peer.outbound, \&quot;this runtime dials it\&quot;);\nassert_eq!(peer.handshakes, 1);\nassert_eq!(peer.restarts, 0, \&quot;the peer&#39;s process has not died under the link\&quot;);\n```&quot;,
-      &quot;properties&quot;: {
-        &quot;endpoint&quot;: {
-          &quot;description&quot;: &quot;The endpoint this runtime dials, when it does.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;endpoints&quot;: {
-          &quot;description&quot;: &quot;Where the peer answers.&quot;,
-          &quot;items&quot;: {
-            &quot;type&quot;: &quot;string&quot;
-          },
-          &quot;type&quot;: &quot;array&quot;
-        },
-        &quot;failures&quot;: {
-          &quot;description&quot;: &quot;Consecutive failed rounds.&quot;,
-          &quot;format&quot;: &quot;uint32&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;features&quot;: {
-          &quot;description&quot;: &quot;The link features the peer carries.&quot;,
-          &quot;items&quot;: {
-            &quot;type&quot;: &quot;string&quot;
-          },
-          &quot;type&quot;: &quot;array&quot;
-        },
-        &quot;handshakes&quot;: {
-          &quot;description&quot;: &quot;Handshakes completed with this peer.&quot;,
-          &quot;format&quot;: &quot;uint64&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;inbound&quot;: {
-          &quot;description&quot;: &quot;Whether the peer dials this runtime.&quot;,
-          &quot;type&quot;: &quot;boolean&quot;
-        },
-        &quot;instance&quot;: {
-          &quot;description&quot;: &quot;The current instance.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;last_error&quot;: {
-          &quot;description&quot;: &quot;The last failure, in words.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;last_exchange_ms&quot;: {
-          &quot;description&quot;: &quot;Milliseconds since the last successful exchange in either direction.&quot;,
-          &quot;format&quot;: &quot;uint64&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: [
-            &quot;integer&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;linked_at&quot;: {
-          &quot;description&quot;: &quot;When the current link was established, RFC 3339.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;local&quot;: {
-          &quot;description&quot;: &quot;Whether the peer runs on this machine (the same node key).&quot;,
-          &quot;type&quot;: &quot;boolean&quot;
-        },
-        &quot;name&quot;: {
-          &quot;description&quot;: &quot;The node&#39;s display name.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;node&quot;: {
-          &quot;description&quot;: &quot;The node (machine key digest).&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;outbound&quot;: {
-          &quot;description&quot;: &quot;Whether this runtime dials the peer.&quot;,
-          &quot;type&quot;: &quot;boolean&quot;
-        },
-        &quot;protocol&quot;: {
-          &quot;description&quot;: &quot;The negotiated link protocol.&quot;,
-          &quot;format&quot;: &quot;uint32&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;reconnects&quot;: {
-          &quot;description&quot;: &quot;Handshakes after an expiry or a dropped link.&quot;,
-          &quot;format&quot;: &quot;uint64&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;restarts&quot;: {
-          &quot;description&quot;: &quot;New instances of the peer seen (its process restarted).&quot;,
-          &quot;format&quot;: &quot;uint64&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;rtt_ms&quot;: {
-          &quot;description&quot;: &quot;The last round trip, milliseconds.&quot;,
-          &quot;format&quot;: &quot;uint64&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: [
-            &quot;integer&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;runtime&quot;: {
-          &quot;description&quot;: &quot;`&lt;node&gt;-&lt;runtime&gt;`: the peer&#39;s durable identity.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;state&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/LinkState&quot;,
-          &quot;description&quot;: &quot;The link&#39;s standing.&quot;
-        },
-        &quot;trust&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/TrustState&quot;,
-          &quot;description&quot;: &quot;The trust verdict the link was admitted under.&quot;
-        },
-        &quot;version&quot;: {
-          &quot;description&quot;: &quot;The executable version.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      },
       &quot;required&quot;: [
         &quot;runtime&quot;,
         &quot;node&quot;,
@@ -699,355 +292,162 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
         &quot;restarts&quot;,
         &quot;linked_at&quot;
       ],
-      &quot;type&quot;: &quot;object&quot;
-    },
-    &quot;RefusalCode&quot;: {
-      &quot;description&quot;: &quot;Why a link message was turned down. Every refusal is typed, counted and shown: a mesh\nthat refuses a peer says which rule did, instead of dropping a socket.\n\nThe codes are the diagnosis a person needs when two runtimes will not link, and they\nare deliberately distinct where the remedies differ: `Untrusted` is a key to add,\n`RepositoryMismatch` is two different repositories, `SelfLink` is a configuration that\ndials its own endpoint, and `UnknownLink` is not a failure at all but an instruction to\nsay hello again.\n\n```\nuse majordomus_cli::mesh::link::RefusalCode;\n\n// the wire word is the code&#39;s identity across surfaces, and it is stable\nassert_eq!(RefusalCode::RepositoryMismatch.as_str(), \&quot;repository_mismatch\&quot;);\nassert_eq!(\n    serde_json::to_value(RefusalCode::Untrusted).unwrap(),\n    serde_json::json!(\&quot;untrusted\&quot;),\n);\nassert_ne!(RefusalCode::Untrusted, RefusalCode::RepositoryMismatch);\n```&quot;,
-      &quot;oneOf&quot;: [
-        {
-          &quot;const&quot;: &quot;malformed&quot;,
-          &quot;description&quot;: &quot;Not the shape of the message.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;oversized&quot;,
-          &quot;description&quot;: &quot;Over `MAX_LINK_MESSAGE`.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;protocol_unsupported&quot;,
-          &quot;description&quot;: &quot;The protocol ranges do not meet.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;signature&quot;,
-          &quot;description&quot;: &quot;The signature does not verify.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;stale&quot;,
-          &quot;description&quot;: &quot;The timestamp is outside the skew window.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;replay&quot;,
-          &quot;description&quot;: &quot;A nonce or a counter already seen.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;repository_mismatch&quot;,
-          &quot;description&quot;: &quot;The peer serves another repository: the isolation rule.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;untrusted&quot;,
-          &quot;description&quot;: &quot;The peer&#39;s key is not trusted by this runtime&#39;s policy: discovery is not trust.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;self_link&quot;,
-          &quot;description&quot;: &quot;The peer is this very runtime.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;not_active&quot;,
-          &quot;description&quot;: &quot;This runtime&#39;s cooperation is not active.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;unknown_link&quot;,
-          &quot;description&quot;: &quot;The link id is unknown here: the answerer restarted or expired the link; say hello.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;capacity&quot;,
-          &quot;description&quot;: &quot;A bound of this runtime is full.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;feature_unsupported&quot;,
-          &quot;description&quot;: &quot;The peer lacks a feature the operation needs.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;misaddressed&quot;,
-          &quot;description&quot;: &quot;A hello addressed to another runtime: captured on its way there and replayed here.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      ]
-    },
-    &quot;RefusedView&quot;: {
-      &quot;description&quot;: &quot;A candidate that was refused, with the rule that refused it. A refusal is kept and\nshown rather than logged and dropped, because the commonest mesh failure is a link that\nnever forms: a person who declared a seed and sees no peer needs the decision that was\nmade about it — the wrong repository, a key nobody allowed, a clock too far out — and\nthe direction says which side made it.\n\n```\n# use std::collections::BTreeMap;\n# use std::sync::{Arc, Mutex, Weak};\n# use majordomus_cli::mesh::config::{CooperationConfig, TrustConfig};\n# use majordomus_cli::mesh::cooperation::*;\n# use majordomus_cli::mesh::identity::NodeIdentity;\n# use majordomus_cli::mesh::link::{LinkReply, LinkTransport, RefusalCode, Signed, HELLO_PATH};\n# use majordomus_cli::mesh::registry::MeshRegistry;\n# use majordomus_cli::mesh::repository::{of_root_commits, runtime_id};\n# use majordomus_cli::mesh::trust::TrustPolicy;\n# #[derive(Default)] struct Net(Mutex&lt;BTreeMap&lt;String, Weak&lt;Cooperation&gt;&gt;&gt;);\n# impl LinkTransport for Net {\n#   fn post(&amp;self, e: &amp;str, p: &amp;str, m: &amp;Signed) -&gt; Result&lt;LinkReply, String&gt; {\n#     let peer = (self.0.lock().unwrap().get(e).and_then(Weak::upgrade))\n#         .ok_or_else(|| format!(\&quot;{e}: nobody there\&quot;))?;\n#     Ok(if p == HELLO_PATH { peer.accept_hello(m) } else { peer.accept_sync(m) }) } }\n# let net = Arc::new(Net::default());\n# let runtime = |endpoint: &amp;str, policy: TrustPolicy| {\n#   let c = Cooperation::new(CooperationSetup {\n#     identity: Arc::new(NodeIdentity::ephemeral().unwrap()), runtime: runtime_id(endpoint),\n#     repository: of_root_commits(&amp;[\&quot;root\&quot;.into()]), endpoints: vec![endpoint.into()],\n#     version: \&quot;doc\&quot;.into(), config: CooperationConfig::default(),\n#     trust: TrustConfig { policy, allow: vec![] }, journal_path: None,\n#     registry: Arc::new(MeshRegistry::new()),\n#     transport: Arc::clone(&amp;net) as Arc&lt;dyn LinkTransport&gt;, board: None,\n#     checkout: CheckoutFacts::default() }).unwrap();\n#   net.0.lock().unwrap().insert(endpoint.into(), Arc::downgrade(&amp;c)); c };\n# let a = runtime(\&quot;a:1\&quot;, TrustPolicy::Tofu);\n# let strict = runtime(\&quot;s:1\&quot;, TrustPolicy::DenyUnknown);\na.dial(&amp;[\&quot;s:1\&quot;.into()]).expect_err(\&quot;reachable, and not trusted\&quot;);\n\nlet refused: &amp;RefusedView = &amp;strict.status().refused[0];\nassert_eq!(refused.refusal.code, RefusalCode::Untrusted);\nassert_eq!(refused.direction, \&quot;inbound\&quot;, \&quot;this runtime refused the hello\&quot;);\nassert_eq!(refused.runtime.as_deref(), Some(a.runtime_key()));\n```&quot;,
+      &quot;type&quot;: &quot;object&quot;,
+      &quot;description&quot;: &quot;One peer as every surface shows it: who it is, how this runtime reaches it, and what\nthe link has been through. The counters are carried per peer rather than only in the\ntotals because the question a person asks of a flapping mesh is which peer is flapping,\nand `restarts` answers a different one from `reconnects` — a peer whose process keeps\ndying, against a link that keeps dropping under a process that never did.\n\n```\n# use std::collections::BTreeMap;\n# use std::sync::{Arc, Mutex, Weak};\n# use majordomus_cli::mesh::config::{CooperationConfig, TrustConfig};\n# use majordomus_cli::mesh::cooperation::*;\n# use majordomus_cli::mesh::identity::NodeIdentity;\n# use majordomus_cli::mesh::link::{LinkReply, LinkTransport, Signed, HELLO_PATH};\n# use majordomus_cli::mesh::registry::MeshRegistry;\n# use majordomus_cli::mesh::repository::{of_root_commits, runtime_id};\n# use majordomus_cli::mesh::trust::TrustPolicy;\n# #[derive(Default)] struct Net(Mutex&lt;BTreeMap&lt;String, Weak&lt;Cooperation&gt;&gt;&gt;);\n# impl LinkTransport for Net {\n#   fn post(&amp;self, e: &amp;str, p: &amp;str, m: &amp;Signed) -&gt; Result&lt;LinkReply, String&gt; {\n#     let peer = (self.0.lock().unwrap().get(e).and_then(Weak::upgrade))\n#         .ok_or_else(|| format!(\&quot;{e}: nobody there\&quot;))?;\n#     Ok(if p == HELLO_PATH { peer.accept_hello(m) } else { peer.accept_sync(m) }) } }\n# let net = Arc::new(Net::default());\n# let runtime = |endpoint: &amp;str| { let c = Cooperation::new(CooperationSetup {\n#     identity: Arc::new(NodeIdentity::ephemeral().unwrap()), runtime: runtime_id(endpoint),\n#     repository: of_root_commits(&amp;[\&quot;root\&quot;.into()]), endpoints: vec![endpoint.into()],\n#     version: \&quot;doc\&quot;.into(), config: CooperationConfig::default(),\n#     trust: TrustConfig { policy: TrustPolicy::Tofu, allow: vec![] }, journal_path: None,\n#     registry: Arc::new(MeshRegistry::new()),\n#     transport: Arc::clone(&amp;net) as Arc&lt;dyn LinkTransport&gt;, board: None,\n#     checkout: CheckoutFacts::default() }).unwrap();\n#   net.0.lock().unwrap().insert(endpoint.into(), Arc::downgrade(&amp;c)); c };\n# let (a, b) = (runtime(\&quot;a:1\&quot;), runtime(\&quot;b:1\&quot;));\na.dial(&amp;[\&quot;b:1\&quot;.into()]).unwrap();\n\nlet peer: &amp;PeerView = &amp;a.peers()[0];\nassert_eq!(peer.runtime, b.runtime_key(), \&quot;the durable identity, not the endpoint\&quot;);\nassert!(peer.outbound, \&quot;this runtime dials it\&quot;);\nassert_eq!(peer.handshakes, 1);\nassert_eq!(peer.restarts, 0, \&quot;the peer&#39;s process has not died under the link\&quot;);\n```&quot;,
       &quot;properties&quot;: {
-        &quot;at&quot;: {
-          &quot;description&quot;: &quot;When, RFC 3339.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;direction&quot;: {
-          &quot;description&quot;: &quot;`outbound` (this runtime refused the peer&#39;s welcome, or the peer refused this\nhello) or `inbound` (this runtime refused the peer&#39;s hello).&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
         &quot;endpoint&quot;: {
-          &quot;description&quot;: &quot;The endpoint dialed, or `inbound:&lt;runtime&gt;` for a refused hello.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;refusal&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/LinkRefusal&quot;,
-          &quot;description&quot;: &quot;The refusal.&quot;
-        },
-        &quot;runtime&quot;: {
-          &quot;description&quot;: &quot;The peer&#39;s runtime key, when its card said.&quot;,
           &quot;type&quot;: [
             &quot;string&quot;,
             &quot;null&quot;
-          ]
-        }
-      },
-      &quot;required&quot;: [
-        &quot;endpoint&quot;,
-        &quot;direction&quot;,
-        &quot;refusal&quot;,
-        &quot;at&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
-    },
-    &quot;RuntimeNode&quot;: {
-      &quot;description&quot;: &quot;One runtime in the peer tree.&quot;,
-      &quot;properties&quot;: {
-        &quot;last_beat_ms&quot;: {
-          &quot;description&quot;: &quot;Milliseconds since its beat last rose, on this runtime&#39;s clock.&quot;,
-          &quot;format&quot;: &quot;uint64&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: [
-            &quot;integer&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;link&quot;: {
-          &quot;anyOf&quot;: [
-            {
-              &quot;$ref&quot;: &quot;#/$defs/PeerView&quot;
-            },
-            {
-              &quot;type&quot;: &quot;null&quot;
-            }
           ],
-          &quot;description&quot;: &quot;This runtime&#39;s link to it, when there is one.&quot;
+          &quot;description&quot;: &quot;The endpoint this runtime dials, when it does.&quot;
         },
-        &quot;liveness&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/StreamLiveness&quot;,
-          &quot;description&quot;: &quot;Whether its stream beats: own, live, or expired.&quot;
-        },
-        &quot;newest_claim&quot;: {
-          &quot;anyOf&quot;: [
-            {
-              &quot;$ref&quot;: &quot;#/$defs/MeshClaimBrief&quot;
-            },
-            {
-              &quot;type&quot;: &quot;null&quot;
-            }
-          ],
-          &quot;description&quot;: &quot;Its newest live claim, told briefly.&quot;
-        },
-        &quot;runtime&quot;: {
-          &quot;description&quot;: &quot;`&lt;node&gt;-&lt;runtime&gt;`.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;sessions&quot;: {
-          &quot;description&quot;: &quot;Its sessions; in the summary view only the active ones.&quot;,
+        &quot;endpoints&quot;: {
           &quot;items&quot;: {
-            &quot;$ref&quot;: &quot;#/$defs/SessionNode&quot;
+            &quot;type&quot;: &quot;string&quot;
           },
-          &quot;type&quot;: &quot;array&quot;
+          &quot;type&quot;: &quot;array&quot;,
+          &quot;description&quot;: &quot;Where the peer answers.&quot;
         },
-        &quot;this_runtime&quot;: {
-          &quot;description&quot;: &quot;Whether this is the runtime answering.&quot;,
+        &quot;inbound&quot;: {
+          &quot;description&quot;: &quot;Whether the peer dials this runtime.&quot;,
           &quot;type&quot;: &quot;boolean&quot;
-        }
-      },
-      &quot;required&quot;: [
-        &quot;runtime&quot;,
-        &quot;this_runtime&quot;,
-        &quot;liveness&quot;,
-        &quot;sessions&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
-    },
-    &quot;SessionInfo&quot;: {
-      &quot;description&quot;: &quot;What a session tells the mesh about itself. Every field is a public fact about work in\nprogress; none is a path on the author&#39;s disk, a secret or a credential.\n\nAlmost everything here is optional, and that is the design: a session says what it\nknows, and a field it leaves out is omitted rather than carried empty, so a reader can\ntell \&quot;no task\&quot; from \&quot;a task called nothing\&quot;. Opening the same session id again replaces\nthis record, which is how a session that learns its branch later tells the mesh.\n\n```\nuse majordomus_cli::mesh::journal::SessionInfo;\n\nlet mut info = SessionInfo::named(\&quot;s1\&quot;, \&quot;claude-code\&quot;);\nassert_eq!(info.task, None);\nassert!(serde_json::to_value(&amp;info).unwrap().get(\&quot;task\&quot;).is_none(), \&quot;unsaid, not empty\&quot;);\n\ninfo.branch = Some(\&quot;feature/mesh-cooperation\&quot;.into());\nassert_eq!(serde_json::to_value(&amp;info).unwrap()[\&quot;branch\&quot;], \&quot;feature/mesh-cooperation\&quot;);\n```&quot;,
-      &quot;properties&quot;: {
-        &quot;branch&quot;: {
-          &quot;description&quot;: &quot;The branch checked out.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
         },
-        &quot;checkout&quot;: {
-          &quot;description&quot;: &quot;The checkout id (a digest, never a path).&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;client&quot;: {
-          &quot;description&quot;: &quot;The client: `claude-code`, `codex`, `cli`, ...&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;client_pid&quot;: {
-          &quot;description&quot;: &quot;The client process the session belongs to, on the machine of the runtime holding it.\nA client that crashes never says goodbye, so this is what lets that runtime close the\nsession for it once the process is gone (I3810).&quot;,
+        &quot;failures&quot;: {
           &quot;format&quot;: &quot;uint32&quot;,
+          &quot;type&quot;: &quot;integer&quot;,
           &quot;minimum&quot;: 0,
-          &quot;type&quot;: [
-            &quot;integer&quot;,
-            &quot;null&quot;
-          ]
+          &quot;description&quot;: &quot;Consecutive failed rounds.&quot;
         },
-        &quot;client_started&quot;: {
-          &quot;description&quot;: &quot;When that process started, as the machine&#39;s process table reports it. Compared only\nfor equality and only on that machine, so a pid the system handed to another process\nis never taken for the client, and no two clocks are ever compared.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;context&quot;: {
-          &quot;description&quot;: &quot;The context revision the session works from (a digest the context compiler names).&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;dirty&quot;: {
-          &quot;description&quot;: &quot;Whether the working tree had uncommitted changes when this was said.&quot;,
-          &quot;type&quot;: [
-            &quot;boolean&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;head&quot;: {
-          &quot;description&quot;: &quot;The commit checked out.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;intent&quot;: {
-          &quot;description&quot;: &quot;What the session says it is doing.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;issue&quot;: {
-          &quot;description&quot;: &quot;The issue (`I0001`, `#184`) the work belongs to.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;milestone&quot;: {
-          &quot;description&quot;: &quot;The milestone the work belongs to.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;session&quot;: {
-          &quot;description&quot;: &quot;The session&#39;s id within its stream.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;task&quot;: {
-          &quot;description&quot;: &quot;The task id (`t-...`) the session works under.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;worker&quot;: {
-          &quot;description&quot;: &quot;The worker&#39;s own name for itself, when it gave one.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        }
-      },
-      &quot;required&quot;: [
-        &quot;session&quot;,
-        &quot;client&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
-    },
-    &quot;SessionNode&quot;: {
-      &quot;description&quot;: &quot;One session in the peer tree.&quot;,
-      &quot;properties&quot;: {
-        &quot;blocked&quot;: {
-          &quot;description&quot;: &quot;Why the session waits on a person — `permission dialog`, `awaiting input` — while its\nphase says it does (`blocked: …`, see `blocked_reason`), until its next real work\nclears it (I3992). Information only: its claims are judged by its progress alone.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;claims&quot;: {
-          &quot;description&quot;: &quot;The claims it holds or held; empty in the summary view, which counts them instead.&quot;,
-          &quot;items&quot;: {
-            &quot;$ref&quot;: &quot;#/$defs/ClaimView&quot;
-          },
-          &quot;type&quot;: &quot;array&quot;
-        },
-        &quot;claims_held&quot;: {
-          &quot;description&quot;: &quot;How many of its claims are live.&quot;,
-          &quot;format&quot;: &quot;uint&quot;,
+        &quot;handshakes&quot;: {
+          &quot;description&quot;: &quot;Handshakes completed with this peer.&quot;,
+          &quot;format&quot;: &quot;uint64&quot;,
           &quot;minimum&quot;: 0,
           &quot;type&quot;: &quot;integer&quot;
         },
-        &quot;info&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/SessionInfo&quot;,
-          &quot;description&quot;: &quot;What the session last said about itself.&quot;
-        },
-        &quot;key&quot;: {
-          &quot;description&quot;: &quot;`&lt;stream&gt;/&lt;session&gt;`.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;phase&quot;: {
-          &quot;description&quot;: &quot;What its newest session beat said it was doing — `waiting on CI run 123` — when it\nsaid (I3990).&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;progress_ms&quot;: {
-          &quot;description&quot;: &quot;Milliseconds since this runtime stored the session&#39;s newest session beat that was\nprogress, on its own clock: how long ago its worker last showed progress (I3990).\nAbsent for a session that never beat — it lives by its runtime&#39;s beat alone — and for\none that has only said it waits on a person (I3992). Outside the digest, like every\nage.&quot;,
-          &quot;format&quot;: &quot;uint64&quot;,
+        &quot;restarts&quot;: {
           &quot;minimum&quot;: 0,
+          &quot;description&quot;: &quot;New instances of the peer seen (its process restarted).&quot;,
+          &quot;type&quot;: &quot;integer&quot;,
+          &quot;format&quot;: &quot;uint64&quot;
+        },
+        &quot;rtt_ms&quot;: {
           &quot;type&quot;: [
             &quot;integer&quot;,
             &quot;null&quot;
-          ]
+          ],
+          &quot;format&quot;: &quot;uint64&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;description&quot;: &quot;The last round trip, milliseconds.&quot;
         },
-        &quot;reviews&quot;: {
-          &quot;description&quot;: &quot;The review requests it opened, by key.&quot;,
+        &quot;node&quot;: {
+          &quot;description&quot;: &quot;The node (machine key digest).&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;last_exchange_ms&quot;: {
+          &quot;description&quot;: &quot;Milliseconds since the last successful exchange in either direction.&quot;,
+          &quot;format&quot;: &quot;uint64&quot;,
+          &quot;type&quot;: [
+            &quot;integer&quot;,
+            &quot;null&quot;
+          ],
+          &quot;minimum&quot;: 0
+        },
+        &quot;name&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The node&#39;s display name.&quot;
+        },
+        &quot;trust&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/TrustState&quot;,
+          &quot;description&quot;: &quot;The trust verdict the link was admitted under.&quot;
+        },
+        &quot;reconnects&quot;: {
+          &quot;minimum&quot;: 0,
+          &quot;format&quot;: &quot;uint64&quot;,
+          &quot;type&quot;: &quot;integer&quot;,
+          &quot;description&quot;: &quot;Handshakes after an expiry or a dropped link.&quot;
+        },
+        &quot;instance&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The current instance.&quot;
+        },
+        &quot;local&quot;: {
+          &quot;type&quot;: &quot;boolean&quot;,
+          &quot;description&quot;: &quot;Whether the peer runs on this machine (the same node key).&quot;
+        },
+        &quot;protocol&quot;: {
+          &quot;minimum&quot;: 0,
+          &quot;format&quot;: &quot;uint32&quot;,
+          &quot;description&quot;: &quot;The negotiated link protocol.&quot;,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;version&quot;: {
+          &quot;description&quot;: &quot;The executable version.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;features&quot;: {
+          &quot;description&quot;: &quot;The link features the peer carries.&quot;,
           &quot;items&quot;: {
             &quot;type&quot;: &quot;string&quot;
           },
           &quot;type&quot;: &quot;array&quot;
         },
+        &quot;outbound&quot;: {
+          &quot;type&quot;: &quot;boolean&quot;,
+          &quot;description&quot;: &quot;Whether this runtime dials the peer.&quot;
+        },
+        &quot;linked_at&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;When the current link was established, RFC 3339.&quot;
+        },
+        &quot;last_error&quot;: {
+          &quot;description&quot;: &quot;The last failure, in words.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
         &quot;state&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/SessionState&quot;,
-          &quot;description&quot;: &quot;Its standing.&quot;
+          &quot;$ref&quot;: &quot;#/$defs/LinkState&quot;,
+          &quot;description&quot;: &quot;The link&#39;s standing.&quot;
+        },
+        &quot;runtime&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;`&lt;node&gt;-&lt;runtime&gt;`: the peer&#39;s durable identity.&quot;
         }
-      },
-      &quot;required&quot;: [
-        &quot;key&quot;,
-        &quot;info&quot;,
-        &quot;state&quot;,
-        &quot;claims&quot;,
-        &quot;claims_held&quot;,
-        &quot;reviews&quot;
+      }
+    },
+    &quot;LinkState&quot;: {
+      &quot;oneOf&quot;: [
+        {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;connecting&quot;,
+          &quot;description&quot;: &quot;Handshaking, or never yet exchanged.&quot;
+        },
+        {
+          &quot;const&quot;: &quot;connected&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;An exchange within two heartbeats.&quot;
+        },
+        {
+          &quot;const&quot;: &quot;degraded&quot;,
+          &quot;description&quot;: &quot;Rounds are failing; the last exchange is under half the expiry old.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;unreachable&quot;,
+          &quot;description&quot;: &quot;The last exchange is over half the expiry old; the link is about to expire.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;expired&quot;,
+          &quot;description&quot;: &quot;No exchange within the expiry: the link is dropped and will be re-dialed.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
       ],
-      &quot;type&quot;: &quot;object&quot;
+      &quot;description&quot;: &quot;A link&#39;s standing, from this runtime&#39;s side. It is a statement about a connection and\nnever about the peer: a runtime reachable only through a third party is `Expired` here\nwhile its streams beat on everywhere, which is why claims follow streams and not this.\n\nThe variants are ordered by how far the link has fallen, so the worst link in a table\nis the maximum and a reader never has to rank them by hand.\n\n```\nuse majordomus_cli::mesh::cooperation::LinkState;\n\nlet table = [LinkState::Connected, LinkState::Unreachable, LinkState::Degraded];\nassert_eq!(table.iter().max(), Some(&amp;LinkState::Unreachable), \&quot;the worst link shows\&quot;);\nassert_eq!(serde_json::to_value(LinkState::Connected).unwrap(), \&quot;connected\&quot;);\n```&quot;
     },
     &quot;SessionState&quot;: {
-      &quot;description&quot;: &quot;A session&#39;s standing, as every runtime of the mesh reads it. The distinction that\nmatters is between `Closed` and `Expired`: the first is a session that said it was\nfinished, the second one whose runtime stopped beating and can no longer say anything.\nBoth end the session&#39;s claims, but only the second is a machine nobody should expect an\nanswer from.\n\n```\nuse std::sync::Arc;\nuse majordomus_cli::mesh::identity::NodeIdentity;\nuse majordomus_cli::mesh::journal::{EventBody, Journal, SessionInfo, StreamLiveness};\nuse majordomus_cli::mesh::state::{fold, SessionState};\n\nlet j = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), \&quot;0000000000000001\&quot;,\n    \&quot;repo\&quot;.into(), None).unwrap();\nj.append_own(EventBody::SessionOpened { info: SessionInfo::named(\&quot;s1\&quot;, \&quot;cli\&quot;) }).unwrap();\nassert_eq!(fold(&amp;j.events(), &amp;|_| StreamLiveness::Own).sessions[0].state, SessionState::Active);\n\n// the same events, read on a runtime that no longer hears the writer\nlet gone = fold(&amp;j.events(), &amp;|_| StreamLiveness::Expired);\nassert_eq!(gone.sessions[0].state, SessionState::Expired);\n```&quot;,
       &quot;oneOf&quot;: [
         {
           &quot;const&quot;: &quot;active&quot;,
@@ -1060,53 +460,66 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
           &quot;type&quot;: &quot;string&quot;
         },
         {
-          &quot;const&quot;: &quot;expired&quot;,
           &quot;description&quot;: &quot;Never closed, but its runtime stopped beating: gone, as far as anyone can tell.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;expired&quot;
         }
-      ]
+      ],
+      &quot;description&quot;: &quot;A session&#39;s standing, as every runtime of the mesh reads it. The distinction that\nmatters is between `Closed` and `Expired`: the first is a session that said it was\nfinished, the second one whose runtime stopped beating and can no longer say anything.\nBoth end the session&#39;s claims, but only the second is a machine nobody should expect an\nanswer from.\n\n```\nuse std::sync::Arc;\nuse majordomus_cli::mesh::identity::NodeIdentity;\nuse majordomus_cli::mesh::journal::{EventBody, Journal, SessionInfo, StreamLiveness};\nuse majordomus_cli::mesh::state::{fold, SessionState};\n\nlet j = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), \&quot;0000000000000001\&quot;,\n    \&quot;repo\&quot;.into(), None).unwrap();\nj.append_own(EventBody::SessionOpened { info: SessionInfo::named(\&quot;s1\&quot;, \&quot;cli\&quot;) }).unwrap();\nassert_eq!(fold(&amp;j.events(), &amp;|_| StreamLiveness::Own).sessions[0].state, SessionState::Active);\n\n// the same events, read on a runtime that no longer hears the writer\nlet gone = fold(&amp;j.events(), &amp;|_| StreamLiveness::Expired);\nassert_eq!(gone.sessions[0].state, SessionState::Expired);\n```&quot;
     },
-    &quot;StreamId&quot;: {
-      &quot;description&quot;: &quot;One stream: a run of one runtime of one node. `&lt;node 32 hex&gt;-&lt;runtime 16 hex&gt;-&lt;instance\n16 hex&gt;`. The node is the machine&#39;s key, the runtime is one checkout&#39;s server on that\nmachine, the instance is one process run of that server — so two worktrees on one\nmachine are two streams, and a restart is a new stream of the same runtime.\n\nNumbering events within a stream rather than globally is what makes replication cheap\nand unambiguous: a gap in one stream is visible without coordinating with anyone, and\n`(stream, seq)` identifies an event on every machine that holds it.\n\n```\nuse majordomus_cli::mesh::journal::StreamId;\n\nlet id = StreamId::new(&amp;\&quot;a\&quot;.repeat(32), &amp;\&quot;b\&quot;.repeat(16), &amp;\&quot;c\&quot;.repeat(16)).unwrap();\nassert_eq!(id.node(), \&quot;a\&quot;.repeat(32));\nassert_eq!(id.runtime(), \&quot;b\&quot;.repeat(16));\n\n// a restart is a new stream, and the same runtime\nlet after = StreamId::new(&amp;\&quot;a\&quot;.repeat(32), &amp;\&quot;b\&quot;.repeat(16), &amp;\&quot;d\&quot;.repeat(16)).unwrap();\nassert_ne!(after, id);\nassert_eq!(after.runtime_key(), id.runtime_key());\n```&quot;,
-      &quot;type&quot;: &quot;string&quot;
-    },
-    &quot;StreamLiveness&quot;: {
-      &quot;description&quot;: &quot;Whether a stream is speaking now, on this runtime&#39;s clock. It is a verdict about a\nstream and not about a link: a runtime reachable only through a relay is alive, and a\nruntime that crashed stops beating for everyone at once. `Own` is kept apart from `Live`\nbecause a runtime&#39;s own stream needs no evidence — it is the thing doing the beating.\n\n```\nuse majordomus_cli::mesh::journal::StreamLiveness;\n\nassert!(StreamLiveness::Own.is_alive() &amp;&amp; StreamLiveness::Live.is_alive());\nassert!(!StreamLiveness::Expired.is_alive());\nassert_eq!(\n    serde_json::to_value(StreamLiveness::Expired).unwrap(),\n    serde_json::json!(\&quot;expired\&quot;),\n);\n```&quot;,
-      &quot;oneOf&quot;: [
-        {
-          &quot;const&quot;: &quot;own&quot;,
-          &quot;description&quot;: &quot;This runtime&#39;s own current stream.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+    &quot;LinkRefusal&quot;: {
+      &quot;type&quot;: &quot;object&quot;,
+      &quot;description&quot;: &quot;A refusal: the code, the reason in words, and the protocol range of the refuser so a\nversion mismatch is diagnosable from either end.\n\nCarrying the refuser&#39;s protocol range in every refusal, not only in the one about\nprotocols, is what makes a version problem visible from the side that has the log: the\ndialer sees what the answerer speaks without anyone having to read the other machine.\n\n```\nuse majordomus_cli::mesh::link::{LinkRefusal, RefusalCode, LINK_PROTOCOL_MAX};\n\nlet refusal = LinkRefusal::new(RefusalCode::Untrusted, \&quot;the key is not in the allowlist\&quot;);\nassert_eq!(refusal.code, RefusalCode::Untrusted);\nassert_eq!(refusal.proto_max, LINK_PROTOCOL_MAX);\nassert_eq!(refusal.to_string(), \&quot;untrusted: the key is not in the allowlist\&quot;);\n```&quot;,
+      &quot;required&quot;: [
+        &quot;code&quot;,
+        &quot;detail&quot;,
+        &quot;proto_min&quot;,
+        &quot;proto_max&quot;
+      ],
+      &quot;properties&quot;: {
+        &quot;proto_min&quot;: {
+          &quot;type&quot;: &quot;integer&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;description&quot;: &quot;The refuser&#39;s oldest protocol.&quot;,
+          &quot;format&quot;: &quot;uint32&quot;
         },
-        {
-          &quot;const&quot;: &quot;live&quot;,
-          &quot;description&quot;: &quot;Its beat rose within the expiry.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+        &quot;code&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/RefusalCode&quot;,
+          &quot;description&quot;: &quot;The rule that refused.&quot;
         },
-        {
-          &quot;const&quot;: &quot;expired&quot;,
-          &quot;description&quot;: &quot;Its beat has not risen within the expiry, or was never heard.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+        &quot;detail&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;Why, in words.&quot;
+        },
+        &quot;proto_max&quot;: {
+          &quot;description&quot;: &quot;The refuser&#39;s newest protocol.&quot;,
+          &quot;format&quot;: &quot;uint32&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
         }
-      ]
+      }
     },
     &quot;TrustState&quot;: {
-      &quot;description&quot;: &quot;What the policy decided about one node.&quot;,
       &quot;oneOf&quot;: [
         {
           &quot;description&quot;: &quot;Valid, recorded, trusted for nothing. The resting state of an unknown node.&quot;,
+          &quot;required&quot;: [
+            &quot;state&quot;
+          ],
+          &quot;type&quot;: &quot;object&quot;,
           &quot;properties&quot;: {
             &quot;state&quot;: {
               &quot;const&quot;: &quot;observed&quot;,
               &quot;type&quot;: &quot;string&quot;
             }
-          },
-          &quot;required&quot;: [
-            &quot;state&quot;
-          ],
-          &quot;type&quot;: &quot;object&quot;
+          }
         },
         {
+          &quot;type&quot;: &quot;object&quot;,
+          &quot;required&quot;: [
+            &quot;state&quot;,
+            &quot;detail&quot;
+          ],
           &quot;description&quot;: &quot;The policy trusts this key; `detail` says which rule did (`allowlist`, `tofu`).&quot;,
           &quot;properties&quot;: {
             &quot;detail&quot;: {
@@ -1116,31 +529,27 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
               &quot;const&quot;: &quot;trusted&quot;,
               &quot;type&quot;: &quot;string&quot;
             }
-          },
+          }
+        },
+        {
+          &quot;type&quot;: &quot;object&quot;,
           &quot;required&quot;: [
             &quot;state&quot;,
             &quot;detail&quot;
           ],
-          &quot;type&quot;: &quot;object&quot;
-        },
-        {
-          &quot;description&quot;: &quot;The policy rejected this node; `detail` says why (for instance a TOFU key\nchange). A rejected node stays listed — an operator debugging a mesh needs to\nsee what was refused, not wonder about silence.&quot;,
           &quot;properties&quot;: {
-            &quot;detail&quot;: {
-              &quot;type&quot;: &quot;string&quot;
-            },
             &quot;state&quot;: {
               &quot;const&quot;: &quot;rejected&quot;,
               &quot;type&quot;: &quot;string&quot;
+            },
+            &quot;detail&quot;: {
+              &quot;type&quot;: &quot;string&quot;
             }
           },
-          &quot;required&quot;: [
-            &quot;state&quot;,
-            &quot;detail&quot;
-          ],
-          &quot;type&quot;: &quot;object&quot;
+          &quot;description&quot;: &quot;The policy rejected this node; `detail` says why (for instance a TOFU key\nchange). A rejected node stays listed — an operator debugging a mesh needs to\nsee what was refused, not wonder about silence.&quot;
         },
         {
+          &quot;type&quot;: &quot;object&quot;,
           &quot;description&quot;: &quot;The key was succeeded by a trusted successor, whose key is the `detail`: its history\nstays legitimate, and it is trusted for nothing new. Retired, not withdrawn.&quot;,
           &quot;properties&quot;: {
             &quot;detail&quot;: {
@@ -1154,24 +563,621 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
           &quot;required&quot;: [
             &quot;state&quot;,
             &quot;detail&quot;
+          ]
+        }
+      ],
+      &quot;description&quot;: &quot;What the policy decided about one node.&quot;
+    },
+    &quot;RuntimeNode&quot;: {
+      &quot;type&quot;: &quot;object&quot;,
+      &quot;properties&quot;: {
+        &quot;liveness&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/StreamLiveness&quot;,
+          &quot;description&quot;: &quot;Whether its stream beats: own, live, or expired.&quot;
+        },
+        &quot;sessions&quot;: {
+          &quot;description&quot;: &quot;Its sessions; in the summary view only the active ones.&quot;,
+          &quot;items&quot;: {
+            &quot;$ref&quot;: &quot;#/$defs/SessionNode&quot;
+          },
+          &quot;type&quot;: &quot;array&quot;
+        },
+        &quot;this_runtime&quot;: {
+          &quot;type&quot;: &quot;boolean&quot;,
+          &quot;description&quot;: &quot;Whether this is the runtime answering.&quot;
+        },
+        &quot;link&quot;: {
+          &quot;description&quot;: &quot;This runtime&#39;s link to it, when there is one.&quot;,
+          &quot;anyOf&quot;: [
+            {
+              &quot;$ref&quot;: &quot;#/$defs/PeerView&quot;
+            },
+            {
+              &quot;type&quot;: &quot;null&quot;
+            }
+          ]
+        },
+        &quot;newest_claim&quot;: {
+          &quot;description&quot;: &quot;Its newest live claim, told briefly.&quot;,
+          &quot;anyOf&quot;: [
+            {
+              &quot;$ref&quot;: &quot;#/$defs/MeshClaimBrief&quot;
+            },
+            {
+              &quot;type&quot;: &quot;null&quot;
+            }
+          ]
+        },
+        &quot;last_beat_ms&quot;: {
+          &quot;minimum&quot;: 0,
+          &quot;description&quot;: &quot;Milliseconds since its beat last rose, on this runtime&#39;s clock.&quot;,
+          &quot;type&quot;: [
+            &quot;integer&quot;,
+            &quot;null&quot;
           ],
-          &quot;type&quot;: &quot;object&quot;
+          &quot;format&quot;: &quot;uint64&quot;
+        },
+        &quot;runtime&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;`&lt;node&gt;-&lt;runtime&gt;`.&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;runtime&quot;,
+        &quot;this_runtime&quot;,
+        &quot;liveness&quot;,
+        &quot;sessions&quot;
+      ],
+      &quot;description&quot;: &quot;One runtime in the peer tree.&quot;
+    },
+    &quot;RefusedView&quot;: {
+      &quot;description&quot;: &quot;A candidate that was refused, with the rule that refused it. A refusal is kept and\nshown rather than logged and dropped, because the commonest mesh failure is a link that\nnever forms: a person who declared a seed and sees no peer needs the decision that was\nmade about it — the wrong repository, a key nobody allowed, a clock too far out — and\nthe direction says which side made it.\n\n```\n# use std::collections::BTreeMap;\n# use std::sync::{Arc, Mutex, Weak};\n# use majordomus_cli::mesh::config::{CooperationConfig, TrustConfig};\n# use majordomus_cli::mesh::cooperation::*;\n# use majordomus_cli::mesh::identity::NodeIdentity;\n# use majordomus_cli::mesh::link::{LinkReply, LinkTransport, RefusalCode, Signed, HELLO_PATH};\n# use majordomus_cli::mesh::registry::MeshRegistry;\n# use majordomus_cli::mesh::repository::{of_root_commits, runtime_id};\n# use majordomus_cli::mesh::trust::TrustPolicy;\n# #[derive(Default)] struct Net(Mutex&lt;BTreeMap&lt;String, Weak&lt;Cooperation&gt;&gt;&gt;);\n# impl LinkTransport for Net {\n#   fn post(&amp;self, e: &amp;str, p: &amp;str, m: &amp;Signed) -&gt; Result&lt;LinkReply, String&gt; {\n#     let peer = (self.0.lock().unwrap().get(e).and_then(Weak::upgrade))\n#         .ok_or_else(|| format!(\&quot;{e}: nobody there\&quot;))?;\n#     Ok(if p == HELLO_PATH { peer.accept_hello(m) } else { peer.accept_sync(m) }) } }\n# let net = Arc::new(Net::default());\n# let runtime = |endpoint: &amp;str, policy: TrustPolicy| {\n#   let c = Cooperation::new(CooperationSetup {\n#     identity: Arc::new(NodeIdentity::ephemeral().unwrap()), runtime: runtime_id(endpoint),\n#     repository: of_root_commits(&amp;[\&quot;root\&quot;.into()]), endpoints: vec![endpoint.into()],\n#     version: \&quot;doc\&quot;.into(), config: CooperationConfig::default(),\n#     trust: TrustConfig { policy, allow: vec![] }, journal_path: None,\n#     registry: Arc::new(MeshRegistry::new()),\n#     transport: Arc::clone(&amp;net) as Arc&lt;dyn LinkTransport&gt;, board: None,\n#     checkout: CheckoutFacts::default() }).unwrap();\n#   net.0.lock().unwrap().insert(endpoint.into(), Arc::downgrade(&amp;c)); c };\n# let a = runtime(\&quot;a:1\&quot;, TrustPolicy::Tofu);\n# let strict = runtime(\&quot;s:1\&quot;, TrustPolicy::DenyUnknown);\na.dial(&amp;[\&quot;s:1\&quot;.into()]).expect_err(\&quot;reachable, and not trusted\&quot;);\n\nlet refused: &amp;RefusedView = &amp;strict.status().refused[0];\nassert_eq!(refused.refusal.code, RefusalCode::Untrusted);\nassert_eq!(refused.direction, \&quot;inbound\&quot;, \&quot;this runtime refused the hello\&quot;);\nassert_eq!(refused.runtime.as_deref(), Some(a.runtime_key()));\n```&quot;,
+      &quot;properties&quot;: {
+        &quot;refusal&quot;: {
+          &quot;description&quot;: &quot;The refusal.&quot;,
+          &quot;$ref&quot;: &quot;#/$defs/LinkRefusal&quot;
+        },
+        &quot;endpoint&quot;: {
+          &quot;description&quot;: &quot;The endpoint dialed, or `inbound:&lt;runtime&gt;` for a refused hello.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;direction&quot;: {
+          &quot;description&quot;: &quot;`outbound` (this runtime refused the peer&#39;s welcome, or the peer refused this\nhello) or `inbound` (this runtime refused the peer&#39;s hello).&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;runtime&quot;: {
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ],
+          &quot;description&quot;: &quot;The peer&#39;s runtime key, when its card said.&quot;
+        },
+        &quot;at&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;When, RFC 3339.&quot;
+        }
+      },
+      &quot;type&quot;: &quot;object&quot;,
+      &quot;required&quot;: [
+        &quot;endpoint&quot;,
+        &quot;direction&quot;,
+        &quot;refusal&quot;,
+        &quot;at&quot;
+      ]
+    },
+    &quot;StreamId&quot;: {
+      &quot;description&quot;: &quot;One stream: a run of one runtime of one node. `&lt;node 32 hex&gt;-&lt;runtime 16 hex&gt;-&lt;instance\n16 hex&gt;`. The node is the machine&#39;s key, the runtime is one checkout&#39;s server on that\nmachine, the instance is one process run of that server — so two worktrees on one\nmachine are two streams, and a restart is a new stream of the same runtime.\n\nNumbering events within a stream rather than globally is what makes replication cheap\nand unambiguous: a gap in one stream is visible without coordinating with anyone, and\n`(stream, seq)` identifies an event on every machine that holds it.\n\n```\nuse majordomus_cli::mesh::journal::StreamId;\n\nlet id = StreamId::new(&amp;\&quot;a\&quot;.repeat(32), &amp;\&quot;b\&quot;.repeat(16), &amp;\&quot;c\&quot;.repeat(16)).unwrap();\nassert_eq!(id.node(), \&quot;a\&quot;.repeat(32));\nassert_eq!(id.runtime(), \&quot;b\&quot;.repeat(16));\n\n// a restart is a new stream, and the same runtime\nlet after = StreamId::new(&amp;\&quot;a\&quot;.repeat(32), &amp;\&quot;b\&quot;.repeat(16), &amp;\&quot;d\&quot;.repeat(16)).unwrap();\nassert_ne!(after, id);\nassert_eq!(after.runtime_key(), id.runtime_key());\n```&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;ClaimView&quot;: {
+      &quot;required&quot;: [
+        &quot;key&quot;,
+        &quot;stream&quot;,
+        &quot;runtime&quot;,
+        &quot;session&quot;,
+        &quot;scope&quot;,
+        &quot;mode&quot;,
+        &quot;acquired_lamport&quot;,
+        &quot;acquired_seq&quot;,
+        &quot;state&quot;
+      ],
+      &quot;description&quot;: &quot;One claim anywhere in the mesh: who took what, for what, and where it stands. The\nacquisition&#39;s Lamport stamp and sequence are carried rather than derived on demand,\nbecause they are what exclusivity is decided by — every runtime ranks two competing\nclaims by the same triple and so names the same winner, with no message passing and no\n\&quot;last packet wins\&quot;.\n\n```\nuse std::sync::Arc;\nuse majordomus_cli::mesh::identity::NodeIdentity;\nuse majordomus_cli::mesh::journal::{ClaimMode, EventBody, Journal, StreamLiveness};\nuse majordomus_cli::mesh::state::{fold, ClaimState, ClaimView};\n\nlet j = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), \&quot;0000000000000001\&quot;,\n    \&quot;repo\&quot;.into(), None).unwrap();\nj.append_own(EventBody::ClaimAcquired { claim: \&quot;c1\&quot;.into(), session: \&quot;s1\&quot;.into(),\n    scope: vec![\&quot;apps/majordomus-cli\&quot;.into()], intent: Some(\&quot;document the mesh\&quot;.into()),\n    mode: ClaimMode::Exclusive, issue: Some(\&quot;#184\&quot;.into()) }).unwrap();\n\nlet state = fold(&amp;j.events(), &amp;|_| StreamLiveness::Own);\nlet claim: &amp;ClaimView = &amp;state.claims[0];\nassert_eq!(claim.scope, [\&quot;apps/majordomus-cli\&quot;]);\nassert_eq!(claim.state, ClaimState::Held);\nassert!(claim.acquired_lamport &gt; 0, \&quot;the order exclusivity is decided in\&quot;);\n```&quot;,
+      &quot;properties&quot;: {
+        &quot;runtime&quot;: {
+          &quot;description&quot;: &quot;`&lt;node&gt;-&lt;runtime&gt;`.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;session&quot;: {
+          &quot;description&quot;: &quot;The holding session&#39;s key.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;mode&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/ClaimMode&quot;,
+          &quot;description&quot;: &quot;Exclusive or advisory.&quot;
+        },
+        &quot;state&quot;: {
+          &quot;description&quot;: &quot;Its standing.&quot;,
+          &quot;$ref&quot;: &quot;#/$defs/ClaimState&quot;
+        },
+        &quot;stream&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/StreamId&quot;,
+          &quot;description&quot;: &quot;The writing stream.&quot;
+        },
+        &quot;acquired_seq&quot;: {
+          &quot;minimum&quot;: 0,
+          &quot;format&quot;: &quot;uint64&quot;,
+          &quot;type&quot;: &quot;integer&quot;,
+          &quot;description&quot;: &quot;The sequence of the acquisition within its stream: with the stamp and the stream,\nthe total order in which exclusivity is decided.&quot;
+        },
+        &quot;key&quot;: {
+          &quot;description&quot;: &quot;`&lt;stream&gt;/&lt;claim&gt;`.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;scope&quot;: {
+          &quot;items&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          },
+          &quot;type&quot;: &quot;array&quot;,
+          &quot;description&quot;: &quot;The claimed paths.&quot;
+        },
+        &quot;intent&quot;: {
+          &quot;description&quot;: &quot;What it is for.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;issue&quot;: {
+          &quot;description&quot;: &quot;The issue it is for.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;acquired_lamport&quot;: {
+          &quot;type&quot;: &quot;integer&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;format&quot;: &quot;uint64&quot;,
+          &quot;description&quot;: &quot;The Lamport stamp of the acquisition.&quot;
+        }
+      },
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;ClaimMode&quot;: {
+      &quot;description&quot;: &quot;Whether a claim excludes others or only tells them. Both are useful and they answer\ndifferent questions: an exclusive claim is a worker saying \&quot;do not edit this while I\nam\&quot;, an advisory one is saying \&quot;I am here\&quot;. Exclusive is the default because a claim\ntaken without a thought about the mode is a claim somebody expects to be respected.\n\n```\nuse majordomus_cli::mesh::journal::ClaimMode;\n\nassert_eq!(ClaimMode::default(), ClaimMode::Exclusive);\nassert_eq!(serde_json::to_value(ClaimMode::Advisory).unwrap(), serde_json::json!(\&quot;advisory\&quot;));\n```&quot;,
+      &quot;oneOf&quot;: [
+        {
+          &quot;const&quot;: &quot;exclusive&quot;,
+          &quot;description&quot;: &quot;Exclusive: a second exclusive claim meeting this scope is refused while this one\nlives, on every runtime that knows of it.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;advisory&quot;,
+          &quot;description&quot;: &quot;Advisory: an announcement, like the peer board&#39;s. Overlaps are reported, never\nrefused.&quot;,
+          &quot;type&quot;: &quot;string&quot;
         }
       ]
+    },
+    &quot;ClaimState&quot;: {
+      &quot;oneOf&quot;: [
+        {
+          &quot;properties&quot;: {
+            &quot;state&quot;: {
+              &quot;const&quot;: &quot;held&quot;,
+              &quot;type&quot;: &quot;string&quot;
+            }
+          },
+          &quot;type&quot;: &quot;object&quot;,
+          &quot;description&quot;: &quot;Live; for an exclusive claim, the winner of its scope.&quot;,
+          &quot;required&quot;: [
+            &quot;state&quot;
+          ]
+        },
+        {
+          &quot;type&quot;: &quot;object&quot;,
+          &quot;description&quot;: &quot;Released by its holder.&quot;,
+          &quot;required&quot;: [
+            &quot;state&quot;
+          ],
+          &quot;properties&quot;: {
+            &quot;state&quot;: {
+              &quot;const&quot;: &quot;released&quot;,
+              &quot;type&quot;: &quot;string&quot;
+            }
+          }
+        },
+        {
+          &quot;properties&quot;: {
+            &quot;detail&quot;: {
+              &quot;type&quot;: &quot;string&quot;
+            },
+            &quot;state&quot;: {
+              &quot;const&quot;: &quot;expired&quot;,
+              &quot;type&quot;: &quot;string&quot;
+            }
+          },
+          &quot;type&quot;: &quot;object&quot;,
+          &quot;required&quot;: [
+            &quot;state&quot;,
+            &quot;detail&quot;
+          ],
+          &quot;description&quot;: &quot;Ended without a release: the holder&#39;s session closed or its runtime expired.&quot;
+        },
+        {
+          &quot;type&quot;: &quot;object&quot;,
+          &quot;required&quot;: [
+            &quot;state&quot;,
+            &quot;detail&quot;
+          ],
+          &quot;description&quot;: &quot;Live, exclusive, and beaten to its scope by the claim whose key this names.&quot;,
+          &quot;properties&quot;: {
+            &quot;detail&quot;: {
+              &quot;type&quot;: &quot;string&quot;
+            },
+            &quot;state&quot;: {
+              &quot;type&quot;: &quot;string&quot;,
+              &quot;const&quot;: &quot;conflicted&quot;
+            }
+          }
+        },
+        {
+          &quot;description&quot;: &quot;Exclusive, unreleased and of an open session on a beating runtime, but its holder\nstopped making progress: no session beat within its ttl (I3990). It refuses nobody\nwhile it reads so, and holds again the moment its session beats. Suspension only\nstops the refusal and says so — nobody takes the scope over and nothing is fenced;\nthat waits for an epoch a resumed holder can be told it lost (I3174).&quot;,
+          &quot;required&quot;: [
+            &quot;state&quot;,
+            &quot;detail&quot;
+          ],
+          &quot;type&quot;: &quot;object&quot;,
+          &quot;properties&quot;: {
+            &quot;state&quot;: {
+              &quot;type&quot;: &quot;string&quot;,
+              &quot;const&quot;: &quot;suspended&quot;
+            },
+            &quot;detail&quot;: {
+              &quot;type&quot;: &quot;string&quot;
+            }
+          }
+        }
+      ],
+      &quot;description&quot;: &quot;A claim&#39;s standing, and — where it ended, lost or was suspended — why. The variants that\ncarry a string exist because the bare verdict is not actionable: a worker told its claim\nexpired needs to know whether its session closed or its runtime stopped beating, one told\nits claim is conflicted needs the key of the claim that beat it, which is the same key on\nevery runtime, and one told its claim is suspended needs the ttl its holder missed.\n\n```\nuse majordomus_cli::mesh::state::ClaimState;\n\nassert!(ClaimState::Held.is_live());\nassert!(ClaimState::Conflicted(\&quot;s/c1\&quot;.into()).is_live(), \&quot;still held, and not the winner\&quot;);\nassert!(!ClaimState::Released.is_live());\n\n// the detail travels with the verdict, so a reader is never left asking who won\nlet value = serde_json::to_value(ClaimState::Conflicted(\&quot;s/c1\&quot;.into())).unwrap();\nassert_eq!(value[\&quot;state\&quot;], \&quot;conflicted\&quot;);\nassert_eq!(value[\&quot;detail\&quot;], \&quot;s/c1\&quot;);\n```&quot;
+    },
+    &quot;MeshClaimBrief&quot;: {
+      &quot;required&quot;: [
+        &quot;key&quot;,
+        &quot;session&quot;,
+        &quot;paths&quot;,
+        &quot;mode&quot;,
+        &quot;acquired_lamport&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;,
+      &quot;description&quot;: &quot;One live claim, told briefly: whose it is, what it is for and how many paths it holds,\nwith its intent cut to `SUMMARY_TEXT` characters — enough to know whom to ask.\n\n```\nuse std::sync::Arc;\nuse majordomus_cli::mesh::identity::NodeIdentity;\nuse majordomus_cli::mesh::journal::{ClaimMode, EventBody, Journal, SessionInfo, StreamLiveness};\nuse majordomus_cli::mesh::state::fold;\n\nlet j = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), \&quot;0000000000000001\&quot;,\n    \&quot;repo\&quot;.into(), None).unwrap();\nj.append_own(EventBody::SessionOpened { info: SessionInfo::named(\&quot;s1\&quot;, \&quot;claude-code\&quot;) })\n    .unwrap();\nfor (claim, path) in [(\&quot;c1\&quot;, \&quot;apps/a\&quot;), (\&quot;c2\&quot;, \&quot;apps/b\&quot;)] {\n    j.append_own(EventBody::ClaimAcquired { claim: claim.into(), session: \&quot;s1\&quot;.into(),\n        scope: vec![path.into()], intent: Some(\&quot;work\&quot;.into()), mode: ClaimMode::Exclusive,\n        issue: Some(\&quot;#1\&quot;.into()) }).unwrap();\n}\nj.append_own(EventBody::ClaimReleased { claim: \&quot;c1\&quot;.into(), reason: None }).unwrap();\nlet state = fold(&amp;j.events(), &amp;|_| StreamLiveness::Own);\nuse majordomus_cli::mesh::page::{summarize, ClaimBrief};\n\nlet summary = summarize(&amp;state, &amp;[]);\nlet newest: &amp;ClaimBrief = summary.runtimes[0].newest_claim.as_ref().unwrap();\nassert_eq!((newest.issue.as_deref(), newest.paths), (Some(\&quot;#1\&quot;), 1));\n```&quot;,
+      &quot;properties&quot;: {
+        &quot;session&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The holding session&#39;s key.&quot;
+        },
+        &quot;intent&quot;: {
+          &quot;description&quot;: &quot;What it is for, cut to `SUMMARY_TEXT` characters.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;issue&quot;: {
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ],
+          &quot;description&quot;: &quot;The issue it is for.&quot;
+        },
+        &quot;key&quot;: {
+          &quot;description&quot;: &quot;`&lt;stream&gt;/&lt;claim&gt;`.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;paths&quot;: {
+          &quot;type&quot;: &quot;integer&quot;,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;description&quot;: &quot;How many paths it claims.&quot;
+        },
+        &quot;acquired_lamport&quot;: {
+          &quot;description&quot;: &quot;The Lamport stamp of the acquisition.&quot;,
+          &quot;format&quot;: &quot;uint64&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;mode&quot;: {
+          &quot;description&quot;: &quot;Exclusive or advisory.&quot;,
+          &quot;$ref&quot;: &quot;#/$defs/ClaimMode&quot;
+        }
+      }
+    },
+    &quot;SessionNode&quot;: {
+      &quot;properties&quot;: {
+        &quot;key&quot;: {
+          &quot;description&quot;: &quot;`&lt;stream&gt;/&lt;session&gt;`.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;progress_ms&quot;: {
+          &quot;description&quot;: &quot;Milliseconds since this runtime stored the session&#39;s newest session beat that was\nprogress, on its own clock: how long ago its worker last showed progress (I3990).\nAbsent for a session that never beat — it lives by its runtime&#39;s beat alone — and for\none that has only said it waits on a person (I3992). Outside the digest, like every\nage.&quot;,
+          &quot;format&quot;: &quot;uint64&quot;,
+          &quot;type&quot;: [
+            &quot;integer&quot;,
+            &quot;null&quot;
+          ],
+          &quot;minimum&quot;: 0
+        },
+        &quot;state&quot;: {
+          &quot;description&quot;: &quot;Its standing.&quot;,
+          &quot;$ref&quot;: &quot;#/$defs/SessionState&quot;
+        },
+        &quot;info&quot;: {
+          &quot;description&quot;: &quot;What the session last said about itself.&quot;,
+          &quot;$ref&quot;: &quot;#/$defs/SessionInfo&quot;
+        },
+        &quot;claims&quot;: {
+          &quot;description&quot;: &quot;The claims it holds or held; empty in the summary view, which counts them instead.&quot;,
+          &quot;items&quot;: {
+            &quot;$ref&quot;: &quot;#/$defs/ClaimView&quot;
+          },
+          &quot;type&quot;: &quot;array&quot;
+        },
+        &quot;claims_held&quot;: {
+          &quot;description&quot;: &quot;How many of its claims are live.&quot;,
+          &quot;type&quot;: &quot;integer&quot;,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;minimum&quot;: 0
+        },
+        &quot;blocked&quot;: {
+          &quot;description&quot;: &quot;Why the session waits on a person — `permission dialog`, `awaiting input` — while its\nphase says it does (`blocked: …`, see `blocked_reason`), until its next real work\nclears it (I3992). Information only: its claims are judged by its progress alone.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;phase&quot;: {
+          &quot;description&quot;: &quot;What its newest session beat said it was doing — `waiting on CI run 123` — when it\nsaid (I3990).&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;reviews&quot;: {
+          &quot;description&quot;: &quot;The review requests it opened, by key.&quot;,
+          &quot;type&quot;: &quot;array&quot;,
+          &quot;items&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        }
+      },
+      &quot;description&quot;: &quot;One session in the peer tree.&quot;,
+      &quot;required&quot;: [
+        &quot;key&quot;,
+        &quot;info&quot;,
+        &quot;state&quot;,
+        &quot;claims&quot;,
+        &quot;claims_held&quot;,
+        &quot;reviews&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;SessionInfo&quot;: {
+      &quot;properties&quot;: {
+        &quot;session&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The session&#39;s id within its stream.&quot;
+        },
+        &quot;branch&quot;: {
+          &quot;description&quot;: &quot;The branch checked out.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;task&quot;: {
+          &quot;description&quot;: &quot;The task id (`t-...`) the session works under.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;worker&quot;: {
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ],
+          &quot;description&quot;: &quot;The worker&#39;s own name for itself, when it gave one.&quot;
+        },
+        &quot;client&quot;: {
+          &quot;description&quot;: &quot;The client: `claude-code`, `codex`, `cli`, ...&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;client_pid&quot;: {
+          &quot;minimum&quot;: 0,
+          &quot;description&quot;: &quot;The client process the session belongs to, on the machine of the runtime holding it.\nA client that crashes never says goodbye, so this is what lets that runtime close the\nsession for it once the process is gone (I3810).&quot;,
+          &quot;type&quot;: [
+            &quot;integer&quot;,
+            &quot;null&quot;
+          ],
+          &quot;format&quot;: &quot;uint32&quot;
+        },
+        &quot;client_started&quot;: {
+          &quot;description&quot;: &quot;When that process started, as the machine&#39;s process table reports it. Compared only\nfor equality and only on that machine, so a pid the system handed to another process\nis never taken for the client, and no two clocks are ever compared.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;head&quot;: {
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ],
+          &quot;description&quot;: &quot;The commit checked out.&quot;
+        },
+        &quot;issue&quot;: {
+          &quot;description&quot;: &quot;The issue (`I0001`, `#184`) the work belongs to.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;dirty&quot;: {
+          &quot;description&quot;: &quot;Whether the working tree had uncommitted changes when this was said.&quot;,
+          &quot;type&quot;: [
+            &quot;boolean&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;checkout&quot;: {
+          &quot;description&quot;: &quot;The checkout id (a digest, never a path).&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;milestone&quot;: {
+          &quot;description&quot;: &quot;The milestone the work belongs to.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;intent&quot;: {
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ],
+          &quot;description&quot;: &quot;What the session says it is doing.&quot;
+        },
+        &quot;context&quot;: {
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ],
+          &quot;description&quot;: &quot;The context revision the session works from (a digest the context compiler names).&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;session&quot;,
+        &quot;client&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;,
+      &quot;description&quot;: &quot;What a session tells the mesh about itself. Every field is a public fact about work in\nprogress; none is a path on the author&#39;s disk, a secret or a credential.\n\nAlmost everything here is optional, and that is the design: a session says what it\nknows, and a field it leaves out is omitted rather than carried empty, so a reader can\ntell \&quot;no task\&quot; from \&quot;a task called nothing\&quot;. Opening the same session id again replaces\nthis record, which is how a session that learns its branch later tells the mesh.\n\n```\nuse majordomus_cli::mesh::journal::SessionInfo;\n\nlet mut info = SessionInfo::named(\&quot;s1\&quot;, \&quot;claude-code\&quot;);\nassert_eq!(info.task, None);\nassert!(serde_json::to_value(&amp;info).unwrap().get(\&quot;task\&quot;).is_none(), \&quot;unsaid, not empty\&quot;);\n\ninfo.branch = Some(\&quot;feature/mesh-cooperation\&quot;.into());\nassert_eq!(serde_json::to_value(&amp;info).unwrap()[\&quot;branch\&quot;], \&quot;feature/mesh-cooperation\&quot;);\n```&quot;
+    },
+    &quot;RefusalCode&quot;: {
+      &quot;oneOf&quot;: [
+        {
+          &quot;const&quot;: &quot;malformed&quot;,
+          &quot;description&quot;: &quot;Not the shape of the message.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;Over `MAX_LINK_MESSAGE`.&quot;,
+          &quot;const&quot;: &quot;oversized&quot;
+        },
+        {
+          &quot;description&quot;: &quot;The protocol ranges do not meet.&quot;,
+          &quot;const&quot;: &quot;protocol_unsupported&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;signature&quot;,
+          &quot;description&quot;: &quot;The signature does not verify.&quot;
+        },
+        {
+          &quot;description&quot;: &quot;The timestamp is outside the skew window.&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;stale&quot;
+        },
+        {
+          &quot;const&quot;: &quot;replay&quot;,
+          &quot;description&quot;: &quot;A nonce or a counter already seen.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;description&quot;: &quot;The peer serves another repository: the isolation rule.&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;repository_mismatch&quot;
+        },
+        {
+          &quot;description&quot;: &quot;The peer&#39;s key is not trusted by this runtime&#39;s policy: discovery is not trust.&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;untrusted&quot;
+        },
+        {
+          &quot;description&quot;: &quot;The peer is this very runtime.&quot;,
+          &quot;const&quot;: &quot;self_link&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;description&quot;: &quot;This runtime&#39;s cooperation is not active.&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;not_active&quot;
+        },
+        {
+          &quot;description&quot;: &quot;The link id is unknown here: the answerer restarted or expired the link; say hello.&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;unknown_link&quot;
+        },
+        {
+          &quot;const&quot;: &quot;capacity&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;A bound of this runtime is full.&quot;
+        },
+        {
+          &quot;const&quot;: &quot;feature_unsupported&quot;,
+          &quot;description&quot;: &quot;The peer lacks a feature the operation needs.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;description&quot;: &quot;A hello addressed to another runtime: captured on its way there and replayed here.&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;misaddressed&quot;
+        }
+      ],
+      &quot;description&quot;: &quot;Why a link message was turned down. Every refusal is typed, counted and shown: a mesh\nthat refuses a peer says which rule did, instead of dropping a socket.\n\nThe codes are the diagnosis a person needs when two runtimes will not link, and they\nare deliberately distinct where the remedies differ: `Untrusted` is a key to add,\n`RepositoryMismatch` is two different repositories, `SelfLink` is a configuration that\ndials its own endpoint, and `UnknownLink` is not a failure at all but an instruction to\nsay hello again.\n\n```\nuse majordomus_cli::mesh::link::RefusalCode;\n\n// the wire word is the code&#39;s identity across surfaces, and it is stable\nassert_eq!(RefusalCode::RepositoryMismatch.as_str(), \&quot;repository_mismatch\&quot;);\nassert_eq!(\n    serde_json::to_value(RefusalCode::Untrusted).unwrap(),\n    serde_json::json!(\&quot;untrusted\&quot;),\n);\nassert_ne!(RefusalCode::Untrusted, RefusalCode::RepositoryMismatch);\n```&quot;
+    },
+    &quot;StreamLiveness&quot;: {
+      &quot;oneOf&quot;: [
+        {
+          &quot;const&quot;: &quot;own&quot;,
+          &quot;description&quot;: &quot;This runtime&#39;s own current stream.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;live&quot;,
+          &quot;description&quot;: &quot;Its beat rose within the expiry.&quot;
+        },
+        {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;Its beat has not risen within the expiry, or was never heard.&quot;,
+          &quot;const&quot;: &quot;expired&quot;
+        }
+      ],
+      &quot;description&quot;: &quot;Whether a stream is speaking now, on this runtime&#39;s clock. It is a verdict about a\nstream and not about a link: a runtime reachable only through a relay is alive, and a\nruntime that crashed stops beating for everyone at once. `Own` is kept apart from `Live`\nbecause a runtime&#39;s own stream needs no evidence — it is the thing doing the beating.\n\n```\nuse majordomus_cli::mesh::journal::StreamLiveness;\n\nassert!(StreamLiveness::Own.is_alive() &amp;&amp; StreamLiveness::Live.is_alive());\nassert!(!StreamLiveness::Expired.is_alive());\nassert_eq!(\n    serde_json::to_value(StreamLiveness::Expired).unwrap(),\n    serde_json::json!(\&quot;expired\&quot;),\n);\n```&quot;
     }
   },
+  &quot;required&quot;: [
+    &quot;found&quot;,
+    &quot;refused&quot;
+  ],
+  &quot;title&quot;: &quot;PeerDetail&quot;,
+  &quot;type&quot;: &quot;object&quot;,
   &quot;description&quot;: &quot;The answer of `mesh.peer`.&quot;,
   &quot;properties&quot;: {
-    &quot;found&quot;: {
-      &quot;description&quot;: &quot;Whether the runtime is known here.&quot;,
-      &quot;type&quot;: &quot;boolean&quot;
-    },
     &quot;machine&quot;: {
       &quot;description&quot;: &quot;The machine it runs on.&quot;,
       &quot;type&quot;: [
         &quot;string&quot;,
         &quot;null&quot;
       ]
+    },
+    &quot;found&quot;: {
+      &quot;type&quot;: &quot;boolean&quot;,
+      &quot;description&quot;: &quot;Whether the runtime is known here.&quot;
     },
     &quot;reason&quot;: {
       &quot;description&quot;: &quot;Why not, when it is not.&quot;,
@@ -1188,6 +1194,7 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
       &quot;type&quot;: &quot;array&quot;
     },
     &quot;runtime&quot;: {
+      &quot;description&quot;: &quot;The runtime, its link and its sessions.&quot;,
       &quot;anyOf&quot;: [
         {
           &quot;$ref&quot;: &quot;#/$defs/RuntimeNode&quot;
@@ -1195,16 +1202,9 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
         {
           &quot;type&quot;: &quot;null&quot;
         }
-      ],
-      &quot;description&quot;: &quot;The runtime, its link and its sessions.&quot;
+      ]
     }
-  },
-  &quot;required&quot;: [
-    &quot;found&quot;,
-    &quot;refused&quot;
-  ],
-  &quot;title&quot;: &quot;PeerDetail&quot;,
-  &quot;type&quot;: &quot;object&quot;
+  }
 }</pre></div>
   </details>
 </div>
@@ -1235,7 +1235,7 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
         <div><dt class="text-body-subtle">modul Rust</dt><dd class="min-w-0 break-all font-mono text-heading">majordomus_cli::capability::builtin::mesh</dd></div>
         <div><dt class="text-body-subtle">typ vstupu</dt><dd class="font-mono text-heading">PeerInput</dd></div>
         <div><dt class="text-body-subtle">typ výstupu</dt><dd class="font-mono text-heading">PeerDetail</dd></div>
-        <div><dt class="text-body-subtle">reference na GitHubu</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/aa9f816f8673880ab4beb6dbebff688f9da5bb65/docs/generated/modules/mesh.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/mesh.md</a></dd></div><div><dt class="text-body-subtle">otisk registru</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">c514db707bb1f5f7557f2a1629d42c4bdc05eb7ef58464c288e42bafcd3d8720</dd></div>
+        <div><dt class="text-body-subtle">reference na GitHubu</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/docs/generated/modules/mesh.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/mesh.md</a></dd></div><div><dt class="text-body-subtle">otisk registru</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">3f734f2faf797f0ca7c39b4cd837e68b6619c41c6f6711f3d3aeca8f341934eb</dd></div>
         <div><dt class="text-body-subtle">vygenerováno nástrojem</dt><dd class="font-mono text-heading">majordomus-cli 1.0.0-alpha.10</dd></div>
       </dl>
     </div>
@@ -1291,9 +1291,9 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
       <div class="min-w-0">
         <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">Projekt</h2><ul class="space-y-2 text-sm font-medium text-body">
           <li><a href="https://github.com/korczis/prismatic-majordomus" class="hover:text-heading hover:underline">GitHub</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/aa9f816f8673880ab4beb6dbebff688f9da5bb65/LICENSE" class="hover:text-heading hover:underline">Licence MIT</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/aa9f816f8673880ab4beb6dbebff688f9da5bb65/SECURITY.md" class="hover:text-heading hover:underline">Bezpečnostní politika</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/aa9f816f8673880ab4beb6dbebff688f9da5bb65/CONTRIBUTING.md" class="hover:text-heading hover:underline">Průvodce pro přispěvatele</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/LICENSE" class="hover:text-heading hover:underline">Licence MIT</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/SECURITY.md" class="hover:text-heading hover:underline">Bezpečnostní politika</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/CONTRIBUTING.md" class="hover:text-heading hover:underline">Průvodce pro přispěvatele</a></li>
         </ul>
       </div>
     </div>
@@ -1301,7 +1301,7 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/cs/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.10</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/aa9f816f8673880ab4beb6dbebff688f9da5bb65" class="font-mono underline">aa9f816</a> · inputs <span class="font-mono">a64b981ed16e</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/cs/architecture/" class="underline">how this site is derived</a> names them.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.10</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/745db2ea21e02613943face75a2bf95542be1f2e" class="font-mono underline">745db2e</a> · inputs <span class="font-mono">0a58c217d1b7</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/cs/architecture/" class="underline">how this site is derived</a> names them.</p>
     </div>
   </div>
 </footer>

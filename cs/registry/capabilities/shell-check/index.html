@@ -211,8 +211,8 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
   &quot;additionalProperties&quot;: false,
-  &quot;description&quot;: &quot;No input.&quot;,
   &quot;title&quot;: &quot;Empty&quot;,
+  &quot;description&quot;: &quot;No input.&quot;,
   &quot;type&quot;: &quot;object&quot;
 }</pre></div>
   </details>
@@ -227,40 +227,40 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
         <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
         <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Kolik výjimek inventář deklaruje, podle dispozice.</td>
       </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">zjištění</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Každý nález v kanonickém pořadí. Prázdný seznam je úspěšná odpověď.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">řízeno</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Adresáře, jejichž shellové jednotky se musí deklarovat.</td>
-      </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">inventář</td>
         <td class="px-3 py-2 font-mono text-xs text-body">string</td>
         <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
         <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Přečtený inventář, relativně ke kořeni repozitáře.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">naměřeno</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">boolean</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Zda se strom vůbec dal změřit. <code>false</code> není úspěch: důvod říká, co měření zastavilo, a volající, který se na tuto zprávu podmiňuje, musí odmítnout.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">průchody</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">boolean</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words"><code>true</code>, když byl strom změřen a nic se nenašlo.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">důvod</td>
         <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
         <td class="px-3 py-2 font-mono text-xs text-body">ne</td>
         <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Proč se strom nedal změřit, když se nedal.</td>
       </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">řízeno</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Adresáře, jejichž shellové jednotky se musí deklarovat.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">zjištění</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Každý nález v kanonickém pořadí. Prázdný seznam je úspěšná odpověď.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">průchody</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">boolean</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words"><code>true</code>, když byl strom změřen a nic se nenašlo.</td>
+      </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">records</td>
         <td class="px-3 py-2 font-mono text-xs text-body">integer</td>
         <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
         <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Kolik záznamů inventář drží, shellových či nikoli.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">naměřeno</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">boolean</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Zda se strom vůbec dal změřit. <code>false</code> není úspěch: důvod říká, co měření zastavilo, a volající, který se na tuto zprávu podmiňuje, musí odmítnout.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">jednotky</td>
         <td class="px-3 py-2 font-mono text-xs text-body">array</td>
@@ -272,125 +272,67 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
   &quot;$defs&quot;: {
-    &quot;ShellFinding&quot;: {
-      &quot;description&quot;: &quot;One thing the check refuses, with what to do about it.&quot;,
-      &quot;properties&quot;: {
-        &quot;code&quot;: {
-          &quot;description&quot;: &quot;The finding&#39;s code: `shell.undeclared`, `shell.stale`, `shell.missing_field`,\n`shell.invalid_disposition`, `shell.invalid_unit`, `shell.exemption_not_shell`,\n`shell.duplicate`, `shell.out_of_order` or `shell.malformed`.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;line&quot;: {
-          &quot;description&quot;: &quot;The line of the inventory the finding is about, when it is about one.&quot;,
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: [
-            &quot;integer&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;message&quot;: {
-          &quot;description&quot;: &quot;What is wrong, in a sentence.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;path&quot;: {
-          &quot;description&quot;: &quot;The file the finding is about: the shell unit, or the inventory itself.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;remedy&quot;: {
-          &quot;description&quot;: &quot;What to do about it.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      },
-      &quot;required&quot;: [
-        &quot;code&quot;,
-        &quot;path&quot;,
-        &quot;message&quot;,
-        &quot;remedy&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
-    },
     &quot;ShellUnit&quot;: {
-      &quot;description&quot;: &quot;One shell unit the tree carries.&quot;,
       &quot;properties&quot;: {
         &quot;dialect&quot;: {
           &quot;description&quot;: &quot;The shell the unit is written for: the interpreter its first line names, or\n`sourced` for a `*.sh` file with no interpreter line.&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
-        &quot;disposition&quot;: {
-          &quot;description&quot;: &quot;The disposition its inventory record carries, when it has one.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        },
         &quot;path&quot;: {
           &quot;description&quot;: &quot;The path, relative to the repository root.&quot;,
           &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;disposition&quot;: {
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ],
+          &quot;description&quot;: &quot;The disposition its inventory record carries, when it has one.&quot;
         }
       },
       &quot;required&quot;: [
         &quot;path&quot;,
         &quot;dialect&quot;
       ],
-      &quot;type&quot;: &quot;object&quot;
-    }
-  },
-  &quot;description&quot;: &quot;The verdict of one check of the tree.&quot;,
-  &quot;properties&quot;: {
-    &quot;exemptions&quot;: {
-      &quot;additionalProperties&quot;: {
-        &quot;format&quot;: &quot;uint&quot;,
-        &quot;minimum&quot;: 0,
-        &quot;type&quot;: &quot;integer&quot;
+      &quot;type&quot;: &quot;object&quot;,
+      &quot;description&quot;: &quot;One shell unit the tree carries.&quot;
+    },
+    &quot;ShellFinding&quot;: {
+      &quot;description&quot;: &quot;One thing the check refuses, with what to do about it.&quot;,
+      &quot;properties&quot;: {
+        &quot;path&quot;: {
+          &quot;description&quot;: &quot;The file the finding is about: the shell unit, or the inventory itself.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;message&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;What is wrong, in a sentence.&quot;
+        },
+        &quot;remedy&quot;: {
+          &quot;description&quot;: &quot;What to do about it.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;line&quot;: {
+          &quot;minimum&quot;: 0,
+          &quot;description&quot;: &quot;The line of the inventory the finding is about, when it is about one.&quot;,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;type&quot;: [
+            &quot;integer&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;code&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The finding&#39;s code: `shell.undeclared`, `shell.stale`, `shell.missing_field`,\n`shell.invalid_disposition`, `shell.invalid_unit`, `shell.exemption_not_shell`,\n`shell.duplicate`, `shell.out_of_order` or `shell.malformed`.&quot;
+        }
       },
-      &quot;description&quot;: &quot;How many exemptions the inventory declares, by disposition.&quot;,
-      &quot;type&quot;: &quot;object&quot;
-    },
-    &quot;findings&quot;: {
-      &quot;description&quot;: &quot;Every finding, in canonical order. Empty is the passing answer.&quot;,
-      &quot;items&quot;: {
-        &quot;$ref&quot;: &quot;#/$defs/ShellFinding&quot;
-      },
-      &quot;type&quot;: &quot;array&quot;
-    },
-    &quot;governed&quot;: {
-      &quot;description&quot;: &quot;The directories whose shell units must be declared.&quot;,
-      &quot;items&quot;: {
-        &quot;type&quot;: &quot;string&quot;
-      },
-      &quot;type&quot;: &quot;array&quot;
-    },
-    &quot;inventory&quot;: {
-      &quot;description&quot;: &quot;The inventory read, relative to the repository root.&quot;,
-      &quot;type&quot;: &quot;string&quot;
-    },
-    &quot;measured&quot;: {
-      &quot;description&quot;: &quot;Whether the tree could be measured at all. `false` is not a pass: the reason says\nwhat stopped the measurement, and a caller that gates on this report must refuse.&quot;,
-      &quot;type&quot;: &quot;boolean&quot;
-    },
-    &quot;passes&quot;: {
-      &quot;description&quot;: &quot;`true` when the tree was measured and nothing was found.&quot;,
-      &quot;type&quot;: &quot;boolean&quot;
-    },
-    &quot;reason&quot;: {
-      &quot;description&quot;: &quot;Why the tree could not be measured, when it could not.&quot;,
-      &quot;type&quot;: [
-        &quot;string&quot;,
-        &quot;null&quot;
+      &quot;type&quot;: &quot;object&quot;,
+      &quot;required&quot;: [
+        &quot;code&quot;,
+        &quot;path&quot;,
+        &quot;message&quot;,
+        &quot;remedy&quot;
       ]
-    },
-    &quot;records&quot;: {
-      &quot;description&quot;: &quot;How many records the inventory holds, shell or not.&quot;,
-      &quot;format&quot;: &quot;uint&quot;,
-      &quot;minimum&quot;: 0,
-      &quot;type&quot;: &quot;integer&quot;
-    },
-    &quot;units&quot;: {
-      &quot;description&quot;: &quot;Every shell unit under the governed directories, in canonical order.&quot;,
-      &quot;items&quot;: {
-        &quot;$ref&quot;: &quot;#/$defs/ShellUnit&quot;
-      },
-      &quot;type&quot;: &quot;array&quot;
     }
   },
   &quot;required&quot;: [
@@ -403,8 +345,66 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
     &quot;findings&quot;,
     &quot;passes&quot;
   ],
+  &quot;properties&quot;: {
+    &quot;exemptions&quot;: {
+      &quot;type&quot;: &quot;object&quot;,
+      &quot;additionalProperties&quot;: {
+        &quot;minimum&quot;: 0,
+        &quot;type&quot;: &quot;integer&quot;,
+        &quot;format&quot;: &quot;uint&quot;
+      },
+      &quot;description&quot;: &quot;How many exemptions the inventory declares, by disposition.&quot;
+    },
+    &quot;inventory&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;description&quot;: &quot;The inventory read, relative to the repository root.&quot;
+    },
+    &quot;reason&quot;: {
+      &quot;description&quot;: &quot;Why the tree could not be measured, when it could not.&quot;,
+      &quot;type&quot;: [
+        &quot;string&quot;,
+        &quot;null&quot;
+      ]
+    },
+    &quot;governed&quot;: {
+      &quot;description&quot;: &quot;The directories whose shell units must be declared.&quot;,
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;string&quot;
+      },
+      &quot;type&quot;: &quot;array&quot;
+    },
+    &quot;findings&quot;: {
+      &quot;description&quot;: &quot;Every finding, in canonical order. Empty is the passing answer.&quot;,
+      &quot;items&quot;: {
+        &quot;$ref&quot;: &quot;#/$defs/ShellFinding&quot;
+      },
+      &quot;type&quot;: &quot;array&quot;
+    },
+    &quot;passes&quot;: {
+      &quot;type&quot;: &quot;boolean&quot;,
+      &quot;description&quot;: &quot;`true` when the tree was measured and nothing was found.&quot;
+    },
+    &quot;records&quot;: {
+      &quot;format&quot;: &quot;uint&quot;,
+      &quot;type&quot;: &quot;integer&quot;,
+      &quot;minimum&quot;: 0,
+      &quot;description&quot;: &quot;How many records the inventory holds, shell or not.&quot;
+    },
+    &quot;measured&quot;: {
+      &quot;type&quot;: &quot;boolean&quot;,
+      &quot;description&quot;: &quot;Whether the tree could be measured at all. `false` is not a pass: the reason says\nwhat stopped the measurement, and a caller that gates on this report must refuse.&quot;
+    },
+    &quot;units&quot;: {
+      &quot;description&quot;: &quot;Every shell unit under the governed directories, in canonical order.&quot;,
+      &quot;items&quot;: {
+        &quot;$ref&quot;: &quot;#/$defs/ShellUnit&quot;
+      },
+      &quot;type&quot;: &quot;array&quot;
+    }
+  },
+  &quot;type&quot;: &quot;object&quot;,
   &quot;title&quot;: &quot;ShellReport&quot;,
-  &quot;type&quot;: &quot;object&quot;
+  &quot;description&quot;: &quot;The verdict of one check of the tree.&quot;
 }</pre></div>
   </details>
 </div>
@@ -435,7 +435,7 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
         <div><dt class="text-body-subtle">modul Rust</dt><dd class="min-w-0 break-all font-mono text-heading">majordomus_cli::capability::builtin::shell</dd></div>
         <div><dt class="text-body-subtle">typ vstupu</dt><dd class="font-mono text-heading">Prázdné</dd></div>
         <div><dt class="text-body-subtle">typ výstupu</dt><dd class="font-mono text-heading">ShellReport</dd></div>
-        <div><dt class="text-body-subtle">reference na GitHubu</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/aa9f816f8673880ab4beb6dbebff688f9da5bb65/docs/generated/modules/shell.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/shell.md</a></dd></div><div><dt class="text-body-subtle">otisk registru</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">c514db707bb1f5f7557f2a1629d42c4bdc05eb7ef58464c288e42bafcd3d8720</dd></div>
+        <div><dt class="text-body-subtle">reference na GitHubu</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/docs/generated/modules/shell.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/shell.md</a></dd></div><div><dt class="text-body-subtle">otisk registru</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">3f734f2faf797f0ca7c39b4cd837e68b6619c41c6f6711f3d3aeca8f341934eb</dd></div>
         <div><dt class="text-body-subtle">vygenerováno nástrojem</dt><dd class="font-mono text-heading">majordomus-cli 1.0.0-alpha.10</dd></div>
       </dl>
     </div>
@@ -491,9 +491,9 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
       <div class="min-w-0">
         <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">Projekt</h2><ul class="space-y-2 text-sm font-medium text-body">
           <li><a href="https://github.com/korczis/prismatic-majordomus" class="hover:text-heading hover:underline">GitHub</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/aa9f816f8673880ab4beb6dbebff688f9da5bb65/LICENSE" class="hover:text-heading hover:underline">Licence MIT</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/aa9f816f8673880ab4beb6dbebff688f9da5bb65/SECURITY.md" class="hover:text-heading hover:underline">Bezpečnostní politika</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/aa9f816f8673880ab4beb6dbebff688f9da5bb65/CONTRIBUTING.md" class="hover:text-heading hover:underline">Průvodce pro přispěvatele</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/LICENSE" class="hover:text-heading hover:underline">Licence MIT</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/SECURITY.md" class="hover:text-heading hover:underline">Bezpečnostní politika</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/CONTRIBUTING.md" class="hover:text-heading hover:underline">Průvodce pro přispěvatele</a></li>
         </ul>
       </div>
     </div>
@@ -501,7 +501,7 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/cs/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.10</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/aa9f816f8673880ab4beb6dbebff688f9da5bb65" class="font-mono underline">aa9f816</a> · inputs <span class="font-mono">a64b981ed16e</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/cs/architecture/" class="underline">how this site is derived</a> names them.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.10</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/745db2ea21e02613943face75a2bf95542be1f2e" class="font-mono underline">745db2e</a> · inputs <span class="font-mono">0a58c217d1b7</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/cs/architecture/" class="underline">how this site is derived</a> names them.</p>
     </div>
   </div>
 </footer>

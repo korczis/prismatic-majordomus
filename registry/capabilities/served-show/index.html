@@ -244,8 +244,6 @@ absent.</td>
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
-  &quot;additionalProperties&quot;: false,
-  &quot;description&quot;: &quot;The input of `served.show`: the commit every record is re-judged against, and\noptionally a single deployment. `HEAD` and every deployment when absent.\n\n```\nuse majordomus_cli::capability::builtin::served::ShowInput;\nlet input: ShowInput = serde_json::from_str(r#\&quot;{\&quot;deployment\&quot;:\&quot;pages\&quot;}\&quot;#).unwrap();\nassert_eq!(input.deployment.as_deref(), Some(\&quot;pages\&quot;));\nassert!(input.commit.is_none(), \&quot;absent means HEAD\&quot;);\n// a field this operation does not have is refused rather than ignored\nassert!(serde_json::from_str::&lt;ShowInput&gt;(r#\&quot;{\&quot;url\&quot;:\&quot;https://x\&quot;}\&quot;#).is_err());\n```&quot;,
   &quot;properties&quot;: {
     &quot;commit&quot;: {
       &quot;description&quot;: &quot;The commit each record is re-judged against, any revision git resolves; `HEAD` when\nabsent.&quot;,
@@ -263,7 +261,9 @@ absent.</td>
     }
   },
   &quot;title&quot;: &quot;ShowInput&quot;,
-  &quot;type&quot;: &quot;object&quot;
+  &quot;additionalProperties&quot;: false,
+  &quot;type&quot;: &quot;object&quot;,
+  &quot;description&quot;: &quot;The input of `served.show`: the commit every record is re-judged against, and\noptionally a single deployment. `HEAD` and every deployment when absent.\n\n```\nuse majordomus_cli::capability::builtin::served::ShowInput;\nlet input: ShowInput = serde_json::from_str(r#\&quot;{\&quot;deployment\&quot;:\&quot;pages\&quot;}\&quot;#).unwrap();\nassert_eq!(input.deployment.as_deref(), Some(\&quot;pages\&quot;));\nassert!(input.commit.is_none(), \&quot;absent means HEAD\&quot;);\n// a field this operation does not have is refused rather than ignored\nassert!(serde_json::from_str::&lt;ShowInput&gt;(r#\&quot;{\&quot;url\&quot;:\&quot;https://x\&quot;}\&quot;#).is_err());\n```&quot;
 }</pre></div>
   </details>
 </div>
@@ -307,53 +307,51 @@ command line, over HTTP and to an MCP client, from one derivation.</p>
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
-  &quot;$defs&quot;: {
-    &quot;BuildIdentity&quot;: {
-      &quot;description&quot;: &quot;The build identity a deployment serves, as far as this module relies on it. Other\nfields of the served document are ignored rather than refused: the document is written\nby another program, and a field it adds is not a malformation.\n\n```\nuse majordomus_cli::served::BuildIdentity;\nlet id = BuildIdentity {\n    commit: \&quot;a\&quot;.repeat(40),\n    dirty: false,\n    source_version: Some(\&quot;0.7.0\&quot;.into()),\n    source_hash: None,\n};\n// what is judged is the commit and whether the tree it was built from was committed\nassert_eq!(id.commit.len(), 40);\nassert!(!id.dirty);\n```&quot;,
-      &quot;properties&quot;: {
-        &quot;commit&quot;: {
-          &quot;description&quot;: &quot;The full commit the served build was made from.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;dirty&quot;: {
-          &quot;description&quot;: &quot;Whether the tree it was built from had uncommitted changes. A dirty build names a\ncommit it does not equal, so it proves no commit.&quot;,
-          &quot;type&quot;: &quot;boolean&quot;
-        },
-        &quot;source_hash&quot;: {
-          &quot;description&quot;: &quot;The fingerprint of the site&#39;s canonical inputs, when the build states one.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;source_version&quot;: {
-          &quot;description&quot;: &quot;The version the build states, when it states one.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        }
-      },
-      &quot;required&quot;: [
-        &quot;commit&quot;,
-        &quot;dirty&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
+  &quot;properties&quot;: {
+    &quot;deployments&quot;: {
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;description&quot;: &quot;One entry per deployment observed, in name order.&quot;,
+      &quot;items&quot;: {
+        &quot;$ref&quot;: &quot;#/$defs/DeploymentStanding&quot;
+      }
     },
+    &quot;expected&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;description&quot;: &quot;The full commit every record was re-judged against.&quot;
+    },
+    &quot;observations&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;description&quot;: &quot;The checkout-local file the records were read from.&quot;
+    },
+    &quot;unreadable&quot;: {
+      &quot;format&quot;: &quot;uint&quot;,
+      &quot;description&quot;: &quot;Lines of that file that were not readable observations.&quot;,
+      &quot;type&quot;: &quot;integer&quot;,
+      &quot;minimum&quot;: 0
+    }
+  },
+  &quot;required&quot;: [
+    &quot;expected&quot;,
+    &quot;observations&quot;,
+    &quot;unreadable&quot;,
+    &quot;deployments&quot;
+  ],
+  &quot;$defs&quot;: {
     &quot;DeploymentStanding&quot;: {
+      &quot;type&quot;: &quot;object&quot;,
       &quot;description&quot;: &quot;One deployment&#39;s newest record and what it proves about the commit asked. Both are\ncarried: the recorded judgement is what was seen, `now` is what it still proves.\n\n```\nuse majordomus_cli::capability::builtin::served::DeploymentStanding;\nuse majordomus_cli::served::ServedVerdict;\nlet json = r#\&quot;{\&quot;deployment\&quot;:\&quot;pages\&quot;,\&quot;observation\&quot;:{\&quot;schema\&quot;:\&quot;majordomus.served-observation/v1\&quot;,\n  \&quot;deployment\&quot;:\&quot;pages\&quot;,\&quot;url\&quot;:\&quot;https://majordomus.dev/build.json\&quot;,\n  \&quot;expected\&quot;:\&quot;aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\&quot;,\&quot;verdict\&quot;:\&quot;served\&quot;,\n  \&quot;reason\&quot;:\&quot;the deployment serves aaaaaaaaaaaa\&quot;,\&quot;at\&quot;:\&quot;1970-01-01T00:00:00Z\&quot;},\n  \&quot;now\&quot;:{\&quot;verdict\&quot;:\&quot;stale\&quot;,\&quot;reason\&quot;:\&quot;it does not contain bbbbbbbbbbbb\&quot;}}\&quot;#;\nlet s: DeploymentStanding = serde_json::from_str(json).unwrap();\n// seen as served, and no longer proving the commit asked about\nassert_eq!(s.observation.judgement.verdict, ServedVerdict::Served);\nassert_eq!(s.now.verdict, ServedVerdict::Stale);\n```&quot;,
       &quot;properties&quot;: {
-        &quot;deployment&quot;: {
-          &quot;description&quot;: &quot;The deployment name.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
         &quot;now&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/Judgement&quot;,
-          &quot;description&quot;: &quot;That record re-judged against the commit asked about. This, not the recorded\njudgement, is what a reader acts on.&quot;
+          &quot;description&quot;: &quot;That record re-judged against the commit asked about. This, not the recorded\njudgement, is what a reader acts on.&quot;,
+          &quot;$ref&quot;: &quot;#/$defs/Judgement&quot;
         },
         &quot;observation&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/Observation&quot;,
-          &quot;description&quot;: &quot;The newest record of it.&quot;
+          &quot;description&quot;: &quot;The newest record of it.&quot;,
+          &quot;$ref&quot;: &quot;#/$defs/Observation&quot;
+        },
+        &quot;deployment&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The deployment name.&quot;
         },
         &quot;status&quot;: {
           &quot;anyOf&quot;: [
@@ -371,39 +369,50 @@ command line, over HTTP and to an MCP client, from one derivation.</p>
         &quot;deployment&quot;,
         &quot;observation&quot;,
         &quot;now&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
-    },
-    &quot;DeploymentStatus&quot;: {
-      &quot;description&quot;: &quot;Where a deployment stands.\n\n`Status` is the right name inside this module; the schema component namespace is flat,\nand `distribution::Status` answers a different question, so each says which it is.&quot;,
-      &quot;oneOf&quot;: [
-        {
-          &quot;const&quot;: &quot;declared&quot;,
-          &quot;description&quot;: &quot;The object exists and nothing is deployed from it yet.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;active&quot;,
-          &quot;description&quot;: &quot;It is deployed.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;retired&quot;,
-          &quot;description&quot;: &quot;It was, and the object is kept for the record.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
       ]
+    },
+    &quot;BuildIdentity&quot;: {
+      &quot;required&quot;: [
+        &quot;commit&quot;,
+        &quot;dirty&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;,
+      &quot;properties&quot;: {
+        &quot;source_hash&quot;: {
+          &quot;description&quot;: &quot;The fingerprint of the site&#39;s canonical inputs, when the build states one.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;dirty&quot;: {
+          &quot;description&quot;: &quot;Whether the tree it was built from had uncommitted changes. A dirty build names a\ncommit it does not equal, so it proves no commit.&quot;,
+          &quot;type&quot;: &quot;boolean&quot;
+        },
+        &quot;commit&quot;: {
+          &quot;description&quot;: &quot;The full commit the served build was made from.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;source_version&quot;: {
+          &quot;description&quot;: &quot;The version the build states, when it states one.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        }
+      },
+      &quot;description&quot;: &quot;The build identity a deployment serves, as far as this module relies on it. Other\nfields of the served document are ignored rather than refused: the document is written\nby another program, and a field it adds is not a malformation.\n\n```\nuse majordomus_cli::served::BuildIdentity;\nlet id = BuildIdentity {\n    commit: \&quot;a\&quot;.repeat(40),\n    dirty: false,\n    source_version: Some(\&quot;0.7.0\&quot;.into()),\n    source_hash: None,\n};\n// what is judged is the commit and whether the tree it was built from was committed\nassert_eq!(id.commit.len(), 40);\nassert!(!id.dirty);\n```&quot;
     },
     &quot;Judgement&quot;: {
       &quot;description&quot;: &quot;The judgement of one served identity against one expected commit, with its reason. The\nreason travels with the verdict so that every surface can say *why* without re-deriving\nit.\n\n```\nuse majordomus_cli::served::{judge, Fetched, Judgement, ServedVerdict};\nlet j: Judgement = judge(&amp;Err(Fetched::Unreachable(\&quot;timeout\&quot;.into())), &amp;\&quot;a\&quot;.repeat(40), &amp;fake());\nassert_eq!(j.verdict, ServedVerdict::Unreachable);\nassert!(j.reason.contains(\&quot;timeout\&quot;));\n# use majordomus_cli::served::Ancestry;\n# struct N; impl Ancestry for N {\n#     fn has(&amp;self, _: &amp;str) -&gt; Option&lt;bool&gt; { Some(true) }\n#     fn contains(&amp;self, _: &amp;str, _: &amp;str) -&gt; Option&lt;bool&gt; { Some(true) }\n# }\n# fn fake() -&gt; impl Ancestry { N }\n```&quot;,
       &quot;properties&quot;: {
         &quot;reason&quot;: {
-          &quot;description&quot;: &quot;Why, in one line a reader can act on.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;Why, in one line a reader can act on.&quot;
         },
         &quot;verdict&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/ServedVerdict&quot;,
-          &quot;description&quot;: &quot;The verdict.&quot;
+          &quot;description&quot;: &quot;The verdict.&quot;,
+          &quot;$ref&quot;: &quot;#/$defs/ServedVerdict&quot;
         }
       },
       &quot;required&quot;: [
@@ -412,29 +421,63 @@ command line, over HTTP and to an MCP client, from one derivation.</p>
       ],
       &quot;type&quot;: &quot;object&quot;
     },
+    &quot;DeploymentStatus&quot;: {
+      &quot;oneOf&quot;: [
+        {
+          &quot;const&quot;: &quot;declared&quot;,
+          &quot;description&quot;: &quot;The object exists and nothing is deployed from it yet.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;description&quot;: &quot;It is deployed.&quot;,
+          &quot;const&quot;: &quot;active&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;description&quot;: &quot;It was, and the object is kept for the record.&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;retired&quot;
+        }
+      ],
+      &quot;description&quot;: &quot;Where a deployment stands.\n\n`Status` is the right name inside this module; the schema component namespace is flat,\nand `distribution::Status` answers a different question, so each says which it is.&quot;
+    },
+    &quot;ServedVerdict&quot;: {
+      &quot;oneOf&quot;: [
+        {
+          &quot;const&quot;: &quot;served&quot;,
+          &quot;description&quot;: &quot;The served build is the expected commit or contains it. The only passing verdict.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;description&quot;: &quot;The served build does not contain the expected commit: the deployment is behind.&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;stale&quot;
+        },
+        {
+          &quot;description&quot;: &quot;Nothing was received. The deployment was not measured.&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;unreachable&quot;
+        },
+        {
+          &quot;const&quot;: &quot;malformed&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;Something was received and it is not a build identity.&quot;
+        },
+        {
+          &quot;description&quot;: &quot;The served build was made from an uncommitted tree, so it proves no commit.&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;dirty&quot;
+        },
+        {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The served commit is not in this clone, or git could not be asked; containment is\nundecided. Fetching the remote usually turns this into an answer.&quot;,
+          &quot;const&quot;: &quot;undecided&quot;
+        }
+      ],
+      &quot;description&quot;: &quot;What an observation says about the expected commit. Only `ServedVerdict::Served` is a\nproof; the other five are each a different reason the question was not answered yes.\n\n```\nuse majordomus_cli::served::ServedVerdict;\n// a measured no and an unanswered question are never spelled the same\nassert!(ServedVerdict::Served.passes());\nassert_eq!(ServedVerdict::Stale.exit_code(), 10);\nassert_eq!(ServedVerdict::Unreachable.exit_code(), 12);\n```&quot;
+    },
     &quot;Observation&quot;: {
-      &quot;description&quot;: &quot;One observation of one deployment, as recorded: what was asked, what was served, what\nwas judged and when. Everything needed to judge it again later is in the record, which\nis what lets `Observation::rejudge` answer without probing.\n\n```\nuse majordomus_cli::served::{observe, Fetch, Fetched, GitAncestry, Observation, OBSERVATION_SCHEMA};\nuse std::{path::Path, time::SystemTime};\nstruct None_;\nimpl Fetch for None_ {\n    fn fetch(&amp;self, _: &amp;str) -&gt; Fetched { Fetched::Unreachable(\&quot;no route\&quot;.into()) }\n}\nlet git = GitAncestry { root: Path::new(env!(\&quot;CARGO_MANIFEST_DIR\&quot;)) };\nlet o: Observation = observe(\&quot;pages\&quot;, \&quot;https://s\&quot;, \&quot;build.json\&quot;, &amp;\&quot;a\&quot;.repeat(40), &amp;None_,\n                              &amp;git, SystemTime::UNIX_EPOCH);\nassert_eq!(o.schema, OBSERVATION_SCHEMA);\nassert_eq!(o.url, \&quot;https://s/build.json\&quot;);\nassert_eq!(o.at, \&quot;1970-01-01T00:00:00Z\&quot;);\n```&quot;,
       &quot;properties&quot;: {
-        &quot;at&quot;: {
-          &quot;description&quot;: &quot;When, RFC 3339 UTC.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;deployment&quot;: {
-          &quot;description&quot;: &quot;Which deployment: the name the caller observed it under (`pages`, or a deployment\nobject&#39;s id).&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;expected&quot;: {
-          &quot;description&quot;: &quot;The commit that was expected, full.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;reason&quot;: {
-          &quot;description&quot;: &quot;Why, in one line a reader can act on.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;schema&quot;: {
-          &quot;description&quot;: &quot;Always `OBSERVATION_SCHEMA`.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
         &quot;served&quot;: {
           &quot;anyOf&quot;: [
             {
@@ -446,15 +489,37 @@ command line, over HTTP and to an MCP client, from one derivation.</p>
           ],
           &quot;description&quot;: &quot;What was served, when a build identity was received.&quot;
         },
-        &quot;url&quot;: {
-          &quot;description&quot;: &quot;The identity URL probed.&quot;,
+        &quot;deployment&quot;: {
+          &quot;description&quot;: &quot;Which deployment: the name the caller observed it under (`pages`, or a deployment\nobject&#39;s id).&quot;,
           &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;expected&quot;: {
+          &quot;description&quot;: &quot;The commit that was expected, full.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;url&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The identity URL probed.&quot;
+        },
+        &quot;reason&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;Why, in one line a reader can act on.&quot;
+        },
+        &quot;schema&quot;: {
+          &quot;description&quot;: &quot;Always `OBSERVATION_SCHEMA`.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;at&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;When, RFC 3339 UTC.&quot;
         },
         &quot;verdict&quot;: {
           &quot;$ref&quot;: &quot;#/$defs/ServedVerdict&quot;,
           &quot;description&quot;: &quot;The verdict.&quot;
         }
       },
+      &quot;type&quot;: &quot;object&quot;,
+      &quot;description&quot;: &quot;One observation of one deployment, as recorded: what was asked, what was served, what\nwas judged and when. Everything needed to judge it again later is in the record, which\nis what lets `Observation::rejudge` answer without probing.\n\n```\nuse majordomus_cli::served::{observe, Fetch, Fetched, GitAncestry, Observation, OBSERVATION_SCHEMA};\nuse std::{path::Path, time::SystemTime};\nstruct None_;\nimpl Fetch for None_ {\n    fn fetch(&amp;self, _: &amp;str) -&gt; Fetched { Fetched::Unreachable(\&quot;no route\&quot;.into()) }\n}\nlet git = GitAncestry { root: Path::new(env!(\&quot;CARGO_MANIFEST_DIR\&quot;)) };\nlet o: Observation = observe(\&quot;pages\&quot;, \&quot;https://s\&quot;, \&quot;build.json\&quot;, &amp;\&quot;a\&quot;.repeat(40), &amp;None_,\n                              &amp;git, SystemTime::UNIX_EPOCH);\nassert_eq!(o.schema, OBSERVATION_SCHEMA);\nassert_eq!(o.url, \&quot;https://s/build.json\&quot;);\nassert_eq!(o.at, \&quot;1970-01-01T00:00:00Z\&quot;);\n```&quot;,
       &quot;required&quot;: [
         &quot;schema&quot;,
         &quot;deployment&quot;,
@@ -463,77 +528,12 @@ command line, over HTTP and to an MCP client, from one derivation.</p>
         &quot;verdict&quot;,
         &quot;reason&quot;,
         &quot;at&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
-    },
-    &quot;ServedVerdict&quot;: {
-      &quot;description&quot;: &quot;What an observation says about the expected commit. Only `ServedVerdict::Served` is a\nproof; the other five are each a different reason the question was not answered yes.\n\n```\nuse majordomus_cli::served::ServedVerdict;\n// a measured no and an unanswered question are never spelled the same\nassert!(ServedVerdict::Served.passes());\nassert_eq!(ServedVerdict::Stale.exit_code(), 10);\nassert_eq!(ServedVerdict::Unreachable.exit_code(), 12);\n```&quot;,
-      &quot;oneOf&quot;: [
-        {
-          &quot;const&quot;: &quot;served&quot;,
-          &quot;description&quot;: &quot;The served build is the expected commit or contains it. The only passing verdict.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;stale&quot;,
-          &quot;description&quot;: &quot;The served build does not contain the expected commit: the deployment is behind.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;unreachable&quot;,
-          &quot;description&quot;: &quot;Nothing was received. The deployment was not measured.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;malformed&quot;,
-          &quot;description&quot;: &quot;Something was received and it is not a build identity.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;dirty&quot;,
-          &quot;description&quot;: &quot;The served build was made from an uncommitted tree, so it proves no commit.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;undecided&quot;,
-          &quot;description&quot;: &quot;The served commit is not in this clone, or git could not be asked; containment is\nundecided. Fetching the remote usually turns this into an answer.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
       ]
     }
   },
-  &quot;description&quot;: &quot;Every deployment&#39;s standing against one commit: the answer `served.show` gives on the\ncommand line, over HTTP and to an MCP client, from one derivation.\n\n```\nuse majordomus_cli::capability::builtin::served::{standing, ServedStanding};\nuse majordomus_cli::served::{Ancestry, OBSERVATIONS_PATH};\n# struct A; impl Ancestry for A {\n#     fn has(&amp;self, _: &amp;str) -&gt; Option&lt;bool&gt; { Some(true) }\n#     fn contains(&amp;self, _: &amp;str, _: &amp;str) -&gt; Option&lt;bool&gt; { Some(true) } }\nlet dir = tempfile::tempdir().unwrap();\nlet s: ServedStanding = standing(dir.path(), &amp;\&quot;a\&quot;.repeat(40), None, &amp;A);\nassert_eq!(s.observations, OBSERVATIONS_PATH);\nassert!(s.deployments.is_empty(), \&quot;nothing observed yet\&quot;);\nassert_eq!(s.unreadable, 0);\n```&quot;,
-  &quot;properties&quot;: {
-    &quot;deployments&quot;: {
-      &quot;description&quot;: &quot;One entry per deployment observed, in name order.&quot;,
-      &quot;items&quot;: {
-        &quot;$ref&quot;: &quot;#/$defs/DeploymentStanding&quot;
-      },
-      &quot;type&quot;: &quot;array&quot;
-    },
-    &quot;expected&quot;: {
-      &quot;description&quot;: &quot;The full commit every record was re-judged against.&quot;,
-      &quot;type&quot;: &quot;string&quot;
-    },
-    &quot;observations&quot;: {
-      &quot;description&quot;: &quot;The checkout-local file the records were read from.&quot;,
-      &quot;type&quot;: &quot;string&quot;
-    },
-    &quot;unreadable&quot;: {
-      &quot;description&quot;: &quot;Lines of that file that were not readable observations.&quot;,
-      &quot;format&quot;: &quot;uint&quot;,
-      &quot;minimum&quot;: 0,
-      &quot;type&quot;: &quot;integer&quot;
-    }
-  },
-  &quot;required&quot;: [
-    &quot;expected&quot;,
-    &quot;observations&quot;,
-    &quot;unreadable&quot;,
-    &quot;deployments&quot;
-  ],
+  &quot;type&quot;: &quot;object&quot;,
   &quot;title&quot;: &quot;ServedStanding&quot;,
-  &quot;type&quot;: &quot;object&quot;
+  &quot;description&quot;: &quot;Every deployment&#39;s standing against one commit: the answer `served.show` gives on the\ncommand line, over HTTP and to an MCP client, from one derivation.\n\n```\nuse majordomus_cli::capability::builtin::served::{standing, ServedStanding};\nuse majordomus_cli::served::{Ancestry, OBSERVATIONS_PATH};\n# struct A; impl Ancestry for A {\n#     fn has(&amp;self, _: &amp;str) -&gt; Option&lt;bool&gt; { Some(true) }\n#     fn contains(&amp;self, _: &amp;str, _: &amp;str) -&gt; Option&lt;bool&gt; { Some(true) } }\nlet dir = tempfile::tempdir().unwrap();\nlet s: ServedStanding = standing(dir.path(), &amp;\&quot;a\&quot;.repeat(40), None, &amp;A);\nassert_eq!(s.observations, OBSERVATIONS_PATH);\nassert!(s.deployments.is_empty(), \&quot;nothing observed yet\&quot;);\nassert_eq!(s.unreadable, 0);\n```&quot;
 }</pre></div>
   </details>
 </div>
@@ -564,7 +564,7 @@ command line, over HTTP and to an MCP client, from one derivation.</p>
         <div><dt class="text-body-subtle">Rust module</dt><dd class="min-w-0 break-all font-mono text-heading">majordomus_cli::capability::builtin::served</dd></div>
         <div><dt class="text-body-subtle">input type</dt><dd class="font-mono text-heading">ShowInput</dd></div>
         <div><dt class="text-body-subtle">output type</dt><dd class="font-mono text-heading">ServedStanding</dd></div>
-        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/aa9f816f8673880ab4beb6dbebff688f9da5bb65/docs/generated/modules/served.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/served.md</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">c514db707bb1f5f7557f2a1629d42c4bdc05eb7ef58464c288e42bafcd3d8720</dd></div>
+        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/docs/generated/modules/served.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/served.md</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">3f734f2faf797f0ca7c39b4cd837e68b6619c41c6f6711f3d3aeca8f341934eb</dd></div>
         <div><dt class="text-body-subtle">generated by</dt><dd class="font-mono text-heading">majordomus-cli 1.0.0-alpha.10</dd></div>
       </dl>
     </div>
@@ -620,9 +620,9 @@ command line, over HTTP and to an MCP client, from one derivation.</p>
       <div class="min-w-0">
         <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">Project</h2><ul class="space-y-2 text-sm font-medium text-body">
           <li><a href="https://github.com/korczis/prismatic-majordomus" class="hover:text-heading hover:underline">GitHub</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/aa9f816f8673880ab4beb6dbebff688f9da5bb65/LICENSE" class="hover:text-heading hover:underline">MIT licence</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/aa9f816f8673880ab4beb6dbebff688f9da5bb65/SECURITY.md" class="hover:text-heading hover:underline">Security policy</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/aa9f816f8673880ab4beb6dbebff688f9da5bb65/CONTRIBUTING.md" class="hover:text-heading hover:underline">Contributing guide</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/LICENSE" class="hover:text-heading hover:underline">MIT licence</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/SECURITY.md" class="hover:text-heading hover:underline">Security policy</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/CONTRIBUTING.md" class="hover:text-heading hover:underline">Contributing guide</a></li>
         </ul>
       </div>
     </div>
@@ -630,7 +630,7 @@ command line, over HTTP and to an MCP client, from one derivation.</p>
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.10</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/aa9f816f8673880ab4beb6dbebff688f9da5bb65" class="font-mono underline">aa9f816</a> · inputs <span class="font-mono">a64b981ed16e</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/architecture/" class="underline">how this site is derived</a> names them.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.10</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/745db2ea21e02613943face75a2bf95542be1f2e" class="font-mono underline">745db2e</a> · inputs <span class="font-mono">0a58c217d1b7</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/architecture/" class="underline">how this site is derived</a> names them.</p>
     </div>
   </div>
 </footer>

@@ -234,16 +234,16 @@ how long an open episode may be silent and still hold the work.</td>
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
   &quot;additionalProperties&quot;: false,
-  &quot;description&quot;: &quot;What to judge uncommitted work against.&quot;,
   &quot;properties&quot;: {
     &quot;older_than&quot;: {
-      &quot;description&quot;: &quot;The age past which work nothing holds is abandoned, as a person writes it (`90s`,\n`30m`, `12h`, `1d`). Default: the policy&#39;s `session.stranded_after`, which is also\nhow long an open episode may be silent and still hold the work.&quot;,
       &quot;type&quot;: [
         &quot;string&quot;,
         &quot;null&quot;
-      ]
+      ],
+      &quot;description&quot;: &quot;The age past which work nothing holds is abandoned, as a person writes it (`90s`,\n`30m`, `12h`, `1d`). Default: the policy&#39;s `session.stranded_after`, which is also\nhow long an open episode may be silent and still hold the work.&quot;
     }
   },
+  &quot;description&quot;: &quot;What to judge uncommitted work against.&quot;,
   &quot;title&quot;: &quot;UncommittedInput&quot;,
   &quot;type&quot;: &quot;object&quot;
 }</pre></div>
@@ -272,11 +272,6 @@ how long an open episode may be silent and still hold the work.</td>
     <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
       <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
       <tbody><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">findings</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">What could not be read or judged, in words.</td>
-      </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">observed_at</td>
         <td class="px-3 py-2 font-mono text-xs text-body">string</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
@@ -301,66 +296,278 @@ how long an open episode may be silent and still hold the work.</td>
         <td class="px-3 py-2 font-mono text-xs text-body">array</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
         <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Every linked work tree with uncommitted work, abandoned first, then oldest first.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">findings</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">What could not be read or judged, in words.</td>
       </tr></tbody>
     </table>
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
+  &quot;required&quot;: [
+    &quot;schema&quot;,
+    &quot;observed_at&quot;,
+    &quot;threshold&quot;,
+    &quot;worktrees&quot;,
+    &quot;tallies&quot;,
+    &quot;findings&quot;
+  ],
+  &quot;title&quot;: &quot;UncommittedReport&quot;,
+  &quot;type&quot;: &quot;object&quot;,
+  &quot;description&quot;: &quot;Every linked work tree holding uncommitted work, with what holds it: the answer of\n`worktree.uncommitted` on every surface, and what `doctor` renders.\n\n```\nuse majordomus_cli::worktree::uncommitted::UNCOMMITTED_SCHEMA;\nuse majordomus_cli::worktree::{Threshold, UncommittedReport, WorktreeService};\nlet dir = tempfile::tempdir().unwrap();\nlet init = std::process::Command::new(\&quot;git\&quot;)\n    .args([\&quot;init\&quot;, \&quot;-q\&quot;])\n    .current_dir(dir.path())\n    .status()\n    .unwrap();\nassert!(init.success());\n// a repository with no linked work tree, and a policy that declares no threshold\nlet threshold = Threshold::resolve(None, None).unwrap();\nlet report: UncommittedReport =\n    WorktreeService::open(dir.path()).unwrap().uncommitted(&amp;threshold).unwrap();\nassert_eq!(report.schema, UNCOMMITTED_SCHEMA);\nassert!(report.worktrees.is_empty());\nassert_eq!(report.tallies.measured, 0);\nassert_eq!(report.findings.len(), 1, \&quot;a missing threshold is said, not assumed\&quot;);\n```&quot;,
   &quot;$defs&quot;: {
-    &quot;DirtyState&quot;: {
-      &quot;description&quot;: &quot;Uncommitted work in a work tree, counted from `git status --porcelain`. Untracked\ncontent counts: it is exactly what a careless move loses.&quot;,
+    &quot;Threshold&quot;: {
+      &quot;required&quot;: [
+        &quot;source&quot;
+      ],
+      &quot;description&quot;: &quot;The age past which uncommitted work nothing holds is abandoned, and where it came from.\n\nIt is reported with every reading, so a reader can see what the verdicts were judged\nagainst; a threshold nothing declares is carried as absent, not filled in.\n\n```\nuse majordomus_cli::worktree::Threshold;\nlet declared = Threshold::resolve(Some(\&quot;12h\&quot;), None).unwrap();\nlet wire = serde_json::to_value(&amp;declared).unwrap();\nassert_eq!(wire[\&quot;declared\&quot;], \&quot;12h\&quot;);\nassert_eq!(wire[\&quot;seconds\&quot;], 43_200);\nlet absent: Threshold =\n    serde_json::from_value(serde_json::json!({\&quot;source\&quot;: \&quot;absent\&quot;})).unwrap();\nassert_eq!((absent.declared, absent.seconds), (None, None), \&quot;absent is not a default\&quot;);\n```&quot;,
       &quot;properties&quot;: {
-        &quot;clean&quot;: {
-          &quot;description&quot;: &quot;Nothing above is non-zero.&quot;,
-          &quot;type&quot;: &quot;boolean&quot;
+        &quot;source&quot;: {
+          &quot;description&quot;: &quot;`THRESHOLD_KEY`, `older_than` when the caller named one, or `absent`.&quot;,
+          &quot;type&quot;: &quot;string&quot;
         },
-        &quot;conflicted&quot;: {
-          &quot;description&quot;: &quot;Entries with an unresolved merge conflict.&quot;,
+        &quot;seconds&quot;: {
+          &quot;description&quot;: &quot;The same value, in seconds.&quot;,
+          &quot;format&quot;: &quot;uint64&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: [
+            &quot;integer&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;declared&quot;: {
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ],
+          &quot;description&quot;: &quot;The value as written (`12h`). Absent when nothing declares one.&quot;
+        }
+      },
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;UncommittedTallies&quot;: {
+      &quot;required&quot;: [
+        &quot;measured&quot;,
+        &quot;uncommitted&quot;,
+        &quot;held&quot;,
+        &quot;recent&quot;,
+        &quot;abandoned&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;,
+      &quot;description&quot;: &quot;The counts of an `UncommittedReport`: how many linked work trees were read, how many\nhold uncommitted work, and how those split into held, recent and abandoned. The three\nstandings always add up to `uncommitted`; `doctor` reads `abandoned` to decide whether it\nhas anything to warn about.\n\n```\nuse majordomus_cli::worktree::UncommittedTallies;\nlet wire = serde_json::json!(\n    {\&quot;measured\&quot;: 4, \&quot;uncommitted\&quot;: 3, \&quot;held\&quot;: 1, \&quot;recent\&quot;: 1, \&quot;abandoned\&quot;: 1}\n);\nlet t: UncommittedTallies = serde_json::from_value(wire.clone()).unwrap();\nassert_eq!(t.held + t.recent + t.abandoned, t.uncommitted);\nassert_eq!(serde_json::to_value(&amp;t).unwrap(), wire, \&quot;the shape doctor&#39;s jq reads\&quot;);\nassert_eq!(UncommittedTallies::default().abandoned, 0, \&quot;nothing read, nothing abandoned\&quot;);\n```&quot;,
+      &quot;properties&quot;: {
+        &quot;uncommitted&quot;: {
+          &quot;minimum&quot;: 0,
+          &quot;description&quot;: &quot;Of those, the ones holding uncommitted work: every entry of the listing.&quot;,
+          &quot;type&quot;: &quot;integer&quot;,
+          &quot;format&quot;: &quot;uint&quot;
+        },
+        &quot;held&quot;: {
           &quot;format&quot;: &quot;uint&quot;,
+          &quot;description&quot;: &quot;Held by a task, an episode or a process.&quot;,
           &quot;minimum&quot;: 0,
           &quot;type&quot;: &quot;integer&quot;
         },
-        &quot;in_progress&quot;: {
-          &quot;description&quot;: &quot;A merge, rebase, cherry-pick, revert or bisect is in progress here.&quot;,
+        &quot;recent&quot;: {
+          &quot;type&quot;: &quot;integer&quot;,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;description&quot;: &quot;Held by nothing, younger than the threshold.&quot;
+        },
+        &quot;abandoned&quot;: {
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;type&quot;: &quot;integer&quot;,
+          &quot;description&quot;: &quot;Held by nothing, older than the threshold.&quot;,
+          &quot;minimum&quot;: 0
+        },
+        &quot;measured&quot;: {
+          &quot;description&quot;: &quot;Linked work trees whose status was read.&quot;,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;type&quot;: &quot;integer&quot;,
+          &quot;minimum&quot;: 0
+        }
+      }
+    },
+    &quot;UncommittedWorktree&quot;: {
+      &quot;properties&quot;: {
+        &quot;episodes&quot;: {
+          &quot;description&quot;: &quot;The episodes open there.&quot;,
+          &quot;items&quot;: {
+            &quot;$ref&quot;: &quot;#/$defs/OpenEpisode&quot;
+          },
+          &quot;type&quot;: &quot;array&quot;
+        },
+        &quot;branch&quot;: {
+          &quot;description&quot;: &quot;The branch checked out there. Absent when detached.&quot;,
           &quot;type&quot;: [
             &quot;string&quot;,
             &quot;null&quot;
           ]
         },
-        &quot;staged&quot;: {
-          &quot;description&quot;: &quot;Entries with a change in the index.&quot;,
-          &quot;format&quot;: &quot;uint&quot;,
+        &quot;held_by&quot;: {
+          &quot;description&quot;: &quot;What holds it, in words; empty when nothing does.&quot;,
+          &quot;type&quot;: &quot;array&quot;,
+          &quot;items&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        },
+        &quot;paths&quot;: {
           &quot;minimum&quot;: 0,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;description&quot;: &quot;Every changed path: staged, unstaged, untracked and conflicted together.&quot;,
           &quot;type&quot;: &quot;integer&quot;
         },
-        &quot;unstaged&quot;: {
-          &quot;description&quot;: &quot;Entries with a change in the work tree that is not in the index.&quot;,
-          &quot;format&quot;: &quot;uint&quot;,
+        &quot;path&quot;: {
+          &quot;description&quot;: &quot;Absolute, as git holds it.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;oldest_change&quot;: {
+          &quot;description&quot;: &quot;When the oldest change was made: the earliest modification time among the changed\npaths, the index file&#39;s standing in for a path that no longer exists. RFC 3339.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;standing&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/WorkStanding&quot;,
+          &quot;description&quot;: &quot;The verdict.&quot;
+        },
+        &quot;process_inside&quot;: {
+          &quot;description&quot;: &quot;A process has its working directory inside it. Absent when that could not be read.&quot;,
+          &quot;type&quot;: [
+            &quot;boolean&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;task&quot;: {
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ],
+          &quot;description&quot;: &quot;The active task recorded there.&quot;
+        },
+        &quot;age_seconds&quot;: {
+          &quot;format&quot;: &quot;uint64&quot;,
           &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
+          &quot;type&quot;: [
+            &quot;integer&quot;,
+            &quot;null&quot;
+          ],
+          &quot;description&quot;: &quot;Seconds since then.&quot;
+        },
+        &quot;age&quot;: {
+          &quot;description&quot;: &quot;The same, for a person (`3d`, `5h`, `40m`).&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;label&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The branch, or `detached/&lt;short commit&gt;`.&quot;
+        },
+        &quot;remedy&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The command that would put this work on a remote ref. Suggested, never run.&quot;
+        },
+        &quot;work&quot;: {
+          &quot;description&quot;: &quot;The counts, as `worktree status` gives them.&quot;,
+          &quot;$ref&quot;: &quot;#/$defs/DirtyState&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;path&quot;,
+        &quot;label&quot;,
+        &quot;work&quot;,
+        &quot;paths&quot;,
+        &quot;episodes&quot;,
+        &quot;held_by&quot;,
+        &quot;standing&quot;,
+        &quot;remedy&quot;
+      ],
+      &quot;description&quot;: &quot;One linked work tree holding uncommitted work: how much, how old, what holds it, the\nverdict, and the command that would preserve it. A listing is in canonical order —\nabandoned first, then recent, then held, the oldest first inside each.\n\n```\nuse majordomus_cli::worktree::{DirtyState, UncommittedWorktree, WorkStanding};\nlet entry = |path: &amp;str, standing: WorkStanding, age: u64| UncommittedWorktree {\n    path: path.into(),\n    branch: None,\n    label: path.into(),\n    work: DirtyState { staged: 1, ..DirtyState::default() },\n    paths: 1,\n    oldest_change: None,\n    age_seconds: Some(age),\n    age: None,\n    task: None,\n    episodes: Vec::new(),\n    process_inside: None,\n    held_by: Vec::new(),\n    standing,\n    remedy: String::new(),\n};\nlet mut listing = vec![\n    entry(\&quot;/wt/held-old\&quot;, WorkStanding::Held, 900_000),\n    entry(\&quot;/wt/young\&quot;, WorkStanding::Abandoned, 50_000),\n    entry(\&quot;/wt/older\&quot;, WorkStanding::Abandoned, 90_000),\n];\nmajordomus_cli::order::canonical(&amp;mut listing);\nlet paths: Vec&lt;&amp;str&gt; = listing.iter().map(|w| w.path.as_str()).collect();\nassert_eq!(paths, [\&quot;/wt/older\&quot;, \&quot;/wt/young\&quot;, \&quot;/wt/held-old\&quot;]);\n```&quot;,
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;WorkStanding&quot;: {
+      &quot;description&quot;: &quot;What a work tree&#39;s uncommitted work is, judged: held by something, recent, or abandoned.\n`judge` is the one place it is decided, and `doctor` warns only on `abandoned`.\n\n```\nuse majordomus_cli::worktree::uncommitted::{judge, WorkStanding};\nlet standing = judge(false, Some(90_000), Some(43_200));\nassert_eq!(standing, WorkStanding::Abandoned);\nassert_eq!(serde_json::to_value(standing).unwrap(), \&quot;abandoned\&quot;);\n```&quot;,
+      &quot;oneOf&quot;: [
+        {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;A task, an episode or a process holds it.&quot;,
+          &quot;const&quot;: &quot;held&quot;
+        },
+        {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;recent&quot;,
+          &quot;description&quot;: &quot;Nothing holds it, and it is younger than the threshold.&quot;
+        },
+        {
+          &quot;const&quot;: &quot;abandoned&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;Nothing holds it, and it is older than the threshold — or its age cannot be read.&quot;
+        }
+      ]
+    },
+    &quot;DirtyState&quot;: {
+      &quot;properties&quot;: {
+        &quot;in_progress&quot;: {
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ],
+          &quot;description&quot;: &quot;A merge, rebase, cherry-pick, revert or bisect is in progress here.&quot;
+        },
+        &quot;clean&quot;: {
+          &quot;type&quot;: &quot;boolean&quot;,
+          &quot;description&quot;: &quot;Nothing above is non-zero.&quot;
         },
         &quot;untracked&quot;: {
           &quot;description&quot;: &quot;Untracked, not ignored, files.&quot;,
           &quot;format&quot;: &quot;uint&quot;,
           &quot;minimum&quot;: 0,
           &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;unstaged&quot;: {
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;description&quot;: &quot;Entries with a change in the work tree that is not in the index.&quot;,
+          &quot;type&quot;: &quot;integer&quot;,
+          &quot;minimum&quot;: 0
+        },
+        &quot;conflicted&quot;: {
+          &quot;minimum&quot;: 0,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;description&quot;: &quot;Entries with an unresolved merge conflict.&quot;,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;staged&quot;: {
+          &quot;type&quot;: &quot;integer&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;description&quot;: &quot;Entries with a change in the index.&quot;
         }
       },
+      &quot;type&quot;: &quot;object&quot;,
+      &quot;description&quot;: &quot;Uncommitted work in a work tree, counted from `git status --porcelain`. Untracked\ncontent counts: it is exactly what a careless move loses.&quot;,
       &quot;required&quot;: [
         &quot;staged&quot;,
         &quot;unstaged&quot;,
         &quot;untracked&quot;,
         &quot;conflicted&quot;,
         &quot;clean&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
+      ]
     },
     &quot;OpenEpisode&quot;: {
       &quot;description&quot;: &quot;An open episode in a work tree, as far as holding its work goes: it holds the work only\nwhile `stranded` is `Some(false)`; a stranded or unjudgeable one holds nothing.\n\n```\nuse majordomus_cli::worktree::OpenEpisode;\nlet unjudged = OpenEpisode {\n    id: \&quot;s-20260101000000-0a0a\&quot;.into(),\n    last_sign_of_life: None,\n    stranded: None,\n};\nlet wire = serde_json::to_value(&amp;unjudged).unwrap();\nassert!(wire.get(\&quot;stranded\&quot;).is_none(), \&quot;what could not be judged is absent, not false\&quot;);\nlet back: OpenEpisode = serde_json::from_value(wire).unwrap();\nassert_eq!(back, unjudged);\n```&quot;,
+      &quot;type&quot;: &quot;object&quot;,
+      &quot;required&quot;: [
+        &quot;id&quot;
+      ],
       &quot;properties&quot;: {
         &quot;id&quot;: {
-          &quot;description&quot;: &quot;The episode.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The episode.&quot;
         },
         &quot;last_sign_of_life&quot;: {
           &quot;description&quot;: &quot;Its newest sign of life, RFC 3339 in UTC.&quot;,
@@ -376,248 +583,41 @@ how long an open episode may be silent and still hold the work.</td>
             &quot;null&quot;
           ]
         }
-      },
-      &quot;required&quot;: [
-        &quot;id&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
-    },
-    &quot;Threshold&quot;: {
-      &quot;description&quot;: &quot;The age past which uncommitted work nothing holds is abandoned, and where it came from.\n\nIt is reported with every reading, so a reader can see what the verdicts were judged\nagainst; a threshold nothing declares is carried as absent, not filled in.\n\n```\nuse majordomus_cli::worktree::Threshold;\nlet declared = Threshold::resolve(Some(\&quot;12h\&quot;), None).unwrap();\nlet wire = serde_json::to_value(&amp;declared).unwrap();\nassert_eq!(wire[\&quot;declared\&quot;], \&quot;12h\&quot;);\nassert_eq!(wire[\&quot;seconds\&quot;], 43_200);\nlet absent: Threshold =\n    serde_json::from_value(serde_json::json!({\&quot;source\&quot;: \&quot;absent\&quot;})).unwrap();\nassert_eq!((absent.declared, absent.seconds), (None, None), \&quot;absent is not a default\&quot;);\n```&quot;,
-      &quot;properties&quot;: {
-        &quot;declared&quot;: {
-          &quot;description&quot;: &quot;The value as written (`12h`). Absent when nothing declares one.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;seconds&quot;: {
-          &quot;description&quot;: &quot;The same value, in seconds.&quot;,
-          &quot;format&quot;: &quot;uint64&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: [
-            &quot;integer&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;source&quot;: {
-          &quot;description&quot;: &quot;`THRESHOLD_KEY`, `older_than` when the caller named one, or `absent`.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      },
-      &quot;required&quot;: [
-        &quot;source&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
-    },
-    &quot;UncommittedTallies&quot;: {
-      &quot;description&quot;: &quot;The counts of an `UncommittedReport`: how many linked work trees were read, how many\nhold uncommitted work, and how those split into held, recent and abandoned. The three\nstandings always add up to `uncommitted`; `doctor` reads `abandoned` to decide whether it\nhas anything to warn about.\n\n```\nuse majordomus_cli::worktree::UncommittedTallies;\nlet wire = serde_json::json!(\n    {\&quot;measured\&quot;: 4, \&quot;uncommitted\&quot;: 3, \&quot;held\&quot;: 1, \&quot;recent\&quot;: 1, \&quot;abandoned\&quot;: 1}\n);\nlet t: UncommittedTallies = serde_json::from_value(wire.clone()).unwrap();\nassert_eq!(t.held + t.recent + t.abandoned, t.uncommitted);\nassert_eq!(serde_json::to_value(&amp;t).unwrap(), wire, \&quot;the shape doctor&#39;s jq reads\&quot;);\nassert_eq!(UncommittedTallies::default().abandoned, 0, \&quot;nothing read, nothing abandoned\&quot;);\n```&quot;,
-      &quot;properties&quot;: {
-        &quot;abandoned&quot;: {
-          &quot;description&quot;: &quot;Held by nothing, older than the threshold.&quot;,
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;held&quot;: {
-          &quot;description&quot;: &quot;Held by a task, an episode or a process.&quot;,
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;measured&quot;: {
-          &quot;description&quot;: &quot;Linked work trees whose status was read.&quot;,
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;recent&quot;: {
-          &quot;description&quot;: &quot;Held by nothing, younger than the threshold.&quot;,
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;uncommitted&quot;: {
-          &quot;description&quot;: &quot;Of those, the ones holding uncommitted work: every entry of the listing.&quot;,
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        }
-      },
-      &quot;required&quot;: [
-        &quot;measured&quot;,
-        &quot;uncommitted&quot;,
-        &quot;held&quot;,
-        &quot;recent&quot;,
-        &quot;abandoned&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
-    },
-    &quot;UncommittedWorktree&quot;: {
-      &quot;description&quot;: &quot;One linked work tree holding uncommitted work: how much, how old, what holds it, the\nverdict, and the command that would preserve it. A listing is in canonical order —\nabandoned first, then recent, then held, the oldest first inside each.\n\n```\nuse majordomus_cli::worktree::{DirtyState, UncommittedWorktree, WorkStanding};\nlet entry = |path: &amp;str, standing: WorkStanding, age: u64| UncommittedWorktree {\n    path: path.into(),\n    branch: None,\n    label: path.into(),\n    work: DirtyState { staged: 1, ..DirtyState::default() },\n    paths: 1,\n    oldest_change: None,\n    age_seconds: Some(age),\n    age: None,\n    task: None,\n    episodes: Vec::new(),\n    process_inside: None,\n    held_by: Vec::new(),\n    standing,\n    remedy: String::new(),\n};\nlet mut listing = vec![\n    entry(\&quot;/wt/held-old\&quot;, WorkStanding::Held, 900_000),\n    entry(\&quot;/wt/young\&quot;, WorkStanding::Abandoned, 50_000),\n    entry(\&quot;/wt/older\&quot;, WorkStanding::Abandoned, 90_000),\n];\nmajordomus_cli::order::canonical(&amp;mut listing);\nlet paths: Vec&lt;&amp;str&gt; = listing.iter().map(|w| w.path.as_str()).collect();\nassert_eq!(paths, [\&quot;/wt/older\&quot;, \&quot;/wt/young\&quot;, \&quot;/wt/held-old\&quot;]);\n```&quot;,
-      &quot;properties&quot;: {
-        &quot;age&quot;: {
-          &quot;description&quot;: &quot;The same, for a person (`3d`, `5h`, `40m`).&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;age_seconds&quot;: {
-          &quot;description&quot;: &quot;Seconds since then.&quot;,
-          &quot;format&quot;: &quot;uint64&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: [
-            &quot;integer&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;branch&quot;: {
-          &quot;description&quot;: &quot;The branch checked out there. Absent when detached.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;episodes&quot;: {
-          &quot;description&quot;: &quot;The episodes open there.&quot;,
-          &quot;items&quot;: {
-            &quot;$ref&quot;: &quot;#/$defs/OpenEpisode&quot;
-          },
-          &quot;type&quot;: &quot;array&quot;
-        },
-        &quot;held_by&quot;: {
-          &quot;description&quot;: &quot;What holds it, in words; empty when nothing does.&quot;,
-          &quot;items&quot;: {
-            &quot;type&quot;: &quot;string&quot;
-          },
-          &quot;type&quot;: &quot;array&quot;
-        },
-        &quot;label&quot;: {
-          &quot;description&quot;: &quot;The branch, or `detached/&lt;short commit&gt;`.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;oldest_change&quot;: {
-          &quot;description&quot;: &quot;When the oldest change was made: the earliest modification time among the changed\npaths, the index file&#39;s standing in for a path that no longer exists. RFC 3339.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;path&quot;: {
-          &quot;description&quot;: &quot;Absolute, as git holds it.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;paths&quot;: {
-          &quot;description&quot;: &quot;Every changed path: staged, unstaged, untracked and conflicted together.&quot;,
-          &quot;format&quot;: &quot;uint&quot;,
-          &quot;minimum&quot;: 0,
-          &quot;type&quot;: &quot;integer&quot;
-        },
-        &quot;process_inside&quot;: {
-          &quot;description&quot;: &quot;A process has its working directory inside it. Absent when that could not be read.&quot;,
-          &quot;type&quot;: [
-            &quot;boolean&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;remedy&quot;: {
-          &quot;description&quot;: &quot;The command that would put this work on a remote ref. Suggested, never run.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;standing&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/WorkStanding&quot;,
-          &quot;description&quot;: &quot;The verdict.&quot;
-        },
-        &quot;task&quot;: {
-          &quot;description&quot;: &quot;The active task recorded there.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;work&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/DirtyState&quot;,
-          &quot;description&quot;: &quot;The counts, as `worktree status` gives them.&quot;
-        }
-      },
-      &quot;required&quot;: [
-        &quot;path&quot;,
-        &quot;label&quot;,
-        &quot;work&quot;,
-        &quot;paths&quot;,
-        &quot;episodes&quot;,
-        &quot;held_by&quot;,
-        &quot;standing&quot;,
-        &quot;remedy&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
-    },
-    &quot;WorkStanding&quot;: {
-      &quot;description&quot;: &quot;What a work tree&#39;s uncommitted work is, judged: held by something, recent, or abandoned.\n`judge` is the one place it is decided, and `doctor` warns only on `abandoned`.\n\n```\nuse majordomus_cli::worktree::uncommitted::{judge, WorkStanding};\nlet standing = judge(false, Some(90_000), Some(43_200));\nassert_eq!(standing, WorkStanding::Abandoned);\nassert_eq!(serde_json::to_value(standing).unwrap(), \&quot;abandoned\&quot;);\n```&quot;,
-      &quot;oneOf&quot;: [
-        {
-          &quot;const&quot;: &quot;held&quot;,
-          &quot;description&quot;: &quot;A task, an episode or a process holds it.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;recent&quot;,
-          &quot;description&quot;: &quot;Nothing holds it, and it is younger than the threshold.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;abandoned&quot;,
-          &quot;description&quot;: &quot;Nothing holds it, and it is older than the threshold — or its age cannot be read.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      ]
+      }
     }
   },
-  &quot;description&quot;: &quot;Every linked work tree holding uncommitted work, with what holds it: the answer of\n`worktree.uncommitted` on every surface, and what `doctor` renders.\n\n```\nuse majordomus_cli::worktree::uncommitted::UNCOMMITTED_SCHEMA;\nuse majordomus_cli::worktree::{Threshold, UncommittedReport, WorktreeService};\nlet dir = tempfile::tempdir().unwrap();\nlet init = std::process::Command::new(\&quot;git\&quot;)\n    .args([\&quot;init\&quot;, \&quot;-q\&quot;])\n    .current_dir(dir.path())\n    .status()\n    .unwrap();\nassert!(init.success());\n// a repository with no linked work tree, and a policy that declares no threshold\nlet threshold = Threshold::resolve(None, None).unwrap();\nlet report: UncommittedReport =\n    WorktreeService::open(dir.path()).unwrap().uncommitted(&amp;threshold).unwrap();\nassert_eq!(report.schema, UNCOMMITTED_SCHEMA);\nassert!(report.worktrees.is_empty());\nassert_eq!(report.tallies.measured, 0);\nassert_eq!(report.findings.len(), 1, \&quot;a missing threshold is said, not assumed\&quot;);\n```&quot;,
   &quot;properties&quot;: {
-    &quot;findings&quot;: {
-      &quot;description&quot;: &quot;What could not be read or judged, in words.&quot;,
-      &quot;items&quot;: {
-        &quot;type&quot;: &quot;string&quot;
-      },
-      &quot;type&quot;: &quot;array&quot;
-    },
     &quot;observed_at&quot;: {
-      &quot;description&quot;: &quot;When the reading was taken, RFC 3339 in UTC.&quot;,
-      &quot;type&quot;: &quot;string&quot;
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;description&quot;: &quot;When the reading was taken, RFC 3339 in UTC.&quot;
     },
     &quot;schema&quot;: {
-      &quot;description&quot;: &quot;`UNCOMMITTED_SCHEMA`.&quot;,
-      &quot;type&quot;: &quot;string&quot;
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;description&quot;: &quot;`UNCOMMITTED_SCHEMA`.&quot;
     },
     &quot;tallies&quot;: {
       &quot;$ref&quot;: &quot;#/$defs/UncommittedTallies&quot;,
       &quot;description&quot;: &quot;The counts.&quot;
     },
     &quot;threshold&quot;: {
-      &quot;$ref&quot;: &quot;#/$defs/Threshold&quot;,
-      &quot;description&quot;: &quot;The threshold it was judged against.&quot;
+      &quot;description&quot;: &quot;The threshold it was judged against.&quot;,
+      &quot;$ref&quot;: &quot;#/$defs/Threshold&quot;
     },
     &quot;worktrees&quot;: {
       &quot;description&quot;: &quot;Every linked work tree with uncommitted work, abandoned first, then oldest first.&quot;,
+      &quot;type&quot;: &quot;array&quot;,
       &quot;items&quot;: {
         &quot;$ref&quot;: &quot;#/$defs/UncommittedWorktree&quot;
+      }
+    },
+    &quot;findings&quot;: {
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;string&quot;
       },
-      &quot;type&quot;: &quot;array&quot;
+      &quot;description&quot;: &quot;What could not be read or judged, in words.&quot;
     }
-  },
-  &quot;required&quot;: [
-    &quot;schema&quot;,
-    &quot;observed_at&quot;,
-    &quot;threshold&quot;,
-    &quot;worktrees&quot;,
-    &quot;tallies&quot;,
-    &quot;findings&quot;
-  ],
-  &quot;title&quot;: &quot;UncommittedReport&quot;,
-  &quot;type&quot;: &quot;object&quot;
+  }
 }</pre></div>
   </details>
 </div>
@@ -648,7 +648,7 @@ how long an open episode may be silent and still hold the work.</td>
         <div><dt class="text-body-subtle">Rust module</dt><dd class="min-w-0 break-all font-mono text-heading">majordomus_cli::capability::builtin::worktree</dd></div>
         <div><dt class="text-body-subtle">input type</dt><dd class="font-mono text-heading">UncommittedInput</dd></div>
         <div><dt class="text-body-subtle">output type</dt><dd class="font-mono text-heading">UncommittedReport</dd></div>
-        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/aa9f816f8673880ab4beb6dbebff688f9da5bb65/docs/generated/modules/worktree.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/worktree.md</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">c514db707bb1f5f7557f2a1629d42c4bdc05eb7ef58464c288e42bafcd3d8720</dd></div>
+        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/docs/generated/modules/worktree.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/worktree.md</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">3f734f2faf797f0ca7c39b4cd837e68b6619c41c6f6711f3d3aeca8f341934eb</dd></div>
         <div><dt class="text-body-subtle">generated by</dt><dd class="font-mono text-heading">majordomus-cli 1.0.0-alpha.10</dd></div>
       </dl>
     </div>
@@ -704,9 +704,9 @@ how long an open episode may be silent and still hold the work.</td>
       <div class="min-w-0">
         <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">Project</h2><ul class="space-y-2 text-sm font-medium text-body">
           <li><a href="https://github.com/korczis/prismatic-majordomus" class="hover:text-heading hover:underline">GitHub</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/aa9f816f8673880ab4beb6dbebff688f9da5bb65/LICENSE" class="hover:text-heading hover:underline">MIT licence</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/aa9f816f8673880ab4beb6dbebff688f9da5bb65/SECURITY.md" class="hover:text-heading hover:underline">Security policy</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/aa9f816f8673880ab4beb6dbebff688f9da5bb65/CONTRIBUTING.md" class="hover:text-heading hover:underline">Contributing guide</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/LICENSE" class="hover:text-heading hover:underline">MIT licence</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/SECURITY.md" class="hover:text-heading hover:underline">Security policy</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/CONTRIBUTING.md" class="hover:text-heading hover:underline">Contributing guide</a></li>
         </ul>
       </div>
     </div>
@@ -714,7 +714,7 @@ how long an open episode may be silent and still hold the work.</td>
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.10</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/aa9f816f8673880ab4beb6dbebff688f9da5bb65" class="font-mono underline">aa9f816</a> · inputs <span class="font-mono">a64b981ed16e</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/architecture/" class="underline">how this site is derived</a> names them.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.10</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/745db2ea21e02613943face75a2bf95542be1f2e" class="font-mono underline">745db2e</a> · inputs <span class="font-mono">0a58c217d1b7</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/architecture/" class="underline">how this site is derived</a> names them.</p>
     </div>
   </div>
 </footer>

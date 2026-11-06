@@ -221,10 +221,10 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
   <h3 class="font-mono text-sm font-semibold text-heading">input · Empty</h3><div class="mt-1 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">No input.</div><p class="mt-2 text-sm text-body-subtle">No properties: the capability takes no input.</p><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
-  &quot;additionalProperties&quot;: false,
+  &quot;type&quot;: &quot;object&quot;,
   &quot;description&quot;: &quot;No input.&quot;,
-  &quot;title&quot;: &quot;Empty&quot;,
-  &quot;type&quot;: &quot;object&quot;
+  &quot;additionalProperties&quot;: false,
+  &quot;title&quot;: &quot;Empty&quot;
 }</pre></div>
   </details>
 </div>
@@ -239,42 +239,21 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
     <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
       <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
       <tbody><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">branch</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The branch this answer is about, or <code>DETACHED</code>.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">candidates</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Every candidate, in canonical order of id.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">cap</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">integer | null</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words"><code>knowledge.candidates_max_files</code>, when the policy declares it.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">findings</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">What a reader should know before trusting the above: a malformed record that was
-skipped, a cap that was exceeded, a policy that declares none. Empty is the good case.</td>
-      </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">groups</td>
         <td class="px-3 py-2 font-mono text-xs text-body">array</td>
         <td class="px-3 py-2 font-mono text-xs text-body">no</td>
         <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The candidates and rejected records derived from observations, grouped by what they
 are about, in order of subject.</td>
       </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">on_this_branch</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">integer</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">How many of them came from an episode on this checkout's branch.</td>
+        <td class="px-3 py-2 font-mono text-heading">candidates</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Every candidate, in canonical order of id.</td>
       </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">over_cap</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">boolean</td>
+        <td class="px-3 py-2 font-mono text-heading">branch</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">True when <code>total</code> exceeds <code>cap</code>. False when no cap is declared: nobody wrote one down.</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The branch this answer is about, or <code>DETACHED</code>.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">total</td>
         <td class="px-3 py-2 font-mono text-xs text-body">integer</td>
@@ -285,29 +264,157 @@ are about, in order of subject.</td>
         <td class="px-3 py-2 font-mono text-xs text-body">integer</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
         <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">How many name an episode this checkout knows nothing about.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">findings</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">What a reader should know before trusting the above: a malformed record that was
+skipped, a cap that was exceeded, a policy that declares none. Empty is the good case.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">over_cap</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">boolean</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">True when <code>total</code> exceeds <code>cap</code>. False when no cap is declared: nobody wrote one down.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">cap</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">integer | null</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words"><code>knowledge.candidates_max_files</code>, when the policy declares it.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">on_this_branch</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">integer</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">How many of them came from an episode on this checkout's branch.</td>
       </tr></tbody>
     </table>
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
+  &quot;properties&quot;: {
+    &quot;groups&quot;: {
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;description&quot;: &quot;The candidates and rejected records derived from observations, grouped by what they\nare about, in order of subject.&quot;,
+      &quot;items&quot;: {
+        &quot;$ref&quot;: &quot;#/$defs/KnowledgeGroup&quot;
+      }
+    },
+    &quot;candidates&quot;: {
+      &quot;items&quot;: {
+        &quot;$ref&quot;: &quot;#/$defs/KnowledgeCandidate&quot;
+      },
+      &quot;description&quot;: &quot;Every candidate, in canonical order of id.&quot;,
+      &quot;type&quot;: &quot;array&quot;
+    },
+    &quot;branch&quot;: {
+      &quot;description&quot;: &quot;The branch this answer is about, or `DETACHED`.&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;total&quot;: {
+      &quot;format&quot;: &quot;uint&quot;,
+      &quot;minimum&quot;: 0,
+      &quot;description&quot;: &quot;How many records carry `status: candidate` under the candidates class.&quot;,
+      &quot;type&quot;: &quot;integer&quot;
+    },
+    &quot;unattributed&quot;: {
+      &quot;description&quot;: &quot;How many name an episode this checkout knows nothing about.&quot;,
+      &quot;minimum&quot;: 0,
+      &quot;format&quot;: &quot;uint&quot;,
+      &quot;type&quot;: &quot;integer&quot;
+    },
+    &quot;findings&quot;: {
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;string&quot;
+      },
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;description&quot;: &quot;What a reader should know before trusting the above: a malformed record that was\nskipped, a cap that was exceeded, a policy that declares none. Empty is the good case.&quot;
+    },
+    &quot;over_cap&quot;: {
+      &quot;description&quot;: &quot;True when `total` exceeds `cap`. False when no cap is declared: nobody wrote one down.&quot;,
+      &quot;type&quot;: &quot;boolean&quot;
+    },
+    &quot;cap&quot;: {
+      &quot;minimum&quot;: 0,
+      &quot;format&quot;: &quot;uint&quot;,
+      &quot;description&quot;: &quot;`knowledge.candidates_max_files`, when the policy declares it.&quot;,
+      &quot;type&quot;: [
+        &quot;integer&quot;,
+        &quot;null&quot;
+      ]
+    },
+    &quot;on_this_branch&quot;: {
+      &quot;format&quot;: &quot;uint&quot;,
+      &quot;type&quot;: &quot;integer&quot;,
+      &quot;description&quot;: &quot;How many of them came from an episode on this checkout&#39;s branch.&quot;,
+      &quot;minimum&quot;: 0
+    }
+  },
+  &quot;required&quot;: [
+    &quot;total&quot;,
+    &quot;on_this_branch&quot;,
+    &quot;unattributed&quot;,
+    &quot;branch&quot;,
+    &quot;over_cap&quot;
+  ],
+  &quot;title&quot;: &quot;KnowledgeCandidates&quot;,
+  &quot;type&quot;: &quot;object&quot;,
+  &quot;description&quot;: &quot;The candidates awaiting review, against the policy&#39;s cap.\n\n```\nuse majordomus_cli::capability::builtin::knowledge_base::KnowledgeCandidates;\nlet empty: KnowledgeCandidates = serde_json::from_str(\n    r#\&quot;{\&quot;total\&quot;:0,\&quot;on_this_branch\&quot;:0,\&quot;unattributed\&quot;:0,\&quot;branch\&quot;:\&quot;master\&quot;,\&quot;candidates\&quot;:[],\&quot;over_cap\&quot;:false}\&quot;#,\n).unwrap();\nassert_eq!(empty.total, 0, \&quot;an empty queue is an answer\&quot;);\nassert_eq!(empty.cap, None, \&quot;and a policy without the key declares no cap\&quot;);\n```&quot;,
   &quot;$defs&quot;: {
+    &quot;KnowledgeGroup&quot;: {
+      &quot;required&quot;: [
+        &quot;about&quot;,
+        &quot;route&quot;
+      ],
+      &quot;properties&quot;: {
+        &quot;episodes&quot;: {
+          &quot;type&quot;: &quot;array&quot;,
+          &quot;description&quot;: &quot;The episodes behind all of them, each once, in order.&quot;,
+          &quot;items&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          }
+        },
+        &quot;route&quot;: {
+          &quot;description&quot;: &quot;The route of its records.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;rejected&quot;: {
+          &quot;description&quot;: &quot;The records rejected and kept, by id.&quot;,
+          &quot;items&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          },
+          &quot;type&quot;: &quot;array&quot;
+        },
+        &quot;about&quot;: {
+          &quot;description&quot;: &quot;The subject, as written.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;candidates&quot;: {
+          &quot;items&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          },
+          &quot;type&quot;: &quot;array&quot;,
+          &quot;description&quot;: &quot;The candidates awaiting review, by id.&quot;
+        }
+      },
+      &quot;description&quot;: &quot;The records under one subject: every candidate awaiting review and every rejected one,\nwith the episodes behind them (ADR 0118). Recurrence is read here, never written: each\nrecord stays one episode&#39;s own file, and a group is how several of them read as one thing.\n\n```\nuse majordomus_cli::capability::builtin::knowledge_base::KnowledgeGroup;\nlet g: KnowledgeGroup = serde_json::from_str(\n    r#\&quot;{\&quot;about\&quot;:\&quot;lib/a.sh\&quot;,\&quot;route\&quot;:\&quot;project\&quot;,\&quot;candidates\&quot;:[\&quot;e1-a\&quot;,\&quot;e2-b\&quot;],\&quot;episodes\&quot;:[\&quot;e1\&quot;,\&quot;e2\&quot;]}\&quot;#,\n).unwrap();\nassert_eq!(g.episodes.len(), 2, \&quot;two episodes observed it\&quot;);\nassert!(g.rejected.is_empty(), \&quot;and nobody rejected it\&quot;);\n```&quot;,
+      &quot;type&quot;: &quot;object&quot;
+    },
     &quot;AgeSource&quot;: {
       &quot;description&quot;: &quot;Where the age of a candidate in the review queue was read from. A candidate&#39;s `date` is\nthe day of the evidence it came from, deliberately, so that the same evidence yields the\nsame bytes; the day it entered the queue is a different fact and is read from the ledger\nfirst, then from git, and only then from the record.\n\n```\nuse majordomus_cli::capability::builtin::knowledge_base::AgeSource;\nlet from_ledger: AgeSource = serde_json::from_str(r#\&quot;\&quot;derivation\&quot;\&quot;#).unwrap();\nassert_eq!(from_ledger, AgeSource::Derivation);\nassert!(AgeSource::Derivation &lt; AgeSource::Date, \&quot;the ledger is asked before the record\&quot;);\n```&quot;,
       &quot;oneOf&quot;: [
         {
-          &quot;const&quot;: &quot;derivation&quot;,
           &quot;description&quot;: &quot;The oldest `knowledge.derived` line in this checkout&#39;s ledger whose paths name it.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;derivation&quot;
         },
         {
-          &quot;const&quot;: &quot;commit&quot;,
           &quot;description&quot;: &quot;The commit that added the file to this history.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;commit&quot;
         },
         {
+          &quot;type&quot;: &quot;string&quot;,
           &quot;const&quot;: &quot;date&quot;,
-          &quot;description&quot;: &quot;The record&#39;s own `date`, at midnight UTC: the evidence day, not the queue day.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;description&quot;: &quot;The record&#39;s own `date`, at midnight UTC: the evidence day, not the queue day.&quot;
         }
       ]
     },
@@ -316,8 +423,8 @@ are about, in order of subject.</td>
       &quot;oneOf&quot;: [
         {
           &quot;const&quot;: &quot;fresh&quot;,
-          &quot;description&quot;: &quot;Inside `session.freshness.fresh_minutes`. Current; act on it.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;Inside `session.freshness.fresh_minutes`. Current; act on it.&quot;
         },
         {
           &quot;const&quot;: &quot;aging&quot;,
@@ -325,13 +432,13 @@ are about, in order of subject.</td>
           &quot;type&quot;: &quot;string&quot;
         },
         {
-          &quot;const&quot;: &quot;stale&quot;,
+          &quot;type&quot;: &quot;string&quot;,
           &quot;description&quot;: &quot;At or beyond `session.freshness.stale_minutes`. History, never current.&quot;,
-          &quot;type&quot;: &quot;string&quot;
+          &quot;const&quot;: &quot;stale&quot;
         },
         {
-          &quot;const&quot;: &quot;unknown&quot;,
           &quot;description&quot;: &quot;Nothing to judge it by: no timestamp, or no thresholds declared.&quot;,
+          &quot;const&quot;: &quot;unknown&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
         {
@@ -342,88 +449,6 @@ are about, in order of subject.</td>
       ]
     },
     &quot;KnowledgeCandidate&quot;: {
-      &quot;description&quot;: &quot;One candidate record awaiting review: what a reader needs to decide whether to open it.\n\n```\nuse majordomus_cli::capability::builtin::knowledge_base::KnowledgeCandidate;\nlet c: KnowledgeCandidate = serde_json::from_str(r#\&quot;{\n  \&quot;id\&quot;: \&quot;e1-0123456789ab\&quot;, \&quot;uri\&quot;: \&quot;majordomus://knowledge/e1-0123456789ab\&quot;,\n  \&quot;path\&quot;: \&quot;.ai/repo/knowledge/candidates/e1-0123456789ab.md\&quot;, \&quot;class\&quot;: \&quot;convention\&quot;,\n  \&quot;status\&quot;: \&quot;candidate\&quot;, \&quot;epistemics\&quot;: \&quot;decided\&quot;, \&quot;title\&quot;: \&quot;Tests run in disposable repositories\&quot;,\n  \&quot;date\&quot;: \&quot;2026-09-12\&quot;, \&quot;derived_from\&quot;: [\&quot;session:e1\&quot;], \&quot;episode\&quot;: \&quot;e1\&quot;,\n  \&quot;freshness\&quot;: \&quot;unknown\&quot;, \&quot;freshness_reason\&quot;: \&quot;no timestamp\&quot;, \&quot;age_source\&quot;: \&quot;date\&quot;\n}\&quot;#).unwrap();\nassert_eq!(c.episode, \&quot;e1\&quot;);\nassert_eq!(c.branch, None, \&quot;an episode this checkout never saw has no branch, and says so\&quot;);\n```&quot;,
-      &quot;properties&quot;: {
-        &quot;about&quot;: {
-          &quot;description&quot;: &quot;What the observation it was derived from is about (ADR 0118); empty for a record\nderived from anything else.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;age_minutes&quot;: {
-          &quot;description&quot;: &quot;The wait in whole minutes, when it could be measured.&quot;,
-          &quot;format&quot;: &quot;int64&quot;,
-          &quot;type&quot;: [
-            &quot;integer&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;age_source&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/AgeSource&quot;,
-          &quot;description&quot;: &quot;Where the wait was read from.&quot;
-        },
-        &quot;branch&quot;: {
-          &quot;default&quot;: null,
-          &quot;description&quot;: &quot;The branch that episode ran on, joined to the tracked session record or, while that\nis not yet written, to the ledger&#39;s `session.started` line. `None` when this checkout\nknows nothing about the episode — named rather than hidden, so that a reader can tell\n\&quot;not this branch\&quot; from \&quot;not known here\&quot;. Serialised as `null` in that case, never\nomitted.&quot;,
-          &quot;type&quot;: [
-            &quot;string&quot;,
-            &quot;null&quot;
-          ]
-        },
-        &quot;class&quot;: {
-          &quot;description&quot;: &quot;`fact`, `convention`, `constraint`, `memory` or `lesson`.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;date&quot;: {
-          &quot;description&quot;: &quot;The day of the evidence, `YYYY-MM-DD`.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;derived_from&quot;: {
-          &quot;description&quot;: &quot;The typed references the record names as its evidence, as declared.&quot;,
-          &quot;items&quot;: {
-            &quot;type&quot;: &quot;string&quot;
-          },
-          &quot;type&quot;: &quot;array&quot;
-        },
-        &quot;episode&quot;: {
-          &quot;description&quot;: &quot;The episode the record came from: the `session:` reference, or empty when it names none.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;epistemics&quot;: {
-          &quot;description&quot;: &quot;`observed`, `inferred` or `decided`.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;freshness&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/Freshness&quot;,
-          &quot;description&quot;: &quot;How long it has waited, judged against `session.freshness`.&quot;
-        },
-        &quot;freshness_reason&quot;: {
-          &quot;description&quot;: &quot;Why it was judged that way, in one phrase. Never empty.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;id&quot;: {
-          &quot;description&quot;: &quot;The record id, which is also its file name.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;path&quot;: {
-          &quot;description&quot;: &quot;Repository-relative path.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;route&quot;: {
-          &quot;description&quot;: &quot;Which owner should look first, derived from `about`&#39;s structure; empty without one.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;status&quot;: {
-          &quot;description&quot;: &quot;Always `candidate` here; carried so that a reader sees the same record shape as `record`.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;title&quot;: {
-          &quot;description&quot;: &quot;The assertion, in one line.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;uri&quot;: {
-          &quot;description&quot;: &quot;`majordomus://knowledge/&lt;id&gt;`.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      },
       &quot;required&quot;: [
         &quot;id&quot;,
         &quot;uri&quot;,
@@ -437,116 +462,91 @@ are about, in order of subject.</td>
         &quot;freshness_reason&quot;,
         &quot;age_source&quot;
       ],
-      &quot;type&quot;: &quot;object&quot;
-    },
-    &quot;KnowledgeGroup&quot;: {
-      &quot;description&quot;: &quot;The records under one subject: every candidate awaiting review and every rejected one,\nwith the episodes behind them (ADR 0118). Recurrence is read here, never written: each\nrecord stays one episode&#39;s own file, and a group is how several of them read as one thing.\n\n```\nuse majordomus_cli::capability::builtin::knowledge_base::KnowledgeGroup;\nlet g: KnowledgeGroup = serde_json::from_str(\n    r#\&quot;{\&quot;about\&quot;:\&quot;lib/a.sh\&quot;,\&quot;route\&quot;:\&quot;project\&quot;,\&quot;candidates\&quot;:[\&quot;e1-a\&quot;,\&quot;e2-b\&quot;],\&quot;episodes\&quot;:[\&quot;e1\&quot;,\&quot;e2\&quot;]}\&quot;#,\n).unwrap();\nassert_eq!(g.episodes.len(), 2, \&quot;two episodes observed it\&quot;);\nassert!(g.rejected.is_empty(), \&quot;and nobody rejected it\&quot;);\n```&quot;,
+      &quot;description&quot;: &quot;One candidate record awaiting review: what a reader needs to decide whether to open it.\n\n```\nuse majordomus_cli::capability::builtin::knowledge_base::KnowledgeCandidate;\nlet c: KnowledgeCandidate = serde_json::from_str(r#\&quot;{\n  \&quot;id\&quot;: \&quot;e1-0123456789ab\&quot;, \&quot;uri\&quot;: \&quot;majordomus://knowledge/e1-0123456789ab\&quot;,\n  \&quot;path\&quot;: \&quot;.ai/repo/knowledge/candidates/e1-0123456789ab.md\&quot;, \&quot;class\&quot;: \&quot;convention\&quot;,\n  \&quot;status\&quot;: \&quot;candidate\&quot;, \&quot;epistemics\&quot;: \&quot;decided\&quot;, \&quot;title\&quot;: \&quot;Tests run in disposable repositories\&quot;,\n  \&quot;date\&quot;: \&quot;2026-09-12\&quot;, \&quot;derived_from\&quot;: [\&quot;session:e1\&quot;], \&quot;episode\&quot;: \&quot;e1\&quot;,\n  \&quot;freshness\&quot;: \&quot;unknown\&quot;, \&quot;freshness_reason\&quot;: \&quot;no timestamp\&quot;, \&quot;age_source\&quot;: \&quot;date\&quot;\n}\&quot;#).unwrap();\nassert_eq!(c.episode, \&quot;e1\&quot;);\nassert_eq!(c.branch, None, \&quot;an episode this checkout never saw has no branch, and says so\&quot;);\n```&quot;,
       &quot;properties&quot;: {
-        &quot;about&quot;: {
-          &quot;description&quot;: &quot;The subject, as written.&quot;,
+        &quot;status&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;Always `candidate` here; carried so that a reader sees the same record shape as `record`.&quot;
+        },
+        &quot;uri&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;`majordomus://knowledge/&lt;id&gt;`.&quot;
+        },
+        &quot;epistemics&quot;: {
+          &quot;description&quot;: &quot;`observed`, `inferred` or `decided`.&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
-        &quot;candidates&quot;: {
-          &quot;description&quot;: &quot;The candidates awaiting review, by id.&quot;,
+        &quot;derived_from&quot;: {
+          &quot;type&quot;: &quot;array&quot;,
           &quot;items&quot;: {
             &quot;type&quot;: &quot;string&quot;
           },
-          &quot;type&quot;: &quot;array&quot;
+          &quot;description&quot;: &quot;The typed references the record names as its evidence, as declared.&quot;
         },
-        &quot;episodes&quot;: {
-          &quot;description&quot;: &quot;The episodes behind all of them, each once, in order.&quot;,
-          &quot;items&quot;: {
-            &quot;type&quot;: &quot;string&quot;
-          },
-          &quot;type&quot;: &quot;array&quot;
-        },
-        &quot;rejected&quot;: {
-          &quot;description&quot;: &quot;The records rejected and kept, by id.&quot;,
-          &quot;items&quot;: {
-            &quot;type&quot;: &quot;string&quot;
-          },
-          &quot;type&quot;: &quot;array&quot;
+        &quot;freshness&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/Freshness&quot;,
+          &quot;description&quot;: &quot;How long it has waited, judged against `session.freshness`.&quot;
         },
         &quot;route&quot;: {
-          &quot;description&quot;: &quot;The route of its records.&quot;,
+          &quot;description&quot;: &quot;Which owner should look first, derived from `about`&#39;s structure; empty without one.&quot;,
           &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;age_source&quot;: {
+          &quot;description&quot;: &quot;Where the wait was read from.&quot;,
+          &quot;$ref&quot;: &quot;#/$defs/AgeSource&quot;
+        },
+        &quot;branch&quot;: {
+          &quot;default&quot;: null,
+          &quot;description&quot;: &quot;The branch that episode ran on, joined to the tracked session record or, while that\nis not yet written, to the ledger&#39;s `session.started` line. `None` when this checkout\nknows nothing about the episode — named rather than hidden, so that a reader can tell\n\&quot;not this branch\&quot; from \&quot;not known here\&quot;. Serialised as `null` in that case, never\nomitted.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;freshness_reason&quot;: {
+          &quot;description&quot;: &quot;Why it was judged that way, in one phrase. Never empty.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;date&quot;: {
+          &quot;description&quot;: &quot;The day of the evidence, `YYYY-MM-DD`.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;id&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The record id, which is also its file name.&quot;
+        },
+        &quot;episode&quot;: {
+          &quot;description&quot;: &quot;The episode the record came from: the `session:` reference, or empty when it names none.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;age_minutes&quot;: {
+          &quot;type&quot;: [
+            &quot;integer&quot;,
+            &quot;null&quot;
+          ],
+          &quot;description&quot;: &quot;The wait in whole minutes, when it could be measured.&quot;,
+          &quot;format&quot;: &quot;int64&quot;
+        },
+        &quot;path&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;Repository-relative path.&quot;
+        },
+        &quot;about&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;What the observation it was derived from is about (ADR 0118); empty for a record\nderived from anything else.&quot;
+        },
+        &quot;title&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The assertion, in one line.&quot;
+        },
+        &quot;class&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;`fact`, `convention`, `constraint`, `memory` or `lesson`.&quot;
         }
       },
-      &quot;required&quot;: [
-        &quot;about&quot;,
-        &quot;route&quot;
-      ],
       &quot;type&quot;: &quot;object&quot;
     }
-  },
-  &quot;description&quot;: &quot;The candidates awaiting review, against the policy&#39;s cap.\n\n```\nuse majordomus_cli::capability::builtin::knowledge_base::KnowledgeCandidates;\nlet empty: KnowledgeCandidates = serde_json::from_str(\n    r#\&quot;{\&quot;total\&quot;:0,\&quot;on_this_branch\&quot;:0,\&quot;unattributed\&quot;:0,\&quot;branch\&quot;:\&quot;master\&quot;,\&quot;candidates\&quot;:[],\&quot;over_cap\&quot;:false}\&quot;#,\n).unwrap();\nassert_eq!(empty.total, 0, \&quot;an empty queue is an answer\&quot;);\nassert_eq!(empty.cap, None, \&quot;and a policy without the key declares no cap\&quot;);\n```&quot;,
-  &quot;properties&quot;: {
-    &quot;branch&quot;: {
-      &quot;description&quot;: &quot;The branch this answer is about, or `DETACHED`.&quot;,
-      &quot;type&quot;: &quot;string&quot;
-    },
-    &quot;candidates&quot;: {
-      &quot;description&quot;: &quot;Every candidate, in canonical order of id.&quot;,
-      &quot;items&quot;: {
-        &quot;$ref&quot;: &quot;#/$defs/KnowledgeCandidate&quot;
-      },
-      &quot;type&quot;: &quot;array&quot;
-    },
-    &quot;cap&quot;: {
-      &quot;description&quot;: &quot;`knowledge.candidates_max_files`, when the policy declares it.&quot;,
-      &quot;format&quot;: &quot;uint&quot;,
-      &quot;minimum&quot;: 0,
-      &quot;type&quot;: [
-        &quot;integer&quot;,
-        &quot;null&quot;
-      ]
-    },
-    &quot;findings&quot;: {
-      &quot;description&quot;: &quot;What a reader should know before trusting the above: a malformed record that was\nskipped, a cap that was exceeded, a policy that declares none. Empty is the good case.&quot;,
-      &quot;items&quot;: {
-        &quot;type&quot;: &quot;string&quot;
-      },
-      &quot;type&quot;: &quot;array&quot;
-    },
-    &quot;groups&quot;: {
-      &quot;description&quot;: &quot;The candidates and rejected records derived from observations, grouped by what they\nare about, in order of subject.&quot;,
-      &quot;items&quot;: {
-        &quot;$ref&quot;: &quot;#/$defs/KnowledgeGroup&quot;
-      },
-      &quot;type&quot;: &quot;array&quot;
-    },
-    &quot;on_this_branch&quot;: {
-      &quot;description&quot;: &quot;How many of them came from an episode on this checkout&#39;s branch.&quot;,
-      &quot;format&quot;: &quot;uint&quot;,
-      &quot;minimum&quot;: 0,
-      &quot;type&quot;: &quot;integer&quot;
-    },
-    &quot;over_cap&quot;: {
-      &quot;description&quot;: &quot;True when `total` exceeds `cap`. False when no cap is declared: nobody wrote one down.&quot;,
-      &quot;type&quot;: &quot;boolean&quot;
-    },
-    &quot;total&quot;: {
-      &quot;description&quot;: &quot;How many records carry `status: candidate` under the candidates class.&quot;,
-      &quot;format&quot;: &quot;uint&quot;,
-      &quot;minimum&quot;: 0,
-      &quot;type&quot;: &quot;integer&quot;
-    },
-    &quot;unattributed&quot;: {
-      &quot;description&quot;: &quot;How many name an episode this checkout knows nothing about.&quot;,
-      &quot;format&quot;: &quot;uint&quot;,
-      &quot;minimum&quot;: 0,
-      &quot;type&quot;: &quot;integer&quot;
-    }
-  },
-  &quot;required&quot;: [
-    &quot;total&quot;,
-    &quot;on_this_branch&quot;,
-    &quot;unattributed&quot;,
-    &quot;branch&quot;,
-    &quot;over_cap&quot;
-  ],
-  &quot;title&quot;: &quot;KnowledgeCandidates&quot;,
-  &quot;type&quot;: &quot;object&quot;
+  }
 }</pre></div>
   </details>
 </div>
@@ -580,7 +580,7 @@ are about, in order of subject.</td>
         <div><dt class="text-body-subtle">Rust module</dt><dd class="min-w-0 break-all font-mono text-heading">majordomus_cli::capability::builtin::knowledge_base</dd></div>
         <div><dt class="text-body-subtle">input type</dt><dd class="font-mono text-heading">Empty</dd></div>
         <div><dt class="text-body-subtle">output type</dt><dd class="font-mono text-heading">KnowledgeCandidates</dd></div>
-        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/aa9f816f8673880ab4beb6dbebff688f9da5bb65/docs/generated/modules/knowledge_base.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/knowledge_base.md</a></dd></div><div><dt class="text-body-subtle">tests</dt><dd class="min-w-0 space-y-1"><a href="https://github.com/korczis/prismatic-majordomus/blob/aa9f816f8673880ab4beb6dbebff688f9da5bb65/apps/majordomus-cli/tests/knowledge_base.rs" class="block break-all font-mono text-xs text-fg-brand hover:underline py-1">apps/majordomus-cli/tests/knowledge_base.rs</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">c514db707bb1f5f7557f2a1629d42c4bdc05eb7ef58464c288e42bafcd3d8720</dd></div>
+        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/docs/generated/modules/knowledge_base.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/knowledge_base.md</a></dd></div><div><dt class="text-body-subtle">tests</dt><dd class="min-w-0 space-y-1"><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/apps/majordomus-cli/tests/knowledge_base.rs" class="block break-all font-mono text-xs text-fg-brand hover:underline py-1">apps/majordomus-cli/tests/knowledge_base.rs</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">3f734f2faf797f0ca7c39b4cd837e68b6619c41c6f6711f3d3aeca8f341934eb</dd></div>
         <div><dt class="text-body-subtle">generated by</dt><dd class="font-mono text-heading">majordomus-cli 1.0.0-alpha.10</dd></div>
       </dl>
     </div>
@@ -636,9 +636,9 @@ are about, in order of subject.</td>
       <div class="min-w-0">
         <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">Project</h2><ul class="space-y-2 text-sm font-medium text-body">
           <li><a href="https://github.com/korczis/prismatic-majordomus" class="hover:text-heading hover:underline">GitHub</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/aa9f816f8673880ab4beb6dbebff688f9da5bb65/LICENSE" class="hover:text-heading hover:underline">MIT licence</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/aa9f816f8673880ab4beb6dbebff688f9da5bb65/SECURITY.md" class="hover:text-heading hover:underline">Security policy</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/aa9f816f8673880ab4beb6dbebff688f9da5bb65/CONTRIBUTING.md" class="hover:text-heading hover:underline">Contributing guide</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/LICENSE" class="hover:text-heading hover:underline">MIT licence</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/SECURITY.md" class="hover:text-heading hover:underline">Security policy</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/CONTRIBUTING.md" class="hover:text-heading hover:underline">Contributing guide</a></li>
         </ul>
       </div>
     </div>
@@ -646,7 +646,7 @@ are about, in order of subject.</td>
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.10</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/aa9f816f8673880ab4beb6dbebff688f9da5bb65" class="font-mono underline">aa9f816</a> · inputs <span class="font-mono">a64b981ed16e</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/architecture/" class="underline">how this site is derived</a> names them.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.10</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/745db2ea21e02613943face75a2bf95542be1f2e" class="font-mono underline">745db2e</a> · inputs <span class="font-mono">0a58c217d1b7</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/architecture/" class="underline">how this site is derived</a> names them.</p>
     </div>
   </div>
 </footer>

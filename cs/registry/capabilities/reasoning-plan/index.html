@@ -220,6 +220,11 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
     <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
       <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">vlastnost</th><th class="px-3 py-2">typ</th><th class="px-3 py-2">povinné</th><th class="px-3 py-2">popis</th></tr></thead>
       <tbody><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">podstatnost</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">jedno ze 2</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">ne</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words"><code>trivial</code>, <code>low</code>, <code>material</code>, <code>high</code> nebo <code>critical</code>.</td>
+      </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">capabilities</td>
         <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
         <td class="px-3 py-2 font-mono text-xs text-body">ne</td>
@@ -229,89 +234,12 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
         <td class="px-3 py-2 font-mono text-xs text-body">jedno ze 2</td>
         <td class="px-3 py-2 font-mono text-xs text-body">ne</td>
         <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words"><code>low</code>, <code>medium</code> nebo <code>high</code>.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">podstatnost</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">jedno ze 2</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">ne</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words"><code>trivial</code>, <code>low</code>, <code>material</code>, <code>high</code> nebo <code>critical</code>.</td>
       </tr></tbody>
     </table>
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
-  &quot;$defs&quot;: {
-    &quot;Materiality&quot;: {
-      &quot;description&quot;: &quot;How much the uncertain decision could matter. Ordered from `trivial` to `critical`:\nwith the mode it sets the review budget, and from `material` up a decision taken alone\ncarries the structured local review.\n\n```\nuse majordomus_cli::reasoning::policy::Materiality;\n\nassert_eq!(Materiality::default(), Materiality::Low);\nassert!(Materiality::Material &lt; Materiality::Critical);\nlet m: Materiality = serde_json::from_str(\&quot;\\\&quot;high\\\&quot;\&quot;).unwrap();\nassert_eq!(m, Materiality::High);\n```&quot;,
-      &quot;oneOf&quot;: [
-        {
-          &quot;const&quot;: &quot;trivial&quot;,
-          &quot;description&quot;: &quot;A name, a format, an obvious convention: never reviewed.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;low&quot;,
-          &quot;description&quot;: &quot;Local and reversible.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;material&quot;,
-          &quot;description&quot;: &quot;Could affect correctness, an interface, persistent data, concurrency, operations.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;high&quot;,
-          &quot;description&quot;: &quot;Architecture, security, compatibility or a public contract.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;critical&quot;,
-          &quot;description&quot;: &quot;Irreversible or destructive, or repository governance itself.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      ]
-    },
-    &quot;ReasoningConfidence&quot;: {
-      &quot;description&quot;: &quot;How sure the primary executor is of its current hypothesis. `high` lowers the review\nbudget by one; the other levels leave it as the mode and materiality set it.\n\n```\nuse majordomus_cli::reasoning::availability::{ModeResolution, ReasoningMode};\nuse majordomus_cli::reasoning::policy::{plan, Materiality, PlanRequest, ReasoningConfidence};\n\nlet mode = ModeResolution { mode: ReasoningMode::Strict, source: \&quot;default\&quot;.into() };\nlet budget = |confidence: ReasoningConfidence| {\n    let request = PlanRequest { materiality: Materiality::Critical, confidence, ..Default::default() };\n    plan(&amp;request, &amp;mode, &amp;[]).budget\n};\nassert_eq!(budget(ReasoningConfidence::Medium), 3);\nassert_eq!(budget(ReasoningConfidence::High), 2);\n```&quot;,
-      &quot;oneOf&quot;: [
-        {
-          &quot;const&quot;: &quot;low&quot;,
-          &quot;description&quot;: &quot;A guess the evidence does not yet support.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;medium&quot;,
-          &quot;description&quot;: &quot;Supported, with open questions.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;high&quot;,
-          &quot;description&quot;: &quot;Supported by evidence that would be hard to overturn.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      ]
-    }
-  },
-  &quot;additionalProperties&quot;: false,
-  &quot;description&quot;: &quot;The input of `reasoning.plan`: a stated uncertainty, in transport-friendly scalars.\nNothing is recorded; `reasoning.record` with a `plan` records one.\n\n```\nuse majordomus_cli::capability::builtin::reasoning::PlanPreviewInput;\nuse majordomus_cli::reasoning::Materiality;\n\nlet input: PlanPreviewInput = serde_json::from_value(serde_json::json!({\n    \&quot;materiality\&quot;: \&quot;high\&quot;, \&quot;capabilities\&quot;: \&quot;code_review,security_review\&quot;,\n})).unwrap();\nassert_eq!(input.materiality, Some(Materiality::High));\nassert!(input.confidence.is_none(), \&quot;an absent field takes the policy&#39;s default\&quot;);\nassert!(serde_json::from_value::&lt;PlanPreviewInput&gt;(serde_json::json!({ \&quot;quorum\&quot;: 2 })).is_err());\n```&quot;,
   &quot;properties&quot;: {
-    &quot;capabilities&quot;: {
-      &quot;description&quot;: &quot;Advisory capabilities review needs, comma-separated.&quot;,
-      &quot;type&quot;: [
-        &quot;string&quot;,
-        &quot;null&quot;
-      ]
-    },
-    &quot;confidence&quot;: {
-      &quot;anyOf&quot;: [
-        {
-          &quot;$ref&quot;: &quot;#/$defs/ReasoningConfidence&quot;
-        },
-        {
-          &quot;type&quot;: &quot;null&quot;
-        }
-      ],
-      &quot;description&quot;: &quot;`low`, `medium` or `high`.&quot;
-    },
     &quot;materiality&quot;: {
       &quot;anyOf&quot;: [
         {
@@ -322,10 +250,82 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
         }
       ],
       &quot;description&quot;: &quot;`trivial`, `low`, `material`, `high` or `critical`.&quot;
+    },
+    &quot;capabilities&quot;: {
+      &quot;description&quot;: &quot;Advisory capabilities review needs, comma-separated.&quot;,
+      &quot;type&quot;: [
+        &quot;string&quot;,
+        &quot;null&quot;
+      ]
+    },
+    &quot;confidence&quot;: {
+      &quot;description&quot;: &quot;`low`, `medium` or `high`.&quot;,
+      &quot;anyOf&quot;: [
+        {
+          &quot;$ref&quot;: &quot;#/$defs/ReasoningConfidence&quot;
+        },
+        {
+          &quot;type&quot;: &quot;null&quot;
+        }
+      ]
     }
   },
   &quot;title&quot;: &quot;PlanPreviewInput&quot;,
-  &quot;type&quot;: &quot;object&quot;
+  &quot;type&quot;: &quot;object&quot;,
+  &quot;$defs&quot;: {
+    &quot;Materiality&quot;: {
+      &quot;description&quot;: &quot;How much the uncertain decision could matter. Ordered from `trivial` to `critical`:\nwith the mode it sets the review budget, and from `material` up a decision taken alone\ncarries the structured local review.\n\n```\nuse majordomus_cli::reasoning::policy::Materiality;\n\nassert_eq!(Materiality::default(), Materiality::Low);\nassert!(Materiality::Material &lt; Materiality::Critical);\nlet m: Materiality = serde_json::from_str(\&quot;\\\&quot;high\\\&quot;\&quot;).unwrap();\nassert_eq!(m, Materiality::High);\n```&quot;,
+      &quot;oneOf&quot;: [
+        {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;trivial&quot;,
+          &quot;description&quot;: &quot;A name, a format, an obvious convention: never reviewed.&quot;
+        },
+        {
+          &quot;description&quot;: &quot;Local and reversible.&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;low&quot;
+        },
+        {
+          &quot;const&quot;: &quot;material&quot;,
+          &quot;description&quot;: &quot;Could affect correctness, an interface, persistent data, concurrency, operations.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;description&quot;: &quot;Architecture, security, compatibility or a public contract.&quot;,
+          &quot;const&quot;: &quot;high&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;critical&quot;,
+          &quot;description&quot;: &quot;Irreversible or destructive, or repository governance itself.&quot;
+        }
+      ]
+    },
+    &quot;ReasoningConfidence&quot;: {
+      &quot;oneOf&quot;: [
+        {
+          &quot;description&quot;: &quot;A guess the evidence does not yet support.&quot;,
+          &quot;const&quot;: &quot;low&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;medium&quot;,
+          &quot;description&quot;: &quot;Supported, with open questions.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;description&quot;: &quot;Supported by evidence that would be hard to overturn.&quot;,
+          &quot;const&quot;: &quot;high&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      ],
+      &quot;description&quot;: &quot;How sure the primary executor is of its current hypothesis. `high` lowers the review\nbudget by one; the other levels leave it as the mode and materiality set it.\n\n```\nuse majordomus_cli::reasoning::availability::{ModeResolution, ReasoningMode};\nuse majordomus_cli::reasoning::policy::{plan, Materiality, PlanRequest, ReasoningConfidence};\n\nlet mode = ModeResolution { mode: ReasoningMode::Strict, source: \&quot;default\&quot;.into() };\nlet budget = |confidence: ReasoningConfidence| {\n    let request = PlanRequest { materiality: Materiality::Critical, confidence, ..Default::default() };\n    plan(&amp;request, &amp;mode, &amp;[]).budget\n};\nassert_eq!(budget(ReasoningConfidence::Medium), 3);\nassert_eq!(budget(ReasoningConfidence::High), 2);\n```&quot;
+    }
+  },
+  &quot;additionalProperties&quot;: false,
+  &quot;description&quot;: &quot;The input of `reasoning.plan`: a stated uncertainty, in transport-friendly scalars.\nNothing is recorded; `reasoning.record` with a `plan` records one.\n\n```\nuse majordomus_cli::capability::builtin::reasoning::PlanPreviewInput;\nuse majordomus_cli::reasoning::Materiality;\n\nlet input: PlanPreviewInput = serde_json::from_value(serde_json::json!({\n    \&quot;materiality\&quot;: \&quot;high\&quot;, \&quot;capabilities\&quot;: \&quot;code_review,security_review\&quot;,\n})).unwrap();\nassert_eq!(input.materiality, Some(Materiality::High));\nassert!(input.confidence.is_none(), \&quot;an absent field takes the policy&#39;s default\&quot;);\nassert!(serde_json::from_value::&lt;PlanPreviewInput&gt;(serde_json::json!({ \&quot;quorum\&quot;: 2 })).is_err());\n```&quot;
 }</pre></div>
   </details>
 </div>
@@ -345,25 +345,20 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
     <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
       <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">vlastnost</th><th class="px-3 py-2">typ</th><th class="px-3 py-2">povinné</th><th class="px-3 py-2">popis</th></tr></thead>
       <tbody><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">dostupné</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">integer</td>
+        <td class="px-3 py-2 font-mono text-heading">důvod</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
         <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Poradci dostupní v době tvorby plánu, ať byl vybrán kdokoli.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">rozpočet</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">integer</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Kolik poradců režim a podstatnost dovolují.</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Proč, jednou větou.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">capabilities</td>
         <td class="px-3 py-2 font-mono text-xs text-body">array</td>
         <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
         <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Schopnosti, o jejichž recenzi se žádalo.</td>
       </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">jistota</td>
+        <td class="px-3 py-2 font-mono text-heading">podstatnost</td>
         <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
         <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Jistota, s níž odpověděl.</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Významnost, na kterou odpověděl.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">vyloučeno</td>
         <td class="px-3 py-2 font-mono text-xs text-body">array</td>
@@ -375,293 +370,112 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
         <td class="px-3 py-2 font-mono text-xs text-body">ne</td>
         <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Strukturovaná lokální revize k provedení, když na materiální nejistotu nestačí žádný poradce.</td>
       </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">podstatnost</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Významnost, na kterou odpověděl.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">režim</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Režim, ve kterém vznikl.</td>
-      </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">mode_source</td>
         <td class="px-3 py-2 font-mono text-xs text-body">string</td>
         <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
         <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Co rozhodlo o režimu.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">dostupné</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">integer</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Poradci dostupní v době tvorby plánu, ať byl vybrán kdokoli.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">vybráno</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Poradci ke konzultaci, v pořadí výběru.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">rozpočet</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">integer</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Kolik poradců režim a podstatnost dovolují.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">jistota</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Jistota, s níž odpověděl.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">výsledek</td>
         <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
         <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
         <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Co dělat.</td>
       </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">důvod</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
+        <td class="px-3 py-2 font-mono text-heading">režim</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
         <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Proč, jednou větou.</td>
-      </tr><tr class="border-t border-default align-top">
-        <td class="px-3 py-2 font-mono text-heading">vybráno</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
-        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
-        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Poradci ke konzultaci, v pořadí výběru.</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Režim, ve kterém vznikl.</td>
       </tr></tbody>
     </table>
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
-  &quot;$defs&quot;: {
-    &quot;AdvisorStatus&quot;: {
-      &quot;description&quot;: &quot;An advisor&#39;s standing: whether it may be asked now and, when not, which kind of\nreason keeps it out. Only `available` advisors enter a plan.\n\n```\nuse majordomus_cli::reasoning::availability::AdvisorStatus;\n\nassert_eq!(serde_json::to_value(AdvisorStatus::NotConfigured).unwrap(), \&quot;not_configured\&quot;);\nlet s: AdvisorStatus = serde_json::from_str(\&quot;\\\&quot;rate_limited\\\&quot;\&quot;).unwrap();\nassert_eq!(s, AdvisorStatus::RateLimited);\n```&quot;,
-      &quot;oneOf&quot;: [
-        {
-          &quot;const&quot;: &quot;available&quot;,
-          &quot;description&quot;: &quot;It may be asked. Presence was observed; whether it answers is learned by asking.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;unavailable&quot;,
-          &quot;description&quot;: &quot;Not installed: its executable is not on `PATH`.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;not_configured&quot;,
-          &quot;description&quot;: &quot;Installed or reachable in principle, but its credential is not configured.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;disabled&quot;,
-          &quot;description&quot;: &quot;Left out by the mode or by an explicit disable.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;temporarily_failed&quot;,
-          &quot;description&quot;: &quot;Its recent consultations failed; its circuit is open until the cooldown passes.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;rate_limited&quot;,
-          &quot;description&quot;: &quot;It answered with a rate limit; not asked again until the limit passes.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      ]
-    },
-    &quot;ExcludedAdvisor&quot;: {
-      &quot;description&quot;: &quot;One advisor left out of the plan, its standing when the plan was made, and why: its\nstatus, a capability it does not offer, or a budget already spent.\n\n```\nuse majordomus_cli::reasoning::availability::{AdvisorState, AdvisorStatus, ModeResolution, ReasoningMode};\nuse majordomus_cli::reasoning::policy::{plan, ExcludedAdvisor, Materiality, PlanRequest};\n\nfn advisor(id: &amp;str, adapter: &amp;str, status: &amp;str) -&gt; AdvisorState {\n    serde_json::from_value(serde_json::json!({\n        \&quot;id\&quot;: id, \&quot;title\&quot;: id, \&quot;transport\&quot;: \&quot;api\&quot;, \&quot;adapter\&quot;: adapter,\n        \&quot;capabilities\&quot;: [\&quot;independent_reasoning\&quot;], \&quot;status\&quot;: status,\n        \&quot;reason\&quot;: \&quot;present\&quot;, \&quot;probe\&quot;: \&quot;\&quot;,\n    }))\n    .unwrap()\n}\nlet mode = ModeResolution { mode: ReasoningMode::Standard, source: \&quot;default\&quot;.into() };\nlet request = PlanRequest { materiality: Materiality::Material, ..Default::default() };\nlet states = [advisor(\&quot;a\&quot;, \&quot;x-api\&quot;, \&quot;available\&quot;), advisor(\&quot;b\&quot;, \&quot;y-api\&quot;, \&quot;available\&quot;)];\nlet p = plan(&amp;request, &amp;mode, &amp;states);\nlet left: &amp;ExcludedAdvisor = &amp;p.excluded[0];\nassert_eq!((left.advisor.as_str(), left.status), (\&quot;b\&quot;, AdvisorStatus::Available));\nassert!(left.reason.contains(\&quot;budget was spent\&quot;));\n```&quot;,
-      &quot;properties&quot;: {
-        &quot;advisor&quot;: {
-          &quot;description&quot;: &quot;The advisor id.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;reason&quot;: {
-          &quot;description&quot;: &quot;Why it is not in the plan.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;status&quot;: {
-          &quot;$ref&quot;: &quot;#/$defs/AdvisorStatus&quot;,
-          &quot;description&quot;: &quot;Its standing when the plan was made.&quot;
-        }
-      },
-      &quot;required&quot;: [
-        &quot;advisor&quot;,
-        &quot;status&quot;,
-        &quot;reason&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
-    },
-    &quot;Materiality&quot;: {
-      &quot;description&quot;: &quot;How much the uncertain decision could matter. Ordered from `trivial` to `critical`:\nwith the mode it sets the review budget, and from `material` up a decision taken alone\ncarries the structured local review.\n\n```\nuse majordomus_cli::reasoning::policy::Materiality;\n\nassert_eq!(Materiality::default(), Materiality::Low);\nassert!(Materiality::Material &lt; Materiality::Critical);\nlet m: Materiality = serde_json::from_str(\&quot;\\\&quot;high\\\&quot;\&quot;).unwrap();\nassert_eq!(m, Materiality::High);\n```&quot;,
-      &quot;oneOf&quot;: [
-        {
-          &quot;const&quot;: &quot;trivial&quot;,
-          &quot;description&quot;: &quot;A name, a format, an obvious convention: never reviewed.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;low&quot;,
-          &quot;description&quot;: &quot;Local and reversible.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;material&quot;,
-          &quot;description&quot;: &quot;Could affect correctness, an interface, persistent data, concurrency, operations.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;high&quot;,
-          &quot;description&quot;: &quot;Architecture, security, compatibility or a public contract.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;critical&quot;,
-          &quot;description&quot;: &quot;Irreversible or destructive, or repository governance itself.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      ]
-    },
-    &quot;PlanOutcome&quot;: {
-      &quot;description&quot;: &quot;What the plan decided: consult the selected advisors, decide on local evidence, or\nreuse a standing conclusion. Deciding locally is an ordinary outcome, not a failure.\n\n```\nuse majordomus_cli::reasoning::availability::{ModeResolution, ReasoningMode};\nuse majordomus_cli::reasoning::policy::{plan, Materiality, PlanOutcome, PlanRequest};\n\nlet mode = ModeResolution { mode: ReasoningMode::Ci, source: \&quot;CI\&quot;.into() };\nlet request = PlanRequest { materiality: Materiality::Critical, ..Default::default() };\nlet outcome: PlanOutcome = plan(&amp;request, &amp;mode, &amp;[]).outcome;\nassert_eq!(outcome, PlanOutcome::DecideLocally);\nassert_eq!(serde_json::to_value(outcome).unwrap(), \&quot;decide_locally\&quot;);\n```&quot;,
-      &quot;oneOf&quot;: [
-        {
-          &quot;const&quot;: &quot;consult&quot;,
-          &quot;description&quot;: &quot;Consult the selected advisors, then conclude.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;decide_locally&quot;,
-          &quot;description&quot;: &quot;Decide on local evidence; no independent review is called for or none is available.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;reuse_prior&quot;,
-          &quot;description&quot;: &quot;A standing conclusion already answers this; reuse it rather than ask again.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      ]
-    },
-    &quot;ReasoningConfidence&quot;: {
-      &quot;description&quot;: &quot;How sure the primary executor is of its current hypothesis. `high` lowers the review\nbudget by one; the other levels leave it as the mode and materiality set it.\n\n```\nuse majordomus_cli::reasoning::availability::{ModeResolution, ReasoningMode};\nuse majordomus_cli::reasoning::policy::{plan, Materiality, PlanRequest, ReasoningConfidence};\n\nlet mode = ModeResolution { mode: ReasoningMode::Strict, source: \&quot;default\&quot;.into() };\nlet budget = |confidence: ReasoningConfidence| {\n    let request = PlanRequest { materiality: Materiality::Critical, confidence, ..Default::default() };\n    plan(&amp;request, &amp;mode, &amp;[]).budget\n};\nassert_eq!(budget(ReasoningConfidence::Medium), 3);\nassert_eq!(budget(ReasoningConfidence::High), 2);\n```&quot;,
-      &quot;oneOf&quot;: [
-        {
-          &quot;const&quot;: &quot;low&quot;,
-          &quot;description&quot;: &quot;A guess the evidence does not yet support.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;medium&quot;,
-          &quot;description&quot;: &quot;Supported, with open questions.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;high&quot;,
-          &quot;description&quot;: &quot;Supported by evidence that would be hard to overturn.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      ]
-    },
-    &quot;ReasoningMode&quot;: {
-      &quot;description&quot;: &quot;How much independent review a session may use, and where from. The policy reads it\nfor the review budget; availability reads it to leave advisors out (`ci` all of them,\n`offline` every one that leaves the machine). `standard` is the default.\n\n```\nuse majordomus_cli::reasoning::availability::ReasoningMode;\n\nassert_eq!(ReasoningMode::default(), ReasoningMode::Standard);\nassert_eq!(serde_json::to_value(ReasoningMode::Offline).unwrap(), \&quot;offline\&quot;);\nlet m: ReasoningMode = serde_json::from_str(\&quot;\\\&quot;strict\\\&quot;\&quot;).unwrap();\nassert_eq!(m, ReasoningMode::Strict);\n```&quot;,
-      &quot;oneOf&quot;: [
-        {
-          &quot;const&quot;: &quot;offline&quot;,
-          &quot;description&quot;: &quot;No network: only advisors that stay on this machine.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;ci&quot;,
-          &quot;description&quot;: &quot;Deterministic: no advisor at all, whatever is installed.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;fast&quot;,
-          &quot;description&quot;: &quot;Review only where the blast radius is high.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;standard&quot;,
-          &quot;description&quot;: &quot;Review where uncertainty is material.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        {
-          &quot;const&quot;: &quot;strict&quot;,
-          &quot;description&quot;: &quot;Review wider, and complementary review where the stakes are highest.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      ]
-    },
-    &quot;SelectedAdvisor&quot;: {
-      &quot;description&quot;: &quot;One selected advisor, the requested capabilities it covers, and why the greedy\nselection chose it at its position.\n\n```\nuse majordomus_cli::reasoning::availability::{AdvisorState, ModeResolution, ReasoningMode};\nuse majordomus_cli::reasoning::policy::{plan, Materiality, PlanRequest, SelectedAdvisor};\n\nfn advisor(id: &amp;str, adapter: &amp;str, status: &amp;str) -&gt; AdvisorState {\n    serde_json::from_value(serde_json::json!({\n        \&quot;id\&quot;: id, \&quot;title\&quot;: id, \&quot;transport\&quot;: \&quot;api\&quot;, \&quot;adapter\&quot;: adapter,\n        \&quot;capabilities\&quot;: [\&quot;independent_reasoning\&quot;], \&quot;status\&quot;: status,\n        \&quot;reason\&quot;: \&quot;present\&quot;, \&quot;probe\&quot;: \&quot;\&quot;,\n    }))\n    .unwrap()\n}\nlet mode = ModeResolution { mode: ReasoningMode::Standard, source: \&quot;default\&quot;.into() };\nlet request = PlanRequest { materiality: Materiality::Material, ..Default::default() };\nlet p = plan(&amp;request, &amp;mode, &amp;[advisor(\&quot;a\&quot;, \&quot;x-api\&quot;, \&quot;available\&quot;)]);\nlet chosen: &amp;SelectedAdvisor = &amp;p.selected[0];\nassert_eq!(chosen.advisor, \&quot;a\&quot;);\nassert_eq!(chosen.covers, [\&quot;independent_reasoning\&quot;]);\nassert!(chosen.why.starts_with(\&quot;the first available advisor\&quot;));\n```&quot;,
-      &quot;properties&quot;: {
-        &quot;advisor&quot;: {
-          &quot;description&quot;: &quot;The advisor id.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        },
-        &quot;covers&quot;: {
-          &quot;description&quot;: &quot;The requested capabilities it covers.&quot;,
-          &quot;items&quot;: {
-            &quot;type&quot;: &quot;string&quot;
-          },
-          &quot;type&quot;: &quot;array&quot;
-        },
-        &quot;why&quot;: {
-          &quot;description&quot;: &quot;Why it was chosen.&quot;,
-          &quot;type&quot;: &quot;string&quot;
-        }
-      },
-      &quot;required&quot;: [
-        &quot;advisor&quot;,
-        &quot;covers&quot;,
-        &quot;why&quot;
-      ],
-      &quot;type&quot;: &quot;object&quot;
-    }
-  },
-  &quot;description&quot;: &quot;The plan: the decision with its reasons attached. It carries what it answered (mode,\nmateriality, confidence, capabilities), the budget, the outcome with one sentence of\nwhy, every advisor selected or excluded, and the local review when one is due.\n\n```\nuse majordomus_cli::reasoning::availability::{ModeResolution, ReasoningMode};\nuse majordomus_cli::reasoning::policy::{plan, Materiality, PlanRequest, ReviewPlan, LOCAL_REVIEW};\n\nlet mode = ModeResolution { mode: ReasoningMode::Offline, source: \&quot;MAJORDOMUS_REASONING_MODE\&quot;.into() };\nlet request = PlanRequest { materiality: Materiality::Material, ..Default::default() };\nlet p: ReviewPlan = plan(&amp;request, &amp;mode, &amp;[]);\nassert_eq!(p.mode_source, \&quot;MAJORDOMUS_REASONING_MODE\&quot;);\nassert_eq!(p.capabilities, [\&quot;independent_reasoning\&quot;]);\nassert_eq!((p.budget, p.available), (1, 0));\nassert_eq!(p.local_review.len(), LOCAL_REVIEW.len());\nassert!(p.reason.starts_with(\&quot;no available advisor offers\&quot;));\n```&quot;,
   &quot;properties&quot;: {
+    &quot;reason&quot;: {
+      &quot;description&quot;: &quot;Why, in one sentence.&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;capabilities&quot;: {
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;description&quot;: &quot;The capabilities review was asked for.&quot;,
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;string&quot;
+      }
+    },
+    &quot;materiality&quot;: {
+      &quot;description&quot;: &quot;The materiality it answered.&quot;,
+      &quot;$ref&quot;: &quot;#/$defs/Materiality&quot;
+    },
+    &quot;excluded&quot;: {
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;description&quot;: &quot;Every advisor not selected, with its reason.&quot;,
+      &quot;items&quot;: {
+        &quot;$ref&quot;: &quot;#/$defs/ExcludedAdvisor&quot;
+      }
+    },
+    &quot;local_review&quot;: {
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;description&quot;: &quot;The structured local review to perform, when material uncertainty meets no advisor.&quot;,
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;string&quot;
+      }
+    },
+    &quot;mode_source&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;description&quot;: &quot;What decided the mode.&quot;
+    },
     &quot;available&quot;: {
-      &quot;description&quot;: &quot;Advisors available when the plan was made, whatever was selected.&quot;,
-      &quot;format&quot;: &quot;uint&quot;,
+      &quot;type&quot;: &quot;integer&quot;,
       &quot;minimum&quot;: 0,
-      &quot;type&quot;: &quot;integer&quot;
+      &quot;format&quot;: &quot;uint&quot;,
+      &quot;description&quot;: &quot;Advisors available when the plan was made, whatever was selected.&quot;
+    },
+    &quot;selected&quot;: {
+      &quot;items&quot;: {
+        &quot;$ref&quot;: &quot;#/$defs/SelectedAdvisor&quot;
+      },
+      &quot;description&quot;: &quot;The advisors to consult, in selection order.&quot;,
+      &quot;type&quot;: &quot;array&quot;
     },
     &quot;budget&quot;: {
       &quot;description&quot;: &quot;How many advisors the mode and materiality allow.&quot;,
       &quot;format&quot;: &quot;uint&quot;,
-      &quot;minimum&quot;: 0,
-      &quot;type&quot;: &quot;integer&quot;
-    },
-    &quot;capabilities&quot;: {
-      &quot;description&quot;: &quot;The capabilities review was asked for.&quot;,
-      &quot;items&quot;: {
-        &quot;type&quot;: &quot;string&quot;
-      },
-      &quot;type&quot;: &quot;array&quot;
+      &quot;type&quot;: &quot;integer&quot;,
+      &quot;minimum&quot;: 0
     },
     &quot;confidence&quot;: {
       &quot;$ref&quot;: &quot;#/$defs/ReasoningConfidence&quot;,
       &quot;description&quot;: &quot;The confidence it answered.&quot;
     },
-    &quot;excluded&quot;: {
-      &quot;description&quot;: &quot;Every advisor not selected, with its reason.&quot;,
-      &quot;items&quot;: {
-        &quot;$ref&quot;: &quot;#/$defs/ExcludedAdvisor&quot;
-      },
-      &quot;type&quot;: &quot;array&quot;
-    },
-    &quot;local_review&quot;: {
-      &quot;description&quot;: &quot;The structured local review to perform, when material uncertainty meets no advisor.&quot;,
-      &quot;items&quot;: {
-        &quot;type&quot;: &quot;string&quot;
-      },
-      &quot;type&quot;: &quot;array&quot;
-    },
-    &quot;materiality&quot;: {
-      &quot;$ref&quot;: &quot;#/$defs/Materiality&quot;,
-      &quot;description&quot;: &quot;The materiality it answered.&quot;
-    },
-    &quot;mode&quot;: {
-      &quot;$ref&quot;: &quot;#/$defs/ReasoningMode&quot;,
-      &quot;description&quot;: &quot;The mode it was made under.&quot;
-    },
-    &quot;mode_source&quot;: {
-      &quot;description&quot;: &quot;What decided the mode.&quot;,
-      &quot;type&quot;: &quot;string&quot;
-    },
     &quot;outcome&quot;: {
       &quot;$ref&quot;: &quot;#/$defs/PlanOutcome&quot;,
       &quot;description&quot;: &quot;What to do.&quot;
     },
-    &quot;reason&quot;: {
-      &quot;description&quot;: &quot;Why, in one sentence.&quot;,
-      &quot;type&quot;: &quot;string&quot;
-    },
-    &quot;selected&quot;: {
-      &quot;description&quot;: &quot;The advisors to consult, in selection order.&quot;,
-      &quot;items&quot;: {
-        &quot;$ref&quot;: &quot;#/$defs/SelectedAdvisor&quot;
-      },
-      &quot;type&quot;: &quot;array&quot;
+    &quot;mode&quot;: {
+      &quot;description&quot;: &quot;The mode it was made under.&quot;,
+      &quot;$ref&quot;: &quot;#/$defs/ReasoningMode&quot;
     }
   },
+  &quot;description&quot;: &quot;The plan: the decision with its reasons attached. It carries what it answered (mode,\nmateriality, confidence, capabilities), the budget, the outcome with one sentence of\nwhy, every advisor selected or excluded, and the local review when one is due.\n\n```\nuse majordomus_cli::reasoning::availability::{ModeResolution, ReasoningMode};\nuse majordomus_cli::reasoning::policy::{plan, Materiality, PlanRequest, ReviewPlan, LOCAL_REVIEW};\n\nlet mode = ModeResolution { mode: ReasoningMode::Offline, source: \&quot;MAJORDOMUS_REASONING_MODE\&quot;.into() };\nlet request = PlanRequest { materiality: Materiality::Material, ..Default::default() };\nlet p: ReviewPlan = plan(&amp;request, &amp;mode, &amp;[]);\nassert_eq!(p.mode_source, \&quot;MAJORDOMUS_REASONING_MODE\&quot;);\nassert_eq!(p.capabilities, [\&quot;independent_reasoning\&quot;]);\nassert_eq!((p.budget, p.available), (1, 0));\nassert_eq!(p.local_review.len(), LOCAL_REVIEW.len());\nassert!(p.reason.starts_with(\&quot;no available advisor offers\&quot;));\n```&quot;,
   &quot;required&quot;: [
     &quot;mode&quot;,
     &quot;mode_source&quot;,
@@ -676,6 +490,192 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
     &quot;available&quot;
   ],
   &quot;title&quot;: &quot;ReviewPlan&quot;,
+  &quot;$defs&quot;: {
+    &quot;ReasoningMode&quot;: {
+      &quot;description&quot;: &quot;How much independent review a session may use, and where from. The policy reads it\nfor the review budget; availability reads it to leave advisors out (`ci` all of them,\n`offline` every one that leaves the machine). `standard` is the default.\n\n```\nuse majordomus_cli::reasoning::availability::ReasoningMode;\n\nassert_eq!(ReasoningMode::default(), ReasoningMode::Standard);\nassert_eq!(serde_json::to_value(ReasoningMode::Offline).unwrap(), \&quot;offline\&quot;);\nlet m: ReasoningMode = serde_json::from_str(\&quot;\\\&quot;strict\\\&quot;\&quot;).unwrap();\nassert_eq!(m, ReasoningMode::Strict);\n```&quot;,
+      &quot;oneOf&quot;: [
+        {
+          &quot;const&quot;: &quot;offline&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;No network: only advisors that stay on this machine.&quot;
+        },
+        {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;ci&quot;,
+          &quot;description&quot;: &quot;Deterministic: no advisor at all, whatever is installed.&quot;
+        },
+        {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;Review only where the blast radius is high.&quot;,
+          &quot;const&quot;: &quot;fast&quot;
+        },
+        {
+          &quot;const&quot;: &quot;standard&quot;,
+          &quot;description&quot;: &quot;Review where uncertainty is material.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;strict&quot;,
+          &quot;description&quot;: &quot;Review wider, and complementary review where the stakes are highest.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      ]
+    },
+    &quot;PlanOutcome&quot;: {
+      &quot;oneOf&quot;: [
+        {
+          &quot;const&quot;: &quot;consult&quot;,
+          &quot;description&quot;: &quot;Consult the selected advisors, then conclude.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;decide_locally&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;Decide on local evidence; no independent review is called for or none is available.&quot;
+        },
+        {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;reuse_prior&quot;,
+          &quot;description&quot;: &quot;A standing conclusion already answers this; reuse it rather than ask again.&quot;
+        }
+      ],
+      &quot;description&quot;: &quot;What the plan decided: consult the selected advisors, decide on local evidence, or\nreuse a standing conclusion. Deciding locally is an ordinary outcome, not a failure.\n\n```\nuse majordomus_cli::reasoning::availability::{ModeResolution, ReasoningMode};\nuse majordomus_cli::reasoning::policy::{plan, Materiality, PlanOutcome, PlanRequest};\n\nlet mode = ModeResolution { mode: ReasoningMode::Ci, source: \&quot;CI\&quot;.into() };\nlet request = PlanRequest { materiality: Materiality::Critical, ..Default::default() };\nlet outcome: PlanOutcome = plan(&amp;request, &amp;mode, &amp;[]).outcome;\nassert_eq!(outcome, PlanOutcome::DecideLocally);\nassert_eq!(serde_json::to_value(outcome).unwrap(), \&quot;decide_locally\&quot;);\n```&quot;
+    },
+    &quot;ReasoningConfidence&quot;: {
+      &quot;description&quot;: &quot;How sure the primary executor is of its current hypothesis. `high` lowers the review\nbudget by one; the other levels leave it as the mode and materiality set it.\n\n```\nuse majordomus_cli::reasoning::availability::{ModeResolution, ReasoningMode};\nuse majordomus_cli::reasoning::policy::{plan, Materiality, PlanRequest, ReasoningConfidence};\n\nlet mode = ModeResolution { mode: ReasoningMode::Strict, source: \&quot;default\&quot;.into() };\nlet budget = |confidence: ReasoningConfidence| {\n    let request = PlanRequest { materiality: Materiality::Critical, confidence, ..Default::default() };\n    plan(&amp;request, &amp;mode, &amp;[]).budget\n};\nassert_eq!(budget(ReasoningConfidence::Medium), 3);\nassert_eq!(budget(ReasoningConfidence::High), 2);\n```&quot;,
+      &quot;oneOf&quot;: [
+        {
+          &quot;description&quot;: &quot;A guess the evidence does not yet support.&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;low&quot;
+        },
+        {
+          &quot;description&quot;: &quot;Supported, with open questions.&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;medium&quot;
+        },
+        {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;Supported by evidence that would be hard to overturn.&quot;,
+          &quot;const&quot;: &quot;high&quot;
+        }
+      ]
+    },
+    &quot;SelectedAdvisor&quot;: {
+      &quot;description&quot;: &quot;One selected advisor, the requested capabilities it covers, and why the greedy\nselection chose it at its position.\n\n```\nuse majordomus_cli::reasoning::availability::{AdvisorState, ModeResolution, ReasoningMode};\nuse majordomus_cli::reasoning::policy::{plan, Materiality, PlanRequest, SelectedAdvisor};\n\nfn advisor(id: &amp;str, adapter: &amp;str, status: &amp;str) -&gt; AdvisorState {\n    serde_json::from_value(serde_json::json!({\n        \&quot;id\&quot;: id, \&quot;title\&quot;: id, \&quot;transport\&quot;: \&quot;api\&quot;, \&quot;adapter\&quot;: adapter,\n        \&quot;capabilities\&quot;: [\&quot;independent_reasoning\&quot;], \&quot;status\&quot;: status,\n        \&quot;reason\&quot;: \&quot;present\&quot;, \&quot;probe\&quot;: \&quot;\&quot;,\n    }))\n    .unwrap()\n}\nlet mode = ModeResolution { mode: ReasoningMode::Standard, source: \&quot;default\&quot;.into() };\nlet request = PlanRequest { materiality: Materiality::Material, ..Default::default() };\nlet p = plan(&amp;request, &amp;mode, &amp;[advisor(\&quot;a\&quot;, \&quot;x-api\&quot;, \&quot;available\&quot;)]);\nlet chosen: &amp;SelectedAdvisor = &amp;p.selected[0];\nassert_eq!(chosen.advisor, \&quot;a\&quot;);\nassert_eq!(chosen.covers, [\&quot;independent_reasoning\&quot;]);\nassert!(chosen.why.starts_with(\&quot;the first available advisor\&quot;));\n```&quot;,
+      &quot;properties&quot;: {
+        &quot;covers&quot;: {
+          &quot;items&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          },
+          &quot;description&quot;: &quot;The requested capabilities it covers.&quot;,
+          &quot;type&quot;: &quot;array&quot;
+        },
+        &quot;why&quot;: {
+          &quot;description&quot;: &quot;Why it was chosen.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;advisor&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The advisor id.&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;advisor&quot;,
+        &quot;covers&quot;,
+        &quot;why&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;Materiality&quot;: {
+      &quot;description&quot;: &quot;How much the uncertain decision could matter. Ordered from `trivial` to `critical`:\nwith the mode it sets the review budget, and from `material` up a decision taken alone\ncarries the structured local review.\n\n```\nuse majordomus_cli::reasoning::policy::Materiality;\n\nassert_eq!(Materiality::default(), Materiality::Low);\nassert!(Materiality::Material &lt; Materiality::Critical);\nlet m: Materiality = serde_json::from_str(\&quot;\\\&quot;high\\\&quot;\&quot;).unwrap();\nassert_eq!(m, Materiality::High);\n```&quot;,
+      &quot;oneOf&quot;: [
+        {
+          &quot;const&quot;: &quot;trivial&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;A name, a format, an obvious convention: never reviewed.&quot;
+        },
+        {
+          &quot;const&quot;: &quot;low&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;Local and reversible.&quot;
+        },
+        {
+          &quot;description&quot;: &quot;Could affect correctness, an interface, persistent data, concurrency, operations.&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;material&quot;
+        },
+        {
+          &quot;const&quot;: &quot;high&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;Architecture, security, compatibility or a public contract.&quot;
+        },
+        {
+          &quot;const&quot;: &quot;critical&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;Irreversible or destructive, or repository governance itself.&quot;
+        }
+      ]
+    },
+    &quot;AdvisorStatus&quot;: {
+      &quot;description&quot;: &quot;An advisor&#39;s standing: whether it may be asked now and, when not, which kind of\nreason keeps it out. Only `available` advisors enter a plan.\n\n```\nuse majordomus_cli::reasoning::availability::AdvisorStatus;\n\nassert_eq!(serde_json::to_value(AdvisorStatus::NotConfigured).unwrap(), \&quot;not_configured\&quot;);\nlet s: AdvisorStatus = serde_json::from_str(\&quot;\\\&quot;rate_limited\\\&quot;\&quot;).unwrap();\nassert_eq!(s, AdvisorStatus::RateLimited);\n```&quot;,
+      &quot;oneOf&quot;: [
+        {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;available&quot;,
+          &quot;description&quot;: &quot;It may be asked. Presence was observed; whether it answers is learned by asking.&quot;
+        },
+        {
+          &quot;description&quot;: &quot;Not installed: its executable is not on `PATH`.&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;unavailable&quot;
+        },
+        {
+          &quot;const&quot;: &quot;not_configured&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;Installed or reachable in principle, but its credential is not configured.&quot;
+        },
+        {
+          &quot;description&quot;: &quot;Left out by the mode or by an explicit disable.&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;disabled&quot;
+        },
+        {
+          &quot;description&quot;: &quot;Its recent consultations failed; its circuit is open until the cooldown passes.&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;const&quot;: &quot;temporarily_failed&quot;
+        },
+        {
+          &quot;const&quot;: &quot;rate_limited&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;It answered with a rate limit; not asked again until the limit passes.&quot;
+        }
+      ]
+    },
+    &quot;ExcludedAdvisor&quot;: {
+      &quot;description&quot;: &quot;One advisor left out of the plan, its standing when the plan was made, and why: its\nstatus, a capability it does not offer, or a budget already spent.\n\n```\nuse majordomus_cli::reasoning::availability::{AdvisorState, AdvisorStatus, ModeResolution, ReasoningMode};\nuse majordomus_cli::reasoning::policy::{plan, ExcludedAdvisor, Materiality, PlanRequest};\n\nfn advisor(id: &amp;str, adapter: &amp;str, status: &amp;str) -&gt; AdvisorState {\n    serde_json::from_value(serde_json::json!({\n        \&quot;id\&quot;: id, \&quot;title\&quot;: id, \&quot;transport\&quot;: \&quot;api\&quot;, \&quot;adapter\&quot;: adapter,\n        \&quot;capabilities\&quot;: [\&quot;independent_reasoning\&quot;], \&quot;status\&quot;: status,\n        \&quot;reason\&quot;: \&quot;present\&quot;, \&quot;probe\&quot;: \&quot;\&quot;,\n    }))\n    .unwrap()\n}\nlet mode = ModeResolution { mode: ReasoningMode::Standard, source: \&quot;default\&quot;.into() };\nlet request = PlanRequest { materiality: Materiality::Material, ..Default::default() };\nlet states = [advisor(\&quot;a\&quot;, \&quot;x-api\&quot;, \&quot;available\&quot;), advisor(\&quot;b\&quot;, \&quot;y-api\&quot;, \&quot;available\&quot;)];\nlet p = plan(&amp;request, &amp;mode, &amp;states);\nlet left: &amp;ExcludedAdvisor = &amp;p.excluded[0];\nassert_eq!((left.advisor.as_str(), left.status), (\&quot;b\&quot;, AdvisorStatus::Available));\nassert!(left.reason.contains(\&quot;budget was spent\&quot;));\n```&quot;,
+      &quot;properties&quot;: {
+        &quot;status&quot;: {
+          &quot;description&quot;: &quot;Its standing when the plan was made.&quot;,
+          &quot;$ref&quot;: &quot;#/$defs/AdvisorStatus&quot;
+        },
+        &quot;advisor&quot;: {
+          &quot;description&quot;: &quot;The advisor id.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;reason&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;Why it is not in the plan.&quot;
+        }
+      },
+      &quot;type&quot;: &quot;object&quot;,
+      &quot;required&quot;: [
+        &quot;advisor&quot;,
+        &quot;status&quot;,
+        &quot;reason&quot;
+      ]
+    }
+  },
   &quot;type&quot;: &quot;object&quot;
 }</pre></div>
   </details>
@@ -707,7 +707,7 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
         <div><dt class="text-body-subtle">modul Rust</dt><dd class="min-w-0 break-all font-mono text-heading">majordomus_cli::capability::builtin::reasoning</dd></div>
         <div><dt class="text-body-subtle">typ vstupu</dt><dd class="font-mono text-heading">PlanPreviewInput</dd></div>
         <div><dt class="text-body-subtle">typ výstupu</dt><dd class="font-mono text-heading">ReviewPlan</dd></div>
-        <div><dt class="text-body-subtle">reference na GitHubu</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/aa9f816f8673880ab4beb6dbebff688f9da5bb65/docs/generated/modules/reasoning.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/reasoning.md</a></dd></div><div><dt class="text-body-subtle">otisk registru</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">c514db707bb1f5f7557f2a1629d42c4bdc05eb7ef58464c288e42bafcd3d8720</dd></div>
+        <div><dt class="text-body-subtle">reference na GitHubu</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/docs/generated/modules/reasoning.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/reasoning.md</a></dd></div><div><dt class="text-body-subtle">otisk registru</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">3f734f2faf797f0ca7c39b4cd837e68b6619c41c6f6711f3d3aeca8f341934eb</dd></div>
         <div><dt class="text-body-subtle">vygenerováno nástrojem</dt><dd class="font-mono text-heading">majordomus-cli 1.0.0-alpha.10</dd></div>
       </dl>
     </div>
@@ -763,9 +763,9 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
       <div class="min-w-0">
         <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">Projekt</h2><ul class="space-y-2 text-sm font-medium text-body">
           <li><a href="https://github.com/korczis/prismatic-majordomus" class="hover:text-heading hover:underline">GitHub</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/aa9f816f8673880ab4beb6dbebff688f9da5bb65/LICENSE" class="hover:text-heading hover:underline">Licence MIT</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/aa9f816f8673880ab4beb6dbebff688f9da5bb65/SECURITY.md" class="hover:text-heading hover:underline">Bezpečnostní politika</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/aa9f816f8673880ab4beb6dbebff688f9da5bb65/CONTRIBUTING.md" class="hover:text-heading hover:underline">Průvodce pro přispěvatele</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/LICENSE" class="hover:text-heading hover:underline">Licence MIT</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/SECURITY.md" class="hover:text-heading hover:underline">Bezpečnostní politika</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/745db2ea21e02613943face75a2bf95542be1f2e/CONTRIBUTING.md" class="hover:text-heading hover:underline">Průvodce pro přispěvatele</a></li>
         </ul>
       </div>
     </div>
@@ -773,7 +773,7 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/cs/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.10</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/aa9f816f8673880ab4beb6dbebff688f9da5bb65" class="font-mono underline">aa9f816</a> · inputs <span class="font-mono">a64b981ed16e</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/cs/architecture/" class="underline">how this site is derived</a> names them.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.10</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/745db2ea21e02613943face75a2bf95542be1f2e" class="font-mono underline">745db2e</a> · inputs <span class="font-mono">0a58c217d1b7</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/cs/architecture/" class="underline">how this site is derived</a> names them.</p>
     </div>
   </div>
 </footer>
