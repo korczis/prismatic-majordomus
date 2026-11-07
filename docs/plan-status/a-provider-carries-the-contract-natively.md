@@ -9,7 +9,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 
 | milestone | status | done of required | ready | blocked | active | verify | cancelled | outcome |
 |---|---|---|---|---|---|---|---|---|
-| [a-provider-carries-the-contract-natively](https://majordomus.dev/plan/a-provider-carries-the-contract-natively/) | ACTIVE | 1/11 | 5 | 5 | 0 | 0 | 0 | One generated Claude plugin, the edit guard wired and then refusing, a Stop-time owed report, extension provenance in doctor, bounded hooks and MCP listing, Codex hook parity where Codex offers the hook, Zed schema associations. |
+| [a-provider-carries-the-contract-natively](https://majordomus.dev/plan/a-provider-carries-the-contract-natively/) | ACTIVE | 1/13 | 6 | 6 | 0 | 0 | 0 | One generated Claude plugin, the edit guard wired and then refusing, a Stop-time owed report, extension provenance in doctor, bounded hooks and MCP listing, Codex hook parity where Codex offers the hook, Zed schema associations. |
 
 ## Issues
 
@@ -26,6 +26,8 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | [I3323](https://majordomus.dev/plan/i3323/) | BLOCKED | 1 | I3322 | An unclaimed edit is refused in Claude Code once no live peer edits without a claim |
 | [I3410](https://majordomus.dev/plan/i3410/) | BLOCKED | 2 | I3303, I3406 | A Codex prompt is captured through Codex's own UserPromptSubmit hook, and capture status stops calling Codex prompts unadapted |
 | [I3829](https://majordomus.dev/plan/i3829/) | DONE | 0 | — | A provider declares whether its client drives a browser beside the server, and preflight says when this machine's bridge is missing |
+| [I4551](https://majordomus.dev/plan/i4551/) | READY | 0 | — | A message one session sends another is never archived as the person's prompt |
+| [I4552](https://majordomus.dev/plan/i4552/) | BLOCKED | 1 | I3322 | Claude Code's UserPromptSubmit hook answers bounded context from the running server, and nothing when nothing changed |
 
 ## Findings
 
@@ -48,6 +50,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I3304` | shares .ai/repo/policy.yaml with I4481; they may not run concurrently |
 | WARN | `scope_conflict` | `I3304` | shares apps/majordomus-cli/src/capability/builtin/lifecycle.rs with I4486; they may not run concurrently |
 | WARN | `scope_conflict` | `I3304` | shares .ai/repo/policy.yaml with I4512; they may not run concurrently |
+| WARN | `scope_conflict` | `I3304` | shares lib/capture.sh with I4551; they may not run concurrently |
 | WARN | `scope_conflict` | `I3307` | shares test/cases/940_mcp_says_nothing_its_capability_does_not.sh with I3318; they may not run concurrently |
 | WARN | `scope_conflict` | `I3307` | shares test/cases/940_mcp_says_nothing_its_capability_does_not.sh with I3448; they may not run concurrently |
 | WARN | `scope_conflict` | `I3307` | shares apps/majordomus-cli/src/capability/builtin/mcp.rs with I3607; they may not run concurrently |
@@ -88,3 +91,4 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I3322` | shares lib/capture.sh with I4468; they may not run concurrently |
 | WARN | `scope_conflict` | `I3322` | shares .ai/repo/policy.yaml with I4481; they may not run concurrently |
 | WARN | `scope_conflict` | `I3322` | shares .ai/repo/policy.yaml with I4512; they may not run concurrently |
+| WARN | `scope_conflict` | `I3322` | shares lib/capture.sh with I4551; they may not run concurrently |

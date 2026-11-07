@@ -57,5 +57,13 @@ satisfaction:
     criterion: "Every provider in share/providers.yaml declares whether its client drives a browser beside the server (browser: bridge or none) with cited evidence, every surface that reports provider capability shows it from that one declaration, and preflight reports a declared bridge whose native messaging host is missing on this machine as a finding with the person's remedy, never as a failure (planned proof: case_a_provider_declares_its_browser_bridge, written by I3829)"
     evidence: command
     ref: "majordomus intent explain a-provider-carries-the-contract-natively"
+  - id: a-synthetic-message-is-not-the-persons
+    criterion: "A payload that opens with the cross-session message tag, with or without attributes, is not archived as the person's prompt, a person's prompt that mentions the tag later is, and capture status counts the skipped deliveries apart (planned proof: case_a_synthetic_message_is_not_the_persons in test/cases/29_prompt_capture.sh written by I4551)"
+    evidence: command
+    ref: "majordomus intent explain a-provider-carries-the-contract-natively"
+  - id: a-prompt-turn-carries-its-context
+    criterion: "Claude Code's UserPromptSubmit hook, as capture install writes it, answers additionalContext naming the active task, its scope and its bound issue within session.briefing_budget_lines, answers nothing over unchanged state or when the server cannot be asked, never exits 2, and reads no prompt text (planned proof: test_a_prompt_turn_carries_its_context in apps/majordomus-cli/tests/prompt_context_hook.rs written by I4552)"
+    evidence: command
+    ref: "majordomus intent explain a-provider-carries-the-contract-natively"
 created_at: 2026-10-18
-updated_at: 2026-10-21
+updated_at: 2026-11-07

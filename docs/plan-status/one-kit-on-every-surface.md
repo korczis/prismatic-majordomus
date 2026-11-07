@@ -38,6 +38,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I3793` | shares scripts/ci/design-check with I4468; they may not run concurrently |
 | WARN | `scope_conflict` | `I3793` | shares share/ui with I4483; they may not run concurrently |
 | WARN | `scope_conflict` | `I3793` | shares share/ui with I4494; they may not run concurrently |
+| WARN | `scope_conflict` | `I3793` | shares share/ui with I4547; they may not run concurrently |
 | WARN | `scope_conflict` | `I3795` | shares docs/DESIGN_SYSTEM.md with I4334; they may not run concurrently |
 | WARN | `scope_conflict` | `I3795` | shares docs/DESIGN_SYSTEM.md with I4400; they may not run concurrently |
 | WARN | `scope_conflict` | `I4334` | shares apps/majordomus-cli/src/design/licence.rs with I4336; they may not run concurrently |
@@ -50,3 +51,4 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I4377` | shares site/charts.js with I4400; they may not run concurrently |
 | WARN | `scope_conflict` | `I4377` | shares share/ui/src/ui.css with I4483; they may not run concurrently |
 | WARN | `scope_conflict` | `I4377` | shares share/ui/ui.js with I4494; they may not run concurrently |
+| WARN | `scope_conflict` | `I4377` | shares share/ui/ui.js with I4547; they may not run concurrently |

@@ -22439,7 +22439,7 @@
             "A Gemini adapter, deferred until the Codex adapter (I3303) settles the adapter shape; the verified Gemini evidence and the SessionEnd and PreCompress caveats in share/providers.yaml stay",
             "Loading code from outside the repository: external scripted capabilities belong to repository-automation-is-typed"
           ],
-          "updated_at": "2026-10-21"
+          "updated_at": "2026-11-07"
         }
       },
       {
@@ -57038,7 +57038,9 @@
         "facts": {
           "acceptance_criteria": [
             "An outcome naming an existing intent's subject lists that intent first with the matching terms",
-            "The brief writes nothing"
+            "The brief writes nothing",
+            "A brief asked for a draft revision names that revision, and an answer for an older revision of the same draft is discarded rather than shown",
+            "The brief reports, for each source class it reads (records, rules and ADRs, knowledge, code, git history), whether it was read, partial or unavailable, with the reason"
           ],
           "created_at": "2026-10-18",
           "current_state": "intents.propose writes a declared intent from a sentence and checks only that the id is free; devcontext compiles context from an issue, milestone, text or paths.",
@@ -57059,7 +57061,7 @@
             "apps/majordomus-cli/tests/intent.rs"
           ],
           "slug": "an-outcome-is-briefed",
-          "updated_at": "2026-10-18",
+          "updated_at": "2026-11-07",
           "validation": [
             "majordomus plan validate",
             "majordomus intent validate"
@@ -57074,17 +57076,6 @@
         "route": "/cockpit/objects/issue/i3252",
         "source": ".ai/repo/project/issues/I3252.yaml",
         "facts": {
-          "acceptance_criteria": [
-            "A draft with a dangling dependency or an uncovered criterion is refused by check and by write, writing nothing",
-            "A passing draft written then validated produces no finding",
-            "CLI, HTTP and MCP return the same check result",
-            "intents.record answers a digest of the record, and a write against a record that changed since that read is refused naming both digests",
-            "A draft that amends an existing intent refuses a half-planned result: a milestone with no criterion, or a criterion no milestone carries",
-            "The writer test in capability/builtin/intents.rs that names every writer is updated in the same change, as I3396's must be",
-            "A string holding ':', '#' or '`' is written quoted, and the shell engine and the Rust executable read the written record to the same fields",
-            "A written record carries no started_at, verified_at, completed_at or status",
-            "An existing id, an unknown milestone, an unresolved dependency and a cycle are each refused with a typed error that names the offending value"
-          ],
           "created_at": "2026-10-18",
           "current_state": "Only intents.propose writes (ADR 0144); milestones and issues are hand-written YAML; plan validate and intent validate read only written records.",
           "depends_on": [
@@ -57110,7 +57101,7 @@
             "apps/majordomus-cli/tests/intent_plan.rs"
           ],
           "slug": "a-checked-draft-is-written",
-          "updated_at": "2026-10-30",
+          "updated_at": "2026-11-07",
           "validation": [
             "majordomus plan validate",
             "majordomus intent validate"
@@ -57125,11 +57116,6 @@
         "route": "/cockpit/objects/issue/i3253",
         "source": ".ai/repo/project/issues/I3253.yaml",
         "facts": {
-          "acceptance_criteria": [
-            "A criterion with '< 200 ms' and no cited measurement is refused naming it",
-            "A proposal's unresolved items are returned by intents.list",
-            "intents.draft_write (I3252) refuses a draft whose unresolved list holds a value that is neither resolved nor marked deferred with a reason, naming each such value, and writes nothing"
-          ],
           "created_at": "2026-10-18",
           "current_state": "intents.propose takes a statement and optional title and id; no field carries open values.",
           "depends_on": [
@@ -57154,7 +57140,7 @@
             "apps/majordomus-cli/tests/intent.rs"
           ],
           "slug": "a-proposal-says-what-it-left-open",
-          "updated_at": "2026-10-18",
+          "updated_at": "2026-11-07",
           "validation": [
             "majordomus plan validate",
             "majordomus intent validate"
@@ -57169,10 +57155,6 @@
         "route": "/cockpit/objects/issue/i3254",
         "source": ".ai/repo/project/issues/I3254.yaml",
         "facts": {
-          "acceptance_criteria": [
-            "A proposal restating an existing intent's statement with a new id is refused naming it",
-            "Confirming novelty records the reason in the proposal"
-          ],
           "created_at": "2026-10-18",
           "current_state": "ProposeError has Invalid, Exists (same id) and Write; a different id with the same meaning is accepted.",
           "depends_on": [
@@ -57194,7 +57176,7 @@
             "apps/majordomus-cli/tests/intent.rs"
           ],
           "slug": "a-proposal-names-its-duplicates",
-          "updated_at": "2026-10-18",
+          "updated_at": "2026-11-07",
           "validation": [
             "majordomus plan validate",
             "majordomus intent validate"
@@ -57395,12 +57377,6 @@
         "route": "/cockpit/objects/issue/i3260",
         "source": ".ai/repo/project/issues/I3260.yaml",
         "facts": {
-          "acceptance_criteria": [
-            "The case prints admit, draft, execute, handover, fail, replan, fix, satisfied, explained, each with its evidence",
-            "It runs in CI with no manual step",
-            "After each writing step, git status in the fixture lists exactly the one path that step's capability declares",
-            "Removing any one step makes a later assertion fail, shown once in the pull request"
-          ],
           "created_at": "2026-10-18",
           "current_state": "Cases 367, 386, 388, 960, 961 each prove one join; I2812 (case 3220) walks the UI loop in a browser in the 0.30.0 top.",
           "depends_on": [
@@ -57420,7 +57396,7 @@
             "docs/PLANNING.md"
           ],
           "slug": "the-loop-is-proved-across-providers",
-          "updated_at": "2026-10-30",
+          "updated_at": "2026-11-07",
           "validation": [
             "majordomus plan validate",
             "majordomus intent validate"
@@ -80527,6 +80503,292 @@
           ],
           "serves": [],
           "slug": "the-pages-name-the-pre-release-that-was-published"
+        }
+      },
+      {
+        "id": "majordomus://issue/I4547",
+        "kind": "issue",
+        "label": "I4547",
+        "summary": "The workspace opens a new draft on a route of its own, which writes nothing",
+        "route": "/cockpit/objects/issue/i4547",
+        "source": ".ai/repo/project/issues/I4547.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "GET /ui/idd/draft answers 200 with a labelled textarea and the not-a-record label, and a POST to it answers 405",
+            "The workspace's 'Which intent?' panel links to it as a secondary action, and the workspace still offers one primary action",
+            "The screen refresh in share/ui/ui.js does not replace the screen while its editor holds text",
+            "The snapshot withholds the route, asserted as the existing withheld routes are",
+            "git status --porcelain is unchanged after every request the test makes"
+          ],
+          "created_at": "2026-11-07",
+          "evidence_required": [
+            "test_a_draft_is_opened_from_the_workspace"
+          ],
+          "milestone": "idd-reads-at-a-glance",
+          "non_scope": [
+            "Saving a draft (I4548)",
+            "Writing any tracked record",
+            "A second primary action on /ui/idd: the link is secondary"
+          ],
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/ui/mod.rs",
+            "apps/majordomus-cli/src/ui/draft.rs",
+            "apps/majordomus-cli/src/ui/idd.rs",
+            "apps/majordomus-cli/src/ui/icons.toml",
+            "apps/majordomus-cli/src/web/report/snapshot.rs",
+            "share/ui/ui.js",
+            "apps/majordomus-cli/tests/ui_idd_draft.rs",
+            "docs/MAJORDOMUS_UI.md"
+          ],
+          "serves": [
+            "the-owner-directs-work-from-the-ui#a-draft-is-composed-from-the-workspace"
+          ],
+          "slug": "a-draft-is-opened-from-the-workspace",
+          "updated_at": "2026-11-07",
+          "validation": [
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test ui_idd_draft",
+            "majordomus generate --check"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4548",
+        "kind": "issue",
+        "label": "I4548",
+        "summary": "A draft is saved on this machine as immutable revisions, resumed by its id, and a save on a stale revision is refused naming both",
+        "route": "/cockpit/objects/issue/i4548",
+        "source": ".ai/repo/project/issues/I4548.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A saved draft is read back by its id with its revisions listed, and saving the same text on the same revision is idempotent",
+            "Two saves on one base revision leave one revision and refuse the other naming both revisions",
+            "intents.draft_get is refused to a caller beyond loopback, and a POST from a foreign Origin is refused 403",
+            "The draft's id is validated so no path leaves .ai/local/state/drafts, and its text is bounded by a named constant",
+            "The writer test in capability/builtin/intents.rs that names every writer is updated in the same change",
+            "A draft canary never reaches a published byte (scripts/ci/local-never-published)"
+          ],
+          "created_at": "2026-11-07",
+          "current_state": "No draft store exists under .ai/local; the layout check refuses a .ai/local file that declares a canonical schema; reasoning.record is the precedent for a write under .ai/local/state.",
+          "depends_on": [
+            "I4547"
+          ],
+          "desired_state": "Save, reload and resume work on the command line, loopback HTTP and MCP with one answer; a remote caller is refused; the draft never reaches a tracked path or a published snapshot.",
+          "evidence_required": [
+            "test_a_draft_is_kept_on_this_machine"
+          ],
+          "milestone": "idd-reads-at-a-glance",
+          "non_scope": [
+            "Debounced autosave without confirmation",
+            "Promoting a draft to records (I3252)"
+          ],
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/capability/builtin/intents.rs",
+            "apps/majordomus-cli/src/intent_draft_store.rs",
+            "apps/majordomus-cli/src/http/router.rs",
+            "apps/majordomus-cli/src/ui/draft.rs",
+            "apps/majordomus-cli/tests/ui_idd_draft.rs",
+            "apps/majordomus-cli/tests/remote_callers.rs",
+            "test/cases/181_local_is_never_published.sh"
+          ],
+          "serves": [
+            "the-owner-directs-work-from-the-ui#a-draft-is-composed-from-the-workspace"
+          ],
+          "slug": "a-draft-is-kept-on-this-machine",
+          "updated_at": "2026-11-07",
+          "validation": [
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test ui_idd_draft",
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test remote_callers",
+            "bash test/run.sh 181_local_is_never_published"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4549",
+        "kind": "issue",
+        "label": "I4549",
+        "summary": "A draft revision compiles to one deterministic prompt preview that can be copied, and an unchanged revision compiles to the same bytes",
+        "route": "/cockpit/objects/issue/i4549",
+        "source": ".ai/repo/project/issues/I4549.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "One revision at one index fingerprint compiles to byte-identical text twice and on the command line, HTTP and MCP",
+            "The preview names the draft revision and the fingerprint it was compiled at",
+            "No capability, command or kind added by this issue is named pack or intake",
+            "The preview writes nothing"
+          ],
+          "created_at": "2026-11-07",
+          "current_state": "devcontext says rendering a prompt is a projection of its selection; nothing renders one from a draft.",
+          "depends_on": [
+            "I4548",
+            "I3251"
+          ],
+          "desired_state": "The same revision and the same index fingerprint give byte-identical text on every surface; a changed revision gives a new text and the screen says which revision it shows.",
+          "evidence_required": [
+            "test_a_draft_previews_its_prompt"
+          ],
+          "milestone": "idd-reads-at-a-glance",
+          "non_scope": [
+            "Executing the prompt",
+            "A stored prompt: the preview is derived on read"
+          ],
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/capability/builtin/intents.rs",
+            "apps/majordomus-cli/src/devcontext/mod.rs",
+            "apps/majordomus-cli/src/ui/draft.rs",
+            "apps/majordomus-cli/tests/ui_idd_draft.rs"
+          ],
+          "serves": [
+            "the-owner-directs-work-from-the-ui#a-draft-is-composed-from-the-workspace"
+          ],
+          "slug": "a-draft-previews-its-prompt",
+          "updated_at": "2026-11-07",
+          "validation": [
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test ui_idd_draft"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4550",
+        "kind": "issue",
+        "label": "I4550",
+        "summary": "A draft is assisted by a model only as the recorded decision allows, a reply that does not parse is refused, and an absent provider is said to be absent",
+        "route": "/cockpit/objects/issue/i4550",
+        "source": ".ai/repo/project/issues/I4550.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A reasoning record decides whether the runtime may call a model for a draft, with its evidence, before any call is added",
+            "An advisor-written draft that does not parse is refused with the reason",
+            "With no provider available the answer says unavailable with the reason, and the draft is still saved and previewed",
+            "Every suggestion is labelled inferred and nothing it says is written as evidence or as a record"
+          ],
+          "created_at": "2026-11-07",
+          "current_state": "scripts/advisor-consult and the adapters in scripts/lib/advisors serve engineering uncertainty, selected by reasoning.plan; no Rust capability calls a model; models.route only routes.",
+          "depends_on": [
+            "I4548"
+          ],
+          "desired_state": "As the recorded decision says, with the suggestions never written as evidence or as records.",
+          "evidence_required": [
+            "malformed_advisor_draft_refused"
+          ],
+          "milestone": "idd-reads-at-a-glance",
+          "non_scope": [
+            "A model deciding a status, a verdict or a write",
+            "Requiring a provider: without one the draft is written by hand and checked the same"
+          ],
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/reasoning",
+            "apps/majordomus-cli/src/capability/builtin/intents.rs",
+            "apps/majordomus-cli/src/ui/draft.rs",
+            "scripts/lib/advisors",
+            "apps/majordomus-cli/tests/ui_idd_draft.rs"
+          ],
+          "serves": [
+            "the-owner-directs-work-from-the-ui#a-draft-is-composed-from-the-workspace"
+          ],
+          "slug": "a-draft-is-assisted-and-never-decided",
+          "updated_at": "2026-11-07",
+          "validation": [
+            "majordomus reasoning check",
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test ui_idd_draft"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4551",
+        "kind": "issue",
+        "label": "I4551",
+        "summary": "A message one session sends another is never archived as the person's prompt",
+        "route": "/cockpit/objects/issue/i4551",
+        "source": ".ai/repo/project/issues/I4551.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A payload opening with '<cross-session-message from=\\\"uds:x\\\">' writes no person prompt record, and one opening with the bare tag still writes none",
+            "A person's prompt that mentions the tag later in its text is still archived",
+            "capture status reports the synthetic deliveries it skipped as their own count"
+          ],
+          "created_at": "2026-11-07",
+          "current_state": "MJ_CAPTURE_ADAPTERS field 10 lists the bare tag; mj_capture_is_person compares the payload's opening with it.",
+          "desired_state": "A payload that opens with the cross-session tag, with or without attributes, is not archived as the person's prompt, and capture status counts it apart.",
+          "evidence_required": [
+            "case_a_synthetic_message_is_not_the_persons"
+          ],
+          "milestone": "a-provider-carries-the-contract-natively",
+          "non_scope": [
+            "Rewriting or deleting records already archived",
+            "Moving capture to the Rust session domain (I3143)"
+          ],
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "lib/capture.sh",
+            "test/cases/29_prompt_capture.sh"
+          ],
+          "serves": [
+            "a-provider-carries-the-contract-natively#a-synthetic-message-is-not-the-persons"
+          ],
+          "slug": "a-synthetic-message-is-not-the-persons",
+          "updated_at": "2026-11-07",
+          "validation": [
+            "bash test/run.sh 29_prompt_capture",
+            "majordomus shell check"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4552",
+        "kind": "issue",
+        "label": "I4552",
+        "summary": "Claude Code's UserPromptSubmit hook answers bounded context from the running server, and nothing when nothing changed",
+        "route": "/cockpit/objects/issue/i4552",
+        "source": ".ai/repo/project/issues/I4552.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Given a UserPromptSubmit payload, the hook command prints JSON whose hookSpecificOutput.additionalContext names the active task, its scope and its bound issue, within session.briefing_budget_lines",
+            "A second turn over unchanged state prints nothing, as I4250 asks of the brief",
+            "The hook never exits 2 and answers nothing when the server cannot be asked",
+            "The shell side carries no logic but relaying the payload (ADR 0217), and capture install writes the entry",
+            "The hook stays within the latency budget the hooks-within-budget criterion declares"
+          ],
+          "created_at": "2026-11-07",
+          "depends_on": [
+            "I3322"
+          ],
+          "desired_state": "Every prompt turn of a supervised Claude Code session carries the bounded context; an unchanged state answers nothing; a failure answers nothing and never blocks the prompt.",
+          "evidence_required": [
+            "test_a_prompt_turn_carries_its_context"
+          ],
+          "milestone": "a-provider-carries-the-contract-natively",
+          "non_scope": [
+            "Reading .ai/local/prompts, or any prompt text, to compose the context",
+            "Calling a model from the hook",
+            "Storing a match or a route beside the prompt"
+          ],
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/capability/builtin/brief.rs",
+            "apps/majordomus-cli/src/cli.rs",
+            "lib/capture.sh",
+            ".claude/hooks",
+            "apps/majordomus-cli/tests/prompt_context_hook.rs"
+          ],
+          "serves": [
+            "a-provider-carries-the-contract-natively#a-prompt-turn-carries-its-context"
+          ],
+          "slug": "a-prompt-turn-carries-its-context",
+          "updated_at": "2026-11-07",
+          "validation": [
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test prompt_context_hook",
+            "bash test/run.sh 29_prompt_capture"
+          ]
         }
       },
       {
@@ -149157,6 +149419,91 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I4547",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4547",
+        "target": "majordomus://milestone/idd-reads-at-a-glance",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4548",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4548",
+        "target": "majordomus://issue/I4547",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I4548",
+        "target": "majordomus://milestone/idd-reads-at-a-glance",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4549",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4549",
+        "target": "majordomus://issue/I3251",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I4549",
+        "target": "majordomus://issue/I4548",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I4549",
+        "target": "majordomus://milestone/idd-reads-at-a-glance",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4550",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4550",
+        "target": "majordomus://issue/I4548",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I4550",
+        "target": "majordomus://milestone/idd-reads-at-a-glance",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4551",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4551",
+        "target": "majordomus://milestone/a-provider-carries-the-contract-natively",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4552",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4552",
+        "target": "majordomus://issue/I3322",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I4552",
+        "target": "majordomus://milestone/a-provider-carries-the-contract-natively",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -161813,8 +162160,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4422,
-      "edges": 10037,
+      "nodes": 4428,
+      "edges": 10054,
       "acyclic": false,
       "truncated": false
     }

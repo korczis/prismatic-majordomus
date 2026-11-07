@@ -130,6 +130,76 @@ value; a form mints one key per render; `docs/EXECUTIONS.md` says a key is forgo
 execution; and two concurrent starts answer one id. I3260's ask that a repeated start of
 plan.transition answer the first id would add a dependency on I4000 and waits for it.
 
+## The packs of 2026-11-07, mapped onto master
+
+Two packs arrived on 2026-11-07 and were measured against master on that day. Most of what
+they ask for is already planned by records written from earlier briefs. Those asks are folded
+into the records that carry them, and only the gaps became new issues.
+
+### `campaigns/majordomus-intent-workbench-pack-20261107`
+
+The pack asks for a live intent editor on the existing workspace. Nothing of it was on
+master: no draft store, no `intents.draft_check`, no compose route. Its backend is planned by
+the milestone `an-outcome-becomes-a-reviewed-plan` (ADR 0191, proposed). Its screen belongs to
+the workspace milestone `idd-reads-at-a-glance`, under the new criterion
+`the-owner-directs-work-from-the-ui#a-draft-is-composed-from-the-workspace`.
+
+| prompt | carried as | folded into or delivered by | not carried, and why |
+|---|---|---|---|
+| P00 entrypoint | I4547 `/ui/idd/draft`, writes nothing | none | the never-landed I2807 form wrote tracked records; this route writes none |
+| P01 private draft and revisions | I4548 `intents.draft_save` / `intents.draft_get` under `.ai/local/state/drafts` | none | unconfirmed debounced autosave: every command is confirmed and no effect fits a checkout-local write, so it waits for a reasoning record or an ADR |
+| P02 evidence-backed context | none | I3251: revision binding, coverage per source class, stale answers discarded | none |
+| P03 prompt and pack preview | I4549, never named pack or intake | none | the name: `a-brief-is-reconciled-into-the-plan` forbids pack and intake nouns |
+| P04 assisted synthesis | I4550, behind a recorded reasoning decision | carries the milestone's unparsed-advisor-draft criterion | a model deciding anything (ADR 0191) |
+| P05 questions and discussion | none | I3253: bounded, prioritised, revision-bound questions | a stored discussion thread (`project.never-store-transcripts`) |
+| P06 reconcile and dedupe | none | I3254: a first-party draft requirement classified against `intents.record` | none |
+| P07 draft check | none | I3252: fingerprint and stale reading | none |
+| P08 materialisation | none | I3252: idempotency key, approval bound to the draft digest, refusal on a moved HEAD, a proposal the index cannot see | waits for the owner to accept ADR 0191 |
+| P09 execution and feedback | none | I3225, I4483, and the records of PR #2520 (I3984) | none |
+| P10 security, performance and end to end | none | I3260: draft attack cases; I3432 and I3434 already plan the private-read and publication halves | none |
+| P11 dogfood and release | none | evidence for I3260 | a process, not a record |
+
+### `campaigns/majordomus-nexus-pack-20261107`
+
+The pack asks for one ingress for every prompt. Its intent is already recorded as
+`a-change-reconciles-what-it-affects`, and its first vertical slice as the milestone
+`a-prompt-reaches-the-work-it-serves` (I3406, I3408, I3409, I3411, I3430-I3435). Nothing in
+it is carried under the name Nexus. Rule `project.no-new-nouns` and ADR 0217 (proposed) keep
+hooks to sensing, derive a match on read and never store it, and map routing levels onto the
+existing plan outcomes (I3423). They also add no stored receipt, resolution or decision record
+and no route enum beside the ledger, `intents.binding`, executions and `proceed.step`.
+
+| prompt | carried as | folded into or delivered by |
+|---|---|---|
+| 00 baseline, 01 ownership | this section | the owners are capture (`lib/capture.sh`, ADR 0009), `devcontext`, `intents.*`, `proceed.*`, `mesh.*`, `executions.*`, `reasoning.*` |
+| 02 prompt capture | I4551: a synthetic message is never archived as the person's prompt | I3406 (idempotent capture), I3143 (the Rust session domain), I3304 |
+| 03 Claude Code lifecycle | I4552: UserPromptSubmit answers bounded context | I3322 and PR #2836 (PreToolUse), I3323, I3992 (Stop and Notification), I3301, I3296 |
+| 04 provider adapters | none | I3303 and I3410 (Codex); the matrix is `share/providers.yaml` and `capture status` |
+| 05 context compiler | none | delivered as `devcontext.compile`; a prompt-keyed compile is I3251 and I3408 |
+| 06 intent resolution | none | I3251, I3254, I3408, I3409 |
+| 07 proceed and IDD | none | delivered as `proceed.step` → `devtask.implement` (ADR 0177) |
+| 08 mesh council | none | delivered as mesh claims, review requests, `reasoning` advisors and `scripts/collision-check` |
+| 09 durable execution | none | ADR 0225 and I3980-I3986 on PR #2520 |
+| 10 governance reconciliation | none | the evolve skill, the knowledge outbox, I3272-I3275 |
+| 11 intent composer | none | the Workbench records above |
+| 12 projections | none | delivered by the capability registry (ADR 0004) |
+| 13 cockpit and live state | none | I3220, I3430, I3431, PR #2583 |
+| 14 telemetry and economics | none | the milestone `every-sessions-usage-is-observed` (ADR 0213) |
+| 15 security and fault injection | none | I3304, I3424, I3432-I3435 |
+| 16-18 dogfood, delivery, cleanup | none | the integrator, the landing seat and evolve |
+
+Not carried: a Gemini adapter, which the intent `a-provider-carries-the-contract-natively`
+defers until I3303 settles the adapter shape, and PostToolUse and Subagent hooks, for which no
+use is declared.
+
+### What the owner must decide
+
+- The milestone `a-prompt-reaches-the-work-it-serves` depends on three milestones that are not
+  done, and that gate holds every one of its wave-0 issues (I3406, I3432, I3434), although
+  none of them depends on an issue. Taking them now needs that dependency recorded again.
+- ADR 0191 is proposed. I3252, which materialises a checked draft, must not land before the
+  owner accepts it.
+
 ## What was not planned, and why
 
 Each pack was read as a brief, and a brief can ask for what the repository has decided
