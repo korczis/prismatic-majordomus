@@ -348,10 +348,10 @@ The guarantees, exactly:
   relayed, not interpreted. An event of a known kind out of bounds is refused.
 - **Bounds:** 48 KiB per event, 32 KiB per handover body, 1 to 64 paths per claim, 64 streams
   per node. A claim with no path is refused ("a claim names at least one path"), so a claim
-  that coordinates rather than edits names a scope of its own, as the seats do
-  (`campaign/*/landing`, `release/seat`); a body over 32 KiB travels as several handovers,
-  each naming the others. Streams expired longer than 15 minutes that nothing still needs are compacted away
-  when the journal passes 20 000 events or 768 streams, and a node's own such streams when
+  that coordinates rather than edits names a scope of its own, as every seat of rule
+  `project.the-cooperation-model-is-the-owners-word` does; a body over 32 KiB travels as
+  several handovers, each naming the others. Streams expired longer than 15 minutes that
+  nothing still needs are compacted away when the journal passes 20 000 events or 768 streams, and a node's own such streams when
   it holds 48 — every worktree of a machine signs with the machine's key and every server
   restart is a new stream, so a machine would otherwise fill its quota by running and its
   later runs would be refused. What compaction keeps, and how a compacted stream that
