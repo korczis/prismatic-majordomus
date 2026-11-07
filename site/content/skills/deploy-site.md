@@ -1,7 +1,7 @@
 +++
 title = "Deploy the site by hand"
 description = "Publish the website to GitHub Pages from a terminal, through the one script the Pages workflow runs, when waiting for the Actions queue is not acceptable."
-weight = 2
+weight = 3
 [extra]
 id = "deploy-site"
 status = "active"
