@@ -38,6 +38,22 @@ evidence_required:
   - doctor
 risk: "finish and gate decide whether work counts as done; a refusal that is wrong there stops a worker, so each refusal has to name the command that resolves it in the same breath."
 created_at: 2026-10-28
-updated_at: 2026-10-30T00:56:20Z
+updated_at: 2026-11-01T04:55:46Z
 started_at: 2026-10-30T00:56:20Z
 started_event: sha256:dea69ec0f8e591ce8a80d70ea780d4d5f64e14a24668f46173b1e6ef0f2faf79
+completed_at: 2026-11-01T04:55:46Z
+completed_event: sha256:49b0c6f13933f9213ca6d0fc98b6f90fb3f5a51885b19a16b8a4d832a358607f
+evidence:
+  - covers: suite
+    type: test
+    command: "bash test/run.sh 3049_a_second_workers_record_lands_on_the_first_workers_task 980_a_session_records_what_it_observed"
+    result: "delivered by fa9e8e0b1da (#2750, train 13c): evidence, gate, finish, session close, mesh join and knowledge observe attribute through mj_record_attribution, each refusal names its ADR and the command that resolves it, and no ledger line carries task_id none; both cases pass at master aca6f182b41, and train 13c's validate run 41258147817 passed every suite shard with 0 failures"
+    artifact: "https://github.com/korczis/prismatic-majordomus/actions/runs/41258147817"
+    commit: aca6f182b4175a0da20878211103eff3801132f1
+    recorded_at: 2026-11-01T04:55:26Z
+  - covers: doctor
+    type: test
+    command: "majordomus doctor"
+    result: "doctor: 0 failure(s) at master aca6f182b41, as in train 13c's structure job"
+    commit: aca6f182b4175a0da20878211103eff3801132f1
+    recorded_at: 2026-11-01T04:55:36Z

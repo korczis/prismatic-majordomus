@@ -43,4 +43,23 @@ evidence_required:
   - ci
 risk: "A run of the built commit whose only reason is one the producer adds later (a new entry of evidence.json `unconfirmed`) withholds the count until it is resolved; that is the intended reading, and /evidence/ lists the reason."
 created_at: 2026-10-28
-updated_at: 2026-10-28
+updated_at: 2026-10-30T10:30:17Z
+started_at: 2026-10-30T10:28:31Z
+started_event: sha256:4140840f214187eb95d2cb0f731db36a38063d94811881eb12cb4a1e4f4433ec
+completed_at: 2026-10-30T10:30:17Z
+completed_event: sha256:5215d54c6b864d8e8c954db3edf702daa17b770b9a61e505835b1d5eeca610a7
+evidence:
+  - covers: test
+    type: test
+    command: "bash test/run.sh 544_the_homepage_counts_declared_apart_from_supported"
+    result: "ok on master 51b38035a71, locally and in suite-shard of validate run 40922124895; merged in fb33dafbb5b"
+    artifact: "https://github.com/korczis/prismatic-majordomus/actions/runs/40922124895"
+    commit: 51b38035a7162332304aef58fed25b98761f412b
+    recorded_at: 2026-10-30T10:29:17Z
+  - covers: ci
+    type: ci
+    command: "validate on master 51b38035a71"
+    result: "run 40922124895 success: site, site-probe and every suite shard green with scripts/ci/homepage-check as merged in fb33dafbb5b"
+    artifact: "https://github.com/korczis/prismatic-majordomus/actions/runs/40922124895"
+    commit: 51b38035a7162332304aef58fed25b98761f412b
+    recorded_at: 2026-10-30T10:29:46Z

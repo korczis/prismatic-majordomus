@@ -27,4 +27,16 @@ evidence_required:
   - suite
 risk: "The audit also judges the bar, so the check runs twice on a green job, about a minute; the step's bound keeps a hung browser from costing more."
 created_at: 2026-10-22
-updated_at: 2026-10-22
+updated_at: 2026-10-30T19:05:17Z
+started_at: 2026-10-30T19:04:38Z
+started_event: sha256:43d41922b310a80b5af36d4b838c96d6f9f083524b5a3c3b3eb3cd462330e6fd
+completed_at: 2026-10-30T19:05:17Z
+completed_event: sha256:dee6b0ff1e4d79ed97754d26b4b91ea8e2f3f7afc26a693e465f9e96e0303546
+evidence:
+  - covers: suite
+    type: ci
+    command: "validate on master 51b38035a71"
+    result: "delivered by the ui job split: validate.yml runs scripts/ui navbar as its own bounded, timed step of ui-checks (timed --bound 600) right after the site build, beside the audit shards, and a branch run that step turns red ends there (gh run cancel), so the audit is not spent to learn a stale bar; an integration/* top runs to the end. Run 40922124895 (attempt 1) is green, with every case that reads validate.yml"
+    artifact: "https://github.com/korczis/prismatic-majordomus/actions/runs/40922124895"
+    commit: 323e09e6fdb5be5320b96308fca4139378402885
+    recorded_at: 2026-10-30T19:05:05Z

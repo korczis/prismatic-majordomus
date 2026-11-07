@@ -37,3 +37,18 @@ evidence_required:
   - test
 serves: []
 created_at: 2026-10-28
+updated_at: 2026-10-30T19:37:46Z
+started_at: 2026-10-30T19:36:33Z
+started_event: sha256:bef41b292e13f15a1a45c9ada9dd2b9b91e32f45af49e59a8a6725a27e630864
+verified_at: 2026-10-30T19:37:16Z
+verified_event: sha256:6b8e0975bc99f8a0b3f18d2d1d2ea41d81e3a2ddade59585d8bdf2c136d8f156
+completed_at: 2026-10-30T19:37:46Z
+completed_event: sha256:10d8feeff460f173131c8c4c0b5f80b2c3aac27a2a75c3409442d24476487141
+evidence:
+  - covers: test
+    type: test
+    command: "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test plan_delivery; majordomus served forge && majordomus plan delivery"
+    result: "validate run 41064782563 green on train 12c at 6b30ede2d13, including the plan_delivery tests; Pages run 41107049733 published 6b30ede2d13 (majordomus.dev/build.json); after served forge at 2026-10-30T19:31Z, plan delivery at 6b30ede2d13 read deployed 136, observed.commit equal to the served pointer (it read 0 before the forge was observed)"
+    artifact: "https://github.com/korczis/prismatic-majordomus/actions/runs/41064782563"
+    commit: 6b30ede2d133e702e0a796e3d83b2257c7174c7a
+    recorded_at: 2026-10-30T19:35:40Z

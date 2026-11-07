@@ -65,4 +65,3 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I4468` | shares scripts/ci with I4512; they may not run concurrently |
 | WARN | `scope_conflict` | `I4468` | shares apps/majordomus-cli/src/capability/builtin with I4522; they may not run concurrently |
 | WARN | `scope_conflict` | `I4468` | shares .ai/repo/ci with I4524; they may not run concurrently |
-| WARN | `scope_conflict` | `I4468` | shares scripts/ci with I4527; they may not run concurrently |
