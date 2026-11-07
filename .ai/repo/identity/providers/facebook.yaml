@@ -1,0 +1,33 @@
+schema: identity-provider/v1
+kind: identity-provider
+id: facebook
+display_name: Facebook
+description: A Facebook account, through Facebook Login's OpenID Connect code flow with PKCE.
+order: 20
+flow: oidc-authorization-code-pkce
+
+# The issuer and the key set are read from the discovery document on 2026-11-07. That document
+# publishes no token endpoint, so the two endpoints the code flow uses are the ones Facebook's
+# "OIDC Code Flow with PKCE for Manually Built Facebook Login Flows" guide names, at the Graph
+# API version that guide used on that date.
+issuer: https://www.facebook.com
+discovery: https://www.facebook.com/.well-known/openid-configuration/
+endpoints:
+  authorization: https://www.facebook.com/v27.0/dialog/oauth
+  token: https://graph.facebook.com/v27.0/oauth/access_token
+  jwks: https://www.facebook.com/.well-known/oauth/openid/jwks/
+
+scopes:
+  - openid
+  - email
+# Facebook's subject is pairwise: stable for one app, different in another.
+subject_claim: sub
+
+# Names, never values: the app id and app secret are issued in the Meta developer console and
+# reach the server through these variables alone.
+credentials:
+  client_id_env: MAJORDOMUS_IDENTITY_FACEBOOK_CLIENT_ID
+  client_secret_env: MAJORDOMUS_IDENTITY_FACEBOOK_CLIENT_SECRET
+
+created_at: 2026-11-07
+updated_at: 2026-11-07

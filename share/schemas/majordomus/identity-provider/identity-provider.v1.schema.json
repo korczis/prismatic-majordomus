@@ -1,0 +1,148 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://majordomus.dev/schemas/majordomus/identity-provider/identity-provider.v1.schema.json",
+  "x-majordomus-schema": "majordomus.identity-provider/v1",
+  "title": "Identity provider",
+  "description": "One identity provider a person may sign in with, under .ai/repo/identity/providers/. Every provider is reached through the same flow — the OpenID Connect authorization code flow with PKCE (S256) and a nonce, whose ID Token is verified against the provider's JSON Web Key Set, whose `iss` must equal `issuer`, and whose subject is read from `subject_claim` — so the shape below has no field that only one provider can fill and no place for a provider-specific extension. A provider is struck by deleting its file. The object names the environment variables its client id and client secret arrive in and never holds either value: no credential is written in this repository.",
+  "x-majordomus-allow": "identity-provider",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "kind",
+    "id",
+    "display_name",
+    "order",
+    "flow",
+    "issuer",
+    "endpoints",
+    "scopes",
+    "subject_claim",
+    "credentials"
+  ],
+  "properties": {
+    "schema": {
+      "description": "The format version of this object. A version the tool does not know is refused, never guessed.",
+      "const": "identity-provider/v1"
+    },
+    "kind": {
+      "const": "identity-provider"
+    },
+    "id": {
+      "description": "The identity of this provider within the repository, `[a-z][a-z0-9-]*`, equal to the file's name without `.yaml`. A display name is never an identity.",
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*$"
+    },
+    "display_name": {
+      "description": "The name the sign-in offer shows a person, as the provider's own brand writes it.",
+      "type": "string",
+      "minLength": 1
+    },
+    "description": {
+      "description": "One line: what this provider is, for a listing.",
+      "type": "string"
+    },
+    "order": {
+      "description": "Where this provider stands in the sign-in offer: the offer lists providers by ascending order. Two providers of one repository do not share an order.",
+      "type": "integer",
+      "minimum": 1
+    },
+    "flow": {
+      "description": "The flow the provider is reached through. One value, because there is one flow: the OpenID Connect authorization code flow with PKCE (RFC 7636, S256) and a nonce. A provider that cannot be reached through it is not an identity provider of this kind; a second flow would be a new version of the schema, never a field of one object.",
+      "const": "oidc-authorization-code-pkce"
+    },
+    "issuer": {
+      "description": "The OpenID Provider's issuer identifier (OpenID Connect Discovery 1.0, section 3): an https URL with no query and no fragment. An ID Token whose `iss` is not exactly this value is refused.",
+      "type": "string",
+      "pattern": "^https://[a-z0-9.-]+(/[^?#]*)?$"
+    },
+    "discovery": {
+      "description": "The provider's discovery document (`/.well-known/openid-configuration`), where the endpoints below can be checked against what the provider publishes. Optional and never a substitute for them: a discovery document need not carry every endpoint the code flow uses, so the endpoints are declared.",
+      "type": "string",
+      "pattern": "^https://[a-z0-9.-]+/"
+    },
+    "endpoints": {
+      "$ref": "#/$defs/endpoints"
+    },
+    "scopes": {
+      "description": "The scopes the authorization request asks for. `openid` is always among them, because without it the response carries no ID Token and no subject. Ask for no more than sign-in needs.",
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "contains": {
+        "const": "openid"
+      },
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z][a-z0-9_.:-]*$"
+      }
+    },
+    "subject_claim": {
+      "description": "The ID Token claim that carries the stable identifier of the person at this provider. OpenID Connect Core names it `sub`; it is the only claim an account is bound to, never an e-mail address or a name, which a person can change.",
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_]*$"
+    },
+    "credentials": {
+      "$ref": "#/$defs/credentials"
+    },
+    "created_at": {
+      "$ref": "#/$defs/date"
+    },
+    "updated_at": {
+      "$ref": "#/$defs/date"
+    }
+  },
+  "$defs": {
+    "date": {
+      "description": "A calendar date, `YYYY-MM-DD`.",
+      "type": "string",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+    },
+    "url": {
+      "description": "An https URL. A query string is allowed, because some providers version an endpoint in its path and others do not; a fragment is not.",
+      "type": "string",
+      "pattern": "^https://[a-z0-9.-]+/[^#]*$"
+    },
+    "endpoints": {
+      "description": "The three endpoints the code flow reaches, each an https URL: where the person is sent to authenticate, where the code is exchanged for tokens, and where the keys that sign the ID Token are published.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["authorization", "token", "jwks"],
+      "properties": {
+        "authorization": {
+          "description": "The authorization endpoint (OpenID Connect Core 1.0, section 3.1.2).",
+          "$ref": "#/$defs/url"
+        },
+        "token": {
+          "description": "The token endpoint (OpenID Connect Core 1.0, section 3.1.3). Reached from the server only, never from a browser.",
+          "$ref": "#/$defs/url"
+        },
+        "jwks": {
+          "description": "The JSON Web Key Set the ID Token's signature is verified against (`jwks_uri`).",
+          "$ref": "#/$defs/url"
+        }
+      }
+    },
+    "credentials": {
+      "description": "Where the client's credentials arrive: the names of two environment variables, never their values. A value written here — a client id, a client secret, a token — does not match the pattern and is refused.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["client_id_env", "client_secret_env"],
+      "properties": {
+        "client_id_env": {
+          "description": "The environment variable the client id arrives in.",
+          "$ref": "#/$defs/env"
+        },
+        "client_secret_env": {
+          "description": "The environment variable the client secret arrives in. Read by the server at run time; never logged, never written to a file of this repository.",
+          "$ref": "#/$defs/env"
+        }
+      }
+    },
+    "env": {
+      "description": "The name of an environment variable, `[A-Z][A-Z0-9_]*`: upper case, digits and underscores, and never a value.",
+      "type": "string",
+      "pattern": "^[A-Z][A-Z0-9_]*$"
+    }
+  }
+}

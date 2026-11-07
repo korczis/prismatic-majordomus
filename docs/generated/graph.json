@@ -26,6 +26,7 @@
       "feature": "an object of kind `feature`",
       "file": "a file the layer names and does not hold as an object",
       "gap": "an object of kind `gap`",
+      "identity-provider": "an object of kind `identity-provider`",
       "implementation": "an object of kind `implementation`",
       "intent": "an object of kind `intent`",
       "issue": "an object of kind `issue`",
@@ -4455,6 +4456,14 @@
         "external": true
       },
       {
+        "id": "file:share/allow/identity-provider.txt",
+        "kind": "file",
+        "label": "identity-provider.txt",
+        "summary": "named by the layer; not an object of this index",
+        "source": "share/allow/identity-provider.txt",
+        "external": true
+      },
+      {
         "id": "file:share/allow/intent.txt",
         "kind": "file",
         "label": "intent.txt",
@@ -4660,6 +4669,14 @@
         "label": "domain.v1.schema.json",
         "summary": "named by the layer; not an object of this index",
         "source": "share/schemas/majordomus/domain/domain.v1.schema.json",
+        "external": true
+      },
+      {
+        "id": "file:share/schemas/majordomus/identity-provider/identity-provider.v1.schema.json",
+        "kind": "file",
+        "label": "identity-provider.v1.schema.json",
+        "summary": "named by the layer; not an object of this index",
+        "source": "share/schemas/majordomus/identity-provider/identity-provider.v1.schema.json",
         "external": true
       },
       {
@@ -5111,6 +5128,12 @@
         "kind": "kind",
         "label": "gap",
         "summary": "every object of kind `gap`"
+      },
+      {
+        "id": "kind:identity-provider",
+        "kind": "kind",
+        "label": "identity-provider",
+        "summary": "every object of kind `identity-provider`"
       },
       {
         "id": "kind:implementation",
@@ -15841,6 +15864,53 @@
         }
       },
       {
+        "id": "majordomus://context/ai.repo.identity",
+        "kind": "context",
+        "label": "ai.repo.identity",
+        "summary": "Identity",
+        "route": "/cockpit/objects/context/ai-repo-identity",
+        "source": ".ai/repo/identity/README.md",
+        "status": "active",
+        "facts": {
+          "audience": [
+            "human",
+            "agent"
+          ],
+          "composition": "extend",
+          "order": 100,
+          "providers": [
+            "*"
+          ],
+          "scope": "subtree"
+        }
+      },
+      {
+        "id": "majordomus://context/ai.repo.identity.providers",
+        "kind": "context",
+        "label": "ai.repo.identity.providers",
+        "summary": "Identity providers",
+        "route": "/cockpit/objects/context/ai-repo-identity-providers",
+        "source": ".ai/repo/identity/providers/README.md",
+        "status": "active",
+        "facts": {
+          "audience": [
+            "human",
+            "agent"
+          ],
+          "composition": "extend",
+          "order": 100,
+          "providers": [
+            "*"
+          ],
+          "scope": "subtree",
+          "tracks": [
+            "share/schemas/majordomus/identity-provider/identity-provider.v1.schema.json",
+            "share/allow/identity-provider.txt",
+            "share/kinds.yaml"
+          ]
+        }
+      },
+      {
         "id": "majordomus://context/ai.repo.knowledge",
         "kind": "context",
         "label": "ai.repo.knowledge",
@@ -21841,6 +21911,50 @@
           "observed_at": "d116266803",
           "recorded_at": "2026-10-16",
           "recorded_by": "claude-code (session 21616f1e, worktree feature/the-ui-is-an-idd-workspace; read-only inventory of /ui, /cockpit, the plan capabilities and the open pull requests at master)"
+        }
+      },
+      {
+        "id": "majordomus://identity-provider/facebook",
+        "kind": "identity-provider",
+        "label": "facebook",
+        "summary": "Facebook",
+        "route": "/cockpit/objects/identity-provider/facebook",
+        "source": ".ai/repo/identity/providers/facebook.yaml",
+        "facts": {
+          "created_at": "2026-11-07",
+          "discovery": "https://www.facebook.com/.well-known/openid-configuration/",
+          "display_name": "Facebook",
+          "flow": "oidc-authorization-code-pkce",
+          "issuer": "https://www.facebook.com",
+          "order": 20,
+          "scopes": [
+            "openid",
+            "email"
+          ],
+          "subject_claim": "sub",
+          "updated_at": "2026-11-07"
+        }
+      },
+      {
+        "id": "majordomus://identity-provider/google",
+        "kind": "identity-provider",
+        "label": "google",
+        "summary": "Google",
+        "route": "/cockpit/objects/identity-provider/google",
+        "source": ".ai/repo/identity/providers/google.yaml",
+        "facts": {
+          "created_at": "2026-11-07",
+          "discovery": "https://accounts.google.com/.well-known/openid-configuration",
+          "display_name": "Google",
+          "flow": "oidc-authorization-code-pkce",
+          "issuer": "https://accounts.google.com",
+          "order": 10,
+          "scopes": [
+            "openid",
+            "email"
+          ],
+          "subject_claim": "sub",
+          "updated_at": "2026-11-07"
         }
       },
       {
@@ -107577,6 +107691,13 @@
         "source": "test/cases/4563_the_live_site_is_probed_in_a_real_browser.sh"
       },
       {
+        "id": "majordomus://test/test/cases/4564_an_identity_provider_is_a_declarative_object.sh",
+        "kind": "test",
+        "label": "test/cases/4564_an_identity_provider_is_a_declarative_object.sh",
+        "route": "/cockpit/objects/test/test-cases-4564-an-identity-provider-is-a-declarative-object-sh",
+        "source": "test/cases/4564_an_identity_provider_is_a_declarative_object.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/45_github_projection.sh",
         "kind": "test",
         "label": "test/cases/45_github_projection.sh",
@@ -128737,6 +128858,31 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://context/ai.repo.identity",
+        "target": "kind:context",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://context/ai.repo.identity.providers",
+        "target": "file:share/allow/identity-provider.txt",
+        "kind": "tracks"
+      },
+      {
+        "source": "majordomus://context/ai.repo.identity.providers",
+        "target": "file:share/kinds.yaml",
+        "kind": "tracks"
+      },
+      {
+        "source": "majordomus://context/ai.repo.identity.providers",
+        "target": "file:share/schemas/majordomus/identity-provider/identity-provider.v1.schema.json",
+        "kind": "tracks"
+      },
+      {
+        "source": "majordomus://context/ai.repo.identity.providers",
+        "target": "kind:context",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://context/ai.repo.knowledge",
         "target": "file:share/knowledge-sources.yaml",
         "kind": "tracks"
@@ -131244,6 +131390,16 @@
       {
         "source": "majordomus://gap/the-owner-directs-work-from-the-ui",
         "target": "kind:gap",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://identity-provider/facebook",
+        "target": "kind:identity-provider",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://identity-provider/google",
+        "target": "kind:identity-provider",
         "kind": "is_a"
       },
       {
@@ -156687,6 +156843,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/4564_an_identity_provider_is_a_declarative_object.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/45_github_projection.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -161813,8 +161974,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4422,
-      "edges": 10037,
+      "nodes": 4430,
+      "edges": 10045,
       "acyclic": false,
       "truncated": false
     }

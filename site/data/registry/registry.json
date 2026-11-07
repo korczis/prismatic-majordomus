@@ -6,26 +6,26 @@
     "version": "1.0.0"
   },
   "registry": {
-    "fingerprint": "99df951f5533a1b2775a224eda81907e0c210ac22cdfa46ba0642d4fdeda5c3e",
+    "fingerprint": "f0ba08be58e08c31138d425e1929ca69eeff226acd35e022286ce0d2cef6198c",
     "summary": {
-      "total": 3951,
+      "total": 3956,
       "builtin": 231,
-      "declarative": 3720,
+      "declarative": 3725,
       "by_kind": {
         "command": 41,
         "query": 190,
-        "resource": 3720
+        "resource": 3725
       },
       "by_stability": {
         "behaviorally_verified": 153,
         "experimental": 68,
-        "implemented": 3730
+        "implemented": 3735
       },
       "mcp_tools": 215,
-      "mcp_resources": 3777,
+      "mcp_resources": 3782,
       "http_routes": 219,
       "cli_commands": 128,
-      "modules": 96,
+      "modules": 97,
       "benchmark_required": 186,
       "benchmark_waived": 45,
       "cached": 55
@@ -96669,7 +96669,7 @@
         "title": "context",
         "description": "Declarative objects of kind 'context' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 39,
+        "capabilities": 41,
         "capability_ids": []
       },
       {
@@ -97091,6 +97091,14 @@
           "module": "majordomus_cli::capability::builtin::health",
           "path": "majordomus_cli/capability/builtin/health/index.html"
         }
+      },
+      {
+        "id": "identity-provider",
+        "title": "identity-provider",
+        "description": "Declarative objects of kind 'identity-provider' from the repository's AI layer.",
+        "source": "declarative",
+        "capabilities": 2,
+        "capability_ids": []
       },
       {
         "id": "implementation",
@@ -97785,7 +97793,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 697,
+        "capabilities": 698,
         "capability_ids": []
       },
       {
@@ -97878,7 +97886,7 @@
     ]
   },
   "index": {
-    "fingerprint": "8c343d8050dc0d470510985c455e609a7cc42df0510482af8657bbdc1e8cebb9",
+    "fingerprint": "a9a12a0ac9d93c8dd52e0dcfa5b2a6e88dc269e62166627b9ddbefa3823197ee",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -97907,7 +97915,7 @@
       "audience": 8,
       "claim": 250,
       "command": 31,
-      "context": 39,
+      "context": 41,
       "critique": 40,
       "deployment": 1,
       "derive-offload": 1,
@@ -97916,6 +97924,7 @@
       "domain": 6,
       "feature": 29,
       "gap": 5,
+      "identity-provider": 2,
       "implementation": 54,
       "intent": 45,
       "issue": 1223,
@@ -97932,7 +97941,7 @@
       "session": 95,
       "skill": 10,
       "taxonomy": 10,
-      "test": 697,
+      "test": 698,
       "use-case": 49,
       "workspace": 1
     },
@@ -103955,6 +103964,26 @@
         "bytes": 1893
       },
       {
+        "uri": "majordomus://context/ai.repo.identity",
+        "kind": "context",
+        "identity": "ai.repo.identity",
+        "title": "Identity",
+        "description": "How a person proves who they are to this repository's web surfaces, declared as data; no credential is ever here.",
+        "path": ".ai/repo/identity/README.md",
+        "source_class": "context",
+        "bytes": 1272
+      },
+      {
+        "uri": "majordomus://context/ai.repo.identity.providers",
+        "kind": "context",
+        "identity": "ai.repo.identity.providers",
+        "title": "Identity providers",
+        "description": "One declarative object per OpenID Connect provider a person may sign in with; striking a provider is deleting its file.",
+        "path": ".ai/repo/identity/providers/README.md",
+        "source_class": "context",
+        "bytes": 2714
+      },
+      {
         "uri": "majordomus://context/ai.repo.knowledge",
         "kind": "context",
         "identity": "ai.repo.knowledge",
@@ -108522,6 +108551,26 @@
         "section": "project",
         "source_class": "gap",
         "bytes": 4045
+      },
+      {
+        "uri": "majordomus://identity-provider/facebook",
+        "kind": "identity-provider",
+        "identity": "facebook",
+        "title": "Facebook",
+        "description": "A Facebook account, through Facebook Login's OpenID Connect code flow with PKCE.",
+        "path": ".ai/repo/identity/providers/facebook.yaml",
+        "source_class": "identity-provider",
+        "bytes": 1308
+      },
+      {
+        "uri": "majordomus://identity-provider/google",
+        "kind": "identity-provider",
+        "identity": "google",
+        "title": "Google",
+        "description": "A Google account, through Google's OpenID Connect provider.",
+        "path": ".ai/repo/identity/providers/google.yaml",
+        "source_class": "identity-provider",
+        "bytes": 898
       },
       {
         "uri": "majordomus://implementation/bin/majordomus",
@@ -136337,6 +136386,14 @@
         "bytes": 6846
       },
       {
+        "uri": "majordomus://test/test/cases/4564_an_identity_provider_is_a_declarative_object.sh",
+        "kind": "test",
+        "identity": "test/cases/4564_an_identity_provider_is_a_declarative_object.sh",
+        "path": "test/cases/4564_an_identity_provider_is_a_declarative_object.sh",
+        "source_class": "case",
+        "bytes": 10092
+      },
+      {
         "uri": "majordomus://test/test/cases/45_github_projection.sh",
         "kind": "test",
         "identity": "test/cases/45_github_projection.sh",
@@ -138756,7 +138813,7 @@
       "identity": [
         "id"
       ],
-      "objects": 39
+      "objects": 41
     },
     {
       "name": "critique",
@@ -138833,6 +138890,16 @@
         "intent"
       ],
       "objects": 5
+    },
+    {
+      "name": "identity-provider",
+      "format": "yaml",
+      "front_matter": "none",
+      "schema": "majordomus.identity-provider/v1",
+      "identity": [
+        "id"
+      ],
+      "objects": 2
     },
     {
       "name": "implementation",
@@ -139021,7 +139088,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 697
+      "objects": 698
     },
     {
       "name": "use-case",

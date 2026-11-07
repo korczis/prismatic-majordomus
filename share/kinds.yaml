@@ -403,6 +403,20 @@ kinds:
       field: schema
       supported: [workspace/v1]
 
+  # One OpenID Connect provider a person may sign in with (I1201). Every provider is reached
+  # through the one flow the schema states, so no object carries a field the others cannot
+  # fill; an object names the environment variables its credentials arrive in and holds none.
+  identity-provider:
+    format: yaml
+    # the identity fixes the path: share/schemas/majordomus/identity-provider/identity-provider.v1.schema.json
+    schema: majordomus.identity-provider/v1
+    identity: [id]
+    title: display_name
+    description: description
+    schema_version:
+      field: schema
+      supported: [identity-provider/v1]
+
   distribution-model:
     format: yaml
     schema: majordomus.distribution/v1

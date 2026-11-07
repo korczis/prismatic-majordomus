@@ -1,0 +1,29 @@
+schema: identity-provider/v1
+kind: identity-provider
+id: google
+display_name: Google
+description: A Google account, through Google's OpenID Connect provider.
+order: 10
+flow: oidc-authorization-code-pkce
+
+# Read from the discovery document on 2026-11-07.
+issuer: https://accounts.google.com
+discovery: https://accounts.google.com/.well-known/openid-configuration
+endpoints:
+  authorization: https://accounts.google.com/o/oauth2/v2/auth
+  token: https://oauth2.googleapis.com/token
+  jwks: https://www.googleapis.com/oauth2/v3/certs
+
+scopes:
+  - openid
+  - email
+subject_claim: sub
+
+# Names, never values: the client id and secret are issued in the Google Cloud console and
+# reach the server through these variables alone.
+credentials:
+  client_id_env: MAJORDOMUS_IDENTITY_GOOGLE_CLIENT_ID
+  client_secret_env: MAJORDOMUS_IDENTITY_GOOGLE_CLIENT_SECRET
+
+created_at: 2026-11-07
+updated_at: 2026-11-07
