@@ -9,11 +9,11 @@ Every externally callable operation is a benchmark target, derived from the regi
 
 | scope | required | covered | missing | waived |
 |---|---|---|---|---|
-| direct | 231 | 186 | 0 | 45 |
-| http | 219 | 184 | 0 | 35 |
-| mcp | 215 | 181 | 0 | 34 |
+| direct | 232 | 187 | 0 | 45 |
+| http | 220 | 185 | 0 | 35 |
+| mcp | 216 | 182 | 0 | 34 |
 | system | 14 | 14 | 0 | 0 |
-| total | 679 | 565 | 0 | 114 |
+| total | 682 | 568 | 0 | 114 |
 
 ## Capabilities
 
@@ -245,6 +245,7 @@ Every externally callable operation is a benchmark target, derived from the regi
 | `why.validate` | why | query | process, 2 entries | covered | covered | covered | `default` |
 | `worktree.create` | worktree | command | — | covered | covered | covered | `refused-name` |
 | `worktree.inspect` | worktree | query | — | covered | covered | covered | `feature-branch` |
+| `worktree.liveness` | worktree | query | — | covered | covered | covered | `absent-path` |
 | `worktree.migration_plan` | worktree | query | — | covered | covered | covered | `default` |
 | `worktree.status` | worktree | query | — | covered | covered | covered | `default`, `primary-checkout` |
 | `worktree.topology` | worktree | query | — | covered | covered | covered | `default` |

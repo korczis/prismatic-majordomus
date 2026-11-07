@@ -7,7 +7,7 @@ description: Open pull requests, linked worktrees, local branches, running serve
 statement: Before adding anything that accumulates, name the command that measures it, the threshold that makes it loud and the command that reduces it; never wait on a forge merge button this repository's merge policy cannot reach, never match a process by name to kill it, never remove a worktree or branch whose work is not pushed, bound what a build may consume before it starts rather than diagnosing the machine after it is full, and sweep what a shared build directory accumulates only while holding cargo's own lock on it.
 status: active
 class: blocking
-depends_on: [project.worktree-topology@1, project.work-is-claimed-before-it-is-built@1, project.destructive-sweeps-fail-closed@1, project.reclaim-only-what-you-own@1, project.every-wait-is-bounded@2]
+depends_on: [project.worktree-topology@1, project.work-is-claimed-before-it-is-built@1, project.destructive-sweeps-fail-closed@1, project.reclaim-only-what-you-own@2, project.every-wait-is-bounded@2]
 tags: [operations, git, worktree, safety, agents, coordination, ci, disk]
 
 x-majordomus:

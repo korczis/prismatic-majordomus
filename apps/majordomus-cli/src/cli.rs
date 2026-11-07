@@ -4808,6 +4808,15 @@ pub enum WorktreeCommand {
         #[arg(long, value_name = "DURATION")]
         older_than: Option<String>,
     },
+    /// Whether anybody uses each path, a tree or a build directory: one `keep` or `reclaim` line per path with every reason found, and `blind` lines for the sources that could not be read. The one liveness predicate every deleting sweep asks; writes nothing. Exit 10 when a source could not be read (a sweep then removes nothing), 0 otherwise
+    Liveness {
+        /// The trees or build directories, absolute or relative to the current directory
+        #[arg(required = true, value_name = "PATH")]
+        paths: Vec<String>,
+        /// Judge git activity against this idle window instead of thirty minutes (90s, 20m, 2h)
+        #[arg(long, value_name = "DURATION")]
+        idle: Option<String>,
+    },
     /// How far this checkout and the local trunk are from the remote trunk, as of the last fetch, judged against the policy's checkout.trunk_distance: current, lagging, stale, unjudged or unmeasured, with the commands that bring it current. Fetches nothing; exit 10 when stale
     Trunk,
     /// Every local branch, one per line, for a shell completion that wants the live set
@@ -7086,6 +7095,17 @@ pub const EXAMPLES: &[CommandExamples] = &[
             argv: &["worktree", "uncommitted"],
             setup: &[],
             expect: Expect::StdoutContains(&["0 with uncommitted work", "nothing was changed"]),
+        }],
+    },
+    CommandExamples {
+        command: "worktree liveness",
+        examples: &[ExampleDoc {
+            id: "worktree-liveness-absent",
+            title: "Keep or reclaim, and why",
+            description: "The one liveness predicate every deleting sweep asks, for each path it is given: `keep` with every reason found, or `reclaim` when every source was read and none names it. A path that is not there is kept, as anything the predicate cannot read is, and asking about it reads nothing of the machine.",
+            argv: &["worktree", "liveness", "no/such/build-dir"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["keep", "it does not exist", "every source was read"]),
         }],
     },
     CommandExamples {

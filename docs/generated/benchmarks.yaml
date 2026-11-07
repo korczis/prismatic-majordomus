@@ -6,20 +6,20 @@ generated: "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the benchmark proje
 generator: majordomus-cli 1.0.0
 coverage:
   - scope: direct
-    required: 231
-    covered: 186
+    required: 232
+    covered: 187
     missing: 0
     waived: 45
     inapplicable: 0
   - scope: http
-    required: 219
-    covered: 184
+    required: 220
+    covered: 185
     missing: 0
     waived: 35
     inapplicable: 0
   - scope: mcp
-    required: 215
-    covered: 181
+    required: 216
+    covered: 182
     missing: 0
     waived: 34
     inapplicable: 0
@@ -30,8 +30,8 @@ coverage:
     waived: 0
     inapplicable: 0
   - scope: total
-    required: 679
-    covered: 565
+    required: 682
+    covered: 568
     missing: 0
     waived: 114
     inapplicable: 0
@@ -2103,6 +2103,15 @@ capabilities:
     http: covered
     cases:
       - feature-branch
+  - id: worktree.liveness
+    module: worktree
+    kind: query
+    cache: "—"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - absent-path
   - id: worktree.migration_plan
     module: worktree
     kind: query

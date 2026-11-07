@@ -99,6 +99,7 @@ Every command below is declared once, in [`apps/majordomus-cli/src/cli.rs`](../.
 | [`majordomus worktree remove`](#majordomus-worktree-remove) | `/docs/cli/worktree/remove/` | Remove one linked worktree by branch or path. Never the primary checkout, never a branch, never uncommitted work without --force |
 | [`majordomus worktree cleanup`](#majordomus-worktree-cleanup) | `/docs/cli/worktree/cleanup/` | The branches merged into the trunk whose worktree is clean or absent: what could be removed. Removes nothing without --remove |
 | [`majordomus worktree uncommitted`](#majordomus-worktree-uncommitted) | `/docs/cli/worktree/uncommitted/` | Every linked worktree holding uncommitted work: how many paths, how old the oldest change, what holds it (an active task, an open episode, a process inside) and whether it is abandoned, with the command that would put it on a remote ref. Reads every worktree and writes none |
+| [`majordomus worktree liveness`](#majordomus-worktree-liveness) | `/docs/cli/worktree/liveness/` | Whether anybody uses each path, a tree or a build directory: one `keep` or `reclaim` line per path with every reason found, and `blind` lines for the sources that could not be read. The one liveness predicate every deleting sweep asks; writes nothing. Exit 10 when a source could not be read (a sweep then removes nothing), 0 otherwise |
 | [`majordomus worktree trunk`](#majordomus-worktree-trunk) | `/docs/cli/worktree/trunk/` | How far this checkout and the local trunk are from the remote trunk, as of the last fetch, judged against the policy's checkout.trunk_distance: current, lagging, stale, unjudged or unmeasured, with the commands that bring it current. Fetches nothing; exit 10 when stale |
 | [`majordomus worktree branches`](#majordomus-worktree-branches) | `/docs/cli/worktree/branches/` | Every local branch, one per line, for a shell completion that wants the live set |
 | [`majordomus prs`](#majordomus-prs) | `/docs/cli/prs/` | Pull-request integration: every open pull request classified against the current master with its evidence, the ranked plan, and the executor that merges the next provably safe one — one at a time, re-planning after each (ADR 0101) |
@@ -2393,7 +2394,7 @@ Examples:
 
 The branch-to-worktree topology: where every linked worktree belongs (`<repo>-wt/<branch>`), where each one is, and the lifecycle — create, migrate, repair, guard
 
-Subcommands: [`majordomus worktree status`](#majordomus-worktree-status), [`majordomus worktree list`](#majordomus-worktree-list), [`majordomus worktree topology`](#majordomus-worktree-topology), [`majordomus worktree root`](#majordomus-worktree-root), [`majordomus worktree path`](#majordomus-worktree-path), [`majordomus worktree inspect`](#majordomus-worktree-inspect), [`majordomus worktree create`](#majordomus-worktree-create), [`majordomus worktree ensure`](#majordomus-worktree-ensure), [`majordomus worktree migrate`](#majordomus-worktree-migrate), [`majordomus worktree validate`](#majordomus-worktree-validate), [`majordomus worktree doctor`](#majordomus-worktree-doctor), [`majordomus worktree guard`](#majordomus-worktree-guard), [`majordomus worktree repair`](#majordomus-worktree-repair), [`majordomus worktree remove`](#majordomus-worktree-remove), [`majordomus worktree cleanup`](#majordomus-worktree-cleanup), [`majordomus worktree uncommitted`](#majordomus-worktree-uncommitted), [`majordomus worktree trunk`](#majordomus-worktree-trunk), [`majordomus worktree branches`](#majordomus-worktree-branches).
+Subcommands: [`majordomus worktree status`](#majordomus-worktree-status), [`majordomus worktree list`](#majordomus-worktree-list), [`majordomus worktree topology`](#majordomus-worktree-topology), [`majordomus worktree root`](#majordomus-worktree-root), [`majordomus worktree path`](#majordomus-worktree-path), [`majordomus worktree inspect`](#majordomus-worktree-inspect), [`majordomus worktree create`](#majordomus-worktree-create), [`majordomus worktree ensure`](#majordomus-worktree-ensure), [`majordomus worktree migrate`](#majordomus-worktree-migrate), [`majordomus worktree validate`](#majordomus-worktree-validate), [`majordomus worktree doctor`](#majordomus-worktree-doctor), [`majordomus worktree guard`](#majordomus-worktree-guard), [`majordomus worktree repair`](#majordomus-worktree-repair), [`majordomus worktree remove`](#majordomus-worktree-remove), [`majordomus worktree cleanup`](#majordomus-worktree-cleanup), [`majordomus worktree uncommitted`](#majordomus-worktree-uncommitted), [`majordomus worktree liveness`](#majordomus-worktree-liveness), [`majordomus worktree trunk`](#majordomus-worktree-trunk), [`majordomus worktree branches`](#majordomus-worktree-branches).
 
 ```text
 majordomus worktree [OPTIONS] [COMMAND]
@@ -2869,6 +2870,35 @@ Examples:
   ```
 
   Verified: exits 0; prints 0 with uncommitted work, nothing was changed.
+
+<a id="majordomus-worktree-liveness"></a>
+## `majordomus worktree liveness`
+
+Whether anybody uses each path, a tree or a build directory: one `keep` or `reclaim` line per path with every reason found, and `blind` lines for the sources that could not be read. The one liveness predicate every deleting sweep asks; writes nothing. Exit 10 when a source could not be read (a sweep then removes nothing), 0 otherwise
+
+```text
+majordomus worktree liveness [OPTIONS] <PATH>
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `<PATH>` | `<PATH>` | required | The trees or build directories, absolute or relative to the current directory |
+| `--idle` | `<DURATION>` | — | Judge git activity against this idle window instead of thirty minutes (90s, 20m, 2h) |
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree; `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | Output shape (accepted by every subcommand) — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **Keep or reclaim, and why** — The one liveness predicate every deleting sweep asks, for each path it is given: `keep` with every reason found, or `reclaim` when every source was read and none names it. A path that is not there is kept, as anything the predicate cannot read is, and asking about it reads nothing of the machine.
+
+  ```console
+  $ majordomus worktree liveness no/such/build-dir
+  ```
+
+  Verified: exits 0; prints keep, it does not exist, every source was read.
 
 <a id="majordomus-worktree-trunk"></a>
 ## `majordomus worktree trunk`

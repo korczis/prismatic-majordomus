@@ -188,6 +188,11 @@ majordomus worktree uncommitted                # uncommitted work in linked work
 majordomus worktree cleanup --remove           # removes those worktrees, refusing what it cannot prove
 ```
 
+<!-- majordomus:unrun its exit is 10 wherever a declared mesh has no server to ask, which a documentation check run in a fresh clone always is; case 611 and the unit tests of worktree::liveness run it against fixtures -->
+```bash
+majordomus worktree liveness ../my-repo-wt/feature/x   # keep or reclaim, with every reason; writes nothing
+```
+
 <div class="overflow-x-auto" tabindex="0">
 
 | command | what it does | exit 10 when |
@@ -206,7 +211,8 @@ majordomus worktree cleanup --remove           # removes those worktrees, refusi
 | `worktree repair [--dry-run]` | drop stale registrations, repair git's links; deletes no directory | |
 | `worktree remove <branch\|path> [--force]` | remove one linked worktree; never the primary, never a branch, never dirty work unforced | refused |
 | `worktree cleanup` | branches merged into the trunk, or into the remote-tracking branch the trunk follows, whose worktree is clean or absent, with the commands that would remove them. A primary checkout nobody has pulled does not hide what has already landed. | |
-| `worktree cleanup --remove` | removes those worktrees, each re-measured first; refuses a branch ahead of its remote, a worktree something is working in, uncommitted work, or a reading it could not take | |
+| `worktree cleanup --remove` | removes those worktrees, each re-measured first; refuses a branch ahead of its remote, a worktree the liveness predicate says is in use, uncommitted work, or a reading it could not take | |
+| `worktree liveness <path>… [--idle D]` | the one liveness predicate every deleting sweep asks: `keep` or `reclaim` per path with every reason, `blind` for each source it could not read; writes nothing | a source could not be read (a sweep then removes nothing) |
 | `worktree uncommitted [--older-than D]` | every linked worktree holding uncommitted work: paths, age of the oldest change, what holds it, `abandoned` or not, and the command that would put it on a remote ref; writes nothing | |
 | `worktree trunk` | how far this checkout and the local trunk are from the remote trunk, as of the last fetch, judged against `checkout.trunk_distance`, with the commands that bring it current; fetches nothing | the checkout is stale |
 | `worktree branches [--without-worktree]` | every local branch, one per line | |
@@ -513,9 +519,9 @@ again for each candidate immediately before it goes, and names what it refuses:
 | refusal | why it is not covered by "merged and clean" |
 |---|---|
 | ahead of its remote, no upstream, or upstream gone | the branch's merged history is on the remote; a commit on top of it is on one disk, and being merged says nothing about that |
-| a process has its working directory inside | mtime lies: two worktrees swept on 2026-09-15 looked untouched since the 12th and had live processes in them |
+| in use, by the liveness predicate | a process works inside it, builds into it or names it, a task, claim, board peer, derive or offload run holds it, or its git state moved within thirty minutes; two worktrees swept on 2026-09-15 looked untouched since the 12th and had live processes in them |
 | uncommitted work | read again at the moment of removal, not taken from the listing |
-| `lsof` is missing, or git could not compare with the upstream | not knowing is not the same as nothing being there |
+| a liveness reading could not be taken, or git could not compare with the upstream | not knowing is not the same as nothing being there |
 
 </div>
 
@@ -527,6 +533,51 @@ which stay. It includes the combination the refusals exist for: a branch merged 
 trunk *and* carrying a commit its remote has never seen. What changes *after* the listing — a
 commit, a deleted remote branch, a file written — is planted by the unit tests of the reclaim
 in `apps/majordomus-cli/src/commands/worktree.rs`. A missing `lsof` is not planted anywhere.
+
+### One liveness predicate
+
+Three sweeps delete: `worktree cleanup --remove` (whole worktrees), `scripts/reap-orphans
+--targets` (a worktree's `target/` and the shared build directory) and the build host's
+`disk-guard` (cargo build directories under people's and CI runners' homes). Until I4346 each
+decided for itself whether anybody was using what it was about to remove, and on 2026-10-28 the
+reaper removed a live worktree's `target/` — the only copy of the executable its hooks require
+(ADR 0224) — because its liveness was a substring match against `ps` and working directories,
+which a session working through absolute paths from elsewhere never shows.
+
+Liveness is now one typed capability, `worktree.liveness` (`majordomus worktree liveness
+<path>...`, MCP `majordomus_worktree_liveness`, `POST /api/v1/worktrees/liveness`), implemented
+once in `apps/majordomus-cli/src/worktree/liveness.rs`. `worktree cleanup` asks it in process;
+the reaper and the guard ask the executable — the reaper the one `lib/rust_bin.sh` resolves for
+its checkout (or `MAJORDOMUS_BIN`), the guard the one `disk-guard.service` names in
+`LIVENESS_BIN`, which `mesh build-cache provision --apply` installs. A path is judged with the
+work tree that holds it, and is kept when:
+
+<div class="overflow-x-auto" tabindex="0">
+
+| signal | read from |
+|---|---|
+| `task` | the tree's `.ai/local/state/current.yaml` with outcome `active` |
+| `mesh_claim` | a live mesh claim for the branch's issue or over the tree's absolute path, or an active session on its branch or issue |
+| `board_claim` | a peer attached to, or announcing on, the server holding the tree's own lease |
+| `derive_lock` | the derive lock beside the primary checkout, whose live owner names the branch |
+| `queue_pid_file` | an offload run record whose live run is in it, or an offload lock pid file whose process works in it |
+| `runner_job` | a running `Runner.Worker` whose home holds it |
+| `process_environment` | another process's `CARGO_*_DIR` or `MAJORDOMUS_BIN` points into it |
+| `process_directory` | another process's working directory is inside it |
+| `process_arguments` | another process names it on its command line (the asker and its callers excepted) |
+| `git_activity` | the tree's index, `HEAD` or `HEAD` reflog written within the idle window (thirty minutes; `--idle`) |
+| `unreadable` | a reading that could not be taken: a task record that is not one, a git file that cannot be stat'ed, a live server that does not answer |
+
+</div>
+
+
+It fails closed. A source that could not be read at all — the process table, the working
+directories, this user's process environments, the claims of a repository that declares a mesh,
+the offload run records — is listed as `blind`, the answer is incomplete and the command exits
+10: the reaper then removes nothing and exits 12, and the guard keeps the directory. Without
+the executable neither removes a build directory. The rule is
+`project.reclaim-only-what-you-own` v2; cases 611 and 276 and the unit tests of
+`worktree::liveness` hold it.
 
 ## A checkout and its distance from the trunk
 
@@ -606,7 +657,7 @@ holds changes — staged, unstaged, untracked and conflicted paths counted toget
 | `oldest_change`, `age` | the earliest modification time among the changed paths; for a path that no longer exists (a deletion) the index file's time stands in |
 | `task` | the active task recorded there: `.ai/local/state/current.yaml` with outcome `active`, the record `start` writes and `finish` closes |
 | `episodes` | the open episodes there (`.ai/local/state/sessions-open/`), each with its last sign of life and whether it is stranded |
-| `process_inside` | a process has its working directory inside, by the `lsof` reading `cleanup --remove` refuses on |
+| `process_inside` | a process has its working directory inside, by an `lsof` reading; `cleanup --remove` refuses on the liveness predicate, which reads the same and more |
 | `standing` | `held` when the task, an episode that is not stranded or a process holds it; otherwise `abandoned` when the oldest change is older than the threshold (or its age cannot be read), else `recent` |
 | `remedy` | the command that would commit the work there and push it to `rescue/<branch>-<YYYYMMDD>`; suggested, never run |
 

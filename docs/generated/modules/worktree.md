@@ -5,7 +5,7 @@
 
 Where every linked git worktree of this repository belongs and where each one is. The container is the primary checkout's sibling named with `-wt`, the path under it is the branch name with its hierarchy kept, and both are derived from git's own identity — the common directory, the registered worktrees, the branches — never from a registry, a configuration or the current directory. A worktree somewhere else is a typed diagnostic with a remedy; the migration that repairs it is a command-line operation of the same service.
 
-Stability: behaviorally_verified. Capabilities: 7.
+Stability: behaviorally_verified. Capabilities: 8.
 
 ## `worktree.create` — The canonical worktree of a branch, made or found
 
@@ -55,6 +55,30 @@ The canonical path of a branch, derived from its name alone, whether the branch 
 derives from the name alone. |
 
 Output: `InspectReport`.
+
+## `worktree.liveness` — Whether anybody uses a tree or build directory: keep or reclaim
+
+The one liveness predicate every deleting sweep asks (I4346): `worktree cleanup --remove` in process, `scripts/reap-orphans --targets` and the build host's `disk-guard` through `majordomus worktree liveness <path>...`. Each path is judged with the work tree holding it, and is `keep` when an open task is recorded in the tree, a live mesh claim or active session names its issue, branch or path, a peer is attached to or announced on the tree's own server, the derive lock's live owner names its branch, an offload run record or offload lock pid file names a process working in it, a CI runner job runs under the home holding it, another process's `CARGO_*_DIR` or `MAJORDOMUS_BIN` points into it, another process works inside it or names it on its command line, or the tree's index, `HEAD` or `HEAD` reflog changed within the idle window (thirty minutes unless `idle` says otherwise). Every reason is reported. A reading that could not be taken keeps the path (`unreadable`); a source that could not be read at all — the process table, the working directories, this user's process environments, the claims of a repository that declares a mesh, the offload run records — is named in `blind`, and the answer is then `complete: false`, on which the command line exits 10 and a sweep removes nothing. Writes nothing and refreshes no index.
+
+| | |
+|---|---|
+| kind | query |
+| stability | behaviorally_verified |
+| MCP tool | `majordomus_worktree_liveness` |
+| HTTP | `POST /api/v1/worktrees/liveness` |
+| CLI | `majordomus worktree liveness` |
+| cache | — |
+| benchmark | required |
+| provenance | builtin majordomus_cli::capability::builtin::worktree |
+| tags | worktree, liveness, reclamation, introspection |
+
+| input | type | required | description |
+|---|---|---|---|
+| `paths` | array | yes | The trees or build directories, absolute or relative to the primary checkout. |
+| `idle` | string or null | no | The idle window git activity is judged against, as a person writes it (`20m`, `2h`).
+Default: thirty minutes. |
+
+Output: `LivenessReport`.
 
 ## `worktree.migration_plan` — What it would take to bring every worktree home
 

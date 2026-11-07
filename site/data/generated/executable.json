@@ -4013,6 +4013,23 @@
       "tool": "majordomus_worktree_inspect"
     },
     {
+      "api_anchor": "/docs/api/worktree/#op-worktree-liveness",
+      "claims": [],
+      "cli": "majordomus worktree liveness",
+      "id": "worktree.liveness",
+      "kind": "query",
+      "module": "worktree",
+      "module_route": "/registry/modules/worktree/",
+      "resource": null,
+      "route": "/registry/capabilities/worktree-liveness/",
+      "slug": "worktree-liveness",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/worktree.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/worktree.rs",
+      "tests": [],
+      "title": "Whether anybody uses a tree or build directory: keep or reclaim",
+      "tool": "majordomus_worktree_liveness"
+    },
+    {
       "api_anchor": "/docs/api/worktree/#op-worktree-migration_plan",
       "claims": [],
       "cli": "majordomus worktree migrate",
@@ -4734,7 +4751,7 @@
     ]
   },
   "counts": {
-    "capabilities": 231,
+    "capabilities": 232,
     "claims": 93,
     "modules": 62
   },
@@ -6574,6 +6591,11 @@
           "id": "worktree.inspect",
           "route": "/registry/capabilities/worktree-inspect/",
           "slug": "worktree-inspect"
+        },
+        {
+          "id": "worktree.liveness",
+          "route": "/registry/capabilities/worktree-liveness/",
+          "slug": "worktree-liveness"
         },
         {
           "id": "worktree.migration_plan",

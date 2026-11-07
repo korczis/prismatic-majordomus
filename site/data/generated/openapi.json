@@ -214,6 +214,7 @@
     "op-why-validate": "docs/api/why/",
     "op-worktree-create": "docs/api/worktree/",
     "op-worktree-inspect": "docs/api/worktree/",
+    "op-worktree-liveness": "docs/api/worktree/",
     "op-worktree-migration_plan": "docs/api/worktree/",
     "op-worktree-status": "docs/api/worktree/",
     "op-worktree-topology": "docs/api/worktree/",
@@ -794,6 +795,11 @@
     "schema-LinkState": "docs/api/mesh/",
     "schema-Listen": "docs/api/deploy/",
     "schema-Liveness": "docs/api/health/",
+    "schema-LivenessInput": "docs/api/worktree/",
+    "schema-LivenessReason": "docs/api/worktree/",
+    "schema-LivenessReport": "docs/api/worktree/",
+    "schema-LivenessSignal": "docs/api/worktree/",
+    "schema-LivenessVerdict": "docs/api/worktree/",
     "schema-LocalOverrides": "docs/api/worktree/",
     "schema-LogStream": "docs/api/executions/",
     "schema-MachineNode": "docs/api/mesh/",
@@ -904,6 +910,7 @@
     "schema-ParameterView": "docs/api/executions/",
     "schema-PassedOver": "docs/api/integration/",
     "schema-PathChange": "docs/api/commit/",
+    "schema-PathLiveness": "docs/api/worktree/",
     "schema-PathOverlap": "docs/api/integration/",
     "schema-Peer": "docs/api/peers/",
     "schema-PeerAddress": "docs/api/shared/",
@@ -1408,8 +1415,8 @@
   },
   "binding": "GET binds every top-level input property as a query parameter; POST binds the input as the JSON body",
   "counts": {
-    "operations": 219,
-    "schemas": 1124,
+    "operations": 220,
+    "schemas": 1130,
     "tags": 62
   },
   "dialect": "https://spec.openapis.org/oas/3.1/dialect/base",
@@ -1720,6 +1727,7 @@
     "why.validate": "why",
     "worktree.create": "worktree",
     "worktree.inspect": "worktree",
+    "worktree.liveness": "worktree",
     "worktree.migration_plan": "worktree",
     "worktree.status": "worktree",
     "worktree.topology": "worktree",
@@ -2304,6 +2312,11 @@
     "LinkState": "mesh",
     "Listen": "deploy",
     "Liveness": "health",
+    "LivenessInput": "worktree",
+    "LivenessReason": "worktree",
+    "LivenessReport": "worktree",
+    "LivenessSignal": "worktree",
+    "LivenessVerdict": "worktree",
     "LocalOverrides": "worktree",
     "LogStream": "executions",
     "MachineNode": "mesh",
@@ -2414,6 +2427,7 @@
     "ParameterView": "executions",
     "PassedOver": "integration",
     "PathChange": "commit",
+    "PathLiveness": "worktree",
     "PathOverlap": "integration",
     "Peer": "peers",
     "PeerAddress": "shared",
@@ -22437,6 +22451,7 @@
         "worktree.topology",
         "worktree.create",
         "worktree.inspect",
+        "worktree.liveness",
         "worktree.migration_plan",
         "worktree.status",
         "worktree.trunk",
@@ -35008,6 +35023,200 @@
       "variants": []
     },
     {
+      "description": "The paths a sweep is about to delete.",
+      "home": "worktree",
+      "is_enum": false,
+      "name": "LivenessInput",
+      "properties": [
+        {
+          "description": "The trees or build directories, absolute or relative to the primary checkout.",
+          "name": "paths",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
+        },
+        {
+          "description": "The idle window git activity is judged against, as a person writes it (`20m`, `2h`).\nDefault: thirty minutes.",
+          "name": "idle",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "worktree.liveness"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "One reason a path is kept.",
+      "home": "worktree",
+      "is_enum": false,
+      "name": "LivenessReason",
+      "properties": [
+        {
+          "description": "What kind of evidence.",
+          "name": "signal",
+          "refs": [
+            "LivenessSignal"
+          ],
+          "required": true,
+          "type": "LivenessSignal"
+        },
+        {
+          "description": "The evidence, in words.",
+          "name": "detail",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "PathLiveness"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "The answer of `worktree.liveness`.",
+      "home": "worktree",
+      "is_enum": false,
+      "name": "LivenessReport",
+      "properties": [
+        {
+          "description": "`SCHEMA`.",
+          "name": "schema",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The idle window git activity is judged against, in seconds.",
+          "name": "idle_seconds",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        },
+        {
+          "description": "Whether every source was read. A sweep that gets `false` removes nothing.",
+          "name": "complete",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "Every source that could not be read at all, with why.",
+          "name": "blind",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
+        },
+        {
+          "description": "One answer per path, in the order asked.",
+          "name": "paths",
+          "refs": [
+            "PathLiveness"
+          ],
+          "required": true,
+          "type": "array of PathLiveness"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "worktree.liveness"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "What made a path live.",
+      "home": "worktree",
+      "is_enum": true,
+      "name": "LivenessSignal",
+      "properties": [],
+      "type": "\"task\" | \"mesh_claim\" | \"board_claim\" | \"derive_lock\" | \"queue_pid_file\" | \"runner_job\" | \"process_environment\" | \"process_directory\" | \"process_arguments\" | \"git_activity\" | \"unreadable\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "LivenessReason"
+      ],
+      "values": [
+        {
+          "description": "An open majordomus task in the tree.",
+          "value": "task"
+        },
+        {
+          "description": "A live mesh claim or session names it.",
+          "value": "mesh_claim"
+        },
+        {
+          "description": "A peer of the tree's own server is attached or announced.",
+          "value": "board_claim"
+        },
+        {
+          "description": "The derive lock's live owner names it.",
+          "value": "derive_lock"
+        },
+        {
+          "description": "An offload run record or a pid file of the offload lock names it.",
+          "value": "queue_pid_file"
+        },
+        {
+          "description": "A CI runner job is running under the home that holds it.",
+          "value": "runner_job"
+        },
+        {
+          "description": "Another process's `CARGO_*_DIR` or `MAJORDOMUS_BIN` points into it.",
+          "value": "process_environment"
+        },
+        {
+          "description": "Another process's working directory is inside it.",
+          "value": "process_directory"
+        },
+        {
+          "description": "Another process names it on its command line.",
+          "value": "process_arguments"
+        },
+        {
+          "description": "Its index, `HEAD` or `HEAD` reflog changed within the idle window.",
+          "value": "git_activity"
+        },
+        {
+          "description": "A reading that could not be taken: not knowing keeps it.",
+          "value": "unreadable"
+        }
+      ],
+      "variants": []
+    },
+    {
+      "description": "Keep or reclaim.",
+      "home": "worktree",
+      "is_enum": true,
+      "name": "LivenessVerdict",
+      "properties": [],
+      "type": "\"keep\" | \"reclaim\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "PathLiveness"
+      ],
+      "values": [
+        {
+          "description": "Something uses it, or that could not be ruled out.",
+          "value": "keep"
+        },
+        {
+          "description": "Every source was read and none of them names it.",
+          "value": "reclaim"
+        }
+      ],
+      "variants": []
+    },
+    {
       "description": "What became of the primary checkout's machine-local `.envrc.local` for a worktree.",
       "home": "worktree",
       "is_enum": false,
@@ -41144,6 +41353,53 @@
       "used_by": [],
       "used_by_schemas": [
         "WorkingTreeState"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "The answer for one path.",
+      "home": "worktree",
+      "is_enum": false,
+      "name": "PathLiveness",
+      "properties": [
+        {
+          "description": "The path as it was asked about (made absolute when it was relative).",
+          "name": "path",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Keep or reclaim.",
+          "name": "verdict",
+          "refs": [
+            "LivenessVerdict"
+          ],
+          "required": true,
+          "type": "LivenessVerdict"
+        },
+        {
+          "description": "The work tree that holds it, when one does.",
+          "name": "tree",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "Every reason it is kept; empty exactly when the verdict is `reclaim`.",
+          "name": "reasons",
+          "refs": [
+            "LivenessReason"
+          ],
+          "required": true,
+          "type": "array of LivenessReason"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "LivenessReport"
       ],
       "values": [],
       "variants": []
@@ -81430,6 +81686,65 @@
           "result_schema": "InspectReport",
           "stability": "behaviorally_verified",
           "summary": "One branch: where its worktree belongs and what is there"
+        },
+        {
+          "benchmark": "required",
+          "benchmark_reason": "",
+          "body_examples": [
+            {
+              "case": "absent-path",
+              "json": "{\"paths\":[\"does/not/exist\"]}"
+            }
+          ],
+          "body_schema": "LivenessInput",
+          "cache": "disabled",
+          "cache_detail": "",
+          "cli": "worktree liveness",
+          "curl": "curl -s -X POST \"http://127.0.0.1:8741/api/v1/worktrees/liveness\" -H \"content-type: application/json\" -d '{\"paths\":[\"does/not/exist\"]}'",
+          "description": "The one liveness predicate every deleting sweep asks (I4346): `worktree cleanup --remove` in process, `scripts/reap-orphans --targets` and the build host's `disk-guard` through `majordomus worktree liveness <path>...`. Each path is judged with the work tree holding it, and is `keep` when an open task is recorded in the tree, a live mesh claim or active session names its issue, branch or path, a peer is attached to or announced on the tree's own server, the derive lock's live owner names its branch, an offload run record or offload lock pid file names a process working in it, a CI runner job runs under the home holding it, another process's `CARGO_*_DIR` or `MAJORDOMUS_BIN` points into it, another process works inside it or names it on its command line, or the tree's index, `HEAD` or `HEAD` reflog changed within the idle window (thirty minutes unless `idle` says otherwise). Every reason is reported. A reading that could not be taken keeps the path (`unreadable`); a source that could not be read at all — the process table, the working directories, this user's process environments, the claims of a repository that declares a mesh, the offload run records — is named in `blind`, and the answer is then `complete: false`, on which the command line exits 10 and a sweep removes nothing. Writes nothing and refreshes no index.",
+          "home": "worktree",
+          "id": "worktree.liveness",
+          "kind": "query",
+          "mcp_resource": "",
+          "mcp_tool": "majordomus_worktree_liveness",
+          "method": "POST",
+          "parameters": [],
+          "path": "/api/v1/worktrees/liveness",
+          "primary": true,
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::worktree",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "Whether anybody uses a tree or build directory: keep or reclaim: the result.",
+              "schema": "LivenessReport",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "LivenessReport",
+          "stability": "behaviorally_verified",
+          "summary": "Whether anybody uses a tree or build directory: keep or reclaim"
         },
         {
           "benchmark": "required",

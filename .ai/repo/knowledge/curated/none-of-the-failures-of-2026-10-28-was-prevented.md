@@ -91,7 +91,7 @@ relations:
   - type: relates_to
     target: file:.ai/repo/project/issues/I1954.yaml
   - type: relates_to
-    target: file:.ai/repo/rules/project/reclaim-only-what-you-own.v1.md
+    target: file:.ai/repo/rules/project/reclaim-only-what-you-own.v2.md
   - type: relates_to
     target: file:.ai/repo/rules/project/the-cooperation-model-is-the-owners-word.v2.md
 ---

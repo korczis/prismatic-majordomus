@@ -70,7 +70,7 @@ Every capability this executable ships, as the registry holds it. MCP tools and 
 | `trace` | Traceability | behaviorally_verified | 3 | [`modules/trace.md`](modules/trace.md) |
 | `web` | Web surfaces | behaviorally_verified | 1 | [`modules/web.md`](modules/web.md) |
 | `why` | Why | behaviorally_verified | 6 | [`modules/why.md`](modules/why.md) |
-| `worktree` | Worktree topology | behaviorally_verified | 7 | [`modules/worktree.md`](modules/worktree.md) |
+| `worktree` | Worktree topology | behaviorally_verified | 8 | [`modules/worktree.md`](modules/worktree.md) |
 
 ## Executable capabilities
 
@@ -302,6 +302,7 @@ Every capability this executable ships, as the registry holds it. MCP tools and 
 | `why.validate` | `why` | query | behaviorally_verified | `majordomus_why_validate` | — | `GET /api/v1/why/validate` | `majordomus why validate` | process, 2 entries | required |
 | `worktree.create` | `worktree` | command | behaviorally_verified | `majordomus_worktree_create` | — | `POST /api/v1/worktrees/create` | `majordomus worktree ensure` | — | required |
 | `worktree.inspect` | `worktree` | query | behaviorally_verified | `majordomus_worktree_inspect` | — | `GET /api/v1/worktrees/inspect` | `majordomus worktree inspect` | — | required |
+| `worktree.liveness` | `worktree` | query | behaviorally_verified | `majordomus_worktree_liveness` | — | `POST /api/v1/worktrees/liveness` | `majordomus worktree liveness` | — | required |
 | `worktree.migration_plan` | `worktree` | query | behaviorally_verified | `majordomus_worktree_migration_plan` | — | `GET /api/v1/worktrees/migration` | `majordomus worktree migrate` | — | required |
 | `worktree.status` | `worktree` | query | behaviorally_verified | `majordomus_worktree_status` | — | `GET /api/v1/worktrees/status` | `majordomus worktree status` | — | required |
 | `worktree.topology` | `worktree` | query | behaviorally_verified | `majordomus_worktrees` | `majordomus://worktrees` | `GET /api/v1/worktrees` | `majordomus worktree topology` | — | required |

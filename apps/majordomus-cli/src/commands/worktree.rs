@@ -18,6 +18,7 @@ use serde_json::Value;
 
 use crate::cli::{OutputFormat, WorktreeArgs, WorktreeCommand};
 use crate::error::{Error, Result};
+use crate::worktree::liveness::DEFAULT_IDLE_SECONDS;
 use crate::worktree::{
     migrate, BranchState, CreateRequest, Detail, DirtyState, HooksPath, MigrationAction,
     MigrationOptions, MigrationPlan, RepositoryTopology, Severity, Standing, StatusReport,
@@ -35,6 +36,10 @@ pub fn run(args: WorktreeArgs) -> Result<u8> {
     let mut out = stdout.lock();
     let format = args.format;
     let svc = || WorktreeService::open(&start).map_err(refuse);
+    // asked about paths, not about this repository: no service, and no repository needed
+    if let Some(WorktreeCommand::Liveness { paths, idle }) = &args.command {
+        return liveness(&start, paths, idle.as_deref(), format, &mut out);
+    }
     match args.command {
         None | Some(WorktreeCommand::Status) => status(&svc()?, format, &mut out),
         Some(WorktreeCommand::List) => list(&svc()?, format, &mut out),
@@ -97,6 +102,7 @@ pub fn run(args: WorktreeArgs) -> Result<u8> {
             uncommitted(svc()?.uncommitted(&threshold), &threshold, format, &mut out)
         }
         Some(WorktreeCommand::Trunk) => trunk(&svc()?, format, &mut out),
+        Some(WorktreeCommand::Liveness { .. }) => unreachable!("answered above"),
         Some(WorktreeCommand::Branches { without_worktree }) => {
             branches(&svc()?, without_worktree, &mut out)
         }
@@ -671,12 +677,71 @@ fn uncommitted(
     Ok(0)
 }
 
-/// Is anything working inside this directory right now? The service's one reading of it
-/// ([`crate::worktree::state::processes_inside`]); a missing `lsof` is not "nothing is
-/// running" — it is not knowing, and the caller refuses on `None` rather than removing.
-fn occupied(path: &str) -> Option<bool> {
-    crate::worktree::state::processes_inside(&[std::path::Path::new(path)])
-        .and_then(|inside| inside.first().copied())
+/// `worktree liveness`: the one liveness predicate's answer for each path, one line each.
+/// Exit 10 when a source could not be read, which a sweep reads as "remove nothing".
+fn liveness(
+    start: &std::path::Path,
+    paths: &[String],
+    idle: Option<&str>,
+    format: OutputFormat,
+    out: &mut Out<'_>,
+) -> Result<u8> {
+    let idle = crate::worktree::liveness::idle_seconds(idle).map_err(|reason| Error::Refused {
+        code: crate::cli::EXIT_USAGE,
+        reason: format!("worktree liveness: {reason}"),
+    })?;
+    let paths = crate::worktree::liveness::absolute(paths, start);
+    let r = crate::worktree::liveness::answer(&paths, idle);
+    render_liveness(&r, format, out)
+}
+
+fn render_liveness(
+    r: &crate::worktree::liveness::LivenessReport,
+    format: OutputFormat,
+    out: &mut Out<'_>,
+) -> Result<u8> {
+    let code = if r.complete { 0 } else { EXIT_REFUSED };
+    if format == OutputFormat::Json {
+        json(out, r)?;
+        return Ok(code);
+    }
+    // one field per tab, so that a shell sweep reads it with `cut` or `read`
+    let flat = |s: &str| s.replace(['\t', '\n'], " ");
+    for p in &r.paths {
+        let why = if p.reasons.is_empty() {
+            "-".to_string()
+        } else {
+            p.reasons
+                .iter()
+                .map(|x| format!("{}: {}", x.signal.as_str(), flat(&x.detail)))
+                .collect::<Vec<_>>()
+                .join("; ")
+        };
+        w(out, format!("{}\t{}\t{why}", p.verdict.as_str(), p.path))?;
+    }
+    for b in &r.blind {
+        w(out, format!("blind\t{}", flat(b)))?;
+    }
+    let keep = r
+        .paths
+        .iter()
+        .filter(|p| p.verdict == crate::worktree::liveness::LivenessVerdict::Keep)
+        .count();
+    w(
+        out,
+        format!(
+            "liveness: {} path(s), {keep} keep, {} reclaim, idle window {}s; {}",
+            r.paths.len(),
+            r.paths.len() - keep,
+            r.idle_seconds,
+            if r.complete {
+                "every source was read"
+            } else {
+                "INCOMPLETE: a source could not be read, so nothing may be removed"
+            }
+        ),
+    )?;
+    Ok(code)
 }
 
 /// Remove the worktrees the listing offers, each re-measured immediately before it goes.
@@ -686,6 +751,9 @@ fn occupied(path: &str) -> Option<bool> {
 /// its remote, whether anything is running inside and the working tree's cleanliness are all
 /// read again by [`refusal`], one worktree at a time, and a candidate that fails any of them is
 /// named and skipped rather than removed.
+///
+/// Whether anybody uses it is the one liveness predicate's answer (I4346), with its default
+/// idle window: a worktree whose git state moved in the last thirty minutes is somebody's.
 ///
 /// Branches are never deleted. `git branch -d` refuses an unmerged branch on its own, but a
 /// branch is the only durable name a piece of work has, and the disk is what was scarce.
@@ -702,7 +770,7 @@ fn reclaim(
         let Some(path) = b.worktree.clone() else {
             continue; // no worktree to reclaim; the branch alone costs nothing
         };
-        if let Some(why) = refusal(svc, &b.name, &path) {
+        if let Some(why) = refusal(svc, &b.name, &path, DEFAULT_IDLE_SECONDS) {
             refused.push((b.name.clone(), why));
             continue;
         }
@@ -748,7 +816,7 @@ fn reclaim(
 /// Each reading is taken here, at the moment of removal, and none comes from the listing that
 /// nominated the branch: a commit made, a push deleted or a file written after the listing is
 /// seen.
-fn refusal(svc: &WorktreeService, branch: &str, path: &str) -> Option<String> {
+fn refusal(svc: &WorktreeService, branch: &str, path: &str, idle: u64) -> Option<String> {
     let primary = &svc.identity().primary_worktree().path;
     // Commits that exist on one disk. `merged into the trunk` is about the branch's remote
     // history and says nothing about a local head that ran ahead of it.
@@ -770,10 +838,12 @@ fn refusal(svc: &WorktreeService, branch: &str, path: &str) -> Option<String> {
         }
         Some(_) => {}
     }
-    match occupied(path) {
-        None => return Some("cannot tell whether anything is working inside it (no lsof)".into()),
-        Some(true) => return Some("a process has its working directory inside it".into()),
-        Some(false) => {}
+    // The one liveness predicate (I4346), asked now: a process inside, a claim, a task, git
+    // written within the window, or a reading that could not be taken.
+    let live = crate::worktree::liveness::answer(&[path.to_string()], idle);
+    if let Some(p) = live.paths.first().filter(|p| !p.reasons.is_empty()) {
+        let why: Vec<String> = p.reasons.iter().map(|r| r.detail.clone()).collect();
+        return Some(format!("in use: {}", why.join("; ")));
     }
     match crate::worktree::state::dirty_state(std::path::Path::new(path)) {
         Ok(d) if d.clean => None,
@@ -1191,6 +1261,7 @@ mod tests {
         let at = svc.expected_path_of("spare").expect("the path of spare");
         let at = at.to_string_lossy().to_string();
         git(&repo, &["worktree", "add", "-q", at.as_str(), "spare"]);
+        age_git(Path::new(&at));
         let t = svc.topology(Detail::Full).expect("topology");
         let b = t
             .branches
@@ -1198,6 +1269,114 @@ mod tests {
             .find(|b| b.name == "spare" && b.cleanup_eligible)
             .expect("the listing nominates spare");
         (tmp, svc, b)
+    }
+
+    /// Age a worktree's index, `HEAD` and `HEAD` reflog past any idle window: a fixture made
+    /// a second ago is, to the liveness predicate, somebody's work in progress.
+    fn age_git(worktree: &Path) {
+        let gitdir = crate::worktree::state::git_dir_of(worktree).expect("a git directory");
+        let then =
+            std::time::SystemTime::UNIX_EPOCH + std::time::Duration::from_secs(1_577_836_800);
+        for f in ["HEAD", "index", "logs/HEAD"] {
+            if let Ok(file) = std::fs::File::options().write(true).open(gitdir.join(f)) {
+                file.set_modified(then).expect("set the time");
+            }
+        }
+    }
+
+    /// The reclaim asks the liveness predicate: a worktree whose `HEAD` moved within the
+    /// window is somebody's, and is refused with the predicate's reason.
+    #[test]
+    fn a_worktree_written_within_the_idle_window_is_refused_as_in_use() {
+        let (_tmp, svc, b) = nominated();
+        let path = b.worktree.clone().expect("a worktree");
+        let gitdir = crate::worktree::state::git_dir_of(Path::new(&path)).unwrap();
+        std::fs::File::options()
+            .write(true)
+            .open(gitdir.join("HEAD"))
+            .unwrap()
+            .set_modified(std::time::SystemTime::now())
+            .unwrap();
+        let why = refusal(&svc, &b.name, &path, DEFAULT_IDLE_SECONDS).expect("refused");
+        assert!(why.starts_with("in use:") && why.contains("HEAD"), "{why}");
+        // and the list it comes from refuses it by name, removing nothing
+        let mut buf = Vec::new();
+        let code = reclaim(&svc, &[&b], OutputFormat::Json, &mut buf).unwrap();
+        assert_eq!(code, 0);
+        let v: Value = serde_json::from_slice(&buf).unwrap();
+        assert_eq!(v["removed"], serde_json::json!([]));
+        assert_eq!(v["refused"][0]["branch"], "spare");
+        assert!(Path::new(&path).is_dir());
+    }
+
+    #[test]
+    fn a_liveness_answer_renders_one_line_per_path_and_exits_ten_when_blind() {
+        use crate::worktree::liveness::{
+            LivenessReason, LivenessReport, LivenessSignal, LivenessVerdict, PathLiveness, SCHEMA,
+        };
+        let mut r = LivenessReport {
+            schema: SCHEMA.into(),
+            idle_seconds: 1200,
+            complete: true,
+            blind: Vec::new(),
+            paths: vec![
+                PathLiveness {
+                    path: "/a".into(),
+                    verdict: LivenessVerdict::Keep,
+                    tree: None,
+                    reasons: vec![LivenessReason {
+                        signal: LivenessSignal::ProcessDirectory,
+                        detail: "pid 1 (zsh)\thas its working directory inside it".into(),
+                    }],
+                },
+                PathLiveness {
+                    path: "/b".into(),
+                    verdict: LivenessVerdict::Reclaim,
+                    tree: None,
+                    reasons: Vec::new(),
+                },
+            ],
+        };
+        let (code, text) = at_every_write(|out| render_liveness(&r, OutputFormat::Text, out));
+        assert_eq!(code, 0);
+        assert!(
+            text.contains("keep\t/a\tprocess_directory: pid 1 (zsh) has its"),
+            "{text}"
+        );
+        assert!(text.contains("reclaim\t/b\t-\n"), "{text}");
+        assert!(text.contains("1 keep, 1 reclaim, idle window 1200s; every source was read"));
+        r.complete = false;
+        r.blind = vec!["the process table: ps listed no process".into()];
+        let (code, text) = at_every_write(|out| render_liveness(&r, OutputFormat::Text, out));
+        assert_eq!(code, EXIT_REFUSED);
+        assert!(
+            text.contains("blind\tthe process table: ps listed no process"),
+            "{text}"
+        );
+        assert!(text.contains("INCOMPLETE"), "{text}");
+        let (code, text) = at_every_write(|out| render_liveness(&r, OutputFormat::Json, out));
+        assert_eq!(code, EXIT_REFUSED);
+        assert!(text.contains("\"complete\": false"), "{text}");
+        // the command: a relative path against the start, a bad window refused as usage
+        let mut buf = Vec::new();
+        let code = liveness(
+            Path::new("/"),
+            &["no/such".into()],
+            Some("1m"),
+            OutputFormat::Text,
+            &mut buf,
+        )
+        .unwrap();
+        assert_eq!(code, 0);
+        assert!(String::from_utf8_lossy(&buf).starts_with("keep\t/no/such\t"));
+        assert!(liveness(
+            Path::new("/"),
+            &["x".into()],
+            Some("soon"),
+            OutputFormat::Text,
+            &mut buf
+        )
+        .is_err());
     }
 
     #[test]
@@ -1210,7 +1389,7 @@ mod tests {
         );
         // the listing still says zero ahead; the reading taken now does not
         assert_eq!(b.upstream.as_ref().and_then(|u| u.ahead), Some(0));
-        let why = refusal(&svc, &b.name, &path).expect("refused");
+        let why = refusal(&svc, &b.name, &path, DEFAULT_IDLE_SECONDS).expect("refused");
         assert!(why.contains("1 commit(s) ahead"), "{why}");
     }
 
@@ -1223,7 +1402,7 @@ mod tests {
             &["push", "-q", "origin", "--delete", "spare"],
         );
         git(Path::new(&path), &["fetch", "-q", "--prune", "origin"]);
-        let why = refusal(&svc, &b.name, &path).expect("refused");
+        let why = refusal(&svc, &b.name, &path, DEFAULT_IDLE_SECONDS).expect("refused");
         assert!(why.contains("is gone"), "{why}");
     }
 
@@ -1231,12 +1410,14 @@ mod tests {
     fn work_written_after_the_listing_is_seen_by_the_reclaim() {
         let (_tmp, svc, b) = nominated();
         let path = b.worktree.clone().expect("a worktree");
-        if occupied(&path).is_none() {
-            eprintln!("no lsof: the occupancy reading refuses first, which is its own test");
+        if !crate::worktree::liveness::answer(std::slice::from_ref(&path), DEFAULT_IDLE_SECONDS)
+            .complete
+        {
+            eprintln!("this machine cannot be read: the liveness reading refuses first, which is its own test");
             return;
         }
         assert_eq!(
-            refusal(&svc, &b.name, &path),
+            refusal(&svc, &b.name, &path, DEFAULT_IDLE_SECONDS),
             None,
             "nothing refuses a spare worktree"
         );
@@ -1245,7 +1426,7 @@ mod tests {
             "written after the listing\n",
         )
         .expect("write");
-        let why = refusal(&svc, &b.name, &path).expect("refused");
+        let why = refusal(&svc, &b.name, &path, DEFAULT_IDLE_SECONDS).expect("refused");
         assert!(why.contains("uncommitted work"), "{why}");
     }
 

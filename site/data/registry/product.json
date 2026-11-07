@@ -5,7 +5,7 @@
     "id": "majordomus-cli",
     "version": "1.0.0"
   },
-  "fingerprint": "429ceae42d668864d6290e2a75c37444542c5f57bd6b78231ffce47d940ce1ff",
+  "fingerprint": "0961800425f62b91cee1455dd05547c10cef5b6789b85e3122c551e30fa47765",
   "route": "/features/",
   "domain_route": "/domains/",
   "counts": {
@@ -1162,7 +1162,7 @@
         "use_cases": 6,
         "rules": 13,
         "enforced_rules": 11,
-        "capabilities": 89,
+        "capabilities": 90,
         "moments": 17
       },
       "evidence": {
@@ -4792,6 +4792,15 @@
               "cli": "majordomus worktree inspect"
             },
             {
+              "id": "worktree.liveness",
+              "title": "Whether anybody uses a tree or build directory: keep or reclaim",
+              "kind": "query",
+              "stability": "behaviorally_verified",
+              "tool": "majordomus_worktree_liveness",
+              "route": "POST /api/v1/worktrees/liveness",
+              "cli": "majordomus worktree liveness"
+            },
+            {
               "id": "worktree.migration_plan",
               "title": "What it would take to bring every worktree home",
               "kind": "query",
@@ -5202,11 +5211,11 @@
         "worktrees"
       ],
       "counts": {
-        "capabilities": 19,
-        "mcp_tools": 19,
+        "capabilities": 20,
+        "mcp_tools": 20,
         "mcp_resources": 2,
-        "http_routes": 19,
-        "cli_paths": 13,
+        "http_routes": 20,
+        "cli_paths": 14,
         "commands": 3,
         "objects": 0,
         "rules": 5,
@@ -5318,6 +5327,15 @@
               "tool": "majordomus_worktree_inspect",
               "route": "GET /api/v1/worktrees/inspect",
               "cli": "majordomus worktree inspect"
+            },
+            {
+              "id": "worktree.liveness",
+              "title": "Whether anybody uses a tree or build directory: keep or reclaim",
+              "kind": "query",
+              "stability": "behaviorally_verified",
+              "tool": "majordomus_worktree_liveness",
+              "route": "POST /api/v1/worktrees/liveness",
+              "cli": "majordomus worktree liveness"
             },
             {
               "id": "worktree.migration_plan",
@@ -5486,11 +5504,11 @@
         "planning"
       ],
       "counts": {
-        "capabilities": 8,
-        "mcp_tools": 8,
+        "capabilities": 9,
+        "mcp_tools": 9,
         "mcp_resources": 2,
-        "http_routes": 8,
-        "cli_paths": 8,
+        "http_routes": 9,
+        "cli_paths": 9,
         "commands": 0,
         "objects": 0,
         "rules": 2,
@@ -18830,14 +18848,14 @@
     }
   ],
   "telemetry": {
-    "capabilities": 3951,
-    "builtin": 231,
+    "capabilities": 3952,
+    "builtin": 232,
     "declarative": 3720,
     "modules": 62,
-    "mcp_tools": 215,
+    "mcp_tools": 216,
     "mcp_resources": 3777,
-    "http_routes": 219,
-    "cli_commands": 229,
+    "http_routes": 220,
+    "cli_commands": 230,
     "shell_commands": 30,
     "kinds": 34,
     "objects": 3720,

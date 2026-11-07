@@ -6,27 +6,27 @@
     "version": "1.0.0"
   },
   "registry": {
-    "fingerprint": "99df951f5533a1b2775a224eda81907e0c210ac22cdfa46ba0642d4fdeda5c3e",
+    "fingerprint": "2e9dc3bc027a28f296c97a8b195d92cbce0532dcfdede4f969c2e0110ddcef78",
     "summary": {
-      "total": 3951,
-      "builtin": 231,
+      "total": 3952,
+      "builtin": 232,
       "declarative": 3720,
       "by_kind": {
         "command": 41,
-        "query": 190,
+        "query": 191,
         "resource": 3720
       },
       "by_stability": {
-        "behaviorally_verified": 153,
+        "behaviorally_verified": 154,
         "experimental": 68,
         "implemented": 3730
       },
-      "mcp_tools": 215,
+      "mcp_tools": 216,
       "mcp_resources": 3777,
-      "http_routes": 219,
-      "cli_commands": 128,
+      "http_routes": 220,
+      "cli_commands": 129,
       "modules": 96,
-      "benchmark_required": 186,
+      "benchmark_required": 187,
       "benchmark_waived": 45,
       "cached": 55
     },
@@ -93476,6 +93476,254 @@
         "source_path": "apps/majordomus-cli/src/capability/builtin/worktree.rs"
       },
       {
+        "id": "worktree.liveness",
+        "module": "worktree",
+        "kind": "query",
+        "title": "Whether anybody uses a tree or build directory: keep or reclaim",
+        "description": "The one liveness predicate every deleting sweep asks (I4346): `worktree cleanup --remove` in process, `scripts/reap-orphans --targets` and the build host's `disk-guard` through `majordomus worktree liveness <path>...`. Each path is judged with the work tree holding it, and is `keep` when an open task is recorded in the tree, a live mesh claim or active session names its issue, branch or path, a peer is attached to or announced on the tree's own server, the derive lock's live owner names its branch, an offload run record or offload lock pid file names a process working in it, a CI runner job runs under the home holding it, another process's `CARGO_*_DIR` or `MAJORDOMUS_BIN` points into it, another process works inside it or names it on its command line, or the tree's index, `HEAD` or `HEAD` reflog changed within the idle window (thirty minutes unless `idle` says otherwise). Every reason is reported. A reading that could not be taken keeps the path (`unreadable`); a source that could not be read at all — the process table, the working directories, this user's process environments, the claims of a repository that declares a mesh, the offload run records — is named in `blind`, and the answer is then `complete: false`, on which the command line exits 10 and a sweep removes nothing. Writes nothing and refreshes no index.",
+        "input": {
+          "name": "LivenessInput",
+          "schema": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "paths": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "The trees or build directories, absolute or relative to the primary checkout."
+              },
+              "idle": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "The idle window git activity is judged against, as a person writes it (`20m`, `2h`).\nDefault: thirty minutes."
+              }
+            },
+            "required": [
+              "paths"
+            ],
+            "description": "The paths a sweep is about to delete.",
+            "title": "LivenessInput"
+          }
+        },
+        "output": {
+          "name": "LivenessReport",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "schema": {
+                "type": "string",
+                "description": "`SCHEMA`."
+              },
+              "idle_seconds": {
+                "type": "integer",
+                "format": "uint64",
+                "minimum": 0,
+                "description": "The idle window git activity is judged against, in seconds."
+              },
+              "complete": {
+                "type": "boolean",
+                "description": "Whether every source was read. A sweep that gets `false` removes nothing."
+              },
+              "blind": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "Every source that could not be read at all, with why."
+              },
+              "paths": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/PathLiveness"
+                },
+                "description": "One answer per path, in the order asked."
+              }
+            },
+            "required": [
+              "schema",
+              "idle_seconds",
+              "complete",
+              "blind",
+              "paths"
+            ],
+            "description": "The answer of `worktree.liveness`.",
+            "title": "LivenessReport",
+            "$defs": {
+              "PathLiveness": {
+                "type": "object",
+                "properties": {
+                  "path": {
+                    "type": "string",
+                    "description": "The path as it was asked about (made absolute when it was relative)."
+                  },
+                  "verdict": {
+                    "$ref": "#/$defs/LivenessVerdict",
+                    "description": "Keep or reclaim."
+                  },
+                  "tree": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The work tree that holds it, when one does."
+                  },
+                  "reasons": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/$defs/LivenessReason"
+                    },
+                    "description": "Every reason it is kept; empty exactly when the verdict is `reclaim`."
+                  }
+                },
+                "required": [
+                  "path",
+                  "verdict",
+                  "reasons"
+                ],
+                "description": "The answer for one path."
+              },
+              "LivenessVerdict": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "keep",
+                    "description": "Something uses it, or that could not be ruled out."
+                  },
+                  {
+                    "type": "string",
+                    "const": "reclaim",
+                    "description": "Every source was read and none of them names it."
+                  }
+                ],
+                "description": "Keep or reclaim."
+              },
+              "LivenessReason": {
+                "type": "object",
+                "properties": {
+                  "signal": {
+                    "$ref": "#/$defs/LivenessSignal",
+                    "description": "What kind of evidence."
+                  },
+                  "detail": {
+                    "type": "string",
+                    "description": "The evidence, in words."
+                  }
+                },
+                "required": [
+                  "signal",
+                  "detail"
+                ],
+                "description": "One reason a path is kept."
+              },
+              "LivenessSignal": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "task",
+                    "description": "An open majordomus task in the tree."
+                  },
+                  {
+                    "type": "string",
+                    "const": "mesh_claim",
+                    "description": "A live mesh claim or session names it."
+                  },
+                  {
+                    "type": "string",
+                    "const": "board_claim",
+                    "description": "A peer of the tree's own server is attached or announced."
+                  },
+                  {
+                    "type": "string",
+                    "const": "derive_lock",
+                    "description": "The derive lock's live owner names it."
+                  },
+                  {
+                    "type": "string",
+                    "const": "queue_pid_file",
+                    "description": "An offload run record or a pid file of the offload lock names it."
+                  },
+                  {
+                    "type": "string",
+                    "const": "runner_job",
+                    "description": "A CI runner job is running under the home that holds it."
+                  },
+                  {
+                    "type": "string",
+                    "const": "process_environment",
+                    "description": "Another process's `CARGO_*_DIR` or `MAJORDOMUS_BIN` points into it."
+                  },
+                  {
+                    "type": "string",
+                    "const": "process_directory",
+                    "description": "Another process's working directory is inside it."
+                  },
+                  {
+                    "type": "string",
+                    "const": "process_arguments",
+                    "description": "Another process names it on its command line."
+                  },
+                  {
+                    "type": "string",
+                    "const": "git_activity",
+                    "description": "Its index, `HEAD` or `HEAD` reflog changed within the idle window."
+                  },
+                  {
+                    "type": "string",
+                    "const": "unreadable",
+                    "description": "A reading that could not be taken: not knowing keeps it."
+                  }
+                ],
+                "description": "What made a path live."
+              }
+            }
+          }
+        },
+        "provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::worktree"
+        },
+        "exposure": {
+          "mcp": {
+            "tool": "majordomus_worktree_liveness"
+          },
+          "http": {
+            "method": "POST",
+            "path": "/api/v1/worktrees/liveness"
+          },
+          "cli": {
+            "path": [
+              "worktree",
+              "liveness"
+            ]
+          }
+        },
+        "availability": "runtime",
+        "visibility": "public",
+        "stability": "behaviorally_verified",
+        "tags": [
+          "worktree",
+          "liveness",
+          "reclamation",
+          "introspection"
+        ],
+        "benchmark": {
+          "policy": "required"
+        },
+        "cache": {
+          "policy": "disabled"
+        },
+        "execution": {
+          "effect": "read",
+          "cancellable": false,
+          "concurrency": "unrestricted"
+        },
+        "source_path": "apps/majordomus-cli/src/capability/builtin/worktree.rs"
+      },
+      {
         "id": "worktree.migration_plan",
         "module": "worktree",
         "kind": "query",
@@ -97863,10 +98111,11 @@
         "description": "Where every linked git worktree of this repository belongs and where each one is. The container is the primary checkout's sibling named with `-wt`, the path under it is the branch name with its hierarchy kept, and both are derived from git's own identity — the common directory, the registered worktrees, the branches — never from a registry, a configuration or the current directory. A worktree somewhere else is a typed diagnostic with a remedy; the migration that repairs it is a command-line operation of the same service.",
         "stability": "behaviorally_verified",
         "source": "builtin",
-        "capabilities": 7,
+        "capabilities": 8,
         "capability_ids": [
           "worktree.create",
           "worktree.inspect",
+          "worktree.liveness",
           "worktree.migration_plan",
           "worktree.status",
           "worktree.topology",
@@ -97878,7 +98127,7 @@
     ]
   },
   "index": {
-    "fingerprint": "8c343d8050dc0d470510985c455e609a7cc42df0510482af8657bbdc1e8cebb9",
+    "fingerprint": "c119fb587f3ebaeb7789facc158cada43b4ef61a9de20ae7b81a43779e868e56",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -105664,7 +105913,7 @@
         "title": "Worktrees",
         "path": "docs/WORKTREES.md",
         "source_class": "document",
-        "bytes": 54360
+        "bytes": 58202
       },
       {
         "uri": "majordomus://document/docs/claims/a-candidate-is-routed-by-what-it-is-about.md",
@@ -130532,18 +130781,19 @@
         ]
       },
       {
-        "uri": "majordomus://rule/project.reclaim-only-what-you-own@1",
+        "uri": "majordomus://rule/project.reclaim-only-what-you-own@2",
         "kind": "rule",
-        "identity": "project.reclaim-only-what-you-own@1",
-        "title": "A worker reclaims only what it owns",
-        "description": "Build output, scratch trees and worktrees belong to whoever is working in them; a worker under disk pressure reclaims its own and says what it removed, because everything else on the machine is another worker's instrument.",
-        "path": ".ai/repo/rules/project/reclaim-only-what-you-own.v1.md",
+        "identity": "project.reclaim-only-what-you-own@2",
+        "title": "A worker reclaims only what it owns, and every deleting sweep asks one liveness predicate",
+        "description": "Build output, scratch trees and worktrees belong to whoever is working in them; a worker under disk pressure reclaims its own and says what it removed, and every sweep that deletes asks the one liveness predicate, worktree.liveness, which keeps whatever it cannot prove nobody uses.",
+        "path": ".ai/repo/rules/project/reclaim-only-what-you-own.v2.md",
         "section": "rules",
         "source_class": "rule",
-        "bytes": 4230,
+        "bytes": 7427,
         "tags": [
           "process",
-          "worktrees"
+          "worktrees",
+          "reclamation"
         ]
       },
       {
@@ -132710,7 +132960,7 @@
         "identity": "test/cases/1022_worktrees_share_build_intermediates.sh",
         "path": "test/cases/1022_worktrees_share_build_intermediates.sh",
         "source_class": "case",
-        "bytes": 11236
+        "bytes": 11696
       },
       {
         "uri": "majordomus://test/test/cases/1023_a_branch_cannot_widen_the_mesh_trust.sh",
@@ -133822,7 +134072,7 @@
         "identity": "test/cases/276_disk_is_bounded.sh",
         "path": "test/cases/276_disk_is_bounded.sh",
         "source_class": "case",
-        "bytes": 18551
+        "bytes": 22993
       },
       {
         "uri": "majordomus://test/test/cases/277_entities_are_routable.sh",
@@ -134582,7 +134832,7 @@
         "identity": "test/cases/3125_the_reaper_asks_cargo_for_the_build_dir.sh",
         "path": "test/cases/3125_the_reaper_asks_cargo_for_the_build_dir.sh",
         "source_class": "case",
-        "bytes": 8371
+        "bytes": 8823
       },
       {
         "uri": "majordomus://test/test/cases/3131_a_new_worktree_starts_from_the_remote_trunk.sh",
@@ -134662,7 +134912,7 @@
         "identity": "test/cases/318_a_partial_sweep_says_so.sh",
         "path": "test/cases/318_a_partial_sweep_says_so.sh",
         "source_class": "case",
-        "bytes": 23341
+        "bytes": 23675
       },
       {
         "uri": "majordomus://test/test/cases/3190_a_scope_of_dot_is_the_repository.sh",
@@ -136854,7 +137104,7 @@
         "identity": "test/cases/611_the_reclaim_refuses_what_it_cannot_prove.sh",
         "path": "test/cases/611_the_reclaim_refuses_what_it_cannot_prove.sh",
         "source_class": "case",
-        "bytes": 8188
+        "bytes": 13003
       },
       {
         "uri": "majordomus://test/test/cases/617_a_case_can_name_what_it_covers.sh",
@@ -151378,6 +151628,142 @@
                 "command": "majordomus worktree uncommitted",
                 "setup": [],
                 "expectation": "exits 0; prints 0 with uncommitted work, nothing was changed"
+              }
+            ],
+            "subcommands": []
+          },
+          {
+            "path": [
+              "majordomus",
+              "worktree",
+              "liveness"
+            ],
+            "route": "/docs/cli/worktree/liveness/",
+            "executable": true,
+            "usage": "majordomus worktree liveness [OPTIONS] <PATH>",
+            "about": "Whether anybody uses each path, a tree or a build directory: one `keep` or `reclaim` line per path with every reason found, and `blind` lines for the sources that could not be read. The one liveness predicate every deleting sweep asks; writes nothing. Exit 10 when a source could not be read (a sweep then removes nothing), 0 otherwise",
+            "args": [
+              {
+                "name": "paths",
+                "positional": true,
+                "help": "The trees or build directories, absolute or relative to the current directory",
+                "value_name": "PATH",
+                "takes_value": true,
+                "required": true,
+                "global": false,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "idle",
+                "long": "idle",
+                "positional": false,
+                "help": "Judge git activity against this idle window instead of thirty minutes (90s, 20m, 2h)",
+                "value_name": "DURATION",
+                "takes_value": true,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "repo",
+                "long": "repo",
+                "positional": false,
+                "help": "Start the search for the repository root here (default: the current directory)",
+                "value_name": "PATH",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "discovery",
+                "long": "discovery",
+                "positional": false,
+                "help": "How declarative files are enumerated",
+                "value_name": "DISCOVERY",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "vcs",
+                    "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
+                  },
+                  {
+                    "name": "filesystem",
+                    "help": "A walk of the work tree with the same glob semantics; untracked files included"
+                  }
+                ],
+                "defaults": [
+                  "vcs"
+                ]
+              },
+              {
+                "name": "strict",
+                "long": "strict",
+                "positional": false,
+                "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+                "value_name": "STRICT",
+                "takes_value": false,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": [
+                  "false"
+                ]
+              },
+              {
+                "name": "share",
+                "long": "share",
+                "positional": false,
+                "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+                "value_name": "DIR",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "format",
+                "long": "format",
+                "positional": false,
+                "help": "Output shape",
+                "value_name": "FORMAT",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "text",
+                    "help": "Lines for a person"
+                  },
+                  {
+                    "name": "json",
+                    "help": "One JSON document, deterministic"
+                  }
+                ],
+                "defaults": [
+                  "text"
+                ]
+              }
+            ],
+            "examples": [
+              {
+                "id": "worktree-liveness-absent",
+                "title": "Keep or reclaim, and why",
+                "description": "The one liveness predicate every deleting sweep asks, for each path it is given: `keep` with every reason found, or `reclaim` when every source was read and none names it. A path that is not there is kept, as anything the predicate cannot read is, and asking about it reads nothing of the machine.",
+                "argv": [
+                  "worktree",
+                  "liveness",
+                  "no/such/build-dir"
+                ],
+                "command": "majordomus worktree liveness no/such/build-dir",
+                "setup": [],
+                "expectation": "exits 0; prints keep, it does not exist, every source was read"
               }
             ],
             "subcommands": []
@@ -178720,6 +179106,23 @@
         "output": "InspectReport"
       },
       {
+        "name": "majordomus_worktree_liveness",
+        "id": "worktree.liveness",
+        "title": "Whether anybody uses a tree or build directory: keep or reclaim",
+        "description": "The one liveness predicate every deleting sweep asks (I4346): `worktree cleanup --remove` in process, `scripts/reap-orphans --targets` and the build host's `disk-guard` through `majordomus worktree liveness <path>...`. Each path is judged with the work tree holding it, and is `keep` when an open task is recorded in the tree, a live mesh claim or active session names its issue, branch or path, a peer is attached to or announced on the tree's own server, the derive lock's live owner names its branch, an offload run record or offload lock pid file names a process working in it, a CI runner job runs under the home holding it, another process's `CARGO_*_DIR` or `MAJORDOMUS_BIN` points into it, another process works inside it or names it on its command line, or the tree's index, `HEAD` or `HEAD` reflog changed within the idle window (thirty minutes unless `idle` says otherwise). Every reason is reported. A reading that could not be taken keeps the path (`unreadable`); a source that could not be read at all — the process table, the working directories, this user's process environments, the claims of a repository that declares a mesh, the offload run records — is named in `blind`, and the answer is then `complete: false`, on which the command line exits 10 and a sweep removes nothing. Writes nothing and refreshes no index.",
+        "kind": "query",
+        "read_only": true,
+        "effect": "read",
+        "hints": {
+          "read_only": true,
+          "destructive": false,
+          "idempotent": true,
+          "open_world": false
+        },
+        "input": "LivenessInput",
+        "output": "LivenessReport"
+      },
+      {
         "name": "majordomus_worktree_migration_plan",
         "id": "worktree.migration_plan",
         "title": "What it would take to bring every worktree home",
@@ -180492,6 +180895,12 @@
         "method": "GET",
         "path": "/api/v1/worktrees/inspect",
         "id": "worktree.inspect",
+        "kind": "query"
+      },
+      {
+        "method": "POST",
+        "path": "/api/v1/worktrees/liveness",
+        "id": "worktree.liveness",
         "kind": "query"
       },
       {
@@ -188011,6 +188420,35 @@
         "route": "GET /api/v1/worktrees/inspect"
       },
       {
+        "key": "worktree.liveness|direct|absent-path",
+        "kind": "capability",
+        "transport": "direct",
+        "id": "worktree.liveness",
+        "module": "worktree",
+        "case": "absent-path",
+        "cached": false
+      },
+      {
+        "key": "worktree.liveness|mcp|absent-path",
+        "kind": "capability",
+        "transport": "mcp",
+        "id": "worktree.liveness",
+        "module": "worktree",
+        "case": "absent-path",
+        "cached": false,
+        "tool": "majordomus_worktree_liveness"
+      },
+      {
+        "key": "worktree.liveness|http|absent-path",
+        "kind": "capability",
+        "transport": "http",
+        "id": "worktree.liveness",
+        "module": "worktree",
+        "case": "absent-path",
+        "cached": false,
+        "route": "POST /api/v1/worktrees/liveness"
+      },
+      {
         "key": "worktree.migration_plan|direct|default",
         "kind": "capability",
         "transport": "direct",
@@ -193353,6 +193791,27 @@
           "cases": 1
         },
         {
+          "subject": "worktree.liveness",
+          "module": "worktree",
+          "transport": "direct",
+          "state": "covered",
+          "cases": 1
+        },
+        {
+          "subject": "worktree.liveness",
+          "module": "worktree",
+          "transport": "mcp",
+          "state": "covered",
+          "cases": 1
+        },
+        {
+          "subject": "worktree.liveness",
+          "module": "worktree",
+          "transport": "http",
+          "state": "covered",
+          "cases": 1
+        },
+        {
           "subject": "worktree.migration_plan",
           "module": "worktree",
           "transport": "direct",
@@ -193558,22 +194017,22 @@
       ],
       "tallies": {
         "direct": {
-          "required": 231,
-          "covered": 186,
+          "required": 232,
+          "covered": 187,
           "missing": 0,
           "waived": 45,
           "inapplicable": 0
         },
         "http": {
-          "required": 219,
-          "covered": 184,
+          "required": 220,
+          "covered": 185,
           "missing": 0,
           "waived": 35,
           "inapplicable": 0
         },
         "mcp": {
-          "required": 215,
-          "covered": 181,
+          "required": 216,
+          "covered": 182,
           "missing": 0,
           "waived": 34,
           "inapplicable": 0
@@ -193586,8 +194045,8 @@
           "inapplicable": 0
         },
         "total": {
-          "required": 679,
-          "covered": 565,
+          "required": 682,
+          "covered": 568,
           "missing": 0,
           "waived": 114,
           "inapplicable": 0

@@ -1,6 +1,6 @@
 ---
 name: mj-worktree
-description: "Majordomus worktree: The canonical worktree of a branch, made or found; One branch: where its worktree belongs and what is there; What it would take to bring every worktree home; Where this is, and whether that is where it belongs; The whole topology; How far a checkout is from the remote trunk…"
+description: "Majordomus worktree: The canonical worktree of a branch, made or found; One branch: where its worktree belongs and what is there; Whether anybody uses a tree or build directory: keep or reclaim; What it would take to bring every worktree home; Where this is, and whether that is where it belongs…"
 argument-hint: "[request]"
 ---
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
@@ -17,6 +17,7 @@ $ARGUMENTS
 |---|---|---|---|---|
 | `worktree.create` | The canonical worktree of a branch, made or found | `majordomus_worktree_create` | `majordomus worktree ensure` | changes |
 | `worktree.inspect` | One branch: where its worktree belongs and what is there | `majordomus_worktree_inspect` | `majordomus worktree inspect` | reads |
+| `worktree.liveness` | Whether anybody uses a tree or build directory: keep or reclaim | `majordomus_worktree_liveness` | `majordomus worktree liveness` | reads |
 | `worktree.migration_plan` | What it would take to bring every worktree home | `majordomus_worktree_migration_plan` | `majordomus worktree migrate` | reads |
 | `worktree.status` | Where this is, and whether that is where it belongs | `majordomus_worktree_status` | `majordomus worktree status` | reads |
 | `worktree.topology` | The whole topology | `majordomus_worktrees` | `majordomus worktree topology` | reads |

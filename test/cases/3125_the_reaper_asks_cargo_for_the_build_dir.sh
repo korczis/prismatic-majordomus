@@ -83,8 +83,13 @@ fill() { # dir [untagged]
 }
 fill "$REAL_DIR"; fill "$DECOY_DIR"; fill "$PRIVATE_DIR"
 
-# the process table is the reaper's liveness input: nobody is building
-printf '#!/bin/sh\necho "/bin/sleep 1"\n' > "$P/stub/ps"; chmod +x "$P/stub/ps"
+# the process table is the reaper's liveness input: nobody is building. It is stubbed in the
+# shape `ps -o pid= -o ppid= -o uid= -o args=` prints, which the liveness predicate (I4346)
+# reads as well, and the case directory — a repository the runner made a moment ago, which
+# holds every build directory here — is aged past the predicate's idle window
+printf '#!/bin/sh\necho "    1     0     0 /bin/sleep 1"\n' > "$P/stub/ps"; chmod +x "$P/stub/ps"
+t_gd="$(git -C "$P" rev-parse --absolute-git-dir)"
+for f in HEAD index logs/HEAD; do [ ! -e "$t_gd/$f" ] || touch -t 202001010000 "$t_gd/$f"; done
 run() { # FAKE_CARGO-mode reaper-args...
   local mode="$1"; shift
   MJ_ROOT="$FIX" PATH="$P/stub:$PATH" FAKE_CARGO="$mode" CARGO_HOME="$SHELL_SIDE" \

@@ -4107,9 +4107,9 @@
         },
         {
           "edge": "put_in_force",
-          "label": "project.reclaim-only-what-you-own@1",
+          "label": "project.reclaim-only-what-you-own@2",
           "kind": "rule",
-          "route": "/rules/project-reclaim-only-what-you-own-1/",
+          "route": "/rules/project-reclaim-only-what-you-own-2/",
           "external": false
         },
         {
@@ -12525,9 +12525,9 @@
         },
         {
           "edge": "put_in_force",
-          "label": "project.reclaim-only-what-you-own@1",
+          "label": "project.reclaim-only-what-you-own@2",
           "kind": "rule",
-          "route": "/rules/project-reclaim-only-what-you-own-1/",
+          "route": "/rules/project-reclaim-only-what-you-own-2/",
           "external": false
         },
         {
@@ -18468,9 +18468,9 @@
         },
         {
           "edge": "depends_on",
-          "label": "project.reclaim-only-what-you-own@1",
+          "label": "project.reclaim-only-what-you-own@2",
           "kind": "rule",
-          "route": "/rules/project-reclaim-only-what-you-own-1/",
+          "route": "/rules/project-reclaim-only-what-you-own-2/",
           "external": false
         },
         {
@@ -19643,6 +19643,13 @@
           "label": "project.accumulation-is-measured@2",
           "kind": "rule",
           "route": "/rules/project-accumulation-is-measured-2/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
+          "label": "project.reclaim-only-what-you-own@2",
+          "kind": "rule",
+          "route": "/rules/project-reclaim-only-what-you-own-2/",
           "external": false
         },
         {
@@ -22905,18 +22912,26 @@
     },
     {
       "kind": "rule",
-      "id": "majordomus://rule/project.reclaim-only-what-you-own@1",
-      "identity": "project.reclaim-only-what-you-own@1",
-      "slug": "project-reclaim-only-what-you-own-1",
-      "cockpit": "/cockpit/objects/rule/project-reclaim-only-what-you-own-1",
-      "title": "A worker reclaims only what it owns",
+      "id": "majordomus://rule/project.reclaim-only-what-you-own@2",
+      "identity": "project.reclaim-only-what-you-own@2",
+      "slug": "project-reclaim-only-what-you-own-2",
+      "cockpit": "/cockpit/objects/rule/project-reclaim-only-what-you-own-2",
+      "title": "A worker reclaims only what it owns, and every deleting sweep asks one liveness predicate",
       "status": "active",
       "tags": [
         "process",
-        "worktrees"
+        "worktrees",
+        "reclamation"
       ],
-      "source": ".ai/repo/rules/project/reclaim-only-what-you-own.v1.md",
+      "source": ".ai/repo/rules/project/reclaim-only-what-you-own.v2.md",
       "references": [
+        {
+          "edge": "depends_on",
+          "label": "project.destructive-sweeps-fail-closed@1",
+          "kind": "rule",
+          "route": "/rules/project-destructive-sweeps-fail-closed-1/",
+          "external": false
+        },
         {
           "edge": "depends_on",
           "label": "project.worktree-topology@1",
@@ -24850,9 +24865,9 @@
         },
         {
           "edge": "depends_on",
-          "label": "project.reclaim-only-what-you-own@1",
+          "label": "project.reclaim-only-what-you-own@2",
           "kind": "rule",
-          "route": "/rules/project-reclaim-only-what-you-own-1/",
+          "route": "/rules/project-reclaim-only-what-you-own-2/",
           "external": false
         },
         {
@@ -24896,9 +24911,9 @@
         },
         {
           "edge": "depends_on",
-          "label": "project.reclaim-only-what-you-own@1",
+          "label": "project.reclaim-only-what-you-own@2",
           "kind": "rule",
-          "route": "/rules/project-reclaim-only-what-you-own-1/",
+          "route": "/rules/project-reclaim-only-what-you-own-2/",
           "external": false
         },
         {

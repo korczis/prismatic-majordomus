@@ -34,6 +34,13 @@
 //! standing, or judges whether a move is safe; a second implementation of any of those is
 //! the defect this module exists to prevent.
 //!
+//! # Liveness
+//!
+//! Whether anybody is using a tree or a build directory is decided once, in `worktree::liveness`
+//! (`worktree.liveness`, I4346): every deleting sweep — `worktree cleanup --remove`,
+//! `scripts/reap-orphans --targets` and the build host's `disk-guard` — asks it, and an
+//! answer it could not read is `keep`.
+//!
 //! # Safety
 //!
 //! Nothing here deletes a directory because its name looks right, and nothing here resets,
@@ -49,6 +56,7 @@ pub mod fingerprint;
 pub(crate) mod git;
 pub(crate) mod hooks;
 pub(crate) mod identity;
+pub(crate) mod liveness;
 pub(crate) mod lock;
 pub(crate) mod migrate;
 pub(crate) mod model;
