@@ -127,3 +127,26 @@ done
 grep -q 'delivery_at_build "$commit" "$dirty" "$DELIVERY"' "$ROOT/scripts/site-build" \
   || { echo "    scripts/site-build does not read delivery at its build commit"; exit 1; }
 echo "    ok   a_render_without_a_build_record_falls_back_to_committed_delivery"
+
+# ---------------------------------------------------------------- 6  no executable: the committed projection, never a failed build
+# The real function, lifted out of scripts/site-build and run against a stub launcher: a refusal
+# for want of an executable (12, lines prefixed majordomus-cli) records no reading and returns 0;
+# any other failure of the reading still stops the build with 12 (2026-11-07, run 42339976144).
+FN="$PWD/delivery_at_build.sh"
+sed -n '/^delivery_at_build() {/,/^}/p' "$ROOT/scripts/site-build" > "$FN"
+grep -q '^delivery_at_build() {' "$FN" || { echo "    delivery_at_build could not be lifted out of scripts/site-build"; exit 1; }
+stub_root() { # <exit> <stderr line>
+  R="$PWD/stub-root"; rm -rf "$R"; mkdir -p "$R/bin"
+  printf '#!/usr/bin/env bash\necho "%s" >&2\nexit %s\n' "$2" "$1" > "$R/bin/majordomus"; chmod +x "$R/bin/majordomus"
+}
+# shellcheck source=/dev/null  # the function lifted out of scripts/site-build at run time
+lifted() { ( ROOT="$R"; . "$FN"; delivery_at_build 0123456789abcdef0123456789abcdef01234567 false "$PWD/dl.json" ) > lifted.out 2>&1; echo $?; }
+stub_root 12 "majordomus-cli: /x/target/debug/majordomus is missing, and no ordinary command builds it (ADR 0224)"
+rc="$(lifted)"
+[ "$rc" = 0 ] || { echo "    a missing executable stopped the build (exit $rc):"; cat lifted.out; exit 1; }
+[ "$(cat "$PWD/dl.json")" = null ] || { echo "    a missing executable left a reading behind:"; cat "$PWD/dl.json"; exit 1; }
+grep -q 'no executable of this tree, so delivery is not read' lifted.out || { echo "    a missing executable was not said:"; cat lifted.out; exit 1; }
+stub_root 12 "plan delivery: the history could not be read"
+rc="$(lifted)"
+[ "$rc" = 12 ] || { echo "    a reading the tool could not give did not stop the build (exit $rc):"; cat lifted.out; exit 1; }
+echo "    ok   a_build_without_the_executable_reads_the_committed_delivery"
