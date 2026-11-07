@@ -1,0 +1,42 @@
+id: I4535
+milestone: one-frame-one-kit-one-library-per-job
+serves:
+  - "one-kit-on-every-surface#one-client-core"
+title: "One share/design/js/core ESM module holds the token resolver, theme observer, reduced motion, lazy loader, fragment fetch, bounded polling and socket client, and every copy is gone"
+slug: one-client-core-module
+priority: p1
+profile: implementation
+parallel_safe: false
+objective: "Slice S1 of milestone one-frame-one-kit-one-library-per-job. Add share/design/js/core as one ES module set: tokens (a --mj-* token resolved to a colour), theme (one observer of the light and dark switch), motion (prefers-reduced-motion), lazy (load a vendored library once, on first need), fragment (fetch and swap an HTML fragment), poll (bounded polling with backoff and a stop) and socket (the live socket client). share/ui, share/cockpit and site import it; every copy is deleted; scripts/cockpit-assets and scripts/site-build ship it; a case fails on a planted second copy of any helper."
+why: "The owner's order of 2026-11-07 13:30Z asks for /ui, /cockpit and the site to be reintegrated on one kit: max reuse, Flowbite Pro best practices, one library per job, everything derived, tested, deployed and linked (intent one-kit-on-every-surface). ADR 0135 says shared code moves to a module both surfaces import and is not duplicated; the helpers are copied up to eight times."
+current_state: "Measured on master on 2026-11-07: the token-to-hex helper has 8 copies, the theme observer 6, reduced motion 6, the lazy loader 7, fragment fetch 4, polling 7. Byte copies: site/nav.js = share/ui/nav.js = share/cockpit/nav.js (cmp), share/ui/theme.js = share/cockpit/theme.js, share/ui/socket.js = share/cockpit/socket.js. No share/design/js directory exists."
+desired_state: "share/design/js/core/{tokens,theme,motion,lazy,fragment,poll,socket}.js exist once; share/ui/ui.js, share/cockpit/*.js and site/*.js import them; no helper body exists twice in the three trees; the case that guards it runs in the suite."
+scope:
+  - "share/design/js/core"
+  - "share/ui"
+  - "share/cockpit"
+  - "site/nav.js"
+  - "site/kit.js"
+  - "site/search.js"
+  - "site/graph.js"
+  - "site/charts.js"
+  - "scripts/cockpit-assets"
+  - "scripts/site-build"
+  - ".ai/repo/project/issues/I4535.yaml"
+non_scope:
+  - "Flowbite JS (I4536)"
+  - "The Cytoscape, ECharts and Alpine modules (I4541, I4542, I4543)"
+depends_on:
+  - "I4534"
+acceptance_criteria:
+  - "cmp finds no two identical files among share/ui/*.js, share/cockpit/*.js and site/*.js"
+  - "A case (numbered by scripts/case-numbers next) fails when a planted copy of any core helper is added under share/ui, share/cockpit or site, and passes on the tree"
+  - "The /ui, /cockpit and site pages load share/design/js/core with no CSP violation in the browser console, read by the interaction probe"
+validation:
+  - "majordomus plan validate"
+  - "node scripts/ui audit"
+  - "scripts/interaction-probe"
+evidence_required:
+  - "one_client_core_case"
+created_at: 2026-11-07
+updated_at: 2026-11-07

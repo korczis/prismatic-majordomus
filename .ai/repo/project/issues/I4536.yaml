@@ -1,0 +1,42 @@
+id: I4536
+milestone: one-frame-one-kit-one-library-per-job
+serves:
+  - "one-kit-on-every-surface#flowbite-js-drives-behaviour"
+title: "Flowbite JS, vendored from npm 4.0.2 and CSP-checked, drives collapse, dropdown, modal, drawer, tabs and tooltip on every surface"
+slug: flowbite-js-drives-behaviour
+priority: p1
+profile: implementation
+parallel_safe: false
+objective: "Slice S2 of milestone one-frame-one-kit-one-library-per-job. Vendor Flowbite JS from the npm flowbite 4.0.2 package.json already pins, built by scripts/cockpit-assets and scripts/site-build into the served tree and checked against the /ui and /cockpit CSP. Delete the collapse and dropdown of site/nav.js; move tabs, modal, drawer and tooltip (site/kit.js, site/search.js, the Cockpit palette, the graph detail panes) onto Flowbite's data attributes and its initialisers, re-run after a fragment swap. Decision recorded here, not as an ADR edit: the owner's order of 2026-11-07 moves ADR 0230 (Flowbite Pro is adapted onto Tailwind 4) from proposed to accepted; the status change is the owner's act through the ADR process."
+why: "The owner's order of 2026-11-07 13:30Z asks for /ui, /cockpit and the site to be reintegrated on one kit: max reuse, Flowbite Pro best practices, one library per job, everything derived, tested, deployed and linked (intent one-kit-on-every-surface). Flowbite is used as CSS only, so every interactive control is hand-written, and the design kit judge's S3 signal refuses a script that reads the kit's data attributes itself."
+current_state: "Measured on master on 2026-11-07: package.json pins flowbite 4.0.2 and tailwindcss 4.1.14; no page loads Flowbite JS; site/nav.js (77 lines) re-implements collapse and dropdown and is byte-copied to share/ui/nav.js and share/cockpit/nav.js; tabs, modal, drawer and tooltip are hand-written in site/kit.js (134 lines), site/search.js (277 lines), share/cockpit/palette.js and the graph scripts. ADR 0230 reads status: proposed."
+desired_state: "One vendored flowbite.min.js is served on /ui, /cockpit and the site and initialised through share/design/js/core; nav.js holds no collapse or dropdown code; no hand-written tabs, modal, drawer or tooltip remains; majordomus design kit --check reports zero S3 findings."
+scope:
+  - "package.json"
+  - "scripts/cockpit-assets"
+  - "scripts/site-build"
+  - "site/nav.js"
+  - "site/kit.js"
+  - "site/search.js"
+  - "share/cockpit/palette.js"
+  - "share/ui/nav.js"
+  - "share/cockpit/nav.js"
+  - ".ai/repo/project/issues/I4536.yaml"
+non_scope:
+  - "The component markup (I4537) and the page frame (I4538)"
+  - "Editing ADR 0230: its status is the owner's act"
+depends_on:
+  - "I4534"
+acceptance_criteria:
+  - "majordomus design kit --check reports zero S3 findings on /ui, /cockpit and the site"
+  - "The interaction probe opens and closes every collapse, dropdown, modal, drawer, tab and tooltip on /ui, /cockpit and the site by mouse and keyboard, with focus returned and no CSP violation"
+  - "No script under share/ui, share/cockpit or site reads data-collapse-toggle, data-dropdown-toggle, data-modal-target, data-drawer-target, data-tabs-toggle or data-tooltip-target itself"
+  - "The served Flowbite file's bytes equal the npm 4.0.2 build's, checked by the asset build"
+validation:
+  - "majordomus design kit --check"
+  - "scripts/interaction-probe"
+  - "majordomus plan validate"
+evidence_required:
+  - "flowbite_js_probe"
+created_at: 2026-11-07
+updated_at: 2026-11-07
