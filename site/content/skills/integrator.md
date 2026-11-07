@@ -5,7 +5,7 @@ weight = 5
 [extra]
 id = "integrator"
 status = "active"
-version = 5
+version = 6
 source = ".ai/repo/skills/integrator/SKILL.md"
 +++
 {% raw %}
@@ -199,6 +199,22 @@ Then delivery: `majordomus run release.currency` says whether landed work waits 
 last tag (the release seat's act), and `majordomus served` / `majordomus deploy` say what
 the site serves. A merge the forge accepted is not a green master, and a green master is not
 a release.
+
+A release is not reported released until the live homepage shows it in a real browser:
+
+```bash
+scripts/release-probe --expect v<version> --wait 600 --out target/release-probe
+```
+
+renders https://majordomus.dev/ in Chromium with the cache bypassed and holds it to the tag:
+GitHub's newest release is that tag and the page names its version; the trust strip, the
+navbar badge, `/releases/latest.json` and the newest pre-release ahead of stable agree; the
+footer names `/build.json`'s commit. `release.yml` runs the same in its `live` job after
+`publish`, and the pages deploy runs it after `the release it offers`; both keep `home.png`
+and `result.json` as the run's artifact. The release seat's report of a release carries the
+probe's lines and the screenshot (I4530); a `FAIL` names both sides, and the next act is on
+the source — the record that has not landed, the pages that read the tree's records only —
+never on the picture.
 
 ### 6. Close the loop
 

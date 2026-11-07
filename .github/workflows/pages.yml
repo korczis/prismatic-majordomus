@@ -797,6 +797,32 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: scripts/pages release-live
 
+      # The same page as a browser renders it, held to what was published (I4530): the trust
+      # strip, the navbar badge, /releases/latest.json and GitHub name one release; the hero
+      # names the newest published pre-release ahead of it and no other; the footer names
+      # /build.json's commit. release-live reads the stable channel with curl; the hero that
+      # named a superseded pre-release for hours after every release was never read by anything
+      # until this step. Its screenshot and readings are the run's artifact, so what the site
+      # showed at this deploy can be looked at afterwards.
+      - id: browser
+        name: the homepage in a real browser
+        if: steps.public.outcome == 'success'
+        timeout-minutes: 2
+        env:
+          GH_TOKEN: ${{ github.token }}
+          CHROME_BIN: google-chrome
+          CI: "true"
+        run: scripts/release-probe --wait 60 --out target/release-probe
+      - name: the browser's reading, as an artifact
+        if: always() && steps.browser.outcome != 'skipped'
+        timeout-minutes: 1
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-probe
+          path: target/release-probe
+          if-no-files-found: ignore
+          retention-days: 30
+
       # The third way a deploy fails, and the only one that used to end in a green tick.
       #
       # The `public` step waits for the site to serve this commit and is deliberately a report:

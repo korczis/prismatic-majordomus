@@ -1323,6 +1323,19 @@ else:
             elif shown_l != want_l:
                 pp.append(f"the product view counts v{rel.get('version')}'s changes as [" + ", ".join(f"{k} {n}" for k, n in shown_l)
                           + "], and the changelog gives [" + ", ".join(f"{k} {n}" for k, n in want_l) + "]")
+# a published page reads delivery at the commit it was built from (I3769): on a clean build the
+# commit the hero's delivery card names is the build's, and the build's own reading was taken
+# there. A dirty build is rendered from bytes no commit holds and names what it can: not judged.
+bcommit = build.get("commit") or ""
+if build and bcommit and bcommit != "unknown" and not build.get("dirty"):
+    named_d = re.search(r'\bdata-product-delivery-commit="([0-9a-f]+)"', hero)
+    if named_d and named_d.group(1) != bcommit:
+        pp.append(f"the hero names delivery inferred at {named_d.group(1)[:11]}, and this clean build was made from {bcommit[:11]}: "
+                  "a published page reads delivery at the commit it was built from (I3769)")
+    observed = ((build.get("delivery") or {}).get("observed") or {}).get("commit") or ""
+    if build.get("delivery") and observed != bcommit:
+        pp.append(f"the build's own delivery reading was observed at {observed[:11] or 'no commit'}, not at the build commit {bcommit[:11]}: "
+                  "scripts/site-build reads plan delivery --at the commit it builds (I3769)")
 for pr in pp:
     bad("product", pr)
 if not pp:

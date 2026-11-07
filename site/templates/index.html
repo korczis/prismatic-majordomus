@@ -39,6 +39,10 @@
 {#- the build's provenance is a fact of the build, written by scripts/site-build and never
     committed; a plain `zola serve` has none, and the trust strip then says so -#}
 {%- set build = load_data(path="data/build.json", required=false) -%}
+{#- the delivery the build read at its own commit (I3769), when the build carries one: then the
+    card names the commit this page was built from. A plain `zola serve` has no build record and
+    reads the committed projection above, observed at the commit before the one it landed in. -#}
+{%- if build and build.delivery %}{% set delivery = build.delivery %}{% endif -%}
 {#- the evidence CI recorded for this deployment (data/evidence.json, written by scripts/pages
     evidence and never committed): the dataset the evidence page reads. Its `claims` counts the
     guaranteed claims the nearest complete run supports, beside the commit that run was
@@ -162,7 +166,16 @@
         {#- what the history proves first, then what the records say: a declared status is a stamp,
             and the stage beside it is the delivery the commits, merges and releases show -#}
         {%- if delivery %}
+        {#- one commit when the build read delivery at its own commit (I3769): the sentence names
+            the build commit. Two sentences otherwise, two facts: the committed observation is where
+            an issue's delivery last moved (generate-site-data keeps it while the facts are
+            byte-equal), and the build commit is the trunk this page was rendered from, which is what
+            "current" means. Read as one date, the first looked stale on 2026-11-06 while the site
+            was a day old. -#}
         <p class="mt-4 text-xs text-body-subtle">Delivery the history proves, inferred at <a href="{{ project.repository_url }}/commit/{{ delivery.observed.commit }}" class="font-mono hover:underline" data-product-delivery-commit="{{ delivery.observed.commit }}">{{ delivery.observed.commit | truncate(length=7, end="") }}</a></p>
+        {%- if build and build.commit and build.commit != "unknown" and not build.delivery %}
+        <p class="mt-1 text-xs text-body-subtle">Verified at <a href="{{ project.repository_url }}/commit/{{ build.commit }}" class="font-mono hover:underline" data-product-verified-commit="{{ build.commit }}">{{ build.commit | truncate(length=7, end="") }}</a>{% if build.commit_time %}, committed <time datetime="{{ build.commit_time }}" class="font-mono" translate="no">{{ build.commit_time }}</time>{% endif %}</p>
+        {%- endif %}
         <dl class="mt-2 flex flex-wrap gap-2" data-product-delivery>
           {%- for stage in delivery.stages %}{% set n = delivery.tallies[stage] | default(value=0) %}{% if n > 0 and stage != "none" %}
           <div class="min-w-14 flex-1 rounded-base border border-default bg-neutral-primary px-2 py-2 sm:min-w-16 sm:px-3"><dt class="text-xs text-body">{{ stage | replace(from="_", to=" ") }}</dt><dd class="mt-0.5 font-mono text-xl font-bold tracking-tight text-heading" data-delivery="{{ stage }}"><a href="{{ roadmap_href }}#delivery" class="hover:underline">{{ n }}</a></dd></div>
