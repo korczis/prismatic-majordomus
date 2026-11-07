@@ -36,6 +36,7 @@
 //!     version: RECORD_VERSION,
 //!     id: "assessment-20261001T000000Z-abcdef".into(),
 //!     task: "untasked".into(),
+//!     session: None,
 //!     recorded_at: "2026-10-01T00:00:00Z".into(),
 //!     head: None,
 //!     redacted: vec![],
@@ -230,6 +231,7 @@ pub struct PlanInput {
 ///     version: RECORD_VERSION,
 ///     id: "assessment-1".into(),
 ///     task: "t".into(),
+///     session: None,
 ///     recorded_at: "2026-10-01T00:00:01Z".into(),
 ///     head: None,
 ///     redacted: vec![],
@@ -499,6 +501,7 @@ pub struct DisagreementPosition {
 ///     version: RECORD_VERSION,
 ///     id: "assessment-1".into(),
 ///     task: "t".into(),
+///     session: None,
 ///     recorded_at: "2026-10-01T00:00:01Z".into(),
 ///     head: None,
 ///     redacted: vec![],
@@ -890,6 +893,7 @@ impl ReasoningBody {
 ///     version: RECORD_VERSION,
 ///     id: "attempt-20261001T000000Z-abcdef".into(),
 ///     task: "untasked".into(),
+///     session: None,
 ///     recorded_at: "2026-10-01T00:00:00Z".into(),
 ///     head: None,
 ///     redacted: vec![],
@@ -916,8 +920,13 @@ pub struct ReasoningRecord {
     pub version: u32,
     /// `<kind>-<yyyymmddThhmmssZ>-<hex>`, unique in the store.
     pub id: String,
-    /// The task it was recorded under, or `untasked`.
+    /// The task it was recorded under, or `untasked`: the active task of the checkout,
+    /// unless another episode that is still open opened it (ADR 0164).
     pub task: String,
+    /// The episode that recorded it, when the writer ran inside one open here. Absent, not
+    /// guessed: with no identity among several open episodes the record is nobody's.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub session: Option<String>,
     /// When it was recorded, RFC 3339; stamped by the writer, never supplied.
     pub recorded_at: String,
     /// The commit the checkout was on.

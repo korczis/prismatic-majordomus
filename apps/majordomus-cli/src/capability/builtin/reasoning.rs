@@ -336,11 +336,22 @@ fn reasoning_record(
         crate::git::GitState::Available(g) => g.head.clone(),
         _ => None,
     };
+    // Whose record this is, and whether the active task is theirs to file it under: the
+    // calling connection's episode when it attached one, else the environment's, and the
+    // task only when no other open episode opened it (ADR 0164). The pointer and the bare
+    // current task are not consulted: both name whoever was here last.
+    let who = crate::ledger::attribution(
+        Path::new(&ctx.index.repository.root),
+        ctx.episode_key().as_deref(),
+    );
     let record = ReasoningRecord {
         schema: RECORD_SCHEMA.into(),
         version: RECORD_VERSION,
         id: mint_id(body.kind(), &recorded_at),
-        task: s.store.current_task(),
+        task: who
+            .task
+            .unwrap_or_else(|| crate::reasoning::store::UNTASKED.to_string()),
+        session: who.session,
         recorded_at,
         head,
         redacted,
@@ -760,5 +771,54 @@ mod tests {
                 e.capability.id
             );
         }
+    }
+
+    /// The writer names its caller and relates the active task only when it is the
+    /// caller's (ADR 0164). With two episodes open in the checkout and no caller named —
+    /// no attached peer, and no environment that names one of them — the record carries
+    /// no session and is filed untasked rather than under whoever opened the task.
+    #[test]
+    fn an_anonymous_record_among_two_episodes_names_nobody_and_is_untasked() {
+        let repo = crate::synthetic::SyntheticRepository::small().expect("a synthetic repository");
+        let state = repo.root().join(".ai/local/state");
+        std::fs::create_dir_all(state.join("sessions-open")).unwrap();
+        let here = repo.root().display().to_string();
+        for (file, sid) in [("worker-a.yaml", "s-a"), ("worker-b.yaml", "s-b")] {
+            std::fs::write(
+                state.join("sessions-open").join(file),
+                format!("session_id: {sid}\nworktree: {here}\n"),
+            )
+            .unwrap();
+        }
+        std::fs::write(
+            state.join("current.yaml"),
+            format!("id: t-1\nworktree: {here}\n"),
+        )
+        .unwrap();
+        // the ledger says A opened the task: it is A's to relate, and A is still open
+        std::fs::write(
+            state.join("ledger.jsonl"),
+            concat!(
+                r#"{"ts":"1","event":"task.started","head":"h","branch":"b","by":"x","session":"s-a","task_id":"t-1"}"#,
+                "\n"
+            ),
+        )
+        .unwrap();
+        let ctx = repo
+            .context()
+            .expect("a context over the synthetic repository");
+        let out = reasoning_record(
+            &ctx,
+            ReasoningRecordInput {
+                record: ReasoningInput::Assessment(crate::reasoning::record::AssessmentInput {
+                    subject: "which episode this record belongs to".into(),
+                    ..Default::default()
+                }),
+            },
+        )
+        .expect("an assessment is admitted in every mode");
+        assert_eq!(out.record.session, None, "two episodes, nobody named");
+        assert_eq!(out.record.task, crate::reasoning::store::UNTASKED);
+        assert!(repo.root().join(&out.path).is_file(), "{}", out.path);
     }
 }
