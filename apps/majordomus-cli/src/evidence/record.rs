@@ -1071,6 +1071,365 @@ fn write_run_record(out: &Path, run_record: &EvidenceRunRecord) -> std::io::Resu
     std::fs::write(out, text)
 }
 
+// ---------------------------------------------------------------- declared verifications
+
+/// The prefix of an intent criterion's reference that cites a verification the effective
+/// profile declares: `verify:<name>` (I3395).
+pub const VERIFY_REF: &str = "verify:";
+
+/// What the tree digest leaves out: the evidence the recording itself writes, the ignored
+/// per-checkout layer, and the plan's own records. Recording a run, or closing the work it
+/// serves, is not a change to what the run verified.
+const UNMEASURED: [&str; 3] = [".ai/repo/evidence", ".ai/local", ".ai/repo/project"];
+
+/// The verifications the effective profile declares: the profile the policy's
+/// `profiles.default` names, and every `verification.commands[]` entry of it, in the order
+/// it declares them.
+///
+/// ```
+/// use majordomus_cli::evidence::record::DeclaredVerifications;
+/// let d = DeclaredVerifications {
+///     profile: Some("implementation".into()),
+///     commands: vec![("tests".into(), "python3 -m pytest -q".into())],
+/// };
+/// assert_eq!(d.command("tests"), Some("python3 -m pytest -q"));
+/// assert!(d.command("lint").is_none());
+/// assert_eq!(d.names(), ["tests"]);
+/// ```
+#[derive(Debug, Clone, Default, PartialEq, Eq)]
+pub struct DeclaredVerifications {
+    /// The effective profile's name; `None` when the policy names no default profile.
+    pub profile: Option<String>,
+    /// `(name, command)`, as the profile declares them.
+    pub commands: Vec<(String, String)>,
+}
+
+impl DeclaredVerifications {
+    /// The command the profile declares under `name`, exactly as written; `None` when it
+    /// declares no such name, which a `verify:<name>` criterion reads as unresolved and
+    /// `evidence record --verify` refuses. The first declaration of a repeated name wins.
+    ///
+    /// ```
+    /// use majordomus_cli::evidence::record::DeclaredVerifications;
+    /// let d = DeclaredVerifications {
+    ///     profile: Some("implementation".into()),
+    ///     commands: vec![("tests".into(), "make test".into()), ("tests".into(), "true".into())],
+    /// };
+    /// assert_eq!(d.command("tests"), Some("make test"));
+    /// assert_eq!(d.command("lint"), None);
+    /// ```
+    pub fn command(&self, name: &str) -> Option<&str> {
+        self.commands
+            .iter()
+            .find(|(n, _)| n == name)
+            .map(|(_, c)| c.as_str())
+    }
+
+    /// Every declared name, in the order the profile declares them: what a refusal of an
+    /// undeclared name lists as the names a caller may give instead.
+    ///
+    /// ```
+    /// use majordomus_cli::evidence::record::DeclaredVerifications;
+    /// let d = DeclaredVerifications {
+    ///     profile: None,
+    ///     commands: vec![("unit".into(), "make".into()), ("lint".into(), "make lint".into())],
+    /// };
+    /// assert_eq!(d.names(), ["unit", "lint"]);
+    /// assert!(DeclaredVerifications::default().names().is_empty());
+    /// ```
+    pub fn names(&self) -> Vec<&str> {
+        self.commands.iter().map(|(n, _)| n.as_str()).collect()
+    }
+}
+
+#[derive(Debug, Default, serde::Deserialize)]
+struct ProfileDoc {
+    #[serde(default)]
+    verification: ProfileVerification,
+}
+
+#[derive(Debug, Default, serde::Deserialize)]
+struct ProfileVerification {
+    #[serde(default)]
+    commands: Vec<ProfileCommand>,
+}
+
+#[derive(Debug, serde::Deserialize)]
+struct ProfileCommand {
+    name: String,
+    command: String,
+}
+
+/// Read the verifications the effective profile of the repository at `root` declares. A
+/// repository whose policy names no default profile, or whose profile declares no
+/// `verification.commands`, declares none; a policy or profile that cannot be read is an
+/// error, so a misread file never reads as a declaration.
+///
+/// ```
+/// use majordomus_cli::evidence::record::declared_verifications;
+/// let root = tempfile::tempdir().unwrap();
+/// // no layer at all is an error, not an empty declaration
+/// assert!(declared_verifications(root.path()).is_err());
+/// ```
+pub fn declared_verifications(root: &Path) -> Result<DeclaredVerifications> {
+    let repository = crate::repository::Repository::open(root)?;
+    let Some(rel) = repository.section_path(crate::policy::POLICY_SECTION) else {
+        return Ok(DeclaredVerifications::default());
+    };
+    let path = root.join(&rel);
+    let text = std::fs::read_to_string(&path).map_err(|e| Error::io(&path, e))?;
+    let policy: crate::policy::Policy =
+        crate::metadata::yaml::parse_into(&text).map_err(|reason| Error::InvalidPolicy {
+            path: path.clone(),
+            reason,
+        })?;
+    let Some(profile) = policy.profiles.default.filter(|p| !p.trim().is_empty()) else {
+        return Ok(DeclaredVerifications::default());
+    };
+    let file = crate::policy::profile_files(&repository)?
+        .into_iter()
+        .find(|p| p.file_stem().is_some_and(|s| s == profile.as_str()));
+    let commands = match file {
+        None => Vec::new(),
+        Some(p) => {
+            let text = std::fs::read_to_string(&p).map_err(|e| Error::io(&p, e))?;
+            let doc: ProfileDoc = crate::metadata::yaml::parse_into(&text)
+                .map_err(|reason| refused(format!("{}: {reason}", p.display())))?;
+            doc.verification
+                .commands
+                .into_iter()
+                .map(|c| (c.name.trim().to_string(), c.command))
+                .collect()
+        }
+    };
+    Ok(DeclaredVerifications {
+        profile: Some(profile),
+        commands,
+    })
+}
+
+/// The digest of the tree a verification runs on: every path the index tracks, outside the
+/// evidence, `.ai/local/` and the plan's records, with the content its working copy holds
+/// now — the index's blob id for a file the working copy has not changed, the id git would
+/// give the working copy for one it has, and nothing for one it has deleted. Untracked files
+/// are not part of it. `sha256:<hex>`; `None` when git cannot list the tree.
+///
+/// It is a read: `git ls-files` and `git hash-object` without `-w` write neither the index
+/// nor an object.
+///
+/// ```
+/// use majordomus_cli::evidence::record::tree_digest;
+/// use std::process::Command;
+/// let root = tempfile::tempdir().unwrap();
+/// let git = |a: &[&str]| Command::new("git").arg("-C").arg(root.path()).args(a).output().unwrap();
+/// git(&["init", "-q"]);
+/// std::fs::write(root.path().join("a.txt"), "one\n").unwrap();
+/// git(&["add", "a.txt"]);
+/// let first = tree_digest(root.path()).unwrap();
+/// assert!(first.starts_with("sha256:"));
+/// // an untracked file and the evidence the recording writes are not the tree
+/// std::fs::write(root.path().join("untracked.txt"), "x\n").unwrap();
+/// assert_eq!(tree_digest(root.path()).unwrap(), first);
+/// // a tracked file's working copy is
+/// std::fs::write(root.path().join("a.txt"), "two\n").unwrap();
+/// assert_ne!(tree_digest(root.path()).unwrap(), first);
+/// std::fs::write(root.path().join("a.txt"), "one\n").unwrap();
+/// assert_eq!(tree_digest(root.path()).unwrap(), first);
+/// ```
+pub fn tree_digest(root: &Path) -> Option<String> {
+    let listed = |args: &[&str]| -> Option<Vec<u8>> {
+        crate::git::read_only(root)
+            .args(args)
+            .output()
+            .ok()
+            .filter(|o| o.status.success())
+            .map(|o| o.stdout)
+    };
+    let measured = |p: &str| {
+        !UNMEASURED
+            .iter()
+            .any(|u| p == *u || p.strip_prefix(u).is_some_and(|r| r.starts_with('/')))
+    };
+    let split = |bytes: &[u8]| -> Vec<String> {
+        bytes
+            .split(|b| *b == 0)
+            .filter(|s| !s.is_empty())
+            .map(|s| String::from_utf8_lossy(s).into_owned())
+            .collect()
+    };
+    // `<mode> <id> <stage>\t<path>`, in the index's order
+    let staged: Vec<(String, String, String)> = split(&listed(&["ls-files", "-s", "-z"])?)
+        .into_iter()
+        .filter_map(|entry| {
+            let (meta, path) = entry.split_once('\t')?;
+            let mut fields = meta.split(' ');
+            let (mode, id) = (fields.next()?.to_string(), fields.next()?.to_string());
+            Some((mode, id, path.to_string()))
+        })
+        .filter(|(_, _, path)| measured(path))
+        .collect();
+    let deleted: std::collections::BTreeSet<String> = split(&listed(&["ls-files", "-d", "-z"])?)
+        .into_iter()
+        .collect();
+    // a submodule's entry is the commit it records, which no working-copy hash replaces
+    let gitlinks: std::collections::BTreeSet<&str> = staged
+        .iter()
+        .filter(|(mode, _, _)| mode == "160000")
+        .map(|(_, _, p)| p.as_str())
+        .collect();
+    let modified: Vec<String> = split(&listed(&["ls-files", "-m", "-z"])?)
+        .into_iter()
+        .filter(|p| measured(p) && !deleted.contains(p) && !gitlinks.contains(p.as_str()))
+        .collect();
+    // the ids git would give the working copies that differ from the index, without
+    // writing them
+    let mut rehashed: BTreeMap<String, String> = BTreeMap::new();
+    if !modified.is_empty() {
+        use std::io::Write as _;
+        let mut child = crate::git::read_only(root)
+            .args(["hash-object", "--stdin-paths"])
+            .stdin(std::process::Stdio::piped())
+            .stdout(std::process::Stdio::piped())
+            .stderr(std::process::Stdio::null())
+            .spawn()
+            .ok()?;
+        {
+            let mut stdin = child.stdin.take()?;
+            for p in &modified {
+                writeln!(stdin, "{p}").ok()?;
+            }
+        }
+        let out = child
+            .wait_with_output()
+            .ok()
+            .filter(|o| o.status.success())?;
+        let ids = String::from_utf8_lossy(&out.stdout);
+        for (p, id) in modified.iter().zip(ids.lines()) {
+            rehashed.insert(p.clone(), id.trim().to_string());
+        }
+    }
+    let mut text = String::new();
+    for (mode, id, path) in &staged {
+        if deleted.contains(path) {
+            continue;
+        }
+        let id = rehashed.get(path).unwrap_or(id);
+        text.push_str(&format!("{mode} {id} {path}\n"));
+    }
+    Some(digest_of(text.as_bytes()))
+}
+
+/// A verification to run and record: the declared name, where it runs, and which ledger
+/// the run goes into.
+///
+/// ```
+/// use majordomus_cli::evidence::ledger::LedgerTarget;
+/// use majordomus_cli::evidence::record::VerifyRequest;
+/// use majordomus_cli::evidence::Origin;
+/// let req = VerifyRequest { name: "tests".into(), origin: Origin::Local, ledger: LedgerTarget::Repo };
+/// assert_eq!(req.name, "tests");
+/// ```
+#[derive(Debug, Clone)]
+pub struct VerifyRequest {
+    /// The name the effective profile declares the command under.
+    pub name: String,
+    /// Where the run happens.
+    pub origin: Origin,
+    /// The ledger the run is merged into.
+    pub ledger: LedgerTarget,
+}
+
+/// Run a verification the effective profile declares and record it (I3395): the digest of
+/// the tree it runs on, then the command through `sh -c` at the repository root, then its
+/// exit, its duration, the commit and the time, merged into the ledger under its name. What
+/// the command prints goes to standard error, so a JSON answer on standard output stays
+/// whole. A failing run is recorded like a passing one: the ledger holds what happened.
+///
+/// It refuses a name the profile does not declare, naming the profile and what it does
+/// declare, and a tree git cannot list, because a run whose tree is unknown proves nothing
+/// about any tree.
+///
+/// ```
+/// use majordomus_cli::evidence::ledger::LedgerTarget;
+/// use majordomus_cli::evidence::record::{record_verification, VerifyRequest};
+/// use majordomus_cli::evidence::Origin;
+/// let root = tempfile::tempdir().unwrap();
+/// let req = VerifyRequest { name: "tests".into(), origin: Origin::Local, ledger: LedgerTarget::Repo };
+/// // a directory with no layer declares nothing to run
+/// assert!(record_verification(root.path(), &req).is_err());
+/// ```
+pub fn record_verification(
+    root: &Path,
+    req: &VerifyRequest,
+) -> Result<super::ledger::VerificationRun> {
+    let declared = declared_verifications(root)?;
+    let name = req.name.trim();
+    let Some(command) = declared.command(name).map(str::to_string) else {
+        let profile = declared.profile.as_deref().unwrap_or("(none)");
+        let names = declared.names();
+        return Err(refused(format!(
+            "`{name}` is not a verification the effective profile `{profile}` declares under \
+             verification.commands (it declares: {})",
+            if names.is_empty() {
+                "nothing".to_string()
+            } else {
+                names.join(", ")
+            }
+        )));
+    };
+    let tree = tree_digest(root).ok_or_else(|| {
+        refused(
+            "git cannot list the tree here, so a verification run here would carry no tree and \
+             prove nothing",
+        )
+    })?;
+    let commit = match crate::git::inspect(root) {
+        crate::git::GitState::Available(i) => i.head,
+        crate::git::GitState::Unavailable { .. } => None,
+    }
+    .unwrap_or_default();
+    let at = now_rfc3339();
+    let started = std::time::Instant::now();
+    let ran = std::process::Command::new("sh")
+        .arg("-c")
+        .arg(&command)
+        .current_dir(root)
+        .stdin(std::process::Stdio::null())
+        .output();
+    let millis = u64::try_from(started.elapsed().as_millis()).unwrap_or(u64::MAX);
+    let (outcome, exit) = match &ran {
+        Ok(out) => {
+            use std::io::Write as _;
+            let mut err = std::io::stderr().lock();
+            // what the command printed is the reader's; failing to echo it changes no record
+            let _ = err.write_all(&out.stdout);
+            let _ = err.write_all(&out.stderr);
+            match out.status.code() {
+                Some(0) => (Outcome::Pass, Some(0)),
+                Some(c) => (Outcome::Fail, Some(c)),
+                None => (Outcome::Error, None),
+            }
+        }
+        Err(_) => (Outcome::Error, None),
+    };
+    let run = super::ledger::VerificationRun {
+        name: name.to_string(),
+        profile: declared.profile.unwrap_or_default(),
+        command,
+        outcome,
+        exit,
+        millis,
+        tree,
+        commit,
+        at,
+        origin: req.origin,
+    };
+    let mut ledger = Ledger::load_from(root, req.ledger)?;
+    ledger.merge_verification(run.clone());
+    ledger.save_to(root, req.ledger)?;
+    Ok(run)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

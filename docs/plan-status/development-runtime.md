@@ -208,7 +208,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I1997` | shares docs/MCP.md with I3307; they may not run concurrently |
 | WARN | `scope_conflict` | `I1997` | shares test/cases with I3309; they may not run concurrently |
 | WARN | `scope_conflict` | `I1997` | shares test/cases with I3318; they may not run concurrently |
-| WARN | `scope_conflict` | `I1997` | shares test/cases with I3395; they may not run concurrently |
+| WARN | `scope_conflict` | `I1997` | shares apps/majordomus-cli/src/cli.rs with I3395; they may not run concurrently |
 | WARN | `scope_conflict` | `I1997` | shares test/cases with I3400; they may not run concurrently |
 | WARN | `scope_conflict` | `I1997` | shares test/cases with I3447; they may not run concurrently |
 | WARN | `scope_conflict` | `I1997` | shares test/cases with I3448; they may not run concurrently |
@@ -669,6 +669,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I2690` | shares apps/majordomus-cli/src/capability/builtin/ with I3314; they may not run concurrently |
 | WARN | `scope_conflict` | `I2690` | shares apps/majordomus-cli/src/capability/builtin/ with I3317; they may not run concurrently |
 | WARN | `scope_conflict` | `I2690` | shares .ai/repo/policy.yaml with I3322; they may not run concurrently |
+| WARN | `scope_conflict` | `I2690` | shares apps/majordomus-cli/src/capability/builtin/ with I3395; they may not run concurrently |
 | WARN | `scope_conflict` | `I2690` | shares apps/majordomus-cli/src/capability/builtin/ with I3442; they may not run concurrently |
 | WARN | `scope_conflict` | `I2690` | shares apps/majordomus-cli/src/capability/builtin/ with I3443; they may not run concurrently |
 | WARN | `scope_conflict` | `I2690` | shares apps/majordomus-cli/src/capability/builtin/ with I3444; they may not run concurrently |

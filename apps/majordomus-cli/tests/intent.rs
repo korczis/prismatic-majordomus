@@ -931,3 +931,115 @@ fn governance_claims_files_and_deployments_resolve_against_the_repository_itself
     assert_eq!(state("it-is-deployed"), "not_derivable");
     assert_eq!(state("it-is-deployed-nowhere"), "unresolved");
 }
+
+/// A repository whose tests are none of the kinds this executable runs — pytest-style files
+/// under `tests/` — settles an intent with its own check (I3395): the profile declares the
+/// command under a name, a criterion cites it as `verify:<name>`, and `evidence record
+/// --verify` runs and records it. The criterion is unresolved while the profile declares no
+/// such name, not run until a run is recorded, current after a passing run at this tree,
+/// stale once the tree changes, and failing after a failing run.
+#[test]
+fn test_verify_criterion_in_foreign_repository() {
+    let f = Fixture::new();
+    f.write(
+        "tests/test_probe.py",
+        "def test_probe():\n    assert open('tests/state.txt').read().strip() == 'pass'\n",
+    );
+    f.write("tests/state.txt", "pass\n");
+    // the criterion cites a verification before the profile declares it
+    f.write(
+        ".ai/repo/project/intents/fixture-intent.yaml",
+        "id: fixture-intent
+title: The fixture's outcome is true
+statement: \"The outcome the fixture milestone reaches is true for its users.\"
+invariants:
+  - The fixture stays a valid repository
+milestones:
+  - fixture-milestone
+satisfaction:
+  - id: the-checks-pass
+    criterion: The repository's own checks pass
+    evidence: command
+    ref: verify:tests
+",
+    );
+    f.commit("a foreign repository's tests");
+    let show = |f: &Fixture| cli_json(f, &["intent", "show", "fixture-intent"]).1;
+
+    let v = show(&f);
+    assert_eq!(v["satisfaction"][0]["state"], "unresolved", "{v:#}");
+    let (code, out, _) = run_in(&f.root(), &["intent", "validate"], "");
+    assert_eq!(code, 10, "an undeclared verification is a failure:\n{out}");
+    assert!(
+        out.contains("unresolved_evidence_ref") && out.contains("verify:tests"),
+        "the finding names the verification:\n{out}"
+    );
+
+    // the profile declares it: resolved, and nothing recorded is not a pass
+    f.write(
+        ".ai/repo/profiles/implementation.yaml",
+        &format!(
+            "{}{}",
+            common::PROFILE,
+            concat!(
+                "verification:\n",
+                "  commands:\n",
+                "    - name: tests\n",
+                "      command: \"grep -q pass tests/state.txt\"\n",
+            )
+        ),
+    );
+    f.commit("declare the repository's own check");
+    let v = show(&f);
+    assert_eq!(v["satisfaction"][0]["state"], "not_run", "{v:#}");
+    assert_eq!(
+        v["satisfaction"][0]["reproduce"],
+        "majordomus evidence record --verify tests"
+    );
+    assert_eq!(
+        v["verdict"]["state"], "unsatisfied",
+        "the ledger can settle it"
+    );
+
+    // a passing run at this tree: current, and with no other criterion the verdict holds
+    let (code, rec) = cli_json(&f, &["evidence", "record", "--verify", "tests"]);
+    assert_eq!(code, 0, "{rec:#}");
+    assert_eq!(rec["verification"]["outcome"], "pass", "{rec:#}");
+    assert_eq!(rec["verification"]["exit"], 0);
+    assert!(rec["verification"]["tree"]
+        .as_str()
+        .unwrap()
+        .starts_with("sha256:"));
+    let v = show(&f);
+    assert_eq!(v["satisfaction"][0]["state"], "current", "{v:#}");
+    assert_eq!(v["satisfaction"][0]["met"], true);
+    assert_eq!(v["satisfaction"][0]["proof"], "proven");
+    assert_eq!(v["verdict"]["state"], "satisfied", "{v:#}");
+    // committing the ledger the recording wrote is not a change to the tree it verified
+    f.commit("record the check");
+    assert_eq!(show(&f)["satisfaction"][0]["state"], "current");
+
+    // the same pass, at another tree, proves nothing about this one
+    f.write("lib/a.sh", "#!/usr/bin/env bash\necho changed\n");
+    let v = show(&f);
+    assert_eq!(v["satisfaction"][0]["state"], "stale", "{v:#}");
+    assert_eq!(v["verdict"]["state"], "unsatisfied");
+
+    // a failing run at this tree is not evidence either
+    f.write("tests/state.txt", "fail\n");
+    let (code, rec) = cli_json(&f, &["evidence", "record", "--verify", "tests"]);
+    assert_eq!(
+        code, 0,
+        "a failing run is recorded like a passing one: {rec:#}"
+    );
+    assert_eq!(rec["verification"]["outcome"], "fail");
+    assert_eq!(rec["verification"]["exit"], 1);
+    let v = show(&f);
+    assert_eq!(v["satisfaction"][0]["state"], "failing", "{v:#}");
+    assert_eq!(v["verdict"]["state"], "unsatisfied");
+
+    // a name the profile does not declare is refused, naming what it does declare
+    let (code, _, err) = run_in(&f.root(), &["evidence", "record", "--verify", "lint"], "");
+    assert_ne!(code, 0);
+    assert!(err.contains("`lint`") && err.contains("tests"), "{err}");
+}

@@ -27,17 +27,22 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 |---|---|---|---|
 | WARN | `scope_conflict` | `I3395` | shares docs/generated/openapi.json with I3443; they may not run concurrently |
 | WARN | `scope_conflict` | `I3395` | shares test/cases/367_an_intent_is_satisfied_only_by_evidence.sh with I3448; they may not run concurrently |
-| WARN | `scope_conflict` | `I3395` | shares test/cases/367_an_intent_is_satisfied_only_by_evidence.sh with I3607; they may not run concurrently |
+| WARN | `scope_conflict` | `I3395` | shares apps/majordomus-cli/src/capability/builtin/evidence.rs with I3607; they may not run concurrently |
 | WARN | `scope_conflict` | `I3395` | shares docs/generated/cli.json with I3757; they may not run concurrently |
 | WARN | `scope_conflict` | `I3395` | shares docs/generated/cli.json with I3762; they may not run concurrently |
 | WARN | `scope_conflict` | `I3395` | shares docs/generated/cli.json with I3763; they may not run concurrently |
-| WARN | `scope_conflict` | `I3395` | shares docs/generated/cli.json with I3810; they may not run concurrently |
+| WARN | `scope_conflict` | `I3395` | shares apps/majordomus-cli/src/cli.rs with I3810; they may not run concurrently |
 | WARN | `scope_conflict` | `I3395` | shares docs/generated/cli.json with I3841; they may not run concurrently |
+| WARN | `scope_conflict` | `I3395` | shares apps/majordomus-cli/src/capability/builtin/evidence.rs with I4002; they may not run concurrently |
 | WARN | `scope_conflict` | `I3395` | shares apps/majordomus-cli/src/commands/evidence.rs with I4006; they may not run concurrently |
-| WARN | `scope_conflict` | `I3395` | shares docs/generated/cli.json with I4294; they may not run concurrently |
+| WARN | `scope_conflict` | `I3395` | shares apps/majordomus-cli/src/cli.rs with I4294; they may not run concurrently |
 | WARN | `scope_conflict` | `I3395` | shares apps/majordomus-cli/src/intent.rs with I4322; they may not run concurrently |
 | WARN | `scope_conflict` | `I3395` | shares apps/majordomus-cli/src/intent.rs with I4325; they may not run concurrently |
+| WARN | `scope_conflict` | `I3395` | shares apps/majordomus-cli/src/capability/builtin/evidence.rs with I4327; they may not run concurrently |
+| WARN | `scope_conflict` | `I3395` | shares apps/majordomus-cli/src/cli.rs with I4334; they may not run concurrently |
 | WARN | `scope_conflict` | `I3395` | shares docs/generated/cli.json with I4400; they may not run concurrently |
-| WARN | `scope_conflict` | `I3395` | shares docs/generated/cli.json with I4418; they may not run concurrently |
+| WARN | `scope_conflict` | `I3395` | shares apps/majordomus-cli/src/cli.rs with I4418; they may not run concurrently |
 | WARN | `scope_conflict` | `I3395` | shares docs/generated/cli.json with I4466; they may not run concurrently |
+| WARN | `scope_conflict` | `I3395` | shares apps/majordomus-cli/src/capability/builtin/evidence.rs with I4468; they may not run concurrently |
 | WARN | `scope_conflict` | `I3395` | shares apps/majordomus-cli/tests/intent.rs with I4481; they may not run concurrently |
+| WARN | `scope_conflict` | `I3395` | shares apps/majordomus-cli/src/capability/builtin/evidence.rs with I4486; they may not run concurrently |
