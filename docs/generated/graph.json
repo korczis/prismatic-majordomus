@@ -80530,6 +80530,47 @@
         }
       },
       {
+        "id": "majordomus://issue/I4551",
+        "kind": "issue",
+        "label": "I4551",
+        "summary": "A message one session sends another is never archived as the person's prompt",
+        "route": "/cockpit/objects/issue/i4551",
+        "source": ".ai/repo/project/issues/I4551.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A payload opening with '<cross-session-message from=\\\"uds:x\\\">' writes no person prompt record, and one opening with the bare tag still writes none",
+            "A person's prompt that mentions the tag later in its text is still archived",
+            "capture status reports the synthetic deliveries it skipped as their own count"
+          ],
+          "created_at": "2026-11-07",
+          "current_state": "MJ_CAPTURE_ADAPTERS field 10 lists the bare tag; mj_capture_is_person compares the payload's opening with it.",
+          "desired_state": "A payload that opens with the cross-session tag, with or without attributes, is not archived as the person's prompt, and capture status counts it apart.",
+          "evidence_required": [
+            "case_a_synthetic_message_is_not_the_persons"
+          ],
+          "milestone": "a-provider-carries-the-contract-natively",
+          "non_scope": [
+            "Rewriting or deleting records already archived",
+            "Moving capture to the Rust session domain (I3143)"
+          ],
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "lib/capture.sh",
+            "test/cases/29_prompt_capture.sh"
+          ],
+          "serves": [
+            "a-provider-carries-the-contract-natively#a-synthetic-message-is-not-the-persons"
+          ],
+          "slug": "a-synthetic-message-is-not-the-persons",
+          "updated_at": "2026-11-07",
+          "validation": [
+            "bash test/run.sh 29_prompt_capture",
+            "majordomus shell check"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "label": "a-brief-is-reconciled-not-transcribed",
@@ -149157,6 +149198,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I4551",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4551",
+        "target": "majordomus://milestone/a-provider-carries-the-contract-natively",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -161813,8 +161864,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4422,
-      "edges": 10037,
+      "nodes": 4423,
+      "edges": 10039,
       "acyclic": false,
       "truncated": false
     }
