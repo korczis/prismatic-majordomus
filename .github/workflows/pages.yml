@@ -660,11 +660,13 @@ jobs:
       # since the last deploy is the record the step above composed, adopted when it names this commit.
       # The bound follows the `build` row of .ai/repo/ci/pages.yaml (budget.bound.percent of it):
       # 15 s on 39228746039 over the English site, 200-314 s with the Czech copy (ADR 0218).
-      # The executable the ui-snapshot job built at this commit (above); a missing one is not a
-      # failed deploy, the build then reads the committed delivery projection and says so.
+      # The executable the ui-snapshot job built at this commit (above). This job needs that one,
+      # which uploads it or fails (if-no-files-found: error), so the download is a gating step:
+      # the publication measurement stays the one step that may fail softly (case 97). The build
+      # falls back to the committed delivery projection, and says so, only where no executable is
+      # handed to it at all (a hand deploy, scripts/site-build run alone).
       - name: the executable the run built
         timeout-minutes: 1
-        continue-on-error: true
         uses: actions/download-artifact@v4
         with:
           name: pages-executable
