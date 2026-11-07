@@ -14,7 +14,8 @@
 //! What the executable decides is what only it knows:
 //!
 //! - **the version** the badge names: the executable's, where the site names the release it
-//!   offers;
+//!   offers, and the badge says so (`data-version-role="build"`, I3449). The pre-release the
+//!   site's bar names beside its release is not carried: the executable is not told it;
 //! - **the live surfaces**: an entry the site leads to a published snapshot of a surface this
 //!   process serves leads to the surface itself, and stops saying "snapshot".
 //!
@@ -110,6 +111,16 @@ mod tests {
         assert!(
             FRAGMENT.contains(VERSION_SLOT),
             "the badge names a version to fill in"
+        );
+        assert!(
+            FRAGMENT.contains(&format!(
+                "data-release=\"{VERSION_SLOT}\" data-version-role=\"build\""
+            )),
+            "the badge says the version it names is the executable's build (I3449)"
+        );
+        assert!(
+            !FRAGMENT.contains("data-prerelease"),
+            "the site's pre-release badge is the site's"
         );
         assert!(
             !FRAGMENT.contains("href=\"#"),

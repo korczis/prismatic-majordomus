@@ -8,7 +8,7 @@ This page is the index. Each milestone's issues, and the findings about them, ar
 its own under [`plan-status/`](plan-status/), named by the milestone, so the plan grows by pages
 and no one page grows with it.
 
-Generated from canonical inputs `cda38202c2b6`.
+Generated from canonical inputs `3743aeb36524`.
 
 ## Milestones
 
@@ -493,7 +493,7 @@ Generated from canonical inputs `cda38202c2b6`.
 
 ## Findings
 
-9234 finding(s), each on the page of the milestone its subject is or belongs to:
+9229 finding(s), each on the page of the milestone its subject is or belongs to:
 
 | milestone | findings |
 |---|---|
@@ -566,6 +566,6 @@ Generated from canonical inputs `cda38202c2b6`.
 | [`the-session-domain-is-written-once`](plan-status/the-session-domain-is-written-once.md) | 6 |
 | [`the-ui-runs-and-explains`](plan-status/the-ui-runs-and-explains.md) | 18 |
 | [`the-ui-works-on-a-phone`](plan-status/the-ui-works-on-a-phone.md) | 17 |
-| [`truthful-plan-surfaces`](plan-status/truthful-plan-surfaces.md) | 291 |
+| [`truthful-plan-surfaces`](plan-status/truthful-plan-surfaces.md) | 286 |
 | [`two-folder-integration`](plan-status/two-folder-integration.md) | 9 |
 | [`web-sign-in`](plan-status/web-sign-in.md) | 35 |

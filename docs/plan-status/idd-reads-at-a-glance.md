@@ -943,7 +943,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I2908` | shares docs with I3444; they may not run concurrently |
 | WARN | `scope_conflict` | `I2908` | shares apps/majordomus-cli/src/ui/view.rs with I3447; they may not run concurrently |
 | WARN | `scope_conflict` | `I2908` | shares .ai/repo/project with I3448; they may not run concurrently |
-| WARN | `scope_conflict` | `I2908` | shares apps/majordomus-cli/src/ui/view.rs with I3449; they may not run concurrently |
+| WARN | `scope_conflict` | `I2908` | shares site with I3449; they may not run concurrently |
 | WARN | `scope_conflict` | `I2908` | shares docs with I3606; they may not run concurrently |
 | WARN | `scope_conflict` | `I2908` | shares docs with I3607; they may not run concurrently |
 | WARN | `scope_conflict` | `I2908` | shares docs with I3608; they may not run concurrently |
@@ -1732,7 +1732,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I2912` | shares docs with I3444; they may not run concurrently |
 | WARN | `scope_conflict` | `I2912` | shares apps/majordomus-cli/src/ui/view.rs with I3447; they may not run concurrently |
 | WARN | `scope_conflict` | `I2912` | shares .ai/repo/project with I3448; they may not run concurrently |
-| WARN | `scope_conflict` | `I2912` | shares apps/majordomus-cli/src/ui/view.rs with I3449; they may not run concurrently |
+| WARN | `scope_conflict` | `I2912` | shares site with I3449; they may not run concurrently |
 | WARN | `scope_conflict` | `I2912` | shares docs with I3606; they may not run concurrently |
 | WARN | `scope_conflict` | `I2912` | shares docs with I3607; they may not run concurrently |
 | WARN | `scope_conflict` | `I2912` | shares docs with I3608; they may not run concurrently |

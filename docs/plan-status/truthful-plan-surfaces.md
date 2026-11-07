@@ -128,7 +128,6 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I3079` | shares .ai/repo/project/issues/I3079.yaml with I3373; they may not run concurrently |
 | WARN | `scope_conflict` | `I3079` | shares apps/majordomus-cli/src/ui/view.rs with I3440; they may not run concurrently |
 | WARN | `scope_conflict` | `I3079` | shares apps/majordomus-cli/src/ui/view.rs with I3447; they may not run concurrently |
-| WARN | `scope_conflict` | `I3079` | shares apps/majordomus-cli/src/ui/view.rs with I3449; they may not run concurrently |
 | WARN | `scope_conflict` | `I3079` | shares share/ui/src/ui.css with I3793; they may not run concurrently |
 | WARN | `scope_conflict` | `I3079` | shares apps/majordomus-cli/src/ui/deployments.rs with I4327; they may not run concurrently |
 | WARN | `scope_conflict` | `I3079` | shares share/ui/src/ui.css with I4377; they may not run concurrently |
@@ -152,7 +151,6 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I3319` | shares .ai/repo/adrs/0017-an-episode-that-opens-is-handed-what-the-last-one-left.md with I4500; they may not run concurrently |
 | WARN | `scope_conflict` | `I3319` | shares .ai/repo/ci/gates.yaml with I4512; they may not run concurrently |
 | WARN | `scope_conflict` | `I3440` | shares apps/majordomus-cli/src/ui/view.rs with I3447; they may not run concurrently |
-| WARN | `scope_conflict` | `I3440` | shares apps/majordomus-cli/src/ui/view.rs with I3449; they may not run concurrently |
 | WARN | `scope_conflict` | `I3440` | shares apps/majordomus-cli/src/ui/milestone.rs with I3757; they may not run concurrently |
 | WARN | `scope_conflict` | `I3440` | shares apps/majordomus-cli/src/ui/dashboard.rs with I4327; they may not run concurrently |
 | WARN | `scope_conflict` | `I3440` | shares apps/majordomus-cli/src/ui/milestone.rs with I4330; they may not run concurrently |
@@ -210,15 +208,12 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I3443` | shares apps/majordomus-cli/src/capability/builtin/product.rs with I4486; they may not run concurrently |
 | WARN | `scope_conflict` | `I3443` | shares apps/majordomus-cli/src/ui/roadmap.rs with I4494; they may not run concurrently |
 | WARN | `scope_conflict` | `I3449` | shares test/cases/3727_the_pages_name_the_pre_release_beside_the_stable_one.sh with I3607; they may not run concurrently |
+| WARN | `scope_conflict` | `I3449` | shares scripts/lib/ui-navbar.mjs with I3767; they may not run concurrently |
 | WARN | `scope_conflict` | `I3449` | shares scripts/site-build with I3769; they may not run concurrently |
 | WARN | `scope_conflict` | `I3449` | shares scripts/site-check with I3841; they may not run concurrently |
 | WARN | `scope_conflict` | `I3449` | shares site/templates/partials/navbar.html with I4294; they may not run concurrently |
-| WARN | `scope_conflict` | `I3449` | shares apps/majordomus-cli/src/ui/view.rs with I4327; they may not run concurrently |
+| WARN | `scope_conflict` | `I3449` | shares apps/majordomus-cli/src/ui/navbar.rs with I4327; they may not run concurrently |
 | WARN | `scope_conflict` | `I3449` | shares site/templates/partials/navbar.html with I4400; they may not run concurrently |
-| WARN | `scope_conflict` | `I3449` | shares apps/majordomus-cli/src/ui/view.rs with I4483; they may not run concurrently |
-| WARN | `scope_conflict` | `I3449` | shares apps/majordomus-cli/src/ui/view.rs with I4485; they may not run concurrently |
-| WARN | `scope_conflict` | `I3449` | shares apps/majordomus-cli/src/ui/view.rs with I4494; they may not run concurrently |
-| WARN | `scope_conflict` | `I3449` | shares apps/majordomus-cli/src/ui/view.rs with I4495; they may not run concurrently |
 | WARN | `scope_conflict` | `I3449` | shares scripts/site-build with I4531; they may not run concurrently |
 | WARN | `scope_conflict` | `I3750` | shares scripts/generate-site-data with I3836; they may not run concurrently |
 | WARN | `scope_conflict` | `I3750` | shares scripts/generate-site-data with I3841; they may not run concurrently |
