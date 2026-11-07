@@ -1,0 +1,38 @@
+id: I4547
+milestone: idd-reads-at-a-glance
+title: "The workspace opens a new draft on a route of its own, which writes nothing"
+slug: a-draft-is-opened-from-the-workspace
+priority: p1
+profile: implementation
+objective: "Add the screen /ui/idd/draft: a labelled editor where the owner writes what must become true, its constraints and the evidence that would prove it, reached by a secondary link from the workspace's 'Which intent?' panel. It is a route, not a query parameter, so that the local-only page list and the snapshot's withheld list can match it by path; the 60-second screen refresh does not replace it while the editor holds text."
+why: "The owner's pack of 2026-11-07 asks for a New Intent entry on the existing workspace as its first usable checkpoint (campaigns/majordomus-intent-workbench-pack-20261107/prompts/00-P00-LAND-THE-ENTRYPOINT.md). Measured on master: /ui serves GET only and no screen composes anything; the workspace only tells the reader to run majordomus intent propose; the form of I2807 (origin/feature/an-intent-is-proposed-from-the-workspace) never landed and wrote tracked records, which this route does not."
+current_state: "SCREENS in apps/majordomus-cli/src/ui/mod.rs has no compose route; share/ui/ui.js re-reads the screen every 60 s and replaces #main, skipping only aria-busy and data-observatory, so typed text would be lost."
+desired_state: "GET /ui/idd/draft answers the editor with the label 'Draft: not an intent record; nothing is written' and a link back to /ui/idd; the snapshot withholds it; a POST is refused; the working tree is unchanged after any request."
+scope:
+  - "apps/majordomus-cli/src/ui/mod.rs"
+  - "apps/majordomus-cli/src/ui/draft.rs"
+  - "apps/majordomus-cli/src/ui/idd.rs"
+  - "apps/majordomus-cli/src/ui/icons.toml"
+  - "apps/majordomus-cli/src/web/report/snapshot.rs"
+  - "share/ui/ui.js"
+  - "apps/majordomus-cli/tests/ui_idd_draft.rs"
+  - "docs/MAJORDOMUS_UI.md"
+non_scope:
+  - "Saving a draft (I4548)"
+  - "Writing any tracked record"
+  - "A second primary action on /ui/idd: the link is secondary"
+serves:
+  - "the-owner-directs-work-from-the-ui#a-draft-is-composed-from-the-workspace"
+acceptance_criteria:
+  - "GET /ui/idd/draft answers 200 with a labelled textarea and the not-a-record label, and a POST to it answers 405"
+  - "The workspace's 'Which intent?' panel links to it as a secondary action, and the workspace still offers one primary action"
+  - "The screen refresh in share/ui/ui.js does not replace the screen while its editor holds text"
+  - "The snapshot withholds the route, asserted as the existing withheld routes are"
+  - "git status --porcelain is unchanged after every request the test makes"
+validation:
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test ui_idd_draft"
+  - "majordomus generate --check"
+evidence_required:
+  - "test_a_draft_is_opened_from_the_workspace"
+created_at: 2026-11-07
+updated_at: 2026-11-07

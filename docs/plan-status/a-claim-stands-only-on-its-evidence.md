@@ -62,6 +62,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I3083` | shares lib/capture.sh with I4468; they may not run concurrently |
 | WARN | `scope_conflict` | `I3083` | shares .ai/repo/adrs/0021-the-branch-to-worktree-topology-is-derived-from-git-identity-and-enfor.md with I4481; they may not run concurrently |
 | WARN | `scope_conflict` | `I3083` | shares .ai/repo/adrs/0021-the-branch-to-worktree-topology-is-derived-from-git-identity-and-enfor.md with I4500; they may not run concurrently |
+| WARN | `scope_conflict` | `I3083` | shares lib/capture.sh with I4551; they may not run concurrently |
 | WARN | `scope_conflict` | `I3087` | shares docs/EVIDENCE.md with I3116; they may not run concurrently |
 | WARN | `scope_conflict` | `I3087` | shares .ai/repo/project/issues/I3087.yaml with I3246; they may not run concurrently |
 | WARN | `scope_conflict` | `I3087` | shares docs/EVIDENCE.md with I3255; they may not run concurrently |

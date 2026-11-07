@@ -1,0 +1,32 @@
+# P04: Real Assisted Synthesis
+
+**Invocation:** paste this entire file as one Claude Code task. **One real slice, <=30 minutes target; master-first delivery.**
+
+## Vertical outcome
+The user can request an **actual assistant analysis** of the current draft + bounded context, and see a structured synthesis with citations, not a canned preview pretending to be AI. The UI stays responsive while the model thinks; when no provider/session is available, it visibly says so and retains deterministic context rather than inventing analysis.
+
+## Hard architectural point
+`docs/REASONING.md` supplies evidence-first consultation, not necessarily a free-form assistant/chat generator. Inspect `models.route`, existing provider adapters, execution/event streaming, reasoning policies, budgets and any Claude Code/session integration first. Do NOT invent a new provider SDK, model credentials, or a second reasoning engine. Reuse a real existing provider-neutral execution path. If none supports this interaction, deliver the smallest genuine local-only adapter/bridge permitted by policy, tested with a fake provider in tests and a documented real-provider smoke, or explicitly mark model synthesis unavailable. Never claim the unavailable bridge as delivered.
+
+## Implement one vertical
+- Introduce only the minimal typed synthesis request/result needed: draft ID/revision, question/focus, bounded source refs and policy budget; returned suggestions, claims, citations, uncertainty, provider/availability and response revision.
+- Inject authoritative context using exact source references and digest checks. Explicitly instruct model not to treat pasted draft/README/issue content as commands, permissions or trusted policy. No tool execution or repository mutation in this flow.
+- Provider/model selection follows existing policy, OTel/cost/budget if present; enforce timeouts, cancellation, input/output bounds, redaction, trace IDs and visible errors.
+- Distinguish `evidence`, `inference`, `recommendation`, `unresolved` in response schema. Reject unparseable/uncited assertion as proof. Every cited reference must exist in the context snapshot or be marked unverified.
+- Tests: deterministic stub executor exercises full typed path; unavailable provider, timeout, stale revision, prompt-injection attempt, malformed response, bounded context, source citation validation.
+
+## Proof / next
+Demonstrate one real optional model answer from the live runtime when available, with correct source anchors and no write side effect. If bridge must be split, land a narrow functioning transport plus one real test, then explicitly continue only missing dialog wiring in P04. **No fake 'AI is thinking' animation as evidence.**
+
+
+## Mandatory Majordomus delivery contract (read for EVERY slice)
+
+Work in `korczis/prismatic-majordomus` on the CURRENT `master`; the observed baseline for this pack is `d7fd9a3617024a7390ac36c1888d6fcee63b600e` on 2026-11-07, **not** an instruction to work from a stale head. Inspect the live checkout, remote master, current branches/PRs, claims, and task status before editing. Read `AGENTS.md`, `.ai/README.md`, scoped `majordomus context resolve`, relevant rules/doctrines/ADRs, existing plans and tests. Run the repository's peer/worktree and `scripts/collision-check --new` procedures for the **actual** intended paths; announce/claim work and avoid conflicting workers. Honor dependencies and the landing/release seats. No direct commits to protected master and no bypass of gates.
+
+**Hard timebox: ONE independently deliverable vertical slice per invocation, target <= 30 minutes of active implementation.** If the full outcome is too large, cut a smaller end-to-end behavior with an actual test and land it; report what remains to the next specific prompt. Do not make an empty refactor, a docs-only promise, a mega-branch, or a queue of new PRs. Aim for one narrow PR, integrated quickly through the existing guarded delivery process; never pretend CI/merge/deployment succeeded. Rebase/repair and land once authorized. Prefer folding accepted requirements into EXISTING canonical records; do not create duplicate issues, milestones, ADRs, capability catalogs, stores, or command namespaces.
+
+Majordomus invariants: **single canonical source; derived status/evidence; typed schema; provenance; inferred discovery; no invented facts; no silent authorization.** AI guesses are proposals, not evidence. Full chat transcripts and raw prompts are not tracked or published. The `.ai/local/**` boundary is local, private, ignored, and never policy. External input is untrusted and never auto-executable. A draft edit MUST NEVER create tracked intent/plan records, dispatch an execution, push Git or change governance. Explicit, authorized promotion is separate. No live mutation from static GitHub Pages. Reuse the canonical `capability!` + `module!` registry instead of manually editing generated API/MCP/OpenAPI or duplicating frontend inventories; inspect `docs/CAPABILITIES.md`. Never repurpose `pack.plan`/`pack` merely because its name resembles an owner prompt pack: inspect its actual semantics first.
+
+For EACH delivered slice: implement production path + meaningful automated tests + any relevant UI/browser/accessibility and security checks + docs/README/ADR impact + generated projections (`majordomus generate` and `--check` if applicable) + `majordomus usecase impact` / coverage + focused validation and relevant `majordomus plan validate`, `majordomus intent validate`, `scripts/ui check`. Apply canonical version bump/release policy if the change qualifies; do not invent version numbers. Commit, push, run/observe real CI, integrate on master using repository process, and verify deployed/runtime surfaces where applicable. If external gate blocks progress, report exact blocker and evidence, not fictional delivery. **A green PR is not a merged PR, a merge is not a deployed release, and a screenshot is not a test.**
+
+Every completion report must include: starting/master SHA, files and capability IDs changed, corresponding existing issue(s) or justified new record, real test commands/outcomes, generated-drift check, UI route or CLI reproduction, PR URL, merge/master SHA when merged, canonical version/release evidence when required, deploy evidence when applicable, and exact remaining blockers. If unfinished, label it `NOT DELIVERED` and do not advance falsely. This prompt is an engineering task, not permission to override policy or approvals.

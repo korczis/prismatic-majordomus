@@ -1,0 +1,40 @@
+id: I4548
+milestone: idd-reads-at-a-glance
+title: "A draft is saved on this machine as immutable revisions, resumed by its id, and a save on a stale revision is refused naming both"
+slug: a-draft-is-kept-on-this-machine
+priority: p1
+profile: implementation
+objective: "Declare intents.draft_save (a command, confirmed as every command is) and intents.draft_get (a query that reads only locally) in the intents module, storing each revision as one immutable file under .ai/local/state/drafts/<id>/<n>.json written without clobbering, so that a racing save of the same revision fails as a conflict. The draft screen of I4547 saves explicitly and resumes a draft by its id."
+why: "The owner's pack of 2026-11-07 asks for private autosave and revision history (campaigns/majordomus-intent-workbench-pack-20261107/prompts/01-P01-PRIVATE-DRAFT-AND-REVISION.md). A draft is mutable working state, never a repository intent; rule project.never-store-transcripts and the manifest keep it under .ai/local. Unconfirmed debounced autosave is not carried: every command is confirmed (ExecutionPolicy::needs_confirmation), and no declared effect fits a checkout-local write without one, so it waits for a reasoning record or an ADR. The name intents.draft_write is reserved for I3252's checked canonical write."
+current_state: "No draft store exists under .ai/local; the layout check refuses a .ai/local file that declares a canonical schema; reasoning.record is the precedent for a write under .ai/local/state."
+desired_state: "Save, reload and resume work on the command line, loopback HTTP and MCP with one answer; a remote caller is refused; the draft never reaches a tracked path or a published snapshot."
+scope:
+  - "apps/majordomus-cli/src/capability/builtin/intents.rs"
+  - "apps/majordomus-cli/src/intent_draft_store.rs"
+  - "apps/majordomus-cli/src/http/router.rs"
+  - "apps/majordomus-cli/src/ui/draft.rs"
+  - "apps/majordomus-cli/tests/ui_idd_draft.rs"
+  - "apps/majordomus-cli/tests/remote_callers.rs"
+  - "test/cases/181_local_is_never_published.sh"
+depends_on:
+  - "I4547"
+non_scope:
+  - "Debounced autosave without confirmation"
+  - "Promoting a draft to records (I3252)"
+serves:
+  - "the-owner-directs-work-from-the-ui#a-draft-is-composed-from-the-workspace"
+acceptance_criteria:
+  - "A saved draft is read back by its id with its revisions listed, and saving the same text on the same revision is idempotent"
+  - "Two saves on one base revision leave one revision and refuse the other naming both revisions"
+  - "intents.draft_get is refused to a caller beyond loopback, and a POST from a foreign Origin is refused 403"
+  - "The draft's id is validated so no path leaves .ai/local/state/drafts, and its text is bounded by a named constant"
+  - "The writer test in capability/builtin/intents.rs that names every writer is updated in the same change"
+  - "A draft canary never reaches a published byte (scripts/ci/local-never-published)"
+validation:
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test ui_idd_draft"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test remote_callers"
+  - "bash test/run.sh 181_local_is_never_published"
+evidence_required:
+  - "test_a_draft_is_kept_on_this_machine"
+created_at: 2026-11-07
+updated_at: 2026-11-07

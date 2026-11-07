@@ -5,7 +5,7 @@ slug: a-checked-draft-is-written
 priority: p1
 profile: implementation
 objective: "Revive I2205 and I2207 from origin/chore/the-owner-packs-are-planned (ec37317fe7c, 2026-10-10, never landed): intents.draft_check runs the plan and intent validators over a draft (intent, criteria, milestones, issues) in memory; intents.draft_write writes it as records only when the check passes, as one execution with a declared repository_mutation effect."
-why: "Owner orders of 2026-10-04, 2026-10-11 and 2026-10-13: an intent entered in the UI is planned and materialised into milestones and issues with the same result on every surface. A proposed plan must not be execution authority before it is checked. Proposed in ADR 0191 (A plan drafted from an intent is a proposal, checked by the plan's own validators before any record is written) (proposed; it carries no authority until the owner accepts it). Sources: chatgpt-majordomus:c185#4, chatgpt-majordomus:c226#3, chatgpt-majordomus:c245#2. The owner's pack asks for the same in campaigns/majordomus-intent-ui-pack/03-INTENT-VERTICAL.md; PR #1058 planned it as I2542 and I2543, which never landed, and the criteria of those records this one did not hold were folded in on 2026-10-30."
+why: "Owner orders of 2026-10-04, 2026-10-11 and 2026-10-13: an intent entered in the UI is planned and materialised into milestones and issues with the same result on every surface. A proposed plan must not be execution authority before it is checked. Proposed in ADR 0191 (A plan drafted from an intent is a proposal, checked by the plan's own validators before any record is written) (proposed; it carries no authority until the owner accepts it). Sources: chatgpt-majordomus:c185#4, chatgpt-majordomus:c226#3, chatgpt-majordomus:c245#2. The owner's pack asks for the same in campaigns/majordomus-intent-ui-pack/03-INTENT-VERTICAL.md; PR #1058 planned it as I2542 and I2543, which never landed, and the criteria of those records this one did not hold were folded in on 2026-10-30. The owner's pack of 2026-11-07 asks for the same in campaigns/majordomus-intent-workbench-pack-20261107/prompts/07-P07-DRAFT-CHECK-SAME-VALIDATORS.md and 08-P08-EXPLICIT-MATERIALIZATION.md; the criteria this record did not hold were folded in on 2026-11-07."
 current_state: "Only intents.propose writes (ADR 0144); milestones and issues are hand-written YAML; plan validate and intent validate read only written records."
 desired_state: "Check and write share one validator path, so a draft that passes the check is exactly what the written tree validates to."
 scope:
@@ -30,6 +30,10 @@ acceptance_criteria:
   - "A string holding ':', '#' or '`' is written quoted, and the shell engine and the Rust executable read the written record to the same fields"
   - "A written record carries no started_at, verified_at, completed_at or status"
   - "An existing id, an unknown milestone, an unresolved dependency and a cycle are each refused with a typed error that names the offending value"
+  - "The check's answer carries the index fingerprint and HEAD it judged, and an answer read at another fingerprint is reported stale"
+  - "A write carries an idempotency key, and the same key sent again writes nothing more and answers the first write"
+  - "A write is bound to the exact digest of the draft revision that was checked and approved, and is refused when the draft or HEAD changed since"
+  - "A proposal written into a checkout where the index cannot see it (an untracked file in a trunk checkout, as the /intent skill leaves today) is refused or reported with the remedy, never answered as written"
 validation:
   - "majordomus plan validate"
   - "majordomus intent validate"
@@ -37,4 +41,4 @@ evidence_required:
   - "test_a_checked_draft_is_written"
   - "case_a_draft_is_written_only_when_checked"
 created_at: 2026-10-18
-updated_at: 2026-10-30
+updated_at: 2026-11-07

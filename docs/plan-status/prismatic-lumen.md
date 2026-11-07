@@ -37,3 +37,4 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I3137` | shares docs/MAJORDOMUS_UI.md with I4494; they may not run concurrently |
 | WARN | `scope_conflict` | `I3137` | shares docs/MAJORDOMUS_UI.md with I4495; they may not run concurrently |
 | WARN | `scope_conflict` | `I3137` | shares .ai/repo/adrs/0209-prismatic-lumen-names-the-owner-s-mesh-wide-view-and-it-owns-no.md with I4500; they may not run concurrently |
+| WARN | `scope_conflict` | `I3137` | shares docs/MAJORDOMUS_UI.md with I4547; they may not run concurrently |

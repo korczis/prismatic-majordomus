@@ -6,23 +6,23 @@
     "version": "1.0.0"
   },
   "registry": {
-    "fingerprint": "99df951f5533a1b2775a224eda81907e0c210ac22cdfa46ba0642d4fdeda5c3e",
+    "fingerprint": "3b127093f5fd00fbced271f5b148f3525716bcc40a4bdfcf38e57bc995c38e2b",
     "summary": {
-      "total": 3951,
+      "total": 3958,
       "builtin": 231,
-      "declarative": 3720,
+      "declarative": 3727,
       "by_kind": {
         "command": 41,
         "query": 190,
-        "resource": 3720
+        "resource": 3727
       },
       "by_stability": {
         "behaviorally_verified": 153,
         "experimental": 68,
-        "implemented": 3730
+        "implemented": 3737
       },
       "mcp_tools": 215,
-      "mcp_resources": 3777,
+      "mcp_resources": 3784,
       "http_routes": 219,
       "cli_commands": 128,
       "modules": 96,
@@ -97172,7 +97172,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 1223,
+        "capabilities": 1230,
         "capability_ids": []
       },
       {
@@ -97878,7 +97878,7 @@
     ]
   },
   "index": {
-    "fingerprint": "8c343d8050dc0d470510985c455e609a7cc42df0510482af8657bbdc1e8cebb9",
+    "fingerprint": "ee6cc1b8f05863247b948bab7d4edb309251b6656768d2013df119f81bc1cad6",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -97918,7 +97918,7 @@
       "gap": 5,
       "implementation": 54,
       "intent": 45,
-      "issue": 1223,
+      "issue": 1230,
       "knowledge": 186,
       "mesh-declaration": 1,
       "milestone": 117,
@@ -105430,7 +105430,7 @@
         "title": "Working from the owner's packs",
         "path": "docs/OWNER_PACKS.md",
         "source_class": "document",
-        "bytes": 14839
+        "bytes": 22917
       },
       {
         "uri": "majordomus://document/docs/PAGES_STATUS.md",
@@ -105475,7 +105475,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 132233
+        "bytes": 132546
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -108521,7 +108521,7 @@
         "path": ".ai/repo/project/gaps/the-owner-directs-work-from-the-ui.yaml",
         "section": "project",
         "source_class": "gap",
-        "bytes": 4045
+        "bytes": 4611
       },
       {
         "uri": "majordomus://implementation/bin/majordomus",
@@ -109041,7 +109041,7 @@
         "path": ".ai/repo/project/intents/a-provider-carries-the-contract-natively.yaml",
         "section": "project",
         "source_class": "intent",
-        "bytes": 6522
+        "bytes": 7611
       },
       {
         "uri": "majordomus://intent/a-review-is-seen-at-its-commit",
@@ -109371,7 +109371,7 @@
         "path": ".ai/repo/project/intents/the-owner-directs-work-from-the-ui.yaml",
         "section": "project",
         "source_class": "intent",
-        "bytes": 4105
+        "bytes": 4838
       },
       {
         "uri": "majordomus://intent/the-owner-oversees-the-mesh-from-one-page",
@@ -117379,7 +117379,7 @@
         "path": ".ai/repo/project/issues/I3251.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 1960
+        "bytes": 2496
       },
       {
         "uri": "majordomus://issue/I3252",
@@ -117390,7 +117390,7 @@
         "path": ".ai/repo/project/issues/I3252.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 3355
+        "bytes": 4226
       },
       {
         "uri": "majordomus://issue/I3253",
@@ -117401,7 +117401,7 @@
         "path": ".ai/repo/project/issues/I3253.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2025
+        "bytes": 2494
       },
       {
         "uri": "majordomus://issue/I3254",
@@ -117412,7 +117412,7 @@
         "path": ".ai/repo/project/issues/I3254.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2029
+        "bytes": 2459
       },
       {
         "uri": "majordomus://issue/I3255",
@@ -117478,7 +117478,7 @@
         "path": ".ai/repo/project/issues/I3260.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2565
+        "bytes": 2989
       },
       {
         "uri": "majordomus://issue/I3261",
@@ -122902,6 +122902,83 @@
         "section": "project",
         "source_class": "issue",
         "bytes": 4732
+      },
+      {
+        "uri": "majordomus://issue/I4547",
+        "kind": "issue",
+        "identity": "I4547",
+        "title": "The workspace opens a new draft on a route of its own, which writes nothing",
+        "description": "Add the screen /ui/idd/draft: a labelled editor where the owner writes what must become true, its constraints and the evidence that would prove it, reached by a secondary link from the workspace's 'Which intent?' panel. It is a route, not a query parameter, so that the local-only page list and the snapshot's withheld list can match it by path; the 60-second screen refresh does not replace it while the editor holds text.",
+        "path": ".ai/repo/project/issues/I4547.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2934
+      },
+      {
+        "uri": "majordomus://issue/I4548",
+        "kind": "issue",
+        "identity": "I4548",
+        "title": "A draft is saved on this machine as immutable revisions, resumed by its id, and a save on a stale revision is refused naming both",
+        "description": "Declare intents.draft_save (a command, confirmed as every command is) and intents.draft_get (a query that reads only locally) in the intents module, storing each revision as one immutable file under .ai/local/state/drafts/<id>/<n>.json written without clobbering, so that a racing save of the same revision fails as a conflict. The draft screen of I4547 saves explicitly and resumes a draft by its id.",
+        "path": ".ai/repo/project/issues/I4548.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3282
+      },
+      {
+        "uri": "majordomus://issue/I4549",
+        "kind": "issue",
+        "identity": "I4549",
+        "title": "A draft revision compiles to one deterministic prompt preview that can be copied, and an unchanged revision compiles to the same bytes",
+        "description": "Derive, read-only, a prompt text from one draft revision and its brief (I3251): the statement, the criteria, the context the brief cites with its sources, and the delivery contract the repository's rules already state; show it on the draft screen with a copy action.",
+        "path": ".ai/repo/project/issues/I4549.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2189
+      },
+      {
+        "uri": "majordomus://issue/I4550",
+        "kind": "issue",
+        "identity": "I4550",
+        "title": "A draft is assisted by a model only as the recorded decision allows, a reply that does not parse is refused, and an absent provider is said to be absent",
+        "description": "Record first, through majordomus reasoning, whether and how the runtime may ask a model about a draft: model.rs asserts that no handler reaches beyond the machine, rule project.advisors-are-optional keeps model credentials out of CI, and ADR 0191 (proposed) says a model may author a draft and never decides. Then carry that decision: the suggestions are labelled inferred, a reply that does not parse is refused with its reason, and with no provider the screen says so and the draft stays usable.",
+        "path": ".ai/repo/project/issues/I4550.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2620
+      },
+      {
+        "uri": "majordomus://issue/I4551",
+        "kind": "issue",
+        "identity": "I4551",
+        "title": "A message one session sends another is never archived as the person's prompt",
+        "description": "Make mj_capture_is_person in lib/capture.sh recognise the injected marker by its prefix: the adapter's marker list holds the literal '<cross-session-message>', while real messages arrive as '<cross-session-message from=\\\"...\\\">', so the prefix never matches and every such message is archived as a person prompt.",
+        "path": ".ai/repo/project/issues/I4551.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2044
+      },
+      {
+        "uri": "majordomus://issue/I4552",
+        "kind": "issue",
+        "identity": "I4552",
+        "title": "Claude Code's UserPromptSubmit hook answers bounded context from the running server, and nothing when nothing changed",
+        "description": "Add a hook command in the Rust executable, following mesh beat --hook and guard hook, that answers Claude Code's UserPromptSubmit with hookSpecificOutput.additionalContext composed by the brief module: the active task and its scope, the issue and intent it is bound to, this session's claims, and 'match: not computed' until I3408 lands, bounded by session.briefing_budget_lines; wired by capture install only.",
+        "path": ".ai/repo/project/issues/I4552.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2899
+      },
+      {
+        "uri": "majordomus://issue/I4553",
+        "kind": "issue",
+        "identity": "I4553",
+        "title": "A review request addressed to a session answers the route that wakes it, and the answer wakes the requester the same way",
+        "description": "ReviewRequestInput and EventBody::ReviewRequested (apps/majordomus-cli/src/mesh/journal.rs) gain an optional `session` addressee, read with serde(default) so that a runtime written before the change reads a request without it, as it reads one without a body. The Written answer of mesh.review.request, and of mesh.review.answer for the requester, carries a `route` resolved from the board row's PeerAddress (apps/majordomus-cli/src/peers.rs): `{via: provider-socket, to: uds:<socket>}` when the row names a provider and a socket, `{unavailable: <why>}` otherwise. The requesting worker wakes the addressee with its own provider's messaging tool, carrying the review key; the addressee reads the request once by that key and answers it with mesh.review.answer, whose route wakes the requester, who reads the answer once. Majordomus sends nothing to the socket and never reads the provider's messaging token (peers.rs: the address is where to knock, not the key). `share/providers.yaml` gains a `messaging` cell in its `offers` block: `socket` for claude-code, with its citation, and `none` for every other provider. Optionally, scripts/lib/advisors/mesh-review.mjs follows the existing /events stream for its requester instead of reading mesh state every two seconds.",
+        "path": ".ai/repo/project/issues/I4553.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 5363
       },
       {
         "uri": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
@@ -138859,7 +138936,7 @@
       "identity": [
         "id"
       ],
-      "objects": 1223
+      "objects": 1230
     },
     {
       "name": "knowledge",
