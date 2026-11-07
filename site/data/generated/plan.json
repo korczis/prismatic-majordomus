@@ -78965,17 +78965,17 @@
       ],
       "non_scope": [
         "The milestone pass itself (which state a milestone is set to, and when)",
+        "Moving an existing issue to its canonical milestone, which stays `gh issue edit --milestone <title>` (case 894 pins that call and its failure accounting): the same hole for a closed milestone, a follow-up issue",
         "Reopening a milestone on GitHub for any reason",
         "The adopter's repository; the fix ships in the next release and its next --apply uses it"
       ],
-      "objective": "scripts/github-sync creates an issue without --milestone and joins it to its canonical milestone by number through the REST field (PATCH repos/<r>/issues/<n> milestone=<number>), which accepts a closed milestone, and moves an existing issue to its milestone the same way; a case on a closed-milestone fixture holds both.",
+      "objective": "scripts/github-sync creates an issue without --milestone and joins it to its canonical milestone by number through the REST field (PATCH repos/<r>/issues/<n> milestone=<number>), which accepts a closed milestone; a case on a closed-milestone fixture holds it.",
       "why": "`gh issue create --milestone <title>` and `gh issue edit --milestone <title>` resolve the title among the OPEN milestones only. The milestone of a DONE record is closed on GitHub by the adapter's own milestone pass, which runs before the issues are projected, so an issue recorded under a finished milestone can never be created: gh answers \\\"could not add to milestone\\\", the adapter notes FAIL created, and --apply fails on every run of a repository that finished one milestone and planned another issue in it. Reopening the milestone by hand does not help, because the next run closes it again first. Found by the adopter able-cz/flight-agent-empty-legs at v1.0.0-alpha.8 (I0077 in a DONE milestone), who created the issue with a patched copy and reported the shape of the fix.",
       "current_state": "Measured at 1112bace343: scripts/github-sync:1111-1113 creates with `gh issue create ... --milestone \\\"<title>\\\"` when the milestone exists remotely, and :1161 moves an issue with `gh issue edit ... --milestone \\\"<title>\\\"`; both resolve among open milestones only. remote_milestone_number (:297) already knows the number of every remote milestone, open or closed.",
-      "desired_state": "The creation passes no --milestone; when the canonical milestone exists remotely, the created issue is joined to it with `gh api -X PATCH repos/$REPO/issues/<n> -F milestone=<number>` and the OK line names the milestone and its number; an issue that is not on its canonical milestone is moved the same way. A milestone that does not exist remotely stays the DRIFT finding it is. No call of the adapter names a milestone by title.",
+      "desired_state": "The creation passes no --milestone; when the canonical milestone exists remotely, the created issue is joined to it with `gh api -X PATCH repos/$REPO/issues/<n> -F milestone=<number>` and the OK line names the milestone and its number. A milestone that does not exist remotely stays the DRIFT finding it is. The creation names no milestone by title.",
       "acceptance_criteria": [
         "Against a stub forge that refuses a title named with --milestone when the listing says that milestone is closed: --apply creates a new issue of a closed milestone without --milestone, then joins it by number (PATCH repos/<r>/issues/<n> milestone=<number>), and exits 0",
-        "An existing issue on the wrong milestone is moved by number, and the OK line names the milestone and its number",
-        "No call of the run names a milestone by title",
+        "The creation names no milestone by title",
         "Negative: the case fails against the adapter before this change (the stub answers could not add to milestone, and the run notes FAIL created)"
       ],
       "validation": [

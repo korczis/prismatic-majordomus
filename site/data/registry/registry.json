@@ -6,7 +6,7 @@
     "version": "1.0.0"
   },
   "registry": {
-    "fingerprint": "d3799b1e5777dc7fa78bccb162194b40051fac9a2597dc8b035c6c4dfba7e9cc",
+    "fingerprint": "3ff8ef4ae857eeb6f2ac81eb4a1d0f8afafcebaa99a758e977b7ab953ea9dec3",
     "summary": {
       "total": 3951,
       "builtin": 231,
@@ -97878,7 +97878,7 @@
     ]
   },
   "index": {
-    "fingerprint": "e1a672f02bd76775714c3054ed4e83e8e1cbd1e9c5a4a44bcde60cb9b0d0711a",
+    "fingerprint": "68aab43f0b984baf8b3be79252a8983fd88a11c13527704565b24e4608d73e1e",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -122875,11 +122875,11 @@
         "kind": "issue",
         "identity": "I4529",
         "title": "An issue joins a closed milestone by number, so a record under a finished milestone can be created",
-        "description": "scripts/github-sync creates an issue without --milestone and joins it to its canonical milestone by number through the REST field (PATCH repos/<r>/issues/<n> milestone=<number>), which accepts a closed milestone, and moves an existing issue to its milestone the same way; a case on a closed-milestone fixture holds both.",
+        "description": "scripts/github-sync creates an issue without --milestone and joins it to its canonical milestone by number through the REST field (PATCH repos/<r>/issues/<n> milestone=<number>), which accepts a closed milestone; a case on a closed-milestone fixture holds it.",
         "path": ".ai/repo/project/issues/I4529.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 3705
+        "bytes": 3658
       },
       {
         "uri": "majordomus://issue/I4530",
@@ -136326,7 +136326,7 @@
         "identity": "test/cases/4562_an_issue_joins_a_closed_milestone_by_number.sh",
         "path": "test/cases/4562_an_issue_joins_a_closed_milestone_by_number.sh",
         "source_class": "case",
-        "bytes": 5446
+        "bytes": 4987
       },
       {
         "uri": "majordomus://test/test/cases/4563_the_live_site_is_probed_in_a_real_browser.sh",
