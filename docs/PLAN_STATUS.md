@@ -8,7 +8,7 @@ This page is the index. Each milestone's issues, and the findings about them, ar
 its own under [`plan-status/`](plan-status/), named by the milestone, so the plan grows by pages
 and no one page grows with it.
 
-Generated from canonical inputs `3743aeb36524`.
+Generated from canonical inputs `99ea657f05ab`.
 
 ## Milestones
 
@@ -126,7 +126,7 @@ Generated from canonical inputs `3743aeb36524`.
 | [the-session-domain-is-written-once](https://majordomus.dev/plan/the-session-domain-is-written-once/) | ACTIVE | 1/9 | 1 | 7 | 0 | 0 | 0 | Each lifecycle transition has one implementation in the typed domain; the shell commands keep their arguments, output and exit codes and delegate; a closed record states whether it is complete. | [`plan-status/the-session-domain-is-written-once.md`](plan-status/the-session-domain-is-written-once.md) |
 | [the-ui-runs-and-explains](https://majordomus.dev/plan/the-ui-runs-and-explains/) | PLANNED | 0/7 | 3 | 4 | 0 | 0 | 0 | I3225, I3226, I3227, I3228, I3229 and I3230 close these gaps on the existing screens. | [`plan-status/the-ui-runs-and-explains.md`](plan-status/the-ui-runs-and-explains.md) |
 | [the-ui-works-on-a-phone](https://majordomus.dev/plan/the-ui-works-on-a-phone/) | PLANNED | 0/4 | 2 | 2 | 0 | 0 | 0 | The narrow-screen menu behaves as one tested component on /ui and /cockpit, the audit refuses a control a thumb cannot hit, the dense screens have a phone projection, and the IDD loop is accepted at the floor width. | [`plan-status/the-ui-works-on-a-phone.md`](plan-status/the-ui-works-on-a-phone.md) |
-| [truthful-plan-surfaces](https://majordomus.dev/plan/truthful-plan-surfaces/) | ACTIVE | 20/46 | 20 | 5 | 1 | 0 | 0 | Every plan surface draws every milestone in the graph's order, each issue with its declared status beside the delivery stage inferred from branches, pull requests, merges, tags and the published site; a merged but unrecorded issue turns the trunk red past a window; no milestone carries a typed version; every relationship is a drawn, clickable diagram; every code block is highlighted by one engine with one token-derived palette. | [`plan-status/truthful-plan-surfaces.md`](plan-status/truthful-plan-surfaces.md) |
+| [truthful-plan-surfaces](https://majordomus.dev/plan/truthful-plan-surfaces/) | ACTIVE | 20/46 | 19 | 5 | 1 | 1 | 0 | Every plan surface draws every milestone in the graph's order, each issue with its declared status beside the delivery stage inferred from branches, pull requests, merges, tags and the published site; a merged but unrecorded issue turns the trunk red past a window; no milestone carries a typed version; every relationship is a drawn, clickable diagram; every code block is highlighted by one engine with one token-derived palette. | [`plan-status/truthful-plan-surfaces.md`](plan-status/truthful-plan-surfaces.md) |
 | [two-folder-integration](https://majordomus.dev/plan/two-folder-integration/) | ACTIVE | 3/31 | 2 | 26 | 0 | 0 | 0 | Adoption is a reconciliation, not a template copy. One typed repository model is discovered once and every consumer reads it. A desired integration is computed from that model, diffed against what the repository actually holds, and applied as the smallest mutation that closes the gap — with everything Majordomus owns living under `.ai/` and `.majordomus/`, and anything outside those two namespaces reduced to a small managed bridge whose ownership is recorded. Running the reconciliation twice changes nothing the second time, and uninstalling gives back exactly what was taken and nothing a person authored. | [`plan-status/two-folder-integration.md`](plan-status/two-folder-integration.md) |
 | [web-sign-in](https://majordomus.dev/plan/web-sign-in/) | PLANNED | 0/8 | 1 | 7 | 0 | 0 | 0 | One canonical identity-provider kind under .ai/repo/identity/providers/ describes each provider as data: its issuer, its endpoints or its discovery document, the scopes requested, the claim that carries a stable subject and the environment variable names its credentials arrive in. A single OpenID-Connect-shaped flow in the executable serves every provider in that directory; Google and Facebook are two objects, not two code paths. Sessions are cookie-borne, signed, short and revocable; identity is attached to a request once, in the router, and every surface — HTTP, Cockpit, OpenAPI, MCP — reads it from the same place. The capability registry's effect classification, not a per-route list, decides what an anonymous reader may do, and the OpenAPI document and the Cockpit both state that decision because both project it from the registry. Striking a provider is deleting one file and regenerating. | [`plan-status/web-sign-in.md`](plan-status/web-sign-in.md) |
 | [what-a-workspace-decides-reaches-the-repository-with-its-source](https://majordomus.dev/plan/what-a-workspace-decides-reaches-the-repository-with-its-source/) | BLOCKED | 0/2 | 0 | 2 | 0 | 0 | 0 | The owner thinks aloud in the ChatGPT project. What the owner decides there is read into this checkout's own store, promoted by a person into intents, ADRs, milestones, issues and knowledge, and every promoted record names the conversation and message it came from, so that from the UI one click opens that message for the operator who holds the store, while the public repository and site carry only the reference. | [`plan-status/what-a-workspace-decides-reaches-the-repository-with-its-source.md`](plan-status/what-a-workspace-decides-reaches-the-repository-with-its-source.md) |
@@ -336,7 +336,6 @@ Generated from canonical inputs `3743aeb36524`.
 - `I3444` (mesh-journal-converges, wave 0) — A claim released on a runtime that is not replicating reaches every linked runtime, or the release is refused
 - `I3447` (surfaces-never-disagree, wave 0) — No two published paths differ only in case, and a publication that holds two is refused before it is built
 - `I3448` (M004, wave 0) — A deploy of master keeps every pre-release's metadata the site already serves
-- `I3449` (truthful-plan-surfaces, wave 0) — Every surface names its versions from one derived release model, says which version each one is, and a gate refuses a version that disagrees or is written by hand
 - `I3606` (runtime-lifecycle, wave 0) — Two live instances of one runtime slot keep their links, and the mesh names them instead of flapping
 - `I3607` (surfaces-never-disagree, wave 0) — mesh state answers in JSON on the command line, and its view is chosen the same way on every surface
 - `I3608` (mesh-journal-converges, wave 0) — An open review says how old it is, and lapses when nobody can answer it any more
@@ -493,13 +492,13 @@ Generated from canonical inputs `3743aeb36524`.
 
 ## Findings
 
-9229 finding(s), each on the page of the milestone its subject is or belongs to:
+9185 finding(s), each on the page of the milestone its subject is or belongs to:
 
 | milestone | findings |
 |---|---|
 | [`M002`](plan-status/M002.md) | 35 |
 | [`M003`](plan-status/M003.md) | 10 |
-| [`M004`](plan-status/M004.md) | 425 |
+| [`M004`](plan-status/M004.md) | 423 |
 | [`a-bounded-task-is-carried-to-accepted-work`](plan-status/a-bounded-task-is-carried-to-accepted-work.md) | 35 |
 | [`a-change-is-judged-in-minutes`](plan-status/a-change-is-judged-in-minutes.md) | 73 |
 | [`a-claim-stands-only-on-its-evidence`](plan-status/a-claim-stands-only-on-its-evidence.md) | 196 |
@@ -517,7 +516,7 @@ Generated from canonical inputs `3743aeb36524`.
 | [`a-session-proceeds-through-the-mesh`](plan-status/a-session-proceeds-through-the-mesh.md) | 55 |
 | [`a-test-fails-when-the-code-is-wrong`](plan-status/a-test-fails-when-the-code-is-wrong.md) | 39 |
 | [`a-version-follows-the-work`](plan-status/a-version-follows-the-work.md) | 21 |
-| [`adopter-upgrades`](plan-status/adopter-upgrades.md) | 586 |
+| [`adopter-upgrades`](plan-status/adopter-upgrades.md) | 583 |
 | [`an-authorised-node-connects-from-anywhere`](plan-status/an-authorised-node-connects-from-anywhere.md) | 12 |
 | [`an-outcome-becomes-a-reviewed-plan`](plan-status/an-outcome-becomes-a-reviewed-plan.md) | 15 |
 | [`an-unmet-criterion-is-drafted-into-work`](plan-status/an-unmet-criterion-is-drafted-into-work.md) | 124 |
@@ -525,11 +524,11 @@ Generated from canonical inputs `3743aeb36524`.
 | [`automation`](plan-status/automation.md) | 59 |
 | [`campaigns-are-read-as-provenance`](plan-status/campaigns-are-read-as-provenance.md) | 21 |
 | [`capability-graph`](plan-status/capability-graph.md) | 13 |
-| [`ci-critical-path`](plan-status/ci-critical-path.md) | 334 |
+| [`ci-critical-path`](plan-status/ci-critical-path.md) | 332 |
 | [`command-and-deployment-criteria-are-judged`](plan-status/command-and-deployment-criteria-are-judged.md) | 5 |
 | [`delivery-economics-are-measured-over-declared-windows`](plan-status/delivery-economics-are-measured-over-declared-windows.md) | 1 |
 | [`derived-data-integrity`](plan-status/derived-data-integrity.md) | 26 |
-| [`development-runtime`](plan-status/development-runtime.md) | 847 |
+| [`development-runtime`](plan-status/development-runtime.md) | 843 |
 | [`every-session-joins-the-mesh`](plan-status/every-session-joins-the-mesh.md) | 13 |
 | [`every-sessions-usage-is-observed`](plan-status/every-sessions-usage-is-observed.md) | 56 |
 | [`every-surface-follows-what-changed`](plan-status/every-surface-follows-what-changed.md) | 18 |
@@ -538,34 +537,34 @@ Generated from canonical inputs `3743aeb36524`.
 | [`external-workspaces`](plan-status/external-workspaces.md) | 34 |
 | [`failure-is-visible`](plan-status/failure-is-visible.md) | 31 |
 | [`fly-deployment`](plan-status/fly-deployment.md) | 4 |
-| [`idd-reads-at-a-glance`](plan-status/idd-reads-at-a-glance.md) | 3160 |
+| [`idd-reads-at-a-glance`](plan-status/idd-reads-at-a-glance.md) | 3144 |
 | [`intent-lifecycle`](plan-status/intent-lifecycle.md) | 63 |
 | [`knowledge-acts-on-what-it-learns`](plan-status/knowledge-acts-on-what-it-learns.md) | 82 |
 | [`landing-survives-any-session`](plan-status/landing-survives-any-session.md) | 10 |
-| [`mcp-transports-are-reliable`](plan-status/mcp-transports-are-reliable.md) | 197 |
+| [`mcp-transports-are-reliable`](plan-status/mcp-transports-are-reliable.md) | 196 |
 | [`measurements-are-tracked-over-time`](plan-status/measurements-are-tracked-over-time.md) | 16 |
 | [`merging-and-referencing-are-enforced`](plan-status/merging-and-referencing-are-enforced.md) | 30 |
 | [`mesh-journal-converges`](plan-status/mesh-journal-converges.md) | 133 |
 | [`one-kit-on-every-surface`](plan-status/one-kit-on-every-surface.md) | 20 |
 | [`peer-blackboard`](plan-status/peer-blackboard.md) | 9 |
 | [`prismatic-lumen`](plan-status/prismatic-lumen.md) | 13 |
-| [`public-proof`](plan-status/public-proof.md) | 128 |
+| [`public-proof`](plan-status/public-proof.md) | 127 |
 | [`recovery-from-injected-faults-is-proven`](plan-status/recovery-from-injected-faults-is-proven.md) | 2 |
 | [`repository-automation-is-typed`](plan-status/repository-automation-is-typed.md) | 33 |
 | [`runtime-adapters`](plan-status/runtime-adapters.md) | 97 |
 | [`runtime-lifecycle`](plan-status/runtime-lifecycle.md) | 48 |
 | [`runtime-trust`](plan-status/runtime-trust.md) | 28 |
-| [`safe-self-update`](plan-status/safe-self-update.md) | 473 |
-| [`surfaces-never-disagree`](plan-status/surfaces-never-disagree.md) | 329 |
+| [`safe-self-update`](plan-status/safe-self-update.md) | 470 |
+| [`surfaces-never-disagree`](plan-status/surfaces-never-disagree.md) | 327 |
 | [`test-evidence`](plan-status/test-evidence.md) | 25 |
 | [`the-corpus-is-registered-before-it-runs`](plan-status/the-corpus-is-registered-before-it-runs.md) | 5 |
-| [`the-mesh-works-out-of-the-box`](plan-status/the-mesh-works-out-of-the-box.md) | 205 |
+| [`the-mesh-works-out-of-the-box`](plan-status/the-mesh-works-out-of-the-box.md) | 204 |
 | [`the-plan-says-what-a-fix-unblocks`](plan-status/the-plan-says-what-a-fix-unblocks.md) | 25 |
 | [`the-proof-scorecard-is-published`](plan-status/the-proof-scorecard-is-published.md) | 2 |
 | [`the-proof-tests-are-registered-before-they-run`](plan-status/the-proof-tests-are-registered-before-they-run.md) | 11 |
 | [`the-session-domain-is-written-once`](plan-status/the-session-domain-is-written-once.md) | 6 |
 | [`the-ui-runs-and-explains`](plan-status/the-ui-runs-and-explains.md) | 18 |
 | [`the-ui-works-on-a-phone`](plan-status/the-ui-works-on-a-phone.md) | 17 |
-| [`truthful-plan-surfaces`](plan-status/truthful-plan-surfaces.md) | 286 |
+| [`truthful-plan-surfaces`](plan-status/truthful-plan-surfaces.md) | 277 |
 | [`two-folder-integration`](plan-status/two-folder-integration.md) | 9 |
 | [`web-sign-in`](plan-status/web-sign-in.md) | 35 |
