@@ -139,6 +139,7 @@ stub_root() { # <exit> <stderr line>
   R="$PWD/stub-root"; rm -rf "$R"; mkdir -p "$R/bin"
   printf '#!/usr/bin/env bash\necho "%s" >&2\nexit %s\n' "$2" "$1" > "$R/bin/majordomus"; chmod +x "$R/bin/majordomus"
 }
+# shellcheck source=/dev/null  # the function lifted out of scripts/site-build at run time
 lifted() { ( ROOT="$R"; . "$FN"; delivery_at_build 0123456789abcdef0123456789abcdef01234567 false "$PWD/dl.json" ) > lifted.out 2>&1; echo $?; }
 stub_root 12 "majordomus-cli: /x/target/debug/majordomus is missing, and no ordinary command builds it (ADR 0224)"
 rc="$(lifted)"
