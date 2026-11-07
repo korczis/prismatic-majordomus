@@ -411,6 +411,16 @@ later, a job of it still `in_progress`, is force-cancelled. `scripts/ci/release-
 does this by itself for the runs it cancels, after the model's `cancel_wait_seconds`; case 3027
 holds it.
 
+A job that hangs is evidence only until it is cancelled: the log of a job that never
+completed can be gone the next day. Run 42271470301 (master, 2026-11-06) held lane 2 of `rust` in
+`Post Run ./.github/actions/setup-rust` from 18:54:49Z, after its tests had passed, until the
+run was cancelled at 20:08:23Z; the next morning
+`gh api repos/<owner>/<repo>/actions/jobs/128077533596/logs` answered 404 `BlobNotFound`, and
+the cause could not be named (54 of the 55 `rust` jobs of the 30 newest completed `validate`
+runs finished that post-step in 0-1 s). Before cancelling a run whose job stands still, save
+what can be read while it runs: the job's steps (`gh run view <id> --json jobs`), the live log
+the run page streams, and the runner's name.
+
 The release path goes first (I2710). Every workflow of this repository draws on one pool of
 job slots, first come, first served, and on 2026-10-14 v0.26.0 was published while its record's
 verdict and the Pages deploy that publishes it sat queued behind two pull requests' validates
@@ -676,6 +686,19 @@ The figures are reproduced from the file:
 jq '[.runs[] | select(.event == "pull_request")] | group_by(.conclusion) | map({(.[0].conclusion): length}) | add' .ai/repo/ci/baseline-2026-10-10.json
 jq '[.runs[] | select(.conclusion != "success") | .jobs[].seconds // 0] | add / 60 | floor' .ai/repo/ci/baseline-2026-10-10.json
 ```
+
+### Read again on 2026-11-07
+
+One change's way to the published site is now its pull request's `validate`, master's
+`validate` on the landed commit, `release`, the release record's pull request and `pages`. The
+75th percentile of the last 20 green first attempts of each, read with
+`gh api repos/<owner>/<repo>/actions/workflows/<id>/runs?status=success` from `created_at` to
+`updated_at`: a pull request's `validate` 15134 s, master's 12410 s, `release` 3042 s, `pages`
+4743 s, so about 14 hours end to end with the record's own `validate`. One job sets that clock:
+a `suite-shard` (four shards) ran 5497 s in run 42331200044 and 7331 s in run 42357908072,
+longer than every other job of the run including its queue time. A plan that promises a
+delivery in less (a prompt pack timed at 30 minutes was, that day) is measured against these
+runs first; the shard count and the suite's own cost are where the time is.
 
 ## Reproducing CI locally
 
