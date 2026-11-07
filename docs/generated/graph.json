@@ -46140,6 +46140,8 @@
             "A record that loses the selection is not judged",
             "continuity.state answers in the primary checkout without one git process per record"
           ],
+          "completed_at": "2026-11-07T14:22:24Z",
+          "completed_event": "sha256:a2bf168d7a37c89f10c50543b4b6d6b6149d268a4de9779e522b4aa0818f6c2c",
           "created_at": "2026-10-19",
           "current_state": "resolve() in capability/builtin/continuity.rs calls divergence() for every candidate record in the loop that selects one.",
           "depends_on": [],
@@ -46159,7 +46161,9 @@
             "apps/majordomus-cli/src/capability/builtin/continuity.rs"
           ],
           "slug": "a-briefing-resolves-one-record-not-every-record",
-          "updated_at": "2026-10-19",
+          "started_at": "2026-11-07T14:11:49Z",
+          "started_event": "sha256:cfc69d4341b5a2e653f5f6802a53df9cfa18b648c46f089a3a8ff635ada2eea3",
+          "updated_at": "2026-11-07T14:22:24Z",
           "validation": [
             "bin/majordomus plan validate",
             "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib -- capability::builtin::continuity"
@@ -46178,6 +46182,7 @@
             "scripts/derive in a worktree with MERGE_HEAD present exits non-zero before stage A and names MERGE_HEAD",
             "The same derive after the merge is committed runs as before"
           ],
+          "cancelled": true,
           "created_at": "2026-10-21",
           "depends_on": [],
           "evidence_required": [
@@ -46196,7 +46201,7 @@
             ".ai/repo/project/issues/I2863.yaml"
           ],
           "slug": "a-derive-does-not-run-mid-merge",
-          "updated_at": "2026-10-21",
+          "updated_at": "2026-10-30",
           "validation": [
             "bin/majordomus plan validate"
           ]
@@ -68157,6 +68162,8 @@
             "homepage-check fails when the built title lowercases or rewords the sentence",
             "The Czech homepage's title, description and og:description are Czech, and site-translate reach names the page each new key reaches"
           ],
+          "completed_at": "2026-10-30T11:08:14Z",
+          "completed_event": "sha256:ed33d0eedcad57a1d4dd69e17b8eb1de6fd098d0f747423378c452c418e3fd40",
           "created_at": "2026-10-22",
           "depends_on": [
             "I3134"
@@ -68179,7 +68186,9 @@
             "a-visitor-understands-and-checks-majordomus#the-copy-says-only-what-is-proved"
           ],
           "slug": "the-homepage-title-says-the-sentence-in-every-language",
-          "updated_at": "2026-10-22T05:42:22Z",
+          "started_at": "2026-10-30T11:07:29Z",
+          "started_event": "sha256:8852f869f6455267e5fb284ab702bfdb2441726d8181fe90154928e2ba41dcdc",
+          "updated_at": "2026-10-30T11:08:14Z",
           "validation": [
             "scripts/ci/homepage-check",
             "bash test/run.sh 333_homepage_narrative",
@@ -68980,6 +68989,8 @@
             "On a branch the audit is skipped after a failed earlier step; on integration/* it runs unless the job was cancelled",
             "Every case that reads .github/workflows/validate.yml passes"
           ],
+          "completed_at": "2026-10-30T19:05:17Z",
+          "completed_event": "sha256:dee6b0ff1e4d79ed97754d26b4b91ea8e2f3f7afc26a693e465f9e96e0303546",
           "created_at": "2026-10-22",
           "current_state": "The ui job runs the warm-screen budget, then `scripts/ui audit --report`, which checks the bar, audits every page, and fails at the end when the bar is stale.",
           "depends_on": [],
@@ -69000,7 +69011,9 @@
             ".ai/repo/project/issues/I3931.yaml"
           ],
           "slug": "the-ui-bar-is-judged-before-the-audit",
-          "updated_at": "2026-10-22",
+          "started_at": "2026-10-30T19:04:38Z",
+          "started_event": "sha256:43d41922b310a80b5af36d4b838c96d6f9f083524b5a3c3b3eb3cd462330e6fd",
+          "updated_at": "2026-10-30T19:05:17Z",
           "validation": [
             "bash test/run.sh $(grep -lE 'validate\\\\.yml' test/cases/*.sh | sed 's#test/cases/##; s/\\\\.sh$//')",
             "actionlint .github/workflows/validate.yml"
@@ -69194,6 +69207,8 @@
             "Every case that reads .github/workflows/validate.yml passes, and actionlint is clean",
             "The next master run's pages-live passes without a rerun, or names a deploy that is slower than the heavy jobs"
           ],
+          "completed_at": "2026-10-30T19:06:30Z",
+          "completed_event": "sha256:da8ec428ee3ddd1ed1b3a5bdb6d4e9991fe2675c8be3d0804b7fcfb5fc6c3391",
           "created_at": "2026-10-22",
           "current_state": "The pages job needs only plan, so it starts in the first wave beside about nineteen jobs and its wait expires while the deploy is still queued behind them.",
           "depends_on": [],
@@ -69215,7 +69230,9 @@
             ".ai/repo/project/issues/I3936.yaml"
           ],
           "slug": "the-pages-gate-waits-behind-the-heavy-jobs",
-          "updated_at": "2026-10-22",
+          "started_at": "2026-10-30T19:05:43Z",
+          "started_event": "sha256:79e6d53ebeb92e5f0409dbe15f3690a621ff432d497d8a9d0978fce092c2d5d1",
+          "updated_at": "2026-10-30T19:06:30Z",
           "validation": [
             "actionlint .github/workflows/validate.yml"
           ]
@@ -72201,6 +72218,8 @@
             "test/cases/1096_no_screen_waits_for_a_source.sh has no printf piped into grep",
             "Case 1096 passes, with the same checks and messages as before"
           ],
+          "completed_at": "2026-10-30T10:21:44Z",
+          "completed_event": "sha256:c6454630408f17597f042f133c60ad90a5ddc10129aadd21fea0fab06b74f3fd",
           "created_at": "2026-10-25",
           "depends_on": [
             "I2486"
@@ -72224,7 +72243,9 @@
           ],
           "serves": [],
           "slug": "case-1096-matches-without-a-pipe",
-          "updated_at": "2026-10-25",
+          "started_at": "2026-10-30T10:19:58Z",
+          "started_event": "sha256:bbdc9a2290c7750f5d1e82d9ef03ce8d997e41bf3de8fc511c34a9cd36c125f1",
+          "updated_at": "2026-10-30T10:21:44Z",
           "validation": [
             "MJ_TEST_JOBS=2 bash test/run.sh 1096_no_screen_waits_for_a_source",
             "bin/majordomus plan validate"
@@ -72335,6 +72356,8 @@
             "A pressure age of 0 keeps the hour, and an idle age of 0 evicts nothing, under the mark too",
             "Without the change, case 3959's pressure section fails"
           ],
+          "completed_at": "2026-10-30T10:24:47Z",
+          "completed_event": "sha256:bd67a4452ea2314d67699866a1d7cfd17c716ad9c59805a452686429b2958bf3",
           "created_at": "2026-10-25",
           "depends_on": [
             "I3959"
@@ -72358,7 +72381,9 @@
           ],
           "serves": [],
           "slug": "the-bound-evicts-under-pressure",
-          "updated_at": "2026-10-25",
+          "started_at": "2026-10-30T10:22:43Z",
+          "started_event": "sha256:0c874d3d3ca5d98e56dd45877408e1757dcfaeb5631d1682f0383ffb6e7544f4",
+          "updated_at": "2026-10-30T10:24:47Z",
           "validation": [
             "MJ_TEST_JOBS=1 bash test/run.sh 3959_the_shared_build_dir_stays_under_its_bound",
             "bin/majordomus plan validate"
@@ -72415,6 +72440,8 @@
         "route": "/cockpit/objects/issue/i4232",
         "source": ".ai/repo/project/issues/I4232.yaml",
         "facts": {
+          "completed_at": "2026-10-30T10:27:35Z",
+          "completed_event": "sha256:08009f0cf81a1c159734e6a4105b98ecc0edaeeba5963d730469dd974cebc122",
           "created_at": "2026-10-25",
           "current_state": "Measured at origin/master 2efeacea031 on 2026-10-25: apps/majordomus-core/Cargo.toml declares crate-type = [\\\"rlib\\\", \\\"cdylib\\\"].",
           "depends_on": [],
@@ -72437,7 +72464,9 @@
           ],
           "serves": [],
           "slug": "a-core-build-keeps-its-own-rlib",
-          "updated_at": "2026-10-25",
+          "started_at": "2026-10-30T10:25:45Z",
+          "started_event": "sha256:ab6d3f727bfcc3174d98f16176a4e1d47e528b07bdf80f5341720d046b0701e0",
+          "updated_at": "2026-10-30T10:27:35Z",
           "validation": [
             "MJ_TEST_JOBS=1 bash test/run.sh 4232_a_core_build_keeps_its_own_rlib",
             "scripts/rust-check --portable-core",
@@ -73428,6 +73457,8 @@
             "Every refusal names the rule that refused and the command that resolves it",
             "No ledger line carries the literal task_id none"
           ],
+          "completed_at": "2026-11-01T04:55:46Z",
+          "completed_event": "sha256:49b0c6f13933f9213ca6d0fc98b6f90fb3f5a51885b19a16b8a4d832a358607f",
           "created_at": "2026-10-28",
           "depends_on": [],
           "evidence_required": [
@@ -73460,7 +73491,7 @@
           "slug": "remaining-shell-writers-attribute",
           "started_at": "2026-10-30T00:56:20Z",
           "started_event": "sha256:dea69ec0f8e591ce8a80d70ea780d4d5f64e14a24668f46173b1e6ef0f2faf79",
-          "updated_at": "2026-10-30T00:56:20Z",
+          "updated_at": "2026-11-01T04:55:46Z",
           "validation": [
             "bash test/run.sh 3049",
             "bash test/run.sh",
@@ -74544,6 +74575,8 @@
             "A deployed commit carrying neither names both paths in the unread reason",
             "The ui-snapshot job fails when the publication source is unread after the forge was observed"
           ],
+          "completed_at": "2026-10-30T19:37:46Z",
+          "completed_event": "sha256:10d8feeff460f173131c8c4c0b5f80b2c3aac27a2a75c3409442d24476487141",
           "created_at": "2026-10-28",
           "depends_on": [],
           "evidence_required": [
@@ -74571,11 +74604,16 @@
           ],
           "serves": [],
           "slug": "the-deployed-stage-reads-what-pages-published",
+          "started_at": "2026-10-30T19:36:33Z",
+          "started_event": "sha256:bef41b292e13f15a1a45c9ada9dd2b9b91e32f45af49e59a8a6725a27e630864",
+          "updated_at": "2026-10-30T19:37:46Z",
           "validation": [
             "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test plan_delivery",
             "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib plan::delivery",
             "majordomus served forge && majordomus plan delivery (deployed > 0 at origin/master)"
-          ]
+          ],
+          "verified_at": "2026-10-30T19:37:16Z",
+          "verified_event": "sha256:6b8e0975bc99f8a0b3f18d2d1d2ea41d81e3a2ddade59585d8bdf2c136d8f156"
         }
       },
       {
@@ -74629,6 +74667,8 @@
         "route": "/cockpit/objects/issue/i4317",
         "source": ".ai/repo/project/issues/I4317.yaml",
         "facts": {
+          "completed_at": "2026-10-30T10:30:17Z",
+          "completed_event": "sha256:5215d54c6b864d8e8c954db3edf702daa17b770b9a61e505835b1d5eeca610a7",
           "created_at": "2026-10-28",
           "evidence_required": [
             "test",
@@ -74654,7 +74694,9 @@
             "test/cases/12_site_build.sh"
           ],
           "slug": "the-homepage-supported-figure-follows-the-runs-state",
-          "updated_at": "2026-10-28",
+          "started_at": "2026-10-30T10:28:31Z",
+          "started_event": "sha256:4140840f214187eb95d2cb0f731db36a38063d94811881eb12cb4a1e4f4433ec",
+          "updated_at": "2026-10-30T10:30:17Z",
           "validation": [
             "bash test/run.sh 544_the_homepage_counts_declared_apart_from_supported",
             "bash test/run.sh 333_homepage_narrative 3105_the_homepage_states_no_present_it_does_not_read",
@@ -74672,6 +74714,8 @@
         "route": "/cockpit/objects/issue/i4318",
         "source": ".ai/repo/project/issues/I4318.yaml",
         "facts": {
+          "completed_at": "2026-11-07T14:26:34Z",
+          "completed_event": "sha256:8bbb1db267e5bf02f5bcdb65143fa868fc578ed1a77d23374b4cef07e0dc2a3a",
           "created_at": "2026-10-28",
           "evidence_required": [
             "test"
@@ -74691,7 +74735,9 @@
             "test/cases/333_homepage_narrative.sh"
           ],
           "slug": "the-homepage-rule-count-agrees-with-doctrines",
-          "updated_at": "2026-10-28",
+          "started_at": "2026-11-07T14:13:20Z",
+          "started_event": "sha256:44a05705150c9c4c8e3bead70f2848d9912bf9b13dfbda8fd2ae19172207aef5",
+          "updated_at": "2026-11-07T14:26:34Z",
           "validation": [
             "bash test/run.sh 4318_the_homepage_rule_figure_agrees_with_its_link 333_homepage_narrative",
             "scripts/site-build --no-css && scripts/ci/homepage-check --only figures",
@@ -75874,6 +75920,8 @@
         "route": "/cockpit/objects/issue/i4347",
         "source": ".ai/repo/project/issues/I4347.yaml",
         "facts": {
+          "completed_at": "2026-11-07T14:25:38Z",
+          "completed_event": "sha256:85e024792853145d2c59fc536651418a15249fe14f4f4008658fc9a7f78ba3cc",
           "created_at": "2026-10-29",
           "depends_on": [],
           "evidence_required": [
@@ -75896,7 +75944,9 @@
           ],
           "serves": [],
           "slug": "a-labeled-event-starts-gates-only-for-ci-full",
-          "updated_at": "2026-11-01",
+          "started_at": "2026-11-07T14:12:33Z",
+          "started_event": "sha256:19daff9a126a82b4207297722f34c1b41196425aa1053f176a9fa082cca428d1",
+          "updated_at": "2026-11-07T14:25:38Z",
           "validation": [
             "bash test/run.sh 26_ci_wiring 94_ci_plan",
             "actionlint .github/workflows/validate.yml",
@@ -80336,6 +80386,50 @@
         }
       },
       {
+        "id": "majordomus://issue/I4525",
+        "kind": "issue",
+        "label": "I4525",
+        "summary": "The deployed stage reads unknown, not 0, while the forge's deployment record is absent or older than the pointer majordomus.dev serves",
+        "route": "/cockpit/objects/issue/i4525",
+        "source": ".ai/repo/project/issues/I4525.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "With no forge observation, plan delivery reports the deployed stage unknown with the reason 'forge not observed' and names `majordomus served forge`, and no tally reports deployed 0",
+            "With a forge observation older than the newest successful Pages deployment, the deployed stage is unknown with the reason naming both times",
+            "With an observation that covers the served deployment, the deployed count is reported as today, with the observation's time",
+            "The derived delivery data and the site render unknown as unknown, never as 0"
+          ],
+          "created_at": "2026-10-30",
+          "current_state": "With no forge observation, or one older than the newest Pages deployment, plan delivery counts every issue below deployed and reports deployed 0, with no reason attached to the stage.",
+          "depends_on": [
+            "I4315"
+          ],
+          "evidence_required": [
+            "test"
+          ],
+          "milestone": "truthful-plan-surfaces",
+          "non_scope": [
+            "Observing deployments inside `prs refresh` or `plan delivery` itself (3e8225a4329 separated them on purpose)",
+            "How `served forge` reads the forge"
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/plan/delivery.rs",
+            "apps/majordomus-cli/tests/plan_delivery.rs",
+            "docs/PLANNING.md",
+            ".ai/repo/project/issues/I4525.yaml"
+          ],
+          "serves": [],
+          "slug": "the-deployed-stage-is-unknown-until-the-forge-is-observed",
+          "validation": [
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test plan_delivery",
+            "majordomus plan delivery on a fresh clone (deployed unknown), then after majordomus served forge (deployed > 0)"
+          ]
+        }
+      },
+      {
         "id": "majordomus://issue/I4527",
         "kind": "issue",
         "label": "I4527",
@@ -80343,6 +80437,8 @@
         "route": "/cockpit/objects/issue/i4527",
         "source": ".ai/repo/project/issues/I4527.yaml",
         "facts": {
+          "completed_at": "2026-11-07T14:23:44Z",
+          "completed_event": "sha256:4804f71e6b940c1a084c304ce38cafca03322f6c6899f31e0b6ebfdba45d86c3",
           "created_at": "2026-11-01",
           "depends_on": [],
           "evidence_required": [
@@ -80367,7 +80463,7 @@
           "slug": "the-install-check-runs-the-release-on-a-layer-it-wrote",
           "started_at": "2026-11-01T02:54:21Z",
           "started_event": "sha256:cc9eecd15f90e75f239c2d02bd1b647435a2e1381f16427d538b057859cb357e",
-          "updated_at": "2026-11-01T02:54:21Z",
+          "updated_at": "2026-11-07T14:23:44Z",
           "validation": [
             "bash test/run.sh 97_install_gate 1024_an_installed_release_serves_a_foreign_repository",
             "shellcheck -S warning scripts/ci/install-check"
@@ -80386,6 +80482,8 @@
             "Case 3002 passes in under a minute on a machine with less than 51200 MB free (measured: 17 s at 47 GB free); without the line it times out on the same machine",
             "The next master validate passes suite-shard (4)"
           ],
+          "completed_at": "2026-11-07T14:24:39Z",
+          "completed_event": "sha256:3413f07135f0c3080eeeee60fdead0480c78d3576169536054772c5c58b0babe",
           "created_at": "2026-11-01",
           "current_state": "Measured at aca6f182b41: the scenario's env omits MAJORDOMUS_PRIVATE_BUILD_ABOVE_MB; run() sets it to 0 for every other scenario.",
           "depends_on": [],
@@ -80410,7 +80508,7 @@
           "slug": "the-disk-floor-case-is-independent-of-the-runners-disk",
           "started_at": "2026-11-01T08:20:49Z",
           "started_event": "sha256:f80a2305ea807a1a4aec5caf5e803be3cd3bd316743146e1df5bceb255d27c83",
-          "updated_at": "2026-11-01T08:20:49Z",
+          "updated_at": "2026-11-07T14:24:39Z",
           "validation": [
             "bash test/run.sh 3002_a_build_never_waits_in_silence"
           ]
@@ -149107,6 +149205,21 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I4525",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4525",
+        "target": "majordomus://issue/I4315",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I4525",
+        "target": "majordomus://milestone/truthful-plan-surfaces",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://issue/I4527",
         "target": "kind:issue",
         "kind": "is_a"
@@ -161813,8 +161926,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4422,
-      "edges": 10037,
+      "nodes": 4423,
+      "edges": 10040,
       "acyclic": false,
       "truncated": false
     }

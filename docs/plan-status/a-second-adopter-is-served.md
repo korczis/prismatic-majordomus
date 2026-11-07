@@ -63,7 +63,6 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I4254` | shares scripts/github-sync with I4261; they may not run concurrently |
 | WARN | `scope_conflict` | `I4254` | shares bin/majordomus with I4268; they may not run concurrently |
 | WARN | `scope_conflict` | `I4254` | shares docs/PLANNING.md with I4306; they may not run concurrently |
-| WARN | `scope_conflict` | `I4254` | shares docs/PLANNING.md with I4315; they may not run concurrently |
 | WARN | `scope_conflict` | `I4254` | shares bin/majordomus with I4322; they may not run concurrently |
 | WARN | `scope_conflict` | `I4254` | shares bin/majordomus with I4329; they may not run concurrently |
 | WARN | `scope_conflict` | `I4254` | shares docs/PLANNING.md with I4330; they may not run concurrently |
@@ -141,11 +140,9 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I4267` | shares docs/SCHEMAS.md with I4413; they may not run concurrently |
 | WARN | `scope_conflict` | `I4267` | shares docs/SCHEMAS.md with I4415; they may not run concurrently |
 | WARN | `scope_conflict` | `I4267` | shares share/allow/deployment.txt with I4468; they may not run concurrently |
-| WARN | `scope_conflict` | `I4268` | shares lib/evidence.sh with I4292; they may not run concurrently |
 | WARN | `scope_conflict` | `I4268` | shares bin/majordomus with I4322; they may not run concurrently |
 | WARN | `scope_conflict` | `I4268` | shares bin/majordomus with I4329; they may not run concurrently |
 | WARN | `scope_conflict` | `I4268` | shares bin/majordomus with I4334; they may not run concurrently |
-| WARN | `scope_conflict` | `I4268` | shares scripts/ci-plan with I4347; they may not run concurrently |
 | WARN | `scope_conflict` | `I4268` | shares docs/CI.md with I4349; they may not run concurrently |
 | WARN | `scope_conflict` | `I4268` | shares docs/CI.md with I4460; they may not run concurrently |
 | WARN | `scope_conflict` | `I4268` | shares lib/evidence.sh with I4468; they may not run concurrently |

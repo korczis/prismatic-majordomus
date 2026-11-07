@@ -30,6 +30,16 @@ evidence_required:
   - suite
 risk: "The launcher check no longer touches the source checkout at all; a launcher that reads only a newer layer would pass here, which is the skew I1980 owns, not this gate."
 created_at: 2026-11-01
-updated_at: 2026-11-01T02:54:21Z
+updated_at: 2026-11-07T14:23:44Z
 started_at: 2026-11-01T02:54:21Z
 started_event: sha256:cc9eecd15f90e75f239c2d02bd1b647435a2e1381f16427d538b057859cb357e
+completed_at: 2026-11-07T14:23:44Z
+completed_event: sha256:4804f71e6b940c1a084c304ce38cafca03322f6c6899f31e0b6ebfdba45d86c3
+evidence:
+  - covers: "suite"
+    type: test
+    command: "bash test/run.sh 97_install_gate"
+    result: "delivered by 36ec3550f0b: install-check runs the no-toolchain check on the layer section 5 wrote, case 97 covers the unknown-key manifest; train 29 validate run 42259789353 at e3dd08606fa passed suite (1)-(4)"
+    artifact: "https://github.com/korczis/prismatic-majordomus/actions/runs/42259789353"
+    commit: d7fd9a3617024a7390ac36c1888d6fcee63b600e
+    recorded_at: 2026-11-07T14:19:29Z
