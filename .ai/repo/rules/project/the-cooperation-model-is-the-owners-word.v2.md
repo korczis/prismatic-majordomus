@@ -3,8 +3,8 @@ id: project.the-cooperation-model-is-the-owners-word
 version: 3
 kind: rule
 title: Work moves through seats held as mesh claims, a worker lands its own green head, and every checkout is kept current
-description: The owner's operating decision of 2026-10-16, relaxed by the owner on 2026-10-20 and amended by the owner on 2026-11-01 (a member's fix may travel inside a train top with attribution). A seat (landing, release, repair, worker) is an exclusive mesh claim and nothing else; a worker lands its own green pull request through the guarded lander's queue, pinned to the head its ci judged; the landing seat composes combined tops only when heads must ship together, and a member's fix may travel inside a top as its own commit that names the member and is then carried to the member's branch; a stale checkout or branch is preserved in a rescue ref and brought current without asking; the release seat tags on master's own green ci whenever master holds landed work past the last tag. At most five builders run on one machine and none starts below 35 GiB free. Every surface that describes the model reads this record or the live claims, never a copy.
-statement: Hold a seat only by holding its exclusive mesh claim; land a pull request or a combined top only pinned to the head whose ci succeeded and which contains the current master, a worker's own green head through the guarded lander's queue; put a member's fix inside a top only as its own commit that names the member, and carry it to the member's branch; preserve a stale checkout's work in a rescue ref, then bring it current without asking, and bring a pushed branch current by merging master into it; release whenever master holds landed work past the last tag; start no build beside five others or below 35 GiB free; and describe the model by pointing at this rule or reading the live claims, never by copying it.
+description: The owner's operating decision of 2026-10-16, relaxed by the owner on 2026-10-20 and amended by the owner on 2026-11-01 (a member's fix may travel inside a train top with attribution); the landing act is the owner's decision of 2026-10-22: `majordomus prs drain` lands by a non-forced fast-forward of master to the head its ci judged, never `--admin`, from no queue file. A seat (landing, release, repair, worker) is an exclusive mesh claim and nothing else; a worker lands its own green pull request through the guarded lander's queue, pinned to the head its ci judged; the landing seat composes combined tops only when heads must ship together, and a member's fix may travel inside a top as its own commit that names the member and is then carried to the member's branch; a stale checkout or branch is preserved in a rescue ref and brought current without asking; the release seat tags on master's own green ci whenever master holds landed work past the last tag. At most five builders run on one machine and none starts below 35 GiB free. Every surface that describes the model reads this record or the live claims, never a copy.
+statement: Hold a seat only by holding its exclusive mesh claim; land a pull request or a combined top only through `majordomus prs drain`, by a non-forced fast-forward of master to the head whose ci succeeded and which contains the current master, a worker's own green head through the guarded lander's queue; put a member's fix inside a top only as its own commit that names the member, and carry it to the member's branch; preserve a stale checkout's work in a rescue ref, then bring it current without asking, and bring a pushed branch current by merging master into it; release whenever master holds landed work past the last tag; start no build beside five others or below 35 GiB free; and describe the model by pointing at this rule or reading the live claims, never by copying it.
 status: active
 class: blocking
 depends_on: [project.integration-follows-the-current-master@3, project.an-expedited-landing-is-the-owners-word@1, project.work-is-claimed-before-it-is-built@1, project.mesh-cooperation-is-authenticated@2, project.an-exclusive-claim-lives-by-its-holders-progress@1]
@@ -66,6 +66,29 @@ compose commit, not made as commits of their own that each name a member, so the
 not cover them after the fact. Carrying each of them to its member's branch is still owed; no
 record yet shows any of the eight carried.
 
+## The owner's decision of 2026-10-22: the drain lands, by a fast-forward
+
+Versions 1 to 3 named two landing acts and no lander: clause 2 a pinned admin merge, clause 6 a
+fast-forward by a loop that read a queue file beside the checkouts (`.e7-land-queue`). That loop
+lived inside one session; on 2026-10-22 a machine restart ended it, #1838 sat green and unlanded
+for hours, and the owner fast-forwarded master by hand. Asked that day how the autonomous lander
+moves master, the owner decided that landing is a fast-forward, because only a fast-forward is a
+compare-and-swap the forge enforces with protection `strict: false`: two landers can never both
+land, and master is exactly the tree its `ci` judged (I3910).
+
+So the guarded lander is `majordomus prs drain` (ADR 0101, `docs/INTEGRATION.md`), and its act
+is a non-forced fast-forward of master to the decided head (`gh api -X PATCH
+repos/<owner>/<name>/git/refs/heads/master -f sha=<head> -F force=false`). A master that moved
+since the decision refuses the update; the drain observes again and decides from the new
+master. A combined top is landed like any pull request; a member a train carries is held by the
+label `hold` until the train lands, and is then `redundant`; the drain closes nothing. While a
+pull request is named the carrier of master's red (label `red-carrier`) and a required check of
+master's own commit is red, the drain lands that carrier and nothing else (I2709). The pinned
+admin merge of clause 2's earlier wording,
+`gh pr merge <n> --admin --merge --match-head-commit <sha>`,
+and the queue file are no longer ways to land. The rule keeps version 3: the criterion
+of I3910 names it, and this section is its dated amendment.
+
 How a top's branch is named, the label its pull request carries and how its pull request lists
 the fixes are practice, described in `docs/INTEGRATION.md`, not obligations of this rule.
 
@@ -87,7 +110,7 @@ and 3824 read this file by that path, and renaming it would change the crate for
 
    | seat | claims | does |
    |---|---|---|
-   | landing seat | `campaign/*/landing` | composes and lands combined tops when heads must ship together, pinned to the head CI judged; runs the guarded lander's queue |
+   | landing seat | `campaign/*/landing` | composes combined tops when heads must ship together; runs `majordomus prs drain`, the guarded lander's queue |
    | release seat | `release/seat` | bumps, tags on master's own green ci, records and verifies the site after landings, whenever master holds landed work past the last tag |
    | repair lane | `refs/heads/*` | merges master into a pull request that conflicts, on that pull request's own branch, one claim per branch |
    | worker | the paths of its one issue | one issue, one pull request: announces on the board, claims on the mesh, asks for a mesh review, lands its own green head through the guarded lander's queue |
@@ -100,9 +123,10 @@ and 3824 read this file by that path, and renaming it would change the crate for
    the current master. The derived files are regenerated once, after the merge commit. One
    validation run judges every member. A red member is dropped from the top and fixed on its
    own branch, or its fix travels inside the top as its own commit that names the member, and
-   is carried to the member's branch afterwards. The top lands by one merge,
-   `gh pr merge <n> --admin --merge --match-head-commit <sha>`, and only when that exact head's
-   `ci` concluded success and the head contains the current `origin/master`. A release's bump
+   is carried to the member's branch afterwards. The top lands like any pull request:
+   `majordomus prs drain` fast-forwards master to that exact head, never forced and never with
+   `--admin`, and only when that exact head's `ci`
+   concluded success and the head contains the current `origin/master`. A release's bump
    may ride inside a top. The pull request of a top names its members and their heads.
 3. **Always current, preserved first.** A checkout or branch found behind master is brought
    current by whoever finds it, without asking. Before anything is moved, what it holds is
@@ -117,11 +141,12 @@ and 3824 read this file by that path, and renaming it would change the crate for
 5. **One record, read everywhere.** The integration, mesh and release documents point at this
    rule and ADR 0167 rather than restating the seats; the site renders both from these files;
    the UI reads the seats from the mesh. A copy of the seat table anywhere else is a defect.
-6. **A worker lands its own green head.** A worker whose pull request is green enters its
-   number in the guarded lander's queue (`.e7-land-queue`, beside the checkouts) and does not
-   wait for a seat. The lander fast-forwards master only when the newest `ci` check run on the
-   pull request's head concluded success, that head is still the pull request's head, and it
-   contains `origin/master`; anything else stays queued and is named. A head that must ship
+6. **A worker lands its own green head.** A worker whose pull request is green does not wait
+   for a seat: the guarded lander's queue is the integration queue `majordomus prs drain` builds
+   from the forge, and no queue file exists. The drain fast-forwards master only when the
+   required `ci` on the pull request's head concluded success, that head is still the pull
+   request's head, and it contains `origin/master`, and while master's own `ci` is red only the
+   red's named carrier; anything else stays queued and is named (`majordomus prs status`). A head that must ship
    with others still goes to the landing seat as a member of a combined top (clause 2).
 7. **Builds are bounded by the machine, not by a slot order.** At most five builders run at
    once on one machine, and none starts while less than 35 GiB is free. Within those limits a
@@ -142,6 +167,10 @@ critical path, not by this rule.
 
 # What it amends, and what still holds
 
+The amendment of 2026-10-22 changes the act, not the pin: what lands is still exactly the head
+whose `ci` succeeded and which contains the current master. It names `majordomus prs drain` as
+the one lander and the fast-forward as its act, and retires the admin merge and the queue file.
+
 Version 3 widens one sentence of clause 2, "never inside the top": a member's fix may travel
 inside the top as its own commit that names the member, and is carried to the member's branch
 afterwards, as the owner decided on 2026-11-01. It adds nothing else. Nothing about what may
@@ -154,8 +183,8 @@ under, so nothing about what may reach master is looser. It replaces the landing
 order with the two machine limits of clause 7. Everything below holds as in version 1.
 
 ADR 0101 left batches to a person, and this is the owner taking that decision: a combined top
-is the landing seat's ordinary unit, not an exception. The integration executor is unchanged:
-`majordomus prs drain` still lands one ready pull request at a time and never passes `--admin`,
+is the landing seat's ordinary unit, not an exception. The integration executor is the lander:
+`majordomus prs drain` lands one ready pull request at a time and never passes `--admin`,
 as `project.integration-follows-the-current-master` requires of integration code. ADR 0155's
 "one landing at a time" now reads "one landing seat at a time"; a landing may carry a whole
 top. Every other clause of both rules holds: decisions name the master and heads they were
@@ -181,6 +210,11 @@ never expedited, and every decision leaves its evidence.
   wherever it is read (rule `project.a-checkout-serves-the-current-trunk`, branch
   `feature/a-checkout-serves-the-current-trunk`, case 3176). When they land, their cases join
   this rule's tests.
+
+- `apps/majordomus-cli/tests/integration_executor.rs`: `a_green_train_is_fast_forwarded_and_verified`,
+  `a_fast_forward_onto_a_master_that_moved_is_refused_and_decided_again` and
+  `while_master_is_red_the_drain_lands_only_its_carrier` hold the landing act of the amendment
+  of 2026-10-22 against a scripted forge and a real origin.
 
 - `test/cases/3824_the_bootstrap_says_what_the_cooperation_rule_says.sh`: the bootstrap
   paragraph every provider's instruction file carries says what clauses 6 and 7 say (a worker
