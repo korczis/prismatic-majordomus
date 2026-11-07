@@ -1163,10 +1163,8 @@ for id in $(selected_issues); do
   if [ -n "$want_ms" ] && [ "$(remote_issue_milestone "$id")" != "$want_ms" ]; then
     note DRIFT milestone "issue $id (#$num) is not on GitHub milestone $ms"
     if [ "$MODE" = apply ]; then
-      # by number, through the REST field: `gh issue edit --milestone` resolves a title among
-      # the open milestones only, and the canonical milestone may be DONE and closed (I4529)
-      applied updated "issue $id (#$num) milestone" "set to '$want_ms' (#$(remote_milestone_number "$ms"), its canonical milestone)" \
-        gh api -X PATCH "repos/$REPO/issues/$num" -F "milestone=$(remote_milestone_number "$ms")"
+      applied updated "issue $id (#$num) milestone" "set to '$want_ms', its canonical milestone" \
+        gh issue edit "$num" --repo "$REPO" --milestone "$want_ms"
     fi
   fi
   [ "$have_state" = "$want_state" ] || { changed=1; note DRIFT state "issue $id (#$num) is $have_state on GitHub, canonically $want_state"; }
