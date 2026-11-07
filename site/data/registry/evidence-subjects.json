@@ -1174,6 +1174,11 @@
     },
     {
       "kind": "capability",
+      "subject": "capability:worktree.liveness",
+      "path": "/evidence/capabilities/worktree-liveness/"
+    },
+    {
+      "kind": "capability",
       "subject": "capability:worktree.migration_plan",
       "path": "/evidence/capabilities/worktree-migration-plan/"
     },
@@ -3681,6 +3686,11 @@
       "kind": "command",
       "subject": "command:worktree list",
       "path": "/evidence/commands/worktree-list/"
+    },
+    {
+      "kind": "command",
+      "subject": "command:worktree liveness",
+      "path": "/evidence/commands/worktree-liveness/"
     },
     {
       "kind": "command",
@@ -6827,6 +6837,18 @@
       "programs": [],
       "members": [
         "command:worktree inspect"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "capability:worktree.liveness": {
+      "kind": "capability",
+      "id": "worktree.liveness",
+      "page": "/evidence/capabilities/worktree-liveness/",
+      "programs": [],
+      "members": [
+        "command:worktree liveness"
       ],
       "routes": [],
       "mechanisms": [],
@@ -20014,6 +20036,25 @@
       "mechanisms": [],
       "findings": []
     },
+    "command:worktree liveness": {
+      "kind": "command",
+      "id": "worktree liveness",
+      "page": "/evidence/commands/worktree-liveness/",
+      "programs": [
+        "native"
+      ],
+      "members": [],
+      "routes": [
+        {
+          "via": "example",
+          "test": "crate:cli_examples",
+          "path": "apps/majordomus-cli/tests/cli_examples.rs",
+          "category": "integration"
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
     "command:worktree migrate": {
       "kind": "command",
       "id": "worktree migrate",
@@ -23452,6 +23493,18 @@
       "programs": [],
       "members": [
         "capability:worktree.inspect"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "mcp:majordomus_worktree_liveness": {
+      "kind": "mcp",
+      "id": "majordomus_worktree_liveness",
+      "alias_of": "capability:worktree.liveness",
+      "programs": [],
+      "members": [
+        "capability:worktree.liveness"
       ],
       "routes": [],
       "mechanisms": [],
@@ -27552,7 +27605,28 @@
       "status": "active",
       "programs": [],
       "members": [],
-      "routes": [],
+      "routes": [
+        {
+          "via": "rule",
+          "test": "suite:276_disk_is_bounded",
+          "path": "test/cases/276_disk_is_bounded.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/276_disk_is_bounded.sh",
+            ".ai/repo/rules/project/reclaim-only-what-you-own.v2.md"
+          ]
+        },
+        {
+          "via": "rule",
+          "test": "suite:611_the_reclaim_refuses_what_it_cannot_prove",
+          "path": "test/cases/611_the_reclaim_refuses_what_it_cannot_prove.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/611_the_reclaim_refuses_what_it_cannot_prove.sh",
+            ".ai/repo/rules/project/reclaim-only-what-you-own.v2.md"
+          ]
+        }
+      ],
       "mechanisms": [],
       "findings": []
     },
@@ -30548,7 +30622,6 @@
     "suite:593_generation_states_its_subject",
     "suite:599_a_silent_check_is_not_a_pass",
     "suite:59_reference_integrity",
-    "suite:611_the_reclaim_refuses_what_it_cannot_prove",
     "suite:617_a_case_can_name_what_it_covers",
     "suite:620_mcp_tools_are_invoked_and_answer",
     "suite:623_a_ref_verdict_needs_the_refs",

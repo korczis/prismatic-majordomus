@@ -130,9 +130,14 @@ printf '[build]\nbuild-dir = "%s"\n' "$SHARED" > "$FIX/.cargo/config.toml"
 printf 'Signature: 8a477f597d28d172789f06886806bc55\n# This file is a cache directory tag created by cargo.\n' > "$SHARED/CACHEDIR.TAG"
 dd if=/dev/zero of="$SHARED/debug/blob" bs=1024 count=2048 2>/dev/null
 
-# the process table is the reaper's liveness input, so it is the one thing stubbed
+# the process table is the reaper's liveness input, so it is the one thing stubbed, in the
+# shape `ps -o pid= -o ppid= -o uid= -o args=` prints, which the liveness predicate (I4346)
+# reads as well; and the case directory, a repository the runner made a moment ago that holds
+# the shared directory, is aged past the predicate's idle window
 mkdir -p "$T/stub"
-printf '#!/bin/sh\necho "/bin/sleep 1"\n' > "$T/stub/ps"; chmod +x "$T/stub/ps"
+printf '#!/bin/sh\necho "    1     0     0 /bin/sleep 1"\n' > "$T/stub/ps"; chmod +x "$T/stub/ps"
+t_gd="$(git -C "$T" rev-parse --absolute-git-dir)"
+for f in HEAD index logs/HEAD; do [ ! -e "$t_gd/$f" ] || touch -t 202001010000 "$t_gd/$f"; done
 run() { MJ_ROOT="$FIX" PATH="$T/stub:$PATH" MAJORDOMUS_SHARED_BUILD_CAP_MB="$1" "$REAPER" "${@:2}" 2>&1; }
 
 # within its bound: kept, and said so
@@ -147,14 +152,14 @@ expect_grep 'would reclaim — shared, over its'
 [ -d "$SHARED" ] || { echo "    the report removed the directory it only measures"; exit 1; }
 
 # over its bound while a build runs: kept, because removing it would fail that build
-printf '#!/bin/sh\necho "/Users/x/.cargo/bin/cargo build"\n' > "$T/stub/ps"
+printf '#!/bin/sh\necho "    1     0     0 /Users/x/.cargo/bin/cargo build"\n' > "$T/stub/ps"
 rc=0; LAST_OUT="$(run 1 --targets --reclaim)" || rc=$?
 [ "$rc" = 0 ] || { echo "    --reclaim exited $rc with a build running"; printf '%s\n' "$LAST_OUT"; exit 1; }
 expect_grep 'a cargo or rustc process is running'
 [ -d "$SHARED" ] || { echo "    the shared directory was removed under a running build"; exit 1; }
 
 # over its bound and idle: reclaimed, as a whole, and the report says what it freed
-printf '#!/bin/sh\necho "/bin/sleep 1"\n' > "$T/stub/ps"
+printf '#!/bin/sh\necho "    1     0     0 /bin/sleep 1"\n' > "$T/stub/ps"
 rc=0; LAST_OUT="$(run 1 --targets --reclaim)" || rc=$?
 [ "$rc" = 0 ] || { echo "    --reclaim exited $rc"; printf '%s\n' "$LAST_OUT"; exit 1; }
 expect_grep 'reclaimed'

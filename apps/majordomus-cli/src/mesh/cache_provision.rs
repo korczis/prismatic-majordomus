@@ -68,6 +68,11 @@ const RW_POLICY: &str = include_str!("../../assets/mesh-cache-provider/mesh-buil
 const WRAPPER: &str = include_str!("../../assets/mesh-cache-provider/sccache-mesh");
 const RUNNER: &str = include_str!("../../assets/mesh-cache-provider/runner.conf");
 
+/// Where disk-guard.service tells the guard the liveness predicate's executable is (I4346):
+/// the executable that applies the provisioning is installed there, and the guard removes no
+/// build directory while nothing executable is.
+pub(crate) const GUARD_LIVENESS: &str = "/usr/local/libexec/majordomus/majordomus";
+
 /// The file the disk guard reads its homes from (`HOMES_FILE` in the script), rendered from
 /// the policy.
 const GUARD_HOMES: &str = "/etc/majordomus/disk-guard.homes";
@@ -787,11 +792,23 @@ fn steps(policy: &Policy, runners: &[String]) -> Vec<Step> {
         ));
     }
     v.push(s(
+        "guard-liveness",
+        install_liveness_line(std::env::current_exe().ok()),
+        "always",
+    ));
+    v.push(s(
         "guard-run",
         "systemctl start disk-guard.service".into(),
         "always",
     ));
     v
+}
+
+/// The step that puts the liveness predicate where disk-guard.service names it: the
+/// executable applying the provisioning, or the one on the path when that is unknown.
+fn install_liveness_line(exe: Option<PathBuf>) -> String {
+    let exe = exe.map_or("majordomus".to_string(), |p| p.display().to_string());
+    format!("install -D -m 0755 {exe} {GUARD_LIVENESS}")
 }
 
 fn physical(root: &Path, logical: &str) -> PathBuf {
@@ -2016,6 +2033,7 @@ mod tests {
             rm() { command rm -rf -- "${@: -1}"; }
             size_gib() { echo 1; }
             [ "$(id -u)" -ne 0 ] || as_owner_of() { shift; "$@"; }
+            liveness_reclaims() { return 0; }
         "#;
         let mut cmd = Command::new("bash");
         cmd.arg("-c")
@@ -2097,6 +2115,70 @@ mod tests {
             names_in(&dir),
             vec!["disk-guard".to_string(), "target".to_string()]
         );
+    }
+
+    /// I4346: the guard asks the one liveness predicate before it renames anything. Without
+    /// an executable at the path disk-guard.service names it removes no build directory, and
+    /// an answer that is not `reclaim` for that very path keeps it; only `reclaim` lets it go.
+    #[test]
+    fn the_guard_removes_a_build_directory_only_when_the_liveness_predicate_says_reclaim() {
+        assert!(
+            GUARD_SERVICE.contains(&format!("Environment=LIVENESS_BIN={GUARD_LIVENESS}")),
+            "the service names the predicate's executable"
+        );
+        assert!(GUARD.contains("liveness_reclaims \"$dir\" \"$minutes\" || return 1"));
+        assert!(install_liveness_line(None).ends_with(&format!("majordomus {GUARD_LIVENESS}")));
+        assert!(
+            install_liveness_line(Some("/x/mj".into())).starts_with("install -D -m 0755 /x/mj ")
+        );
+        let dir = scratch("liveness");
+        let target = dir.join("target");
+        let fresh = |t: &Path| {
+            std::fs::create_dir_all(t.join("debug")).unwrap();
+            std::fs::write(t.join("CACHEDIR.TAG"), "created by cargo").unwrap();
+        };
+        fresh(&target);
+        let stub = dir.join("majordomus");
+        let mut answers = Vec::new();
+        // the stub is asked `worktree liveness --idle 20m -- <dir>`: the path is its sixth word
+        for (bin, verdict, path, kept) in [
+            ("absent", "", "", true),
+            ("stub", "keep", "$6", true),
+            ("stub", "reclaim", "/somewhere/else", true),
+            ("stub", "reclaim", "$6", false),
+        ] {
+            fresh(&target);
+            std::fs::write(
+                &stub,
+                format!("#!/bin/sh\nprintf '%s\\t%s\\t%s\\n' {verdict} \"{path}\" 'pid 1 works in it'\n"),
+            )
+            .unwrap();
+            std::fs::set_permissions(&stub, std::fs::Permissions::from_mode(0o755)).unwrap();
+            let bin = if bin == "absent" {
+                dir.join("nothing-here")
+            } else {
+                stub.clone()
+            };
+            // the guard sourced again: its own liveness_reclaims, not the preamble's
+            let script = format!(
+                ". \"$1\"; LIVENESS_BIN='{}'; reap \"$3\" 20; printf '%s\\n' \"${{actions[@]+\"${{actions[@]}}\"}}\"",
+                bin.display()
+            );
+            let out = run_guard(&dir, &script, &[&target, &target]);
+            assert!(out.status.success(), "{out:?}");
+            assert_eq!(
+                target.join("CACHEDIR.TAG").is_file(),
+                kept,
+                "{verdict} {path}: {out:?}"
+            );
+            answers.push(String::from_utf8_lossy(&out.stdout).into_owned());
+        }
+        assert!(
+            answers[0].contains("no liveness executable"),
+            "{}",
+            answers[0]
+        );
+        assert!(answers[1].contains("kept"), "{}", answers[1]);
     }
 
     /// I4352 (review): a runner home is written by the CI jobs it runs, so a tag planted

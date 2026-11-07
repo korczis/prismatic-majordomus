@@ -98,7 +98,8 @@ if [ -x "$REAPER" ]; then
   else
     ok "the reaper removes build directories and never a worktree"
   fi
-  for predicate in 'merge-base --is-ancestor' 'for-each-ref --contains' 'ps -Ao command=' '\-d cwd' 'status --porcelain'; do
+  # liveness is the one predicate's answer (`worktree liveness`, I4346), not a reading of its own
+  for predicate in 'merge-base --is-ancestor' 'for-each-ref --contains' 'ps -Ao command=' 'worktree liveness' 'status --porcelain'; do
     grep -qE "$predicate" "$REAPER" \
       || fail "$REAPER no longer tests '$predicate': landed or pushed, not live and idle are all three required"
   done

@@ -14542,6 +14542,70 @@ paths:
       x-majordomus-mcp:
         tool: majordomus_worktree_inspect
       x-majordomus-cli: worktree inspect
+  "/api/v1/worktrees/liveness":
+    post:
+      operationId: worktree.liveness
+      summary: "Whether anybody uses a tree or build directory: keep or reclaim"
+      description: "The one liveness predicate every deleting sweep asks (I4346): `worktree cleanup --remove` in process, `scripts/reap-orphans --targets` and the build host's `disk-guard` through `majordomus worktree liveness <path>...`. Each path is judged with the work tree holding it, and is `keep` when an open task is recorded in the tree, a live mesh claim or active session names its issue, branch or path, a peer is attached to or announced on the tree's own server, the derive lock's live owner names its branch, an offload run record or offload lock pid file names a process working in it, a CI runner job runs under the home holding it, another process's `CARGO_*_DIR` or `MAJORDOMUS_BIN` points into it, another process works inside it or names it on its command line, or the tree's index, `HEAD` or `HEAD` reflog changed within the idle window (thirty minutes unless `idle` says otherwise). Every reason is reported. A reading that could not be taken keeps the path (`unreadable`); a source that could not be read at all — the process table, the working directories, this user's process environments, the claims of a repository that declares a mesh, the offload run records — is named in `blind`, and the answer is then `complete: false`, on which the command line exits 10 and a sweep removes nothing. Writes nothing and refreshes no index."
+      tags:
+        - worktree
+      requestBody:
+        required: true
+        description: "The input of `worktree.liveness`."
+        content:
+          "application/json":
+            schema:
+              "$ref": "#/components/schemas/LivenessInput"
+            examples:
+              absent-path:
+                value:
+                  paths:
+                    - does/not/exist
+      responses:
+        "200":
+          description: "Whether anybody uses a tree or build directory: keep or reclaim: the result."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/LivenessReport"
+        "400":
+          description: "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "404":
+          description: "`not_found`: The input names something the repository does not hold."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "500":
+          description: "`internal`: The capability failed for a reason of its own; the message names it."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        default:
+          description: "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+      x-majordomus-id: worktree.liveness
+      x-majordomus-kind: query
+      x-majordomus-stability: behaviorally_verified
+      x-majordomus-provenance:
+        source: builtin
+        module: majordomus_cli::capability::builtin::worktree
+      x-majordomus-benchmark:
+        policy: required
+      x-majordomus-cache:
+        policy: disabled
+      x-majordomus-effect: read
+      x-majordomus-mcp:
+        tool: majordomus_worktree_liveness
+      x-majordomus-cli: worktree liveness
   "/api/v1/worktrees/migration":
     get:
       operationId: worktree.migration_plan
@@ -32444,6 +32508,112 @@ components:
         - version
         - commit
       description: "The answer to \"is this process alive\": the cheapest true thing this executable can\nsay about itself. Deliberately not a summary of anything — a probe that grew an\nopinion would stop reporting the one fact the platform polls it for."
+    LivenessInput:
+      type: object
+      additionalProperties: false
+      properties:
+        paths:
+          type: array
+          items:
+            type: string
+          description: "The trees or build directories, absolute or relative to the primary checkout."
+        idle:
+          type:
+            - string
+            - "null"
+          description: "The idle window git activity is judged against, as a person writes it (`20m`, `2h`).\nDefault: thirty minutes."
+      required:
+        - paths
+      description: The paths a sweep is about to delete.
+    LivenessReason:
+      type: object
+      properties:
+        signal:
+          "$ref": "#/components/schemas/LivenessSignal"
+          description: What kind of evidence.
+        detail:
+          type: string
+          description: "The evidence, in words."
+      required:
+        - signal
+        - detail
+      description: One reason a path is kept.
+    LivenessReport:
+      type: object
+      properties:
+        schema:
+          type: string
+          description: "`SCHEMA`."
+        idle_seconds:
+          type: integer
+          format: uint64
+          minimum: 0
+          description: "The idle window git activity is judged against, in seconds."
+        complete:
+          type: boolean
+          description: "Whether every source was read. A sweep that gets `false` removes nothing."
+        blind:
+          type: array
+          items:
+            type: string
+          description: "Every source that could not be read at all, with why."
+        paths:
+          type: array
+          items:
+            "$ref": "#/components/schemas/PathLiveness"
+          description: "One answer per path, in the order asked."
+      required:
+        - schema
+        - idle_seconds
+        - complete
+        - blind
+        - paths
+      description: "The answer of `worktree.liveness`."
+    LivenessSignal:
+      oneOf:
+        - type: string
+          const: task
+          description: An open majordomus task in the tree.
+        - type: string
+          const: mesh_claim
+          description: A live mesh claim or session names it.
+        - type: string
+          const: board_claim
+          description: "A peer of the tree's own server is attached or announced."
+        - type: string
+          const: derive_lock
+          description: "The derive lock's live owner names it."
+        - type: string
+          const: queue_pid_file
+          description: An offload run record or a pid file of the offload lock names it.
+        - type: string
+          const: runner_job
+          description: A CI runner job is running under the home that holds it.
+        - type: string
+          const: process_environment
+          description: "Another process's `CARGO_*_DIR` or `MAJORDOMUS_BIN` points into it."
+        - type: string
+          const: process_directory
+          description: "Another process's working directory is inside it."
+        - type: string
+          const: process_arguments
+          description: Another process names it on its command line.
+        - type: string
+          const: git_activity
+          description: "Its index, `HEAD` or `HEAD` reflog changed within the idle window."
+        - type: string
+          const: unreadable
+          description: "A reading that could not be taken: not knowing keeps it."
+      description: What made a path live.
+    LivenessVerdict:
+      oneOf:
+        - type: string
+          const: keep
+          description: "Something uses it, or that could not be ruled out."
+        - type: string
+          const: reclaim
+          description: Every source was read and none of them names it.
+      description: Keep or reclaim.
     LocalOverrides:
       oneOf:
         - type: object
@@ -35849,6 +36019,30 @@ components:
         - stage
         - status
       description: "One path, and where it stands.\n```\nuse majordomus_cli::commit::ChangeStage;\nuse majordomus_cli::commit::plan::PathChange;\n// staged and modified again since: the commit would carry the staged half only\nlet c = PathChange {\n    path: \"src/a.rs\".into(), stage: ChangeStage::Staged, status: \"MM\".into(), partial: true,\n};\nassert!(c.partial);\n```"
+    PathLiveness:
+      type: object
+      properties:
+        path:
+          type: string
+          description: The path as it was asked about (made absolute when it was relative).
+        verdict:
+          "$ref": "#/components/schemas/LivenessVerdict"
+          description: Keep or reclaim.
+        tree:
+          type:
+            - string
+            - "null"
+          description: "The work tree that holds it, when one does."
+        reasons:
+          type: array
+          items:
+            "$ref": "#/components/schemas/LivenessReason"
+          description: "Every reason it is kept; empty exactly when the verdict is `reclaim`."
+      required:
+        - path
+        - verdict
+        - reasons
+      description: The answer for one path.
     PathOverlap:
       type: object
       properties:

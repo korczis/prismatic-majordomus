@@ -7,7 +7,7 @@ description: This repository's .cargo/config.toml names one build directory for 
 statement: Cargo intermediates live in one declared build-dir shared by every worktree; finished artifacts stay in each worktree's own target; the shared directory is bounded by scripts/reap-orphans and removed only as a whole, when over its bound and nobody is building.
 status: active
 class: blocking
-depends_on: [project.worktree-topology@1, project.reclaim-only-what-you-own@1, project.accumulation-is-measured@2, project.destructive-sweeps-fail-closed@1]
+depends_on: [project.worktree-topology@1, project.reclaim-only-what-you-own@2, project.accumulation-is-measured@2, project.destructive-sweeps-fail-closed@1]
 tags: [operations, worktrees, disk, build]
 
 x-majordomus:

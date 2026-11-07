@@ -376,7 +376,7 @@ modules:
     description: "Where every linked git worktree of this repository belongs and where each one is. The container is the primary checkout's sibling named with `-wt`, the path under it is the branch name with its hierarchy kept, and both are derived from git's own identity — the common directory, the registered worktrees, the branches — never from a registry, a configuration or the current directory. A worktree somewhere else is a typed diagnostic with a remedy; the migration that repairs it is a command-line operation of the same service."
     stability: behaviorally_verified
     source: builtin
-    capabilities: 7
+    capabilities: 8
 capabilities:
   - id: artifacts.list
     module: artifacts
@@ -66636,6 +66636,178 @@ capabilities:
       - worktree
       - git
       - topology
+    benchmark:
+      policy: required
+    cache:
+      policy: disabled
+    execution:
+      effect: read
+      cancellable: false
+      concurrency: unrestricted
+    source_path: apps/majordomus-cli/src/capability/builtin/worktree.rs
+  - id: worktree.liveness
+    module: worktree
+    kind: query
+    title: "Whether anybody uses a tree or build directory: keep or reclaim"
+    description: "The one liveness predicate every deleting sweep asks (I4346): `worktree cleanup --remove` in process, `scripts/reap-orphans --targets` and the build host's `disk-guard` through `majordomus worktree liveness <path>...`. Each path is judged with the work tree holding it, and is `keep` when an open task is recorded in the tree, a live mesh claim or active session names its issue, branch or path, a peer is attached to or announced on the tree's own server, the derive lock's live owner names its branch, an offload run record or offload lock pid file names a process working in it, a CI runner job runs under the home holding it, another process's `CARGO_*_DIR` or `MAJORDOMUS_BIN` points into it, another process works inside it or names it on its command line, or the tree's index, `HEAD` or `HEAD` reflog changed within the idle window (thirty minutes unless `idle` says otherwise). Every reason is reported. A reading that could not be taken keeps the path (`unreadable`); a source that could not be read at all — the process table, the working directories, this user's process environments, the claims of a repository that declares a mesh, the offload run records — is named in `blind`, and the answer is then `complete: false`, on which the command line exits 10 and a sweep removes nothing. Writes nothing and refreshes no index."
+    input:
+      name: LivenessInput
+      schema:
+        type: object
+        additionalProperties: false
+        properties:
+          paths:
+            type: array
+            items:
+              type: string
+            description: "The trees or build directories, absolute or relative to the primary checkout."
+          idle:
+            type:
+              - string
+              - "null"
+            description: "The idle window git activity is judged against, as a person writes it (`20m`, `2h`).\nDefault: thirty minutes."
+        required:
+          - paths
+        description: The paths a sweep is about to delete.
+        title: LivenessInput
+    output:
+      name: LivenessReport
+      schema:
+        type: object
+        properties:
+          schema:
+            type: string
+            description: "`SCHEMA`."
+          idle_seconds:
+            type: integer
+            format: uint64
+            minimum: 0
+            description: "The idle window git activity is judged against, in seconds."
+          complete:
+            type: boolean
+            description: "Whether every source was read. A sweep that gets `false` removes nothing."
+          blind:
+            type: array
+            items:
+              type: string
+            description: "Every source that could not be read at all, with why."
+          paths:
+            type: array
+            items:
+              "$ref": "#/$defs/PathLiveness"
+            description: "One answer per path, in the order asked."
+        required:
+          - schema
+          - idle_seconds
+          - complete
+          - blind
+          - paths
+        description: "The answer of `worktree.liveness`."
+        title: LivenessReport
+        "$defs":
+          PathLiveness:
+            type: object
+            properties:
+              path:
+                type: string
+                description: The path as it was asked about (made absolute when it was relative).
+              verdict:
+                "$ref": "#/$defs/LivenessVerdict"
+                description: Keep or reclaim.
+              tree:
+                type:
+                  - string
+                  - "null"
+                description: "The work tree that holds it, when one does."
+              reasons:
+                type: array
+                items:
+                  "$ref": "#/$defs/LivenessReason"
+                description: "Every reason it is kept; empty exactly when the verdict is `reclaim`."
+            required:
+              - path
+              - verdict
+              - reasons
+            description: The answer for one path.
+          LivenessVerdict:
+            oneOf:
+              - type: string
+                const: keep
+                description: "Something uses it, or that could not be ruled out."
+              - type: string
+                const: reclaim
+                description: Every source was read and none of them names it.
+            description: Keep or reclaim.
+          LivenessReason:
+            type: object
+            properties:
+              signal:
+                "$ref": "#/$defs/LivenessSignal"
+                description: What kind of evidence.
+              detail:
+                type: string
+                description: "The evidence, in words."
+            required:
+              - signal
+              - detail
+            description: One reason a path is kept.
+          LivenessSignal:
+            oneOf:
+              - type: string
+                const: task
+                description: An open majordomus task in the tree.
+              - type: string
+                const: mesh_claim
+                description: A live mesh claim or session names it.
+              - type: string
+                const: board_claim
+                description: "A peer of the tree's own server is attached or announced."
+              - type: string
+                const: derive_lock
+                description: "The derive lock's live owner names it."
+              - type: string
+                const: queue_pid_file
+                description: An offload run record or a pid file of the offload lock names it.
+              - type: string
+                const: runner_job
+                description: A CI runner job is running under the home that holds it.
+              - type: string
+                const: process_environment
+                description: "Another process's `CARGO_*_DIR` or `MAJORDOMUS_BIN` points into it."
+              - type: string
+                const: process_directory
+                description: "Another process's working directory is inside it."
+              - type: string
+                const: process_arguments
+                description: Another process names it on its command line.
+              - type: string
+                const: git_activity
+                description: "Its index, `HEAD` or `HEAD` reflog changed within the idle window."
+              - type: string
+                const: unreadable
+                description: "A reading that could not be taken: not knowing keeps it."
+            description: What made a path live.
+    provenance:
+      source: builtin
+      module: majordomus_cli::capability::builtin::worktree
+    exposure:
+      mcp:
+        tool: majordomus_worktree_liveness
+      http:
+        method: POST
+        path: /api/v1/worktrees/liveness
+      cli:
+        path:
+          - worktree
+          - liveness
+    availability: runtime
+    visibility: public
+    stability: behaviorally_verified
+    tags:
+      - worktree
+      - liveness
+      - reclamation
+      - introspection
     benchmark:
       policy: required
     cache:

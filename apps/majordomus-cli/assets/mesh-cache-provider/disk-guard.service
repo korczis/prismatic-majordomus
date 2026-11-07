@@ -5,6 +5,10 @@ After=docker.service local-fs.target
 
 [Service]
 Type=oneshot
+# The one liveness predicate every deleting sweep asks (I4346). The guard removes no build
+# directory while nothing executable is here; `majordomus mesh build-cache provision --apply`
+# installs the executable that runs it.
+Environment=LIVENESS_BIN=/usr/local/libexec/majordomus/majordomus
 ExecStart=/usr/local/libexec/majordomus/disk-guard
 Nice=10
 IOSchedulingClass=idle

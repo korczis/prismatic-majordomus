@@ -20,6 +20,15 @@
 #                         the same as nothing there, and the difference is somebody's afternoon
 #
 # And no branch is ever deleted: the disk was scarce, not the names.
+#
+# Whether anybody uses a worktree is one predicate's answer (I4346), `worktree.liveness`, which
+# `worktree cleanup` asks in process and `scripts/reap-orphans --targets` asks through the
+# executable. The second half of this case holds the reaper to it: every build directory the
+# predicate answers keep for is kept with the predicate's reason, a repository that declares a
+# mesh whose claims cannot be read gets nothing removed and a non-zero exit, and a build
+# directory nothing names is reclaimed. Every fixture's git state is aged past the predicate's
+# idle window first: a tree made a second ago is somebody's work in progress. The rule is
+# project.reclaim-only-what-you-own v2.
 . "$ROOT/test/lib.sh"
 [ -f "$ROOT/apps/majordomus-cli/Cargo.toml" ] || { echo "    apps/majordomus-cli/Cargo.toml is missing"; exit 1; }
 RB="$(rust_bin)" || rust_bin_exit $?
@@ -37,6 +46,8 @@ cd repo || exit 1
 git config user.email t@t; git config user.name t
 git remote add origin ../origin.git
 printf 'one\n' > file.txt
+# build output and the local half are ignored here as they are in the real repository
+printf 'target\n.ai/local/\n' > .gitignore
 git add -A && git commit -qm trunk
 git push -q -u origin HEAD:master
 git branch -M master
@@ -90,6 +101,18 @@ trap 'kill "$INSIDE" 2>/dev/null; :' EXIT
 sleep 1
 printf 'uncommitted\n' >> "$("$RB" worktree path dirty-tree)/dirty-tree.txt"
 
+# A worktree's index, HEAD and HEAD reflog, aged past any idle window.
+age_git() {
+  local gd
+  gd="$(git -C "$1" rev-parse --absolute-git-dir)" || return 1
+  touch -t 202001010000 "$gd/HEAD"
+  [ ! -e "$gd/index" ] || touch -t 202001010000 "$gd/index"
+  [ ! -e "$gd/logs/HEAD" ] || touch -t 202001010000 "$gd/logs/HEAD"
+}
+for b in spare-one ahead-of-remote occupied dirty-tree upstream-gone no-upstream; do
+  age_git "$("$RB" worktree path "$b")" || { echo "    could not age the git state of $b"; exit 1; }
+done
+
 # --- what the listing offers, before anything is removed
 "$RB" worktree cleanup --format json > "$T/list.json" 2>/dev/null || true
 jq -e '[.[] | select(.name == "spare-one")] | length == 1' "$T/list.json" >/dev/null \
@@ -119,7 +142,7 @@ echo "    a branch whose commits reach no remote is refused, with the count"
 
 [ "$(refused occupied)" = 1 ] || { echo "    a worktree with a process inside was not refused"; exit 1; }
 case "$(why occupied)" in
-  *working\ directory\ inside*) ;;
+  "in use: "*working\ directory\ inside*) ;;
   *) echo "    it was refused for the wrong reason: $(why occupied)"; exit 1 ;;
 esac
 [ -d "$occ" ] || { echo "    the occupied worktree was removed"; exit 1; }
@@ -151,5 +174,86 @@ for b in spare-one ahead-of-remote occupied dirty-tree upstream-gone no-upstream
     || { echo "    branch $b was deleted; the reclaim is about disk, not names"; exit 1; }
 done
 echo "    no branch was deleted: the disk was what was scarce"
+
+# --- the reaper asks the same predicate
+# Four more worktrees, each merged, pushed, clean and holding cargo's build output, so that the
+# reaper's own checks call every one spare and liveness alone decides: one nothing names, one
+# with an open task, one a process builds into from elsewhere (CARGO_TARGET_DIR, the shape the
+# 2026-10-28 incident had), and one whose HEAD moved a moment ago.
+for b in reap-idle reap-task reap-env reap-head; do mk "$b"; done
+for b in reap-idle reap-task reap-env reap-head; do
+  p="$("$RB" worktree path "$b")"
+  mkdir -p "$p/apps/majordomus-cli/target/debug"
+  printf 'Signature: 8a477f597d28d172789f06886806bc55\n# This file is a cache directory tag created by cargo.\n' \
+    > "$p/apps/majordomus-cli/target/CACHEDIR.TAG"
+  age_git "$p" || { echo "    could not age the git state of $b"; exit 1; }
+done
+mkdir -p "$("$RB" worktree path reap-task)/.ai/local/state"
+printf 'id: t-20261107000000-beef\ntask: still building\noutcome: active\n' \
+  > "$("$RB" worktree path reap-task)/.ai/local/state/current.yaml"
+# The builder is this case's own bash and not `sleep`: macOS withholds the environment of
+# Apple's platform binaries from every reader, and a bash from anywhere else is not one. Where
+# the bash running this case is Apple's too, the environment cannot be planted and that one
+# expectation is said to be left out rather than passed.
+env_target="$("$RB" worktree path reap-env)/apps/majordomus-cli/target"
+( cd "$S" && exec env CARGO_TARGET_DIR="$env_target" "$BASH" -c 'sleep 300; :' ) &
+BUILDER=$!
+trap 'pkill -P "$BUILDER" 2>/dev/null || true; kill "$INSIDE" "$BUILDER" 2>/dev/null || true' EXIT
+touch "$(git -C "$("$RB" worktree path reap-head)" rev-parse --absolute-git-dir)/HEAD"
+sleep 1
+ENV_SEEN=1
+if [ "$(uname -s)" = Darwin ] \
+  && ! ps -E -ww -o command= -p "$BUILDER" 2>/dev/null | grep -q "CARGO_TARGET_DIR=$env_target"; then
+  ENV_SEEN=0
+  echo "    (this bash, $BASH, is Apple's: macOS withholds its environment, so the CARGO_TARGET_DIR expectation is left out here)"
+fi
+
+reap() { MAJORDOMUS_BIN="$RB" MJ_ROOT="$S/repo" "$ROOT/scripts/reap-orphans" --targets "$@"; }
+rc=0; reap > "$T/reap.txt" 2>&1 || rc=$?
+LAST_OUT="$(cat "$T/reap.txt")"
+[ "$rc" = 10 ] || { echo "    the reaper's report exited $rc, not 10:"; sed 's/^/      /' "$T/reap.txt"; exit 1; }
+expect_grep 'reap-idle.*would reclaim'
+expect_grep 'reap-task.*keep — merged, but somebody is working in it: task: task t-20261107000000-beef'
+[ "$ENV_SEEN" = 0 ] \
+  || expect_grep 'reap-env.*keep — merged, but somebody is working in it: process_environment: .*CARGO_TARGET_DIR='
+expect_grep 'reap-head.*keep — merged, but somebody is working in it: git_activity: its HEAD changed'
+echo "    the reaper keeps every build directory the predicate answers keep for, with its reason"
+
+# the same predicate as a client asks it over MCP: one answer, the command line's
+task_path="$("$RB" worktree path reap-task)"
+{ printf '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-06-18","capabilities":{},"clientInfo":{"name":"case611","version":"0"}}}\n'
+  printf '{"jsonrpc":"2.0","method":"notifications/initialized"}\n'
+  printf '{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"majordomus_worktree_liveness","arguments":{"paths":["%s"]}}}\n' "$task_path"
+} | "$RB" mcp --standalone --repo "$ROOT" 2>"$T/mcp.err" | sed -n 2p > "$T/frame.json"
+jq -e '.result.structuredContent' "$T/frame.json" > "$T/tool.json" 2>/dev/null \
+  || { echo "    majordomus_worktree_liveness returned no typed answer:"; head -c 800 "$T/frame.json"; echo; head -5 "$T/mcp.err"; exit 1; }
+[ "$(jq -r '.paths[0].verdict' "$T/tool.json")" = keep ] \
+  && jq -e '[.paths[0].reasons[].signal] | index("task")' "$T/tool.json" >/dev/null \
+  || { echo "    the tool did not keep the worktree with an open task:"; cat "$T/tool.json"; exit 1; }
+echo "    majordomus_worktree_liveness answers what the command line does"
+
+# a repository that declares a mesh nobody can be asked about: nothing at all is removed
+mkdir -p "$S/repo/.ai/repo/mesh"
+printf 'kind: mesh-declaration\nenabled: true\n' > "$S/repo/.ai/repo/mesh/fixture.yaml"
+rc=0; reap --reclaim > "$T/blind.txt" 2>&1 || rc=$?
+LAST_OUT="$(cat "$T/blind.txt")"
+[ "$rc" = 12 ] || { echo "    a sweep whose mesh claims cannot be read exited $rc, not 12:"; sed 's/^/      /' "$T/blind.txt"; exit 1; }
+expect_grep 'liveness could not be measured \(.*mesh claims'
+expect_grep 'nothing is reclaimed'
+expect_file "$("$RB" worktree path reap-idle)/apps/majordomus-cli/target/CACHEDIR.TAG"
+echo "    a declared mesh whose claims cannot be read removes nothing and exits non-zero"
+mv "$S/repo/.ai/repo/mesh/fixture.yaml" "$T/mesh-declaration.yaml"
+
+rc=0; reap --reclaim > "$T/reclaimed.txt" 2>&1 || rc=$?
+LAST_OUT="$(cat "$T/reclaimed.txt")"
+[ "$rc" = 0 ] || { echo "    the reclaim exited $rc, not 0:"; sed 's/^/      /' "$T/reclaimed.txt"; exit 1; }
+expect_grep 'reap-idle.*reclaimed'
+[ -e "$("$RB" worktree path reap-idle)/apps/majordomus-cli/target" ] \
+  && { echo "    the build output nothing names survived the reclaim"; exit 1; }
+kept_ones="reap-task reap-head"; [ "$ENV_SEEN" = 0 ] || kept_ones="$kept_ones reap-env"
+for b in $kept_ones; do
+  expect_file "$("$RB" worktree path "$b")/apps/majordomus-cli/target/CACHEDIR.TAG"
+done
+echo "    a build directory with no signal at all is reclaimed, and the rest are not"
 
 echo "    the reclaim removes what it can prove is spare, and refuses the rest by name"

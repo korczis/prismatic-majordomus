@@ -12065,6 +12065,12 @@
           "route": "/docs/cli/worktree/uncommitted/"
         },
         {
+          "about": "Whether anybody uses each path, a tree or a build directory: one `keep` or `reclaim` line per path with every reason found, and `blind` lines for the sources that could not be read. The one liveness predicate every deleting sweep asks; writes nothing. Exit 10 when a source could not be read (a sweep then removes nothing), 0 otherwise",
+          "command": "majordomus worktree liveness",
+          "name": "liveness",
+          "route": "/docs/cli/worktree/liveness/"
+        },
+        {
           "about": "How far this checkout and the local trunk are from the remote trunk, as of the last fetch, judged against the policy's checkout.trunk_distance: current, lagging, stale, unjudged or unmeasured, with the commands that bring it current. Fetches nothing; exit 10 when stale",
           "command": "majordomus worktree trunk",
           "name": "trunk",
@@ -14432,6 +14438,159 @@
       ],
       "route": "/docs/cli/worktree/uncommitted/",
       "usage": "majordomus worktree uncommitted [OPTIONS]"
+    },
+    {
+      "about": "Whether anybody uses each path, a tree or a build directory: one `keep` or `reclaim` line per path with every reason found, and `blind` lines for the sources that could not be read. The one liveness predicate every deleting sweep asks; writes nothing. Exit 10 when a source could not be read (a sweep then removes nothing), 0 otherwise",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        },
+        {
+          "command": "majordomus worktree",
+          "name": "worktree",
+          "route": "/docs/cli/worktree/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [],
+          "global": false,
+          "help": "The trees or build directories, absolute or relative to the current directory",
+          "name": "paths",
+          "positional": true,
+          "possible_values": [],
+          "required": true,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [],
+          "global": false,
+          "help": "Judge git activity against this idle window instead of thirty minutes (90s, 20m, 2h)",
+          "long": "idle",
+          "name": "idle",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DURATION"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Start the search for the repository root here (default: the current directory)",
+          "long": "repo",
+          "name": "repo",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [
+            "vcs"
+          ],
+          "global": true,
+          "help": "How declarative files are enumerated",
+          "long": "discovery",
+          "name": "discovery",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
+              "name": "vcs"
+            },
+            {
+              "help": "A walk of the work tree with the same glob semantics; untracked files included",
+              "name": "filesystem"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DISCOVERY"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+          "long": "strict",
+          "name": "strict",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "STRICT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+          "long": "share",
+          "name": "share",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DIR"
+        },
+        {
+          "defaults": [
+            "text"
+          ],
+          "global": true,
+          "help": "Output shape",
+          "long": "format",
+          "name": "format",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Lines for a person",
+              "name": "text"
+            },
+            {
+              "help": "One JSON document, deterministic",
+              "name": "json"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FORMAT"
+        }
+      ],
+      "children": [],
+      "command": "majordomus worktree liveness",
+      "depth": 2,
+      "examples": [
+        {
+          "argv": [
+            "worktree",
+            "liveness",
+            "no/such/build-dir"
+          ],
+          "command": "majordomus worktree liveness no/such/build-dir",
+          "description": "The one liveness predicate every deleting sweep asks, for each path it is given: `keep` with every reason found, or `reclaim` when every source was read and none names it. A path that is not there is kept, as anything the predicate cannot read is, and asking about it reads nothing of the machine.",
+          "expectation": "exits 0; prints keep, it does not exist, every source was read",
+          "id": "worktree-liveness-absent",
+          "setup": [],
+          "title": "Keep or reclaim, and why"
+        }
+      ],
+      "executable": true,
+      "long_about": null,
+      "name": "liveness",
+      "parent_route": "/docs/cli/worktree/",
+      "path": [
+        "majordomus",
+        "worktree",
+        "liveness"
+      ],
+      "route": "/docs/cli/worktree/liveness/",
+      "usage": "majordomus worktree liveness [OPTIONS] <PATH>"
     },
     {
       "about": "How far this checkout and the local trunk are from the remote trunk, as of the last fetch, judged against the policy's checkout.trunk_distance: current, lagging, stale, unjudged or unmeasured, with the commands that bring it current. Fetches nothing; exit 10 when stale",
@@ -41961,10 +42120,10 @@
     }
   ],
   "counts": {
-    "arguments": 1819,
-    "commands": 264,
-    "examples": 263,
-    "runnable": 229
+    "arguments": 1826,
+    "commands": 265,
+    "examples": 264,
+    "runnable": 230
   },
   "declaration": "apps/majordomus-cli/src/cli.rs",
   "generator_version": "1.0.0",

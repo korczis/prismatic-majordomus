@@ -16,7 +16,14 @@
 # Build output is a directory whose CACHEDIR.TAG says cargo created it, outside cargo's
 # registry and git checkouts. Nothing else under a home is touched: no source, worktree,
 # .git, virtualenv, registry or toolchain. A directory with an open file, or a write inside
-# its idle window, is skipped; a check that cannot tell (lsof timed out) also skips. An idle
+# its idle window, is skipped; a check that cannot tell (lsof timed out) also skips. Whether
+# anybody uses it is then asked of the one liveness predicate every deleting sweep asks
+# (I4346, `majordomus worktree liveness`), at the path disk-guard.service hands this script
+# as LIVENESS_BIN: a task, claim or board peer of the worktree holding it, a derive or offload
+# run, a running CI runner job under its home, a process building into it or running from it,
+# or git state of its worktree written within the idle window keeps it. No executable there,
+# an error, or any answer but `reclaim` keeps it too: without the predicate the guard removes
+# no build directory at all, and says so. An idle
 # directory is renamed aside, checked again, and only then deleted; one that came into use
 # meanwhile is given back or left for a later run, never deleted (reap).
 #
@@ -54,6 +61,9 @@ set -uo pipefail
 : "${RUNNER_CARGO_CAP_GIB:=40}"
 HOMES=(/home/korczis)
 RUNNER_HOMES=()
+# The liveness predicate's executable, named by disk-guard.service. Empty or absent: nothing
+# is removed.
+: "${LIVENESS_BIN:=}"
 : "${STATE:=/var/lib/majordomus/disk-guard.json}"
 : "${SCAN_STAMP:=/var/lib/majordomus/disk-guard.scan}"
 : "${HOMES_FILE:=/etc/majordomus/disk-guard.homes}"
@@ -75,6 +85,24 @@ idle() {
   [ -z "$(find "$1" -mmin "-$2" -print -quit 2>/dev/null)" ] || return 1
   timeout 120 lsof -t +D "$1" >/dev/null 2>&1
   [ $? -eq 1 ]
+}
+
+# Whether the one liveness predicate answers `reclaim` for $1 against an idle window of $2
+# minutes. Anything else is keep: no executable, a failure, an incomplete answer (exit 10), a
+# `keep`, or an answer that does not name $1.
+liveness_reclaims() {
+  local out
+  if [ -z "$LIVENESS_BIN" ] || [ ! -x "$LIVENESS_BIN" ]; then
+    warn "no liveness executable at '${LIVENESS_BIN}': kept $1, and no build directory is removed"
+    return 1
+  fi
+  out=$(timeout 120 "$LIVENESS_BIN" worktree liveness --idle "${2}m" -- "$1" 2>/dev/null </dev/null) \
+    || { warn "the liveness predicate did not answer reclaim for $1 (exit $?): kept"; return 1; }
+  if printf '%s\n' "$out" | awk -F'\t' -v p="$1" '$1 == "reclaim" && $2 == p { f = 1 } END { exit !f }'; then
+    return 0
+  fi
+  info "kept $1: $(printf '%s\n' "$out" | awk -F'\t' -v p="$1" '$2 == p { print $3; exit }')"
+  return 1
 }
 
 # The CACHEDIR.TAG files under people's homes, in their build roots only.
@@ -174,10 +202,13 @@ runner_cargo_dirs() { runner_tags | cargo_of; }
 # deleted. An aside that an interrupted run left behind (only one run holds the lock) goes
 # with the next reap there once it is idle. A rename that fails removes nothing. Under a
 # runner home every rename and deletion runs as the home's owner (as_owner_of), and the
-# candidate is judged again just before the rename.
+# candidate is judged again just before the rename. Before the rename the liveness predicate
+# is asked about it against the idle window of $2 minutes, and anything but `reclaim` keeps
+# it (liveness_reclaims).
 reap() {
-  local dir=$1 aside old
+  local dir=$1 minutes=${2:-$HARD_IDLE_MIN} aside old
   runner_candidate "$dir" || return 1
+  liveness_reclaims "$dir" "$minutes" || return 1
   for old in "$dir".reaping.*; do
     [ -d "$old" ] && idle "$old" 1 \
       && act as_owner_of "$old" rm -rf --one-file-system -- "$old"
@@ -205,7 +236,7 @@ reclaim_cargo() {
     [ -d "$dir" ] || continue
     size=$(size_gib "$dir")
     idle "$dir" "$minutes" || continue
-    reap "$dir" && info "removed cargo output idle >${minutes}m: $dir (${size}G)"
+    reap "$dir" "$minutes" && info "removed cargo output idle >${minutes}m: $dir (${size}G)"
   done < <(cargo_dirs)
 }
 
@@ -220,7 +251,7 @@ reclaim_runner_cargo_over() {
     size=$(size_gib "$dir")
     [ "${size:-0}" -gt "$cap" ] || continue
     idle "$dir" "$minutes" || continue
-    reap "$dir" \
+    reap "$dir" "$minutes" \
       && info "removed runner cargo output over ${cap}G idle >${minutes}m: $dir (${size}G)"
   done < <(runner_cargo_dirs)
 }
@@ -299,7 +330,7 @@ if [ "$(free_gib)" -lt "$HARD_GIB" ]; then
   reclaim_cargo "$HARD_IDLE_MIN"
   for h in "${HOMES[@]+"${HOMES[@]}"}"; do
     for d in "$h"/.cargo/build-shared/*; do
-      idle "$d" "$HARD_IDLE_MIN" && reap "$d" \
+      idle "$d" "$HARD_IDLE_MIN" && reap "$d" "$HARD_IDLE_MIN" \
         && warn "removed shared build directory $d"
     done
   done
