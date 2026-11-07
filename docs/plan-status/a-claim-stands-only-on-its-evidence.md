@@ -218,6 +218,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I3123` | shares share/allow/profile.txt with I3167; they may not run concurrently |
 | WARN | `scope_conflict` | `I3123` | shares lib/finish.sh with I3309; they may not run concurrently |
 | WARN | `scope_conflict` | `I3123` | shares test/cases/06_finish.sh with I3318; they may not run concurrently |
+| WARN | `scope_conflict` | `I3123` | shares share/allow/profile.txt with I3395; they may not run concurrently |
 | WARN | `scope_conflict` | `I3123` | shares test/cases/06_finish.sh with I3448; they may not run concurrently |
 | WARN | `scope_conflict` | `I3123` | shares test/cases/06_finish.sh with I3607; they may not run concurrently |
 | WARN | `scope_conflict` | `I3123` | shares docs/SCHEMAS.md with I4261; they may not run concurrently |

@@ -164,3 +164,76 @@ expect_exit 10 "$RB" intent validate
 expect_grep 'FAIL unresolved_evidence_ref  probe'
 expect_grep 'invalid'
 same "an unresolved reference" "unresolved" "$(state)"
+
+# --- a foreign repository whose tests are pytest-style files under tests/, which no runner
+#     of this executable drives (I3395). Its effective profile declares the command under a
+#     name; a criterion cites it as verify:<name>; `evidence record --verify` runs and records
+#     it. The criterion is unresolved while nothing declares the name, current after a
+#     recorded passing run at this tree, stale once the tree changes, failing after a failing
+#     run — with no test under test/cases/ anywhere in the repository.
+command -v python3 >/dev/null 2>&1 || { echo "    python3 is required"; exit 1; }
+F="$M/foreign"; mkdir -p "$F"; cd "$F"
+git init -q . && git config user.email t@example.com && git config user.name t
+"$MJ" init >/dev/null
+mkdir -p tests .ai/repo/project/milestones .ai/repo/project/intents
+cat > tests/test_probe.py <<'PY'
+def test_probe():
+    with open("tests/state.txt") as f:
+        assert f.read().strip() == "pass"
+
+
+if __name__ == "__main__":
+    test_probe()
+PY
+echo pass > tests/state.txt
+milestone ""
+cat > .ai/repo/project/intents/probe.yaml <<'YAML'
+id: probe
+title: The probe's own checks pass
+statement: "The repository's own tests pass at the tree there is."
+invariants:
+  - The probe stays a valid repository
+milestones:
+  - probe
+satisfaction:
+  - id: checks-pass
+    criterion: The repository's pytest-style tests pass
+    evidence: command
+    ref: verify:tests
+YAML
+git add -A >/dev/null && git commit -qm install
+[ ! -d test/cases ] || [ -z "$(ls test/cases)" ] \
+  || { echo "    the foreign fixture holds a test/cases/ case"; exit 1; }
+
+expect_exit 10 "$RB" intent validate
+expect_grep 'FAIL unresolved_evidence_ref  probe: .*verify:tests'
+same "a verification the profile does not declare" "unresolved" "$(state)"
+
+awk '{ print } /^verification:$/ { print "  commands:"; print "    - name: tests";
+  print "      command: \"python3 tests/test_probe.py\"" }' \
+  .ai/repo/profiles/implementation.yaml > "$M/profile.yaml"
+cp "$M/profile.yaml" .ai/repo/profiles/implementation.yaml
+git add -A >/dev/null && git commit -qm "declare the repository's own check"
+expect_exit 0 "$RB" intent validate
+same "a declared verification nothing has run" "not_run" "$(state)"
+same "the verdict before a run" "unsatisfied" "$(verdict)"
+
+expect_exit 0 "$RB" evidence record --verify tests
+expect_grep 'verified     tests \(implementation\): pass, exit 0'
+same "a recorded passing run at this tree" "current" "$(state)"
+same "the verdict of the one criterion, met" "satisfied" "$(verdict)"
+git add -A >/dev/null && git commit -qm "record the check"
+same "the recorded ledger committed" "current" "$(state)"
+
+echo "# a change" >> tests/test_probe.py
+same "a passing run at another tree" "stale" "$(state)"
+same "the verdict over a stale run" "unsatisfied" "$(verdict)"
+
+echo fail > tests/state.txt
+expect_exit 0 "$RB" evidence record --verify tests
+expect_grep 'verified     tests \(implementation\): fail, exit 1'
+same "a failing run" "failing" "$(state)"
+same "the verdict over a failing run" "unsatisfied" "$(verdict)"
+
+expect_exit 13 "$RB" evidence record --verify lint
+expect_grep '`lint` is not a verification the effective profile `implementation` declares'

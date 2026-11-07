@@ -146,6 +146,28 @@
         },
         "decision_record_required": {
           "type": "boolean"
+        },
+        "commands": {
+          "description": "The repository's own checks, each under a name: `majordomus evidence record --verify <name>` runs the command at the repository root and records its exit, duration and tree digest, and an intent criterion cites it as `verify:<name>`. Read from the profile the policy's profiles.default names.",
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "name",
+              "command"
+            ],
+            "properties": {
+              "name": {
+                "type": "string",
+                "pattern": "^[a-z][a-z0-9-]*$"
+              },
+              "command": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          }
         }
       }
     },

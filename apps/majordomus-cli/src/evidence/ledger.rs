@@ -148,6 +148,11 @@ pub struct Ledger {
     pub version: u32,
     /// The executions, one per test, ordered by test id so the file diffs cleanly.
     pub executions: Vec<Execution>,
+    /// The latest run of every verification the effective profile declares, one per name,
+    /// ordered by name (I3395). Absent from the file when there is none, so a ledger that
+    /// never recorded a verification is byte for byte what it was before the key existed.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub verifications: Vec<VerificationRun>,
 }
 
 impl Default for Ledger {
@@ -155,8 +160,69 @@ impl Default for Ledger {
         Ledger {
             version: LEDGER_VERSION,
             executions: Vec::new(),
+            verifications: Vec::new(),
         }
     }
+}
+
+/// One run of a verification the repository's effective profile declares under
+/// `verification.commands` (I3395): which one, the command that ran, how it exited, how long
+/// it took, the digest of the tree it ran on, and when.
+///
+/// The digest is what makes the run evidence: an intent criterion citing `verify:<name>` is
+/// current only while the newest run of that name passed and the tree digest the run
+/// recorded is the digest of the tree now ([`super::record::tree_digest`]). A run at any
+/// other tree, a failing run, or a run of a command the profile no longer declares, is not.
+///
+/// ```
+/// use majordomus_cli::evidence::ledger::{Ledger, VerificationRun};
+/// use majordomus_cli::evidence::{Origin, Outcome};
+///
+/// let run = |outcome: Outcome| VerificationRun {
+///     name: "tests".into(),
+///     profile: "implementation".into(),
+///     command: "python3 -m pytest -q".into(),
+///     outcome,
+///     exit: Some(if outcome == Outcome::Pass { 0 } else { 1 }),
+///     millis: 412,
+///     tree: "sha256:0".into(),
+///     commit: "0".repeat(40),
+///     at: "2026-10-19T00:00:00Z".into(),
+///     origin: Origin::Local,
+/// };
+/// let mut ledger = Ledger::empty();
+/// ledger.merge_verification(run(Outcome::Pass));
+/// ledger.merge_verification(run(Outcome::Fail));
+/// // one entry per name: the newest replaces the one before it
+/// assert_eq!(ledger.verifications.len(), 1);
+/// assert_eq!(ledger.verification("tests").unwrap().outcome, Outcome::Fail);
+/// assert!(ledger.verification("lint").is_none());
+/// ```
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, schemars::JsonSchema)]
+#[schemars(rename = "EvidenceVerificationRun")]
+pub struct VerificationRun {
+    /// The name the profile declares the command under; what `verify:<name>` cites.
+    pub name: String,
+    /// The profile that declared it: the policy's `profiles.default`.
+    pub profile: String,
+    /// The command as the profile declared it when it ran.
+    pub command: String,
+    /// `pass` when the command exited 0, `fail` when it exited otherwise, `error` when it
+    /// could not be started or was ended by a signal.
+    pub outcome: super::Outcome,
+    /// The exit code; absent when the command was ended by a signal or never started.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub exit: Option<i32>,
+    /// How long it ran, in milliseconds.
+    pub millis: u64,
+    /// The digest of the tree it ran on ([`super::record::tree_digest`]), `sha256:<hex>`.
+    pub tree: String,
+    /// The commit checked out when it ran.
+    pub commit: String,
+    /// When it ran, RFC 3339, UTC.
+    pub at: String,
+    /// Where it ran.
+    pub origin: super::Origin,
 }
 
 impl Ledger {
@@ -343,6 +409,42 @@ impl Ledger {
         n
     }
 
+    /// The latest recorded run of one declared verification, by name.
+    ///
+    /// ```
+    /// use majordomus_cli::evidence::Ledger;
+    /// assert!(Ledger::empty().verification("tests").is_none(), "never run, never recorded");
+    /// ```
+    pub fn verification(&self, name: &str) -> Option<&VerificationRun> {
+        self.verifications.iter().find(|v| v.name == name)
+    }
+
+    /// Merge one verification run: it replaces the entry of its name and leaves every other
+    /// verification, and every test execution, alone. Entries stay ordered by name.
+    ///
+    /// ```
+    /// # use majordomus_cli::evidence::ledger::{Ledger, VerificationRun};
+    /// # use majordomus_cli::evidence::{Origin, Outcome};
+    /// # let run = |name: &str| VerificationRun {
+    /// #     name: name.into(), profile: "p".into(), command: "true".into(),
+    /// #     outcome: Outcome::Pass, exit: Some(0), millis: 1, tree: "sha256:0".into(),
+    /// #     commit: "0".repeat(40), at: "2026-10-19T00:00:00Z".into(), origin: Origin::Local,
+    /// # };
+    /// let mut ledger = Ledger::empty();
+    /// ledger.merge_verification(run("tests"));
+    /// ledger.merge_verification(run("lint"));
+    /// let names: Vec<&str> = ledger.verifications.iter().map(|v| v.name.as_str()).collect();
+    /// assert_eq!(names, ["lint", "tests"]);
+    /// assert!(ledger.executions.is_empty());
+    /// ```
+    pub fn merge_verification(&mut self, run: VerificationRun) {
+        match self.verifications.iter_mut().find(|v| v.name == run.name) {
+            Some(slot) => *slot = run,
+            None => self.verifications.push(run),
+        }
+        self.verifications.sort_by(|a, b| a.name.cmp(&b.name));
+    }
+
     /// Write the ledger, creating its directory. Trailing newline, two-space indent: a
     /// tracked file a person reads in a diff.
     ///
@@ -459,7 +561,7 @@ impl Ledger {
             .collect();
         LedgerSummary {
             path: LEDGER_PATH.to_string(),
-            present: !self.executions.is_empty(),
+            present: !self.executions.is_empty() || !self.verifications.is_empty(),
             executions: self.executions.len(),
             newest: self.executions.iter().map(|e| e.at.clone()).max(),
             commits,

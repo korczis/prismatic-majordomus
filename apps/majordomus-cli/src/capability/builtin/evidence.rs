@@ -311,6 +311,12 @@ pub struct EvidenceRecordInput {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     /// Also write the run record to this file.
     pub run_record: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    /// Run the verification the effective profile declares under this name
+    /// (`verification.commands`) and record its exit, duration, tree digest and time — the
+    /// run an intent criterion citing `verify:<name>` is judged by. Given alone: it reads no
+    /// report.
+    pub verify: Option<String>,
 }
 
 impl BenchmarkCases for EvidenceRecordInput {
@@ -493,6 +499,7 @@ pub struct TestEvidence {
 ///         "recorded_at": "2026-09-26T12:00:00Z", "ledger": "repo"
 ///     }))
 ///     .unwrap(),
+///     verification: None,
 /// };
 /// // the failing test is one of the three recorded, not a fourth thing that was dropped
 /// assert_eq!(report.recorded - report.passed, 1);
@@ -523,6 +530,10 @@ pub struct RecordReport {
     pub ledger: String,
     /// The recording as a typed run.
     pub run_record: EvidenceRunRecord,
+    /// The verification run `verify` asked for, as the ledger now holds it; absent from the
+    /// document for a recording of reports.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub verification: Option<evidence::ledger::VerificationRun>,
 }
 
 // ---------------------------------------------------------------- handlers
@@ -679,6 +690,9 @@ fn record(ctx: &Context, input: EvidenceRecordInput) -> Result<RecordReport, Cap
         Origin::Local | Origin::Release => None,
     };
     let ledger = input.ledger.unwrap_or_default();
+    if let Some(name) = &input.verify {
+        return record_verification(&root, name, origin, run, ledger, &input);
+    }
     let given: Vec<EvidenceProducer> = [
         (EvidenceProducer::Suite, input.suite.is_some()),
         (EvidenceProducer::Crate, input.crate_output.is_some()),
@@ -709,6 +723,67 @@ fn record(ctx: &Context, input: EvidenceRecordInput) -> Result<RecordReport, Cap
         dropped: got.dropped,
         ledger: ledger.path().to_string(),
         run_record: got.run_record,
+        verification: None,
+    })
+}
+
+/// `evidence record --verify <name>`: run the declared verification and record it (I3395).
+/// It reads no report, so a report, a measurement, a coverage summary or a run record given
+/// beside it is refused rather than silently ignored.
+fn record_verification(
+    root: &std::path::Path,
+    name: &str,
+    origin: Origin,
+    run: Option<evidence::RunRef>,
+    ledger: LedgerTarget,
+    input: &EvidenceRecordInput,
+) -> Result<RecordReport, CapabilityError> {
+    if input.suite.is_some()
+        || input.crate_output.is_some()
+        || input.coverage.is_some()
+        || !input.provenance.is_empty()
+        || input.run_record.is_some()
+    {
+        return Err(CapabilityError::InvalidInput(
+            "--verify runs a declared verification and reads no report: give it without \
+             --suite, --crate-output, --coverage, --provenance or --run-record"
+                .into(),
+        ));
+    }
+    let req = evidence::record::VerifyRequest {
+        name: name.to_string(),
+        origin,
+        ledger,
+    };
+    let v = evidence::record::record_verification(root, &req).map_err(refused_or_internal)?;
+    let run_record = EvidenceRunRecord {
+        schema: evidence::RUN_RECORD_SCHEMA,
+        id: evidence::run_id(origin, run.as_ref(), &v.commit, &v.at),
+        origin,
+        commit: v.commit.clone(),
+        working_tree: TreeState::Unknown,
+        recorded_at: v.at.clone(),
+        ledger,
+        run,
+        provenance: Vec::new(),
+        totals: Default::default(),
+        absent: Vec::new(),
+        dropped: Vec::new(),
+        unknown: Vec::new(),
+        coverage: None,
+        executions: Vec::new(),
+    };
+    Ok(RecordReport {
+        recorded: 1,
+        passed: usize::from(v.outcome.proves()),
+        commit: v.commit.clone(),
+        // the run names its tree by digest (`verification.tree`), not as clean or dirty
+        working_tree: TreeState::Unknown.as_str().to_string(),
+        unknown: Vec::new(),
+        dropped: Vec::new(),
+        ledger: ledger.path().to_string(),
+        run_record,
+        verification: Some(v),
     })
 }
 
@@ -833,7 +908,7 @@ pub fn module() -> ModuleDescriptor {
                 id: "evidence.record",
                 kind: CapabilityKind::Command,
                 title: "Record a run that happened",
-                description: "Reads what the runs already wrote — the suite's TSV report, cargo test's output, a coverage summary — carries into each result what that run measured about its own checkout (the commit and the tree, from the measurement `evidence stamp` wrote), with the digest of the test's own source, the time and the origin, and merges it into the ledger. It records; it decides nothing: a case that failed is a case the runner said failed, and a test no report named is left exactly as it was, so recording one case never erases the evidence for the rest. It refuses a tree with no commit, a measurement of another commit or of another report, a local measurement that names no report, and a CI report without a measurement; a local report recorded without one carries the tree unknown, which never reads proven. Every recording returns a run record (its commit, the tree each report's run measured, its totals and what was absent, dropped or unknown, and a coverage summary bound to its commit), and --ledger local writes only the ignored local ledger. A crate binary that ran no test, or only a filtered subset, is recorded as a skip, and what no claim can name yet (the crate's own unit tests, its doctests) is listed as dropped.",
+                description: "Reads what the runs already wrote — the suite's TSV report, cargo test's output, a coverage summary — carries into each result what that run measured about its own checkout (the commit and the tree, from the measurement `evidence stamp` wrote), with the digest of the test's own source, the time and the origin, and merges it into the ledger. It records; it decides nothing: a case that failed is a case the runner said failed, and a test no report named is left exactly as it was, so recording one case never erases the evidence for the rest. It refuses a tree with no commit, a measurement of another commit or of another report, a local measurement that names no report, and a CI report without a measurement; a local report recorded without one carries the tree unknown, which never reads proven. Every recording returns a run record (its commit, the tree each report's run measured, its totals and what was absent, dropped or unknown, and a coverage summary bound to its commit), and --ledger local writes only the ignored local ledger. A crate binary that ran no test, or only a filtered subset, is recorded as a skip, and what no claim can name yet (the crate's own unit tests, its doctests) is listed as dropped. With --verify <name> it reads no report: it runs the verification the effective profile (the policy's profiles.default) declares under that name in verification.commands, and records its exit, duration, the digest of the tree it ran on and the time, which is what an intent criterion citing verify:<name> is judged by; a name the profile does not declare is refused.",
                 input: EvidenceRecordInput,
                 output: RecordReport,
                 stability: Stability::BehaviorallyVerified,

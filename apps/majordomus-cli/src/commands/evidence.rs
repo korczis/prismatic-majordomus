@@ -95,8 +95,12 @@ pub fn run(args: EvidenceArgs) -> Result<u8> {
             coverage,
             ledger,
             run_record,
+            verify,
         } => {
             let mut input = json!({});
+            if let Some(name) = &verify {
+                input["verify"] = json!(name);
+            }
             if !provenance.is_empty() {
                 input["provenance"] = json!(provenance);
             }
@@ -172,6 +176,32 @@ fn write_stamp(
 /// A recording, one line per fact: what reached the ledger, against what, where, what the
 /// reports held that no claim can name yet, and what they named that this repository lacks.
 fn record_text(out: &mut impl Write, v: &Value, run_record: Option<&Path>) -> Result<()> {
+    let ver = &v["verification"];
+    if ver.is_object() {
+        // a declared verification that ran: what ran, how it ended, and the tree it measured
+        let exit = ver["exit"]
+            .as_i64()
+            .map_or_else(|| "no exit code".to_string(), |c| format!("exit {c}"));
+        for line in [
+            format!(
+                "verified     {} ({}): {}, {exit}, {} ms",
+                ver["name"].as_str().unwrap_or("?"),
+                ver["profile"].as_str().unwrap_or("?"),
+                ver["outcome"].as_str().unwrap_or("?"),
+                ver["millis"]
+            ),
+            format!("command      {}", ver["command"].as_str().unwrap_or("?")),
+            format!(
+                "tree         {} at {}",
+                ver["tree"].as_str().unwrap_or("?"),
+                short(ver["commit"].as_str().unwrap_or("?"))
+            ),
+            format!("ledger       {}", v["ledger"].as_str().unwrap_or("?")),
+        ] {
+            writeln!(out, "{line}").map_err(Error::Transport)?;
+        }
+        return Ok(());
+    }
     writeln!(
         out,
         "recorded     {} execution(s), {} passing",
@@ -844,6 +874,7 @@ mod tests {
                 coverage: None,
                 ledger: None,
                 run_record: None,
+                verify: None,
             },
             format: OutputFormat::Text,
         };
@@ -963,6 +994,7 @@ mod tests {
             coverage: None,
             ledger: None,
             run_record: None,
+            verify: None,
         }
     }
 
@@ -998,6 +1030,7 @@ mod tests {
             coverage: None,
             ledger: Some("local".into()),
             run_record: Some(run_record.clone()),
+            verify: None,
         };
         assert_eq!(run(evidence(&repo, cmd, OutputFormat::Json)).unwrap(), 0);
         let v: Value =
@@ -1025,6 +1058,7 @@ mod tests {
             coverage: Some(reports.path().join("coverage.json")),
             ledger: None,
             run_record: None,
+            verify: None,
         };
         let err = run(evidence(&repo, cmd, OutputFormat::Text)).unwrap_err();
         assert!(err.to_string().contains("absent.json"), "{err}");

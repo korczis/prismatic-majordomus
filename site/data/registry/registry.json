@@ -6,7 +6,7 @@
     "version": "1.0.0"
   },
   "registry": {
-    "fingerprint": "99df951f5533a1b2775a224eda81907e0c210ac22cdfa46ba0642d4fdeda5c3e",
+    "fingerprint": "4816265bce5b8d3795a293e32a521005fba76eaa204f8815dbd81772dbf5a816",
     "summary": {
       "total": 3951,
       "builtin": 231,
@@ -28272,7 +28272,7 @@
         "module": "evidence",
         "kind": "command",
         "title": "Record a run that happened",
-        "description": "Reads what the runs already wrote — the suite's TSV report, cargo test's output, a coverage summary — carries into each result what that run measured about its own checkout (the commit and the tree, from the measurement `evidence stamp` wrote), with the digest of the test's own source, the time and the origin, and merges it into the ledger. It records; it decides nothing: a case that failed is a case the runner said failed, and a test no report named is left exactly as it was, so recording one case never erases the evidence for the rest. It refuses a tree with no commit, a measurement of another commit or of another report, a local measurement that names no report, and a CI report without a measurement; a local report recorded without one carries the tree unknown, which never reads proven. Every recording returns a run record (its commit, the tree each report's run measured, its totals and what was absent, dropped or unknown, and a coverage summary bound to its commit), and --ledger local writes only the ignored local ledger. A crate binary that ran no test, or only a filtered subset, is recorded as a skip, and what no claim can name yet (the crate's own unit tests, its doctests) is listed as dropped.",
+        "description": "Reads what the runs already wrote — the suite's TSV report, cargo test's output, a coverage summary — carries into each result what that run measured about its own checkout (the commit and the tree, from the measurement `evidence stamp` wrote), with the digest of the test's own source, the time and the origin, and merges it into the ledger. It records; it decides nothing: a case that failed is a case the runner said failed, and a test no report named is left exactly as it was, so recording one case never erases the evidence for the rest. It refuses a tree with no commit, a measurement of another commit or of another report, a local measurement that names no report, and a CI report without a measurement; a local report recorded without one carries the tree unknown, which never reads proven. Every recording returns a run record (its commit, the tree each report's run measured, its totals and what was absent, dropped or unknown, and a coverage summary bound to its commit), and --ledger local writes only the ignored local ledger. A crate binary that ran no test, or only a filtered subset, is recorded as a skip, and what no claim can name yet (the crate's own unit tests, its doctests) is listed as dropped. With --verify <name> it reads no report: it runs the verification the effective profile (the policy's profiles.default) declares under that name in verification.commands, and records its exit, duration, the digest of the tree it ran on and the time, which is what an intent criterion citing verify:<name> is judged by; a name the profile does not declare is refused.",
         "input": {
           "name": "EvidenceRecordInput",
           "schema": {
@@ -28331,6 +28331,13 @@
                   "null"
                 ],
                 "description": "Also write the run record to this file."
+              },
+              "verify": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "Run the verification the effective profile declares under this name\n(`verification.commands`) and record its exit, duration, tree digest and time — the\nrun an intent criterion citing `verify:<name>` is judged by. Given alone: it reads no\nreport."
               }
             },
             "description": "A run to record into the ledger.\n\nPaths to what the runners already wrote, not a run to perform: the recorder reads a\nreport, carries into each result what that run measured about its own checkout, and\nmerges it. The reports are optional and may be given together; an absent origin is\n`local`, and an absent ledger is the tracked one.\n\n```\nuse majordomus_cli::capability::builtin::evidence::EvidenceRecordInput;\n\nlet input: EvidenceRecordInput =\n    serde_json::from_str(r#\"{\"suite\": \"tmp/report.tsv\"}\"#).unwrap();\nassert_eq!(input.suite.as_deref(), Some(\"tmp/report.tsv\"));\nassert!(input.crate_output.is_none() && input.origin.is_none());\n\n// what was not given is not written back as null: the shape a client reads is the\n// shape it sent\nassert_eq!(\n    serde_json::to_string(&input).unwrap(),\n    r#\"{\"suite\":\"tmp/report.tsv\"}\"#\n);\n```",
@@ -28400,6 +28407,17 @@
               "run_record": {
                 "$ref": "#/$defs/EvidenceRunRecord",
                 "description": "The recording as a typed run."
+              },
+              "verification": {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/EvidenceVerificationRun"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "The verification run `verify` asked for, as the ledger now holds it; absent from the\ndocument for a recording of reports."
               }
             },
             "required": [
@@ -28411,7 +28429,7 @@
               "ledger",
               "run_record"
             ],
-            "description": "What a recording did: how much of the run reached the ledger, and under what provenance.\n\nThe recorder decides nothing, and this report says so. A result no runner in this\nrepository owns is named in `unknown` rather than written under a guessed identity, and\na failure is recorded like a pass — the ledger holds what happened, so `passed` is a\ncount and never a filter.\n\n```\nuse majordomus_cli::capability::builtin::evidence::RecordReport;\n\nlet report = RecordReport {\n    recorded: 3,\n    passed: 2,\n    commit: \"06fa258913a1b2c3d4e5f60718293a4b5c6d7e8f\".to_string(),\n    working_tree: \"clean\".to_string(),\n    unknown: vec![\"docs/CLAIMS.yaml\".to_string()],\n    dropped: vec![],\n    ledger: majordomus_cli::evidence::LEDGER_PATH.to_string(),\n    run_record: serde_json::from_value(serde_json::json!({\n        \"schema\": 1, \"id\": \"local:06fa258913a1:20260926T120000Z\", \"origin\": \"local\",\n        \"commit\": \"06fa258913a1b2c3d4e5f60718293a4b5c6d7e8f\", \"working_tree\": \"clean\",\n        \"recorded_at\": \"2026-09-26T12:00:00Z\", \"ledger\": \"repo\"\n    }))\n    .unwrap(),\n};\n// the failing test is one of the three recorded, not a fourth thing that was dropped\nassert_eq!(report.recorded - report.passed, 1);\nassert!(report.ledger.starts_with(\".ai/repo/\"));\n\nlet json = serde_json::to_value(&report).unwrap();\nassert_eq!(json[\"unknown\"].as_array().unwrap().len(), 1);\nassert_eq!(json[\"working_tree\"], \"clean\");\n// a suite-only recording listed nothing, and its document is what it always was\nassert!(json.get(\"dropped\").is_none());\n```",
+            "description": "What a recording did: how much of the run reached the ledger, and under what provenance.\n\nThe recorder decides nothing, and this report says so. A result no runner in this\nrepository owns is named in `unknown` rather than written under a guessed identity, and\na failure is recorded like a pass — the ledger holds what happened, so `passed` is a\ncount and never a filter.\n\n```\nuse majordomus_cli::capability::builtin::evidence::RecordReport;\n\nlet report = RecordReport {\n    recorded: 3,\n    passed: 2,\n    commit: \"06fa258913a1b2c3d4e5f60718293a4b5c6d7e8f\".to_string(),\n    working_tree: \"clean\".to_string(),\n    unknown: vec![\"docs/CLAIMS.yaml\".to_string()],\n    dropped: vec![],\n    ledger: majordomus_cli::evidence::LEDGER_PATH.to_string(),\n    run_record: serde_json::from_value(serde_json::json!({\n        \"schema\": 1, \"id\": \"local:06fa258913a1:20260926T120000Z\", \"origin\": \"local\",\n        \"commit\": \"06fa258913a1b2c3d4e5f60718293a4b5c6d7e8f\", \"working_tree\": \"clean\",\n        \"recorded_at\": \"2026-09-26T12:00:00Z\", \"ledger\": \"repo\"\n    }))\n    .unwrap(),\n    verification: None,\n};\n// the failing test is one of the three recorded, not a fourth thing that was dropped\nassert_eq!(report.recorded - report.passed, 1);\nassert!(report.ledger.starts_with(\".ai/repo/\"));\n\nlet json = serde_json::to_value(&report).unwrap();\nassert_eq!(json[\"unknown\"].as_array().unwrap().len(), 1);\nassert_eq!(json[\"working_tree\"], \"clean\");\n// a suite-only recording listed nothing, and its document is what it always was\nassert!(json.get(\"dropped\").is_none());\n```",
             "title": "RecordReport",
             "$defs": {
               "EvidenceDropped": {
@@ -29202,6 +29220,69 @@
                   }
                 ],
                 "description": "What a run said about one test.\n\n`NotRun` is deliberately absent: it is the absence of an execution, not an outcome one\nhad. Encoding it here would let a recorder write \"this did not run\" and have it counted\namong the things that did.\n\n```\nuse majordomus_cli::evidence::Outcome;\n\nassert!(Outcome::parse(\"ok\").proves());\nassert!(!Outcome::parse(\"timeout\").proves());\n// exactly one of the five is evidence of anything; the other four are reasons there\n// is none, kept apart because \"it declined\" and \"the harness broke\" are different bugs\nassert_eq!(Outcome::parse(\"skipped\"), Outcome::Skip);\nassert_eq!(Outcome::parse(\"nonsense\"), Outcome::Error);\n```\n# Example\n\n```\nuse majordomus_cli::evidence::Outcome;\nassert!(Outcome::parse(\"ok\").proves());\nassert_eq!(Outcome::parse(\"wat\"), Outcome::Error);\n```"
+              },
+              "EvidenceVerificationRun": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "description": "The name the profile declares the command under; what `verify:<name>` cites."
+                  },
+                  "profile": {
+                    "type": "string",
+                    "description": "The profile that declared it: the policy's `profiles.default`."
+                  },
+                  "command": {
+                    "type": "string",
+                    "description": "The command as the profile declared it when it ran."
+                  },
+                  "outcome": {
+                    "$ref": "#/$defs/EvidenceOutcome",
+                    "description": "`pass` when the command exited 0, `fail` when it exited otherwise, `error` when it\ncould not be started or was ended by a signal."
+                  },
+                  "exit": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "format": "int32",
+                    "description": "The exit code; absent when the command was ended by a signal or never started."
+                  },
+                  "millis": {
+                    "type": "integer",
+                    "format": "uint64",
+                    "minimum": 0,
+                    "description": "How long it ran, in milliseconds."
+                  },
+                  "tree": {
+                    "type": "string",
+                    "description": "The digest of the tree it ran on (`super::record::tree_digest`), `sha256:<hex>`."
+                  },
+                  "commit": {
+                    "type": "string",
+                    "description": "The commit checked out when it ran."
+                  },
+                  "at": {
+                    "type": "string",
+                    "description": "When it ran, RFC 3339, UTC."
+                  },
+                  "origin": {
+                    "$ref": "#/$defs/EvidenceOrigin",
+                    "description": "Where it ran."
+                  }
+                },
+                "required": [
+                  "name",
+                  "profile",
+                  "command",
+                  "outcome",
+                  "millis",
+                  "tree",
+                  "commit",
+                  "at",
+                  "origin"
+                ],
+                "description": "One run of a verification the repository's effective profile declares under\n`verification.commands` (I3395): which one, the command that ran, how it exited, how long\nit took, the digest of the tree it ran on, and when.\n\nThe digest is what makes the run evidence: an intent criterion citing `verify:<name>` is\ncurrent only while the newest run of that name passed and the tree digest the run\nrecorded is the digest of the tree now (`super::record::tree_digest`). A run at any\nother tree, a failing run, or a run of a command the profile no longer declares, is not.\n\n```\nuse majordomus_cli::evidence::ledger::{Ledger, VerificationRun};\nuse majordomus_cli::evidence::{Origin, Outcome};\n\nlet run = |outcome: Outcome| VerificationRun {\n    name: \"tests\".into(),\n    profile: \"implementation\".into(),\n    command: \"python3 -m pytest -q\".into(),\n    outcome,\n    exit: Some(if outcome == Outcome::Pass { 0 } else { 1 }),\n    millis: 412,\n    tree: \"sha256:0\".into(),\n    commit: \"0\".repeat(40),\n    at: \"2026-10-19T00:00:00Z\".into(),\n    origin: Origin::Local,\n};\nlet mut ledger = Ledger::empty();\nledger.merge_verification(run(Outcome::Pass));\nledger.merge_verification(run(Outcome::Fail));\n// one entry per name: the newest replaces the one before it\nassert_eq!(ledger.verifications.len(), 1);\nassert_eq!(ledger.verification(\"tests\").unwrap().outcome, Outcome::Fail);\nassert!(ledger.verification(\"lint\").is_none());\n```"
               }
             }
           }
@@ -44771,7 +44852,7 @@
                   {
                     "type": "string",
                     "const": "not_derivable",
-                    "description": "The reference resolves, and this kind of evidence (`command`, `deployment`) is not\nderivable from the ledger, so it never meets a criterion by itself."
+                    "description": "The reference resolves, and this kind of evidence (`command`, `deployment`) is not\nderivable from the ledger, so it never meets a criterion by itself. A `command` that\ncites a declared verification (`verify:<name>`) is derivable, and is never this."
                   },
                   {
                     "type": "string",
@@ -45734,7 +45815,7 @@
                   {
                     "type": "string",
                     "const": "not_derivable",
-                    "description": "The reference resolves, and this kind of evidence (`command`, `deployment`) is not\nderivable from the ledger, so it never meets a criterion by itself."
+                    "description": "The reference resolves, and this kind of evidence (`command`, `deployment`) is not\nderivable from the ledger, so it never meets a criterion by itself. A `command` that\ncites a declared verification (`verify:<name>`) is derivable, and is never this."
                   },
                   {
                     "type": "string",
@@ -46621,7 +46702,7 @@
                   {
                     "type": "string",
                     "const": "not_derivable",
-                    "description": "The reference resolves, and this kind of evidence (`command`, `deployment`) is not\nderivable from the ledger, so it never meets a criterion by itself."
+                    "description": "The reference resolves, and this kind of evidence (`command`, `deployment`) is not\nderivable from the ledger, so it never meets a criterion by itself. A `command` that\ncites a declared verification (`verify:<name>`) is derivable, and is never this."
                   },
                   {
                     "type": "string",
@@ -47664,7 +47745,7 @@
                   {
                     "type": "string",
                     "const": "not_derivable",
-                    "description": "The reference resolves, and this kind of evidence (`command`, `deployment`) is not\nderivable from the ledger, so it never meets a criterion by itself."
+                    "description": "The reference resolves, and this kind of evidence (`command`, `deployment`) is not\nderivable from the ledger, so it never meets a criterion by itself. A `command` that\ncites a declared verification (`verify:<name>`) is derivable, and is never this."
                   },
                   {
                     "type": "string",
@@ -48220,7 +48301,7 @@
                   {
                     "type": "string",
                     "const": "not_derivable",
-                    "description": "The reference resolves, and this kind of evidence (`command`, `deployment`) is not\nderivable from the ledger, so it never meets a criterion by itself."
+                    "description": "The reference resolves, and this kind of evidence (`command`, `deployment`) is not\nderivable from the ledger, so it never meets a criterion by itself. A `command` that\ncites a declared verification (`verify:<name>`) is derivable, and is never this."
                   },
                   {
                     "type": "string",
@@ -49019,7 +49100,7 @@
                   {
                     "type": "string",
                     "const": "not_derivable",
-                    "description": "The reference resolves, and this kind of evidence (`command`, `deployment`) is not\nderivable from the ledger, so it never meets a criterion by itself."
+                    "description": "The reference resolves, and this kind of evidence (`command`, `deployment`) is not\nderivable from the ledger, so it never meets a criterion by itself. A `command` that\ncites a declared verification (`verify:<name>`) is derivable, and is never this."
                   },
                   {
                     "type": "string",
@@ -97878,7 +97959,7 @@
     ]
   },
   "index": {
-    "fingerprint": "8c343d8050dc0d470510985c455e609a7cc42df0510482af8657bbdc1e8cebb9",
+    "fingerprint": "7c9bfab3e9150f19df290e36c6e7abee4933913deade384c42290b22b943eb78",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -118622,7 +118703,7 @@
         "path": ".ai/repo/project/issues/I3395.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2935
+        "bytes": 3185
       },
       {
         "uri": "majordomus://issue/I3396",
@@ -135366,7 +135447,7 @@
         "identity": "test/cases/367_an_intent_is_satisfied_only_by_evidence.sh",
         "path": "test/cases/367_an_intent_is_satisfied_only_by_evidence.sh",
         "source_class": "case",
-        "bytes": 8426
+        "bytes": 11630
       },
       {
         "uri": "majordomus://test/test/cases/368_mesh_handover_resolves.sh",
@@ -165400,6 +165481,18 @@
                 "positional": false,
                 "help": "Also write the run record to this file",
                 "value_name": "RUN_RECORD",
+                "takes_value": true,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "verify",
+                "long": "verify",
+                "positional": false,
+                "help": "Run the verification the effective profile declares under this name (verification.commands) and record it; an intent criterion cites it as verify:NAME",
+                "value_name": "NAME",
                 "takes_value": true,
                 "required": false,
                 "global": false,

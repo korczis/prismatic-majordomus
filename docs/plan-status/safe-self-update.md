@@ -83,7 +83,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I2720` | shares docs/DISTRIBUTION.md with I3315; they may not run concurrently |
 | WARN | `scope_conflict` | `I2720` | shares apps/majordomus-cli/src/capability/builtin with I3317; they may not run concurrently |
 | WARN | `scope_conflict` | `I2720` | shares test/cases with I3318; they may not run concurrently |
-| WARN | `scope_conflict` | `I2720` | shares test/cases with I3395; they may not run concurrently |
+| WARN | `scope_conflict` | `I2720` | shares apps/majordomus-cli/src/capability/builtin with I3395; they may not run concurrently |
 | WARN | `scope_conflict` | `I2720` | shares test/cases with I3400; they may not run concurrently |
 | WARN | `scope_conflict` | `I2720` | shares apps/majordomus-cli/src/capability/builtin with I3442; they may not run concurrently |
 | WARN | `scope_conflict` | `I2720` | shares apps/majordomus-cli/src/capability/builtin with I3443; they may not run concurrently |
