@@ -431,9 +431,11 @@ from there:
 
 - `intent-closes-github-milestones` — the GitHub projection closes a milestone from its derived
   plan status alone and reads no intent.
-- `intent-command-deployment-evidence` — a criterion settled by a `command` or a `deployment`
-  resolves and reads `not_derivable`; the ledger records runs of tests and claims only, so such
-  a criterion is never met.
+- `intent-command-deployment-evidence` — a `command` criterion is judged from the ledger by a
+  receipt of exactly its command at the presented revision ([`EVIDENCE.md`](@/docs/evidence.md)); a
+  `deployment` criterion, and a command criterion whose ref is `majordomus intent explain <its
+  own intent>` (a placeholder for a planned proof), still resolve and read `not_derivable`, so
+  such a criterion is never met.
 
 ## Traceability: what realised an issue, and what an issue realised
 

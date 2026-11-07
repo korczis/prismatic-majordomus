@@ -334,6 +334,31 @@ its own file is not that code, so it is judged as a route that names no inputs (
 pass is current only while nothing but the ledger has changed since the run, and a change to
 the code under test, with the test file byte-identical, makes it `stale`.
 
+An intent criterion naming a `command` is judged from the same ledger, with no store of its
+own: its receipt is the latest recorded execution whose `command` is the criterion's `ref`,
+byte for byte. A command declares no inputs, so it is judged as row 14 too, and the plan's
+own records are not set aside as they are for a test, because they may be exactly what the
+command reads: a pass is current only at the presented revision, nothing but the ledger
+having changed since the run.
+
+<div class="overflow-x-auto" tabindex="0">
+
+| What the ledger holds for the command | The criterion reads |
+|---|---|
+| a pass of exactly that command, at the presented revision, on a clean tree | `current` (`proven`) |
+| a run of a different command — one argument more or fewer is different | `not_run` |
+| no run of it at all | `not_run` |
+| a failing, timed-out or errored run of it | `failing` |
+| a pass of it, followed by a change (committed or not), or at a commit this history lacks | `stale` |
+
+</div>
+
+
+A command criterion whose `ref` is `majordomus intent explain <its own intent>` is a
+placeholder for a proof still planned, not a receipt: `intent explain` exits 0 whatever it
+finds. It reads `not_derivable` and names that command, whatever the ledger records for it,
+and like a `deployment` it holds the verdict at `unknown` rather than `unsatisfied`.
+
 Counting `inputs_unchanged` as met does not make the two strongest states one tick. `met` is
 the intent's own question, and every intent criterion carries `proof`, the verdict behind it:
 the terminal prints `current (proven)` or `current (inputs_unchanged)`, and the Cockpit's badge

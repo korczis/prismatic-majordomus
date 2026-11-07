@@ -156,7 +156,8 @@ fn the_command_line_http_and_mcp_agree_on_the_verdict_the_evidence_alone_derives
         json!({ "state": "satisfied", "reasons": [] })
     );
 
-    // a command criterion the ledger cannot settle leaves the evidence unable to answer
+    // a placeholder command criterion the ledger cannot settle leaves the evidence unable to
+    // answer
     f.write(
         ".ai/repo/project/intents/fixture-intent.yaml",
         &common::INTENT.replace(
@@ -165,7 +166,7 @@ fn the_command_line_http_and_mcp_agree_on_the_verdict_the_evidence_alone_derives
   - id: it-ships
     criterion: The fixture ships
     evidence: command
-    ref: just ship
+    ref: majordomus intent explain fixture-intent
 ",
         ),
     );
@@ -224,6 +225,182 @@ fn a_criterion_is_met_only_by_a_recorded_passing_run_of_the_test_that_is_there()
 
     record(run(Outcome::Fail, digest_of(&source)));
     assert_eq!(criterion(&f)["state"], "failing");
+}
+
+/// The fixture intent with one more criterion: a command criterion whose reference is `command`.
+fn with_command_criterion(f: &Fixture, id: &str, command: &str) {
+    f.write(
+        ".ai/repo/project/intents/fixture-intent.yaml",
+        &common::INTENT.replace(
+            "    ref: test/cases/00_x.sh\n",
+            &format!(
+                "    ref: test/cases/00_x.sh\n  - id: {id}\n    criterion: The command passes\n    \
+                 evidence: command\n    ref: \"{command}\"\n"
+            ),
+        ),
+    );
+    f.commit("a command criterion");
+}
+
+/// Record one run of the fixture case, as `command` recorded it, at `commit`.
+fn record_command_run(f: &Fixture, command: &str, outcome: Outcome, commit: &str) {
+    let id = TestId::of("test/cases/00_x.sh").unwrap();
+    let source = std::fs::read(f.path(&id.source())).unwrap();
+    let mut ledger = Ledger::empty();
+    ledger.merge([Execution {
+        test: id.as_string(),
+        runner: Runner::Suite,
+        source: id.source(),
+        outcome,
+        seconds: 1,
+        commit: commit.to_string(),
+        working_tree: "clean".into(),
+        digest: digest_of(&source),
+        at: "2026-11-07T00:00:00Z".into(),
+        origin: Origin::Local,
+        command: command.to_string(),
+        run: None,
+    }]);
+    ledger.save(&f.root()).unwrap();
+    f.commit("record a run");
+}
+
+/// The state, `met` and `proof` of the criterion `id` of the fixture intent.
+fn command_criterion(f: &Fixture, id: &str) -> (String, bool, String, Value) {
+    let (code, v) = cli_json(f, &["intent", "show", "fixture-intent"]);
+    assert_eq!(code, 0, "{v:#}");
+    let c = v["satisfaction"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|c| c["id"] == id)
+        .unwrap_or_else(|| panic!("no criterion {id}: {v:#}"))
+        .clone();
+    (
+        c["state"].as_str().unwrap().to_string(),
+        c["met"] == true,
+        c["proof"].as_str().unwrap_or("absent").to_string(),
+        v["verdict"].clone(),
+    )
+}
+
+/// I3255, first criterion: a passing receipt of exactly the command, at the presented
+/// revision, is the one thing that reads current.
+#[test]
+fn a_command_criterion_is_judged_current_by_a_passing_receipt_of_exactly_it_at_the_presented_revision(
+) {
+    let f = Fixture::new();
+    let command = "bash test/run.sh 00_x --strict";
+    with_command_criterion(&f, "it-verifies", command);
+    let (state, met, proof, _) = command_criterion(&f, "it-verifies");
+    assert_eq!((state.as_str(), met, proof.as_str()), ("not_run", false, "not_run"));
+
+    let head = f.git(&["rev-parse", "HEAD"]).trim().to_string();
+    record_command_run(&f, command, Outcome::Pass, &head);
+    let (state, met, proof, _) = command_criterion(&f, "it-verifies");
+    assert_eq!(
+        (state.as_str(), met, proof.as_str()),
+        ("current", true, "proven"),
+        "a pass of exactly the command at the revision presented, the ledger's own commit aside"
+    );
+}
+
+/// I3255, second criterion: a receipt of a different command, a failing run, and a run before
+/// a change read not current, each with the word that says why.
+#[test]
+fn a_command_criterion_is_judged_not_current_by_a_near_miss_a_failing_run_or_a_later_change() {
+    let f = Fixture::new();
+    let command = "bash test/run.sh 00_x --strict";
+    with_command_criterion(&f, "it-verifies", command);
+    let head = || f.git(&["rev-parse", "HEAD"]).trim().to_string();
+    let judged = |f: &Fixture| {
+        let (state, met, proof, verdict) = command_criterion(f, "it-verifies");
+        assert!(!met || state == "current");
+        (state, proof, verdict)
+    };
+
+    // a near miss: the same command with one argument fewer, and with one more, is not its
+    // receipt, however it went
+    for near in ["bash test/run.sh 00_x", "bash test/run.sh 00_x --strict --fast"] {
+        record_command_run(&f, near, Outcome::Pass, &head());
+        let (state, proof, verdict) = judged(&f);
+        assert_eq!((state.as_str(), proof.as_str()), ("not_run", "not_run"), "{near}");
+        assert_eq!(verdict["state"], "unsatisfied", "{near}: {verdict}");
+    }
+
+    // a failing run of exactly the command
+    record_command_run(&f, command, Outcome::Fail, &head());
+    let (state, proof, verdict) = judged(&f);
+    assert_eq!((state.as_str(), proof.as_str()), ("failing", "failing"));
+    assert!(verdict["reasons"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .any(|r| r["criterion"] == "it-verifies" && r["state"] == "failing"));
+
+    // a pass, then a change to what it may read: another revision is not the one presented
+    record_command_run(&f, command, Outcome::Pass, &head());
+    assert_eq!(judged(&f).0, "current");
+    f.write("lib/a.sh", "#!/usr/bin/env bash\n# the one library file\nexit 1\n");
+    assert_eq!(judged(&f).0, "stale", "an uncommitted change since the run");
+    f.commit("a change since the run");
+    let (state, proof, _) = judged(&f);
+    assert_eq!((state.as_str(), proof.as_str()), ("stale", "stale"));
+
+    // a pass recorded against a commit this history does not hold is stale, never current
+    record_command_run(&f, command, Outcome::Pass, &"1".repeat(40));
+    assert_eq!(judged(&f).0, "stale", "a receipt of another revision");
+}
+
+/// I3255, third and fourth criteria: intent-lifecycle#model-is-gated, as master declares it,
+/// is judged rather than read not_derivable; and a criterion whose reference is `majordomus
+/// intent explain <its own intent>` is a placeholder, never current even beside a passing
+/// receipt of that very command.
+#[test]
+fn a_command_criterion_is_judged_unless_it_is_its_own_intents_explain_placeholder() {
+    // the criterion exactly as the repository's own record declares it
+    let record = std::fs::read_to_string(
+        std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("../../.ai/repo/project/intents/intent-lifecycle.yaml"),
+    )
+    .unwrap();
+    let map = majordomus_cli::metadata::yaml::parse_mapping(&record).unwrap();
+    let gated = map["satisfaction"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|c| c["id"] == "model-is-gated")
+        .expect("intent-lifecycle declares model-is-gated")
+        .clone();
+    assert_eq!(gated["evidence"], "command");
+    let command = gated["ref"].as_str().unwrap().to_string();
+
+    let f = Fixture::new();
+    with_command_criterion(&f, "model-is-gated", &command);
+    let (state, _, proof, _) = command_criterion(&f, "model-is-gated");
+    assert_ne!(state, "not_derivable", "{command} is judged from the ledger");
+    assert_eq!((state.as_str(), proof.as_str()), ("not_run", "not_run"));
+    let head = f.git(&["rev-parse", "HEAD"]).trim().to_string();
+    record_command_run(&f, &command, Outcome::Pass, &head);
+    assert_eq!(command_criterion(&f, "model-is-gated").0, "current");
+
+    // the placeholder: a passing receipt of it at this revision still meets nothing
+    let placeholder = "majordomus intent explain fixture-intent";
+    with_command_criterion(&f, "planned", placeholder);
+    let head = f.git(&["rev-parse", "HEAD"]).trim().to_string();
+    record_command_run(&f, placeholder, Outcome::Pass, &head);
+    let (code, v) = cli_json(&f, &["intent", "show", "fixture-intent"]);
+    assert_eq!(code, 0, "{v:#}");
+    let c = v["satisfaction"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|c| c["id"] == "planned")
+        .unwrap()
+        .clone();
+    assert_eq!(c["state"], "not_derivable", "{c:#}");
+    assert_eq!(c["met"], false);
+    assert_eq!(c["reproduce"], placeholder, "it names the command it stands for");
 }
 
 /// A test criterion and a claim criterion over the same case, judged at every step through
