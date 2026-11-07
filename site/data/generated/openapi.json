@@ -30896,7 +30896,7 @@
           "value": "not_run"
         },
         {
-          "description": "The reference resolves, and this kind of evidence (`command`, `deployment`) is not\nderivable from the ledger, so it never meets a criterion by itself.",
+          "description": "The reference resolves, and nothing the ledger holds can settle it, so it never meets\na criterion by itself: a `deployment`, and a `command` criterion whose reference is\n`majordomus intent explain <its own intent>` — a placeholder for a proof still planned,\nbecause that command exits 0 whatever it finds.",
           "value": "not_derivable"
         },
         {
@@ -32220,11 +32220,11 @@
           "value": "satisfied"
         },
         {
-          "description": "A criterion the ledger or the claim join can settle (`test`, `claim`) is not met.",
+          "description": "A criterion the ledger or the claim join can settle (`test`, `claim`, `command`) is\nnot met.",
           "value": "unsatisfied"
         },
         {
-          "description": "Every unmet criterion is of a kind the ledger cannot yet settle (`command`,\n`deployment`), or the intent declares no criterion: the evidence cannot answer.",
+          "description": "Every unmet criterion is one the ledger cannot settle (a `deployment`, or a `command`\nthat is a placeholder and reads `not_derivable`), or the intent declares no criterion:\nthe evidence cannot answer.",
           "value": "unknown"
         }
       ],
