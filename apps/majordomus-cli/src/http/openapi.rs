@@ -50,10 +50,12 @@ pub fn infrastructure_routes() -> Vec<crate::web::ProjectionRoute> {
 }
 
 /// The error statuses the router answers, by code, with the reason each one is given.
-/// `refused` is a command's alone: a query has nothing to refuse.
+/// `refused` and `conflict` are a command's alone: a query has nothing to refuse and holds
+/// nothing a request could contradict.
 const ERROR_STATUSES: &[(&str, &str, &str)] = &[
     ("400", "invalid_input", "The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects."),
     ("404", "not_found", "The input names something the repository does not hold."),
+    ("409", "conflict", "The command contradicts what the server already holds, such as an idempotency key sent again with a different input; the message names what the key already started."),
     ("422", "refused", "The command was understood and turned down for the reason the message gives."),
     ("500", "internal", "The capability failed for a reason of its own; the message names it."),
 ];
@@ -261,7 +263,7 @@ fn responses(kind: CapabilityKind, title: &str, output_ref: &Value, error_ref: &
         json!({ "description": format!("{title}: the result."), "content": { "application/json": { "schema": output_ref } } }),
     );
     for (status, code, reason) in ERROR_STATUSES {
-        if *code == "refused" && kind != CapabilityKind::Command {
+        if matches!(*code, "refused" | "conflict") && kind != CapabilityKind::Command {
             continue;
         }
         map.insert(

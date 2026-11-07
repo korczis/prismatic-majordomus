@@ -5,7 +5,7 @@ weight = 3
 [extra]
 id = "evolve"
 status = "active"
-version = 3
+version = 4
 source = ".ai/repo/skills/evolve/SKILL.md"
 +++
 {% raw %}
@@ -188,8 +188,12 @@ scripts/derive
 ```
 
 Run the gate of everything the change touched before the derive, so that one derive is
-enough. A lesson about a gate is proven by a case that breaks the thing and watches the
-gate refuse it. On a machine under its disk floor, `majordomus offload derive .` is the
+enough, and stage the records this run wrote first (`git add -A` under the knowledge
+section): a derive projects what git tracks and refuses a tree that holds untracked files
+(exit 10), and `MAJORDOMUS_DERIVE_ALLOW_UNTRACKED=1` only makes it run blind to them. On
+2026-11-05 an evolve run derived with its 43 new records untracked, the derive refused, and
+the commit's pages gate then refused the stale derived data. A lesson about a gate is proven
+by a case that breaks the thing and watches the gate refuse it. On a machine under its disk floor, `majordomus offload derive .` is the
 derive of record: it runs on a build host and stages what it derived, and a local build
 there takes the disk from every other worker of the machine.
 

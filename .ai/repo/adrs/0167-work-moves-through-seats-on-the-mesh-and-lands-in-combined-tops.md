@@ -18,7 +18,7 @@ related:
   - file:.ai/repo/rules/project/integration-follows-the-current-master.v3.md
   - file:.ai/repo/rules/project/an-expedited-landing-is-the-owners-word.v1.md
   - file:.ai/repo/rules/project/work-is-claimed-before-it-is-built.v1.md
-  - file:.ai/repo/rules/project/mesh-cooperation-is-authenticated.v1.md
+  - file:.ai/repo/rules/project/mesh-cooperation-is-authenticated.v2.md
   - file:docs/INTEGRATION.md
   - file:docs/MESH.md
   - file:docs/RELEASE.md

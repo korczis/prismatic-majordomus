@@ -1883,7 +1883,7 @@ mod tests {
             .with_max_level(tracing::Level::WARN)
             .with_writer(std::io::sink)
             .finish();
-        tracing::subscriber::with_default(subscriber, || {
+        crate::logging::with_scoped(subscriber, || {
             assert_eq!(superseded_by(&lease, &identity_of(&exe), "0.30.2"), None);
         });
     }
@@ -1909,7 +1909,7 @@ mod tests {
             .with_max_level(tracing::Level::WARN)
             .with_writer(std::io::sink)
             .finish();
-        tracing::subscriber::with_default(subscriber, || {
+        crate::logging::with_scoped(subscriber, || {
             assert!(!record_runtime(
                 &path,
                 &held.token,
@@ -2120,7 +2120,7 @@ mod tests {
             .with_max_level(tracing::Level::WARN)
             .with_writer(std::io::sink)
             .finish();
-        tracing::subscriber::with_default(subscriber, || {
+        crate::logging::with_scoped(subscriber, || {
             assert!(
                 !remove_if_held(&path, "owner"),
                 "no removal without the lock"
@@ -2322,7 +2322,7 @@ mod tests {
             .with_writer(std::io::sink)
             .finish();
         let mut ran = false;
-        tracing::subscriber::with_default(subscriber, || {
+        crate::logging::with_scoped(subscriber, || {
             take_over_with(&path, &seen, Duration::ZERO, || ran = true).unwrap();
         });
         assert!(!ran, "nothing past the lock ran");

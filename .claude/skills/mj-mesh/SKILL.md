@@ -5,7 +5,7 @@ argument-hint: "[request]"
 ---
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: module:mesh; regenerate with `majordomus generate`
-     Generator: majordomus-cli 1.0.0-alpha.10 -->
+     Generator: majordomus-cli 1.0.0 -->
 
 # Majordomus `mesh`
 
@@ -40,6 +40,7 @@ $ARGUMENTS
 | `mesh.state` | The state every linked runtime converges on | `majordomus_mesh_state` | — | reads |
 | `mesh.status` | The mesh, at a glance | `majordomus_mesh` | — | reads |
 | `mesh.verify` | Prove cooperation now | `majordomus_mesh_verify` | — | changes |
+| `mesh.who` | Who runs this | `majordomus_mesh_who` | `majordomus mesh who` | reads |
 
 A capability that *changes* something runs only when the person asked for that change: call it once, and if it is refused or its outcome is not known, report that as it is and do not try again by another way. One that *reads* may be called whenever the request needs it.
 

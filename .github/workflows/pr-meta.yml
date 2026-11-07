@@ -48,8 +48,11 @@ jobs:
       # The trunk's adapter and never the head's, with the whole history: the adapter reads
       # the head's commits and records with git as data, and finds what the head changed from
       # its merge base with the base branch.
+      # Twenty minutes, the bound I4296 gave validate's full-history checkouts on the same
+      # runners: on 2026-11-05 this one timed out at five (run 42035733979) and held #2932's
+      # auto-merge until the job was rerun by hand.
       - uses: actions/checkout@v4
-        timeout-minutes: 5
+        timeout-minutes: 20
         with:
           ref: ${{ github.event.repository.default_branch }}
           fetch-depth: 0

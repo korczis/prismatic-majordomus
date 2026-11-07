@@ -6,12 +6,17 @@
 //! 2, with the reason and the remedy on stderr, which the provider hands to the model. Every
 //! other outcome is 0, an undecidable one included: a guard that refused because it could
 //! not read its own inputs would stop every edit of a checkout nobody has served.
+//!
+//! A payload of the shell tool is asked the second question first: does its command start
+//! a build on a declared cluster host outside the offload path ([`crate::guard`]'s
+//! `remote_build`, I3956)? That refusal is 2 as well, with the rule and the way.
 
 use std::io::{Read, Write};
 use std::path::{Path, PathBuf};
 
 use crate::cli::{GuardArgs, GuardCommand, GuardHookArgs};
 use crate::error::Result;
+use crate::guard::remote_build::{declared_hosts, from_payload as from_command, RemoteBuild};
 use crate::guard::{from_payload, judge, server_claims, ClaimSource, EditVerdict};
 
 /// The code a provider's pre-tool hook reads as "do not run this tool".
@@ -30,8 +35,20 @@ fn hook(args: GuardHookArgs) -> Result<u8> {
     let mut payload = String::new();
     let _ = std::io::stdin().read_to_string(&mut payload);
     let base = args.repo.clone().or_else(|| std::env::current_dir().ok());
+    let build = from_command(&payload, base.as_deref(), declared_hosts);
+    if let Some(code) = report_build(build.as_ref(), &mut std::io::stderr()) {
+        return Ok(code);
+    }
     let verdict = answer(&args.provider, base, &payload, server_claims);
     Ok(report(verdict.as_ref(), &mut std::io::stderr()))
+}
+
+/// The exit code for a build the payload's command would start on a cluster host, with the
+/// refusal written to `err`; `None` when it starts none and the edit guard decides.
+fn report_build(build: Option<&RemoteBuild>, err: &mut dyn Write) -> Option<u8> {
+    let build = build?;
+    let _ = writeln!(err, "{}", build.refusal());
+    Some(EXIT_REFUSED)
 }
 
 /// The verdict on the edit `payload` names, or `None` when it names no file of a repository.
@@ -153,6 +170,27 @@ mod tests {
         let mut err = Vec::new();
         assert_eq!(report(None, &mut err), 0);
         assert!(err.is_empty());
+    }
+
+    #[test]
+    fn a_remote_build_is_refused_before_the_edit_guard_is_asked() {
+        let build = crate::guard::remote_build::remote_build(
+            "ssh lundra cargo test",
+            &[serde_json::from_value(
+                serde_json::json!({ "id": "lundra", "address": "u@10.0.0.1" }),
+            )
+            .unwrap()],
+        );
+        let mut err = Vec::new();
+        assert_eq!(report_build(build.as_ref(), &mut err), Some(EXIT_REFUSED));
+        let text = String::from_utf8(err).unwrap();
+        assert!(
+            text.contains("majordomus offload derive --host lundra"),
+            "{text}"
+        );
+        let mut quiet = Vec::new();
+        assert_eq!(report_build(None, &mut quiet), None);
+        assert!(quiet.is_empty(), "no build, nothing said");
     }
 
     #[test]

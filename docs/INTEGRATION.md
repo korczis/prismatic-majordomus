@@ -679,6 +679,17 @@ The procedure:
    is the widest and slowest the
    repository has, and every member waits on it. The composer finds the member the failure
    belongs to and applies step 4.
+
+   The hook's `--before-push` is a budget, not step 2's plan: it keeps the structure gates CI
+   recorded at 15 s or less while their sum stays within 120 s, so core-check and
+   knowledge-nodes, and adr-collision once cheaper gates fill the sum, are first met in CI. A
+   top that raises a rule's or a decision's version, or renames any record file, runs those
+   three itself and greps the tree for the old path. Train 19c (#2918) passed its hook and
+   failed structure in run 41896185903 on ADR 0167, which still related the `.v1.md` file of
+   a rule its member raised to v2 (fixed by `5512734636d`). Step 1's merged judgement holds
+   for a member's own cases as well: train P (#2855) failed cases 3441 and 99, which #2522 had
+   written against an older master and no finished run of its own had repeated
+   (`37a8ef2f4c9`).
 4. **A member that blocks moves to the next train at once, unless its fix is small and
    ready.** Small and green beats big. A top waits on its worst member, so one member's red
    holds back every other member's landing. Clause 2, as the owner decided on 2026-11-01 at
@@ -915,6 +926,24 @@ json` stays the list of pull requests to close.
   refuses to itself — and the next executor of that checkout releases the leftover, so a
   crash costs other machines a wait, never a claim nobody can give back
   (`integration::exclusive`, `tests/integration_across_machines.rs`, case 924).
+- An executor's lease lives by its progress through the queue, not by its process existing
+  (I3991). The claim's session is beaten once as it is taken and again each time the
+  executor advances its queue: a pull request planned, acted on or refused, one becoming or
+  stopping being actionable, or a head or a check verdict that moved between two
+  observations. Observing, idling and waiting out an outage are not progress. An executor
+  that holds the lease and advances nothing for `cooperation.session_ttl_seconds` has its
+  claim suspended by the mesh (I3990) while its process lives, and another machine's
+  executor is admitted. Before every write to the forge or a branch — a merge, a refresh, a
+  reopen, a repair, a closure — the executor beats and reads its claim again: one another
+  executor was admitted over is released by the mesh with `OVERTAKEN` at that beat, and the
+  executor records `lease_lost`, does nothing, and stops (`prs drain` exits 10; `repair
+  --apply` and `cleanup --apply` exit 12). The lease record carries `progressed_at` and
+  `progress_ttl_seconds`, and `prs brief` says "no queue progress for N s" once the holder
+  is past its ttl. A long derive inside one refresh can outlast the ttl; the check before
+  the push catches it, and the keep-alive deliberately does not beat. What this does not
+  close is the moment between that check and the forge's merge: an executor suspended and
+  overtaken inside it still merges once. Fencing that write needs an epoch the forge side
+  can be told was lost (I3174).
 - Every act is appended to the audit trail before it happens. The trail is one file per
   repository, `<git-common-dir>/majordomus/integration/events.jsonl`, beside the lease, so
   every worktree writes the same trail and `prs events`, `prs brief`, `prs status`, the

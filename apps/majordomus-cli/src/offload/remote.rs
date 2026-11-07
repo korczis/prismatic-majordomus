@@ -63,9 +63,10 @@ fn expand_home(path: &str) -> String {
 }
 
 impl Remote {
-    /// This machine, as a host: the script runs under `sh` here. What the tests use as a
-    /// host, with real processes standing for the waiters.
-    #[cfg(test)]
+    /// This machine, as a host: the script runs under `sh` here. What `mesh who` reads a
+    /// local process through, and what the tests use as a host, with real processes
+    /// standing for the waiters. The module is the crate's own, so a doc example could not
+    /// name it; `tests::arguments_reach_the_script_as_they_are` runs a script through it.
     pub fn local() -> Remote {
         Remote {
             prefix: Vec::new(),
@@ -138,6 +139,28 @@ impl Remote {
         };
         let out = c.output()?;
         Ok(RemoteOutput {
+            code: out.status.code(),
+            stdout: String::from_utf8_lossy(&out.stdout).into_owned(),
+            stderr: String::from_utf8_lossy(&out.stderr).into_owned(),
+        })
+    }
+
+    /// Run a script to its end with its standard input held open by this process until the
+    /// script ends: a script that watches its input (the derive does) learns that this
+    /// process is gone — killed, disconnected, crashed — when the input reaches its end, and
+    /// stops what it started (I3956).
+    pub fn run_held(&self, script: &str, args: &[&str]) -> std::io::Result<RemoteOutput> {
+        let mut child = self
+            .command(script, args)
+            .stdin(Stdio::piped())
+            .stdout(Stdio::piped())
+            .stderr(Stdio::piped())
+            .spawn()?;
+        // taken out of the child so that waiting does not close it: it is closed after
+        let held = child.stdin.take();
+        let out = child.wait_with_output();
+        drop(held);
+        out.map(|out| RemoteOutput {
             code: out.status.code(),
             stdout: String::from_utf8_lossy(&out.stdout).into_owned(),
             stderr: String::from_utf8_lossy(&out.stderr).into_owned(),
@@ -380,6 +403,22 @@ mod tests {
         ));
         let e = Holder::start(&binary).err().expect("bytes are not a pid");
         assert_eq!(e.kind(), std::io::ErrorKind::InvalidData);
+    }
+
+    /// A held run reports what its script printed and how it ended; a host that cannot be
+    /// reached is an error.
+    #[test]
+    fn a_held_run_reports_its_script_as_it_ended() {
+        let out = Remote::local()
+            .run_held("printf '%s' \"$1\"; echo said >&2; exit 3", &["out"])
+            .unwrap();
+        assert_eq!(
+            (out.code, out.stdout.as_str(), out.stderr.as_str()),
+            (Some(3), "out", "said\n")
+        );
+        let tmp = tempfile::tempdir().unwrap();
+        let gone = Remote::through(&tmp.path().join("no-such-ssh"));
+        assert!(gone.run_held("true", &[]).is_err());
     }
 
     /// A holder whose standard input was never piped still ends with its owner.

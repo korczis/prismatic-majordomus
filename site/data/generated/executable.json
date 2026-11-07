@@ -715,6 +715,23 @@
       "tool": "majordomus_devcontext_policy"
     },
     {
+      "api_anchor": "/docs/api/devtask/#op-devtask-implement",
+      "claims": [],
+      "cli": null,
+      "id": "devtask.implement",
+      "kind": "command",
+      "module": "devtask",
+      "module_route": "/registry/modules/devtask/",
+      "resource": null,
+      "route": "/registry/capabilities/devtask-implement/",
+      "slug": "devtask-implement",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/devtask.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/devtask.rs",
+      "tests": [],
+      "title": "Implement an issue: readiness, preflight, claim, worktree and one run",
+      "tool": "majordomus_devtask_implement"
+    },
+    {
       "api_anchor": "/docs/api/devtask/#op-devtask-issue",
       "claims": [],
       "cli": "majordomus devtask issue",
@@ -747,6 +764,23 @@
       "tests": [],
       "title": "One milestone as an executable dependency graph",
       "tool": "majordomus_devtask_milestone"
+    },
+    {
+      "api_anchor": null,
+      "claims": [],
+      "cli": null,
+      "id": "devtask.run",
+      "kind": "command",
+      "module": "devtask",
+      "module_route": "/registry/modules/devtask/",
+      "resource": null,
+      "route": "/registry/capabilities/devtask-run/",
+      "slug": "devtask-run",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/devtask.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/devtask.rs",
+      "tests": [],
+      "title": "A worker's run on an issue's worktree",
+      "tool": null
     },
     {
       "api_anchor": "/docs/api/directories/#op-directories-list",
@@ -2562,6 +2596,23 @@
       "tool": "majordomus_mesh_verify"
     },
     {
+      "api_anchor": "/docs/api/mesh/#op-mesh-who",
+      "claims": [],
+      "cli": "majordomus mesh who",
+      "id": "mesh.who",
+      "kind": "query",
+      "module": "mesh",
+      "module_route": "/registry/modules/mesh/",
+      "resource": null,
+      "route": "/registry/capabilities/mesh-who/",
+      "slug": "mesh-who",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/mesh.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/mesh.rs",
+      "tests": [],
+      "title": "Who runs this",
+      "tool": "majordomus_mesh_who"
+    },
+    {
       "api_anchor": "/docs/api/models/#op-models-list",
       "claims": [],
       "cli": "majordomus models list",
@@ -2891,6 +2942,23 @@
       "tool": "majordomus_perf"
     },
     {
+      "api_anchor": "/docs/api/plan/#op-plan-allocate",
+      "claims": [],
+      "cli": null,
+      "id": "plan.allocate",
+      "kind": "command",
+      "module": "plan",
+      "module_route": "/registry/modules/plan/",
+      "resource": null,
+      "route": "/registry/capabilities/plan-allocate/",
+      "slug": "plan-allocate",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/plan.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/plan.rs",
+      "tests": [],
+      "title": "Reserve the next issue, case or ADR number",
+      "tool": "majordomus_plan_allocate"
+    },
+    {
       "api_anchor": "/docs/api/plan/#op-plan-delivery",
       "claims": [],
       "cli": "majordomus plan delivery",
@@ -3093,6 +3161,40 @@
       "tests": [],
       "title": "What may run at the same time",
       "tool": "majordomus_plan_waves"
+    },
+    {
+      "api_anchor": "/docs/api/proceed/#op-proceed-plan",
+      "claims": [],
+      "cli": "majordomus proceed plan",
+      "id": "proceed.plan",
+      "kind": "query",
+      "module": "proceed",
+      "module_route": "/registry/modules/proceed/",
+      "resource": null,
+      "route": "/registry/capabilities/proceed-plan/",
+      "slug": "proceed-plan",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/proceed.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/proceed.rs",
+      "tests": [],
+      "title": "What to proceed with, and why",
+      "tool": "majordomus_proceed_plan"
+    },
+    {
+      "api_anchor": "/docs/api/proceed/#op-proceed-step",
+      "claims": [],
+      "cli": "majordomus proceed step",
+      "id": "proceed.step",
+      "kind": "query",
+      "module": "proceed",
+      "module_route": "/registry/modules/proceed/",
+      "resource": null,
+      "route": "/registry/capabilities/proceed-step/",
+      "slug": "proceed-step",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/proceed.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/proceed.rs",
+      "tests": [],
+      "title": "Proceed: the next step, as one work order",
+      "tool": "majordomus_proceed_step"
     },
     {
       "api_anchor": "/docs/api/product/#op-product-domains",
@@ -3877,6 +3979,23 @@
       "tool": "majordomus_why_validate"
     },
     {
+      "api_anchor": "/docs/api/worktree/#op-worktree-create",
+      "claims": [],
+      "cli": "majordomus worktree ensure",
+      "id": "worktree.create",
+      "kind": "command",
+      "module": "worktree",
+      "module_route": "/registry/modules/worktree/",
+      "resource": null,
+      "route": "/registry/capabilities/worktree-create/",
+      "slug": "worktree-create",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/worktree.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/worktree.rs",
+      "tests": [],
+      "title": "The canonical worktree of a branch, made or found",
+      "tool": "majordomus_worktree_create"
+    },
+    {
       "api_anchor": "/docs/api/worktree/#op-worktree-inspect",
       "claims": [],
       "cli": "majordomus worktree inspect",
@@ -4615,11 +4734,11 @@
     ]
   },
   "counts": {
-    "capabilities": 224,
+    "capabilities": 231,
     "claims": 93,
-    "modules": 61
+    "modules": 62
   },
-  "generator": "majordomus-cli 1.0.0-alpha.10",
+  "generator": "majordomus-cli 1.0.0",
   "modules": [
     {
       "capabilities": [
@@ -4988,6 +5107,11 @@
     {
       "capabilities": [
         {
+          "id": "devtask.implement",
+          "route": "/registry/capabilities/devtask-implement/",
+          "slug": "devtask-implement"
+        },
+        {
           "id": "devtask.issue",
           "route": "/registry/capabilities/devtask-issue/",
           "slug": "devtask-issue"
@@ -4996,6 +5120,11 @@
           "id": "devtask.milestone",
           "route": "/registry/capabilities/devtask-milestone/",
           "slug": "devtask-milestone"
+        },
+        {
+          "id": "devtask.run",
+          "route": "/registry/capabilities/devtask-run/",
+          "slug": "devtask-run"
         }
       ],
       "claims": [],
@@ -5746,6 +5875,11 @@
           "id": "mesh.verify",
           "route": "/registry/capabilities/mesh-verify/",
           "slug": "mesh-verify"
+        },
+        {
+          "id": "mesh.who",
+          "route": "/registry/capabilities/mesh-who/",
+          "slug": "mesh-who"
         }
       ],
       "claims": [],
@@ -5940,6 +6074,11 @@
     {
       "capabilities": [
         {
+          "id": "plan.allocate",
+          "route": "/registry/capabilities/plan-allocate/",
+          "slug": "plan-allocate"
+        },
+        {
           "id": "plan.delivery",
           "route": "/registry/capabilities/plan-delivery/",
           "slug": "plan-delivery"
@@ -6007,6 +6146,27 @@
       "source_path": "apps/majordomus-cli/src/capability/builtin/plan.rs",
       "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/plan.rs",
       "title": "The plan and its derivations"
+    },
+    {
+      "capabilities": [
+        {
+          "id": "proceed.plan",
+          "route": "/registry/capabilities/proceed-plan/",
+          "slug": "proceed-plan"
+        },
+        {
+          "id": "proceed.step",
+          "route": "/registry/capabilities/proceed-step/",
+          "slug": "proceed-step"
+        }
+      ],
+      "claims": [],
+      "id": "proceed",
+      "route": "/registry/modules/proceed/",
+      "slug": "proceed",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/proceed.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/proceed.rs",
+      "title": "What a session proceeds with"
     },
     {
       "capabilities": [
@@ -6405,6 +6565,11 @@
     },
     {
       "capabilities": [
+        {
+          "id": "worktree.create",
+          "route": "/registry/capabilities/worktree-create/",
+          "slug": "worktree-create"
+        },
         {
           "id": "worktree.inspect",
           "route": "/registry/capabilities/worktree-inspect/",

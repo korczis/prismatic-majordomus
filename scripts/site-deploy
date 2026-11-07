@@ -282,7 +282,28 @@ if newer "$prev_version" "$build_version" && [ -n "$prev_tag" ] \
   # `scripts/pages release-live` and the pages-live gate refuse it once the window has passed.
   echo "site-deploy: warning: the pages of this build offer ${build_version:-no release}, older than the $prev_version gh-pages serves; the next build offers $prev_version (project.the-site-offers-the-release-it-published)" >&2
 fi
-msg="deploy: site from ${HEAD_SHA:0:7}${fp:+ (registry $fp)}, $routes routes${kept:+, release metadata kept at $kept}"
+# A pre-release publishes its document beside the latest release (I2829, case 3222) and its
+# record lands hours later, as a stable release's does; until 2026-11-06 an ordinary deploy in
+# between dropped the document, because the build carries the documents of the records it has
+# and nothing else, and the next build, which reads the published branch for the pre-release
+# its pages name (scripts/site-build), found nothing newer than its records: v1.0.0-alpha.10
+# was published at 17:09Z and three deploys of master took its document off the site, each
+# putting alpha.9 back into the homepage's hero (I4531). A release document gh-pages serves
+# that this build does not carry is a publication ahead of its record, whatever its channel:
+# kept, and named.
+kept_docs=""
+while IFS= read -r kept_doc; do
+  case "$kept_doc" in releases/v*.json) ;; *) continue ;; esac
+  [ ! -f "$W/$kept_doc" ] || continue
+  mkdir -p "$W/releases"
+  git -C "$W" show "HEAD:$kept_doc" > "$W/$kept_doc"
+  kept_docs="$kept_docs ${kept_doc#releases/}"
+done <<EOF
+$(git -C "$W" ls-tree --name-only HEAD releases/ 2>/dev/null || true)
+EOF
+[ -z "$kept_docs" ] \
+  || echo "site-deploy: kept the published release documents this build does not carry:$kept_docs (their records have not landed; ADR 0131)"
+msg="deploy: site from ${HEAD_SHA:0:7}${fp:+ (registry $fp)}, $routes routes${kept:+, release metadata kept at $kept}${kept_docs:+, published documents kept:$kept_docs}"
 (
   cd "$W"
   git add -A

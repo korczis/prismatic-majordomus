@@ -1,7 +1,7 @@
 +++
 title = "Economics"
 description = "the question, what is measured and how each number is labelled, control and treatment, how runs become a statement, and what is not measured"
-weight = 38
+weight = 39
 [extra]
 source = "docs/ECONOMICS.md"
 +++

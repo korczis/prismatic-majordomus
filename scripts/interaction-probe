@@ -20,6 +20,19 @@
 #   MJ_PROBE_LIVE=1                               drive the published site itself rather than site/public: the page
 #                                                 list is still this build's, so run it against the commit
 #                                                 scripts/pages verify says is served
+#   MJ_PROBE_ROUTE_SECONDS=N                      seconds one page may take, from opening it to its last spec, plus
+#                                                 2.5 s for every control it declares (default 240); past it the
+#                                                 page is a finding and its browser context is closed
+#   MJ_PROBE_SPEC_SECONDS=N                       seconds one spec may take on one page, the resize to its width
+#                                                 included, plus 2.5 s for every control of it there (default 60)
+#
+# A shard drives its heaviest pages first: the most controls the markup declares, then the route, so the pages that
+# take minutes start while every worker is free rather than meeting the bound at the end of the queue (F02). A page
+# or spec that outlives its deadline is a finding naming the page, the step it was at and the seconds, and its
+# browser context is closed so the call that hung is released and the worker goes on. A page over 30 s is named as
+# it finishes, the slowest ten and p50/p95 are printed at the end, and a SIGTERM names every page still being
+# driven and the step it is at, and the findings so far, before the probe exits 143: a shard stopped at its bound
+# says what it was doing.
 #
 # Without a browser: SKIP and exit 0 locally, exit 12 under CI=true. Exit 0 clean, 10 findings, 12 unrunnable.
 set -eu
@@ -94,8 +107,33 @@ const exercised = new Map(specs.map((s) => [s.id, 0]));
 const fail = (route, spec, msg) => { findings.push(`${route}: ${spec ? `[${spec}] ` : ''}${msg}`); };
 const t0 = Date.now();
 
-async function openPage(route, width) {
+// The deadlines. A call into the browser that never answers (a resize, F02) used to hold its worker until the job's
+// bound killed the shard, with no finding printed and no page named. Each page and each spec on it now race a timer
+// of its base plus PER_CONTROL seconds for every control the markup declares there: /registry/ drove its ~1240
+// controls in 63 s on a laptop (about 50 ms each, most of it one scroll-region spec), so a fixed minute would fail a
+// healthy heavy page on a slower runner, while a resize before a two-control mobile spec still runs out in a minute.
+const seconds = (v, d) => (Number(v) > 0 ? Number(v) : d);
+const ROUTE_SECONDS = seconds(env.MJ_PROBE_ROUTE_SECONDS, 240);
+const SPEC_SECONDS = seconds(env.MJ_PROBE_SPEC_SECONDS, 60);
+// 2.5 s per declared control: CI run 41919666430 measured disclosure specs at 0.79 s a control or more
+// (/changelog/: 207 cut at 163.5 s; /roadmap/: 234 cut at 177 s), so this is about 3.2 times the slowest
+// lower bound; a spec that never resolves still fails, naming its page (case 337)
+const PER_CONTROL = 2.5;
+const controlsOf = (byspec) => [...byspec.values()].reduce((a, c) => a + c.live + c.conditional, 0);
+const within = (base, controls) => Math.round((base + PER_CONTROL * controls) * 10) / 10;
+const EXPIRED = Symbol('expired');
+const timer = (s) => { let id; const p = new Promise((done) => { id = setTimeout(done, s * 1000, EXPIRED); }); return { p, stop: () => clearTimeout(id) }; };
+const ago = (t) => Math.round((Date.now() - t) / 1000);
+// what each worker is doing now, route -> { start, step, context, over }: what a deadline names and closes, and what a
+// SIGTERM prints; then how long each page took
+const inflight = new Map();
+const took = [];
+const close = (context) => Promise.race([context.close().catch(() => {}), new Promise((done) => setTimeout(done, 10000))]);
+
+async function openPage(route, width, run) {
   const context = await browser.newContext({ viewport: { width, height: 900 } });
+  run.context = context;
+  if (run.over) { await close(context); throw new Error('the page outlived its deadline before it opened'); }
   // the system clipboard is one per machine, so pages exercised in parallel overwrite each other's copies: each page
   // records what it asked to copy instead, and a spec reads window.__mjClipboard (the last text written)
   await context.addInitScript(() => {
@@ -115,9 +153,73 @@ async function openPage(route, width) {
   const errors = [];
   page.on('console', (m) => { if (m.type() === 'error') errors.push(m.text()); });
   page.on('pageerror', (e) => errors.push(`uncaught: ${e.message}`));
+  run.step = 'goto';
   const resp = await page.goto(origin + route, { waitUntil: 'load', timeout: 30000 });
+  run.step = 'networkidle';
   await page.waitForLoadState('networkidle', { timeout: 10000 }).catch(() => {});
   return { context, page, errors, foreign, status: resp ? resp.status() : 0 };
+}
+
+// One spec on an open page: narrowed to its width, its controls marked again, then exercised. Everything it does is
+// inside the caller's race with the spec's deadline, the resize included, so a call that hangs is the spec's finding.
+async function exerciseSpec(route, spec, declared, page, run, say) {
+  const width = spec.width || 1280;
+  run.step = `${spec.id}: resize to ${width}`;
+  if (page.viewportSize().width !== width) { await page.setViewportSize({ width, height: 900 }); await page.waitForTimeout(50); }
+  run.step = `${spec.id}: mark`;
+  const live = await page.evaluate(markControls, isControl.toString());
+  const mine = live.filter((c) => spec.claims(c));
+  if (mine.length !== declared.live) say(`the markup declares ${declared.live} control(s) this spec claims and the live page holds ${mine.length}`);
+  const ctx = {
+    page, route, width, origin,
+    controls: mine.map((c) => ({ ...c, locator: page.locator(`[data-mj-control="${c.n}"]`) })),
+    conditional: declared.conditional,
+    fail: say,
+  };
+  run.step = `${spec.id}: exercise`;
+  const n = await spec.exercise(ctx);
+  const expected = declared.live + declared.conditional;
+  if (typeof n !== 'number') say('exercise() did not say how many controls it drove');
+  else if (n !== expected) say(`drove ${n} of the ${expected} control(s) it claims (${[...declared.sigs].join(', ')})`);
+  else if (!run.over) exercised.set(spec.id, exercised.get(spec.id) + n);
+}
+
+async function drive(route, wanted, group, run, report) {
+  let v;
+  try { v = await openPage(route, group[0].width || 1280, run); } catch (e) { report(null, `the page did not load: ${String(e.message).split('\n')[0]}`); return; }
+  const { context, page, errors, foreign, status } = v;
+  try {
+    if (status !== 200) { report(null, `the page answered ${status}`); return; }
+    // what the page reported while it loaded belongs to the page, before any spec touched it
+    const loaded = errors.length;
+    for (const e of errors.slice(0, loaded)) report(null, `console: ${e.slice(0, 200)}`);
+    let hung = false;
+    for (const [i, spec] of group.entries()) {
+      const before = errors.length;
+      const say = (msg) => report(spec.id, msg);
+      const deadline = within(SPEC_SECONDS, wanted.get(spec.id).live + wanted.get(spec.id).conditional);
+      const limit = timer(deadline);
+      const r = await Promise.race([
+        exerciseSpec(route, spec, wanted.get(spec.id), page, run, say)
+          .catch((e) => say(`threw: ${String(e.message).split('\n')[0].slice(0, 240)}`)),
+        limit.p,
+      ]);
+      limit.stop();
+      if (r === EXPIRED) {
+        // the page is left inside a call that never answered: the specs after this one are not run on it, and say so
+        const rest = group.slice(i + 1).map((s) => s.id);
+        say(`did not finish within ${deadline}s: still at ${run.step}${rest.length ? `; the page was closed, so ${rest.join(', ')} did not run on it` : ''}`);
+        hung = true;
+        break;
+      }
+      for (const e of errors.slice(before)) say(`console: ${e.slice(0, 200)}`);
+    }
+    for (const u of [...new Set(foreign)]) report(null, `requested ${u}, which is not the site's own origin`);
+    // in the same turn as the finding: what the hung call says once its context is closed is its echo, not a finding
+    if (hung) run.over = true;
+  } finally {
+    await close(context);
+  }
 }
 
 async function visit(route) {
@@ -127,51 +229,33 @@ async function visit(route) {
   // spec, so a spec that reloads the page cannot leave the next one pointing at nothing.
   const group = [...wanted.keys()].map((id) => specs.find((s) => s.id === id))
     .sort((a, b) => (b.width || 1280) - (a.width || 1280) || (a.order || 0) - (b.order || 0) || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
-  let v;
-  try { v = await openPage(route, group[0].width || 1280); } catch (e) { fail(route, null, `the page did not load: ${String(e.message).split('\n')[0]}`); return; }
-  const { context, page, errors, foreign, status } = v;
-  try {
-    if (status !== 200) { fail(route, null, `the page answered ${status}`); return; }
-    // what the page reported while it loaded belongs to the page, before any spec touched it
-    const loaded = errors.length;
-    for (const e of errors.slice(0, loaded)) fail(route, null, `console: ${e.slice(0, 200)}`);
-    for (const spec of group) {
-      const width = spec.width || 1280;
-      if (page.viewportSize().width !== width) { await page.setViewportSize({ width, height: 900 }); await page.waitForTimeout(50); }
-      const before = errors.length;
-      try {
-        const live = await page.evaluate(markControls, isControl.toString());
-        const mine = live.filter((c) => spec.claims(c));
-        const declared = wanted.get(spec.id);
-        if (mine.length !== declared.live) {
-          fail(route, spec.id, `the markup declares ${declared.live} control(s) this spec claims and the live page holds ${mine.length}`);
-        }
-        const ctx = {
-          page, route, width, origin,
-          controls: mine.map((c) => ({ ...c, locator: page.locator(`[data-mj-control="${c.n}"]`) })),
-          conditional: declared.conditional,
-          fail: (msg) => fail(route, spec.id, msg),
-        };
-        const n = await spec.exercise(ctx);
-        const expected = declared.live + declared.conditional;
-        if (typeof n !== 'number') fail(route, spec.id, 'exercise() did not say how many controls it drove');
-        else if (n !== expected) fail(route, spec.id, `drove ${n} of the ${expected} control(s) it claims (${[...declared.sigs].join(', ')})`);
-        else exercised.set(spec.id, exercised.get(spec.id) + n);
-      } catch (e) {
-        fail(route, spec.id, `threw: ${String(e.message).split('\n')[0].slice(0, 240)}`);
-      }
-      for (const e of errors.slice(before)) fail(route, spec.id, `console: ${e.slice(0, 200)}`);
-    }
-    for (const u of [...new Set(foreign)]) fail(route, null, `requested ${u}, which is not the site's own origin`);
-  } finally {
-    await context.close();
+  const run = { start: Date.now(), step: 'open', context: null, over: false };
+  inflight.set(route, run);
+  const report = (spec, msg) => { if (!run.over) fail(route, spec, msg); };
+  const deadline = within(ROUTE_SECONDS, controlsOf(wanted));
+  const limit = timer(deadline);
+  const r = await Promise.race([
+    drive(route, wanted, group, run, report).catch((e) => report(null, `the probe threw: ${String(e.message).split('\n')[0].slice(0, 240)}`)),
+    limit.p,
+  ]);
+  limit.stop();
+  if (r === EXPIRED) {
+    report(null, `did not finish within ${deadline}s: still at ${run.step}`);
+    run.over = true;
+    // closing the context answers the hung call with an error, which ends the work the timer outran
+    if (run.context) await close(run.context);
   }
+  run.over = true;
+  inflight.delete(route);
+  const ms = Date.now() - run.start;
+  took.push([route, ms]);
+  if (ms > 30000) process.stderr.write(`  ${route} took ${Math.round(ms / 1000)}s\n`);
 }
 
 // the pages in a fixed order, then this shard's stride of them, cut by scripts/site-probe --partition
 const all = [...plan.keys()].sort();
 const sharded = env.MJ_PROBE_SHARD_SPEC !== '1/1';
-let routes = all;
+let routes = all;   // the report below keeps this order; the pool drives them heaviest first
 if (sharded) {
   const { execFileSync } = await import('node:child_process');
   routes = execFileSync(env.MJ_PROBE_PARTITION, ['--partition', env.MJ_PROBE_SHARD_SPEC], { input: `${all.join('\n')}\n` })
@@ -185,6 +269,20 @@ if (env.MJ_PROBE_REPORT) {
   const { writeFileSync } = await import('node:fs');
   writeFileSync(env.MJ_PROBE_REPORT, `# shard ${env.MJ_PROBE_SHARD_SPEC} of ${all.length} routes\n${routes.map((r) => `${r}\n`).join('')}`);
 }
+// The heaviest pages first, by what the markup declares before any page is opened: the controls the specs will
+// drive, then the route. The shard is the same set of pages, each once, in another order: a page that takes minutes
+// started last ran the shard past its bound with three workers idle (F02), and started first it runs beside the rest.
+const cost = new Map(routes.map((r) => [r, controlsOf(plan.get(r))]));
+routes = [...routes].sort((a, b) => cost.get(b) - cost.get(a) || (a < b ? -1 : a > b ? 1 : 0));
+// A shard stopped from outside (scripts/ci/timed's bound) names what it was doing when it was stopped
+const stopped = (sig) => {
+  process.stderr.write(`interaction-probe: ${sig} after ${ago(t0)}s, ${took.length}/${routes.length} page(s) done; in flight:\n`);
+  for (const [route, run] of inflight) process.stderr.write(`  ${route} at ${run.step}, ${ago(run.start)}s\n`);
+  for (const f of [...findings].sort()) console.log(`FAIL behaviour     ${f}`);
+  process.exit(sig === 'SIGTERM' ? 143 : 130);
+};
+process.on('SIGTERM', () => stopped('SIGTERM'));
+process.on('SIGINT', () => stopped('SIGINT'));
 const jobs = Math.max(1, Number(env.MJ_PROBE_JOBS || 4));
 let next = 0, done = 0;
 await Promise.all(Array.from({ length: jobs }, async () => {
@@ -197,6 +295,13 @@ await Promise.all(Array.from({ length: jobs }, async () => {
 }));
 await browser.close();
 
+// where the time went: the slowest pages and the spread, so the next bound is set from a measurement
+if (took.length) {
+  const ms = took.map(([, t]) => t).sort((a, b) => a - b);
+  const at = (p) => Math.round(ms[Math.min(ms.length - 1, Math.ceil(p * ms.length) - 1)] / 1000);
+  const slow = [...took].sort((a, b) => b[1] - a[1]).slice(0, 10).map(([r, t]) => `${r} ${Math.round(t / 1000)}s`);
+  process.stderr.write(`interaction-probe: p50 ${at(0.5)}s, p95 ${at(0.95)}s per page; slowest: ${slow.join(', ')}\n`);
+}
 for (const f of findings.sort()) console.log(`FAIL behaviour     ${f}`);
 const total = [...exercised.values()].reduce((a, b) => a + b, 0);
 const perSpec = specs.map((s) => `${exercised.get(s.id)} ${s.id}`).join(', ');

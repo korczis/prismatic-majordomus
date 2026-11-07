@@ -29,7 +29,8 @@ if [ "$registry" != "$page" ]; then
   exit 1
 fi
 # ... and the comparison is held: a page that drops one is refused
-sed 's/`plan.transition`, //' "$PAGE" > "$T/interfaces.md"
+# whatever follows the comma (a space, or the end of a wrapped line)
+sed 's/`plan\.transition`,[[:space:]]*//' "$PAGE" > "$T/interfaces.md"
 [ "$(named "$T/interfaces.md")" != "$registry" ] || { echo "    a page missing plan.transition was not told apart"; exit 1; }
 
 # ---------------------------------------------------------------- 2. the retired sentences stay retired

@@ -1,6 +1,6 @@
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: the benchmark projection of the canonical capability registry; regenerate with `majordomus generate`
-     Generator: majordomus-cli 1.0.0-alpha.10 -->
+     Generator: majordomus-cli 1.0.0 -->
 # Benchmark targets and coverage
 
 Every externally callable operation is a benchmark target, derived from the registry: each executable capability directly and on every transport its exposure declares, with the cases its input type provides, plus the transports' own operations. Nothing below is listed by hand; `majordomus bench coverage` computes the same table live, `majordomus bench` times it, and `capabilities validate` fails when a requirement is missing.
@@ -9,11 +9,11 @@ Every externally callable operation is a benchmark target, derived from the regi
 
 | scope | required | covered | missing | waived |
 |---|---|---|---|---|
-| direct | 224 | 183 | 0 | 41 |
-| http | 213 | 181 | 0 | 32 |
-| mcp | 209 | 178 | 0 | 31 |
+| direct | 231 | 186 | 0 | 45 |
+| http | 219 | 184 | 0 | 35 |
+| mcp | 215 | 181 | 0 | 34 |
 | system | 14 | 14 | 0 | 0 |
-| total | 660 | 556 | 0 | 104 |
+| total | 679 | 565 | 0 | 114 |
 
 ## Capabilities
 
@@ -61,8 +61,10 @@ Every externally callable operation is a benchmark target, derived from the regi
 | `devcontext.compile` | devcontext | query | process, 16 entries | covered | covered | covered | `no-seed`, `issue`, `milestone`, `intent`, `source-ranges` |
 | `devcontext.explain` | devcontext | query | process, 8 entries | covered | covered | covered | `policy`, `absent` |
 | `devcontext.policy` | devcontext | query | — | covered | covered | covered | `default` |
+| `devtask.implement` | devtask | command | — | waived | waived | waived | — |
 | `devtask.issue` | devtask | query | — | covered | covered | covered | `records-only`, `with-git` |
 | `devtask.milestone` | devtask | query | — | covered | covered | covered | `first-milestone` |
+| `devtask.run` | devtask | command | — | waived | — | — | — |
 | `directories.list` | directories | query | process, 8 entries, 5s | covered | covered | covered | `whole-tree`, `one-directory`, `effective-everywhere`, `owed` |
 | `distribution.artifact` | distribution | query | — | covered | covered | covered | `first-published-target` |
 | `distribution.build` | distribution | query | — | covered | covered | covered | `default` |
@@ -162,6 +164,7 @@ Every externally callable operation is a benchmark target, derived from the regi
 | `mesh.state` | mesh | query | — | covered | covered | covered | `summary`, `full` |
 | `mesh.status` | mesh | query | — | covered | covered | covered | `default` |
 | `mesh.verify` | mesh | command | — | waived | waived | waived | — |
+| `mesh.who` | mesh | query | — | waived | waived | waived | — |
 | `models.list` | models | query | process, 4 entries, 5s | covered | covered | covered | `default`, `narrowed` |
 | `models.route` | models | query | — | covered | covered | covered | `default` |
 | `monitor.stream` | monitor | query | — | covered | covered | covered | `local-first-page`, `local-resumed` |
@@ -179,6 +182,7 @@ Every externally callable operation is a benchmark target, derived from the regi
 | `peers.announce` | peers | command | — | covered | covered | covered | `default` |
 | `peers.list` | peers | query | — | covered | covered | covered | `default` |
 | `perf.counters` | perf | query | — | covered | covered | covered | `default` |
+| `plan.allocate` | plan | command | — | waived | waived | waived | — |
 | `plan.delivery` | plan | query | — | covered | covered | covered | `every-issue`, `one-issue-at-head` |
 | `plan.drift` | plan | query | — | covered | covered | covered | `every-issue`, `one-issue-at-head-as-trunk-gate` |
 | `plan.flight` | plan | query | — | covered | covered | covered | `where-the-work-is`, `one-milestone-inspected` |
@@ -191,6 +195,8 @@ Every externally callable operation is a benchmark target, derived from the regi
 | `plan.transition` | plan | command | — | covered | covered | covered | `refused-by-status` |
 | `plan.validate` | plan | query | — | covered | covered | covered | `default` |
 | `plan.waves` | plan | query | — | covered | covered | covered | `whole-plan`, `one-milestone` |
+| `proceed.plan` | proceed | query | — | covered | covered | covered | `default`, `milestone_and_session` |
+| `proceed.step` | proceed | query | — | covered | covered | covered | `whole_plan`, `one_intent` |
 | `product.domains` | product | query | process, 4 entries | covered | covered | covered | `stable`, `any` |
 | `product.feature` | product | query | process, 64 entries | covered | covered | covered | `first-feature` |
 | `product.features` | product | query | process, 32 entries | covered | covered | covered | `all`, `featured`, `by-area`, `by-domain` |
@@ -237,6 +243,7 @@ Every externally callable operation is a benchmark target, derived from the regi
 | `why.list` | why | query | process, 32 entries | covered | covered | covered | `all`, `by-audience`, `search` |
 | `why.moment` | why | query | process, 64 entries | covered | covered | covered | `first-moment` |
 | `why.validate` | why | query | process, 2 entries | covered | covered | covered | `default` |
+| `worktree.create` | worktree | command | — | covered | covered | covered | `refused-name` |
 | `worktree.inspect` | worktree | query | — | covered | covered | covered | `feature-branch` |
 | `worktree.migration_plan` | worktree | query | — | covered | covered | covered | `default` |
 | `worktree.status` | worktree | query | — | covered | covered | covered | `default`, `primary-checkout` |

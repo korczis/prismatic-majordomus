@@ -1189,3 +1189,17 @@ fn a_declaration_that_cannot_be_written_is_an_error_and_stays_as_it_was() {
     assert!(err.contains("internal: .ai/repo/mesh/mesh.yaml"), "{err}");
     assert_eq!(std::fs::read_to_string(&declaration).unwrap(), SEEDED);
 }
+
+/// I3992: `mesh beat --hook` reads the provider's hook event from stdin, takes the
+/// directory it runs in as its checkout when it is named none, and — no server answering
+/// there — prints nothing and answers 0: a hook that fails or writes is felt by the person.
+#[test]
+fn a_hook_beat_reads_its_event_from_stdin_prints_nothing_and_answers_zero() {
+    let f = Fixture::plain_dir();
+    let (code, out, err) = run_in(
+        &f.root(),
+        &["mesh", "beat", "--hook", "claude-code"],
+        r#"{"session_id":"s1","hook_event_name":"Stop"}"#,
+    );
+    assert_eq!((code, out.as_str()), (0, ""), "{err}");
+}

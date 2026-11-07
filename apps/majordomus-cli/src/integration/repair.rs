@@ -51,7 +51,9 @@ use std::path::Path;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use super::drain::{event, record, FailureClass, IntegrationAction, Integrator};
+use super::drain::{
+    event, recorded, unless_held, DrainStepOutcome, FailureClass, IntegrationAction, Integrator,
+};
 use super::{
     IntegrationQueue, PullRequestAssessment, PullRequestDisposition, ReasonCode, RelationToMaster,
 };
@@ -415,7 +417,7 @@ pub fn apply(
                 refusal.to_string(),
             );
             e.class = Some(refusal.class());
-            record(root, e)?;
+            recorded(root, integrator, e)?;
             return Ok(report);
         }
         RepairDecision::Eligible(a) => a,
@@ -429,9 +431,19 @@ pub fn apply(
         format!("named by a person: {target}"),
     )
     .with_evidence(&candidate);
-    if let Err(reason) = record(root, selected) {
+    if let Err(reason) = recorded(root, integrator, selected) {
         report.outcome = unwritable(reason);
         return Ok(report);
+    }
+    // another machine's executor may have been admitted while this lease advanced nothing:
+    // asked again now, before anything is pushed (I3991)
+    if let Some(DrainStepOutcome::LeaseLost { reason, .. }) =
+        unless_held(root, integrator, &candidate, "repairing")?
+    {
+        return Err(format!(
+            "#{} was not repaired: the integration lease was lost: {reason}",
+            candidate.number
+        ));
     }
     // on the trail before anything is pushed: a push the trail cannot name is not made
     let attempted = event(
@@ -442,7 +454,7 @@ pub fn apply(
             queue.master_sha, candidate.head_ref, candidate.evaluated_against.head_sha
         ),
     );
-    if let Err(reason) = record(root, attempted) {
+    if let Err(reason) = recorded(root, integrator, attempted) {
         report.outcome = unwritable(reason);
         return Ok(report);
     }
@@ -455,7 +467,7 @@ pub fn apply(
             );
             e.master_after = Some(queue.master_sha.clone());
             e.head_after = Some(head_after.clone());
-            record(root, e)?;
+            recorded(root, integrator, e)?;
             report.outcome = RepairOutcome::Repaired { head_after };
         }
         Err(reason) => {
@@ -469,7 +481,7 @@ pub fn apply(
                 refusal.to_string(),
             );
             e.class = Some(refusal.class());
-            record(root, e)?;
+            recorded(root, integrator, e)?;
             report.outcome = RepairOutcome::Refused { refusal };
         }
     }

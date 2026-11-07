@@ -36,7 +36,6 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I1302` | shares share/schemas with I1988; they may not run concurrently |
 | WARN | `scope_conflict` | `I1302` | shares docs with I2654; they may not run concurrently |
 | WARN | `scope_conflict` | `I1302` | shares docs with I2700; they may not run concurrently |
-| WARN | `scope_conflict` | `I1302` | shares docs with I2703; they may not run concurrently |
 | WARN | `scope_conflict` | `I1302` | shares docs with I2704; they may not run concurrently |
 | WARN | `scope_conflict` | `I1302` | shares docs with I2709; they may not run concurrently |
 | WARN | `scope_conflict` | `I1302` | shares share/schemas with I2870; they may not run concurrently |
@@ -61,5 +60,9 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I1302` | shares docs with I3668; they may not run concurrently |
 | WARN | `scope_conflict` | `I1302` | shares docs with I3826; they may not run concurrently |
 | WARN | `scope_conflict` | `I1302` | shares docs with I3932; they may not run concurrently |
+| WARN | `scope_conflict` | `I1302` | shares docs with I3991; they may not run concurrently |
+| WARN | `scope_conflict` | `I1302` | shares docs with I3992; they may not run concurrently |
+| WARN | `scope_conflict` | `I1302` | shares docs with I3993; they may not run concurrently |
+| WARN | `scope_conflict` | `I1302` | shares docs with I3994; they may not run concurrently |
 | WARN | `scope_conflict` | `I1302` | shares docs with I4332; they may not run concurrently |
 | WARN | `scope_conflict` | `I1302` | shares docs with I4523; they may not run concurrently |
