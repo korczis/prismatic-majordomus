@@ -1,0 +1,40 @@
+id: I4532
+milestone: ci-critical-path
+title: "The hosted CI jobs of this repository are bounded to fourteen in flight, leaving six for OSCILLA"
+slug: the-hosted-ci-jobs-are-bounded-to-fourteen-in-flight
+priority: p1
+profile: implementation
+parallel_safe: true
+serves: []
+objective: "Bound the GitHub-hosted jobs of this repository's workflows so that at most fourteen run at once — max-parallel on the matrix jobs of validate.yml and pages.yml, or a concurrency design the CI model declares — leaving six of the account's twenty hosted runners to OSCILLA, as the owner decided; the bound is documented in the CI model, proved by a case, and never counts a job on a self-hosted runner."
+why: "OSCILLA and prismatic-majordomus share one GitHub account, and the account's plan runs at most 20 GitHub-hosted jobs at once across every repository. Measured on 2026-11-06: 18/20 in flight from 18:30Z, 17/20 at 22:30Z, 20/20 at 22:54Z and again after 23:00Z, most of them this repository's; at 22:27Z master's validate alone held 11 jobs and a train top 4. Each OSCILLA release waited about 1.5-3 h for a runner. In session 6f686fcc (OSCILLA, 2026-11-06 ~22:58Z) the owner was asked 'Measured tonight: OSCILLA and prismatic-majordomus share one account-wide cap of 20 GitHub-hosted CI jobs. It sat at 20/20 from 18:30Z, mostly Majordomus jobs, so each OSCILLA release waits about 1.5-3 h for runners. How should CI capacity be split?' and answered 'Reserve 6 for OSCILLA (Recommended)'; OSCILLA records the answer as its plan issue Q102. This repository holds no bound of its own: a full validate plan fans out to the four suite shards, the three rust lanes, the six site-probe and six interaction-probe shards, the four ui shards and the two install runners beside its single jobs, and pages.yml adds five more, so two validating heads and a publication fill the account by themselves."
+current_state: "Measured at 5ca0bec8c42: no job of .github/workflows/validate.yml or pages.yml carries max-parallel; the two concurrency groups (validate-<pr or run>, pages-<ref>) serialise runs of one head and one ref with cancel-in-progress false, and neither bounds how many jobs of a run start. .ai/repo/ci/gates.yaml names the job of every gate and .ai/repo/ci/pages.yaml the publication's budgets; neither declares how many hosted runners the repository may hold. The one job that can run on a self-hosted runner is the ci aggregate (vars.MJ_AGGREGATE_RUNNER, e.g. lundra); every other job runs on ubuntu-latest or macos-latest."
+desired_state: "At most fourteen GitHub-hosted jobs of this repository run at once, whatever heads are validating and publishing: either every matrix job of validate.yml and pages.yml carries a max-parallel the CI model declares and scripts/ci/step-bound-check holds the workflows to, or the CI model declares a concurrency design (groups and their widths) that the workflows implement. The bound is written in .ai/repo/ci/ with the measurement that set it, a case proves it against the workflow files, and a job whose runs-on is a self-hosted label is never counted against it."
+scope:
+  - ".ai/repo/project/issues/I4532.yaml"
+  - ".ai/repo/ci/README.md"
+  - ".ai/repo/ci/gates.yaml"
+  - ".ai/repo/ci/pages.yaml"
+  - ".github/workflows/validate.yml"
+  - ".github/workflows/pages.yml"
+  - "scripts/ci/step-bound-check"
+  - "test/cases/4532_the_hosted_ci_jobs_are_bounded_to_fourteen.sh"
+  - "site/content/plan/I4532.md"
+non_scope:
+  - "The account's plan, its hosted-job cap, or more self-hosted runners: the owner's question, not this repository's"
+  - "OSCILLA's own workflows and how it spends its six"
+  - "Removing, skipping or making advisory any gate to fit the bound; a plan that does not fit waits for its own jobs"
+depends_on: []
+acceptance_criteria:
+  - "What the hosted jobs of validate.yml and pages.yml can hold at once — the sum of every matrix job's max-parallel and of the single jobs, or the widths of the concurrency groups the CI model declares — is at most fourteen, and a case computes it from the workflow files and refuses a workflow that exceeds it"
+  - "The bound and the measurement that set it (20/20 on 2026-11-06, six reserved for OSCILLA) are written in .ai/repo/ci/"
+  - "A job whose runs-on is a self-hosted label (lundra) is not counted against the bound, and the case proves it on a fixture workflow"
+  - "scripts/ci/step-bound-check and case 26 are green on the changed workflows"
+validation:
+  - "bash test/run.sh 4532_the_hosted_ci_jobs_are_bounded_to_fourteen 26_ci_wiring"
+  - "scripts/ci/step-bound-check"
+evidence_required:
+  - suite
+risk: "A bound lengthens every full validate: a plan that spreads over its shards now waits for them. The minutes it costs are measured on GitHub before the bound is tightened below fourteen, and a case can only prove the declared width, never the account's live queue."
+created_at: 2026-11-07
+updated_at: 2026-11-07
