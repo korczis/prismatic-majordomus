@@ -80581,6 +80581,48 @@
         }
       },
       {
+        "id": "majordomus://issue/I4559",
+        "kind": "issue",
+        "label": "I4559",
+        "summary": "The brief states its own facts and their fingerprint, so a client compares facts, not words",
+        "route": "/cockpit/objects/issue/i4559",
+        "source": ".ai/repo/project/issues/I4559.yaml",
+        "facts": {
+          "created_at": "2026-11-07",
+          "depends_on": [
+            "I4250"
+          ],
+          "evidence_required": [
+            "the_brief_reports_only_what_changed"
+          ],
+          "milestone": "development-runtime",
+          "non_scope": [
+            "A typed SelfReport record with claims, evidence and next actions (the mission's later slices)",
+            "Mesh journal events for reports",
+            "Removing the mod's text comparison, which an executable older than the field still needs"
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I4559.yaml",
+            "apps/majordomus-cli/src/capability/builtin/brief.rs",
+            "apps/majordomus-cli/src/commands/prs.rs",
+            "share/mods/claude-code/majordomus-brief/",
+            "docs/BRIEF.md",
+            "test/cases/4250_the_brief_reports_only_what_changed.sh"
+          ],
+          "serves": [],
+          "slug": "the-brief-fingerprints-its-facts",
+          "updated_at": "2026-11-07",
+          "validation": [
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib capability::builtin::brief",
+            "env -u MAJORDOMUS_SHARE claude plugin test share/mods/claude-code/majordomus-brief",
+            "env -u MAJORDOMUS_SHARE bash test/run.sh 1065_a_session_briefs_itself 4250_the_brief_reports_only_what_changed"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "label": "a-brief-is-reconciled-not-transcribed",
@@ -149240,6 +149282,21 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I4559",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4559",
+        "target": "majordomus://issue/I4250",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I4559",
+        "target": "majordomus://milestone/development-runtime",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -161901,8 +161958,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4424,
-      "edges": 10043,
+      "nodes": 4425,
+      "edges": 10046,
       "acyclic": false,
       "truncated": false
     }

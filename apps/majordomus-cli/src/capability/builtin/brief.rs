@@ -213,6 +213,11 @@ pub struct BriefIntegrationSection {
     pub state: BriefSectionState,
     /// The section in words.
     pub summary: String,
+    /// What the section states with the clock taken out, part by part (`prs::brief_reading`):
+    /// the queue observed again with nothing changed states the same facts. Empty from a
+    /// server older than the field, and when the forge was never observed.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub facts: Vec<String>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
@@ -300,9 +305,179 @@ pub struct SessionBrief {
     /// field.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub runtime: Option<server::RuntimeState>,
+    /// What the brief states with the clock taken out, and its fingerprint: two briefs with
+    /// the same fingerprint state the same facts, whatever their times and ages. A client
+    /// that tells a session only when something changed compares this, not the text. Empty
+    /// from a server older than the field.
+    #[serde(default)]
+    pub facts: BriefFacts,
+}
+
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+/// The brief's facts: one canonical statement per section, in the brief's order, and their
+/// digest. Built from each section's typed fields, never from its words, so no instant, age,
+/// held duration or board position (a peer's `p1`, reassigned on every reconnect) is in it.
+pub struct BriefFacts {
+    /// The first 16 hex digits of the SHA-256 of the sections, one `section: fact` line each.
+    pub fingerprint: String,
+    /// The facts, section by section.
+    pub sections: Vec<BriefFact>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+/// What one section of the brief states.
+pub struct BriefFact {
+    /// The section: `session`, `peers`, `mesh`, `integration`, `release`, `derive`,
+    /// `runtime` or `answered_by`.
+    pub section: String,
+    /// What it states, canonically.
+    pub fact: String,
+}
+
+/// The brief's facts, from its sections' typed fields.
+fn brief_facts(b: &SessionBrief) -> BriefFacts {
+    let opt = |v: &Option<String>| v.clone().unwrap_or_else(|| "-".into());
+    let mut sections = vec![
+        (
+            "session",
+            format!(
+                "{} {} @{} task {} episode {}",
+                b.session.state.as_str(),
+                b.session.head,
+                b.session.branch,
+                opt(&b.session.task_id),
+                opt(&b.session.episode)
+            ),
+        ),
+        (
+            "peers",
+            format!(
+                "{} {} attached on {} board(s), {} overlap(s); unread [{}]; superseded {}; [{}]",
+                b.peers.state.as_str(),
+                b.peers.attached,
+                b.peers.boards,
+                b.peers.overlaps,
+                b.peers.unread.join(" | "),
+                opt(&b.peers.superseded),
+                b.peers
+                    .named
+                    .iter()
+                    .map(|n| peer_fact(n))
+                    .collect::<Vec<_>>()
+                    .join(" | ")
+            ),
+        ),
+        (
+            "mesh",
+            format!(
+                "{} active {} ({}) links {}/{} failing {} claims {} own {} reviews {} handovers {} overlaps {}",
+                b.mesh.state.as_str(),
+                b.mesh.active,
+                opt(&b.mesh.reason),
+                b.mesh.connected,
+                b.mesh.links,
+                b.mesh.failing,
+                b.mesh.claims_held,
+                b.mesh.own_claims,
+                b.mesh.reviews_for_you,
+                b.mesh.handovers_waiting,
+                b.mesh.overlaps_for_you
+            ),
+        ),
+        (
+            "integration",
+            format!(
+                "{} {}",
+                b.integration.state.as_str(),
+                if b.integration.facts.is_empty() && b.integration.state != BriefSectionState::Read
+                {
+                    // a section that was not read says why in words, and says no time
+                    b.integration.summary.clone()
+                } else {
+                    b.integration.facts.join("; ")
+                }
+            ),
+        ),
+        (
+            "release",
+            format!(
+                "{} {} landed {}",
+                b.release.state.as_str(),
+                b.release
+                    .stance
+                    .and_then(|st| serde_json::to_value(st).ok())
+                    .and_then(|v| v.as_str().map(str::to_string))
+                    .unwrap_or_else(|| "-".into()),
+                b.release.landed
+            ),
+        ),
+        (
+            "derive",
+            format!(
+                "{} holder {} pid {} alive {} priority {}",
+                b.derive.state.as_str(),
+                opt(&b.derive.holder),
+                b.derive.pid.map_or_else(|| "-".into(), |p| p.to_string()),
+                b.derive.alive.map_or_else(|| "-".into(), |a| a.to_string()),
+                opt(&b.derive.priority)
+            ),
+        ),
+    ];
+    if let Some(r) = &b.runtime {
+        sections.push((
+            "runtime",
+            format!(
+                "{} ({}) last {}",
+                r.state.as_str(),
+                opt(&r.reason),
+                r.transition
+                    .as_ref()
+                    .map_or_else(|| "-".into(), |t| t.state.as_str().to_string())
+            ),
+        ));
+    }
+    sections.push(("answered_by", b.answered_by.process.clone()));
+    let sections: Vec<BriefFact> = sections
+        .into_iter()
+        .map(|(section, fact)| BriefFact {
+            section: section.to_string(),
+            fact,
+        })
+        .collect();
+    let canonical: String = sections
+        .iter()
+        .map(|f| format!("{}: {}\n", f.section, f.fact))
+        .collect();
+    let mut fingerprint = crate::policy::sha256_hex(&canonical);
+    fingerprint.truncate(16);
+    BriefFacts {
+        fingerprint,
+        sections,
+    }
+}
+
+/// A named peer as a fact: its line without the board position it opens with (`p1 `), which
+/// is reassigned on every reconnect and names no worker (ADR 0044).
+fn peer_fact(line: &str) -> &str {
+    match line.split_once(' ') {
+        Some((id, rest))
+            if id.len() > 1
+                && id.starts_with('p')
+                && id[1..].chars().all(|c| c.is_ascii_digit()) =>
+        {
+            rest
+        }
+        _ => line,
+    }
 }
 
 impl SessionBrief {
+    /// The brief with its facts computed from its sections.
+    fn with_facts(mut self) -> Self {
+        self.facts = brief_facts(&self);
+        self
+    }
+
     /// The brief with this checkout's runtime state: the field, and one line saying it,
     /// before the line that says who answered, which stays the last.
     fn with_runtime(mut self, runtime: server::RuntimeState) -> Self {
@@ -314,6 +489,7 @@ impl SessionBrief {
         self.lines
             .insert(at, format!("runtime      {}", runtime_summary(&runtime)));
         self.runtime = Some(runtime);
+        self.facts = brief_facts(&self);
         self
     }
 }
@@ -768,14 +944,16 @@ fn mesh_section(ctx: &Context) -> BriefMeshSection {
 }
 
 fn integration_section(root: &Path) -> BriefIntegrationSection {
-    match crate::commands::prs::brief(root) {
-        Some(line) => BriefIntegrationSection {
+    match crate::commands::prs::brief_reading(root) {
+        Some(reading) => BriefIntegrationSection {
             state: BriefSectionState::Read,
-            summary: line,
+            summary: reading.line,
+            facts: reading.facts,
         },
         None => BriefIntegrationSection {
             state: BriefSectionState::Undeclared,
             summary: "this checkout never observed the forge: majordomus prs status".into(),
+            facts: Vec::new(),
         },
     }
 }
@@ -971,7 +1149,9 @@ fn compose(
         release,
         derive,
         runtime: None,
+        facts: BriefFacts::default(),
     }
+    .with_facts()
 }
 
 /// The one line: a few words per section, every section present whatever its state.
@@ -1193,6 +1373,7 @@ mod tests {
         let integration = BriefIntegrationSection {
             state: BriefSectionState::Read,
             summary: "master at abc observed 3 min ago (t): 52 open — ready 1; next merge #902; lease free".into(),
+            facts: Vec::new(),
         };
         let derive = derive_from(false, None, None);
         let b = compose(
@@ -1235,6 +1416,7 @@ mod tests {
         let integration = BriefIntegrationSection {
             state: BriefSectionState::Undeclared,
             summary: "never observed".into(),
+            facts: Vec::new(),
         };
         let b = compose(
             "t".into(),
@@ -1304,6 +1486,7 @@ mod tests {
             &BriefIntegrationSection {
                 state: BriefSectionState::Undeclared,
                 summary: String::new(),
+                facts: Vec::new(),
             },
             &BriefReleaseSection::default(),
             &held,
@@ -1838,10 +2021,110 @@ mod tests {
             BriefIntegrationSection {
                 state: BriefSectionState::Undeclared,
                 summary: "never observed".into(),
+                facts: Vec::new(),
             },
             BriefReleaseSection::default(),
             derive_from(false, None, None),
         )
+    }
+
+    /// The brief's fingerprint is its facts, not its words: a brief composed later, whose
+    /// words carry other instants, ages and held durations and whose peer stands at another
+    /// board position, states the same facts and has the same fingerprint.
+    #[test]
+    fn the_fingerprint_ignores_the_clock_and_board_positions() {
+        let one = a_brief();
+        let mut session_later = session(None);
+        session_later.summary = "episode s-1 on feature/x at abc1234567, opened 3 h ago".into();
+        let mut peers_later = peers(0, false);
+        peers_later.named = vec!["p7 claude-code @master: integrating".into()];
+        let mut derive_later = derive_from(false, None, None);
+        derive_later.held_seconds = Some(9_999);
+        derive_later.summary = "free (held 2 h 46 min ago)".into();
+        let later = compose(
+            "2026-11-07T17:00:00Z".into(),
+            20,
+            origin(),
+            session_later,
+            peers_later,
+            mesh_off(),
+            BriefIntegrationSection {
+                state: BriefSectionState::Undeclared,
+                summary: "never observed".into(),
+                facts: Vec::new(),
+            },
+            BriefReleaseSection::default(),
+            derive_later,
+        );
+        assert_ne!(one.lines, later.lines, "the words differ");
+        assert_eq!(one.facts, later.facts);
+        assert_eq!(one.facts.fingerprint.len(), 16);
+        // a section per part of the brief, in its order, the composing process last
+        let names: Vec<&str> = one.facts.sections.iter().map(|f| f.section.as_str()).collect();
+        assert_eq!(
+            names,
+            ["session", "peers", "mesh", "integration", "release", "derive", "answered_by"]
+        );
+    }
+
+    /// A fact that changes moves the fingerprint: a new head, a task taken, a peer more, the
+    /// queue's next merge, and the runtime's state each give another one.
+    #[test]
+    fn a_changed_fact_moves_the_fingerprint() {
+        let base = a_brief().facts.fingerprint;
+        let with = |f: &dyn Fn(&mut SessionBrief)| {
+            let mut b = a_brief();
+            f(&mut b);
+            b.with_facts().facts.fingerprint
+        };
+        let changed = [
+            with(&|b| b.session.head = "def7654321".into()),
+            with(&|b| b.session.task_id = Some("I1".into())),
+            with(&|b| b.peers.attached = 4),
+            with(&|b| {
+                b.integration.state = BriefSectionState::Read;
+                b.integration.facts = vec!["next merge #902".into()];
+            }),
+            with(&|b| b.derive.holder = Some("derive pid 7".into())),
+            a_brief()
+                .with_runtime(server::RuntimeState {
+                    state: ServerStanding::Operational,
+                    reason: None,
+                    transition: None,
+                })
+                .facts
+                .fingerprint,
+        ];
+        for (i, f) in changed.iter().enumerate() {
+            assert_ne!(f, &base, "change {i} did not move the fingerprint");
+        }
+        // the integration queue observed again: same facts, same fingerprint
+        let again = |at: &str| {
+            with(&|b| {
+                b.integration.state = BriefSectionState::Read;
+                b.integration.summary = format!("master at abc observed {at}: 52 open; next merge #902");
+                b.integration.facts = vec!["master at abc: 52 open — ".into(), "next merge #902".into()];
+            })
+        };
+        assert_eq!(again("3 min ago"), again("2 h ago"));
+    }
+
+    /// A peer's board position is not a fact, and nothing else of its line is dropped.
+    #[test]
+    fn a_peer_fact_drops_only_the_board_position() {
+        assert_eq!(peer_fact("p12 codex @main: x"), "codex @main: x");
+        assert_eq!(peer_fact("planner @main: x"), "planner @main: x");
+        assert_eq!(peer_fact("p codex"), "p codex");
+    }
+
+    /// An older server's answer has no facts: it still reads, with an empty fingerprint the
+    /// client knows to fall back from.
+    #[test]
+    fn an_answer_without_facts_still_reads() {
+        let mut v = serde_json::to_value(a_brief()).unwrap();
+        v.as_object_mut().unwrap().remove("facts");
+        let b: SessionBrief = serde_json::from_value(v).unwrap();
+        assert!(b.facts.fingerprint.is_empty());
     }
 
     /// The runtime is one line of the brief, before the line that says who answered, which
@@ -1922,6 +2205,7 @@ mod tests {
                 BriefIntegrationSection {
                     state: BriefSectionState::Undeclared,
                     summary: "never observed".into(),
+                    facts: Vec::new(),
                 },
                 r,
                 derive_from(false, None, None),
@@ -2380,6 +2664,7 @@ mod tests {
             &BriefIntegrationSection {
                 state: BriefSectionState::Unread,
                 summary: String::new(),
+                facts: Vec::new(),
             },
             &BriefReleaseSection::default(),
             &free,

@@ -769,8 +769,24 @@ fn ago(at: &str) -> String {
 /// merge — from files alone. `None` when this checkout never observed the forge, so that a
 /// briefing does not grow a section about nothing.
 pub(crate) fn brief(root: &std::path::Path) -> Option<String> {
+    brief_reading(root).map(|r| r.line)
+}
+
+/// The briefing line and what it states with the clock taken out.
+pub(crate) struct BriefReading {
+    /// The line, as [`brief`] answers it.
+    pub line: String,
+    /// The line's facts, one per part, without an age or the instant of an observation: a
+    /// queue observed again with nothing changed states the same facts. An event's own
+    /// instant stays, because a second merge or refresh is a new fact, not a later reading.
+    pub facts: Vec<String>,
+}
+
+/// [`brief`] with its facts beside it: each part is composed once, in words and as a fact.
+pub(crate) fn brief_reading(root: &std::path::Path) -> Option<BriefReading> {
     let obs = integration::load_observation(root).ok().flatten()?;
     let mut parts = Vec::new();
+    let mut facts = Vec::new();
     match integration::QueueSummary::load(root) {
         Some(s) => {
             let lanes: Vec<String> = s
@@ -788,47 +804,74 @@ pub(crate) fn brief(root: &std::path::Path) -> Option<String> {
                 s.tallies.open,
                 lanes.join(", ")
             ));
-            parts.push(match s.next_merge {
+            facts.push(format!(
+                "{} at {}: {} open — {}",
+                s.base,
+                short(&s.master_sha),
+                s.tallies.open,
+                lanes.join(", ")
+            ));
+            let next = match s.next_merge {
                 Some(n) => format!("next merge #{n}"),
                 None => "nothing ready".into(),
-            });
+            };
+            facts.push(next.clone());
+            parts.push(next);
             if !s.starving.is_empty() {
                 let list: Vec<String> = s.starving.iter().map(|n| format!("#{n}")).collect();
-                parts.push(format!("starving {}", list.join(" ")));
+                let starving = format!("starving {}", list.join(" "));
+                facts.push(starving.clone());
+                parts.push(starving);
             }
             if s.diagnostics > 0 {
-                parts.push(format!(
-                    "{} diagnostic(s): majordomus prs status",
-                    s.diagnostics
-                ));
+                let d = format!("{} diagnostic(s): majordomus prs status", s.diagnostics);
+                facts.push(d.clone());
+                parts.push(d);
             }
         }
-        None => parts.push(format!(
-            "observed {} at {}; no queue built since — majordomus prs status",
-            obs.repository, obs.observed_at
-        )),
+        None => {
+            parts.push(format!(
+                "observed {} at {}; no queue built since — majordomus prs status",
+                obs.repository, obs.observed_at
+            ));
+            facts.push(format!("observed {}; no queue built since", obs.repository));
+        }
     }
-    parts.push(match IntegrationLease::read(root, &obs.base) {
+    let (lease, lease_fact) = match IntegrationLease::read(root, &obs.base) {
         Ok(Some(l)) => match (&l.holder, l.stale) {
-            (_, true) => format!(
-                "lease stale (renewed {} s ago; the next executor takes it over)",
-                l.renewed_seconds_ago
+            (_, true) => (
+                format!(
+                    "lease stale (renewed {} s ago; the next executor takes it over)",
+                    l.renewed_seconds_ago
+                ),
+                "lease stale".to_string(),
             ),
-            (Some(h), false) => format!(
-                "lease held by pid {} on {}, {}{}",
-                h.pid,
-                h.host,
-                match &h.mesh_claim {
+            (Some(h), false) => {
+                let claim = match &h.mesh_claim {
                     Some(key) => format!("across machines by mesh claim {key}"),
                     None => "per-clone guard only".to_string(),
-                },
-                without_progress(h)
+                };
+                let stalled = without_progress(h);
+                (
+                    format!("lease held by pid {} on {}, {claim}{stalled}", h.pid, h.host),
+                    format!(
+                        "lease held by pid {} on {}, {claim}{}",
+                        h.pid,
+                        h.host,
+                        if stalled.is_empty() { "" } else { ", without queue progress" }
+                    ),
+                )
+            }
+            (None, false) => (
+                "lease held (holder unreadable)".to_string(),
+                "lease held (holder unreadable)".to_string(),
             ),
-            (None, false) => "lease held (holder unreadable)".into(),
         },
-        Ok(None) => "lease free".into(),
-        Err(_) => "lease unknown".into(),
-    });
+        Ok(None) => ("lease free".to_string(), "lease free".to_string()),
+        Err(_) => ("lease unknown".to_string(), "lease unknown".to_string()),
+    };
+    parts.push(lease);
+    facts.push(lease_fact);
     let trail = drain::events(root);
     if let Some(m) = trail
         .iter()
@@ -840,16 +883,21 @@ pub(crate) fn brief(root: &std::path::Path) -> Option<String> {
             m.pr.unwrap_or_default(),
             ago(&m.at)
         ));
+        facts.push(format!("last merge #{} at {}", m.pr.unwrap_or_default(), m.at));
     }
     if let Some(e) = last_outcome(&trail) {
-        parts.push(format!(
-            "last {}{} {}",
+        let what = format!(
+            "last {}{}",
             e.action.as_str(),
-            e.pr.map(|n| format!(" #{n}")).unwrap_or_default(),
-            ago(&e.at)
-        ));
+            e.pr.map(|n| format!(" #{n}")).unwrap_or_default()
+        );
+        parts.push(format!("{what} {}", ago(&e.at)));
+        facts.push(format!("{what} at {}", e.at));
     }
-    Some(parts.join("; "))
+    Some(BriefReading {
+        line: parts.join("; "),
+        facts,
+    })
 }
 
 /// ", no queue progress for N s (over the ttl of T s)" when the holder of a lease has advanced
