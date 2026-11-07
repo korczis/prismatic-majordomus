@@ -15,6 +15,10 @@
 #   4  a dirty build is rendered from bytes no commit holds, and is not judged on either
 #   5  the templates read the build's reading when there is one and the committed projection
 #      otherwise, so a plain `zola serve` still renders delivery
+#   6  scripts/site-build without an executable records no reading and goes on; any other
+#      failure of the reading still stops it
+#   7  a clean build that carries no reading renders the committed projection, and its card
+#      naming that projection's commit is not refused (master deploy 42367964782, 2026-11-07)
 # Rule: project.homepage-tells-a-declared-story.
 . "$ROOT/test/lib.sh"
 CHECK="$ROOT/scripts/ci/homepage-check"
@@ -150,3 +154,9 @@ stub_root 12 "plan delivery: the history could not be read"
 rc="$(lifted)"
 [ "$rc" = 12 ] || { echo "    a reading the tool could not give did not stop the build (exit $rc):"; cat lifted.out; exit 1; }
 echo "    ok   a_build_without_the_executable_reads_the_committed_delivery"
+
+# ---------------------------------------------------------------- 7  no reading: the card names the projection
+fresh; sed -i.bak "s#data-product-delivery-commit=\"$C\"#data-product-delivery-commit=\"$O\"#" "$F/site/public/index.html"
+build_json ".delivery = null"
+expect_finding 0 '^OK   product ' "a clean build with no reading, its card naming the committed projection's commit"
+echo "    ok   a_build_with_no_reading_names_the_committed_projection"
