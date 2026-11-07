@@ -7,7 +7,7 @@ slug: one-link-resolver
 priority: p1
 profile: implementation
 parallel_safe: false
-objective: "Slice S6 of milestone one-frame-one-kit-one-library-per-job. Add one resolver, apps/majordomus-cli/src/web/links, that maps an id of an issue, PR, commit, run, capability, rule, skill, intent, milestone, peer, worktree or release to its canonical page on /ui, /cockpit and the site, and a Tera function that calls the same table. Every id cell of every kit component goes through it. Extend case 1091 so that an id rendered as plain text fails it."
+objective: "Slice S6 of milestone one-frame-one-kit-one-library-per-job. Add one resolver, apps/majordomus-cli/src/web/links, that maps an id of an issue, PR, commit, run, capability, rule, skill, intent, milestone, peer, worktree or release to its canonical page on /ui, /cockpit and the site, and the same table generated into site/data by majordomus generate for a Tera macro to read: Zola runs its own Tera and cannot call a function of this executable. Detection is by markup, not by text: every entity a component renders carries a data-entity mark, and the case refuses an entity cell without a link; the regex-shaped ids (I1234, #123, a commit sha) are also scanned in text, while name-shaped ids (a capability, rule, skill, intent, milestone, peer or worktree name) are not, because they cannot be told from prose. Every id cell of every kit component goes through it. Extend case 1091 so that an id rendered as plain text fails it."
 why: "The owner's order of 2026-11-07 13:30Z asks for /ui, /cockpit and the site to be reintegrated on one kit: max reuse, Flowbite Pro best practices, one library per job, everything derived, tested, deployed and linked (intent one-kit-on-every-surface). The owner asks for everything linked; an id that is plain text on one surface and a link on another is a dead end."
 current_state: "Measured on master on 2026-11-07: test/cases/1091_no_link_on_the_ui_is_dead.sh checks that links resolve, not that ids are links; each surface builds its own hrefs; no apps/majordomus-cli/src/web/links exists."
 desired_state: "One resolver table decides every entity link on all three surfaces; case 1091 fails on a planted plain-text id and on a link to a page that does not exist."
@@ -17,6 +17,8 @@ scope:
   - "site/templates/kit"
   - "test/cases/1091_no_link_on_the_ui_is_dead.sh"
   - ".ai/repo/project/issues/I4540.yaml"
+  - "site/data"
+  - "apps/majordomus-cli/src/ui/view.rs"
 non_scope:
   - "Links to external forges beyond the PR, commit, run and release pages already linked"
 depends_on:
@@ -24,9 +26,12 @@ depends_on:
 acceptance_criteria:
   - "Case 1091 fails when a planted page renders an issue id, a commit or a capability id as plain text, and passes on the tree"
   - "Each of the 12 entity kinds resolves to a page that answers 200 on /ui, /cockpit and the site, or is said to have none on that surface"
+  - "The site's link table is a generated file compared by majordomus generate --check, never hand-written"
+  - "The first commit that adds this issue's case also changes criterion every-entity-linked of .ai/repo/project/intents/one-kit-on-every-surface.yaml to evidence: test with that case as its ref, so the criterion stops being proven by majordomus intent explain of itself"
 validation:
   - "bash test/run.sh 1091_no_link_on_the_ui_is_dead"
   - "majordomus plan validate"
+  - "node scripts/ui audit"
 evidence_required:
   - "case_1091_extended"
 created_at: 2026-11-07

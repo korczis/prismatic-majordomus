@@ -16,18 +16,18 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | issue | status | wave | depends on | title |
 |---|---|---|---|---|
 | [I4534](https://majordomus.dev/plan/i4534/) | READY | 0 | — | The nine open UI pull requests are each landed, absorbed or superseded with a recorded reason before the reintegration touches their paths |
-| [I4535](https://majordomus.dev/plan/i4535/) | BLOCKED | 1 | I4534 | One share/design/js/core ESM module holds the token resolver, theme observer, reduced motion, lazy loader, fragment fetch, bounded polling and socket client, and every copy is gone |
-| [I4536](https://majordomus.dev/plan/i4536/) | BLOCKED | 1 | I4534 | Flowbite JS, vendored from npm 4.0.2 and CSP-checked, drives collapse, dropdown, modal, drawer, tabs and tooltip on every surface |
-| [I4537](https://majordomus.dev/plan/i4537/) | BLOCKED | 2 | I4535, I4536 | One component kit: the /ui and Cockpit El kits merge into web/kit, the Tera kit emits the same markup contract, and a case holds the two together |
-| [I4538](https://majordomus.dev/plan/i4538/) | BLOCKED | 3 | I4535, I4536, I4537 | One Pro page frame serves /ui and /cockpit, /ui SCREENS is derived from the registry, and the site wears the Pro navbar and footer |
-| [I4539](https://majordomus.dev/plan/i4539/) | BLOCKED | 3 | I4537 | One advanced table component, rendered on the server and enhanced on the client, lists issues, prs, capabilities, skills, objects, executions and commands |
-| [I4540](https://majordomus.dev/plan/i4540/) | BLOCKED | 3 | I4537 | One link resolver maps every entity id to its canonical page on each surface, and case 1091 refuses an id rendered as plain text |
-| [I4541](https://majordomus.dev/plan/i4541/) | BLOCKED | 2 | I4535, I4536 | One Cytoscape module draws every graph on every surface, and the duplicated PR and milestone dependency graphs become one each |
-| [I4542](https://majordomus.dev/plan/i4542/) | BLOCKED | 2 | I4535, I4536 | ECharts draws the charts of /ui and the Cockpit through the site's chart module, and /ui/trends and /trends/ share it |
-| [I4543](https://majordomus.dev/plan/i4543/) | BLOCKED | 2 | I4535, I4536 | Alpine runs as one CSP build everywhere, the site's inline x-data become Alpine.data components in one module, and the duplicate tabs and copy controls retire |
-| [I4544](https://majordomus.dev/plan/i4544/) | BLOCKED | 4 | I4538 | Every page carries rel=alternate JSON of the data it shows, and /ui and the site publish an llms.txt derived from the route registry |
+| [I4535](https://majordomus.dev/plan/i4535/) | BLOCKED | 2 | I4534, I3794 | One share/design/js/core ESM module holds the token resolver, theme observer, reduced motion, lazy loader, fragment fetch, bounded polling and socket client, and every copy is gone |
+| [I4536](https://majordomus.dev/plan/i4536/) | BLOCKED | 3 | I4534, I4535 | Flowbite JS, vendored from npm 4.0.2 and CSP-checked, drives collapse, dropdown, modal, drawer, tabs and tooltip on every surface |
+| [I4537](https://majordomus.dev/plan/i4537/) | BLOCKED | 4 | I4535, I4536 | One component kit: the /ui and Cockpit El kits merge into web/kit, the Tera kit emits the same markup contract, and a case holds the two together |
+| [I4538](https://majordomus.dev/plan/i4538/) | BLOCKED | 5 | I4535, I4536, I4537 | One Pro page frame serves /ui and /cockpit, /ui SCREENS is derived from the registry, and the site wears the Pro navbar and footer |
+| [I4539](https://majordomus.dev/plan/i4539/) | BLOCKED | 5 | I4537, I4495 | One advanced table component, rendered on the server and enhanced on the client, lists issues, prs, capabilities, skills, objects, executions and commands |
+| [I4540](https://majordomus.dev/plan/i4540/) | BLOCKED | 5 | I4537 | One link resolver maps every entity id to its canonical page on each surface, and case 1091 refuses an id rendered as plain text |
+| [I4541](https://majordomus.dev/plan/i4541/) | BLOCKED | 4 | I4535, I4536 | One Cytoscape module draws every graph on every surface, and the duplicated PR and milestone dependency graphs become one each |
+| [I4542](https://majordomus.dev/plan/i4542/) | BLOCKED | 4 | I4535, I4536 | ECharts draws the charts of /ui and the Cockpit through the site's chart module, and /ui/trends and /trends/ share it |
+| [I4543](https://majordomus.dev/plan/i4543/) | BLOCKED | 4 | I4535, I4536 | Alpine runs as one CSP build everywhere, the site's inline x-data become Alpine.data components in one module, and the duplicate tabs and copy controls retire |
+| [I4544](https://majordomus.dev/plan/i4544/) | BLOCKED | 6 | I4538 | Every page carries rel=alternate JSON of the data it shows, and /ui and the site publish an llms.txt derived from the route registry |
 | [I4545](https://majordomus.dev/plan/i4545/) | BLOCKED | 1 | I4534 | The handbook loads ECharts, Mermaid and highlight.js vendored at the site's versions instead of from cdnjs |
-| [I4546](https://majordomus.dev/plan/i4546/) | BLOCKED | 4 | I4538, I4539, I4540, I4541, I4542, I4543 | The probes cover the three.js topology and p5 activity pages and every kit component, and design kit --check is a gate at zero findings |
+| [I4546](https://majordomus.dev/plan/i4546/) | BLOCKED | 6 | I4538, I4539, I4540, I4541, I4542, I4543 | The probes cover the three.js topology and p5 activity pages and every kit component, and design kit --check is a gate at zero findings |
 
 ## Findings
 

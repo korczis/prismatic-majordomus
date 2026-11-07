@@ -7,7 +7,7 @@ slug: one-advanced-table
 priority: p1
 profile: implementation
 parallel_safe: false
-objective: "Slice S5 of milestone one-frame-one-kit-one-library-per-job. Add one table component to web/kit and its enhancement to share/design/js/table: search, filter, sort, pagination, column visibility, CSV and JSON export and a row link. The server renders the complete table so it reads without script; the client enhances it. Adopt it on the issues, prs, capabilities, skills, objects, executions and commands lists of /ui and /cockpit."
+objective: "Slice S5 of milestone one-frame-one-kit-one-library-per-job. Add one table component to web/kit and its enhancement to share/design/js/table: search, filter, sort, pagination, column visibility, CSV and JSON export and a row link. Without script the table is the server's page of the list, paginated as the Cockpit's Window and pagination already do (cockpit/view.rs:606-670), never every row of capabilities.list (3920) or objects (3689); the client enhances the page it was given and asks the list's own capability filters for more. Adopt it on the issues, prs, capabilities, skills, objects, executions and commands lists of /ui and /cockpit."
 why: "The owner's order of 2026-11-07 13:30Z asks for /ui, /cockpit and the site to be reintegrated on one kit: max reuse, Flowbite Pro best practices, one library per job, everything derived, tested, deployed and linked (intent one-kit-on-every-surface). The owner asks for advanced tables; each list screen sorts, pages and filters its own way today, and some do not at all."
 current_state: "Measured on master on 2026-11-07: the table is one of the components drawn two or three times (S3 inventory); apps/majordomus-cli/src/cockpit/view.rs:630 and :644 hold the Cockpit's own pages and page_numbers; no share/design/js/table exists and no list exports CSV or JSON."
 desired_state: "Every list screen named here renders the one table; with script it searches, filters, sorts, pages, hides columns, exports CSV and JSON and links each row; without script it is the complete server-rendered table."
@@ -20,14 +20,19 @@ scope:
   - "apps/majordomus-cli/src/ui/skills.rs"
   - "apps/majordomus-cli/src/cockpit/pages.rs"
   - ".ai/repo/project/issues/I4539.yaml"
+  - "apps/majordomus-cli/src/cockpit/view.rs"
+  - "share/design/js/core"
 non_scope:
   - "Server-side query languages beyond the filters the list's capability already takes"
 depends_on:
   - "I4537"
+  - "I4495"
 acceptance_criteria:
   - "The interaction probe drives search, filter, sort, pagination, column visibility, CSV export, JSON export and the row link on each of the seven lists"
-  - "With script disabled each list renders every row the capability returns"
   - "An exported CSV and JSON hold exactly the rows and columns shown"
+  - "The issue list keeps I4495's page-in-the-URL reading (milestone a-screen-is-fast-bounded-and-says-why), on which this table builds rather than replacing it"
+  - "With script disabled each list renders its server page and pagination links that reach every row the capability returns"
+  - "Every /ui screen that adopts the table stays within the warm budget of the ui-checks step (100 ms p95, I4200), measured by majordomus bench on the same build before and after"
 validation:
   - "scripts/interaction-probe"
   - "node scripts/ui audit"

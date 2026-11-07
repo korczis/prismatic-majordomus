@@ -7,7 +7,7 @@ slug: the-kit-is-probed-and-gated
 priority: p1
 profile: implementation
 parallel_safe: false
-objective: "Slice S12 of milestone one-frame-one-kit-one-library-per-job. Extend the ui-shard and interaction probes (scripts/lib, scripts/interaction-probe, scripts/lib/interaction-specs) to the three.js topology page, the p5 activity page and every component of the one kit on all three surfaces, and run majordomus design kit --check in .github/workflows/validate.yml as a gate that fails on any finding. The deploy is verified in a browser after it publishes."
+objective: "Slice S12 of milestone one-frame-one-kit-one-library-per-job. Extend the ui-shard and interaction probes (scripts/lib, scripts/interaction-probe, scripts/lib/interaction-specs) to the three.js topology page, the p5 activity page and every component of the one kit on all three surfaces, and adopt the kit with majordomus design kit adopt flowbite-pro (ADR 0230, decision 4), which sets ui.kit, keeps the repository's own section of rule project.ui-uses-flowbite-pro and writes the design-kit-on-push and design-kit enforcement entries, so the gate and the licence judgement (inactive today: ui.kit is empty) come from the adoption and not from a hand-written workflow step. It also writes the one case of criterion one-library-per-job: a planted second construction of ECharts, Cytoscape, p5 or Alpine outside share/design/js fails it. The deploy is verified in a browser after it publishes."
 why: "The owner's order of 2026-11-07 13:30Z asks for /ui, /cockpit and the site to be reintegrated on one kit: max reuse, Flowbite Pro best practices, one library per job, everything derived, tested, deployed and linked (intent one-kit-on-every-surface). The topology page has no dedicated test, and nothing yet refuses a change that reintroduces a second frame, kit or library."
 current_state: "Measured on master on 2026-11-07: share/cockpit/topology.js (three.js 0.185.1) and share/cockpit/activity.js (p5 2.3.2) have no dedicated probe; .github/workflows/validate.yml runs four ui-shard jobs and no design kit --check step; case 4334 (test/cases/4334_the_ui_kit_is_checked_by_one_capability.sh) proves the capability, not the gate on this tree."
 desired_state: "Every kit component and the topology and activity pages are visited by a probe; validate.yml fails on any design kit finding; the pages deploy is followed by a browser probe of the published site."
@@ -17,6 +17,9 @@ scope:
   - "scripts/interaction-probe"
   - ".github/workflows/validate.yml"
   - ".ai/repo/project/issues/I4546.yaml"
+  - "test/cases"
+  - ".ai/repo/policy.yaml"
+  - ".ai/repo/rules/project/ui-uses-flowbite-pro.v1.md"
 non_scope:
   - "The release probe of the published homepage (I4530)"
 depends_on:
@@ -30,6 +33,10 @@ acceptance_criteria:
   - "The ui-shard probe visits /cockpit/graphs/topology and /cockpit/activity and fails when either renders an empty canvas"
   - "Every kit component is driven by an interaction spec on each surface it appears on"
   - "validate.yml runs majordomus design kit --check and the job fails on a planted finding (case 26 still passes)"
+  - "majordomus design licence reports active (ui.kit: flowbite-pro), and majordomus doctor names no missing design-kit enforcement entry"
+  - "A case fails on a planted second import or construction of ECharts, Cytoscape, p5 or Alpine outside share/design/js, and passes on the tree"
+  - "The ui-shard probe visits the observatory kiosk's p5 scenes (share/ui/observatory-kiosk.js, ADR 0160) and fails on an empty stage"
+  - "The first commit that adds this issue's case also changes criterion one-library-per-job of .ai/repo/project/intents/one-kit-on-every-surface.yaml to evidence: test with that case as its ref, so the criterion stops being proven by majordomus intent explain of itself"
 validation:
   - "majordomus design kit --check"
   - "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 26_ci_wiring"

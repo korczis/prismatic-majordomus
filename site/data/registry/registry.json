@@ -6,23 +6,23 @@
     "version": "1.0.0"
   },
   "registry": {
-    "fingerprint": "a8a6637f58f9a2d0d629086ecf517080f515da09841400a67c081cb44b50b2be",
+    "fingerprint": "d64e902b0f01977a1a8000fefb0342d3692ccd2751470dd79fbbc1743e91721f",
     "summary": {
-      "total": 3966,
+      "total": 3967,
       "builtin": 231,
-      "declarative": 3735,
+      "declarative": 3736,
       "by_kind": {
         "command": 41,
         "query": 190,
-        "resource": 3735
+        "resource": 3736
       },
       "by_stability": {
         "behaviorally_verified": 153,
         "experimental": 68,
-        "implemented": 3745
+        "implemented": 3746
       },
       "mcp_tools": 215,
-      "mcp_resources": 3792,
+      "mcp_resources": 3793,
       "http_routes": 219,
       "cli_commands": 128,
       "modules": 96,
@@ -96713,7 +96713,7 @@
         "title": "critique",
         "description": "Declarative objects of kind 'critique' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 40,
+        "capabilities": 41,
         "capability_ids": []
       },
       {
@@ -97878,7 +97878,7 @@
     ]
   },
   "index": {
-    "fingerprint": "4e2f2117d0da02b89a5061fa7584c179cebbcd9af664ff9ecb3659df0ef16fc4",
+    "fingerprint": "b4cbd02f83de1da3e4a320aae8d0b3fbc715406b5bcd7be60f2c216478eae1b3",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -97908,7 +97908,7 @@
       "claim": 250,
       "command": 31,
       "context": 39,
-      "critique": 40,
+      "critique": 41,
       "deployment": 1,
       "derive-offload": 1,
       "distribution-model": 1,
@@ -104533,6 +104533,17 @@
         "bytes": 15782
       },
       {
+        "uri": "majordomus://critique/one-kit-on-every-surface",
+        "kind": "critique",
+        "identity": "one-kit-on-every-surface",
+        "title": "one-kit-on-every-surface",
+        "description": "4e757681523",
+        "path": ".ai/repo/project/critiques/one-kit-on-every-surface.yaml",
+        "section": "project",
+        "source_class": "critique",
+        "bytes": 25546
+      },
+      {
         "uri": "majordomus://critique/operation-convergence",
         "kind": "critique",
         "identity": "operation-convergence",
@@ -109327,7 +109338,7 @@
         "path": ".ai/repo/project/intents/one-kit-on-every-surface.yaml",
         "section": "project",
         "source_class": "intent",
-        "bytes": 5703
+        "bytes": 6103
       },
       {
         "uri": "majordomus://intent/operation-convergence",
@@ -122923,7 +122934,7 @@
         "path": ".ai/repo/project/issues/I4534.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 4218
+        "bytes": 5100
       },
       {
         "uri": "majordomus://issue/I4535",
@@ -122934,18 +122945,18 @@
         "path": ".ai/repo/project/issues/I4535.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 3027
+        "bytes": 4204
       },
       {
         "uri": "majordomus://issue/I4536",
         "kind": "issue",
         "identity": "I4536",
         "title": "Flowbite JS, vendored from npm 4.0.2 and CSP-checked, drives collapse, dropdown, modal, drawer, tabs and tooltip on every surface",
-        "description": "Slice S2 of milestone one-frame-one-kit-one-library-per-job. Vendor Flowbite JS from the npm flowbite 4.0.2 package.json already pins, built by scripts/cockpit-assets and scripts/site-build into the served tree and checked against the /ui and /cockpit CSP. Delete the collapse and dropdown of site/nav.js; move tabs, modal, drawer and tooltip (site/kit.js, site/search.js, the Cockpit palette, the graph detail panes) onto Flowbite's data attributes and its initialisers, re-run after a fragment swap. Decision recorded here, not as an ADR edit: the owner's order of 2026-11-07 moves ADR 0230 (Flowbite Pro is adapted onto Tailwind 4) from proposed to accepted; the status change is the owner's act through the ADR process.",
+        "description": "Slice S2 of milestone one-frame-one-kit-one-library-per-job. Vendor Flowbite JS from the npm flowbite 4.0.2 package.json already pins, built by scripts/cockpit-assets and scripts/site-build into the served tree and checked against the /ui and /cockpit CSP. Delete the collapse and dropdown of site/nav.js; move tabs, modal, drawer and tooltip (site/kit.js, site/search.js, the Cockpit palette, the graph detail panes) onto Flowbite's data attributes and its initialisers, re-run after a fragment swap. ADR 0230 (Flowbite Pro is adapted onto Tailwind 4) is proposed; this slice builds on it and asks the owner to accept it through the ADR process. The owner's order of 2026-11-07 does not name ADR 0230 and is not read as accepting it. Initialise per fragment: Flowbite's initDropdowns and its siblings construct a new instance for every matching element of the whole document, and the constructor binds listeners before the instance registry refuses a duplicate (node_modules/flowbite/dist/flowbite.js:6804-6820, 7026, 8336-8345), so re-running initFlowbite after a swap binds every existing toggle twice; a swapped fragment's elements are instantiated alone through the component constructors. Flowbite's Dropdown and Collapse have no Escape handling or focus return (only Drawer, Modal and Tooltip handle Escape, flowbite.js:6455, 7375, 8173), which site/nav.js:5-8 does today; the keyboard behaviour is kept by a core extension that drives Flowbite's instance API, never by reading the data attributes. The tab half of I3793 (one tab control on every surface) is delivered here as Flowbite tabs; I3793 keeps the copy control.",
         "path": ".ai/repo/project/issues/I4536.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 3461
+        "bytes": 5320
       },
       {
         "uri": "majordomus://issue/I4537",
@@ -122956,40 +122967,40 @@
         "path": ".ai/repo/project/issues/I4537.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 3188
+        "bytes": 4273
       },
       {
         "uri": "majordomus://issue/I4538",
         "kind": "issue",
         "identity": "I4538",
         "title": "One Pro page frame serves /ui and /cockpit, /ui SCREENS is derived from the registry, and the site wears the Pro navbar and footer",
-        "description": "Slice S4 of milestone one-frame-one-kit-one-library-per-job. Replace ui/shell.rs page and cockpit/view.rs page with one frame on the Flowbite Pro shell: a fixed navbar, the sidebar drawer an aside labelled Sidebar that both drawer attributes name, and a page header with its breadcrumb. Derive /ui SCREENS from the capability registry the way apps/majordomus-cli/src/cockpit/nav.rs derives the Cockpit sidebar. Put site/templates/base.html on the Pro navbar and footer. web/html.rs page with its inline CSS uses the same frame or is retired.",
+        "description": "Slice S4 of milestone one-frame-one-kit-one-library-per-job. Replace ui/shell.rs page and cockpit/view.rs page with one frame on the Flowbite Pro shell: a fixed navbar, the sidebar drawer an aside labelled Sidebar that both drawer attributes name, and a page header with its breadcrumb. The frame is shared mechanics in the sense of ADR 0135 (0135:65-75), not a shared surface: it takes each surface's own navigation, title suffix and body root as input, so /ui keeps its delivery-vocabulary screens and CSS-only menu toggle (ui/shell.rs:134-140) and the Cockpit keeps its areas, its Alpine root x-data=cockpit and its palette (cockpit/view.rs:110-113); neither surface's pages or areas are reshaped. SCREENS is the one declaration of /ui's navigation, held to the router by a test (ui/mod.rs:137-140, 517-536); the capability registry declares capabilities, not screens, so SCREENS is derived from the router's own route table (or kept as that declaration with its test), and no registry entry is invented for a screen. Put site/templates/base.html on the Pro navbar and footer. web/html.rs page with its inline CSS uses the same frame or is retired.",
         "path": ".ai/repo/project/issues/I4538.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 3330
+        "bytes": 4821
       },
       {
         "uri": "majordomus://issue/I4539",
         "kind": "issue",
         "identity": "I4539",
         "title": "One advanced table component, rendered on the server and enhanced on the client, lists issues, prs, capabilities, skills, objects, executions and commands",
-        "description": "Slice S5 of milestone one-frame-one-kit-one-library-per-job. Add one table component to web/kit and its enhancement to share/design/js/table: search, filter, sort, pagination, column visibility, CSV and JSON export and a row link. The server renders the complete table so it reads without script; the client enhances it. Adopt it on the issues, prs, capabilities, skills, objects, executions and commands lists of /ui and /cockpit.",
+        "description": "Slice S5 of milestone one-frame-one-kit-one-library-per-job. Add one table component to web/kit and its enhancement to share/design/js/table: search, filter, sort, pagination, column visibility, CSV and JSON export and a row link. Without script the table is the server's page of the list, paginated as the Cockpit's Window and pagination already do (cockpit/view.rs:606-670), never every row of capabilities.list (3920) or objects (3689); the client enhances the page it was given and asks the list's own capability filters for more. Adopt it on the issues, prs, capabilities, skills, objects, executions and commands lists of /ui and /cockpit.",
         "path": ".ai/repo/project/issues/I4539.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2687
+        "bytes": 3377
       },
       {
         "uri": "majordomus://issue/I4540",
         "kind": "issue",
         "identity": "I4540",
         "title": "One link resolver maps every entity id to its canonical page on each surface, and case 1091 refuses an id rendered as plain text",
-        "description": "Slice S6 of milestone one-frame-one-kit-one-library-per-job. Add one resolver, apps/majordomus-cli/src/web/links, that maps an id of an issue, PR, commit, run, capability, rule, skill, intent, milestone, peer, worktree or release to its canonical page on /ui, /cockpit and the site, and a Tera function that calls the same table. Every id cell of every kit component goes through it. Extend case 1091 so that an id rendered as plain text fails it.",
+        "description": "Slice S6 of milestone one-frame-one-kit-one-library-per-job. Add one resolver, apps/majordomus-cli/src/web/links, that maps an id of an issue, PR, commit, run, capability, rule, skill, intent, milestone, peer, worktree or release to its canonical page on /ui, /cockpit and the site, and the same table generated into site/data by majordomus generate for a Tera macro to read: Zola runs its own Tera and cannot call a function of this executable. Detection is by markup, not by text: every entity a component renders carries a data-entity mark, and the case refuses an entity cell without a link; the regex-shaped ids (I1234, #123, a commit sha) are also scanned in text, while name-shaped ids (a capability, rule, skill, intent, milestone, peer or worktree name) are not, because they cannot be told from prose. Every id cell of every kit component goes through it. Extend case 1091 so that an id rendered as plain text fails it.",
         "path": ".ai/repo/project/issues/I4540.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2380
+        "bytes": 3327
       },
       {
         "uri": "majordomus://issue/I4541",
@@ -123000,18 +123011,18 @@
         "path": ".ai/repo/project/issues/I4541.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 3217
+        "bytes": 3903
       },
       {
         "uri": "majordomus://issue/I4542",
         "kind": "issue",
         "identity": "I4542",
         "title": "ECharts draws the charts of /ui and the Cockpit through the site's chart module, and /ui/trends and /trends/ share it",
-        "description": "Slice S8 of milestone one-frame-one-kit-one-library-per-job. Move site/charts.js's ECharts 6.0.0 integration into share/design/js/chart and load it on /ui and /cockpit as on the site. /ui/trends and the site's /trends/ draw site/data/trends.json through it. The Rust SVG lines of apps/majordomus-cli/src/ui/trends.rs, the Rust SVG donut and the Tera SVG sparkline become ECharts charts or a declared static fallback drawn from the page's table. Decision recorded here, not as an ADR edit: the owner's order of 2026-11-07 moves ADR 0152 (a diagram and a chart on the site are one viewer each) from proposed to accepted, and Chart.js is not adopted; the status change is the owner's act through the ADR process.",
+        "description": "Slice S8 of milestone one-frame-one-kit-one-library-per-job. Move site/charts.js's ECharts 6.0.0 integration into share/design/js/chart and load it on /ui and /cockpit as on the site. /ui/trends and the site's /trends/ draw site/data/trends.json through it. The Rust SVG lines of apps/majordomus-cli/src/ui/trends.rs, the Rust SVG donut and the Tera SVG sparkline become ECharts charts or a declared static fallback drawn from the page's table. ADR 0152 (a diagram and a chart on the site are one viewer each) is proposed; the owner's order of 2026-11-07 does not name it and names chart.js among the libraries to review, so the intent's non-goal 'Chart.js is not adopted' is a proposal to the owner, not the owner's word. Before this slice starts, the owner's answer on Chart.js is recorded as a decision with the question and the answer verbatim.",
         "path": ".ai/repo/project/issues/I4542.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2970
+        "bytes": 3410
       },
       {
         "uri": "majordomus://issue/I4543",
@@ -123022,40 +123033,40 @@
         "path": ".ai/repo/project/issues/I4543.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2471
+        "bytes": 3090
       },
       {
         "uri": "majordomus://issue/I4544",
         "kind": "issue",
         "identity": "I4544",
         "title": "Every page carries rel=alternate JSON of the data it shows, and /ui and the site publish an llms.txt derived from the route registry",
-        "description": "Slice S10 of milestone one-frame-one-kit-one-library-per-job. Every /ui, /cockpit and site page carries a link rel=alternate type=application/json to the capability answer or data file it renders. /ui serves /ui/llms.txt and the site publishes /llms.txt, each derived from the route registry (the derived SCREENS of I4538 and the site's sections), never hand-written.",
+        "description": "Slice S10 of milestone one-frame-one-kit-one-library-per-job. Every /ui, /cockpit and site page carries one link rel=alternate type=application/json per capability answer or data file it renders (a /ui screen reads up to six, ui/idd.rs), each titled by its source, beside the existing hreflang alternates of site/templates/base.html:51-57. A static snapshot (web/report/snapshot.rs) rewrites an alternate to the JSON it carries or drops it, never leaving a link to an /api route a publication does not serve. /ui serves /ui/llms.txt and the site publishes /llms.txt, each derived from the route registry (the derived SCREENS of I4538 and the site's sections), never hand-written.",
         "path": ".ai/repo/project/issues/I4544.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2290
+        "bytes": 3187
       },
       {
         "uri": "majordomus://issue/I4545",
         "kind": "issue",
         "identity": "I4545",
         "title": "The handbook loads ECharts, Mermaid and highlight.js vendored at the site's versions instead of from cdnjs",
-        "description": "Slice S11 of milestone one-frame-one-kit-one-library-per-job. Serve the handbook's ECharts, Mermaid and highlight.js from the tree at the versions the site pins (ECharts 6.0.0 and the site's Mermaid and highlighter), and remove every cdnjs URL from handbook/cs, as ADR 0012 and ADR 0166 ask.",
+        "description": "Slice S11 of milestone one-frame-one-kit-one-library-per-job. The handbook is one HTML file published as a claude.ai Artifact (docs/HANDBOOK.md, ADR 0149), which has no served tree and loads external scripts only from cdnjs, jsdelivr and unpkg. Its five libraries (markdown-it, highlight.js, dompurify, mermaid, echarts: handbook/cs/extras10.js:6-13) are inlined at build time into the built file: ECharts and Mermaid from the versions package.json pins (6.0.0 and 11.12.0); markdown-it and dompurify, which package.json does not pin, are added to it as pinned build dependencies; highlight.js leaves when I2747's one highlighter (ADR 0166, decision 7; PR #1294) reaches the handbook. The measured size of the built file is recorded before and after.",
         "path": ".ai/repo/project/issues/I4545.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 1890
+        "bytes": 2679
       },
       {
         "uri": "majordomus://issue/I4546",
         "kind": "issue",
         "identity": "I4546",
         "title": "The probes cover the three.js topology and p5 activity pages and every kit component, and design kit --check is a gate at zero findings",
-        "description": "Slice S12 of milestone one-frame-one-kit-one-library-per-job. Extend the ui-shard and interaction probes (scripts/lib, scripts/interaction-probe, scripts/lib/interaction-specs) to the three.js topology page, the p5 activity page and every component of the one kit on all three surfaces, and run majordomus design kit --check in .github/workflows/validate.yml as a gate that fails on any finding. The deploy is verified in a browser after it publishes.",
+        "description": "Slice S12 of milestone one-frame-one-kit-one-library-per-job. Extend the ui-shard and interaction probes (scripts/lib, scripts/interaction-probe, scripts/lib/interaction-specs) to the three.js topology page, the p5 activity page and every component of the one kit on all three surfaces, and adopt the kit with majordomus design kit adopt flowbite-pro (ADR 0230, decision 4), which sets ui.kit, keeps the repository's own section of rule project.ui-uses-flowbite-pro and writes the design-kit-on-push and design-kit enforcement entries, so the gate and the licence judgement (inactive today: ui.kit is empty) come from the adoption and not from a hand-written workflow step. It also writes the one case of criterion one-library-per-job: a planted second construction of ECharts, Cytoscape, p5 or Alpine outside share/design/js fails it. The deploy is verified in a browser after it publishes.",
         "path": ".ai/repo/project/issues/I4546.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2731
+        "bytes": 3964
       },
       {
         "uri": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
@@ -138931,7 +138942,7 @@
       "identity": [
         "intent"
       ],
-      "objects": 40
+      "objects": 41
     },
     {
       "name": "deployment",

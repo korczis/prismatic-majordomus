@@ -3,7 +3,7 @@ title: "Every page of /ui, /cockpit and majordomus.dev is drawn from one compone
 statement: "Every page of /ui, /cockpit and majordomus.dev is drawn from one component kit on the Flowbite Pro shell, with one library per job. Every entity it names is a link to its canonical page, and every page is readable by a person and by a model. The owner's order of 2026-11-07 13:30Z, verbatim: 'cele http://127.0.0.1:8741/ui potrebuje reintegraci, review vsech rotes, components, max reuse, max flowbite pro best practices + llm, same for alpine.js, cytoscape.js, chart.js, p5.js, apache ec charts, reuse, dry with cokcpit, ui, pages, all dericed, infered, tested, deployed, dynamic, robust ... advanced tables, advanced componets, everything linked'."
 invariants:
   - "A library a slice adopts is vendored from npm at the version package.json pins and served from the tree; no slice adds a CDN load, and the swagger page's pinned unpkg load stays the one accepted exception (apps/majordomus-cli/src/http/swagger.rs)"
-  - "No slice weakens the /ui and /cockpit Content-Security-Policy: no inline script, no eval, no unsafe-inline is admitted to make a library run"
+  - "No slice weakens the /ui and /cockpit Content-Security-Policy (crate::cockpit::csp): no unsafe-eval, no script-src unsafe-inline, no new inline script and no remote origin is admitted to make a library run; style-src keeps the unsafe-inline it already carries for drawing libraries and no slice widens it"
   - "Every sentence, figure and badge is a projection of an existing capability; a component draws data and never decides it"
   - "No Flowbite Pro source file is published verbatim; Pro markup is adapted onto the --mj-* tokens (ADR 0230)"
 non_goals:
@@ -14,7 +14,7 @@ milestones:
   - "one-frame-one-kit-one-library-per-job"
 satisfaction:
   - id: one-page-frame
-    criterion: "One page frame (the Pro navbar, the sidebar drawer, the page header with its breadcrumb) serves /ui and /cockpit, the site wears the Pro navbar and footer, and majordomus design kit --check reports zero S3 and S5 findings (planned by I4538)"
+    criterion: "One page frame (the Pro navbar, the sidebar drawer, the page header with its breadcrumb) serves /ui and /cockpit, the site wears the Pro navbar and footer, every /ui and /cockpit page carries the one frame's mark, which the ui-shard probe refuses a page without, and majordomus design kit --check reports zero S3 and S5 findings with no new ui.exempt entry (planned by I4538; design kit judges only the site's layout, so it is no evidence for the Rust frames)"
     evidence: command
     ref: "majordomus design kit --check"
   - id: one-component-kit
@@ -26,7 +26,7 @@ satisfaction:
     evidence: command
     ref: "majordomus design kit --check"
   - id: one-library-per-job
-    criterion: "Charts are ECharts, graphs are Cytoscape, scenes are p5 and behaviour is Alpine (the CSP build, Alpine.data components), each imported through one shared ESM module per job that all three surfaces load; Chart.js is not adopted (planned proof: a test/cases case that fails on a second import of any of the four libraries, to be written by I4541, I4542 and I4543)"
+    criterion: "Charts are ECharts, graphs are Cytoscape, scenes are p5 and behaviour is Alpine (the CSP build, Alpine.data components), each imported through one shared ESM module per job that all three surfaces load; Chart.js is not adopted (planned proof: a test/cases case that fails on a second import of any of the four libraries, written by I4546 once I4541, I4542 and I4543 have landed)"
     evidence: command
     ref: "majordomus intent explain one-kit-on-every-surface"
   - id: one-client-core

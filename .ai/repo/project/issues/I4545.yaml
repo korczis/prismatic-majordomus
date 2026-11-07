@@ -7,20 +7,23 @@ slug: the-handbook-loads-no-cdn
 priority: p1
 profile: implementation
 parallel_safe: false
-objective: "Slice S11 of milestone one-frame-one-kit-one-library-per-job. Serve the handbook's ECharts, Mermaid and highlight.js from the tree at the versions the site pins (ECharts 6.0.0 and the site's Mermaid and highlighter), and remove every cdnjs URL from handbook/cs, as ADR 0012 and ADR 0166 ask."
+objective: "Slice S11 of milestone one-frame-one-kit-one-library-per-job. The handbook is one HTML file published as a claude.ai Artifact (docs/HANDBOOK.md, ADR 0149), which has no served tree and loads external scripts only from cdnjs, jsdelivr and unpkg. Its five libraries (markdown-it, highlight.js, dompurify, mermaid, echarts: handbook/cs/extras10.js:6-13) are inlined at build time into the built file: ECharts and Mermaid from the versions package.json pins (6.0.0 and 11.12.0); markdown-it and dompurify, which package.json does not pin, are added to it as pinned build dependencies; highlight.js leaves when I2747's one highlighter (ADR 0166, decision 7; PR #1294) reaches the handbook. The measured size of the built file is recorded before and after."
 why: "The owner's order of 2026-11-07 13:30Z asks for /ui, /cockpit and the site to be reintegrated on one kit: max reuse, Flowbite Pro best practices, one library per job, everything derived, tested, deployed and linked (intent one-kit-on-every-surface). The handbook loads three libraries from cdnjs at versions the rest of the product does not use."
 current_state: "Measured on master on 2026-11-07: handbook/cs/extras10.js:6 var CDN = 'https://cdnjs.cloudflare.com/ajax/libs/' with highlight.js/11.9.0 (line 9) and mermaid/10.9.1 (line 11); handbook/cs/extras11.js:14 and handbook/cs/extras12.js:17 load echarts/5.5.0 from cdnjs."
-desired_state: "grep finds no cdnjs, jsdelivr or unpkg URL under handbook/; the handbook's charts, diagrams and code render from the vendored files."
+desired_state: "The built handbook file names no cdnjs, jsdelivr or unpkg URL; its charts, diagrams and code render from libraries inlined at the versions package.json pins."
 scope:
   - "handbook/cs"
+  - "handbook/build.py"
+  - "package.json"
   - ".ai/repo/project/issues/I4545.yaml"
 non_scope:
   - "The handbook's content"
 depends_on:
   - "I4534"
 acceptance_criteria:
-  - "grep -rn -E 'cdnjs|jsdelivr|unpkg' handbook/ finds nothing"
   - "The handbook pages render their charts, Mermaid diagrams and highlighted code in a browser with the network to CDNs blocked"
+  - "The handbook's libraries are the versions package.json pins (ECharts 6.0.0, Mermaid 11.12.0), read by a handbook test from the built file target/handbook/cs/prirucka-majordomusu.html"
+  - "The built handbook stays within the Artifact's 16 MB page limit and renders its charts, diagrams and code in the published artifact"
 validation:
   - "majordomus plan validate"
 evidence_required:
