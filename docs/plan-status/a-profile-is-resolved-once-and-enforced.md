@@ -9,13 +9,13 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 
 | milestone | status | done of required | ready | blocked | active | verify | cancelled | outcome |
 |---|---|---|---|---|---|---|---|---|
-| [a-profile-is-resolved-once-and-enforced](https://majordomus.dev/plan/a-profile-is-resolved-once-and-enforced/) | PLANNED | 0/12 | 1 | 11 | 0 | 0 | 0 | One typed resolver in the Rust executable turns the policy, a profile definition and the task, issue and intent it is asked about into an effective profile with a source and a reason for every field and a fingerprint. The command line, HTTP, MCP and a screen of majordomus ui read that one answer; the shell lifecycle reads it too; a task record carries its fingerprint; every axis says how far it is enforced; and a capability that changes the repository is refused at the executor under a profile that does not grant it. |
+| [a-profile-is-resolved-once-and-enforced](https://majordomus.dev/plan/a-profile-is-resolved-once-and-enforced/) | ACTIVE | 0/12 | 0 | 11 | 1 | 0 | 0 | One typed resolver in the Rust executable turns the policy, a profile definition and the task, issue and intent it is asked about into an effective profile with a source and a reason for every field and a fingerprint. The command line, HTTP, MCP and a screen of majordomus ui read that one answer; the shell lifecycle reads it too; a task record carries its fingerprint; every axis says how far it is enforced; and a capability that changes the repository is refused at the executor under a profile that does not grant it. |
 
 ## Issues
 
 | issue | status | wave | depends on | title |
 |---|---|---|---|---|
-| [I4500](https://majordomus.dev/plan/i4500/) | READY | 0 | — | A profile is traced from its file to finish: every link marked proven, advisory, duplicated or missing, and the resolver's owner decided in a record |
+| [I4500](https://majordomus.dev/plan/i4500/) | ACTIVE | 0 | — | A profile is traced from its file to finish: every link marked proven, advisory, duplicated or missing, and the resolver's owner decided in a record |
 | [I4501](https://majordomus.dev/plan/i4501/) | BLOCKED | 1 | I4500 | A profile is a typed object: one Rust definition parses, validates and lists the profiles, and profile.list, profile.show and profile.validate answer everywhere |
 | [I4502](https://majordomus.dev/plan/i4502/) | BLOCKED | 2 | I4501 | An effective profile is resolved by one function: every field with its source and reason, one fingerprint, the same answer in any order |
 | [I4503](https://majordomus.dev/plan/i4503/) | BLOCKED | 3 | I4502 | The lifecycle reads the resolver: start, check --explain, context, finish and doctor take a profile from one answer, and no shell function reads a profile's keys |

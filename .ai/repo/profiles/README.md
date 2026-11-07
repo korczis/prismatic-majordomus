@@ -22,8 +22,20 @@ the default (`profiles.default`), and a task carries the profile it was started 
 
 The keys are closed by `share/allow/profile.txt` — a key nothing reads is an error, not a
 silent no-op. `context.*` switches the sections the context builder assembles;
-`requires.*` is what `majordomus finish` refuses to skip. Nothing here decides *what* a
+`verification.*` is what `majordomus finish` refuses to skip. Nothing here decides *what* a
 worker does; it decides how much the tool spends on helping.
+
+## Who reads a profile
+
+No resolver exists yet. Each command opens the file itself: `start`, `check`, `context`,
+`finish`, `watch`, `doctor` and `update` in shell, and `reasoning`, `proceed.step` and the
+object index in the executable. `docs/PROFILES.md` traces every reader to its line and
+marks each link proven, advisory, duplicated or missing.
+`.ai/repo/adrs/0232-one-resolver-in-the-profile-module-owns-the-effective-profile.md`
+(ADR 0232) decides where this goes next. One resolver, in the executable's `profile` module, owns
+the effective profile. Requirements and limits intersect, and preferences take
+precedence. A key is added to `majordomus.profile/v1` only when it is optional and comes
+with the code that reads it.
 
 ## Adding one
 

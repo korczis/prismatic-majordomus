@@ -168,6 +168,76 @@ benchmark:
 
 Every key is read with `mj_pol_req`: declared or refused, no reader-side default.
 
+## Profile reads
+
+This is the baseline the profile resolver (ADR 0232) is measured against. It was taken
+before the resolver exists, while every command still reads its profile through
+`mj_load_profile`. The trace of every reader is in [`PROFILES.md`](PROFILES.md).
+
+Conditions:
+
+| | |
+|---|---|
+| Commit | d7fd9a36170 (origin/master at the time), worktree clean |
+| Tool | `bin/majordomus`, the shell lifecycle. No cargo build: `start` and `check --explain` read a profile in shell |
+| Host | Apple M5 Pro, 18 cores, macOS 26.5.1, GNU bash 5.3.15 |
+| Host load | 1-minute load average 40.43 at the start and 47.76 at the end. The machine was shared with other sessions' builds, which explains the spread |
+| When | 2026-11-07, 15:22:37Z to 15:29:45Z |
+| Fixture | a fresh `git init` plus `majordomus init` in a scratch directory, never this repository |
+| Samples | 9 per command and profile, taken in sequence, no warm-up discarded |
+
+Wall time in milliseconds. The interquartile range is p75 minus p25:
+
+| Command | Profile | min | median | max | IQR |
+|---|---|---:|---:|---:|---:|
+| `start --profile <p>` | debugging | 1012 | 1213 | 2196 | 665 |
+| `start --profile <p>` | deep-work | 858 | 1236 | 1754 | 620 |
+| `start --profile <p>` | implementation | 1288 | 2389 | 3967 | 1453 |
+| `start --profile <p>` | routine | 1238 | 1890 | 2890 | 697 |
+| `check --explain` | debugging | 1804 | 2193 | 3813 | 1307 |
+| `check --explain` | deep-work | 1637 | 2107 | 4067 | 805 |
+| `check --explain` | implementation | 1906 | 3737 | 6303 | 1927 |
+| `check --explain` | routine | 2120 | 2747 | 4363 | 1127 |
+| `mj_yaml_flatten <profile>` alone | debugging | 4 | 10 | 12 | 5 |
+| `mj_yaml_flatten <profile>` alone | deep-work | 4 | 9 | 15 | 6 |
+| `mj_yaml_flatten <profile>` alone | implementation | 6 | 21 | 39 | 14 |
+| `mj_yaml_flatten <profile>` alone | routine | 5 | 9 | 11 | 4 |
+
+The profile parse is roughly 10 ms of a 1 to 4 s command. In the same fixture,
+`MJ_TIMING=1 majordomus check --explain` counted 66 `yaml_flatten` calls and 3 cache hits,
+and only one of those flattens is the profile. A resolver therefore saves little time by
+reading the profile faster. What it buys is one answer in place of eight readers. The
+brief's targets of 50 ms warm and 150 ms cold for resolution belong to the brief. The
+target that binds is the one the resolver's own bench records and the policy then
+declares. No profile-dependent difference is visible here above the load noise:
+`implementation` ran third, during the busiest minutes.
+
+The command that measured it. It takes the worktree, a scratch fixture directory and the
+number of runs, and prints `command<TAB>profile<TAB>ms`:
+
+```bash
+set -u; WT="$1"; FX="$2"; N="${3:-9}"; unset MAJORDOMUS_SHARE; MJ="$WT/bin/majordomus"
+rm -rf "$FX"; mkdir -p "$FX"; cd "$FX" || exit 1
+git init -q . && git config user.email b@b && git config user.name b
+git commit -q --allow-empty -m root; "$MJ" init >/dev/null 2>&1
+git add -A >/dev/null 2>&1; git commit -qm init >/dev/null 2>&1; mkdir -p lib
+ms() { perl -MTime::HiRes=time -e 'printf "%d\n", time()*1000'; }
+for p in $(for f in .ai/repo/profiles/*.yaml; do basename "$f" .yaml; done); do
+  for i in $(seq 1 "$N"); do
+    t0=$(ms); "$MJ" start "bench $p $i" --scope lib --profile "$p" >/dev/null 2>&1; t1=$(ms)
+    "$MJ" check --explain >/dev/null 2>&1; t2=$(ms)
+    printf 'start\t%s\t%s\nexplain\t%s\t%s\n' "$p" $((t1-t0)) "$p" $((t2-t1))
+    printf '# Reason\nbenchmark run\n' > "$FX/.note.md"
+    "$MJ" finish --outcome no_match --note "$FX/.note.md" >/dev/null 2>&1
+  done
+done
+```
+
+The flatten row came from sourcing `lib/common.sh` in that fixture and timing
+`mj_yaml_flatten .ai/repo/profiles/<p>.yaml` nine times per profile with
+`$EPOCHREALTIME`. Repeat the whole run on an idle host before comparing a resolver against
+it. A load average near 45 on 18 cores spreads one sample by a factor of two.
+
 ## Working on performance
 
 1. Measure first: `MJ_TIMING=1 bin/majordomus <command>` and read the ranking.
