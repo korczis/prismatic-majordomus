@@ -498,6 +498,19 @@ delivery_at_build() {   # <commit> <dirty> <out>
     if [ "$is_dirty" = true ]; then echo "== delivery read at ${at:0:12}, dirty"; else echo "== delivery read at ${at:0:12}"; fi
     return 0
   fi
+  # No executable of this tree's generation is not a failed reading but a build that cannot take
+  # one: the pages deploy job builds from the Pages run's artifacts and keeps no executable, and
+  # stopping there stopped every deploy of master (run 42339976144, 2026-11-07). The launcher
+  # refuses with 12 and lines it prefixes `majordomus-cli`; then the build records no reading,
+  # says so, and the pages read the committed projection as a plain `zola serve` does. Any other
+  # failure is a reading the tool could not give, and still stops the build.
+  if [ "$rc" = 12 ] && grep -q '^majordomus-cli' "$out.err" 2>/dev/null; then
+    echo null > "$out"
+    echo "site-build: no executable of this tree, so delivery is not read at ${at:0:12}; the pages read the committed projection (set MAJORDOMUS_BIN to read it here)" >&2
+    [ -z "${GITHUB_ACTIONS:-}" ] || echo "::warning title=Delivery not read at the build commit::no executable of this tree in this job; the pages read the committed delivery projection"
+    rm -f "$out.err"
+    return 0
+  fi
   echo "site-build: the issues' delivery at $at could not be read: 'majordomus --json plan delivery --at $at' exited $rc" >&2
   if [ -s "$out.err" ]; then sed 's/^/  /' "$out.err" >&2; fi
   echo "  the build's provenance is not written from a reading this run could not reach" >&2
