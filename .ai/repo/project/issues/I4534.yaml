@@ -1,0 +1,38 @@
+id: I4534
+milestone: one-frame-one-kit-one-library-per-job
+serves:
+  - "one-kit-on-every-surface#one-page-frame"
+  - "one-kit-on-every-surface#one-component-kit"
+  - "one-kit-on-every-surface#flowbite-js-drives-behaviour"
+  - "one-kit-on-every-surface#one-library-per-job"
+  - "one-kit-on-every-surface#one-client-core"
+  - "one-kit-on-every-surface#advanced-tables"
+  - "one-kit-on-every-surface#every-entity-linked"
+  - "one-kit-on-every-surface#readable-by-a-model"
+  - "one-kit-on-every-surface#derived-and-proven"
+title: "The nine open UI pull requests are each landed, absorbed or superseded with a recorded reason before the reintegration touches their paths"
+slug: the-open-ui-pull-requests-are-triaged
+priority: p0
+profile: implementation
+parallel_safe: false
+objective: "Slice S0 of milestone one-frame-one-kit-one-library-per-job. Each of the nine open UI pull requests #2583, #1761, #1346, #1345, #1178, #1050, #966, #933, #2349 is assessed through the one integration engine (majordomus prs explain <n>) and carried to one of three ends: landed through the landing seat's queue, absorbed into the slice that owns its paths (its commits kept, its pull request closed naming the absorbing slice), or superseded with its reason. A refs/rescue/ ref is written for each head before any branch is rewritten or any pull request is closed. The verdict, the reason and the rescue ref of each are recorded in this issue's evidence and in the pull request's closing comment."
+why: "The owner's order of 2026-11-07 13:30Z asks for /ui, /cockpit and the site to be reintegrated on one kit: max reuse, Flowbite Pro best practices, one library per job, everything derived, tested, deployed and linked (intent one-kit-on-every-surface). Nine open pull requests already change the paths the slices S1 to S12 rewrite; starting a slice over them would either conflict with them or silently drop their work."
+current_state: "Open on 2026-11-07, read with gh pr view: #2583 feat(ui) the Blackboard is the board of the work (I4236), feature/the-blackboard-is-the-board-of-the-work; #1761 fix(ui) a screen behind the repository says why, and a page follows it by a pulse (ADR 0173), feature/a-display-behind-the-repository-says-why; #1346 feat(knowledge) /ui/knowledge browses the knowledge base, feature/the-knowledge-base-is-listed-and-browsed; #1345 feat(ui) a page computes the canonical digest in a Worker (I2788), feature/a-browser-computes-on-the-page; #1178 feat(ui) the Observatory hears executions as they happen (case 3046), feature/the-observatory-hears-executions-as-they-happen; #1050 Markdown is rendered once (ADR 0148), feature/markdown-is-rendered-once; #966 / is the UI's front door, and the capabilities are faceted (I2480, I2479), feature/the-capabilities-are-faceted; #933 feat(site) seven widths, a reduced-motion pass and a rendering budget, feature/the-site-is-probed-at-every-width-and-budget; #2349 feat(site) the navbar names the newest pre-release, feature/the-site-names-the-newest-prerelease. Each was last updated between 2026-10-30 and 2026-11-01."
+desired_state: "None of the nine is open. Each one's end (landed, absorbed into a named slice, or superseded) and its reason are recorded, and each head is reachable from a refs/rescue/ ref or from master."
+scope:
+  - ".ai/repo/project/issues/I4534.yaml"
+non_scope:
+  - "Any code change of the nine branches beyond what the landing seat's repair lane makes to land one"
+  - "Merging, cancelling or rerunning anything outside the landing seat's queue"
+depends_on: []
+acceptance_criteria:
+  - "gh pr list --state open shows none of #2583, #1761, #1346, #1345, #1178, #1050, #966, #933, #2349"
+  - "For each of the nine, this issue's evidence names its end (landed, absorbed into I45xx, superseded), its reason and the rescue ref or master commit that holds its head"
+  - "git branch -r --contains or git for-each-ref refs/rescue/ shows every one of the nine heads reachable"
+validation:
+  - "gh pr list --state open --limit 500 --json number --jq '[.[].number | select(IN(2583,1761,1346,1345,1178,1050,966,933,2349))] | length'"
+  - "majordomus plan validate"
+evidence_required:
+  - "pr_triage_record"
+created_at: 2026-11-07
+updated_at: 2026-11-07
