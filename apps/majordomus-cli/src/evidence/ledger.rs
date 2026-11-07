@@ -225,6 +225,14 @@ pub struct VerificationRun {
     pub origin: super::Origin,
 }
 
+/// Verification runs are ordered by the name they are declared under, as executions are by
+/// their test id, so the tracked file diffs cleanly.
+impl crate::order::Ordered for VerificationRun {
+    fn order_key(&self) -> crate::order::OrderKey<'_> {
+        crate::order::OrderKey::plain(&self.name, &self.name)
+    }
+}
+
 impl Ledger {
     /// An empty ledger — what a repository that has recorded nothing has.
     ///
@@ -442,7 +450,7 @@ impl Ledger {
             Some(slot) => *slot = run,
             None => self.verifications.push(run),
         }
-        self.verifications.sort_by(|a, b| a.name.cmp(&b.name));
+        crate::order::canonical(&mut self.verifications);
     }
 
     /// Write the ledger, creating its directory. Trailing newline, two-space indent: a

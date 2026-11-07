@@ -1105,7 +1105,19 @@ pub struct DeclaredVerifications {
 }
 
 impl DeclaredVerifications {
-    /// The command declared under `name`.
+    /// The command the profile declares under `name`, exactly as written; `None` when it
+    /// declares no such name, which a `verify:<name>` criterion reads as unresolved and
+    /// `evidence record --verify` refuses. The first declaration of a repeated name wins.
+    ///
+    /// ```
+    /// use majordomus_cli::evidence::record::DeclaredVerifications;
+    /// let d = DeclaredVerifications {
+    ///     profile: Some("implementation".into()),
+    ///     commands: vec![("tests".into(), "make test".into()), ("tests".into(), "true".into())],
+    /// };
+    /// assert_eq!(d.command("tests"), Some("make test"));
+    /// assert_eq!(d.command("lint"), None);
+    /// ```
     pub fn command(&self, name: &str) -> Option<&str> {
         self.commands
             .iter()
@@ -1113,7 +1125,18 @@ impl DeclaredVerifications {
             .map(|(_, c)| c.as_str())
     }
 
-    /// Every declared name, in declaration order.
+    /// Every declared name, in the order the profile declares them: what a refusal of an
+    /// undeclared name lists as the names a caller may give instead.
+    ///
+    /// ```
+    /// use majordomus_cli::evidence::record::DeclaredVerifications;
+    /// let d = DeclaredVerifications {
+    ///     profile: None,
+    ///     commands: vec![("unit".into(), "make".into()), ("lint".into(), "make lint".into())],
+    /// };
+    /// assert_eq!(d.names(), ["unit", "lint"]);
+    /// assert!(DeclaredVerifications::default().names().is_empty());
+    /// ```
     pub fn names(&self) -> Vec<&str> {
         self.commands.iter().map(|(n, _)| n.as_str()).collect()
     }

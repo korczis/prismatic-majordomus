@@ -171,7 +171,7 @@ same "an unresolved reference" "unresolved" "$(state)"
 #     it. The criterion is unresolved while nothing declares the name, current after a
 #     recorded passing run at this tree, stale once the tree changes, failing after a failing
 #     run — with no test under test/cases/ anywhere in the repository.
-command -v python3 >/dev/null 2>&1 || { echo "    python3 is required"; exit 1; }
+mj_runs python3 || { echo "    $(mj_runs_why python3)"; exit 1; }
 F="$M/foreign"; mkdir -p "$F"; cd "$F"
 git init -q . && git config user.email t@example.com && git config user.name t
 "$MJ" init >/dev/null
