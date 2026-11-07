@@ -291,6 +291,14 @@ pub fn bootstrap_median_clustered(
 
 /// Which way of a paired difference (treatment minus control) is the better one, as the
 /// methodology declares it for a metric: a higher accepted share is better, fewer tokens are.
+/// It travels as `higher` or `lower`.
+///
+/// ```
+/// use majordomus_cli::economics::stats::Better;
+/// let b: Better = serde_json::from_value(serde_json::json!("lower")).unwrap();
+/// assert_eq!(b, Better::Lower);
+/// assert_eq!(serde_json::to_value(Better::Higher).unwrap(), "higher");
+/// ```
 #[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum Better {
@@ -356,7 +364,21 @@ pub const MDE_METHOD: &str = "minimum detectable difference of the exact sign-fl
 /// What [`bootstrap_mean_difference_clustered`] writes into [`EconomicsInterval::method`].
 pub const CLUSTER_MEAN_DIFFERENCE_METHOD: &str = "percentile bootstrap of the mean paired difference, cluster bootstrap over tasks: each resample draws tasks with replacement and averages the drawn tasks' mean differences";
 
-/// The result of [`paired_sign_flip_test`].
+/// The result of [`paired_sign_flip_test`]: the p-value of a zero mean per-task difference,
+/// with what it was computed over (how many tasks, how many of them moved, whether every
+/// sign assignment was enumerated) and the method, so a reader can tell an exact p-value
+/// from a sampled one. [`test_verdict`] turns it into a [`Verdict`].
+///
+/// ```
+/// use majordomus_cli::economics::stats::{
+///     paired_sign_flip_test, PairedTest, EXACT_SIGN_FLIP_METHOD,
+/// };
+/// let tasks = vec![vec![1.0], vec![1.0], vec![0.0], vec![0.0, 0.0]];
+/// let t: PairedTest = paired_sign_flip_test(&tasks, 100, 1, 5).unwrap();
+/// assert_eq!((t.tasks, t.moved, t.exact, t.permutations), (4, 2, true, 4));
+/// assert_eq!((t.mean_difference, t.p_value), (0.5, 0.5));
+/// assert_eq!(t.method, EXACT_SIGN_FLIP_METHOD);
+/// ```
 #[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
 pub struct PairedTest {
     /// The tasks (clusters) that held at least one finite difference.
@@ -486,6 +508,16 @@ pub fn paired_sign_flip_test(
 /// The verdict of a [`PairedTest`] at `level_bp`: `Inconclusive` unless the p-value is at
 /// most one minus the level, and then favourable or unfavourable by the sign of the mean
 /// difference against the declared better direction (see [`Verdict`]).
+///
+/// ```
+/// use majordomus_cli::economics::stats::{paired_sign_flip_test, test_verdict, Better, Verdict};
+/// // seven of seven tasks spent less: p = 2/128
+/// let fewer: Vec<Vec<f64>> = (0..7).map(|_| vec![-1.0]).collect();
+/// let t = paired_sign_flip_test(&fewer, 100, 1, 5).unwrap();
+/// assert_eq!(test_verdict(&t, 9500, Better::Lower), Verdict::Favourable);
+/// assert_eq!(test_verdict(&t, 9500, Better::Higher), Verdict::Unfavourable);
+/// assert_eq!(test_verdict(&t, 9900, Better::Lower), Verdict::Inconclusive, "2/128 > 1%");
+/// ```
 pub fn test_verdict(test: &PairedTest, level_bp: u32, better: Better) -> Verdict {
     let alpha = 1.0 - level_bp as f64 / 10_000.0;
     if test.p_value <= alpha {
@@ -519,7 +551,17 @@ pub fn interval_verdict(interval: &EconomicsInterval, better: Better) -> Verdict
     }
 }
 
-/// The smallest difference the exact test can detect, and how it was derived.
+/// The smallest difference the exact test can detect, and how it was derived: the result of
+/// [`minimum_detectable_difference`], which a report shows beside an inconclusive verdict so
+/// that "inconclusive" says how large a difference the sample could have called.
+///
+/// ```
+/// use majordomus_cli::economics::stats::{
+///     minimum_detectable_difference, MinimumDetectableDifference,
+/// };
+/// let m: MinimumDetectableDifference = minimum_detectable_difference(12, 9500).unwrap();
+/// assert_eq!((m.tasks, m.level_bp, m.tasks_needed, m.difference), (12, 9500, 6, 0.5));
+/// ```
 #[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
 pub struct MinimumDetectableDifference {
     /// The tasks of the comparison.
