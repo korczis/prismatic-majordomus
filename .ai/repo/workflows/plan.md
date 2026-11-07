@@ -16,4 +16,10 @@ Take something else only when it is a blocker, when it invalidates an assumption
 milestone rests on, or when a person reprioritised. Not because it looked more useful.
 Trivial exceptions are a typo, a broken link, or a fix forced from outside the repository.
 
+Work that arrives as a brief — a pasted text, a document or a pack, or a statement
+`intents.propose` refused because it holds more than one outcome — is turned into plan
+records by `majordomus://skill/decompose-a-brief`: kept as a campaign, mapped onto the
+intents and issues that already exist, drafted only where it is new, critiqued, validated
+and offered. It never becomes an intent statement verbatim.
+
 A repository with no `project/` section populated has no plan, and `plan` says so.

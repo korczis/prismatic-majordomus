@@ -57124,7 +57124,17 @@
       "evidence_required": [
         "test_the_decompose_skill_is_a_proven_capability"
       ],
-      "evidence": [],
+      "evidence": [
+        {
+          "covers": "test_the_decompose_skill_is_a_proven_capability",
+          "type": "test",
+          "command": "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test skills; bash test/run.sh 391_skills_are_proven_capabilities",
+          "result": "on lundra over d7fd9a36170 plus this change: tests/skills.rs 5 passed 0 failed (every_active_skill_of_this_repository_is_a_valid_invoked_capability_this_file_tests holds decompose-a-brief); case 391 ok; skills verify exit 0; skills explain decompose-a-brief lists tests/skills.rs and case 391 as naming tests and .ai/repo/workflows/plan.md:21 as its invocation",
+          "artifact": "",
+          "commit": "d7fd9a3617024a7390ac36c1888d6fcee63b600e",
+          "recorded_at": "2026-11-07T19:20:33Z"
+        }
+      ],
       "risk": "",
       "completion": "",
       "started_at": "",

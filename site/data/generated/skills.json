@@ -42,6 +42,44 @@
       "route": "/skills/assess-before-deleting/"
     },
     {
+      "id": "decompose-a-brief",
+      "uri": "majordomus://skill/decompose-a-brief",
+      "title": "Decompose a brief into the plan",
+      "description": "Keep a pasted or handed-over brief as a campaign in one canonical byte form, map every requirement it holds onto the intents, milestones and issues that already exist, draft only what is new under a critique by a reviewer that did not write it, derive and validate the records, and offer the first wave on the mesh without claiming it.",
+      "status": "active",
+      "version": 1,
+      "tags": [
+        "planning",
+        "intent",
+        "campaign",
+        "provenance",
+        "review",
+        "coordination"
+      ],
+      "related": [
+        "implement",
+        "report-verification-state",
+        "repo-review",
+        "evolve"
+      ],
+      "inputs": [
+        "the brief as the person handed it over (a pasted text, a Markdown document or a pack), or the refusal of intents.propose that names this skill with the brief's byte length and digest",
+        "a worktree of its own made from origin/master, with the tool's task open",
+        "the board and master's plan, read before anything is drafted"
+      ],
+      "outputs": [
+        "the brief kept as a campaign under campaigns/ whose manifest digest is the digest of its canonical text, or a workspace reference, or a recorded question to the person, and never a copy of a conversation",
+        "every item of the brief classified, and every requirement mapped to an existing record or drafted as a new one",
+        "new or amended intents, milestones and issues that cite the campaign, a critique of them with every finding resolved, and plan validate, intent validate and campaigns-check passing",
+        "one pull request carrying the campaign, the records, the critique and their derived files; one announced issue taken and the rest offered by a handover that claims no scope"
+      ],
+      "path": ".ai/repo/skills/decompose-a-brief/SKILL.md",
+      "sha256": "f33ac272588b09e39c490cead3c37c68376eec4282204d707b937cfdb2f9fe25",
+      "examples": [],
+      "valid": true,
+      "route": "/skills/decompose-a-brief/"
+    },
+    {
       "id": "deploy-site",
       "uri": "majordomus://skill/deploy-site",
       "title": "Deploy the site by hand",
@@ -422,7 +460,7 @@
       "route": "/skills/report-verification-state/"
     }
   ],
-  "count": 10,
+  "count": 11,
   "by_tag": {
     "cleanup": [
       "assess-before-deleting"
@@ -441,6 +479,29 @@
       "assess-before-deleting",
       "rebaser"
     ],
+    "planning": [
+      "decompose-a-brief"
+    ],
+    "intent": [
+      "decompose-a-brief"
+    ],
+    "campaign": [
+      "decompose-a-brief"
+    ],
+    "provenance": [
+      "decompose-a-brief"
+    ],
+    "review": [
+      "decompose-a-brief",
+      "evolve",
+      "pack-for-chatgpt",
+      "pack-for-review",
+      "repo-review"
+    ],
+    "coordination": [
+      "decompose-a-brief",
+      "evolve"
+    ],
     "site": [
       "deploy-site"
     ],
@@ -450,18 +511,9 @@
     "knowledge": [
       "evolve"
     ],
-    "review": [
-      "evolve",
-      "pack-for-chatgpt",
-      "pack-for-review",
-      "repo-review"
-    ],
     "delivery": [
       "evolve",
       "integrator"
-    ],
-    "coordination": [
-      "evolve"
     ],
     "implementation": [
       "implement"
@@ -974,6 +1026,13 @@
       "description": "Remove a file, branch, worktree, record or process only after each candidate has been classified by what depends on it and what would be lost, and the reversible step has been taken first."
     },
     {
+      "name": "decompose-a-brief",
+      "path": ".claude/skills/decompose-a-brief/SKILL.md",
+      "kind": "skill",
+      "source": ".ai/repo/skills/decompose-a-brief/SKILL.md",
+      "description": "Keep a pasted or handed-over brief as a campaign in one canonical byte form, map every requirement it holds onto the intents, milestones and issues that already exist, draft only what is new under a critique by a reviewer that did not write it, derive and validate the records, and offer the first wave on the mesh without claiming it."
+    },
+    {
       "name": "deploy-site",
       "path": ".claude/skills/deploy-site/SKILL.md",
       "kind": "skill",
@@ -1040,6 +1099,6 @@
   "claude_by_kind": {
     "command": 2,
     "domain": 62,
-    "skill": 10
+    "skill": 11
   }
 }
