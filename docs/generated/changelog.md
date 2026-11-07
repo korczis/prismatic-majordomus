@@ -7,7 +7,7 @@ Every entry below is derived: a section per release the layer records, its decis
 
 Current version: **1.0.0**
 
-## v1.0.0 — 2026-11-07
+## v1.0.0 — 2026-11-06
 
 ### Decisions
 
@@ -250,10 +250,6 @@ Current version: **1.0.0**
 - **proceed**: case 4005 says what a step over an unread declared mesh does (`c934f3eb9`)
 - **proceed**: proceed.step and plan.allocate are asked over MCP, and case 3443's curl is bounded (`454346cb9`)
 - **site**: case 1060 holds what moved since the previous deployment (`9049473e3`)
-
-### Pipeline
-
-- **release**: the publish job's bound fits its checkout, build and derive (`ddef2b1f5`)
 
 ### Housekeeping
 
