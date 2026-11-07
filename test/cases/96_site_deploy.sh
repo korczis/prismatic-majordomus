@@ -11,12 +11,19 @@ mj_zola_ready "$ROOT" || skip "$(mj_zola_why "$ROOT")"
 [ -d "$ROOT/node_modules/tailwindcss" ] || skip "node_modules absent"
 S="$(mktemp -d "${TMPDIR:-/tmp}/mj96.XXXXXX")"; trap 'rm -rf "$S"' EXIT
 
-# a clone of this checkout's HEAD with a bare remote of its own, so nothing here touches origin
+# a clone of this checkout's HEAD with a bare remote of its own, so nothing here touches origin.
+# The remote's master is HEAD, and the remote borrows this checkout's objects rather than being
+# pushed them: a push of HEAD's history sends every blob it reaches, and a partial clone (CI's
+# blobless checkouts, I3241) has none of the past to send ("unable to read <blob>", unpacker
+# error). What the deploy pushes afterwards, gh-pages and new commits, is the clone's own.
 git init -q --bare "$S/remote.git"
-git clone -q "$ROOT" "$S/work" 2>/dev/null
+git clone -q "$ROOT" "$S/work" 2>/dev/null || { echo "    could not clone the checkout"; exit 1; }
 cd "$S/work" || exit 1
+objects="$(git -C "$ROOT" rev-parse --path-format=absolute --git-common-dir)/objects"
+printf '%s\n' "$objects" > "$S/remote.git/objects/info/alternates"
+git -C "$S/remote.git" update-ref refs/heads/master "$(git rev-parse HEAD)" \
+  || { echo "    the bare remote could not take HEAD as its master"; exit 1; }
 git remote set-url origin "$S/remote.git"
-git push -q origin HEAD:refs/heads/master
 ln -s "$ROOT/node_modules" node_modules
 # The surfaces scripts/site-build composes into the site (ADR 0086) are producer outputs, never
 # committed, so a clone has none and the build refuses without them. The clone borrows this

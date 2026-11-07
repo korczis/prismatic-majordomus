@@ -262,9 +262,31 @@ $ gh run download <run-id> -n ci-metrics-suite -D /tmp/s
 $ awk -F'\t' -v OFS='\t' '{print $1, $3}' /tmp/s/suite.tsv | LC_ALL=C sort > .ai/repo/ci/suite-durations.tsv
 ```
 
-The jobs that run the suite check out the whole history: a case that clones the checkout
-into a fixture and pushes cannot push a shallow clone. So does the `rust` job, for the
-other reason: `generate --check` runs there, and the changelog it checks is composed from
+A checkout fetches what its job's gates read, and nothing more (I3241). The default is HEAD's
+ancestry as commits and trees (`filter: blob:none`): a blob a gate reads is fetched when it is
+read. A gate that reads more declares it in `.ai/repo/ci/gates.yaml` as `history_reads`:
+`heads` (other branches, origin/master among them: collision-check, adr-collision, plan-drift,
+the GitHub projection, site-build's gh-pages, the pages walk), `tags` (the release tags:
+version-matches-surface, release-check, the release cases) and `blobs` (blobs in bulk, which a
+lazy fetch cannot serve). `scripts/ci/step-bound-check` holds `validate.yml` to the model: a
+`fetch-depth: 0` checkout, which fetches every head and every tag, only in a job one of whose
+gates reads heads or tags; one without `filter: blob:none` only where a gate reads blobs; a
+`git fetch` of `refs/heads/*` only where a gate reads heads, and one of the tags only where a
+gate reads tags. A job named `<job>-shard` runs the gates of `<job>`; a job with no
+history-reading gate (`evidence`) checks out one blobless commit and then
+`git fetch --no-tags --unshallow origin "$GITHUB_SHA"`. Case 3749 holds the rule. On
+2026-10-28 the seven `fetch-depth: 0` checkouts fetched 2.85 GiB each (549 heads, every tag,
+every blob; the registry alone is 1.76 GB packed) and hit their bound six times (runs
+40708407384, 40733537887); in run 42367964807 structure's blobless checkout took 18 s while the
+full ones took 159 to 347 s.
+
+The jobs that run the suite (`suite-shard`, `macos`) keep the blobs, and `shell-suite` and
+`macos` declare them: cases 51, 56 and 3048 clone the checkout with `--no-local`, which reads
+every blob its refs reach, and 489 pushes HEAD's history into a fixture, and a partial clone
+can serve neither. 96_site_deploy no longer pushes: its bare remote borrows the checkout's
+objects and takes HEAD as its master, so it passes from a partial clone. The `rust` job keeps
+them too, for `plan-record-cases` (51 and 3048), and fetches every tag for version-surface and
+the release cases: `generate --check` runs there, and the changelog it checks is composed from
 the release records, the decisions and `git log <previous>..<this>`. A checkout one commit
 deep has none of that history, so every release record names a commit the clone does not
 have, the composer writes the degraded document

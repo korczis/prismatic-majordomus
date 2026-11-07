@@ -361,6 +361,10 @@ jobs:
       # This one also keeps its history to commits and trees (blob:none): its gates read history
       # as object ids, merge bases and paths, and the one file of the past they read, the
       # release's registry, is fetched on demand, as pages.yml already does for its link check.
+      # Since I3241 every checkout of this file fetches only what its job's gates declare in
+      # gates.yaml's history_reads (here heads and tags: collision-check, adr-collision,
+      # plan-drift, release-check), which scripts/ci/step-bound-check holds; blobless, it takes
+      # 18 s where the full checkouts of the same run took 159 to 347 s (run 42367964807).
       - uses: actions/checkout@v4
         timeout-minutes: 20
         with:
@@ -445,11 +449,14 @@ jobs:
     steps:
       # structure's setup, step for step (see there for why each is needed): the full history
       # with a bound of its own, the linters, just, the plan, the toolchain and the executable
-      # worktree-topology's behavioural case drives.
+      # worktree-topology's behavioural case drives. Every head, because github-projection
+      # reads origin/<base> and the trunk (history_reads in gates.yaml); no blob in bulk, as in
+      # structure (I3241): the records it reads at a pull request's head are fetched when read.
       - uses: actions/checkout@v4
         timeout-minutes: 10
         with:
           fetch-depth: 0
+          filter: blob:none
       - run: sudo apt-get install -y shellcheck >/dev/null
       - uses: taiki-e/install-action@v2
         with:
@@ -540,8 +547,10 @@ jobs:
     timeout-minutes: 225
     runs-on: ubuntu-latest
     steps:
-      # the whole history: a case that clones this checkout into a fixture and pushes
-      # (96_site_deploy does, to a bare repository of its own) cannot push a shallow clone
+      # the whole history, blobs included: shell-suite declares history_reads heads, tags and
+      # blobs in gates.yaml, because cases clone this checkout with --no-local (51, 56, 3048),
+      # which reads every blob its refs reach, and push HEAD's history into a fixture (489); a
+      # blobless checkout can serve neither (I3241). 96_site_deploy no longer pushes it.
       - uses: actions/checkout@v4
         timeout-minutes: 20
         with:
@@ -795,6 +804,9 @@ jobs:
       # decision, every range yielded nothing, and the composer wrote the honest degraded
       # document it is required to write. The gate then reported the committed artifact stale
       # for a reason no branch had caused. A check reads its inputs; this job now fetches them.
+      # Blobs as well (I3241): plan-record-cases declares history_reads blobs in gates.yaml,
+      # because its cases 51 and 3048 clone this checkout with --no-local; the tags are
+      # version-surface's and release-record-cases'.
       - uses: actions/checkout@v4
         timeout-minutes: 20
         with:
@@ -1108,11 +1120,18 @@ jobs:
       MJ_RESULT_COVERAGE: ${{ needs.coverage.result }}
       MJ_PLAN_MODE: ${{ needs.plan.outputs.mode }}
     steps:
-      # the whole history: the report compares each execution's commit with the tree
+      # HEAD's ancestry, as commits and trees: the report compares each execution's commit with
+      # the tree. This job runs no gate that reads another head, a tag or blobs in bulk, so it
+      # fetches none of them (I3241, held by scripts/ci/step-bound-check): a checkout of one
+      # commit without blobs, then its ancestry, which the blobless checkout's promisor remote
+      # fetches as commits and trees. A blob of the past it reads is fetched when read.
       - uses: actions/checkout@v4
-        timeout-minutes: 20
+        timeout-minutes: 5
         with:
-          fetch-depth: 0
+          filter: blob:none
+      - name: HEAD's ancestry
+        timeout-minutes: 5
+        run: git fetch --no-tags --unshallow origin "$GITHUB_SHA"
       # whether anything a recording needs was owed: a plan that owes no test report needs no
       # executable and downloads nothing, and its receipt says not_required
       - id: owed
@@ -1251,11 +1270,15 @@ jobs:
     steps:
       # The whole history, because scripts/ci/link-check decides a commit link by whether the
       # commit is in the history being published, and refuses to report clean from a shallow
-      # clone that cannot say.
+      # clone that cannot say. Every head and tag as well: the build reads the release served
+      # from origin/gh-pages and the previous release's tag (site-build's history_reads in
+      # gates.yaml). Commits and trees only (I3241): the few blobs of the past it reads, the
+      # published release metadata and that release's registry, are fetched when read.
       - uses: actions/checkout@v4
         timeout-minutes: 20
         with:
           fetch-depth: 0
+          filter: blob:none
       - id: site
         uses: ./.github/actions/setup-site
       # The generator reads the plan, the registry and the delivery through the executable, and
@@ -1942,6 +1965,8 @@ jobs:
       # every gate's receipts, "<gate><TAB><step outcome><TAB><source>": what the ci verdict asks each selected gate for
       MJ_CI_RECEIPTS: ${{ github.workspace }}/receipts.tsv
     steps:
+      # the whole history, blobs included: the whole suite runs here, so what shell-suite
+      # reads (see suite-shard), and the macos gate declares it in gates.yaml (I3241)
       - uses: actions/checkout@v4
         timeout-minutes: 20
         with:
@@ -2054,7 +2079,9 @@ jobs:
   # `pages: read` is the second half of publication: the push to gh-pages is this repository's
   # and the build of it is GitHub's, and the gate reads that build's own status rather than
   # inferring it from the symptom. The whole history is needed, so `fetch-depth: 0` stays: the
-  # gate walks master back to the published commit to decide whether a deploy is owed.
+  # gate walks master back to the published commit to decide whether a deploy is owed, and
+  # reads gh-pages (pages-live's history_reads in gates.yaml). Commits and trees only (I3241):
+  # the walk compares paths, and the one file it reads at the source commit is fetched when read.
   #
   # It starts behind `evidence`, not beside the first wave (I3936). The deploy it waits for is
   # pages.yml's run of the same push, which queues behind this run's own jobs for the runners:
@@ -2083,6 +2110,7 @@ jobs:
         timeout-minutes: 20
         with:
           fetch-depth: 0
+          filter: blob:none
       # --for: this job runs beside the deploy of its own commit, and judging the site before
       # that deploy is served judges the previous one (I2711: run 38600347235 went red on
       # 2026-10-14 while the deploy of ff38297096 was in flight, and passed on a rerun). So it
