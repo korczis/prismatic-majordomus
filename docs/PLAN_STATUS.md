@@ -8,7 +8,7 @@ This page is the index. Each milestone's issues, and the findings about them, ar
 its own under [`plan-status/`](plan-status/), named by the milestone, so the plan grows by pages
 and no one page grows with it.
 
-Generated from canonical inputs `cda38202c2b6`.
+Generated from canonical inputs `108901e7dfb2`.
 
 ## Milestones
 
@@ -493,13 +493,13 @@ Generated from canonical inputs `cda38202c2b6`.
 
 ## Findings
 
-9234 finding(s), each on the page of the milestone its subject is or belongs to:
+9252 finding(s), each on the page of the milestone its subject is or belongs to:
 
 | milestone | findings |
 |---|---|
 | [`M002`](plan-status/M002.md) | 35 |
 | [`M003`](plan-status/M003.md) | 10 |
-| [`M004`](plan-status/M004.md) | 425 |
+| [`M004`](plan-status/M004.md) | 427 |
 | [`a-bounded-task-is-carried-to-accepted-work`](plan-status/a-bounded-task-is-carried-to-accepted-work.md) | 35 |
 | [`a-change-is-judged-in-minutes`](plan-status/a-change-is-judged-in-minutes.md) | 73 |
 | [`a-claim-stands-only-on-its-evidence`](plan-status/a-claim-stands-only-on-its-evidence.md) | 196 |
@@ -517,7 +517,7 @@ Generated from canonical inputs `cda38202c2b6`.
 | [`a-session-proceeds-through-the-mesh`](plan-status/a-session-proceeds-through-the-mesh.md) | 55 |
 | [`a-test-fails-when-the-code-is-wrong`](plan-status/a-test-fails-when-the-code-is-wrong.md) | 39 |
 | [`a-version-follows-the-work`](plan-status/a-version-follows-the-work.md) | 21 |
-| [`adopter-upgrades`](plan-status/adopter-upgrades.md) | 586 |
+| [`adopter-upgrades`](plan-status/adopter-upgrades.md) | 589 |
 | [`an-authorised-node-connects-from-anywhere`](plan-status/an-authorised-node-connects-from-anywhere.md) | 12 |
 | [`an-outcome-becomes-a-reviewed-plan`](plan-status/an-outcome-becomes-a-reviewed-plan.md) | 15 |
 | [`an-unmet-criterion-is-drafted-into-work`](plan-status/an-unmet-criterion-is-drafted-into-work.md) | 124 |
@@ -525,11 +525,11 @@ Generated from canonical inputs `cda38202c2b6`.
 | [`automation`](plan-status/automation.md) | 59 |
 | [`campaigns-are-read-as-provenance`](plan-status/campaigns-are-read-as-provenance.md) | 21 |
 | [`capability-graph`](plan-status/capability-graph.md) | 13 |
-| [`ci-critical-path`](plan-status/ci-critical-path.md) | 334 |
+| [`ci-critical-path`](plan-status/ci-critical-path.md) | 336 |
 | [`command-and-deployment-criteria-are-judged`](plan-status/command-and-deployment-criteria-are-judged.md) | 5 |
 | [`delivery-economics-are-measured-over-declared-windows`](plan-status/delivery-economics-are-measured-over-declared-windows.md) | 1 |
 | [`derived-data-integrity`](plan-status/derived-data-integrity.md) | 26 |
-| [`development-runtime`](plan-status/development-runtime.md) | 847 |
+| [`development-runtime`](plan-status/development-runtime.md) | 851 |
 | [`every-session-joins-the-mesh`](plan-status/every-session-joins-the-mesh.md) | 13 |
 | [`every-sessions-usage-is-observed`](plan-status/every-sessions-usage-is-observed.md) | 56 |
 | [`every-surface-follows-what-changed`](plan-status/every-surface-follows-what-changed.md) | 18 |
@@ -542,7 +542,7 @@ Generated from canonical inputs `cda38202c2b6`.
 | [`intent-lifecycle`](plan-status/intent-lifecycle.md) | 63 |
 | [`knowledge-acts-on-what-it-learns`](plan-status/knowledge-acts-on-what-it-learns.md) | 82 |
 | [`landing-survives-any-session`](plan-status/landing-survives-any-session.md) | 10 |
-| [`mcp-transports-are-reliable`](plan-status/mcp-transports-are-reliable.md) | 197 |
+| [`mcp-transports-are-reliable`](plan-status/mcp-transports-are-reliable.md) | 198 |
 | [`measurements-are-tracked-over-time`](plan-status/measurements-are-tracked-over-time.md) | 16 |
 | [`merging-and-referencing-are-enforced`](plan-status/merging-and-referencing-are-enforced.md) | 30 |
 | [`mesh-journal-converges`](plan-status/mesh-journal-converges.md) | 133 |
@@ -555,11 +555,11 @@ Generated from canonical inputs `cda38202c2b6`.
 | [`runtime-adapters`](plan-status/runtime-adapters.md) | 97 |
 | [`runtime-lifecycle`](plan-status/runtime-lifecycle.md) | 48 |
 | [`runtime-trust`](plan-status/runtime-trust.md) | 28 |
-| [`safe-self-update`](plan-status/safe-self-update.md) | 473 |
-| [`surfaces-never-disagree`](plan-status/surfaces-never-disagree.md) | 329 |
+| [`safe-self-update`](plan-status/safe-self-update.md) | 476 |
+| [`surfaces-never-disagree`](plan-status/surfaces-never-disagree.md) | 331 |
 | [`test-evidence`](plan-status/test-evidence.md) | 25 |
 | [`the-corpus-is-registered-before-it-runs`](plan-status/the-corpus-is-registered-before-it-runs.md) | 5 |
-| [`the-mesh-works-out-of-the-box`](plan-status/the-mesh-works-out-of-the-box.md) | 205 |
+| [`the-mesh-works-out-of-the-box`](plan-status/the-mesh-works-out-of-the-box.md) | 206 |
 | [`the-plan-says-what-a-fix-unblocks`](plan-status/the-plan-says-what-a-fix-unblocks.md) | 25 |
 | [`the-proof-scorecard-is-published`](plan-status/the-proof-scorecard-is-published.md) | 2 |
 | [`the-proof-tests-are-registered-before-they-run`](plan-status/the-proof-tests-are-registered-before-they-run.md) | 11 |

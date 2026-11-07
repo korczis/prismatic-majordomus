@@ -71651,7 +71651,8 @@
       "scope": [
         ".ai/repo/project/issues/I4316.yaml",
         ".ai/repo/adrs/0036-the-design-system-is-a-typed-declaration-and-every-first-party-surface-consumes-its-projections.md",
-        "scripts/ci/design-check"
+        "scripts/ci/design-check",
+        "test/cases/107_design_tokens.sh"
       ],
       "non_scope": [
         "Restyling existing pages that are not review surfaces; one-kit-on-every-surface owns the rest of the kit",
@@ -71669,7 +71670,8 @@
       ],
       "validation": [
         "MAJORDOMUS_SHARE=$PWD/share scripts/ci/design-check",
-        "bin/majordomus adr check"
+        "bin/majordomus adr check",
+        "bash test/run.sh 107_design_tokens"
       ],
       "evidence_required": [
         "design_check_refuses_raw_palette_and_pro_source"
@@ -87506,6 +87508,12 @@
       "level": "WARN",
       "code": "scope_conflict",
       "subject": "I1980",
+      "message": "shares test/cases with I4316; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I1980",
       "message": "shares test/cases with I4317; they may not run concurrently"
     },
     {
@@ -88664,6 +88672,12 @@
       "level": "WARN",
       "code": "scope_conflict",
       "subject": "I1990",
+      "message": "shares test/cases with I4316; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I1990",
       "message": "shares test/cases with I4317; they may not run concurrently"
     },
     {
@@ -89613,6 +89627,12 @@
       "code": "scope_conflict",
       "subject": "I1997",
       "message": "shares docs/MCP.md with I4306; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I1997",
+      "message": "shares test/cases with I4316; they may not run concurrently"
     },
     {
       "level": "WARN",
@@ -90938,6 +90958,12 @@
       "level": "WARN",
       "code": "scope_conflict",
       "subject": "I1999",
+      "message": "shares test/cases with I4316; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I1999",
       "message": "shares test/cases with I4317; they may not run concurrently"
     },
     {
@@ -91886,6 +91912,12 @@
       "level": "WARN",
       "code": "scope_conflict",
       "subject": "I2059",
+      "message": "shares test/cases with I4316; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I2059",
       "message": "shares test/cases with I4317; they may not run concurrently"
     },
     {
@@ -92792,6 +92824,12 @@
       "level": "WARN",
       "code": "scope_conflict",
       "subject": "I2114",
+      "message": "shares test/cases with I4316; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I2114",
       "message": "shares test/cases with I4317; they may not run concurrently"
     },
     {
@@ -93639,6 +93677,12 @@
       "code": "scope_conflict",
       "subject": "I2115",
       "message": "shares test/cases with I4292; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I2115",
+      "message": "shares test/cases with I4316; they may not run concurrently"
     },
     {
       "level": "WARN",
@@ -94551,6 +94595,12 @@
       "code": "scope_conflict",
       "subject": "I2148",
       "message": "shares share/skeleton with I4306; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I2148",
+      "message": "shares test/cases with I4316; they may not run concurrently"
     },
     {
       "level": "WARN",
@@ -95469,6 +95519,12 @@
       "code": "scope_conflict",
       "subject": "I2350",
       "message": "shares lib/gates.sh with I4292; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I2350",
+      "message": "shares test/cases with I4316; they may not run concurrently"
     },
     {
       "level": "WARN",
@@ -96957,6 +97013,12 @@
       "code": "scope_conflict",
       "subject": "I2411",
       "message": "shares docs/MESH.md with I4306; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I2411",
+      "message": "shares test/cases with I4316; they may not run concurrently"
     },
     {
       "level": "WARN",
@@ -99836,6 +99898,12 @@
       "level": "WARN",
       "code": "scope_conflict",
       "subject": "I2714",
+      "message": "shares test/cases with I4316; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I2714",
       "message": "shares test/cases with I4317; they may not run concurrently"
     },
     {
@@ -100713,6 +100781,12 @@
       "code": "scope_conflict",
       "subject": "I2717",
       "message": "shares test/cases with I4292; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I2717",
+      "message": "shares test/cases with I4316; they may not run concurrently"
     },
     {
       "level": "WARN",
@@ -101708,6 +101782,12 @@
       "level": "WARN",
       "code": "scope_conflict",
       "subject": "I2720",
+      "message": "shares test/cases with I4316; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I2720",
       "message": "shares test/cases with I4317; they may not run concurrently"
     },
     {
@@ -102687,6 +102767,12 @@
       "code": "scope_conflict",
       "subject": "I2723",
       "message": "shares docs/MESH.md with I4306; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I2723",
+      "message": "shares test/cases with I4316; they may not run concurrently"
     },
     {
       "level": "WARN",
@@ -103875,6 +103961,12 @@
       "code": "scope_conflict",
       "subject": "I2826",
       "message": "shares test/cases with I4292; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I2826",
+      "message": "shares test/cases with I4316; they may not run concurrently"
     },
     {
       "level": "WARN",
@@ -130976,6 +131068,12 @@
       "level": "WARN",
       "code": "scope_conflict",
       "subject": "I3318",
+      "message": "shares test/cases with I4316; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I3318",
       "message": "shares test/cases with I4317; they may not run concurrently"
     },
     {
@@ -133394,6 +133492,12 @@
       "level": "WARN",
       "code": "scope_conflict",
       "subject": "I3448",
+      "message": "shares test/cases with I4316; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I3448",
       "message": "shares test/cases with I4317; they may not run concurrently"
     },
     {
@@ -134175,6 +134279,12 @@
       "code": "scope_conflict",
       "subject": "I3607",
       "message": "shares docs/MESH.md with I4306; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I3607",
+      "message": "shares test/cases with I4316; they may not run concurrently"
     },
     {
       "level": "WARN",
@@ -139953,7 +140063,7 @@
     {
       "level": "WARN",
       "code": "scope_conflict",
-      "count": 9196,
+      "count": 9214,
       "examples": [
         {
           "level": "WARN",

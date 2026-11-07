@@ -7,6 +7,8 @@
 # and names the file, and each documented exemption passes. The generator itself is proved
 # through the executable in 109_design_system.sh; this case never runs it.
 . "$ROOT/test/lib.sh"
+# question 11 reads the licence evidence from the environment; this case hands it in itself
+unset MAJORDOMUS_KIT_EVIDENCE_FLOWBITE_PRO 2>/dev/null || true
 
 DC="$ROOT/scripts/ci/design-check"
 
@@ -183,3 +185,94 @@ expect_grep 'reads the family --mj-nosuch-\*, of which the declaration emits not
 rm -f share/cockpit/graph.js
 git add -A >/dev/null 2>&1
 expect_exit 0 "$DC" --root "$T"
+
+# --- 10. a surface adapted from a Flowbite Pro block names the block and brings none of its
+# values (ADR 0036, amendment of 2026-11-07; I4316). The review surfaces are such surfaces
+# from the day they exist: /quality/ is site/templates/quality.html.
+mkdir -p site/templates
+printf '<section class="bg-neutral-primary-soft text-heading">q</section>\n' > site/templates/quality.html
+git add -A >/dev/null 2>&1
+expect_exit 10 "$DC" --root "$T"
+expect_grep 'site/templates/quality.html  a review surface that names no Flowbite Pro block'
+# naming its block, on the tokens: the adaptation the amendment asks for
+{
+  printf '{# flowbite-pro: application-ui/tables/table-with-search #}\n'
+  printf '<section class="bg-neutral-primary-soft text-heading border-default">q</section>\n'
+} > site/templates/quality.html
+git add -A >/dev/null 2>&1
+expect_exit 0 "$DC" --root "$T"
+expect_grep '1 file\(s\) name the Flowbite Pro block they adapt'
+# the block's blue, kept raw: refused, naming the file and the class
+printf '<button class="bg-blue-600 text-sm">Go</button>\n' >> site/templates/quality.html
+git add -A >/dev/null 2>&1
+expect_exit 10 "$DC" --root "$T"
+expect_grep 'site/templates/quality.html:3  a raw palette utility \(bg-blue-600\)'
+# Pro's own primary scale and its white label: what question 2 does not name, this one does
+sed -i.bak '3s/.*/<button class="bg-primary-700 hover:bg-primary-800 text-white">Go<\/button>/' site/templates/quality.html
+rm -f site/templates/quality.html.bak
+git add -A >/dev/null 2>&1
+expect_exit 10 "$DC" --root "$T"
+expect_grep 'site/templates/quality.html:3  a Flowbite Pro palette value \(bg-primary-700\)'
+expect_grep 'site/templates/quality.html:3  a Flowbite Pro palette value \(hover:bg-primary-800\)|\(bg-primary-800\)'
+expect_grep 'site/templates/quality.html:3  a Flowbite Pro palette value \(text-white\)'
+# a type value of its own, as a bracket or as a literal in a style
+sed -i.bak '3s/.*/<span class="text-[13px]" style="font-size: 12px">x<\/span>/' site/templates/quality.html
+rm -f site/templates/quality.html.bak
+git add -A >/dev/null 2>&1
+expect_exit 10 "$DC" --root "$T"
+expect_grep 'site/templates/quality.html:3  a type value of its own \(text-\[13px\]\)'
+expect_grep 'site/templates/quality.html:3  a type value of its own \(font-size: 1'
+# a bracket that reads a token, and a named step, are reads of the declaration
+sed -i.bak '3s/.*/<span class="text-small text-[color:var(--mj-fg)] bg-brand">x<\/span>/' site/templates/quality.html
+rm -f site/templates/quality.html.bak
+git add -A >/dev/null 2>&1
+expect_exit 0 "$DC" --root "$T"
+# a page that is no review surface and names no block is not asked about Pro's values
+printf '<p class="text-white">x</p>\n' > site/templates/other.html
+git add -A >/dev/null 2>&1
+expect_exit 0 "$DC" --root "$T"
+expect_grep '1 file\(s\) name the Flowbite Pro block they adapt'
+rm -f site/templates/other.html
+git add -A >/dev/null 2>&1
+
+# --- 11. no tracked file is a licensed kit's file, byte for byte. The "licensed" bytes are
+# this case's own: no Flowbite Pro byte is in this repository, and none is needed to prove
+# the comparison. The evidence lives outside the fixture tree, as the owner's does.
+EVD="$(mktemp -d "${TMPDIR:-/tmp}/mj107.XXXXXX")"
+trap 'rm -rf "$EVD"' EXIT
+printf '<div class="fixture-pro-table">\n  <nav>block</nav>\n</div>\n' > "$EVD/table.html"
+exact="$(sha256_of_file "$EVD/table.html")"
+norm="$(LC_ALL=C tr '\t\r\n' '   ' < "$EVD/table.html" | LC_ALL=C tr -s ' ' | mj_sha256_hex)"
+printf '# kit: flowbite-pro\n# kit-evidence/v1\n%s\t%s\tfixture-pro/blocks/table.html\n' "$exact" "$norm" > "$EVD/evidence.tsv"
+# no evidence: said not to be judged, never said to pass
+expect_exit 0 "$DC" --root "$T"
+expect_grep '^NOTE not judged here: no kit evidence'
+# evidence, and no copy in the tree
+expect_exit 0 "$DC" --root "$T" --evidence "$EVD/evidence.tsv"
+expect_grep 'tracked file\(s\) compared with 1 licensed file\(s\) of flowbite-pro; none is a copy'
+# a licensed file committed as shipped: refused, naming the file and the licensed source
+cp "$EVD/table.html" site/table.html
+git add -A >/dev/null 2>&1
+expect_exit 10 "$DC" --root "$T" --evidence "$EVD/evidence.tsv"
+expect_grep '^FAIL site/table.html  is byte for byte fixture-pro/blocks/table.html \(flowbite-pro\), a licensed file'
+# the same evidence as CI holds it, base64(gzip(text)) in the secret
+SECRET="$(gzip -c "$EVD/evidence.tsv" | base64 | tr -d '\n')"
+MAJORDOMUS_KIT_EVIDENCE_FLOWBITE_PRO="$SECRET" expect_exit 10 "$DC" --root "$T"
+expect_grep '^FAIL site/table.html  is byte for byte fixture-pro/blocks/table.html'
+# a secret that is not evidence is named and never printed
+MAJORDOMUS_KIT_EVIDENCE_FLOWBITE_PRO="not-evidence-0f1e2d3c" expect_exit 10 "$DC" --root "$T"
+expect_grep 'MAJORDOMUS_KIT_EVIDENCE_FLOWBITE_PRO does not hold base64\(gzip\(kit-evidence/v1\)\)'
+expect_no_grep 'not-evidence-0f1e2d3c'
+# an evidence file with a line that is no fingerprint is named by the line, not its content
+printf '# kit-evidence/v1\nsecret-looking-line\n' > "$EVD/bad.tsv"
+expect_exit 10 "$DC" --root "$T" --evidence "$EVD/bad.tsv"
+expect_grep 'the kit evidence is not kit-evidence/v1 \(line 2\)'
+expect_no_grep 'secret-looking-line'
+# adapted, the file is no longer the licensed one: byte identity is the gate's boundary, and
+# the amendment leaves a lightly edited copy to the review
+printf '<div class="bg-neutral-primary-soft">\n  <nav>block</nav>\n</div>\n' > site/table.html
+git add -A >/dev/null 2>&1
+expect_exit 0 "$DC" --root "$T" --evidence "$EVD/evidence.tsv"
+rm -f site/table.html site/templates/quality.html
+git add -A >/dev/null 2>&1
+expect_exit 0 "$DC" --root "$T" --evidence "$EVD/evidence.tsv"

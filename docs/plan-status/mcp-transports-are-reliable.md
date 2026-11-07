@@ -137,6 +137,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I2148` | shares test/cases with I4291; they may not run concurrently |
 | WARN | `scope_conflict` | `I2148` | shares test/cases with I4292; they may not run concurrently |
 | WARN | `scope_conflict` | `I2148` | shares share/skeleton with I4306; they may not run concurrently |
+| WARN | `scope_conflict` | `I2148` | shares test/cases with I4316; they may not run concurrently |
 | WARN | `scope_conflict` | `I2148` | shares test/cases with I4317; they may not run concurrently |
 | WARN | `scope_conflict` | `I2148` | shares test/cases with I4318; they may not run concurrently |
 | WARN | `scope_conflict` | `I2148` | shares test/cases with I4322; they may not run concurrently |

@@ -5990,6 +5990,9 @@
             "file:share/design/primitives.css",
             "file:scripts/ci/design-check",
             "file:docs/DESIGN_SYSTEM.md",
+            "file:.ai/repo/project/issues/I4316.yaml",
+            "rule:project.ui-uses-flowbite-pro",
+            "file:.ai/repo/adrs/0230-flowbite-pro-is-adapted-onto-tailwind-4.md",
             "test:test/cases/107_design_tokens.sh",
             "test:test/cases/109_design_system.sh"
           ],
@@ -74608,16 +74611,18 @@
           "scope": [
             ".ai/repo/project/issues/I4316.yaml",
             ".ai/repo/adrs/0036-the-design-system-is-a-typed-declaration-and-every-first-party-surface-consumes-its-projections.md",
-            "scripts/ci/design-check"
+            "scripts/ci/design-check",
+            "test/cases/107_design_tokens.sh"
           ],
           "serves": [
             "a-review-is-seen-at-its-commit#findings-are-published-at-their-commit"
           ],
           "slug": "review-surfaces-start-from-flowbite-pro",
-          "updated_at": "2026-10-28",
+          "updated_at": "2026-11-07",
           "validation": [
             "MAJORDOMUS_SHARE=$PWD/share scripts/ci/design-check",
-            "bin/majordomus adr check"
+            "bin/majordomus adr check",
+            "bash test/run.sh 107_design_tokens"
           ]
         }
       },
@@ -116438,7 +116443,17 @@
       },
       {
         "source": "majordomus://adr/adr-0036",
+        "target": "majordomus://adr/adr-0230",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0036",
         "target": "majordomus://document/docs/DESIGN_SYSTEM.md",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0036",
+        "target": "majordomus://issue/I4316",
         "kind": "put_in_force"
       },
       {
@@ -116459,6 +116474,11 @@
       {
         "source": "majordomus://adr/adr-0036",
         "target": "majordomus://rule/project.ui-conformance@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0036",
+        "target": "majordomus://rule/project.ui-uses-flowbite-pro@1",
         "kind": "put_in_force"
       },
       {
@@ -161814,7 +161834,7 @@
     ],
     "metadata": {
       "nodes": 4422,
-      "edges": 10037,
+      "edges": 10040,
       "acyclic": false,
       "truncated": false
     }
