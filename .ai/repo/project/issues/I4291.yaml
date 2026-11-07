@@ -13,7 +13,10 @@ scope:
   - ".ai/repo/project/issues/I4291.yaml"
   - "apps/majordomus-cli/src/ledger.rs"
   - "apps/majordomus-cli/src/plan.rs"
+  - "apps/majordomus-cli/src/capability/handler.rs"
   - "apps/majordomus-cli/src/capability/builtin/plan.rs"
+  - "apps/majordomus-cli/src/capability/builtin/continuity_transfer.rs"
+  - "apps/majordomus-cli/src/capability/builtin/reasoning.rs"
   - "apps/majordomus-cli/src/continuity"
   - "apps/majordomus-cli/src/reasoning"
   - "test/cases/3049_a_second_workers_record_lands_on_the_first_workers_task.sh"
@@ -33,4 +36,6 @@ evidence_required:
   - suite
 risk: "Three Rust writers share the pointer read; fixing ledger.rs and not continuity or reasoning leaves a defect that looks fixed."
 created_at: 2026-10-28
-updated_at: 2026-10-28
+updated_at: 2026-10-31T22:32:59Z
+started_at: 2026-10-31T22:32:59Z
+started_event: sha256:cf65525be41e3834d09953ea9fc6b0bd0f9d0c2108c70d69452224bcdf535470
