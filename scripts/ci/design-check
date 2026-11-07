@@ -32,6 +32,17 @@
 #      4.5:1 for text, in both themes. The pairs are not listed here — they are derived by
 #      the executable from the declaration and from the primitives that consume it, so a
 #      role added tomorrow is measured tomorrow (`design.contrast`, crate::design::contrast).
+#  10. A surface adapted from a Flowbite Pro block names the block it adapts, in a comment
+#      `flowbite-pro: <category>/<block>`, and every new review surface (/quality/, /trace/,
+#      the hotspot view, the /ui status charts) is such a surface. A file that names a block
+#      brings none of the block's own values with it: no `primary-<shade>`, `white` or `black`
+#      colour utility, no bracketed type value, no literal font size, family, letter-spacing
+#      or line height. Question 2 already refuses Tailwind's palette families everywhere; this
+#      one refuses what a Pro block adds to them (ADR 0036, amendment of 2026-11-07).
+#  11. No tracked file is a licensed kit's file, byte for byte. The licensed fingerprints are
+#      kit-evidence/v1, the owner's and never committed: `--evidence FILE`, or in CI the
+#      secret MAJORDOMUS_KIT_EVIDENCE_FLOWBITE_PRO as base64(gzip(text)). Without either the
+#      question is said not to be judged here, which is not a pass.
 #
 # What is exempt, and why — an exemption is a reason, never a path somebody added:
 #
@@ -70,15 +81,27 @@
 #
 #   scripts/ci/design-check
 #   scripts/ci/design-check --root DIR     the same questions over another tree (the case)
+#   scripts/ci/design-check --evidence F   question 11 judged against a kit-evidence/v1 file
 #
-# Exit: 0 clean, 10 a surface carries a design decision of its own or a projection is stale.
+# Exit: 0 clean, 10 a surface carries a design decision of its own, a projection is stale or
+# a licensed file is in the tree, 2 an argument this gate does not know.
 #
-# The rule is project.design-tokens-declared-once; ADR 0031 and ADR 0036 record the decisions.
+# The rules are project.design-tokens-declared-once and project.ui-uses-flowbite-pro; ADR
+# 0031 and ADR 0036 record the decisions.
 set -eu
 HERE="$(cd "$(dirname "$0")/../.." && pwd)"
-if [ "${1:-}" = "--root" ]; then ROOT="${2:?--root needs a directory}"; shift 2; else
-  ROOT="$HERE"
-fi
+# SHA-256 without Perl (question 11): sha256sum, else openssl; never shasum
+# shellcheck source=lib/sha256.sh
+. "$HERE/lib/sha256.sh"
+ROOT="$HERE"; EVIDENCE=""
+while [ "$#" -gt 0 ]; do
+  case "$1" in
+    --root) ROOT="${2:?--root needs a directory}"; shift 2 ;;
+    --evidence) EVIDENCE="${2:?--evidence needs a kit-evidence/v1 file}"; shift 2 ;;
+    *) echo "design-check: unknown argument $1 (--root DIR, --evidence FILE)" >&2; exit 2 ;;
+  esac
+done
+case "$EVIDENCE" in ""|/*) ;; *) EVIDENCE="$PWD/$EVIDENCE" ;; esac
 cd "$ROOT"
 status=0
 fail() { echo "FAIL $1"; status=10; }
@@ -116,10 +139,11 @@ echo "== 2. no first-party surface reaches past the roles for a raw palette util
 PALETTE_UTILITY='\b(text|bg|border|border-[lrtbxy]|ring|fill|stroke|outline|decoration|from|to|via|accent|caret|divide|shadow)-(red|orange|amber|yellow|lime|green|emerald|teal|cyan|sky|blue|indigo|violet|purple|fuchsia|pink|rose|slate|gray|zinc|neutral|stone)-[0-9]{2,3}\b'
 for file in $(first_party); do
   case "$file" in scripts/ci/*|test/*) continue ;; esac
-  hits="$(grep -nE "$PALETTE_UTILITY" "$file" 2>/dev/null || true)"
+  # one line per utility, `<line>:<utility>`, so that the refusal names the class it refuses
+  hits="$(grep -noE "$PALETTE_UTILITY" "$file" 2>/dev/null || true)"
   [ -n "$hits" ] || continue
   printf '%s\n' "$hits" | while IFS= read -r line; do
-    fail "$file:${line%%:*}  a raw palette utility; name a role (--mj-*) or file the word under a status"
+    fail "$file:${line%%:*}  a raw palette utility (${line#*:}); name a role (--mj-*) or file the word under a status"
   done
   status=10
 done
@@ -280,6 +304,131 @@ else
     done
     fail "a declared pair cannot be read: darken it in share/design/tokens.yaml, keeping the hue, or state why the pair is not rendered"
   fi
+fi
+
+echo "== 10. a surface adapted from a Flowbite Pro block names it and brings none of its values"
+# ADR 0036, amendment of 2026-11-07 (I4316): a review surface starts from the matching Pro
+# block, adapts its markup and takes every colour and type value from the --mj-* tokens. The
+# block is named where the markup is, so a reviewer can open the licensed original beside the
+# adaptation; a name is a category and a block, `application-ui/tables/table-with-search`.
+PRO_BLOCK='flowbite-pro:[[:space:]]*[a-z0-9][a-z0-9._-]*(/[a-z0-9][a-z0-9._-]*)+'
+# the review surfaces of milestone a-review-is-published-at-its-commit, by the page or screen
+# they render; none of them exists before it does, and each must name its block when it does
+REVIEW_SURFACE='^site/templates/(quality|trace|hotspots)(\.html$|[-_/])|^apps/majordomus-cli/src/ui/(quality|trace|hotspots|status_charts)(\.(rs|html)$|[-_/])'
+# what a Pro block carries that question 2 does not name: its `primary` scale (Pro's
+# tailwind.config.js declares it in hexadecimal) and the two absolutes it paints text and
+# surfaces with. In this tree the accent is `brand` and `fg-brand`, a surface is
+# `neutral-primary(-soft)`, the label on an accent is the kit primitive's `--mj-on-accent`.
+PRO_PALETTE='\b(text|bg|border|border-[lrtbxy]|ring|ring-offset|fill|stroke|outline|decoration|from|to|via|accent|caret|divide|shadow|placeholder)-(primary-[0-9]{2,3}|white|black)\b'
+# a type value of its own: a bracketed utility (one that reads a token, `text-[var(--mj-…)]`,
+# is a read and passes), or a literal size, family, spacing or line height in a style
+PRO_TYPE='\b(text|tracking|leading|font)-\[[^]]*\]|(font-size|letter-spacing|line-height)[[:space:]]*:[[:space:]]*[0-9.]|font-family[[:space:]]*:[[:space:]]*[^v[:space:]]'
+# the files that name a block, in one read of the tree rather than one process per file
+naming="$(first_party | while IFS= read -r f; do [ -f "$f" ] && printf '%s\0' "$f"; done \
+  | xargs -0 grep -lE "$PRO_BLOCK" 2>/dev/null || true)"
+for file in $(first_party | grep -E "$REVIEW_SURFACE" || true); do
+  printf '%s\n' "$naming" | grep -qxF -- "$file" \
+    || fail "$file  a review surface that names no Flowbite Pro block; write the comment flowbite-pro: <category>/<block> beside the markup it adapts"
+done
+adapted=0
+for file in $naming; do
+  adapted=$((adapted + 1))
+  hits="$(grep -noE "$PRO_PALETTE" "$file" 2>/dev/null || true)"
+  if [ -n "$hits" ]; then
+    while IFS= read -r line; do
+      fail "$file:${line%%:*}  a Flowbite Pro palette value (${line#*:}) in an adapted block; name a role (--mj-*): brand, fg-brand, neutral-primary, heading"
+    done <<< "$hits"
+  fi
+  hits="$(grep -noE "$PRO_TYPE" "$file" 2>/dev/null | grep -vE -- '-\[([a-z-]+:)?var\(--' || true)"
+  if [ -n "$hits" ]; then
+    while IFS= read -r line; do
+      fail "$file:${line%%:*}  a type value of its own (${line#*:}) in an adapted block; use a named step (text-meta, text-label, text-small, text-dense, tracking-caps)"
+    done <<< "$hits"
+  fi
+done
+echo "OK   $adapted file(s) name the Flowbite Pro block they adapt"
+
+echo "== 11. no tracked file is a licensed kit's file, byte for byte"
+# The licence of Flowbite Pro allows adapting its markup into the owner's products and forbids
+# publishing its source; this tree is public. The fingerprints are kit-evidence/v1 — per line
+# the sha256 of a licensed file's exact bytes (64 hex, or a 16-hex prefix), the sha256 of its
+# whitespace-normalised bytes, and optionally its path under the kit's root; `# kit: <name>`
+# names the kit. This question asks the exact column alone: a copy committed as shipped. A
+# reformatted copy is `majordomus design licence`'s to find in a tree that declares a kit
+# (I4336), and an adapted one is the review's, as the amendment says. The evidence is never
+# in the tree: the owner's file is handed in with --evidence, CI's arrives as the secret.
+EV_VAR=MAJORDOMUS_KIT_EVIDENCE_FLOWBITE_PRO
+ev=""; ev_tmp=""
+if [ -n "$EVIDENCE" ]; then
+  if [ -r "$EVIDENCE" ]; then ev="$EVIDENCE"; else fail "$EVIDENCE  the --evidence file cannot be read"; fi
+elif [ -n "${MAJORDOMUS_KIT_EVIDENCE_FLOWBITE_PRO:-}" ]; then
+  ev_tmp="$(umask 077; mktemp "${TMPDIR:-/tmp}/design-check.kitev.XXXXXX")"
+  trap 'rm -f "$ev_tmp"' EXIT
+  # a subshell without xtrace: the value is a secret, and a traced shell would print it
+  if ( set +x; printf '%s' "$MAJORDOMUS_KIT_EVIDENCE_FLOWBITE_PRO" | LC_ALL=C tr -d ' \t\r\n' \
+       | base64 -d 2>/dev/null | gzip -dc > "$ev_tmp" 2>/dev/null ); then
+    ev="$ev_tmp"
+  else
+    fail "$EV_VAR does not hold base64(gzip(kit-evidence/v1))"
+  fi
+fi
+if [ -n "$ev" ]; then
+  # the shape, before a hash is compared: a line that is not evidence is named by its number,
+  # never by its content
+  bad="$(LC_ALL=C awk -F'\t' '
+    function hex(h) { return (length(h) == 16 || length(h) == 64) && h !~ /[^0-9a-f]/ }
+    /^#/ || /^[ \t\r]*$/ { next }
+    !((NF == 2 || NF == 3) && hex($1) && hex($2)) { bad = NR; exit }
+    { n++ }
+    END { if (bad) print "line " bad; else if (!n) print "no fingerprint" }' "$ev")"
+  kit="$(LC_ALL=C sed -n 's/^# kit:[[:space:]]*\([A-Za-z0-9._-]*\).*/\1/p' "$ev" | head -n 1)"
+  kit="${kit:-flowbite-pro}"
+  if [ -n "$bad" ]; then
+    fail "the kit evidence is not kit-evidence/v1 ($bad)"
+  elif mj_sha256_tool 2>/dev/null; then
+    # the files asked are the tracked ones of a kind the kit ships, by the extensions of the
+    # licensed paths; evidence without paths asks every tracked file. An empty file is
+    # nobody's source.
+    candidates="$(printf '%s\n' "$tracked" | LC_ALL=C awk -F'\t' '
+      NR == FNR {
+        if ($0 ~ /^#/ || NF < 2) next
+        if (NF == 2) { all = 1; next }
+        n = split($3, part, "/"); base = part[n]
+        if (base ~ /\./) { sub(/.*\./, "", base); ext[tolower(base)] = 1 } else { all = 1 }
+        next
+      }
+      $0 != "" {
+        n = split($0, part, "/"); base = part[n]; e = ""
+        if (base ~ /\./) { e = base; sub(/.*\./, "", e); e = tolower(e) }
+        if (all || (e != "" && e in ext)) print
+      }' "$ev" - | while IFS= read -r f; do
+        if [ -f "$f" ] && [ ! -L "$f" ] && [ -s "$f" ]; then printf '%s\n' "$f"; fi
+      done)"
+    asked=0; matches=""
+    if [ -n "$candidates" ]; then
+      asked="$(printf '%s\n' "$candidates" | wc -l | tr -d ' ')"
+      matches="$(printf '%s\n' "$candidates" | tr '\n' '\0' | mj_sha256_xargs -0 \
+        | LC_ALL=C awk -F'\t' -v kit="$kit" '
+          NR == FNR {
+            if ($0 ~ /^#/ || NF < 2) next
+            k = substr($1, 1, 16); src[k] = (NF == 3 && $3 != "") ? $3 : "a licensed " kit " file"
+            next
+          }
+          { k = substr($0, 1, 16); if (k in src) print substr($0, 67) "\t" src[k] }' "$ev" -)"
+    fi
+    licensed="$(LC_ALL=C awk -F'\t' '!/^#/ && NF >= 2 { n++ } END { print n + 0 }' "$ev")"
+    if [ -n "$matches" ]; then
+      while IFS="$(printf '\t')" read -r path source; do
+        fail "$path  is byte for byte $source ($kit), a licensed file; adapt its markup, never commit the file"
+      done <<< "$matches"
+    else
+      echo "OK   $asked tracked file(s) compared with $licensed licensed file(s) of $kit; none is a copy"
+    fi
+  else
+    fail "$MJ_SHA256_MISSING; the kit evidence cannot be compared"
+  fi
+elif [ -z "$EVIDENCE" ] && [ -z "${MAJORDOMUS_KIT_EVIDENCE_FLOWBITE_PRO:-}" ]; then
+  echo "NOTE not judged here: no kit evidence (--evidence FILE, or $EV_VAR in CI); scripts/ci/design-check --evidence <the owner's kit-evidence/v1> judges it"
 fi
 
 [ "$status" = 0 ] && echo "==> design-check: one declaration, and every surface projects it"

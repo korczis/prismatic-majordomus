@@ -13,6 +13,7 @@ scope:
   - ".ai/repo/project/issues/I4316.yaml"
   - ".ai/repo/adrs/0036-the-design-system-is-a-typed-declaration-and-every-first-party-surface-consumes-its-projections.md"
   - "scripts/ci/design-check"
+  - "test/cases/107_design_tokens.sh"
 non_scope:
   - "Restyling existing pages that are not review surfaces; one-kit-on-every-surface owns the rest of the kit"
   - "Committing or vendoring any Flowbite Pro source file, stylesheet or script"
@@ -27,8 +28,9 @@ acceptance_criteria:
 validation:
   - "MAJORDOMUS_SHARE=$PWD/share scripts/ci/design-check"
   - "bin/majordomus adr check"
+  - "bash test/run.sh 107_design_tokens"
 evidence_required:
   - design_check_refuses_raw_palette_and_pro_source
 risk: "The licence allows adapting Pro markup into the owner's products and forbids publishing its source; a check by byte identity misses a lightly edited copy, so the amendment states the boundary in words and the review of each surface keeps it."
 created_at: 2026-10-28
-updated_at: 2026-10-28
+updated_at: 2026-11-07
