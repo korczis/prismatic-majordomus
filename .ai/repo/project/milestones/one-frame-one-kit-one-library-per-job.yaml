@@ -1,0 +1,51 @@
+id: one-frame-one-kit-one-library-per-job
+title: "/ui, /cockpit and the site are one page frame, one component kit, one client core and one library per job, every entity linked and every page readable by a model"
+slug: one-frame-one-kit-one-library-per-job
+order: 551
+priority: p1
+problem: "Two read-only inventories of master on 2026-11-07 (the owner's order of 13:30Z) found the three surfaces drawn four ways. There are four page frames: cockpit/view.rs page (apps/majordomus-cli/src/cockpit/view.rs:62), ui/shell.rs page (apps/majordomus-cli/src/ui/shell.rs:83), web/html.rs page with inline CSS (apps/majordomus-cli/src/web/html.rs:48) and swagger from unpkg. Sidebar, card, kpi, hero, meter, timeline, breadcrumbs, footer, table and badge are each drawn by two or three implementations over overlapping .mj-* classes (.mj-card, .mj-ui-panel and .mj-panel; .mj-stat, .mj-ui-kpi and .mj-kpi). Flowbite 4.0.2 is used as CSS only and its JavaScript is loaded nowhere, so collapse, dropdown, tabs, modal, drawer and tooltip are hand-written. Alpine is two builds, Cytoscape is four integrations, charts are five renderers, and the shared client helpers are copied up to eight times. Proposed ADR 0230 names the Flowbite move and proposed ADR 0152 names ECharts as the one chart library."
+outcome: "A reader meets one frame, one kit and one behaviour on /ui, /cockpit and majordomus.dev: the Flowbite Pro shell, one component per kind in both renderers, Flowbite JS for every interactive control, ECharts for charts, Cytoscape for graphs, p5 for scenes, Alpine CSP components for behaviour, one advanced table on every list, every id a link, and every page with a JSON alternate and an llms.txt beside it. The plan is the 13 slices I4534 to I4546, one pull request each, in order."
+current_state: "Measured on master on 2026-11-07. Frames: /ui has 19 screens and 5 panels with SCREENS hand-listed (apps/majordomus-cli/src/ui/mod.rs:140); about 40 /cockpit pages whose sidebar is derived from the registry (apps/majordomus-cli/src/cockpit/nav.rs); the site is Zola and Tera with 39 partials and a kit under site/templates/kit. Client copies: site/nav.js is byte-identical to share/ui/nav.js and share/cockpit/nav.js; share/ui/theme.js and share/cockpit/theme.js, share/ui/socket.js and share/cockpit/socket.js are byte copies; the token-to-hex helper has 8 copies, the theme observer 6, reduced motion 6, the lazy loader 7, fragment fetch 4, polling 7. Cytoscape 3.33.1 runs in share/cockpit/graph.js (1310 lines), share/cockpit/trains.js (1259), share/ui/ui.js (cytoscape at lines 572 and 838) and site/graph.js (755). Charts: ECharts 6.0.0 on the site only (site/charts.js, 2391 lines), Rust SVG lines (apps/majordomus-cli/src/ui/trends.rs), a Rust SVG donut, a Tera SVG sparkline and a p5 time series (share/cockpit/activity.js); Chart.js is absent. three.js 0.185.1 draws share/cockpit/topology.js only, with no dedicated test. The handbook loads ECharts 5.5.0, Mermaid 10.9.1 and highlight.js 11.9.0 from cdnjs (handbook/cs/extras10.js:6-11, handbook/cs/extras11.js:14, handbook/cs/extras12.js:17). Nine open UI pull requests (#2583, #1761, #1346, #1345, #1178, #1050, #966, #933, #2349) touch these paths. The milestone one-kit-on-every-surface of 2026-10-20 (I3790 to I3797, I4334, I4377) holds the design-book, copy, tab and shell-block parts; this milestone is the frame, kit, library and link reintegration beside it."
+desired_state: "Every criterion of the intent one-kit-on-every-surface is carried by an issue here and proven by its case or probe: one Pro frame for /ui and /cockpit and the Pro navbar and footer on the site, one kit contract across the Rust and Tera renderers, Flowbite JS behind every control, one shared ESM module per library job, one share/design/js/core, one advanced table, one link resolver, rel=alternate JSON and llms.txt from the route registry, and SCREENS derived from the registry with every component under the ui-shard and interaction probes."
+scope:
+  - "apps/majordomus-cli/src/ui"
+  - "apps/majordomus-cli/src/cockpit"
+  - "apps/majordomus-cli/src/web"
+  - "share/design"
+  - "share/ui"
+  - "share/cockpit"
+  - "site/templates"
+  - "site/nav.js"
+  - "site/kit.js"
+  - "site/search.js"
+  - "site/graph.js"
+  - "site/charts.js"
+  - "handbook/cs"
+  - "package.json"
+  - "scripts/cockpit-assets"
+  - "scripts/site-build"
+  - "scripts/lib"
+  - ".github/workflows/validate.yml"
+non_scope:
+  - "The design book sections, copy control, tab control and shell block of milestone one-kit-on-every-surface (I3790 to I3797), which this milestone builds on and does not redo"
+  - "Rustdoc's own pages and themes"
+  - "Chart.js, which is not adopted (ADR 0152)"
+acceptance_criteria:
+  - "majordomus design kit --check reports zero findings for /ui, /cockpit and the site"
+  - "A case renders every kit component through the Rust El kit and the Tera kit and finds one markup contract"
+  - "No helper of share/design/js/core and no library integration exists twice under share/ui, share/cockpit and site, and a case fails on a planted copy"
+  - "Every list screen renders the one advanced table, and every entity id on every surface is a link (case 1091)"
+  - "Every page has a rel=alternate JSON link, /ui and the site serve llms.txt, and /ui SCREENS is derived from the registry"
+  - "Each of the nine open UI pull requests is landed, absorbed or superseded with its reason recorded"
+validation:
+  - "majordomus plan validate"
+  - "majordomus intent validate"
+  - "majordomus design kit --check"
+evidence_required: []
+depends_on: []
+risks:
+  - "Flowbite JS reads data-* attributes at load: a fragment swapped in later needs its initialiser called again, or a drawer and a dropdown in it are dead"
+  - "Moving the site's inline x-data to Alpine.data under the CSP build can break the 15 templates that carry it; each must be driven by the interaction probe before the slice lands"
+  - "The four Cytoscape integrations carry different keyboard and theme behaviour; unifying them can regress /cockpit/trains, the busiest graph"
+created_at: 2026-11-07
+updated_at: 2026-11-07

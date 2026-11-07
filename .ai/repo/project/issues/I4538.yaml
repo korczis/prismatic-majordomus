@@ -1,0 +1,48 @@
+id: I4538
+milestone: one-frame-one-kit-one-library-per-job
+serves:
+  - "one-kit-on-every-surface#one-page-frame"
+  - "one-kit-on-every-surface#derived-and-proven"
+title: "One Pro page frame serves /ui and /cockpit, /ui SCREENS is derived from the registry, and the site wears the Pro navbar and footer"
+slug: one-pro-page-frame
+priority: p1
+profile: implementation
+parallel_safe: false
+objective: "Slice S4 of milestone one-frame-one-kit-one-library-per-job. Replace ui/shell.rs page and cockpit/view.rs page with one frame on the Flowbite Pro shell: a fixed navbar, the sidebar drawer an aside labelled Sidebar that both drawer attributes name, and a page header with its breadcrumb. The frame is shared mechanics in the sense of ADR 0135 (0135:65-75), not a shared surface: it takes each surface's own navigation, title suffix and body root as input, so /ui keeps its delivery-vocabulary screens and CSS-only menu toggle (ui/shell.rs:134-140) and the Cockpit keeps its areas, its Alpine root x-data=cockpit and its palette (cockpit/view.rs:110-113); neither surface's pages or areas are reshaped. SCREENS is the one declaration of /ui's navigation, held to the router by a test (ui/mod.rs:137-140, 517-536); the capability registry declares capabilities, not screens, so SCREENS is derived from the router's own route table (or kept as that declaration with its test), and no registry entry is invented for a screen. Put site/templates/base.html on the Pro navbar and footer. web/html.rs page with its inline CSS uses the same frame or is retired."
+why: "The owner's order of 2026-11-07 13:30Z asks for /ui, /cockpit and the site to be reintegrated on one kit: max reuse, Flowbite Pro best practices, one library per job, everything derived, tested, deployed and linked (intent one-kit-on-every-surface). Four page frames mean four navigations, four breadcrumbs and four places a fix must be made, and a hand-listed SCREENS goes stale as routes are added."
+current_state: "Measured on master on 2026-11-07: four frames, apps/majordomus-cli/src/cockpit/view.rs:62 (pub fn page), apps/majordomus-cli/src/ui/shell.rs:83 (pub fn page), apps/majordomus-cli/src/web/html.rs:48 (pub fn page, inline CSS) and swagger (apps/majordomus-cli/src/http/swagger.rs, unpkg); /ui SCREENS is the hand list at apps/majordomus-cli/src/ui/mod.rs:140 for 19 screens and 5 panels; the Cockpit sidebar is derived (apps/majordomus-cli/src/cockpit/nav.rs); site/templates/base.html has no Pro shell."
+desired_state: "One frame function renders /ui and /cockpit; SCREENS is computed from the registry and a route added there appears in the navigation; site/templates/base.html renders the Pro navbar and footer; majordomus design kit --check reports zero S5 findings."
+scope:
+  - "apps/majordomus-cli/src/ui/shell.rs"
+  - "apps/majordomus-cli/src/ui/mod.rs"
+  - "apps/majordomus-cli/src/ui/navbar.rs"
+  - "apps/majordomus-cli/src/ui/navbar.html"
+  - "apps/majordomus-cli/src/cockpit/view.rs"
+  - "apps/majordomus-cli/src/cockpit/nav.rs"
+  - "apps/majordomus-cli/src/web/html.rs"
+  - "site/i18n"
+  - "site/templates/base.html"
+  - ".ai/repo/project/issues/I4538.yaml"
+non_scope:
+  - "The swagger page, which keeps its pinned unpkg assets"
+  - "New routes"
+depends_on:
+  - "I4535"
+  - "I4536"
+  - "I4537"
+acceptance_criteria:
+  - "Every /ui and /cockpit page is served by the one frame function, read by the ui-shard probe at every width it visits"
+  - "The site's base.html renders the Pro navbar and footer at every width the site probe visits"
+  - "A test adds a /ui route to the route table and finds it in /ui's navigation, and removes one and finds it gone, with no second list edited"
+  - "Every /ui and /cockpit page carries the one frame's mark (one frame function stamps it) and the ui-shard probe refuses a page without it: majordomus design kit judges only site/templates/base.html as a layout and cannot see the Rust frames, so its S5 count is no evidence for /ui or /cockpit"
+  - "majordomus design kit --check reports zero S5 findings for the site with no new ui.exempt entry; this issue's evidence says whether base.html carries the navbar and footer markers itself or the profile was changed in the distribution (ADR 0230, consequence on run-time assembled shells)"
+  - "The Pro navbar and footer on site/templates/base.html render in every language the site declares (site/i18n/languages.json), with every label from the site's i18n data"
+  - "No Flowbite Pro source file enters the tree: the adapted markup is reviewed against rule project.ui-uses-flowbite-pro and this issue's evidence names the Pro block each part was adapted from"
+validation:
+  - "majordomus design kit --check"
+  - "node scripts/ui audit"
+  - "majordomus plan validate"
+evidence_required:
+  - "one_frame_probe"
+created_at: 2026-11-07
+updated_at: 2026-11-07

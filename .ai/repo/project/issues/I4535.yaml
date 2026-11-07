@@ -1,0 +1,48 @@
+id: I4535
+milestone: one-frame-one-kit-one-library-per-job
+serves:
+  - "one-kit-on-every-surface#one-client-core"
+title: "One share/design/js/core ESM module holds the token resolver, theme observer, reduced motion, lazy loader, fragment fetch, bounded polling and socket client, and every copy is gone"
+slug: one-client-core-module
+priority: p1
+profile: implementation
+parallel_safe: false
+objective: "Slice S1 of milestone one-frame-one-kit-one-library-per-job. Add share/design/js/core as one ES module set: tokens (a --mj-* token resolved to a colour), theme (one observer of the light and dark switch), motion (prefers-reduced-motion), lazy (load a vendored library once, on first need), fragment (fetch and swap an HTML fragment), poll (bounded polling with backoff and a stop) and socket (the live socket client). share/ui, share/cockpit and site import it; every copy is deleted; scripts/cockpit-assets and scripts/site-build ship it; a case fails on a planted second copy of any helper."
+why: "The owner's order of 2026-11-07 13:30Z asks for /ui, /cockpit and the site to be reintegrated on one kit: max reuse, Flowbite Pro best practices, one library per job, everything derived, tested, deployed and linked (intent one-kit-on-every-surface). ADR 0135 says shared code moves to a module both surfaces import and is not duplicated; the helpers are copied up to eight times."
+current_state: "Measured on master on 2026-11-07: the token-to-hex helper has 8 copies, the theme observer 6, reduced motion 6, the lazy loader 7, fragment fetch 4, polling 7. Byte copies: site/nav.js = share/ui/nav.js = share/cockpit/nav.js (cmp), share/ui/theme.js = share/cockpit/theme.js, share/ui/socket.js = share/cockpit/socket.js. No share/design/js directory exists."
+desired_state: "share/design/js/core/{tokens,theme,motion,lazy,fragment,poll,socket}.js exist once; share/ui/ui.js, share/cockpit/*.js and site/*.js import them; no helper body exists twice in the three trees; the case that guards it runs in the suite."
+scope:
+  - "share/design/js/core"
+  - "share/ui"
+  - "share/cockpit"
+  - "site/nav.js"
+  - "site/kit.js"
+  - "site/search.js"
+  - "site/graph.js"
+  - "site/charts.js"
+  - "scripts/cockpit-assets"
+  - "scripts/site-build"
+  - ".ai/repo/project/issues/I4535.yaml"
+  - "apps/majordomus-cli/src/cockpit/assets.rs"
+  - "test/cases"
+non_scope:
+  - "Flowbite JS (I4536)"
+  - "The Cytoscape, ECharts and Alpine modules (I4541, I4542, I4543)"
+depends_on:
+  - "I4534"
+  - "I3794"
+acceptance_criteria:
+  - "A case (numbered by scripts/case-numbers next) fails when a planted copy of any core helper is added under share/ui, share/cockpit or site, and passes on the tree"
+  - "The /ui, /cockpit and site pages load share/design/js/core with no CSP violation in the browser console, read by the interaction probe"
+  - "No helper body is kept by hand in two places: a file that exists under share/ui, share/cockpit or site as a byte copy of another is written by scripts/cockpit-assets or scripts/site-build and held by its --check, as rule project.the-ui-wears-the-sites-navbar requires of nav.js and theme.js (scripts/cockpit-assets:41-44); a copy no --check holds fails the case"
+  - "share/design/js/core is served under a digested URL on /ui and /cockpit whose relative imports are rewritten as assets.rs:275-283 rewrites them within share/cockpit, and the site build fingerprints the same graph; a changed core file is a changed URL for every importer on all three surfaces"
+  - "The site's and the bar's classic scripts (nav.js, theme.js, loaded without type=module by cockpit/view.rs:84-88 and ui/shell.rs:100-105) either stay classic or move to modules on all three surfaces in the same change, and scripts/ui navbar still passes"
+  - "The first commit that adds this issue's case also changes criterion one-client-core of .ai/repo/project/intents/one-kit-on-every-surface.yaml to evidence: test with that case as its ref, so the criterion stops being proven by majordomus intent explain of itself"
+validation:
+  - "majordomus plan validate"
+  - "node scripts/ui audit"
+  - "scripts/interaction-probe"
+evidence_required:
+  - "one_client_core_case"
+created_at: 2026-11-07
+updated_at: 2026-11-07

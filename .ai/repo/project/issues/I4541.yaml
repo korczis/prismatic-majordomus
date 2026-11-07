@@ -1,0 +1,44 @@
+id: I4541
+milestone: one-frame-one-kit-one-library-per-job
+serves:
+  - "one-kit-on-every-surface#one-library-per-job"
+title: "One Cytoscape module draws every graph on every surface, and the duplicated PR and milestone dependency graphs become one each"
+slug: one-cytoscape-module
+priority: p1
+profile: implementation
+parallel_safe: false
+objective: "Slice S7 of milestone one-frame-one-kit-one-library-per-job. Add share/design/js/graph: one Cytoscape 3.33.1 integration with token styling, the core theme observer, one keyboard model and a Flowbite drawer for a node's details. share/cockpit/graph.js, share/cockpit/trains.js, the graph part of share/ui/ui.js and site/graph.js become callers of it. The PR dependency graph (/ui/prs and /cockpit/trains) and the milestone dependency graph (/ui/roadmap, /roadmap/ and the Mermaid of /plan/ and /dag/) are drawn once each. Decision recorded here by measurement: three.js stays for the topology page when its 3D view is measured to show what a Cytoscape layout cannot, otherwise the topology page moves to Cytoscape and three.js leaves package.json; the measurement and the verdict are recorded in this issue's evidence."
+why: "The owner's order of 2026-11-07 13:30Z asks for /ui, /cockpit and the site to be reintegrated on one kit: max reuse, Flowbite Pro best practices, one library per job, everything derived, tested, deployed and linked (intent one-kit-on-every-surface). Four Cytoscape integrations carry four stylings, four theme observers and four keyboard handlings, and two graphs are drawn twice."
+current_state: "Measured on master on 2026-11-07: Cytoscape 3.33.1 (package.json) in share/cockpit/graph.js (1310 lines), share/cockpit/trains.js (1259 lines), share/ui/ui.js (window.cytoscape at lines 572 and 838 of 1150) and site/graph.js (755 lines); PR dependencies on /ui/prs and /cockpit/trains; milestone dependencies on /ui/roadmap, Cytoscape on /roadmap/ and Mermaid on /plan/ and /dag/; mesh topology on /ui/mesh (Cytoscape) and /cockpit/graphs/topology (three.js 0.185.1, share/cockpit/topology.js)."
+desired_state: "share/design/js/graph is the one Cytoscape integration; each graph kind has one view; the three.js verdict is recorded with its measurement."
+scope:
+  - "share/design/js/graph"
+  - "share/cockpit/graph.js"
+  - "share/cockpit/trains.js"
+  - "share/cockpit/topology.js"
+  - "share/ui/ui.js"
+  - "site/graph.js"
+  - ".ai/repo/project/issues/I4541.yaml"
+non_scope:
+  - "New graph kinds"
+  - "The chart module (I4542)"
+depends_on:
+  - "I4535"
+  - "I4536"
+acceptance_criteria:
+  - "window.cytoscape is constructed only in share/design/js/graph; grep finds no other call"
+  - "The interaction probe drives keyboard navigation, theme switch and the details drawer on every graph page of the three surfaces"
+  - "The PR dependency graph and the milestone dependency graph each render from one module and one data source"
+  - "This issue's evidence records the topology measurement and the three.js verdict"
+  - "The one graph module draws the bounded neighbourhood of I4494 (no page hands the browser more nodes than a stated bound, READY in milestone a-screen-is-fast-bounded-and-says-why); whichever lands second builds on the other, recorded in this issue's evidence"
+  - "A milestone dependency diagram that moves from Mermaid to Cytoscape on /plan/ or /dag/ keeps its ADR 0152 addresses (#diagram-<name> and #diagram-<name>:<node>) or scripts/ci/link-check fails every link that used them; this issue's evidence says which"
+  - "The work of I2656 (the diagram viewer serves the Cockpit and /ui, READY) is absorbed here or its issue depends on this one, recorded in this issue's evidence"
+validation:
+  - "scripts/interaction-probe"
+  - "node scripts/ui audit"
+  - "majordomus plan validate"
+evidence_required:
+  - "one_graph_module_probe"
+  - "threejs_topology_measurement"
+created_at: 2026-11-07
+updated_at: 2026-11-07
