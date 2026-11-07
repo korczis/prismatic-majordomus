@@ -80792,6 +80792,64 @@
         }
       },
       {
+        "id": "majordomus://issue/I4553",
+        "kind": "issue",
+        "label": "I4553",
+        "summary": "A review request addressed to a session answers the route that wakes it, and the answer wakes the requester the same way",
+        "route": "/cockpit/objects/issue/i4553",
+        "source": ".ai/repo/project/issues/I4553.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A request naming a session whose board row carries a provider and a socket answers a provider-socket route naming that socket; one whose row has none answers unavailable with the reason",
+            "The answer to that request answers the requester's route the same way",
+            "A journal written before the change, whose requests name no session, reads unchanged",
+            "share/providers.yaml declares messaging for every provider, socket only where a citation shows it",
+            "Majordomus sends nothing to a socket and reads no messaging token: no handler opens a Unix stream",
+            "Two live sessions exchange one request and its answer by the routes, each woken once and neither reading mesh state in a loop, recorded as manual evidence naming both sessions and the review key"
+          ],
+          "created_at": "2026-11-07",
+          "depends_on": [
+            "I4327"
+          ],
+          "evidence_required": [
+            "review_route_unit_tests",
+            "a_live_exchange_by_route"
+          ],
+          "milestone": "the-mesh-works-out-of-the-box",
+          "non_scope": [
+            "A message bus, an envelope, an inbox or a delivery state of Majordomus's own: the journal's MeshEvent is the envelope (project.no-new-nouns, project.mesh-cooperation-is-authenticated)",
+            "Majordomus connecting to a provider socket, or reading a provider's messaging token",
+            "A Unix socket or a listener of Majordomus's own (ADR 0003)",
+            "Remote transports, QUIC or transport encryption (ADR 0067, ADR 0032, I3189)",
+            "Who may answer a request (I4327) and when it lapses (I3608)"
+          ],
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/mesh/journal.rs",
+            "apps/majordomus-cli/src/mesh/cooperation.rs",
+            "apps/majordomus-cli/src/mesh/state.rs",
+            "apps/majordomus-cli/src/peers.rs",
+            "apps/majordomus-cli/src/capability/builtin/mesh.rs",
+            "apps/majordomus-cli/tests/reasoning_mesh.rs",
+            "share/providers.yaml",
+            "docs/MESH.md",
+            "scripts/lib/advisors/mesh-review.mjs",
+            ".ai/repo/project/issues/I4553.yaml"
+          ],
+          "serves": [],
+          "slug": "a-review-request-wakes-the-session-it-names",
+          "updated_at": "2026-11-07",
+          "validation": [
+            "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --lib mesh::cooperation::",
+            "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --lib mesh::journal::",
+            "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --test reasoning_mesh",
+            "majordomus generate --check"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "label": "a-brief-is-reconciled-not-transcribed",
@@ -149504,6 +149562,21 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I4553",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4553",
+        "target": "majordomus://issue/I4327",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I4553",
+        "target": "majordomus://milestone/the-mesh-works-out-of-the-box",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -162160,8 +162233,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4428,
-      "edges": 10054,
+      "nodes": 4429,
+      "edges": 10057,
       "acyclic": false,
       "truncated": false
     }

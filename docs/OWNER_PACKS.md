@@ -132,7 +132,7 @@ plan.transition answer the first id would add a dependency on I4000 and waits fo
 
 ## The packs of 2026-11-07, mapped onto master
 
-Two packs arrived on 2026-11-07 and were measured against master on that day. Most of what
+Three packs arrived on 2026-11-07 and were measured against master on that day. Most of what
 they ask for is already planned by records written from earlier briefs. Those asks are folded
 into the records that carry them, and only the gaps became new issues.
 
@@ -192,6 +192,27 @@ Not carried: a Gemini adapter, which the intent `a-provider-carries-the-contract
 defers until I3303 settles the adapter shape, and PostToolUse and Subagent hooks, for which no
 use is declared.
 
+### `campaigns/majordomus-mesh-fabric-pack-20261107`
+
+The pack's snapshot is of 2026-09-11, and master's mesh has moved since: the journal, its
+claims, handovers and review requests, and the peer board stamped with each worker's provider
+address. Its first milestone, two live AI peers exchanging a request and an answer without
+polling a board, is partly true: a review request is already a signed, correlated request and
+answer, and the board already records each provider's socket, but nothing wakes the
+addressee.
+
+| phase | carried as | folded into or delivered by | not carried |
+|---|---|---|---|
+| 01 discovery and owners | none | the mesh modules and `peers.rs` are the single owners (ADR 0067) | |
+| 02 typed envelope | none | `MeshEvent` is the envelope: origin-signed, sequenced, stamped, bounded; a deadline is I3608 | a second envelope (project.no-new-nouns, the mesh cooperation rule) |
+| 03 local direct routing | I4553: a review request addressed to a session answers the route that wakes it | I4327 (who may answer) comes first | a listener or socket of Majordomus's own (ADR 0003) |
+| 04 durable delivery | none | the journal: synced appends, idempotent apply, replay by cursor; I3174, I3444, I3608 | per-message acknowledgement, retry and dead letters |
+| 05 runtime adapters | I4553: a `messaging` offer in `share/providers.yaml` | the provider matrix and capture adapters | |
+| 06 remote QUIC | none | | QUIC and transport encryption: ADR 0067 point 4 and ADR 0032 keep the mesh on the crate's HTTP client, and I3189 leaves the choice to the owner |
+| 07 adaptive routing | none | link path choice is I3187 and I3772 | routing of messages, which nothing needs yet |
+| 08 surfaces and governance | none | delivered by the capability registry and `majordomus generate` (ADR 0004) | |
+| 09 hardening and delivery | none | after the slices; `tests/mesh_cooperation.rs` and the mesh lab are the base | |
+
 ### What the owner must decide
 
 - The milestone `a-prompt-reaches-the-work-it-serves` depends on three milestones that are not
@@ -199,6 +220,9 @@ use is declared.
   none of them depends on an issue. Taking them now needs that dependency recorded again.
 - ADR 0191 is proposed. I3252, which materialises a checked draft, must not land before the
   owner accepts it.
+- The Mesh Fabric pack asks for a QUIC transport with encryption between machines. The
+  mesh keeps to the crate's HTTP client with no TLS (ADR 0067, ADR 0032), and I3189 records
+  the transport choice as the owner's. Nothing plans it until the owner decides.
 
 ## What was not planned, and why
 
@@ -218,6 +242,7 @@ against. These are recorded so that nobody plans them again by accident.
 | every recipe generated, shell removed at once | the shell half is what the installer ships and what the hooks run | an ordered migration with counts that cannot rise (I3155, I4488, I4492) |
 | peer scheduling and provider-side enforcement of a profile | the tool starts no worker and invokes no model (ADR 0032, ADR 0044) | one refusal at the capability executor (I4506) |
 | every mesh command offered on a node's inspector | one cooperation action, under a resolved identity (I3139, I3192) | nothing beyond those |
+| a message bus with its own envelope, inbox and delivery states | the journal's signed event is the envelope, and the tool gains no new nouns (project.no-new-nouns) | a review request that names its session and the provider's own route (I4553) |
 
 ## Starting
 

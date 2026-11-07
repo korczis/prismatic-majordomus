@@ -1,0 +1,80 @@
+{
+  "name": "Majordomus Mesh Fabric",
+  "version": "1.0.0-prompt-pack",
+  "basis": "historical archive dated 2026-09-11; MUST revalidate HEAD",
+  "master": "MASTER-PROMPT.md",
+  "execution_contract": "EXECUTION-CONTRACT.md",
+  "strategy": "sequential, phase-gated, minimize parallel overlapping edits",
+  "phases": [
+    {
+      "id": "MMF-01",
+      "file": "prompts/01-01-discovery-and-canonical-owners.md",
+      "depends_on": [],
+      "required_evidence": "Evidence: current SHA, paths, exact commands, ownership matrix, collision audit and regression baseline. Reject phase if it merely renames a proposed bus without identifying canonical owner."
+    },
+    {
+      "id": "MMF-02",
+      "file": "prompts/02-02-protocol-schema-and-governance.md",
+      "depends_on": [
+        "MMF-01"
+      ],
+      "required_evidence": "Evidence: generated schema and cross-surface contract tests; bad input tests; no duplicate protocol definitions. Gate on backwards compatibility or explicit migration."
+    },
+    {
+      "id": "MMF-03",
+      "file": "prompts/03-03-local-direct-routing.md",
+      "depends_on": [
+        "MMF-02"
+      ],
+      "required_evidence": "Evidence: runnable two-peer demo script and captured real trace, p50/p95 local baseline, tool authorization test, no board polling as messaging. If AI unsolicited ingress unsupported, explicit alternative supported orchestration route with honest capability status."
+    },
+    {
+      "id": "MMF-04",
+      "file": "prompts/04-04-durable-delivery-recovery.md",
+      "depends_on": [
+        "MMF-03"
+      ],
+      "required_evidence": "Evidence: fault matrix with passing repeated runs, restart recovery, stable DB migrations, replay trace, disk/queue limits and no lost accepted durable messages under specified fault model."
+    },
+    {
+      "id": "MMF-05",
+      "file": "prompts/05-05-agent-runtime-adapters.md",
+      "depends_on": [
+        "MMF-04"
+      ],
+      "required_evidence": "Evidence: live provider-backed message/result recorded with runtime versions, correlation, provenance and actual tool invocation; negative receive-capability test; zero hardcoded provider routing."
+    },
+    {
+      "id": "MMF-06",
+      "file": "prompts/06-06-remote-quic-discovery-security.md",
+      "depends_on": [
+        "MMF-05"
+      ],
+      "required_evidence": "Evidence: two-host/container-network test, UDP-blocked fallback trace, unauthorized peer denial, cert rollover test and no exposed sensitive metadata in discovery."
+    },
+    {
+      "id": "MMF-07",
+      "file": "prompts/07-07-adaptive-routing-observability.md",
+      "depends_on": [
+        "MMF-06"
+      ],
+      "required_evidence": "Evidence: baseline/after results, route-explain command/endpoint, failure switching tests, telemetry cardinality/privacy budget and fallback rollback test."
+    },
+    {
+      "id": "MMF-08",
+      "file": "prompts/08-08-surfaces-docs-governance.md",
+      "depends_on": [
+        "MMF-07"
+      ],
+      "required_evidence": "Evidence: cross-surface identity consistency suite, generator diff clean, real Cockpit interactions/screenshots if available, docs deploy verification where authorized, governance gate demonstrates deliberate violation detection."
+    },
+    {
+      "id": "MMF-09",
+      "file": "prompts/09-09-rollout-hardening-delivery.md",
+      "depends_on": [
+        "MMF-08"
+      ],
+      "required_evidence": "Evidence: clean checkout smoke test, test matrix, threat-model decisions, measured perf budgets, exact release/merge refs, master SHA and demonstrated rollback. No claims of deployed unless verified."
+    }
+  ]
+}

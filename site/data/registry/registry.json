@@ -6,23 +6,23 @@
     "version": "1.0.0"
   },
   "registry": {
-    "fingerprint": "4ba94265ac36863c3f4822c694392ba269154e257d5bc44b4d927471c107461e",
+    "fingerprint": "3b127093f5fd00fbced271f5b148f3525716bcc40a4bdfcf38e57bc995c38e2b",
     "summary": {
-      "total": 3957,
+      "total": 3958,
       "builtin": 231,
-      "declarative": 3726,
+      "declarative": 3727,
       "by_kind": {
         "command": 41,
         "query": 190,
-        "resource": 3726
+        "resource": 3727
       },
       "by_stability": {
         "behaviorally_verified": 153,
         "experimental": 68,
-        "implemented": 3736
+        "implemented": 3737
       },
       "mcp_tools": 215,
-      "mcp_resources": 3783,
+      "mcp_resources": 3784,
       "http_routes": 219,
       "cli_commands": 128,
       "modules": 96,
@@ -97172,7 +97172,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 1229,
+        "capabilities": 1230,
         "capability_ids": []
       },
       {
@@ -97878,7 +97878,7 @@
     ]
   },
   "index": {
-    "fingerprint": "17549ec27c78c6408ae9627dd8108378fe95870e87cad2cc69b7a83424bcbd0c",
+    "fingerprint": "ee6cc1b8f05863247b948bab7d4edb309251b6656768d2013df119f81bc1cad6",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -97918,7 +97918,7 @@
       "gap": 5,
       "implementation": 54,
       "intent": 45,
-      "issue": 1229,
+      "issue": 1230,
       "knowledge": 186,
       "mesh-declaration": 1,
       "milestone": 117,
@@ -105430,7 +105430,7 @@
         "title": "Working from the owner's packs",
         "path": "docs/OWNER_PACKS.md",
         "source_class": "document",
-        "bytes": 20486
+        "bytes": 22917
       },
       {
         "uri": "majordomus://document/docs/PAGES_STATUS.md",
@@ -105475,7 +105475,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 132539
+        "bytes": 132546
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -122970,6 +122970,17 @@
         "bytes": 2899
       },
       {
+        "uri": "majordomus://issue/I4553",
+        "kind": "issue",
+        "identity": "I4553",
+        "title": "A review request addressed to a session answers the route that wakes it, and the answer wakes the requester the same way",
+        "description": "ReviewRequestInput and EventBody::ReviewRequested (apps/majordomus-cli/src/mesh/journal.rs) gain an optional `session` addressee, read with serde(default) so that a runtime written before the change reads a request without it, as it reads one without a body. The Written answer of mesh.review.request, and of mesh.review.answer for the requester, carries a `route` resolved from the board row's PeerAddress (apps/majordomus-cli/src/peers.rs): `{via: provider-socket, to: uds:<socket>}` when the row names a provider and a socket, `{unavailable: <why>}` otherwise. The requesting worker wakes the addressee with its own provider's messaging tool, carrying the review key; the addressee reads the request once by that key and answers it with mesh.review.answer, whose route wakes the requester, who reads the answer once. Majordomus sends nothing to the socket and never reads the provider's messaging token (peers.rs: the address is where to knock, not the key). `share/providers.yaml` gains a `messaging` cell in its `offers` block: `socket` for claude-code, with its citation, and `none` for every other provider. Optionally, scripts/lib/advisors/mesh-review.mjs follows the existing /events stream for its requester instead of reading mesh state every two seconds.",
+        "path": ".ai/repo/project/issues/I4553.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 5363
+      },
+      {
         "uri": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "identity": "a-brief-is-reconciled-not-transcribed",
@@ -138925,7 +138936,7 @@
       "identity": [
         "id"
       ],
-      "objects": 1229
+      "objects": 1230
     },
     {
       "name": "knowledge",
