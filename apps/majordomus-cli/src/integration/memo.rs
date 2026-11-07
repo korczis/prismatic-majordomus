@@ -476,16 +476,26 @@ mod tests {
         assert!(out.status.success(), "{out:?}");
         let kept = String::from_utf8_lossy(&out.stdout).trim().to_string();
         git(r, &["update-ref", "refs/majordomus/prs/3", &kept]);
-        let walk = Command::new("git")
-            .env_remove("GIT_DIR")
-            .arg("-C")
-            .arg(r)
-            .args(["rev-list", &kept])
-            .output()
-            .unwrap();
+        let run = |args: &[&str]| {
+            Command::new("git")
+                .env_remove("GIT_DIR")
+                .arg("-C")
+                .arg(r)
+                .args(args)
+                .output()
+                .unwrap()
+        };
         assert!(
-            !walk.status.success(),
+            !run(&["rev-list", &kept]).status.success(),
             "the precondition: git cannot walk {kept}"
+        );
+        // nothing git writes afterwards can supply the parent: a commit-graph and a gc, which
+        // may refuse the repository, leave the tip as unwalkable as before
+        run(&["commit-graph", "write", "--reachable"]);
+        run(&["gc", "-q"]);
+        assert!(
+            !run(&["rev-list", &kept]).status.success(),
+            "the precondition survives a commit-graph and a gc: git cannot walk {kept}"
         );
         let walked = memo.containing(r, &heads[..2], all);
         assert!(walked.is_empty(), "{walked:?}");
