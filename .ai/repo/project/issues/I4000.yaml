@@ -27,4 +27,18 @@ validation:
 evidence_required:
   - "case_4000_a_repeated_start_is_one_execution"
 created_at: 2026-10-23
-updated_at: 2026-10-23
+updated_at: 2026-11-07T16:45:08Z
+started_at: 2026-11-07T16:32:23Z
+started_event: sha256:36244c9efe8378e37135883d4b1fc6eff202d86f7ea7343331d5e2a768379490
+verified_at: 2026-11-07T16:43:27Z
+verified_event: sha256:81f5e735981e0eb873f618fa408d44c5fcfae390734c3d8c209abcdb74a0fab3
+completed_at: 2026-11-07T16:45:08Z
+completed_event: sha256:9e7a0589fc2e4337780c9611774e671d6ef0c1dc3764d0be71001be6f05808a8
+evidence:
+  - covers: "case_4000_a_repeated_start_is_one_execution"
+    type: test
+    command: "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh --no-skips 4000_a_repeated_start_is_one_execution && cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib execution::store"
+    result: "delivered by 46e59032d48 on master (via #2522): case 4000 ok, 1 passed with no skips; execution::store 23 passed, among them the five idempotency-key tests (two_starts_sent_at_once_with_one_key_record_one_execution, a_key_sent_again_with_another_input_is_refused_and_names_what_it_started, a_key_is_scoped_to_its_repository_and_capability_and_absent_keys_never_match, a_key_is_held_as_long_as_its_execution_and_freed_when_it_is_forgotten, a_key_is_looked_up_without_creating_and_forgotten_with_its_execution) (lundra, debug build of master d7fd9a36170)"
+    artifact: "test/cases/4000_a_repeated_start_is_one_execution.sh"
+    commit: d7fd9a3617024a7390ac36c1888d6fcee63b600e
+    recorded_at: 2026-11-07T16:42:04Z

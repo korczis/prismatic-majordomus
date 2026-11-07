@@ -71207,6 +71207,8 @@
         "route": "/cockpit/objects/issue/i4000",
         "source": ".ai/repo/project/issues/I4000.yaml",
         "facts": {
+          "completed_at": "2026-11-07T16:45:08Z",
+          "completed_event": "sha256:9e7a0589fc2e4337780c9611774e671d6ef0c1dc3764d0be71001be6f05808a8",
           "created_at": "2026-10-23",
           "current_state": "Built on #2522: executions.start takes an idempotency key, and a repeated start with the same key answers the same execution (case 4000).",
           "desired_state": "The acceptance criteria below hold and case 4000 proves them.",
@@ -71229,10 +71231,14 @@
             "a-session-proceeds-through-the-mesh#an-implement-request-runs-once"
           ],
           "slug": "executions-start-takes-an-idempotency-key",
-          "updated_at": "2026-10-23",
+          "started_at": "2026-11-07T16:32:23Z",
+          "started_event": "sha256:36244c9efe8378e37135883d4b1fc6eff202d86f7ea7343331d5e2a768379490",
+          "updated_at": "2026-11-07T16:45:08Z",
           "validation": [
             "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 4000_a_repeated_start_is_one_execution"
           ],
+          "verified_at": "2026-11-07T16:43:27Z",
+          "verified_event": "sha256:81f5e735981e0eb873f618fa408d44c5fcfae390734c3d8c209abcdb74a0fab3",
           "why": "A double click or a retried client starts two executions of the same capability today; nothing in ExecutionStore::create recognises a repeat."
         }
       },
