@@ -454,6 +454,21 @@ jobs:
           path: target/web/cockpit-snapshot
           if-no-files-found: error
           retention-days: 1
+      # The executable this job built at this commit, for the deploy job's site build: it reads the
+      # issues' delivery at the commit the site is built from (I3769), and the deploy job builds
+      # from artifacts and keeps no executable of its own. Without it the build reads the committed
+      # projection and says so (#2959); with it the page names its own commit.
+      - name: the executable, for the deploy's site build
+        run: |
+          mkdir -p target/pages-executable
+          cp apps/majordomus-cli/target/debug/majordomus target/pages-executable/majordomus
+          printf '{"commit":"%s"}\n' "$GITHUB_SHA" > target/pages-executable/majordomus-cli.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: pages-executable
+          path: target/pages-executable
+          if-no-files-found: error
+          retention-days: 1
 
   # The bound is over two different kinds of second, so it is written twice, and the two
   # numbers are not independent.
@@ -645,11 +660,26 @@ jobs:
       # since the last deploy is the record the step above composed, adopted when it names this commit.
       # The bound follows the `build` row of .ai/repo/ci/pages.yaml (budget.bound.percent of it):
       # 15 s on 39228746039 over the English site, 200-314 s with the Czech copy (ADR 0218).
+      # The executable the ui-snapshot job built at this commit (above); a missing one is not a
+      # failed deploy, the build then reads the committed delivery projection and says so.
+      - name: the executable the run built
+        timeout-minutes: 1
+        continue-on-error: true
+        uses: actions/download-artifact@v4
+        with:
+          name: pages-executable
+          path: ${{ runner.temp }}/pages-executable
       - name: build
         timeout-minutes: 11
         env:
           MJ_SITE_SINCE_DEPLOY_RECORD: ${{ steps.since.outputs.record }}
-        run: scripts/pages build
+          MJ_PAGES_EXECUTABLE: ${{ runner.temp }}/pages-executable/majordomus
+        run: |
+          if [ -f "$MJ_PAGES_EXECUTABLE" ]; then
+            chmod +x "$MJ_PAGES_EXECUTABLE"
+            export MAJORDOMUS_BIN="$MJ_PAGES_EXECUTABLE" MAJORDOMUS_BIN_COMMIT="$GITHUB_SHA" MAJORDOMUS_NO_BUILD=1
+          fi
+          scripts/pages build
 
       # every static check over the output; the browser probe stays in validate.yml. The bound
       # follows the `check` row: 169 s on 39228746039 over the English site alone; with the
