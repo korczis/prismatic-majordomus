@@ -6,28 +6,28 @@
     "version": "1.0.0"
   },
   "registry": {
-    "fingerprint": "99df951f5533a1b2775a224eda81907e0c210ac22cdfa46ba0642d4fdeda5c3e",
+    "fingerprint": "bdd04c583bd90fc5c82f45d80ab8982fadecffc10fd5a944eef05ab640bb994d",
     "summary": {
-      "total": 3951,
-      "builtin": 231,
-      "declarative": 3720,
+      "total": 3953,
+      "builtin": 232,
+      "declarative": 3721,
       "by_kind": {
-        "command": 41,
+        "command": 42,
         "query": 190,
-        "resource": 3720
+        "resource": 3721
       },
       "by_stability": {
-        "behaviorally_verified": 153,
+        "behaviorally_verified": 154,
         "experimental": 68,
-        "implemented": 3730
+        "implemented": 3731
       },
       "mcp_tools": 215,
-      "mcp_resources": 3777,
+      "mcp_resources": 3778,
       "http_routes": 219,
-      "cli_commands": 128,
-      "modules": 96,
+      "cli_commands": 129,
+      "modules": 97,
       "benchmark_required": 186,
-      "benchmark_waived": 45,
+      "benchmark_waived": 46,
       "cached": 55
     },
     "builtin": [
@@ -86131,6 +86131,309 @@
         "source_path": "apps/majordomus-cli/src/capability/builtin/rules.rs"
       },
       {
+        "id": "self.update",
+        "module": "self",
+        "kind": "command",
+        "title": "Report or apply an upgrade to the stable release",
+        "description": "Reads the release metadata the installation's share/distribution.yaml names (releases/latest.json, or releases/<tag>.json for a named version; MAJORDOMUS_RELEASE_BASE_URL overrides the base as it does for install.sh) and judges it against the running version: an upgrade applies only to a newer, stable, listed release; a downgrade, a pre-release and an unlisted version are refused with the reason. Without --apply it writes nothing. With --apply it fetches install.sh from the same base and runs it with --version <tag>, --prefix and --install-dir of this installation, then reads the installed version back from the launcher. Exit 0 nothing to do or done, 10 refused or the installer failed, 12 not answered.",
+        "input": {
+          "name": "UpdateInput",
+          "schema": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "apply": {
+                "type": "boolean",
+                "description": "Install the target. Without it the command reports and writes nothing.",
+                "default": false
+              },
+              "version": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "The release to move to (`v1.0.0` or `1.0.0`); the stable pointer when absent."
+              },
+              "base_url": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "The release base to read the metadata and the installer from; when absent,\n`MAJORDOMUS_RELEASE_BASE_URL`, else the installer base of share/distribution.yaml."
+              },
+              "timeout_seconds": {
+                "type": [
+                  "integer",
+                  "null"
+                ],
+                "format": "uint64",
+                "minimum": 0,
+                "description": "The bound on each metadata read, in seconds; twenty when absent."
+              }
+            },
+            "description": "The input of `self.update`: report (the default), or apply; the stable release unless a\nversion is named.\n\n```\nuse majordomus_cli::capability::builtin::self_update::UpdateInput;\nlet input: UpdateInput = serde_json::from_str(r#\"{\"apply\":true,\"version\":\"v1.0.0\"}\"#).unwrap();\nassert!(input.apply && input.version.as_deref() == Some(\"v1.0.0\"));\nassert!(serde_json::from_str::<UpdateInput>(r#\"{\"prefix\":\"/tmp\"}\"#).is_err(),\n    \"the places are the installation's own, never given\");\n```",
+            "title": "UpdateInput"
+          }
+        },
+        "output": {
+          "name": "UpdateReport",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "running": {
+                "type": "string",
+                "description": "The version this installation runs: its tree's `share/version.txt`, or the version\nthis executable was built as when it is not an installed release."
+              },
+              "stable": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "The version the stable pointer (`releases/latest.json`) names, when it was read."
+              },
+              "target": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "The version asked about: the one named, or the stable one."
+              },
+              "metadata_url": {
+                "type": "string",
+                "description": "Where the metadata was read."
+              },
+              "decision": {
+                "$ref": "#/$defs/Decision",
+                "description": "The judgement: upgrade, current or refused, with its reason."
+              },
+              "applies": {
+                "type": "boolean",
+                "description": "Whether `--apply` would install something."
+              },
+              "installation": {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/Installation"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "The installation this executable belongs to, when it is one."
+              },
+              "not_installed": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "Why this executable is not an installation `--apply` can update, when it is not."
+              },
+              "applied": {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/Applied"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "What running the installer came to, under `--apply`."
+              },
+              "exit_code": {
+                "type": "integer",
+                "format": "int32",
+                "description": "The exit status the command line reports: 0 nothing to do, an upgrade reported or\ninstalled and read back; 10 refused, or an installer that failed; 12 not answered\n(the metadata could not be read, or this is no installation to apply to)."
+              }
+            },
+            "required": [
+              "running",
+              "metadata_url",
+              "decision",
+              "applies",
+              "exit_code"
+            ],
+            "description": "What `self.update` found and did: the running and the stable version, where the metadata\nwas read, the decision, whether `--apply` would install anything, the installation this\nexecutable belongs to (or why it is none), the installer run under `--apply`, and the\nexit status the command line reports.\n\n```\nuse majordomus_cli::capability::builtin::self_update::UpdateReport;\nlet r: UpdateReport = serde_json::from_str(r#\"{\n  \"running\":\"0.9.0\",\"stable\":\"1.0.0\",\"target\":\"1.0.0\",\n  \"metadata_url\":\"https://majordomus.dev/releases/latest.json\",\n  \"decision\":{\"verdict\":\"upgrade\",\"reason\":\"v1.0.0 is newer\"},\n  \"applies\":true,\"exit_code\":0}\"#).unwrap();\nassert!(r.applies && r.applied.is_none(), \"a check applies nothing\");\nassert_eq!(r.exit_code, 0);\n```",
+            "title": "UpdateReport",
+            "$defs": {
+              "Decision": {
+                "type": "object",
+                "properties": {
+                  "verdict": {
+                    "$ref": "#/$defs/Verdict",
+                    "description": "The verdict."
+                  },
+                  "refusal": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/Refusal"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "Why a target is refused; absent unless the verdict is `refused`."
+                  },
+                  "reason": {
+                    "type": "string",
+                    "description": "The reason, in one sentence."
+                  }
+                },
+                "required": [
+                  "verdict",
+                  "reason"
+                ],
+                "description": "What `decide` concluded, with the sentence a person reads: the verdict, the refusal\nwhen there is one, and the reason, so that a report and a script read the same answer.\n\n```\nuse majordomus_cli::release::self_update::{Decision, Refusal, Verdict};\nlet d: Decision = serde_json::from_str(\n    r#\"{\"verdict\":\"refused\",\"refusal\":\"downgrade\",\"reason\":\"v0.9.0 is older\"}\"#).unwrap();\nassert_eq!((d.verdict, d.refusal), (Verdict::Refused, Some(Refusal::Downgrade)));\n// an upgrade carries no refusal, and none is serialized\nlet up = Decision { verdict: Verdict::Upgrade, refusal: None, reason: \"newer\".into() };\nassert!(!serde_json::to_string(&up).unwrap().contains(\"refusal\"));\n```"
+              },
+              "Verdict": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "upgrade",
+                    "description": "The target is newer than the running version, stable and listed: `--apply` installs it."
+                  },
+                  {
+                    "type": "string",
+                    "const": "current",
+                    "description": "The running version is the target: nothing applies."
+                  },
+                  {
+                    "type": "string",
+                    "const": "refused",
+                    "description": "The target is refused, for the reason beside it."
+                  },
+                  {
+                    "type": "string",
+                    "const": "unanswered",
+                    "description": "The question could not be answered: the metadata or the installer could not be read.\nNot a refusal and never a yes; nothing is installed."
+                  }
+                ],
+                "description": "The verdict of comparing the running version with a target.\n\n```\nuse majordomus_cli::release::self_update::Verdict;\nassert_eq!(serde_json::to_value(Verdict::Upgrade).unwrap(), \"upgrade\");\nassert_eq!(serde_json::to_value(Verdict::Current).unwrap(), \"current\");\nassert_eq!(serde_json::to_value(Verdict::Refused).unwrap(), \"refused\");\nassert_eq!(serde_json::to_value(Verdict::Unanswered).unwrap(), \"unanswered\");\n```"
+              },
+              "Refusal": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "downgrade",
+                    "description": "The target is lower than the running version: going back is an operator's act through\n`install.sh --version`, never this command's (ADR 0161, forward only)."
+                  },
+                  {
+                    "type": "string",
+                    "const": "prerelease",
+                    "description": "The target is a pre-release: a node follows the stable channel only."
+                  },
+                  {
+                    "type": "string",
+                    "const": "unlisted",
+                    "description": "The published metadata lists no such release."
+                  }
+                ],
+                "description": "Why an upgrade does not apply, or why the version asked for is refused.\n\n```\nuse majordomus_cli::release::self_update::Refusal;\nassert_eq!(serde_json::to_value(Refusal::Downgrade).unwrap(), \"downgrade\");\nassert_eq!(serde_json::to_value(Refusal::Prerelease).unwrap(), \"prerelease\");\nassert_eq!(serde_json::to_value(Refusal::Unlisted).unwrap(), \"unlisted\");\n```"
+              },
+              "Installation": {
+                "type": "object",
+                "properties": {
+                  "prefix": {
+                    "type": "string",
+                    "description": "The installer's `--prefix`: the directory holding `versions/`."
+                  },
+                  "install_dir": {
+                    "type": "string",
+                    "description": "The installer's `--install-dir`: the directory holding the launchers."
+                  },
+                  "tree": {
+                    "type": "string",
+                    "description": "The version tree this executable runs from."
+                  },
+                  "version": {
+                    "type": "string",
+                    "description": "The version that tree states (`share/version.txt`)."
+                  }
+                },
+                "required": [
+                  "prefix",
+                  "install_dir",
+                  "tree",
+                  "version"
+                ],
+                "description": "Where an installation made by `install.sh` lives, found from the executable's own path.\n\nThe installer lays a release out as `<prefix>/versions/<version>/` holding `bin/`,\n`libexec/` and `share/`, and writes launchers into `<install dir>` that export\n`MAJORDOMUS_LAUNCHER` as their own path (`share/install/install.sh.in`, `write_launcher`).\n`apply` hands the installer exactly these places, so that an update lands where the\ninstallation already is and not at the installer's defaults.\n\n```\nuse majordomus_cli::release::self_update::Installation;\nlet at = Installation {\n    prefix: \"/home/me/.local/share/majordomus\".into(),\n    install_dir: \"/home/me/.local/bin\".into(),\n    tree: \"/home/me/.local/share/majordomus/versions/0.9.0\".into(),\n    version: \"0.9.0\".into(),\n};\nassert!(at.tree.starts_with(&at.prefix), \"a version tree lives under its prefix\");\nlet json = serde_json::to_value(&at).unwrap();\nassert_eq!(json[\"install_dir\"], \"/home/me/.local/bin\");\n```"
+              },
+              "Applied": {
+                "type": "object",
+                "properties": {
+                  "argv": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "The command that ran, as an argument vector (the installer's path first after `sh`)."
+                  },
+                  "status": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "format": "int32",
+                    "description": "The installer's exit status; absent when it was ended by a signal."
+                  },
+                  "output": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "The last lines the installer printed, stdout and stderr together."
+                  },
+                  "installed": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The version the launcher reports after the run (`majordomus version`), when it ran."
+                  }
+                },
+                "required": [
+                  "argv",
+                  "output"
+                ],
+                "description": "What running the installer came to: the argument vector that ran, its exit status, the\ntail of what it printed, and the version the launcher reports afterwards. An installer\nthat failed reads back nothing, whatever it printed.\n\n```\nuse majordomus_cli::release::self_update::Applied;\nlet a: Applied = serde_json::from_str(\n    r#\"{\"argv\":[\"sh\",\"install.sh\",\"--version\",\"v1.0.0\"],\"status\":10,\"output\":[\"digest mismatch\"]}\"#,\n).unwrap();\nassert_eq!(a.status, Some(10));\nassert!(a.installed.is_none(), \"a failed run installs nothing it can read back\");\n```"
+              }
+            }
+          }
+        },
+        "provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::self_update"
+        },
+        "exposure": {
+          "cli": {
+            "path": [
+              "self",
+              "update"
+            ]
+          }
+        },
+        "availability": "runtime",
+        "visibility": "developer",
+        "stability": "behaviorally_verified",
+        "tags": [
+          "distribution",
+          "release",
+          "install"
+        ],
+        "benchmark": {
+          "policy": "waived",
+          "reason": "external_dependency"
+        },
+        "cache": {
+          "policy": "disabled"
+        },
+        "execution": {
+          "effect": "process_state",
+          "cancellable": false,
+          "concurrency": "serial"
+        },
+        "source_path": "apps/majordomus-cli/src/capability/builtin/self_update.rs"
+      },
+      {
         "id": "served.forge",
         "module": "served",
         "kind": "command",
@@ -97672,6 +97975,23 @@
         "capability_ids": []
       },
       {
+        "id": "self",
+        "title": "Self-update",
+        "description": "An installation keeps itself at the published stable release through the one installer: the running version against the version the published metadata names, forward only and stable only, and an apply that re-runs install.sh with the installation's own prefix rather than a second implementation of download, verification and swap (ADR 0161).",
+        "stability": "behaviorally_verified",
+        "source": "builtin",
+        "capabilities": 1,
+        "capability_ids": [
+          "self.update"
+        ],
+        "source_path": "apps/majordomus-cli/src/capability/builtin/self_update.rs",
+        "rustdoc": {
+          "surface": "rustdoc",
+          "module": "majordomus_cli::capability::builtin::self_update",
+          "path": "majordomus_cli/capability/builtin/self_update/index.html"
+        }
+      },
+      {
         "id": "served",
         "title": "Served deployments",
         "description": "Whether a deployment serves the commit it was meant to: the build identity a site serves, read from outside the way a visitor reads it, judged by commit containment and recorded so that a later reader can re-judge it. Only `served` passes; a site that could not be reached, an identity that could not be read, a build from an uncommitted tree and a served commit this clone does not hold are each an unanswered question, never a yes. Observing reaches the network and is a command of the trusted command line; reading the recorded standing is a read on every surface.",
@@ -97785,7 +98105,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 697,
+        "capabilities": 698,
         "capability_ids": []
       },
       {
@@ -97878,7 +98198,7 @@
     ]
   },
   "index": {
-    "fingerprint": "8c343d8050dc0d470510985c455e609a7cc42df0510482af8657bbdc1e8cebb9",
+    "fingerprint": "9755fe738d826d75d969fb653864412d9739d30dd7ac1b3b6946924bbf082f3b",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -97932,7 +98252,7 @@
       "session": 95,
       "skill": 10,
       "taxonomy": 10,
-      "test": 697,
+      "test": 698,
       "use-case": 49,
       "workspace": 1
     },
@@ -105178,7 +105498,7 @@
         "title": "Distribution",
         "path": "docs/DISTRIBUTION.md",
         "source_class": "document",
-        "bytes": 40638
+        "bytes": 42054
       },
       {
         "uri": "majordomus://document/docs/DOCTRINE.md",
@@ -133785,6 +134105,14 @@
         "bytes": 13421
       },
       {
+        "uri": "majordomus://test/test/cases/2720_self_update_wraps_the_installer.sh",
+        "kind": "test",
+        "identity": "test/cases/2720_self_update_wraps_the_installer.sh",
+        "path": "test/cases/2720_self_update_wraps_the_installer.sh",
+        "source_class": "case",
+        "bytes": 6576
+      },
+      {
         "uri": "majordomus://test/test/cases/272_diagrams_are_drawn.sh",
         "kind": "test",
         "identity": "test/cases/272_diagrams_are_drawn.sh",
@@ -139021,7 +139349,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 697
+      "objects": 698
     },
     {
       "name": "use-case",
@@ -166218,6 +166546,274 @@
       {
         "path": [
           "majordomus",
+          "self"
+        ],
+        "route": "/docs/cli/self/",
+        "executable": false,
+        "usage": "majordomus self [OPTIONS] <COMMAND>",
+        "about": "This installation itself: report or apply an upgrade to the published stable release, through the one installer (ADR 0161)",
+        "args": [
+          {
+            "name": "repo",
+            "long": "repo",
+            "positional": false,
+            "help": "Start the search for the repository root here (default: the current directory)",
+            "value_name": "PATH",
+            "takes_value": true,
+            "required": false,
+            "global": true,
+            "possible_values": [],
+            "defaults": []
+          },
+          {
+            "name": "discovery",
+            "long": "discovery",
+            "positional": false,
+            "help": "How declarative files are enumerated",
+            "value_name": "DISCOVERY",
+            "takes_value": true,
+            "required": false,
+            "global": true,
+            "possible_values": [
+              {
+                "name": "vcs",
+                "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
+              },
+              {
+                "name": "filesystem",
+                "help": "A walk of the work tree with the same glob semantics; untracked files included"
+              }
+            ],
+            "defaults": [
+              "vcs"
+            ]
+          },
+          {
+            "name": "strict",
+            "long": "strict",
+            "positional": false,
+            "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+            "value_name": "STRICT",
+            "takes_value": false,
+            "required": false,
+            "global": true,
+            "possible_values": [],
+            "defaults": [
+              "false"
+            ]
+          },
+          {
+            "name": "share",
+            "long": "share",
+            "positional": false,
+            "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+            "value_name": "DIR",
+            "takes_value": true,
+            "required": false,
+            "global": true,
+            "possible_values": [],
+            "defaults": []
+          },
+          {
+            "name": "format",
+            "long": "format",
+            "positional": false,
+            "help": "Output shape",
+            "value_name": "FORMAT",
+            "takes_value": true,
+            "required": false,
+            "global": true,
+            "possible_values": [
+              {
+                "name": "text",
+                "help": "Lines for a person"
+              },
+              {
+                "name": "json",
+                "help": "One JSON document, deterministic"
+              }
+            ],
+            "defaults": [
+              "text"
+            ]
+          }
+        ],
+        "examples": [],
+        "subcommands": [
+          {
+            "path": [
+              "majordomus",
+              "self",
+              "update"
+            ],
+            "route": "/docs/cli/self/update/",
+            "executable": true,
+            "usage": "majordomus self update [OPTIONS]",
+            "about": "Report (--check, the default) or apply (--apply) an upgrade to the published stable release, through install.sh",
+            "args": [
+              {
+                "name": "check",
+                "long": "check",
+                "positional": false,
+                "help": "Report what applies and write nothing (the default)",
+                "value_name": "CHECK",
+                "takes_value": false,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": [
+                  "false"
+                ]
+              },
+              {
+                "name": "apply",
+                "long": "apply",
+                "positional": false,
+                "help": "Install the target by re-running the published install.sh with this installation's prefix",
+                "value_name": "APPLY",
+                "takes_value": false,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": [
+                  "false"
+                ]
+              },
+              {
+                "name": "base_url",
+                "long": "base-url",
+                "positional": false,
+                "help": "The release base to read from (default: MAJORDOMUS_RELEASE_BASE_URL, else the installer base of share/distribution.yaml)",
+                "value_name": "BASE_URL",
+                "takes_value": true,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "timeout",
+                "long": "timeout",
+                "positional": false,
+                "help": "Bound on each metadata read, in seconds (default 20)",
+                "value_name": "TIMEOUT",
+                "takes_value": true,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "repo",
+                "long": "repo",
+                "positional": false,
+                "help": "Start the search for the repository root here (default: the current directory)",
+                "value_name": "PATH",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "discovery",
+                "long": "discovery",
+                "positional": false,
+                "help": "How declarative files are enumerated",
+                "value_name": "DISCOVERY",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "vcs",
+                    "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
+                  },
+                  {
+                    "name": "filesystem",
+                    "help": "A walk of the work tree with the same glob semantics; untracked files included"
+                  }
+                ],
+                "defaults": [
+                  "vcs"
+                ]
+              },
+              {
+                "name": "strict",
+                "long": "strict",
+                "positional": false,
+                "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+                "value_name": "STRICT",
+                "takes_value": false,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": [
+                  "false"
+                ]
+              },
+              {
+                "name": "share",
+                "long": "share",
+                "positional": false,
+                "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+                "value_name": "DIR",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "format",
+                "long": "format",
+                "positional": false,
+                "help": "Output shape",
+                "value_name": "FORMAT",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "text",
+                    "help": "Lines for a person"
+                  },
+                  {
+                    "name": "json",
+                    "help": "One JSON document, deterministic"
+                  }
+                ],
+                "defaults": [
+                  "text"
+                ]
+              }
+            ],
+            "examples": [
+              {
+                "id": "self-update-unreachable",
+                "title": "A release base that cannot be reached answers nothing, and nothing is installed",
+                "description": "Reads the stable pointer under the release base and judges it against the running version, writing nothing. Nothing listens on the discard port, so the pointer is not read and the answer is exit 12, the unanswered question. Against the published site the same command reports `upgrade` (with --apply: installs through install.sh and reads the version back), `current`, or a refused downgrade, pre-release or unlisted version (10).",
+                "argv": [
+                  "self",
+                  "update",
+                  "--check",
+                  "--base-url",
+                  "https://127.0.0.1:9",
+                  "--timeout",
+                  "1"
+                ],
+                "command": "majordomus self update --check --base-url https://127.0.0.1:9 --timeout 1",
+                "setup": [],
+                "expectation": "exits 12"
+              }
+            ],
+            "subcommands": []
+          }
+        ]
+      },
+      {
+        "path": [
+          "majordomus",
           "deploy"
         ],
         "route": "/docs/cli/deploy/",
@@ -192917,6 +193513,14 @@
           "cases": 1
         },
         {
+          "subject": "self.update",
+          "module": "self",
+          "transport": "direct",
+          "state": "waived",
+          "cases": 0,
+          "reason": "external_dependency"
+        },
+        {
           "subject": "served.forge",
           "module": "served",
           "transport": "direct",
@@ -193558,10 +194162,10 @@
       ],
       "tallies": {
         "direct": {
-          "required": 231,
+          "required": 232,
           "covered": 186,
           "missing": 0,
-          "waived": 45,
+          "waived": 46,
           "inapplicable": 0
         },
         "http": {
@@ -193586,10 +194190,10 @@
           "inapplicable": 0
         },
         "total": {
-          "required": 679,
+          "required": 680,
           "covered": 565,
           "missing": 0,
-          "waived": 114,
+          "waived": 115,
           "inapplicable": 0
         }
       }

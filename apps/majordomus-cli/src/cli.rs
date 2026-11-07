@@ -101,6 +101,9 @@ pub enum Command {
     Evidence(EvidenceArgs),
     /// Whether a deployment serves the commit it was meant to: observe the build identity it serves, judged by commit containment, and read each deployment's recorded standing against a commit
     Served(ServedArgs),
+    /// This installation itself: report or apply an upgrade to the published stable release, through the one installer (ADR 0161)
+    #[command(name = "self")]
+    SelfUpdate(SelfArgs),
     /// The tree a deployment's provider receives, assembled outside the checkout from the deployment object at one commit: its build inputs, the provider's generated files, the buildpack line and the executable built at that commit
     Deploy(DeployArgs),
     /// Every rule against the proof there is for it: what each one names, whether it is in the tree, whether a runner drives it, whether anything ran, and whether what ran is older than what it is about
@@ -3587,6 +3590,70 @@ pub enum DriftGateArg {
 }
 
 #[derive(Debug, Args)]
+/// `majordomus self`: this installation itself, read from the executable's own tree and the
+/// launcher it runs through, never from the repository it is asked in.
+///
+/// ```
+/// use clap::Parser;
+/// use majordomus_cli::cli::{Cli, Command, SelfArgs, SelfCommand};
+/// let cli = Cli::try_parse_from(["majordomus", "self", "update", "--check"]).unwrap();
+/// let Command::SelfUpdate(args) = cli.command else { panic!("self") };
+/// let args: SelfArgs = args;   // the group's own arguments
+/// assert!(matches!(args.command, SelfCommand::Update { check: true, apply: false, .. }));
+/// let cli = Cli::try_parse_from(["majordomus", "self", "update", "--apply", "--version", "v1.0.0"]).unwrap();
+/// let Command::SelfUpdate(args) = cli.command else { panic!("self") };
+/// assert!(matches!(args.command, SelfCommand::Update { apply: true, version: Some(ref v), .. } if v == "v1.0.0"));
+/// assert!(Cli::try_parse_from(["majordomus", "self", "update", "--check", "--apply"]).is_err());
+/// ```
+pub struct SelfArgs {
+    #[command(flatten)]
+    /// Where and how the repository is read.
+    pub repo: RepoArgs,
+
+    #[command(subcommand)]
+    /// `update`.
+    pub command: SelfCommand,
+
+    #[arg(long, value_enum, default_value_t = OutputFormat::Text, global = true)]
+    /// Output shape
+    pub format: OutputFormat,
+}
+
+#[derive(Debug, Subcommand)]
+/// The subcommands of `majordomus self`: `update` is the command line of `self.update`, and
+/// a command line and nothing else, because applied it replaces the executable that answers.
+///
+/// ```
+/// use clap::Parser;
+/// use majordomus_cli::cli::{Cli, Command, SelfCommand};
+/// let cli = Cli::try_parse_from(["majordomus", "self", "update", "--base-url", "https://example.test"]).unwrap();
+/// let Command::SelfUpdate(args) = cli.command else { panic!("self") };
+/// let SelfCommand::Update { apply, base_url, .. } = args.command;
+/// assert!(!apply, "without --apply it only reports");
+/// assert_eq!(base_url.as_deref(), Some("https://example.test"));
+/// ```
+pub enum SelfCommand {
+    /// Report (--check, the default) or apply (--apply) an upgrade to the published stable release, through install.sh
+    Update {
+        /// Report what applies and write nothing (the default)
+        #[arg(long, conflicts_with = "apply")]
+        check: bool,
+        /// Install the target by re-running the published install.sh with this installation's prefix
+        #[arg(long)]
+        apply: bool,
+        /// The release to move to (v1.0.0 or 1.0.0; default: the stable pointer)
+        #[arg(long)]
+        version: Option<String>,
+        /// The release base to read from (default: MAJORDOMUS_RELEASE_BASE_URL, else the installer base of share/distribution.yaml)
+        #[arg(long)]
+        base_url: Option<String>,
+        /// Bound on each metadata read, in seconds (default 20)
+        #[arg(long)]
+        timeout: Option<u64>,
+    },
+}
+
+#[derive(Debug, Args)]
 /// `majordomus served`: what a deployment serves, observed from outside and judged against
 /// a commit. `ServedArgs` carries the repository the question is asked of, the subcommand
 /// and the output shape.
@@ -6668,6 +6735,17 @@ pub const EXAMPLES: &[CommandExamples] = &[
             argv: &["deploy", "slug", "--executable", "majordomus", "--out", "/nonexistent/slug"],
             setup: &[],
             expect: Expect::ExitCode(15),
+        }],
+    },
+    CommandExamples {
+        command: "self update",
+        examples: &[ExampleDoc {
+            id: "self-update-unreachable",
+            title: "A release base that cannot be reached answers nothing, and nothing is installed",
+            description: "Reads the stable pointer under the release base and judges it against the running version, writing nothing. Nothing listens on the discard port, so the pointer is not read and the answer is exit 12, the unanswered question. Against the published site the same command reports `upgrade` (with --apply: installs through install.sh and reads the version back), `current`, or a refused downgrade, pre-release or unlisted version (10).",
+            argv: &["self", "update", "--check", "--base-url", "https://127.0.0.1:9", "--timeout", "1"],
+            setup: &[],
+            expect: Expect::ExitCode(12),
         }],
     },
     CommandExamples {

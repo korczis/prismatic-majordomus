@@ -587,15 +587,28 @@ commit and target it came from.
 ## Self-update
 
 The owner decided on 2026-10-14 that a node of this repository's mesh follows the published
-release by itself (ADR 0161). Until I2720-I2722 land, the session that holds the release seat
-upgrades every enrolled node by hand once `releases/latest.json` names the new version, and
-reads each node's version back. What follows is the design those issues build.
+release by itself (ADR 0161). `majordomus self update` (I2720) is the command a person, or a
+node's follower, runs. Until a node follows by itself (I2721, I2722), the session that holds the
+release seat runs `majordomus self update --apply` on every enrolled node once
+`releases/latest.json` names the new version, and reads each node's version back. The rest of
+this section is the design those issues build.
 
 **One implementation of the risky part.** `majordomus self update` re-runs the published
 installer with `--version <tag>` and the installation's own prefix; it does not reimplement
 download, verification or swap. `--check` reports the running version, the version the stable
-pointer names and whether an upgrade applies; `--apply` installs it and reads the version back
-from the new launcher. Everything it resolves comes from what is already typed:
+pointer names and whether an upgrade applies, and writes nothing; `--apply` fetches `install.sh`
+from the same base and runs it as `sh install.sh --version <tag> --prefix <prefix> --install-dir
+<dir>`, the prefix and the directory being this installation's own (found from the executable's
+`<prefix>/versions/<version>/` tree and the `MAJORDOMUS_LAUNCHER` its launcher exports), then
+reads the version back from the launcher. `--version <tag>` names another target. Exit 0 when
+nothing applies, an upgrade is reported or it was installed and read back; 10 for a refusal or an
+installer that failed; 12 when the metadata could not be read or the executable is not an
+installation (a build in a checkout is updated by building it). `MAJORDOMUS_RELEASE_BASE_URL` (or `--base-url`)
+moves the base exactly as it does for `install.sh`, and plain http needs
+`MAJORDOMUS_INSECURE_BASE_URL=1`, as there. It is a command of the command line only: applied, it
+replaces the executable that answers, so no MCP client or browser is handed it. Like every
+command of the executable it runs inside a repository. The decision and the installation's
+places are `apps/majordomus-cli/src/release/self_update.rs`; what it would resolve through:
 
 ```rust
 Model::load(share)          // this installation's own model, shipped in share/
@@ -633,9 +646,11 @@ announcement: one HTTPS request for `releases/latest.json`, never in the path of
 `majordomus mesh peers` prints them and `mesh doctor` names a node more than one release
 behind (I2723). A release is rolled out when every enrolled, following node reports it.
 
-`test/cases/85_installer.sh` covers the risky part today, and `self update` resolves releases
-through the same records and the same stable pointer as the installer does, once it exists:
-`self update` is the design above and is not implemented yet.
+`test/cases/85_installer.sh` covers the risky part, and `test/cases/2720_self_update_wraps_the_installer.sh`
+covers `self update` against the same kind of served release: a check that writes nothing, an
+apply through the installer into the installation's own places, and the downgrade, the
+pre-release and the unlisted version each refused with nothing changed. Following by itself,
+activation and rollback are the design above and are not implemented yet (I2721-I2724).
 
 ## Package managers
 

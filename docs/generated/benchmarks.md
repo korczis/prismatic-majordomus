@@ -9,11 +9,11 @@ Every externally callable operation is a benchmark target, derived from the regi
 
 | scope | required | covered | missing | waived |
 |---|---|---|---|---|
-| direct | 231 | 186 | 0 | 45 |
+| direct | 232 | 186 | 0 | 46 |
 | http | 219 | 184 | 0 | 35 |
 | mcp | 215 | 181 | 0 | 34 |
 | system | 14 | 14 | 0 | 0 |
-| total | 679 | 565 | 0 | 114 |
+| total | 680 | 565 | 0 | 115 |
 
 ## Capabilities
 
@@ -223,6 +223,7 @@ Every externally callable operation is a benchmark target, derived from the regi
 | `rules.proves` | rules | query | — | covered | covered | covered | `suite` |
 | `rules.report` | rules | query | process, 8 entries, per checkout state | covered | covered | covered | `all`, `findings`, `blocking` |
 | `rules.show` | rules | query | process, 32 entries, per checkout state | covered | covered | covered | `first` |
+| `self.update` | self | command | — | waived | — | — | — |
 | `served.forge` | served | command | — | waived | — | — | — |
 | `served.observe` | served | command | — | waived | — | — | — |
 | `served.show` | served | query | — | covered | covered | covered | `head`, `pages-against-head` |

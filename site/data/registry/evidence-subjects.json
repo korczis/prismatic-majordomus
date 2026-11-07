@@ -1064,6 +1064,11 @@
     },
     {
       "kind": "capability",
+      "subject": "capability:self.update",
+      "path": "/evidence/capabilities/self-update/"
+    },
+    {
+      "kind": "capability",
       "subject": "capability:served.forge",
       "path": "/evidence/capabilities/served-forge/"
     },
@@ -3456,6 +3461,11 @@
       "kind": "command",
       "subject": "command:search",
       "path": "/evidence/commands/search/"
+    },
+    {
+      "kind": "command",
+      "subject": "command:self update",
+      "path": "/evidence/commands/self-update/"
     },
     {
       "kind": "command",
@@ -6561,6 +6571,18 @@
       "programs": [],
       "members": [
         "command:rules show"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "capability:self.update": {
+      "kind": "capability",
+      "id": "self.update",
+      "page": "/evidence/capabilities/self-update/",
+      "programs": [],
+      "members": [
+        "command:self update"
       ],
       "routes": [],
       "mechanisms": [],
@@ -18552,6 +18574,25 @@
       "mechanisms": [],
       "findings": []
     },
+    "command:self update": {
+      "kind": "command",
+      "id": "self update",
+      "page": "/evidence/commands/self-update/",
+      "programs": [
+        "native"
+      ],
+      "members": [],
+      "routes": [
+        {
+          "via": "example",
+          "test": "crate:cli_examples",
+          "path": "apps/majordomus-cli/tests/cli_examples.rs",
+          "category": "integration"
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
     "command:serve": {
       "kind": "command",
       "id": "serve",
@@ -30357,6 +30398,7 @@
     "suite:240_the_session_domain_is_typed",
     "suite:241_merge_policy_claims_only_generator_output",
     "suite:2484_majordomus_ui_opens_the_dashboard",
+    "suite:2720_self_update_wraps_the_installer",
     "suite:278_the_gate_runner_clears_the_share",
     "suite:279_the_publication_age_is_the_oldest_debt",
     "suite:280_capture_status_states_its_denominator",

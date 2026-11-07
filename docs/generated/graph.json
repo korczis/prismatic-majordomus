@@ -1906,6 +1906,15 @@
         "status": "query"
       },
       {
+        "id": "capability:self.update",
+        "kind": "capability",
+        "label": "self.update",
+        "summary": "Report or apply an upgrade to the stable release",
+        "route": "/cockpit/capabilities/self.update",
+        "source": "apps/majordomus-cli/src/capability/builtin/self_update.rs",
+        "status": "command"
+      },
+      {
         "id": "capability:served.forge",
         "kind": "capability",
         "label": "served.forge",
@@ -105344,6 +105353,13 @@
         "source": "test/cases/271_adr_allocation.sh"
       },
       {
+        "id": "majordomus://test/test/cases/2720_self_update_wraps_the_installer.sh",
+        "kind": "test",
+        "label": "test/cases/2720_self_update_wraps_the_installer.sh",
+        "route": "/cockpit/objects/test/test-cases-2720-self-update-wraps-the-installer-sh",
+        "source": "test/cases/2720_self_update_wraps_the_installer.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/272_diagrams_are_drawn.sh",
         "kind": "test",
         "label": "test/cases/272_diagrams_are_drawn.sh",
@@ -111492,6 +111508,11 @@
         "label": "rules"
       },
       {
+        "id": "module:self",
+        "kind": "module",
+        "label": "self"
+      },
+      {
         "id": "module:served",
         "kind": "module",
         "label": "served"
@@ -115099,6 +115120,16 @@
       {
         "source": "capability:rules.show",
         "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:self.update",
+        "target": "projection:cli",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:self.update",
+        "target": "projection:cockpit",
         "kind": "projects"
       },
       {
@@ -155092,6 +155123,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/2720_self_update_wraps_the_installer.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/272_diagrams_are_drawn.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -161677,6 +161713,11 @@
         "kind": "composes"
       },
       {
+        "source": "module:self",
+        "target": "capability:self.update",
+        "kind": "composes"
+      },
+      {
         "source": "module:served",
         "target": "capability:served.forge",
         "kind": "composes"
@@ -161813,8 +161854,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4422,
-      "edges": 10037,
+      "nodes": 4425,
+      "edges": 10041,
       "acyclic": false,
       "truncated": false
     }
