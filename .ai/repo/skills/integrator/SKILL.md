@@ -1,7 +1,7 @@
 ---
 schema: skill/v1
 id: integrator
-version: 6
+version: 7
 title: Take finished work to a verified master
 description: Carry a finished change from an open pull request to master and beyond through the one integration engine and the one landing seat, answering at each stage why it is not there yet and stopping only at a landing verified on master, a release, or a named blocker with its next act.
 status: active
@@ -135,6 +135,17 @@ when its own pre-push judgement passed, not when it is committed:
   run the failing cases on the base on the same host (`bash test/run.sh <cases>` in a
   detached worktree of master); identical failures are the host's, and the top is judged
   on a host whose pinned tools match (the macOS differences of `docs/INTEGRATION.md` aside).
+- **A case red on every top is a finding until its cause is named.** Calling a failure the
+  host's names what the host lacks that CI's job has, and then asks whether every place the
+  changed code runs has it. Case 10 failed on the judging host of trains 29 to 32 the same
+  way ("plan delivery --at exits 12 in the fixture") and was read as a host quirk; it was
+  #2946 (I3769) calling an executable that `pages.yml`'s deploy job does not have, so CI's
+  job, which had one, was green, and master's first Pages run after train 32 (42339976144)
+  died at build. Fixed by #2959 and #2960; the same failure on four tops was the evidence.
+- **Read the red job, not the fan-ins.** A pull request's run that is not an
+  `integration/*` branch cancels itself at its first red ("a failed branch run ends here"),
+  so every other shard then reads `cancelled`. The job to read is the one with a failed step:
+  `gh api repos/<owner>/<repo>/actions/runs/<id>/jobs --jq '.jobs[] | select([.steps[] | select(.conclusion == "failure")] | length > 0) | .name'`.
 - **Run what the budget leaves out when a record is renamed.** `run-plan --before-push`
   runs a structure gate only when CI recorded it at 15 s or less and the sum stays within
   120 s (`.ai/repo/ci/structure-durations.tsv`), so core-check and knowledge-nodes are

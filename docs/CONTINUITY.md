@@ -225,6 +225,14 @@ There is no third tier. A record from an unrelated worktree or branch is never o
 because a globally newer record silently becoming your context is worse than having no
 context at all — you cannot tell that it is wrong until you have acted on it.
 
+Within a tier the newest record wins, whatever it is about. A handover written on the same
+worktree and branch for a side purpose (a dispatch to the mesh, a status for peers) becomes
+what the next session resumes, and the previous record's open Next Action is no longer read.
+On 2026-11-07 four such handovers were written on the primary checkout's `master` in eight
+minutes, over a record whose Next Action held four open acts of the landing seat. Carry the
+open acts of the record a new one replaces into its own Next Action, or write the side record
+from a worktree of its own.
+
 Records written inside the same second would otherwise resolve in an order decided by a
 random filename suffix, so the ledger, which is append-only and written in command order,
 breaks the tie.
