@@ -2655,6 +2655,14 @@
         "external": true
       },
       {
+        "id": "file:apps/majordomus-cli/src/capability/builtin/proceed/step.rs",
+        "kind": "file",
+        "label": "step.rs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-cli/src/capability/builtin/proceed/step.rs",
+        "external": true
+      },
+      {
         "id": "file:apps/majordomus-cli/src/capability/builtin/product.rs",
         "kind": "file",
         "label": "product.rs",
@@ -3159,6 +3167,14 @@
         "external": true
       },
       {
+        "id": "file:apps/majordomus-cli/src/gates/done.rs",
+        "kind": "file",
+        "label": "done.rs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-cli/src/gates/done.rs",
+        "external": true
+      },
+      {
         "id": "file:apps/majordomus-cli/src/generate.rs",
         "kind": "file",
         "label": "generate.rs",
@@ -3559,6 +3575,14 @@
         "external": true
       },
       {
+        "id": "file:apps/majordomus-cli/src/policy.rs",
+        "kind": "file",
+        "label": "policy.rs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-cli/src/policy.rs",
+        "external": true
+      },
+      {
         "id": "file:apps/majordomus-cli/src/product.rs",
         "kind": "file",
         "label": "product.rs",
@@ -3628,6 +3652,14 @@
         "label": "check.rs",
         "summary": "named by the layer; not an object of this index",
         "source": "apps/majordomus-cli/src/reasoning/check.rs",
+        "external": true
+      },
+      {
+        "id": "file:apps/majordomus-cli/src/reasoning/mod.rs",
+        "kind": "file",
+        "label": "mod.rs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-cli/src/reasoning/mod.rs",
         "external": true
       },
       {
@@ -4044,6 +4076,14 @@
         "label": "README.md",
         "summary": "named by the layer; not an object of this index",
         "source": "campaigns/README.md",
+        "external": true
+      },
+      {
+        "id": "file:campaigns/majordomus-profile-system-v2-prompt-pack/MAJORDOMUS_PROFILE_SYSTEM_V2_PROMPT_PACK.md",
+        "kind": "file",
+        "label": "MAJORDOMUS_PROFILE_SYSTEM_V2_PROMPT_PACK.md",
+        "summary": "named by the layer; not an object of this index",
+        "source": "campaigns/majordomus-profile-system-v2-prompt-pack/MAJORDOMUS_PROFILE_SYSTEM_V2_PROMPT_PACK.md",
         "external": true
       },
       {
@@ -4631,6 +4671,14 @@
         "external": true
       },
       {
+        "id": "file:share/profile-limits.yaml",
+        "kind": "file",
+        "label": "profile-limits.yaml",
+        "summary": "named by the layer; not an object of this index",
+        "source": "share/profile-limits.yaml",
+        "external": true
+      },
+      {
         "id": "file:share/providers.yaml",
         "kind": "file",
         "label": "providers.yaml",
@@ -4700,6 +4748,14 @@
         "label": "mesh-declaration.v1.schema.json",
         "summary": "named by the layer; not an object of this index",
         "source": "share/schemas/majordomus/mesh-declaration/mesh-declaration.v1.schema.json",
+        "external": true
+      },
+      {
+        "id": "file:share/schemas/majordomus/profile/profile.v1.schema.json",
+        "kind": "file",
+        "label": "profile.v1.schema.json",
+        "summary": "named by the layer; not an object of this index",
+        "source": "share/schemas/majordomus/profile/profile.v1.schema.json",
         "external": true
       },
       {
@@ -9806,6 +9862,41 @@
           "tags": [
             "design",
             "ui",
+            "enforcement"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://adr/adr-0232",
+        "kind": "adr",
+        "label": "adr-0232",
+        "summary": "One resolver in the profile module owns the effective profile; constraints intersect, preferences take precedence, and a profile's word ends where a named adapter or gate begins",
+        "route": "/cockpit/objects/adr/adr-0232",
+        "source": ".ai/repo/adrs/0232-one-resolver-in-the-profile-module-owns-the-effective-profile.md",
+        "status": "proposed",
+        "facts": {
+          "date": "2026-11-07",
+          "related": [
+            "file:campaigns/majordomus-profile-system-v2-prompt-pack/MAJORDOMUS_PROFILE_SYSTEM_V2_PROMPT_PACK.md",
+            "file:docs/PROFILES.md",
+            "file:.ai/repo/profiles/README.md",
+            "file:.ai/repo/project/milestones/a-profile-is-resolved-once-and-enforced.yaml",
+            "file:.ai/repo/project/issues/I4500.yaml",
+            "file:share/schemas/majordomus/profile/profile.v1.schema.json",
+            "file:share/allow/profile.txt",
+            "file:share/profile-limits.yaml",
+            "file:lib/common.sh",
+            "file:apps/majordomus-cli/src/policy.rs",
+            "file:apps/majordomus-cli/src/reasoning/mod.rs",
+            "file:apps/majordomus-cli/src/capability/builtin/proceed/step.rs",
+            "file:apps/majordomus-cli/src/gates/done.rs",
+            "test:test/cases/16_profiles.sh",
+            "test:test/cases/4400_a_profile_axis_names_the_limit_it_derives.sh",
+            "rule:majordomus.profile-requirements"
+          ],
+          "tags": [
+            "profiles",
+            "policy",
             "enforcement"
           ]
         }
@@ -17637,6 +17728,14 @@
         "summary": "Product — the features, and the landing page as a projection of them",
         "route": "/cockpit/objects/document/docs-product-md",
         "source": "docs/PRODUCT.md"
+      },
+      {
+        "id": "majordomus://document/docs/PROFILES.md",
+        "kind": "document",
+        "label": "docs/PROFILES.md",
+        "summary": "Profiles: the trace from the file to finish",
+        "route": "/cockpit/objects/document/docs-profiles-md",
+        "source": "docs/PROFILES.md"
       },
       {
         "id": "majordomus://document/docs/QUALITY.md",
@@ -79493,7 +79592,9 @@
             ".ai/repo/project/issues/I4500.yaml"
           ],
           "slug": "a-profile-is-traced-from-its-file-to-finish",
-          "updated_at": "2026-10-30",
+          "started_at": "2026-11-07T15:37:00Z",
+          "started_event": "sha256:091ffd6cbd060a8f960e166b92527068f6135b42f153654ac1991d51e786b788",
+          "updated_at": "2026-11-07T15:37:00Z",
           "validation": [
             "bin/majordomus plan validate",
             "bin/majordomus generate --check",
@@ -123347,6 +123448,91 @@
         "kind": "put_in_force"
       },
       {
+        "source": "majordomus://adr/adr-0232",
+        "target": "file:apps/majordomus-cli/src/capability/builtin/proceed/step.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0232",
+        "target": "file:apps/majordomus-cli/src/gates/done.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0232",
+        "target": "file:apps/majordomus-cli/src/policy.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0232",
+        "target": "file:apps/majordomus-cli/src/reasoning/mod.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0232",
+        "target": "file:campaigns/majordomus-profile-system-v2-prompt-pack/MAJORDOMUS_PROFILE_SYSTEM_V2_PROMPT_PACK.md",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0232",
+        "target": "file:share/allow/profile.txt",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0232",
+        "target": "file:share/profile-limits.yaml",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0232",
+        "target": "file:share/schemas/majordomus/profile/profile.v1.schema.json",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0232",
+        "target": "kind:adr",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://adr/adr-0232",
+        "target": "majordomus://context/ai.repo.profiles",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0232",
+        "target": "majordomus://document/docs/PROFILES.md",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0232",
+        "target": "majordomus://implementation/lib/common.sh",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0232",
+        "target": "majordomus://issue/I4500",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0232",
+        "target": "majordomus://milestone/a-profile-is-resolved-once-and-enforced",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0232",
+        "target": "majordomus://rule/majordomus.profile-requirements@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0232",
+        "target": "majordomus://test/test/cases/16_profiles.sh",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0232",
+        "target": "majordomus://test/test/cases/4400_a_profile_axis_names_the_limit_it_derives.sh",
+        "kind": "put_in_force"
+      },
+      {
         "source": "majordomus://application/ci-gated-project",
         "target": "kind:application",
         "kind": "is_a"
@@ -129703,6 +129889,11 @@
       },
       {
         "source": "majordomus://document/docs/PRODUCT.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://document/docs/PROFILES.md",
         "target": "kind:document",
         "kind": "is_a"
       },
@@ -161813,8 +162004,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4422,
-      "edges": 10037,
+      "nodes": 4431,
+      "edges": 10055,
       "acyclic": false,
       "truncated": false
     }

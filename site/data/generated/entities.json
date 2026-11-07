@@ -9,7 +9,7 @@
       "title": "Decisions",
       "description": "Every architecture decision this repository has recorded, with what it supersedes, what it put in force, and what has since referred back to it. One page per decision, generated from the decision's own file.",
       "weight": 45,
-      "count": 169,
+      "count": 170,
       "dir": "adrs",
       "statuses": [
         "accepted",
@@ -38,7 +38,7 @@
       "route": "/adrs/",
       "title": "Decisions",
       "reason": null,
-      "count": 169
+      "count": 170
     },
     {
       "kind": "application",
@@ -126,7 +126,7 @@
       "route": null,
       "title": null,
       "reason": "A document of the layer is prose already published where it belongs — /docs/, /method/, /context/ — and a second address for the same words is the duplication this file exists to prevent.",
-      "count": 357
+      "count": 358
     },
     {
       "kind": "domain",
@@ -14926,6 +14926,136 @@
       "referenced_by": []
     },
     {
+      "kind": "adr",
+      "id": "majordomus://adr/adr-0232",
+      "identity": "adr-0232",
+      "slug": "adr-0232",
+      "cockpit": "/cockpit/objects/adr/adr-0232",
+      "title": "One resolver in the profile module owns the effective profile; constraints intersect, preferences take precedence, and a profile's word ends where a named adapter or gate begins",
+      "status": "proposed",
+      "tags": [
+        "profiles",
+        "policy",
+        "enforcement"
+      ],
+      "source": ".ai/repo/adrs/0232-one-resolver-in-the-profile-module-owns-the-effective-profile.md",
+      "references": [
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-cli/src/capability/builtin/proceed/step.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-cli/src/gates/done.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-cli/src/policy.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-cli/src/reasoning/mod.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "campaigns/majordomus-profile-system-v2-prompt-pack/MAJORDOMUS_PROFILE_SYSTEM_V2_PROMPT_PACK.md",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "share/allow/profile.txt",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "share/profile-limits.yaml",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "share/schemas/majordomus/profile/profile.v1.schema.json",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "ai.repo.profiles",
+          "kind": "context",
+          "route": "/context/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "docs/PROFILES.md",
+          "kind": "document",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "lib/common.sh",
+          "kind": "implementation",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "I4500",
+          "kind": "issue",
+          "route": "/plan/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "a-profile-is-resolved-once-and-enforced",
+          "kind": "milestone",
+          "route": "/plan/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "majordomus.profile-requirements@1",
+          "kind": "rule",
+          "route": "/rules/majordomus-profile-requirements-1/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "test/cases/16_profiles.sh",
+          "kind": "test",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "test/cases/4400_a_profile_axis_names_the_limit_it_derives.sh",
+          "kind": "test",
+          "route": null,
+          "external": false
+        }
+      ],
+      "referenced_by": []
+    },
+    {
       "kind": "rule",
       "id": "majordomus://rule/majordomus.adr-integrity@1",
       "identity": "majordomus.adr-integrity@1",
@@ -16620,6 +16750,13 @@
         }
       ],
       "referenced_by": [
+        {
+          "edge": "put_in_force",
+          "label": "adr-0232",
+          "kind": "adr",
+          "route": "/adrs/adr-0232/",
+          "external": false
+        },
         {
           "edge": "exercises",
           "label": "accept-or-refuse-finished-work",

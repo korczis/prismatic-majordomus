@@ -1,7 +1,7 @@
 +++
 title = "Working from the owner's packs"
 description = "working from the owner's prompt packs: how a brief kept under `campaigns/` becomes milestones and issues that cite it, the packs of 2026-10-11 and 2026-10-12 with the master records each one maps onto, what was not planned and which decision or record says why, where to start, and the gate that holds packs and plan together"
-weight = 66
+weight = 67
 [extra]
 source = "docs/OWNER_PACKS.md"
 +++
