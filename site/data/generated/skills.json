@@ -289,6 +289,66 @@
       "route": "/skills/pack-for-review/"
     },
     {
+      "id": "project-picture",
+      "uri": "majordomus://skill/project-picture",
+      "title": "Project picture",
+      "description": "Build the best evidenced picture of a project from every source the worker can reach, local first, every source optional, with each claim tagged and sourced and every gap recorded.",
+      "status": "draft",
+      "version": 1,
+      "tags": [
+        "orientation",
+        "evidence",
+        "knowledge",
+        "coverage",
+        "read-only"
+      ],
+      "related": [
+        "repo-review",
+        "report-verification-state",
+        "evolve"
+      ],
+      "inputs": [
+        "PROJECT: a repository, a set of repositories, or a name to resolve (default: the repository of the working directory)",
+        "SCOPE: paths or repositories to narrow to (default: all of PROJECT)",
+        "MODE: auto | local | global | offline (default: auto, detected, never asked)",
+        "BUDGET: wall-clock seconds and tokens for the whole run (default: 600 s; per source a tenth of it)",
+        "SINCE: the time window for activity (default: 30 days; history before it is summarised)",
+        "DEPTH: quick | standard | deep (default: standard)"
+      ],
+      "outputs": [
+        "the picture in Markdown, sections as in Output",
+        "the same picture as JSON with the same structure",
+        "a coverage ledger with one row per source tier and adapter",
+        "proposed records (knowledge candidates, questions, a handover body), written only when asked"
+      ],
+      "path": ".ai/repo/skills/project-picture/SKILL.md",
+      "sha256": "b6937a38e9467d1d328bf20351cacdc497e4112e8c6c1754f96a5c22f5098b3e",
+      "examples": [
+        {
+          "path": ".ai/repo/skills/project-picture/examples/picture-global.md",
+          "title": "Picture across every project on a machine",
+          "body": "\nIntent: \"What is going on across all my projects?\" There is no repository in the working\ndirectory, or PROJECT names several. MODE auto resolves to global.\n\nThe worker enumerates repositories under the workspace root (any directory that `git\nrev-parse` accepts, plus the linked worktrees), and records which are supervised. It runs\nstages 2–8 per repository within an equal share of BUDGET, with DEPTH quick unless one is\nnamed, and then merges the results:\n\n- one TL;DR line and one coverage row per repository;\n- the links between repositories: shared remotes, a dependency named in a manifest, the same\n  tracker project, the same people on the board;\n- shared resources that one project's state depends on, such as a CI slot cap or a request\n  budget per consumer, as DERIVED findings;\n- the cross-project next actions, ranked by what they unblock.\n\nConfidentiality is applied per repository. A finding from one project's external channel\nnever appears in another project's section.\n"
+        },
+        {
+          "path": ".ai/repo/skills/project-picture/examples/picture-offline.md",
+          "title": "Picture with no network",
+          "body": "\nIntent: \"Give me the picture of acme-ledger, offline.\" MODE offline, or MODE auto on a machine\nwhose remotes do not answer.\n\nThe worker runs stages 1–5 and 10 only. `git fetch` fails, so trunk is read as the last\nfetched `origin/main`, and the picture says how old that fetch is. Stage 10 still reconciles\nthe tree against the `.ai/` records and derives plan drift from local data. Nothing from the\nforge, the tracker or the conversations appears as a fact.\n\nThe coverage ledger is what makes the result honest:\n\n```markdown\n| Tier | Adapter | State | Reason |\n|---|---|---|---|\n| T0 | git | partial | fetch failed; origin/main as of last fetch 2031-03-11T09:02Z |\n| T1 | majordomus | read | context, plan, knowledge, decisions |\n| T2 | forge CLI | skipped | offline |\n| T3 | tracker | skipped | offline |\n| T4 | chat workspace | skipped | offline |\n| T5 | mesh, other checkouts | partial | local worktrees only |\n```\n\nNext actions that would need a remote source say so, for example: \"confirm PR #31's state\nwhen online\".\n"
+        },
+        {
+          "path": ".ai/repo/skills/project-picture/examples/picture-online.md",
+          "title": "Picture of one supervised project, every source reachable",
+          "body": "\nIntent: \"Load everything about acme-ledger and give me the picture.\" MODE auto resolves to\nlocal and supervised, DEPTH standard, SINCE 30 days.\n\nThe worker runs stages 1–5 before any network call. It then gives the forge, the tracker and\nthe chat workspace one read-only worker each, and reconciles their results in stage 10.\n\nExcerpt of the Markdown output:\n\n```markdown\n## TL;DR (as_of 2031-03-14)\n- acme-ledger reconciles supplier invoices read from scanned documents.\n- Trunk has the matching engine; operation still runs the version before it.\n- Blocker: deploys from trunk fail since 2031-03-03 (approval guard, run 812).\n- Next: a second reviewer approves PR #23; owner: the infrastructure lead.\n- Scope agreed in chat on 2031-03-12 is not in the plan yet.\n\n## Contradictions\n| One side | Other side | Locator |\n|---|---|---|\n| plan: T7.2 todo (DERIVED from plan.json) | PR #31 merged, closes it (OBSERVED) | plan.json@b3e19c0, PR #31 |\n| chat: scope cut to 10 days (OBSERVED, internal) | plan: 21 days remain (OBSERVED) | #acme-internal 1962…, docs/effort |\n\n## Coverage\n| Tier | Adapter | State | Covered |\n|---|---|---|---|\n| T0 | git | read | origin/main at b3e19c0, 30 days |\n| T1 | majordomus | read | context, plan, 0 candidates; handover stale (5 d) |\n| T2 | forge CLI | read | 42 open, 18 closed issues, 3 PRs, deploy runs |\n| T3 | tracker API | failed | 401 unauthenticated; offline export used |\n| T4 | chat workspace | read | 2 channels (1 shared-with-external), 2 DMs |\n```\n\nThe JSON rendering carries the same sections, and every finding carries its `tag` and\n`locator`.\n"
+        },
+        {
+          "path": ".ai/repo/skills/project-picture/examples/picture-unsupervised.md",
+          "title": "Picture of a repository without a Majordomus layer",
+          "body": "\nIntent: \"What is the state of acme-tools?\" The repository has no `.ai/manifest.yaml`.\n\nThe worker skips stages 3–5 and records them as one coverage row: \"T1: not supervised\". It\ndoes not run `majordomus init` and does not suggest running it unasked. The picture rests on\nthe tree (stage 2) and on whatever forges, trackers and conversations answer (stages 6–9).\nPrecedence still holds: the tree outranks everything else.\n\nThe decisions, open questions and rationale normally read from the `.ai/` layer come here\nfrom ADR-like documents in the tree, issue threads and conversations. Each one is tagged\nwith that weaker source. Stage 11 proposes no Majordomus records. A missing layer is not\nsomething to fix inside this skill.\n"
+        }
+      ],
+      "valid": true,
+      "route": "/skills/project-picture/"
+    },
+    {
       "id": "rebaser",
       "uri": "majordomus://skill/rebaser",
       "title": "Bring a branch current by the cheapest safe strategy",
@@ -422,7 +482,7 @@
       "route": "/skills/report-verification-state/"
     }
   ],
-  "count": 10,
+  "count": 11,
   "by_tag": {
     "cleanup": [
       "assess-before-deleting"
@@ -434,6 +494,7 @@
       "assess-before-deleting",
       "deploy-site",
       "implement",
+      "project-picture",
       "repo-review",
       "report-verification-state"
     ],
@@ -448,7 +509,8 @@
       "deploy-site"
     ],
     "knowledge": [
-      "evolve"
+      "evolve",
+      "project-picture"
     ],
     "review": [
       "evolve",
@@ -500,6 +562,15 @@
     ],
     "chatgpt": [
       "pack-for-chatgpt"
+    ],
+    "orientation": [
+      "project-picture"
+    ],
+    "coverage": [
+      "project-picture"
+    ],
+    "read-only": [
+      "project-picture"
     ],
     "merge": [
       "rebaser"
