@@ -102,6 +102,12 @@ for g in $gate_ids; do
   # `network` says the gate reaches beyond this machine; like on-demand, true or absent
   net="$(mj_yget "$FLAT" "gates.$i.network")"
   [ -z "$net" ] || [ "$net" = true ] || { echo "ci-plan: gate $g: network is true or absent, not $net" >&2; bad=1; }
+  # `history_reads` names what of the history the gate reads beyond HEAD's ancestry (I3241):
+  # heads, tags or blobs; scripts/ci/step-bound-check holds each checkout to it, so a word it
+  # does not know would justify nothing and is refused here
+  for hr in $(mj_ylist "$FLAT" "gates.$i.history_reads"); do
+    case "$hr" in heads|tags|blobs) ;; *) echo "ci-plan: gate $g: history_reads names $hr; it is heads, tags or blobs" >&2; bad=1 ;; esac
+  done
   # `subsumed-by` names one other gate that exists: a gate is not subsumed by itself, and the
   # gate that subsumes it is not itself subsumed (a chain would drop a gate for a gate the plan
   # then drops, and nothing would run the cases)
