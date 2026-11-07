@@ -50,6 +50,8 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I2700` | shares test/cases with I3970; they may not run concurrently |
 | WARN | `scope_conflict` | `I2700` | shares test/cases with I3991; they may not run concurrently |
 | WARN | `scope_conflict` | `I2700` | shares test/cases with I3992; they may not run concurrently |
+| WARN | `scope_conflict` | `I2700` | shares test/cases with I4001; they may not run concurrently |
+| WARN | `scope_conflict` | `I2700` | shares test/cases with I4004; they may not run concurrently |
 | WARN | `scope_conflict` | `I2700` | shares test/cases with I4332; they may not run concurrently |
 | WARN | `scope_conflict` | `I2700` | shares test/cases with I4523; they may not run concurrently |
 | WARN | `scope_conflict` | `I3179` | shares docs/MCP.md with I3307; they may not run concurrently |
