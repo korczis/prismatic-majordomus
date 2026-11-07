@@ -72379,7 +72379,6 @@
             "The rest of the test (pairs decided once, an unnamed head left to the caller, no repository answers nothing) is unchanged"
           ],
           "created_at": "2026-10-25",
-          "current_state": "The test deletes .git/objects/<lost> and asserts that containment then answers nothing for the mirror.",
           "depends_on": [],
           "evidence_required": [
             "containment_answers_as_containing_and_asks_each_pair_once_test"
@@ -72401,7 +72400,7 @@
             "landing-survives-any-session#one-executor"
           ],
           "slug": "a-mirror-whose-history-is-missing-decides-nothing",
-          "updated_at": "2026-10-25",
+          "updated_at": "2026-11-07",
           "validation": [
             "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --lib integration::memo::"
           ]
