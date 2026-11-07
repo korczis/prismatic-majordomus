@@ -191,12 +191,22 @@ done
 mkdir -p "$("$RB" worktree path reap-task)/.ai/local/state"
 printf 'id: t-20261107000000-beef\ntask: still building\noutcome: active\n' \
   > "$("$RB" worktree path reap-task)/.ai/local/state/current.yaml"
+# The builder is this case's own bash and not `sleep`: macOS withholds the environment of
+# Apple's platform binaries from every reader, and a bash from anywhere else is not one. Where
+# the bash running this case is Apple's too, the environment cannot be planted and that one
+# expectation is said to be left out rather than passed.
 env_target="$("$RB" worktree path reap-env)/apps/majordomus-cli/target"
-( cd "$S" && exec env CARGO_TARGET_DIR="$env_target" sleep 300 ) &
+( cd "$S" && exec env CARGO_TARGET_DIR="$env_target" "$BASH" -c 'sleep 300; :' ) &
 BUILDER=$!
-trap 'kill "$INSIDE" "$BUILDER" 2>/dev/null; :' EXIT
+trap 'pkill -P "$BUILDER" 2>/dev/null || true; kill "$INSIDE" "$BUILDER" 2>/dev/null || true' EXIT
 touch "$(git -C "$("$RB" worktree path reap-head)" rev-parse --absolute-git-dir)/HEAD"
 sleep 1
+ENV_SEEN=1
+if [ "$(uname -s)" = Darwin ] \
+  && ! ps -E -ww -o command= -p "$BUILDER" 2>/dev/null | grep -q "CARGO_TARGET_DIR=$env_target"; then
+  ENV_SEEN=0
+  echo "    (this bash, $BASH, is Apple's: macOS withholds its environment, so the CARGO_TARGET_DIR expectation is left out here)"
+fi
 
 reap() { MAJORDOMUS_BIN="$RB" MJ_ROOT="$S/repo" "$ROOT/scripts/reap-orphans" --targets "$@"; }
 rc=0; reap > "$T/reap.txt" 2>&1 || rc=$?
@@ -204,9 +214,23 @@ LAST_OUT="$(cat "$T/reap.txt")"
 [ "$rc" = 10 ] || { echo "    the reaper's report exited $rc, not 10:"; sed 's/^/      /' "$T/reap.txt"; exit 1; }
 expect_grep 'reap-idle.*would reclaim'
 expect_grep 'reap-task.*keep — merged, but somebody is working in it: task: task t-20261107000000-beef'
-expect_grep 'reap-env.*keep — merged, but somebody is working in it: process_environment: .*CARGO_TARGET_DIR='
+[ "$ENV_SEEN" = 0 ] \
+  || expect_grep 'reap-env.*keep — merged, but somebody is working in it: process_environment: .*CARGO_TARGET_DIR='
 expect_grep 'reap-head.*keep — merged, but somebody is working in it: git_activity: its HEAD changed'
 echo "    the reaper keeps every build directory the predicate answers keep for, with its reason"
+
+# the same predicate as a client asks it over MCP: one answer, the command line's
+task_path="$("$RB" worktree path reap-task)"
+{ printf '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-06-18","capabilities":{},"clientInfo":{"name":"case611","version":"0"}}}\n'
+  printf '{"jsonrpc":"2.0","method":"notifications/initialized"}\n'
+  printf '{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"majordomus_worktree_liveness","arguments":{"paths":["%s"]}}}\n' "$task_path"
+} | "$RB" mcp --standalone --repo "$ROOT" 2>"$T/mcp.err" | sed -n 2p > "$T/frame.json"
+jq -e '.result.structuredContent' "$T/frame.json" > "$T/tool.json" 2>/dev/null \
+  || { echo "    majordomus_worktree_liveness returned no typed answer:"; head -c 800 "$T/frame.json"; echo; head -5 "$T/mcp.err"; exit 1; }
+[ "$(jq -r '.paths[0].verdict' "$T/tool.json")" = keep ] \
+  && jq -e '[.paths[0].reasons[].signal] | index("task")' "$T/tool.json" >/dev/null \
+  || { echo "    the tool did not keep the worktree with an open task:"; cat "$T/tool.json"; exit 1; }
+echo "    majordomus_worktree_liveness answers what the command line does"
 
 # a repository that declares a mesh nobody can be asked about: nothing at all is removed
 mkdir -p "$S/repo/.ai/repo/mesh"
@@ -226,7 +250,8 @@ LAST_OUT="$(cat "$T/reclaimed.txt")"
 expect_grep 'reap-idle.*reclaimed'
 [ -e "$("$RB" worktree path reap-idle)/apps/majordomus-cli/target" ] \
   && { echo "    the build output nothing names survived the reclaim"; exit 1; }
-for b in reap-task reap-env reap-head; do
+kept_ones="reap-task reap-head"; [ "$ENV_SEEN" = 0 ] || kept_ones="$kept_ones reap-env"
+for b in $kept_ones; do
   expect_file "$("$RB" worktree path "$b")/apps/majordomus-cli/target/CACHEDIR.TAG"
 done
 echo "    a build directory with no signal at all is reclaimed, and the rest are not"

@@ -42,6 +42,11 @@
 //! anything there is `complete: false`: the command line exits non-zero on it, and
 //! `reap-orphans` then removes nothing at all.
 //!
+//! One reading the kernel itself withholds: macOS hands nobody the environment of Apple's
+//! platform binaries (`/bin/zsh`, `/bin/sleep`), not even their own user. Their working
+//! directory and command line are still read; the processes that build — cargo, rustc, the
+//! executable itself — are not platform binaries, and their environments are read in full.
+//!
 //! The predicate never deletes, never writes, and never refreshes an index: every reading is a
 //! stat, a file read, a process-table read or a bounded HTTP GET to a loopback server.
 
@@ -1349,6 +1354,9 @@ pub(crate) fn answer(paths: &[String], idle_seconds: u64) -> LivenessReport {
 mod tests {
     use super::*;
 
+    /// Set in the child a test starts from this binary to hold an environment open.
+    const HOLD: &str = "MJ_LIVENESS_TEST_HOLD";
+
     /// A server that is never there: every question about a board or the mesh fails.
     struct Nobody;
     impl Servers for Nobody {
@@ -1817,15 +1825,37 @@ mod tests {
 
     #[test]
     fn a_real_process_whose_cargo_target_dir_points_inside_is_read_and_keeps_it() {
+        // The child is this test binary, run again as this one test: macOS withholds the
+        // environment of Apple's platform binaries (`/bin/sleep`, `/bin/zsh`) from every
+        // reader, and this one is not one of them.
+        if std::env::var_os(HOLD).is_some() {
+            std::thread::sleep(Duration::from_secs(30));
+            return;
+        }
         let f = Fixture::new();
-        let mut child = std::process::Command::new("sleep")
-            .arg("30")
+        let mut child = std::process::Command::new(std::env::current_exe().expect("this binary"))
+            .args([
+                "--exact",
+                "worktree::liveness::tests::a_real_process_whose_cargo_target_dir_points_inside_is_read_and_keeps_it",
+                "--test-threads",
+                "1",
+            ])
+            .env(HOLD, "1")
             .env("CARGO_TARGET_DIR", &f.target)
             .current_dir(&f.root)
+            .stdout(std::process::Stdio::null())
             .spawn()
             .expect("start a child");
-        let m = read_machine();
-        let p = f.ask(&m, &Nobody);
+        let mut m = read_machine();
+        let mut p = f.ask(&m, &Nobody);
+        for _ in 0..50 {
+            if signals(&p).contains(&LivenessSignal::ProcessEnvironment) {
+                break;
+            }
+            std::thread::sleep(Duration::from_millis(100));
+            m = read_machine();
+            p = f.ask(&m, &Nobody);
+        }
         let _ = child.kill();
         let _ = child.wait();
         if m.processes.is_err() || m.directories.is_err() {
