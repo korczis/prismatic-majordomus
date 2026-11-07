@@ -72,7 +72,21 @@ impl BenchmarkCases for UpdateInput {
     }
 }
 
-/// What `self.update` found and did.
+/// What `self.update` found and did: the running and the stable version, where the metadata
+/// was read, the decision, whether `--apply` would install anything, the installation this
+/// executable belongs to (or why it is none), the installer run under `--apply`, and the
+/// exit status the command line reports.
+///
+/// ```
+/// use majordomus_cli::capability::builtin::self_update::UpdateReport;
+/// let r: UpdateReport = serde_json::from_str(r#"{
+///   "running":"0.9.0","stable":"1.0.0","target":"1.0.0",
+///   "metadata_url":"https://majordomus.dev/releases/latest.json",
+///   "decision":{"verdict":"upgrade","reason":"v1.0.0 is newer"},
+///   "applies":true,"exit_code":0}"#).unwrap();
+/// assert!(r.applies && r.applied.is_none(), "a check applies nothing");
+/// assert_eq!(r.exit_code, 0);
+/// ```
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 pub struct UpdateReport {
     /// The version this installation runs: its tree's `share/version.txt`, or the version
@@ -105,7 +119,14 @@ pub struct UpdateReport {
     pub exit_code: i32,
 }
 
-/// The module.
+/// The `self` module's declaration: its one capability, `self.update`, exposed on the command
+/// line as `majordomus self update` and on no other surface.
+///
+/// ```
+/// let m = majordomus_cli::capability::builtin::self_update::module();
+/// assert_eq!(m.id.as_str(), "self");
+/// assert_eq!(m.capabilities.len(), 1);
+/// ```
 pub fn module() -> ModuleDescriptor {
     module! {
         id: "self",

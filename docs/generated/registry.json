@@ -86730,7 +86730,7 @@
             "applies",
             "exit_code"
           ],
-          "description": "What `self.update` found and did.",
+          "description": "What `self.update` found and did: the running and the stable version, where the metadata\nwas read, the decision, whether `--apply` would install anything, the installation this\nexecutable belongs to (or why it is none), the installer run under `--apply`, and the\nexit status the command line reports.\n\n```\nuse majordomus_cli::capability::builtin::self_update::UpdateReport;\nlet r: UpdateReport = serde_json::from_str(r#\"{\n  \"running\":\"0.9.0\",\"stable\":\"1.0.0\",\"target\":\"1.0.0\",\n  \"metadata_url\":\"https://majordomus.dev/releases/latest.json\",\n  \"decision\":{\"verdict\":\"upgrade\",\"reason\":\"v1.0.0 is newer\"},\n  \"applies\":true,\"exit_code\":0}\"#).unwrap();\nassert!(r.applies && r.applied.is_none(), \"a check applies nothing\");\nassert_eq!(r.exit_code, 0);\n```",
           "title": "UpdateReport",
           "$defs": {
             "Decision": {
@@ -86760,7 +86760,7 @@
                 "verdict",
                 "reason"
               ],
-              "description": "What `decide` concluded, with the sentence a person reads."
+              "description": "What `decide` concluded, with the sentence a person reads: the verdict, the refusal\nwhen there is one, and the reason, so that a report and a script read the same answer.\n\n```\nuse majordomus_cli::release::self_update::{Decision, Refusal, Verdict};\nlet d: Decision = serde_json::from_str(\n    r#\"{\"verdict\":\"refused\",\"refusal\":\"downgrade\",\"reason\":\"v0.9.0 is older\"}\"#).unwrap();\nassert_eq!((d.verdict, d.refusal), (Verdict::Refused, Some(Refusal::Downgrade)));\n// an upgrade carries no refusal, and none is serialized\nlet up = Decision { verdict: Verdict::Upgrade, refusal: None, reason: \"newer\".into() };\nassert!(!serde_json::to_string(&up).unwrap().contains(\"refusal\"));\n```"
             },
             "Verdict": {
               "oneOf": [
@@ -86833,7 +86833,7 @@
                 "tree",
                 "version"
               ],
-              "description": "Where an installation made by `install.sh` lives, found from the executable's own path.\n\nThe installer lays a release out as `<prefix>/versions/<version>/` holding `bin/`,\n`libexec/` and `share/`, and writes launchers into `<install dir>` that export\n`MAJORDOMUS_LAUNCHER` as their own path (`share/install/install.sh.in`, `write_launcher`)."
+              "description": "Where an installation made by `install.sh` lives, found from the executable's own path.\n\nThe installer lays a release out as `<prefix>/versions/<version>/` holding `bin/`,\n`libexec/` and `share/`, and writes launchers into `<install dir>` that export\n`MAJORDOMUS_LAUNCHER` as their own path (`share/install/install.sh.in`, `write_launcher`).\n`apply` hands the installer exactly these places, so that an update lands where the\ninstallation already is and not at the installer's defaults.\n\n```\nuse majordomus_cli::release::self_update::Installation;\nlet at = Installation {\n    prefix: \"/home/me/.local/share/majordomus\".into(),\n    install_dir: \"/home/me/.local/bin\".into(),\n    tree: \"/home/me/.local/share/majordomus/versions/0.9.0\".into(),\n    version: \"0.9.0\".into(),\n};\nassert!(at.tree.starts_with(&at.prefix), \"a version tree lives under its prefix\");\nlet json = serde_json::to_value(&at).unwrap();\nassert_eq!(json[\"install_dir\"], \"/home/me/.local/bin\");\n```"
             },
             "Applied": {
               "type": "object",
@@ -86872,7 +86872,7 @@
                 "argv",
                 "output"
               ],
-              "description": "What running the installer came to."
+              "description": "What running the installer came to: the argument vector that ran, its exit status, the\ntail of what it printed, and the version the launcher reports afterwards. An installer\nthat failed reads back nothing, whatever it printed.\n\n```\nuse majordomus_cli::release::self_update::Applied;\nlet a: Applied = serde_json::from_str(\n    r#\"{\"argv\":[\"sh\",\"install.sh\",\"--version\",\"v1.0.0\"],\"status\":10,\"output\":[\"digest mismatch\"]}\"#,\n).unwrap();\nassert_eq!(a.status, Some(10));\nassert!(a.installed.is_none(), \"a failed run installs nothing it can read back\");\n```"
             }
           }
         }

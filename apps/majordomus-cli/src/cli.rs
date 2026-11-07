@@ -3590,13 +3590,15 @@ pub enum DriftGateArg {
 }
 
 #[derive(Debug, Args)]
-/// `majordomus self`: this installation itself.
+/// `majordomus self`: this installation itself, read from the executable's own tree and the
+/// launcher it runs through, never from the repository it is asked in.
 ///
 /// ```
 /// use clap::Parser;
-/// use majordomus_cli::cli::{Cli, Command, SelfCommand};
+/// use majordomus_cli::cli::{Cli, Command, SelfArgs, SelfCommand};
 /// let cli = Cli::try_parse_from(["majordomus", "self", "update", "--check"]).unwrap();
 /// let Command::SelfUpdate(args) = cli.command else { panic!("self") };
+/// let args: SelfArgs = args;   // the group's own arguments
 /// assert!(matches!(args.command, SelfCommand::Update { check: true, apply: false, .. }));
 /// let cli = Cli::try_parse_from(["majordomus", "self", "update", "--apply", "--version", "v1.0.0"]).unwrap();
 /// let Command::SelfUpdate(args) = cli.command else { panic!("self") };
@@ -3620,6 +3622,16 @@ pub struct SelfArgs {
 #[derive(Debug, Subcommand)]
 /// The subcommands of `majordomus self`: `update` is the command line of `self.update`, and
 /// a command line and nothing else, because applied it replaces the executable that answers.
+///
+/// ```
+/// use clap::Parser;
+/// use majordomus_cli::cli::{Cli, Command, SelfCommand};
+/// let cli = Cli::try_parse_from(["majordomus", "self", "update", "--base-url", "https://example.test"]).unwrap();
+/// let Command::SelfUpdate(args) = cli.command else { panic!("self") };
+/// let SelfCommand::Update { apply, base_url, .. } = args.command;
+/// assert!(!apply, "without --apply it only reports");
+/// assert_eq!(base_url.as_deref(), Some("https://example.test"));
+/// ```
 pub enum SelfCommand {
     /// Report (--check, the default) or apply (--apply) an upgrade to the published stable release, through install.sh
     Update {

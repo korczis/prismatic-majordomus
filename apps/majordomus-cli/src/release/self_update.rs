@@ -17,6 +17,21 @@
 //! [`apply`] then runs the installer the installation's `share/distribution.yaml` names, with
 //! `--version <tag>`, `--prefix` and `--install-dir`, and reads the installed version back
 //! from the launcher it wrote.
+//!
+//! The lifecycle, end to end: judge, then (only for an upgrade) apply.
+//!
+//! ```
+//! use majordomus_cli::release::self_update::{decide, stated_version, Verdict};
+//! use majordomus_cli::release::version::Version;
+//! // the running version, as the installation's share/version.txt states it
+//! let running = Version::parse(&stated_version("# GENERATED\nversion=0.9.0\n").unwrap()).unwrap();
+//! // the version releases/latest.json names
+//! let stable = Version::parse("1.0.0").unwrap();
+//! let decision = decide(&running, Some(&stable), None);
+//! assert_eq!(decision.verdict, Verdict::Upgrade, "only now would apply() run install.sh");
+//! // the same installation asked to go back is refused, and nothing runs
+//! assert_eq!(decide(&stable, Some(&running), Some("v0.9.0")).verdict, Verdict::Refused);
+//! ```
 
 use std::path::{Path, PathBuf};
 use std::process::Command;
@@ -69,7 +84,18 @@ pub enum Verdict {
     Unanswered,
 }
 
-/// What [`decide`] concluded, with the sentence a person reads.
+/// What [`decide`] concluded, with the sentence a person reads: the verdict, the refusal
+/// when there is one, and the reason, so that a report and a script read the same answer.
+///
+/// ```
+/// use majordomus_cli::release::self_update::{Decision, Refusal, Verdict};
+/// let d: Decision = serde_json::from_str(
+///     r#"{"verdict":"refused","refusal":"downgrade","reason":"v0.9.0 is older"}"#).unwrap();
+/// assert_eq!((d.verdict, d.refusal), (Verdict::Refused, Some(Refusal::Downgrade)));
+/// // an upgrade carries no refusal, and none is serialized
+/// let up = Decision { verdict: Verdict::Upgrade, refusal: None, reason: "newer".into() };
+/// assert!(!serde_json::to_string(&up).unwrap().contains("refusal"));
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct Decision {
     /// The verdict.
@@ -153,6 +179,21 @@ pub fn decide(running: &Version, target: Option<&Version>, asked: Option<&str>) 
 /// The installer lays a release out as `<prefix>/versions/<version>/` holding `bin/`,
 /// `libexec/` and `share/`, and writes launchers into `<install dir>` that export
 /// `MAJORDOMUS_LAUNCHER` as their own path (`share/install/install.sh.in`, `write_launcher`).
+/// [`apply`] hands the installer exactly these places, so that an update lands where the
+/// installation already is and not at the installer's defaults.
+///
+/// ```
+/// use majordomus_cli::release::self_update::Installation;
+/// let at = Installation {
+///     prefix: "/home/me/.local/share/majordomus".into(),
+///     install_dir: "/home/me/.local/bin".into(),
+///     tree: "/home/me/.local/share/majordomus/versions/0.9.0".into(),
+///     version: "0.9.0".into(),
+/// };
+/// assert!(at.tree.starts_with(&at.prefix), "a version tree lives under its prefix");
+/// let json = serde_json::to_value(&at).unwrap();
+/// assert_eq!(json["install_dir"], "/home/me/.local/bin");
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct Installation {
     /// The installer's `--prefix`: the directory holding `versions/`.
@@ -245,7 +286,18 @@ pub fn stated_version(text: &str) -> Option<String> {
         .filter(|v| !v.is_empty())
 }
 
-/// What running the installer came to.
+/// What running the installer came to: the argument vector that ran, its exit status, the
+/// tail of what it printed, and the version the launcher reports afterwards. An installer
+/// that failed reads back nothing, whatever it printed.
+///
+/// ```
+/// use majordomus_cli::release::self_update::Applied;
+/// let a: Applied = serde_json::from_str(
+///     r#"{"argv":["sh","install.sh","--version","v1.0.0"],"status":10,"output":["digest mismatch"]}"#,
+/// ).unwrap();
+/// assert_eq!(a.status, Some(10));
+/// assert!(a.installed.is_none(), "a failed run installs nothing it can read back");
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct Applied {
     /// The command that ran, as an argument vector (the installer's path first after `sh`).
