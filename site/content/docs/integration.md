@@ -25,9 +25,11 @@ those files, so they cannot drift from what is read here. Who holds each seat no
 by the Mesh screen of the UI (`/ui/mesh`) from the live claims.
 
 What the decision changes here is the lander's unit of work, not the executor. `prs drain`
-below still takes one ready pull request at a time and never passes `--admin`; a combined top
-is the landing seat's own act, the batch ADR 0101 left to a person and the owner has now
-chosen. Everything else this document says of a decision still holds for a top: it is taken
+below takes one ready pull request at a time and never passes `--admin`, and since the owner's
+decision of 2026-10-22 (I3910, the rule's and ADR 0167's amendments of that date) it is the one
+lander: a combined top is composed by the landing seat, the batch ADR 0101 left to a person and
+the owner has now chosen, and is landed by the drain like any pull request, by a fast-forward.
+No queue file names what lands; the queue is the one `prs status` shows. Everything else this document says of a decision still holds for a top: it is taken
 against the current master and the heads it names, its evidence is recorded, and no check is
 bypassed.
 
@@ -496,7 +498,10 @@ executor first sees the pull request as actionable, not when the forge was first
 `prs drain` loops over one step and holds nothing between steps:
 
 1. observe the forge, fetch every open head, and build the queue;
-2. take the first `ready` pull request;
+2. take the first `ready` pull request; while a pull request is labelled `red-carrier` and a
+   required check of master's own commit concluded red (`failure`, `timed_out`,
+   `startup_failure`), take the first `ready` one so labelled instead, and when none is ready
+   land nothing and record `idle` naming the red and the carrier (I2709);
 3. observe again and rebuild the queue;
 4. act only if the second decision names the same master and head and still says `ready`,
    and otherwise record `stale_decision` and start again;
@@ -523,6 +528,13 @@ master became as merged by itself. A head that does not contain master is landed
 commit only when it carries master (the `carries_master` link of a train whose lower link
 landed by a merge); that is rare, since a link above one that was fast-forwarded to contains
 master.
+
+The carrier gate reads master's own check runs (`gh api
+repos/OWNER/NAME/commits/<master>/check-runs?check_name=<check>&filter=latest`) only while some
+open pull request carries `red-carrier`: naming the carrier is the integrator's act (rule
+`project.an-expedited-landing-is-the-owners-word`, clause 8), and a drain with nobody named asks
+the forge nothing more. A verdict that cannot be read is not taken for red, since a ready head's
+own required checks already passed on a tree that contains master.
 
 A landing moves every other pull request behind master, so the next step always starts from a
 new observation.
@@ -780,11 +792,13 @@ Nothing here depends on them.
 
 ## An expedited landing
 
-Everything above is the executor, and the executor never passes `--admin`. One thing is
-outside it: the owner of the branch protection may decide to spend it. Rule
+Everything above is the executor, and the executor never passes `--admin`; it is the lander,
+and the landing seat lands through it. One thing is outside it, and is no way to land for a seat
+or a worker: the owner of the branch protection may decide to spend it, by name, for one
+landing past the required check. Rule
 `project.an-expedited-landing-is-the-owners-word` and ADR 0155 say when a named lander may
 merge past the required check, and what that never reaches.
-Since 2026-10-16 the lander is the landing seat of
+Since 2026-10-16 the named lander of an expedited landing is the landing seat of
 [*The model in force*](#the-model-in-force), and what it lands may be a combined top rather
 than one pull request: one seat at a time, and a landing may carry a whole top.
 

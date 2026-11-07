@@ -99,6 +99,110 @@ pub fn fast_forward_args(repository: &str, base: &str, head: &str) -> Vec<String
     .to_vec()
 }
 
+/// The label that names a pull request the carrier of master's red (I2709): while one carries
+/// it and a required check of master's own commit has failed, the drain lands a ready pull
+/// request carrying it and nothing else. Compared case-insensitively, like every label of the
+/// policy.
+pub const RED_CARRIER_LABEL: &str = "red-carrier";
+
+/// Master's red, as the drain reads it before it lands: the commit, the required checks whose
+/// newest run on it concluded red, and the open pull requests labelled [`RED_CARRIER_LABEL`].
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct TrunkRed {
+    /// The master commit whose required checks were read.
+    pub master_sha: String,
+    /// The required check contexts that concluded red there, in the order the base requires
+    /// them; never empty.
+    pub failed: Vec<String>,
+    /// The open pull requests named its carrier, by number.
+    pub carriers: Vec<u64>,
+}
+
+impl TrunkRed {
+    /// Why nothing but the carrier lands, in the words of the trail.
+    pub fn why_held(&self) -> String {
+        let carriers = if self.carriers.is_empty() {
+            format!("no pull request is labelled {RED_CARRIER_LABEL}")
+        } else {
+            format!(
+                "its carrier ({}) is not ready",
+                self.carriers
+                    .iter()
+                    .map(|n| format!("#{n}"))
+                    .collect::<Vec<_>>()
+                    .join(" ")
+            )
+        };
+        format!(
+            "master {} is red ({}): only the red's carrier lands, and {carriers}",
+            self.master_sha,
+            self.failed.join(", ")
+        )
+    }
+}
+
+/// Whether one check run, as the forge's check-runs API answers it, is red: completed with a
+/// `failure`, `timed_out` or `startup_failure` conclusion. A cancelled run is not red (a run
+/// yields; it does not fail), and a run still going is not a verdict.
+///
+/// The module is private, so the example is text; the unit tests run the same assertions.
+///
+/// ```text
+/// use majordomus_cli::integration::drain::check_run_is_red;
+/// let red = serde_json::json!({"status": "completed", "conclusion": "failure"});
+/// let going = serde_json::json!({"status": "in_progress", "conclusion": null});
+/// assert!(check_run_is_red(&red));
+/// assert!(!check_run_is_red(&going));
+/// ```
+pub fn check_run_is_red(run: &serde_json::Value) -> bool {
+    run["status"].as_str() == Some("completed")
+        && matches!(
+            run["conclusion"].as_str(),
+            Some("failure" | "timed_out" | "startup_failure")
+        )
+}
+
+/// The pull request the drain may land while master is red: the first ready one, in rank
+/// order, that `red` names its carrier. `None` when none is ready, and the drain then lands
+/// nothing (I2709).
+///
+/// ```text
+/// // a queue whose ready pull requests are #1 then #2, with #2 the carrier: #2 is chosen
+/// assert_eq!(carrier_to_land(&queue, &red), Some(2));
+/// ```
+pub fn carrier_to_land(queue: &IntegrationQueue, red: &TrunkRed) -> Option<u64> {
+    queue
+        .assessments
+        .iter()
+        .find(|a| {
+            a.disposition == PullRequestDisposition::Ready && red.carriers.contains(&a.number)
+        })
+        .map(|a| a.number)
+}
+
+/// The forge path that lists the newest check runs named `context` on `sha` of `repository`,
+/// the name percent-encoded.
+///
+/// ```text
+/// assert_eq!(
+///     check_runs_path("o/r", "abc", "ci"),
+///     "repos/o/r/commits/abc/check-runs?check_name=ci&filter=latest"
+/// );
+/// ```
+pub fn check_runs_path(repository: &str, sha: &str, context: &str) -> String {
+    let name: String = context
+        .bytes()
+        .map(|b| {
+            if b.is_ascii_alphanumeric() || b"-_.~".contains(&b) {
+                (b as char).to_string()
+            } else {
+                format!("%{b:02X}")
+            }
+        })
+        .collect();
+    format!("repos/{repository}/commits/{sha}/check-runs?check_name={name}&filter=latest")
+}
+
 /// How long a required check that has not reported (`missing`) on a head the executor pushed
 /// still holds the refresh pipeline, counted from the `refreshed` event. A forge creates no
 /// check run for an aggregate job until every job it needs has finished, so for most of a CI
@@ -1284,6 +1388,16 @@ pub trait Integrator {
     /// The executor advanced its queue, as `phase` says ([`IntegrationAction::advances_queue`]):
     /// what keeps its lease alive across machines (I3991). Nothing by default.
     fn progressed(&mut self, _phase: &str) {}
+    /// Master's red against `queue`'s master, when a pull request is named its carrier
+    /// ([`RED_CARRIER_LABEL`]) and a required check of that commit concluded red
+    /// ([`TrunkRed`]); `None` when nobody is named, none did, or the verdict could not be
+    /// read. Naming the carrier is what engages the gate (rule clause 8: the integrator names
+    /// it), so a drain with no carrier named asks the forge nothing more. An unread verdict is
+    /// not taken for red: a ready head's own required checks passed on a tree that contains
+    /// master, which is the reading of master's lanes the forge already gave. None by default.
+    fn trunk_red(&mut self, _queue: &IntegrationQueue) -> Option<TrunkRed> {
+        None
+    }
     /// Whether the executor still holds its lease where it reaches, asked before `act`
     /// writes to the forge or a branch; the reason when it does not. Held by default.
     fn holds(&mut self, _act: &str) -> Result<(), String> {
@@ -1350,7 +1464,18 @@ pub fn step(
             ));
         }
     }
-    let Some(candidate) = first.next_merge.and_then(|n| first.get(n).cloned()) else {
+    // while master's own required check is red, only the red's named carrier lands (I2709):
+    // anything else would land onto a trunk whose red nobody has paid yet
+    let red = first.next_merge.and_then(|_| integrator.trunk_red(&first));
+    let chosen = match &red {
+        None => first.next_merge,
+        Some(r) => carrier_to_land(&first, r),
+    };
+    let held_by_red = red
+        .as_ref()
+        .filter(|_| chosen.is_none())
+        .map(TrunkRed::why_held);
+    let Some(candidate) = chosen.and_then(|n| first.get(n).cloned()) else {
         // a record nothing can merge until its own run exists comes before any refresh: it
         // pushes nothing, and every open head is red until the record has landed
         if let Some(outcome) = reopen_step(root, integrator, &first, dry_run)? {
@@ -1361,7 +1486,9 @@ pub fn step(
                 return Ok(outcome);
             }
         }
-        let why = if first.next_refresh.is_empty() {
+        let why = if let Some(held) = held_by_red {
+            held
+        } else if first.next_refresh.is_empty() {
             format!(
                 "nothing is ready among {} open pull request(s)",
                 first.tallies.open
@@ -1391,7 +1518,11 @@ pub fn step(
     let mut selected = event(
         IntegrationAction::Selected,
         Some(&candidate),
-        "the first ready pull request",
+        if red.is_some() {
+            "the carrier of master's red"
+        } else {
+            "the first ready pull request"
+        },
     );
     selected.passed_over = others(&first, PullRequestDisposition::Ready, candidate.number);
     recorded(root, integrator, selected)?;
@@ -2556,6 +2687,44 @@ impl Integrator for ForgeIntegrator<'_> {
 
     fn holds(&mut self, act: &str) -> Result<(), String> {
         self.lease.map_or(Ok(()), |l| l.holds(act))
+    }
+
+    fn trunk_red(&mut self, queue: &IntegrationQueue) -> Option<TrunkRed> {
+        // the carrier is named first (rule clause 8: the integrator names it), and only a
+        // named carrier makes master's verdict worth a forge read on every landing
+        let carriers: Vec<u64> = super::load_observation(self.root)
+            .ok()
+            .flatten()?
+            .pull_requests
+            .iter()
+            .filter(|p| {
+                p.labels
+                    .iter()
+                    .any(|l| l.eq_ignore_ascii_case(RED_CARRIER_LABEL))
+            })
+            .map(|p| p.number)
+            .collect();
+        if carriers.is_empty() {
+            return None;
+        }
+        let required = queue.policy.required_checks.as_ref()?;
+        let failed: Vec<String> = required
+            .iter()
+            .filter(|check| {
+                let path = check_runs_path(&queue.repository, &queue.master_sha, &check.context);
+                gh(self.root, &["api", &path])
+                    .ok()
+                    .and_then(|text| serde_json::from_str::<serde_json::Value>(&text).ok())
+                    .and_then(|v| v["check_runs"].as_array().cloned())
+                    .is_some_and(|runs| runs.iter().any(check_run_is_red))
+            })
+            .map(|check| check.context.clone())
+            .collect();
+        (!failed.is_empty()).then(|| TrunkRed {
+            master_sha: queue.master_sha.clone(),
+            failed,
+            carriers,
+        })
     }
 
     fn merge(&mut self, pr: u64, head_sha: &str, method: &str) -> Result<(), String> {
@@ -3760,5 +3929,106 @@ mod fast_forward_tests {
             ..Default::default()
         };
         assert!(landing(root, &behind, FAST_FORWARD, &head).is_err());
+    }
+}
+
+#[cfg(test)]
+mod trunk_red_tests {
+    //! I3910 criterion 4: while master's required check is red, the drain lands only the
+    //! red's named carrier (I2709), and says so when there is none to land.
+
+    use super::*;
+    use crate::integration::{
+        build_queue, forge, ForgeObservation, RelationToMaster, OBSERVATION_SCHEMA,
+    };
+
+    /// A queue of `ready` pull requests, numbered as given, each `ready` in that rank order.
+    fn queue_of(ready: &[u64]) -> IntegrationQueue {
+        let pull_requests = ready
+            .iter()
+            .filter_map(|n| {
+                forge::pull_request_of(&serde_json::json!({
+                    "number": n, "title": "t", "author": {"login": "a"},
+                    "headRefName": format!("fix/{n}"), "headRefOid": format!("{n:040}"),
+                    "baseRefName": "master", "isDraft": false, "labels": [],
+                    "createdAt": "2026-10-01T00:00:00Z", "updatedAt": "2026-10-01T00:00:00Z",
+                    "body": "", "statusCheckRollup": [], "reviewDecision": "",
+                    "autoMergeRequest": null, "isCrossRepository": false
+                }))
+                .map(forge::read_whole)
+            })
+            .collect();
+        let obs = ForgeObservation {
+            schema: OBSERVATION_SCHEMA,
+            repository: "o/r".into(),
+            base: "master".into(),
+            base_sha: "m".into(),
+            observed_at: "t".into(),
+            required_checks: None,
+            review_policy: None,
+            up_to_date_required: None,
+            merge_methods: Some(vec!["merge".into()]),
+            pull_requests,
+            resolved: Default::default(),
+            delete_branch_on_merge: None,
+        };
+        let mut queue = build_queue(&obs, "m", |_| RelationToMaster::Unknown {
+            reason: "not asked".into(),
+        });
+        // the order and the disposition are what this test is about, not how they were decided
+        queue.assessments.sort_by_key(|a| {
+            ready
+                .iter()
+                .position(|n| *n == a.number)
+                .unwrap_or(usize::MAX)
+        });
+        for a in &mut queue.assessments {
+            a.disposition = PullRequestDisposition::Ready;
+        }
+        queue.next_merge = ready.first().copied();
+        queue
+    }
+
+    /// The drain's word while master is red: the red's carrier, first ready in rank order,
+    /// is the one pull request it may land; with no ready carrier it lands nothing.
+    #[test]
+    fn while_master_is_red_only_its_carrier_lands() {
+        let queue = queue_of(&[1, 2, 3]);
+        let red = |carriers: Vec<u64>| TrunkRed {
+            master_sha: "m".into(),
+            failed: vec!["ci".into()],
+            carriers,
+        };
+        assert_eq!(carrier_to_land(&queue, &red(vec![3, 2])), Some(2));
+        assert_eq!(carrier_to_land(&queue, &red(vec![9])), None);
+        let none = red(Vec::new());
+        assert_eq!(carrier_to_land(&queue, &none), None);
+        assert!(
+            none.why_held().contains("master m is red (ci)"),
+            "{}",
+            none.why_held()
+        );
+        assert!(none.why_held().contains(RED_CARRIER_LABEL));
+        assert!(red(vec![9]).why_held().contains("#9"));
+    }
+
+    /// Only a completed failure is red: a cancelled run yielded, and a run still going has
+    /// no verdict; and the check is named in the forge path percent-encoded.
+    #[test]
+    fn only_a_completed_failure_of_masters_check_is_red() {
+        let run = |status: &str, conclusion: Option<&str>| serde_json::json!({"status": status, "conclusion": conclusion});
+        assert!(check_run_is_red(&run("completed", Some("failure"))));
+        assert!(check_run_is_red(&run("completed", Some("timed_out"))));
+        assert!(!check_run_is_red(&run("completed", Some("success"))));
+        assert!(!check_run_is_red(&run("completed", Some("cancelled"))));
+        assert!(!check_run_is_red(&run("in_progress", None)));
+        assert_eq!(
+            check_runs_path("o/r", "abc", "ci"),
+            "repos/o/r/commits/abc/check-runs?check_name=ci&filter=latest"
+        );
+        assert_eq!(
+            check_runs_path("o/r", "abc", "a b/c"),
+            "repos/o/r/commits/abc/check-runs?check_name=a%20b%2Fc&filter=latest"
+        );
     }
 }
