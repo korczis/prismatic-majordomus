@@ -80530,6 +80530,48 @@
         }
       },
       {
+        "id": "majordomus://issue/I4561",
+        "kind": "issue",
+        "label": "I4561",
+        "summary": "A ledger line names the process that wrote it: its pid, its working directory and the mesh session it is attached to",
+        "route": "/cockpit/objects/issue/i4561",
+        "source": ".ai/repo/project/issues/I4561.yaml",
+        "facts": {
+          "created_at": "2026-11-08",
+          "depends_on": [],
+          "evidence_required": [
+            "ci"
+          ],
+          "milestone": "M002",
+          "non_scope": [
+            "Which episode a line names (I4291, I4292, ADR 0164)",
+            "Verifying a writer's identity: a pid and a directory are what the process reports, not an authentication",
+            "Rewriting lines already written"
+          ],
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "risk": "Low. Lines grow by three keys; readers that parse the envelope strictly must accept them, and the case reads every ledger reader once.",
+          "scope": [
+            ".ai/repo/project/issues/I4561.yaml",
+            "lib/common.sh",
+            "lib/history.sh",
+            "apps/majordomus-cli/src/ledger.rs",
+            "share/events.yaml",
+            "test/cases/4568_a_ledger_line_names_its_writer.sh"
+          ],
+          "serves": [
+            "a-session-record-says-what-it-served#checkpoints-name-their-episode"
+          ],
+          "slug": "a-ledger-event-names-its-writer",
+          "updated_at": "2026-11-08",
+          "validation": [
+            "bash test/run.sh 4568_a_ledger_line_names_its_writer",
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib ledger::"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "label": "a-brief-is-reconciled-not-transcribed",
@@ -149157,6 +149199,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I4561",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4561",
+        "target": "majordomus://milestone/M002",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -161813,8 +161865,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4422,
-      "edges": 10037,
+      "nodes": 4423,
+      "edges": 10039,
       "acyclic": false,
       "truncated": false
     }

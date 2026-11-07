@@ -40,6 +40,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I4461` | shares docs/CLI.md with I4465; they may not run concurrently |
 | WARN | `scope_conflict` | `I4461` | shares lib/handover.sh with I4467; they may not run concurrently |
 | WARN | `scope_conflict` | `I4461` | shares lib/handover.sh with I4468; they may not run concurrently |
+| WARN | `scope_conflict` | `I4461` | shares lib/common.sh with I4561; they may not run concurrently |
 | WARN | `scope_conflict` | `I4462` | shares docs/CLI.md with I4463; they may not run concurrently |
 | WARN | `scope_conflict` | `I4462` | shares docs/CLI.md with I4464; they may not run concurrently |
 | WARN | `scope_conflict` | `I4462` | shares docs/CLI.md with I4465; they may not run concurrently |
@@ -59,6 +60,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I4466` | shares apps/majordomus-cli/src/capability/builtin/mesh.rs with I4486; they may not run concurrently |
 | WARN | `scope_conflict` | `I4466` | shares .ai/repo/ci/mesh-event-fields.yaml with I4488; they may not run concurrently |
 | WARN | `scope_conflict` | `I4467` | shares lib/handover.sh with I4468; they may not run concurrently |
+| WARN | `scope_conflict` | `I4467` | shares lib/common.sh with I4561; they may not run concurrently |
 | WARN | `scope_conflict` | `I4468` | shares apps/majordomus-cli/src/capability/builtin with I4481; they may not run concurrently |
 | WARN | `scope_conflict` | `I4468` | shares apps/majordomus-cli/src/capability/builtin with I4486; they may not run concurrently |
 | WARN | `scope_conflict` | `I4468` | shares scripts/ci with I4488; they may not run concurrently |
@@ -66,3 +68,4 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I4468` | shares apps/majordomus-cli/src/capability/builtin with I4522; they may not run concurrently |
 | WARN | `scope_conflict` | `I4468` | shares .ai/repo/ci with I4524; they may not run concurrently |
 | WARN | `scope_conflict` | `I4468` | shares scripts/ci with I4527; they may not run concurrently |
+| WARN | `scope_conflict` | `I4468` | shares lib with I4561; they may not run concurrently |
