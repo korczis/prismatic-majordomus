@@ -43,8 +43,9 @@ done
 grep -qF 'Written by `majordomus capture install`' "$MOD/hooks/register.ts" \
   || fail 'the installed hooks module carries no marker, so the next install cannot own it'
 grep -qF '$.ui.status' "$MOD/hooks/register.ts" || fail 'the installed module shows no status line'
-# what is installed reports only a changed fact (I4250); case 4250 runs the rule's own test
-grep -qF 'fingerprint(b) !== fingerprint(told)' "$MOD/hooks/register.ts" \
+# what is installed reports only a changed fact (I4250), compared by the facts the executable
+# states (I4559); case 4250 runs the rule's own test
+grep -qF '!sameFacts(b, told)' "$MOD/hooks/register.ts" \
   || fail 'the installed module self-reports whether or not anything changed'
 expect_no_grep 'majordomus-brief' .claude/settings.json
 
