@@ -2,17 +2,17 @@
  "schema": 1,
  "generated_by": "scripts/lib/docs-index.mjs",
  "build": {
-  "commit": "51719a448248f2ebf9417ab97e147912434f6dbd",
+  "commit": "df412480833a8285bee938a1f9d93257a766b4bd",
   "source_version": "1.0.0",
-  "registry_fingerprint": "fbfae9d957fcb1ad137e28f200413c4179167cc564687dfafd4d91d664eb6b81"
+  "registry_fingerprint": "f35f529dd06acf46a550068bad759e880c7954654ef32b33eafa5785d9d5f709"
  },
  "counts": {
-  "pages": 6456,
-  "capabilities": 3956,
+  "pages": 6460,
+  "capabilities": 3958,
   "cli_commands": 128,
   "http_routes": 219,
   "mcp_tools": 215,
-  "mcp_resources": 3782,
+  "mcp_resources": 3784,
   "modules": 96
  },
  "kinds": [
@@ -158,7 +158,7 @@
    "route": "/plan/",
    "title": null,
    "reason": null,
-   "count": 1223
+   "count": 1225
   },
   {
    "kind": "knowledge",
@@ -15819,6 +15819,18 @@
    "route": "/cs/plan/i4531/",
    "title": "I4531 — The pages name the pre-release that was published, not only the one recorded",
    "description": "scripts/site-build derives the pre-release the pages name beside the stable release the way it derives the stable one (project.the-site-offers-the-release-it-published): from the release records of the tree and from the pre-release documents the published branch already serves, the newer pick named and its source recorded in build.json; scripts/site-deploy keeps a published release document the build does not carry; scripts/pages release-live holds the live homepage's pre-release to GitHub's newest pre-release the way it holds the stable one.",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/plan/i4532/",
+   "title": "I4532 — The hosted CI jobs of this repository are admitted to fourteen in flight, leaving six for OSCILLA",
+   "description": "Bound the GitHub-hosted jobs of this repository so that at most fourteen run at once across every run, leaving six of the account's twenty hosted runners to OSCILLA, as the owner decided: before any gate asks for a runner, a run's plan job counts the hosted jobs of this repository already in flight and yields, as the release-path yield does, when admitting its plan would pass fourteen; the bound is declared in the CI model, proved by a case, and never counts a job on a self-hosted runner.",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/plan/i4533/",
+   "title": "I4533 — The published site stays under GitHub Pages' size limit",
+   "description": "Bound the tree scripts/pages publishes to gh-pages: a measured budget with margin under GitHub's 1 GB Pages limit (900 MB or lower) that scripts/pages check or scripts/site-check refuses with the three largest contributors named, and a decision on what leaves the tree or is compressed so the deploy fits; a case proves the bound.",
    "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
   },
   {
@@ -33066,6 +33078,18 @@
    "section": "The plan"
   },
   {
+   "route": "/plan/i4532/",
+   "title": "I4532 — The hosted CI jobs of this repository are admitted to fourteen in flight, leaving six for OSCILLA",
+   "description": "Bound the GitHub-hosted jobs of this repository so that at most fourteen run at once across every run, leaving six of the account's twenty hosted runners to OSCILLA, as the owner decided: before any gate asks for a runner, a run's plan job counts the hosted jobs of this repository already in flight and yields, as the release-path yield does, when admitting its plan would pass fourteen; the bound is declared in the CI model, proved by a case, and never counts a job on a self-hosted runner.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i4533/",
+   "title": "I4533 — The published site stays under GitHub Pages' size limit",
+   "description": "Bound the tree scripts/pages publishes to gh-pages: a measured budget with margin under GitHub's 1 GB Pages limit (900 MB or lower) that scripts/pages check or scripts/site-check refuses with the three largest contributors named, and a decision on what leaves the tree or is compressed so the deploy fits; a case proves the bound.",
+   "section": "The plan"
+  },
+  {
    "route": "/plan/idd-reads-at-a-glance/",
    "title": "idd-reads-at-a-glance — The intent workspace reads at a glance and leads everywhere it names",
    "description": "The workspace reads in the order a person asks (what the intent is, what is missing, what to do next, the work, the evidence), every id on it is a link, its numbers are the intent's, its texts render through the UI's one prose renderer, it offers one primary action, and audit rules keep bare ids and raw markdown off every /ui page from now on.",
@@ -37010,7 +37034,7 @@
   {
    "route": "/rustdoc/",
    "title": "majordomus-cli 1.0.0 — Rust API reference",
-   "description": "The rustdoc reference of majordomus-cli 1.0.0, built from commit 51719a448248f2ebf9417ab97e147912434f6dbd: the public items of the library and of the executable, and the source they were built from.",
+   "description": "The rustdoc reference of majordomus-cli 1.0.0, built from commit df412480833a8285bee938a1f9d93257a766b4bd: the public items of the library and of the executable, and the source they were built from.",
    "section": "majordomus-cli 1.0.0 — Rust API reference"
   },
   {
