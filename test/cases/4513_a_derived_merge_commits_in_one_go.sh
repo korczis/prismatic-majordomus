@@ -42,13 +42,20 @@ set -eu
 repo="\$3"; mkdir -p "\$repo/docs/generated"
 "$STUB/history" "\$repo" > "\$repo/docs/generated/history.txt"
 EOF
-# the executable scripts/pages runs: `[--repo R] generate --check` refuses a stale projection
+# the executable scripts/pages runs: `generate [--repo R] --check` refuses a stale projection.
+# It parses as the real one does: --repo is an option of `generate`, and before the subcommand
+# it is refused ("unexpected argument '--repo'"), which is how the first version of this gate
+# failed on a real merge on 2026-11-08 while this stub accepted it.
 cat > bin/majordomus-cli <<EOF
 #!/usr/bin/env bash
 set -eu
 repo="\$(git rev-parse --show-toplevel)"
-[ "\${1:-}" = --repo ] && { repo="\$2"; shift 2; }
-[ "\${1:-}" = generate ] && [ "\${2:-}" = --check ] || exit 0
+[ "\${1:-}" = generate ] || { echo "error: unexpected argument '\${1:-}' found" >&2; exit 2; }
+shift; check=""
+while [ \$# -gt 0 ]; do
+  case "\$1" in --repo) repo="\$2"; shift 2 ;; --check) check=1; shift ;; *) shift ;; esac
+done
+[ -n "\$check" ] || exit 0
 "$STUB/history" "\$repo" | cmp -s - "\$repo/docs/generated/history.txt" && exit 0
 echo "generate --check: docs/generated/history.txt is stale for \$repo" >&2; exit 10
 EOF

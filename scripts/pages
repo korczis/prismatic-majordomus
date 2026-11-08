@@ -251,10 +251,11 @@ derived_merge_end() {
   env -u GIT_INDEX_FILE -u GIT_DIR -u GIT_WORK_TREE git -C "$ROOT" worktree prune >/dev/null 2>&1 || true
   derived_repo=""; derived_scratch=""
 }
-derived_check() {   # the executable's own `generate --check`, here or on the merge commit
+derived_check() {   # the executable's own `generate --check`, here or on the merge commit;
+  # --repo is an option of `generate`, not of the executable: before the subcommand it is refused
   if [ -z "$derived_repo" ]; then MAJORDOMUS_NO_BUILD=1 "$1" generate --check; return; fi
   (cd "$derived_repo" && env -u GIT_INDEX_FILE -u GIT_DIR -u GIT_WORK_TREE \
-    MAJORDOMUS_NO_BUILD=1 MAJORDOMUS_SHARE="$derived_repo/share" "$1" --repo "$derived_repo" generate --check)
+    MAJORDOMUS_NO_BUILD=1 MAJORDOMUS_SHARE="$derived_repo/share" "$1" generate --repo "$derived_repo" --check)
 }
 cmd_derived() {
   local cli="$ROOT/bin/majordomus-cli" out rc=0
