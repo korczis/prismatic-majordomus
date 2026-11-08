@@ -128,6 +128,26 @@ expect_grep '^- \[unresolved\] none — B question resolved by A' .ai/local/stat
 expect_exit 0 a "$MJ" question resolve "B question resolved by A" --answer "A supplies the answer"
 event_is question.resolved "$sid_a" "$id"
 expect_grep '^- \[resolved [0-9-]+\] none — B question resolved by A' .ai/local/state/open-questions.md
+
+# The executable's writers resolve the caller as the shell's do (I4291). Both episodes are
+# open and the pointer names B, which opened last: a plan transition made through the
+# executable names its own caller's episode, A's for A and B's for B, never the pointer's.
+# Until I4291 the executable's ledger writer read the pointer, and A's transition was B's.
+RB="$(rust_bin)" || rust_bin_exit $?
+pj_init; pj_milestone M000 0; pj_issue I0001 M000; pj_issue I0002 M000
+git add -A >/dev/null 2>&1; git commit -qm "the plan" >/dev/null 2>&1
+expect_exit 0 a env MAJORDOMUS_SHARE="$ROOT/share" "$RB" run plan.transition \
+  --input '{"issue":"I0001","transition":"start"}' --repo . --format json
+event_is plan_start "$sid_a" ""
+expect_exit 0 b env MAJORDOMUS_SHARE="$ROOT/share" "$RB" run plan.transition \
+  --input '{"issue":"I0002","transition":"start"}' --repo . --format json
+event_is plan_start "$sid_b" ""
+must "the executable named the pointer's episode for A" \
+  test "$(jq -r 'select(.event == "plan_start" and .issue == "I0001") | .session' "$ledger")" = "$sid_a"
+# a caller whose episode is not open names none, and still not the pointer's
+expect_exit 0 unknown env MAJORDOMUS_SHARE="$ROOT/share" "$RB" run plan.transition \
+  --input '{"issue":"I0001","transition":"verify"}' --repo . --format json
+event_is plan_verify "" ""
 expect_exit 0 "$MJ" question list --all
 expect_grep 'A question resolved by B'
 expect_grep 'B question resolved by A'

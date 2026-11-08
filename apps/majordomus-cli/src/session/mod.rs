@@ -72,6 +72,7 @@
 //! assert!(open_episodes(dir.path()).is_empty());
 //! ```
 
+pub mod attribution;
 pub mod episode;
 pub mod identity;
 pub mod ledger;
