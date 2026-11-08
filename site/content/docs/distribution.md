@@ -238,9 +238,12 @@ as `refs/remotes/origin/*`): a tag whose record is carried by the tip of a
 `release/record-<tag>` branch younger than `MJ_RELEASE_RECORD_GRACE_HOURS` (24 by default) is
 reported `pending`, naming that branch, and passes. What it costs: the gate trusts a branch,
 not a merged record, for up to a day — a record branch whose pull request was closed excuses
-its tag until the grace runs out — and a checkout that fetched no branches sees no proposal
-and refuses as before. A tag with no record and no branch proposing one, the v0.7.0 state, is
-refused at once on every head. Proposing the record before the tag was the other choice, and
+its tag until the grace runs out. A checkout fetched before the branch was pushed holds no
+ref of it (I4341: on 2026-10-28 master validate run 40676150754 went red on
+v1.0.0-alpha.9 that way), so when no fetched ref proposes the record inside the grace the gate
+asks `origin` for that one branch with `git ls-remote --heads` and fetches only it; where
+`origin` cannot be reached the refusal stands, with a note naming the remote. A tag with no
+record and no branch proposing one, the v0.7.0 state, is refused at once on every head. Proposing the record before the tag was the other choice, and
 it was not taken: the record would describe artifacts nobody had built yet.
 `test/cases/3021_a_tag_does_not_freeze_the_queue.sh` holds every state.
 
@@ -250,11 +253,15 @@ published yet either: on 2026-10-14 the structure job of #1146 went red on v0.26
 release run was still waiting for a macOS build. Only the forge can see that state, so for a
 tag with neither record nor proposal the gate asks `gh` for the tag's runs of `release.yml`: a
 run queued or running makes the tag `pending`, naming the run; no run listed and no GitHub
-release yet, inside the same grace, is pending too. A concluded run, a GitHub release that
-exists, a forge that cannot be read and a repository it cannot name (`MJ_RELEASE_CHECK_REPO`,
-else the `origin` remote on github.com) leave the refusal standing, with a note saying which —
-offline, the gate is as strict as before. `test/cases/3029_a_tag_in_flight_is_pending.sh`
-holds those states.
+release yet, inside the same grace, is pending too; and a GitHub release of the tag younger
+than the grace is pending whatever its run concluded (I4341), so that both excuses run on the
+one clock and a tag reads pending for the grace in every ordering of the checkout's fetch, the
+record branch's push and the run's conclusion, and missing after it. A concluded run that
+published no GitHub release, a GitHub release older than the grace, a forge that cannot be
+read and a repository it cannot name (`MJ_RELEASE_CHECK_REPO`, else the `origin` remote on
+github.com) leave the refusal standing, with a note saying which — offline, the gate is as
+strict as before. `test/cases/3029_a_tag_in_flight_is_pending.sh` holds those states and
+every ordering.
 
 The pipeline is [`.github/workflows/release.yml`](https://github.com/korczis/prismatic-majordomus/blob/@source-ref@/.github/workflows/release.yml), an
 adapter over [`.ai/repo/ci/release.yaml`](https://github.com/korczis/prismatic-majordomus/blob/@source-ref@/.ai/repo/ci/release.yaml) and the generated

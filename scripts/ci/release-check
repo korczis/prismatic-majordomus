@@ -31,9 +31,11 @@
 #      which is what a failure in the publish job looks like from the outside: nothing red,
 #      and an installer that goes on serving the previous version. A tag whose record is
 #      proposed — a fresh release/record-<tag> branch carries it — is pending, not missing,
-#      so the window between a tag and its record's merge turns no unrelated head red. So is
-#      a tag whose release is still in flight (I2712): its release run queued or running, or
-#      no run concluded yet and no GitHub release published — asked of the forge, see 5.
+#      so the window between a tag and its record's merge turns no unrelated head red; a
+#      branch pushed after this checkout fetched is asked of origin (I4341). So is a tag whose
+#      release is still in flight (I2712): its release run queued or running, a GitHub
+#      release of it younger than the grace whatever its run concluded, or no run concluded
+#      yet and no GitHub release published — asked of the forge, see 5.
 #
 #   scripts/ci/release-check                report every finding, exit 10 on any
 #   MJ_ROOT=<dir> scripts/ci/release-check  against another tree (the behavioural case does)
@@ -220,6 +222,15 @@ recorded_tag() {
 # the window has passed the tag is missing again and every head says so. What still fails at
 # once: a tag with no record and no branch proposing one — the v0.7.0 state, where the publish
 # job could not open the pull request at all.
+#
+# The refs a checkout fetched are a photograph of one moment, and the record branch is pushed
+# at another (I4341). On 2026-10-28 master validate run 40676150754 went red on
+# v1.0.0-alpha.9: its jobs fetched after the tag and before release/record-<tag> was pushed,
+# and judged after the release run had concluded, so neither excuse saw the release. So when
+# no fetched ref proposes the record inside the grace, origin is asked for that one branch
+# (`git ls-remote --heads`, no token beyond the checkout's own) and only that ref is fetched,
+# into refs/remotes/origin/ where the next fetch would put it anyway. Where origin cannot be
+# asked the finding is not excused by it, and a note names the remote that was not reached.
 RECORD_GRACE_HOURS="${MJ_RELEASE_RECORD_GRACE_HOURS:-24}"
 case "$RECORD_GRACE_HOURS" in ''|*[!0-9]*)
   echo "release-check: MJ_RELEASE_RECORD_GRACE_HOURS must be a whole number of hours, not '$RECORD_GRACE_HOURS'" >&2
@@ -236,15 +247,27 @@ now_epoch="$(date -u +%s)"
 # This is the one question git cannot answer, so it is asked of the forge, and only for a tag
 # that already has no record and no proposal. What it says, for tag t:
 #   a release run of t queued or running              -> pending, naming the run
+#   a GitHub release of t younger than the grace       -> pending, whatever its release run
+#                                                         concluded (I4341): the release is out
+#                                                         and its record is owed within the day
+#   a GitHub release of t older than the grace         -> the finding stands, naming its age
 #   no run of t listed and no GitHub release of t      -> pending while the tag is younger than
 #                                                         the grace (the run is being created)
-#   a run concluded (any way) and still nothing        -> the finding stands, naming the run
+#   a run concluded (any way) and no GitHub release    -> the finding stands, naming the run
 #   the forge cannot be asked                          -> the finding stands, and a note says
 #                                                         why it was not asked
 # It cannot be asked without gh, without a token gh accepts, or when no GitHub repository is
 # known (MJ_RELEASE_CHECK_REPO, else the `origin` remote's URL). That is the safe side: what
 # could not be read never excuses a tag, so offline the gate is what it was before — strict.
 # The structure job runs this gate with GH_TOKEN, so on CI the forge is asked.
+#
+# Why a release younger than the grace is pending whatever the run did (I4341): the in-flight
+# excuse used to end the moment the run concluded, and the proposal excuse only began once a
+# fetched ref carried the record branch. A run that published the release and was then
+# cancelled, or that concluded before the job judging this head had fetched the branch it
+# pushed, fell between the two, and every head went red for a release nobody had to act on
+# yet. Both excuses now run on the same clock — the grace — so the tag reads pending for that
+# long in every ordering of the fetch, the push and the conclusion, and missing after it.
 release_repo() {
   if [ -n "${MJ_RELEASE_CHECK_REPO:-}" ]; then printf '%s' "$MJ_RELEASE_CHECK_REPO"; return 0; fi
   git remote get-url origin 2>/dev/null \
@@ -252,7 +275,7 @@ release_repo() {
 }
 # prints "pending <phrase>" or "stands <phrase>"; the phrase is printed either way
 release_in_flight() {
-  local t="$1" repo runs active done_run rel_rc age made
+  local t="$1" repo runs active done_run ran rel rel_rc published rage age made
   repo="$(release_repo)"
   if [ -z "$repo" ]; then printf 'stands no GitHub repository is known (MJ_RELEASE_CHECK_REPO, or an origin on github.com), so its release run was not asked'; return 0; fi
   if ! command -v gh >/dev/null 2>&1; then printf 'stands gh is not installed, so the release run of %s in %s was not asked' "$t" "$repo"; return 0; fi
@@ -263,9 +286,23 @@ release_in_flight() {
   active="$(printf '%s' "$runs" | jq -r '[.workflow_runs[] | select(.status != "completed")] | sort_by(.created_at) | last | select(.) | "\(.id) (\(.status)) \(.html_url // "")"')"
   if [ -n "$active" ]; then printf 'pending its release run %s is still going' "$active"; return 0; fi
   done_run="$(printf '%s' "$runs" | jq -r '.workflow_runs | sort_by(.created_at) | last | select(.) | "\(.id) (\(.conclusion // "no conclusion"))"')"
-  if [ -n "$done_run" ]; then printf 'stands its release run %s has concluded' "$done_run"; return 0; fi
-  rel_rc=0; gh api "repos/$repo/releases/tags/$t" >/dev/null 2>&1 || rel_rc=$?
-  if [ "$rel_rc" = 0 ]; then printf 'stands GitHub holds a release of %s and no release run of it is listed' "$t"; return 0; fi
+  if [ -n "$done_run" ]; then ran="its release run $done_run has concluded"; else ran="no release run of it is listed"; fi
+  rel_rc=0; rel="$(gh api "repos/$repo/releases/tags/$t" 2>/dev/null)" || rel_rc=$?
+  if [ "$rel_rc" = 0 ]; then
+    published="$(printf '%s' "$rel" | jq -r '(.published_at // .created_at // empty) | fromdateiso8601 | floor' 2>/dev/null || true)"
+    case "$published" in
+      ''|*[!0-9]*)
+        printf 'stands GitHub holds a release of %s whose publication date could not be read, and %s' "$t" "$ran"; return 0 ;;
+    esac
+    rage="$(( (now_epoch - published) / 3600 ))"
+    if [ "$rage" -lt "$RECORD_GRACE_HOURS" ]; then
+      printf 'pending GitHub published its release of %s %sh ago (grace %sh) and %s' "$t" "$rage" "$RECORD_GRACE_HOURS" "$ran"
+    else
+      printf 'stands GitHub published its release of %s %sh ago, longer than the %sh grace, and %s' "$t" "$rage" "$RECORD_GRACE_HOURS" "$ran"
+    fi
+    return 0
+  fi
+  if [ -n "$done_run" ]; then printf 'stands %s and GitHub holds no release of it' "$ran"; return 0; fi
   # the tag's own date when it is annotated, its commit's when it is not: never later than
   # the push, so the grace can only close early, never stay open past its hours
   made="$(git for-each-ref --format='%(creatordate:unix)' "refs/tags/$t" 2>/dev/null || true)"
@@ -277,8 +314,8 @@ release_in_flight() {
     printf 'stands no release run of it was ever listed and GitHub holds no release of it, %sh after the tag' "$age"
   fi
 }
-# prints "<ref> <age in hours>" for the freshest branch that proposes the tag's record
-proposed_record() {
+# prints "<ref> <age in hours>" for the freshest fetched branch that proposes the tag's record
+fetched_proposal() {
   git for-each-ref --sort=-committerdate --format='%(refname) %(committerdate:unix)' \
     "refs/heads/release/record-$1" "refs/remotes/*/release/record-$1" 2>/dev/null |
     while read -r ref when; do
@@ -286,6 +323,35 @@ proposed_record() {
       printf '%s %s\n' "${ref#refs/}" "$(( (now_epoch - when) / 3600 ))"
       break
     done
+}
+# prints "found <ref> <age in hours>" for the freshest branch that proposes the tag's record,
+# and "note <phrase>" when origin could not be asked for one pushed after this checkout fetched
+proposed_record() {
+  local t="$1" found url heads tracked
+  found="$(fetched_proposal "$t")"
+  if [ -n "$found" ] && [ "${found##* }" -lt "$RECORD_GRACE_HOURS" ]; then
+    printf 'found %s\n' "$found"; return 0
+  fi
+  if ! url="$(git remote get-url origin 2>/dev/null)"; then
+    printf 'note this checkout has no remote origin, so whether release/record-%s was pushed after it fetched was not asked\n' "$t"
+  else
+    # a URL may carry credentials; what is printed names the remote, never its secret
+    url="$(printf '%s' "$url" | sed 's#://[^/@]*@#://#')"
+    if ! heads="$(GIT_TERMINAL_PROMPT=0 git ls-remote --heads origin "refs/heads/release/record-$t" 2>/dev/null)"; then
+      printf 'note origin (%s) could not be asked whether release/record-%s proposes its record, so a record branch pushed after this checkout fetched was not seen\n' "$url" "$t"
+    elif [ -n "$heads" ]; then
+      tracked="$(git rev-parse -q --verify "refs/remotes/origin/release/record-$t" 2>/dev/null || true)"
+      if [ "${heads%%[[:space:]]*}" != "$tracked" ]; then
+        if GIT_TERMINAL_PROMPT=0 git fetch -q --no-tags origin \
+             "+refs/heads/release/record-$t:refs/remotes/origin/release/record-$t" 2>/dev/null; then
+          found="$(fetched_proposal "$t")"
+        else
+          printf 'note origin (%s) lists release/record-%s and it could not be fetched\n' "$url" "$t"
+        fi
+      fi
+    fi
+  fi
+  [ -z "$found" ] || printf 'found %s\n' "$found"
 }
 
 if ! command -v git >/dev/null 2>&1 || ! git rev-parse --git-dir >/dev/null 2>&1; then
@@ -325,7 +391,11 @@ else
         excused=$((excused+1))
         continue
       fi
-      proposal="$(proposed_record "$t")"
+      asked="$(proposed_record "$t")"
+      proposal="$(printf '%s\n' "$asked" | sed -n 's/^found //p' | head -n 1)"
+      printf '%s\n' "$asked" | sed -n 's/^note //p' | while IFS= read -r line; do
+        printf 'note  %s: %s\n' "$t" "$line"
+      done
       if [ -n "$proposal" ]; then
         pref="${proposal% *}"
         page="${proposal##* }"
