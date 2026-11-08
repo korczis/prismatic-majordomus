@@ -276,7 +276,10 @@ in flight on each.
 
 `MAJORDOMUS_MESH_QUIC=off` in the server's environment leaves its links on HTTP alone. A host
 firewall that admits the server's TCP port must also admit the same UDP port for QUIC; without
-it, links fall back to HTTP.
+it, every link waits out the handshake timeout and falls back to HTTP. `majordomus mesh
+firewall --port <port>` plans both: a `link` rule over TCP and a `quic` rule over UDP on the
+same port, from the same networks (comment `majordomus mesh: link over QUIC`). Under
+`MAJORDOMUS_MESH_QUIC=off` the UDP rule is not planned, because nothing listens there.
 
 ## Presence, heartbeats and expiry
 

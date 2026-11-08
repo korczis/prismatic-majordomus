@@ -53706,7 +53706,7 @@
       "is_enum": true,
       "name": "Role",
       "properties": [],
-      "type": "\"multicast\" | \"broadcast\" | \"hub\" | \"link\"",
+      "type": "\"multicast\" | \"broadcast\" | \"hub\" | \"link\" | \"quic\"",
       "used_by": [],
       "used_by_schemas": [
         "FirewallRule"
@@ -53727,6 +53727,10 @@
         {
           "description": "This machine's server is dialed by peers on the link protocol.",
           "value": "link"
+        },
+        {
+          "description": "The same server answers the link over QUIC on its own port number, over UDP\n(ADR 0233): a peer tries QUIC first and falls back to TCP when the datagram is dropped.",
+          "value": "quic"
         }
       ],
       "variants": []

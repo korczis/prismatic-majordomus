@@ -79123,6 +79123,8 @@
         "apps/majordomus-cli/src/shared.rs",
         "apps/majordomus-cli/src/capability/builtin/mesh.rs",
         "apps/majordomus-cli/tests/mesh_quic.rs",
+        "apps/majordomus-cli/tests/mesh.rs",
+        "test/cases/495_the_firewall_admits_the_mesh.sh",
         "apps/majordomus-cli/Cargo.toml",
         "Cargo.lock",
         "scripts/ci/crate-boundary",
@@ -79148,7 +79150,9 @@
         "A message over MAX_LINK_MESSAGE is refused before it is sent, and a reply over MAX_LINK_REPLY is refused, exactly as on HTTP",
         "mesh status names the QUIC listener or why there is none (MAJORDOMUS_MESH_QUIC=off, a port QUIC cannot bind), and for each endpoint dialled the transport its last round took, the round time and why it fell back; the advertisement and the card are unchanged, so an older runtime links as before",
         "A live link between two machines (this Mac and lundra over the tailnet) carries a claim both ways over QUIC; its round time, and the HTTP round time on the same pair, are recorded in the issue's evidence",
-        "The added build time and release binary size are measured and recorded in ADR 0233"
+        "The added build time and release binary size are measured and recorded in ADR 0233",
+        "mesh firewall --port <p> plans a quic rule over UDP on port p beside the link rule over TCP, from the same networks, and plans none under MAJORDOMUS_MESH_QUIC=off",
+        "scripts/ci/crate-boundary admits tokio and mio only while src/mesh/quic.rs alone names tokio (ADR 0032, amendment of 2026-11-08), and case 360 holds both halves"
       ],
       "validation": [
         "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --lib mesh::quic::",
@@ -79157,9 +79161,67 @@
       "evidence_required": [
         "test_two_runtimes_link_over_quic",
         "test_a_quic_peer_with_another_key_is_refused",
-        "test_quic_falls_back_to_http"
+        "test_quic_falls_back_to_http",
+        "test_a_server_with_quic_switched_off_is_admitted_on_tcp_alone",
+        "live_link_mac_lundra_over_quic",
+        "release_build_time_and_size_measured"
       ],
-      "evidence": [],
+      "evidence": [
+        {
+          "covers": "live_link_mac_lundra_over_quic",
+          "type": "manual",
+          "command": "two debug builds of 1f0d85ea659 served one fixture repo (Mac 100.120.245.51, lundra 100.65.22.118:9741); round_ms read from GET /api/v1/mesh .links.paths, 15 rounds each, then MAJORDOMUS_MESH_QUIC=off on the Mac",
+          "result": "QUIC median 8 ms (min 6, max 229); HTTP median 29 ms (min 11, max 272); an exclusive claim written on each side held on the other within 3 s over QUIC",
+          "artifact": ".ai/repo/adrs/0233-a-mesh-link-runs-over-quic-with-the-node-key-as-its-tls-identity.md#measured",
+          "commit": "8787c0ea6413c56a1f3ad5564a49dbcf0664bc8e",
+          "recorded_at": "2026-11-08T20:46:23Z"
+        },
+        {
+          "covers": "release_build_time_and_size_measured",
+          "type": "build",
+          "command": "cargo build --release --locked --bin majordomus from empty target and build dirs on lundra (x86_64, rustc 1.98.1, 4 jobs), master 8a7e9df20d8 then 1f0d85ea659",
+          "result": "478 s / 58,480,112 bytes vs 488 s / 60,314,560 bytes: +10 s (+2.1 %), +1,834,448 bytes (+3.1 %), +15 packages",
+          "artifact": ".ai/repo/adrs/0233-a-mesh-link-runs-over-quic-with-the-node-key-as-its-tls-identity.md#measured",
+          "commit": "8787c0ea6413c56a1f3ad5564a49dbcf0664bc8e",
+          "recorded_at": "2026-11-08T20:46:34Z"
+        },
+        {
+          "covers": "test_two_runtimes_link_over_quic",
+          "type": "test",
+          "command": "cargo test --locked --test mesh_quic; cargo test --locked --lib -- mesh::quic::",
+          "result": "mesh_quic 2 passed (two_runtimes_link_over_quic_and_carry_a_claim_both_ways: two serve processes link over QUIC and a claim from each is held on the other); lib incl. a_hello_and_a_sync_travel_on_one_connection passed; on lundra (x86_64, rustc 1.98.1), tree 8787c0ea641 plus the firewall change committed after it",
+          "artifact": "apps/majordomus-cli/tests/mesh_quic.rs",
+          "commit": "8787c0ea6413c56a1f3ad5564a49dbcf0664bc8e",
+          "recorded_at": "2026-11-08T21:17:07Z"
+        },
+        {
+          "covers": "test_a_quic_peer_with_another_key_is_refused",
+          "type": "test",
+          "command": "cargo test --locked --lib -- mesh::quic::",
+          "result": "a_hello_addressed_to_another_node_is_refused_in_the_handshake, a_request_signed_by_another_key and a_reply_signed_by_another_key passed (64 passed with mesh::firewall::); on lundra (x86_64, rustc 1.98.1), tree 8787c0ea641 plus the firewall change committed after it",
+          "artifact": "apps/majordomus-cli/src/mesh/quic.rs",
+          "commit": "8787c0ea6413c56a1f3ad5564a49dbcf0664bc8e",
+          "recorded_at": "2026-11-08T21:17:18Z"
+        },
+        {
+          "covers": "test_quic_falls_back_to_http",
+          "type": "test",
+          "command": "cargo test --locked --lib -- mesh::quic::; cargo test --locked --test mesh_quic",
+          "result": "a_plain_endpoint_falls_back_to_http passed; a_runtime_without_quic_is_reached_over_http_and_the_path_says_why passed (path transport http with its fallback reason); on lundra (x86_64, rustc 1.98.1), tree 8787c0ea641 plus the firewall change committed after it",
+          "artifact": "apps/majordomus-cli/tests/mesh_quic.rs",
+          "commit": "8787c0ea6413c56a1f3ad5564a49dbcf0664bc8e",
+          "recorded_at": "2026-11-08T21:17:29Z"
+        },
+        {
+          "covers": "test_a_server_with_quic_switched_off_is_admitted_on_tcp_alone",
+          "type": "test",
+          "command": "cargo test --locked --lib -- mesh::firewall::; cargo test --locked --test mesh an_enabled_declaration_derives_the_group_rule",
+          "result": "a_server_with_quic_switched_off_is_admitted_on_tcp_alone passed (quic on: link+quic rules; off: link alone, no udp command); tests/mesh.rs roles multicast, link, quic passed; doctests 53 passed; clippy -D warnings clean; on lundra (x86_64, rustc 1.98.1), tree 8787c0ea641 plus the firewall change committed after it",
+          "artifact": "apps/majordomus-cli/src/mesh/firewall.rs",
+          "commit": "8787c0ea6413c56a1f3ad5564a49dbcf0664bc8e",
+          "recorded_at": "2026-11-08T21:18:04Z"
+        }
+      ],
       "risk": "",
       "completion": "",
       "started_at": "",

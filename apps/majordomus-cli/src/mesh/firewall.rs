@@ -99,6 +99,9 @@ pub enum Role {
     Hub,
     /// This machine's server is dialed by peers on the link protocol.
     Link,
+    /// The same server answers the link over QUIC on its own port number, over UDP
+    /// (ADR 0233): a peer tries QUIC first and falls back to TCP when the datagram is dropped.
+    Quic,
 }
 
 /// One inbound admission the mesh needs on this host: a protocol and a port, the group it is
@@ -245,8 +248,8 @@ pub fn parse_endpoint(endpoint: &str) -> Option<(Ipv4Addr, u16)> {
 /// answer. Otherwise: the multicast group's port when multicast is on; the broadcast
 /// port when broadcast is a permitted fallback, from the networks it names; every declared
 /// hub port whose address is this machine's; and the server's port, from the fleet's
-/// networks, when one is given — a server on loopback is dialed by nobody and needs no
-/// rule.
+/// networks, when one is given, over TCP and over UDP (QUIC answers on the same port number,
+/// ADR 0233) — a server on loopback is dialed by nobody and needs no rule.
 ///
 /// ```
 /// use std::net::Ipv4Addr;
@@ -257,10 +260,10 @@ pub fn parse_endpoint(endpoint: &str) -> Option<(Ipv4Addr, u16)> {
 ///     "schema": "mesh/v1", "kind": "mesh-declaration", "id": "doc", "enabled": true,
 ///     "cooperation": { "seeds": ["http://10.9.8.7:8741"] },
 /// })).unwrap();
-/// // no hub here, a server beyond loopback on 8741: the group's port and the link port
+/// // no hub here, a server beyond loopback on 8741: the group's port and the link port, twice
 /// let p = plan(Some(&config), &[Ipv4Addr::new(10, 9, 8, 1)], Some(8741));
 /// let roles: Vec<Role> = p.rules.iter().map(|r| r.role).collect();
-/// assert_eq!(roles, [Role::Multicast, Role::Link]);
+/// assert_eq!(roles, [Role::Multicast, Role::Link, Role::Quic]);
 /// assert_eq!(p.rules[1].sources, ["10.0.0.0/8"]);
 /// ```
 pub fn plan(
@@ -375,6 +378,20 @@ pub fn plan(
                 ),
             });
         }
+        // The server answers QUIC on the same port number over UDP (ADR 0233), whether the
+        // TCP side is the link port or a hub port: a peer tries QUIC first, so a dropped
+        // datagram costs every link the handshake timeout before it falls back to TCP.
+        // `report` leaves this rule out when MAJORDOMUS_MESH_QUIC=off.
+        rules.push(FirewallRule {
+            role: Role::Quic,
+            protocol: Protocol::Udp,
+            port,
+            destination: None,
+            sources: networks.clone(),
+            reason: format!(
+                "this checkout's server answers the link over QUIC on UDP port {port} (ADR 0233): a peer tries it first, and a dropped datagram delays every link to the HTTP fallback"
+            ),
+        });
     }
 
     FirewallPlan {
@@ -551,6 +568,7 @@ fn comment(rule: &FirewallRule) -> String {
         Role::Broadcast => "broadcast discovery",
         Role::Hub => "rendezvous hub",
         Role::Link => "link protocol",
+        Role::Quic => "link over QUIC",
     };
     format!("{COMMENT_PREFIX}: {what}")
 }
@@ -1197,19 +1215,24 @@ pub fn report(
         os: std::env::consts::OS,
         backend: detect_here(),
         executable: std::env::current_exe().ok(),
+        quic: !crate::mesh::quic::switched_off(),
         run: &run,
     };
     report_with(config, local, server_port, host)
 }
 
 /// The host a report is built on: its platform, the firewall front found there, the
-/// executable the server runs as, and how its tools are asked. [`report`] fills it from
-/// this process; a test fills it with a platform and answers of its own, which is how the
-/// verdict of every backend and every observation is held on a machine that has neither.
+/// executable the server runs as, whether its server answers QUIC, and how its tools are
+/// asked. [`report`] fills it from this process; a test fills it with a platform and answers
+/// of its own, which is how the verdict of every backend and every observation is held on a
+/// machine that has neither.
 struct Host<'a> {
     os: &'a str,
     backend: Backend,
     executable: Option<PathBuf>,
+    /// The server answers QUIC on its port (ADR 0233); false under `MAJORDOMUS_MESH_QUIC=off`,
+    /// and then the UDP rule for it is not planned: a port nobody listens on is not opened.
+    quic: bool,
     run: Runner<'a>,
 }
 
@@ -1224,9 +1247,13 @@ fn report_with(
         os,
         backend,
         executable,
+        quic,
         run,
     } = host;
-    let plan = plan(config, local, server_port);
+    let mut plan = plan(config, local, server_port);
+    if !quic {
+        plan.rules.retain(|r| r.role != Role::Quic);
+    }
     let commands = render(backend, &plan, executable.as_deref());
     let observation = if plan.rules.is_empty() {
         FirewallObservation::of(
@@ -1502,9 +1529,12 @@ mod tests {
         }));
         let p = plan(Some(&c), &[Ipv4Addr::new(192, 168, 1, 2)], Some(8791));
         assert_eq!(p.hub_ports, [8791]);
-        assert_eq!(p.rules.len(), 1);
+        // one TCP rule for the port, and the UDP rule QUIC answers on beside it (ADR 0233)
+        assert_eq!(p.rules.len(), 2);
         assert_eq!(p.rules[0].role, Role::Hub);
         assert_eq!(p.rules[0].label(), "tcp/8791 from 192.168.1.0/24");
+        assert_eq!(p.rules[1].role, Role::Quic);
+        assert_eq!(p.rules[1].label(), "udp/8791 from 192.168.1.0/24");
     }
 
     #[test]
@@ -1805,6 +1835,7 @@ mod tests {
             os,
             backend,
             executable: executable.map(PathBuf::from),
+            quic: true,
             run: &|program, args| host.run(program, args),
         };
         report_with(Some(&fleet()), &[HUB], None, host)
@@ -1912,6 +1943,29 @@ mod tests {
     }
 
     #[test]
+    fn a_server_with_quic_switched_off_is_admitted_on_tcp_alone() {
+        let seeded = config(serde_json::json!({
+            "schema": "mesh/v1", "kind": "mesh-declaration", "id": "t", "enabled": true,
+            "multicast": { "enabled": false },
+            "cooperation": { "seeds": ["http://10.9.8.7:8741"] },
+        }));
+        let nobody: Runner<'_> = &|program, _| Err(format!("{program} is not asked"));
+        let host = |quic| Host {
+            os: "linux",
+            backend: Backend::Ufw,
+            executable: None,
+            quic,
+            run: nobody,
+        };
+        let roles = |r: &FirewallReport| -> Vec<Role> { r.plan.rules.iter().map(|r| r.role).collect() };
+        let on = report_with(Some(&seeded), &[Ipv4Addr::new(10, 9, 8, 1)], Some(8741), host(true));
+        assert_eq!(roles(&on), [Role::Link, Role::Quic]);
+        let off = report_with(Some(&seeded), &[Ipv4Addr::new(10, 9, 8, 1)], Some(8741), host(false));
+        assert_eq!(roles(&off), [Role::Link]);
+        assert!(off.commands.iter().all(|c| !c.line.contains("proto udp")), "{:?}", off.commands);
+    }
+
+    #[test]
     fn a_server_beyond_loopback_is_admitted_on_its_port_from_the_networks_of_the_seeds() {
         let seeded = config(serde_json::json!({
             "schema": "mesh/v1", "kind": "mesh-declaration", "id": "t", "enabled": true,
@@ -1919,12 +1973,14 @@ mod tests {
         }));
         let p = plan(Some(&seeded), &[Ipv4Addr::new(10, 9, 8, 1)], Some(8741));
         let roles: Vec<Role> = p.rules.iter().map(|r| r.role).collect();
-        assert_eq!(roles, [Role::Multicast, Role::Link]);
+        assert_eq!(roles, [Role::Multicast, Role::Link, Role::Quic]);
         assert_eq!(p.rules[1].sources, ["10.0.0.0/8"]);
         assert!(p.rules[1].reason.contains("TCP port 8741"));
         // on loopback nobody dials it, and no port is given: no rule
         let quiet = plan(Some(&seeded), &[Ipv4Addr::new(10, 9, 8, 1)], None);
-        assert!(quiet.rules.iter().all(|r| r.role != Role::Link));
+        assert!(quiet.rules.iter().all(|r| r.role != Role::Link && r.role != Role::Quic));
+        assert_eq!(p.rules[2].label(), "udp/8741 from 10.0.0.0/8");
+        assert!(p.rules[2].reason.contains("QUIC on UDP port 8741"));
     }
 
     #[test]
@@ -2053,13 +2109,14 @@ mod tests {
         let roles: Vec<Role> = p.rules.iter().map(|r| r.role).collect();
         assert_eq!(
             roles,
-            [Role::Multicast, Role::Broadcast, Role::Hub, Role::Link]
+            [Role::Multicast, Role::Broadcast, Role::Hub, Role::Link, Role::Quic]
         );
         let comments = [
             "majordomus mesh: multicast discovery",
             "majordomus mesh: broadcast discovery",
             "majordomus mesh: rendezvous hub",
             "majordomus mesh: link protocol",
+            "majordomus mesh: link over QUIC",
         ];
 
         let ufw = render(Backend::Ufw, &p, None);
@@ -2071,6 +2128,7 @@ mod tests {
                 "ufw allow in proto udp from 192.168.7.0/24 to any port 7741 comment 'majordomus mesh: broadcast discovery'",
                 "ufw allow in proto tcp from 192.168.7.0/24 to any port 8791 comment 'majordomus mesh: rendezvous hub'",
                 "ufw allow in proto tcp from 192.168.7.0/24 to any port 8741 comment 'majordomus mesh: link protocol'",
+                "ufw allow in proto udp from 192.168.7.0/24 to any port 8741 comment 'majordomus mesh: link over QUIC'",
             ]
         );
         for (command, (rule, comment)) in ufw.iter().zip(p.rules.iter().zip(comments)) {
@@ -2082,12 +2140,13 @@ mod tests {
         }
 
         let nft = render(Backend::Nftables, &p, None);
-        assert_eq!(nft.len(), 4, "{nft:#?}");
+        assert_eq!(nft.len(), 5, "{nft:#?}");
         let heads = [
             "nft add rule inet filter input ip daddr 239.255.77.77 udp dport 7741 accept comment ",
             "nft add rule inet filter input ip saddr 192.168.7.0/24 udp dport 7741 accept comment ",
             "nft add rule inet filter input ip saddr 192.168.7.0/24 tcp dport 8791 accept comment ",
             "nft add rule inet filter input ip saddr 192.168.7.0/24 tcp dport 8741 accept comment ",
+            "nft add rule inet filter input ip saddr 192.168.7.0/24 udp dport 8741 accept comment ",
         ];
         for ((command, head), (rule, comment)) in
             nft.iter().zip(heads).zip(p.rules.iter().zip(comments))
@@ -2694,6 +2753,7 @@ mod tests {
                 os,
                 backend,
                 executable: Some(PathBuf::from(EXECUTABLE)),
+                quic: true,
                 run: &|program, args| host.run(program, args),
             };
             let r = report_with(None, &[HUB], Some(8741), on);
@@ -2777,6 +2837,7 @@ mod tests {
             os: "linux",
             backend: Backend::Ufw,
             executable: None,
+            quic: true,
             run: &|program, args| host.run(program, args),
         };
         let a = apply_as(report_with(None, &[HUB], None, on), true);

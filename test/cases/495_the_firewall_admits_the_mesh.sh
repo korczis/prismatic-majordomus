@@ -142,9 +142,12 @@ EOF
   ( cd "$R" && XDG_STATE_HOME="$T/state" "$RB" mesh firewall --port 8741 --format json ) > "$T/hub2.json" 2>/dev/null || true
   jq -e '[.plan.rules[] | select(.role == "link")] | length == 1 and .[0].port == 8741' "$T/hub2.json" >/dev/null \
     || { echo "    --port 8741 derives no link rule:"; jq '.plan.rules' "$T/hub2.json"; exit 1; }
+  # the server answers QUIC on the same port number over UDP (ADR 0233), from the same sources
+  jq -e '.plan.rules as $r | ([$r[] | select(.role == "quic")]) as $q | ($q | length == 1) and $q[0].protocol == "udp" and $q[0].port == 8741 and $q[0].sources == ([$r[] | select(.role == "link")][0].sources)' "$T/hub2.json" >/dev/null \
+    || { echo "    --port 8741 derives no UDP rule for QUIC:"; jq '.plan.rules' "$T/hub2.json"; exit 1; }
   ( cd "$R" && XDG_STATE_HOME="$T/state" "$RB" mesh firewall --port 8791 --format json ) > "$T/hub3.json" 2>/dev/null || true
-  jq -e '.plan.rules | length == 1' "$T/hub3.json" >/dev/null \
-    || { echo "    the hub port given as the server port is admitted twice:"; jq '.plan.rules' "$T/hub3.json"; exit 1; }
+  jq -e '([.plan.rules[] | select(.protocol == "tcp")] | length == 1) and ([.plan.rules[] | select(.role == "quic" and .protocol == "udp" and .port == 8791)] | length == 1)' "$T/hub3.json" >/dev/null \
+    || { echo "    the hub port given as the server port is admitted twice over TCP, or not over UDP for QUIC:"; jq '.plan.rules' "$T/hub3.json"; exit 1; }
 fi
 
 # ---------------------------------------------------------------- 5. apply refuses without root

@@ -252,7 +252,7 @@ fn link_transport(
     identity: &crate::mesh::identity::NodeIdentity,
     bound: &str,
 ) -> Arc<dyn crate::mesh::link::LinkTransport> {
-    let off = environment_variable("MAJORDOMUS_MESH_QUIC").as_deref() == Some("off");
+    let off = crate::mesh::quic::switched_off();
     crate::mesh::quic::runtime_transport(&ctx.mesh, identity, bound, off)
 }
 

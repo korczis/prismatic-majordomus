@@ -80579,7 +80579,10 @@
           "evidence_required": [
             "test_two_runtimes_link_over_quic",
             "test_a_quic_peer_with_another_key_is_refused",
-            "test_quic_falls_back_to_http"
+            "test_quic_falls_back_to_http",
+            "test_a_server_with_quic_switched_off_is_admitted_on_tcp_alone",
+            "live_link_mac_lundra_over_quic",
+            "release_build_time_and_size_measured"
           ],
           "milestone": "mesh-connectivity",
           "non_scope": [
@@ -80600,6 +80603,8 @@
             "apps/majordomus-cli/src/shared.rs",
             "apps/majordomus-cli/src/capability/builtin/mesh.rs",
             "apps/majordomus-cli/tests/mesh_quic.rs",
+            "apps/majordomus-cli/tests/mesh.rs",
+            "test/cases/495_the_firewall_admits_the_mesh.sh",
             "apps/majordomus-cli/Cargo.toml",
             "Cargo.lock",
             "scripts/ci/crate-boundary",
@@ -80612,7 +80617,7 @@
             "an-authorised-node-connects-from-anywhere#path-is-explained"
           ],
           "slug": "a-link-runs-over-quic",
-          "updated_at": "2026-11-08",
+          "updated_at": "2026-11-08T21:18:05Z",
           "validation": [
             "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --lib mesh::quic::",
             "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --test mesh_quic"

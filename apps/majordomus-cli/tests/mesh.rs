@@ -560,7 +560,8 @@ fn an_enabled_declaration_derives_the_group_rule_and_the_report_agrees_with_its_
         .flatten()
         .filter_map(|r| r["role"].as_str())
         .collect();
-    assert_eq!(roles, ["multicast", "link"], "{report}");
+    // and the same port over UDP, where the server answers QUIC (ADR 0233)
+    assert_eq!(roles, ["multicast", "link", "quic"], "{report}");
 }
 
 /// I2133: a rendezvous answers a refused caller with the refusal alone, and an admitted one

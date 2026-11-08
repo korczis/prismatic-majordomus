@@ -38911,6 +38911,9 @@ capabilities:
               - type: string
                 const: link
                 description: "This machine's server is dialed by peers on the link protocol."
+              - type: string
+                const: quic
+                description: "The same server answers the link over QUIC on its own port number, over UDP\n(ADR 0233): a peer tries QUIC first and falls back to TCP when the datagram is dropped."
             description: "Why a rule exists: which part of the declaration implied it. The role is what a person\nreads beside the rule and what a verdict names, and it is serialised in snake case.\n\n```\nuse majordomus_cli::mesh::firewall::Role;\n\nassert_eq!(serde_json::to_value(Role::Hub).unwrap(), \"hub\");\nlet back: Role = serde_json::from_value(serde_json::json!(\"multicast\")).unwrap();\nassert_eq!(back, Role::Multicast);\n```"
           Protocol:
             oneOf:
@@ -39264,6 +39267,9 @@ capabilities:
               - type: string
                 const: link
                 description: "This machine's server is dialed by peers on the link protocol."
+              - type: string
+                const: quic
+                description: "The same server answers the link over QUIC on its own port number, over UDP\n(ADR 0233): a peer tries QUIC first and falls back to TCP when the datagram is dropped."
             description: "Why a rule exists: which part of the declaration implied it. The role is what a person\nreads beside the rule and what a verdict names, and it is serialised in snake case.\n\n```\nuse majordomus_cli::mesh::firewall::Role;\n\nassert_eq!(serde_json::to_value(Role::Hub).unwrap(), \"hub\");\nlet back: Role = serde_json::from_value(serde_json::json!(\"multicast\")).unwrap();\nassert_eq!(back, Role::Multicast);\n```"
           Protocol:
             oneOf:

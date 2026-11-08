@@ -103,6 +103,26 @@ pub const QUIC_HANDSHAKE_WITHIN: Duration = Duration::from_secs(2);
 /// ```
 pub const QUIC_RETRY_AFTER: Duration = Duration::from_secs(600);
 
+/// The environment variable that switches QUIC off: `MAJORDOMUS_MESH_QUIC=off` leaves a
+/// server on HTTP alone, and the firewall plan then opens no UDP port for it.
+///
+/// ```
+/// assert_eq!(majordomus_cli::mesh::quic::SWITCH, "MAJORDOMUS_MESH_QUIC");
+/// ```
+pub const SWITCH: &str = "MAJORDOMUS_MESH_QUIC";
+
+/// True when [`SWITCH`] is `off` in this process's environment: the server binds no QUIC
+/// listener and dials HTTP only, and `mesh firewall` plans no UDP rule for the link.
+///
+/// ```
+/// use majordomus_cli::mesh::quic::{switched_off, SWITCH};
+///
+/// assert_eq!(switched_off(), std::env::var(SWITCH).as_deref() == Ok("off"));
+/// ```
+pub fn switched_off() -> bool {
+    std::env::var(SWITCH).as_deref() == Ok("off")
+}
+
 /// The most connections a QUIC listener holds at once; one more is refused at the handshake.
 const MAX_CONNECTIONS: usize = 64;
 

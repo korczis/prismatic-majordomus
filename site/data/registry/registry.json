@@ -6,7 +6,7 @@
     "version": "1.0.0"
   },
   "registry": {
-    "fingerprint": "012b200952a7960e8ced0f3bce3e1b233b5bfb0fcff9531aa954107305096d85",
+    "fingerprint": "c82088fee4f4dc38375d1bb9078388ce4086903cfb56b751e8bb06b6f0fc1dfc",
     "summary": {
       "total": 3953,
       "builtin": 231,
@@ -54632,6 +54632,11 @@
                     "type": "string",
                     "const": "link",
                     "description": "This machine's server is dialed by peers on the link protocol."
+                  },
+                  {
+                    "type": "string",
+                    "const": "quic",
+                    "description": "The same server answers the link over QUIC on its own port number, over UDP\n(ADR 0233): a peer tries QUIC first and falls back to TCP when the datagram is dropped."
                   }
                 ],
                 "description": "Why a rule exists: which part of the declaration implied it. The role is what a person\nreads beside the rule and what a verdict names, and it is serialised in snake case.\n\n```\nuse majordomus_cli::mesh::firewall::Role;\n\nassert_eq!(serde_json::to_value(Role::Hub).unwrap(), \"hub\");\nlet back: Role = serde_json::from_value(serde_json::json!(\"multicast\")).unwrap();\nassert_eq!(back, Role::Multicast);\n```"
@@ -55130,6 +55135,11 @@
                     "type": "string",
                     "const": "link",
                     "description": "This machine's server is dialed by peers on the link protocol."
+                  },
+                  {
+                    "type": "string",
+                    "const": "quic",
+                    "description": "The same server answers the link over QUIC on its own port number, over UDP\n(ADR 0233): a peer tries QUIC first and falls back to TCP when the datagram is dropped."
                   }
                 ],
                 "description": "Why a rule exists: which part of the declaration implied it. The role is what a person\nreads beside the rule and what a verdict names, and it is serialised in snake case.\n\n```\nuse majordomus_cli::mesh::firewall::Role;\n\nassert_eq!(serde_json::to_value(Role::Hub).unwrap(), \"hub\");\nlet back: Role = serde_json::from_value(serde_json::json!(\"multicast\")).unwrap();\nassert_eq!(back, Role::Multicast);\n```"
@@ -97948,7 +97958,7 @@
     ]
   },
   "index": {
-    "fingerprint": "89ecd4c019bd0795d0f0fee74b6a752ee8f94839f782f33013076c8f94120ff5",
+    "fingerprint": "7e4b08165ccfab016e495e8027542ebbc650cc502e0a1ca681b30050ede44541",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -100760,7 +100770,7 @@
         "path": ".ai/repo/adrs/0233-a-mesh-link-runs-over-quic-with-the-node-key-as-its-tls-identity.md",
         "section": "adrs",
         "source_class": "adr",
-        "bytes": 8816,
+        "bytes": 9998,
         "tags": [
           "mesh-runtime",
           "transport"
@@ -105479,7 +105489,7 @@
         "title": "Majordomus Mesh",
         "path": "docs/MESH.md",
         "source_class": "document",
-        "bytes": 97369
+        "bytes": 97693
       },
       {
         "uri": "majordomus://document/docs/MODELS.md",
@@ -122997,7 +123007,7 @@
         "path": ".ai/repo/project/issues/I4564.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 4769
+        "bytes": 9059
       },
       {
         "uri": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
@@ -136550,7 +136560,7 @@
         "identity": "test/cases/495_the_firewall_admits_the_mesh.sh",
         "path": "test/cases/495_the_firewall_admits_the_mesh.sh",
         "source_class": "case",
-        "bytes": 11477
+        "bytes": 12089
       },
       {
         "uri": "majordomus://test/test/cases/49_roadmap_doctrine.sh",
