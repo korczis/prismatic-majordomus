@@ -191,28 +191,87 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
     </div><article class="format break-words [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal max-w-none dark:format-invert lg:format-lg [&_pre]:overflow-x-auto [&_pre]:max-w-full [&_table]:block [&_table]:overflow-x-auto [&_.zola-anchor]:text-inherit [&_.zola-anchor]:no-underline [&_.zola-anchor:hover]:underline" tabindex="0"><h2 id="rationale"><a class="zola-anchor" href="#rationale" aria-label="Odkaz na kotvu: rationale">Zdůvodnění</a></h2>
 <p>Dne 2026-10-12 byla v 09:43Z otagována verze v0.21.0, release pipeline publikovala jejích šest archivů a v 10:23Z vložila na publikovaný web <code>releases/latest.json</code> jmenující 0.21.0, což je to, co rozlišuje instalátor. Domovská stránka vedle instalačního příkazu nadále nabízela 0.20.0 a odkazovala na jeho poznámky k vydání, dokud záznam release nedorazil do masteru — záznam přichází přes pull request, který release otevře po publikaci a který potřebuje vlastní plnou validaci, hodinu či dvě. Dva povrchy jednoho webu odpovídaly na otázku „který release je nejnovější“ ze dvou zdrojů a po každém release se na hodiny rozcházely. Nikdo si nevšiml, protože každá kontrola četla vždy jeden povrch: kontrola instalátoru četla <code>latest.json</code>, smoke test release čekal na <code>latest.json</code>, <code>site-check</code> držel stránky u záznamů stromu, z něhož byly sestaveny, a každá z nich byla pravdivá.</p>
 <p>ADR 0131 už zařídilo, že metadata odcházejí před záznamem, a že je deploy masteru zachová. Neumožnilo však stránkám je následovat: vykreslovaly projekci záznamu (<code>site/data/registry/distribution.json</code> a pole <code>release</code>, které nesla data webu), takže publikace posunula jeden povrch a ostatní nechala být.</p>
+<p>On 2026-11-06 the same thing happened on the pre-release channel. v1.0.0-alpha.10 was
+published at 17:09Z and its document put on the site beside <code>latest.json</code>; its record was a
+pull request in the train queue. The pages read the pre-release from the records alone ("never
+from a ref", I3449), so each of three deploys of master that evening rebuilt the hero as
+<code>1.0.0-alpha.9 (pre-release) · stable 0.30.2</code> — the screenshot the owner sent many times — and
+each took alpha.10's document off the site, because an ordinary deploy kept only <code>latest.json</code>
+and the stable tag file it names. The stable channel had the published-wins rule; the
+pre-release channel did not (I4531).</p>
 <h2 id="required-behaviour"><a class="zola-anchor" href="#required-behaviour" aria-label="Odkaz na kotvu: required-behaviour">Požadované chování</a></h2>
 <ol>
-<li><strong>Jedno odvození.</strong> <code>scripts/site-build</code> odvozuje release, který web nabízí, jako novější ze dvou čtení jednoho faktu: nejnovějšího záznamu release stromu, který sestavuje (jeho projekce <code>site/data/registry/distribution.json</code>), a <code>releases/latest.json</code>, které publikovaná větev už servíruje, čteného z git refu (<code>origin/gh-pages</code>) a nikdy nestahovaného po síti při renderu. Výsledek, s tím, které čtení zvítězilo, a commitem publikované větve, který přečetlo, zapíše do <code>build.json</code> jako <code>release</code>; <code>/build.json</code> jej servíruje. Je-li novější publikovaný release, jeho dva dokumenty se zkopírují do sestavení, takže metadata, která sestavení servíruje, jsou release, který jeho stránky nabízejí.</li>
+<li><strong>One derivation.</strong> <code>scripts/site-build</code> derives the release the site offers as the newer of
+two readings of one fact: the newest release record of the tree it builds (its projection
+<code>site/data/registry/distribution.json</code>) and the <code>releases/latest.json</code> the published branch
+already serves, read from the git ref (<code>origin/gh-pages</code>) and never fetched over the network
+at render time. It writes the result, with which reading won and the commit of the published
+branch it read, into <code>build.json</code> as <code>release</code>; <code>/build.json</code> serves it. When the published
+release is the newer, its two documents are copied into the build, so the metadata the build
+serves is the release its pages offer. The pre-release beside it is derived the same way:
+each of the two readings — the records of channel prerelease, and the pre-release documents
+<code>releases/v*.json</code> the published branch serves at the same commit — picks its highest
+pre-release that is not yanked and is ahead of the stable release by its base version; the
+newer pick is named, the record on a tie, and a tag the tree records is the record's, so a
+yanked record withdraws the published document too. <code>build.json</code> carries which reading won
+(<code>release.prerelease.source</code>, <code>published_from</code>), and a winning published document is copied
+into the build at its tag's own path.</li>
 <li><strong>Čte ho každý povrch.</strong> Stránka, která jmenuje nejnovější release, čte <code>offered</code> (nastavené jednou v <code>base.html</code> z <code>build.release</code>) a nic jiného. Data webu nenesou žádný vlastní release: <code>project.json</code> uvádí verzi stromu, což je jiný fakt.</li>
 <li><strong>Záznam zůstává archivní projekcí.</strong> Záznam releasu nese to, co je známo až po publikaci — digesty, atestace, čas publikace — takže nemůže přistát před tagem a tag na něj nečeká. Changelog a historie instalační příručky jsou jeho projekce a následují ho; uvádějí releasy, které existují, a nikdy žádný nenabízejí před ním.</li>
 <li><strong>Odmítnuto před pushem.</strong> <code>scripts/site-check</code> odmítne build, jehož nabídka na homepage (<code>data-release</code> na pásu důvěry a na odznacích v navigaci a hero), <code>/build.json</code> a servírovaný <code>/releases/latest.json</code> jmenují různé releasy, a strom, jehož dvě commitnuté projekce posledního releasu — <code>latest</code> v <code>distribution.json</code> a <code>site/static/releases/latest.json</code> — si odporují: předsloučená polovina, rozhodnutelná ze stromu. Čtení záznamu je nejvyšší stabilní záznam, který není stažen (<code>Releases::latest_stable</code>); žádný povrch nevypisuje soubory záznamů, aby našel „nejnovější“.</li>
-<li><strong>Měří se po nasazení.</strong> <code>scripts/pages release-live</code> čte nabídku živé domovské stránky, <code>/build.json</code>, <code>/releases/latest.json</code> a nejnovější release na GitHubu. Jedna verze je úspěch. Neshoda mladší než <code>deploy.release_window</code> (<code>.ai/repo/ci/pages.yaml</code>) po releasu na GitHubu je publikace v běhu a projde, s upozorněním; starší selže. Web nabízející verzi, kterou GitHub nepublikoval, selže ihned. Čtení, které nelze provést, je exit 12, nikdy úspěch.</li>
+<li><strong>Measured after it is deployed.</strong> <code>scripts/pages release-live</code> reads the live homepage's
+offer, <code>/build.json</code>, <code>/releases/latest.json</code> and the newest GitHub release. One version is a
+pass. A disagreement younger than <code>deploy.release_window</code> (<code>.ai/repo/ci/pages.yaml</code>) after
+GitHub's release is a publication in flight and passes, saying so; older, it fails. A site
+offering a version GitHub has not published fails at once. A reading it cannot take is exit
+12, never a pass. It reads the homepage's <code>data-prerelease</code>, <code>/build.json</code>'s
+<code>release.prerelease</code> and GitHub's newest pre-release as well: the homepage names GitHub's
+newest pre-release when that is ahead of GitHub's newest release by its base version, and
+none otherwise; behind it, the same window applies; a pre-release GitHub has not published
+fails at once.</li>
+<li><strong>A deploy keeps what was published.</strong> <code>scripts/site-deploy</code> keeps every release document
+gh-pages serves that the build does not carry, whatever its channel, beside the
+<code>latest.json</code> it already kept (ADR 0131), and names them in the deploy's commit: a
+publication ahead of its record survives the deploys of master in between, so the next
+build has it to read.</li>
 </ol>
 <h2 id="failure-behaviour"><a class="zola-anchor" href="#failure-behaviour" aria-label="Odkaz na kotvu: failure-behaviour">Chování při selhání</a></h2>
 <ul>
-<li><code>scripts/site-build</code> končí s <code>10</code>, když publikovaná branch servíruje <code>releases/latest.json</code>, který není dokumentem <code>release/v1</code> jmenujícím vlastní tag, nebo soubor tagu, který se od něj liší.</li>
+<li><code>scripts/site-build</code> exits <code>10</code> when the published branch serves a <code>releases/latest.json</code>
+that is not a <code>release/v1</code> document naming its own tag, or a tag file that differs from it,
+or a pre-release document that is not a <code>release/v1</code> document naming its own tag.</li>
 <li><code>scripts/site-check</code> selže (sekce 17b, <code>release</code>) při jakékoli neshodě v bodě 4.</li>
-<li><code>scripts/pages release-live</code> skončí kódem <code>10</code> po uplynutí okna nebo u nabídky předstihující GitHub, <code>12</code> když chybí údaj. V <code>.github/workflows/pages.yml</code> je to krok <code>the release it offers</code>, poté co web poskytuje nasazený commit; v <code>scripts/ci/pages-check</code> je to oddíl 5 kontroly <code>pages-live</code>, na kterou se ptá <code>finish</code> (<code>at-finish</code>) a naplánované běhy pages se ptají každých třicet minut a při selhání nasazují.</li>
+<li><code>scripts/pages release-live</code> exits <code>10</code> past the window or for an offer ahead of GitHub, on
+either channel, <code>12</code> when a reading is missing. In <code>.github/workflows/pages.yml</code> it is the step <code>the release it offers</code>, after the site serves the deployed commit; in <code>scripts/ci/pages-check</code> it is section
+5 of the <code>pages-live</code> gate, which <code>finish</code> asks (<code>at-finish</code>) and the scheduled pages run asks
+every thirty minutes, deploying when it fails.</li>
 <li><code>scripts/site-deploy</code> varuje, když ponechává publikovaná metadata nad starším buildem: stránky onoho buildu nabízejí starší release až do dalšího buildu.</li>
 </ul>
 <h2 id="verification"><a class="zola-anchor" href="#verification" aria-label="Odkaz na kotvu: verification">Ověření</a></h2>
-<p><code>test/cases/1087_the_site_offers_the_release_it_published.sh</code>: odvození vybere publikovaný release před starším záznamem a záznam před starší nebo chybějící publikací, zkopíruje publikované dokumenty a odmítne vadný; každá šablona čte jedno odvození; <code>scripts/pages release-live</code> proti webu <code>file://</code> a <code>gh</code> na <code>PATH</code> projde jeden release, projde čerstvou neshodu v rámci okna a selže, když každý ze tří povrchů postupně pojmenuje po jeho uplynutí jiný release, když web nabízí, co GitHub nepublikoval, a vrátí 12, když GitHub nelze přečíst. <code>test/cases/352</code> drží nabídku u releasu, který existuje; <code>test/cases/1041</code> drží cestu metadat z ADR 0131.</p>
+<p><code>test/cases/1087_the_site_offers_the_release_it_published.sh</code>: the derivation picks the
+published release over an older record and the record over an older or absent publication,
+copies the published documents, and refuses a malformed one; every template reads the one
+derivation; <code>scripts/pages release-live</code> against a <code>file://</code> site and a <code>gh</code> on <code>PATH</code> passes
+one release, passes a fresh disagreement inside the window, and fails when each of the three
+surfaces in turn names another release past it, when the site offers what GitHub has not
+published, and returns 12 when GitHub cannot be read; the same gate holds the pre-release the
+homepage names to GitHub's newest pre-release — agreeing, behind inside and beyond the window,
+ahead of GitHub, disagreeing with its own build.json, overtaken by a stable release — and the
+derivation names a pre-release document the published branch serves ahead of any record.
+<code>test/cases/3727_the_pages_name_the_pre_release_beside_the_stable_one.sh</code>: over fixture records
+and fixture published documents, a published pre-release newer than every record wins with its
+source named, the record wins an older or equal publication, a yanked record withdraws the
+published document, a published pre-release behind the stable release is not offered, a
+malformed one is refused, and with no record at all the published one is named.
+<code>test/cases/3222_an_alpha_publishes_beside_the_latest_release.sh</code>: a deploy of master keeps a
+published pre-release document the build does not carry until its record lands.
+<code>test/cases/352</code> holds the offer to a release that exists; <code>test/cases/1041</code> holds the metadata
+path of ADR 0131.</p>
 </article>
 
     <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Odkud to pochází</h2>
     <dl class="mt-3 grid gap-x-6 gap-y-2 text-sm sm:grid-cols-[max-content_1fr]">
-      <dt class="text-body-subtle">kanonický soubor</dt><dd class="min-w-0"><a class="break-all font-mono text-fg-brand hover:underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/blob/5ca0bec8c42355f8a32ba76014b2bb705f7d5c4e/.ai/repo/rules/project/the-site-offers-the-release-it-published.v1.md">.ai/repo/rules/project/the-site-offers-the-release-it-published.v1.md</a></dd>
+      <dt class="text-body-subtle">kanonický soubor</dt><dd class="min-w-0"><a class="break-all font-mono text-fg-brand hover:underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/blob/d7fd9a3617024a7390ac36c1888d6fcee63b600e/.ai/repo/rules/project/the-site-offers-the-release-it-published.v1.md">.ai/repo/rules/project/the-site-offers-the-release-it-published.v1.md</a></dd>
       <dt class="text-body-subtle">identity</dt><dd class="min-w-0 break-all font-mono text-heading">project.the-site-offers-the-release-it-published@1</dd>
       <dt class="text-body-subtle">dostupné také jako</dt><dd class="min-w-0 break-all font-mono text-heading">Zdroj MCP <code>majordomus://rule/project.the-site-offers-the-release-it-published@1</code> · <code>majordomus entity show rule/project-the-site-offers-the-release-it-published-1</code> · <code>GET /api/v1/entity?uri=majordomus://rule/project.the-site-offers-the-release-it-published@1</code></dd>
       <dt class="text-body-subtle">v Cockpitu</dt><dd class="min-w-0 break-all font-mono text-heading">/cockpit/objects/rule/project-the-site-offers-the-release-it-published-1</dd>
@@ -269,9 +328,9 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
       <div class="min-w-0">
         <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">Projekt</h2><ul class="space-y-2 text-sm font-medium text-body">
           <li><a href="https://github.com/korczis/prismatic-majordomus" class="hover:text-heading hover:underline">GitHub</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/5ca0bec8c42355f8a32ba76014b2bb705f7d5c4e/LICENSE" class="hover:text-heading hover:underline">Licence MIT</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/5ca0bec8c42355f8a32ba76014b2bb705f7d5c4e/SECURITY.md" class="hover:text-heading hover:underline">Bezpečnostní politika</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/5ca0bec8c42355f8a32ba76014b2bb705f7d5c4e/CONTRIBUTING.md" class="hover:text-heading hover:underline">Průvodce pro přispěvatele</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/d7fd9a3617024a7390ac36c1888d6fcee63b600e/LICENSE" class="hover:text-heading hover:underline">Licence MIT</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/d7fd9a3617024a7390ac36c1888d6fcee63b600e/SECURITY.md" class="hover:text-heading hover:underline">Bezpečnostní politika</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/d7fd9a3617024a7390ac36c1888d6fcee63b600e/CONTRIBUTING.md" class="hover:text-heading hover:underline">Průvodce pro přispěvatele</a></li>
         </ul>
       </div>
     </div>
@@ -279,7 +338,7 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/cs/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/5ca0bec8c42355f8a32ba76014b2bb705f7d5c4e" class="font-mono underline">5ca0bec</a> · inputs <span class="font-mono">d169ec327c1f</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/cs/architecture/" class="underline">how this site is derived</a> names them.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/d7fd9a3617024a7390ac36c1888d6fcee63b600e" class="font-mono underline">d7fd9a3</a> · inputs <span class="font-mono">cda38202c2b6</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/cs/architecture/" class="underline">how this site is derived</a> names them.</p>
     </div>
   </div>
 </footer>

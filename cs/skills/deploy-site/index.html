@@ -177,7 +177,7 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
       <code class="font-mono text-heading">majordomus://skill/deploy-site</code>
       <span class="mj-badge mj-badge--active relative" data-status="active"><span aria-hidden="true">•</span>aktivní</span>
 
-      <span class="font-mono text-xs text-body-subtle">verze 1</span><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">web</span><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">deploy</span><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">evidence</span>
+      <span class="font-mono text-xs text-body-subtle">verze 2</span><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">web</span><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">deploy</span><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">evidence</span>
     </div>
     <div class="mb-8 grid gap-4 sm:grid-cols-2">
       <div class="rounded-base border border-default bg-neutral-primary-soft p-4">
@@ -186,7 +186,7 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
       </div>
       <div class="rounded-base border border-default bg-neutral-primary-soft p-4">
         <h2 class="mb-2 font-mono text-xs uppercase tracking-wide text-body-subtle">zanechá postup</h2>
-        <ul class="list-disc space-y-1 pl-5 text-sm text-body"><li>commit v gh-pages pojmenovávající zdrojový commit, nebo odmítnutí pojmenovávající kontrolu, která jej zastavila</li><li>kontrolní bod zaznamenávající nasazení a commit, který publikovalo</li></ul>
+        <ul class="list-disc space-y-1 pl-5 text-sm text-body"><li>commit v gh-pages pojmenovávající zdrojový commit, nebo odmítnutí pojmenovávající kontrolu, která jej zastavila</li><li>the real-browser probe&#39;s verdict over the live homepage, with its screenshot and result.json</li><li>kontrolní bod zaznamenávající nasazení a commit, který publikovalo</li></ul>
       </div>
     </div><article class="format break-words [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal max-w-none dark:format-invert lg:format-lg [&_pre]:overflow-x-auto [&_pre]:max-w-full [&_table]:block [&_table]:overflow-x-auto [&_.zola-anchor]:text-inherit [&_.zola-anchor]:no-underline [&_.zola-anchor:hover]:underline" tabindex="0"><h2 id="purpose"><a class="zola-anchor" href="#purpose" aria-label="Odkaz na kotvu: purpose">Účel</a></h2>
 <p>Dostat web živě hned, ne po frontě Actions, aniž by vznikl druhý způsob publikace. Jeden příkaz, ten samý, který spouští workflow Pages, a nasazení je poté vidět: commit <code>gh-pages</code> i patička webu uvádějí zdrojový commit.</p>
@@ -249,6 +249,16 @@ under this one's name. Verify the UI and the Cockpit as well as the site (step 4
 its snapshot names that commit and every page it lists answers;
 <code>scripts/pages verify-ui --surface cockpit --commit "$(git rev-parse HEAD)"</code> asks it of the
 Cockpit.</p>
+<p>Then the page as a person sees it, in a real browser, held to what was published:</p>
+<pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="shellscript"><span class="giallo-l"><span class="z-l-1 z-d-3">scripts/release-probe</span><span class="z-l-3 z-d-7"> -</span><span class="z-l-3 z-d-7">-wait</span><span class="z-l-9 z-d-11"> 120</span><span class="z-l-3 z-d-7"> -</span><span class="z-l-3 z-d-7">-out</span><span class="z-l-8 z-d-8"> target/release-probe</span><span class="z-l-10 z-l-i z-d-4 z-d-i">     #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> exit 0 agree, 10 a disagreement, 12 unread</span></span></code></pre>
+<p>It renders the homepage in Chromium with the cache bypassed and holds it to the facts: the trust
+strip's release, the navbar badge, <code>/releases/latest.json</code> and GitHub's newest release name one
+version; the hero names the newest published pre-release ahead of it and no other; the footer
+names <code>/build.json</code>'s commit. It writes <code>home.png</code> and <code>result.json</code> under <code>--out</code>. A hand
+deploy is not reported until this says <code>ok</code>, and the report carries its lines and the
+screenshot; a <code>FAIL</code> line names both sides, and the source — not the output — is what gets
+fixed (I4530). Until 2026-11-06 the only live reading was curl over the stable channel, and the
+hero named a superseded pre-release for hours with every check green.</p>
 <p>Pak otevřete stránku, kterou jste změnili.</p>
 <p>Pro čtení z druhé strany — díváš se na živý web a chceš vědět, co to je — <code>git log -1 --format='%an %s' origin/gh-pages</code> pojmenuje zdrojový commit a řekne, kdo jej publikoval: <code>github-actions[bot]</code> pro push do masteru, člověk pro ruční nasazení. Náhled publikovaný přes <code>--any-ref</code> zůstává živý, dokud jej další push do masteru nepřepíše, takže živý web, který není master, je očekávaný, ne chybný.</p>
 <h3 id="5-do-not"><a class="zola-anchor" href="#5-do-not" aria-label="Anchor link for: 5-do-not">5. Nedělejte</a></h3>
@@ -267,9 +277,9 @@ Cockpit.</p>
 
     <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Odkud to pochází</h2>
     <dl class="mt-3 grid gap-x-6 gap-y-2 text-sm sm:grid-cols-[max-content_1fr]">
-      <dt class="text-body-subtle">kanonický soubor</dt><dd class="min-w-0"><a class="break-all font-mono text-fg-brand hover:underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/blob/5ca0bec8c42355f8a32ba76014b2bb705f7d5c4e/.ai/repo/skills/deploy-site/SKILL.md">.ai/repo/skills/deploy-site/SKILL.md</a></dd>
-      <dt class="text-body-subtle">hash obsahu</dt><dd class="min-w-0 break-all font-mono text-heading">eb55eb3c763e1295bf8223efa6398726fe3e77307a5b5cf4a4669470ddf404ce</dd>
-      <dt class="text-body-subtle">kontrakt</dt><dd class="min-w-0"><a class="break-all font-mono text-fg-brand hover:underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/blob/5ca0bec8c42355f8a32ba76014b2bb705f7d5c4e/share/schemas/majordomus/skill/skill.v1.schema.json">share/schemas/majordomus/skill/skill.v1.schema.json</a></dd>
+      <dt class="text-body-subtle">kanonický soubor</dt><dd class="min-w-0"><a class="break-all font-mono text-fg-brand hover:underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/blob/d7fd9a3617024a7390ac36c1888d6fcee63b600e/.ai/repo/skills/deploy-site/SKILL.md">.ai/repo/skills/deploy-site/SKILL.md</a></dd>
+      <dt class="text-body-subtle">hash obsahu</dt><dd class="min-w-0 break-all font-mono text-heading">b805ea184f54aa10f9181ac55336fe7aa7cc0e2d9af7b4b077aea61140126778</dd>
+      <dt class="text-body-subtle">kontrakt</dt><dd class="min-w-0"><a class="break-all font-mono text-fg-brand hover:underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/blob/d7fd9a3617024a7390ac36c1888d6fcee63b600e/share/schemas/majordomus/skill/skill.v1.schema.json">share/schemas/majordomus/skill/skill.v1.schema.json</a></dd>
       <dt class="text-body-subtle">dostupné také jako</dt><dd class="min-w-0 font-mono text-heading">Zdroj MCP <code>majordomus://skill/deploy-site</code> · <code>majordomus skills show deploy-site</code></dd>
     </dl>
     <p class="mt-3 text-sm text-body">Tato stránka je vygenerována z výše uvedeného souboru pomocí <code class="font-mono text-heading">scripts/generate-site-data</code>; úprava stránky nic nezmění, úprava souboru změní všechny povrchy.</p>
@@ -324,9 +334,9 @@ Cockpit.</p>
       <div class="min-w-0">
         <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">Projekt</h2><ul class="space-y-2 text-sm font-medium text-body">
           <li><a href="https://github.com/korczis/prismatic-majordomus" class="hover:text-heading hover:underline">GitHub</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/5ca0bec8c42355f8a32ba76014b2bb705f7d5c4e/LICENSE" class="hover:text-heading hover:underline">Licence MIT</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/5ca0bec8c42355f8a32ba76014b2bb705f7d5c4e/SECURITY.md" class="hover:text-heading hover:underline">Bezpečnostní politika</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/5ca0bec8c42355f8a32ba76014b2bb705f7d5c4e/CONTRIBUTING.md" class="hover:text-heading hover:underline">Průvodce pro přispěvatele</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/d7fd9a3617024a7390ac36c1888d6fcee63b600e/LICENSE" class="hover:text-heading hover:underline">Licence MIT</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/d7fd9a3617024a7390ac36c1888d6fcee63b600e/SECURITY.md" class="hover:text-heading hover:underline">Bezpečnostní politika</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/d7fd9a3617024a7390ac36c1888d6fcee63b600e/CONTRIBUTING.md" class="hover:text-heading hover:underline">Průvodce pro přispěvatele</a></li>
         </ul>
       </div>
     </div>
@@ -334,7 +344,7 @@ Cockpit.</p>
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/cs/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/5ca0bec8c42355f8a32ba76014b2bb705f7d5c4e" class="font-mono underline">5ca0bec</a> · inputs <span class="font-mono">d169ec327c1f</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/cs/architecture/" class="underline">how this site is derived</a> names them.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/d7fd9a3617024a7390ac36c1888d6fcee63b600e" class="font-mono underline">d7fd9a3</a> · inputs <span class="font-mono">cda38202c2b6</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/cs/architecture/" class="underline">how this site is derived</a> names them.</p>
     </div>
   </div>
 </footer>
