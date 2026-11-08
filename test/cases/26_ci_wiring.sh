@@ -457,3 +457,28 @@ for pr in 2631 2630 2593 2592 2591 2501; do
   expect_exit 0 cv decide labeled train "$sha" || exit 1
   cv_says "carry $((1000 + n)) success" "#$pr: the labeled event of a train"
 done
+
+# A cancelled run reports no false red (2026-11-08). After a cancel (the landing seat's, or a
+# branch run's own first red, I2664) the shards a fan-in joins left nothing to join, and a
+# probe shard whose site job did not succeed has no artifact to download: on 2026-11-07 each
+# cancelled run added twelve "Artifact not found" shards and a "no row for" union beside its
+# one real red. The fan-ins run on !cancelled(), the probe shards only on the site's success,
+# and the plan job gives a superseded head's runners back before any gate asks for one.
+job_if() { awk -v j="  $1:" '$0 == j {in_job=1; next} in_job && /^  [a-z0-9-]+:$/ {exit} in_job && /^    if: / {sub(/^    if: /, ""); print; exit}' "$W"; }
+for j in suite ui site-probe interactions site-probe-shard interaction-probe-shard; do
+  c="$(job_if "$j")"
+  case "$c" in *'!cancelled()'*) ;; *) echo "    job $j runs on '$c': after a cancel it reports a false red"; exit 1 ;; esac
+  case "$c" in *'always()'*) echo "    job $j still runs on always(): '$c'"; exit 1 ;; esac
+done
+for j in site-probe-shard interaction-probe-shard; do
+  job_if "$j" | grep -qF "needs.site.result == 'success'" \
+    || { echo "    job $j starts without a successful site job, so without its input artifact"; exit 1; }
+done
+job_if ci | grep -qx 'always()' || { echo "    the ci job no longer runs always(): a cancelled run would carry no verdict"; exit 1; }
+awk '/^  plan:$/ {p=1} p && /^  build:$/ {exit} p' "$W" > plan-job.yml
+grep -q 'name: a superseded head gives its runners back' plan-job.yml \
+  || { echo "    the plan job has no step that gives a superseded head's runners back"; exit 1; }
+awk '/name: a superseded head gives its runners back/ {s=NR} /uses: actions\/checkout@v4/ && !c {c=NR} END {exit !(s && c && s < c)}' plan-job.yml \
+  || { echo "    the superseded-head step runs after the checkout, not before any work"; exit 1; }
+grep -A14 'name: a superseded head gives its runners back' plan-job.yml | grep -q 'gh run cancel "\$GITHUB_RUN_ID"' \
+  || { echo "    the superseded-head step does not cancel its own run"; exit 1; }
