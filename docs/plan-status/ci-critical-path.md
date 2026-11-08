@@ -9,7 +9,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 
 | milestone | status | done of required | ready | blocked | active | verify | cancelled | outcome |
 |---|---|---|---|---|---|---|---|---|
-| [ci-critical-path](https://majordomus.dev/plan/ci-critical-path/) | ACTIVE | 18/46 | 14 | 11 | 3 | 0 | 0 | The change-to-verdict path runs p50 under 40 s and p95 under 60 s warm, and merge-to-verified-deploy p50 under 45 s and p95 under 60 s, measured on GitHub with warm, partial and cold reported apart, every skip of a gate explained by the repository's own impact model, and no required test removed, skipped or made advisory to reach the number. |
+| [ci-critical-path](https://majordomus.dev/plan/ci-critical-path/) | ACTIVE | 18/46 | 13 | 11 | 4 | 0 | 0 | The change-to-verdict path runs p50 under 40 s and p95 under 60 s warm, and merge-to-verified-deploy p50 under 45 s and p95 under 60 s, measured on GitHub with warm, partial and cold reported apart, every skip of a gate explained by the repository's own impact model, and no required test removed, skipped or made advisory to reach the number. |
 
 ## Issues
 
@@ -58,7 +58,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | [I4358](https://majordomus.dev/plan/i4358/) | BLOCKED | 3 | I3072, I4356, I4355 | A seat is taken by `start --seat` under its provider session, kept between that session's tasks and lost with it, and an unbound seat is named by the doctor |
 | [I4373](https://majordomus.dev/plan/i4373/) | DONE | 0 | — | The economics runner starts a freshly written harness once it is free, and a harness that cannot start has no version |
 | [I4380](https://majordomus.dev/plan/i4380/) | DONE | 0 | — | An optional step of the Pages publication never stops the deploy |
-| [I4513](https://majordomus.dev/plan/i4513/) | READY | 0 | — | The pre-commit pages gate judges a staged merge as scripts/derive writes it, with both parents |
+| [I4513](https://majordomus.dev/plan/i4513/) | ACTIVE | 0 | — | The pre-commit pages gate judges a staged merge as scripts/derive writes it, with both parents |
 | [I4527](https://majordomus.dev/plan/i4527/) | ACTIVE | 0 | — | The installed launcher is checked on a layer the release wrote, never on the source checkout |
 | [I4528](https://majordomus.dev/plan/i4528/) | ACTIVE | 0 | — | Case 3002's disk-floor scenario proves the function, not the runner's free disk |
 

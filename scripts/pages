@@ -214,6 +214,49 @@ cmd_current() {
 # A repository without the built executable — an adopter's, or a clone before the first build
 # — skips it and says so. Skipping loudly is the point: silence here is what this gate is for.
 DERIVED_SKIPPED=""
+# A MERGE IN PROGRESS (I4513). scripts/derive derives a staged merge as the commit it will be
+# (I3963): the staged tree with both parents, in a detached scratch worktree, so the readers of
+# history (the changelog's decisions and releases, delivery and plan history) see the merged
+# lineage. Judged here at HEAD, the merge's first parent, that correct output read as stale
+# (master's ADRs were missing from the changelog's history) and the commit was refused: on
+# 2026-10-30 three times (#1056, #1083, #2688) and on 2026-11-07 for #2599, each repaired with a
+# second derive and a second commit. So while MERGE_HEAD exists and nothing is unresolved, the
+# check runs against the same commit: `git write-tree` of the index this commit will have
+# (GIT_INDEX_FILE, which git sets for a hook, is kept for that one call), HEAD and MERGE_HEAD
+# as parents, no ref. The scratch tree is exactly the staged tree, so a stale staged file is
+# still stale there. Every other git call runs without the hook's GIT_INDEX_FILE, which would
+# otherwise make `git worktree add` write the scratch checkout's index over the commit's.
+# Outside a merge nothing changes.
+derived_repo=""; derived_scratch=""
+derived_merge_begin() {
+  local git_dir merge_tree merge_commit
+  git_dir="$(git -C "$ROOT" rev-parse --absolute-git-dir 2>/dev/null)" || return 0
+  [ -f "$git_dir/MERGE_HEAD" ] || return 0
+  # an unresolved path has no staged tree to judge; git commit refuses it before this hook
+  [ -z "$(git -C "$ROOT" ls-files --unmerged 2>/dev/null | head -1)" ] || return 0
+  merge_tree="$(git -C "$ROOT" write-tree 2>/dev/null)" || return 0
+  merge_commit="$(env -u GIT_INDEX_FILE git -C "$ROOT" -c user.name=pages -c user.email=pages@invalid \
+    commit-tree "$merge_tree" -p HEAD -p MERGE_HEAD -m 'pages input: a merge in progress' 2>/dev/null)" || return 0
+  derived_scratch="$(mktemp -d "${TMPDIR:-/tmp}/pages-merge.XXXXXX")"
+  env -u GIT_INDEX_FILE -u GIT_DIR -u GIT_WORK_TREE \
+    git -C "$ROOT" worktree add --quiet --detach "$derived_scratch/tree" "$merge_commit" >/dev/null 2>&1 || {
+    rm -rf "$derived_scratch"; derived_scratch=""; return 0; }
+  derived_repo="$derived_scratch/tree"
+  [ -n "${MJ_PAGES_QUIET:-}" ] || printf 'pages: a merge in progress: the registry half is judged as the merge commit, both parents as history\n'
+}
+derived_merge_end() {
+  [ -n "$derived_scratch" ] || return 0
+  env -u GIT_INDEX_FILE -u GIT_DIR -u GIT_WORK_TREE git -C "$ROOT" worktree remove --force "$derived_repo" >/dev/null 2>&1 || true
+  rm -rf "$derived_scratch"
+  env -u GIT_INDEX_FILE -u GIT_DIR -u GIT_WORK_TREE git -C "$ROOT" worktree prune >/dev/null 2>&1 || true
+  derived_repo=""; derived_scratch=""
+}
+derived_check() {   # the executable's own `generate --check`, here or on the merge commit;
+  # --repo is an option of `generate`, not of the executable: before the subcommand it is refused
+  if [ -z "$derived_repo" ]; then MAJORDOMUS_NO_BUILD=1 "$1" generate --check; return; fi
+  (cd "$derived_repo" && env -u GIT_INDEX_FILE -u GIT_DIR -u GIT_WORK_TREE \
+    MAJORDOMUS_NO_BUILD=1 MAJORDOMUS_SHARE="$derived_repo/share" "$1" generate --repo "$derived_repo" --check)
+}
 cmd_derived() {
   local cli="$ROOT/bin/majordomus-cli" out rc=0
   if [ ! -x "$cli" ]; then
@@ -221,7 +264,9 @@ cmd_derived() {
     DERIVED_SKIPPED=1
     return 0
   fi
-  out="$(MAJORDOMUS_NO_BUILD=1 "$cli" generate --check 2>&1)" || rc=$?
+  derived_merge_begin
+  out="$(derived_check "$cli" 2>&1)" || rc=$?
+  derived_merge_end
   case "$rc" in
     0) [ -n "${MJ_PAGES_QUIET:-}" ] || printf 'pages: the registry projections are in sync with this tree\n'
        # What the check kept rather than judged is said even when it passes — a changelog
