@@ -221,6 +221,13 @@ pub fn inspector(roadmap: &Answer, issues: &Answer, id: &str) -> El {
                 .map(|i| text(i, "id"))
                 .collect();
             let path = critical_path(&mine);
+            // what holds a milestone the milestone graph does not (I3757): each issue a link to
+            // its inspector, a milestone gate met on the way a link to that milestone's
+            let milestones: BTreeSet<String> = list(roadmap, "/milestones")
+                .iter()
+                .map(|m| text(m, "id"))
+                .collect();
+            let waits_on = strings(&m, "waits_on");
             let serves: Vec<String> = mine
                 .iter()
                 .flat_map(|i| {
@@ -328,6 +335,20 @@ pub fn inspector(roadmap: &Answer, issues: &Answer, id: &str) -> El {
                             "Blocked by",
                             chips(&strings(&m, "blocked_by"), href_owned),
                         ))
+                        .children((!waits_on.is_empty()).then(|| {
+                            fact(
+                                "Held by",
+                                el("span")
+                                    .class("mj-ui-badges")
+                                    .children(waits_on.iter().map(
+                                        |w| match milestones.contains(w) {
+                                            true => chip(href(w), w.clone()),
+                                            false => chip(issue_href(w), w.clone()),
+                                        },
+                                    )),
+                            )
+                            .attr("data-held-by", waits_on.join(" "))
+                        }))
                         .child(fact(
                             "Unblocks",
                             chips(&strings(&m, "dependents"), href_owned),
@@ -478,6 +499,44 @@ mod tests {
         assert_eq!(
             inspector_with(&roadmap, &issues, &bare, "M004").render(),
             inspector(&roadmap, &issues, "M004").render()
+        );
+    }
+
+    /// I3757: a BLOCKED milestone the milestone graph does not hold names what does, each
+    /// issue a link to its inspector and a milestone gate a link to that milestone; one whose
+    /// waits_on is empty draws no such fact.
+    #[test]
+    fn a_held_milestone_names_what_holds_it() {
+        let roadmap = answer(
+            "plan.roadmap",
+            serde_json::json!({ "milestones": [
+                { "id": "M005", "status": "BLOCKED", "order": 5, "priority": "p1", "title": "held",
+                  "depends_on": [], "blocked_by": [], "waits_on": ["I0002", "M003"],
+                  "dependents": [], "counts": { "total": 1, "by_status": { "BLOCKED": 1 } },
+                  "issues": ["I0005"] },
+                { "id": "M003", "status": "ACTIVE", "order": 3, "priority": "p0", "title": "gate",
+                  "depends_on": [], "blocked_by": [], "waits_on": [], "dependents": [],
+                  "issues": [] }
+            ]}),
+        );
+        let issues = answer(
+            "plan.issues",
+            serde_json::json!({ "issues": [issue("I0005", "BLOCKED", &["I0002"])] }),
+        );
+        let html = inspector(&roadmap, &issues, "M005").render();
+        for want in [
+            "Held by",
+            "data-held-by=\"I0002 M003\"",
+            "?issue=I0002#issue\">",
+            "?milestone=M003#milestone\">",
+        ] {
+            assert!(html.contains(want), "{want} is missing from {html}");
+        }
+        let (roadmap, issues) = plan();
+        let html = inspector(&roadmap, &issues, "M004").render();
+        assert!(
+            !html.contains("Held by"),
+            "an empty waits_on drew a fact: {html}"
         );
     }
 

@@ -154,6 +154,9 @@ mj_pj_issue_ids()      { mj_pj_rows I | cut -f2; }
 #                    8 counts (name=value, comma separated, keyed by the status vocabulary)
 #                    9 last accepted issue (DONE milestones only) · 10 rank · 11 depends
 #                    12 blocked_by · 13 dependents · 14 claims
+#                    15 waits_on: what holds a BLOCKED milestone whose blocked_by is empty —
+#                       the issues its blocked issues wait on, a milestone gate met on the way
+#                       by its milestone id; sorted, each once, empty otherwise (I3757)
 mj_pj_m_status()  { mj_pj_col M "$1" 3; }
 mj_pj_m_title()   { mj_pj_col M "$1" 6; }
 mj_pj_m_counts()  { mj_pj_col M "$1" 8; }
@@ -162,6 +165,7 @@ mj_pj_m_rank()    { mj_pj_col M "$1" 10; }
 mj_pj_m_deps()    { mj_pj_col M "$1" 11; }
 mj_pj_m_blocked() { mj_pj_col M "$1" 12; }
 mj_pj_m_claims()  { mj_pj_col M "$1" 14; }
+mj_pj_m_waits_on() { mj_pj_col M "$1" 15; }
 # The release that carried a milestone, inferred and never typed (ADR 0166): the first
 # release record (.ai/repo/releases/v*.yaml, the tracked statement of a tag), in version
 # order, whose `commit:` contains the merge of the milestone's last accepted issue, and

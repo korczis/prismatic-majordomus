@@ -42552,6 +42552,13 @@
           "type": "array of string"
         },
         {
+          "description": "What holds a BLOCKED milestone whose `blocked_by` is empty: following each of its\nBLOCKED issues' `blocked_by` until an issue that is not BLOCKED (READY elsewhere,\nACTIVE, VERIFY or CANCELLED), or a milestone gate (`milestone:<id>`, reported as that\nmilestone's id). Sorted, each once; empty for every other milestone (I3757).",
+          "name": "waits_on",
+          "refs": [],
+          "required": false,
+          "type": "array of string"
+        },
+        {
           "description": "The milestones that require it.",
           "name": "dependents",
           "refs": [],

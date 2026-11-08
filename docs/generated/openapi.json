@@ -53421,6 +53421,14 @@
             },
             "description": "Those of them that are not DONE. Non-empty means the gate holds every issue of this\nmilestone back, whatever the issue graph says."
           },
+          "waits_on": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "What holds a BLOCKED milestone whose `blocked_by` is empty: following each of its\nBLOCKED issues' `blocked_by` until an issue that is not BLOCKED (READY elsewhere,\nACTIVE, VERIFY or CANCELLED), or a milestone gate (`milestone:<id>`, reported as that\nmilestone's id). Sorted, each once; empty for every other milestone (I3757).",
+            "default": []
+          },
           "dependents": {
             "type": "array",
             "items": {

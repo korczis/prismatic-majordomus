@@ -75,6 +75,20 @@ A milestone's status follows from its issues and its own evidence:
 | `VERIFY` | every issue that is not cancelled is done and the milestone's own evidence is not complete |
 | `DONE` | that evidence is complete too |
 
+A `BLOCKED` milestone always says what holds it. When a milestone it requires is not `DONE`,
+`blocked_by` names that milestone and the gate is the whole reason. When every milestone it
+requires is `DONE`, `blocked_by` is empty and the reason is in its issues: `waits_on` follows
+each of its `BLOCKED` issues' `blocked_by` until an issue that is not `BLOCKED` (`READY` in
+another milestone, `ACTIVE`, `VERIFY` or `CANCELLED`) or a milestone gate, which it names by
+that milestone's id, and lists what it reaches, sorted and each once. A chain is followed to
+its end: an issue waiting on a `BLOCKED` issue elsewhere, which waits on an `ACTIVE` one, names
+the `ACTIVE` one. `waits_on` is empty for every other milestone. Both engines derive it, the
+shell as the fifteenth column of the `M` row (`lib/project.sh`), the executable as
+`PlanMilestone.waits_on`; the `/ui` milestone inspector shows it as **Held by**, and `/roadmap/`
+says in one sentence that every open issue waits on the named work outside the milestone
+(I3757). A `BLOCKED` milestone with neither, whose issues wait only on each other, is the
+`blocked_without_reason` failure of `plan validate`.
+
 A milestone is never `DONE` because a count of closed issues reached its total. The last step
 is the milestone's own acceptance, and it is evidence-gated like every other step.
 
@@ -98,6 +112,7 @@ these is a distinct finding naming the issue that caused it:
 - a cycle, with every issue trapped in or behind it named
 - an issue that is `ACTIVE`, `VERIFY` or `DONE` while a dependency is not `DONE`
 - an issue with no acceptance criteria or no validation command — a placeholder
+- a `BLOCKED` milestone with neither `blocked_by` nor `waits_on` (`blocked_without_reason`)
 
 A failing finding makes `majordomus plan validate` and `majordomus doctor` exit non-zero.
 `majordomus watch` reports the same violations as drift. Work in progress is reported and

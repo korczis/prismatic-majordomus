@@ -8,7 +8,7 @@ This page is the index. Each milestone's issues, and the findings about them, ar
 its own under [`plan-status/`](plan-status/), named by the milestone, so the plan grows by pages
 and no one page grows with it.
 
-Generated from canonical inputs `cda38202c2b6`.
+Generated from canonical inputs `eabc3678eaed`.
 
 ## Milestones
 
@@ -493,7 +493,7 @@ Generated from canonical inputs `cda38202c2b6`.
 
 ## Findings
 
-9234 finding(s), each on the page of the milestone its subject is or belongs to:
+9240 finding(s), each on the page of the milestone its subject is or belongs to:
 
 | milestone | findings |
 |---|---|
@@ -526,7 +526,7 @@ Generated from canonical inputs `cda38202c2b6`.
 | [`campaigns-are-read-as-provenance`](plan-status/campaigns-are-read-as-provenance.md) | 21 |
 | [`capability-graph`](plan-status/capability-graph.md) | 13 |
 | [`ci-critical-path`](plan-status/ci-critical-path.md) | 334 |
-| [`command-and-deployment-criteria-are-judged`](plan-status/command-and-deployment-criteria-are-judged.md) | 5 |
+| [`command-and-deployment-criteria-are-judged`](plan-status/command-and-deployment-criteria-are-judged.md) | 6 |
 | [`delivery-economics-are-measured-over-declared-windows`](plan-status/delivery-economics-are-measured-over-declared-windows.md) | 1 |
 | [`derived-data-integrity`](plan-status/derived-data-integrity.md) | 26 |
 | [`development-runtime`](plan-status/development-runtime.md) | 847 |
@@ -539,7 +539,7 @@ Generated from canonical inputs `cda38202c2b6`.
 | [`failure-is-visible`](plan-status/failure-is-visible.md) | 31 |
 | [`fly-deployment`](plan-status/fly-deployment.md) | 4 |
 | [`idd-reads-at-a-glance`](plan-status/idd-reads-at-a-glance.md) | 3160 |
-| [`intent-lifecycle`](plan-status/intent-lifecycle.md) | 63 |
+| [`intent-lifecycle`](plan-status/intent-lifecycle.md) | 65 |
 | [`knowledge-acts-on-what-it-learns`](plan-status/knowledge-acts-on-what-it-learns.md) | 82 |
 | [`landing-survives-any-session`](plan-status/landing-survives-any-session.md) | 10 |
 | [`mcp-transports-are-reliable`](plan-status/mcp-transports-are-reliable.md) | 197 |
@@ -566,6 +566,6 @@ Generated from canonical inputs `cda38202c2b6`.
 | [`the-session-domain-is-written-once`](plan-status/the-session-domain-is-written-once.md) | 6 |
 | [`the-ui-runs-and-explains`](plan-status/the-ui-runs-and-explains.md) | 18 |
 | [`the-ui-works-on-a-phone`](plan-status/the-ui-works-on-a-phone.md) | 17 |
-| [`truthful-plan-surfaces`](plan-status/truthful-plan-surfaces.md) | 291 |
+| [`truthful-plan-surfaces`](plan-status/truthful-plan-surfaces.md) | 294 |
 | [`two-folder-integration`](plan-status/two-folder-integration.md) | 9 |
 | [`web-sign-in`](plan-status/web-sign-in.md) | 35 |

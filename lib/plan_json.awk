@@ -85,10 +85,10 @@ END {
     } else {
         for (r = 1; r <= nm; r++) {
             n = split(mrow[r], c, "\t"); id = c[2]; load(id)
-            printf "%s{\"id\":%s,\"slug\":%s,\"status\":%s,\"order\":%s,\"priority\":%s,\"title\":%s,\"problem\":%s,\"outcome\":%s,\"current_state\":%s,\"desired_state\":%s,\"scope\":%s,\"non_scope\":%s,\"acceptance_criteria\":%s,\"validation\":%s,\"evidence_required\":%s,\"risks\":%s,\"evidence\":%s,\"issues\":%s,\"mermaid\":%s,\"counts\":%s}", \
+            printf "%s{\"id\":%s,\"slug\":%s,\"status\":%s,\"order\":%s,\"priority\":%s,\"title\":%s,\"problem\":%s,\"outcome\":%s,\"current_state\":%s,\"desired_state\":%s,\"scope\":%s,\"non_scope\":%s,\"acceptance_criteria\":%s,\"validation\":%s,\"evidence_required\":%s,\"risks\":%s,\"evidence\":%s,\"issues\":%s,\"waits_on\":%s,\"mermaid\":%s,\"counts\":%s}", \
                 (r > 1 ? "," : ""), jstr(id), jstr(c[7]), jstr(c[3]), jnum(c[4]), jstr(c[5]), jstr(c[6]), jstr(get("problem")), jstr(get("outcome")), \
                 jstr(get("current_state")), jstr(get("desired_state")), jlist("scope"), jlist("non_scope"), jlist("acceptance_criteria"), \
-                jlist("validation"), jlist("evidence_required"), jlist("risks"), jevidence(), jcsv(iof[id]), \
+                jlist("validation"), jlist("evidence_required"), jlist("risks"), jevidence(), jcsv(iof[id]), jcsv(c[15]), \
                 (mermaid == "" ? "\"\"" : jfile(mermaid "/" id)), jcounts(c[8])
         }
     }

@@ -65796,7 +65796,12 @@
             "lib/project.awk",
             "lib/project.sh",
             "lib/plan_json.awk",
+            "lib/plan.sh",
             "apps/majordomus-cli/src/ui/milestone.rs",
+            "apps/majordomus-cli/src/intent.rs",
+            "apps/majordomus-cli/src/board.rs",
+            "apps/majordomus-cli/src/devtask/graph.rs",
+            "apps/majordomus-cli/src/devtask/task.rs",
             "site/templates/roadmap.html",
             "site/i18n/cs/memory",
             "test/cases/99_plan_capabilities.sh",
@@ -106784,6 +106789,13 @@
         "label": "test/cases/3728_an_unkeyed_memory_entry_is_refused.sh",
         "route": "/cockpit/objects/test/test-cases-3728-an-unkeyed-memory-entry-is-refused-sh",
         "source": "test/cases/3728_an_unkeyed_memory_entry_is_refused.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/3730_a_blocked_milestone_names_what_holds_it.sh",
+        "kind": "test",
+        "label": "test/cases/3730_a_blocked_milestone_names_what_holds_it.sh",
+        "route": "/cockpit/objects/test/test-cases-3730-a-blocked-milestone-names-what-holds-it-sh",
+        "source": "test/cases/3730_a_blocked_milestone_names_what_holds_it.sh"
       },
       {
         "id": "majordomus://test/test/cases/3731_a_number_in_a_segment_is_a_placeholder.sh",
@@ -156122,6 +156134,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/3730_a_blocked_milestone_names_what_holds_it.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/3731_a_number_in_a_segment_is_a_placeholder.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -161813,8 +161830,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4422,
-      "edges": 10037,
+      "nodes": 4423,
+      "edges": 10038,
       "acyclic": false,
       "truncated": false
     }

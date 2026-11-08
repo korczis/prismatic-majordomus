@@ -455,6 +455,12 @@ pub struct PlanMilestone {
     /// Those of them that are not DONE. Non-empty means the gate holds every issue of this
     /// milestone back, whatever the issue graph says.
     pub blocked_by: Vec<String>,
+    /// What holds a BLOCKED milestone whose `blocked_by` is empty: following each of its
+    /// BLOCKED issues' `blocked_by` until an issue that is not BLOCKED (READY elsewhere,
+    /// ACTIVE, VERIFY or CANCELLED), or a milestone gate (`milestone:<id>`, reported as that
+    /// milestone's id). Sorted, each once; empty for every other milestone (I3757).
+    #[serde(default)]
+    pub waits_on: Vec<String>,
     /// The milestones that require it.
     pub dependents: Vec<String>,
     /// The claims of the repository this outcome makes true.
@@ -1212,6 +1218,28 @@ fn derive(mut header: PlanProject, mraw: Vec<PlanMilestoneRaw>, iraw: Vec<PlanIs
         counts[n] = tally(&iraw, &status, &m.id);
     }
 
+    // --- what holds a milestone the milestone graph does not (I3757; the same block in
+    //     lib/project.awk, at the same point). A BLOCKED milestone whose blocked_by is empty
+    //     is held by its issues: each BLOCKED issue's blocked_by is followed until an issue
+    //     that is not BLOCKED, or a milestone gate, reported as that milestone. A walk that
+    //     reaches nothing leaves the milestone without any reason, which is refused by name.
+    let mut mwaits: Vec<Vec<String>> = vec![Vec::new(); mraw.len()];
+    for (n, m) in mraw.iter().enumerate() {
+        if mstatus[n] != "BLOCKED" || !mblocked[n].is_empty() {
+            continue;
+        }
+        mwaits[n] = holding(&iraw, &status, &blocked_by, &ix, &m.id);
+        if mwaits[n].is_empty() {
+            v.fail(
+                "blocked_without_reason",
+                &m.id,
+                "is BLOCKED, yet every milestone it requires is DONE and its blocked issues \
+                 reach no issue outside their own chain: they wait only on each other"
+                    .into(),
+            );
+        }
+    }
+
     // --- scope conflict: two issues that could run together but touch the same paths.
     //     Reported conservatively — an uncertain overlap serialises rather than races.
     //     The runnable issues are chosen once and every scope entry normalised once, so the
@@ -1386,6 +1414,7 @@ fn derive(mut header: PlanProject, mraw: Vec<PlanMilestoneRaw>, iraw: Vec<PlanIs
                 .cloned()
                 .collect(),
             blocked_by: mblocked[n].clone(),
+            waits_on: mwaits[n].clone(),
             dependents: mdependents[n].clone(),
             claims: r.claims.clone(),
             counts: counts[n].clone(),
@@ -1414,6 +1443,49 @@ fn derive(mut header: PlanProject, mraw: Vec<PlanMilestoneRaw>, iraw: Vec<PlanIs
         milestone_edges: medges,
         findings: v.0,
     }
+}
+
+/// What holds the open issues of one milestone: every BLOCKED issue of it, and every BLOCKED
+/// issue met on the way, has its `blocked_by` followed until an entry that is not a BLOCKED
+/// issue — an issue READY, ACTIVE, VERIFY or CANCELLED, or a `milestone:<id>` gate, kept as
+/// `<id>`. Sorted in byte order, each once. Walked with a stack, never recursion: a chain is as
+/// long as the plan.
+fn holding(
+    iraw: &[PlanIssueRaw],
+    status: &[String],
+    blocked_by: &[Vec<String>],
+    ix: &dyn Fn(&str) -> Option<usize>,
+    milestone: &str,
+) -> Vec<String> {
+    let mut walked = vec![false; iraw.len()];
+    let mut stack: Vec<usize> = Vec::new();
+    for (n, r) in iraw.iter().enumerate() {
+        if r.milestone == milestone && status[n] == "BLOCKED" {
+            walked[n] = true;
+            stack.push(n);
+        }
+    }
+    let mut held: BTreeSet<String> = BTreeSet::new();
+    while let Some(x) = stack.pop() {
+        for e in &blocked_by[x] {
+            if let Some(gate) = e.strip_prefix("milestone:") {
+                held.insert(gate.to_string());
+                continue;
+            }
+            match ix(e) {
+                Some(dn) if status[dn] == "BLOCKED" => {
+                    if !walked[dn] {
+                        walked[dn] = true;
+                        stack.push(dn);
+                    }
+                }
+                _ => {
+                    held.insert(e.clone());
+                }
+            }
+        }
+    }
+    held.into_iter().collect()
 }
 
 /// What [`released_in`] answers for a milestone no release carried, or not yet.
@@ -1824,6 +1896,118 @@ mod tests {
         assert_eq!(p.milestone("M001").unwrap().rank, 1);
         assert_eq!(p.project.active_milestone, "M000");
         assert_eq!(p.next_ready(None).unwrap().id, "I0001");
+    }
+
+    /// I3757: a milestone the milestone graph gates keeps its blocked_by, which already says
+    /// why, and names nothing in waits_on, whatever its issues wait on.
+    #[test]
+    fn gated_milestone_has_no_waits_on() {
+        let p = derive(
+            header(),
+            vec![
+                milestone("M000", &[]),
+                milestone("M001", &["M000"]),
+                milestone("M002", &[]),
+            ],
+            vec![
+                issue("I0001", "M000", &[]),
+                issue("I0002", "M001", &["I0003"]),
+                issue("I0003", "M002", &[]),
+            ],
+        );
+        let m = p.milestone("M001").unwrap();
+        assert_eq!(m.status, "BLOCKED");
+        assert_eq!(m.blocked_by, vec!["M000"]);
+        assert!(m.waits_on.is_empty(), "{:?}", m.waits_on);
+        assert!(p
+            .findings
+            .iter()
+            .all(|f| f.code != "blocked_without_reason"));
+    }
+
+    /// I3757: a milestone held by its issues rather than by the milestone graph names the
+    /// issues outside it that hold every open issue inside it.
+    #[test]
+    fn blocked_milestone_names_its_holding_issue() {
+        let p = derive(
+            header(),
+            vec![milestone("M000", &[]), milestone("M001", &[])],
+            vec![
+                issue("I0001", "M000", &[]),
+                issue("I0002", "M001", &["I0001"]),
+                issue("I0003", "M001", &["I0001", "I0002"]),
+            ],
+        );
+        let m = p.milestone("M001").unwrap();
+        assert_eq!(m.status, "BLOCKED");
+        assert!(m.blocked_by.is_empty());
+        assert_eq!(
+            m.waits_on,
+            vec!["I0001"],
+            "named once, though two issues wait on it"
+        );
+        assert!(p
+            .findings
+            .iter()
+            .all(|f| f.code != "blocked_without_reason"));
+        // a milestone with one READY issue is not BLOCKED and names nothing
+        let m0 = p.milestone("M000").unwrap();
+        assert_ne!(m0.status, "BLOCKED");
+        assert!(m0.waits_on.is_empty());
+    }
+
+    /// A chain is followed to the issue that is not BLOCKED: the ACTIVE issue at its end is
+    /// named and the BLOCKED one between is not; a milestone gate met on the way is named by
+    /// its milestone.
+    #[test]
+    fn a_chain_names_the_issue_at_its_end() {
+        let mut active = issue("I0001", "M000", &[]);
+        active.stamp_with_seal(Transition::Start, "2026-01-01T00:00:00Z");
+        let p = derive(
+            header(),
+            vec![
+                milestone("M000", &[]),
+                milestone("M001", &[]),
+                milestone("M002", &["M000"]),
+                milestone("M003", &[]),
+            ],
+            vec![
+                active,
+                issue("I0002", "M000", &["I0001"]),
+                issue("I0003", "M001", &["I0002"]),
+                issue("I0004", "M002", &[]),
+                issue("I0005", "M003", &["I0004"]),
+            ],
+        );
+        assert_eq!(p.issue("I0002").unwrap().status, "BLOCKED");
+        assert_eq!(p.milestone("M001").unwrap().waits_on, vec!["I0001"]);
+        assert_eq!(p.milestone("M002").unwrap().blocked_by, vec!["M000"]);
+        assert_eq!(p.milestone("M003").unwrap().waits_on, vec!["M002"]);
+        assert_eq!(p.failures(), 0);
+    }
+
+    /// Issues that block only each other reach no holding issue: the milestone has no reason
+    /// to be BLOCKED that anybody could act on, and plan validate says so beside the cycle.
+    #[test]
+    fn a_cycle_inside_a_milestone_is_blocked_without_reason() {
+        let p = derive(
+            header(),
+            vec![milestone("M000", &[])],
+            vec![
+                issue("I0001", "M000", &["I0002"]),
+                issue("I0002", "M000", &["I0001"]),
+            ],
+        );
+        let m = p.milestone("M000").unwrap();
+        assert_eq!(m.status, "BLOCKED");
+        assert!(m.waits_on.is_empty());
+        assert!(p.findings.iter().any(|f| f.code == "cycle"));
+        let f = p
+            .findings
+            .iter()
+            .find(|f| f.code == "blocked_without_reason")
+            .expect("the finding");
+        assert_eq!((f.level.as_str(), f.subject.as_str()), ("FAIL", "M000"));
     }
 
     /// Two issues of one wave that touch the same paths are serialised, and said so.

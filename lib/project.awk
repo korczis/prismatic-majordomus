@@ -14,7 +14,10 @@
 # output (tab separated, first field is the record type):
 #   P  name  repository  default_branch  active_milestone
 #   M  id  status  order  priority  title  slug  counts  last  rank  depends  blocked_by \
-#      dependents  claims
+#      dependents  claims  waits_on
+#      `waits_on` names what holds a BLOCKED milestone whose blocked_by is empty: the issues
+#      its blocked issues wait on (a milestone gate met on the way by its milestone id), comma
+#      separated, sorted, each once; empty for every other milestone.
 #      `last` is the last accepted issue of a DONE milestone — its DONE issue with the latest
 #      completed_at, the greater id on a tie — and empty otherwise. The release that carried
 #      the milestone (released_in) is that issue's merge looked up in the release records,
@@ -56,6 +59,8 @@ BEGIN { FS = "\t"; OFS = "\t"
   # Whether length() counts characters (a UTF-8 aware awk) or bytes (BWK awk, mawk): "é" is
   # two bytes, and chars() below must count it once either way.
   UTF8_LENGTH = (length("\303\251") == 1)
+  # printable ASCII in byte order, so bytesort() orders ids as plan.rs does whatever the locale
+  for (k = 32; k < 127; k++) ASCII = ASCII sprintf("%c", k)
 }
 
 function clean(s) { gsub(/\t/, " ", s); return s }
@@ -320,6 +325,39 @@ END {
     mrow[id] = mcounts(id)
   }
 
+  # --- what holds a milestone the milestone graph does not (I3757). A milestone is BLOCKED
+  #     when none of its issues is ready; when no milestone it requires is unfinished, its
+  #     blocked_by is empty and the reason lies in its issues. Following each BLOCKED issue's
+  #     blocked_by until an issue that is not BLOCKED (READY elsewhere, ACTIVE, VERIFY or
+  #     CANCELLED), or a milestone gate (milestone:<id>, reported as that milestone), names
+  #     what holds it, each once and sorted: waits_on. A walk that reaches nothing (the issues
+  #     wait only on each other, in a cycle) leaves a BLOCKED milestone with no reason at all,
+  #     which is refused by name. plan.rs derives the same at the same point.
+  for (i = 1; i <= mn; i++) {
+    id = mids[i]; mwaits[id] = ""
+    if (mstatus[id] != "BLOCKED" || mblockedby[id] != "") continue
+    delete held; delete walked; nheld = 0; sp = 0
+    for (j = 1; j <= inum; j++) {
+      iid = iids[j]
+      if (it[iid, "milestone"] != id || status[iid] != "BLOCKED") continue
+      walked[iid] = 1; stk[++sp] = iid
+    }
+    while (sp > 0) {
+      x = stk[sp--]
+      nb = split(blockedby[x], bl, ",")
+      for (k = 1; k <= nb; k++) {
+        e = bl[k]
+        if (e ~ /^milestone:/) e = substr(e, 11)
+        else if (status[e] == "BLOCKED") { if (!(e in walked)) { walked[e] = 1; stk[++sp] = e }; continue }
+        if (!(e in held)) { held[e] = 1; hl[++nheld] = e }
+      }
+    }
+    bytesort(hl, nheld)
+    for (k = 1; k <= nheld; k++) mwaits[id] = mwaits[id] (k > 1 ? "," : "") hl[k]
+    if (nheld == 0)
+      finding("FAIL", "blocked_without_reason", id, "is BLOCKED, yet every milestone it requires is DONE and its blocked issues reach no issue outside their own chain: they wait only on each other")
+  }
+
   # --- scope conflict: two issues that could run together but touch the same paths.
   #     Reported conservatively — an uncertain overlap serialises rather than races.
   for (i = 1; i <= inum; i++) for (j = i + 1; j <= inum; j++) {
@@ -393,7 +431,7 @@ END {
     mcl = ""; for (k = 1; k <= mclaimn[id]; k++) mcl = mcl (mcl == "" ? "" : ",") mclaim[id, k]
     mrd = ""; for (k = 1; k <= moutn[id]; k++) mrd = mrd (mrd == "" ? "" : ",") mout[id, k]
     print "M", id, mstatus[id], m[id, "order"], m[id, "priority"], clean(m[id, "title"]), m[id, "slug"], mrow[id], \
-          mlast[id], mrank[id] + 0, mdl, mblockedby[id], mrd, mcl
+          mlast[id], mrank[id] + 0, mdl, mblockedby[id], mrd, mcl, mwaits[id]
   }
   for (i = 1; i <= inum; i++) {
     id = iids[i]
@@ -453,6 +491,23 @@ function overlap(a, b) {
   if (index(b, a "/") == 1) return 1
   if (index(a, b "/") == 1) return 1
   return 0
+}
+
+# insertion sort in byte order (Rust's String order), not the locale's: macOS awk collates
+# under a UTF-8 locale, where "delivery-x" sorts before "I2709". Ids are ASCII.
+function byteless(a, b,   n, i, ca, cb) {
+  n = length(a) < length(b) ? length(a) : length(b)
+  for (i = 1; i <= n; i++) {
+    ca = substr(a, i, 1); cb = substr(b, i, 1)
+    if (ca != cb) return index(ASCII, ca) < index(ASCII, cb)
+  }
+  return length(a) < length(b)
+}
+function bytesort(arr, n,   i, j, t) {
+  for (i = 2; i <= n; i++) { t = arr[i]; j = i - 1
+    while (j >= 1 && byteless(t, arr[j])) { arr[j + 1] = arr[j]; j-- }
+    arr[j + 1] = t }
+  return n
 }
 
 # insertion sort: the edge list is small and awk 3.2-era has no asort()

@@ -156,9 +156,9 @@ mj_plan_roadmap() {
         printf "{\"schema\":1,\"milestones\":["
         for (i = 1; i <= n; i++) {
           sub(/^[^\t]*\t[^\t]*\t/, "", r[i]); split(r[i], f, "\t")
-          printf "%s{\"id\":\"%s\",\"released_in\":\"%s\",\"title\":\"%s\",\"status\":\"%s\",\"rank\":%d,\"order\":%d,\"issues\":%s,\"depends_on\":%s,\"blocked_by\":%s,\"dependents\":%s,\"claims\":%s}", \
+          printf "%s{\"id\":\"%s\",\"released_in\":\"%s\",\"title\":\"%s\",\"status\":\"%s\",\"rank\":%d,\"order\":%d,\"issues\":%s,\"depends_on\":%s,\"blocked_by\":%s,\"waits_on\":%s,\"dependents\":%s,\"claims\":%s}", \
             (i > 1 ? "," : ""), esc(f[2]), esc((f[2] in rel) ? rel[f[2]] : "unreleased"), esc(f[6]), esc(f[3]), f[10], f[4], \
-            counts(f[8]), lst(f[11]), lst(f[12]), lst(f[13]), lst(f[14])
+            counts(f[8]), lst(f[11]), lst(f[12]), lst(f[15]), lst(f[13]), lst(f[14])
         }
         printf "]}\n"
       }' "$MJ_PJ/released.tsv" "$MJ_PJ/model.tsv"

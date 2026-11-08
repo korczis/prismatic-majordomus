@@ -2476,6 +2476,7 @@ mod tests {
             rank: 0,
             depends_on: vec![],
             blocked_by: vec![],
+            waits_on: Vec::new(),
             dependents: vec![],
             claims: vec![],
             counts: PlanCounts {

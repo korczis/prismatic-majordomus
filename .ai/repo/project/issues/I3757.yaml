@@ -1,6 +1,9 @@
 # rehomed from the-plan-says-what-a-fix-unblocks: that milestone is PLANNED (O1); truthful-plan-surfaces is ACTIVE and already scopes plan.rs, lib/project.awk, lib/project.sh, apps/majordomus-cli/src/ui and site/templates
 # campaign.md sequences N9 after I3267; no depends_on is kept, because I3267 (plan.impact, what finishing an issue unblocks) sits in the PLANNED milestone and this record derives only why a milestone is blocked, from blocked_by, which needs no impact evaluator
 # case name: 3730_ stands for the case number allocated with the id
+# scope widened at implementation: lib/plan.sh carries waits_on into `plan roadmap --json`, the
+# shell side of case 99's roadmap comparison and the roadmap.json /roadmap/ reads; intent.rs,
+# board.rs, devtask/graph.rs and devtask/task.rs build PlanMilestone literals in their tests
 id: "I3757"
 milestone: "truthful-plan-surfaces"
 title: "A BLOCKED milestone names what holds it: the milestones it waits on, or the issues outside it that hold every open issue inside it"
@@ -17,7 +20,12 @@ scope:
   - "lib/project.awk"
   - "lib/project.sh"
   - "lib/plan_json.awk"
+  - "lib/plan.sh"
   - "apps/majordomus-cli/src/ui/milestone.rs"
+  - "apps/majordomus-cli/src/intent.rs"
+  - "apps/majordomus-cli/src/board.rs"
+  - "apps/majordomus-cli/src/devtask/graph.rs"
+  - "apps/majordomus-cli/src/devtask/task.rs"
   - "site/templates/roadmap.html"
   - "site/i18n/cs/memory"
   - "test/cases/99_plan_capabilities.sh"

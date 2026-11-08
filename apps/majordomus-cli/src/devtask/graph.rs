@@ -774,6 +774,7 @@ mod tests {
                 rank: 0,
                 depends_on: Vec::new(),
                 blocked_by: Vec::new(),
+                waits_on: Vec::new(),
                 dependents: Vec::new(),
                 claims: Vec::new(),
                 counts: PlanCounts {
