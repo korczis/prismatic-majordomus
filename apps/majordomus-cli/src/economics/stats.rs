@@ -981,6 +981,9 @@ mod tests {
         );
         assert!(minimum_detectable_difference(20, 10_000).is_none());
         assert!(minimum_detectable_difference(5, 9500).is_none());
+        // fewer than two tasks is no comparison at any level, before the level is read
+        assert!(minimum_detectable_difference(1, 9500).is_none());
+        assert!(minimum_detectable_difference(0, 0).is_none());
         // the MDE is where the test first rejects: six tasks reject, five do not
         let at = |j: usize| {
             let mut t: Vec<Vec<f64>> = (0..20 - j).map(|_| one(0.0)).collect();
