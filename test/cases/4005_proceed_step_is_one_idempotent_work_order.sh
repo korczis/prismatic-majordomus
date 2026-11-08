@@ -61,6 +61,13 @@ satisfaction:
     ref: test/cases/01_a.sh
 Y
 commit "declare the plan and the intent"
+# the forge observed with no pull request open: proceed.plan's delivery source reads it (I4562)
+mkdir -p .ai/local/state/integration
+cat > .ai/local/state/integration/observation.json <<'J'
+{"schema":4,"repository":"o/fixture","base":"master",
+ "base_sha":"0000000000000000000000000000000000000000","observed_at":"2026-11-08T00:00:00Z",
+ "required_checks":null,"review_policy":null,"merge_methods":["merge"],"pull_requests":[]}
+J
 
 # the skeleton declares an enabled mesh, and no server runs here: the decision is provisional,
 # so the step orders nothing, waits and says why (exit 10)

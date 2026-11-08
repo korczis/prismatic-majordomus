@@ -1,6 +1,6 @@
 +++
 title = "HTTP API: proceed"
-description = "The decision a session starts from (ADR 0177): the issue to take, every READY issue it passed over with the constraint that issue failed and the hold that failed it, and the terms of the order, composed from the plan, every checkout's board and every linked machine's live claims. Writes nothing."
+description = "The decision a session starts from (ADR 0177): the issue to take, every READY issue it passed over with the constraint that issue failed and the hold that failed it, and the terms of the order, composed from the plan, every checkout's board, every linked machine's live claims and the work in flight `plan.delivery` finds. Writes nothing."
 weight = 1045
 path = "docs/api/proceed"
 template = "api-tag.html"

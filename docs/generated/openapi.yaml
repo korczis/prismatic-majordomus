@@ -112,7 +112,7 @@ tags:
   - name: plan
     description: "The milestone and issue model of this repository, and everything derived from it that nobody authored: the status of each record, the dependency graphs above and below the milestone boundary, the topological execution waves, the roadmap order, the milestone being executed and the one issue to take next. Status is never stored — a record says what happened to it and the status follows from that and from the state of its dependencies — so no file can contradict the graph. This capability reads; writing a lifecycle marker into a record is `plan.transition`, which declares that it writes the repository."
   - name: proceed
-    description: "The decision a session starts from (ADR 0177): the issue to take, every READY issue it passed over with the constraint that issue failed and the hold that failed it, and the terms of the order, composed from the plan, every checkout's board and every linked machine's live claims. Writes nothing."
+    description: "The decision a session starts from (ADR 0177): the issue to take, every READY issue it passed over with the constraint that issue failed and the hold that failed it, and the terms of the order, composed from the plan, every checkout's board, every linked machine's live claims and the work in flight `plan.delivery` finds. Writes nothing."
   - name: product
     description: "What this repository's product does for a person, as the features under the layer's features section declare it: each feature made of modules, commands, kinds, rules, documents, decisions, claims, use cases, Cockpit areas and web surfaces it names, with the interfaces it is exposed through, every count, the moments it answers and what is guaranteed derived from those references. The matrix of features against interfaces, the providers the tool has an adapter for, and the model's own validation. The homepage is a reader of this module and holds no inventory of its own."
   - name: quality
@@ -10816,7 +10816,7 @@ paths:
     get:
       operationId: proceed.plan
       summary: "What to proceed with, and why"
-      description: "The READY issues in the plan's hand-out order (the asked milestone first, then wave, priority and id, as `plan.next`), each refused when another worker holds it: a live mesh claim names it as its issue or a hold claims its record (`claimed`), a board or mesh announcement names its id as a word of its own (`named`, quoted beside it), or a live exclusive mesh claim of another session meets its scope (`scope_held`); advisory holds over its scope are listed as `shared_with` and refuse nothing. The first issue nothing refuses is `selected`, with what it unblocks, what finishes it and the commands that take it; `reason` says why in one sentence, and `sources` whether the board and the mesh could be read. A decision that could not read the board, or a declared mesh, is `provisional` and gives no commands. The caller's own session (its mesh claims on this runtime, and its board announcements) is never held against it; a session of the same name on another runtime is another worker. Composed by the server holding this checkout's lease, which holds the board and the mesh; the command line asks it. Writes nothing."
+      description: "The READY issues in the plan's hand-out order (the asked milestone first, then wave, priority and id, as `plan.next`), each refused when another worker holds it: a live mesh claim names it as its issue or a hold claims its record (`claimed`), a board or mesh announcement names its id as a word of its own (`named`, quoted beside it), a live exclusive mesh claim of another session meets its scope (`scope_held`), or `plan.delivery` places it at stage `branch` or `pr_open` on a branch or an open pull request that is not the caller's (`in_flight`, naming the pull request and its head or the branch and its commit, whether or not its author still holds a claim); advisory holds over its scope are listed as `shared_with` and refuse nothing. The first issue nothing refuses is `selected`, with what it unblocks, what finishes it and the commands that take it; `reason` says why in one sentence, and `sources` whether the plan, the board, the mesh and the delivery could be read. A decision that could not read the board, a declared mesh, or the branches and the forge the delivery reads, is `provisional` and gives no commands. The caller's own session (its mesh claims on this runtime, its board announcements, and the branch checked out where the decision is composed or on its board peer's checkout) is never held against it; a session of the same name on another runtime is another worker. Composed by the server holding this checkout's lease, which holds the board and the mesh; the command line asks it. Writes nothing."
       tags:
         - proceed
       parameters:
@@ -37321,6 +37321,9 @@ components:
           const: claimed
           description: "Another worker holds the issue itself: a live mesh claim names it as its issue, or a hold claims its record."
         - type: string
+          const: in_flight
+          description: "Work on the issue is already in flight: `plan.delivery` finds a branch or an open pull request naming it that is not the caller's."
+        - type: string
           const: named
           description: "A hold's words name the issue's id as a word of their own: how the board takes work, and how a mention reads."
         - type: string
@@ -37404,7 +37407,7 @@ components:
           description: Which constraint.
         hold:
           type: string
-          description: "The hold that failed it: a mesh claim's key, or `board:<checkout>:<peer>[:<claim>]`."
+          description: "The hold that failed it: a mesh claim's key, `board:<checkout>:<peer>[:<claim>]`, `delivery:pr:#<number>` or `delivery:branch:<ref>`."
         holder:
           type: string
           description: "Who holds it, in words."
@@ -37422,7 +37425,7 @@ components:
       properties:
         source:
           type: string
-          description: "`board` (every checkout's peers) or `mesh` (every linked machine's live claims)."
+          description: "`plan` (the plan's records), `board` (every checkout's peers), `mesh` (every linked machine's live claims) or `delivery` (the branches and open pull requests `plan.delivery` finds naming an issue)."
         state:
           "$ref": "#/components/schemas/ProceedSourceState"
           description: "Whether it was read whole, in part, or not at all."

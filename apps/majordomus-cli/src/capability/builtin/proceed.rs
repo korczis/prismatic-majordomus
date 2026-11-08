@@ -4,8 +4,9 @@
 //! # Why one capability decides
 //!
 //! Every fact a session needs before it takes work has an owner already: the plan's
-//! hand-out order (`plan.next`), the boards of every checkout (`peers.list`) and the live
-//! claims of every linked machine (`mesh.state`). Before this capability a session composed
+//! hand-out order (`plan.next`), the boards of every checkout (`peers.list`), the live
+//! claims of every linked machine (`mesh.state`) and how far each issue's work has travelled
+//! (`plan.delivery`). Before this capability a session composed
 //! them by hand — on 2026-10-17 the sessions of this repository chose issues by grepping the
 //! board, and two of them took the same identifier three times in one day. `proceed.plan`
 //! asks each owner once and answers one decision: the issue to take, every READY issue it
@@ -13,7 +14,7 @@
 //! term the order was decided by. It ranks nothing of its own: the order is the plan's, and
 //! a claim removes an issue from it without reordering what remains.
 //!
-//! # The three constraints
+//! # The four constraints
 //!
 //! An issue is *claimed* when a live mesh claim names it as its issue or any hold claims the
 //! issue's own record: a structured statement that it is somebody else's work. It is *named*
@@ -26,15 +27,25 @@
 //! nothing and is reported beside the issue as `shared_with`: a cost of coordination, not a
 //! reason to walk away.
 //!
+//! An issue is *in flight* (I4562) when `plan.delivery` places it at stage `branch` or
+//! `pr_open`: a branch or an open pull request names it, whether or not its author still holds
+//! a claim or an announcement. On 2026-11-08 this module ordered an issue that was already an
+//! open pull request, because the session that opened it had ended and with it every claim
+//! and announcement; a branch pushed before a session started carries no announcement and no
+//! less of a claim (`project.work-is-claimed-before-it-is-built`). The refusal names the pull
+//! request and its head, or the branch and the commit it points at.
+//!
 //! The caller's own holds are never held against it: the mesh claims of its session on this
 //! runtime (`<stream>/<session>`, the key `mesh.claim` writes and admits; the same name on
 //! another runtime is another session, and holds) and its board announcements (the peer whose
-//! board session `board-<peer>` is the session, or the calling MCP peer).
+//! board session `board-<peer>` is the session, or the calling MCP peer), and the branch it
+//! works on: the one checked out where the decision is composed, and its board peer's.
 //!
 //! # A decision over a source it could not read
 //!
-//! A decision that could not read the board, or the mesh of a repository that declares one,
-//! still names the issue it would select, and says it is `provisional`: the claims it did not
+//! A decision that could not read the board, the mesh of a repository that declares one, or
+//! the delivery of the plan's issues (no history, no refs, a forge never observed), still
+//! names the issue it would select, and says it is `provisional`: the claims it did not
 //! read may hold that issue. Its `next` is then empty and the command line exits 11, so that
 //! neither a person nor an acting command takes work on the strength of a partial read. A
 //! repository that declares no enabled mesh has no mesh to miss, and that source is
@@ -70,6 +81,7 @@ use crate::capability::handler::{CapabilityError, Context};
 use crate::capability::model::{CachePolicy, CliExposure, Exposure, Stability};
 use crate::capability::module::ModuleDescriptor;
 use crate::lease;
+use crate::plan::delivery::{DeliveryBranch, DeliveryReading, DeliveryStage, IssueDeliveryReport};
 use crate::plan::{Plan, PlanIssue};
 use crate::{capability, module};
 
@@ -179,7 +191,7 @@ pub struct ProceedTerms {
 pub struct ProceedRefusal {
     /// Which constraint.
     pub constraint: ProceedConstraint,
-    /// The hold that failed it: a mesh claim's key, or `board:<checkout>:<peer>[:<claim>]`.
+    /// The hold that failed it: a mesh claim's key, `board:<checkout>:<peer>[:<claim>]`, `delivery:pr:#<number>` or `delivery:branch:<ref>`.
     pub hold: String,
     /// Who holds it, in words.
     pub holder: String,
@@ -193,6 +205,8 @@ pub struct ProceedRefusal {
 pub enum ProceedConstraint {
     /// Another worker holds the issue itself: a live mesh claim names it as its issue, or a hold claims its record.
     Claimed,
+    /// Work on the issue is already in flight: `plan.delivery` finds a branch or an open pull request naming it that is not the caller's.
+    InFlight,
     /// A hold's words name the issue's id as a word of their own: how the board takes work, and how a mention reads.
     Named,
     /// A live exclusive mesh claim of another session meets the issue's scope, so claiming it would be refused.
@@ -213,7 +227,7 @@ pub struct ProceedEvidence {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 /// One source of holds and whether it could be read.
 pub struct ProceedSource {
-    /// `board` (every checkout's peers) or `mesh` (every linked machine's live claims).
+    /// `plan` (the plan's records), `board` (every checkout's peers), `mesh` (every linked machine's live claims) or `delivery` (the branches and open pull requests `plan.delivery` finds naming an issue).
     pub source: String,
     /// Whether it was read whole, in part, or not at all.
     pub state: ProceedSourceState,
@@ -239,7 +253,8 @@ pub enum ProceedSourceState {
 
 // ---------------------------------------------------------------- the decision
 
-/// Something another worker holds: a live mesh claim or a board announcement.
+/// Something another worker holds: a live mesh claim, a board announcement, or a branch or
+/// open pull request naming an issue.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) struct Hold {
     pub(crate) key: String,
@@ -248,6 +263,8 @@ pub(crate) struct Hold {
     pub(crate) issue: Option<String>,
     pub(crate) words: String,
     pub(crate) scope: Vec<String>,
+    /// For work in flight on `issue`: what is in flight, said in the refusal.
+    pub(crate) in_flight: Option<String>,
 }
 
 /// The decision over a plan and the holds of others. Pure: everything it reads is passed in.
@@ -345,10 +362,13 @@ fn candidate(plan: &Plan, asked: &str, issue: &PlanIssue, holds: &[Hold]) -> Pro
     let mut shared_with = Vec::new();
     for h in holds {
         let held = if h.issue.as_deref() == Some(issue.id.as_str()) {
-            Some((
-                ProceedConstraint::Claimed,
-                format!("claims {} as its issue", issue.id),
-            ))
+            Some(match &h.in_flight {
+                Some(what) => (ProceedConstraint::InFlight, what.clone()),
+                None => (
+                    ProceedConstraint::Claimed,
+                    format!("claims {} as its issue", issue.id),
+                ),
+            })
         } else if h.scope.contains(&record) {
             Some((
                 ProceedConstraint::Claimed,
@@ -498,7 +518,8 @@ pub(super) fn decision_of(ctx: &Context, input: ProceedPlanInput) -> ProceedDeci
         .clone()
         .or_else(|| ctx.caller.as_ref().map(|p| format!("board-{}", p.as_str())));
     let mut holds = Vec::new();
-    let mut board = board_holds(ctx, &root, session.as_deref(), &mut holds);
+    let mut own: Vec<String> = checked_out(&root).into_iter().collect();
+    let mut board = board_holds(ctx, &root, session.as_deref(), &mut holds, &mut own);
     if let Some(why) = unasked {
         unasked_board(&mut board, &why);
     }
@@ -506,12 +527,13 @@ pub(super) fn decision_of(ctx: &Context, input: ProceedPlanInput) -> ProceedDeci
     if let Some(n) = note {
         mesh.summary = format!("{}; {n}", mesh.summary);
     }
+    let delivery = delivery_holds(ctx, &own, &mut holds);
     decide(
         &Plan::build(&ctx.index),
         input.milestone.as_deref(),
         session.as_deref(),
         &holds,
-        vec![plan_source(ctx), board, mesh],
+        vec![plan_source(ctx), board, mesh, delivery],
     )
 }
 
@@ -570,12 +592,14 @@ fn unasked_board(board: &mut ProceedSource, why: &str) {
     );
 }
 
-/// The announcements of every attached peer but the caller's own, on every checkout's board.
+/// The announcements of every attached peer but the caller's own, on every checkout's board;
+/// the branch of the caller's own peer is added to `own`.
 fn board_holds(
     ctx: &Context,
     root: &std::path::Path,
     session: Option<&str>,
     holds: &mut Vec<Hold>,
+    own: &mut Vec<String>,
 ) -> ProceedSource {
     let list: Result<PeerList, String> = ctx
         .execute("peers.list", json!({ "checkouts": "repository" }))
@@ -600,6 +624,7 @@ fn board_holds(
             .is_some_and(|c| c.worktree.canonicalize().unwrap_or(c.worktree.clone()) == root);
         let own_session = session == Some(format!("board-{}", p.id.as_str()).as_str());
         if here && (ctx.caller.as_ref() == Some(&p.id) || own_session) {
+            own.extend(p.checkout.as_ref().and_then(|c| c.branch.clone()));
             continue;
         }
         let worktree = p
@@ -625,6 +650,7 @@ fn board_holds(
                 issue: None,
                 words: a.intent.clone(),
                 scope: a.scope.clone(),
+                in_flight: None,
             });
         }
     }
@@ -710,6 +736,7 @@ fn mesh_holds(ctx: &Context, session: Option<&str>, holds: &mut Vec<Hold>) -> Pr
             issue: c.issue.clone(),
             words: c.intent.clone().unwrap_or_default(),
             scope: c.scope.clone(),
+            in_flight: None,
         });
     }
     ProceedSource {
@@ -718,6 +745,133 @@ fn mesh_holds(ctx: &Context, session: Option<&str>, holds: &mut Vec<Hold>) -> Pr
         holds: holds.len() - before,
         summary: format!("{} live claim(s) of others", holds.len() - before),
     }
+}
+
+/// The branch checked out at `root`: the caller's own when the decision is composed in its
+/// checkout. `None` for a detached head or a directory git cannot answer for.
+fn checked_out(root: &std::path::Path) -> Option<String> {
+    let out = crate::worktree::git::run(root, &["symbolic-ref", "--short", "-q", "HEAD"]).ok()?;
+    let name = String::from_utf8_lossy(&out.stdout).trim().to_string();
+    (!name.is_empty()).then_some(name)
+}
+
+/// The work in flight `plan.delivery` finds, as holds: its own reading, asked once, never a
+/// second reader of the refs or the forge. A reading that cannot be done is `unread`, never an
+/// empty pass.
+fn delivery_holds(ctx: &Context, own: &[String], holds: &mut Vec<Hold>) -> ProceedSource {
+    let report: Result<IssueDeliveryReport, String> = ctx
+        .execute("plan.delivery", json!({}))
+        .map_err(|e| e.to_string())
+        .and_then(|v| serde_json::from_value(v).map_err(|e| e.to_string()));
+    match report {
+        Ok(report) => in_flight(&report, own, holds),
+        Err(e) => ProceedSource {
+            source: "delivery".into(),
+            state: ProceedSourceState::Unread,
+            holds: 0,
+            summary: format!("plan.delivery did not answer ({e})"),
+        },
+    }
+}
+
+/// The holds of the work in flight in a delivery reading: every issue at stage `pr_open`,
+/// held by its pull request, and at stage `branch`, held by its branch, unless that pull
+/// request's head or that branch is one of `own` (a remote-tracking ref is its branch without
+/// the remote). Pure. The source is partial when the refs or the forge were not read: an issue
+/// they could have placed in flight is then not known to be free.
+fn in_flight(report: &IssueDeliveryReport, own: &[String], holds: &mut Vec<Hold>) -> ProceedSource {
+    let mine = |name: &str| own.iter().any(|o| o == name);
+    let before = holds.len();
+    for i in &report.issues {
+        let (key, holder, what) = match (i.stage, &i.pr_open, &i.branch) {
+            (DeliveryStage::PrOpen, Some(pr), _) => {
+                if mine(&pr.head_ref) {
+                    continue;
+                }
+                let head = i
+                    .branch
+                    .as_ref()
+                    .filter(|b| local_name(b) == pr.head_ref)
+                    .map(|b| format!(" at {}", short(&b.head)))
+                    .unwrap_or_default();
+                (
+                    format!("delivery:pr:#{}", pr.number),
+                    format!("pull request #{} (observed {})", pr.number, pr.observed_at),
+                    format!(
+                        "in flight as {}pull request #{} from {}{head}: {}",
+                        if pr.draft { "draft " } else { "" },
+                        pr.number,
+                        pr.head_ref,
+                        clip(&pr.title, 120)
+                    ),
+                )
+            }
+            (DeliveryStage::Branch, _, Some(b)) => {
+                if mine(local_name(b)) {
+                    continue;
+                }
+                (
+                    format!("delivery:branch:{}", b.name),
+                    format!("branch {} (observed {})", b.name, b.observed_at),
+                    format!(
+                        "in flight on {} branch {} at {}",
+                        if b.remote { "the pushed" } else { "the local" },
+                        b.name,
+                        short(&b.head)
+                    ),
+                )
+            }
+            _ => continue,
+        };
+        holds.push(Hold {
+            key,
+            holder,
+            exclusive: false,
+            issue: Some(i.issue.clone()),
+            words: String::new(),
+            scope: Vec::new(),
+            in_flight: Some(what),
+        });
+    }
+    let unread: Vec<String> = report
+        .sources
+        .iter()
+        .filter(|s| {
+            s.state == DeliveryReading::Unread && ["branches", "forge"].contains(&s.name.as_str())
+        })
+        .map(|s| format!("{}: {}", s.name, s.detail))
+        .collect();
+    let count = holds.len() - before;
+    ProceedSource {
+        source: "delivery".into(),
+        state: match unread.len() {
+            0 => ProceedSourceState::Read,
+            1 => ProceedSourceState::Partial,
+            _ => ProceedSourceState::Unread,
+        },
+        holds: count,
+        summary: if unread.is_empty() {
+            format!("{count} issue(s) in flight on a branch or an open pull request of others")
+        } else {
+            format!(
+                "{count} issue(s) in flight on a branch or an open pull request of others; not read: {}",
+                unread.join("; ")
+            )
+        },
+    }
+}
+
+/// A branch's name without its remote: `origin/feature/x` is `feature/x`.
+fn local_name(b: &DeliveryBranch) -> &str {
+    if b.remote {
+        b.name.split_once('/').map_or(b.name.as_str(), |(_, n)| n)
+    } else {
+        b.name.as_str()
+    }
+}
+
+fn short(commit: &str) -> &str {
+    commit.get(..11).unwrap_or(commit)
 }
 
 /// Ask the leaseholder over the route this capability is declared at ([`PLAN_ROUTE`]).
@@ -747,13 +901,13 @@ pub fn module() -> ModuleDescriptor {
     module! {
         id: "proceed",
         title: "What a session proceeds with",
-        description: "The decision a session starts from (ADR 0177): the issue to take, every READY issue it passed over with the constraint that issue failed and the hold that failed it, and the terms of the order, composed from the plan, every checkout's board and every linked machine's live claims. Writes nothing.",
+        description: "The decision a session starts from (ADR 0177): the issue to take, every READY issue it passed over with the constraint that issue failed and the hold that failed it, and the terms of the order, composed from the plan, every checkout's board, every linked machine's live claims and the work in flight `plan.delivery` finds. Writes nothing.",
         stability: Stability::BehaviorallyVerified,
         capabilities: [
             capability! {
                 id: "proceed.plan",
                 title: "What to proceed with, and why",
-                description: "The READY issues in the plan's hand-out order (the asked milestone first, then wave, priority and id, as `plan.next`), each refused when another worker holds it: a live mesh claim names it as its issue or a hold claims its record (`claimed`), a board or mesh announcement names its id as a word of its own (`named`, quoted beside it), or a live exclusive mesh claim of another session meets its scope (`scope_held`); advisory holds over its scope are listed as `shared_with` and refuse nothing. The first issue nothing refuses is `selected`, with what it unblocks, what finishes it and the commands that take it; `reason` says why in one sentence, and `sources` whether the board and the mesh could be read. A decision that could not read the board, or a declared mesh, is `provisional` and gives no commands. The caller's own session (its mesh claims on this runtime, and its board announcements) is never held against it; a session of the same name on another runtime is another worker. Composed by the server holding this checkout's lease, which holds the board and the mesh; the command line asks it. Writes nothing.",
+                description: "The READY issues in the plan's hand-out order (the asked milestone first, then wave, priority and id, as `plan.next`), each refused when another worker holds it: a live mesh claim names it as its issue or a hold claims its record (`claimed`), a board or mesh announcement names its id as a word of its own (`named`, quoted beside it), a live exclusive mesh claim of another session meets its scope (`scope_held`), or `plan.delivery` places it at stage `branch` or `pr_open` on a branch or an open pull request that is not the caller's (`in_flight`, naming the pull request and its head or the branch and its commit, whether or not its author still holds a claim); advisory holds over its scope are listed as `shared_with` and refuse nothing. The first issue nothing refuses is `selected`, with what it unblocks, what finishes it and the commands that take it; `reason` says why in one sentence, and `sources` whether the plan, the board, the mesh and the delivery could be read. A decision that could not read the board, a declared mesh, or the branches and the forge the delivery reads, is `provisional` and gives no commands. The caller's own session (its mesh claims on this runtime, its board announcements, and the branch checked out where the decision is composed or on its board peer's checkout) is never held against it; a session of the same name on another runtime is another worker. Composed by the server holding this checkout's lease, which holds the board and the mesh; the command line asks it. Writes nothing.",
                 input: ProceedPlanInput,
                 output: ProceedDecision,
                 stability: Stability::BehaviorallyVerified,
@@ -859,6 +1013,7 @@ mod tests {
             issue: issue.map(Into::into),
             words: words.into(),
             scope: scope.iter().map(|s| s.to_string()).collect(),
+            in_flight: None,
         }
     }
 
@@ -1143,6 +1298,7 @@ mod tests {
     #[test]
     fn the_handler_reads_the_board_and_tells_an_undeclared_mesh_from_an_unread_one() {
         let repo = planned(&[("I0001", &[], &["src/a"])]);
+        delivered(&repo);
         let local = || ProceedPlanInput {
             local: true,
             ..Default::default()
@@ -1261,6 +1417,7 @@ mod tests {
             ("I0002", &[], &["src/b"]),
             ("I0003", &[], &["src/c"]),
         ]);
+        delivered(&repo);
         let dir = repo.root().join(".ai/repo/mesh");
         std::fs::create_dir_all(&dir).unwrap();
         std::fs::write(
@@ -1662,6 +1819,10 @@ mod tests {
         canned("intent_realization.work")
     }
 
+    fn canned_delivery(_: &Context, _: Anything) -> Result<serde_json::Value, CapabilityError> {
+        canned("plan.delivery")
+    }
+
     /// A context whose registry holds this module and stand-ins for the owners it asks.
     pub(super) fn canned_context(repo: &crate::synthetic::SyntheticRepository) -> Context {
         let registry = crate::capability::CapabilityRegistry::builder()
@@ -1679,6 +1840,12 @@ mod tests {
                     stability: Stability::Experimental, exposure: Exposure::default(), tags: [],
                     handler: canned_realization,
                 },
+                capability! {
+                    id: "plan.delivery", title: "Delivery", description: "Canned.",
+                    input: Anything, output: serde_json::Value,
+                    stability: Stability::Experimental, exposure: Exposure::default(), tags: [],
+                    handler: canned_delivery,
+                },
             ])
             .build()
             .expect("a registry of stand-ins");
@@ -1695,7 +1862,7 @@ mod tests {
         let root = PathBuf::from(&ctx.index.repository.root);
         can("peers.list", None);
         let mut holds = Vec::new();
-        let board = board_holds(&ctx, &root, None, &mut holds);
+        let board = board_holds(&ctx, &root, None, &mut holds, &mut Vec::new());
         assert_eq!(board.state, ProceedSourceState::Unread);
         assert!(
             board.summary.starts_with("peers.list did not answer (")
@@ -1704,7 +1871,7 @@ mod tests {
             board.summary
         );
         can("peers.list", Some(json!({ "peers": "nobody" })));
-        let board = board_holds(&ctx, &root, None, &mut holds);
+        let board = board_holds(&ctx, &root, None, &mut holds, &mut Vec::new());
         assert_eq!(board.state, ProceedSourceState::Unread, "{}", board.summary);
         assert!(holds.is_empty());
     }
@@ -1736,7 +1903,7 @@ mod tests {
         can("peers.list", Some(list));
         let root = PathBuf::from(&ctx.index.repository.root);
         let mut holds = Vec::new();
-        let board = board_holds(&ctx, &root, None, &mut holds);
+        let board = board_holds(&ctx, &root, None, &mut holds, &mut Vec::new());
         assert_eq!(
             board.state,
             ProceedSourceState::Partial,
@@ -1752,5 +1919,382 @@ mod tests {
         assert!(holds[0].key.ends_with(":second"), "{}", holds[0].key);
         assert!(holds[0].holder.ends_with("@?"), "{}", holds[0].holder);
         assert_eq!(holds[0].words, "work on a");
+    }
+
+    // ------------------------------------------------ work in flight (I4562)
+
+    /// Run git in `dir` as a test's own author, and say what it printed.
+    fn git_in(dir: &std::path::Path, args: &[&str]) -> String {
+        let out = std::process::Command::new("git")
+            .arg("-C")
+            .arg(dir)
+            .args([
+                "-c",
+                "user.name=t",
+                "-c",
+                "user.email=t@t",
+                "-c",
+                "commit.gpgsign=false",
+            ])
+            .args(args)
+            .output()
+            .expect("git");
+        assert!(
+            out.status.success(),
+            "git {args:?}: {}",
+            String::from_utf8_lossy(&out.stderr)
+        );
+        String::from_utf8_lossy(&out.stdout).into_owned()
+    }
+
+    /// Make the repository one `plan.delivery` can read whole: a history on `master` and a
+    /// forge observed with no pull request open.
+    fn delivered(repo: &crate::synthetic::SyntheticRepository) {
+        git_in(repo.root(), &["init", "-q", "-b", "master"]);
+        git_in(repo.root(), &["add", "-A"]);
+        git_in(repo.root(), &["commit", "-qm", "the plan"]);
+        let observation = serde_json::from_value(json!({
+            "schema": crate::integration::forge::OBSERVATION_SCHEMA,
+            "repository": "o/r", "base": "master", "base_sha": "0".repeat(40),
+            "observed_at": "2026-11-08T00:00:00Z", "required_checks": null,
+            "review_policy": null, "up_to_date_required": null, "merge_methods": ["merge"],
+            "pull_requests": [], "resolved": {}, "delete_branch_on_merge": null,
+        }))
+        .expect("an observation");
+        crate::integration::store_observation(repo.root(), &observation).expect("stored");
+    }
+
+    /// One issue of a delivery reading: its stage, an open pull request `(number, head_ref)`
+    /// and a branch `(name, remote)` naming it.
+    fn flight(
+        id: &str,
+        stage: &str,
+        pr: Option<(u64, &str)>,
+        branch: Option<(&str, bool)>,
+    ) -> serde_json::Value {
+        let mut i = json!({
+            "issue": id, "title": format!("t {id}"), "milestone": "M000", "status": "READY",
+            "stage": stage, "settled": true, "unread": [],
+        });
+        if let Some((number, head_ref)) = pr {
+            i["pr_open"] = json!({
+                "number": number, "title": format!("fix: {id}"), "head_ref": head_ref,
+                "draft": false, "via": "title_or_branch", "observed_at": "2026-11-08T00:00:00Z",
+            });
+        }
+        if let Some((name, remote)) = branch {
+            i["branch"] = json!({
+                "name": name, "head": "bff711a6b03c0ffee", "remote": remote, "via": "id",
+                "observed_at": "2026-11-08T00:20:00Z",
+            });
+        }
+        i
+    }
+
+    /// A delivery reading of `issues`, the sources named in `unread` not read.
+    fn report(issues: Vec<serde_json::Value>, unread: &[&str]) -> serde_json::Value {
+        let sources: Vec<serde_json::Value> = ["history", "branches", "forge"]
+            .iter()
+            .map(|name| {
+                if unread.contains(name) {
+                    json!({ "name": name, "state": "unread", "detail": format!("{name} not read here") })
+                } else {
+                    json!({ "name": name, "state": "read", "detail": "read" })
+                }
+            })
+            .collect();
+        json!({
+            "schema": 1,
+            "observed": { "mode": "live", "trunk": "master", "commit": "c", "observed_at": "now" },
+            "stages": [], "sources": sources, "tallies": {}, "unsettled": 0, "issues": issues,
+        })
+    }
+
+    fn holds_of(report: serde_json::Value, own: &[&str]) -> (ProceedSource, Vec<Hold>) {
+        let report: IssueDeliveryReport = serde_json::from_value(report).expect("a reading");
+        let own: Vec<String> = own.iter().map(|s| s.to_string()).collect();
+        let mut holds = Vec::new();
+        let source = in_flight(&report, &own, &mut holds);
+        (source, holds)
+    }
+
+    /// The defect of 2026-11-08, through the handler: an issue that is an open pull request,
+    /// with no mesh claim and no board announcement naming it, is not handed out; the next
+    /// free one is, and the refusal names the pull request and its head.
+    #[test]
+    fn proceed_skips_an_issue_in_flight_test() {
+        let repo = planned(&[("I0001", &[], &["src/a"]), ("I0002", &[], &["src/b"])]);
+        let ctx = canned_context(&repo);
+        can(
+            "peers.list",
+            Some(json!({ "count": 0, "peers": [], "covered": 0, "boards": [], "complete": true })),
+        );
+        can(
+            "plan.delivery",
+            Some(report(
+                vec![
+                    flight(
+                        "I0001",
+                        "pr_open",
+                        Some((2971, "feature/I0001-x")),
+                        Some(("origin/feature/I0001-x", true)),
+                    ),
+                    flight("I0002", "none", None, None),
+                ],
+                &[],
+            )),
+        );
+        let d = proceed_plan(
+            &ctx,
+            ProceedPlanInput {
+                local: true,
+                ..Default::default()
+            },
+        )
+        .unwrap();
+        let delivery = d.sources.iter().find(|s| s.source == "delivery").unwrap();
+        assert_eq!(
+            (delivery.state, delivery.holds),
+            (ProceedSourceState::Read, 1)
+        );
+        let first = d.candidates.iter().find(|c| c.issue == "I0001").unwrap();
+        assert_eq!(first.refused.len(), 1, "{:?}", first.refused);
+        let r = &first.refused[0];
+        assert_eq!(
+            (r.constraint, r.hold.as_str()),
+            (ProceedConstraint::InFlight, "delivery:pr:#2971")
+        );
+        assert!(
+            r.detail
+                .contains("pull request #2971 from feature/I0001-x at bff711a6b03"),
+            "{}",
+            r.detail
+        );
+        assert_eq!(d.selected.map(|c| c.issue).as_deref(), Some("I0002"));
+        assert!(
+            !d.provisional && d.next[0].contains("--issue I0002"),
+            "{}",
+            d.reason
+        );
+        can("peers.list", None);
+        can("plan.delivery", None);
+    }
+
+    #[test]
+    fn proceed_skips_an_issue_in_flight_test_an_open_pull_request_alone_is_refused_naming_it() {
+        let plan = plan_of(&planned(&[
+            ("I0001", &[], &["src/a"]),
+            ("I0002", &[], &["src/b"]),
+        ]));
+        // the pull request's branch was never fetched here: the pull request alone holds
+        let (source, holds) = holds_of(
+            report(
+                vec![flight(
+                    "I0001",
+                    "pr_open",
+                    Some((2975, "fix/I0001-y")),
+                    None,
+                )],
+                &[],
+            ),
+            &[],
+        );
+        assert_eq!((source.state, source.holds), (ProceedSourceState::Read, 1));
+        let d = decide(
+            &plan,
+            None,
+            None,
+            &holds,
+            vec![read("board"), read("mesh"), source],
+        );
+        let r = &d.candidates[0].refused[0];
+        assert_eq!(
+            (r.constraint, r.hold.as_str()),
+            (ProceedConstraint::InFlight, "delivery:pr:#2975")
+        );
+        assert!(
+            r.detail
+                .contains("pull request #2975 from fix/I0001-y: fix: I0001"),
+            "{}",
+            r.detail
+        );
+        assert!(r.holder.starts_with("pull request #2975"), "{}", r.holder);
+        assert_eq!(d.selected.map(|c| c.issue).as_deref(), Some("I0002"));
+    }
+
+    #[test]
+    fn proceed_skips_an_issue_in_flight_test_a_pushed_branch_alone_is_refused_naming_it() {
+        let plan = plan_of(&planned(&[
+            ("I0001", &[], &["src/a"]),
+            ("I0002", &[], &["src/b"]),
+        ]));
+        let (source, holds) = holds_of(
+            report(
+                vec![
+                    flight(
+                        "I0001",
+                        "branch",
+                        None,
+                        Some(("origin/feature/I0001-x", true)),
+                    ),
+                    // a merged issue is not in flight, whatever still names it
+                    flight("I0002", "merged", None, Some(("feature/I0002", false))),
+                ],
+                &[],
+            ),
+            &[],
+        );
+        assert_eq!(holds.len(), 1, "{holds:?}");
+        let d = decide(&plan, None, None, &holds, vec![source]);
+        let r = &d.candidates[0].refused[0];
+        assert_eq!(
+            (r.constraint, r.hold.as_str()),
+            (
+                ProceedConstraint::InFlight,
+                "delivery:branch:origin/feature/I0001-x"
+            )
+        );
+        assert!(
+            r.detail
+                .contains("the pushed branch origin/feature/I0001-x at bff711a6b03"),
+            "{}",
+            r.detail
+        );
+        assert_eq!(d.selected.map(|c| c.issue).as_deref(), Some("I0002"));
+    }
+
+    #[test]
+    fn proceed_skips_an_issue_in_flight_test_an_unread_delivery_is_unread_and_provisional() {
+        let repo = planned(&[("I0001", &[], &["src/a"])]);
+        let ctx = canned_context(&repo);
+        can(
+            "peers.list",
+            Some(json!({ "count": 0, "peers": [], "covered": 0, "boards": [], "complete": true })),
+        );
+        // plan.delivery does not answer
+        can("plan.delivery", None);
+        let d = proceed_plan(
+            &ctx,
+            ProceedPlanInput {
+                local: true,
+                ..Default::default()
+            },
+        )
+        .unwrap();
+        let delivery = d.sources.iter().find(|s| s.source == "delivery").unwrap();
+        assert_eq!(
+            delivery.state,
+            ProceedSourceState::Unread,
+            "{}",
+            delivery.summary
+        );
+        assert!(
+            delivery
+                .summary
+                .starts_with("plan.delivery did not answer ("),
+            "{}",
+            delivery.summary
+        );
+        assert!(d.provisional && d.next.is_empty(), "{}", d.reason);
+        assert!(
+            d.reason
+                .ends_with("decided without all of: delivery (see sources)"),
+            "{}",
+            d.reason
+        );
+        assert_eq!(
+            d.selected.map(|c| c.issue).as_deref(),
+            Some("I0001"),
+            "named, not taken"
+        );
+        can("peers.list", None);
+
+        // a forge never observed: an open pull request cannot be ruled out
+        let (source, _) = holds_of(
+            report(vec![flight("I0001", "none", None, None)], &["forge"]),
+            &[],
+        );
+        assert_eq!(source.state, ProceedSourceState::Partial);
+        assert!(
+            source
+                .summary
+                .contains("not read: forge: forge not read here"),
+            "{}",
+            source.summary
+        );
+        let d = decide(&plan_of(&repo), None, None, &[], vec![source]);
+        assert!(d.provisional && d.next.is_empty(), "{}", d.reason);
+        // neither the refs nor the forge: nothing of the work in flight was read
+        let (source, _) = holds_of(report(vec![], &["branches", "forge"]), &[]);
+        assert_eq!(source.state, ProceedSourceState::Unread);
+    }
+
+    #[test]
+    fn proceed_skips_an_issue_in_flight_test_the_callers_own_branch_does_not_hold() {
+        let plan = plan_of(&planned(&[
+            ("I0001", &[], &["src/a"]),
+            ("I0002", &[], &["src/b"]),
+        ]));
+        let reading = || {
+            report(
+                vec![
+                    flight("I0001", "pr_open", Some((7, "feature/I0001-x")), None),
+                    flight(
+                        "I0002",
+                        "branch",
+                        None,
+                        Some(("origin/feature/I0002-y", true)),
+                    ),
+                ],
+                &[],
+            )
+        };
+        // the caller's own pull request, and its own branch as the remote tracks it
+        let (source, holds) = holds_of(reading(), &["feature/I0001-x", "feature/I0002-y"]);
+        assert!(holds.is_empty(), "{holds:?}");
+        assert_eq!((source.state, source.holds), (ProceedSourceState::Read, 0));
+        let d = decide(&plan, None, None, &holds, vec![source]);
+        assert_eq!(d.selected.map(|c| c.issue).as_deref(), Some("I0001"));
+        // another caller's: both hold
+        let (_, holds) = holds_of(reading(), &["master"]);
+        assert_eq!(holds.len(), 2);
+
+        // through the handler: the branch checked out where the decision is composed is the
+        // caller's own
+        let repo = planned(&[("I0001", &[], &["src/a"])]);
+        git_in(repo.root(), &["init", "-q", "-b", "feature/I0001-x"]);
+        let ctx = canned_context(&repo);
+        can(
+            "peers.list",
+            Some(json!({ "count": 0, "peers": [], "covered": 0, "boards": [], "complete": true })),
+        );
+        can(
+            "plan.delivery",
+            Some(report(
+                vec![flight(
+                    "I0001",
+                    "pr_open",
+                    Some((7, "feature/I0001-x")),
+                    None,
+                )],
+                &[],
+            )),
+        );
+        let d = proceed_plan(
+            &ctx,
+            ProceedPlanInput {
+                local: true,
+                ..Default::default()
+            },
+        )
+        .unwrap();
+        assert_eq!(
+            d.selected.map(|c| c.issue).as_deref(),
+            Some("I0001"),
+            "{}",
+            d.reason
+        );
+        can("peers.list", None);
+        can("plan.delivery", None);
     }
 }

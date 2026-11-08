@@ -39,6 +39,13 @@ mkdir -p "$R/.ai/repo/mesh"
   printf 'cooperation:\n  heartbeat_seconds: 1\n  expiry_seconds: 30\n  repository: case-3367\n'
 } > "$R/.ai/repo/mesh/majordomus.yaml"
 git -C "$R" add -A >/dev/null && git -C "$R" commit -qm base >/dev/null
+# the forge observed with no pull request open: proceed.plan's delivery source reads it (I4562)
+mkdir -p "$R/.ai/local/state/integration"
+cat > "$R/.ai/local/state/integration/observation.json" <<'J'
+{"schema":4,"repository":"o/fixture","base":"master",
+ "base_sha":"0000000000000000000000000000000000000000","observed_at":"2026-11-08T00:00:00Z",
+ "required_checks":null,"review_policy":null,"merge_methods":["merge"],"pull_requests":[]}
+J
 mkdir -p "$T/state"
 export MAJORDOMUS_BIN="$RB" MAJORDOMUS_SHARE="$ROOT/share" MAJORDOMUS_LOG=warn XDG_STATE_HOME="$T/state"
 S="$T/io"; mkdir -p "$S"
