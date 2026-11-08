@@ -41,6 +41,7 @@ Current version: **1.0.0**
 
 - **ADR-0230** Flowbite Pro is adapted onto Tailwind 4 and Flowbite 4, a brand's colour is the primary scale, and one capability judges every repository's interface against it _(proposed)_
 - **ADR-0227** The deployed stage reads the pointer where Pages published it _(proposed)_
+- **ADR-0177** A session proceeds through one entrypoint that composes the capabilities the repository already has _(proposed)_
 
 ### Added
 
