@@ -457,3 +457,16 @@ for pr in 2631 2630 2593 2592 2591 2501; do
   expect_exit 0 cv decide labeled train "$sha" || exit 1
   cv_says "carry $((1000 + n)) success" "#$pr: the labeled event of a train"
 done
+
+# 12. the pages deploy's site build is handed the executable the run built (I3769, #2959): the
+#     deploy job builds from artifacts and keeps none, so site-build read delivery at the committed
+#     projection only; on 2026-11-07 a build that required it stopped every deploy of master.
+#     The ui-snapshot job uploads the executable it built with its commit, and the build step
+#     exports it as MAJORDOMUS_BIN with MAJORDOMUS_BIN_COMMIT when it is there.
+grep -q 'name: pages-executable' "$P" \
+  || { echo "    the pages workflow uploads no executable for the deploy's site build"; exit 1; }
+build_step="$(awk '$0 == "  deploy:" {f=1; next} /^  [a-z-]+:$/ {f=0} f && /^      - name: build$/ {b=1} f && b {print} f && b && /scripts\/pages build/ {exit}' "$P")"
+printf '%s\n' "$build_step" | grep -q 'MAJORDOMUS_BIN=' \
+  || { echo "    the deploy's build step does not hand the run's executable to site-build"; printf '%s\n' "$build_step"; exit 1; }
+printf '%s\n' "$build_step" | grep -q 'MAJORDOMUS_BIN_COMMIT=' \
+  || { echo "    the deploy's build step names no commit for the executable it hands over"; exit 1; }

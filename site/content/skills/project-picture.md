@@ -33,11 +33,17 @@ changes nothing outside the records allowed in stage 11, and never asks for a lo
    cancel, deploy or publish on any system. The only writes are those in stage 11.
 2. **Every source is optional.** Each one is probed before it is read, has a timeout and a share
    of BUDGET, and on failure (absent, unauthenticated, rate-limited, offline, denied) becomes a
-   coverage row with the reason. A run with only the tree still yields a picture.
+   coverage row with the reason. A run with only the tree still yields a picture. Ask the
+   shared server first (its MCP or HTTP surface answers the board, the brief and the plan from
+   memory). A command line call that exceeds its share becomes a `partial: timed out` row; it
+   never stalls the run. Some calls are slow on a large repository: `plan next`, `doctor`, and
+   an integration-queue status.
 3. **Local first.** Finish tiers T0 and T1 before any network call. With MODE offline, or when no
    network answers, stop after them and say so.
 4. **Never mutate the checkout to read it.** Read trunk with `git fetch` and
-   `git show origin/<trunk>:<path>`. Never merge, rebase, stash, switch or clean.
+   `git show origin/<trunk>:<path>`. Never merge, rebase, stash, switch or clean. The one write
+   this skill allows itself is the dry-run merge of stage 6: `git merge-tree --write-tree` adds
+   unreferenced tree objects to `.git` and moves no ref.
 5. **Precedence.** The tree (git and files) outranks `.ai/` records. Records outrank forges and
    trackers. Those outrank conversations. Memory and recalled notes rank last and are
    re-verified before use. A higher source wins only after the contradiction is recorded.
@@ -124,6 +130,9 @@ each return findings in the shape below, not prose.
 - List every contradiction with both sides cited. Typical ones: an issue open while its work
   merged; a document that says "not built" while code exists; a plan that misses a scope
   agreed in a conversation; CI green while the deploy is red; a due date in the past.
+  Before a contradiction is listed, read both sides at their locators yourself. A
+  contradiction that a parallel worker returned is a lead, not a finding. A document's
+  sentence is read whole: "X beyond Y is not built" does not contradict a merged Y.
 - Re-verify, at the source, the two or three claims that the next actions depend on,
   including any claim a parallel worker returned.
 - Derive: the critical path, who waits on whom, momentum (the last landing and what stopped
@@ -181,8 +190,16 @@ stale when its newest source is older than the repository's stale threshold.
     and the first command.
 11. **Diagram**, Mermaid, from OBSERVED facts.
 12. **Proposed records** from stage 11, marked as unwritten.
-13. **Coverage ledger**: one row per tier and adapter: read, partial, skipped (offline, out of
-    budget) or failed (with the reason), with counts and the time range covered.
+13. **Coverage ledger**: one row per tier and adapter. Each row states:
+    - a state: `read` (at least one locator), `partial` (truncated by budget, pagination or a
+      timeout), `skipped` (offline, or out of budget before it started) or `failed` (with the
+      reason);
+    - the elapsed seconds;
+    - the locator count;
+    - the newest timestamp the source held;
+    - the time range covered.
+
+    A row cannot claim coverage without evidence.
 
 Every section has an evidence rule. A row with no locator is not printed. Use
 `report-verification-state` for anything the picture claims was done. Depth means connected
@@ -190,7 +207,8 @@ and verified, not long.
 
 ## Compatibility
 
-Written against Majordomus 1.0.0-alpha.9. The commands named here were confirmed by probe on
-that version. A later version may answer more (capabilities, intents, releases, delivery,
-gates). Regenerate this skill from its metaprompt when the minor version changes.
+The commands named here were confirmed by stage 1's probe. Re-run that probe whenever the
+installed version changes. A command it no longer shows becomes a gap row. A later version may
+answer more (capabilities, intents, releases, delivery, gates), and the skill names those
+commands only once a probe confirms them.
 {% endraw %}

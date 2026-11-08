@@ -23,13 +23,13 @@ Excerpt of the Markdown output:
 | chat: scope cut to 10 days (OBSERVED, internal) | plan: 21 days remain (OBSERVED) | #acme-internal 1962…, docs/effort |
 
 ## Coverage
-| Tier | Adapter | State | Covered |
-|---|---|---|---|
-| T0 | git | read | origin/main at b3e19c0, 30 days |
-| T1 | majordomus | read | context, plan, 0 candidates; handover stale (5 d) |
-| T2 | forge CLI | read | 42 open, 18 closed issues, 3 PRs, deploy runs |
-| T3 | tracker API | failed | 401 unauthenticated; offline export used |
-| T4 | chat workspace | read | 2 channels (1 shared-with-external), 2 DMs |
+| Tier | Adapter | State | Elapsed | Locators | Newest | Covered |
+|---|---|---|---|---|---|---|
+| T0 | git | read | 4 s | 31 | 2031-03-14 | origin/main at b3e19c0, 30 days |
+| T1 | majordomus | read | 22 s | 17 | 2031-03-09 | context, plan, 0 candidates; handover stale (5 d) |
+| T2 | forge CLI | read | 41 s | 63 | 2031-03-13 | 42 open, 18 closed issues, 3 PRs, deploy runs |
+| T3 | tracker API | failed | 2 s | 0 | – | 401 unauthenticated; offline export used |
+| T4 | chat workspace | partial | 60 s | 24 | 2031-03-14 | 2 channels (1 shared-with-external), 2 DMs; cut at its budget share |
 ```
 
 The JSON rendering carries the same sections, and every finding carries its `tag` and
