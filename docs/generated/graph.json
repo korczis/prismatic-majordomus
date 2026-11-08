@@ -17007,6 +17007,38 @@
         "source": ".ai/repo/skills/pack-for-review/examples/second-opinion-from-another-model.md"
       },
       {
+        "id": "majordomus://document/.ai/repo/skills/project-picture/examples/picture-global.md",
+        "kind": "document",
+        "label": ".ai/repo/skills/project-picture/examples/picture-global.md",
+        "summary": "Picture across every project on a machine",
+        "route": "/cockpit/objects/document/ai-repo-skills-project-picture-examples-picture-global-md",
+        "source": ".ai/repo/skills/project-picture/examples/picture-global.md"
+      },
+      {
+        "id": "majordomus://document/.ai/repo/skills/project-picture/examples/picture-offline.md",
+        "kind": "document",
+        "label": ".ai/repo/skills/project-picture/examples/picture-offline.md",
+        "summary": "Picture with no network",
+        "route": "/cockpit/objects/document/ai-repo-skills-project-picture-examples-picture-offline-md",
+        "source": ".ai/repo/skills/project-picture/examples/picture-offline.md"
+      },
+      {
+        "id": "majordomus://document/.ai/repo/skills/project-picture/examples/picture-online.md",
+        "kind": "document",
+        "label": ".ai/repo/skills/project-picture/examples/picture-online.md",
+        "summary": "Picture of one supervised project, every source reachable",
+        "route": "/cockpit/objects/document/ai-repo-skills-project-picture-examples-picture-online-md",
+        "source": ".ai/repo/skills/project-picture/examples/picture-online.md"
+      },
+      {
+        "id": "majordomus://document/.ai/repo/skills/project-picture/examples/picture-unsupervised.md",
+        "kind": "document",
+        "label": ".ai/repo/skills/project-picture/examples/picture-unsupervised.md",
+        "summary": "Picture of a repository without a Majordomus layer",
+        "route": "/cockpit/objects/document/ai-repo-skills-project-picture-examples-picture-unsupervised-md",
+        "source": ".ai/repo/skills/project-picture/examples/picture-unsupervised.md"
+      },
+      {
         "id": "majordomus://document/.ai/repo/skills/rebaser/examples/a-link-behind-master.md",
         "kind": "document",
         "label": ".ai/repo/skills/rebaser/examples/a-link-behind-master.md",
@@ -80530,6 +80562,94 @@
         }
       },
       {
+        "id": "majordomus://issue/I4532",
+        "kind": "issue",
+        "label": "I4532",
+        "summary": "The hosted CI jobs of this repository are admitted to fourteen in flight, leaving six for OSCILLA",
+        "route": "/cockpit/objects/issue/i4532",
+        "source": ".ai/repo/project/issues/I4532.yaml",
+        "facts": {
+          "created_at": "2026-11-07",
+          "depends_on": [],
+          "evidence_required": [
+            "suite"
+          ],
+          "milestone": "ci-critical-path",
+          "non_scope": [
+            "The account's plan, its hosted-job cap, or more self-hosted runners: the owner's question, not this repository's",
+            "OSCILLA's own workflows and how it spends its six",
+            "Removing, skipping or making advisory any gate to fit the bound; a plan that does not fit waits for its own jobs"
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I4532.yaml",
+            ".ai/repo/ci/README.md",
+            ".ai/repo/ci/gates.yaml",
+            ".ai/repo/ci/pages.yaml",
+            ".github/workflows/validate.yml",
+            ".github/workflows/pages.yml",
+            "scripts/ci/step-bound-check",
+            "scripts/ci/admission",
+            "test/cases/4532_the_hosted_ci_jobs_are_bounded_to_fourteen.sh",
+            "site/content/plan/I4532.md"
+          ],
+          "serves": [],
+          "slug": "the-hosted-ci-jobs-are-bounded-to-fourteen-in-flight",
+          "updated_at": "2026-11-08",
+          "validation": [
+            "bash test/run.sh 4532_the_hosted_ci_jobs_are_bounded_to_fourteen 26_ci_wiring",
+            "scripts/ci/step-bound-check"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4533",
+        "kind": "issue",
+        "label": "I4533",
+        "summary": "The published site stays under GitHub Pages' size limit",
+        "route": "/cockpit/objects/issue/i4533",
+        "source": ".ai/repo/project/issues/I4533.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "scripts/pages check or scripts/site-check refuses a built tree over the declared budget (exit 10), naming the budget, the measured size and the three largest contributors; a tree under it passes",
+            "The budget is declared in .ai/repo/ci/pages.yaml with the measurements that set it (1013.7, 1013.5 and 1018.0 MB; two failed Pages builds on 2026-11-06/07)",
+            "The decision on what leaves the tree or is compressed is recorded, and the next gh-pages tree measures under the budget with margin",
+            "A case proves the refusal and the pass on fixture trees"
+          ],
+          "created_at": "2026-11-07",
+          "depends_on": [],
+          "evidence_required": [
+            "suite"
+          ],
+          "milestone": "ci-critical-path",
+          "non_scope": [
+            "Moving the site off GitHub Pages",
+            "GitHub's own 'pages build and deployment', which the publication model measures and never budgets"
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I4533.yaml",
+            ".ai/repo/ci/pages.yaml",
+            "scripts/pages",
+            "scripts/site-check",
+            ".github/workflows/pages.yml",
+            "test/cases/4533_the_published_site_stays_under_the_pages_size_limit.sh",
+            "site/content/plan/I4533.md"
+          ],
+          "serves": [],
+          "slug": "the-published-site-stays-under-the-pages-size-limit",
+          "updated_at": "2026-11-07",
+          "validation": [
+            "bash test/run.sh 4533_the_published_site_stays_under_the_pages_size_limit",
+            "scripts/pages check"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "label": "a-brief-is-reconciled-not-transcribed",
@@ -104061,6 +104181,43 @@
             "review",
             "archive",
             "privacy"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://skill/project-picture",
+        "kind": "skill",
+        "label": "project-picture",
+        "summary": "Project picture",
+        "route": "/cockpit/objects/skill/project-picture",
+        "source": ".ai/repo/skills/project-picture/SKILL.md",
+        "status": "draft",
+        "facts": {
+          "inputs": [
+            "PROJECT: a repository, a set of repositories, or a name to resolve (default: the repository of the working directory)",
+            "SCOPE: paths or repositories to narrow to (default: all of PROJECT)",
+            "MODE: auto | local | global | offline (default: auto, detected, never asked)",
+            "BUDGET: wall-clock seconds and tokens for the whole run (default: 600 s; per source a tenth of it)",
+            "SINCE: the time window for activity (default: 30 days; history before it is summarised)",
+            "DEPTH: quick | standard | deep (default: standard)"
+          ],
+          "outputs": [
+            "the picture in Markdown, sections as in Output",
+            "the same picture as JSON with the same structure",
+            "a coverage ledger with one row per source tier and adapter",
+            "proposed records (knowledge candidates, questions, a handover body), written only when asked"
+          ],
+          "related": [
+            "repo-review",
+            "report-verification-state",
+            "evolve"
+          ],
+          "tags": [
+            "orientation",
+            "evidence",
+            "knowledge",
+            "coverage",
+            "read-only"
           ]
         }
       },
@@ -129312,6 +129469,26 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://document/.ai/repo/skills/project-picture/examples/picture-global.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://document/.ai/repo/skills/project-picture/examples/picture-offline.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://document/.ai/repo/skills/project-picture/examples/picture-online.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://document/.ai/repo/skills/project-picture/examples/picture-unsupervised.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://document/.ai/repo/skills/rebaser/examples/a-link-behind-master.md",
         "target": "kind:document",
         "kind": "is_a"
@@ -149157,6 +149334,26 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I4532",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4532",
+        "target": "majordomus://milestone/ci-critical-path",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4533",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4533",
+        "target": "majordomus://milestone/ci-critical-path",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -154228,6 +154425,26 @@
       },
       {
         "source": "majordomus://skill/pack-for-review",
+        "target": "majordomus://skill/report-verification-state",
+        "kind": "related_to"
+      },
+      {
+        "source": "majordomus://skill/project-picture",
+        "target": "kind:skill",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://skill/project-picture",
+        "target": "majordomus://skill/evolve",
+        "kind": "related_to"
+      },
+      {
+        "source": "majordomus://skill/project-picture",
+        "target": "majordomus://skill/repo-review",
+        "kind": "related_to"
+      },
+      {
+        "source": "majordomus://skill/project-picture",
         "target": "majordomus://skill/report-verification-state",
         "kind": "related_to"
       },
@@ -161813,8 +162030,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4422,
-      "edges": 10037,
+      "nodes": 4429,
+      "edges": 10049,
       "acyclic": false,
       "truncated": false
     }

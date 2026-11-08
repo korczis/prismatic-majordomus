@@ -67,6 +67,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I2848` | shares .ai/repo/ci/gates.yaml with I4468; they may not run concurrently |
 | WARN | `scope_conflict` | `I2848` | shares .ai/repo/ci/gates.yaml with I4488; they may not run concurrently |
 | WARN | `scope_conflict` | `I2848` | shares .ai/repo/ci/gates.yaml with I4512; they may not run concurrently |
+| WARN | `scope_conflict` | `I2848` | shares .ai/repo/ci/gates.yaml with I4532; they may not run concurrently |
 | WARN | `scope_conflict` | `I3241` | shares .ai/repo/project/issues/I3241.yaml with I3246; they may not run concurrently |
 | WARN | `scope_conflict` | `I3241` | shares test/cases/3749_a_full_history_checkout_is_bounded.sh with I3318; they may not run concurrently |
 | WARN | `scope_conflict` | `I3241` | shares .ai/repo/ci/gates.yaml with I3319; they may not run concurrently |
@@ -89,6 +90,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I3241` | shares .ai/repo/ci/gates.yaml with I4488; they may not run concurrently |
 | WARN | `scope_conflict` | `I3241` | shares .ai/repo/ci/gates.yaml with I4512; they may not run concurrently |
 | WARN | `scope_conflict` | `I3241` | shares docs/CI.md with I4524; they may not run concurrently |
+| WARN | `scope_conflict` | `I3241` | shares .github/workflows/validate.yml with I4532; they may not run concurrently |
 | WARN | `scope_conflict` | `I3841` | shares scripts/generate-site-data with I3945; they may not run concurrently |
 | WARN | `scope_conflict` | `I3841` | shares site/templates/dag.html with I4294; they may not run concurrently |
 | WARN | `scope_conflict` | `I3841` | shares site/templates/dag.html with I4400; they may not run concurrently |
@@ -100,6 +102,8 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I3841` | shares site/content with I4527; they may not run concurrently |
 | WARN | `scope_conflict` | `I3841` | shares site/content with I4528; they may not run concurrently |
 | WARN | `scope_conflict` | `I3841` | shares site/content with I4531; they may not run concurrently |
+| WARN | `scope_conflict` | `I3841` | shares site/content with I4532; they may not run concurrently |
+| WARN | `scope_conflict` | `I3841` | shares scripts/site-check with I4533; they may not run concurrently |
 | WARN | `scope_conflict` | `I4349` | shares .ai/repo/ci/gates.yaml with I4357; they may not run concurrently |
 | WARN | `scope_conflict` | `I4349` | shares .ai/repo/policy.yaml with I4418; they may not run concurrently |
 | WARN | `scope_conflict` | `I4349` | shares docs/CI.md with I4460; they may not run concurrently |
@@ -109,3 +113,4 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I4349` | shares .ai/repo/ci/gates.yaml with I4488; they may not run concurrently |
 | WARN | `scope_conflict` | `I4349` | shares .ai/repo/ci/gates.yaml with I4512; they may not run concurrently |
 | WARN | `scope_conflict` | `I4349` | shares docs/CI.md with I4524; they may not run concurrently |
+| WARN | `scope_conflict` | `I4349` | shares .ai/repo/ci/gates.yaml with I4532; they may not run concurrently |
