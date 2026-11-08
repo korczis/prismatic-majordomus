@@ -276,7 +276,7 @@ pub fn append(
 /// MCP names the episode of the connection that made it rather than whichever episode of
 /// the checkout the environment or the pointer would name (I4291). `None` resolves the
 /// caller from the environment, as a command line does ([`crate::session::attribution`]).
-pub fn append_by(
+pub(crate) fn append_by(
     root: &Path,
     vocabulary: &Vocabulary,
     git: &GitState,

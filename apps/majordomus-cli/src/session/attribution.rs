@@ -69,15 +69,6 @@ pub fn caller_key(explicit: Option<&str>) -> Option<String> {
 /// A provider session reduced to one path segment the way `mj_session_key` does: every byte
 /// outside `A-Za-z0-9._-` becomes `-`, runs of `-` become one, the first 64 characters are
 /// kept, and `-` is trimmed from both ends; nothing left is the hand-opened episode.
-///
-/// ```
-/// use majordomus_cli::session::attribution::shell_key;
-/// assert_eq!(shell_key("01Bv2gJsf"), "01Bv2gJsf");
-/// assert_eq!(shell_key("a//b c"), "a-b-c");
-/// assert_eq!(shell_key("/x/"), "x");
-/// assert_eq!(shell_key(""), "hand");
-/// assert_eq!(shell_key(&"z".repeat(80)).len(), 64);
-/// ```
 pub fn shell_key(value: &str) -> String {
     let mut squeezed = String::with_capacity(value.len());
     for c in value.chars() {
@@ -276,6 +267,16 @@ mod tests {
             format!("id: {task}\nworktree: {}\n", root.display()),
         )
         .unwrap();
+    }
+
+    /// A key is squeezed into one path segment exactly as `mj_session_key` squeezes it.
+    #[test]
+    fn a_key_is_squeezed_as_the_shell_squeezes_it() {
+        assert_eq!(shell_key("01Bv2gJsf"), "01Bv2gJsf");
+        assert_eq!(shell_key("a//b c"), "a-b-c");
+        assert_eq!(shell_key("/x/"), "x");
+        assert_eq!(shell_key(""), "hand");
+        assert_eq!(shell_key(&"z".repeat(80)).len(), 64);
     }
 
     /// The port of the provider table is the table: column 13 of `MJ_CAPTURE_LIFECYCLE`.
