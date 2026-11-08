@@ -16,7 +16,9 @@ order: 100
 
 A performance claim in this repository names a measurement, and the measurement is
 compared against a recorded baseline that lives here. One directory per measured surface:
-`rust/` for the executable's own commands, `pages/` for the published site. Nothing here
+`rust/` for the executable's own commands, `pages/` for the published site; and one file,
+`derive-<commit>.json`, per derived commit: what deriving it cost, stage by stage, as
+`scripts/derive --baseline <commit>` summarised the machine's recorded derives. Nothing here
 is prose about speed; the prose is `docs/PERFORMANCE.md`, and it cites these files rather
 than restating their numbers.
 

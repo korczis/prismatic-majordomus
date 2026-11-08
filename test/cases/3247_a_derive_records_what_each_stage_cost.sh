@@ -11,6 +11,10 @@
 #   1  two stages and a record: the line parses, names both stages in order with whole
 #      millisecond durations, and carries the lock wait and the commit
 #   2  MAJORDOMUS_DERIVE_TIMINGS set empty writes nothing
+#   3  `scripts/derive --baseline <commit>` summarises that commit's records into
+#      derive-<commit>.json: sample count, machine, load, each stage's median and spread, and
+#      the stage that was the largest share in most samples; the same samples give the same
+#      bytes, and fewer than three samples are refused (exit 12) with nothing written
 . "$ROOT/test/lib.sh"
 
 block="$T/timing.sh"
@@ -48,4 +52,37 @@ grep -qE '==> derive: stage A: one: [0-9]+s \([0-9]+ms\)' "$T/stderr" \
 run_block "" || { echo "    the timing block failed with the record turned off"; cat "$T/stderr"; exit 1; }
 [ "$(wc -l < "$rec" | tr -d ' ')" = 1 ] || { echo "    an empty MAJORDOMUS_DERIVE_TIMINGS still wrote a record"; exit 1; }
 
-echo "    a derive records each stage in milliseconds, the lock wait apart, and the record can be turned off"
+# ---------------------------------------------------------------- 3. the committed summary
+head="$(git -C "$ROOT" rev-parse HEAD)"
+fx="$T/fixture.jsonl"; out="$T/baseline"
+sample() {   # sample <load> <lock wait> <A ms> <B ms>
+  jq -cn --arg c "$head" --arg load "$1 1.00 1.00" --argjson w "$2" --argjson a "$3" --argjson b "$4" \
+    '{schema: 1, at: "2026-11-08T00:00:00Z", commit: $c, branch: "x", clock: "ms", load: $load,
+      binary: "built", total_ms: ($w + $a + $b), lock_wait_ms: $w,
+      stages: [{stage: "stage A", ms: $a}, {stage: "stage B", ms: $b}]}'
+}
+{ sample 2.00 10 100 900; sample 4.00 20 300 700; } > "$fx"
+rc=0; MAJORDOMUS_DERIVE_TIMINGS="$fx" MAJORDOMUS_DERIVE_BASELINE_DIR="$out" \
+  "$ROOT/scripts/derive" --baseline HEAD 2> "$T/stderr" || rc=$?
+[ "$rc" = 12 ] && [ ! -e "$out/derive-${head:0:11}.json" ] \
+  || { echo "    two samples were not refused with exit 12 (got $rc)"; cat "$T/stderr"; exit 1; }
+{ sample 3.00 30 200 600; sample 1.00 0 0 0 | jq -c '.commit = "other"'; } >> "$fx"
+for i in 1 2; do
+  MAJORDOMUS_DERIVE_TIMINGS="$fx" MAJORDOMUS_DERIVE_BASELINE_DIR="$out" \
+    "$ROOT/scripts/derive" --baseline HEAD 2> "$T/stderr" \
+    || { echo "    --baseline failed on three samples"; cat "$T/stderr"; exit 1; }
+  cp "$out/derive-${head:0:11}.json" "$T/run$i.json"
+done
+cmp -s "$T/run1.json" "$T/run2.json" || { echo "    the same samples gave different bytes"; exit 1; }
+jq -e --arg head "$head" '
+  .commit == $head and .samples == 3 and (.machines | length) == 1
+  and (.machines[0].machine | length) > 0 and .load_1m.median == 3
+  and .lock_wait == {min: 10, median: 20, p90: 30, max: 30}
+  and .work.median == 1000
+  and ([.stages[] | {stage, samples, median}]
+       == [{stage: "stage A", samples: 3, median: 200}, {stage: "stage B", samples: 3, median: 700}])
+  and .largest == {stage: "stage B", largest_in: 3, of: 3, share_median: 0.75}' \
+  "$T/run1.json" >/dev/null \
+  || { echo "    the summary does not carry what it should:"; cat "$T/run1.json"; exit 1; }
+
+echo "    a derive records each stage in milliseconds, the lock wait apart, the record can be turned off, and one commit's records summarise into a committed baseline"

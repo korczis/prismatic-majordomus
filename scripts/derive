@@ -47,6 +47,9 @@
 #                                             tracked or ignored (project.a-derive-sees-what-
 #                                             the-commit-will); MAJORDOMUS_DERIVE_ALLOW_UNTRACKED=1
 #                                             lets a derive run past it
+#   scripts/derive --baseline <commit>        the recorded derives of <commit> on this machine,
+#                                             summarised into .ai/repo/benchmarks/derive-<commit>
+#                                             .json (I2521, docs/PERFORMANCE.md); takes nothing
 #   (lib/machine_lock.sh lists the MAJORDOMUS_DERIVE_* variables that move or bound them)
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
@@ -88,20 +91,101 @@ step_done() {
 # One JSON line per finished derive, appended to a file of this machine's, not of the
 # repository: the measurements I2521 records are read from it, and it is never committed.
 # MAJORDOMUS_DERIVE_TIMINGS moves it; an empty value turns the record off.
+timings_file() {
+  printf '%s' "${MAJORDOMUS_DERIVE_TIMINGS-${XDG_STATE_HOME:-$HOME/.local/state}/majordomus/derive-timings.jsonl}"
+}
+# The machine a duration was taken on, in the form the Rust baseline's provenance.host uses
+# (`<processor>/<logical cpus>`), with the system and architecture after it.
+machine_name() {
+  local cpu n
+  cpu="$(sysctl -n machdep.cpu.brand_string 2>/dev/null \
+    || sed -n 's/^model name[[:space:]]*: *//p' /proc/cpuinfo 2>/dev/null | head -n 1)"
+  n="$(sysctl -n hw.ncpu 2>/dev/null || nproc 2>/dev/null || echo '?')"
+  printf '%s/%s %s %s' "${cpu:-unknown}" "$n" "$(uname -s 2>/dev/null)" "$(uname -m 2>/dev/null)"
+}
 timings_record() {
-  local file="${MAJORDOMUS_DERIVE_TIMINGS-${XDG_STATE_HOME:-$HOME/.local/state}/majordomus/derive-timings.jsonl}"
+  local file; file="$(timings_file)"
   [ -n "$file" ] || return 0
   mkdir -p "$(dirname "$file")" 2>/dev/null || return 0
   jq -cn --arg commit "$(git -C "$ROOT" rev-parse HEAD 2>/dev/null)" \
     --arg branch "$(git -C "$ROOT" symbolic-ref --short -q HEAD 2>/dev/null)" \
     --arg at "$(date -u +%Y-%m-%dT%H:%M:%SZ)" --arg clock "$CLOCK" \
     --arg load "$(uptime 2>/dev/null | sed -n 's/.*load average[s]*: *//p')" \
+    --arg machine "$(machine_name)" \
     --arg binary "$([ -n "${BORROWED_BIN:-}" ] && echo borrowed || echo built)" \
     --argjson total "$(( $(now_ms) - RUN_T0_MS ))" --argjson lock_wait "$LOCK_WAIT_MS" \
     --argjson stages "[${STAGES_JSON}]" \
     '{schema: 1, at: $at, commit: $commit, branch: $branch, clock: $clock, load: $load,
-      binary: $binary, total_ms: $total, lock_wait_ms: $lock_wait, stages: $stages}' \
+      machine: $machine, binary: $binary, total_ms: $total, lock_wait_ms: $lock_wait,
+      stages: $stages}' \
     >> "$file" 2>/dev/null || true
+}
+
+# The committed record of what deriving one commit cost (I2521): every recorded derive of that
+# commit in this machine's timings file, summarised into .ai/repo/benchmarks/derive-<commit>.json
+# with the sample count, the machines and loads they ran under, the lock wait apart from the
+# work, each stage's min, median, p90 and max, and the stage that was the largest share of the
+# work, counted from the samples. Written only from the samples, never by hand, and the same
+# bytes for the same samples. Below three samples there is no median and spread to state, and
+# it refuses (exit 12). A sample older than the machine field is attributed to the machine
+# summarising it, since the timings file is that machine's. MAJORDOMUS_DERIVE_BASELINE_DIR
+# moves where it writes (a case's fixture). It reads and writes nothing else and takes no lock.
+derive_baseline() {
+  local commit file dir out n
+  commit="$(git -C "$ROOT" rev-parse --verify -q "${1}^{commit}" 2>/dev/null)" \
+    || { printf '==> derive: --baseline: %s names no commit\n' "$1" >&2; return 2; }
+  file="$(timings_file)"
+  [ -n "$file" ] && [ -r "$file" ] \
+    || { printf '==> derive: --baseline: no timings file (%s)\n' "${file:-turned off}" >&2; return 12; }
+  n="$(jq -c --arg c "$commit" 'select(.schema == 1 and .commit == $c)' "$file" | wc -l | tr -d ' ')"
+  if [ "$n" -lt 3 ]; then
+    printf '==> derive: --baseline: %s recorded derive(s) of %s in %s; a median needs three\n' \
+      "$n" "$commit" "$file" >&2
+    return 12
+  fi
+  dir="${MAJORDOMUS_DERIVE_BASELINE_DIR:-$ROOT/.ai/repo/benchmarks}"
+  out="$dir/derive-${commit:0:11}.json"
+  mkdir -p "$dir"
+  jq -s --arg c "$commit" --arg host "$(machine_name)" '
+    def med: sort | if length % 2 == 1 then .[length / 2 | floor]
+                    else (.[length / 2 - 1] + .[length / 2]) / 2 end;
+    def p90: sort | .[(length * 0.9 | ceil) - 1];
+    def stats: {min: min, median: (med | floor), p90: p90, max: max};
+    def r3: . * 1000 | round / 1000;
+    [.[] | select(.schema == 1 and .commit == $c)
+     | .machine //= $host | .work_ms = ([.stages[].ms] | add // 0)] as $s
+    | ([$s[].stages[].stage] | reduce .[] as $x ([]; if index([$x]) then . else . + [$x] end))
+      as $names
+    | [$s[] | select(.work_ms > 0) | .stages | max_by(.ms) | .stage] as $largest
+    | ($names | map(. as $n | {stage: $n, n: ([$largest[] | select(. == $n)] | length)})
+       | max_by(.n)) as $top
+    | def shares($n): [$s[] | select(.work_ms > 0) as $r | $r.stages[] | select(.stage == $n)
+                       | .ms / $r.work_ms];
+    {
+      schema: "majordomus/derive-baseline/v1",
+      commit: $c,
+      produced_by: ("scripts/derive --baseline " + $c),
+      source: "derive-timings.jsonl: scripts/derive, one line per finished derive (schema 1)",
+      unit: "milliseconds",
+      samples: ($s | length),
+      first_at: ([$s[].at] | min),
+      last_at: ([$s[].at] | max),
+      machines: ([$s[].machine] | group_by(.) | map({machine: .[0], samples: length})),
+      clock: ([$s[].clock] | unique),
+      binary: ([$s[].binary] | group_by(.) | map({(.[0]): length}) | add),
+      load_1m: ([$s[].load | split(" ")[0] | select(length > 0) | tonumber]
+                | {min: min, median: med, max: max}),
+      total: ([$s[].total_ms] | stats),
+      lock_wait: ([$s[].lock_wait_ms] | stats),
+      work: ([$s[].work_ms] | stats),
+      stages: [$names[] as $n
+        | [$s[].stages[] | select(.stage == $n) | .ms] as $m
+        | {stage: $n, samples: ($m | length)} + ($m | stats)
+          + {share_median: (shares($n) | med | r3)}],
+      largest: {stage: $top.stage, largest_in: $top.n, of: ($largest | length),
+                share_median: (shares($top.stage) | med | r3)}
+    }' "$file" > "$out.tmp" && mv "$out.tmp" "$out"
+  printf '==> derive: %s derive(s) of %s summarised into %s\n' "$n" "${commit:0:11}" "$out" >&2
 }
 
 # ---------------------------------------------------------------- one derive at a time
@@ -114,12 +198,17 @@ mj_lock_traps
 # The arguments are judged before anything else, so a mistyped flag is a usage error and never
 # a refusal of the tree it happened to be typed in.
 case "${1:-}" in
-  ''|--locked|--orphans|--preflight) ;;
-  *) printf 'usage: scripts/derive [--locked -- <command>... | --orphans | --preflight]\n' >&2; exit 2 ;;
+  ''|--locked|--orphans|--preflight|--baseline) ;;
+  *) printf 'usage: scripts/derive [--locked -- <command>... | --orphans | --preflight |\n' >&2
+     printf '                       --baseline <commit>]\n' >&2; exit 2 ;;
 esac
 if [ "${1:-}" = --orphans ]; then
   [ $# = 1 ] || { printf 'usage: scripts/derive --orphans\n' >&2; exit 2; }
   trap - EXIT; mj_lock_orphans; exit 0
+fi
+if [ "${1:-}" = --baseline ]; then
+  [ $# = 2 ] || { printf 'usage: scripts/derive --baseline <commit>\n' >&2; exit 2; }
+  trap - EXIT; rc=0; derive_baseline "$2" || rc=$?; exit "$rc"
 fi
 
 # ---------------------------------------------------------------- what the commit will see

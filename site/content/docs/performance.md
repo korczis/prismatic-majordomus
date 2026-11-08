@@ -66,6 +66,30 @@ The measured deltas of each step are in the commit messages (`git log --grep per
 accepted state is `baseline.json` under `.ai/repo/benchmarks/` once one is written, and the history of local runs is under `.ai/local/benchmarks/`. This
 document carries no numbers on purpose: they go stale, and the files above do not.
 
+## What a derive costs: `scripts/derive --baseline`
+
+`scripts/derive` appends one JSON line per finished derive to a file of the machine's own,
+`~/.local/state/majordomus/derive-timings.jsonl` (`MAJORDOMUS_DERIVE_TIMINGS` moves it, an
+empty value turns it off): the commit checked out, the branch, the machine, the load, whether
+the executable was built or borrowed, the total, the wait for the derive lock apart from the
+work, and every stage with its duration in milliseconds (case 3247). The commit is the
+checkout's `HEAD`; a derive usually runs over changes not yet committed on it, so the samples
+of one commit are derives of trees that share that base.
+
+`scripts/derive --baseline <commit>` turns that commit's samples into the committed record
+`.ai/repo/benchmarks/derive-<commit>.json`. It is written from the samples alone and never by
+hand, and the same samples give the same bytes. The record states the commit, the machines
+and the one-minute load range the samples ran under, how many were built and borrowed, and
+the sample count; the total, the lock wait and the work (the stages summed) as minimum,
+median, p90 and maximum; the same for each stage with its own sample count and its median
+share of the work; and `largest`, the stage that was the largest share in the most samples,
+with how many of them and its median share. Fewer than three samples are refused (exit 12):
+a median and its spread need more. It takes no lock, runs nothing and writes nothing else,
+so no tracked generated file changes when a record is made.
+
+Which files a stage reads is held separately: every file `scripts/generate-site-data` (stage
+B) reads by a literal path is one of its declared `--inputs` (case 3246).
+
 ## Benchmarking: `majordomus bench`
 
 `bench` times every public command of [`share/commands.yaml`](https://github.com/korczis/prismatic-majordomus/blob/@source-ref@/share/commands.yaml) in a

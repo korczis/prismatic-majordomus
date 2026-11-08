@@ -1,0 +1,117 @@
+{
+  "schema": "majordomus/derive-baseline/v1",
+  "commit": "d7fd9a3617024a7390ac36c1888d6fcee63b600e",
+  "produced_by": "scripts/derive --baseline d7fd9a3617024a7390ac36c1888d6fcee63b600e",
+  "source": "derive-timings.jsonl: scripts/derive, one line per finished derive (schema 1)",
+  "unit": "milliseconds",
+  "samples": 20,
+  "first_at": "2026-11-07T11:40:55Z",
+  "last_at": "2026-11-08T12:21:37Z",
+  "machines": [
+    {
+      "machine": "Apple M5 Pro/18 Darwin arm64",
+      "samples": 20
+    }
+  ],
+  "clock": [
+    "ms"
+  ],
+  "binary": {
+    "borrowed": 8,
+    "built": 12
+  },
+  "load_1m": {
+    "min": 6.97,
+    "median": 14.265,
+    "max": 47.70
+  },
+  "total": {
+    "min": 545665,
+    "median": 2269446,
+    "p90": 7589945,
+    "max": 9475949
+  },
+  "lock_wait": {
+    "min": 18,
+    "median": 608200,
+    "p90": 5609315,
+    "max": 7043136
+  },
+  "work": {
+    "min": 295917,
+    "median": 886536,
+    "p90": 2041079,
+    "max": 3821318
+  },
+  "stages": [
+    {
+      "stage": "stage A: majordomus generate (code-only projections)",
+      "samples": 19,
+      "min": 6815,
+      "median": 11060,
+      "p90": 33451,
+      "max": 36895,
+      "share_median": 0.012
+    },
+    {
+      "stage": "stage B: scripts/generate-site-data (site data, content, derived documents)",
+      "samples": 19,
+      "min": 531852,
+      "median": 790117,
+      "p90": 1920627,
+      "max": 1931077,
+      "share_median": 0.963
+    },
+    {
+      "stage": "stage C: majordomus generate (the site dataset and the benchmark matrix over the index)",
+      "samples": 19,
+      "min": 5065,
+      "median": 8856,
+      "p90": 24249,
+      "max": 26702,
+      "share_median": 0.009
+    },
+    {
+      "stage": "stage D: scripts/gitattributes (the merge policy, from the generators)",
+      "samples": 19,
+      "min": 255,
+      "median": 336,
+      "p90": 445,
+      "max": 980,
+      "share_median": 0
+    },
+    {
+      "stage": "building the Rust executable (debug)",
+      "samples": 12,
+      "min": 1102,
+      "median": 238999,
+      "p90": 1574162,
+      "max": 1851521,
+      "share_median": 0.221
+    },
+    {
+      "stage": "a merge in progress: deriving the commit it will be, both parents as history",
+      "samples": 1,
+      "min": 3400,
+      "median": 3400,
+      "p90": 3400,
+      "max": 3400,
+      "share_median": 0.011
+    },
+    {
+      "stage": "a merge in progress: staging what the derive changed",
+      "samples": 1,
+      "min": 2404,
+      "median": 2404,
+      "p90": 2404,
+      "max": 2404,
+      "share_median": 0.008
+    }
+  ],
+  "largest": {
+    "stage": "stage B: scripts/generate-site-data (site data, content, derived documents)",
+    "largest_in": 18,
+    "of": 20,
+    "share_median": 0.963
+  }
+}
