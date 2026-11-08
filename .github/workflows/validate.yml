@@ -75,8 +75,10 @@ permissions:
 # decide nothing about that head while they hold the runners the trunk's run and the
 # deployments wait for; on 2026-10-13 a run with two failed jobs kept nine more running for
 # twenty minutes. So the last step of every gate job, `if: failure()` on a pull_request event
-# alone, cancels the run by its own id: the jobs that `if: always()` (ci, evidence, the suite's
-# union) still run and report it red. A run of master, the schedule or a dispatch (which is how
+# alone, cancels the run by its own id: the ci job (`if: always()`) still runs and reports it
+# red. The fan-ins (the suite's and the audit's unions, site-probe, interactions) are
+# `!cancelled()` and do not: after a cancel their shards left nothing to join, and each would
+# only add a false sharding red beside the real one. A run of master, the schedule or a dispatch (which is how
 # the release pipeline asks for its record's verdict) is never cancelled this way: the
 # trunk's other jobs are the only reading of its other lanes. Case 3019 holds every job to it.
 #
@@ -157,6 +159,30 @@ jobs:
           gh run cancel "$GITHUB_RUN_ID" --repo "$GITHUB_REPOSITORY"
           sleep 120
           echo "::error::the run was not cancelled; a held member's run must not go on"
+          exit 1
+      # A run that reaches its plan for a head the pull request no longer has gives its runners
+      # back before any gate asks for one. That is not a newer commit cancelling a started run
+      # (`concurrency` above keeps that rule): no gate of this run has started, and its verdict
+      # would judge a head nobody can merge. On 2026-11-07 three such runs held 19 queued jobs
+      # (42414190309, 42415589257, 42416714967) under the account's shared hosted cap. A head
+      # that cannot be read lets the run proceed; a cancel that does not take hold fails here.
+      - name: a superseded head gives its runners back
+        if: github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          RUN_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          now="$(gh api "repos/$GITHUB_REPOSITORY/pulls/$PR_NUMBER" --jq .head.sha 2>/dev/null)" || now=""
+          if [ -z "$now" ]; then echo "the pull request's head could not be read; the run proceeds"; exit 0; fi
+          if [ "$now" = "$RUN_SHA" ]; then echo "head ${RUN_SHA:0:11} is the pull request's head"; exit 0; fi
+          {
+            echo "## superseded"; echo
+            echo "Pull request #$PR_NUMBER moved from ${RUN_SHA:0:11} to ${now:0:11} before this run planned; it gives its runners back."
+          } >> "$GITHUB_STEP_SUMMARY"
+          gh run cancel "$GITHUB_RUN_ID" --repo "$GITHUB_REPOSITORY"
+          sleep 120
+          echo "::error::the run was not cancelled; a superseded head's run must not go on"
           exit 1
       - uses: actions/checkout@v4
         with:
@@ -641,7 +667,11 @@ jobs:
   # ci verdict read it exactly as they read the single job it replaces.
   suite:
     needs: [plan, suite-shard]
-    if: always() && needs.plan.outputs.shell_suite == 'true'
+    # !cancelled(), not always(): the union still runs after a shard's red, and reports it, but
+    # never after the run was cancelled, when the shards uploaded header-only reports and the
+    # union read that as a sharding defect ("no row for", 2026-11-07, runs 42382824182 and
+    # 42405310757). The ci job reads the skipped union as red; nothing turns a cancel green.
+    if: ${{ !cancelled() && needs.plan.outputs.shell_suite == 'true' }}
     # 225, re-measured. The bound is a backstop against a wedged runner, and every case
     # already carries one of its own (test/run.sh, `majordomus-timeout:`); it stays the
     # number .ai/repo/ci/suite.yaml declares (case 417) and bounds every shard below too.
@@ -882,9 +912,12 @@ jobs:
           # The case gates of this job (release-record-cases, plan-record-cases) drive the
           # executable rust-check's `cargo test` built, as the suite shards do: without it a
           # case takes the shell path, and `knowledge validate` warns that it could not ask
-          # the index (case 3075, top 70 run 38980212746).
+          # the index (case 3075, top 70 run 38980212746). The commit it was built from goes
+          # with it: scripts/ci/run-plan keeps an executable only of this tree's generation,
+          # and without MAJORDOMUS_BIN_COMMIT it dropped this one, so a case running a copy
+          # of the tool found no executable (case 47, run 42393755816).
           MAJORDOMUS_BIN: ${{ github.workspace }}/apps/majordomus-cli/target/debug/majordomus
-        run: MJ_CI_TIMINGS=timings.tsv scripts/ci/run-plan --plan plan.json --job rust --skip rust-check,rust-integration
+        run: MAJORDOMUS_BIN_COMMIT="$(git rev-parse HEAD)" MJ_CI_TIMINGS=timings.tsv scripts/ci/run-plan --plan plan.json --job rust --skip rust-check,rust-integration
       - id: target
         if: matrix.lane == 3
         run: |
@@ -1391,7 +1424,11 @@ jobs:
   # proves the reports are the whole sweep, each route once, before the gate's receipt.
   site-probe-shard:
     needs: [plan, site]
-    if: always() && needs.plan.outputs.site_probe == 'true' && needs.site.result != 'skipped'
+    # Only on the site job's success: its artifact is the shards' input, and a site that failed
+    # or was cancelled left none. On 2026-11-07 `!= 'skipped'` let twelve shards per cancelled
+    # run start, fail on "Artifact not found for name: site-probe-inputs" and hold runners
+    # (run 42400249801). site-probe below still reports a failed site's shards as red.
+    if: ${{ !cancelled() && needs.plan.outputs.site_probe == 'true' && needs.site.result == 'success' }}
     strategy:
       fail-fast: false
       matrix:
@@ -1439,7 +1476,7 @@ jobs:
 
   site-probe:
     needs: [plan, site-probe-shard]
-    if: always() && needs.plan.outputs.site_probe == 'true'
+    if: ${{ !cancelled() && needs.plan.outputs.site_probe == 'true' }}
     timeout-minutes: 10
     runs-on: ubuntu-latest
     env:
@@ -1490,7 +1527,8 @@ jobs:
   # drove; the interactions job below proves the reports are every page once before the gate's receipt.
   interaction-probe-shard:
     needs: [plan, site]
-    if: always() && needs.plan.outputs.interaction_probe == 'true' && needs.site.result != 'skipped'
+    # Only on the site job's success, as site-probe-shard above: no artifact, no shard.
+    if: ${{ !cancelled() && needs.plan.outputs.interaction_probe == 'true' && needs.site.result == 'success' }}
     strategy:
       fail-fast: false
       matrix:
@@ -1540,7 +1578,7 @@ jobs:
 
   interactions:
     needs: [plan, interaction-probe-shard]
-    if: always() && needs.plan.outputs.interaction_probe == 'true'
+    if: ${{ !cancelled() && needs.plan.outputs.interaction_probe == 'true' }}
     timeout-minutes: 10
     runs-on: ubuntu-latest
     env:
@@ -1739,7 +1777,9 @@ jobs:
 
   ui:
     needs: [plan, ui-shard, ui-checks]
-    if: always() && needs.plan.outputs.ui_audit == 'true'
+    # !cancelled(), as the suite's union: a cancelled run's shards are not "shards [2 3 4]
+    # reported, not each of 1..4 once" (2026-11-07, run 42382824182).
+    if: ${{ !cancelled() && needs.plan.outputs.ui_audit == 'true' }}
     # the join is seconds; the report needs the executable, which the Rust cache restores
     timeout-minutes: 30
     runs-on: ubuntu-latest

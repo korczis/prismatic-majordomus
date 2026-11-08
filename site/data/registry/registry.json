@@ -6,23 +6,23 @@
     "version": "1.0.0"
   },
   "registry": {
-    "fingerprint": "0ef94bb334ad13b5e7420a4d41741ef0c49995ac2eed7aaba9a0e71c00f51d85",
+    "fingerprint": "450327569773df2ffd016b53c6d5d01174f18d373af58ac2e823efea93bf13d4",
     "summary": {
-      "total": 3951,
+      "total": 3956,
       "builtin": 231,
-      "declarative": 3720,
+      "declarative": 3725,
       "by_kind": {
         "command": 41,
         "query": 190,
-        "resource": 3720
+        "resource": 3725
       },
       "by_stability": {
         "behaviorally_verified": 153,
         "experimental": 68,
-        "implemented": 3730
+        "implemented": 3735
       },
       "mcp_tools": 215,
-      "mcp_resources": 3777,
+      "mcp_resources": 3782,
       "http_routes": 219,
       "cli_commands": 128,
       "modules": 96,
@@ -96886,7 +96886,7 @@
         "title": "document",
         "description": "Declarative objects of kind 'document' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 357,
+        "capabilities": 361,
         "capability_ids": []
       },
       {
@@ -97764,7 +97764,7 @@
         "title": "skill",
         "description": "Declarative objects of kind 'skill' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 10,
+        "capabilities": 11,
         "capability_ids": []
       },
       {
@@ -97892,7 +97892,7 @@
     ]
   },
   "index": {
-    "fingerprint": "3078b3d59ed21023b1598a87fc9589251dba505c4f2e45b4c12ed8a3ce1a24e8",
+    "fingerprint": "2ba93fe29e53c94f7155898fcc3179e46fb10b303d05972378371bd50522c206",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -97926,7 +97926,7 @@
       "deployment": 1,
       "derive-offload": 1,
       "distribution-model": 1,
-      "document": 357,
+      "document": 361,
       "domain": 6,
       "feature": 29,
       "gap": 5,
@@ -97944,7 +97944,7 @@
       "rule": 192,
       "scope": 1,
       "session": 95,
-      "skill": 10,
+      "skill": 11,
       "taxonomy": 10,
       "test": 697,
       "use-case": 49,
@@ -104796,6 +104796,46 @@
         "bytes": 408
       },
       {
+        "uri": "majordomus://document/.ai/repo/skills/project-picture/examples/picture-global.md",
+        "kind": "document",
+        "identity": ".ai/repo/skills/project-picture/examples/picture-global.md",
+        "title": "Picture across every project on a machine",
+        "path": ".ai/repo/skills/project-picture/examples/picture-global.md",
+        "section": "skills",
+        "source_class": "skill_example",
+        "bytes": 1034
+      },
+      {
+        "uri": "majordomus://document/.ai/repo/skills/project-picture/examples/picture-offline.md",
+        "kind": "document",
+        "identity": ".ai/repo/skills/project-picture/examples/picture-offline.md",
+        "title": "Picture with no network",
+        "path": ".ai/repo/skills/project-picture/examples/picture-offline.md",
+        "section": "skills",
+        "source_class": "skill_example",
+        "bytes": 1214
+      },
+      {
+        "uri": "majordomus://document/.ai/repo/skills/project-picture/examples/picture-online.md",
+        "kind": "document",
+        "identity": ".ai/repo/skills/project-picture/examples/picture-online.md",
+        "title": "Picture of one supervised project, every source reachable",
+        "path": ".ai/repo/skills/project-picture/examples/picture-online.md",
+        "section": "skills",
+        "source_class": "skill_example",
+        "bytes": 1842
+      },
+      {
+        "uri": "majordomus://document/.ai/repo/skills/project-picture/examples/picture-unsupervised.md",
+        "kind": "document",
+        "identity": ".ai/repo/skills/project-picture/examples/picture-unsupervised.md",
+        "title": "Picture of a repository without a Majordomus layer",
+        "path": ".ai/repo/skills/project-picture/examples/picture-unsupervised.md",
+        "section": "skills",
+        "source_class": "skill_example",
+        "bytes": 784
+      },
+      {
         "uri": "majordomus://document/.ai/repo/skills/rebaser/examples/a-link-behind-master.md",
         "kind": "document",
         "identity": ".ai/repo/skills/rebaser/examples/a-link-behind-master.md",
@@ -105057,7 +105097,7 @@
         "title": "Continuous integration",
         "path": "docs/CI.md",
         "source_class": "document",
-        "bytes": 46531
+        "bytes": 47588
       },
       {
         "uri": "majordomus://document/docs/CLI.md",
@@ -132414,6 +132454,24 @@
         ]
       },
       {
+        "uri": "majordomus://skill/project-picture",
+        "kind": "skill",
+        "identity": "project-picture",
+        "title": "Project picture",
+        "description": "Build the best evidenced picture of a project from every source the worker can reach, local first, every source optional, with each claim tagged and sourced and every gap recorded.",
+        "path": ".ai/repo/skills/project-picture/SKILL.md",
+        "section": "skills",
+        "source_class": "skill",
+        "bytes": 12021,
+        "tags": [
+          "orientation",
+          "evidence",
+          "knowledge",
+          "coverage",
+          "read-only"
+        ]
+      },
+      {
         "uri": "majordomus://skill/rebaser",
         "kind": "skill",
         "identity": "rebaser",
@@ -133788,7 +133846,7 @@
         "identity": "test/cases/26_ci_wiring.sh",
         "path": "test/cases/26_ci_wiring.sh",
         "source_class": "case",
-        "bytes": 35100
+        "bytes": 38928
       },
       {
         "uri": "majordomus://test/test/cases/271_adr_allocation.sh",
@@ -135476,7 +135534,7 @@
         "identity": "test/cases/3742_a_published_page_reads_delivery_at_its_build_commit.sh",
         "path": "test/cases/3742_a_published_page_reads_delivery_at_its_build_commit.sh",
         "source_class": "case",
-        "bytes": 13986
+        "bytes": 14761
       },
       {
         "uri": "majordomus://test/test/cases/3747_a_gated_step_leaves_its_receipt.sh",
@@ -135980,7 +136038,7 @@
         "identity": "test/cases/400_derivation_is_one_graph.sh",
         "path": "test/cases/400_derivation_is_one_graph.sh",
         "source_class": "case",
-        "bytes": 14715
+        "bytes": 15321
       },
       {
         "uri": "majordomus://test/test/cases/401_the_rust_artifact_carries_its_provenance.sh",
@@ -136372,7 +136430,7 @@
         "identity": "test/cases/47_mutation.sh",
         "path": "test/cases/47_mutation.sh",
         "source_class": "case",
-        "bytes": 12452
+        "bytes": 13320
       },
       {
         "uri": "majordomus://test/test/cases/484_the_version_is_authored_once.sh",
@@ -138816,7 +138874,7 @@
       "front_matter": "optional",
       "schema": "majordomus.document/v1",
       "identity": [],
-      "objects": 357
+      "objects": 361
     },
     {
       "name": "domain",
@@ -139008,7 +139066,7 @@
       "identity": [
         "id"
       ],
-      "objects": 10
+      "objects": 11
     },
     {
       "name": "taxonomy",
