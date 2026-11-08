@@ -1,0 +1,38 @@
+id: I4559
+milestone: development-runtime
+title: "The brief states its own facts and their fingerprint, so a client compares facts, not words"
+slug: the-brief-fingerprints-its-facts
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Make brief.session answer with `facts`: one canonical statement per section built from that section's typed fields (never from its words), and `fingerprint`, the first 16 hex digits of their SHA-256; make the integration queue's line state its parts as facts beside its words; make the majordomus-brief mod compare the fingerprints when both briefs carry one, and fall back to its scrubbed-text comparison otherwise."
+why: "I4250 (#2599) made the mod report only on a changed fact by scrubbing the brief's text with regular expressions for instants and spans of time. A clock-free comparison that depends on recognising every age form the executable may print is a second definition of the brief's facts, kept in a client: a new wording (\"opened 3 h ago\", a new unit) wakes an idle session for nothing until the client learns it, and a peer's board position (p1, p2), reassigned on every reconnect (ADR 0044), counts as a fact. Owner's Self-Report 2.0 mission (2026-11-07): compare normalized semantic observations, not presentation strings."
+current_state: "On eb5c2310bfd (I4250 brought current with master d7fd9a36170) brief.session answers sections with typed fields and words; the mod's `fingerprint` joins the words of every section after `normalise` removes instants and spans; `prs::brief` composes the integration line with ages and the observation instant inline and keeps no typed form."
+desired_state: "A brief composed later with other instants, ages, held durations and peer board positions has the same `facts` and fingerprint; a new head, a task taken, a peer more, the queue's next merge, a derive holder and the runtime's state each move it; an answer without `facts` still deserialises with an empty fingerprint; the mod compares fingerprints when both briefs carry one, names the typed section that moved, and compares scrubbed text when either brief lacks them. docs/BRIEF.md and the mod's README say so."
+scope:
+  - ".ai/repo/project/issues/I4559.yaml"
+  - "apps/majordomus-cli/src/capability/builtin/brief.rs"
+  - "apps/majordomus-cli/src/commands/prs.rs"
+  - "share/mods/claude-code/majordomus-brief/"
+  - "docs/BRIEF.md"
+  - "test/cases/4250_the_brief_reports_only_what_changed.sh"
+non_scope:
+  - "A typed SelfReport record with claims, evidence and next actions (the mission's later slices)"
+  - "Mesh journal events for reports"
+  - "Removing the mod's text comparison, which an executable older than the field still needs"
+acceptance_criteria:
+  - "cargo test --lib capability::builtin::brief passes, with the_fingerprint_ignores_the_clock_and_board_positions, a_changed_fact_moves_the_fingerprint, a_peer_fact_drops_only_the_board_position and an_answer_without_facts_still_reads"
+  - "claude plugin test share/mods/claude-code/majordomus-brief passes, with the facts the executable states deciding and the scrubbed-text fallback"
+  - "test/cases/4250_the_brief_reports_only_what_changed.sh passes, its mutation 2 retargeted to the comparison of facts and a mutation 4 (stated fingerprints replaced by the words) failing the mod's test where the stated facts are held"
+  - "the integration line `majordomus prs brief` prints is unchanged"
+validation:
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib capability::builtin::brief"
+  - "env -u MAJORDOMUS_SHARE claude plugin test share/mods/claude-code/majordomus-brief"
+  - "env -u MAJORDOMUS_SHARE bash test/run.sh 1065_a_session_briefs_itself 4250_the_brief_reports_only_what_changed"
+evidence_required:
+  - "the_brief_reports_only_what_changed"
+depends_on:
+  - I4250
+serves: []
+created_at: 2026-11-07
+updated_at: 2026-11-07

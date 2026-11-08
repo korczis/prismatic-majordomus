@@ -29,6 +29,10 @@ export type Brief = {
   interval_minutes: number;
   session?: { branch?: string; head?: string };
   release?: { stance?: string | null };
+  // What the brief states with the clock taken out, from its sections' typed fields, and
+  // their digest (`brief.session`'s `facts`). Absent, or with an empty fingerprint, from an
+  // executable older than the field: the text is then compared once the clock is scrubbed.
+  facts?: { fingerprint?: string; sections?: { section: string; fact: string }[] };
 };
 
 // ---------------------------------------------------------------- what counts as a change
@@ -78,10 +82,32 @@ export const sections = (b: Brief): Map<string, string> => {
 export const fingerprint = (b: Brief): string =>
   [...sections(b)].map(([k, v]) => `${k}=${v}`).join('\n');
 
+/**
+ * The brief's own facts, by the label its line carries (`answered_by` is `answered by`), when
+ * the executable stated them; `undefined` from an older one.
+ */
+export const stated = (b: Brief): Map<string, string> | undefined => {
+  const f = b.facts;
+  if (!f?.fingerprint || !f.sections?.length) return undefined;
+  return new Map(f.sections.map(s => [s.section.replace(/_/g, ' '), s.fact] as [string, string]));
+};
+
+/**
+ * Whether two briefs state the same facts: by the executable's fingerprint when both carry
+ * one, so no wording or clock enters the comparison; by the scrubbed text otherwise, which
+ * also covers one brief from before an upgrade and one from after it.
+ */
+export const sameFacts = (a: Brief, b: Brief): boolean =>
+  stated(a) && stated(b)
+    ? a.facts?.fingerprint === b.facts?.fingerprint
+    : fingerprint(a) === fingerprint(b);
+
 /** The sections whose facts differ between two briefs, in the order the newer one lists them. */
 export const changedSections = (before: Brief, after: Brief): string[] => {
-  const a = sections(before);
-  const b = sections(after);
+  const typedBefore = stated(before);
+  const typedAfter = stated(after);
+  const a = typedBefore && typedAfter ? typedBefore : sections(before);
+  const b = typedBefore && typedAfter ? typedAfter : sections(after);
   const names = [...b.keys(), ...[...a.keys()].filter(k => !b.has(k))];
   return names.filter(k => a.get(k) !== b.get(k));
 };
@@ -260,7 +286,7 @@ const owed = (b: Brief, now: number): boolean => {
     told = b;
     return false;
   }
-  return now - shownAt >= intervalMs(b) && fingerprint(b) !== fingerprint(told);
+  return now - shownAt >= intervalMs(b) && !sameFacts(b, told);
 };
 
 // One refresh: the status line, and the self-report when it is owed.

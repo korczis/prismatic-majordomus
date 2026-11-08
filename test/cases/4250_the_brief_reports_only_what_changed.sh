@@ -17,8 +17,10 @@
 #   2  the test fails when the comparison of fingerprints is replaced by `true`, so a self-report
 #      on every interval again, whatever changed, cannot pass unseen
 #   3  it fails when the clock is no longer taken out of the brief
+#   4  it fails when the facts the executable states (I4559) are no longer what decides, so a
+#      reworded brief with the same facts cannot wake a session unseen
 #
-# 1-3 need Claude Code's engine. Where there is no `claude` on PATH (CI) the case holds 0 only,
+# 1-4 need Claude Code's engine. Where there is no `claude` on PATH (CI) the case holds 0 only,
 # as case 2980 does, rather than declining under --no-skips; MJ_CLAUDE_E2E=1 makes a missing
 # `claude` a failure.
 . "$ROOT/test/lib.sh"
@@ -27,8 +29,10 @@ SRC="$ROOT/share/mods/claude-code/majordomus-brief"
 fail() { printf '    %s\n' "$*"; exit 1; }
 
 # ---------------------------------------------------------------- 0  the mutations still apply
-grep -qF 'fingerprint(b) !== fingerprint(told)' "$SRC/hooks/register.ts" \
-  || fail "the fingerprint comparison is no longer in the module: mutation 2 tests nothing"
+grep -qF '!sameFacts(b, told)' "$SRC/hooks/register.ts" \
+  || fail "the comparison of facts is no longer in the module: mutation 2 tests nothing"
+grep -qF 'a.facts?.fingerprint === b.facts?.fingerprint' "$SRC/hooks/register.ts" \
+  || fail "the stated fingerprints are no longer compared in the module: mutation 4 tests nothing"
 grep -qF ".replace(DURATION, '<age>')" "$SRC/hooks/register.ts" \
   || fail "the clock is no longer taken out in the module: mutation 3 tests nothing"
 grep -qF "test('an idle session whose surroundings only aged is never woken'" \
@@ -50,7 +54,7 @@ mutate() {
 }
 plugin_test() { env -u MAJORDOMUS_SHARE claude plugin test "$T/mod" > "$T/out" 2>&1; }
 
-# 1-3, in Claude Code's engine.
+# 1-4, in Claude Code's engine.
 engine() {
   # -------------------------------------------------------------- 1  the mod's test passes
   copy
@@ -58,7 +62,7 @@ engine() {
 
   # -------------------------------------------------------------- 2  the dedupe is held
   copy
-  mutate 'fingerprint(b) !== fingerprint(told)' 'true'
+  mutate '!sameFacts(b, told)' 'true'
   if plugin_test; then fail 'a self-report on every interval, changed or not, passes the mod'"'"'s test'; fi
   grep -q 'an idle session whose surroundings only aged is never woken' "$T/out" \
     || fail "the mutation failed the test, but not where the quiet session is held: $(tail -5 "$T/out")"
@@ -67,6 +71,13 @@ engine() {
   copy
   mutate ".replace(DURATION, '<age>')" ''
   if plugin_test; then fail 'a brief whose ages count as facts passes the mod'"'"'s test'; fi
+
+  # -------------------------------------------------------------- 4  the stated facts decide
+  copy
+  mutate 'a.facts?.fingerprint === b.facts?.fingerprint' 'fingerprint(a) === fingerprint(b)'
+  if plugin_test; then fail 'a brief judged by its words, not the facts it states, passes the mod'"'"'s test'; fi
+  grep -q 'the facts the executable states decide, not the words' "$T/out" \
+    || fail "the mutation failed the test, but not where the stated facts are held: $(tail -5 "$T/out")"
 }
 
 if command -v claude >/dev/null 2>&1; then

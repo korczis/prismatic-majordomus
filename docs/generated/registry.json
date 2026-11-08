@@ -2188,6 +2188,14 @@
                 }
               ],
               "description": "Where this checkout's runtime stands, and its last recorded transition, as\n`server.status` derives it (I3179). Absent from the answer of a server older than the\nfield."
+            },
+            "facts": {
+              "$ref": "#/$defs/BriefFacts",
+              "description": "What the brief states with the clock taken out, and its fingerprint: two briefs with\nthe same fingerprint state the same facts, whatever their times and ages. A client\nthat tells a session only when something changed compares this, not the text. Empty\nfrom a server older than the field.",
+              "default": {
+                "fingerprint": "",
+                "sections": []
+              }
             }
           },
           "required": [
@@ -2478,6 +2486,13 @@
                 "summary": {
                   "type": "string",
                   "description": "The section in words."
+                },
+                "facts": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "What the section states with the clock taken out, part by part (`prs::brief_reading`):\nthe queue observed again with nothing changed states the same facts. Empty from a\nserver older than the field, and when the forge was never observed."
                 }
               },
               "required": [
@@ -2777,6 +2792,45 @@
                 }
               ],
               "description": "Who recorded a transition. Each state has its one kind of writer: the serving process\nrecords its own `starting`, `ready` and `stopping`, because only it knows them; a reader\nthat finds the server gone records `stopped` or `failed`, because a dead process records\nnothing.\n\n```\nuse majordomus_cli::capability::builtin::server::RuntimeWriter;\nassert_eq!(serde_json::to_value(RuntimeWriter::ServeEnsure).unwrap(), \"serve_ensure\");\nassert_eq!(RuntimeWriter::reader_named(Some(\"reap_orphans\")), RuntimeWriter::ReapOrphans);\nassert_eq!(RuntimeWriter::reader_named(Some(\"server\")), RuntimeWriter::ServerStatus);\nassert_eq!(RuntimeWriter::reader_named(None), RuntimeWriter::ServerStatus);\n```"
+            },
+            "BriefFacts": {
+              "type": "object",
+              "properties": {
+                "fingerprint": {
+                  "type": "string",
+                  "description": "The first 16 hex digits of the SHA-256 of the sections, one `section: fact` line each."
+                },
+                "sections": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/$defs/BriefFact"
+                  },
+                  "description": "The facts, section by section."
+                }
+              },
+              "required": [
+                "fingerprint",
+                "sections"
+              ],
+              "description": "The brief's facts: one canonical statement per section, in the brief's order, and their\ndigest. Built from each section's typed fields, never from its words, so no instant, age,\nheld duration or board position (a peer's `p1`, reassigned on every reconnect) is in it."
+            },
+            "BriefFact": {
+              "type": "object",
+              "properties": {
+                "section": {
+                  "type": "string",
+                  "description": "The section: `session`, `peers`, `mesh`, `integration`, `release`, `derive`,\n`runtime` or `answered_by`."
+                },
+                "fact": {
+                  "type": "string",
+                  "description": "What it states, canonically."
+                }
+              },
+              "required": [
+                "section",
+                "fact"
+              ],
+              "description": "What one section of the brief states."
             }
           }
         }

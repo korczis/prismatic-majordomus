@@ -94,7 +94,18 @@ shim `capture install` already wires, and a Claude Code session loads a mod from
 
 ### What counts as a change
 
-The mod compares the brief's lines section by section, after taking the clock out of them:
+`brief.session` states its own facts. Its answer carries `facts`: one canonical statement per
+section, built from that section's typed fields and never from its words, and `fingerprint`,
+the first 16 hex digits of their SHA-256. Two briefs with one fingerprint state the same facts,
+whatever their times, ages and wording. What the statements leave out is what the table below
+ignores, plus a peer's board position (`p1`, `p2`), which is reassigned on every reconnect and
+names no worker (ADR 0044); the integration queue's facts keep each merge's and refresh's own
+instant, because a second merge is a new fact, while the instant the queue was last observed
+is not. The mod compares the fingerprints when both briefs carry one.
+
+An executable older than the field answers without `facts` (or with an empty fingerprint), and
+so does one side of a comparison across an upgrade. The mod then compares the brief's lines
+section by section, after taking the clock out of them:
 
 | Ignored: it moves with the clock alone | Counted: it is a fact |
 |---|---|

@@ -6,23 +6,23 @@
     "version": "1.0.0"
   },
   "registry": {
-    "fingerprint": "4b9eaaab07a1ce64a5ec9c9bb2cdd425ad39ddfad97aaeef3904ad43e35b4cab",
+    "fingerprint": "caaaa0030b3c800d463d4479b592c18b57746e56e76179c27c3d0ab4c7f19a56",
     "summary": {
-      "total": 3953,
+      "total": 3954,
       "builtin": 231,
-      "declarative": 3722,
+      "declarative": 3723,
       "by_kind": {
         "command": 41,
         "query": 190,
-        "resource": 3722
+        "resource": 3723
       },
       "by_stability": {
         "behaviorally_verified": 153,
         "experimental": 68,
-        "implemented": 3732
+        "implemented": 3733
       },
       "mcp_tools": 215,
-      "mcp_resources": 3779,
+      "mcp_resources": 3780,
       "http_routes": 219,
       "cli_commands": 128,
       "modules": 96,
@@ -1718,6 +1718,14 @@
                   }
                 ],
                 "description": "Where this checkout's runtime stands, and its last recorded transition, as\n`server.status` derives it (I3179). Absent from the answer of a server older than the\nfield."
+              },
+              "facts": {
+                "$ref": "#/$defs/BriefFacts",
+                "description": "What the brief states with the clock taken out, and its fingerprint: two briefs with\nthe same fingerprint state the same facts, whatever their times and ages. A client\nthat tells a session only when something changed compares this, not the text. Empty\nfrom a server older than the field.",
+                "default": {
+                  "fingerprint": "",
+                  "sections": []
+                }
               }
             },
             "required": [
@@ -2008,6 +2016,13 @@
                   "summary": {
                     "type": "string",
                     "description": "The section in words."
+                  },
+                  "facts": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "What the section states with the clock taken out, part by part (`prs::brief_reading`):\nthe queue observed again with nothing changed states the same facts. Empty from a\nserver older than the field, and when the forge was never observed."
                   }
                 },
                 "required": [
@@ -2307,6 +2322,45 @@
                   }
                 ],
                 "description": "Who recorded a transition. Each state has its one kind of writer: the serving process\nrecords its own `starting`, `ready` and `stopping`, because only it knows them; a reader\nthat finds the server gone records `stopped` or `failed`, because a dead process records\nnothing.\n\n```\nuse majordomus_cli::capability::builtin::server::RuntimeWriter;\nassert_eq!(serde_json::to_value(RuntimeWriter::ServeEnsure).unwrap(), \"serve_ensure\");\nassert_eq!(RuntimeWriter::reader_named(Some(\"reap_orphans\")), RuntimeWriter::ReapOrphans);\nassert_eq!(RuntimeWriter::reader_named(Some(\"server\")), RuntimeWriter::ServerStatus);\nassert_eq!(RuntimeWriter::reader_named(None), RuntimeWriter::ServerStatus);\n```"
+              },
+              "BriefFacts": {
+                "type": "object",
+                "properties": {
+                  "fingerprint": {
+                    "type": "string",
+                    "description": "The first 16 hex digits of the SHA-256 of the sections, one `section: fact` line each."
+                  },
+                  "sections": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/$defs/BriefFact"
+                    },
+                    "description": "The facts, section by section."
+                  }
+                },
+                "required": [
+                  "fingerprint",
+                  "sections"
+                ],
+                "description": "The brief's facts: one canonical statement per section, in the brief's order, and their\ndigest. Built from each section's typed fields, never from its words, so no instant, age,\nheld duration or board position (a peer's `p1`, reassigned on every reconnect) is in it."
+              },
+              "BriefFact": {
+                "type": "object",
+                "properties": {
+                  "section": {
+                    "type": "string",
+                    "description": "The section: `session`, `peers`, `mesh`, `integration`, `release`, `derive`,\n`runtime` or `answered_by`."
+                  },
+                  "fact": {
+                    "type": "string",
+                    "description": "What it states, canonically."
+                  }
+                },
+                "required": [
+                  "section",
+                  "fact"
+                ],
+                "description": "What one section of the brief states."
               }
             }
           }
@@ -97172,7 +97226,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 1224,
+        "capabilities": 1225,
         "capability_ids": []
       },
       {
@@ -97878,7 +97932,7 @@
     ]
   },
   "index": {
-    "fingerprint": "d2d65ac9c4e86dd2c6199e2162e31073ff4f5cccf8b852b82423a2e8aef5cd85",
+    "fingerprint": "7a7e9c2f704d551ae1db1aa377790412f3a2d3686cdc3a8ad49470ec7ef49cda",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -97918,7 +97972,7 @@
       "gap": 5,
       "implementation": 54,
       "intent": 45,
-      "issue": 1224,
+      "issue": 1225,
       "knowledge": 186,
       "mesh-declaration": 1,
       "milestone": 117,
@@ -105007,7 +105061,7 @@
         "title": "The session brief — `majordomus brief`",
         "path": "docs/BRIEF.md",
         "source_class": "document",
-        "bytes": 9493
+        "bytes": 10375
       },
       {
         "uri": "majordomus://document/docs/BUILD_CACHE.md",
@@ -105475,7 +105529,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 132367
+        "bytes": 132374
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -122915,6 +122969,17 @@
         "bytes": 4732
       },
       {
+        "uri": "majordomus://issue/I4559",
+        "kind": "issue",
+        "identity": "I4559",
+        "title": "The brief states its own facts and their fingerprint, so a client compares facts, not words",
+        "description": "Make brief.session answer with `facts`: one canonical statement per section built from that section's typed fields (never from its words), and `fingerprint`, the first 16 hex digits of their SHA-256; make the integration queue's line state its parts as facts beside its words; make the majordomus-brief mod compare the fingerprints when both briefs carry one, and fall back to its scrubbed-text comparison otherwise.",
+        "path": ".ai/repo/project/issues/I4559.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3875
+      },
+      {
         "uri": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "identity": "a-brief-is-reconciled-not-transcribed",
@@ -136161,7 +136226,7 @@
         "identity": "test/cases/4250_the_brief_reports_only_what_changed.sh",
         "path": "test/cases/4250_the_brief_reports_only_what_changed.sh",
         "source_class": "case",
-        "bytes": 3899
+        "bytes": 4701
       },
       {
         "uri": "majordomus://test/test/cases/4251_a_mod_links_nothing_outside_the_repository.sh",
@@ -138878,7 +138943,7 @@
       "identity": [
         "id"
       ],
-      "objects": 1224
+      "objects": 1225
     },
     {
       "name": "knowledge",

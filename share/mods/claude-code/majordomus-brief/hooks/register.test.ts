@@ -7,6 +7,8 @@ import {
   fingerprint,
   normalise,
   reminder,
+  sameFacts,
+  stated,
   selfReport,
   whatChanged,
   type Brief,
@@ -145,6 +147,42 @@ test('what is a fact survives normalisation', () => {
   ];
   for (const f of facts) expect(normalise(f)).toBe(f);
   expect(normalise('a   b')).toBe('a b');
+});
+
+// The executable states the brief's facts from its typed fields (`facts`); the mod compares
+// those, and falls back to the scrubbed text only when a brief carries none.
+const typed = (b: Brief, fp: string, session: string): Brief => ({
+  ...b,
+  facts: {
+    fingerprint: fp,
+    sections: [
+      { section: 'session', fact: session },
+      { section: 'peers', fact: 'read 2 attached' },
+      { section: 'answered_by', fact: 'leaseholder' },
+    ],
+  },
+});
+
+test('the facts the executable states decide, not the words', () => {
+  // the same facts in other words (a reworded summary, an age the scrub does not know): no change
+  const reworded = { ...make(), lines: make().lines.map(l => l.replace('cover the brief', 'covering it, 5 fortnights in')) };
+  expect(fingerprint(reworded)).not.toBe(fingerprint(make()));
+  expect(sameFacts(typed(make(), 'aaaa', 'read 1a2b @main'), typed(reworded, 'aaaa', 'read 1a2b @main'))).toBe(true);
+  // other facts in the same words: a change, named by the section that moved
+  const before = typed(make(), 'aaaa', 'read 1a2b @main');
+  const after = typed(make(), 'bbbb', 'read 9f8e @main');
+  expect(sameFacts(before, after)).toBe(false);
+  expect(changedSections(before, after)).toEqual(['session']);
+  expect(stated(before)?.get('answered by')).toBe('leaseholder');
+});
+
+test('a brief without stated facts is compared by its scrubbed text', () => {
+  const old = make();
+  expect(stated(old)).toBeUndefined();
+  expect(stated({ ...old, facts: { fingerprint: '', sections: [] } })).toBeUndefined();
+  // one side from before an upgrade: the text decides, so the clock alone is still no change
+  expect(sameFacts(typed(make(), 'aaaa', 'x'), make(later(9)))).toBe(true);
+  expect(sameFacts(make({ attached: 3 }), make())).toBe(false);
 });
 
 test('two briefs that differ only by the clock have one fingerprint', () => {

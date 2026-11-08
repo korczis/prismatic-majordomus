@@ -293,6 +293,8 @@
     "schema-BranchState": "docs/api/worktree/",
     "schema-BranchTrace": "docs/api/trace/",
     "schema-BriefDeriveSection": "docs/api/brief/",
+    "schema-BriefFact": "docs/api/brief/",
+    "schema-BriefFacts": "docs/api/brief/",
     "schema-BriefIntegrationSection": "docs/api/brief/",
     "schema-BriefMeshSection": "docs/api/brief/",
     "schema-BriefOrigin": "docs/api/brief/",
@@ -1409,7 +1411,7 @@
   "binding": "GET binds every top-level input property as a query parameter; POST binds the input as the JSON body",
   "counts": {
     "operations": 219,
-    "schemas": 1124,
+    "schemas": 1126,
     "tags": 62
   },
   "dialect": "https://spec.openapis.org/oas/3.1/dialect/base",
@@ -1803,6 +1805,8 @@
     "BranchState": "worktree",
     "BranchTrace": "trace",
     "BriefDeriveSection": "brief",
+    "BriefFact": "brief",
+    "BriefFacts": "brief",
     "BriefIntegrationSection": "brief",
     "BriefMeshSection": "brief",
     "BriefOrigin": "brief",
@@ -6713,6 +6717,66 @@
       "variants": []
     },
     {
+      "description": "What one section of the brief states.",
+      "home": "brief",
+      "is_enum": false,
+      "name": "BriefFact",
+      "properties": [
+        {
+          "description": "The section: `session`, `peers`, `mesh`, `integration`, `release`, `derive`,\n`runtime` or `answered_by`.",
+          "name": "section",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "What it states, canonically.",
+          "name": "fact",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "BriefFacts"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "The brief's facts: one canonical statement per section, in the brief's order, and their\ndigest. Built from each section's typed fields, never from its words, so no instant, age,\nheld duration or board position (a peer's `p1`, reassigned on every reconnect) is in it.",
+      "home": "brief",
+      "is_enum": false,
+      "name": "BriefFacts",
+      "properties": [
+        {
+          "description": "The first 16 hex digits of the SHA-256 of the sections, one `section: fact` line each.",
+          "name": "fingerprint",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The facts, section by section.",
+          "name": "sections",
+          "refs": [
+            "BriefFact"
+          ],
+          "required": true,
+          "type": "array of BriefFact"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "SessionBrief"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "The integration queue, as `majordomus prs brief` says it.",
       "home": "brief",
       "is_enum": false,
@@ -6733,6 +6797,13 @@
           "refs": [],
           "required": true,
           "type": "string"
+        },
+        {
+          "description": "What the section states with the clock taken out, part by part (`prs::brief_reading`):\nthe queue observed again with nothing changed states the same facts. Empty from a\nserver older than the field, and when the forge was never observed.",
+          "name": "facts",
+          "refs": [],
+          "required": false,
+          "type": "array of string"
         }
       ],
       "type": "object",
@@ -56700,6 +56771,15 @@
           ],
           "required": false,
           "type": "RuntimeState | null"
+        },
+        {
+          "description": "What the brief states with the clock taken out, and its fingerprint: two briefs with\nthe same fingerprint state the same facts, whatever their times and ages. A client\nthat tells a session only when something changed compares this, not the text. Empty\nfrom a server older than the field.",
+          "name": "facts",
+          "refs": [
+            "BriefFacts"
+          ],
+          "required": false,
+          "type": "BriefFacts"
         }
       ],
       "type": "object",

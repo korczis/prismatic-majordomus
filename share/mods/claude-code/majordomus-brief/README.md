@@ -13,9 +13,11 @@ without anyone asking (ADR 0136). The surface it reads is `majordomus brief`; se
   (`session.brief_interval_minutes`, carried by the brief; 20 when it cannot be read) and a fact
   in the brief changed since the session was last told, it submits a prompt of its own. The
   prompt is queued and starts a turn only when the session is idle, so a running turn is never
-  interrupted. A brief in which only the clock moved is not news: the `at`, every RFC 3339
-  instant and every span of time ("4 min ago", "38 h ago", "21 h 44 min", "(16s)", "36m") are
-  taken out before the comparison, and so is why a leaseholder did not answer. What the session
+  interrupted. A brief in which only the clock moved is not news. The executable states the
+  brief's facts from its typed fields, with a fingerprint (`facts`, `docs/BRIEF.md`), and the
+  mod compares those fingerprints. With a brief from an older executable it compares the text
+  instead, with the `at`, every RFC 3339 instant and every span of time ("4 min ago", "38 h
+  ago", "21 h 44 min", "(16s)", "36m") taken out, and why a leaseholder did not answer. What the session
   was last told starts as the first brief the mod reads, which is what the start event's
   briefing has just said. A change that reverts before the interval passes is never reported.
 - **A prompt after the interval.** A prompt the person sends under the same two conditions
