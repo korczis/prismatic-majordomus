@@ -258,11 +258,14 @@ the tool beside `share/obligations.yaml`, is the one place that says which axis 
 runtime limit, how the value is derived, and which function applies it (I0201). It declares
 only the limits this repository already applies:
 
-| limit | axis | derive | adapter |
-|---|---|---|---|
-| `checkpoint_max_age_seconds` | `checkpoint_interval` | `duration_seconds` | `mj_validate_checkpoint` |
-| `history_events` | `context.recent_history_depth` | `count` | `mj_ctx_history` |
-| `knowledge_pointers` | `context.knowledge_max_items` | `count` | `mj_context_pointers` |
+| limit | axis | derive | cap | adapter |
+|---|---|---|---|---|
+| `checkpoint_max_age_seconds` | `checkpoint_interval` | `duration_seconds` | | `mj_validate_checkpoint` |
+| `history_events` | `context.recent_history_depth` | `count` | | `mj_ctx_history` |
+| `knowledge_pointers` | `context.knowledge_max_items` | `count` | `context.max_list_items` | `mj_context_pointers` |
+
+A `cap` names a numeric policy key the limit never exceeds; `doctor` refuses one that is not
+a number.
 
 `doctor` reconciles it in both directions and prints each profile's limits as data
 (`OK profile-limits routine — limits checkpoint_max_age_seconds=1800 history_events=0
@@ -272,6 +275,15 @@ the derivation cannot read, a declared adapter that no function under `lib/` car
 limit the file does not declare. Capability, effort and verbosity are absent on purpose:
 nothing here can observe them being enforced. `test/cases/4400_a_profile_axis_names_the_limit_it_derives.sh`
 holds it.
+
+A limit's value is computed in one place, `mj_limits_resolve` in `lib/common.sh` (I0202):
+each adapter asks it for its own limit through `mj_limit <id>`, `doctor` prints what it
+answers, and `majordomus doctrine limits [--json]` prints it for the active task's profile, or
+for the default profile, named as the default, when no task is active. Each line carries the
+value, its unit, and the axis and value it was derived from; the JSON carries the same set
+with a `status` per limit (`ok`, `unset`, `invalid`) and `complete`, and the command exits 10
+when a declared limit cannot be derived. `test/cases/4409_a_task_prints_its_effective_limits.sh`
+compares the command's numbers with what the context section enforcing them does.
 
 ---
 

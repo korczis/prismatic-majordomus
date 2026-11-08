@@ -147,7 +147,7 @@ mj_ctx_outbox() {
 # majordomus-limit: history_events
 mj_ctx_history() {
   local profile="$1" depth
-  depth="$(mj_pro context.recent_history_depth)"; [ -n "$depth" ] || depth=0
+  depth="$(mj_limit history_events)"; [ -n "$depth" ] || depth=0
   if [ "$depth" -gt 0 ] && [ -f "$MJ_STATE_DIR/ledger.jsonl" ]; then
     { printf '## RECENT HISTORY (last %s events)\n' "$depth"
       ( export MJ_JSON=0; mj_cmd_history --limit "$depth" 2>/dev/null | sed '/^(/d' ); } > "$MJ_CTX_TMP/90.history"
@@ -450,9 +450,8 @@ mj_context_pointers() {
     *)  mj_ctx_excl "knowledge pointers" "profile $profile sets context.knowledge: $on"; return 0 ;;
   esac
   maxi="$(mj_pol_req context.max_list_items)"
-  max="$(mj_pro context.knowledge_max_items)"; [ -n "$max" ] || max="$maxi"
-  case "$max" in *[!0-9]*) max="$maxi" ;; esac
-  [ "$max" -le "$maxi" ] || max="$maxi"
+  # the resolver caps the profile's number at the policy's; with none, the policy's number
+  max="$(mj_limit knowledge_pointers)"; [ -n "$max" ] || max="$maxi"
   if [ "$max" -eq 0 ]; then
     mj_ctx_excl "knowledge pointers" "profile $profile sets context.knowledge_max_items: 0"; return 0
   fi

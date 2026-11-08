@@ -8,7 +8,7 @@ This page is the index. Each milestone's issues, and the findings about them, ar
 its own under [`plan-status/`](plan-status/), named by the milestone, so the plan grows by pages
 and no one page grows with it.
 
-Generated from canonical inputs `cda38202c2b6`.
+Generated from canonical inputs `86bbeb791c93`.
 
 ## Milestones
 
@@ -103,7 +103,7 @@ Generated from canonical inputs `cda38202c2b6`.
 | [recovery-from-injected-faults-is-proven](https://majordomus.dev/plan/recovery-from-injected-faults-is-proven/) | PLANNED | 0/5 | 1 | 4 | 0 | 0 | 0 | A conservation reading counts completions per issue, unreachable commits, stranded claims and multiply-consumed handovers; the T5 protocol registers three fault kinds; mesh lab scenarios and live single-host trials inject them; the T5 row publishes every trial. | [`plan-status/recovery-from-injected-faults-is-proven.md`](plan-status/recovery-from-injected-faults-is-proven.md) |
 | [repository-automation-is-typed](https://majordomus.dev/plan/repository-automation-is-typed/) | PLANNED | 0/12 | 3 | 9 | 0 | 0 | 0 | A person, CI and an agent run the same repository automation through one executable with an embedded Rhai engine and typed Rust capabilities; just recipes are derived from the command graph and the commit hook is one call of the executable; shell remains only at declared OS, bootstrap and provider boundaries, and the domain logic left in shell only shrinks; and every migrated unit proved it behaves as its predecessor before the predecessor was deleted. | [`plan-status/repository-automation-is-typed.md`](plan-status/repository-automation-is-typed.md) |
 | [routing-recommendations](https://majordomus.dev/plan/routing-recommendations/) | BLOCKED | 0/4 | 0 | 4 | 0 | 0 | 0 | The profile a task should run under is recommended from measured cost per accepted outcome, and the recommendation names the data it came from. | [`plan-status/routing-recommendations.md`](plan-status/routing-recommendations.md) |
-| [runtime-adapters](https://majordomus.dev/plan/runtime-adapters/) | ACTIVE | 0/6 | 0 | 5 | 1 | 0 | 0 | A profile's axes become opt-in runtime clamps a provider actually applies — read size, output condensation, subagent budget — with the limit derived from the profile rather than configured twice. | [`plan-status/runtime-adapters.md`](plan-status/runtime-adapters.md) |
+| [runtime-adapters](https://majordomus.dev/plan/runtime-adapters/) | ACTIVE | 1/6 | 0 | 4 | 1 | 0 | 0 | A profile's axes become opt-in runtime clamps a provider actually applies — read size, output condensation, subagent budget — with the limit derived from the profile rather than configured twice. | [`plan-status/runtime-adapters.md`](plan-status/runtime-adapters.md) |
 | [runtime-lifecycle](https://majordomus.dev/plan/runtime-lifecycle/) | ACTIVE | 7/10 | 3 | 0 | 0 | 0 | 1 | Entering a checkout, opening the Cockpit, or starting any number of MCP clients converges on one server for that checkout, which is taken over only when it is dead, stops in order when asked, removes only its own lease, reports a typed state every surface reads, and stays up while any surface uses it. | [`plan-status/runtime-lifecycle.md`](plan-status/runtime-lifecycle.md) |
 | [runtime-trust](https://majordomus.dev/plan/runtime-trust/) | ACTIVE | 8/11 | 3 | 0 | 0 | 0 | 0 | Discovery is not trust, trust is not authorization, and a caller is admitted to change anything only by a key the trust policy names. A host that can reach a runtime reads it and changes nothing it cannot authenticate; every event in the journal was checked against the trust policy that holds now, whether it arrived over a link or from disk; and the limits the documents state are the limits the code enforces. | [`plan-status/runtime-trust.md`](plan-status/runtime-trust.md) |
 | [safe-self-update](https://majordomus.dev/plan/safe-self-update/) | ACTIVE | 4/12 | 3 | 5 | 0 | 0 | 0 | An enrolled mesh node follows the stable release by itself through the one installer, forward only, activating in order and rolling back a failed activation (ADR 0161); a newer client replaces an older server in an ordered hand-off and an older client is told it is older; a change to any wire or on-disk schema needs a version bump; a released archive carries a provenance attestation the installer checks. | [`plan-status/safe-self-update.md`](plan-status/safe-self-update.md) |
@@ -493,7 +493,7 @@ Generated from canonical inputs `cda38202c2b6`.
 
 ## Findings
 
-9234 finding(s), each on the page of the milestone its subject is or belongs to:
+9144 finding(s), each on the page of the milestone its subject is or belongs to:
 
 | milestone | findings |
 |---|---|
@@ -552,7 +552,7 @@ Generated from canonical inputs `cda38202c2b6`.
 | [`public-proof`](plan-status/public-proof.md) | 128 |
 | [`recovery-from-injected-faults-is-proven`](plan-status/recovery-from-injected-faults-is-proven.md) | 2 |
 | [`repository-automation-is-typed`](plan-status/repository-automation-is-typed.md) | 33 |
-| [`runtime-adapters`](plan-status/runtime-adapters.md) | 97 |
+| [`runtime-adapters`](plan-status/runtime-adapters.md) | 7 |
 | [`runtime-lifecycle`](plan-status/runtime-lifecycle.md) | 48 |
 | [`runtime-trust`](plan-status/runtime-trust.md) | 28 |
 | [`safe-self-update`](plan-status/safe-self-update.md) | 473 |

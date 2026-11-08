@@ -217,19 +217,65 @@ mj_doctrine_result() {
 
 # ---------------------------------------------------------------- doctrine status
 # Counts derived from the registry and the source, never written down.
+# The limits one profile derives, read before they bite (I0202): the active task's profile, or
+# the default profile, named as the default, when no task is active. The numbers are
+# mj_limits_resolve's, the same the enforcement asks for, and are never computed here.
+mj_doctrine_limits() {
+  [ $# -eq 0 ] || mj_die "$MJ_EX_USAGE" "doctrine limits: unknown option $1"
+  mj_require_installed
+  mj_load_policy || mj_die "$MJ_EX_CONTRACT" "policy does not parse (run: majordomus doctor)"
+  local profile task="" rows rc=0 bad=0 id axis derive unit raw v cap st sep=""
+  if mj_load_current && [ "$(mj_cur outcome)" = active ]; then task="$(mj_cur id)"; profile="$(mj_cur profile)"
+  else profile="$(mj_pol profiles.default)"; fi
+  mj_load_profile "$profile" || mj_die "$MJ_EX_MISSING" "profile '$profile' has no file ($(mj_rel "$MJ_PROFILES_DIR")/$profile.yaml)"
+  mj_limits_load || rc=$?
+  [ "$rc" = 0 ] || mj_die "$MJ_EX_CONTRACT" "share/profile-limits.yaml does not load (run: majordomus doctor)"
+  rows="$(mj_limits_resolve)"
+  if [ "$MJ_JSON" = 1 ]; then
+    printf '{"profile":"%s","source":"%s","task":%s,"limits":[' "$(mj_json_esc "$profile")" \
+      "$([ -n "$task" ] && printf task || printf default)" "$([ -n "$task" ] && printf '"%s"' "$(mj_json_esc "$task")" || printf null)"
+  elif [ -n "$task" ]; then printf 'profile %s, of task %s\n' "$profile" "$task"
+  else printf 'profile %s, the default: no task is active\n' "$profile"; fi
+  while IFS="$MJ_TAB" read -r id axis derive unit raw v cap st; do
+    [ -n "$id" ] || continue
+    [ "$st" = ok ] || bad=1
+    if [ "$MJ_JSON" = 1 ]; then
+      printf '%s{"id":"%s","value":%s,"unit":"%s","axis":"%s","axis_value":%s,"derive":"%s","cap":%s,"status":"%s"}' "$sep" \
+        "$id" "$([ "$st" = ok ] && printf '%s' "$v" || printf null)" "$(mj_json_esc "$unit")" "$axis" \
+        "$([ "$raw" = - ] && printf null || printf '"%s"' "$(mj_json_esc "$raw")")" "$derive" \
+        "$([ "$cap" = - ] && printf null || printf '"%s"' "$cap")" "$st"
+      sep=","
+    else
+      case "$st" in
+        ok) printf '  %-28s %8s %-18s from %s: %s%s\n' "$id" "$v" "$unit" "$axis" "$raw" "$([ "$cap" = - ] || printf ', never above policy %s' "$cap")" ;;
+        unset) printf '  %-28s %8s %-18s %s is not set\n' "$id" - "$unit" "$axis" ;;
+        *) printf '  %-28s %8s %-18s %s: '"'"'%s'"'"' is not a %s value\n' "$id" - "$unit" "$axis" "$raw" "$derive" ;;
+      esac
+    fi
+  done <<EOF
+$rows
+EOF
+  [ "$MJ_JSON" = 1 ] && printf '],"complete":%s}\n' "$([ "$bad" = 0 ] && printf true || printf false)"
+  [ "$bad" = 0 ] || return "$MJ_EX_CONTRACT"
+}
+
 mj_cmd_doctrine() {
   local sub="${1:-status}"
   case "$sub" in
     --help|-h|help) cat <<H
-usage: majordomus doctrine [status|list|show <id>] [--json]
+usage: majordomus doctrine [status|list|show <id>|limits] [--json]
   a doctrine is a rule of the effective set (majordomus rules list) that names a validator
   status   declared, blocking, advisory, unwired and uncovered counts, all derived
   list     one line per doctrine: id, class, validator, the commands that enforce it
   show     the full record for one doctrine: claims, tests, dependencies, the rule file
+  limits   the runtime limits the active task's profile derives (the default profile's
+           when no task is active), each with the axis it came from; exit 10 when a
+           declared limit cannot be derived
 H
       return 0 ;;
     status|list) shift || true ;;
     show) shift; mj_doctrine_show "${1:-}"; return ;;
+    limits) shift; mj_doctrine_limits "$@"; return ;;
     *) mj_die "$MJ_EX_USAGE" "doctrine: unknown subcommand '$sub'" ;;
   esac
   mj_require_installed
