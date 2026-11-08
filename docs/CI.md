@@ -394,14 +394,27 @@ A pull request's run ends at its first red. Once one job has failed the run cann
 and the jobs still going hold runners the trunk's run and the deployments wait for: on
 2026-10-13 a run with two failed jobs kept nine more running for twenty minutes. So the last
 step of every gate job of `validate.yml`, on `failure()` of a `pull_request` event alone,
-cancels the run by its own id with the job's token (`actions: write`); `ci` and `evidence`
-still run, because they run `always()`, and report the run red. A combined top, a pull request
+cancels the run by its own id with the job's token (`actions: write`); `ci` still runs,
+because it runs `always()`, and reports the run red. The fan-ins (the suite's and the audit's
+unions, `site-probe`, `interactions`) run `!cancelled()`, and the probe shards only on the
+`site` job's success: after a cancel the shards left nothing to join and the site no artifact
+to probe, and on 2026-11-07 each cancelled run added twelve "Artifact not found" shards and a
+"no row for" union beside its one real red. They still run, and report red, after a shard or
+the site failed in a run that was not cancelled. A combined top, a pull request
 whose head is an `integration/*` branch, is never cancelled this way: it carries many heads and
 is judged once for all of them, so one run of it shows every red (on 2026-10-15 the grand top
 took three full cycles to show three reds). A push to master, the schedule
 and a dispatch are never cancelled this way: the trunk's remaining jobs are the only reading of
 its other lanes. Read a failed job's log through the jobs API (`gh run view --job <id> --log`)
 rather than waiting for the run. Case 3019 holds every job to it (I2664).
+
+A run that reaches its plan for a head its pull request no longer has gives its runners back:
+the plan job's first step after the held-member yield reads the pull request's head and, when
+it moved, cancels its own run before any gate asks for a runner. That is not a newer commit
+cancelling a started run — no gate of it has started, and its verdict would judge a head nobody
+can merge. On 2026-11-07 three such runs held 19 queued jobs under the account's shared hosted
+cap. A head that cannot be read lets the run proceed. Case 26 holds the step, its place before
+the checkout, and the conditions above.
 
 A cancel GitHub accepted is a request, not an end. On 2026-10-19 a cancelled run's `suite` job
 went on running and held its slot in the pool; only
