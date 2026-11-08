@@ -482,3 +482,10 @@ awk '/name: a superseded head gives its runners back/ {s=NR} /uses: actions\/che
   || { echo "    the superseded-head step runs after the checkout, not before any work"; exit 1; }
 grep -A14 'name: a superseded head gives its runners back' plan-job.yml | grep -q 'gh run cancel "\$GITHUB_RUN_ID"' \
   || { echo "    the superseded-head step does not cancel its own run"; exit 1; }
+
+# The rust job's case gates keep the executable the crate's tests built (2026-11-08):
+# scripts/ci/run-plan drops a MAJORDOMUS_BIN whose commit it cannot name, and a case that runs
+# a copy of the tool then finds none (case 47 failed every plan-record pull request so, run
+# 42393755816). The step that runs the plan's rust gates names the commit beside the path.
+awk '/name: the rust gates of the plan/ {s=1} s && /run: / {print; exit}' "$W" | grep -q 'MAJORDOMUS_BIN_COMMIT="\$(git rev-parse HEAD)"' \
+  || { echo "    the rust gates run without MAJORDOMUS_BIN_COMMIT: run-plan drops the executable"; exit 1; }

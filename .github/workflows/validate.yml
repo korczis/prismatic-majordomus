@@ -912,9 +912,12 @@ jobs:
           # The case gates of this job (release-record-cases, plan-record-cases) drive the
           # executable rust-check's `cargo test` built, as the suite shards do: without it a
           # case takes the shell path, and `knowledge validate` warns that it could not ask
-          # the index (case 3075, top 70 run 38980212746).
+          # the index (case 3075, top 70 run 38980212746). The commit it was built from goes
+          # with it: scripts/ci/run-plan keeps an executable only of this tree's generation,
+          # and without MAJORDOMUS_BIN_COMMIT it dropped this one, so a case running a copy
+          # of the tool found no executable (case 47, run 42393755816).
           MAJORDOMUS_BIN: ${{ github.workspace }}/apps/majordomus-cli/target/debug/majordomus
-        run: MJ_CI_TIMINGS=timings.tsv scripts/ci/run-plan --plan plan.json --job rust --skip rust-check,rust-integration
+        run: MAJORDOMUS_BIN_COMMIT="$(git rev-parse HEAD)" MJ_CI_TIMINGS=timings.tsv scripts/ci/run-plan --plan plan.json --job rust --skip rust-check,rust-integration
       - id: target
         if: matrix.lane == 3
         run: |
