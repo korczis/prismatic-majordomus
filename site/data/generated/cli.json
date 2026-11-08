@@ -26057,6 +26057,44 @@
           "value_name": "PID|auto"
         },
         {
+          "defaults": [
+            "false"
+          ],
+          "global": false,
+          "help": "The session takes reviews of this repository (I4327); without this or a `--reviews-*` flag it takes none and is nobody's eligible reviewer",
+          "long": "reviews",
+          "name": "reviews",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "REVIEWS"
+        },
+        {
+          "defaults": [],
+          "global": false,
+          "help": "Only reviews under this path prefix; repeatable, and implies `--reviews`",
+          "long": "reviews-path",
+          "name": "reviews_paths",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PREFIX"
+        },
+        {
+          "defaults": [],
+          "global": false,
+          "help": "Reviews of this mesh repository id instead of this one; repeatable, and implies `--reviews`",
+          "long": "reviews-repository",
+          "name": "reviews_repositories",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "ID"
+        },
+        {
           "defaults": [],
           "global": true,
           "help": "Start the search for the repository root here (default: the current directory)",
@@ -26158,7 +26196,7 @@
             "#184"
           ],
           "command": "majordomus mesh session open --session s1 --client codex --issue '#184'",
-          "description": "Client, intent, issue and branch of a session, replicated to every linked runtime. It needs the running server; without one it exits 10.",
+          "description": "Client, intent, issue and branch of a session, and with --reviews the reviews it takes, replicated to every linked runtime. It needs the running server; without one it exits 10.",
           "expectation": "exits 10",
           "id": "mesh-session-open",
           "setup": [],
@@ -27044,6 +27082,10 @@
             {
               "help": "an observation with no verdict: neither approval nor a request to change",
               "name": "commented"
+            },
+            {
+              "help": "not this session's to answer: no verdict, the request stays open for others",
+              "name": "declined"
             }
           ],
           "required": true,
@@ -27163,7 +27205,7 @@
             "approved"
           ],
           "command": "majordomus mesh review answer stream/r-000000000000 --session s1 --verdict approved",
-          "description": "approved, changes_requested or commented, with a note, replicated to every linked runtime. It needs the running server; without one it exits 10.",
+          "description": "approved, changes_requested or commented, with a note, or declined (not this session's to answer; the request stays open), replicated to every linked runtime. It needs the running server; without one it exits 10.",
           "expectation": "exits 10",
           "id": "mesh-review-answer",
           "setup": [],
@@ -41961,7 +42003,7 @@
     }
   ],
   "counts": {
-    "arguments": 1819,
+    "arguments": 1822,
     "commands": 264,
     "examples": 263,
     "runnable": 229

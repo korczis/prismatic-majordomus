@@ -1565,7 +1565,17 @@ impl Cooperation {
             let entry = projected.entry(session.clone()).or_default();
             let fresh = entry.info.session.is_empty();
             if fresh || entry.info.intent != intent {
+                // The board says nothing about reviews: a mandate the session declared itself
+                // (mesh.session.open) is carried into the new word, not erased by it (I4327).
+                let key = self.own(&session);
+                let reviews = self
+                    .state()
+                    .sessions
+                    .into_iter()
+                    .find(|s| s.key == key)
+                    .and_then(|s| s.info.reviews);
                 let info = SessionInfo {
+                    reviews,
                     session: session.clone(),
                     client: clip(&peer.client.name, 64),
                     worker: peer
@@ -4555,9 +4565,12 @@ impl Cooperation {
                             "no linked peer {target}"
                         )))
                     }
+                    // The feature is the link protocol's: whether the runtime's link carries
+                    // review events at all. Who there will answer is the sessions' mandate
+                    // (I4327), which the request's `eligible` list reports.
                     Some(peer) if !peer.card.supports("reviews") => {
                         return Err(CooperationError::FeatureUnsupported(format!(
-                            "{target} does not carry the reviews feature (it carries: {})",
+                            "the link to {target} cannot carry review events: its runtime does not carry the reviews feature (it carries: {})",
                             peer.card.features.join(", ")
                         )))
                     }
@@ -4645,6 +4658,80 @@ impl Cooperation {
             },
             request.into(),
         )
+    }
+
+    /// Say that a review request is not this session's to answer (I4327): outside its
+    /// mandate, no time, not its expertise. It is recorded so that "not mine" is never
+    /// mistaken for a verdict or for silence: the request stays open, lists the decline
+    /// apart from its answers, and no longer counts the decliner among those who may answer
+    /// it. The session that asked cannot decline its own request.
+    ///
+    /// ```
+    /// # use std::sync::Arc;
+    /// # use majordomus_cli::mesh::config::{CooperationConfig, TrustConfig};
+    /// # use majordomus_cli::mesh::cooperation::{CheckoutFacts, Cooperation, CooperationSetup};
+    /// # use majordomus_cli::mesh::identity::NodeIdentity;
+    /// # use majordomus_cli::mesh::link::HttpTransport;
+    /// # use majordomus_cli::mesh::registry::MeshRegistry;
+    /// # use majordomus_cli::mesh::repository::of_root_commits;
+    /// # let cooperation = Cooperation::new(CooperationSetup {
+    /// #     identity: Arc::new(NodeIdentity::ephemeral().unwrap()), runtime: "0000000000000001".into(),
+    /// #     repository: of_root_commits(&["root".into()]), endpoints: vec!["127.0.0.1:9".into()],
+    /// #     version: "doc".into(), config: CooperationConfig::default(), trust: TrustConfig::default(),
+    /// #     journal_path: None, registry: Arc::new(MeshRegistry::new()),
+    /// #     transport: Arc::new(HttpTransport), board: None, checkout: CheckoutFacts::default(),
+    /// # }).unwrap();
+    /// use majordomus_cli::mesh::journal::{ReviewMandate, SessionInfo};
+    /// use majordomus_cli::mesh::state::ReviewState;
+    ///
+    /// let reviewer = SessionInfo { reviews: Some(ReviewMandate::default()),
+    ///     ..SessionInfo::named("s2", "codex") };
+    /// cooperation.open_session(reviewer).unwrap();
+    /// let asked = cooperation
+    ///     .request_review("s1", "feature/mesh-cooperation".into(), vec![], None, None, None)
+    ///     .unwrap();
+    /// assert_eq!(cooperation.state().reviews[0].eligible.len(), 1, "s2 reviews this repository");
+    ///
+    /// cooperation.decline_review(&asked.key, "s2", Some("not my mandate today".into())).unwrap();
+    /// let review = &cooperation.state().reviews[0];
+    /// assert_eq!(review.state, ReviewState::Open, "a decline is not an answer");
+    /// assert!(review.answers.is_empty() && review.eligible.is_empty());
+    /// assert_eq!(review.declines[0].note.as_deref(), Some("not my mandate today"));
+    ///
+    /// cooperation.decline_review(&asked.key, "s1", None).expect_err("the asker's own request");
+    /// ```
+    pub fn decline_review(
+        &self,
+        request: &str,
+        session: &str,
+        note: Option<String>,
+    ) -> Result<Written, CooperationError> {
+        let state = self.state();
+        let Some(review) = state.reviews.iter().find(|r| r.key == request) else {
+            return Err(CooperationError::NotFound(format!(
+                "no review request {request}"
+            )));
+        };
+        if review.session == self.own(session) {
+            return Err(CooperationError::Invalid(format!(
+                "session {session} requested review {request} and cannot decline it: withdraw it instead"
+            )));
+        }
+        self.write(
+            EventBody::ReviewDeclined {
+                request: request.into(),
+                session: session.into(),
+                note: note.map(redacted),
+            },
+            request.into(),
+        )
+    }
+
+    /// The open review requests nobody may answer (I4327), each as the finding every surface
+    /// prints: `review_no_eligible_reviewer <repository> <request>`. The repository is this
+    /// journal's mesh repository id, the one every request of the journal belongs to.
+    pub fn reviews_without_reviewer(&self) -> Vec<String> {
+        crate::mesh::state::review_findings(&self.state(), self.journal.repository())
     }
 
     /// End a review request this runtime asked for: done, void or superseded, with an
@@ -6354,6 +6441,60 @@ mod tests {
         );
     }
 
+    /// Rounds enough for both runtimes' events to cross, as `sync_with` documents.
+    fn settle(a: &Cooperation, b: &Cooperation, key: &str) {
+        for _ in 0..2 {
+            a.journal().beat_own();
+            b.journal().beat_own();
+            a.sync_with(key).unwrap();
+        }
+    }
+
+    /// Every linked runtime carries the `reviews` feature, so the feature cannot be who
+    /// reviews (I4327): a session there that declared no mandate is never eligible, one that
+    /// declared one is, and a decline answered through the same capability path removes it.
+    #[test]
+    fn the_reviews_feature_is_not_a_mandate() {
+        use crate::mesh::journal::ReviewMandate;
+        use crate::mesh::state::ReviewState;
+        let net = Arc::new(InProcess::default());
+        let a = runtime(&net, "a:1", "root", TrustPolicy::Tofu);
+        let b = runtime(&net, "b:1", "root", TrustPolicy::Tofu);
+        let key = a.dial(&["b:1".into()]).unwrap();
+        assert!(
+            a.table.lock().unwrap().peers[&key].card.supports("reviews"),
+            "the link carries review events"
+        );
+        b.open_session(SessionInfo::named("idle", "codex")).unwrap();
+        let asked = a
+            .request_review("s1", "feature/x".into(), vec![], None, None, None)
+            .unwrap();
+        settle(&a, &b, &key);
+        let review = |c: &Cooperation| c.state().reviews[0].clone();
+        assert!(
+            review(&b).eligible.is_empty(),
+            "a linked runtime is not a reviewer"
+        );
+        assert_eq!(a.reviews_without_reviewer().len(), 1);
+
+        b.open_session(SessionInfo {
+            reviews: Some(ReviewMandate::default()),
+            ..SessionInfo::named("idle", "codex")
+        })
+        .unwrap();
+        settle(&a, &b, &key);
+        assert_eq!(review(&a).eligible, [b.own("idle")]);
+        assert!(a.reviews_without_reviewer().is_empty());
+
+        b.decline_review(&asked.key, "idle", Some("not today".into()))
+            .unwrap();
+        settle(&a, &b, &key);
+        assert!(review(&a).eligible.is_empty());
+        assert_eq!(review(&a).declines.len(), 1);
+        assert_eq!(review(&a).state, ReviewState::Open);
+        assert!(a.reviews_without_reviewer()[0].starts_with("review_no_eligible_reviewer "));
+    }
+
     #[test]
     fn a_reviewer_must_carry_the_feature_and_stop_ends_every_thread() {
         let net = Arc::new(InProcess::default());
@@ -6421,6 +6562,57 @@ mod tests {
             .unwrap()
             .code,
             RefusalCode::NotActive
+        );
+    }
+
+    /// The board says nothing about reviews, so a new announcement must not erase the
+    /// mandate its session declared through mesh.session.open (I4327).
+    #[test]
+    fn a_new_announcement_keeps_the_review_mandate_its_session_declared() {
+        use crate::mesh::journal::ReviewMandate;
+        let net = Arc::new(InProcess::default());
+        let board = Arc::new(crate::peers::PeerBoard::new());
+        let a = Cooperation::new(CooperationSetup {
+            identity: Arc::new(NodeIdentity::ephemeral().unwrap()),
+            runtime: "00000000000000a1".into(),
+            repository: of_root_commits(&["root".into()]),
+            endpoints: vec!["a:1".into()],
+            version: "test".into(),
+            config: CooperationConfig::default(),
+            trust: TrustConfig::default(),
+            journal_path: None,
+            registry: Arc::new(MeshRegistry::new()),
+            transport: Arc::clone(&net) as Arc<dyn LinkTransport>,
+            board: Some(Arc::clone(&board)),
+            checkout: CheckoutFacts::default(),
+        })
+        .unwrap();
+        let p = board.attach(crate::peers::Transport::Http);
+        board.announce(&p, "implement the mesh", vec!["apps".into()]);
+        a.project_board();
+        let session = format!("board-{}", p.as_str());
+        let mandate = ReviewMandate {
+            repositories: Vec::new(),
+            paths: vec!["apps/majordomus-cli/src/mesh".into()],
+        };
+        a.open_session(SessionInfo {
+            intent: Some("implement the mesh".into()),
+            reviews: Some(mandate.clone()),
+            ..SessionInfo::named(&session, "claude-code")
+        })
+        .unwrap();
+        board.announce(&p, "write the docs", vec!["docs".into()]);
+        a.project_board();
+        let state = a.state();
+        assert_eq!(state.sessions.len(), 1);
+        assert_eq!(
+            state.sessions[0].info.intent.as_deref(),
+            Some("write the docs")
+        );
+        assert_eq!(
+            state.sessions[0].info.reviews,
+            Some(mandate),
+            "kept across the new word"
         );
     }
 

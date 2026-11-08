@@ -4994,6 +4994,9 @@ majordomus mesh session open [OPTIONS]
 | `--branch` | `<BRANCH>` | — | The branch |
 | `--head` | `<HEAD>` | — | The head commit |
 | `--client-pid` | `<PID|auto>` | — | The client process the session belongs to: a pid, or `auto` for the nearest ancestor that is not a shell. The runtime closes the session once it has ended |
+| `--reviews` | flag | — | The session takes reviews of this repository (I4327); without this or a `--reviews-*` flag it takes none and is nobody's eligible reviewer |
+| `--reviews-path` | `<PREFIX>` | — | Only reviews under this path prefix; repeatable, and implies `--reviews` |
+| `--reviews-repository` | `<ID>` | — | Reviews of this mesh repository id instead of this one; repeatable, and implies `--reviews` |
 | `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
 | `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree; `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
 | `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
@@ -5002,7 +5005,7 @@ majordomus mesh session open [OPTIONS]
 
 Examples:
 
-- **Say what a session is doing, to every linked runtime** — Client, intent, issue and branch of a session, replicated to every linked runtime. It needs the running server; without one it exits 10.
+- **Say what a session is doing, to every linked runtime** — Client, intent, issue and branch of a session, and with --reviews the reviews it takes, replicated to every linked runtime. It needs the running server; without one it exits 10.
 
   ```console
   $ majordomus mesh session open --session s1 --client codex --issue '#184'
@@ -5170,7 +5173,7 @@ majordomus mesh review answer [OPTIONS] <REQUEST>
 |---|---|---|---|
 | `<REQUEST>` | `<REQUEST>` | required | The request's key, `<stream>/<review>` |
 | `--session` | `<SESSION>` | required | The answering session's id within this runtime |
-| `--verdict` | `approved` \| `changes_requested` \| `commented` | required | What the reviewer decided — `approved`: the work is good as it stands and the requester may proceed; `changes_requested`: the work needs changing before it proceeds; the note says what; `commented`: an observation with no verdict: neither approval nor a request to change |
+| `--verdict` | `approved` \| `changes_requested` \| `commented` \| `declined` | required | What the reviewer decided — `approved`: the work is good as it stands and the requester may proceed; `changes_requested`: the work needs changing before it proceeds; the note says what; `commented`: an observation with no verdict: neither approval nor a request to change; `declined`: not this session's to answer: no verdict, the request stays open for others |
 | `--note` | `<NOTE>` | — | The note |
 | `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
 | `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree; `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
@@ -5180,7 +5183,7 @@ majordomus mesh review answer [OPTIONS] <REQUEST>
 
 Examples:
 
-- **Answer a review request from any runtime** — approved, changes_requested or commented, with a note, replicated to every linked runtime. It needs the running server; without one it exits 10.
+- **Answer a review request from any runtime** — approved, changes_requested or commented, with a note, or declined (not this session's to answer; the request stays open), replicated to every linked runtime. It needs the running server; without one it exits 10.
 
   ```console
   $ majordomus mesh review answer stream/r-000000000000 --session s1 --verdict approved

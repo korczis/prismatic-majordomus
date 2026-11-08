@@ -474,6 +474,64 @@ pub struct ReviewView {
     /// answer: a review is another session's verdict.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub result: Option<String>,
+    /// Who may answer it while it is open or answered (I4327): the keys of the live sessions
+    /// whose review mandate covers its repository and scope, minus the session that asked,
+    /// minus the sessions of the asker's task (a builder's own subagents), and minus every
+    /// session that declined it. Derived, never written; empty for a request that has ended.
+    /// Empty and open is the finding `review_no_eligible_reviewer`.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub eligible: Vec<String>,
+    /// The sessions that said it is not theirs to answer, in Lamport order. Never verdicts.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub declines: Vec<ReviewAnswer>,
+}
+
+impl ReviewView {
+    /// Whether nobody may answer a request that still waits for an answer: open, and no
+    /// eligible session (I4327). Every surface that reports the finding asks this.
+    ///
+    /// ```
+    /// use majordomus_cli::mesh::state::{ReviewState, ReviewView};
+    ///
+    /// let open = ReviewView { key: "s/r1".into(), session: "s/a".into(), subject: "x".into(),
+    ///     scope: vec![], issue: None, reviewer: None, body: None, state: ReviewState::Open,
+    ///     answers: vec![], result: None, eligible: vec![], declines: vec![] };
+    /// assert!(open.lacks_a_reviewer());
+    /// let covered = ReviewView { eligible: vec!["s/b".into()], ..open.clone() };
+    /// assert!(!covered.lacks_a_reviewer());
+    /// let ended = ReviewView { state: ReviewState::Withdrawn, ..open };
+    /// assert!(!ended.lacks_a_reviewer(), "a request that ended needs nobody");
+    /// ```
+    pub fn lacks_a_reviewer(&self) -> bool {
+        self.state.is_waiting() && self.eligible.is_empty()
+    }
+}
+
+/// The open review requests of `state` nobody may answer (I4327), each as the finding every
+/// surface prints: `review_no_eligible_reviewer <repository> <request>`, in key order.
+/// `repository` is the mesh repository id of the journal the state was folded from.
+///
+/// ```
+/// use std::sync::Arc;
+/// use majordomus_cli::mesh::identity::NodeIdentity;
+/// use majordomus_cli::mesh::journal::{EventBody, Journal, StreamLiveness};
+/// use majordomus_cli::mesh::state::{fold, review_findings};
+///
+/// let j = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), "0000000000000001",
+///     "repo".into(), None).unwrap();
+/// j.append_own(EventBody::ReviewRequested { review: "r1".into(), session: "s1".into(),
+///     subject: "feature/x".into(), scope: vec![], issue: None, reviewer: None, body: None }).unwrap();
+/// let state = fold(&j.events(), &|_| StreamLiveness::Own);
+/// let found = review_findings(&state, "repo");
+/// assert_eq!(found, [format!("review_no_eligible_reviewer repo {}", state.reviews[0].key)]);
+/// ```
+pub fn review_findings(state: &CooperationState, repository: &str) -> Vec<String> {
+    state
+        .reviews
+        .iter()
+        .filter(|r| r.lacks_a_reviewer())
+        .map(|r| format!("review_no_eligible_reviewer {repository} {}", r.key))
+        .collect()
 }
 
 /// The whole folded state, every collection in key order, and its digest: two runtimes
@@ -605,6 +663,11 @@ pub fn fold_with(
     let mut reviews: BTreeMap<String, ReviewView> = BTreeMap::new();
     // Where and when each request was asked: what its expiry is judged by.
     let mut asked_at: BTreeMap<String, StreamId> = BTreeMap::new();
+    // The mesh repository each session and each request was written in: what a review
+    // mandate is judged against (I4327).
+    let mut repository_of: BTreeMap<String, String> = BTreeMap::new();
+    // Who declined each request, by session key: they are no longer eligible for it.
+    let mut declined_by: BTreeMap<String, Vec<String>> = BTreeMap::new();
     let mut opaque = 0usize;
     let mut closed_at: BTreeMap<String, u64> = BTreeMap::new();
 
@@ -618,6 +681,7 @@ pub fn fold_with(
         match body {
             EventBody::SessionOpened { info } => {
                 let k = key(&info.session);
+                repository_of.insert(k.clone(), event.repo.clone());
                 sessions.insert(
                     k.clone(),
                     SessionView {
@@ -707,6 +771,9 @@ pub fn fold_with(
             } => {
                 let k = key(&review);
                 asked_at.entry(k.clone()).or_insert(event.stream.clone());
+                repository_of
+                    .entry(k.clone())
+                    .or_insert_with(|| event.repo.clone());
                 reviews.entry(k.clone()).or_insert(ReviewView {
                     key: k,
                     session: key(&session),
@@ -718,7 +785,31 @@ pub fn fold_with(
                     state: ReviewState::Open,
                     answers: Vec::new(),
                     result: None,
+                    eligible: Vec::new(),
+                    declines: Vec::new(),
                 });
+            }
+            EventBody::ReviewDeclined {
+                request,
+                session,
+                note,
+            } => {
+                // Not a verdict: the state is left as it is. The asker cannot decline its own
+                // request any more than it can answer it.
+                let decliner = key(&session);
+                if let Some(view) = reviews
+                    .get_mut(&request)
+                    .filter(|view| view.session != decliner)
+                {
+                    if !view.declines.iter().any(|d| d.session == decliner) {
+                        view.declines.push(ReviewAnswer {
+                            session: decliner.clone(),
+                            verdict: "declined".into(),
+                            note,
+                        });
+                        declined_by.entry(request).or_default().push(decliner);
+                    }
+                }
             }
             EventBody::ReviewAnswered {
                 request,
@@ -788,6 +879,39 @@ pub fn fold_with(
             view.state = SessionState::Expired;
         }
     }
+
+    // Who may answer each request still taking answers (I4327): the live sessions whose own
+    // mandate covers it. Decided after the sessions' liveness, so a session whose runtime
+    // stopped beating is nobody's reviewer, and from the sessions' word alone — never from
+    // a runtime's link features, which every runtime carries.
+    for view in reviews.values_mut() {
+        if !matches!(view.state, ReviewState::Open | ReviewState::Answered) {
+            continue;
+        }
+        let request_repo = repository_of.get(&view.key).map(String::as_str);
+        let asker_task = sessions
+            .get(&view.session)
+            .and_then(|s| s.info.task.as_deref());
+        let declined = declined_by.get(&view.key);
+        view.eligible = sessions
+            .values()
+            .filter(|s| s.state == SessionState::Active && s.key != view.session)
+            .filter(|s| asker_task.is_none() || s.info.task.as_deref() != asker_task)
+            .filter(|s| !declined.is_some_and(|d| d.contains(&s.key)))
+            .filter(|s| {
+                let Some(mandate) = &s.info.reviews else {
+                    return false;
+                };
+                let session_repo = repository_of.get(&s.key).map(String::as_str);
+                match (request_repo, session_repo) {
+                    (Some(r), Some(own)) => mandate.covers(r, own, &view.scope),
+                    _ => false,
+                }
+            })
+            .map(|s| s.key.clone())
+            .collect();
+    }
+
     for view in claims.values_mut() {
         if view.state != ClaimState::Held {
             continue;
@@ -1600,5 +1724,199 @@ mod tests {
         assert_eq!(after.claims.len(), before.claims.len());
         assert_eq!(after.claims[0].state, ClaimState::Held);
         assert!(after.reviews.is_empty(), "an offer is not a review");
+    }
+
+    // ------------------------------------------------------------ I4327: who may answer
+
+    use crate::mesh::journal::ReviewMandate;
+
+    /// A session that says what it reviews, of `task` when given.
+    fn reviewer(j: &Journal, session: &str, task: Option<&str>, mandate: Option<ReviewMandate>) {
+        j.append_own(EventBody::SessionOpened {
+            info: SessionInfo {
+                task: task.map(str::to_string),
+                reviews: mandate,
+                ..SessionInfo::named(session, "claude-code")
+            },
+        })
+        .unwrap();
+    }
+
+    fn ask(j: &Journal, session: &str, scope: &[&str]) -> String {
+        j.append_own(EventBody::ReviewRequested {
+            review: "r1".into(),
+            session: session.into(),
+            subject: "feature/x".into(),
+            scope: scope.iter().map(|s| s.to_string()).collect(),
+            issue: None,
+            reviewer: None,
+            body: None,
+        })
+        .unwrap();
+        format!("{}/r1", j.own_stream())
+    }
+
+    fn paths(prefixes: &[&str]) -> Option<ReviewMandate> {
+        Some(ReviewMandate {
+            repositories: Vec::new(),
+            paths: prefixes.iter().map(|s| s.to_string()).collect(),
+        })
+    }
+
+    /// The eligible answerers are exactly the live sessions whose own mandate covers the
+    /// request, minus the asker and the asker's task; a session that declares nothing is
+    /// never eligible, however its runtime's link is equipped.
+    #[test]
+    fn a_request_lists_exactly_the_sessions_whose_mandate_covers_it() {
+        let a = journal("0000000000000001");
+        let b = journal("0000000000000002");
+        reviewer(&a, "asker", Some("t-1"), Some(ReviewMandate::default()));
+        reviewer(&a, "subagent", Some("t-1"), Some(ReviewMandate::default()));
+        reviewer(&b, "anything", None, Some(ReviewMandate::default()));
+        reviewer(&b, "the-mesh", Some("t-2"), paths(&["apps/mesh"]));
+        reviewer(&b, "the-docs", None, paths(&["docs"]));
+        reviewer(&b, "silent", None, None);
+        reviewer(
+            &b,
+            "elsewhere",
+            None,
+            Some(ReviewMandate {
+                repositories: vec!["another-repository".into()],
+                paths: Vec::new(),
+            }),
+        );
+        let request = ask(&a, "asker", &["apps/mesh/state.rs", "apps/mesh/"]);
+        sync(&a, &b);
+        sync(&b, &a);
+        let state = fold(&a.events(), &all_live);
+        let review = state.reviews.iter().find(|r| r.key == request).unwrap();
+        let b_ = b.own_stream();
+        assert_eq!(
+            review.eligible,
+            [format!("{b_}/anything"), format!("{b_}/the-mesh")],
+            "the asker, its own task, another scope, no mandate and another repository are out"
+        );
+        assert!(!review.lacks_a_reviewer());
+        assert_eq!(
+            state.digest,
+            fold(&b.events(), &all_live).digest,
+            "every runtime agrees"
+        );
+
+        // a request of the whole tree is covered only by a mandate of the whole tree
+        let whole = fold(&a.events(), &all_live);
+        assert!(whole.reviews[0]
+            .eligible
+            .contains(&format!("{b_}/anything")));
+    }
+
+    /// A session whose runtime stopped beating answers nothing, mandate or not.
+    #[test]
+    fn a_session_of_a_dead_runtime_is_nobodys_reviewer() {
+        let a = journal("0000000000000001");
+        let b = journal("0000000000000002");
+        reviewer(&b, "gone", None, Some(ReviewMandate::default()));
+        sync(&b, &a);
+        ask(&a, "asker", &[]);
+        let dead = b.own_stream();
+        let state = fold(&a.events(), &|s: &StreamId| {
+            if s == dead {
+                StreamLiveness::Expired
+            } else {
+                StreamLiveness::Own
+            }
+        });
+        assert!(state.reviews[0].eligible.is_empty());
+        assert!(state.reviews[0].lacks_a_reviewer());
+        assert_eq!(
+            review_findings(&state, "repo"),
+            [format!(
+                "review_no_eligible_reviewer repo {}",
+                state.reviews[0].key
+            )]
+        );
+    }
+
+    /// A decline is not a verdict: the request stays open, the decliner leaves the eligible
+    /// list and is listed apart; the asker cannot decline its own request.
+    #[test]
+    fn a_decline_leaves_the_request_open_and_the_decliner_ineligible() {
+        let a = journal("0000000000000001");
+        let b = journal("0000000000000002");
+        reviewer(&b, "busy", None, Some(ReviewMandate::default()));
+        reviewer(&b, "free", None, Some(ReviewMandate::default()));
+        let request = ask(&a, "asker", &[]);
+        sync(&a, &b);
+        b.append_own(EventBody::ReviewDeclined {
+            request: request.clone(),
+            session: "busy".into(),
+            note: Some("not my mandate today".into()),
+        })
+        .unwrap();
+        a.append_own(EventBody::ReviewDeclined {
+            request: request.clone(),
+            session: "asker".into(),
+            note: None,
+        })
+        .unwrap();
+        sync(&b, &a);
+        let state = fold(&a.events(), &all_live);
+        let review = &state.reviews[0];
+        assert_eq!(review.state, ReviewState::Open, "a decline is no answer");
+        assert!(review.answers.is_empty());
+        assert_eq!(review.eligible, [format!("{}/free", b.own_stream())]);
+        assert_eq!(
+            review.declines.len(),
+            1,
+            "the asker's own decline is ignored"
+        );
+        assert_eq!(
+            review.declines[0].session,
+            format!("{}/busy", b.own_stream())
+        );
+        assert_eq!(
+            review.declines[0].note.as_deref(),
+            Some("not my mandate today")
+        );
+    }
+
+    /// A journal written before the change — no mandate, no decline — reads as before: its
+    /// requests carry neither new field, so the state, and its digest, are what they were.
+    #[test]
+    fn a_journal_without_mandates_reads_as_before() {
+        let a = journal("0000000000000001");
+        reviewer(&a, "plain", None, None);
+        ask(&a, "asker", &["apps"]);
+        let state = fold(&a.events(), &all_live);
+        let value = serde_json::to_value(&state.reviews[0]).unwrap();
+        assert!(value.get("eligible").is_none() && value.get("declines").is_none());
+        let session = serde_json::to_value(&state.sessions[0].info).unwrap();
+        assert!(session.get("reviews").is_none());
+        assert!(
+            state.reviews[0].lacks_a_reviewer(),
+            "and nobody may answer it"
+        );
+    }
+
+    /// A mandate is bounded like every other field a peer sends.
+    #[test]
+    fn a_mandate_out_of_bounds_is_refused() {
+        let opened = |mandate: ReviewMandate| EventBody::SessionOpened {
+            info: SessionInfo {
+                reviews: Some(mandate),
+                ..SessionInfo::named("s", "cli")
+            },
+        };
+        assert!(opened(ReviewMandate::default()).validate().is_ok());
+        let escaping = ReviewMandate {
+            repositories: Vec::new(),
+            paths: vec!["/etc".into()],
+        };
+        assert!(opened(escaping).validate().is_err());
+        let many = ReviewMandate {
+            repositories: (0..17).map(|n| format!("r{n}")).collect(),
+            paths: Vec::new(),
+        };
+        assert!(opened(many).validate().is_err());
     }
 }

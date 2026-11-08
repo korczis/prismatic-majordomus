@@ -1107,6 +1107,7 @@
     "schema-Resumed": "docs/api/continuity/",
     "schema-ReviewAnswer": "docs/api/mesh/",
     "schema-ReviewAnswerInput": "docs/api/mesh/",
+    "schema-ReviewMandate": "docs/api/mesh/",
     "schema-ReviewPlan": "docs/api/reasoning/",
     "schema-ReviewPolicy": "docs/api/integration/",
     "schema-ReviewRequestInput": "docs/api/mesh/",
@@ -1409,7 +1410,7 @@
   "binding": "GET binds every top-level input property as a query parameter; POST binds the input as the JSON body",
   "counts": {
     "operations": 219,
-    "schemas": 1124,
+    "schemas": 1125,
     "tags": 62
   },
   "dialect": "https://spec.openapis.org/oas/3.1/dialect/base",
@@ -2617,6 +2618,7 @@
     "Resumed": "continuity",
     "ReviewAnswer": "mesh",
     "ReviewAnswerInput": "mesh",
+    "ReviewMandate": "mesh",
     "ReviewPlan": "reasoning",
     "ReviewPolicy": "integration",
     "ReviewRequestInput": "mesh",
@@ -6827,6 +6829,13 @@
           "refs": [],
           "required": true,
           "type": "integer (uint)"
+        },
+        {
+          "description": "Open review requests nobody may answer (I4327), each the finding\n`review_no_eligible_reviewer <repository> <request>`.",
+          "name": "findings",
+          "refs": [],
+          "required": false,
+          "type": "array of string"
         },
         {
           "description": "The section in words.",
@@ -36661,7 +36670,7 @@
       "variants": []
     },
     {
-      "description": "An open review request, told briefly: its key, what is to be reviewed and whom it asks.\nOnly requests nobody has answered are listed in the summary.\n\n```\nuse majordomus_cli::mesh::page::ReviewBrief;\n\nlet brief = ReviewBrief { key: \"s/r1\".into(), subject: \"feature/x\".into(), issue: None,\n    reviewer: None };\nassert!(serde_json::to_value(&brief).unwrap().get(\"issue\").is_none(), \"absent, not null\");\n```",
+      "description": "An open review request, told briefly: its key, what is to be reviewed and whom it asks.\nOnly requests nobody has answered are listed in the summary.\n\n```\nuse majordomus_cli::mesh::page::ReviewBrief;\n\nlet brief = ReviewBrief { key: \"s/r1\".into(), subject: \"feature/x\".into(), issue: None,\n    reviewer: None, eligible: vec![], declined: vec![] };\nlet value = serde_json::to_value(&brief).unwrap();\nassert!(value.get(\"issue\").is_none(), \"absent, not null\");\nassert!(value.get(\"eligible\").is_none(), \"nobody eligible is the finding, said by the brief\");\n```",
       "home": "mesh",
       "is_enum": false,
       "name": "MeshReviewBrief",
@@ -36693,6 +36702,20 @@
           "refs": [],
           "required": false,
           "type": "string | null"
+        },
+        {
+          "description": "The sessions that may answer it (I4327), by key.",
+          "name": "eligible",
+          "refs": [],
+          "required": false,
+          "type": "array of string"
+        },
+        {
+          "description": "The sessions that declined it, by key.",
+          "name": "declined",
+          "refs": [],
+          "required": false,
+          "type": "array of string"
         }
       ],
       "type": "object",
@@ -53222,7 +53245,7 @@
           "type": "string | null"
         },
         {
-          "description": "`approved`, `changes_requested` or `commented`.",
+          "description": "`approved`, `changes_requested` or `commented`; or `declined`, which is no verdict:\nthe request is not this session's to answer, it stays open for somebody else, and\nthe session stops being one of its eligible answerers (I4327).",
           "name": "verdict",
           "refs": [],
           "required": true,
@@ -53241,6 +53264,36 @@
         "mesh.review.answer"
       ],
       "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "What a session will review (I4327): the repositories, and within them the paths. A\nsession declares it when it opens and says it again to change it; saying nothing takes\nno reviews. The mandate is what makes a session an eligible answerer of a review request,\nso eligibility is the sessions' own word and not a reading of their runtime's features.\n\n```\nuse majordomus_cli::mesh::journal::ReviewMandate;\n\n// the repository the session opened in, every path\nlet anything = ReviewMandate::default();\nassert!(anything.covers(\"repo-a\", \"repo-a\", &[]));\nassert!(!anything.covers(\"repo-a\", \"repo-b\", &[]), \"another repository is not its own\");\n\n// named repositories, and only the mesh's code\nlet mesh = ReviewMandate { repositories: vec![\"repo-a\".into()],\n    paths: vec![\"apps/majordomus-cli/src/mesh\".into()] };\nassert!(mesh.covers(\"repo-a\", \"repo-b\", &[\"apps/majordomus-cli/src/mesh/state.rs\".into()]));\nassert!(!mesh.covers(\"repo-a\", \"repo-a\", &[\"docs/MESH.md\".into()]), \"outside its paths\");\nassert!(!mesh.covers(\"repo-a\", \"repo-a\", &[]), \"a request with no scope is the whole tree\");\nassert!(!mesh.covers(\"repo-a\", \"repo-a\", &[\"apps/majordomus-cli/src/meshy.rs\".into()]),\n    \"a prefix is a directory, not a string\");\n```",
+      "home": "mesh",
+      "is_enum": false,
+      "name": "ReviewMandate",
+      "properties": [
+        {
+          "description": "The mesh repository ids the session reviews. Empty: the repository whose journal the\nsession was opened in.",
+          "name": "repositories",
+          "refs": [],
+          "required": false,
+          "type": "array of string"
+        },
+        {
+          "description": "Repository-relative path prefixes within them. Empty: every path.",
+          "name": "paths",
+          "refs": [],
+          "required": false,
+          "type": "array of string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "SessionInfo",
+        "SessionInput"
+      ],
       "values": [],
       "variants": []
     },
@@ -53560,6 +53613,22 @@
           "refs": [],
           "required": false,
           "type": "string | null"
+        },
+        {
+          "description": "Who may answer it while it is open or answered (I4327): the keys of the live sessions\nwhose review mandate covers its repository and scope, minus the session that asked,\nminus the sessions of the asker's task (a builder's own subagents), and minus every\nsession that declined it. Derived, never written; empty for a request that has ended.\nEmpty and open is the finding `review_no_eligible_reviewer`.",
+          "name": "eligible",
+          "refs": [],
+          "required": false,
+          "type": "array of string"
+        },
+        {
+          "description": "The sessions that said it is not theirs to answer, in Lamport order. Never verdicts.",
+          "name": "declines",
+          "refs": [
+            "ReviewAnswer"
+          ],
+          "required": false,
+          "type": "array of ReviewAnswer"
         }
       ],
       "type": "object",
@@ -56835,6 +56904,15 @@
           "refs": [],
           "required": false,
           "type": "string | null"
+        },
+        {
+          "description": "The reviews the session takes (I4327). Absent: it takes none, whatever its runtime's\nlink features say — the `reviews` feature says the link protocol carries review\nevents, never that anybody there will review. A runtime older than the field reads\nthe session without it.",
+          "name": "reviews",
+          "refs": [
+            "ReviewMandate"
+          ],
+          "required": false,
+          "type": "ReviewMandate | null"
         }
       ],
       "type": "object",
@@ -56942,6 +57020,15 @@
           "refs": [],
           "required": false,
           "type": "string | null"
+        },
+        {
+          "description": "The reviews the session takes (I4327): `{}` for every path of this repository,\n`repositories` to name mesh repository ids, `paths` to keep to path prefixes. Absent:\nit takes none, and is nobody's eligible reviewer. Say it again to change it; a session\nopened again without it no longer takes reviews.",
+          "name": "reviews",
+          "refs": [
+            "ReviewMandate"
+          ],
+          "required": false,
+          "type": "ReviewMandate | null"
         }
       ],
       "type": "object",
@@ -75039,7 +75126,7 @@
           "cache_detail": "",
           "cli": "",
           "curl": "curl -s -X POST \"http://127.0.0.1:8741/api/v1/mesh/reviews\" -H \"content-type: application/json\" -d '{\"session\":\"bench\",\"subject\":\"feature/bench\",\"scope\":[]}'",
-          "description": "Ask for a review of a branch, commit or pull request, optionally of one named runtime — which must be linked and carry the `reviews` feature, or the request is refused as `feature_unsupported`. Replicated to every linked runtime. Writes this runtime's journal only.",
+          "description": "Ask for a review of a branch, commit or pull request, optionally of one named runtime — whose link must carry review events (the `reviews` feature), or the request is refused as `feature_unsupported`. Who may answer is the sessions' own review mandate (mesh.session.open `reviews`): the request lists them as `eligible`, and none is the finding review_no_eligible_reviewer. Replicated to every linked runtime. Writes this runtime's journal only.",
           "home": "mesh",
           "id": "mesh.review.request",
           "kind": "command",
@@ -75108,7 +75195,7 @@
           "cache_detail": "",
           "cli": "",
           "curl": "curl -s -X POST \"http://127.0.0.1:8741/api/v1/mesh/reviews/answer\" -H \"content-type: application/json\" -d '{\"request\":\"none/r-0\",\"session\":\"bench\",\"verdict\":\"commented\"}'",
-          "description": "Answer a review request from any runtime with approved, changes_requested or commented, and a note. Replicated to every linked runtime. Writes this runtime's journal only.",
+          "description": "Answer a review request from any runtime with approved, changes_requested or commented, and a note; or decline it with `declined`, which is no verdict: the request stays open and the session stops being one of its eligible answerers. Replicated to every linked runtime. Writes this runtime's journal only.",
           "home": "mesh",
           "id": "mesh.review.answer",
           "kind": "command",

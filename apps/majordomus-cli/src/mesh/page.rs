@@ -587,8 +587,10 @@ pub struct RuntimeSummary {
 /// use majordomus_cli::mesh::page::ReviewBrief;
 ///
 /// let brief = ReviewBrief { key: "s/r1".into(), subject: "feature/x".into(), issue: None,
-///     reviewer: None };
-/// assert!(serde_json::to_value(&brief).unwrap().get("issue").is_none(), "absent, not null");
+///     reviewer: None, eligible: vec![], declined: vec![] };
+/// let value = serde_json::to_value(&brief).unwrap();
+/// assert!(value.get("issue").is_none(), "absent, not null");
+/// assert!(value.get("eligible").is_none(), "nobody eligible is the finding, said by the brief");
 /// ```
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[schemars(rename = "MeshReviewBrief")]
@@ -603,6 +605,12 @@ pub struct ReviewBrief {
     /// The runtime asked, when one was.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub reviewer: Option<String>,
+    /// The sessions that may answer it (I4327), by key.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub eligible: Vec<String>,
+    /// The sessions that declined it, by key.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub declined: Vec<String>,
 }
 
 /// A handover nobody has taken, told briefly: the id `mesh.handover.consume` takes, who
@@ -798,6 +806,8 @@ pub fn summarize(
             subject: cut(&r.subject),
             issue: r.issue.clone(),
             reviewer: r.reviewer.clone(),
+            eligible: r.eligible.clone(),
+            declined: r.declines.iter().map(|d| d.session.clone()).collect(),
         })
         .collect();
     summary.open_reviews_not_listed = open.len().saturating_sub(SUMMARY_LIST);

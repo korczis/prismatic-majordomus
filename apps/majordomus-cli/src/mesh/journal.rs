@@ -454,6 +454,93 @@ pub struct SessionInfo {
     /// is never taken for the client, and no two clocks are ever compared.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub client_started: Option<String>,
+    /// The reviews the session takes (I4327). Absent: it takes none, whatever its runtime's
+    /// link features say — the `reviews` feature says the link protocol carries review
+    /// events, never that anybody there will review. A runtime older than the field reads
+    /// the session without it.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub reviews: Option<ReviewMandate>,
+}
+
+/// The most repositories, and the most path prefixes, one review mandate names.
+pub const REVIEW_MANDATE_MAX: usize = 16;
+
+/// What a session will review (I4327): the repositories, and within them the paths. A
+/// session declares it when it opens and says it again to change it; saying nothing takes
+/// no reviews. The mandate is what makes a session an eligible answerer of a review request,
+/// so eligibility is the sessions' own word and not a reading of their runtime's features.
+///
+/// ```
+/// use majordomus_cli::mesh::journal::ReviewMandate;
+///
+/// // the repository the session opened in, every path
+/// let anything = ReviewMandate::default();
+/// assert!(anything.covers("repo-a", "repo-a", &[]));
+/// assert!(!anything.covers("repo-a", "repo-b", &[]), "another repository is not its own");
+///
+/// // named repositories, and only the mesh's code
+/// let mesh = ReviewMandate { repositories: vec!["repo-a".into()],
+///     paths: vec!["apps/majordomus-cli/src/mesh".into()] };
+/// assert!(mesh.covers("repo-a", "repo-b", &["apps/majordomus-cli/src/mesh/state.rs".into()]));
+/// assert!(!mesh.covers("repo-a", "repo-a", &["docs/MESH.md".into()]), "outside its paths");
+/// assert!(!mesh.covers("repo-a", "repo-a", &[]), "a request with no scope is the whole tree");
+/// assert!(!mesh.covers("repo-a", "repo-a", &["apps/majordomus-cli/src/meshy.rs".into()]),
+///     "a prefix is a directory, not a string");
+/// ```
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+pub struct ReviewMandate {
+    /// The mesh repository ids the session reviews. Empty: the repository whose journal the
+    /// session was opened in.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub repositories: Vec<String>,
+    /// Repository-relative path prefixes within them. Empty: every path.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub paths: Vec<String>,
+}
+
+impl ReviewMandate {
+    /// Whether the mandate covers a request of repository `request_repo` over `scope`, for a
+    /// session opened in `session_repo`. A path-limited mandate covers a request only when
+    /// every path of its scope lies under one of the mandate's prefixes; a request with no
+    /// scope is about the whole tree, which only an unlimited mandate covers.
+    pub fn covers(&self, request_repo: &str, session_repo: &str, scope: &[String]) -> bool {
+        let repository = if self.repositories.is_empty() {
+            request_repo == session_repo
+        } else {
+            self.repositories.iter().any(|r| r == request_repo)
+        };
+        if !repository {
+            return false;
+        }
+        if self.paths.is_empty() {
+            return true;
+        }
+        !scope.is_empty()
+            && scope.iter().all(|path| {
+                let path = path.trim_end_matches('/');
+                self.paths.iter().any(|prefix| {
+                    let prefix = prefix.trim_end_matches('/');
+                    path == prefix || path.starts_with(&format!("{prefix}/"))
+                })
+            })
+    }
+
+    fn validate(&self) -> Result<(), String> {
+        if self.repositories.len() > REVIEW_MANDATE_MAX {
+            return Err(format!(
+                "a review mandate names more than {REVIEW_MANDATE_MAX} repositories"
+            ));
+        }
+        for repository in &self.repositories {
+            ident("repository", repository)?;
+        }
+        if self.paths.len() > REVIEW_MANDATE_MAX {
+            return Err(format!(
+                "a review mandate names more than {REVIEW_MANDATE_MAX} paths"
+            ));
+        }
+        paths(&self.paths, false)
+    }
 }
 
 impl SessionInfo {
@@ -718,6 +805,21 @@ pub enum EventBody {
         #[serde(default, skip_serializing_if = "Option::is_none")]
         note: Option<String>,
     },
+    /// A session said a review request is not its to answer (I4327): outside its mandate,
+    /// no time, not its expertise. Never a verdict on the change: the request stays open
+    /// for somebody else, and the decliner stops being one of its eligible answerers. A kind
+    /// of its own rather than a fourth verdict of `review_answered`, because a runtime older
+    /// than it refuses an answer whose verdict it does not know — which would hold up the
+    /// writer's whole stream there — while it stores and relays an unknown kind opaque.
+    ReviewDeclined {
+        /// The request: `<stream>/<review>`.
+        request: String,
+        /// The declining session within the stream.
+        session: String,
+        /// Why, up to 2048 bytes.
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        note: Option<String>,
+    },
     /// The runtime that asked for a review ended its request: done, void, or superseded.
     /// Only the asking runtime writes it — from any of its sessions — so it is never a
     /// verdict; its note is the requester's own result, shown with the request.
@@ -881,6 +983,7 @@ pub const KNOWN_KINDS: &[&str] = &[
     "handover_consumed",
     "review_requested",
     "review_answered",
+    "review_declined",
     "review_withdrawn",
     "build_cache_offered",
     "build_cache_withdrawn",
@@ -911,6 +1014,7 @@ impl EventBody {
             EventBody::HandoverConsumed { .. } => "handover_consumed",
             EventBody::ReviewRequested { .. } => "review_requested",
             EventBody::ReviewAnswered { .. } => "review_answered",
+            EventBody::ReviewDeclined { .. } => "review_declined",
             EventBody::ReviewWithdrawn { .. } => "review_withdrawn",
             EventBody::BuildCacheOffered { .. } => "build_cache_offered",
             EventBody::BuildCacheWithdrawn { .. } => "build_cache_withdrawn",
@@ -964,7 +1068,10 @@ impl EventBody {
                         line(name, v, max)?;
                     }
                 }
-                Ok(())
+                match &info.reviews {
+                    Some(mandate) => mandate.validate(),
+                    None => Ok(()),
+                }
             }
             EventBody::SessionClosed { session } => ident("session", session),
             EventBody::SessionBeat {
@@ -1077,6 +1184,18 @@ impl EventBody {
                         "verdict '{verdict}' is not approved, changes_requested or commented"
                     ));
                 }
+                if let Some(v) = note {
+                    text("note", v, 2048)?;
+                }
+                Ok(())
+            }
+            EventBody::ReviewDeclined {
+                request,
+                session,
+                note,
+            } => {
+                text("request", request, 128)?;
+                ident("session", session)?;
                 if let Some(v) = note {
                     text("note", v, 2048)?;
                 }

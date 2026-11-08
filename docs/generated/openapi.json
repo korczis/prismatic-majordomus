@@ -12748,7 +12748,7 @@
       "post": {
         "operationId": "mesh.review.request",
         "summary": "Ask the mesh for a review",
-        "description": "Ask for a review of a branch, commit or pull request, optionally of one named runtime — which must be linked and carry the `reviews` feature, or the request is refused as `feature_unsupported`. Replicated to every linked runtime. Writes this runtime's journal only.",
+        "description": "Ask for a review of a branch, commit or pull request, optionally of one named runtime — whose link must carry review events (the `reviews` feature), or the request is refused as `feature_unsupported`. Who may answer is the sessions' own review mandate (mesh.session.open `reviews`): the request lists them as `eligible`, and none is the finding review_no_eligible_reviewer. Replicated to every linked runtime. Writes this runtime's journal only.",
         "tags": [
           "mesh"
         ],
@@ -12868,7 +12868,7 @@
       "post": {
         "operationId": "mesh.review.answer",
         "summary": "Answer a review request",
-        "description": "Answer a review request from any runtime with approved, changes_requested or commented, and a note. Replicated to every linked runtime. Writes this runtime's journal only.",
+        "description": "Answer a review request from any runtime with approved, changes_requested or commented, and a note; or decline it with `declined`, which is no verdict: the request stays open and the session stops being one of its eligible answerers. Replicated to every linked runtime. Writes this runtime's journal only.",
         "tags": [
           "mesh"
         ],
@@ -25898,6 +25898,13 @@
             "format": "uint",
             "minimum": 0,
             "description": "Overlaps between a claim of this runtime and another's."
+          },
+          "findings": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Open review requests nobody may answer (I4327), each the finding\n`review_no_eligible_reviewer <repository> <request>`."
           },
           "summary": {
             "type": "string",
@@ -48841,13 +48848,27 @@
               "null"
             ],
             "description": "The runtime asked, when one was."
+          },
+          "eligible": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The sessions that may answer it (I4327), by key."
+          },
+          "declined": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The sessions that declined it, by key."
           }
         },
         "required": [
           "key",
           "subject"
         ],
-        "description": "An open review request, told briefly: its key, what is to be reviewed and whom it asks.\nOnly requests nobody has answered are listed in the summary.\n\n```\nuse majordomus_cli::mesh::page::ReviewBrief;\n\nlet brief = ReviewBrief { key: \"s/r1\".into(), subject: \"feature/x\".into(), issue: None,\n    reviewer: None };\nassert!(serde_json::to_value(&brief).unwrap().get(\"issue\").is_none(), \"absent, not null\");\n```"
+        "description": "An open review request, told briefly: its key, what is to be reviewed and whom it asks.\nOnly requests nobody has answered are listed in the summary.\n\n```\nuse majordomus_cli::mesh::page::ReviewBrief;\n\nlet brief = ReviewBrief { key: \"s/r1\".into(), subject: \"feature/x\".into(), issue: None,\n    reviewer: None, eligible: vec![], declined: vec![] };\nlet value = serde_json::to_value(&brief).unwrap();\nassert!(value.get(\"issue\").is_none(), \"absent, not null\");\nassert!(value.get(\"eligible\").is_none(), \"nobody eligible is the finding, said by the brief\");\n```"
       },
       "MeshRuntimeSummary": {
         "type": "object",
@@ -61758,7 +61779,7 @@
           },
           "verdict": {
             "type": "string",
-            "description": "`approved`, `changes_requested` or `commented`."
+            "description": "`approved`, `changes_requested` or `commented`; or `declined`, which is no verdict:\nthe request is not this session's to answer, it stays open for somebody else, and\nthe session stops being one of its eligible answerers (I4327)."
           },
           "note": {
             "type": [
@@ -61773,6 +61794,26 @@
           "verdict"
         ],
         "description": "The input of `mesh.review.answer`."
+      },
+      "ReviewMandate": {
+        "type": "object",
+        "properties": {
+          "repositories": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The mesh repository ids the session reviews. Empty: the repository whose journal the\nsession was opened in."
+          },
+          "paths": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Repository-relative path prefixes within them. Empty: every path."
+          }
+        },
+        "description": "What a session will review (I4327): the repositories, and within them the paths. A\nsession declares it when it opens and says it again to change it; saying nothing takes\nno reviews. The mandate is what makes a session an eligible answerer of a review request,\nso eligibility is the sessions' own word and not a reading of their runtime's features.\n\n```\nuse majordomus_cli::mesh::journal::ReviewMandate;\n\n// the repository the session opened in, every path\nlet anything = ReviewMandate::default();\nassert!(anything.covers(\"repo-a\", \"repo-a\", &[]));\nassert!(!anything.covers(\"repo-a\", \"repo-b\", &[]), \"another repository is not its own\");\n\n// named repositories, and only the mesh's code\nlet mesh = ReviewMandate { repositories: vec![\"repo-a\".into()],\n    paths: vec![\"apps/majordomus-cli/src/mesh\".into()] };\nassert!(mesh.covers(\"repo-a\", \"repo-b\", &[\"apps/majordomus-cli/src/mesh/state.rs\".into()]));\nassert!(!mesh.covers(\"repo-a\", \"repo-a\", &[\"docs/MESH.md\".into()]), \"outside its paths\");\nassert!(!mesh.covers(\"repo-a\", \"repo-a\", &[]), \"a request with no scope is the whole tree\");\nassert!(!mesh.covers(\"repo-a\", \"repo-a\", &[\"apps/majordomus-cli/src/meshy.rs\".into()]),\n    \"a prefix is a directory, not a string\");\n```"
       },
       "ReviewPlan": {
         "type": "object",
@@ -62017,6 +62058,20 @@
               "null"
             ],
             "description": "The requester's own result or reason, written when it withdrew the request. Never an\nanswer: a review is another session's verdict."
+          },
+          "eligible": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Who may answer it while it is open or answered (I4327): the keys of the live sessions\nwhose review mandate covers its repository and scope, minus the session that asked,\nminus the sessions of the asker's task (a builder's own subagents), and minus every\nsession that declined it. Derived, never written; empty for a request that has ended.\nEmpty and open is the finding `review_no_eligible_reviewer`."
+          },
+          "declines": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ReviewAnswer"
+            },
+            "description": "The sessions that said it is not theirs to answer, in Lamport order. Never verdicts."
           }
         },
         "required": [
@@ -64548,6 +64603,17 @@
               "null"
             ],
             "description": "When that process started, as the machine's process table reports it. Compared only\nfor equality and only on that machine, so a pid the system handed to another process\nis never taken for the client, and no two clocks are ever compared."
+          },
+          "reviews": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ReviewMandate"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The reviews the session takes (I4327). Absent: it takes none, whatever its runtime's\nlink features say — the `reviews` feature says the link protocol carries review\nevents, never that anybody there will review. A runtime older than the field reads\nthe session without it."
           }
         },
         "required": [
@@ -64652,6 +64718,17 @@
               "null"
             ],
             "description": "When that process started, as this machine's process table reports it."
+          },
+          "reviews": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ReviewMandate"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The reviews the session takes (I4327): `{}` for every path of this repository,\n`repositories` to name mesh repository ids, `paths` to keep to path prefixes. Absent:\nit takes none, and is nobody's eligible reviewer. Say it again to change it; a session\nopened again without it no longer takes reviews."
           }
         },
         "description": "The input of `mesh.session.open`: what a session says about itself."

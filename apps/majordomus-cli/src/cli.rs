@@ -1928,9 +1928,58 @@ pub struct MeshSessionOpenArgs {
     /// ancestor that is not a shell. The runtime closes the session once it has ended
     #[arg(long, value_name = "PID|auto")]
     pub client_pid: Option<String>,
+    /// The session takes reviews of this repository (I4327); without this or a
+    /// `--reviews-*` flag it takes none and is nobody's eligible reviewer
+    #[arg(long)]
+    pub reviews: bool,
+    /// Only reviews under this path prefix; repeatable, and implies `--reviews`
+    #[arg(long = "reviews-path", value_name = "PREFIX")]
+    pub reviews_paths: Vec<String>,
+    /// Reviews of this mesh repository id instead of this one; repeatable, and implies
+    /// `--reviews`
+    #[arg(long = "reviews-repository", value_name = "ID")]
+    pub reviews_repositories: Vec<String>,
     #[command(flatten)]
     /// Where the repository is and how to answer.
     pub query: MeshQueryArgs,
+}
+
+impl MeshSessionOpenArgs {
+    /// The review mandate the flags declare, as `mesh.session.open` takes it: `None` when no
+    /// review flag was given (I4327).
+    ///
+    /// ```
+    /// use clap::Parser;
+    /// use majordomus_cli::cli::{Cli, Command, MeshCommand, MeshSessionCommand};
+    ///
+    /// let open = |args: &[&str]| {
+    ///     let mut all = vec!["majordomus", "mesh", "session", "open", "--session", "s1"];
+    ///     all.extend_from_slice(args);
+    ///     let Command::Mesh(mesh) = Cli::try_parse_from(all).unwrap().command else { panic!() };
+    ///     let MeshCommand::Session(s) = mesh.command else { panic!() };
+    ///     let MeshSessionCommand::Open(open) = s.command else { panic!() };
+    ///     open.review_mandate()
+    /// };
+    /// assert_eq!(open(&[]), None, "a session that says nothing reviews nothing");
+    /// assert_eq!(open(&["--reviews"]), Some(serde_json::json!({})));
+    /// assert_eq!(open(&["--reviews-path", "docs"]), Some(serde_json::json!({"paths": ["docs"]})));
+    /// ```
+    pub fn review_mandate(&self) -> Option<serde_json::Value> {
+        if !self.reviews && self.reviews_paths.is_empty() && self.reviews_repositories.is_empty() {
+            return None;
+        }
+        let mut mandate = serde_json::Map::new();
+        if !self.reviews_repositories.is_empty() {
+            mandate.insert(
+                "repositories".into(),
+                self.reviews_repositories.clone().into(),
+            );
+        }
+        if !self.reviews_paths.is_empty() {
+            mandate.insert("paths".into(), self.reviews_paths.clone().into());
+        }
+        Some(serde_json::Value::Object(mandate))
+    }
 }
 
 #[derive(Debug, Args)]
@@ -2200,7 +2249,8 @@ pub struct MeshReviewRequestArgs {
 
 #[derive(Debug, Args)]
 /// `mesh review answer`: the request being answered, the session answering it, and the
-/// verdict. The verdict is one of three declared words rather than free text, so that a
+/// verdict. The verdict is one of three declared words rather than free text — or
+/// `declined`, which is no verdict but "not mine" (I4327) — so that a
 /// requester can act on an answer without reading it, and clap refuses anything else at
 /// the boundary; the note is where the reasoning goes.
 ///
@@ -2242,6 +2292,8 @@ pub struct MeshReviewAnswerArgs {
             .help("the work needs changing before it proceeds; the note says what"),
         clap::builder::PossibleValue::new("commented")
             .help("an observation with no verdict: neither approval nor a request to change"),
+        clap::builder::PossibleValue::new("declined")
+            .help("not this session's to answer: no verdict, the request stays open for others"),
     ])]
     pub verdict: String,
     /// The note
@@ -8566,7 +8618,7 @@ pub const EXAMPLES: &[CommandExamples] = &[
         examples: &[ExampleDoc {
             id: "mesh-session-open",
             title: "Say what a session is doing, to every linked runtime",
-            description: "Client, intent, issue and branch of a session, replicated to every linked runtime. It needs the running server; without one it exits 10.",
+            description: "Client, intent, issue and branch of a session, and with --reviews the reviews it takes, replicated to every linked runtime. It needs the running server; without one it exits 10.",
             argv: &["mesh", "session", "open", "--session", "s1", "--client", "codex", "--issue", "#184"],
             setup: &[],
             expect: Expect::ExitCode(10),
@@ -8621,7 +8673,7 @@ pub const EXAMPLES: &[CommandExamples] = &[
         examples: &[ExampleDoc {
             id: "mesh-review-answer",
             title: "Answer a review request from any runtime",
-            description: "approved, changes_requested or commented, with a note, replicated to every linked runtime. It needs the running server; without one it exits 10.",
+            description: "approved, changes_requested or commented, with a note, or declined (not this session's to answer; the request stays open), replicated to every linked runtime. It needs the running server; without one it exits 10.",
             argv: &["mesh", "review", "answer", "stream/r-000000000000", "--session", "s1", "--verdict", "approved"],
             setup: &[],
             expect: Expect::ExitCode(10),

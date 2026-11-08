@@ -376,6 +376,44 @@ impl Memory {
                 s.actor = Some(name);
                 s
             }
+            // "not mine" (I4327): news to the asker, who may now have nobody left to answer
+            EventBody::ReviewDeclined {
+                request,
+                session,
+                note,
+            } => {
+                let name = self.name_of(&stream, &session);
+                let (requester, subject, mine) = self
+                    .reviews
+                    .get(&request)
+                    .cloned()
+                    .unwrap_or_else(|| (String::new(), String::new(), false));
+                let review = request.rsplit('/').next().unwrap_or(&request).to_string();
+                let note = note.unwrap_or_default();
+                let to = if requester.is_empty() {
+                    String::new()
+                } else {
+                    format!(" of {requester}")
+                };
+                let mut s = MonitorSignal::new(
+                    event.at,
+                    MonitorSource::Mesh,
+                    "review_declined",
+                    if mine {
+                        MonitorSeverity::Attention
+                    } else {
+                        MonitorSeverity::Info
+                    },
+                    &format!(
+                        "{name} declined {review}{to} — {}",
+                        if note.is_empty() { subject } else { note }
+                    ),
+                );
+                s.for_you = mine;
+                s.session = Some(session);
+                s.actor = Some(name);
+                s
+            }
             // read raw above, before the body is typed: a withdrawal never reaches this match
             EventBody::ReviewWithdrawn { .. } => return None,
             // a session beat is heartbeat noise: a working session says nothing new by it

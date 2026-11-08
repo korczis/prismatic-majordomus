@@ -200,6 +200,39 @@ pub fn session_beats_check(tally: &super::cooperation::SessionBeatTally) -> Doct
     )
 }
 
+/// The `reviews` check (I4327): whether every open review request has somebody who may answer
+/// it. A request nobody's review mandate covers waits for ever without anybody being told,
+/// so each one is a warning naming the repository and the request — a warning and not a
+/// failure, because the mesh works; what is missing is a reviewer.
+///
+/// ```
+/// use majordomus_cli::mesh::doctor::reviews_check;
+/// assert!(reviews_check(&[]).ok && reviews_check(&[]).remediation.is_none());
+/// let found = vec!["review_no_eligible_reviewer repo s/r-1".to_string()];
+/// let check = reviews_check(&found);
+/// assert!(check.ok && check.remediation.is_some(), "a warning: it holds and names a remedy");
+/// assert_eq!(check.detail, "review_no_eligible_reviewer repo s/r-1");
+/// ```
+pub fn reviews_check(findings: &[String]) -> DoctorCheck {
+    if findings.is_empty() {
+        return DoctorCheck::pass(
+            "reviews",
+            "every open review request has an eligible reviewer",
+        );
+    }
+    DoctorCheck {
+        check: "reviews".into(),
+        ok: true,
+        detail: findings.join("; "),
+        impact: Some(
+            "no live session declared a review mandate covering these requests, so nobody is asked to answer them".into(),
+        ),
+        remediation: Some(
+            "a session that will review opens with a mandate (mesh.session.open `reviews`), or the asker withdraws the request".into(),
+        ),
+    }
+}
+
 /// The `transport` check: how each declared rendezvous endpoint and seed would be reached —
 /// over TLS (`https://`), or in cleartext to an address that is loopback, private or an
 /// overlay's — and every one the client refuses to dial, because it would carry the mesh in

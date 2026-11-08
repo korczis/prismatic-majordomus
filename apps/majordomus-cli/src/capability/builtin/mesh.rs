@@ -30,8 +30,8 @@ use crate::mesh::cooperation::{
 };
 use crate::mesh::firewall::{FirewallApplyReport, FirewallReport};
 use crate::mesh::journal::{
-    blocked_reason, ClaimMode, Cursor, CursorError, MeshEvent, SessionInfo, StreamId,
-    StreamLiveness,
+    blocked_reason, ClaimMode, Cursor, CursorError, MeshEvent, ReviewMandate, SessionInfo,
+    StreamId, StreamLiveness,
 };
 use crate::mesh::link::{LinkReply, RefusalCode, Signed, HELLO_PATH, SYNC_PATH};
 use crate::mesh::page::{self, ClaimBrief, Query, Summary, View};
@@ -250,6 +250,9 @@ fn mesh_doctor(ctx: &Context, _: Empty) -> Result<MeshDoctorReport, CapabilityEr
         ));
         report.checks.push(crate::mesh::doctor::session_beats_check(
             &cooperation.session_beat_tally(),
+        ));
+        report.checks.push(crate::mesh::doctor::reviews_check(
+            &cooperation.reviews_without_reviewer(),
         ));
     }
     // on the build host alone: what its provisioning still owes, a warning with the command
@@ -1212,6 +1215,12 @@ pub struct SessionInput {
     /// When that process started, as this machine's process table reports it.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub client_started: Option<String>,
+    /// The reviews the session takes (I4327): `{}` for every path of this repository,
+    /// `repositories` to name mesh repository ids, `paths` to keep to path prefixes. Absent:
+    /// it takes none, and is nobody's eligible reviewer. Say it again to change it; a session
+    /// opened again without it no longer takes reviews.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub reviews: Option<ReviewMandate>,
 }
 
 impl BenchmarkCases for SessionInput {
@@ -1232,6 +1241,7 @@ impl BenchmarkCases for SessionInput {
                 context: None,
                 client_pid: None,
                 client_started: None,
+                reviews: None,
             },
         )]
     }
@@ -1255,6 +1265,7 @@ fn mesh_session_open(ctx: &Context, input: SessionInput) -> Result<Written, Capa
         context: input.context,
         client_pid: input.client_pid,
         client_started: input.client_started,
+        reviews: input.reviews,
     })
     .map_err(map_error)
 }
@@ -1690,7 +1701,9 @@ pub struct ReviewAnswerInput {
     /// The answering session; the calling MCP session's own when omitted.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub session: Option<String>,
-    /// `approved`, `changes_requested` or `commented`.
+    /// `approved`, `changes_requested` or `commented`; or `declined`, which is no verdict:
+    /// the request is not this session's to answer, it stays open for somebody else, and
+    /// the session stops being one of its eligible answerers (I4327).
     pub verdict: String,
     /// The note.
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -1714,6 +1727,11 @@ impl BenchmarkCases for ReviewAnswerInput {
 fn mesh_review_answer(ctx: &Context, input: ReviewAnswerInput) -> Result<Written, CapabilityError> {
     let c = cooperation(ctx)?;
     let session = session_of(ctx, input.session)?;
+    if input.verdict == "declined" {
+        return c
+            .decline_review(&input.request, &session, input.note)
+            .map_err(map_error);
+    }
     c.answer_review(&input.request, &session, input.verdict, input.note)
         .map_err(map_error)
 }
@@ -2205,7 +2223,7 @@ pub fn module() -> ModuleDescriptor {
                 id: "mesh.review.request",
                 kind: CapabilityKind::Command,
                 title: "Ask the mesh for a review",
-                description: "Ask for a review of a branch, commit or pull request, optionally of one named runtime — which must be linked and carry the `reviews` feature, or the request is refused as `feature_unsupported`. Replicated to every linked runtime. Writes this runtime's journal only.",
+                description: "Ask for a review of a branch, commit or pull request, optionally of one named runtime — whose link must carry review events (the `reviews` feature), or the request is refused as `feature_unsupported`. Who may answer is the sessions' own review mandate (mesh.session.open `reviews`): the request lists them as `eligible`, and none is the finding review_no_eligible_reviewer. Replicated to every linked runtime. Writes this runtime's journal only.",
                 input: ReviewRequestInput,
                 output: Written,
                 stability: Stability::Experimental,
@@ -2218,7 +2236,7 @@ pub fn module() -> ModuleDescriptor {
                 id: "mesh.review.answer",
                 kind: CapabilityKind::Command,
                 title: "Answer a review request",
-                description: "Answer a review request from any runtime with approved, changes_requested or commented, and a note. Replicated to every linked runtime. Writes this runtime's journal only.",
+                description: "Answer a review request from any runtime with approved, changes_requested or commented, and a note; or decline it with `declined`, which is no verdict: the request stays open and the session stops being one of its eligible answerers. Replicated to every linked runtime. Writes this runtime's journal only.",
                 input: ReviewAnswerInput,
                 output: Written,
                 stability: Stability::Experimental,

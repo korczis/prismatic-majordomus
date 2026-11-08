@@ -1,5 +1,5 @@
 //! Mesh: the machines working on this repository, their runtimes and sessions, and what the
-//! mesh recorded. Read from `mesh.peers` and `mesh.events`.
+//! mesh recorded. Read from `mesh.peers`, `mesh.events` and `mesh.state`.
 //!
 //! The topology is a graph of what the mesh runtime observed: a machine runs runtimes, a
 //! runtime holds sessions. Every node is selectable; the selection is in the URL (`?node=`),
@@ -12,7 +12,7 @@ use serde_json::Value;
 
 use crate::capability::Context;
 use crate::cockpit::html::{el, El};
-use crate::cockpit::view::word_badge;
+use crate::cockpit::view::{badge, word_badge};
 
 use super::dashboard::ROWS;
 use super::shell::View;
@@ -33,6 +33,12 @@ const EVENTS: Source = Source::with("mesh.events", r#"{"newest":true}"#);
 const CLAIMS: Source = Source::with(
     "mesh.state",
     r#"{"view":"full","kind":"claims","open":true}"#,
+);
+/// Every review request nobody has answered, with who may answer it and who declined
+/// (I4327): what the review panel is read from.
+const REVIEWS: Source = Source::with(
+    "mesh.state",
+    r#"{"view":"full","kind":"reviews","open":true}"#,
 );
 
 /// A seat of the cooperation model and the claim scope that holds it
@@ -151,7 +157,7 @@ pub(crate) fn unobserved(peers: &Answer) -> Option<String> {
 
 /// The Mesh screen; `query` may select one machine (`node`).
 pub fn screen(ctx: &Context, query: &[(String, String)]) -> View {
-    let answers = ask_all(ctx, &[PEERS, EVENTS, CLAIMS]);
+    let answers = ask_all(ctx, &[PEERS, EVENTS, CLAIMS, REVIEWS]);
     let selected = query
         .iter()
         .find(|(k, _)| k == "node")
@@ -160,12 +166,19 @@ pub fn screen(ctx: &Context, query: &[(String, String)]) -> View {
         &answers[&PEERS],
         &answers[&EVENTS],
         &answers[&CLAIMS],
+        &answers[&REVIEWS],
         selected,
     )
 }
 
-/// The screen drawn from the three answers it reads, with `selected` the machine to inspect.
-fn render(peers: &Answer, events: &Answer, claims: &Answer, selected: Option<&str>) -> View {
+/// The screen drawn from the four answers it reads, with `selected` the machine to inspect.
+fn render(
+    peers: &Answer,
+    events: &Answer,
+    claims: &Answer,
+    reviews: &Answer,
+    selected: Option<&str>,
+) -> View {
     let machines = list(peers, "/machines");
     let absent = unobserved(peers);
 
@@ -277,6 +290,12 @@ fn render(peers: &Answer, events: &Answer, claims: &Answer, selected: Option<&st
             "Who holds each seat of the cooperation model now, read from the live exclusive claims (rule project.the-cooperation-model-is-the-owners-word, ADR 0167). A seat nobody claims is said as vacant.",
             seats(claims),
             &[claims],
+        )))
+        .child(wide(panel(
+            "Review requests",
+            "Every review request nobody has answered, with the sessions whose own review mandate covers it and the sessions that declined it (I4327). A request nobody may answer is the finding review_no_eligible_reviewer: no session declared that it reviews it.",
+            review_requests(reviews),
+            &[reviews],
         )))
         .child(panel(
             "Journal",
@@ -643,6 +662,84 @@ fn seats(claims: &Answer) -> El {
     })
 }
 
+/// The last segment of a session key, `<stream>/<session>`, for a cell.
+fn session_name(key: &str) -> String {
+    key.rsplit('/').next().unwrap_or(key).to_string()
+}
+
+/// The names of the session keys at `field` of a review, comma-separated, or `none`.
+fn sessions_at(review: &Value, field: &str, of: Option<&str>) -> String {
+    let names: Vec<String> = review
+        .get(field)
+        .and_then(Value::as_array)
+        .into_iter()
+        .flatten()
+        .filter_map(|v| match of {
+            Some(inner) => v.get(inner).and_then(Value::as_str),
+            None => v.as_str(),
+        })
+        .map(session_name)
+        .collect();
+    if names.is_empty() {
+        "none".into()
+    } else {
+        names.join(", ")
+    }
+}
+
+/// The open review requests: what each asks, who asked, who may answer and who declined.
+/// Who may answer is the fold's own derivation from the sessions' mandates; nothing here
+/// decides it.
+fn review_requests(reviews: &Answer) -> El {
+    unanswered(reviews).unwrap_or_else(|| {
+        if reviews
+            .ok()
+            .and_then(|v| v.get("active"))
+            .and_then(Value::as_bool)
+            != Some(true)
+        {
+            return nothing("The mesh does not run here, so no review request is drawn.");
+        }
+        let open = list(reviews, "/state/reviews");
+        let rows: Vec<El> = open
+            .iter()
+            .take(ROWS * 2)
+            .map(|r| {
+                let eligible = sessions_at(r, "eligible", None);
+                let nobody = eligible == "none";
+                el("tr")
+                    .child(el("td").class("mj-ui-cell-title").text(text(r, "subject")))
+                    .child(
+                        el("td")
+                            .class("mj-ui-mono")
+                            .text(session_name(&text(r, "session"))),
+                    )
+                    .child(el("td").class("mj-ui-mono").child(if nobody {
+                        badge("warn", "nobody may answer")
+                    } else {
+                        el("span").text(eligible)
+                    }))
+                    .child(el("td").class("mj-ui-mono mj-ui-dim").text(sessions_at(
+                        r,
+                        "declines",
+                        Some("session"),
+                    )))
+            })
+            .collect();
+        el("div")
+            .child(table(
+                &["Subject", "Asked by", "May answer", "Declined"],
+                rows,
+                "No review request waits for an answer.",
+            ))
+            .children(super::view::more(
+                (ROWS * 2).min(open.len()),
+                open.len(),
+                None,
+            ))
+    })
+}
+
 fn refused(peers: &Answer) -> El {
     unanswered(peers).unwrap_or_else(|| {
         let rows = list(peers, "/refused")
@@ -822,6 +919,59 @@ mod tests {
     /// A `mesh.state` answer of live claims in the shape `CooperationState` serialises to: the
     /// landing seat held, the release seat vacant, a repair lane on one branch, a worker on
     /// two paths, and an advisory announcement that holds no seat.
+    /// A `mesh.state` reviews answer: one request two sessions may answer and one declined,
+    /// and one nobody may answer.
+    fn reviews() -> Answer {
+        answer(
+            REVIEWS,
+            Ok(serde_json::json!({
+                "active": true,
+                "view": "full",
+                "state": {
+                    "reviews": [
+                        {
+                            "key": "77aa-r9/r-1",
+                            "session": "77aa-r9/board-p2",
+                            "subject": "PR #2979",
+                            "scope": [],
+                            "state": "open",
+                            "answers": [],
+                            "eligible": ["641bdb94aa-r1abcdef1234/s-1", "77aa-r9/board-p4"],
+                            "declines": [{ "session": "77aa-r9/board-p5", "verdict": "declined" }]
+                        },
+                        {
+                            "key": "77aa-r9/r-2",
+                            "session": "77aa-r9/board-p2",
+                            "subject": "PR #2978",
+                            "scope": [],
+                            "state": "open",
+                            "answers": []
+                        }
+                    ]
+                }
+            })),
+        )
+    }
+
+    /// Each open request names who may answer it and who declined, and one nobody may answer
+    /// is drawn as such (I4327).
+    #[test]
+    fn a_review_request_names_who_may_answer_it() {
+        let html = review_requests(&reviews()).render();
+        assert!(html.contains(">PR #2979</td>"), "{html}");
+        assert!(html.contains("s-1, board-p4"), "{html}");
+        assert!(html.contains(">board-p5</td>"), "{html}");
+        assert!(html.contains("nobody may answer"), "{html}");
+        let off = answer(REVIEWS, Ok(serde_json::json!({ "active": false })));
+        assert!(review_requests(&off)
+            .render()
+            .contains("no review request is drawn"));
+        let html = render(&peers(), &events(), &claims(), &reviews(), None)
+            .main
+            .render();
+        assert!(html.contains("Review requests"), "{html}");
+    }
+
     fn claims() -> Answer {
         answer(
             CLAIMS,
@@ -881,7 +1031,9 @@ mod tests {
     /// one says so, a repair lane and a worker are drawn, and an advisory claim holds nothing.
     #[test]
     fn the_seats_are_read_from_the_live_claims() {
-        let html = render(&peers(), &events(), &claims(), None).main.render();
+        let html = render(&peers(), &events(), &claims(), &reviews(), None)
+            .main
+            .render();
         for drawn in [
             "Seats",
             "Landing seat",
@@ -912,11 +1064,15 @@ mod tests {
             CLAIMS,
             Ok(serde_json::json!({ "active": false, "view": "full" })),
         );
-        let html = render(&peers(), &events(), &off, None).main.render();
+        let html = render(&peers(), &events(), &off, &reviews(), None)
+            .main
+            .render();
         assert!(html.contains("no seat can be held"), "{html}");
         assert!(!html.contains(">vacant<"), "{html}");
         let failed = answer(CLAIMS, Err("no journal".into()));
-        let html = render(&peers(), &events(), &failed, None).main.render();
+        let html = render(&peers(), &events(), &failed, &reviews(), None)
+            .main
+            .render();
         assert!(
             html.contains("mesh.state could not answer: no journal"),
             "{html}"
@@ -943,7 +1099,7 @@ mod tests {
     /// in the words the mesh runtime used, and the journal and the refused links are listed.
     #[test]
     fn the_topology_draws_every_machine_runtime_and_session() {
-        let view = render(&peers(), &events(), &claims(), None);
+        let view = render(&peers(), &events(), &claims(), &reviews(), None);
         assert_eq!(view.status, 200);
         let html = view.main.render();
         // the graph: machines, their runtimes by short id, and the sessions those hold
@@ -991,7 +1147,7 @@ mod tests {
     /// the sessions they hold with their claims, and only its own events.
     #[test]
     fn a_selected_machine_opens_its_inspector() {
-        let html = render(&peers(), &events(), &claims(), Some("studio"))
+        let html = render(&peers(), &events(), &claims(), &reviews(), Some("studio"))
             .main
             .render();
         assert!(html.contains("id=\"node\""), "{html}");
@@ -1087,7 +1243,9 @@ mod tests {
     fn a_mesh_that_cannot_answer_is_said_and_never_drawn() {
         let peers = answer(PEERS, Err("the mesh is off".into()));
         let events = answer(EVENTS, Err("no journal".into()));
-        let html = render(&peers, &events, &claims(), None).main.render();
+        let html = render(&peers, &events, &claims(), &reviews(), None)
+            .main
+            .render();
         assert!(
             html.contains("mesh.peers could not answer: the mesh is off"),
             "{html}"
@@ -1110,7 +1268,9 @@ mod tests {
             Ok(serde_json::json!({ "machines": [], "refused": [] })),
         );
         let events = answer(EVENTS, Ok(serde_json::json!({ "events": [] })));
-        let html = render(&peers, &events, &claims(), None).main.render();
+        let html = render(&peers, &events, &claims(), &reviews(), None)
+            .main
+            .render();
         assert!(html.contains("No machine is known to the mesh runtime."));
         assert!(html.contains("No link was refused."));
         assert!(html.contains("The journal holds no event from here."));
@@ -1131,7 +1291,9 @@ mod tests {
             EVENTS,
             Ok(serde_json::json!({ "events": [], "lamport": 0 })),
         );
-        let html = render(&off, &events, &claims(), None).main.render();
+        let html = render(&off, &events, &claims(), &reviews(), None)
+            .main
+            .render();
         assert!(html.contains(">not observed<"), "{html}");
         assert!(
             html.contains("this runtime is not on the mesh (not active: the mesh is not enabled)"),
@@ -1181,7 +1343,7 @@ mod tests {
             .map(|i| serde_json::json!({ "stream": "aa-r1", "at": 1_760_000_000u64 + i as u64, "body": { "kind": "beat" } }))
             .collect();
         let events = answer(EVENTS, Ok(serde_json::json!({ "events": many })));
-        let html = render(&peers, &events, &claims(), Some("studio"))
+        let html = render(&peers, &events, &claims(), &reviews(), Some("studio"))
             .main
             .render();
         assert!(

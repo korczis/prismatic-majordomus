@@ -1321,6 +1321,8 @@ mod tests {
             state: ReviewState::Open,
             answers: Vec::new(),
             result: None,
+            eligible: Vec::new(),
+            declines: Vec::new(),
         };
         let state = CooperationState {
             reviews: vec![review("r1", &s.key), review("r2", "board-p1")],
@@ -1476,6 +1478,8 @@ mod tests {
             state: ReviewState::Open,
             answers: Vec::new(),
             result: None,
+            eligible: Vec::new(),
+            declines: Vec::new(),
         };
         let mut reviews = vec![review(0, None)];
         reviews.extend((1..=MAX_RECORDS).map(|n| review(n, Some("1b"))));

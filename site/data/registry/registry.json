@@ -6,7 +6,7 @@
     "version": "1.0.0"
   },
   "registry": {
-    "fingerprint": "99df951f5533a1b2775a224eda81907e0c210ac22cdfa46ba0642d4fdeda5c3e",
+    "fingerprint": "4be727cb86c0172bad4259506768079db2997a136a49ebaa9cccced1e662ce27",
     "summary": {
       "total": 3951,
       "builtin": 231,
@@ -1977,6 +1977,13 @@
                     "format": "uint",
                     "minimum": 0,
                     "description": "Overlaps between a claim of this runtime and another's."
+                  },
+                  "findings": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "Open review requests nobody may answer (I4327), each the finding\n`review_no_eligible_reviewer <repository> <request>`."
                   },
                   "summary": {
                     "type": "string",
@@ -57146,6 +57153,17 @@
                       "null"
                     ],
                     "description": "When that process started, as the machine's process table reports it. Compared only\nfor equality and only on that machine, so a pid the system handed to another process\nis never taken for the client, and no two clocks are ever compared."
+                  },
+                  "reviews": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/ReviewMandate"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "The reviews the session takes (I4327). Absent: it takes none, whatever its runtime's\nlink features say — the `reviews` feature says the link protocol carries review\nevents, never that anybody there will review. A runtime older than the field reads\nthe session without it."
                   }
                 },
                 "required": [
@@ -57153,6 +57171,26 @@
                   "client"
                 ],
                 "description": "What a session tells the mesh about itself. Every field is a public fact about work in\nprogress; none is a path on the author's disk, a secret or a credential.\n\nAlmost everything here is optional, and that is the design: a session says what it\nknows, and a field it leaves out is omitted rather than carried empty, so a reader can\ntell \"no task\" from \"a task called nothing\". Opening the same session id again replaces\nthis record, which is how a session that learns its branch later tells the mesh.\n\n```\nuse majordomus_cli::mesh::journal::SessionInfo;\n\nlet mut info = SessionInfo::named(\"s1\", \"claude-code\");\nassert_eq!(info.task, None);\nassert!(serde_json::to_value(&info).unwrap().get(\"task\").is_none(), \"unsaid, not empty\");\n\ninfo.branch = Some(\"feature/mesh-cooperation\".into());\nassert_eq!(serde_json::to_value(&info).unwrap()[\"branch\"], \"feature/mesh-cooperation\");\n```"
+              },
+              "ReviewMandate": {
+                "type": "object",
+                "properties": {
+                  "repositories": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "The mesh repository ids the session reviews. Empty: the repository whose journal the\nsession was opened in."
+                  },
+                  "paths": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "Repository-relative path prefixes within them. Empty: every path."
+                  }
+                },
+                "description": "What a session will review (I4327): the repositories, and within them the paths. A\nsession declares it when it opens and says it again to change it; saying nothing takes\nno reviews. The mandate is what makes a session an eligible answerer of a review request,\nso eligibility is the sessions' own word and not a reading of their runtime's features.\n\n```\nuse majordomus_cli::mesh::journal::ReviewMandate;\n\n// the repository the session opened in, every path\nlet anything = ReviewMandate::default();\nassert!(anything.covers(\"repo-a\", \"repo-a\", &[]));\nassert!(!anything.covers(\"repo-a\", \"repo-b\", &[]), \"another repository is not its own\");\n\n// named repositories, and only the mesh's code\nlet mesh = ReviewMandate { repositories: vec![\"repo-a\".into()],\n    paths: vec![\"apps/majordomus-cli/src/mesh\".into()] };\nassert!(mesh.covers(\"repo-a\", \"repo-b\", &[\"apps/majordomus-cli/src/mesh/state.rs\".into()]));\nassert!(!mesh.covers(\"repo-a\", \"repo-a\", &[\"docs/MESH.md\".into()]), \"outside its paths\");\nassert!(!mesh.covers(\"repo-a\", \"repo-a\", &[]), \"a request with no scope is the whole tree\");\nassert!(!mesh.covers(\"repo-a\", \"repo-a\", &[\"apps/majordomus-cli/src/meshy.rs\".into()]),\n    \"a prefix is a directory, not a string\");\n```"
               },
               "SessionState": {
                 "oneOf": [
@@ -58341,6 +58379,17 @@
                       "null"
                     ],
                     "description": "When that process started, as the machine's process table reports it. Compared only\nfor equality and only on that machine, so a pid the system handed to another process\nis never taken for the client, and no two clocks are ever compared."
+                  },
+                  "reviews": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/ReviewMandate"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "The reviews the session takes (I4327). Absent: it takes none, whatever its runtime's\nlink features say — the `reviews` feature says the link protocol carries review\nevents, never that anybody there will review. A runtime older than the field reads\nthe session without it."
                   }
                 },
                 "required": [
@@ -58348,6 +58397,26 @@
                   "client"
                 ],
                 "description": "What a session tells the mesh about itself. Every field is a public fact about work in\nprogress; none is a path on the author's disk, a secret or a credential.\n\nAlmost everything here is optional, and that is the design: a session says what it\nknows, and a field it leaves out is omitted rather than carried empty, so a reader can\ntell \"no task\" from \"a task called nothing\". Opening the same session id again replaces\nthis record, which is how a session that learns its branch later tells the mesh.\n\n```\nuse majordomus_cli::mesh::journal::SessionInfo;\n\nlet mut info = SessionInfo::named(\"s1\", \"claude-code\");\nassert_eq!(info.task, None);\nassert!(serde_json::to_value(&info).unwrap().get(\"task\").is_none(), \"unsaid, not empty\");\n\ninfo.branch = Some(\"feature/mesh-cooperation\".into());\nassert_eq!(serde_json::to_value(&info).unwrap()[\"branch\"], \"feature/mesh-cooperation\");\n```"
+              },
+              "ReviewMandate": {
+                "type": "object",
+                "properties": {
+                  "repositories": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "The mesh repository ids the session reviews. Empty: the repository whose journal the\nsession was opened in."
+                  },
+                  "paths": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "Repository-relative path prefixes within them. Empty: every path."
+                  }
+                },
+                "description": "What a session will review (I4327): the repositories, and within them the paths. A\nsession declares it when it opens and says it again to change it; saying nothing takes\nno reviews. The mandate is what makes a session an eligible answerer of a review request,\nso eligibility is the sessions' own word and not a reading of their runtime's features.\n\n```\nuse majordomus_cli::mesh::journal::ReviewMandate;\n\n// the repository the session opened in, every path\nlet anything = ReviewMandate::default();\nassert!(anything.covers(\"repo-a\", \"repo-a\", &[]));\nassert!(!anything.covers(\"repo-a\", \"repo-b\", &[]), \"another repository is not its own\");\n\n// named repositories, and only the mesh's code\nlet mesh = ReviewMandate { repositories: vec![\"repo-a\".into()],\n    paths: vec![\"apps/majordomus-cli/src/mesh\".into()] };\nassert!(mesh.covers(\"repo-a\", \"repo-b\", &[\"apps/majordomus-cli/src/mesh/state.rs\".into()]));\nassert!(!mesh.covers(\"repo-a\", \"repo-a\", &[\"docs/MESH.md\".into()]), \"outside its paths\");\nassert!(!mesh.covers(\"repo-a\", \"repo-a\", &[]), \"a request with no scope is the whole tree\");\nassert!(!mesh.covers(\"repo-a\", \"repo-a\", &[\"apps/majordomus-cli/src/meshy.rs\".into()]),\n    \"a prefix is a directory, not a string\");\n```"
               },
               "SessionState": {
                 "oneOf": [
@@ -59012,7 +59081,7 @@
         "module": "mesh",
         "kind": "command",
         "title": "Answer a review request",
-        "description": "Answer a review request from any runtime with approved, changes_requested or commented, and a note. Replicated to every linked runtime. Writes this runtime's journal only.",
+        "description": "Answer a review request from any runtime with approved, changes_requested or commented, and a note; or decline it with `declined`, which is no verdict: the request stays open and the session stops being one of its eligible answerers. Replicated to every linked runtime. Writes this runtime's journal only.",
         "input": {
           "name": "ReviewAnswerInput",
           "schema": {
@@ -59032,7 +59101,7 @@
               },
               "verdict": {
                 "type": "string",
-                "description": "`approved`, `changes_requested` or `commented`."
+                "description": "`approved`, `changes_requested` or `commented`; or `declined`, which is no verdict:\nthe request is not this session's to answer, it stays open for somebody else, and\nthe session stops being one of its eligible answerers (I4327)."
               },
               "note": {
                 "type": [
@@ -59151,7 +59220,7 @@
         "module": "mesh",
         "kind": "command",
         "title": "Ask the mesh for a review",
-        "description": "Ask for a review of a branch, commit or pull request, optionally of one named runtime — which must be linked and carry the `reviews` feature, or the request is refused as `feature_unsupported`. Replicated to every linked runtime. Writes this runtime's journal only.",
+        "description": "Ask for a review of a branch, commit or pull request, optionally of one named runtime — whose link must carry review events (the `reviews` feature), or the request is refused as `feature_unsupported`. Who may answer is the sessions' own review mandate (mesh.session.open `reviews`): the request lists them as `eligible`, and none is the finding review_no_eligible_reviewer. Replicated to every linked runtime. Writes this runtime's journal only.",
         "input": {
           "name": "ReviewRequestInput",
           "schema": {
@@ -59660,10 +59729,43 @@
                   "null"
                 ],
                 "description": "When that process started, as this machine's process table reports it."
+              },
+              "reviews": {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/ReviewMandate"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "The reviews the session takes (I4327): `{}` for every path of this repository,\n`repositories` to name mesh repository ids, `paths` to keep to path prefixes. Absent:\nit takes none, and is nobody's eligible reviewer. Say it again to change it; a session\nopened again without it no longer takes reviews."
               }
             },
             "description": "The input of `mesh.session.open`: what a session says about itself.",
-            "title": "SessionInput"
+            "title": "SessionInput",
+            "$defs": {
+              "ReviewMandate": {
+                "type": "object",
+                "properties": {
+                  "repositories": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "The mesh repository ids the session reviews. Empty: the repository whose journal the\nsession was opened in."
+                  },
+                  "paths": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "Repository-relative path prefixes within them. Empty: every path."
+                  }
+                },
+                "description": "What a session will review (I4327): the repositories, and within them the paths. A\nsession declares it when it opens and says it again to change it; saying nothing takes\nno reviews. The mandate is what makes a session an eligible answerer of a review request,\nso eligibility is the sessions' own word and not a reading of their runtime's features.\n\n```\nuse majordomus_cli::mesh::journal::ReviewMandate;\n\n// the repository the session opened in, every path\nlet anything = ReviewMandate::default();\nassert!(anything.covers(\"repo-a\", \"repo-a\", &[]));\nassert!(!anything.covers(\"repo-a\", \"repo-b\", &[]), \"another repository is not its own\");\n\n// named repositories, and only the mesh's code\nlet mesh = ReviewMandate { repositories: vec![\"repo-a\".into()],\n    paths: vec![\"apps/majordomus-cli/src/mesh\".into()] };\nassert!(mesh.covers(\"repo-a\", \"repo-b\", &[\"apps/majordomus-cli/src/mesh/state.rs\".into()]));\nassert!(!mesh.covers(\"repo-a\", \"repo-a\", &[\"docs/MESH.md\".into()]), \"outside its paths\");\nassert!(!mesh.covers(\"repo-a\", \"repo-a\", &[]), \"a request with no scope is the whole tree\");\nassert!(!mesh.covers(\"repo-a\", \"repo-a\", &[\"apps/majordomus-cli/src/meshy.rs\".into()]),\n    \"a prefix is a directory, not a string\");\n```"
+              }
+            }
           }
         },
         "output": {
@@ -60309,13 +60411,27 @@
                       "null"
                     ],
                     "description": "The runtime asked, when one was."
+                  },
+                  "eligible": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "The sessions that may answer it (I4327), by key."
+                  },
+                  "declined": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "The sessions that declined it, by key."
                   }
                 },
                 "required": [
                   "key",
                   "subject"
                 ],
-                "description": "An open review request, told briefly: its key, what is to be reviewed and whom it asks.\nOnly requests nobody has answered are listed in the summary.\n\n```\nuse majordomus_cli::mesh::page::ReviewBrief;\n\nlet brief = ReviewBrief { key: \"s/r1\".into(), subject: \"feature/x\".into(), issue: None,\n    reviewer: None };\nassert!(serde_json::to_value(&brief).unwrap().get(\"issue\").is_none(), \"absent, not null\");\n```"
+                "description": "An open review request, told briefly: its key, what is to be reviewed and whom it asks.\nOnly requests nobody has answered are listed in the summary.\n\n```\nuse majordomus_cli::mesh::page::ReviewBrief;\n\nlet brief = ReviewBrief { key: \"s/r1\".into(), subject: \"feature/x\".into(), issue: None,\n    reviewer: None, eligible: vec![], declined: vec![] };\nlet value = serde_json::to_value(&brief).unwrap();\nassert!(value.get(\"issue\").is_none(), \"absent, not null\");\nassert!(value.get(\"eligible\").is_none(), \"nobody eligible is the finding, said by the brief\");\n```"
               },
               "MeshHandoverBrief": {
                 "type": "object",
@@ -60561,6 +60677,17 @@
                       "null"
                     ],
                     "description": "When that process started, as the machine's process table reports it. Compared only\nfor equality and only on that machine, so a pid the system handed to another process\nis never taken for the client, and no two clocks are ever compared."
+                  },
+                  "reviews": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/ReviewMandate"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "The reviews the session takes (I4327). Absent: it takes none, whatever its runtime's\nlink features say — the `reviews` feature says the link protocol carries review\nevents, never that anybody there will review. A runtime older than the field reads\nthe session without it."
                   }
                 },
                 "required": [
@@ -60568,6 +60695,26 @@
                   "client"
                 ],
                 "description": "What a session tells the mesh about itself. Every field is a public fact about work in\nprogress; none is a path on the author's disk, a secret or a credential.\n\nAlmost everything here is optional, and that is the design: a session says what it\nknows, and a field it leaves out is omitted rather than carried empty, so a reader can\ntell \"no task\" from \"a task called nothing\". Opening the same session id again replaces\nthis record, which is how a session that learns its branch later tells the mesh.\n\n```\nuse majordomus_cli::mesh::journal::SessionInfo;\n\nlet mut info = SessionInfo::named(\"s1\", \"claude-code\");\nassert_eq!(info.task, None);\nassert!(serde_json::to_value(&info).unwrap().get(\"task\").is_none(), \"unsaid, not empty\");\n\ninfo.branch = Some(\"feature/mesh-cooperation\".into());\nassert_eq!(serde_json::to_value(&info).unwrap()[\"branch\"], \"feature/mesh-cooperation\");\n```"
+              },
+              "ReviewMandate": {
+                "type": "object",
+                "properties": {
+                  "repositories": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "The mesh repository ids the session reviews. Empty: the repository whose journal the\nsession was opened in."
+                  },
+                  "paths": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "Repository-relative path prefixes within them. Empty: every path."
+                  }
+                },
+                "description": "What a session will review (I4327): the repositories, and within them the paths. A\nsession declares it when it opens and says it again to change it; saying nothing takes\nno reviews. The mandate is what makes a session an eligible answerer of a review request,\nso eligibility is the sessions' own word and not a reading of their runtime's features.\n\n```\nuse majordomus_cli::mesh::journal::ReviewMandate;\n\n// the repository the session opened in, every path\nlet anything = ReviewMandate::default();\nassert!(anything.covers(\"repo-a\", \"repo-a\", &[]));\nassert!(!anything.covers(\"repo-a\", \"repo-b\", &[]), \"another repository is not its own\");\n\n// named repositories, and only the mesh's code\nlet mesh = ReviewMandate { repositories: vec![\"repo-a\".into()],\n    paths: vec![\"apps/majordomus-cli/src/mesh\".into()] };\nassert!(mesh.covers(\"repo-a\", \"repo-b\", &[\"apps/majordomus-cli/src/mesh/state.rs\".into()]));\nassert!(!mesh.covers(\"repo-a\", \"repo-a\", &[\"docs/MESH.md\".into()]), \"outside its paths\");\nassert!(!mesh.covers(\"repo-a\", \"repo-a\", &[]), \"a request with no scope is the whole tree\");\nassert!(!mesh.covers(\"repo-a\", \"repo-a\", &[\"apps/majordomus-cli/src/meshy.rs\".into()]),\n    \"a prefix is a directory, not a string\");\n```"
               },
               "SessionState": {
                 "oneOf": [
@@ -60951,6 +61098,20 @@
                       "null"
                     ],
                     "description": "The requester's own result or reason, written when it withdrew the request. Never an\nanswer: a review is another session's verdict."
+                  },
+                  "eligible": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "Who may answer it while it is open or answered (I4327): the keys of the live sessions\nwhose review mandate covers its repository and scope, minus the session that asked,\nminus the sessions of the asker's task (a builder's own subagents), and minus every\nsession that declined it. Derived, never written; empty for a request that has ended.\nEmpty and open is the finding `review_no_eligible_reviewer`."
+                  },
+                  "declines": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/$defs/ReviewAnswer"
+                    },
+                    "description": "The sessions that said it is not theirs to answer, in Lamport order. Never verdicts."
                   }
                 },
                 "required": [
@@ -97878,7 +98039,7 @@
     ]
   },
   "index": {
-    "fingerprint": "8c343d8050dc0d470510985c455e609a7cc42df0510482af8657bbdc1e8cebb9",
+    "fingerprint": "a77873498da896db9fff924aa5ac1bbac42b6cef22c467986b8bf87f8e2c12f4",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -105394,7 +105555,7 @@
         "title": "Majordomus Mesh",
         "path": "docs/MESH.md",
         "source_class": "document",
-        "bytes": 95051
+        "bytes": 97269
       },
       {
         "uri": "majordomus://document/docs/MODELS.md",
@@ -105412,7 +105573,7 @@
         "title": "The monitor",
         "path": "docs/MONITOR.md",
         "source_class": "document",
-        "bytes": 9961
+        "bytes": 9982
       },
       {
         "uri": "majordomus://document/docs/OFFLOAD.md",
@@ -161446,6 +161607,44 @@
                     "defaults": []
                   },
                   {
+                    "name": "reviews",
+                    "long": "reviews",
+                    "positional": false,
+                    "help": "The session takes reviews of this repository (I4327); without this or a `--reviews-*` flag it takes none and is nobody's eligible reviewer",
+                    "value_name": "REVIEWS",
+                    "takes_value": false,
+                    "required": false,
+                    "global": false,
+                    "possible_values": [],
+                    "defaults": [
+                      "false"
+                    ]
+                  },
+                  {
+                    "name": "reviews_paths",
+                    "long": "reviews-path",
+                    "positional": false,
+                    "help": "Only reviews under this path prefix; repeatable, and implies `--reviews`",
+                    "value_name": "PREFIX",
+                    "takes_value": true,
+                    "required": false,
+                    "global": false,
+                    "possible_values": [],
+                    "defaults": []
+                  },
+                  {
+                    "name": "reviews_repositories",
+                    "long": "reviews-repository",
+                    "positional": false,
+                    "help": "Reviews of this mesh repository id instead of this one; repeatable, and implies `--reviews`",
+                    "value_name": "ID",
+                    "takes_value": true,
+                    "required": false,
+                    "global": false,
+                    "possible_values": [],
+                    "defaults": []
+                  },
+                  {
                     "name": "repo",
                     "long": "repo",
                     "positional": false,
@@ -161534,7 +161733,7 @@
                   {
                     "id": "mesh-session-open",
                     "title": "Say what a session is doing, to every linked runtime",
-                    "description": "Client, intent, issue and branch of a session, replicated to every linked runtime. It needs the running server; without one it exits 10.",
+                    "description": "Client, intent, issue and branch of a session, and with --reviews the reviews it takes, replicated to every linked runtime. It needs the running server; without one it exits 10.",
                     "argv": [
                       "mesh",
                       "session",
@@ -162261,6 +162460,10 @@
                       {
                         "name": "commented",
                         "help": "an observation with no verdict: neither approval nor a request to change"
+                      },
+                      {
+                        "name": "declined",
+                        "help": "not this session's to answer: no verdict, the request stays open for others"
                       }
                     ],
                     "defaults": []
@@ -162366,7 +162569,7 @@
                   {
                     "id": "mesh-review-answer",
                     "title": "Answer a review request from any runtime",
-                    "description": "approved, changes_requested or commented, with a note, replicated to every linked runtime. It needs the running server; without one it exits 10.",
+                    "description": "approved, changes_requested or commented, with a note, or declined (not this session's to answer; the request stays open), replicated to every linked runtime. It needs the running server; without one it exits 10.",
                     "argv": [
                       "mesh",
                       "review",
@@ -177244,7 +177447,7 @@
         "name": "majordomus_mesh_review_answer",
         "id": "mesh.review.answer",
         "title": "Answer a review request",
-        "description": "Answer a review request from any runtime with approved, changes_requested or commented, and a note. Replicated to every linked runtime. Writes this runtime's journal only.",
+        "description": "Answer a review request from any runtime with approved, changes_requested or commented, and a note; or decline it with `declined`, which is no verdict: the request stays open and the session stops being one of its eligible answerers. Replicated to every linked runtime. Writes this runtime's journal only.",
         "kind": "command",
         "read_only": false,
         "effect": "process_state",
@@ -177261,7 +177464,7 @@
         "name": "majordomus_mesh_review_request",
         "id": "mesh.review.request",
         "title": "Ask the mesh for a review",
-        "description": "Ask for a review of a branch, commit or pull request, optionally of one named runtime — which must be linked and carry the `reviews` feature, or the request is refused as `feature_unsupported`. Replicated to every linked runtime. Writes this runtime's journal only.",
+        "description": "Ask for a review of a branch, commit or pull request, optionally of one named runtime — whose link must carry review events (the `reviews` feature), or the request is refused as `feature_unsupported`. Who may answer is the sessions' own review mandate (mesh.session.open `reviews`): the request lists them as `eligible`, and none is the finding review_no_eligible_reviewer. Replicated to every linked runtime. Writes this runtime's journal only.",
         "kind": "command",
         "read_only": false,
         "effect": "process_state",

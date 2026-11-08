@@ -22381,6 +22381,44 @@
                     "defaults": []
                   },
                   {
+                    "name": "reviews",
+                    "long": "reviews",
+                    "positional": false,
+                    "help": "The session takes reviews of this repository (I4327); without this or a `--reviews-*` flag it takes none and is nobody's eligible reviewer",
+                    "value_name": "REVIEWS",
+                    "takes_value": false,
+                    "required": false,
+                    "global": false,
+                    "possible_values": [],
+                    "defaults": [
+                      "false"
+                    ]
+                  },
+                  {
+                    "name": "reviews_paths",
+                    "long": "reviews-path",
+                    "positional": false,
+                    "help": "Only reviews under this path prefix; repeatable, and implies `--reviews`",
+                    "value_name": "PREFIX",
+                    "takes_value": true,
+                    "required": false,
+                    "global": false,
+                    "possible_values": [],
+                    "defaults": []
+                  },
+                  {
+                    "name": "reviews_repositories",
+                    "long": "reviews-repository",
+                    "positional": false,
+                    "help": "Reviews of this mesh repository id instead of this one; repeatable, and implies `--reviews`",
+                    "value_name": "ID",
+                    "takes_value": true,
+                    "required": false,
+                    "global": false,
+                    "possible_values": [],
+                    "defaults": []
+                  },
+                  {
                     "name": "repo",
                     "long": "repo",
                     "positional": false,
@@ -22469,7 +22507,7 @@
                   {
                     "id": "mesh-session-open",
                     "title": "Say what a session is doing, to every linked runtime",
-                    "description": "Client, intent, issue and branch of a session, replicated to every linked runtime. It needs the running server; without one it exits 10.",
+                    "description": "Client, intent, issue and branch of a session, and with --reviews the reviews it takes, replicated to every linked runtime. It needs the running server; without one it exits 10.",
                     "argv": [
                       "mesh",
                       "session",
@@ -23196,6 +23234,10 @@
                       {
                         "name": "commented",
                         "help": "an observation with no verdict: neither approval nor a request to change"
+                      },
+                      {
+                        "name": "declined",
+                        "help": "not this session's to answer: no verdict, the request stays open for others"
                       }
                     ],
                     "defaults": []
@@ -23301,7 +23343,7 @@
                   {
                     "id": "mesh-review-answer",
                     "title": "Answer a review request from any runtime",
-                    "description": "approved, changes_requested or commented, with a note, replicated to every linked runtime. It needs the running server; without one it exits 10.",
+                    "description": "approved, changes_requested or commented, with a note, or declined (not this session's to answer; the request stays open), replicated to every linked runtime. It needs the running server; without one it exits 10.",
                     "argv": [
                       "mesh",
                       "review",

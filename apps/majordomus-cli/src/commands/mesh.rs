@@ -194,6 +194,7 @@ pub fn run(args: MeshArgs) -> Result<u8> {
                         "head": a.head,
                         "client_pid": client_pid,
                         "client_started": client_started,
+                        "reviews": a.review_mandate(),
                     })),
                     render_written,
                     never,

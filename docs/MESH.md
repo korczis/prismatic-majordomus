@@ -326,7 +326,7 @@ Three layers, deliberately separate:
 
 Everything cooperative is an event of the journal: `session_opened`, `session_closed`,
 `claim_acquired`, `claim_released`, `handover_published`, `handover_consumed`,
-`review_requested`, `review_answered`, `review_withdrawn`, `session_beat` (a working session's progress and phase, left out of `mesh events` unless `--beats` asks and never a monitor signal), and a node's offer of its build
+`review_requested`, `review_answered`, `review_declined`, `review_withdrawn`, `session_beat` (a working session's progress and phase, left out of `mesh events` unless `--beats` asks and never a monitor signal), and a node's offer of its build
 cache, `build_cache_offered` and `build_cache_withdrawn` ([Build-cache offers](#build-cache-offers)). A person or an agent reads the journal folded, not raw, through `majordomus monitor`
 (`docs/MONITOR.md`, ADR 0133). It drops a board session's unchanged re-projection on each
 heartbeat, marks what names the reader, and pages with the full causal key rather than the
@@ -533,6 +533,31 @@ expired ones: it should name them rather than drop them silently. A request may 
 beside its one-line subject: the evidence, the commands and the question. A runtime older
 than the field reads the request without its body, and holds `review_withdrawn` as an opaque
 event it relays but does not fold.
+
+**Who may answer (I4327).** Every runtime's link carries the `reviews` feature, so the feature
+says only that review events cross the link, never that anybody there will review. A session
+says what it reviews itself, as a review mandate when it opens (`mesh session open --reviews`,
+`--reviews-path <prefix>`, `--reviews-repository <id>`; MCP and HTTP: the `reviews` field of
+`mesh.session.open`, `{}` for every path of this repository). A session that declares none
+reviews nothing. Opening the session again replaces its word, mandate included; the board's
+own re-projection of an announcement keeps the mandate the session declared.
+
+The fold derives each request's `eligible` answerers: the live sessions whose mandate covers
+the request's repository and every path of its scope (a request with no scope is the whole tree,
+which only a mandate without paths covers), minus the session that asked, minus the sessions of
+the asker's task (a builder's own subagents), and minus every session that declined. A session
+says "not mine" with `mesh review answer <key> --verdict declined --note <why>`: it is recorded
+as a `review_declined` event, listed under the request's `declines`, and is never a verdict, so
+the request stays open. It is a kind of its own rather than a fourth verdict of
+`review_answered` because a runtime older than it refuses an answer whose verdict it does not
+know, which would hold up the writer's stream there, while it relays an unknown kind opaque.
+
+An open request with nobody eligible is the finding
+`review_no_eligible_reviewer <repository> <request>`: `mesh doctor` prints it as a `reviews`
+warning, the session brief prints it under its mesh line, and `/ui/mesh` draws the request as
+one nobody may answer. `mesh state` lists `eligible` and `declines` with each request (the
+summary lists them as `eligible` and `declined`). A journal written before the change carries
+neither field, and its requests read, and digest, exactly as before.
 
 **Tombstones.** A dropped stream leaves a tombstone: the sequence it reached, advertised as its
 mark so that a peer still holding the stream does not send it again, and the beat it was last
@@ -1077,6 +1102,8 @@ majordomus mesh handover publish --issue '#184'
 majordomus mesh handover consume <id> --session s2
 majordomus mesh review request feature/x --session s1 --reviewer <runtime>
 majordomus mesh review answer <request-key> --session s2 --verdict approved
+majordomus mesh session open --session s3 --reviews-path apps/majordomus-cli/src/mesh   # s3 reviews the mesh's code
+majordomus mesh review answer <request-key> --session s3 --verdict declined --note 'outside my mandate today'
 majordomus mesh review withdraw <request-key> --session s1 --note 'superseded by the rebuilt head'
 ```
 

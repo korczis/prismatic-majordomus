@@ -527,7 +527,7 @@ Output: `Written`.
 
 ## `mesh.review.answer` — Answer a review request
 
-Answer a review request from any runtime with approved, changes_requested or commented, and a note. Replicated to every linked runtime. Writes this runtime's journal only.
+Answer a review request from any runtime with approved, changes_requested or commented, and a note; or decline it with `declined`, which is no verdict: the request stays open and the session stops being one of its eligible answerers. Replicated to every linked runtime. Writes this runtime's journal only.
 
 | | |
 |---|---|
@@ -544,14 +544,16 @@ Answer a review request from any runtime with approved, changes_requested or com
 |---|---|---|---|
 | `request` | string | yes | The request's key, `<stream>/<review>`. |
 | `session` | string or null | no | The answering session; the calling MCP session's own when omitted. |
-| `verdict` | string | yes | `approved`, `changes_requested` or `commented`. |
+| `verdict` | string | yes | `approved`, `changes_requested` or `commented`; or `declined`, which is no verdict:
+the request is not this session's to answer, it stays open for somebody else, and
+the session stops being one of its eligible answerers (I4327). |
 | `note` | string or null | no | The note. |
 
 Output: `Written`.
 
 ## `mesh.review.request` — Ask the mesh for a review
 
-Ask for a review of a branch, commit or pull request, optionally of one named runtime — which must be linked and carry the `reviews` feature, or the request is refused as `feature_unsupported`. Replicated to every linked runtime. Writes this runtime's journal only.
+Ask for a review of a branch, commit or pull request, optionally of one named runtime — whose link must carry review events (the `reviews` feature), or the request is refused as `feature_unsupported`. Who may answer is the sessions' own review mandate (mesh.session.open `reviews`): the request lists them as `eligible`, and none is the finding review_no_eligible_reviewer. Replicated to every linked runtime. Writes this runtime's journal only.
 
 | | |
 |---|---|
@@ -652,6 +654,10 @@ Say what a session of this runtime is: its client, worker, intent, task, issue, 
 | `client_pid` | integer or null | no | The client process the session belongs to, on this machine: the runtime closes the
 session once that process has ended (I3810). |
 | `client_started` | string or null | no | When that process started, as this machine's process table reports it. |
+| `reviews` | object | no | The reviews the session takes (I4327): `{}` for every path of this repository,
+`repositories` to name mesh repository ids, `paths` to keep to path prefixes. Absent:
+it takes none, and is nobody's eligible reviewer. Say it again to change it; a session
+opened again without it no longer takes reviews. |
 
 Output: `Written`.
 

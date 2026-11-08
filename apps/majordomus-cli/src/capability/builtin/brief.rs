@@ -202,6 +202,10 @@ pub struct BriefMeshSection {
     pub handovers_waiting: usize,
     /// Overlaps between a claim of this runtime and another's.
     pub overlaps_for_you: usize,
+    /// Open review requests nobody may answer (I4327), each the finding
+    /// `review_no_eligible_reviewer <repository> <request>`.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub findings: Vec<String>,
     /// The section in words.
     pub summary: String,
 }
@@ -684,6 +688,7 @@ fn mesh_section(ctx: &Context) -> BriefMeshSection {
         reviews_for_you: 0,
         handovers_waiting: 0,
         overlaps_for_you: 0,
+        findings: Vec::new(),
         summary: String::new(),
     };
     let Some(cooperation) = ctx.mesh.cooperation() else {
@@ -763,6 +768,8 @@ fn mesh_section(ctx: &Context) -> BriefMeshSection {
             section.reviews_for_you, section.handovers_waiting, section.overlaps_for_you
         ));
     }
+    section.findings =
+        crate::mesh::state::review_findings(&state, cooperation.journal().repository());
     section.summary = s;
     section
 }
@@ -947,6 +954,11 @@ fn compose(
     ];
     lines.extend(peers.named.iter().map(|n| format!("             {n}")));
     lines.push(format!("mesh         {}", mesh.summary));
+    lines.extend(
+        mesh.findings
+            .iter()
+            .map(|f| format!("             WARN {f}")),
+    );
     lines.push(format!("integration  {}", integration.summary));
     lines.push(format!("release      {}", release.summary));
     lines.push(format!("derive       {}", derive.summary));
@@ -1172,6 +1184,7 @@ mod tests {
             reviews_for_you: 0,
             handovers_waiting: 0,
             overlaps_for_you: 0,
+            findings: Vec::new(),
             summary: "not active here: disabled".into(),
         }
     }
