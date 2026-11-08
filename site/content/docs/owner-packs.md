@@ -235,11 +235,11 @@ addressee.
 | phase | carried as | folded into or delivered by | not carried |
 |---|---|---|---|
 | 01 discovery and owners | none | the mesh modules and `peers.rs` are the single owners (ADR 0067) | |
-| 02 typed envelope | none | `MeshEvent` is the envelope: origin-signed, sequenced, stamped, bounded; a deadline is I3608 | a second envelope (project.no-new-nouns, the mesh cooperation rule) |
+| 02 typed envelope | none | `MeshEvent` is the envelope: origin-signed, sequenced, stamped, bounded; a deadline is I3608 | not planned: the owner decided on 2026-11-08 "Repo decision holds (Recommended)" (AskUserQuestion, session 60a880b1-999a-4666-90c8-925623cc29b4, 2026-11-08T00:43:36Z): `MeshEvent` stays the envelope and no second bus is built |
 | 03 local direct routing | I4553: a review request addressed to a session answers the route that wakes it | I4327 (who may answer) comes first | a listener or socket of Majordomus's own (ADR 0003) |
-| 04 durable delivery | none | the journal: synced appends, idempotent apply, replay by cursor; I3174, I3444, I3608 | per-message acknowledgement, retry and dead letters |
+| 04 durable delivery | none | the journal: synced appends, idempotent apply, replay by cursor; I3174, I3444, I3608 | per-message acknowledgement, retry and dead letters: only after a written assessment (owner, 2026-11-08) |
 | 05 runtime adapters | I4553: a `messaging` offer in `share/providers.yaml` | the provider matrix and capture adapters | |
-| 06 remote QUIC | none | | QUIC and transport encryption: ADR 0067 point 4 and ADR 0032 keep the mesh on the crate's HTTP client, and I3189 leaves the choice to the owner |
+| 06 remote QUIC | none | | not planned: the owner decided on 2026-11-08 "Keep HTTP for now (Recommended)" (AskUserQuestion, session 60a880b1-999a-4666-90c8-925623cc29b4, 2026-11-08T00:43:36Z); revisit on evidence of cross-host latency or a security need. ADR 0067 point 4 and ADR 0032 keep the mesh on the crate's HTTP client |
 | 07 adaptive routing | none | link path choice is I3187 and I3772 | routing of messages, which nothing needs yet |
 | 08 surfaces and governance | none | delivered by the capability registry and `majordomus generate` (ADR 0004) | |
 | 09 hardening and delivery | none | after the slices; `tests/mesh_cooperation.rs` and the mesh lab are the base | |
@@ -249,14 +249,33 @@ addressee.
 
 ### What the owner must decide
 
-- The milestone `a-prompt-reaches-the-work-it-serves` depends on three milestones that are not
-  done, and that gate holds every one of its wave-0 issues (I3406, I3432, I3434), although
-  none of them depends on an issue. Taking them now needs that dependency recorded again.
 - ADR 0191 is proposed. I3252, which materialises a checked draft, must not land before the
   owner accepts it.
-- The Mesh Fabric pack asks for a QUIC transport with encryption between machines. The
-  mesh keeps to the crate's HTTP client with no TLS (ADR 0067, ADR 0032), and I3189 records
-  the transport choice as the owner's. Nothing plans it until the owner decides.
+
+Resolved since the packs were measured:
+
+- The milestone `a-prompt-reaches-the-work-it-serves` holds its wave-0 issues (I3406, I3432,
+  I3434) behind three unfinished milestones, although none of them depends on an issue. This
+  is not the owner's to decide and the milestone is not edited: the plan already carries the
+  way out, I3757 (a blocked milestone names what holds it) and then I3972 (`milestone_gate:
+  own`), after which those three issues opt out of the gate. I3972's non_scope forbids
+  changing a milestone's depends_on instead.
+- The Mesh Fabric pack's own envelope and delivery states: the owner decided on 2026-11-08,
+  asked "The Mesh Fabric pack asks for its own typed envelope plus per-message ACK, retry and
+  dead-letter. The repository has already decided otherwise: MeshEvent is the signed
+  envelope, rule project.no-new-nouns applies, and the journal is at-least-once with
+  idempotent apply. p11's intake (PR #2978) records "a second message envelope: not
+  planned". Which decision holds?", and answered "Repo decision holds (Recommended)". The
+  pack continues through I4553, I4327 and I3608; per-message acknowledgement and dead
+  letters get a written assessment first.
+- The Mesh Fabric pack's QUIC transport: the owner decided on 2026-11-08, asked "Phase 06 of
+  the pack wants an encrypted remote QUIC transport. The repository holds plain HTTP between
+  nodes (ADR 0067, ADR 0032), and I3189 records the transport choice as yours. Nothing is
+  planned until you decide. What should happen?", and answered "Keep HTTP for now
+  (Recommended)": phase 06 stays unplanned until there is evidence of need (cross-host
+  latency or security); the first milestone is local and runs over the provider's socket.
+- Both answers were given through AskUserQuestion in session
+  60a880b1-999a-4666-90c8-925623cc29b4 at 2026-11-08T00:43:36Z.
 
 ## What was not planned, and why
 
@@ -278,7 +297,8 @@ against. These are recorded so that nobody plans them again by accident.
 | every recipe generated, shell removed at once | the shell half is what the installer ships and what the hooks run | an ordered migration with counts that cannot rise (I3155, I4488, I4492) |
 | peer scheduling and provider-side enforcement of a profile | the tool starts no worker and invokes no model (ADR 0032, ADR 0044) | one refusal at the capability executor (I4506) |
 | every mesh command offered on a node's inspector | one cooperation action, under a resolved identity (I3139, I3192) | nothing beyond those |
-| a message bus with its own envelope, inbox and delivery states | the journal's signed event is the envelope, and the tool gains no new nouns (project.no-new-nouns) | a review request that names its session and the provider's own route (I4553) |
+| a message bus with its own envelope, inbox and delivery states | the journal's signed event is the envelope, and the tool gains no new nouns (project.no-new-nouns); the owner confirmed on 2026-11-08 "Repo decision holds" | a review request that names its session and the provider's own route (I4553) |
+| an encrypted QUIC transport between machines | the mesh keeps the crate's HTTP client (ADR 0067, ADR 0032); the owner decided on 2026-11-08 "Keep HTTP for now" | nothing, until there is evidence of a cross-host latency or security need |
 
 </div>
 
