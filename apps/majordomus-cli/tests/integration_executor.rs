@@ -56,6 +56,10 @@ fn git(dir: &Path, args: &[&str]) -> String {
 /// answered at its listed head with each check run written by app 15368. `writers-<n>.json`
 /// is the answer about pull request `n` alone, asked when its contexts did not fit a page;
 /// `writers-fails` refuses the read and `writers-transient` fails it as an outage would.
+///
+/// Master's own check runs are `trunk-checks.json`, the check-runs API's answer for whatever
+/// commit is asked, read only while a pull request is labelled `red-carrier`; without one
+/// master has none, which is not red.
 const GH: &str = r#"#!/bin/sh
 S="@STATE@"; O="@ORIGIN@"; W="@WORK@"
 echo "$*" >> "$S/log"
@@ -64,6 +68,9 @@ case "$1 $2" in
   "repo view") echo '{"nameWithOwner":"o/r","defaultBranchRef":{"name":"master"}}' ;;
   "api repos/o/r") echo '{"allow_merge_commit":true,"allow_squash_merge":true,"allow_rebase_merge":false}' ;;
   "api repos/o/r/commits/master") printf '{"sha":"%s"}\n' "$(git -C "$O" rev-parse master)" ;;
+  "api repos/o/r/commits/"*"/check-runs"*)
+    # master's own required check (I2709): `trunk-checks.json` is the answer, none by default
+    cat "$S/trunk-checks.json" 2>/dev/null || echo '{"total_count":0,"check_runs":[]}' ;;
   "api repos/o/r/branches/master/protection")
     if grep -q TRANSIENT "$S/protection.json" 2>/dev/null; then echo 'gh: HTTP 503: Service Unavailable' >&2; exit 1
     elif grep -q FAIL "$S/protection.json" 2>/dev/null; then echo 'gh: Resource not accessible by integration (HTTP 403)' >&2; exit 1
@@ -529,6 +536,60 @@ fn a_green_train_is_fast_forwarded_and_verified() {
         assert_eq!(a["disposition"], "redundant", "{a}");
     }
     assert!(!f.log().contains("pr close"), "the drain closed something");
+}
+
+/// While master's required check is red, the drain lands only the red's named carrier (the
+/// pull request labelled `red-carrier`, I2709), even when another is ranked first, and lands
+/// nothing while that carrier is not ready; once master is green again the rank decides
+/// (I3910).
+#[test]
+fn while_master_is_red_the_drain_lands_only_its_carrier() {
+    let f = Forge::new();
+    let one = f.branch(1);
+    let two = f.branch(2);
+    f.open(&[(1, &one), (2, &two)]);
+    f.edit(2, "labels", serde_json::json!([{"name": "red-carrier"}]));
+    let red = r#"{"total_count":1,"check_runs":[{"name":"ci","status":"completed","conclusion":"failure"}]}"#;
+    f.set("trunk-checks.json", red);
+    // the carrier is not ready: its head reports a failed ci, so nothing lands at all
+    let failed_ci = serde_json::json!([{"__typename": "CheckRun", "name": "ci",
+        "status": "COMPLETED", "conclusion": "FAILURE", "completedAt": "2026-09-01T00:05:00Z"}]);
+    f.edit(2, "statusCheckRollup", failed_ci);
+    let before = git(&f.origin, &["rev-parse", "master"]);
+
+    let (code, out, err) = f.prs(&["drain", "--max", "1"]);
+    assert_eq!(code, 0, "drain: {out}{err}");
+    assert_eq!(git(&f.origin, &["rev-parse", "master"]), before, "{out}");
+    let idle = f.last("idle").expect("idle on the trail");
+    let why = idle["detail"].as_str().unwrap();
+    assert!(why.contains("is red (ci)"), "{idle}");
+    assert!(why.contains("#2"), "{idle}");
+    assert!(f.last("merge_attempted").is_none());
+    assert!(f.log().contains("/check-runs?check_name=ci&filter=latest"));
+
+    // the carrier is ready, and ranked after #1: it is the one that lands
+    f.open(&[(1, &one), (2, &two)]);
+    f.edit(2, "labels", serde_json::json!([{"name": "red-carrier"}]));
+    let (code, out, err) = f.prs(&["drain", "--max", "1"]);
+    assert_eq!(code, 0, "drain: {out}{err}");
+    assert!(out.contains("merged #2"), "{out}");
+    assert_eq!(git(&f.origin, &["rev-parse", "master"]), two);
+    let selected = f.last("selected").expect("selected");
+    assert_eq!(selected["detail"], "the carrier of master's red");
+    assert!(!f.log().contains("--admin"));
+}
+
+/// With no pull request named the carrier, the drain asks the forge nothing about master's
+/// own checks and lands by rank (I3910).
+#[test]
+fn without_a_named_carrier_the_drain_does_not_read_masters_verdict() {
+    let f = Forge::new();
+    let one = f.branch(1);
+    f.open(&[(1, &one)]);
+    let (code, out, err) = f.prs(&["drain", "--max", "1"]);
+    assert_eq!(code, 0, "drain: {out}{err}");
+    assert!(out.contains("merged #1"), "{out}");
+    assert!(!f.log().contains("/check-runs"), "{}", f.log());
 }
 
 /// A head that carries master without containing it (its lower link landed by a merge commit)
