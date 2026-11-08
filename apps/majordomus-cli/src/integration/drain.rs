@@ -568,6 +568,14 @@ impl IntegrationLease {
             }
             // a path that names another file by now is opened again
             if names_file(&path, &file) {
+                // the holder record first: a reader that finds the file locked must find who
+                // holds it, and the lease on origin below can take a fetch and a push
+                if let Err(e) = write_record(&file, &token) {
+                    let _ = fs::remove_file(&path);
+                    return Err(format!(
+                        "the integration lease was given back: its holder record could not be written: {e}"
+                    ));
+                }
                 // the lease on origin, which another clone's executor may hold (I3911); the
                 // record it gates on is read from there before this one acts
                 let origin = match super::exclusive::OriginLease::take(root, base) {
@@ -584,12 +592,8 @@ impl IntegrationLease {
                     detail: token.clone(),
                     ..IntegrationEvent::of(IntegrationAction::LeaseAcquired)
                 };
-                let kept = write_record(&file, &token)
-                    .map_err(|e| format!("its holder record could not be written: {e}"))
-                    .and_then(|()| {
-                        record(root, taken)
-                            .map_err(|e| format!("the trail could not record it: {e}"))
-                    });
+                let kept =
+                    record(root, taken).map_err(|e| format!("the trail could not record it: {e}"));
                 if let Err(e) = kept {
                     // unlinked while still locked, so nobody takes the record this leaves
                     let _ = fs::remove_file(&path);
