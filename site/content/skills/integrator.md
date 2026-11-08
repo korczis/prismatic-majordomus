@@ -5,7 +5,7 @@ weight = 5
 [extra]
 id = "integrator"
 status = "active"
-version = 6
+version = 7
 source = ".ai/repo/skills/integrator/SKILL.md"
 +++
 {% raw %}
@@ -160,6 +160,20 @@ when its own pre-push judgement passed, not when it is committed:
   train or give it the seat's next refresh, do not refresh it again on its own.
 - A run that yielded (`ci:yielded`) is re-requested by `scripts/ci/release-path resume`;
   do not re-run it by hand while the release path holds — the re-run yields again.
+- A `pages` job red on "the site owes a publication" judges master's deploy, not the pull
+  request. Read `gh run list --workflow pages.yml` before anything else: a row of master
+  failures means the deploy itself is broken, and the pull request that fixes it cannot pass
+  its own `pages` before it lands. From ddae9e192a4 on 2026-11-07, eight master runs failed
+  deploy/check on one I3769 line while the fix, #2960, failed only that job; that is the
+  owner's call for the seat to land past, never a re-run. The release-path yield is circular
+  the same way: it cancelled #2959, the fix of a red deploy, in favour of a master deploy that
+  could not pass without it, and `gh run rerun --failed` restored it. A non-integration run
+  cancels itself at its first red ("a failed branch run ends here"), so its shards read
+  `cancelled`: find the job whose steps failed (`gh run view <id> --json jobs`), not the fan-ins.
+- A case that fails the same way on every top is a finding, never the host. Case 10 printed
+  `plan delivery --at` exiting 12 in its fixture on trains 29 to 32 and was read as a quirk;
+  it was the deploy job's missing executable, and master's next Pages run (42339976144) died
+  at build until #2959.
 - A label other than `ci:full` or `hold` starts no second verdict (I4347,
   `scripts/ci/carried-verdict`); `ci:full` deliberately does.
 - A github-projection failure that says a record is `behind` and "this head did not change

@@ -6,23 +6,23 @@
     "version": "1.0.0"
   },
   "registry": {
-    "fingerprint": "99df951f5533a1b2775a224eda81907e0c210ac22cdfa46ba0642d4fdeda5c3e",
+    "fingerprint": "538c849c2b13bf6cc7c9734dbbbb1ef65844bc7bb652e94f202be23123dbde6b",
     "summary": {
-      "total": 3951,
+      "total": 3957,
       "builtin": 231,
-      "declarative": 3720,
+      "declarative": 3726,
       "by_kind": {
         "command": 41,
         "query": 190,
-        "resource": 3720
+        "resource": 3726
       },
       "by_stability": {
         "behaviorally_verified": 153,
         "experimental": 68,
-        "implemented": 3730
+        "implemented": 3736
       },
       "mcp_tools": 215,
-      "mcp_resources": 3777,
+      "mcp_resources": 3783,
       "http_routes": 219,
       "cli_commands": 128,
       "modules": 96,
@@ -97180,7 +97180,7 @@
         "title": "knowledge",
         "description": "Declarative objects of kind 'knowledge' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 186,
+        "capabilities": 192,
         "capability_ids": []
       },
       {
@@ -97878,7 +97878,7 @@
     ]
   },
   "index": {
-    "fingerprint": "8c343d8050dc0d470510985c455e609a7cc42df0510482af8657bbdc1e8cebb9",
+    "fingerprint": "9ae6686967419d37f1afb19299adb4099f599dcccbe0ba976a25184d2248695b",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -97919,7 +97919,7 @@
       "implementation": 54,
       "intent": 45,
       "issue": 1223,
-      "knowledge": 186,
+      "knowledge": 192,
       "mesh-declaration": 1,
       "milestone": 117,
       "moment": 38,
@@ -105385,7 +105385,7 @@
         "title": "MCP surface — `majordomus mcp`",
         "path": "docs/MCP.md",
         "source_class": "document",
-        "bytes": 84107
+        "bytes": 84479
       },
       {
         "uri": "majordomus://document/docs/MESH.md",
@@ -123674,10 +123674,10 @@
         "identity": "s-20261015194158-7f51-f2e1b28d9060",
         "title": "continuity resolve ran git merge-base --is-ancestor for every candidate handover and checkpoint and kept one: 23-31 s per cold read in the primary, which the session start brief waited on",
         "description": "Observed as defect about capability:continuity.state in episode s-20261015194158-7f51.",
-        "path": ".ai/repo/knowledge/candidates/s-20261015194158-7f51-f2e1b28d9060.md",
+        "path": ".ai/repo/knowledge/curated/s-20261015194158-7f51-f2e1b28d9060.md",
         "section": "knowledge",
-        "source_class": "candidates",
-        "bytes": 957,
+        "source_class": "curated",
+        "bytes": 1531,
         "tags": [
           "derived",
           "observation"
@@ -125568,6 +125568,96 @@
         "section": "knowledge",
         "source_class": "curated",
         "bytes": 2963,
+        "tags": [
+          "derived",
+          "observation"
+        ]
+      },
+      {
+        "uri": "majordomus://knowledge/s-20261108045745-9521-5754615a4938",
+        "kind": "knowledge",
+        "identity": "s-20261108045745-9521-5754615a4938",
+        "title": "on 2026-11-07 06:41Z the release-path yield (I2710) cancelled the validate of #2959, the one pull request that fixed master's broken Pages deploy, in favour of a master Pages dispatch (42348388024) that could not succeed until #2959 landed; a yield to a deploy that is red for the reason the yielding pull request fixes is circular. gh run rerun --failed restored the run.",
+        "description": "Observed as defect about .ai/repo/skills/integrator/SKILL.md in episode s-20261108045745-9521.",
+        "path": ".ai/repo/knowledge/curated/s-20261108045745-9521-5754615a4938.md",
+        "section": "knowledge",
+        "source_class": "curated",
+        "bytes": 1826,
+        "tags": [
+          "derived",
+          "observation"
+        ]
+      },
+      {
+        "uri": "majordomus://knowledge/s-20261108045745-9521-616442397958",
+        "kind": "knowledge",
+        "identity": "s-20261108045745-9521-616442397958",
+        "title": "every master pages.yml run from ddae9e192a4 (train 32, 2026-11-07) to d7fd9a36170 failed, eight in a row (push, schedule and dispatch; the latest 42433055144 on 2026-11-08 01:10Z), in deploy/check on one line, FAIL product: the hero names delivery inferred at ddae9e192a4 and the clean build was made from d7fd9a36170 (I3769): after #2959 the deploy job builds without an executable and reads the committed delivery.json. The site stayed at 5ca0bec, 48 commits behind. #2960, the fix, then failed its own validate pages job on 'the site owes a publication' (run 42410525008, its only FAIL), and the failed-branch step cancelled the run, so its ci went red: a pages red on a pull request that fixes the deploy is master's state and circular. Diagnose with gh run list --workflow pages.yml before blaming a pull request.",
+        "description": "Observed as defect about .ai/repo/skills/integrator/SKILL.md in episode s-20261108045745-9521.",
+        "path": ".ai/repo/knowledge/curated/s-20261108045745-9521-616442397958.md",
+        "section": "knowledge",
+        "source_class": "curated",
+        "bytes": 3110,
+        "tags": [
+          "derived",
+          "observation"
+        ]
+      },
+      {
+        "uri": "majordomus://knowledge/s-20261108045745-9521-7948b6013773",
+        "kind": "knowledge",
+        "identity": "s-20261108045745-9521-7948b6013773",
+        "title": "on 2026-11-07 23:03Z this repository's shared server restarted on 127.0.0.1:49427 because another repository's server on the machine held 8741, the default both derive for a primary checkout; the landing seat's MCP client reattached to 8741 after a re-login and sent its seat claims and beats to the other repository's mesh, so this repository's landing and release seats were unheld until about 00:55Z, and curl reads of 127.0.0.1:8741 answered the other repository's data. Read the address from server.status (this_process.url) and check /api/v1/repository names this checkout before trusting an answer or claiming a seat.",
+        "description": "Observed as friction about docs/MCP.md in episode s-20261108045745-9521.",
+        "path": ".ai/repo/knowledge/curated/s-20261108045745-9521-7948b6013773.md",
+        "section": "knowledge",
+        "source_class": "curated",
+        "bytes": 2284,
+        "tags": [
+          "derived",
+          "observation"
+        ]
+      },
+      {
+        "uri": "majordomus://knowledge/s-20261108045745-9521-79c28fb49a88",
+        "kind": "knowledge",
+        "identity": "s-20261108045745-9521-79c28fb49a88",
+        "title": "the session start opens a mesh session as <provider>-<provider session> (mj_capture_mesh_join, lib/capture.sh) and exports no variable naming it, so nothing a session's own processes run can name the mesh session they work for except the provider's session variable or MAJORDOMUS_OWNER_SESSION, the pair mesh who reads (apps/majordomus-cli/src/mesh/who.rs). I4561 (feat/a-ledger-line-names-its-writer, in flight) writes it into every ledger line from that pair.",
+        "description": "Observed as defect about lib/capture.sh in episode s-20261108045745-9521.",
+        "path": ".ai/repo/knowledge/curated/s-20261108045745-9521-79c28fb49a88.md",
+        "section": "knowledge",
+        "source_class": "curated",
+        "bytes": 2059,
+        "tags": [
+          "derived",
+          "observation"
+        ]
+      },
+      {
+        "uri": "majordomus://knowledge/s-20261108045745-9521-bfe62a15cc27",
+        "kind": "knowledge",
+        "identity": "s-20261108045745-9521-bfe62a15cc27",
+        "title": "case 10_site_data showed plan delivery --at exiting 12 in its fixture on trains 29 to 32 and the seat read it as a host quirk; it was the real defect: #2946 (I3769) made scripts/site-build call the executable, pages.yml's deploy job has none, and master's first Pages run after train 32 (42339976144) died at build. A case that fails the same way on every top is a finding, never weather; CI's verdict was green only because CI's job had an executable. Fixed by #2959 (517211a54aa).",
+        "description": "Observed as defect about .ai/repo/skills/integrator/SKILL.md in episode s-20261108045745-9521.",
+        "path": ".ai/repo/knowledge/curated/s-20261108045745-9521-bfe62a15cc27.md",
+        "section": "knowledge",
+        "source_class": "curated",
+        "bytes": 2126,
+        "tags": [
+          "derived",
+          "observation"
+        ]
+      },
+      {
+        "uri": "majordomus://knowledge/s-20261108045745-9521-c4dfca260a84",
+        "kind": "knowledge",
+        "identity": "s-20261108045745-9521-c4dfca260a84",
+        "title": "merging master into an old branch (a repair lane, #2599 I4250, 2026-11-07) makes the pre-commit pages gate refuse scripts/derive's correct output: scripts/pages current runs generate --check over HEAD's history only, while derive (I3963) judged the two-parent merge, so master's new ADRs read as missing from the changelog. Until I4513 lands (fix/the-pages-gate-judges-a-merge-as-derive-writes-it, in flight), repair lanes build the merge on master: master the first parent, the branch the second, then move the branch to it (a fast-forward).",
+        "description": "Observed as repetition about scripts/pages in episode s-20261108045745-9521.",
+        "path": ".ai/repo/knowledge/curated/s-20261108045745-9521-c4dfca260a84.md",
+        "section": "knowledge",
+        "source_class": "curated",
+        "bytes": 2191,
         "tags": [
           "derived",
           "observation"
@@ -132356,7 +132446,7 @@
         "path": ".ai/repo/skills/integrator/SKILL.md",
         "section": "skills",
         "source_class": "skill",
-        "bytes": 15382,
+        "bytes": 16603,
         "tags": [
           "integration",
           "landing",
@@ -138869,7 +138959,7 @@
       "identity": [
         "id"
       ],
-      "objects": 186
+      "objects": 192
     },
     {
       "name": "mesh-declaration",

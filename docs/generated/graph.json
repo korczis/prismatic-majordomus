@@ -81456,12 +81456,12 @@
         "label": "s-20261015194158-7f51-f2e1b28d9060",
         "summary": "continuity resolve ran git merge-base --is-ancestor for every candidate handover and checkpoint and kept one: 23-31 s per cold read in the primary, which the session start brief waited on",
         "route": "/cockpit/objects/knowledge/s-20261015194158-7f51-f2e1b28d9060",
-        "source": ".ai/repo/knowledge/candidates/s-20261015194158-7f51-f2e1b28d9060.md",
-        "status": "candidate",
+        "source": ".ai/repo/knowledge/curated/s-20261015194158-7f51-f2e1b28d9060.md",
+        "status": "verified",
         "facts": {
           "about": "capability:continuity.state",
           "class": "lesson",
-          "date": "2026-10-19",
+          "date": "2026-11-08",
           "epistemics": "observed",
           "route": "platform",
           "tags": [
@@ -83961,6 +83961,126 @@
           "about": ".ai/repo/skills/integrator/SKILL.md",
           "class": "lesson",
           "date": "2026-11-06",
+          "epistemics": "observed",
+          "route": "project",
+          "tags": [
+            "derived",
+            "observation"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://knowledge/s-20261108045745-9521-5754615a4938",
+        "kind": "knowledge",
+        "label": "s-20261108045745-9521-5754615a4938",
+        "summary": "on 2026-11-07 06:41Z the release-path yield (I2710) cancelled the validate of #2959, the one pull request that fixed master's broken Pages deploy, in favour of a master Pages dispatch (42348388024) that could not succeed until #2959 landed; a yield to a deploy that is red for the reason the yielding pull request fixes is circular. gh run rerun --failed restored the run.",
+        "route": "/cockpit/objects/knowledge/s-20261108045745-9521-5754615a4938",
+        "source": ".ai/repo/knowledge/curated/s-20261108045745-9521-5754615a4938.md",
+        "status": "verified",
+        "facts": {
+          "about": ".ai/repo/skills/integrator/SKILL.md",
+          "class": "lesson",
+          "date": "2026-11-08",
+          "epistemics": "observed",
+          "route": "project",
+          "tags": [
+            "derived",
+            "observation"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://knowledge/s-20261108045745-9521-616442397958",
+        "kind": "knowledge",
+        "label": "s-20261108045745-9521-616442397958",
+        "summary": "every master pages.yml run from ddae9e192a4 (train 32, 2026-11-07) to d7fd9a36170 failed, eight in a row (push, schedule and dispatch; the latest 42433055144 on 2026-11-08 01:10Z), in deploy/check on one line, FAIL product: the hero names delivery inferred at ddae9e192a4 and the clean build was made from d7fd9a36170 (I3769): after #2959 the deploy job builds without an executable and reads the committed delivery.json. The site stayed at 5ca0bec, 48 commits behind. #2960, the fix, then failed its own validate pages job on 'the site owes a publication' (run 42410525008, its only FAIL), and the failed-branch step cancelled the run, so its ci went red: a pages red on a pull request that fixes the deploy is master's state and circular. Diagnose with gh run list --workflow pages.yml before blaming a pull request.",
+        "route": "/cockpit/objects/knowledge/s-20261108045745-9521-616442397958",
+        "source": ".ai/repo/knowledge/curated/s-20261108045745-9521-616442397958.md",
+        "status": "verified",
+        "facts": {
+          "about": ".ai/repo/skills/integrator/SKILL.md",
+          "class": "lesson",
+          "date": "2026-11-08",
+          "epistemics": "observed",
+          "route": "project",
+          "tags": [
+            "derived",
+            "observation"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://knowledge/s-20261108045745-9521-7948b6013773",
+        "kind": "knowledge",
+        "label": "s-20261108045745-9521-7948b6013773",
+        "summary": "on 2026-11-07 23:03Z this repository's shared server restarted on 127.0.0.1:49427 because another repository's server on the machine held 8741, the default both derive for a primary checkout; the landing seat's MCP client reattached to 8741 after a re-login and sent its seat claims and beats to the other repository's mesh, so this repository's landing and release seats were unheld until about 00:55Z, and curl reads of 127.0.0.1:8741 answered the other repository's data. Read the address from server.status (this_process.url) and check /api/v1/repository names this checkout before trusting an answer or claiming a seat.",
+        "route": "/cockpit/objects/knowledge/s-20261108045745-9521-7948b6013773",
+        "source": ".ai/repo/knowledge/curated/s-20261108045745-9521-7948b6013773.md",
+        "status": "verified",
+        "facts": {
+          "about": "docs/MCP.md",
+          "class": "lesson",
+          "date": "2026-11-08",
+          "epistemics": "observed",
+          "route": "documentation",
+          "tags": [
+            "derived",
+            "observation"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://knowledge/s-20261108045745-9521-79c28fb49a88",
+        "kind": "knowledge",
+        "label": "s-20261108045745-9521-79c28fb49a88",
+        "summary": "the session start opens a mesh session as <provider>-<provider session> (mj_capture_mesh_join, lib/capture.sh) and exports no variable naming it, so nothing a session's own processes run can name the mesh session they work for except the provider's session variable or MAJORDOMUS_OWNER_SESSION, the pair mesh who reads (apps/majordomus-cli/src/mesh/who.rs). I4561 (feat/a-ledger-line-names-its-writer, in flight) writes it into every ledger line from that pair.",
+        "route": "/cockpit/objects/knowledge/s-20261108045745-9521-79c28fb49a88",
+        "source": ".ai/repo/knowledge/curated/s-20261108045745-9521-79c28fb49a88.md",
+        "status": "verified",
+        "facts": {
+          "about": "lib/capture.sh",
+          "class": "lesson",
+          "date": "2026-11-08",
+          "epistemics": "observed",
+          "route": "project",
+          "tags": [
+            "derived",
+            "observation"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://knowledge/s-20261108045745-9521-bfe62a15cc27",
+        "kind": "knowledge",
+        "label": "s-20261108045745-9521-bfe62a15cc27",
+        "summary": "case 10_site_data showed plan delivery --at exiting 12 in its fixture on trains 29 to 32 and the seat read it as a host quirk; it was the real defect: #2946 (I3769) made scripts/site-build call the executable, pages.yml's deploy job has none, and master's first Pages run after train 32 (42339976144) died at build. A case that fails the same way on every top is a finding, never weather; CI's verdict was green only because CI's job had an executable. Fixed by #2959 (517211a54aa).",
+        "route": "/cockpit/objects/knowledge/s-20261108045745-9521-bfe62a15cc27",
+        "source": ".ai/repo/knowledge/curated/s-20261108045745-9521-bfe62a15cc27.md",
+        "status": "verified",
+        "facts": {
+          "about": ".ai/repo/skills/integrator/SKILL.md",
+          "class": "lesson",
+          "date": "2026-11-08",
+          "epistemics": "observed",
+          "route": "project",
+          "tags": [
+            "derived",
+            "observation"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://knowledge/s-20261108045745-9521-c4dfca260a84",
+        "kind": "knowledge",
+        "label": "s-20261108045745-9521-c4dfca260a84",
+        "summary": "merging master into an old branch (a repair lane, #2599 I4250, 2026-11-07) makes the pre-commit pages gate refuse scripts/derive's correct output: scripts/pages current runs generate --check over HEAD's history only, while derive (I3963) judged the two-parent merge, so master's new ADRs read as missing from the changelog. Until I4513 lands (fix/the-pages-gate-judges-a-merge-as-derive-writes-it, in flight), repair lanes build the merge on master: master the first parent, the branch the second, then move the branch to it (a fast-forward).",
+        "route": "/cockpit/objects/knowledge/s-20261108045745-9521-c4dfca260a84",
+        "source": ".ai/repo/knowledge/curated/s-20261108045745-9521-c4dfca260a84.md",
+        "status": "verified",
+        "facts": {
+          "about": "scripts/pages",
+          "class": "lesson",
+          "date": "2026-11-08",
           "epistemics": "observed",
           "route": "project",
           "tags": [
@@ -150042,6 +150162,36 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://knowledge/s-20261108045745-9521-5754615a4938",
+        "target": "kind:knowledge",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://knowledge/s-20261108045745-9521-616442397958",
+        "target": "kind:knowledge",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://knowledge/s-20261108045745-9521-7948b6013773",
+        "target": "kind:knowledge",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://knowledge/s-20261108045745-9521-79c28fb49a88",
+        "target": "kind:knowledge",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://knowledge/s-20261108045745-9521-bfe62a15cc27",
+        "target": "kind:knowledge",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://knowledge/s-20261108045745-9521-c4dfca260a84",
+        "target": "kind:knowledge",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://knowledge/start-here",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -161813,8 +161963,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4422,
-      "edges": 10037,
+      "nodes": 4428,
+      "edges": 10043,
       "acyclic": false,
       "truncated": false
     }
