@@ -63,6 +63,10 @@ fields:
   # is then one of approved, changes_requested, commented, so a credential there is refused
   EventBody.ReviewAnswered.verdict: redacted
   EventBody.ReviewAnswered.note: redacted
+  EventBody.ReviewDeclined.request: clear
+  EventBody.ReviewDeclined.session: clear
+  # mesh::cooperation::decline_review passes the note through redact_secrets (I4327)
+  EventBody.ReviewDeclined.note: redacted
   EventBody.ReviewWithdrawn.request: clear
   EventBody.ReviewWithdrawn.session: clear
   # mesh::cooperation::withdraw_review passes the note through redact_secrets
@@ -87,6 +91,13 @@ fields:
   SessionInfo.context: clear
   SessionInfo.client_pid: clear
   SessionInfo.client_started: clear
+  # a container: its fields are decided under ReviewMandate below (I4327)
+  SessionInfo.reviews: clear
+  # ------------------------------------------------------------- ReviewMandate (SessionInfo.reviews)
+  # mesh repository ids (32 hex) and repository-relative path prefixes, both bounded by
+  # EventBody::validate: identifiers and paths inside the repository, never free text
+  ReviewMandate.repositories: clear
+  ReviewMandate.paths: clear
   # ------------------------------------------------------------- HandoverBody (handover_published)
   HandoverBody.id: clear
   HandoverBody.task: clear

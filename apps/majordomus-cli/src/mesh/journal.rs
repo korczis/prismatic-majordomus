@@ -503,6 +503,17 @@ impl ReviewMandate {
     /// session opened in `session_repo`. A path-limited mandate covers a request only when
     /// every path of its scope lies under one of the mandate's prefixes; a request with no
     /// scope is about the whole tree, which only an unlimited mandate covers.
+    ///
+    /// ```
+    /// use majordomus_cli::mesh::journal::ReviewMandate;
+    ///
+    /// let docs = ReviewMandate { repositories: vec![], paths: vec!["docs/".into()] };
+    /// assert!(docs.covers("r", "r", &["docs/MESH.md".into(), "docs".into()]));
+    /// assert!(!docs.covers("r", "r", &["docs/MESH.md".into(), "README.md".into()]),
+    ///     "every path of the scope, not one of them");
+    /// assert!(!docs.covers("r", "other", &["docs/MESH.md".into()]),
+    ///     "no named repository: only the one the session opened in");
+    /// ```
     pub fn covers(&self, request_repo: &str, session_repo: &str, scope: &[String]) -> bool {
         let repository = if self.repositories.is_empty() {
             request_repo == session_repo

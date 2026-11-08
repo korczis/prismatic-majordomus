@@ -1151,7 +1151,6 @@ majordomus mesh handover publish --issue '#184'
 majordomus mesh handover consume <id> --session s2
 majordomus mesh review request feature/x --session s1 --reviewer <runtime>
 majordomus mesh review answer <request-key> --session s2 --verdict approved
-majordomus mesh session open --session s3 --reviews-path apps/majordomus-cli/src/mesh   # s3 reviews the mesh's code
 majordomus mesh review answer <request-key> --session s3 --verdict declined --note 'outside my mandate today'
 majordomus mesh review withdraw <request-key> --session s1 --note 'superseded by the rebuilt head'
 ```

@@ -4730,7 +4730,7 @@ impl Cooperation {
     /// The open review requests nobody may answer (I4327), each as the finding every surface
     /// prints: `review_no_eligible_reviewer <repository> <request>`. The repository is this
     /// journal's mesh repository id, the one every request of the journal belongs to.
-    pub fn reviews_without_reviewer(&self) -> Vec<String> {
+    pub(crate) fn reviews_without_reviewer(&self) -> Vec<String> {
         crate::mesh::state::review_findings(&self.state(), self.journal.repository())
     }
 
