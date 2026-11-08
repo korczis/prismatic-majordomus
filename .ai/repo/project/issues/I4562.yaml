@@ -1,0 +1,27 @@
+id: I4562
+milestone: a-session-proceeds-through-the-mesh
+title: "proceed never hands out an issue already in flight on a pushed branch or an open pull request"
+slug: proceed-skips-work-in-flight
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "proceed.plan and proceed.step hold an issue that plan.delivery finds at stage branch or pr_open as held by the work in flight, naming the branch or the pull request, whether or not its author still holds a live mesh claim or a board announcement."
+why: "On 2026-11-08 at 00:20Z proceed.step ordered `devtask.implement I1201` while I1201 was already pull request #2971 (branch feature/I1201-identity-provider-kind, head bff711a6b03, opened 2026-11-07T19:25Z by another session). devtask.implement found the worktree existing and started a second execution (x-20261108T002022Z-9779ac29, cancelled by hand). The author's session had ended, so no mesh claim or board announcement named the issue, and those are the only two hold sources proceed reads. project.work-is-claimed-before-it-is-built says a branch pushed before a session started carries no announcement and no less of a claim; the plan's own delivery reading already knows the stage. The owner ordered it filed the same day, in Claude Code session 6a3ec53c-4378-46bf-aff7-bebb144c92ca at about 00:40Z, in these words: \"ano zaloz issue na proceed bug\" (yes, file an issue for the proceed bug)."
+current_state: "apps/majordomus-cli/src/capability/builtin/proceed.rs collects holds from three sources only, `plan`, `board` and `mesh` (board_holds, mesh_holds); candidate() refuses a READY issue only for a live mesh claim naming it, a board announcement naming it, or an exclusive scope that meets its scope. plan.delivery's stages (branch, pr_open) are not read."
+desired_state: "A fourth hold source, `delivery`, reads the issues plan.delivery places at stage branch or pr_open and refuses them as candidates with a constraint that names the branch or the pull request and its head; the source reports itself unread (never empty) when the forge or the refs could not be read, as the other sources do; the caller's own branch does not hold against it."
+scope:
+  - "apps/majordomus-cli/src/capability/builtin/proceed.rs"
+  - "apps/majordomus-cli/src/capability/builtin/proceed/step.rs"
+depends_on: []
+acceptance_criteria:
+  - "An issue whose only trace is an open pull request (no mesh claim, no board announcement) is not ordered by proceed.step, and the refusal names the pull request and its head"
+  - "An issue whose only trace is a pushed branch that names it is not ordered either, and the refusal names the branch"
+  - "When the delivery reading cannot be done, the `delivery` source says unread with the reason, and the decision is marked provisional rather than treating the issue as free"
+  - "The caller's own branch and pull request do not hold the issue against the caller"
+validation:
+  - "majordomus plan validate"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib capability::builtin::proceed"
+evidence_required:
+  - "proceed_skips_an_issue_in_flight_test"
+created_at: 2026-11-08
+updated_at: 2026-11-08

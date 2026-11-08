@@ -80530,6 +80530,41 @@
         }
       },
       {
+        "id": "majordomus://issue/I4562",
+        "kind": "issue",
+        "label": "I4562",
+        "summary": "proceed never hands out an issue already in flight on a pushed branch or an open pull request",
+        "route": "/cockpit/objects/issue/i4562",
+        "source": ".ai/repo/project/issues/I4562.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "An issue whose only trace is an open pull request (no mesh claim, no board announcement) is not ordered by proceed.step, and the refusal names the pull request and its head",
+            "An issue whose only trace is a pushed branch that names it is not ordered either, and the refusal names the branch",
+            "When the delivery reading cannot be done, the `delivery` source says unread with the reason, and the decision is marked provisional rather than treating the issue as free",
+            "The caller's own branch and pull request do not hold the issue against the caller"
+          ],
+          "created_at": "2026-11-08",
+          "depends_on": [],
+          "evidence_required": [
+            "proceed_skips_an_issue_in_flight_test"
+          ],
+          "milestone": "a-session-proceeds-through-the-mesh",
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/capability/builtin/proceed.rs",
+            "apps/majordomus-cli/src/capability/builtin/proceed/step.rs"
+          ],
+          "slug": "proceed-skips-work-in-flight",
+          "updated_at": "2026-11-08",
+          "validation": [
+            "majordomus plan validate",
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib capability::builtin::proceed"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "label": "a-brief-is-reconciled-not-transcribed",
@@ -149157,6 +149192,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I4562",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4562",
+        "target": "majordomus://milestone/a-session-proceeds-through-the-mesh",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -161813,8 +161858,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4422,
-      "edges": 10037,
+      "nodes": 4423,
+      "edges": 10039,
       "acyclic": false,
       "truncated": false
     }
