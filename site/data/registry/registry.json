@@ -6,7 +6,7 @@
     "version": "1.0.0"
   },
   "registry": {
-    "fingerprint": "5a10c729a174359db99b1eba4d2229141a920bf87c7f10c21b702b842e6c1ba6",
+    "fingerprint": "19c593d72bf1a266d8efe6685e89c5d6bceadd604c37ff01daaf1a4b772837f1",
     "summary": {
       "total": 3952,
       "builtin": 231,
@@ -71110,7 +71110,7 @@
         "module": "proceed",
         "kind": "query",
         "title": "What to proceed with, and why",
-        "description": "The READY issues in the plan's hand-out order (the asked milestone first, then wave, priority and id, as `plan.next`), each refused when another worker holds it: a live mesh claim names it as its issue or a hold claims its record (`claimed`), a board or mesh announcement names its id as a word of its own (`named`, quoted beside it), a live exclusive mesh claim of another session meets its scope (`scope_held`), or `plan.delivery` places it at stage `branch` or `pr_open` on a branch or an open pull request that is not the caller's (`in_flight`, naming the pull request and its head or the branch and its commit, whether or not its author still holds a claim); advisory holds over its scope are listed as `shared_with` and refuse nothing. The first issue nothing refuses is `selected`, with what it unblocks, what finishes it and the commands that take it; `reason` says why in one sentence, and `sources` whether the plan, the board, the mesh and the delivery could be read. A decision that could not read the board, a declared mesh, or the branches and the forge the delivery reads, is `provisional` and gives no commands. The caller's own session (its mesh claims on this runtime, its board announcements, and the branch checked out where the decision is composed or on its board peer's checkout) is never held against it; a session of the same name on another runtime is another worker. Composed by the server holding this checkout's lease, which holds the board and the mesh; the command line asks it. Writes nothing.",
+        "description": "The READY issues in the plan's hand-out order (the asked milestone first, then wave, priority and id, as `plan.next`), each refused when another worker holds it: a live mesh claim names it as its issue or a hold claims its record (`claimed`), a board or mesh announcement names its id as a word of its own (`named`, quoted beside it), a live exclusive mesh claim of another session meets its scope (`scope_held`), or `plan.delivery` places it at stage `branch` or `pr_open` on a branch or an open pull request that is not the caller's (`in_flight`, naming the pull request and its head or the branch and its commit, whether or not its author still holds a claim); advisory holds over its scope are listed as `shared_with` and refuse nothing. The first issue nothing refuses is `selected`, with what it unblocks, what finishes it and the commands that take it; `reason` says why in one sentence, and `sources` whether the plan, the board, the mesh and the delivery could be read. A decision that could not read the board, a declared mesh, or the delivery at all (`plan.delivery` did not answer, or neither its branches nor its forge were read), is `provisional` and gives no commands; a delivery read in part (a forge never observed from this checkout) is `partial`, names what it missed, and still decides with the holds it read. The caller's own session (its mesh claims on this runtime, its board announcements, and the branch checked out where the decision is composed or on its board peer's checkout) is never held against it; a session of the same name on another runtime is another worker. Composed by the server holding this checkout's lease, which holds the board and the mesh; the command line asks it. Writes nothing.",
         "input": {
           "name": "ProceedPlanInput",
           "schema": {
@@ -97883,7 +97883,7 @@
     ]
   },
   "index": {
-    "fingerprint": "775a81369d1cf14d94a700ae6619633d2501e0e954e980faf16d78891fedf732",
+    "fingerprint": "6ed9a3ca397927cf5869b46e291e77d248eb415b5f3821aca66e07d7edfd0058",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -135190,7 +135190,7 @@
         "identity": "test/cases/3441_the_choice_ranks_by_what_it_unblocks.sh",
         "path": "test/cases/3441_the_choice_ranks_by_what_it_unblocks.sh",
         "source_class": "case",
-        "bytes": 5980
+        "bytes": 5550
       },
       {
         "uri": "majordomus://test/test/cases/3460_a_session_end_hook_fits_its_budget.sh",
@@ -135958,7 +135958,7 @@
         "identity": "test/cases/4005_proceed_step_is_one_idempotent_work_order.sh",
         "path": "test/cases/4005_proceed_step_is_one_idempotent_work_order.sh",
         "source_class": "case",
-        "bytes": 13973
+        "bytes": 13543
       },
       {
         "uri": "majordomus://test/test/cases/4007_an_idle_server_leaves_by_itself.sh",
@@ -177923,7 +177923,7 @@
         "name": "majordomus_proceed_plan",
         "id": "proceed.plan",
         "title": "What to proceed with, and why",
-        "description": "The READY issues in the plan's hand-out order (the asked milestone first, then wave, priority and id, as `plan.next`), each refused when another worker holds it: a live mesh claim names it as its issue or a hold claims its record (`claimed`), a board or mesh announcement names its id as a word of its own (`named`, quoted beside it), a live exclusive mesh claim of another session meets its scope (`scope_held`), or `plan.delivery` places it at stage `branch` or `pr_open` on a branch or an open pull request that is not the caller's (`in_flight`, naming the pull request and its head or the branch and its commit, whether or not its author still holds a claim); advisory holds over its scope are listed as `shared_with` and refuse nothing. The first issue nothing refuses is `selected`, with what it unblocks, what finishes it and the commands that take it; `reason` says why in one sentence, and `sources` whether the plan, the board, the mesh and the delivery could be read. A decision that could not read the board, a declared mesh, or the branches and the forge the delivery reads, is `provisional` and gives no commands. The caller's own session (its mesh claims on this runtime, its board announcements, and the branch checked out where the decision is composed or on its board peer's checkout) is never held against it; a session of the same name on another runtime is another worker. Composed by the server holding this checkout's lease, which holds the board and the mesh; the command line asks it. Writes nothing.",
+        "description": "The READY issues in the plan's hand-out order (the asked milestone first, then wave, priority and id, as `plan.next`), each refused when another worker holds it: a live mesh claim names it as its issue or a hold claims its record (`claimed`), a board or mesh announcement names its id as a word of its own (`named`, quoted beside it), a live exclusive mesh claim of another session meets its scope (`scope_held`), or `plan.delivery` places it at stage `branch` or `pr_open` on a branch or an open pull request that is not the caller's (`in_flight`, naming the pull request and its head or the branch and its commit, whether or not its author still holds a claim); advisory holds over its scope are listed as `shared_with` and refuse nothing. The first issue nothing refuses is `selected`, with what it unblocks, what finishes it and the commands that take it; `reason` says why in one sentence, and `sources` whether the plan, the board, the mesh and the delivery could be read. A decision that could not read the board, a declared mesh, or the delivery at all (`plan.delivery` did not answer, or neither its branches nor its forge were read), is `provisional` and gives no commands; a delivery read in part (a forge never observed from this checkout) is `partial`, names what it missed, and still decides with the holds it read. The caller's own session (its mesh claims on this runtime, its board announcements, and the branch checked out where the decision is composed or on its board peer's checkout) is never held against it; a session of the same name on another runtime is another worker. Composed by the server holding this checkout's lease, which holds the board and the mesh; the command line asks it. Writes nothing.",
         "kind": "query",
         "read_only": true,
         "effect": "read",

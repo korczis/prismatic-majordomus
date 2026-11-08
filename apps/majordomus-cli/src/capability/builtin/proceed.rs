@@ -44,8 +44,8 @@
 //! # A decision over a source it could not read
 //!
 //! A decision that could not read the board, the mesh of a repository that declares one, or
-//! the delivery of the plan's issues (no history, no refs, a forge never observed), still
-//! names the issue it would select, and says it is `provisional`: the claims it did not
+//! the delivery of the plan's issues at all (`plan.delivery` did not answer, or neither its
+//! refs nor its forge were read), still names the issue it would select, and says it is `provisional`: the claims it did not
 //! read may hold that issue. Its `next` is then empty and the command line exits 11, so that
 //! neither a person nor an acting command takes work on the strength of a partial read. A
 //! repository that declares no enabled mesh has no mesh to miss, and that source is
@@ -294,13 +294,15 @@ pub(crate) fn decide(
         .iter()
         .take_while(|c| !c.refused.is_empty())
         .count();
+    // a delivery read in part (a forge never observed from this checkout, as most are) still
+    // decides: its holds apply, and the source names what it missed; only one that could not
+    // be read at all leaves the decision provisional
     let unread: Vec<&str> = sources
         .iter()
-        .filter(|s| {
-            matches!(
-                s.state,
-                ProceedSourceState::Partial | ProceedSourceState::Unread
-            )
+        .filter(|s| match s.state {
+            ProceedSourceState::Unread => true,
+            ProceedSourceState::Partial => s.source != "delivery",
+            _ => false,
         })
         .map(|s| s.source.as_str())
         .collect();
@@ -777,8 +779,9 @@ fn delivery_holds(ctx: &Context, own: &[String], holds: &mut Vec<Hold>) -> Proce
 /// The holds of the work in flight in a delivery reading: every issue at stage `pr_open`,
 /// held by its pull request, and at stage `branch`, held by its branch, unless that pull
 /// request's head or that branch is one of `own` (a remote-tracking ref is its branch without
-/// the remote). Pure. The source is partial when the refs or the forge were not read: an issue
-/// they could have placed in flight is then not known to be free.
+/// the remote). Pure. The source is partial when one of the refs or the forge was not read,
+/// naming it: the holds read still apply and the decision is not made provisional by it.
+/// Neither read is unread, and that does make it provisional.
 fn in_flight(report: &IssueDeliveryReport, own: &[String], holds: &mut Vec<Hold>) -> ProceedSource {
     let mine = |name: &str| own.iter().any(|o| o == name);
     let before = holds.len();
@@ -907,7 +910,7 @@ pub fn module() -> ModuleDescriptor {
             capability! {
                 id: "proceed.plan",
                 title: "What to proceed with, and why",
-                description: "The READY issues in the plan's hand-out order (the asked milestone first, then wave, priority and id, as `plan.next`), each refused when another worker holds it: a live mesh claim names it as its issue or a hold claims its record (`claimed`), a board or mesh announcement names its id as a word of its own (`named`, quoted beside it), a live exclusive mesh claim of another session meets its scope (`scope_held`), or `plan.delivery` places it at stage `branch` or `pr_open` on a branch or an open pull request that is not the caller's (`in_flight`, naming the pull request and its head or the branch and its commit, whether or not its author still holds a claim); advisory holds over its scope are listed as `shared_with` and refuse nothing. The first issue nothing refuses is `selected`, with what it unblocks, what finishes it and the commands that take it; `reason` says why in one sentence, and `sources` whether the plan, the board, the mesh and the delivery could be read. A decision that could not read the board, a declared mesh, or the branches and the forge the delivery reads, is `provisional` and gives no commands. The caller's own session (its mesh claims on this runtime, its board announcements, and the branch checked out where the decision is composed or on its board peer's checkout) is never held against it; a session of the same name on another runtime is another worker. Composed by the server holding this checkout's lease, which holds the board and the mesh; the command line asks it. Writes nothing.",
+                description: "The READY issues in the plan's hand-out order (the asked milestone first, then wave, priority and id, as `plan.next`), each refused when another worker holds it: a live mesh claim names it as its issue or a hold claims its record (`claimed`), a board or mesh announcement names its id as a word of its own (`named`, quoted beside it), a live exclusive mesh claim of another session meets its scope (`scope_held`), or `plan.delivery` places it at stage `branch` or `pr_open` on a branch or an open pull request that is not the caller's (`in_flight`, naming the pull request and its head or the branch and its commit, whether or not its author still holds a claim); advisory holds over its scope are listed as `shared_with` and refuse nothing. The first issue nothing refuses is `selected`, with what it unblocks, what finishes it and the commands that take it; `reason` says why in one sentence, and `sources` whether the plan, the board, the mesh and the delivery could be read. A decision that could not read the board, a declared mesh, or the delivery at all (`plan.delivery` did not answer, or neither its branches nor its forge were read), is `provisional` and gives no commands; a delivery read in part (a forge never observed from this checkout) is `partial`, names what it missed, and still decides with the holds it read. The caller's own session (its mesh claims on this runtime, its board announcements, and the branch checked out where the decision is composed or on its board peer's checkout) is never held against it; a session of the same name on another runtime is another worker. Composed by the server holding this checkout's lease, which holds the board and the mesh; the command line asks it. Writes nothing.",
                 input: ProceedPlanInput,
                 output: ProceedDecision,
                 stability: Stability::BehaviorallyVerified,
@@ -2209,9 +2212,19 @@ mod tests {
         );
         can("peers.list", None);
 
-        // a forge never observed: an open pull request cannot be ruled out
-        let (source, _) = holds_of(
-            report(vec![flight("I0001", "none", None, None)], &["forge"]),
+        // a forge never observed: the source is partial and names what it missed, a pushed
+        // branch still holds, and the decision is final
+        let two = planned(&[("I0001", &[], &["src/a"]), ("I0002", &[], &["src/b"])]);
+        let (source, holds) = holds_of(
+            report(
+                vec![flight(
+                    "I0001",
+                    "branch",
+                    None,
+                    Some(("origin/feature/I0001-x", true)),
+                )],
+                &["forge"],
+            ),
             &[],
         );
         assert_eq!(source.state, ProceedSourceState::Partial);
@@ -2222,11 +2235,24 @@ mod tests {
             "{}",
             source.summary
         );
-        let d = decide(&plan_of(&repo), None, None, &[], vec![source]);
-        assert!(d.provisional && d.next.is_empty(), "{}", d.reason);
+        let d = decide(&plan_of(&two), None, None, &holds, vec![source]);
+        assert!(!d.provisional && d.next.len() == 3, "{}", d.reason);
+        let r = &d.candidates[0].refused[0];
+        assert_eq!(
+            (r.constraint, r.hold.as_str()),
+            (
+                ProceedConstraint::InFlight,
+                "delivery:branch:origin/feature/I0001-x"
+            )
+        );
+        assert_eq!(d.selected.map(|c| c.issue).as_deref(), Some("I0002"));
+        let partial = &d.sources[0];
+        assert!(partial.summary.contains("forge"), "{}", partial.summary);
         // neither the refs nor the forge: nothing of the work in flight was read
         let (source, _) = holds_of(report(vec![], &["branches", "forge"]), &[]);
         assert_eq!(source.state, ProceedSourceState::Unread);
+        let d = decide(&plan_of(&two), None, None, &[], vec![source]);
+        assert!(d.provisional && d.next.is_empty(), "{}", d.reason);
     }
 
     #[test]

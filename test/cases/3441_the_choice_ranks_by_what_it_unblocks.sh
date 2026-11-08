@@ -30,13 +30,6 @@ pj_issue I0003 M000 I0002
 pj_issue I0004 M000 I0002
 pj_issue I0008 M000 I0003 I0004
 git add -A >/dev/null && git commit -qm plan >/dev/null
-# the forge observed with no pull request open: proceed.plan's delivery source reads it (I4562)
-mkdir -p .ai/local/state/integration
-cat > .ai/local/state/integration/observation.json <<'J'
-{"schema":4,"repository":"o/fixture","base":"master",
- "base_sha":"0000000000000000000000000000000000000000","observed_at":"2026-11-08T00:00:00Z",
- "required_checks":null,"review_policy":null,"merge_methods":["merge"],"pull_requests":[]}
-J
 
 shell_next() { "$MJ" plan next 2>/dev/null | grep -oE 'I[0-9]+' | head -n 1; }
 rust_next() { "$RB" proceed plan --format json 2>/dev/null | jq -r '.selected.issue // empty'; }
