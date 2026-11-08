@@ -10,7 +10,8 @@
 # ADR 0220 moved one line of it: the mesh client speaks TLS to an `https://` hub, through
 # rustls over ring with webpki-roots compiled in. Those three are argued for; every other TLS
 # stack, the async adaptors over rustls, and aws-lc (rustls's default provider, which the musl
-# release builds cannot carry) are still refused, and step 2 holds that.
+# release builds cannot carry) are still refused, and step 2 holds that. ADR 0233 moved one
+# more: tokio, the runtime quinn needs, passes only while src/mesh/quic.rs alone names it.
 #
 # Every assertion below runs against a fixture tree, never against this checkout's own
 # manifest: the gate takes MJ_ROOT, so a case can plant a forbidden dependency without
@@ -45,7 +46,7 @@ fixture() { # -> prints a fresh tree's root
 
 # ------------------------------------------------------------------ 1. the tree passes
 expect_exit 0 env MJ_ROOT="$ROOT" "$GATE"
-expect_grep 'links no async runtime, HTTP client, CDP client or TLS stack but rustls over ring'
+expect_grep 'links no HTTP client, CDP client or TLS stack but rustls over ring and no async runtime but tokio'
 
 # ------------------------------------------------------------------ 2. the lock is read
 # `jsonschema` is taken with `default-features = false` because "nothing may resolve over
@@ -61,6 +62,20 @@ d="$(fixture lock2)"
 printf '\n[[package]]\nname = "tokio"\nversion = "1.0.0"\n' >> "$d/apps/majordomus-cli/Cargo.lock"
 expect_exit 10 env MJ_ROOT="$d" "$GATE"
 expect_grep 'tokio is an async runtime'
+
+# ADR 0233 admits one runtime, tokio (and the mio under it), as the QUIC adapter's private
+# machinery: it passes while src/mesh/quic.rs names tokio and no other Rust file of the crate
+# does. The fixture above has no source at all, which is why its tokio is refused; this one
+# is given the adapter, and then a second file that reaches for the runtime.
+d="$(fixture runtime)"
+mkdir -p "$d/apps/majordomus-cli/src/mesh"
+printf 'use tokio::runtime::Runtime;\n' > "$d/apps/majordomus-cli/src/mesh/quic.rs"
+expect_exit 0 env MJ_ROOT="$d" "$GATE"
+expect_grep 'no async runtime but tokio, named by src/mesh/quic.rs alone'
+printf 'fn main() { tokio::spawn(async {}); }\n' > "$d/apps/majordomus-cli/src/other.rs"
+expect_exit 10 env MJ_ROOT="$d" "$GATE"
+expect_grep 'tokio is an async runtime'
+expect_grep 'apps/majordomus-cli/src/other.rs names tokio'
 
 d="$(fixture lock3)"
 printf '\n[[package]]\nname = "openssl"\nversion = "0.10.0"\n' >> "$d/apps/majordomus-cli/Cargo.lock"

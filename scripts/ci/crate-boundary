@@ -11,7 +11,16 @@
 # `https://` rendezvous or seed over TLS (the owner's "TLS first", 2026-10-21; ADR 0032's
 # amendment of that date). The TLS stack it allows is rustls over the ring provider, with
 # webpki-roots compiled in — no OpenSSL, no native-tls, no aws-lc, no async TLS adaptor — and
-# the HTTP framing stays the crate's own few lines. Everything else here stands as written.
+# the HTTP framing stays the crate's own few lines.
+#
+# ADR 0233 moved one more line, and only for one file: a mesh link may run over QUIC (the
+# owner's "hned" to QUIC now, 2026-11-08; ADR 0032's amendment of that date). quinn needs a
+# runtime, so tokio (rt-multi-thread, net, time, sync) and the mio under it are in the lock —
+# but the runtime is owned by the QUIC adapter, and no file of the crate but
+# src/mesh/quic.rs may name tokio. The gate measures that containment, so the async runtime
+# is admitted as one adapter's private machinery, never as the crate's way of working; every
+# other runtime, every tokio-* adaptor, every HTTP client and CDP client stays refused.
+# Everything else here stands as written.
 #
 # and, in its consequences:
 #
@@ -102,7 +111,10 @@ proc-macro2           span locations, so a quality finding can name a line
 ed25519-dalek         mesh identity: signatures only, no encryption, no TLS, no key exchange
 rustls                the mesh client's TLS to an https:// hub or seed (ADR 0220); ring provider only
 webpki-roots          the Mozilla roots that TLS verifies against, compiled in: no system store needed
-getrandom             OS entropy for the node's signing key and instance ids
+quinn                 the mesh link's QUIC transport (ADR 0233), on the rustls and ring above
+tokio                 quinn's runtime, owned by src/mesh/quic.rs and named nowhere else (ADR 0233)
+rcgen                 the node key's self-signed certificate for QUIC (ADR 0233); the TLS tests' CA
+getrandom            OS entropy for the node's signing key and instance ids
 regex                 applies the leak patterns as the grep gates do; already linked via jsonschema
 tiktoken-rs           the tokenizer economics counts with: o200k_base, embedded, no network
 rhai                  the sandboxed engine a scripted capability runs in (ADR 0069)
@@ -110,7 +122,6 @@ tempfile              tests and benches that need a scratch tree
 criterion             the benchmark harness
 proptest              the property-based harnesses
 majordomus-core       the portable core (ADR 0170), a path dependency taking only serde_json and sha2
-rcgen                 the TLS tests mint a certificate authority in memory; a dev-dependency only
 "
 
 # ------------------------------------------------------------------ the forbidden set
@@ -134,6 +145,22 @@ forbidden_category() { # crate name -> category, or empty
     *) : ;;
   esac
 }
+
+# The one async runtime ADR 0233 admits, and the only place it may be named. tokio and the
+# mio under it pass only while src/mesh/quic.rs names tokio and no other Rust file of the
+# crate (src/, tests/, benches/) does; a tree without that file — or a second file reaching
+# for the runtime — is the crate turning async, which is what ADR 0032 refuses.
+QUIC_ADAPTER="$CRATE/src/mesh/quic.rs"
+runtime_outside="" # the files that name tokio outside the adapter, one per line
+runtime_contained() { # -> 0 when the runtime is held inside the QUIC adapter alone
+  [ -f "$QUIC_ADAPTER" ] && grep -qw tokio "$QUIC_ADAPTER" || return 1
+  [ -z "$runtime_outside" ]
+}
+runtime_outside="$(
+  for dir in "$CRATE/src" "$CRATE/tests" "$CRATE/benches"; do
+    [ -d "$dir" ] && grep -rlw --include='*.rs' tokio "$dir" || true
+  done | grep -vx "$QUIC_ADAPTER" | LC_ALL=C sort || true
+)"
 
 # ------------------------------------------------------------------ 1. the list did not grow
 #
@@ -180,6 +207,9 @@ crossed=""
 while IFS= read -r pkg; do
   [ -n "$pkg" ] || continue
   what="$(forbidden_category "$pkg")"
+  case "$pkg" in
+    tokio|mio) runtime_contained && continue ;;
+  esac
   [ -n "$what" ] && crossed="$crossed$pkg	$what
 "
 done <<EOF
@@ -191,7 +221,7 @@ locked="$(awk -F'"' '/^name = "/ { print $2 }' "$LOCK" | LC_ALL=C sort -u | grep
 declared_n="$(printf '%s\n' "$declared" | grep -c '[^[:space:]]' || true)"
 
 if [ -z "$grew" ] && [ -z "$crossed" ]; then
-  echo "crate-boundary: the crate declares $declared_n dependency(ies), all argued for, and links no async runtime, HTTP client, CDP client or TLS stack but rustls over ring ($locked package(s) in the lock)"
+  echo "crate-boundary: the crate declares $declared_n dependency(ies), all argued for, and links no HTTP client, CDP client or TLS stack but rustls over ring and no async runtime but tokio, named by src/mesh/quic.rs alone (ADR 0233; $locked package(s) in the lock)"
   exit 0
 fi
 
@@ -207,6 +237,17 @@ if [ -n "$crossed" ]; then
     echo "  fix:   put the transport in scripts/lib/*.mjs, or turn off the feature that pulled" >&2
     echo "         this in (jsonschema is taken with default-features = false for this reason)." >&2
     echo "         If the boundary itself should move, amend ADR 0032 first." >&2
+    case "$pkg" in
+      tokio|mio)
+        if [ ! -f "$QUIC_ADAPTER" ]; then
+          echo "  note:  ADR 0233 admits this runtime only inside $QUIC_ADAPTER, and that file is absent" >&2
+        else
+          printf '%s\n' "$runtime_outside" | grep -v '^$' | while IFS= read -r f; do
+            echo "  note:  ADR 0233 admits this runtime only inside $QUIC_ADAPTER; $f names tokio" >&2
+          done
+        fi
+        ;;
+    esac
   done
 fi
 

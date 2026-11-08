@@ -9832,6 +9832,7 @@
             "file:.ai/repo/adrs/0067-mesh-cooperation-is-authenticated-links-and-one-replicated-journal.md",
             "file:.ai/repo/adrs/0202-the-mesh-routes-work-to-an-identity-never-an-address-and-selects.md",
             "file:.ai/repo/adrs/0207-a-new-mechanism-is-admitted-only-with-the-measured-problem-it-re.md",
+            "file:.ai/repo/adrs/0032-an-external-workspace-is-not-a-provider-the-term-the-depende.md",
             "file:.ai/repo/adrs/0220-a-hosted-server-is-a-rendezvous-only-over-tls-with-its-key-held-as-a-secret.md",
             "file:.ai/repo/project/issues/I4564.yaml",
             "file:.ai/repo/project/issues/I3189.yaml",
@@ -80601,10 +80602,15 @@
             "apps/majordomus-cli/tests/mesh_quic.rs",
             "apps/majordomus-cli/Cargo.toml",
             "Cargo.lock",
+            "scripts/ci/crate-boundary",
+            "test/cases/360_the_crate_boundary_is_measured.sh",
+            ".ai/repo/adrs/0032-an-external-workspace-is-not-a-provider-the-term-the-depende.md",
             "docs/MESH.md",
             ".ai/repo/adrs/0233-a-mesh-link-runs-over-quic-with-the-node-key-as-its-tls-identity.md"
           ],
-          "serves": [],
+          "serves": [
+            "an-authorised-node-connects-from-anywhere#path-is-explained"
+          ],
           "slug": "a-link-runs-over-quic",
           "updated_at": "2026-11-08",
           "validation": [
@@ -123442,6 +123448,11 @@
       },
       {
         "source": "majordomus://adr/adr-0233",
+        "target": "majordomus://adr/adr-0032",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0233",
         "target": "majordomus://adr/adr-0067",
         "kind": "put_in_force"
       },
@@ -161953,7 +161964,7 @@
     ],
     "metadata": {
       "nodes": 4425,
-      "edges": 10048,
+      "edges": 10049,
       "acyclic": false,
       "truncated": false
     }

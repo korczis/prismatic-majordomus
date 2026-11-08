@@ -20,6 +20,9 @@ scope:
   - "apps/majordomus-cli/tests/mesh_quic.rs"
   - "apps/majordomus-cli/Cargo.toml"
   - "Cargo.lock"
+  - "scripts/ci/crate-boundary"
+  - "test/cases/360_the_crate_boundary_is_measured.sh"
+  - ".ai/repo/adrs/0032-an-external-workspace-is-not-a-provider-the-term-the-depende.md"
   - "docs/MESH.md"
   - ".ai/repo/adrs/0233-a-mesh-link-runs-over-quic-with-the-node-key-as-its-tls-identity.md"
 non_scope:
@@ -28,7 +31,8 @@ non_scope:
   - "Per-message ACK, retry and dead letters (Mesh Fabric phase 04)"
   - "Adaptive route selection by measured RTT (Mesh Fabric phase 07); this issue only falls back from QUIC to HTTP"
 depends_on: []
-serves: []
+serves:
+  - "an-authorised-node-connects-from-anywhere#path-is-explained"
 acceptance_criteria:
   - "Two runtimes in one test, each on its own UDP socket on 127.0.0.1, complete Hello and Sync over QUIC, and a claim written on either side reaches the other"
   - "A QUIC peer that presents a certificate over any key other than the expected node key is refused before any link message is read, and the refusal names the key it expected"

@@ -12,6 +12,7 @@ related:
   - file:.ai/repo/adrs/0067-mesh-cooperation-is-authenticated-links-and-one-replicated-journal.md
   - file:.ai/repo/adrs/0202-the-mesh-routes-work-to-an-identity-never-an-address-and-selects.md
   - file:.ai/repo/adrs/0207-a-new-mechanism-is-admitted-only-with-the-measured-problem-it-re.md
+  - file:.ai/repo/adrs/0032-an-external-workspace-is-not-a-provider-the-term-the-depende.md
   - file:.ai/repo/adrs/0220-a-hosted-server-is-a-rendezvous-only-over-tls-with-its-key-held-as-a-secret.md
   - file:.ai/repo/project/issues/I4564.yaml
   - file:.ai/repo/project/issues/I3189.yaml
@@ -115,6 +116,9 @@ The problems this removes, measured on master 8a7e9df20d8 (ADR 0207):
 - The dependency tree grows by quinn, quinn-proto, quinn-udp and tokio (rt, net, time).
   `cargo build` time and the size of the release artifact are measured in I4564 and
   recorded here.
+- ADR 0032 drew a boundary around the crate that refuses an async runtime. Its amendment of
+  2026-11-08 admits tokio and the mio under it only while `src/mesh/quic.rs` alone names
+  tokio, and `scripts/ci/crate-boundary` measures that containment.
 
 ## Measured
 

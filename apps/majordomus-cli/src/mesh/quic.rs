@@ -42,7 +42,7 @@
 //! assert!(reply.signed.is_some(), "a welcome came back over QUIC");
 //! ```
 
-use std::collections::HashMap;
+use std::collections::{BTreeMap, HashMap};
 use std::net::{SocketAddr, ToSocketAddrs, UdpSocket};
 use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};
@@ -767,7 +767,7 @@ pub struct SelectingTransport {
     quic: Option<Arc<QuicNode>>,
     http: Arc<dyn LinkTransport>,
     quic_down: Mutex<HashMap<String, (Instant, String)>>,
-    paths: Mutex<HashMap<String, LinkPath>>,
+    paths: Mutex<BTreeMap<String, LinkPath>>,
     reason: Option<String>,
 }
 
@@ -796,7 +796,7 @@ impl SelectingTransport {
             quic,
             http,
             quic_down: Mutex::new(HashMap::new()),
-            paths: Mutex::new(HashMap::new()),
+            paths: Mutex::new(BTreeMap::new()),
             reason: None,
         }
     }
@@ -854,13 +854,11 @@ impl SelectingTransport {
     /// assert!(SelectingTransport::new(None).paths().is_empty());
     /// ```
     pub fn paths(&self) -> Vec<LinkPath> {
-        let mut paths: Vec<LinkPath> = self
-            .paths
+        // A BTreeMap keyed by endpoint: its values are already in endpoint order.
+        self.paths
             .lock()
             .map(|p| p.values().cloned().collect())
-            .unwrap_or_default();
-        paths.sort_by(|a, b| a.endpoint.cmp(&b.endpoint));
-        paths
+            .unwrap_or_default()
     }
 
     fn record(&self, endpoint: &str, transport: &str, started: Instant, fallback: Option<String>) {
