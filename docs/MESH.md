@@ -239,8 +239,44 @@ cleartext, and the client sends it only when every address the host resolves to 
 RFC 1918 private, link-local, `100.64.0.0/10` (a tailnet) or IPv6 unique-local: a public address
 is refused before the connection, with the correction `use https://` (ADR 0220). `mesh doctor`
 reports the same verdict for every declared hub and seed as its `transport` check, without
-dialing. Authenticity is the protocol's; confidentiality is TLS's for an `https://` endpoint and
-the network's otherwise — run links on a private network or an overlay (a tailnet, WireGuard).
+dialing. Authenticity is the protocol's; confidentiality is TLS's for an `https://` endpoint,
+QUIC's for a link that took QUIC, and the network's otherwise — run HTTP links on a private
+network or an overlay (a tailnet, WireGuard).
+
+### QUIC (ADR 0233)
+
+A shared server also answers link messages over QUIC (quinn, on the same rustls and ring), on
+its own port number over UDP beside HTTP over TCP. Each runtime's TLS identity is a
+self-signed certificate over its Ed25519 node key, and a certificate is accepted for that key
+and nothing else: no certificate authority, no web PKI. A hello addressed to a runtime (`to`)
+pins its node in the handshake, so a peer holding any other key is refused before a link
+message is read, and the refusal names the node expected. An address that held a node before
+pins that node. Every request and every reply must be signed by the key that holds the
+connection: the answerer refuses another key's request as `signature`, and the dialer treats
+another key's reply as a transport failure. Trust is unchanged: `accept_hello` judges the key
+against the allowlist exactly as over HTTP.
+
+The dialer tries a plain `host:port` or an `http://` endpoint over QUIC first, and over HTTP
+when the QUIC handshake does not complete within two seconds. An address that did not answer
+over QUIC is reached over HTTP alone for ten minutes. A `quic://host:port` endpoint is QUIC's
+alone, and an `https://` endpoint (a hosted hub behind a TLS ingress) is HTTP's alone. Nothing
+new is advertised, so a runtime of an older version links as before, over HTTP. A QUIC
+connection stays open between rounds: a 15-second keep-alive under a 60-second idle bound.
+Each exchange is one bidirectional stream under the same `MAX_LINK_MESSAGE` and
+`MAX_LINK_REPLY` bounds as HTTP. A listener holds at most 64 connections and eight exchanges
+in flight on each.
+
+`mesh status` (`/api/v1/mesh`) carries `links`:
+
+- `listening`: the QUIC endpoint, or `reason` when there is none, such as
+  `MAJORDOMUS_MESH_QUIC=off` or a UDP port QUIC could not bind (the server then dials QUIC from
+  an ephemeral port and is answered over HTTP);
+- `paths`: for every endpoint dialled, the `transport` of its last round (`quic` or `http`),
+  its `round_ms`, and `fallback`, the reason QUIC was not used.
+
+`MAJORDOMUS_MESH_QUIC=off` in the server's environment leaves its links on HTTP alone. A host
+firewall that admits the server's TCP port must also admit the same UDP port for QUIC; without
+it, links fall back to HTTP.
 
 ## Presence, heartbeats and expiry
 

@@ -127,6 +127,10 @@ pub struct MeshStatus {
     /// When the mesh started, RFC 3339.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub started_at: Option<String>,
+    /// The link transport: whether this runtime answers over QUIC, and the path each
+    /// endpoint it dialled took (ADR 0233). Absent until a server attached a transport.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub links: Option<super::quic::LinkStatus>,
 }
 
 struct Active {
@@ -154,6 +158,8 @@ pub struct MeshRuntime {
     /// declined with a reason. A runtime nobody decided on is the command line's, and its
     /// inactivity is an absence the doctor may not report as a verdict (ADR 0059).
     decided: AtomicBool,
+    /// The transport cooperation dials with, once a server attached one.
+    transport: Mutex<Option<Arc<super::quic::SelectingTransport>>>,
 }
 
 impl Default for MeshRuntime {
@@ -175,6 +181,26 @@ impl MeshRuntime {
             cooperation: Mutex::new(None),
             cooperation_reason: Mutex::new(None),
             decided: AtomicBool::new(false),
+            transport: Mutex::new(None),
+        }
+    }
+
+    /// Attach the transport cooperation dials with, so that `mesh status` can say whether
+    /// this runtime answers over QUIC and which path each link took.
+    ///
+    /// ```
+    /// use std::sync::Arc;
+    /// use majordomus_cli::mesh::manager::MeshRuntime;
+    /// use majordomus_cli::mesh::quic::SelectingTransport;
+    ///
+    /// let mesh = MeshRuntime::new();
+    /// assert!(mesh.status().links.is_none());
+    /// mesh.attach_transport(Arc::new(SelectingTransport::new(None)));
+    /// assert_eq!(mesh.status().links.unwrap().listening, None, "no QUIC listener");
+    /// ```
+    pub fn attach_transport(&self, transport: Arc<super::quic::SelectingTransport>) {
+        if let Ok(mut slot) = self.transport.lock() {
+            *slot = Some(transport);
         }
     }
 
@@ -561,6 +587,10 @@ impl MeshRuntime {
         if let Some(cooperation) = self.cooperation.lock().expect("mesh cooperation").as_ref() {
             cooperation.stop();
         }
+        // the status stops naming a QUIC listener; the endpoint closes with the last holder
+        if let Ok(mut transport) = self.transport.lock() {
+            transport.take();
+        }
         let mut state = self.state.lock().expect("mesh state");
         if let Some(active) = state.take() {
             active.stop.store(true, Ordering::SeqCst);
@@ -618,6 +648,7 @@ impl MeshRuntime {
                     tallies: Tallies::default(),
                     refusals: Refusals::default(),
                     started_at: Some(active.started_at.clone()),
+                    links: None,
                 }
             }
             None => MeshStatus {
@@ -630,10 +661,16 @@ impl MeshRuntime {
                 tallies: Tallies::default(),
                 refusals: Refusals::default(),
                 started_at: None,
+                links: None,
             },
         };
         status.tallies = self.registry.tallies();
         status.refusals = self.refusals.snapshot();
+        status.links = self
+            .transport
+            .lock()
+            .ok()
+            .and_then(|t| t.as_ref().map(|t| t.status()));
         status
     }
 

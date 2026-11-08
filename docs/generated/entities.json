@@ -11,7 +11,7 @@
       "title": "Decisions",
       "description": "Every architecture decision this repository has recorded, with what it supersedes, what it put in force, and what has since referred back to it. One page per decision, generated from the decision's own file.",
       "weight": 45,
-      "count": 169,
+      "count": 170,
       "dir": "adrs",
       "statuses": [
         "accepted",
@@ -40,7 +40,7 @@
       "route": "/adrs/",
       "title": "Decisions",
       "reason": null,
-      "count": 169
+      "count": 170
     },
     {
       "kind": "application",
@@ -176,7 +176,7 @@
       "route": "/plan/",
       "title": null,
       "reason": null,
-      "count": 1223
+      "count": 1224
     },
     {
       "kind": "knowledge",
@@ -4524,6 +4524,13 @@
           "label": "adr-0220",
           "kind": "adr",
           "route": "/adrs/adr-0220/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0233",
+          "kind": "adr",
+          "route": "/adrs/adr-0233/",
           "external": false
         }
       ]
@@ -12769,7 +12776,15 @@
           "external": false
         }
       ],
-      "referenced_by": []
+      "referenced_by": [
+        {
+          "edge": "put_in_force",
+          "label": "adr-0233",
+          "kind": "adr",
+          "route": "/adrs/adr-0233/",
+          "external": false
+        }
+      ]
     },
     {
       "kind": "adr",
@@ -13127,6 +13142,13 @@
           "label": "adr-0209",
           "kind": "adr",
           "route": "/adrs/adr-0209/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0233",
+          "kind": "adr",
+          "route": "/adrs/adr-0233/",
           "external": false
         }
       ]
@@ -14601,7 +14623,15 @@
           "external": false
         }
       ],
-      "referenced_by": []
+      "referenced_by": [
+        {
+          "edge": "put_in_force",
+          "label": "adr-0233",
+          "kind": "adr",
+          "route": "/adrs/adr-0233/",
+          "external": false
+        }
+      ]
     },
     {
       "kind": "adr",
@@ -14922,6 +14952,79 @@
           "label": "test/cases/4334_the_ui_kit_is_checked_by_one_capability.sh",
           "kind": "test",
           "route": null,
+          "external": false
+        }
+      ],
+      "referenced_by": []
+    },
+    {
+      "kind": "adr",
+      "id": "majordomus://adr/adr-0233",
+      "identity": "adr-0233",
+      "slug": "adr-0233",
+      "cockpit": "/cockpit/objects/adr/adr-0233",
+      "title": "A mesh link runs over QUIC with the node key as its TLS identity, beside HTTP and never instead of the signed protocol",
+      "status": "proposed",
+      "tags": [
+        "mesh-runtime",
+        "transport"
+      ],
+      "source": ".ai/repo/adrs/0233-a-mesh-link-runs-over-quic-with-the-node-key-as-its-tls-identity.md",
+      "references": [
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-cli/src/mesh/link.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0067",
+          "kind": "adr",
+          "route": "/adrs/adr-0067/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0202",
+          "kind": "adr",
+          "route": "/adrs/adr-0202/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0207",
+          "kind": "adr",
+          "route": "/adrs/adr-0207/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0220",
+          "kind": "adr",
+          "route": "/adrs/adr-0220/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "docs/MESH.md",
+          "kind": "document",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "I3189",
+          "kind": "issue",
+          "route": "/plan/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "I4564",
+          "kind": "issue",
+          "route": "/plan/",
           "external": false
         }
       ],

@@ -789,9 +789,11 @@
     "schema-LineSyncView": "docs/api/continuity/",
     "schema-LineView": "docs/api/continuity/",
     "schema-LinkCheck": "docs/api/integration/",
+    "schema-LinkPath": "docs/api/mesh/",
     "schema-LinkRefusal": "docs/api/mesh/",
     "schema-LinkReply": "docs/api/mesh/",
     "schema-LinkState": "docs/api/mesh/",
+    "schema-LinkStatus": "docs/api/mesh/",
     "schema-Listen": "docs/api/deploy/",
     "schema-Liveness": "docs/api/health/",
     "schema-LocalOverrides": "docs/api/worktree/",
@@ -1409,7 +1411,7 @@
   "binding": "GET binds every top-level input property as a query parameter; POST binds the input as the JSON body",
   "counts": {
     "operations": 219,
-    "schemas": 1124,
+    "schemas": 1126,
     "tags": 62
   },
   "dialect": "https://spec.openapis.org/oas/3.1/dialect/base",
@@ -2299,9 +2301,11 @@
     "LineSyncView": "continuity",
     "LineView": "continuity",
     "LinkCheck": "integration",
+    "LinkPath": "mesh",
     "LinkRefusal": "mesh",
     "LinkReply": "mesh",
     "LinkState": "mesh",
+    "LinkStatus": "mesh",
     "Listen": "deploy",
     "Liveness": "health",
     "LocalOverrides": "worktree",
@@ -34816,6 +34820,49 @@
       "variants": []
     },
     {
+      "description": "The path one endpoint's last exchange took, for `mesh status` and route choice.\n\n```\nuse majordomus_cli::mesh::quic::LinkPath;\n\nlet path = LinkPath { endpoint: \"10.0.0.2:8741\".into(), transport: \"quic\".into(), round_ms: 3, fallback: None };\nassert_eq!(serde_json::to_value(&path).unwrap()[\"transport\"], \"quic\");\n```",
+      "home": "mesh",
+      "is_enum": false,
+      "name": "LinkPath",
+      "properties": [
+        {
+          "description": "The endpoint as dialled.",
+          "name": "endpoint",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "`quic` or `http`.",
+          "name": "transport",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "How long the last exchange took, end to end, in milliseconds.",
+          "name": "round_ms",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        },
+        {
+          "description": "Why QUIC was not used, when the path is `http` after QUIC was tried.",
+          "name": "fallback",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "LinkStatus"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "A refusal: the code, the reason in words, and the protocol range of the refuser so a\nversion mismatch is diagnosable from either end.\n\nCarrying the refuser's protocol range in every refusal, not only in the one about\nprotocols, is what makes a version problem visible from the side that has the log: the\ndialer sees what the answerer speaks without anyone having to read the other machine.\n\n```\nuse majordomus_cli::mesh::link::{LinkRefusal, RefusalCode, LINK_PROTOCOL_MAX};\n\nlet refusal = LinkRefusal::new(RefusalCode::Untrusted, \"the key is not in the allowlist\");\nassert_eq!(refusal.code, RefusalCode::Untrusted);\nassert_eq!(refusal.proto_max, LINK_PROTOCOL_MAX);\nassert_eq!(refusal.to_string(), \"untrusted: the key is not in the allowlist\");\n```",
       "home": "mesh",
       "is_enum": false,
@@ -34929,6 +34976,44 @@
           "value": "expired"
         }
       ],
+      "variants": []
+    },
+    {
+      "description": "What `mesh status` says about the link transport.\n\n```\nuse majordomus_cli::mesh::quic::LinkStatus;\n\nlet status = LinkStatus { listening: None, reason: Some(\"udp 0.0.0.0:8741: in use\".into()), paths: vec![] };\nassert_eq!(serde_json::to_value(&status).unwrap()[\"reason\"], \"udp 0.0.0.0:8741: in use\");\n```",
+      "home": "mesh",
+      "is_enum": false,
+      "name": "LinkStatus",
+      "properties": [
+        {
+          "description": "The QUIC endpoint this runtime answers at, when it does.",
+          "name": "listening",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "Why it does not, when it does not.",
+          "name": "reason",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The path each endpoint this runtime dialled took last.",
+          "name": "paths",
+          "refs": [
+            "LinkPath"
+          ],
+          "required": false,
+          "type": "array of LinkPath"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "MeshStatus"
+      ],
+      "values": [],
       "variants": []
     },
     {
@@ -36990,6 +37075,15 @@
           "refs": [],
           "required": false,
           "type": "string | null"
+        },
+        {
+          "description": "The link transport: whether this runtime answers over QUIC, and the path each\nendpoint it dialled took (ADR 0233). Absent until a server attached a transport.",
+          "name": "links",
+          "refs": [
+            "LinkStatus"
+          ],
+          "required": false,
+          "type": "LinkStatus | null"
         }
       ],
       "type": "object",

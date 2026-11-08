@@ -61786,6 +61786,17 @@
                 "null"
               ],
               "description": "When the mesh started, RFC 3339."
+            },
+            "links": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/LinkStatus"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "The link transport: whether this runtime answers over QUIC, and the path each\nendpoint it dialled took (ADR 0233). Absent until a server attached a transport."
             }
           },
           "required": [
@@ -62012,6 +62023,65 @@
                 "self_heard"
               ],
               "description": "Refused datagrams, by reason. The diagnosis of a hostile or misconfigured network:\na mesh that hears garbage says so, with numbers, instead of being quietly empty."
+            },
+            "LinkStatus": {
+              "type": "object",
+              "properties": {
+                "listening": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "The QUIC endpoint this runtime answers at, when it does."
+                },
+                "reason": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "Why it does not, when it does not."
+                },
+                "paths": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/$defs/LinkPath"
+                  },
+                  "description": "The path each endpoint this runtime dialled took last."
+                }
+              },
+              "description": "What `mesh status` says about the link transport.\n\n```\nuse majordomus_cli::mesh::quic::LinkStatus;\n\nlet status = LinkStatus { listening: None, reason: Some(\"udp 0.0.0.0:8741: in use\".into()), paths: vec![] };\nassert_eq!(serde_json::to_value(&status).unwrap()[\"reason\"], \"udp 0.0.0.0:8741: in use\");\n```"
+            },
+            "LinkPath": {
+              "type": "object",
+              "properties": {
+                "endpoint": {
+                  "type": "string",
+                  "description": "The endpoint as dialled."
+                },
+                "transport": {
+                  "type": "string",
+                  "description": "`quic` or `http`."
+                },
+                "round_ms": {
+                  "type": "integer",
+                  "format": "uint64",
+                  "minimum": 0,
+                  "description": "How long the last exchange took, end to end, in milliseconds."
+                },
+                "fallback": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "Why QUIC was not used, when the path is `http` after QUIC was tried."
+                }
+              },
+              "required": [
+                "endpoint",
+                "transport",
+                "round_ms"
+              ],
+              "description": "The path one endpoint's last exchange took, for `mesh status` and route choice.\n\n```\nuse majordomus_cli::mesh::quic::LinkPath;\n\nlet path = LinkPath { endpoint: \"10.0.0.2:8741\".into(), transport: \"quic\".into(), round_ms: 3, fallback: None };\nassert_eq!(serde_json::to_value(&path).unwrap()[\"transport\"], \"quic\");\n```"
             }
           }
         }

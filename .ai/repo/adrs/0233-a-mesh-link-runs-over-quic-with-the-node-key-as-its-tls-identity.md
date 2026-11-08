@@ -1,0 +1,141 @@
+---
+schema: adr/v1
+id: adr-0233
+kind: adr
+title: "A mesh link runs over QUIC with the node key as its TLS identity, beside HTTP and never instead of the signed protocol"
+status: proposed
+date: 2026-11-08
+tags:
+  - mesh-runtime
+  - transport
+related:
+  - file:.ai/repo/adrs/0067-mesh-cooperation-is-authenticated-links-and-one-replicated-journal.md
+  - file:.ai/repo/adrs/0202-the-mesh-routes-work-to-an-identity-never-an-address-and-selects.md
+  - file:.ai/repo/adrs/0207-a-new-mechanism-is-admitted-only-with-the-measured-problem-it-re.md
+  - file:.ai/repo/adrs/0220-a-hosted-server-is-a-rendezvous-only-over-tls-with-its-key-held-as-a-secret.md
+  - file:.ai/repo/project/issues/I4564.yaml
+  - file:.ai/repo/project/issues/I3189.yaml
+  - file:docs/MESH.md
+  - file:apps/majordomus-cli/src/mesh/link.rs
+provenance:
+  origin: authored
+---
+
+# 233. A mesh link runs over QUIC with the node key as its TLS identity, beside HTTP and never instead of the signed protocol
+
+## Context
+
+The owner's Mesh Fabric pack (2026-11-07, taken in by pull request #2978)
+asks in phase 06 for encrypted remote peer links with discovery, trust, a TCP/TLS fallback and a
+relay. When the pack was taken in, phase 06 was left unplanned. I3189 lists "libp2p, QUIC or ICE
+adoption" and in-crate transport confidentiality as non-scope, both left to the owner. On
+2026-11-08 the owner decided all three open questions (session
+8e226cf8-e383-4936-afd0-7cd6f4227ccd). The questions were asked in a report and the answers
+came in one message. Verbatim:
+
+- "QUIC (fáze 06, I3189): dělat ho teď, nebo ho odložit, dokud nepoběží lokální výměna?"
+  answered "hned" (now).
+- "Zúžení packu: má transportem zůstat journal plus socket providera, jak píše OWNER_PACKS.md?"
+  answered "nezuzuj" (do not narrow).
+- "Vedení MMF: kdo ho vede?" answered "ty vybrt" (you pick). The asking session leads, under the
+  exclusive mesh claim `seat/mesh-fabric-lead`.
+
+The problems this removes, measured on master 8a7e9df20d8 (ADR 0207):
+
+1. **No confidentiality off a private network.** A link to an advertised address is cleartext
+   HTTP. The client sends it only to loopback, private or overlay addresses and refuses anything
+   else (`docs/MESH.md`: "confidentiality is TLS's for an `https://` endpoint and the network's
+   otherwise", ADR 0220). Two nodes on different networks cannot link unless one of them holds
+   a publicly trusted certificate.
+2. **No reverse channel.** Every exchange is one dialer-initiated HTTP request
+   (`mesh/link.rs` `HttpTransport::post`, a new TCP connection per round). A node that cannot be
+   dialled can never be told anything until it dials again. I3189 names this as the reason a
+   relay needs a protocol change.
+3. **A wake has no remote path.** The first Mesh Fabric milestone (2026-11-07, review
+   r-34030860b2bd and I4553's r-60970e4c34ea) delivered a request and its answer between two
+   sessions on one machine through the journal and the provider's socket. A session on another
+   machine is reached only at the next sync round of a link that has to be dialled.
+
+## Decision
+
+1. QUIC is a **link transport**: a second implementation of the existing `LinkTransport` trait,
+   beside `HttpTransport`. It carries the same `Signed` Hello, Welcome, Sync and SyncAnswer
+   messages, one bidirectional stream per exchange. The link protocol, its signatures, its
+   replay cache and the journal do not change. No second bus, no second envelope: `MeshEvent`
+   stays the envelope (the pack's own principle, and the standing part of #2978's record).
+2. **The node key is the TLS identity.** Each runtime presents a self-signed certificate over
+   its Ed25519 node key, and a certificate is accepted only for the node key inside it. Web PKI
+   is not consulted. A dialer that knows whom it is calling refuses, during the handshake, any
+   other node's key, before a link message is read. A dialer knows this when the hello is
+   addressed (`to`), or when the address held a node before. Trust stays where it is: the
+   answerer's `accept_hello` judges the key against the allowlist. Both sides bind the channel
+   to the protocol: a request or reply signed by any key other than the one holding the
+   connection is refused. A relay in the middle with a key of its own can neither answer nor
+   be answered.
+3. **Proven implementation, contained runtime.** The implementation is `quinn` (rustls 0.23 and
+   ring, both already dependencies). Its async runtime lives on one thread owned by the QUIC
+   adapter, so the rest of the crate stays synchronous. ADR 0032's "no HTTP client dependency"
+   is untouched; this is a transport dependency the owner ordered.
+4. **Selection, not replacement, and no new advertisement.** A server answers QUIC on its
+   own port number over UDP, beside HTTP over TCP. Nothing new is advertised, so an older
+   runtime sees an unchanged card and an unchanged advertisement, still bounded by four
+   endpoints. The dialer tries a plain `host:port` or an `http://` endpoint over QUIC first,
+   and over HTTP when the QUIC handshake does not complete within two seconds. An address
+   that did not answer over QUIC is reached over HTTP alone for ten minutes. An `https://`
+   endpoint (a hosted hub behind a TLS ingress) stays HTTP's. `mesh status` names the QUIC
+   listener (or why there is none) and, for every endpoint dialled, the path its last round
+   took, its round time and why it fell back. `MAJORDOMUS_MESH_QUIC=off` leaves a server on
+   HTTP alone. Cleartext HTTP stays bound by ADR 0220. QUIC is encrypted to a pinned key, so
+   it is permitted on any network.
+5. **The connection is the reverse channel.** A QUIC connection the dialer opened stays open
+   between rounds. The answerer may open a stream on it, so an undialable node can be reached
+   without the relay mailbox I3189 had to invent. A relay through a trusted hub stays I3189's,
+   carried over QUIC.
+
+## Alternatives rejected
+
+- **libp2p:** a second identity system, a second discovery system and a large dependency tree
+  for what one trait implementation covers.
+- **quiche:** needs BoringSSL built from C, and the crate already has rustls and ring.
+- **Noise over the existing HTTP link:** confidentiality without the reverse channel or
+  multiplexing, and a protocol built in-house where a proven one exists (ADR 0202).
+- **A tokio runtime for the whole crate:** it would make every synchronous path async for one
+  adapter's sake.
+- **Keeping HTTP only (narrowing the pack):** overruled by the owner on 2026-11-08 ("nezuzuj").
+
+## Consequences
+
+- I4564 delivers the vertical slice: the adapter, certificate pinning, endpoint advertisement,
+  QUIC-then-HTTP selection, a two-runtime test over real UDP sockets, and a live link between
+  two machines with the before and after round times recorded.
+- `docs/MESH.md` gains the QUIC path, and its confidentiality sentence names QUIC as the
+  encrypted path.
+- I3189 (relay) may assume a persistent connection with a reverse channel.
+- The firewall check (`mesh.firewall`) must name the UDP port.
+- The dependency tree grows by quinn, quinn-proto, quinn-udp and tokio (rt, net, time).
+  `cargo build` time and the size of the release artifact are measured in I4564 and
+  recorded here.
+
+## Measured
+
+2026-11-08, branch `feature/I4564-a-link-runs-over-quic` on master 8a7e9df20d8. Two debug
+builds served the same fixture repository: this Mac (arm64) and lundra (x86_64 Linux), over
+the tailnet (100.120.245.51 to 100.65.22.118, port 9741), heartbeat two seconds. The Mac
+dialled lundra from its seed.
+
+| path | rounds sampled | median | min | max |
+|---|---|---|---|---|
+| QUIC | 15 | 8 ms | 6 ms | 229 ms |
+| HTTP (`MAJORDOMUS_MESH_QUIC=off` on the Mac) | 15 | 29 ms | 11 ms | 272 ms |
+
+An exclusive claim written on each side was held on the other within three seconds, over
+QUIC. A round is `round_ms` of `mesh status`: one signed sync request and its answer, end to
+end, on the connection kept open between rounds for QUIC and on a new TCP connection for HTTP.
+A debug build from an empty target directory took 416 s on the Mac and produced an 88 MB
+executable. The release artifact's size before and after is not yet measured; I4564 records it.
+
+## Sources
+
+- The owner's answers above, given in session 8e226cf8-e383-4936-afd0-7cd6f4227ccd on
+  2026-11-08. The owner ordered the work; accepting this record is still the owner's act.
+- The Mesh Fabric pack, phase 06, taken in by pull request #2978.

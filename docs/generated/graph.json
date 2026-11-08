@@ -3455,6 +3455,14 @@
         "external": true
       },
       {
+        "id": "file:apps/majordomus-cli/src/mesh/link.rs",
+        "kind": "file",
+        "label": "link.rs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-cli/src/mesh/link.rs",
+        "external": true
+      },
+      {
         "id": "file:apps/majordomus-cli/src/mesh/manager.rs",
         "kind": "file",
         "label": "manager.rs",
@@ -9807,6 +9815,32 @@
             "design",
             "ui",
             "enforcement"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://adr/adr-0233",
+        "kind": "adr",
+        "label": "adr-0233",
+        "summary": "A mesh link runs over QUIC with the node key as its TLS identity, beside HTTP and never instead of the signed protocol",
+        "route": "/cockpit/objects/adr/adr-0233",
+        "source": ".ai/repo/adrs/0233-a-mesh-link-runs-over-quic-with-the-node-key-as-its-tls-identity.md",
+        "status": "proposed",
+        "facts": {
+          "date": "2026-11-08",
+          "related": [
+            "file:.ai/repo/adrs/0067-mesh-cooperation-is-authenticated-links-and-one-replicated-journal.md",
+            "file:.ai/repo/adrs/0202-the-mesh-routes-work-to-an-identity-never-an-address-and-selects.md",
+            "file:.ai/repo/adrs/0207-a-new-mechanism-is-admitted-only-with-the-measured-problem-it-re.md",
+            "file:.ai/repo/adrs/0220-a-hosted-server-is-a-rendezvous-only-over-tls-with-its-key-held-as-a-secret.md",
+            "file:.ai/repo/project/issues/I4564.yaml",
+            "file:.ai/repo/project/issues/I3189.yaml",
+            "file:docs/MESH.md",
+            "file:apps/majordomus-cli/src/mesh/link.rs"
+          ],
+          "tags": [
+            "mesh-runtime",
+            "transport"
           ]
         }
       },
@@ -80530,6 +80564,56 @@
         }
       },
       {
+        "id": "majordomus://issue/I4564",
+        "kind": "issue",
+        "label": "I4564",
+        "summary": "Two runtimes link over QUIC, each pinned to the other's node key, and fall back to HTTP when QUIC cannot connect",
+        "route": "/cockpit/objects/issue/i4564",
+        "source": ".ai/repo/project/issues/I4564.yaml",
+        "facts": {
+          "created_at": "2026-11-08",
+          "current_state": "On master 8a7e9df20d8 a link is HTTP only: one TCP connection per Hello or Sync round, cleartext unless the endpoint is https:// with a web-PKI certificate. Nothing in apps/ speaks QUIC.",
+          "depends_on": [],
+          "desired_state": "A link between two runtimes runs over an encrypted QUIC connection pinned to their node keys and falls back to HTTP. Mesh status and the path record say which transport each link uses.",
+          "evidence_required": [
+            "test_two_runtimes_link_over_quic",
+            "test_a_quic_peer_with_another_key_is_refused",
+            "test_quic_falls_back_to_http"
+          ],
+          "milestone": "mesh-connectivity",
+          "non_scope": [
+            "A relay through a trusted hub (I3189), which this connection makes possible",
+            "NAT hole punching and ICE (ADR 0202)",
+            "Per-message ACK, retry and dead letters (Mesh Fabric phase 04)",
+            "Adaptive route selection by measured RTT (Mesh Fabric phase 07); this issue only falls back from QUIC to HTTP"
+          ],
+          "priority": "p1",
+          "profile": "deep-work",
+          "scope": [
+            "apps/majordomus-cli/src/mesh/quic.rs",
+            "apps/majordomus-cli/src/mesh/link.rs",
+            "apps/majordomus-cli/src/mesh/mod.rs",
+            "apps/majordomus-cli/src/mesh/manager.rs",
+            "apps/majordomus-cli/src/mesh/identity.rs",
+            "apps/majordomus-cli/src/mesh/firewall.rs",
+            "apps/majordomus-cli/src/shared.rs",
+            "apps/majordomus-cli/src/capability/builtin/mesh.rs",
+            "apps/majordomus-cli/tests/mesh_quic.rs",
+            "apps/majordomus-cli/Cargo.toml",
+            "Cargo.lock",
+            "docs/MESH.md",
+            ".ai/repo/adrs/0233-a-mesh-link-runs-over-quic-with-the-node-key-as-its-tls-identity.md"
+          ],
+          "serves": [],
+          "slug": "a-link-runs-over-quic",
+          "updated_at": "2026-11-08",
+          "validation": [
+            "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --lib mesh::quic::",
+            "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --test mesh_quic"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "label": "a-brief-is-reconciled-not-transcribed",
@@ -123347,6 +123431,51 @@
         "kind": "put_in_force"
       },
       {
+        "source": "majordomus://adr/adr-0233",
+        "target": "file:apps/majordomus-cli/src/mesh/link.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0233",
+        "target": "kind:adr",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://adr/adr-0233",
+        "target": "majordomus://adr/adr-0067",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0233",
+        "target": "majordomus://adr/adr-0202",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0233",
+        "target": "majordomus://adr/adr-0207",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0233",
+        "target": "majordomus://adr/adr-0220",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0233",
+        "target": "majordomus://document/docs/MESH.md",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0233",
+        "target": "majordomus://issue/I3189",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0233",
+        "target": "majordomus://issue/I4564",
+        "kind": "put_in_force"
+      },
+      {
         "source": "majordomus://application/ci-gated-project",
         "target": "kind:application",
         "kind": "is_a"
@@ -149157,6 +149286,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I4564",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4564",
+        "target": "majordomus://milestone/mesh-connectivity",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -161813,8 +161952,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4422,
-      "edges": 10037,
+      "nodes": 4425,
+      "edges": 10048,
       "acyclic": false,
       "truncated": false
     }

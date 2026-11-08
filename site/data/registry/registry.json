@@ -6,23 +6,23 @@
     "version": "1.0.0"
   },
   "registry": {
-    "fingerprint": "1881529b31b9650bfde63de93f09c696b344269616bb23b1a87327f1398ca596",
+    "fingerprint": "e828cbc3aecf787f5bc13bba9333a892556dbcdf3435520e3884c1062eca66f5",
     "summary": {
-      "total": 3951,
+      "total": 3953,
       "builtin": 231,
-      "declarative": 3720,
+      "declarative": 3722,
       "by_kind": {
         "command": 41,
         "query": 190,
-        "resource": 3720
+        "resource": 3722
       },
       "by_stability": {
         "behaviorally_verified": 153,
         "experimental": 68,
-        "implemented": 3730
+        "implemented": 3732
       },
       "mcp_tools": 215,
-      "mcp_resources": 3777,
+      "mcp_resources": 3779,
       "http_routes": 219,
       "cli_commands": 128,
       "modules": 96,
@@ -61316,6 +61316,17 @@
                   "null"
                 ],
                 "description": "When the mesh started, RFC 3339."
+              },
+              "links": {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/LinkStatus"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "The link transport: whether this runtime answers over QUIC, and the path each\nendpoint it dialled took (ADR 0233). Absent until a server attached a transport."
               }
             },
             "required": [
@@ -61542,6 +61553,65 @@
                   "self_heard"
                 ],
                 "description": "Refused datagrams, by reason. The diagnosis of a hostile or misconfigured network:\na mesh that hears garbage says so, with numbers, instead of being quietly empty."
+              },
+              "LinkStatus": {
+                "type": "object",
+                "properties": {
+                  "listening": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The QUIC endpoint this runtime answers at, when it does."
+                  },
+                  "reason": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "Why it does not, when it does not."
+                  },
+                  "paths": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/$defs/LinkPath"
+                    },
+                    "description": "The path each endpoint this runtime dialled took last."
+                  }
+                },
+                "description": "What `mesh status` says about the link transport.\n\n```\nuse majordomus_cli::mesh::quic::LinkStatus;\n\nlet status = LinkStatus { listening: None, reason: Some(\"udp 0.0.0.0:8741: in use\".into()), paths: vec![] };\nassert_eq!(serde_json::to_value(&status).unwrap()[\"reason\"], \"udp 0.0.0.0:8741: in use\");\n```"
+              },
+              "LinkPath": {
+                "type": "object",
+                "properties": {
+                  "endpoint": {
+                    "type": "string",
+                    "description": "The endpoint as dialled."
+                  },
+                  "transport": {
+                    "type": "string",
+                    "description": "`quic` or `http`."
+                  },
+                  "round_ms": {
+                    "type": "integer",
+                    "format": "uint64",
+                    "minimum": 0,
+                    "description": "How long the last exchange took, end to end, in milliseconds."
+                  },
+                  "fallback": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "Why QUIC was not used, when the path is `http` after QUIC was tried."
+                  }
+                },
+                "required": [
+                  "endpoint",
+                  "transport",
+                  "round_ms"
+                ],
+                "description": "The path one endpoint's last exchange took, for `mesh status` and route choice.\n\n```\nuse majordomus_cli::mesh::quic::LinkPath;\n\nlet path = LinkPath { endpoint: \"10.0.0.2:8741\".into(), transport: \"quic\".into(), round_ms: 3, fallback: None };\nassert_eq!(serde_json::to_value(&path).unwrap()[\"transport\"], \"quic\");\n```"
               }
             }
           }
@@ -96515,7 +96585,7 @@
         "title": "adr",
         "description": "Declarative objects of kind 'adr' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 169,
+        "capabilities": 170,
         "capability_ids": []
       },
       {
@@ -97172,7 +97242,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 1223,
+        "capabilities": 1224,
         "capability_ids": []
       },
       {
@@ -97878,7 +97948,7 @@
     ]
   },
   "index": {
-    "fingerprint": "223e1102672dfa03e0722ff771632e2530c956cb517965948639af3f6034d2c0",
+    "fingerprint": "14b05d2b3d9aa6115a0fd29a53fe1c5031a515aa64d680411a5f6ea3f140cf1c",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -97901,7 +97971,7 @@
       "workflows": ".ai/repo/workflows"
     },
     "by_kind": {
-      "adr": 169,
+      "adr": 170,
       "application": 5,
       "area": 9,
       "audience": 8,
@@ -97918,7 +97988,7 @@
       "gap": 5,
       "implementation": 54,
       "intent": 45,
-      "issue": 1223,
+      "issue": 1224,
       "knowledge": 186,
       "mesh-declaration": 1,
       "milestone": 117,
@@ -100679,6 +100749,21 @@
           "design",
           "ui",
           "enforcement"
+        ]
+      },
+      {
+        "uri": "majordomus://adr/adr-0233",
+        "kind": "adr",
+        "identity": "adr-0233",
+        "title": "A mesh link runs over QUIC with the node key as its TLS identity, beside HTTP and never instead of the signed protocol",
+        "description": "A mesh link runs over QUIC with the node key as its TLS identity, beside HTTP and never instead of the signed protocol",
+        "path": ".ai/repo/adrs/0233-a-mesh-link-runs-over-quic-with-the-node-key-as-its-tls-identity.md",
+        "section": "adrs",
+        "source_class": "adr",
+        "bytes": 8475,
+        "tags": [
+          "mesh-runtime",
+          "transport"
         ]
       },
       {
@@ -105394,7 +105479,7 @@
         "title": "Majordomus Mesh",
         "path": "docs/MESH.md",
         "source_class": "document",
-        "bytes": 95051
+        "bytes": 97369
       },
       {
         "uri": "majordomus://document/docs/MODELS.md",
@@ -105475,7 +105560,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 132233
+        "bytes": 132240
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -122904,6 +122989,17 @@
         "bytes": 4732
       },
       {
+        "uri": "majordomus://issue/I4564",
+        "kind": "issue",
+        "identity": "I4564",
+        "title": "Two runtimes link over QUIC, each pinned to the other's node key, and fall back to HTTP when QUIC cannot connect",
+        "description": "A QuicTransport implements LinkTransport (apps/majordomus-cli/src/mesh/link.rs) beside HttpTransport. It uses quinn on one adapter-owned runtime thread. A runtime presents a self-signed certificate over its Ed25519 node key, and each side accepts only the key it expects (the dialled peer's key; on accept, a trusted key). The shared server accepts QUIC on a UDP port and answers the same Signed Hello and Sync messages as on HTTP. The server answers QUIC on its own port number over UDP; nothing new is advertised. The dialer tries QUIC first, falls back to HTTP, and records the path each link took. A connection stays open between rounds.",
+        "path": ".ai/repo/project/issues/I4564.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 4530
+      },
+      {
         "uri": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "identity": "a-brief-is-reconciled-not-transcribed",
@@ -138696,7 +138792,7 @@
       "identity": [
         "id"
       ],
-      "objects": 169
+      "objects": 170
     },
     {
       "name": "application",
@@ -138859,7 +138955,7 @@
       "identity": [
         "id"
       ],
-      "objects": 1223
+      "objects": 1224
     },
     {
       "name": "knowledge",

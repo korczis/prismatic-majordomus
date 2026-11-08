@@ -9,7 +9,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 
 | milestone | status | done of required | ready | blocked | active | verify | cancelled | outcome |
 |---|---|---|---|---|---|---|---|---|
-| [mesh-connectivity](https://majordomus.dev/plan/mesh-connectivity/) | BLOCKED | 0/6 | 0 | 6 | 0 | 0 | 0 | A connectivity decision record, a relayed path through a trusted hub, a signed bootstrap manifest on Pages, and a NAT matrix in the mesh lab. |
+| [mesh-connectivity](https://majordomus.dev/plan/mesh-connectivity/) | BLOCKED | 0/7 | 0 | 7 | 0 | 0 | 0 | A connectivity decision record, a relayed path through a trusted hub, a signed bootstrap manifest on Pages, and a NAT matrix in the mesh lab. |
 
 ## Issues
 
@@ -21,6 +21,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | [I3190](https://majordomus.dev/plan/i3190/) | BLOCKED | 3 | I3189 | The mesh lab proves links behind NAT, with the relay, a hub outage and an address change |
 | [I4012](https://majordomus.dev/plan/i4012/) | BLOCKED | 0 | — | A remote node's loopback runtimes are not dialed, so its hub is |
 | [I4013](https://majordomus.dev/plan/i4013/) | BLOCKED | 0 | — | A server bound to every interface advertises the addresses it has now |
+| [I4564](https://majordomus.dev/plan/i4564/) | BLOCKED | 0 | — | Two runtimes link over QUIC, each pinned to the other's node key, and fall back to HTTP when QUIC cannot connect |
 
 ## Findings
 

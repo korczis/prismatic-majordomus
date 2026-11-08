@@ -83,6 +83,14 @@ tiktoken-rs = "=0.12.0"
 # request is the crate's own few lines (src/mcp/bridge.rs) over a rustls stream.
 rustls = { version = "0.23", default-features = false, features = ["ring", "std", "tls12"] }
 webpki-roots = "1"
+# quinn + tokio + rcgen: a mesh link may run over QUIC (ADR 0233, I4564). quinn is the proven
+# QUIC implementation on the rustls and ring already above; its runtime is one tokio runtime
+# owned by the QUIC adapter (src/mesh/quic.rs), so nothing else in the crate turns async.
+# rcgen mints the self-signed certificate over the node's Ed25519 key, which is the link's
+# TLS identity: no certificate authority and no web PKI are involved.
+quinn = { version = "0.11", default-features = false, features = ["runtime-tokio", "rustls-ring"] }
+tokio = { version = "1", default-features = false, features = ["rt-multi-thread", "net", "time", "sync"] }
+rcgen = { version = "0.14", default-features = false, features = ["crypto", "ring"] }
 
 [build-dependencies]
 # sha2: build.rs takes the generation — the digest of the crate sources this build read —
@@ -96,9 +104,8 @@ criterion = { version = "0.8", default-features = false }
 # equivalence, projection determinism, duplicate detection), strategies derived per
 # capability from its benchmark cases.
 proptest = { version = "1", default-features = false, features = ["std"] }
-# rcgen: the TLS tests mint a certificate authority and a server certificate in memory, so a
-# round trip over TLS is proved against a local server with no network and no fixture key.
-rcgen = { version = "0.14", default-features = false, features = ["crypto", "ring"] }
+# rcgen (a normal dependency above) also lets the TLS tests mint a certificate authority and a
+# server certificate in memory, so a round trip over TLS is proved with no fixture key.
 
 [[bench]]
 name = "projections"

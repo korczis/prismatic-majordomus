@@ -1,0 +1,48 @@
+id: I4564
+milestone: mesh-connectivity
+title: "Two runtimes link over QUIC, each pinned to the other's node key, and fall back to HTTP when QUIC cannot connect"
+slug: a-link-runs-over-quic
+priority: p1
+profile: deep-work
+objective: "A QuicTransport implements LinkTransport (apps/majordomus-cli/src/mesh/link.rs) beside HttpTransport. It uses quinn on one adapter-owned runtime thread. A runtime presents a self-signed certificate over its Ed25519 node key, and each side accepts only the key it expects (the dialled peer's key; on accept, a trusted key). The shared server accepts QUIC on a UDP port and answers the same Signed Hello and Sync messages as on HTTP. The server answers QUIC on its own port number over UDP; nothing new is advertised. The dialer tries QUIC first, falls back to HTTP, and records the path each link took. A connection stays open between rounds."
+why: "Owner order 2026-11-08 (session 8e226cf8-e383-4936-afd0-7cd6f4227ccd): 'QUIC (fáze 06, I3189): dělat ho teď…?' was answered 'hned', and 'Zúžení packu…?' was answered 'nezuzuj'. ADR 0233 records both verbatim. The measured problem (ADR 0207): on master 8a7e9df20d8 a link to an advertised address is cleartext HTTP, which the client sends only to private or overlay addresses (docs/MESH.md, ADR 0220). Nodes on two networks cannot link without a publicly trusted certificate. Every round is a new dialer-initiated TCP request (HttpTransport::post), so an undialable node has no reverse channel (I3189). The first Mesh Fabric exchange (reviews r-34030860b2bd, r-60970e4c34ea) reached only sessions on one machine."
+current_state: "On master 8a7e9df20d8 a link is HTTP only: one TCP connection per Hello or Sync round, cleartext unless the endpoint is https:// with a web-PKI certificate. Nothing in apps/ speaks QUIC."
+desired_state: "A link between two runtimes runs over an encrypted QUIC connection pinned to their node keys and falls back to HTTP. Mesh status and the path record say which transport each link uses."
+scope:
+  - "apps/majordomus-cli/src/mesh/quic.rs"
+  - "apps/majordomus-cli/src/mesh/link.rs"
+  - "apps/majordomus-cli/src/mesh/mod.rs"
+  - "apps/majordomus-cli/src/mesh/manager.rs"
+  - "apps/majordomus-cli/src/mesh/identity.rs"
+  - "apps/majordomus-cli/src/mesh/firewall.rs"
+  - "apps/majordomus-cli/src/shared.rs"
+  - "apps/majordomus-cli/src/capability/builtin/mesh.rs"
+  - "apps/majordomus-cli/tests/mesh_quic.rs"
+  - "apps/majordomus-cli/Cargo.toml"
+  - "Cargo.lock"
+  - "docs/MESH.md"
+  - ".ai/repo/adrs/0233-a-mesh-link-runs-over-quic-with-the-node-key-as-its-tls-identity.md"
+non_scope:
+  - "A relay through a trusted hub (I3189), which this connection makes possible"
+  - "NAT hole punching and ICE (ADR 0202)"
+  - "Per-message ACK, retry and dead letters (Mesh Fabric phase 04)"
+  - "Adaptive route selection by measured RTT (Mesh Fabric phase 07); this issue only falls back from QUIC to HTTP"
+depends_on: []
+serves: []
+acceptance_criteria:
+  - "Two runtimes in one test, each on its own UDP socket on 127.0.0.1, complete Hello and Sync over QUIC, and a claim written on either side reaches the other"
+  - "A QUIC peer that presents a certificate over any key other than the expected node key is refused before any link message is read, and the refusal names the key it expected"
+  - "When the peer's QUIC port does not answer, the same dial completes over HTTP, and the link records path http"
+  - "A message over MAX_LINK_MESSAGE is refused before it is sent, and a reply over MAX_LINK_REPLY is refused, exactly as on HTTP"
+  - "mesh status names the QUIC listener or why there is none (MAJORDOMUS_MESH_QUIC=off, a port QUIC cannot bind), and for each endpoint dialled the transport its last round took, the round time and why it fell back; the advertisement and the card are unchanged, so an older runtime links as before"
+  - "A live link between two machines (this Mac and lundra over the tailnet) carries a claim both ways over QUIC; its round time, and the HTTP round time on the same pair, are recorded in the issue's evidence"
+  - "The added build time and release binary size are measured and recorded in ADR 0233"
+validation:
+  - "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --lib mesh::quic::"
+  - "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --test mesh_quic"
+evidence_required:
+  - "test_two_runtimes_link_over_quic"
+  - "test_a_quic_peer_with_another_key_is_refused"
+  - "test_quic_falls_back_to_http"
+created_at: 2026-11-08
+updated_at: 2026-11-08

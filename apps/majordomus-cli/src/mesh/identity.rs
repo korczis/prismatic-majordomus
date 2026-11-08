@@ -263,6 +263,44 @@ impl NodeIdentity {
         write_private(path, &text)
     }
 
+    /// This node's TLS identity for a QUIC link (ADR 0233): a self-signed certificate over
+    /// the node's own Ed25519 key, and that key as PKCS#8 for the TLS stack, both DER. The
+    /// certificate proves nothing by its issuer, because it has none: a peer accepts it
+    /// only for the key inside, which is the node key the link already trusts or pins, so
+    /// the key's secret half is produced here and nowhere else, as the module promises.
+    ///
+    /// ```
+    /// use majordomus_cli::mesh::identity::NodeIdentity;
+    /// use majordomus_cli::mesh::quic::node_key_of_certificate;
+    ///
+    /// let node = NodeIdentity::ephemeral().unwrap();
+    /// let (certificate, pkcs8) = node.tls_certificate().unwrap();
+    /// assert_eq!(node_key_of_certificate(&certificate).as_deref(), Some(node.public.public_key.as_str()));
+    /// assert_eq!(pkcs8.len(), 85, "PKCS#8 v2: the seed and the public key");
+    /// ```
+    pub fn tls_certificate(&self) -> Result<(Vec<u8>, Vec<u8>), MeshError> {
+        // RFC 8410 OneAsymmetricKey v2: the seed, then the public key in [1], which is the
+        // form ring parses without a second derivation
+        let mut pkcs8 = vec![
+            0x30, 0x53, 0x02, 0x01, 0x01, 0x30, 0x05, 0x06, 0x03, 0x2b, 0x65, 0x70, 0x04, 0x22,
+            0x04, 0x20,
+        ];
+        pkcs8.extend_from_slice(&self.signing.to_bytes());
+        pkcs8.extend_from_slice(&[0xa1, 0x23, 0x03, 0x21, 0x00]);
+        pkcs8.extend_from_slice(self.signing.verifying_key().as_bytes());
+        let key = rcgen::KeyPair::try_from(pkcs8.as_slice())
+            .map_err(|e| MeshError::Identity(format!("the TLS key: {e}")))?;
+        let mut params = rcgen::CertificateParams::new(vec![super::quic::SERVER_NAME.to_string()])
+            .map_err(|e| MeshError::Identity(format!("the TLS certificate: {e}")))?;
+        params
+            .distinguished_name
+            .push(rcgen::DnType::CommonName, self.public.node_id.as_str());
+        let certificate = params
+            .self_signed(&key)
+            .map_err(|e| MeshError::Identity(format!("the TLS certificate: {e}")))?;
+        Ok((certificate.der().to_vec(), pkcs8))
+    }
+
     /// Sign a message with this node's key.
     pub fn sign(&self, message: &[u8]) -> String {
         hex(&self.signing.sign(message).to_bytes())

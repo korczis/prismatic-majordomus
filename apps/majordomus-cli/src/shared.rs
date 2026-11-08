@@ -187,6 +187,7 @@ fn activate_mesh(ctx: &Arc<Context>, version: &str, url: &str, hosting: &MeshHos
             // a server bound to every interface advertises the addresses they hold now, not
             // the ones they held when it started: DHCP moves a machine's address under it
             if hosting.advertise.is_none() && follows_interfaces(&bound) {
+                let bound = bound.clone();
                 ctx.mesh.follow_endpoints(Arc::new(move || {
                     crate::mesh::address::advertised_endpoints(&bound)
                 }));
@@ -211,6 +212,7 @@ fn activate_mesh(ctx: &Arc<Context>, version: &str, url: &str, hosting: &MeshHos
             return;
         }
     };
+    let transport = link_transport(ctx, &identity, &bound);
     let setup = crate::mesh::cooperation::CooperationSetup {
         identity,
         runtime,
@@ -221,7 +223,7 @@ fn activate_mesh(ctx: &Arc<Context>, version: &str, url: &str, hosting: &MeshHos
         trust: config.trust.clone(),
         journal_path: Some(root.join(".ai/local/state/mesh/journal.jsonl")),
         registry: Arc::clone(ctx.mesh.registry()),
-        transport: Arc::new(crate::mesh::link::HttpTransport),
+        transport,
         board: Some(Arc::clone(&ctx.peers)),
         checkout: crate::mesh::cooperation::CheckoutFacts {
             id: Some(crate::repository::identity(root)),
@@ -241,6 +243,17 @@ fn activate_mesh(ctx: &Arc<Context>, version: &str, url: &str, hosting: &MeshHos
             ctx.mesh.decline_cooperation(&e.to_string());
         }
     }
+}
+
+/// The transport cooperation dials with (ADR 0233): `mesh::quic::runtime_transport` on the
+/// server's own address, unless `MAJORDOMUS_MESH_QUIC=off` leaves HTTP alone.
+fn link_transport(
+    ctx: &Arc<Context>,
+    identity: &crate::mesh::identity::NodeIdentity,
+    bound: &str,
+) -> Arc<dyn crate::mesh::link::LinkTransport> {
+    let off = environment_variable("MAJORDOMUS_MESH_QUIC").as_deref() == Some("off");
+    crate::mesh::quic::runtime_transport(&ctx.mesh, identity, bound, off)
 }
 
 impl SharedServer {
