@@ -2,7 +2,8 @@
 # majordomus-negative: history capture
 # A payload may not use one of the ledger envelope's own key names.
 #
-# mj_ledger_append writes ts, event, head, branch, by and session itself, then appends the
+# mj_ledger_append writes ts, event, head, branch, by, session, pid, cwd and mesh_session
+# itself (MJ_LEDGER_ENVELOPE_KEYS; case 4570 holds the last three), then appends the
 # caller's extra fields verbatim. Two callers passed a field literally named `event` — the
 # provider's own event name in the lifecycle receipt — so every receipt this repository has
 # written since d5d541850 carried the envelope key twice:

@@ -6,23 +6,23 @@
     "version": "1.0.0"
   },
   "registry": {
-    "fingerprint": "8c33e8415deea9ebe386b08ab7ee7aa9f7b1198093444baa70461cbb3de3bd01",
+    "fingerprint": "878f87a55b413c6ca2bb8fab07118c513d8e385403aea817f33c68562cf9cf62",
     "summary": {
-      "total": 3951,
+      "total": 3953,
       "builtin": 231,
-      "declarative": 3720,
+      "declarative": 3722,
       "by_kind": {
         "command": 41,
         "query": 190,
-        "resource": 3720
+        "resource": 3722
       },
       "by_stability": {
         "behaviorally_verified": 153,
         "experimental": 68,
-        "implemented": 3730
+        "implemented": 3732
       },
       "mcp_tools": 215,
-      "mcp_resources": 3777,
+      "mcp_resources": 3779,
       "http_routes": 219,
       "cli_commands": 128,
       "modules": 96,
@@ -97172,7 +97172,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 1223,
+        "capabilities": 1224,
         "capability_ids": []
       },
       {
@@ -97785,7 +97785,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 697,
+        "capabilities": 698,
         "capability_ids": []
       },
       {
@@ -97878,7 +97878,7 @@
     ]
   },
   "index": {
-    "fingerprint": "6bf219c1245bfc82b8221760e4ff686b6481f5d0f2183443cc9ffbc00d44e03e",
+    "fingerprint": "c9309c2294fcb4b9b042d46b5f039bf29e4f06977a1c2c2fae25f5fe2b0478ce",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -97918,7 +97918,7 @@
       "gap": 5,
       "implementation": 54,
       "intent": 45,
-      "issue": 1223,
+      "issue": 1224,
       "knowledge": 186,
       "mesh-declaration": 1,
       "milestone": 117,
@@ -97932,7 +97932,7 @@
       "session": 95,
       "skill": 10,
       "taxonomy": 10,
-      "test": 697,
+      "test": 698,
       "use-case": 49,
       "workspace": 1
     },
@@ -105475,7 +105475,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 132233
+        "bytes": 132386
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -108625,7 +108625,7 @@
         "identity": "lib/common.sh",
         "path": "lib/common.sh",
         "source_class": "library",
-        "bytes": 123975
+        "bytes": 125763
       },
       {
         "uri": "majordomus://implementation/lib/context.sh",
@@ -108729,7 +108729,7 @@
         "identity": "lib/history.sh",
         "path": "lib/history.sh",
         "source_class": "library",
-        "bytes": 9228
+        "bytes": 9484
       },
       {
         "uri": "majordomus://implementation/lib/init.sh",
@@ -122904,6 +122904,17 @@
         "bytes": 4732
       },
       {
+        "uri": "majordomus://issue/I4561",
+        "kind": "issue",
+        "identity": "I4561",
+        "title": "A ledger line names the process that wrote it: its pid, its working directory and the mesh session it is attached to",
+        "description": "Every line either ledger writer appends, mj_ledger_append in lib/common.sh and ledger::append in apps/majordomus-cli/src/ledger.rs, carries the writing process's pid, its working directory and, when one is attached, its mesh session id, as envelope keys both writers spell the same, so an unexpected write to a checkout can be traced to the process that made it.",
+        "path": ".ai/repo/project/issues/I4561.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3953
+      },
+      {
         "uri": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "identity": "a-brief-is-reconciled-not-transcribed",
@@ -133414,7 +133425,7 @@
         "identity": "test/cases/133_plan_transition.sh",
         "path": "test/cases/133_plan_transition.sh",
         "source_class": "case",
-        "bytes": 11100
+        "bytes": 11116
       },
       {
         "uri": "majordomus://test/test/cases/133_rule_graph.sh",
@@ -133878,7 +133889,7 @@
         "identity": "test/cases/282_the_ledger_envelope_is_reserved.sh",
         "path": "test/cases/282_the_ledger_envelope_is_reserved.sh",
         "source_class": "case",
-        "bytes": 7734
+        "bytes": 7818
       },
       {
         "uri": "majordomus://test/test/cases/284_a_record_reads_the_whole_declaration.sh",
@@ -136335,6 +136346,14 @@
         "path": "test/cases/4563_the_live_site_is_probed_in_a_real_browser.sh",
         "source_class": "case",
         "bytes": 6846
+      },
+      {
+        "uri": "majordomus://test/test/cases/4570_a_ledger_line_names_its_writer.sh",
+        "kind": "test",
+        "identity": "test/cases/4570_a_ledger_line_names_its_writer.sh",
+        "path": "test/cases/4570_a_ledger_line_names_its_writer.sh",
+        "source_class": "case",
+        "bytes": 5131
       },
       {
         "uri": "majordomus://test/test/cases/45_github_projection.sh",
@@ -138859,7 +138878,7 @@
       "identity": [
         "id"
       ],
-      "objects": 1223
+      "objects": 1224
     },
     {
       "name": "knowledge",
@@ -139021,7 +139040,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 697
+      "objects": 698
     },
     {
       "name": "use-case",

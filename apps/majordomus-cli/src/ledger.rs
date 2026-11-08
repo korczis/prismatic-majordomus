@@ -9,7 +9,8 @@
 //!
 //! * the same file — `.ai/local/state/ledger.jsonl`, never tracked, created on first write;
 //! * the same envelope — `ts`, `event`, `head`, `branch`, `by`, then `session` when this
-//!   checkout has an open episode, then the event's own payload, in that order;
+//!   checkout has an open episode, then `pid` and `cwd` of the writing process and
+//!   `mesh_session` when it names one (I4561), then the event's own payload, in that order;
 //!   `head` is `NONE` in an unborn repository and `branch` is `DETACHED` off a branch,
 //!   because that is what the shell writes and a reader may not meet two spellings;
 //! * the same vocabulary — `share/events.yaml` declares every name the ledger accepts and
@@ -68,6 +69,20 @@ const LEDGER: &str = "ledger.jsonl";
 /// The pointer to this checkout's open episode.
 const SESSION_POINTER: &str = "session-current.yaml";
 
+/// The envelope's keys, in the order a line composes them: `MJ_LEDGER_ENVELOPE_KEYS` in
+/// `lib/common.sh`, which a payload may not carry in either writer.
+pub(crate) const ENVELOPE: [&str; 9] = [
+    "ts",
+    "event",
+    "head",
+    "branch",
+    "by",
+    "session",
+    "pid",
+    "cwd",
+    "mesh_session",
+];
+
 /// Why a line was not written.
 ///
 /// Every variant is a refusal to corrupt the record, never a partial write: the line is
@@ -86,6 +101,14 @@ pub enum LedgerError {
         event: String,
         /// Every name that is declared, in declaration order.
         known: Vec<String>,
+    },
+    /// The payload carries a key the envelope reserves, which every line would then carry
+    /// twice, with readers disagreeing about which one it means.
+    EnvelopeKey {
+        /// The event.
+        event: String,
+        /// The reserved key the payload tried to carry.
+        field: String,
     },
     /// The event is declared, but the payload omits a key the declaration requires.
     MissingField {
@@ -117,6 +140,10 @@ impl fmt::Display for LedgerError {
                 f,
                 "unregistered event '{event}'; declare it in share/events.yaml or use one of: {}",
                 known.join(" ")
+            ),
+            Self::EnvelopeKey { event, field } => write!(
+                f,
+                "event '{event}' carries the payload field '{field}', which is a ledger envelope key"
             ),
             Self::MissingField { event, field } => {
                 write!(f, "event '{event}' is missing the required field '{field}'")
@@ -268,6 +295,72 @@ pub fn append(
     event: &str,
     payload: &[Field<'_>],
 ) -> Result<String, LedgerError> {
+    append_as(
+        root,
+        vocabulary,
+        git,
+        now,
+        event,
+        payload,
+        &Writer::of_this_process(),
+    )
+}
+
+/// The process a line names as its writer (I4561): what it reports about itself, not an
+/// authentication, and what makes an unexpected write to a checkout traceable.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub(crate) struct Writer {
+    /// Its pid.
+    pub(crate) pid: String,
+    /// The directory it ran in, physical, as `pwd -P` spells it.
+    pub(crate) cwd: String,
+    /// The mesh session it works for, when its environment names one.
+    pub(crate) mesh_session: Option<String>,
+}
+
+impl Writer {
+    /// This process.
+    pub(crate) fn of_this_process() -> Writer {
+        Writer {
+            pid: std::process::id().to_string(),
+            cwd: std::env::current_dir()
+                .map(|d| d.display().to_string())
+                .unwrap_or_default(),
+            mesh_session: mesh_session(|k| std::env::var(k).ok()),
+        }
+    }
+}
+
+/// The mesh session an environment names, read as `mesh who` reads a process's owner:
+/// `MAJORDOMUS_OWNER_SESSION`, else `CLAUDE_CODE_SESSION_ID` as `claude-code-<id>`, each
+/// validated by [`crate::offload::owner::owner_value`]. `mj_ledger_mesh_session` in
+/// `lib/common.sh` is the same rule.
+pub(crate) fn mesh_session(env: impl Fn(&str) -> Option<String>) -> Option<String> {
+    use crate::offload::owner::owner_value;
+    let set = |k: &str| env(k).filter(|v| !v.trim().is_empty());
+    if let Some(v) = set("MAJORDOMUS_OWNER_SESSION") {
+        return owner_value(&v);
+    }
+    let id = set("CLAUDE_CODE_SESSION_ID")?;
+    owner_value(&format!("claude-code-{}", id.trim()))
+}
+
+/// [`append`], naming `writer` as the process that wrote the line.
+pub(crate) fn append_as(
+    root: &Path,
+    vocabulary: &Vocabulary,
+    git: &GitState,
+    now: &str,
+    event: &str,
+    payload: &[Field<'_>],
+    writer: &Writer,
+) -> Result<String, LedgerError> {
+    if let Some((k, _)) = payload.iter().find(|(k, _)| ENVELOPE.contains(k)) {
+        return Err(LedgerError::EnvelopeKey {
+            event: event.to_string(),
+            field: (*k).to_string(),
+        });
+    }
     let requires = vocabulary
         .requires(event)
         .ok_or_else(|| LedgerError::UnknownEvent {
@@ -306,6 +399,14 @@ pub fn append(
     if let Some(session) = open_session_id(root) {
         line.push(',');
         push_pair(&mut line, "session", &session);
+    }
+    line.push(',');
+    push_pair(&mut line, "pid", &writer.pid);
+    line.push(',');
+    push_pair(&mut line, "cwd", &writer.cwd);
+    if let Some(mesh) = &writer.mesh_session {
+        line.push(',');
+        push_pair(&mut line, "mesh_session", mesh);
     }
     for (k, v) in payload {
         line.push(',');
@@ -433,6 +534,15 @@ pub struct Entry {
     /// The episode it belongs to, when there was one.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub session: Option<String>,
+    /// The pid of the process that wrote it; absent on lines written before I4561.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub pid: Option<String>,
+    /// The directory that process ran in; absent on lines written before I4561.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub cwd: Option<String>,
+    /// The mesh session it worked for, when it named one.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub mesh_session: Option<String>,
     /// Everything else the line carried.
     #[serde(flatten)]
     pub payload: BTreeMap<String, serde_json::Value>,
@@ -501,6 +611,77 @@ mod tests {
     #[test]
     fn the_envelope_is_the_shells_envelope() {
         let dir = tempdir();
+        let line = append_as(
+            dir.path(),
+            &vocabulary(),
+            &git(),
+            "2026-09-11T12:00:00Z",
+            "plan_start",
+            &[("issue", "i-1".into())],
+            &writer(Some("claude-code-s1")),
+        )
+        .expect("the event is declared and its payload complete");
+        assert_eq!(
+            line,
+            format!(
+                r#"{{"ts":"2026-09-11T12:00:00Z","event":"plan_start","head":"{}","branch":"master","by":"majordomus/{}","pid":"4242","cwd":"/w/d","mesh_session":"claude-code-s1","issue":"i-1"}}"#,
+                "a".repeat(40),
+                crate::VERSION
+            )
+        );
+    }
+
+    fn writer(mesh: Option<&str>) -> Writer {
+        Writer {
+            pid: "4242".into(),
+            cwd: "/w/d".into(),
+            mesh_session: mesh.map(str::to_string),
+        }
+    }
+
+    /// The keys a line composes, in order, are the envelope the shell declares, and a
+    /// process that names no mesh session writes no `mesh_session` at all.
+    #[test]
+    fn a_line_names_its_writer_in_the_declared_order() {
+        let dir = tempdir();
+        let line = append_as(
+            dir.path(),
+            &vocabulary(),
+            &git(),
+            "2026-09-11T12:00:00Z",
+            "plan_start",
+            &[("issue", "i-1".into())],
+            &writer(None),
+        )
+        .unwrap();
+        let v: serde_json::Value = serde_json::from_str(&line).unwrap();
+        let keys: Vec<&str> = v.as_object().unwrap().keys().map(String::as_str).collect();
+        let mut want: Vec<&str> = ENVELOPE
+            .iter()
+            .copied()
+            .filter(|k| *k != "session" && *k != "mesh_session")
+            .collect();
+        want.push("issue");
+        let mut got = keys.clone();
+        got.sort_unstable();
+        want.sort_unstable();
+        assert_eq!(got, want, "{line}");
+        assert!(
+            line.contains(r#""by":"majordomus/"#)
+                && line.contains(r#","pid":"4242","cwd":"/w/d","issue""#),
+            "{line}"
+        );
+        let shell = include_str!("../../../lib/common.sh");
+        assert!(
+            shell.contains(&format!("MJ_LEDGER_ENVELOPE_KEYS='{}'", ENVELOPE.join(" "))),
+            "lib/common.sh declares another envelope than ledger::ENVELOPE"
+        );
+    }
+
+    /// `append` names this process: its pid and the directory it runs in.
+    #[test]
+    fn append_names_this_process() {
+        let dir = tempdir();
         let line = append(
             dir.path(),
             &vocabulary(),
@@ -509,15 +690,78 @@ mod tests {
             "plan_start",
             &[("issue", "i-1".into())],
         )
-        .expect("the event is declared and its payload complete");
-        assert_eq!(
-            line,
-            format!(
-                r#"{{"ts":"2026-09-11T12:00:00Z","event":"plan_start","head":"{}","branch":"master","by":"majordomus/{}","issue":"i-1"}}"#,
-                "a".repeat(40),
-                crate::VERSION
-            )
+        .unwrap();
+        let (entries, skipped) = read(dir.path());
+        assert_eq!((entries.len(), skipped), (1, 0), "{line}");
+        let me = Writer::of_this_process();
+        assert_eq!(entries[0].pid.as_deref(), Some(me.pid.as_str()));
+        assert_eq!(entries[0].cwd.as_deref(), Some(me.cwd.as_str()));
+        assert!(
+            !entries[0].payload.contains_key("pid"),
+            "the reader typed pid"
         );
+        assert_eq!(entries[0].mesh_session, me.mesh_session);
+    }
+
+    /// A payload that names an envelope key is refused and writes nothing, in this writer
+    /// as in the shell's.
+    #[test]
+    fn a_payload_naming_an_envelope_key_is_refused() {
+        for key in ["pid", "cwd", "mesh_session", "session", "by"] {
+            let dir = tempdir();
+            let err = append_as(
+                dir.path(),
+                &vocabulary(),
+                &git(),
+                "2026-09-11T12:00:00Z",
+                "plan_start",
+                &[("issue", "i-1".into()), (key, "x".into())],
+                &writer(None),
+            )
+            .unwrap_err();
+            assert!(
+                matches!(err, LedgerError::EnvelopeKey { .. }),
+                "{key}: {err}"
+            );
+            assert_eq!(
+                err.to_string(),
+                format!("event 'plan_start' carries the payload field '{key}', which is a ledger envelope key")
+            );
+            assert!(!dir.path().join(STATE_DIR).join(LEDGER).exists(), "{key}");
+        }
+    }
+
+    /// The mesh session is read as `mesh who` reads an owner, and a value the owner rule
+    /// refuses is no session rather than a guess.
+    #[test]
+    fn the_mesh_session_is_read_as_mesh_who_reads_it() {
+        let env = |pairs: &'static [(&'static str, &'static str)]| {
+            move |k: &str| {
+                pairs
+                    .iter()
+                    .find(|(n, _)| *n == k)
+                    .map(|(_, v)| v.to_string())
+            }
+        };
+        assert_eq!(mesh_session(env(&[])), None);
+        assert_eq!(
+            mesh_session(env(&[("CLAUDE_CODE_SESSION_ID", " f9c3 ")])).as_deref(),
+            Some("claude-code-f9c3")
+        );
+        assert_eq!(
+            mesh_session(env(&[
+                ("MAJORDOMUS_OWNER_SESSION", "lundra-7"),
+                ("CLAUDE_CODE_SESSION_ID", "f9c3")
+            ]))
+            .as_deref(),
+            Some("lundra-7"),
+            "a stated owner wins"
+        );
+        assert_eq!(
+            mesh_session(env(&[("MAJORDOMUS_OWNER_SESSION", "a b")])),
+            None
+        );
+        assert_eq!(mesh_session(env(&[("CLAUDE_CODE_SESSION_ID", "  ")])), None);
     }
 
     /// An unborn repository and a detached head are the two states the shell spells with
