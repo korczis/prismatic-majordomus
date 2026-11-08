@@ -58074,6 +58074,13 @@
                 "null"
               ],
               "description": "Only what mentions this text, ignoring case: a path, a branch, an issue, a pull\nrequest, a word of an intent or a subject."
+            },
+            "key": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "Only the record with this key (`<stream>/<id>`, a handover by its id): the one review request, claim, session or handover a woken worker reads once by the key its knock carried (I4553), with that record's stream alone."
             }
           },
           "description": "What a reader asks of the folded state. Every filter narrows; none changes a shape, and\nan input it does not know is refused rather than ignored.\n\n```\nuse majordomus_cli::mesh::page::{ClaimFilter, Query, View};\n\nlet q: Query = serde_json::from_str(r#\"{\"view\":\"full\",\"claims\":\"live\",\"limit\":5}\"#).unwrap();\nassert_eq!(q.view(), View::Full);\nassert_eq!((q.claims, q.limit), (Some(ClaimFilter::Live), Some(5)));\nassert!(serde_json::from_str::<Query>(r#\"{\"views\":\"full\"}\"#).is_err());\n```",
@@ -59482,7 +59489,7 @@
       "module": "mesh",
       "kind": "command",
       "title": "Answer a review request",
-      "description": "Answer a review request from any runtime with approved, changes_requested or commented, and a note. Replicated to every linked runtime. Writes this runtime's journal only.",
+      "description": "Answer a review request from any runtime with approved, changes_requested or commented, and a note. The answer carries the requester's route, resolved as `mesh.review.request` resolves the addressee's, so the caller can wake the requester instead of it reading mesh state in a loop. Replicated to every linked runtime. Writes this runtime's journal only.",
       "input": {
         "name": "ReviewAnswerInput",
         "schema": {
@@ -59521,7 +59528,7 @@
         }
       },
       "output": {
-        "name": "Written",
+        "name": "ReviewWritten",
         "schema": {
           "type": "object",
           "properties": {
@@ -59543,6 +59550,17 @@
               "$ref": "#/$defs/Durability",
               "description": "Whether the event reached this machine's disk: `synced`, `memory` (a journal with no\nfile, by configuration), or `not_durable` — held and replicated to peers, not on disk\nhere, and not acknowledged as durable. `unknown` from an executable that predates it.",
               "default": "unknown"
+            },
+            "route": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/SessionRoute"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "The route that wakes the other side, or why there is none."
             }
           },
           "required": [
@@ -59550,8 +59568,8 @@
             "event",
             "lamport"
           ],
-          "description": "What an operation wrote, as its answer to the caller. Every mesh operation is an event\nappended to this runtime's journal, and the caller is handed the three facts it cannot\nwork out for itself: the mesh-wide key of the thing it created, the event that says so,\nand the Lamport stamp that places it against everyone else's events.\n\nThe key is what a later operation is addressed by — a claim is released by the key its\nacquisition returned, never by the local name it was given — and the stamp is what a\ncaller waiting for a peer to catch up compares against.\n\n```\n# use std::sync::Arc;\n# use majordomus_cli::mesh::config::{CooperationConfig, TrustConfig};\n# use majordomus_cli::mesh::cooperation::{CheckoutFacts, Cooperation, CooperationSetup};\n# use majordomus_cli::mesh::identity::NodeIdentity;\n# use majordomus_cli::mesh::link::HttpTransport;\n# use majordomus_cli::mesh::registry::MeshRegistry;\n# use majordomus_cli::mesh::repository::of_root_commits;\n# let cooperation = Cooperation::new(CooperationSetup {\n#     identity: Arc::new(NodeIdentity::ephemeral().unwrap()), runtime: \"0000000000000001\".into(),\n#     repository: of_root_commits(&[\"root\".into()]), endpoints: vec![\"127.0.0.1:9\".into()],\n#     version: \"doc\".into(), config: CooperationConfig::default(), trust: TrustConfig::default(),\n#     journal_path: None, registry: Arc::new(MeshRegistry::new()),\n#     transport: Arc::new(HttpTransport), board: None, checkout: CheckoutFacts::default(),\n# }).unwrap();\nuse majordomus_cli::mesh::cooperation::Written;\nuse majordomus_cli::mesh::journal::{ClaimMode, Durability, SessionInfo};\n\nlet session = SessionInfo::named(\"s1\", \"cli\");\nlet written: Written = cooperation\n    .claim(&session, vec![\"docs\".into()], None, ClaimMode::Advisory, None)\n    .unwrap();\nassert!(written.lamport > 0, \"placed against every other runtime's events\");\nassert_eq!(written.durability, Durability::Memory, \"this journal has no file\");\n\n// and the key it returned is how the claim is addressed from here on\ncooperation.release(&written.key).unwrap();\n```",
-          "title": "Written",
+          "description": "The answer of `mesh.review.request` and `mesh.review.answer`: the event written, and how\nto wake the other side (I4553).\n\n`route` is the addressee's for a request that names a session, and the requester's for\nan answer; absent for a request addressed to nobody. Majordomus sends nothing along it:\nthe calling worker knocks with its own provider's messaging tool, carrying the review\nkey, and the woken side reads the record once by that key.",
+          "title": "ReviewWritten",
           "$defs": {
             "Durability": {
               "oneOf": [
@@ -59577,6 +59595,57 @@
                 }
               ],
               "description": "Whether an event this runtime wrote reached this machine's disk: what an append\nacknowledges, and the only thing a caller may say about it.\n\n```\nuse majordomus_cli::mesh::journal::Durability;\nassert_eq!(serde_json::to_value(Durability::NotDurable).unwrap(), \"not_durable\");\nassert_eq!(Durability::default(), Durability::Unknown, \"an answer that did not say\");\nassert!(Durability::Synced.is_on_disk() && !Durability::NotDurable.is_on_disk());\n```"
+            },
+            "SessionRoute": {
+              "anyOf": [
+                {
+                  "type": "object",
+                  "properties": {
+                    "via": {
+                      "$ref": "#/$defs/RouteVia",
+                      "description": "How: `provider-socket`."
+                    },
+                    "to": {
+                      "type": "string",
+                      "description": "The address the provider's messaging tool takes: `uds:<socket>`."
+                    },
+                    "provider": {
+                      "type": "string",
+                      "description": "The provider whose socket it is (`claude-code`)."
+                    }
+                  },
+                  "required": [
+                    "via",
+                    "to",
+                    "provider"
+                  ],
+                  "description": "The session can be woken through its provider's messaging socket."
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "unavailable": {
+                      "type": "string",
+                      "description": "Why, in one line."
+                    }
+                  },
+                  "required": [
+                    "unavailable"
+                  ],
+                  "description": "The session cannot be woken from here, and why: no board row, no address, no\nprovider, no socket, another machine, or a socket that is gone."
+                }
+              ],
+              "description": "How the worker behind one mesh session can be woken, or why it cannot be: resolved from\nthe board row whose `PeerAddress` names that session.\n\nThe journal stays the record of a request and its answer; a route only says where to\nknock so that the other side reads it now rather than at its next look. Majordomus sends\nnothing to the socket and reads no messaging token: the requesting worker knocks with its\nown provider's tool (Claude Code's `SendMessage` takes `to` as given here), carrying the\nreview key, and the woken side reads the record once by that key.\n\n```\nuse majordomus_cli::peers::SessionRoute;\nlet r = SessionRoute::unavailable(\"no board row names the session\");\nassert_eq!(serde_json::to_value(&r).unwrap(),\n    serde_json::json!({ \"unavailable\": \"no board row names the session\" }));\nassert_eq!(r.to(), None);\n```"
+            },
+            "RouteVia": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "const": "provider-socket",
+                  "description": "The socket the provider listens on for messages from its other sessions on the same\nmachine (`CLAUDE_CODE_MESSAGING_SOCKET` for Claude Code), which the calling worker's\nown messaging tool sends to. Majordomus never connects to it."
+                }
+              ],
+              "description": "How a route reaches its session: only through the provider's own messaging socket."
             }
           }
         }
@@ -59621,7 +59690,7 @@
       "module": "mesh",
       "kind": "command",
       "title": "Ask the mesh for a review",
-      "description": "Ask for a review of a branch, commit or pull request, optionally of one named runtime — which must be linked and carry the `reviews` feature, or the request is refused as `feature_unsupported`. Replicated to every linked runtime. Writes this runtime's journal only.",
+      "description": "Ask for a review of a branch, commit or pull request, optionally of one named runtime — which must be linked and carry the `reviews` feature, or the request is refused as `feature_unsupported` — and optionally for one session (`for_session`, `claude-code-<uuid>`), whose route the answer carries: `{via: provider-socket, to: uds:<socket>, provider}` from that session's board row on this machine, or `{unavailable: <why>}`. The caller wakes the session with its own provider's messaging tool, carrying the review key; Majordomus connects to no socket and reads no messaging token. Replicated to every linked runtime. Writes this runtime's journal only.",
       "input": {
         "name": "ReviewRequestInput",
         "schema": {
@@ -59661,6 +59730,13 @@
               ],
               "description": "The runtime asked (`<node>-<runtime>`); anyone when omitted."
             },
+            "for_session": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "The session the request is for, as its board row's address names it on the mesh (`claude-code-<uuid>`): the answer then carries the route that wakes it. Restricts nobody."
+            },
             "body": {
               "type": [
                 "string",
@@ -59677,7 +59753,7 @@
         }
       },
       "output": {
-        "name": "Written",
+        "name": "ReviewWritten",
         "schema": {
           "type": "object",
           "properties": {
@@ -59699,6 +59775,17 @@
               "$ref": "#/$defs/Durability",
               "description": "Whether the event reached this machine's disk: `synced`, `memory` (a journal with no\nfile, by configuration), or `not_durable` — held and replicated to peers, not on disk\nhere, and not acknowledged as durable. `unknown` from an executable that predates it.",
               "default": "unknown"
+            },
+            "route": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/SessionRoute"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "The route that wakes the other side, or why there is none."
             }
           },
           "required": [
@@ -59706,8 +59793,8 @@
             "event",
             "lamport"
           ],
-          "description": "What an operation wrote, as its answer to the caller. Every mesh operation is an event\nappended to this runtime's journal, and the caller is handed the three facts it cannot\nwork out for itself: the mesh-wide key of the thing it created, the event that says so,\nand the Lamport stamp that places it against everyone else's events.\n\nThe key is what a later operation is addressed by — a claim is released by the key its\nacquisition returned, never by the local name it was given — and the stamp is what a\ncaller waiting for a peer to catch up compares against.\n\n```\n# use std::sync::Arc;\n# use majordomus_cli::mesh::config::{CooperationConfig, TrustConfig};\n# use majordomus_cli::mesh::cooperation::{CheckoutFacts, Cooperation, CooperationSetup};\n# use majordomus_cli::mesh::identity::NodeIdentity;\n# use majordomus_cli::mesh::link::HttpTransport;\n# use majordomus_cli::mesh::registry::MeshRegistry;\n# use majordomus_cli::mesh::repository::of_root_commits;\n# let cooperation = Cooperation::new(CooperationSetup {\n#     identity: Arc::new(NodeIdentity::ephemeral().unwrap()), runtime: \"0000000000000001\".into(),\n#     repository: of_root_commits(&[\"root\".into()]), endpoints: vec![\"127.0.0.1:9\".into()],\n#     version: \"doc\".into(), config: CooperationConfig::default(), trust: TrustConfig::default(),\n#     journal_path: None, registry: Arc::new(MeshRegistry::new()),\n#     transport: Arc::new(HttpTransport), board: None, checkout: CheckoutFacts::default(),\n# }).unwrap();\nuse majordomus_cli::mesh::cooperation::Written;\nuse majordomus_cli::mesh::journal::{ClaimMode, Durability, SessionInfo};\n\nlet session = SessionInfo::named(\"s1\", \"cli\");\nlet written: Written = cooperation\n    .claim(&session, vec![\"docs\".into()], None, ClaimMode::Advisory, None)\n    .unwrap();\nassert!(written.lamport > 0, \"placed against every other runtime's events\");\nassert_eq!(written.durability, Durability::Memory, \"this journal has no file\");\n\n// and the key it returned is how the claim is addressed from here on\ncooperation.release(&written.key).unwrap();\n```",
-          "title": "Written",
+          "description": "The answer of `mesh.review.request` and `mesh.review.answer`: the event written, and how\nto wake the other side (I4553).\n\n`route` is the addressee's for a request that names a session, and the requester's for\nan answer; absent for a request addressed to nobody. Majordomus sends nothing along it:\nthe calling worker knocks with its own provider's messaging tool, carrying the review\nkey, and the woken side reads the record once by that key.",
+          "title": "ReviewWritten",
           "$defs": {
             "Durability": {
               "oneOf": [
@@ -59733,6 +59820,57 @@
                 }
               ],
               "description": "Whether an event this runtime wrote reached this machine's disk: what an append\nacknowledges, and the only thing a caller may say about it.\n\n```\nuse majordomus_cli::mesh::journal::Durability;\nassert_eq!(serde_json::to_value(Durability::NotDurable).unwrap(), \"not_durable\");\nassert_eq!(Durability::default(), Durability::Unknown, \"an answer that did not say\");\nassert!(Durability::Synced.is_on_disk() && !Durability::NotDurable.is_on_disk());\n```"
+            },
+            "SessionRoute": {
+              "anyOf": [
+                {
+                  "type": "object",
+                  "properties": {
+                    "via": {
+                      "$ref": "#/$defs/RouteVia",
+                      "description": "How: `provider-socket`."
+                    },
+                    "to": {
+                      "type": "string",
+                      "description": "The address the provider's messaging tool takes: `uds:<socket>`."
+                    },
+                    "provider": {
+                      "type": "string",
+                      "description": "The provider whose socket it is (`claude-code`)."
+                    }
+                  },
+                  "required": [
+                    "via",
+                    "to",
+                    "provider"
+                  ],
+                  "description": "The session can be woken through its provider's messaging socket."
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "unavailable": {
+                      "type": "string",
+                      "description": "Why, in one line."
+                    }
+                  },
+                  "required": [
+                    "unavailable"
+                  ],
+                  "description": "The session cannot be woken from here, and why: no board row, no address, no\nprovider, no socket, another machine, or a socket that is gone."
+                }
+              ],
+              "description": "How the worker behind one mesh session can be woken, or why it cannot be: resolved from\nthe board row whose `PeerAddress` names that session.\n\nThe journal stays the record of a request and its answer; a route only says where to\nknock so that the other side reads it now rather than at its next look. Majordomus sends\nnothing to the socket and reads no messaging token: the requesting worker knocks with its\nown provider's tool (Claude Code's `SendMessage` takes `to` as given here), carrying the\nreview key, and the woken side reads the record once by that key.\n\n```\nuse majordomus_cli::peers::SessionRoute;\nlet r = SessionRoute::unavailable(\"no board row names the session\");\nassert_eq!(serde_json::to_value(&r).unwrap(),\n    serde_json::json!({ \"unavailable\": \"no board row names the session\" }));\nassert_eq!(r.to(), None);\n```"
+            },
+            "RouteVia": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "const": "provider-socket",
+                  "description": "The socket the provider listens on for messages from its other sessions on the same\nmachine (`CLAUDE_CODE_MESSAGING_SOCKET` for Claude Code), which the calling worker's\nown messaging tool sends to. Majordomus never connects to it."
+                }
+              ],
+              "description": "How a route reaches its session: only through the provider's own messaging socket."
             }
           }
         }
@@ -60237,7 +60375,7 @@
       "module": "mesh",
       "kind": "query",
       "title": "The state every linked runtime converges on",
-      "description": "The journal folded. The default `summary` view is bounded whatever the history: sessions and claims counted by standing, each runtime with its liveness, its counts and its newest live claim, the open review requests and the handovers nobody has taken, and the digest two runtimes compare. `view=full` is every session, every claim with its standing (held, released, expired, conflicted with its winner), the advisory overlaps, every handover with who consumed it, every review request with its answers, and every stream's liveness on this runtime's clock. `claims=live`, `after` (a Lamport stamp), `session` and `runtime` narrow either view; the digest is always the whole fold's.",
+      "description": "The journal folded. The default `summary` view is bounded whatever the history: sessions and claims counted by standing, each runtime with its liveness, its counts and its newest live claim, the open review requests and the handovers nobody has taken, and the digest two runtimes compare. `view=full` is every session, every claim with its standing (held, released, expired, conflicted with its winner), the advisory overlaps, every handover with who consumed it, every review request with its answers, and every stream's liveness on this runtime's clock. `claims=live`, `after` (a Lamport stamp), `session` and `runtime` narrow either view, and `key` (`<stream>/<id>`) reads one record with its stream alone — what a worker woken by a review route reads once; the digest is always the whole fold's.",
       "input": {
         "name": "MeshQuery",
         "schema": {
@@ -60322,6 +60460,13 @@
                 "null"
               ],
               "description": "Only what mentions this text, ignoring case: a path, a branch, an issue, a pull\nrequest, a word of an intent or a subject."
+            },
+            "key": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "Only the record with this key (`<stream>/<id>`, a handover by its id): the one review request, claim, session or handover a woken worker reads once by the key its knock carried (I4553), with that record's stream alone."
             }
           },
           "description": "What a reader asks of the folded state. Every filter narrows; none changes a shape, and\nan input it does not know is refused rather than ignored.\n\n```\nuse majordomus_cli::mesh::page::{ClaimFilter, Query, View};\n\nlet q: Query = serde_json::from_str(r#\"{\"view\":\"full\",\"claims\":\"live\",\"limit\":5}\"#).unwrap();\nassert_eq!(q.view(), View::Full);\nassert_eq!((q.claims, q.limit), (Some(ClaimFilter::Live), Some(5)));\nassert!(serde_json::from_str::<Query>(r#\"{\"views\":\"full\"}\"#).is_err());\n```",
@@ -61397,6 +61542,13 @@
                   ],
                   "description": "The runtime asked, when one was."
                 },
+                "for_session": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "The session the request is for (`claude-code-<uuid>`), when the requester named one:\nthe session the request's route wakes (I4553). Not a restriction on who answers."
+                },
                 "body": {
                   "type": [
                     "string",
@@ -61431,7 +61583,7 @@
                 "state",
                 "answers"
               ],
-              "description": "One review request anywhere in the mesh, with every answer it has drawn. A request with\nno `reviewer` is an offer to the whole mesh rather than to nobody, which is why the\nanswers are a list: any linked runtime carrying the `reviews` feature may add one, and\nthey are kept in Lamport order so that every runtime reads them in the same sequence.\n\n```\nuse std::sync::Arc;\nuse majordomus_cli::mesh::identity::NodeIdentity;\nuse majordomus_cli::mesh::journal::{EventBody, Journal, StreamLiveness};\nuse majordomus_cli::mesh::state::{fold, ReviewView};\n\nlet j = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), \"0000000000000001\",\n    \"repo\".into(), None).unwrap();\nj.append_own(EventBody::ReviewRequested { review: \"r1\".into(), session: \"s1\".into(),\n    subject: \"feature/mesh-cooperation\".into(), scope: vec![\"src/mesh\".into()],\n    issue: Some(\"#184\".into()), reviewer: None, body: None }).unwrap();\nlet request = fold(&j.events(), &|_| StreamLiveness::Own).reviews[0].key.clone();\nj.append_own(EventBody::ReviewAnswered { request, session: \"s2\".into(),\n    verdict: \"approved\".into(), note: Some(\"reads well\".into()) }).unwrap();\n\nlet state = fold(&j.events(), &|_| StreamLiveness::Own);\nlet review: &ReviewView = &state.reviews[0];\nassert_eq!(review.subject, \"feature/mesh-cooperation\");\nassert_eq!(review.reviewer, None, \"offered to the mesh, not addressed\");\nassert_eq!(review.answers[0].verdict, \"approved\");\n```"
+              "description": "One review request anywhere in the mesh, with every answer it has drawn. A request with\nno `reviewer` is an offer to the whole mesh rather than to nobody, which is why the\nanswers are a list: any linked runtime carrying the `reviews` feature may add one, and\nthey are kept in Lamport order so that every runtime reads them in the same sequence.\n\n```\nuse std::sync::Arc;\nuse majordomus_cli::mesh::identity::NodeIdentity;\nuse majordomus_cli::mesh::journal::{EventBody, Journal, StreamLiveness};\nuse majordomus_cli::mesh::state::{fold, ReviewView};\n\nlet j = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), \"0000000000000001\",\n    \"repo\".into(), None).unwrap();\nj.append_own(EventBody::ReviewRequested { review: \"r1\".into(), session: \"s1\".into(),\n    subject: \"feature/mesh-cooperation\".into(), scope: vec![\"src/mesh\".into()],\n    issue: Some(\"#184\".into()), reviewer: None, for_session: None, body: None }).unwrap();\nlet request = fold(&j.events(), &|_| StreamLiveness::Own).reviews[0].key.clone();\nj.append_own(EventBody::ReviewAnswered { request, session: \"s2\".into(),\n    verdict: \"approved\".into(), note: Some(\"reads well\".into()) }).unwrap();\n\nlet state = fold(&j.events(), &|_| StreamLiveness::Own);\nlet review: &ReviewView = &state.reviews[0];\nassert_eq!(review.subject, \"feature/mesh-cooperation\");\nassert_eq!(review.reviewer, None, \"offered to the mesh, not addressed\");\nassert_eq!(review.answers[0].verdict, \"approved\");\n```"
             },
             "ReviewState": {
               "oneOf": [
@@ -61456,7 +61608,7 @@
                   "description": "Nobody answered and the runtime that asked stopped beating. A reading of liveness,\nlike a claim's expiry, decided from the journal and the streams' beats so that no\nruntime needs another's clock — a runtime that beats again reads open again."
                 }
               ],
-              "description": "A review request's standing: whether anybody has answered it yet. There is deliberately\nno `Approved` or `Rejected` here — a request may be answered by several runtimes and the\nverdicts are the answers' own, so collapsing them into one state would throw away the\ndisagreement that makes a second reviewer worth asking.\n\n```\nuse std::sync::Arc;\nuse majordomus_cli::mesh::identity::NodeIdentity;\nuse majordomus_cli::mesh::journal::{EventBody, Journal, StreamLiveness};\nuse majordomus_cli::mesh::state::{fold, ReviewState};\n\nlet j = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), \"0000000000000001\",\n    \"repo\".into(), None).unwrap();\nj.append_own(EventBody::ReviewRequested { review: \"r1\".into(), session: \"s1\".into(),\n    subject: \"feature/x\".into(), scope: vec![], issue: None, reviewer: None, body: None }).unwrap();\nlet asked = fold(&j.events(), &|_| StreamLiveness::Own);\nassert_eq!(asked.reviews[0].state, ReviewState::Open);\n\nlet request = asked.reviews[0].key.clone();\nj.append_own(EventBody::ReviewAnswered { request, session: \"s2\".into(),\n    verdict: \"approved\".into(), note: None }).unwrap();\nassert_eq!(fold(&j.events(), &|_| StreamLiveness::Own).reviews[0].state, ReviewState::Answered);\n```"
+              "description": "A review request's standing: whether anybody has answered it yet. There is deliberately\nno `Approved` or `Rejected` here — a request may be answered by several runtimes and the\nverdicts are the answers' own, so collapsing them into one state would throw away the\ndisagreement that makes a second reviewer worth asking.\n\n```\nuse std::sync::Arc;\nuse majordomus_cli::mesh::identity::NodeIdentity;\nuse majordomus_cli::mesh::journal::{EventBody, Journal, StreamLiveness};\nuse majordomus_cli::mesh::state::{fold, ReviewState};\n\nlet j = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), \"0000000000000001\",\n    \"repo\".into(), None).unwrap();\nj.append_own(EventBody::ReviewRequested { review: \"r1\".into(), session: \"s1\".into(),\n    subject: \"feature/x\".into(), scope: vec![], issue: None, reviewer: None, for_session: None, body: None }).unwrap();\nlet asked = fold(&j.events(), &|_| StreamLiveness::Own);\nassert_eq!(asked.reviews[0].state, ReviewState::Open);\n\nlet request = asked.reviews[0].key.clone();\nj.append_own(EventBody::ReviewAnswered { request, session: \"s2\".into(),\n    verdict: \"approved\".into(), note: None }).unwrap();\nassert_eq!(fold(&j.events(), &|_| StreamLiveness::Own).reviews[0].state, ReviewState::Answered);\n```"
             },
             "ReviewAnswer": {
               "type": "object",
@@ -74699,7 +74851,9 @@
                     "browser": "none",
                     "browser_evidence": "",
                     "usage": [],
-                    "usage_evidence": ""
+                    "usage_evidence": "",
+                    "messaging": "none",
+                    "messaging_evidence": ""
                   }
                 }
               },
@@ -74789,6 +74943,16 @@
                   "type": "string",
                   "description": "Where `usage` was verified, on the same terms as `episode_evidence`.",
                   "default": ""
+                },
+                "messaging": {
+                  "$ref": "#/$defs/MessagingSource",
+                  "description": "How another session on the same machine wakes this provider's session (I4553):\n`socket` when the provider listens on a messaging socket its own tool sends to, the\nroute `mesh.review.request` answers. Absent in a value written before the axis\nexisted, and read as `none` there.",
+                  "default": "none"
+                },
+                "messaging_evidence": {
+                  "type": "string",
+                  "description": "Where `messaging` was verified, on the same terms as `episode_evidence`.",
+                  "default": ""
                 }
               },
               "required": [
@@ -74873,6 +75037,21 @@
                 }
               ],
               "description": "One official seam through which a provider reports what a session consumed.\n\nUsage is read only where the provider itself reports it (ADR 0213): an official\nOpenTelemetry export, a protocol notification of the client's own server, or the usage a\nnon-interactive run prints in its structured output. Never a transcript, a proxy, or a\npatched client. `none` is the declared answer for a provider that offers no such seam,\nand it stands alone.\n\n```\nuse majordomus_cli::share::UsageSource;\nassert_eq!(serde_json::from_str::<UsageSource>(\"\\\"otel\\\"\").unwrap(), UsageSource::Otel);\nassert_eq!(serde_json::from_str::<UsageSource>(\"\\\"app-server\\\"\").unwrap(), UsageSource::AppServer);\nassert!(serde_json::from_str::<UsageSource>(\"\\\"transcript\\\"\").is_err(), \"no transcript seam\");\nassert_eq!(UsageSource::StreamJson.as_str(), \"stream-json\");\n```"
+            },
+            "MessagingSource": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "const": "socket",
+                  "description": "The provider listens on a local socket per session, and its own messaging tool sends\nto it from another session on the same machine."
+                },
+                {
+                  "type": "string",
+                  "const": "none",
+                  "description": "No session of it can be woken by another."
+                }
+              ],
+              "description": "Whether one provider's sessions can be woken by another session on the same machine\nthrough the provider's own messaging (I4553).\n\nA review request addressed to a session answers the route that wakes it, read from the\nboard row's address; this is the vendor half of that answer, declared with its citation\nlike every other cell. Majordomus never sends along it: the requesting worker's own\nprovider tool does.\n\n```\nuse majordomus_cli::share::MessagingSource;\nassert_eq!(serde_json::from_str::<MessagingSource>(\"\\\"socket\\\"\").unwrap(), MessagingSource::Socket);\nassert!(serde_json::from_str::<MessagingSource>(\"\\\"bus\\\"\").is_err(), \"one word for it\");\nassert_eq!(MessagingSource::default(), MessagingSource::None, \"undeclared reads as none\");\nassert_eq!(MessagingSource::Socket.as_str(), \"socket\");\n```"
             }
           }
         }

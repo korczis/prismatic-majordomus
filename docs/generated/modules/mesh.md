@@ -479,6 +479,7 @@ kept in the fold's own order. |
 answered and handovers nobody has taken. |
 | `matching` | string or null | no | Only what mentions this text, ignoring case: a path, a branch, an issue, a pull
 request, a word of an intent or a subject. |
+| `key` | string or null | no | Only the record with this key (`<stream>/<id>`, a handover by its id): the one review request, claim, session or handover a woken worker reads once by the key its knock carried (I4553), with that record's stream alone. |
 
 Output: `PeerTree`.
 
@@ -527,7 +528,7 @@ Output: `Written`.
 
 ## `mesh.review.answer` — Answer a review request
 
-Answer a review request from any runtime with approved, changes_requested or commented, and a note. Replicated to every linked runtime. Writes this runtime's journal only.
+Answer a review request from any runtime with approved, changes_requested or commented, and a note. The answer carries the requester's route, resolved as `mesh.review.request` resolves the addressee's, so the caller can wake the requester instead of it reading mesh state in a loop. Replicated to every linked runtime. Writes this runtime's journal only.
 
 | | |
 |---|---|
@@ -547,11 +548,11 @@ Answer a review request from any runtime with approved, changes_requested or com
 | `verdict` | string | yes | `approved`, `changes_requested` or `commented`. |
 | `note` | string or null | no | The note. |
 
-Output: `Written`.
+Output: `ReviewWritten`.
 
 ## `mesh.review.request` — Ask the mesh for a review
 
-Ask for a review of a branch, commit or pull request, optionally of one named runtime — which must be linked and carry the `reviews` feature, or the request is refused as `feature_unsupported`. Replicated to every linked runtime. Writes this runtime's journal only.
+Ask for a review of a branch, commit or pull request, optionally of one named runtime — which must be linked and carry the `reviews` feature, or the request is refused as `feature_unsupported` — and optionally for one session (`for_session`, `claude-code-<uuid>`), whose route the answer carries: `{via: provider-socket, to: uds:<socket>, provider}` from that session's board row on this machine, or `{unavailable: <why>}`. The caller wakes the session with its own provider's messaging tool, carrying the review key; Majordomus connects to no socket and reads no messaging token. Replicated to every linked runtime. Writes this runtime's journal only.
 
 | | |
 |---|---|
@@ -571,10 +572,11 @@ Ask for a review of a branch, commit or pull request, optionally of one named ru
 | `scope` | array | no | The paths it covers. |
 | `issue` | string or null | no | The issue. |
 | `reviewer` | string or null | no | The runtime asked (`<node>-<runtime>`); anyone when omitted. |
+| `for_session` | string or null | no | The session the request is for, as its board row's address names it on the mesh (`claude-code-<uuid>`): the answer then carries the route that wakes it. Restricts nobody. |
 | `body` | string or null | no | What the reviewer needs beyond the subject: evidence, commands, the question. Up to
 8 KiB, several lines. |
 
-Output: `Written`.
+Output: `ReviewWritten`.
 
 ## `mesh.review.withdraw` — Withdraw a review request
 
@@ -657,7 +659,7 @@ Output: `Written`.
 
 ## `mesh.state` — The state every linked runtime converges on
 
-The journal folded. The default `summary` view is bounded whatever the history: sessions and claims counted by standing, each runtime with its liveness, its counts and its newest live claim, the open review requests and the handovers nobody has taken, and the digest two runtimes compare. `view=full` is every session, every claim with its standing (held, released, expired, conflicted with its winner), the advisory overlaps, every handover with who consumed it, every review request with its answers, and every stream's liveness on this runtime's clock. `claims=live`, `after` (a Lamport stamp), `session` and `runtime` narrow either view; the digest is always the whole fold's.
+The journal folded. The default `summary` view is bounded whatever the history: sessions and claims counted by standing, each runtime with its liveness, its counts and its newest live claim, the open review requests and the handovers nobody has taken, and the digest two runtimes compare. `view=full` is every session, every claim with its standing (held, released, expired, conflicted with its winner), the advisory overlaps, every handover with who consumed it, every review request with its answers, and every stream's liveness on this runtime's clock. `claims=live`, `after` (a Lamport stamp), `session` and `runtime` narrow either view, and `key` (`<stream>/<id>`) reads one record with its stream alone — what a worker woken by a review route reads once; the digest is always the whole fold's.
 
 | | |
 |---|---|
@@ -686,6 +688,7 @@ kept in the fold's own order. |
 answered and handovers nobody has taken. |
 | `matching` | string or null | no | Only what mentions this text, ignoring case: a path, a branch, an issue, a pull
 request, a word of an intent or a subject. |
+| `key` | string or null | no | Only the record with this key (`<stream>/<id>`, a handover by its id): the one review request, claim, session or handover a woken worker reads once by the key its knock carried (I4553), with that record's stream alone. |
 
 Output: `MeshStateAnswer`.
 

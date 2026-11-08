@@ -518,6 +518,177 @@ impl PeerAddress {
     }
 }
 
+// ---------------------------------------------------------------- the route (I4553)
+
+/// How a route reaches its session: only through the provider's own messaging socket.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "kebab-case")]
+pub enum RouteVia {
+    /// The socket the provider listens on for messages from its other sessions on the same
+    /// machine (`CLAUDE_CODE_MESSAGING_SOCKET` for Claude Code), which the calling worker's
+    /// own messaging tool sends to. Majordomus never connects to it.
+    ProviderSocket,
+}
+
+/// How the worker behind one mesh session can be woken, or why it cannot be: resolved from
+/// the board row whose [`PeerAddress`] names that session.
+///
+/// The journal stays the record of a request and its answer; a route only says where to
+/// knock so that the other side reads it now rather than at its next look. Majordomus sends
+/// nothing to the socket and reads no messaging token: the requesting worker knocks with its
+/// own provider's tool (Claude Code's `SendMessage` takes `to` as given here), carrying the
+/// review key, and the woken side reads the record once by that key.
+///
+/// ```
+/// use majordomus_cli::peers::SessionRoute;
+/// let r = SessionRoute::unavailable("no board row names the session");
+/// assert_eq!(serde_json::to_value(&r).unwrap(),
+///     serde_json::json!({ "unavailable": "no board row names the session" }));
+/// assert_eq!(r.to(), None);
+/// ```
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[serde(untagged)]
+pub enum SessionRoute {
+    /// The session can be woken through its provider's messaging socket.
+    Socket {
+        /// How: `provider-socket`.
+        via: RouteVia,
+        /// The address the provider's messaging tool takes: `uds:<socket>`.
+        to: String,
+        /// The provider whose socket it is (`claude-code`).
+        provider: String,
+    },
+    /// The session cannot be woken from here, and why: no board row, no address, no
+    /// provider, no socket, another machine, or a socket that is gone.
+    Unavailable {
+        /// Why, in one line.
+        unavailable: String,
+    },
+}
+
+impl SessionRoute {
+    /// A route that is not there, with its reason.
+    pub fn unavailable(why: impl Into<String>) -> SessionRoute {
+        SessionRoute::Unavailable {
+            unavailable: why.into(),
+        }
+    }
+
+    /// The address to send to, when there is one.
+    pub fn to(&self) -> Option<&str> {
+        match self {
+            SessionRoute::Socket { to, .. } => Some(to),
+            SessionRoute::Unavailable { .. } => None,
+        }
+    }
+}
+
+/// The route to `session` from the board rows a reader holds: the row whose address names
+/// it on the mesh ([`PeerAddress::mesh_session`]) or, on this checkout's own board, whose
+/// `board-<id>` it is. An attached row outranks one whose peer has gone. `here` is this
+/// machine's name, because a socket is reachable only on its own machine, and `exists`
+/// answers whether a socket path is still there — a look at the file system, never a
+/// connection.
+///
+/// ```
+/// use majordomus_cli::peers::{route_to, PeerAddress, PeerBoard, SessionRoute, Transport};
+/// let board = PeerBoard::new();
+/// let id = board.attach(Transport::Http);
+/// let env = |k: &str| match k {
+///     "CLAUDE_CODE_SESSION_ID" => Some("877e".to_string()),
+///     "CLAUDE_CODE_MESSAGING_SOCKET" => Some("/tmp/cc-socks/42.sock".to_string()),
+///     _ => None,
+/// };
+/// board.locate(&id, PeerAddress::from_env(env, Some(42), "mac").unwrap());
+/// let rows = board.list();
+///
+/// let route = route_to("claude-code-877e", &rows, "mac", |_| true);
+/// assert_eq!(route.to(), Some("uds:/tmp/cc-socks/42.sock"));
+/// // the board position names the same row on this checkout's own board
+/// assert_eq!(route_to(&format!("board-{}", id.as_str()), &rows, "mac", |_| true), route);
+///
+/// // a socket that is gone, another machine, nobody: each says why
+/// assert!(route_to("claude-code-877e", &rows, "mac", |_| false).to().is_none());
+/// assert!(route_to("claude-code-877e", &rows, "lundra", |_| true).to().is_none());
+/// assert!(matches!(route_to("claude-code-other", &rows, "mac", |_| true),
+///     SessionRoute::Unavailable { .. }));
+/// ```
+pub fn route_to(
+    session: &str,
+    rows: &[Peer],
+    here: &str,
+    exists: impl Fn(&str) -> bool,
+) -> SessionRoute {
+    match row_naming(session, rows) {
+        Some(row) => route_of_row(session, row, here, exists),
+        None => SessionRoute::unavailable(format!(
+            "no board row of this machine names session {session}"
+        )),
+    }
+}
+
+/// The board row that names `session`, as [`route_to`] reads it: by its address's mesh
+/// session, or as `board-<id>` on this checkout's own board; an attached row first, so that
+/// a session that reconnected is found at its new row.
+pub fn row_naming<'a>(session: &str, rows: &'a [Peer]) -> Option<&'a Peer> {
+    let own_board = |p: &Peer| p.checkout.as_ref().is_none_or(|c| c.this_checkout);
+    let names = |p: &Peer| {
+        p.address
+            .as_ref()
+            .and_then(PeerAddress::mesh_session)
+            .is_some_and(|s| s == session)
+            || (own_board(p) && format!("board-{}", p.id.as_str()) == session)
+    };
+    let mut matching: Vec<&Peer> = rows.iter().filter(|p| names(p)).collect();
+    matching.sort_by_key(|p| !p.attached);
+    matching.first().copied()
+}
+
+/// The route one board row gives to `session`; see [`route_to`].
+pub fn route_of_row(
+    session: &str,
+    row: &Peer,
+    here: &str,
+    exists: impl Fn(&str) -> bool,
+) -> SessionRoute {
+    if !row.attached {
+        return SessionRoute::unavailable(format!(
+            "the board row of session {session} is detached: its worker has gone"
+        ));
+    }
+    let Some(address) = &row.address else {
+        return SessionRoute::unavailable(format!(
+            "the board row of session {session} carries no address"
+        ));
+    };
+    let Some(provider) = &address.provider else {
+        return SessionRoute::unavailable(format!(
+            "the address of session {session} names no provider"
+        ));
+    };
+    let Some(socket) = &address.socket else {
+        return SessionRoute::unavailable(format!(
+            "{provider} names no messaging socket for session {session}"
+        ));
+    };
+    if address.host != here {
+        return SessionRoute::unavailable(format!(
+            "session {session} runs on {}, and a provider socket is reachable only on its own machine",
+            address.host
+        ));
+    }
+    if !exists(socket) {
+        return SessionRoute::unavailable(format!(
+            "the socket {socket} of session {session} is gone: its provider ended or restarted"
+        ));
+    }
+    SessionRoute::Socket {
+        via: RouteVia::ProviderSocket,
+        to: format!("uds:{socket}"),
+        provider: provider.clone(),
+    }
+}
+
 /// Put the address of the worker that started this process into an `initialize` message's
 /// params, under `_meta["dev.majordomus/address"]`, unless the client already put one there.
 ///

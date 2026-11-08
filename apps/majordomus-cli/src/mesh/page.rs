@@ -171,6 +171,9 @@ pub struct Query {
     /// request, a word of an intent or a subject.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub matching: Option<String>,
+    /// Only the record with this key (`<stream>/<id>`, a handover by its id): the one review request, claim, session or handover a woken worker reads once by the key its knock carried (I4553), with that record's stream alone.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub key: Option<String>,
 }
 
 impl crate::capability::benchmark::BenchmarkCases for Query {
@@ -218,6 +221,18 @@ impl Query {
         self.runtime
             .as_deref()
             .is_none_or(|wanted| runtime == wanted || runtime.split('-').next() == Some(wanted))
+    }
+
+    /// Whether `key` is the record asked for by its key, or none was.
+    pub(crate) fn admits_key(&self, key: &str) -> bool {
+        self.key.as_deref().is_none_or(|wanted| key == wanted)
+    }
+
+    /// Whether `stream` is the stream of the record asked for by its key, or none was.
+    pub(crate) fn admits_stream(&self, stream: &str) -> bool {
+        self.key
+            .as_deref()
+            .is_none_or(|wanted| wanted.split_once('/').is_some_and(|(s, _)| s == stream))
     }
 
     fn admits_lamport(&self, lamport: u64) -> bool {
@@ -302,6 +317,7 @@ pub fn narrow(state: &CooperationState, query: &Query) -> CooperationState {
         .sessions
         .iter()
         .filter(|s| query.admits_session(&s.key) && query.admits_runtime(&s.runtime))
+        .filter(|s| query.admits_key(&s.key))
         .filter(|s| query.admits_lamport(s.updated_lamport))
         .filter(|s| !query.open_only() || s.state == SessionState::Active)
         .filter(|s| {
@@ -321,6 +337,7 @@ pub fn narrow(state: &CooperationState, query: &Query) -> CooperationState {
         .claims
         .iter()
         .filter(|c| query.admits_session(&c.session) && query.admits_runtime(&c.runtime))
+        .filter(|c| query.admits_key(&c.key))
         .filter(|c| query.admits_lamport(c.acquired_lamport))
         .filter(|c| query.claims != Some(ClaimFilter::Live) || c.state.is_live())
         .filter(|c| !query.open_only() || c.state.is_live())
@@ -345,6 +362,7 @@ pub fn narrow(state: &CooperationState, query: &Query) -> CooperationState {
         .handovers
         .iter()
         .filter(|h| query.admits_runtime(&h.runtime))
+        .filter(|h| query.admits_key(&h.id))
         .filter(|h| query.admits_lamport(h.published_lamport))
         .filter(|h| {
             query.session.is_none() || h.consumed_by.iter().any(|s| query.admits_session(s))
@@ -365,16 +383,17 @@ pub fn narrow(state: &CooperationState, query: &Query) -> CooperationState {
         .reviews
         .iter()
         .filter(|r| query.admits_session(&r.session))
+        .filter(|r| query.admits_key(&r.key))
         .filter(|r| query.admits_runtime(runtime_of(&r.session)))
         .filter(|r| query.after.is_none() || sessions.iter().any(|s| s.key == r.session))
         .filter(|r| !query.open_only() || r.state == ReviewState::Open)
         .filter(|r| {
-            query.admits_text(
-                r.scope
-                    .iter()
-                    .map(|p| Some(p.as_str()))
-                    .chain([Some(r.subject.as_str()), r.issue.as_deref()]),
-            )
+            query.admits_text(r.scope.iter().map(|p| Some(p.as_str())).chain([
+                Some(r.subject.as_str()),
+                r.issue.as_deref(),
+                Some(r.key.as_str()),
+                r.for_session.as_deref(),
+            ]))
         })
         .cloned()
         .collect();
@@ -884,6 +903,7 @@ mod tests {
                 scope: vec![],
                 issue: None,
                 reviewer: None,
+                for_session: None,
                 body: None,
             })
             .unwrap();
@@ -992,6 +1012,7 @@ mod tests {
             scope: vec!["apps/x".into()],
             issue: None,
             reviewer: None,
+            for_session: None,
             body: None,
         })
         .unwrap();
@@ -1443,6 +1464,51 @@ mod tests {
         );
         assert!(nothing.claims.is_empty() && nothing.sessions.is_empty());
         assert_eq!(nothing.digest, state.digest);
+    }
+
+    /// I4553: a woken worker reads the one record its knock named, by its key, in one bounded
+    /// read: that review alone (or that claim, that session), nothing else of any kind.
+    #[test]
+    fn a_key_reads_one_record_and_nothing_else() {
+        let (_j, state) = history();
+        let wanted = state.reviews[0].key.clone();
+        let one = narrow(
+            &state,
+            &Query {
+                view: Some(View::Full),
+                key: Some(wanted.clone()),
+                ..Query::default()
+            },
+        );
+        assert_eq!(one.reviews.len(), 1);
+        assert_eq!(one.reviews[0].key, wanted);
+        assert!(one.sessions.is_empty() && one.claims.is_empty() && one.handovers.is_empty());
+        let by_text = narrow(
+            &state,
+            &Query {
+                matching: Some(wanted.clone()),
+                kind: Some(Kind::Reviews),
+                ..Query::default()
+            },
+        );
+        assert_eq!(by_text.reviews.len(), 1, "a review's key is text too");
+        let claim = state.claims[0].key.clone();
+        let q = Query {
+            key: Some(claim.clone()),
+            ..Query::default()
+        };
+        assert_eq!(narrow(&state, &q).claims.len(), 1);
+        let (stream, _) = claim.split_once('/').unwrap();
+        assert!(q.admits_stream(stream) && !q.admits_stream("another-stream"));
+        let none = narrow(
+            &state,
+            &Query {
+                key: Some("no/such".into()),
+                ..Query::default()
+            },
+        );
+        assert!(none.reviews.is_empty() && none.claims.is_empty());
+        assert_eq!(none.digest, state.digest);
     }
 
     #[test]

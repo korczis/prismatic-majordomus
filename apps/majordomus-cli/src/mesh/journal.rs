@@ -700,6 +700,13 @@ pub enum EventBody {
         /// The runtime asked (`<node>-<runtime>`), when one was.
         #[serde(default, skip_serializing_if = "Option::is_none")]
         reviewer: Option<String>,
+        /// The session the request is for, as a board row's address names it on the mesh
+        /// (`claude-code-<uuid>`, [`crate::peers::PeerAddress::mesh_session`]), when the
+        /// requester named one: the session whose provider route the request answers
+        /// (I4553). It wakes; it does not restrict who may answer. A runtime older than the
+        /// field reads the request without it.
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        for_session: Option<String>,
         /// What the reviewer needs beyond the subject line: the evidence, the commands, the
         /// question. Up to [`REVIEW_BODY_MAX`] bytes. A runtime older than the field reads
         /// the request without it.
@@ -1047,6 +1054,7 @@ impl EventBody {
                 scope,
                 issue,
                 reviewer,
+                for_session,
                 body,
             } => {
                 ident("review", review)?;
@@ -1058,6 +1066,9 @@ impl EventBody {
                 }
                 if let Some(v) = reviewer {
                     text("reviewer", v, 64)?;
+                }
+                if let Some(v) = for_session {
+                    ident("for_session", v)?;
                 }
                 if let Some(v) = body {
                     text("body", v, REVIEW_BODY_MAX)?;
@@ -3855,6 +3866,64 @@ mod tests {
         );
     }
 
+    /// I4553: a review request written before `for_session` existed — what every runtime
+    /// of 1.0.0-alpha.10 writes — reads unchanged and is written back byte-for-byte, so its
+    /// signature verifies on a newer reader and the fold's digest does not move; an addressed
+    /// request names its session, and the session is an identifier, never a path.
+    #[test]
+    fn a_review_request_without_an_addressee_reads_and_writes_as_before() {
+        let before = serde_json::json!({
+            "kind": "review_requested", "review": "r1", "session": "s1",
+            "subject": "feature/x", "scope": ["src/mesh"], "issue": "#1",
+            "reviewer": "node-runtime", "body": "read the timeout path"
+        });
+        let body = serde_json::from_value::<EventBody>(before.clone()).unwrap();
+        assert!(matches!(
+            &body,
+            EventBody::ReviewRequested {
+                for_session: None,
+                ..
+            }
+        ));
+        assert_eq!(
+            serde_json::to_value(&body).unwrap(),
+            before,
+            "written as read"
+        );
+
+        // signed by one runtime, verified and folded by another
+        let a = journal("0000000000000001");
+        let b = journal("0000000000000002");
+        a.append_own(body).unwrap();
+        b.ingest(&a.events(), &accept_all);
+        assert_eq!(
+            b.events().len(),
+            a.events().len(),
+            "the old shape replicates"
+        );
+        let folded = crate::mesh::state::fold(&b.events(), &|_| StreamLiveness::Live);
+        assert_eq!(folded.reviews.len(), 1);
+        assert_eq!(folded.reviews[0].for_session, None);
+
+        let addressed = |to: &str| EventBody::ReviewRequested {
+            review: "r2".into(),
+            session: "s1".into(),
+            subject: "feature/x".into(),
+            scope: Vec::new(),
+            issue: None,
+            reviewer: None,
+            for_session: Some(to.into()),
+            body: None,
+        };
+        let named = addressed("claude-code-877e4b89");
+        assert_eq!(
+            serde_json::to_value(&named).unwrap()["for_session"],
+            "claude-code-877e4b89"
+        );
+        assert!(named.validate().is_ok());
+        assert!(addressed("/tmp/cc-socks/1.sock").validate().is_err());
+    }
+
     /// I3992: a beat that says the session waits on a person replaces the phase on the
     /// writer and on every reader, and moves no progress clock — a session that only ever
     /// said it waits gets none, and is judged by its stream as before. The next beat that
@@ -5301,6 +5370,7 @@ mod tests {
                 scope: Vec::new(),
                 issue: None,
                 reviewer: None,
+                for_session: None,
                 body: None,
             })
             .unwrap();
@@ -5575,6 +5645,7 @@ mod tests {
                         scope: Vec::new(),
                         issue: None,
                         reviewer: None,
+                        for_session: None,
                         body: None,
                     };
                     run.append_own(asked).unwrap();

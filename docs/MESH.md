@@ -393,6 +393,7 @@ capabilities take one input (`apps/majordomus-cli/src/mesh/page.rs`, I2414):
 | `limit` | a count | At most that many of each collection, the newest by Lamport stamp, in the fold's order. |
 | `open` | `true` | Only what is still open: active sessions, live claims, review requests nobody has answered, handovers nobody has taken. |
 | `matching` | text | Only what mentions it, ignoring case: a claimed path, a branch, an issue, a pull request, a word of an intent or a subject. |
+| `key` | `<stream>/<id>` | Only the record with that key (a handover by its id), and that record's stream alone: what a worker woken by a review route reads once (I4553). |
 
 The `digest` in every answer is the whole fold's, never a page's: it is what two runtimes
 compare. `majordomus mesh state` and `mesh peers` take the same input as `--full`,
@@ -533,6 +534,17 @@ expired ones: it should name them rather than drop them silently. A request may 
 beside its one-line subject: the evidence, the commands and the question. A runtime older
 than the field reads the request without its body, and holds `review_withdrawn` as an opaque
 event it relays but does not fold.
+
+A request may also name the session it is for (`for_session`, `claude-code-<uuid>` as a board
+row's address names it), and then its answer carries that session's `route`, read from the
+board row on this machine: `{via: provider-socket, to: uds:<socket>, provider}`, or
+`{unavailable: <why>}` (no row, no address, no socket, another machine, a socket that is gone).
+An answer carries the requester's route the same way. The journal stays the record; the route
+only wakes. The calling worker knocks with its own provider's messaging tool (Claude Code's
+`SendMessage` takes `to` as given), carrying the review key, and the woken side reads the
+request or the answer once by that key instead of reading mesh state in a loop. Majordomus
+connects to no socket and never reads the provider's messaging token (I4553). The addressee
+restricts nobody, and a runtime older than the field reads the request without it.
 
 **Tombstones.** A dropped stream leaves a tombstone: the sequence it reached, advertised as its
 mark so that a peer still holding the stream does not send it again, and the beat it was last

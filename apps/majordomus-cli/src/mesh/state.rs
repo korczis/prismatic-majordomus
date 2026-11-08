@@ -335,7 +335,7 @@ pub struct HandoverView {
 /// let j = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), "0000000000000001",
 ///     "repo".into(), None).unwrap();
 /// j.append_own(EventBody::ReviewRequested { review: "r1".into(), session: "s1".into(),
-///     subject: "feature/x".into(), scope: vec![], issue: None, reviewer: None, body: None }).unwrap();
+///     subject: "feature/x".into(), scope: vec![], issue: None, reviewer: None, for_session: None, body: None }).unwrap();
 /// let asked = fold(&j.events(), &|_| StreamLiveness::Own);
 /// assert_eq!(asked.reviews[0].state, ReviewState::Open);
 ///
@@ -436,7 +436,7 @@ pub struct ReviewAnswer {
 ///     "repo".into(), None).unwrap();
 /// j.append_own(EventBody::ReviewRequested { review: "r1".into(), session: "s1".into(),
 ///     subject: "feature/mesh-cooperation".into(), scope: vec!["src/mesh".into()],
-///     issue: Some("#184".into()), reviewer: None, body: None }).unwrap();
+///     issue: Some("#184".into()), reviewer: None, for_session: None, body: None }).unwrap();
 /// let request = fold(&j.events(), &|_| StreamLiveness::Own).reviews[0].key.clone();
 /// j.append_own(EventBody::ReviewAnswered { request, session: "s2".into(),
 ///     verdict: "approved".into(), note: Some("reads well".into()) }).unwrap();
@@ -463,6 +463,10 @@ pub struct ReviewView {
     /// The runtime asked, when one was.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub reviewer: Option<String>,
+    /// The session the request is for (`claude-code-<uuid>`), when the requester named one:
+    /// the session the request's route wakes (I4553). Not a restriction on who answers.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub for_session: Option<String>,
     /// What the reviewer needs beyond the subject, when the requester wrote it.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub body: Option<String>,
@@ -703,6 +707,7 @@ pub fn fold_with(
                 scope,
                 issue,
                 reviewer,
+                for_session,
                 body,
             } => {
                 let k = key(&review);
@@ -714,6 +719,7 @@ pub fn fold_with(
                     scope,
                     issue,
                     reviewer,
+                    for_session,
                     body,
                     state: ReviewState::Open,
                     answers: Vec::new(),
@@ -1328,6 +1334,7 @@ mod tests {
             scope: vec!["apps".into()],
             issue: Some("#184".into()),
             reviewer: None,
+            for_session: None,
             body: None,
         })
         .unwrap();
@@ -1367,6 +1374,7 @@ mod tests {
                 scope: vec![],
                 issue: None,
                 reviewer: None,
+                for_session: None,
                 body: Some(format!("{}\nthe evidence", "b".repeat(8000))),
             })
             .unwrap();
@@ -1489,6 +1497,7 @@ mod tests {
             scope: vec![],
             issue: None,
             reviewer: None,
+            for_session: None,
             body: Some(over.clone()),
         };
         assert!(asked.validate().is_err());
@@ -1512,6 +1521,7 @@ mod tests {
             scope: vec![],
             issue: None,
             reviewer: None,
+            for_session: None,
             body: None,
         })
         .unwrap();

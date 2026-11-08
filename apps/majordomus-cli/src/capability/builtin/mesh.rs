@@ -41,6 +41,7 @@ use crate::mesh::{
     default_identity_path, MeshConfig, MeshDoctorReport, MeshStatus, NodeIdentity, NodeRecord,
     PublicIdentity, RegisterAnswer,
 };
+use crate::peers::SessionRoute;
 use crate::{capability, module};
 
 use super::{get, mcp, post, Empty};
@@ -990,6 +991,7 @@ fn mesh_state(ctx: &Context, query: Query) -> Result<MeshStateAnswer, Capability
         .streams()
         .into_iter()
         .filter(|(stream, _, _)| query.admits_runtime(&stream.runtime_key()))
+        .filter(|(stream, _, _)| query.admits_stream(stream.as_str()))
         .map(|(stream, liveness, last_beat_ms)| StreamView {
             stream,
             liveness,
@@ -1642,6 +1644,9 @@ pub struct ReviewRequestInput {
     /// The runtime asked (`<node>-<runtime>`); anyone when omitted.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub reviewer: Option<String>,
+    /// The session the request is for, as its board row's address names it on the mesh (`claude-code-<uuid>`): the answer then carries the route that wakes it. Restricts nobody.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub for_session: Option<String>,
     /// What the reviewer needs beyond the subject: evidence, commands, the question. Up to
     /// 8 KiB, several lines.
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -1658,27 +1663,109 @@ impl BenchmarkCases for ReviewRequestInput {
                 scope: vec![],
                 issue: None,
                 reviewer: None,
+                for_session: None,
                 body: None,
             },
         )]
     }
 }
 
+/// The answer of `mesh.review.request` and `mesh.review.answer`: the event written, and how
+/// to wake the other side (I4553).
+///
+/// `route` is the addressee's for a request that names a session, and the requester's for
+/// an answer; absent for a request addressed to nobody. Majordomus sends nothing along it:
+/// the calling worker knocks with its own provider's messaging tool, carrying the review
+/// key, and the woken side reads the record once by that key.
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+pub struct ReviewWritten {
+    /// What was written: the same fields every cooperative write answers.
+    #[serde(flatten)]
+    pub written: Written,
+    /// The route that wakes the other side, or why there is none.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub route: Option<SessionRoute>,
+}
+
+/// The route to `session` of `stream` (this runtime's own when `None`), from this checkout's
+/// board and then every checkout's board on this machine. A `board-<id>` session is a
+/// position on the board of the runtime whose stream it belongs to, and is resolved only
+/// there. Reads boards and looks at socket files; connects to nothing.
+fn route_of(ctx: &Context, stream: Option<&str>, session: &str) -> SessionRoute {
+    let here = crate::integration::drain::host();
+    let exists = |path: &str| std::path::Path::new(path).exists();
+    let own = ctx
+        .mesh
+        .cooperation()
+        .map(|c| c.journal().own_stream().as_str().to_string());
+    let ours = stream.is_none() || stream == own.as_deref();
+    if ours {
+        // this checkout's board answers for a session attached here, whatever the answer
+        let rows = ctx.peers.list();
+        if let Some(row) = crate::peers::row_naming(session, &rows).filter(|r| r.attached) {
+            return crate::peers::route_of_row(session, row, &here, exists);
+        }
+    }
+    let gathered = match super::peers::peers_list(
+        ctx,
+        super::peers::PeerListInput {
+            checkouts: Default::default(),
+            view: super::peers::PeerListView::Full,
+        },
+    ) {
+        Ok(list) => list,
+        Err(e) => return SessionRoute::unavailable(format!("the boards could not be read: {e}")),
+    };
+    // a board position belongs to the board of the session's own stream, whichever
+    // checkout's server holds it
+    let home = stream.or(own.as_deref());
+    let homes: Vec<&str> = gathered
+        .boards
+        .iter()
+        .filter(|b| b.stream.is_some() && b.stream.as_deref() == home)
+        .map(|b| b.checkout.id.as_str())
+        .collect();
+    let rows: Vec<crate::peers::Peer> = gathered
+        .peers
+        .into_iter()
+        .map(|mut p| {
+            if let Some(c) = p.checkout.as_mut() {
+                c.this_checkout = homes.contains(&c.id.as_str());
+            }
+            p
+        })
+        .collect();
+    let route = crate::peers::route_to(session, &rows, &here, exists);
+    match route {
+        SessionRoute::Unavailable { unavailable } if !gathered.complete => {
+            SessionRoute::unavailable(format!(
+                "{unavailable} (not every board of this machine could be read)"
+            ))
+        }
+        route => route,
+    }
+}
+
 fn mesh_review_request(
     ctx: &Context,
     input: ReviewRequestInput,
-) -> Result<Written, CapabilityError> {
+) -> Result<ReviewWritten, CapabilityError> {
     let c = cooperation(ctx)?;
     let session = session_of(ctx, input.session)?;
-    c.request_review(
-        &session,
-        input.subject,
-        input.scope,
-        input.issue,
-        input.reviewer,
-        input.body,
-    )
-    .map_err(map_error)
+    let for_session = input.for_session.filter(|s| !s.trim().is_empty());
+    let written = c
+        .request_review_for(
+            &session,
+            input.subject,
+            input.scope,
+            input.issue,
+            input.reviewer,
+            for_session.clone(),
+            input.body,
+        )
+        .map_err(map_error)?;
+    let route = for_session.map(|to| route_of(ctx, None, &to));
+    Ok(ReviewWritten { written, route })
 }
 
 #[derive(Debug, Serialize, Deserialize, JsonSchema)]
@@ -1711,11 +1798,27 @@ impl BenchmarkCases for ReviewAnswerInput {
     }
 }
 
-fn mesh_review_answer(ctx: &Context, input: ReviewAnswerInput) -> Result<Written, CapabilityError> {
+fn mesh_review_answer(
+    ctx: &Context,
+    input: ReviewAnswerInput,
+) -> Result<ReviewWritten, CapabilityError> {
     let c = cooperation(ctx)?;
     let session = session_of(ctx, input.session)?;
-    c.answer_review(&input.request, &session, input.verdict, input.note)
-        .map_err(map_error)
+    let written = c
+        .answer_review(&input.request, &session, input.verdict, input.note)
+        .map_err(map_error)?;
+    // the requester's route: its session key is `<stream>/<session>`
+    let requester = c
+        .state()
+        .reviews
+        .into_iter()
+        .find(|r| r.key == input.request)
+        .map(|r| r.session);
+    let route = requester.map(|key| match key.split_once('/') {
+        Some((stream, session)) => route_of(ctx, Some(stream), session),
+        None => route_of(ctx, None, &key),
+    });
+    Ok(ReviewWritten { written, route })
 }
 
 #[derive(Debug, Serialize, Deserialize, JsonSchema)]
@@ -2074,7 +2177,7 @@ pub fn module() -> ModuleDescriptor {
             capability! {
                 id: "mesh.state",
                 title: "The state every linked runtime converges on",
-                description: "The journal folded. The default `summary` view is bounded whatever the history: sessions and claims counted by standing, each runtime with its liveness, its counts and its newest live claim, the open review requests and the handovers nobody has taken, and the digest two runtimes compare. `view=full` is every session, every claim with its standing (held, released, expired, conflicted with its winner), the advisory overlaps, every handover with who consumed it, every review request with its answers, and every stream's liveness on this runtime's clock. `claims=live`, `after` (a Lamport stamp), `session` and `runtime` narrow either view; the digest is always the whole fold's.",
+                description: "The journal folded. The default `summary` view is bounded whatever the history: sessions and claims counted by standing, each runtime with its liveness, its counts and its newest live claim, the open review requests and the handovers nobody has taken, and the digest two runtimes compare. `view=full` is every session, every claim with its standing (held, released, expired, conflicted with its winner), the advisory overlaps, every handover with who consumed it, every review request with its answers, and every stream's liveness on this runtime's clock. `claims=live`, `after` (a Lamport stamp), `session` and `runtime` narrow either view, and `key` (`<stream>/<id>`) reads one record with its stream alone — what a worker woken by a review route reads once; the digest is always the whole fold's.",
                 input: Query,
                 output: MeshStateAnswer,
                 stability: Stability::Experimental,
@@ -2205,9 +2308,9 @@ pub fn module() -> ModuleDescriptor {
                 id: "mesh.review.request",
                 kind: CapabilityKind::Command,
                 title: "Ask the mesh for a review",
-                description: "Ask for a review of a branch, commit or pull request, optionally of one named runtime — which must be linked and carry the `reviews` feature, or the request is refused as `feature_unsupported`. Replicated to every linked runtime. Writes this runtime's journal only.",
+                description: "Ask for a review of a branch, commit or pull request, optionally of one named runtime — which must be linked and carry the `reviews` feature, or the request is refused as `feature_unsupported` — and optionally for one session (`for_session`, `claude-code-<uuid>`), whose route the answer carries: `{via: provider-socket, to: uds:<socket>, provider}` from that session's board row on this machine, or `{unavailable: <why>}`. The caller wakes the session with its own provider's messaging tool, carrying the review key; Majordomus connects to no socket and reads no messaging token. Replicated to every linked runtime. Writes this runtime's journal only.",
                 input: ReviewRequestInput,
-                output: Written,
+                output: ReviewWritten,
                 stability: Stability::Experimental,
                 exposure: Exposure { mcp: mcp("majordomus_mesh_review_request"), http: post("/api/v1/mesh/reviews"), cli: None },
                 tags: ["mesh", "coordination", "cooperation"],
@@ -2218,9 +2321,9 @@ pub fn module() -> ModuleDescriptor {
                 id: "mesh.review.answer",
                 kind: CapabilityKind::Command,
                 title: "Answer a review request",
-                description: "Answer a review request from any runtime with approved, changes_requested or commented, and a note. Replicated to every linked runtime. Writes this runtime's journal only.",
+                description: "Answer a review request from any runtime with approved, changes_requested or commented, and a note. The answer carries the requester's route, resolved as `mesh.review.request` resolves the addressee's, so the caller can wake the requester instead of it reading mesh state in a loop. Replicated to every linked runtime. Writes this runtime's journal only.",
                 input: ReviewAnswerInput,
-                output: Written,
+                output: ReviewWritten,
                 stability: Stability::Experimental,
                 exposure: Exposure { mcp: mcp("majordomus_mesh_review_answer"), http: post("/api/v1/mesh/reviews/answer"), cli: None },
                 tags: ["mesh", "coordination", "cooperation"],
@@ -2969,6 +3072,126 @@ mod tests {
                 matches!(beat(&mcp, session), Err(CapabilityError::NotFound(_))),
                 "{session:?}"
             );
+        }
+    }
+
+    /// I4553: a request for a session answers the route its board row gives — the provider
+    /// socket while the socket is there — and the answer answers the requester's route the
+    /// same way; a row without a socket, a socket that is gone and a session nobody holds
+    /// each answer why not; a request for nobody answers no route.
+    #[test]
+    fn a_review_for_a_session_answers_its_route_and_the_answer_the_requesters() {
+        let (_repo, ctx) = context(false);
+        let c = cooperation();
+        ctx.mesh.attach_cooperation(std::sync::Arc::clone(&c));
+        let here = crate::integration::drain::host();
+        let dir = std::env::temp_dir().join(format!("mj-i4553-{}", std::process::id()));
+        std::fs::create_dir_all(&dir).unwrap();
+        let socket = |name: &str| {
+            let path = dir.join(name);
+            std::fs::write(&path, b"").unwrap();
+            path.display().to_string()
+        };
+        let (theirs, mine) = (socket("1.sock"), socket("2.sock"));
+        let locate = |session: &str, socket: Option<&str>| {
+            let id = ctx.peers.attach(crate::peers::Transport::Http);
+            ctx.peers.locate(
+                &id,
+                crate::peers::PeerAddress {
+                    provider: Some("claude-code".into()),
+                    host: here.clone(),
+                    pid: Some(42),
+                    session: Some(session.into()),
+                    socket: socket.map(str::to_string),
+                },
+            );
+        };
+        locate("aaa", Some(&theirs));
+        locate("req", Some(&mine));
+        locate("mute", None);
+        let ask = |to: Option<&str>| {
+            mesh_review_request(
+                &ctx,
+                ReviewRequestInput {
+                    session: Some("claude-code-req".into()),
+                    subject: "feature/I4553".into(),
+                    scope: vec![],
+                    issue: Some("I4553".into()),
+                    reviewer: None,
+                    for_session: to.map(str::to_string),
+                    body: None,
+                },
+            )
+            .unwrap()
+        };
+
+        let asked = ask(Some("claude-code-aaa"));
+        assert_eq!(
+            serde_json::to_value(&asked.route).unwrap(),
+            serde_json::json!({
+                "via": "provider-socket", "to": format!("uds:{theirs}"), "provider": "claude-code"
+            })
+        );
+        // the written fields stay where every reader of a Written finds them
+        let wire = serde_json::to_value(&asked).unwrap();
+        assert_eq!(wire["key"], serde_json::json!(asked.written.key));
+        let review = c
+            .state()
+            .reviews
+            .into_iter()
+            .find(|r| r.key == asked.written.key)
+            .unwrap();
+        assert_eq!(review.for_session.as_deref(), Some("claude-code-aaa"));
+
+        let answered = mesh_review_answer(
+            &ctx,
+            ReviewAnswerInput {
+                request: asked.written.key.clone(),
+                session: Some("claude-code-aaa".into()),
+                verdict: "commented".into(),
+                note: Some("read once, by its key".into()),
+            },
+        )
+        .unwrap();
+        assert_eq!(
+            answered.route.as_ref().and_then(SessionRoute::to),
+            Some(format!("uds:{mine}").as_str()),
+            "the answer wakes the requester"
+        );
+
+        let mute = ask(Some("claude-code-mute")).route.unwrap();
+        assert!(
+            matches!(&mute, SessionRoute::Unavailable { unavailable } if unavailable.contains("no messaging socket")),
+            "{mute:?}"
+        );
+        assert!(
+            ask(None).route.is_none(),
+            "a request for nobody wakes nobody"
+        );
+        std::fs::remove_file(&theirs).unwrap();
+        let gone = ask(Some("claude-code-aaa")).route.unwrap();
+        assert!(
+            matches!(&gone, SessionRoute::Unavailable { unavailable } if unavailable.contains("is gone")),
+            "{gone:?}"
+        );
+        let nobody = ask(Some("claude-code-nobody")).route.unwrap();
+        assert!(nobody.to().is_none(), "{nobody:?}");
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    /// I4553: a route is an answer, never a delivery. Neither this module's handlers nor the
+    /// board they read a route from opens a stream to a provider's socket, so Majordomus
+    /// sends nothing there and never needs the provider's messaging token.
+    #[test]
+    fn no_route_handler_connects_to_a_socket() {
+        let needles = [concat!("Unix", "Stream"), concat!("Unix", "Datagram")];
+        for (name, text) in [
+            ("capability/builtin/mesh.rs", include_str!("mesh.rs")),
+            ("peers.rs", include_str!("../../peers.rs")),
+        ] {
+            for needle in needles {
+                assert!(!text.contains(needle), "{name} opens a {needle}");
+            }
         }
     }
 

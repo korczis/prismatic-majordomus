@@ -4546,6 +4546,50 @@ impl Cooperation {
         reviewer: Option<String>,
         body: Option<String>,
     ) -> Result<Written, CooperationError> {
+        self.request_review_for(session, subject, scope, issue, reviewer, None, body)
+    }
+
+    /// [`Cooperation::request_review`], addressed to one session as well (I4553): the
+    /// session a board row's address names on the mesh (`claude-code-<uuid>`), whose
+    /// provider route the capability answers so that the requester can wake it. The
+    /// addressee is recorded with the request and restricts nobody: any session but the
+    /// requester may still answer. Majordomus sends nothing to the addressee itself.
+    ///
+    /// ```
+    /// # use std::sync::Arc;
+    /// # use majordomus_cli::mesh::config::{CooperationConfig, TrustConfig};
+    /// # use majordomus_cli::mesh::cooperation::{CheckoutFacts, Cooperation, CooperationSetup};
+    /// # use majordomus_cli::mesh::identity::NodeIdentity;
+    /// # use majordomus_cli::mesh::link::HttpTransport;
+    /// # use majordomus_cli::mesh::registry::MeshRegistry;
+    /// # use majordomus_cli::mesh::repository::of_root_commits;
+    /// # let cooperation = Cooperation::new(CooperationSetup {
+    /// #     identity: Arc::new(NodeIdentity::ephemeral().unwrap()), runtime: "0000000000000001".into(),
+    /// #     repository: of_root_commits(&["root".into()]), endpoints: vec!["127.0.0.1:9".into()],
+    /// #     version: "doc".into(), config: CooperationConfig::default(), trust: TrustConfig::default(),
+    /// #     journal_path: None, registry: Arc::new(MeshRegistry::new()),
+    /// #     transport: Arc::new(HttpTransport), board: None, checkout: CheckoutFacts::default(),
+    /// # }).unwrap();
+    /// cooperation.request_review_for("s1", "feature/x".into(), vec![], None, None,
+    ///     Some("claude-code-877e4b89".into()), None).unwrap();
+    /// let review = &cooperation.state().reviews[0];
+    /// assert_eq!(review.for_session.as_deref(), Some("claude-code-877e4b89"));
+    ///
+    /// // an addressee is an identifier, never a path or a sentence
+    /// cooperation.request_review_for("s1", "feature/x".into(), vec![], None, None,
+    ///     Some("/tmp/cc-socks/1.sock".into()), None).expect_err("not a session id");
+    /// ```
+    #[allow(clippy::too_many_arguments)]
+    pub fn request_review_for(
+        &self,
+        session: &str,
+        subject: String,
+        scope: Vec<String>,
+        issue: Option<String>,
+        reviewer: Option<String>,
+        for_session: Option<String>,
+        body: Option<String>,
+    ) -> Result<Written, CooperationError> {
         if let Some(target) = &reviewer {
             if *target != self.own_key {
                 let table = self.table.lock().expect("cooperation table");
@@ -4574,6 +4618,7 @@ impl Cooperation {
                 scope,
                 issue,
                 reviewer,
+                for_session,
                 body: body.map(redacted),
             },
             self.own(&review),

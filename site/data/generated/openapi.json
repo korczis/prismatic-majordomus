@@ -839,6 +839,7 @@
     "schema-MeshVerifyCheck": "docs/api/mesh/",
     "schema-MeshVerifyReport": "docs/api/mesh/",
     "schema-MeshView": "docs/api/mesh/",
+    "schema-MessagingSource": "docs/api/product/",
     "schema-MigrationAction": "docs/api/worktree/",
     "schema-MigrationPlan": "docs/api/worktree/",
     "schema-MigrationStep": "docs/api/worktree/",
@@ -1113,9 +1114,11 @@
     "schema-ReviewState": "docs/api/mesh/",
     "schema-ReviewView": "docs/api/mesh/",
     "schema-ReviewWithdrawInput": "docs/api/mesh/",
+    "schema-ReviewWritten": "docs/api/mesh/",
     "schema-Role": "docs/api/mesh/",
     "schema-Route": "docs/api/deploy/",
     "schema-RouteCollision": "docs/api/entity/",
+    "schema-RouteVia": "docs/api/mesh/",
     "schema-RoutingDecision": "docs/api/models/",
     "schema-Row": "docs/api/capabilities/",
     "schema-RuleArtifactKind": "docs/api/rules/",
@@ -1174,6 +1177,7 @@
     "schema-SessionInfo": "docs/api/mesh/",
     "schema-SessionInput": "docs/api/mesh/",
     "schema-SessionNode": "docs/api/mesh/",
+    "schema-SessionRoute": "docs/api/mesh/",
     "schema-SessionState": "docs/api/mesh/",
     "schema-SessionView": "docs/api/mesh/",
     "schema-Severity": "docs/api/shared/",
@@ -1409,7 +1413,7 @@
   "binding": "GET binds every top-level input property as a query parameter; POST binds the input as the JSON body",
   "counts": {
     "operations": 219,
-    "schemas": 1124,
+    "schemas": 1128,
     "tags": 62
   },
   "dialect": "https://spec.openapis.org/oas/3.1/dialect/base",
@@ -2349,6 +2353,7 @@
     "MeshVerifyCheck": "mesh",
     "MeshVerifyReport": "mesh",
     "MeshView": "mesh",
+    "MessagingSource": "product",
     "MigrationAction": "worktree",
     "MigrationPlan": "worktree",
     "MigrationStep": "worktree",
@@ -2623,9 +2628,11 @@
     "ReviewState": "mesh",
     "ReviewView": "mesh",
     "ReviewWithdrawInput": "mesh",
+    "ReviewWritten": "mesh",
     "Role": "mesh",
     "Route": "deploy",
     "RouteCollision": "entity",
+    "RouteVia": "mesh",
     "RoutingDecision": "models",
     "Row": "capabilities",
     "RuleArtifactKind": "rules",
@@ -2684,6 +2691,7 @@
     "SessionInfo": "mesh",
     "SessionInput": "mesh",
     "SessionNode": "mesh",
+    "SessionRoute": "mesh",
     "SessionState": "mesh",
     "SessionView": "mesh",
     "Severity": "shared",
@@ -18691,6 +18699,7 @@
       "type": "\"synced\" | \"memory\" | \"not_durable\" | \"unknown\"",
       "used_by": [],
       "used_by_schemas": [
+        "ReviewWritten",
         "Written"
       ],
       "values": [
@@ -37227,6 +37236,29 @@
       "variants": []
     },
     {
+      "description": "Whether one provider's sessions can be woken by another session on the same machine\nthrough the provider's own messaging (I4553).\n\nA review request addressed to a session answers the route that wakes it, read from the\nboard row's address; this is the vendor half of that answer, declared with its citation\nlike every other cell. Majordomus never sends along it: the requesting worker's own\nprovider tool does.\n\n```\nuse majordomus_cli::share::MessagingSource;\nassert_eq!(serde_json::from_str::<MessagingSource>(\"\\\"socket\\\"\").unwrap(), MessagingSource::Socket);\nassert!(serde_json::from_str::<MessagingSource>(\"\\\"bus\\\"\").is_err(), \"one word for it\");\nassert_eq!(MessagingSource::default(), MessagingSource::None, \"undeclared reads as none\");\nassert_eq!(MessagingSource::Socket.as_str(), \"socket\");\n```",
+      "home": "product",
+      "is_enum": true,
+      "name": "MessagingSource",
+      "properties": [],
+      "type": "\"socket\" | \"none\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "ProviderOffers"
+      ],
+      "values": [
+        {
+          "description": "The provider listens on a local socket per session, and its own messaging tool sends\nto it from another session on the same machine.",
+          "value": "socket"
+        },
+        {
+          "description": "No session of it can be woken by another.",
+          "value": "none"
+        }
+      ],
+      "variants": []
+    },
+    {
       "description": "How a step moves its worktree.",
       "home": "worktree",
       "is_enum": true,
@@ -45407,6 +45439,22 @@
           "refs": [],
           "required": false,
           "type": "string"
+        },
+        {
+          "description": "How another session on the same machine wakes this provider's session (I4553):\n`socket` when the provider listens on a messaging socket its own tool sends to, the\nroute `mesh.review.request` answers. Absent in a value written before the axis\nexisted, and read as `none` there.",
+          "name": "messaging",
+          "refs": [
+            "MessagingSource"
+          ],
+          "required": false,
+          "type": "MessagingSource"
+        },
+        {
+          "description": "Where `messaging` was verified, on the same terms as `episode_evidence`.",
+          "name": "messaging_evidence",
+          "refs": [],
+          "required": false,
+          "type": "string"
         }
       ],
       "type": "object",
@@ -53435,6 +53483,13 @@
           "type": "string | null"
         },
         {
+          "description": "The session the request is for, as its board row's address names it on the mesh (`claude-code-<uuid>`): the answer then carries the route that wakes it. Restricts nobody.",
+          "name": "for_session",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
           "description": "What the reviewer needs beyond the subject: evidence, commands, the question. Up to\n8 KiB, several lines.",
           "name": "body",
           "refs": [],
@@ -53451,7 +53506,7 @@
       "variants": []
     },
     {
-      "description": "A review request's standing: whether anybody has answered it yet. There is deliberately\nno `Approved` or `Rejected` here — a request may be answered by several runtimes and the\nverdicts are the answers' own, so collapsing them into one state would throw away the\ndisagreement that makes a second reviewer worth asking.\n\n```\nuse std::sync::Arc;\nuse majordomus_cli::mesh::identity::NodeIdentity;\nuse majordomus_cli::mesh::journal::{EventBody, Journal, StreamLiveness};\nuse majordomus_cli::mesh::state::{fold, ReviewState};\n\nlet j = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), \"0000000000000001\",\n    \"repo\".into(), None).unwrap();\nj.append_own(EventBody::ReviewRequested { review: \"r1\".into(), session: \"s1\".into(),\n    subject: \"feature/x\".into(), scope: vec![], issue: None, reviewer: None, body: None }).unwrap();\nlet asked = fold(&j.events(), &|_| StreamLiveness::Own);\nassert_eq!(asked.reviews[0].state, ReviewState::Open);\n\nlet request = asked.reviews[0].key.clone();\nj.append_own(EventBody::ReviewAnswered { request, session: \"s2\".into(),\n    verdict: \"approved\".into(), note: None }).unwrap();\nassert_eq!(fold(&j.events(), &|_| StreamLiveness::Own).reviews[0].state, ReviewState::Answered);\n```",
+      "description": "A review request's standing: whether anybody has answered it yet. There is deliberately\nno `Approved` or `Rejected` here — a request may be answered by several runtimes and the\nverdicts are the answers' own, so collapsing them into one state would throw away the\ndisagreement that makes a second reviewer worth asking.\n\n```\nuse std::sync::Arc;\nuse majordomus_cli::mesh::identity::NodeIdentity;\nuse majordomus_cli::mesh::journal::{EventBody, Journal, StreamLiveness};\nuse majordomus_cli::mesh::state::{fold, ReviewState};\n\nlet j = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), \"0000000000000001\",\n    \"repo\".into(), None).unwrap();\nj.append_own(EventBody::ReviewRequested { review: \"r1\".into(), session: \"s1\".into(),\n    subject: \"feature/x\".into(), scope: vec![], issue: None, reviewer: None, for_session: None, body: None }).unwrap();\nlet asked = fold(&j.events(), &|_| StreamLiveness::Own);\nassert_eq!(asked.reviews[0].state, ReviewState::Open);\n\nlet request = asked.reviews[0].key.clone();\nj.append_own(EventBody::ReviewAnswered { request, session: \"s2\".into(),\n    verdict: \"approved\".into(), note: None }).unwrap();\nassert_eq!(fold(&j.events(), &|_| StreamLiveness::Own).reviews[0].state, ReviewState::Answered);\n```",
       "home": "mesh",
       "is_enum": true,
       "name": "ReviewState",
@@ -53482,7 +53537,7 @@
       "variants": []
     },
     {
-      "description": "One review request anywhere in the mesh, with every answer it has drawn. A request with\nno `reviewer` is an offer to the whole mesh rather than to nobody, which is why the\nanswers are a list: any linked runtime carrying the `reviews` feature may add one, and\nthey are kept in Lamport order so that every runtime reads them in the same sequence.\n\n```\nuse std::sync::Arc;\nuse majordomus_cli::mesh::identity::NodeIdentity;\nuse majordomus_cli::mesh::journal::{EventBody, Journal, StreamLiveness};\nuse majordomus_cli::mesh::state::{fold, ReviewView};\n\nlet j = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), \"0000000000000001\",\n    \"repo\".into(), None).unwrap();\nj.append_own(EventBody::ReviewRequested { review: \"r1\".into(), session: \"s1\".into(),\n    subject: \"feature/mesh-cooperation\".into(), scope: vec![\"src/mesh\".into()],\n    issue: Some(\"#184\".into()), reviewer: None, body: None }).unwrap();\nlet request = fold(&j.events(), &|_| StreamLiveness::Own).reviews[0].key.clone();\nj.append_own(EventBody::ReviewAnswered { request, session: \"s2\".into(),\n    verdict: \"approved\".into(), note: Some(\"reads well\".into()) }).unwrap();\n\nlet state = fold(&j.events(), &|_| StreamLiveness::Own);\nlet review: &ReviewView = &state.reviews[0];\nassert_eq!(review.subject, \"feature/mesh-cooperation\");\nassert_eq!(review.reviewer, None, \"offered to the mesh, not addressed\");\nassert_eq!(review.answers[0].verdict, \"approved\");\n```",
+      "description": "One review request anywhere in the mesh, with every answer it has drawn. A request with\nno `reviewer` is an offer to the whole mesh rather than to nobody, which is why the\nanswers are a list: any linked runtime carrying the `reviews` feature may add one, and\nthey are kept in Lamport order so that every runtime reads them in the same sequence.\n\n```\nuse std::sync::Arc;\nuse majordomus_cli::mesh::identity::NodeIdentity;\nuse majordomus_cli::mesh::journal::{EventBody, Journal, StreamLiveness};\nuse majordomus_cli::mesh::state::{fold, ReviewView};\n\nlet j = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), \"0000000000000001\",\n    \"repo\".into(), None).unwrap();\nj.append_own(EventBody::ReviewRequested { review: \"r1\".into(), session: \"s1\".into(),\n    subject: \"feature/mesh-cooperation\".into(), scope: vec![\"src/mesh\".into()],\n    issue: Some(\"#184\".into()), reviewer: None, for_session: None, body: None }).unwrap();\nlet request = fold(&j.events(), &|_| StreamLiveness::Own).reviews[0].key.clone();\nj.append_own(EventBody::ReviewAnswered { request, session: \"s2\".into(),\n    verdict: \"approved\".into(), note: Some(\"reads well\".into()) }).unwrap();\n\nlet state = fold(&j.events(), &|_| StreamLiveness::Own);\nlet review: &ReviewView = &state.reviews[0];\nassert_eq!(review.subject, \"feature/mesh-cooperation\");\nassert_eq!(review.reviewer, None, \"offered to the mesh, not addressed\");\nassert_eq!(review.answers[0].verdict, \"approved\");\n```",
       "home": "mesh",
       "is_enum": false,
       "name": "ReviewView",
@@ -53525,6 +53580,13 @@
         {
           "description": "The runtime asked, when one was.",
           "name": "reviewer",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The session the request is for (`claude-code-<uuid>`), when the requester named one:\nthe session the request's route wakes (I4553). Not a restriction on who answers.",
+          "name": "for_session",
           "refs": [],
           "required": false,
           "type": "string | null"
@@ -53601,6 +53663,61 @@
       "type": "object",
       "used_by": [
         "mesh.review.withdraw"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "The answer of `mesh.review.request` and `mesh.review.answer`: the event written, and how\nto wake the other side (I4553).\n\n`route` is the addressee's for a request that names a session, and the requester's for\nan answer; absent for a request addressed to nobody. Majordomus sends nothing along it:\nthe calling worker knocks with its own provider's messaging tool, carrying the review\nkey, and the woken side reads the record once by that key.",
+      "home": "mesh",
+      "is_enum": false,
+      "name": "ReviewWritten",
+      "properties": [
+        {
+          "description": "`<stream>/<local id>` of what was created or changed.",
+          "name": "key",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "`<stream>/<seq>` of the event that says so.",
+          "name": "event",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The event's Lamport stamp.",
+          "name": "lamport",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        },
+        {
+          "description": "Whether the event reached this machine's disk: `synced`, `memory` (a journal with no\nfile, by configuration), or `not_durable` — held and replicated to peers, not on disk\nhere, and not acknowledged as durable. `unknown` from an executable that predates it.",
+          "name": "durability",
+          "refs": [
+            "Durability"
+          ],
+          "required": false,
+          "type": "Durability"
+        },
+        {
+          "description": "The route that wakes the other side, or why there is none.",
+          "name": "route",
+          "refs": [
+            "SessionRoute"
+          ],
+          "required": false,
+          "type": "SessionRoute | null"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "mesh.review.request",
+        "mesh.review.answer"
       ],
       "used_by_schemas": [],
       "values": [],
@@ -53699,6 +53816,25 @@
         "KindList"
       ],
       "values": [],
+      "variants": []
+    },
+    {
+      "description": "How a route reaches its session: only through the provider's own messaging socket.",
+      "home": "mesh",
+      "is_enum": true,
+      "name": "RouteVia",
+      "properties": [],
+      "type": "\"provider-socket\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "SessionRoute"
+      ],
+      "values": [
+        {
+          "description": "The socket the provider listens on for messages from its other sessions on the same\nmachine (`CLAUDE_CODE_MESSAGING_SOCKET` for Claude Code), which the calling worker's\nown messaging tool sends to. Majordomus never connects to it.",
+          "value": "provider-socket"
+        }
+      ],
       "variants": []
     },
     {
@@ -57032,6 +57168,20 @@
       "used_by": [],
       "used_by_schemas": [
         "RuntimeNode"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "How the worker behind one mesh session can be woken, or why it cannot be: resolved from\nthe board row whose `PeerAddress` names that session.\n\nThe journal stays the record of a request and its answer; a route only says where to\nknock so that the other side reads it now rather than at its next look. Majordomus sends\nnothing to the socket and reads no messaging token: the requesting worker knocks with its\nown provider's tool (Claude Code's `SendMessage` takes `to` as given here), carrying the\nreview key, and the woken side reads the record once by that key.\n\n```\nuse majordomus_cli::peers::SessionRoute;\nlet r = SessionRoute::unavailable(\"no board row names the session\");\nassert_eq!(serde_json::to_value(&r).unwrap(),\n    serde_json::json!({ \"unavailable\": \"no board row names the session\" }));\nassert_eq!(r.to(), None);\n```",
+      "home": "mesh",
+      "is_enum": false,
+      "name": "SessionRoute",
+      "properties": [],
+      "type": "object | object",
+      "used_by": [],
+      "used_by_schemas": [
+        "ReviewWritten"
       ],
       "values": [],
       "variants": []
@@ -66026,8 +66176,6 @@
         "mesh.claim",
         "mesh.release",
         "mesh.handover.publish",
-        "mesh.review.request",
-        "mesh.review.answer",
         "mesh.review.withdraw",
         "mesh.session.open",
         "mesh.session.close"
@@ -74917,6 +75065,13 @@
               "name": "matching",
               "required": false,
               "type": "string"
+            },
+            {
+              "description": "Only the record with this key (`<stream>/<id>`, a handover by its id): the one review request, claim, session or handover a woken worker reads once by the key its knock carried (I4553), with that record's stream alone.",
+              "examples": [],
+              "name": "key",
+              "required": false,
+              "type": "string"
             }
           ],
           "path": "/api/v1/mesh/peers",
@@ -75039,7 +75194,7 @@
           "cache_detail": "",
           "cli": "",
           "curl": "curl -s -X POST \"http://127.0.0.1:8741/api/v1/mesh/reviews\" -H \"content-type: application/json\" -d '{\"session\":\"bench\",\"subject\":\"feature/bench\",\"scope\":[]}'",
-          "description": "Ask for a review of a branch, commit or pull request, optionally of one named runtime — which must be linked and carry the `reviews` feature, or the request is refused as `feature_unsupported`. Replicated to every linked runtime. Writes this runtime's journal only.",
+          "description": "Ask for a review of a branch, commit or pull request, optionally of one named runtime — which must be linked and carry the `reviews` feature, or the request is refused as `feature_unsupported` — and optionally for one session (`for_session`, `claude-code-<uuid>`), whose route the answer carries: `{via: provider-socket, to: uds:<socket>, provider}` from that session's board row on this machine, or `{unavailable: <why>}`. The caller wakes the session with its own provider's messaging tool, carrying the review key; Majordomus connects to no socket and reads no messaging token. Replicated to every linked runtime. Writes this runtime's journal only.",
           "home": "mesh",
           "id": "mesh.review.request",
           "kind": "command",
@@ -75056,7 +75211,7 @@
           "responses": [
             {
               "description": "Ask the mesh for a review: the result.",
-              "schema": "Written",
+              "schema": "ReviewWritten",
               "status": "200"
             },
             {
@@ -75090,7 +75245,7 @@
               "status": "default"
             }
           ],
-          "result_schema": "Written",
+          "result_schema": "ReviewWritten",
           "stability": "experimental",
           "summary": "Ask the mesh for a review"
         },
@@ -75108,7 +75263,7 @@
           "cache_detail": "",
           "cli": "",
           "curl": "curl -s -X POST \"http://127.0.0.1:8741/api/v1/mesh/reviews/answer\" -H \"content-type: application/json\" -d '{\"request\":\"none/r-0\",\"session\":\"bench\",\"verdict\":\"commented\"}'",
-          "description": "Answer a review request from any runtime with approved, changes_requested or commented, and a note. Replicated to every linked runtime. Writes this runtime's journal only.",
+          "description": "Answer a review request from any runtime with approved, changes_requested or commented, and a note. The answer carries the requester's route, resolved as `mesh.review.request` resolves the addressee's, so the caller can wake the requester instead of it reading mesh state in a loop. Replicated to every linked runtime. Writes this runtime's journal only.",
           "home": "mesh",
           "id": "mesh.review.answer",
           "kind": "command",
@@ -75125,7 +75280,7 @@
           "responses": [
             {
               "description": "Answer a review request: the result.",
-              "schema": "Written",
+              "schema": "ReviewWritten",
               "status": "200"
             },
             {
@@ -75159,7 +75314,7 @@
               "status": "default"
             }
           ],
-          "result_schema": "Written",
+          "result_schema": "ReviewWritten",
           "stability": "experimental",
           "summary": "Answer a review request"
         },
@@ -75379,7 +75534,7 @@
           "cache_detail": "",
           "cli": "",
           "curl": "curl -s \"http://127.0.0.1:8741/api/v1/mesh/state?view=full\"",
-          "description": "The journal folded. The default `summary` view is bounded whatever the history: sessions and claims counted by standing, each runtime with its liveness, its counts and its newest live claim, the open review requests and the handovers nobody has taken, and the digest two runtimes compare. `view=full` is every session, every claim with its standing (held, released, expired, conflicted with its winner), the advisory overlaps, every handover with who consumed it, every review request with its answers, and every stream's liveness on this runtime's clock. `claims=live`, `after` (a Lamport stamp), `session` and `runtime` narrow either view; the digest is always the whole fold's.",
+          "description": "The journal folded. The default `summary` view is bounded whatever the history: sessions and claims counted by standing, each runtime with its liveness, its counts and its newest live claim, the open review requests and the handovers nobody has taken, and the digest two runtimes compare. `view=full` is every session, every claim with its standing (held, released, expired, conflicted with its winner), the advisory overlaps, every handover with who consumed it, every review request with its answers, and every stream's liveness on this runtime's clock. `claims=live`, `after` (a Lamport stamp), `session` and `runtime` narrow either view, and `key` (`<stream>/<id>`) reads one record with its stream alone — what a worker woken by a review route reads once; the digest is always the whole fold's.",
           "home": "mesh",
           "id": "mesh.state",
           "kind": "query",
@@ -75452,6 +75607,13 @@
               "description": "Only what mentions this text, ignoring case: a path, a branch, an issue, a pull\nrequest, a word of an intent or a subject.",
               "examples": [],
               "name": "matching",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "description": "Only the record with this key (`<stream>/<id>`, a handover by its id): the one review request, claim, session or handover a woken worker reads once by the key its knock carried (I4553), with that record's stream alone.",
+              "examples": [],
+              "name": "key",
               "required": false,
               "type": "string"
             }

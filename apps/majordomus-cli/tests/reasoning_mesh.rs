@@ -71,15 +71,17 @@ impl Node {
     }
 
     fn serve(&self) -> Served {
-        Served::start_with_env(
-            &self.fixture.root(),
-            &["--discovery", "filesystem"],
-            &[
-                ("XDG_STATE_HOME", self.state.to_str().unwrap()),
-                ("MAJORDOMUS_ADVISORS_DISABLE", CATALOGUE_DISABLED),
-                ("MAJORDOMUS_REASONING_MODE", "standard"),
-            ],
-        )
+        self.serve_with(&[])
+    }
+
+    fn serve_with(&self, env: &[(&str, &str)]) -> Served {
+        let mut all = vec![
+            ("XDG_STATE_HOME", self.state.to_str().unwrap()),
+            ("MAJORDOMUS_ADVISORS_DISABLE", CATALOGUE_DISABLED),
+            ("MAJORDOMUS_REASONING_MODE", "standard"),
+        ];
+        all.extend_from_slice(env);
+        Served::start_with_env(&self.fixture.root(), &["--discovery", "filesystem"], &all)
     }
 }
 
@@ -247,4 +249,125 @@ fn a_linked_peer_reviews_and_its_absence_leaves_reasoning_intact() {
     let plan = code_review_plan(&sa);
     assert_eq!(plan["outcome"], json!("decide_locally"), "{plan}");
     assert!(!plan["local_review"].as_array().unwrap().is_empty());
+}
+
+/// Attach an MCP session over HTTP whose `initialize` carries a provider address, as the
+/// bridge a provider starts puts it there: a board row with that address.
+fn attach_addressed(s: &Served, host: &str, session: &str, socket: Option<&str>) -> String {
+    let mut address =
+        json!({ "provider": "claude-code", "host": host, "pid": 4242, "session": session });
+    if let Some(socket) = socket {
+        address["socket"] = json!(socket);
+    }
+    let init = json!({ "jsonrpc": "2.0", "id": 1, "method": "initialize", "params": {
+        "protocolVersion": "2025-06-18", "capabilities": {},
+        "clientInfo": { "name": "claude-code", "version": "0" },
+        "_meta": { "dev.majordomus/address": address },
+    }})
+    .to_string();
+    let (status, headers, body) = s.request("POST", "/mcp", Some(&init));
+    assert_eq!(status, 200, "{body}");
+    headers
+        .into_iter()
+        .find(|(k, _)| k == "mcp-session-id")
+        .map(|(_, v)| v)
+        .expect("initialize answers with a session id")
+}
+
+/// I4553, end to end through a served runtime: a review request for a session answers the
+/// route its board row gives (`uds:<socket>`), the answer answers the requester's route, a
+/// row without a socket answers why not, and a socket that is gone is reported gone. No
+/// handler connects to the socket: these are plain files, and a connection would fail.
+#[test]
+fn a_review_for_a_session_answers_the_route_that_wakes_it_and_back() {
+    const HOST: &str = "i4553-host";
+    let a = Node::new();
+    a.declare(&[&a.key], &[]);
+    let sa = a.serve_with(&[("HOSTNAME", HOST)]);
+    wait_until("the runtime cooperates", Duration::from_secs(20), || {
+        cooperation(&sa)["runtime"].is_string()
+    });
+    let socks = a.fixture.parent().join("cc-socks");
+    std::fs::create_dir_all(&socks).unwrap();
+    let sock = |name: &str| {
+        let path = socks.join(name);
+        std::fs::write(&path, b"").unwrap();
+        path.display().to_string()
+    };
+    let (reviewer_sock, requester_sock) = (sock("1.sock"), sock("2.sock"));
+    let _reviewer = attach_addressed(&sa, HOST, "rev-1", Some(&reviewer_sock));
+    let _requester = attach_addressed(&sa, HOST, "req-1", Some(&requester_sock));
+    let _mute = attach_addressed(&sa, HOST, "mute-1", None);
+
+    let ask = |to: Option<&str>| {
+        let mut body = json!({ "session": "claude-code-req-1", "subject": "feature/I4553" });
+        if let Some(to) = to {
+            body["for_session"] = json!(to);
+        }
+        let (status, written) = post(&sa, "/api/v1/mesh/reviews", body);
+        assert_eq!(status, 200, "{written}");
+        written
+    };
+
+    let asked = ask(Some("claude-code-rev-1"));
+    assert_eq!(
+        asked["route"],
+        json!({ "via": "provider-socket", "to": format!("uds:{reviewer_sock}"), "provider": "claude-code" }),
+        "{asked}"
+    );
+    let key = asked["key"].as_str().expect("the review's key").to_string();
+    // the woken side reads the request once, by the key its knock carried: one record and
+    // its stream, not the whole fold
+    let (status, one) = sa.get(&format!(
+        "/api/v1/mesh/state?view=full&key={}",
+        key.replace('/', "%2F")
+    ));
+    assert_eq!(status, 200, "{one}");
+    let found = one["state"]["reviews"]
+        .as_array()
+        .cloned()
+        .unwrap_or_default();
+    assert_eq!(found.len(), 1, "{one}");
+    assert_eq!(found[0]["for_session"], json!("claude-code-rev-1"));
+    assert!(
+        one["state"]["sessions"]
+            .as_array()
+            .is_some_and(Vec::is_empty),
+        "{one}"
+    );
+    assert_eq!(one["streams"].as_array().map(Vec::len), Some(1), "{one}");
+
+    let (status, answered) = post(
+        &sa,
+        "/api/v1/mesh/reviews/answer",
+        json!({ "request": key, "session": "claude-code-rev-1", "verdict": "commented", "note": "read once" }),
+    );
+    assert_eq!(status, 200, "{answered}");
+    assert_eq!(
+        answered["route"]["to"],
+        json!(format!("uds:{requester_sock}")),
+        "{answered}"
+    );
+
+    let mute = ask(Some("claude-code-mute-1"));
+    assert!(
+        mute["route"]["unavailable"]
+            .as_str()
+            .is_some_and(|w| w.contains("no messaging socket")),
+        "{mute}"
+    );
+    assert!(
+        ask(None).get("route").is_none(),
+        "a request for nobody answers no route"
+    );
+    std::fs::remove_file(&reviewer_sock).unwrap();
+    let gone = ask(Some("claude-code-rev-1"));
+    assert!(
+        gone["route"]["unavailable"]
+            .as_str()
+            .is_some_and(|w| w.contains("is gone")),
+        "{gone}"
+    );
+    let nobody = ask(Some("claude-code-nobody"));
+    assert!(nobody["route"]["unavailable"].is_string(), "{nobody}");
 }

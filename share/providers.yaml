@@ -47,7 +47,7 @@
 #
 # offers — what this provider itself can do about the session lifecycle, and where each
 # answer was verified: the vendor's capability, where `lifecycle` above is this tool's
-# adapter for it. Four capabilities and a citation each, and for a browser bridge its host:
+# adapter for it. Five capabilities and a citation each, and for a browser bridge its host:
 #
 #   episode: hooks       the provider fires its own session events and a hook this tool
 #                        installs draws the boundary from them
@@ -72,7 +72,12 @@
 #              none         no official seam reports usage; it stands alone
 #            Never a transcript, a proxy or a patched client. A seam that exists but whose
 #            coverage is unverified is left out and named in the citation.
-#   episode_evidence, prompts_evidence, browser_evidence, usage_evidence
+#   messaging: socket    another session on the same machine wakes this provider's session
+#                        through a per-session socket its own messaging tool sends to (I4553):
+#                        the route mesh.review.request answers from the board row's address.
+#                        Majordomus never connects to it and never reads the token.
+#              none      no session of it can be woken by another, or none verified
+#   episode_evidence, prompts_evidence, browser_evidence, usage_evidence, messaging_evidence
 #            where the value above was verified. A vendor documentation URL, or the
 #            statement that no such documentation exists and what was searched for it.
 #   browser_host, browser_setup
@@ -84,7 +89,7 @@
 # unknown keys refused, so that a typo never reads as `none`. Adding `browser` (I3829) made an
 # executable built before it fail on this file with "unknown field `browser`"; the remedy is the
 # executable of the tree, never a laxer reader. Whoever caches MAJORDOMUS_BIN refreshes it when
-# a key lands here. `usage` (I3287) does the same.
+# a key lands here. `usage` (I3287) does the same, and so does `messaging` (I4553).
 #
 # **Why every cell carries a citation.** Until ADR 0103 the answer to "can this provider do
 # X" lived in two shell string tables in lib/capture.sh, and a provider absent from one was
@@ -127,6 +132,8 @@ providers:
       browser_evidence: "as above: a convention drives nothing; the concrete tool reading AGENTS.md has its own row, and that row says whether it drives a browser."
       usage: ["none"]
       usage_evidence: "as above: a convention runs no model and reports no usage; the concrete tool reading AGENTS.md has its own row, and that row says how it reports usage."
+      messaging: "none"
+      messaging_evidence: "as above: a convention runs no session and listens on nothing; the concrete tool reading AGENTS.md has its own row, and that row says whether another session can wake it."
   bb:
     title: bb
     # An orchestrator (getbb.app): it runs Claude Code, Codex and ACP agents as processes
@@ -148,6 +155,8 @@ providers:
       browser_evidence: "bb itself ships no browser bridge (searched 2026-10-21: the same docs/ and plugins/ as above name none). The agent bb runs keeps its own: Claude Code under bb has its bridge when the person enabled it, and that is the agent's row, never bb's."
       usage: ["none"]
       usage_evidence: "bb runs Claude Code and Codex as child processes and publishes no usage stream of its own (searched 2026-10-22: getbb.app and the github.com/get-bb/bb docs/ and plugins/ named above document no usage, token or telemetry export). Each child reports through its own row's seam; the usage is the agent's, never bb's."
+      messaging: "none"
+      messaging_evidence: "bb publishes no messaging of its own between the agents it runs (searched 2026-11-08: getbb.app and the github.com/get-bb/bb docs/ named above document none). An agent it runs that offers messaging is woken through its own row, never through bb."
   claude-code:
     title: Claude Code
     client_config: .mcp.json
@@ -170,6 +179,8 @@ providers:
       browser_setup: "in Claude Code: /chrome, choose Enabled by default, sign the extension in to the organization /status names, then restart Chrome"
       usage: ["otel", "stream-json"]
       usage_evidence: "https://code.claude.com/docs/en/monitoring-usage — opt-in with CLAUDE_CODE_ENABLE_TELEMETRY=1 and OTEL_LOGS_EXPORTER/OTEL_METRICS_EXPORTER; the event claude_code.api_request is 'Logged for each API request to Claude' with model, cost_usd ('Estimated cost in USD'), input_tokens ('excluding tokens read from or written to the prompt cache'), output_tokens, cache_read_tokens and cache_creation_tokens, and the metric claude_code.token.usage carries type input, output, cacheRead, cacheCreation. https://code.claude.com/docs/en/headless — with --output-format json or stream-json the run reports usage and total_cost_usd in its final result message, and the docs call both figures 'client-side estimates' that 'can differ from your actual bill'. Verified 2026-10-22. Cost is an estimate on both seams, never a bill."
+      messaging: "socket"
+      messaging_evidence: "https://code.claude.com/docs/en/cross-session-messaging — one session discovers another with ListAgents and messages it with SendMessage; local sessions are reached 'over a per-session socket on your machine, never through Anthropic servers', a busy receiver reads the message between tool calls and an idle one starts a new turn with it (Claude Code v2.1.224 or later on macOS and Linux). The socket is handed to the processes a session starts as CLAUDE_CODE_MESSAGING_SOCKET (the board row's address, apps/majordomus-cli/src/peers.rs), and a message arrives with from=uds:<socket>, which SendMessage takes back as its `to`. Verified 2026-11-08 in Claude Code 2.1.319. The messaging token is a credential this tool never reads."
   codex:
     title: Codex
     client_config: .codex/config.toml
@@ -186,6 +197,8 @@ providers:
       browser_evidence: "not verified either way, and declared none until it is: on 2026-10-21 OpenAI's ChatGPT for Chrome extension registered a native messaging host on the owner's machine (com.openai.codexextension), but no vendor page was read saying its tools arrive in a Codex CLI session beside a project MCP server. Searching learn.chatgpt.com for that is the open re-verification."
       usage: ["app-server"]
       usage_evidence: "github.com/openai/codex at 9a8a85bc5393 (2026-10-22), codex-rs/app-server-protocol/schema/json/ServerNotification.json — the notification thread/tokenUsage/updated carries ThreadTokenUsage {total, last, modelContextWindow}, each a TokenUsageBreakdown of inputTokens, cachedInputTokens, cacheWriteInputTokens, outputTokens, reasoningOutputTokens and totalTokens: `total` is cumulative, so it is never summed with `last`. Verified 2026-10-22. Codex's own OpenTelemetry export is NOT declared and stays unadapted: https://learn.chatgpt.com/docs/config-file/config-advanced says it is 'Disabled by default; opt in via [otel]' and puts token counts only on codex.sse_event's response.completed, but says nothing on whether it covers interactive sessions the person starts or only codex exec, so no seam is claimed until that is read."
+      messaging: "none"
+      messaging_evidence: "not verified (2026-11-08): no Codex documentation was read for a way one session wakes another, and the environment this tool reads an address from names no Codex socket (apps/majordomus-cli/src/peers.rs reads CLAUDE_CODE_MESSAGING_SOCKET only), so no route can be answered for a Codex session. Declared none until a citation shows otherwise."
   gemini:
     title: Gemini CLI
     client_config: .gemini/settings.json
@@ -198,6 +211,8 @@ providers:
       browser_evidence: "not searched: no Gemini CLI browser bridge was looked for on 2026-10-21, when this axis was added for Claude Code. Declared none so that no surface implies one; the search is the open re-verification."
       usage: ["otel"]
       usage_evidence: "https://github.com/google-gemini/gemini-cli/blob/main/docs/cli/telemetry.md — telemetry is enabled in .gemini/settings.json (or its environment variable); the log event gemini_cli.api_response carries input_token_count, output_token_count, cached_content_token_count, thoughts_token_count, tool_token_count and total_token_count, and the metric gemini_cli.token.usage the same by type. Verified 2026-10-22."
+      messaging: "none"
+      messaging_evidence: "not verified (2026-11-08): no Gemini CLI documentation was read for a way one session wakes another, and the environment this tool reads an address from names no Gemini socket (apps/majordomus-cli/src/peers.rs reads CLAUDE_CODE_MESSAGING_SOCKET only), so no route can be answered for a Gemini session. Declared none until a citation shows otherwise."
   generic:
     title: A worker with no convention of its own
     # The provider this whole design is for. It has no hooks by definition — that is what
@@ -214,3 +229,5 @@ providers:
       browser_evidence: "no vendor documentation is involved: a worker with no convention of its own is known only through the MCP connection, and an MCP server cannot drive the client's browser (modelcontextprotocol.io/specification: a server is handed tool calls, it makes none on the client's behalf). Declared none rather than left blank."
       usage: ["none"]
       usage_evidence: "no vendor documentation is involved: a worker with no convention of its own is known only through the MCP connection, and MCP carries no usage report (modelcontextprotocol.io/specification: a server receives initialize, tool calls and notifications, never the client's token counts). Declared none rather than left blank, so its sessions read not observed with this reason."
+      messaging: "none"
+      messaging_evidence: "no vendor documentation is involved: a worker with no convention of its own is known only through its MCP connection, and MCP gives a server no way to wake the client (modelcontextprotocol.io/specification: the server answers requests and sends notifications on the connection the client holds). Its route is always unavailable."

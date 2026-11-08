@@ -5,7 +5,7 @@
     "id": "majordomus-cli",
     "version": "1.0.0"
   },
-  "fingerprint": "429ceae42d668864d6290e2a75c37444542c5f57bd6b78231ffce47d940ce1ff",
+  "fingerprint": "2dd49e774d35820304ce9caf1d4de86b899504a8e6745ba312627f1d4771600d",
   "route": "/features/",
   "domain_route": "/domains/",
   "counts": {
@@ -13610,7 +13610,7 @@
         },
         {
           "name": "issue",
-          "objects": 1223
+          "objects": 1224
         },
         {
           "name": "intent",
@@ -13820,11 +13820,11 @@
       "counts": {
         "capabilities": 30,
         "mcp_tools": 29,
-        "mcp_resources": 1433,
+        "mcp_resources": 1434,
         "http_routes": 29,
         "cli_paths": 14,
         "commands": 1,
-        "objects": 1430,
+        "objects": 1431,
         "rules": 3,
         "enforced_rules": 3,
         "docs": 2,
@@ -17770,7 +17770,7 @@
       },
       {
         "id": "issue",
-        "title": "issue (1223)",
+        "title": "issue (1224)",
         "features": [
           "planning"
         ]
@@ -17906,7 +17906,9 @@
         "usage": [
           "none"
         ],
-        "usage_evidence": "as above: a convention runs no model and reports no usage; the concrete tool reading AGENTS.md has its own row, and that row says how it reports usage."
+        "usage_evidence": "as above: a convention runs no model and reports no usage; the concrete tool reading AGENTS.md has its own row, and that row says how it reports usage.",
+        "messaging": "none",
+        "messaging_evidence": "as above: a convention runs no session and listens on nothing; the concrete tool reading AGENTS.md has its own row, and that row says whether another session can wake it."
       }
     },
     {
@@ -17933,7 +17935,9 @@
         "usage": [
           "none"
         ],
-        "usage_evidence": "bb runs Claude Code and Codex as child processes and publishes no usage stream of its own (searched 2026-10-22: getbb.app and the github.com/get-bb/bb docs/ and plugins/ named above document no usage, token or telemetry export). Each child reports through its own row's seam; the usage is the agent's, never bb's."
+        "usage_evidence": "bb runs Claude Code and Codex as child processes and publishes no usage stream of its own (searched 2026-10-22: getbb.app and the github.com/get-bb/bb docs/ and plugins/ named above document no usage, token or telemetry export). Each child reports through its own row's seam; the usage is the agent's, never bb's.",
+        "messaging": "none",
+        "messaging_evidence": "bb publishes no messaging of its own between the agents it runs (searched 2026-11-08: getbb.app and the github.com/get-bb/bb docs/ named above document none). An agent it runs that offers messaging is woken through its own row, never through bb."
       }
     },
     {
@@ -17967,7 +17971,9 @@
           "otel",
           "stream-json"
         ],
-        "usage_evidence": "https://code.claude.com/docs/en/monitoring-usage — opt-in with CLAUDE_CODE_ENABLE_TELEMETRY=1 and OTEL_LOGS_EXPORTER/OTEL_METRICS_EXPORTER; the event claude_code.api_request is 'Logged for each API request to Claude' with model, cost_usd ('Estimated cost in USD'), input_tokens ('excluding tokens read from or written to the prompt cache'), output_tokens, cache_read_tokens and cache_creation_tokens, and the metric claude_code.token.usage carries type input, output, cacheRead, cacheCreation. https://code.claude.com/docs/en/headless — with --output-format json or stream-json the run reports usage and total_cost_usd in its final result message, and the docs call both figures 'client-side estimates' that 'can differ from your actual bill'. Verified 2026-10-22. Cost is an estimate on both seams, never a bill."
+        "usage_evidence": "https://code.claude.com/docs/en/monitoring-usage — opt-in with CLAUDE_CODE_ENABLE_TELEMETRY=1 and OTEL_LOGS_EXPORTER/OTEL_METRICS_EXPORTER; the event claude_code.api_request is 'Logged for each API request to Claude' with model, cost_usd ('Estimated cost in USD'), input_tokens ('excluding tokens read from or written to the prompt cache'), output_tokens, cache_read_tokens and cache_creation_tokens, and the metric claude_code.token.usage carries type input, output, cacheRead, cacheCreation. https://code.claude.com/docs/en/headless — with --output-format json or stream-json the run reports usage and total_cost_usd in its final result message, and the docs call both figures 'client-side estimates' that 'can differ from your actual bill'. Verified 2026-10-22. Cost is an estimate on both seams, never a bill.",
+        "messaging": "socket",
+        "messaging_evidence": "https://code.claude.com/docs/en/cross-session-messaging — one session discovers another with ListAgents and messages it with SendMessage; local sessions are reached 'over a per-session socket on your machine, never through Anthropic servers', a busy receiver reads the message between tool calls and an idle one starts a new turn with it (Claude Code v2.1.224 or later on macOS and Linux). The socket is handed to the processes a session starts as CLAUDE_CODE_MESSAGING_SOCKET (the board row's address, apps/majordomus-cli/src/peers.rs), and a message arrives with from=uds:<socket>, which SendMessage takes back as its `to`. Verified 2026-11-08 in Claude Code 2.1.319. The messaging token is a credential this tool never reads."
       }
     },
     {
@@ -17987,7 +17993,9 @@
         "usage": [
           "app-server"
         ],
-        "usage_evidence": "github.com/openai/codex at 9a8a85bc5393 (2026-10-22), codex-rs/app-server-protocol/schema/json/ServerNotification.json — the notification thread/tokenUsage/updated carries ThreadTokenUsage {total, last, modelContextWindow}, each a TokenUsageBreakdown of inputTokens, cachedInputTokens, cacheWriteInputTokens, outputTokens, reasoningOutputTokens and totalTokens: `total` is cumulative, so it is never summed with `last`. Verified 2026-10-22. Codex's own OpenTelemetry export is NOT declared and stays unadapted: https://learn.chatgpt.com/docs/config-file/config-advanced says it is 'Disabled by default; opt in via [otel]' and puts token counts only on codex.sse_event's response.completed, but says nothing on whether it covers interactive sessions the person starts or only codex exec, so no seam is claimed until that is read."
+        "usage_evidence": "github.com/openai/codex at 9a8a85bc5393 (2026-10-22), codex-rs/app-server-protocol/schema/json/ServerNotification.json — the notification thread/tokenUsage/updated carries ThreadTokenUsage {total, last, modelContextWindow}, each a TokenUsageBreakdown of inputTokens, cachedInputTokens, cacheWriteInputTokens, outputTokens, reasoningOutputTokens and totalTokens: `total` is cumulative, so it is never summed with `last`. Verified 2026-10-22. Codex's own OpenTelemetry export is NOT declared and stays unadapted: https://learn.chatgpt.com/docs/config-file/config-advanced says it is 'Disabled by default; opt in via [otel]' and puts token counts only on codex.sse_event's response.completed, but says nothing on whether it covers interactive sessions the person starts or only codex exec, so no seam is claimed until that is read.",
+        "messaging": "none",
+        "messaging_evidence": "not verified (2026-11-08): no Codex documentation was read for a way one session wakes another, and the environment this tool reads an address from names no Codex socket (apps/majordomus-cli/src/peers.rs reads CLAUDE_CODE_MESSAGING_SOCKET only), so no route can be answered for a Codex session. Declared none until a citation shows otherwise."
       }
     },
     {
@@ -18013,7 +18021,9 @@
         "usage": [
           "otel"
         ],
-        "usage_evidence": "https://github.com/google-gemini/gemini-cli/blob/main/docs/cli/telemetry.md — telemetry is enabled in .gemini/settings.json (or its environment variable); the log event gemini_cli.api_response carries input_token_count, output_token_count, cached_content_token_count, thoughts_token_count, tool_token_count and total_token_count, and the metric gemini_cli.token.usage the same by type. Verified 2026-10-22."
+        "usage_evidence": "https://github.com/google-gemini/gemini-cli/blob/main/docs/cli/telemetry.md — telemetry is enabled in .gemini/settings.json (or its environment variable); the log event gemini_cli.api_response carries input_token_count, output_token_count, cached_content_token_count, thoughts_token_count, tool_token_count and total_token_count, and the metric gemini_cli.token.usage the same by type. Verified 2026-10-22.",
+        "messaging": "none",
+        "messaging_evidence": "not verified (2026-11-08): no Gemini CLI documentation was read for a way one session wakes another, and the environment this tool reads an address from names no Gemini socket (apps/majordomus-cli/src/peers.rs reads CLAUDE_CODE_MESSAGING_SOCKET only), so no route can be answered for a Gemini session. Declared none until a citation shows otherwise."
       }
     },
     {
@@ -18032,7 +18042,9 @@
         "usage": [
           "none"
         ],
-        "usage_evidence": "no vendor documentation is involved: a worker with no convention of its own is known only through the MCP connection, and MCP carries no usage report (modelcontextprotocol.io/specification: a server receives initialize, tool calls and notifications, never the client's token counts). Declared none rather than left blank, so its sessions read not observed with this reason."
+        "usage_evidence": "no vendor documentation is involved: a worker with no convention of its own is known only through the MCP connection, and MCP carries no usage report (modelcontextprotocol.io/specification: a server receives initialize, tool calls and notifications, never the client's token counts). Declared none rather than left blank, so its sessions read not observed with this reason.",
+        "messaging": "none",
+        "messaging_evidence": "no vendor documentation is involved: a worker with no convention of its own is known only through its MCP connection, and MCP gives a server no way to wake the client (modelcontextprotocol.io/specification: the server answers requests and sends notifications on the connection the client holds). Its route is always unavailable."
       }
     }
   ],
@@ -18830,17 +18842,17 @@
     }
   ],
   "telemetry": {
-    "capabilities": 3951,
+    "capabilities": 3952,
     "builtin": 231,
-    "declarative": 3720,
+    "declarative": 3721,
     "modules": 62,
     "mcp_tools": 215,
-    "mcp_resources": 3777,
+    "mcp_resources": 3778,
     "http_routes": 219,
     "cli_commands": 229,
     "shell_commands": 30,
     "kinds": 34,
-    "objects": 3720,
+    "objects": 3721,
     "by_kind": {
       "adr": 169,
       "application": 5,
@@ -18859,7 +18871,7 @@
       "gap": 5,
       "implementation": 54,
       "intent": 45,
-      "issue": 1223,
+      "issue": 1224,
       "knowledge": 186,
       "mesh-declaration": 1,
       "milestone": 117,

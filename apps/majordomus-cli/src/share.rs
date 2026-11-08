@@ -319,6 +319,10 @@ struct ProviderOffersEntry {
     usage: Option<Vec<UsageSource>>,
     #[serde(default)]
     usage_evidence: Option<String>,
+    #[serde(default)]
+    messaging: Option<MessagingSource>,
+    #[serde(default)]
+    messaging_evidence: Option<String>,
 }
 
 fn offers_of(e: &ProviderOffersEntry) -> ProviderOffers {
@@ -333,6 +337,8 @@ fn offers_of(e: &ProviderOffersEntry) -> ProviderOffers {
         browser_setup: e.browser_setup.clone(),
         usage: e.usage.clone().unwrap_or_default(),
         usage_evidence: e.usage_evidence.clone().unwrap_or_default(),
+        messaging: e.messaging.unwrap_or_default(),
+        messaging_evidence: e.messaging_evidence.clone().unwrap_or_default(),
     }
 }
 
@@ -560,6 +566,61 @@ pub struct ProviderOffers {
     /// Where `usage` was verified, on the same terms as `episode_evidence`.
     #[serde(default)]
     pub usage_evidence: String,
+    /// How another session on the same machine wakes this provider's session (I4553):
+    /// `socket` when the provider listens on a messaging socket its own tool sends to, the
+    /// route `mesh.review.request` answers. Absent in a value written before the axis
+    /// existed, and read as `none` there.
+    #[serde(default)]
+    pub messaging: MessagingSource,
+    /// Where `messaging` was verified, on the same terms as `episode_evidence`.
+    #[serde(default)]
+    pub messaging_evidence: String,
+}
+
+/// Whether one provider's sessions can be woken by another session on the same machine
+/// through the provider's own messaging (I4553).
+///
+/// A review request addressed to a session answers the route that wakes it, read from the
+/// board row's address; this is the vendor half of that answer, declared with its citation
+/// like every other cell. Majordomus never sends along it: the requesting worker's own
+/// provider tool does.
+///
+/// ```
+/// use majordomus_cli::share::MessagingSource;
+/// assert_eq!(serde_json::from_str::<MessagingSource>("\"socket\"").unwrap(), MessagingSource::Socket);
+/// assert!(serde_json::from_str::<MessagingSource>("\"bus\"").is_err(), "one word for it");
+/// assert_eq!(MessagingSource::default(), MessagingSource::None, "undeclared reads as none");
+/// assert_eq!(MessagingSource::Socket.as_str(), "socket");
+/// ```
+#[derive(
+    Debug,
+    Clone,
+    Copy,
+    Default,
+    PartialEq,
+    Eq,
+    serde::Serialize,
+    serde::Deserialize,
+    schemars::JsonSchema,
+)]
+#[serde(rename_all = "snake_case")]
+pub enum MessagingSource {
+    /// The provider listens on a local socket per session, and its own messaging tool sends
+    /// to it from another session on the same machine.
+    Socket,
+    /// No session of it can be woken by another.
+    #[default]
+    None,
+}
+
+impl MessagingSource {
+    /// The word as the declaration writes it, which is also how it serialises.
+    pub fn as_str(self) -> &'static str {
+        match self {
+            MessagingSource::Socket => "socket",
+            MessagingSource::None => "none",
+        }
+    }
 }
 
 /// One official seam through which a provider reports what a session consumed.

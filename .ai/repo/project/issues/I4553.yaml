@@ -1,0 +1,48 @@
+id: I4553
+milestone: the-mesh-works-out-of-the-box
+title: "A review request addressed to a session answers the route that wakes it, and the answer wakes the requester the same way"
+slug: a-review-request-wakes-the-session-it-names
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "ReviewRequestInput and EventBody::ReviewRequested (apps/majordomus-cli/src/mesh/journal.rs) gain an optional `session` addressee, read with serde(default) so that a runtime written before the change reads a request without it, as it reads one without a body. The Written answer of mesh.review.request, and of mesh.review.answer for the requester, carries a `route` resolved from the board row's PeerAddress (apps/majordomus-cli/src/peers.rs): `{via: provider-socket, to: uds:<socket>}` when the row names a provider and a socket, `{unavailable: <why>}` otherwise. The requesting worker wakes the addressee with its own provider's messaging tool, carrying the review key; the addressee reads the request once by that key and answers it with mesh.review.answer, whose route wakes the requester, who reads the answer once. Majordomus sends nothing to the socket and never reads the provider's messaging token (peers.rs: the address is where to knock, not the key). `share/providers.yaml` gains a `messaging` cell in its `offers` block: `socket` for claude-code, with its citation, and `none` for every other provider. Optionally, scripts/lib/advisors/mesh-review.mjs follows the existing /events stream for its requester instead of reading mesh state every two seconds."
+why: "The owner's Mesh Fabric pack of 2026-11-07 makes its first milestone two live AI peers exchanging a real request and answer without polling a shared board (campaigns/majordomus-mesh-fabric-pack-20261107/prompts/03-03-local-direct-routing.md, campaigns/majordomus-mesh-fabric-pack-20261107/prompts/05-05-agent-runtime-adapters.md). Measured on master on 2026-11-07: a review request is a signed, correlated request and answer in the journal, and every peer's board row carries its provider socket, but nothing reaches the addressee. A request names a runtime, never a session; the advisor polls mesh state every two seconds until an answer appears; and one bridge peer announces that replies to it are read at periodic checks. Sessions already wake each other through the provider's own messaging, informally and outside the record. This issue joins the two: the journal stays the durable record and the provider's channel only wakes. It changes the same review fields as I4327, so it follows it."
+current_state: "A review request is addressed to a runtime or to anyone; its answer reaches the requester only when the requester reads mesh state again. The board row's socket is recorded and checked for existence, and nothing uses it. share/providers.yaml declares no messaging offer."
+desired_state: "A request can name the session it is for, and its answer and the request each say how to wake the other side or why that is unavailable. A worker that follows the route is woken by the other side's answer, not by polling, and the exchange is recorded in the journal as before."
+scope:
+  - "apps/majordomus-cli/src/mesh/journal.rs"
+  - "apps/majordomus-cli/src/mesh/cooperation.rs"
+  - "apps/majordomus-cli/src/mesh/state.rs"
+  - "apps/majordomus-cli/src/peers.rs"
+  - "apps/majordomus-cli/src/capability/builtin/mesh.rs"
+  - "apps/majordomus-cli/tests/reasoning_mesh.rs"
+  - "share/providers.yaml"
+  - "docs/MESH.md"
+  - "scripts/lib/advisors/mesh-review.mjs"
+  - ".ai/repo/project/issues/I4553.yaml"
+non_scope:
+  - "A message bus, an envelope, an inbox or a delivery state of Majordomus's own: the journal's MeshEvent is the envelope (project.no-new-nouns, project.mesh-cooperation-is-authenticated)"
+  - "Majordomus connecting to a provider socket, or reading a provider's messaging token"
+  - "A Unix socket or a listener of Majordomus's own (ADR 0003)"
+  - "Remote transports, QUIC or transport encryption (ADR 0067, ADR 0032, I3189)"
+  - "Who may answer a request (I4327) and when it lapses (I3608)"
+depends_on:
+  - I4327
+acceptance_criteria:
+  - "A request naming a session whose board row carries a provider and a socket answers a provider-socket route naming that socket; one whose row has none answers unavailable with the reason"
+  - "The answer to that request answers the requester's route the same way"
+  - "A journal written before the change, whose requests name no session, reads unchanged"
+  - "share/providers.yaml declares messaging for every provider, socket only where a citation shows it"
+  - "Majordomus sends nothing to a socket and reads no messaging token: no handler opens a Unix stream"
+  - "Two live sessions exchange one request and its answer by the routes, each woken once and neither reading mesh state in a loop, recorded as manual evidence naming both sessions and the review key"
+validation:
+  - "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --lib mesh::cooperation::"
+  - "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --lib mesh::journal::"
+  - "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --test reasoning_mesh"
+  - "majordomus generate --check"
+evidence_required:
+  - "review_route_unit_tests"
+  - "a_live_exchange_by_route"
+serves: []
+created_at: 2026-11-07
+updated_at: 2026-11-07
