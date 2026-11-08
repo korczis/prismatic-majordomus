@@ -838,8 +838,7 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
   <h2 class="font-serif text-3xl font-semibold leading-[1.08] tracking-tight text-balance text-heading sm:text-4xl lg:text-5xl">No logos. No testimonials. Evidence.</h2><p class="mt-5 text-lg leading-relaxed text-body">Every figure here is computed from the repository, never typed. Each promise names the test meant to prove it, the ones a recorded run supports are counted apart from the ones only declared, and what is planned or rejected is shown in the open.</p></div>
 
     <p class="mb-6 max-w-3xl rounded-base border border-brand-subtle bg-brand-softer p-4 text-base leading-relaxed text-heading" data-proof-plain>Two numbers, kept apart on purpose. Declared is a promise written down together with the test meant to prove it. Supported means that test ran against this exact revision and the run was recorded. A promise without a recorded run is counted as a promise, and as nothing more.</p><dl class="grid grid-cols-2 gap-3 lg:grid-cols-4" data-claims-proof>
-      <div class="min-w-0 rounded-base border border-default bg-neutral-primary p-4"><dt class="text-xs font-semibold uppercase tracking-wide text-body-subtle"><a href="https://majordomus.dev/guarantees/#guaranteed" class="hover:underline">guaranteed claims, declared</a></dt><dd class="mt-1 font-mono text-2xl font-bold text-heading" data-declared="guaranteed">232</dd><dd class="mt-2 text-xs text-body" data-supported="232" data-supported-state="stale"><span class="mj-badge mj-badge--stale relative" data-status="stale"><span aria-hidden="true">!</span>stale</span>
- <span class="font-mono font-bold text-heading">232</span> supported by the recorded run of <a href="https://github.com/korczis/prismatic-majordomus/commit/d7fd9a3617024a7390ac36c1888d6fcee63b600e" class="font-mono underline" data-supported-commit="d7fd9a3617024a7390ac36c1888d6fcee63b600e">d7fd9a3</a>, <span data-supported-behind="5">5 commit(s) behind</span> the one this page was built from: it says what held there, not what holds here · <a href="https://majordomus.dev/evidence/" class="text-fg-brand underline">the evidence</a></dd>
+      <div class="min-w-0 rounded-base border border-default bg-neutral-primary p-4"><dt class="text-xs font-semibold uppercase tracking-wide text-body-subtle"><a href="https://majordomus.dev/guarantees/#guaranteed" class="hover:underline">guaranteed claims, declared</a></dt><dd class="mt-1 font-mono text-2xl font-bold text-heading" data-declared="guaranteed">232</dd><dd class="mt-2 text-xs text-body" data-supported="232" data-supported-state="current"><span class="font-mono font-bold text-heading">232</span> supported by the recorded run of <a href="https://github.com/korczis/prismatic-majordomus/commit/67e9a2f04a727bfa8ee335f4e7544ce2394ab180" class="font-mono underline" data-supported-commit="67e9a2f04a727bfa8ee335f4e7544ce2394ab180">67e9a2f</a>, the commit this page was built from · <a href="https://majordomus.dev/evidence/" class="text-fg-brand underline">the evidence</a></dd>
 
         <dd class="mt-2 hidden text-xs leading-relaxed text-body sm:block">Declared deterministic and blocking, implemented, and naming the behavioural test that is to prove it. Whether a recorded run supports it is the evidence verdict, shown beside it.</dd></div>
       <div class="min-w-0 rounded-base border border-default bg-neutral-primary p-4"><dt class="text-xs font-semibold uppercase tracking-wide text-body-subtle"><a href="https://majordomus.dev/guarantees/#advisory" class="hover:underline">advisory claims, declared</a></dt><dd class="mt-1 font-mono text-2xl font-bold text-heading" data-declared="advisory">6</dd>
@@ -923,13 +922,13 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
           </button>
         </li>
         <li aria-hidden="true" class="flex shrink-0 items-center justify-center sm:w-8">
-          <span class="block h-5 w-0 sm:h-0 sm:w-full border-l-2 border-dashed border-warning sm:border-l-0 sm:border-t-2" data-chain-edge="evidence" data-chain-edge-kind="declared"></span>
+          <span class="block h-5 w-0 sm:h-0 sm:w-full border-l-2 border-brand sm:border-l-0 sm:border-t-2" data-chain-edge="evidence" data-chain-edge-kind="held"></span>
         </li>
         <li class="min-w-0 sm:flex-1">
           <button type="button" data-chain-node="evidence" aria-controls="chain-detail-evidence"
                   x-on:click="choose('evidence')" x-bind:aria-pressed="(open === 'evidence').toString()"
                   class="group flex h-full w-full min-w-0 flex-col rounded-base border border-default bg-neutral-primary-soft px-3 py-3 text-start transition-colors hover:border-brand-subtle focus:outline-none focus-visible:ring-4 focus-visible:ring-brand-medium aria-pressed:border-brand aria-pressed:bg-brand-softer motion-reduce:transition-none">
-            <span class="font-mono text-2xl font-bold tracking-tight text-heading" data-supported="232" data-supported-state="stale">232</span>
+            <span class="font-mono text-2xl font-bold tracking-tight text-heading" data-supported="232" data-supported-state="current">232</span>
             <span class="mt-1 text-xs leading-snug text-body">supported by the recorded run</span>
           </button>
         </li>
@@ -980,8 +979,8 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
       </div>
       <div id="chain-detail-evidence" data-chain-detail="evidence" x-show="open === 'evidence'">
         <p class="font-mono text-xs uppercase tracking-[0.2em] text-body-subtle">supported by the recorded run</p>
-        <p class="mt-2 font-serif text-5xl font-semibold leading-none tracking-tight text-heading" data-supported="232" data-supported-state="stale">232</p>
-        <p class="mt-1 font-mono text-xs text-body">of 232 guaranteed · recorded at d7fd9a3, stale</p>
+        <p class="mt-2 font-serif text-5xl font-semibold leading-none tracking-tight text-heading" data-supported="232" data-supported-state="current">232</p>
+        <p class="mt-1 font-mono text-xs text-body">of 232 guaranteed · recorded at 67e9a2f</p>
         <p class="mt-4 text-sm leading-relaxed text-heading">A solid line is held by a machine: a projection that disagrees with its declaration fails the build, and a blocking rule is decided by a validator or a test. A dashed line is declared and waits for its evidence: a guaranteed claim names the test that is to prove it, and it counts as supported only when a recorded run of this revision does.</p>
         <p class="mt-4 text-sm font-medium"><a href="https://majordomus.dev/evidence/" class="text-fg-brand hover:underline">supported by the recorded run &rarr;</a></p>
       </div>

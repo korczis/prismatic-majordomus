@@ -191,21 +191,21 @@ refuses to build this page if one does not, and the check that follows the build
 the edge was lost on the way in.</p>
 </article><section class="mt-10" aria-labelledby="ci-evidence-heading">
   <h2 id="ci-evidence-heading" class="text-2xl font-semibold text-heading">Recorded by CI</h2>
-  <p class="mt-3 text-body"><span class="mj-badge mj-badge--stale relative" data-status="stale"><span aria-hidden="true">!</span>stale</span>
+  <p class="mt-3 text-body"><span class="mj-badge mj-badge--current relative" data-status="current"><span aria-hidden="true">✓</span>current</span>
 
-    The newest executions CI recorded are of commit
-    <a class="font-mono underline" href="https://github.com/korczis/prismatic-majordomus/commit/d7fd9a3617024a7390ac36c1888d6fcee63b600e">d7fd9a361702</a>,
-    5 commit(s) and 14 changed file(s) before the one this site was built from.
-    They say what held there, not what holds here; the site is published again once CI has recorded this commit.
+    The report below is the tracked ledger's verdict at commit
+    <a class="font-mono underline" href="https://github.com/korczis/prismatic-majordomus/commit/67e9a2f04a727bfa8ee335f4e7544ce2394ab180">67e9a2f04a72</a>,
+    the commit this site was built from, and CI's run of that commit confirms it: every job that
+    ran tests measured a clean tree, nothing was absent or refused, and nothing failed.
   </p>
   <dl class="mt-4 grid gap-x-8 font-mono text-sm sm:grid-cols-2">
-    <div class="flex justify-between gap-3 border-b border-default py-1.5"><dt class="text-body-subtle">executions recorded</dt><dd class="text-heading">817</dd></div><div class="flex justify-between gap-3 border-b border-default py-1.5"><dt class="text-body-subtle">guaranteed claims this run supports</dt><dd class="text-heading" data-ci-supported="232" data-ci-supported-state="stale">232 <span class="text-body-subtle">of 232, at d7fd9a361702</span></dd></div>
+    <div class="flex justify-between gap-3 border-b border-default py-1.5"><dt class="text-body-subtle">executions recorded</dt><dd class="text-heading">817</dd></div><div class="flex justify-between gap-3 border-b border-default py-1.5"><dt class="text-body-subtle">guaranteed claims this run supports</dt><dd class="text-heading" data-ci-supported="232" data-ci-supported-state="current">232 <span class="text-body-subtle">of 232</span></dd></div>
     <div class="flex justify-between gap-3 border-b border-default py-1.5"><dt class="text-body-subtle">pass</dt><dd class="text-heading">812</dd></div>
     <div class="flex justify-between gap-3 border-b border-default py-1.5"><dt class="text-body-subtle">skip</dt><dd class="text-heading">5</dd></div>
-    <div class="flex justify-between gap-3 border-b border-default py-1.5"><dt class="text-body-subtle">crate lines covered</dt><dd class="text-heading">93.24% <span class="text-body-subtle">(129207/138570)</span></dd></div>
+    <div class="flex justify-between gap-3 border-b border-default py-1.5"><dt class="text-body-subtle">crate lines covered</dt><dd class="text-heading">93.23% <span class="text-body-subtle">(129194/138570)</span></dd></div>
     <div class="flex justify-between gap-3 border-b border-default py-1.5"><dt class="text-body-subtle">crate functions covered</dt><dd class="text-heading">92.64% <span class="text-body-subtle">(15501/16732)</span></dd></div>
-    <div class="flex justify-between gap-3 border-b border-default py-1.5"><dt class="text-body-subtle">crate regions covered</dt><dd class="text-heading">92.36% <span class="text-body-subtle">(215506/233326)</span></dd></div>
-    <div class="flex justify-between gap-3 border-b border-default py-1.5"><dt class="text-body-subtle">recorded</dt><dd class="text-heading">2026-11-07T13:48:19Z</dd></div>
+    <div class="flex justify-between gap-3 border-b border-default py-1.5"><dt class="text-body-subtle">crate regions covered</dt><dd class="text-heading">92.36% <span class="text-body-subtle">(215493/233326)</span></dd></div>
+    <div class="flex justify-between gap-3 border-b border-default py-1.5"><dt class="text-body-subtle">recorded</dt><dd class="text-heading">2026-11-08T15:03:32Z</dd></div>
   </dl>
   <div class="mt-6">
     <div class="min-w-0" x-data="{ t: 0 }">
@@ -222,8 +222,8 @@ the edge was lost on the way in.</p>
 <button type="button" x-cloak x-on:click="Promise.resolve(said = '').then(() => navigator.clipboard.writeText($refs.src.innerText)).then(() => { said = 'Copied'; setTimeout(() => { if (said === 'Copied') said = '' }, 1600) }, () => { said = 'Copy failed — select the text' })" class="inline-flex items-center gap-1 rounded-base px-1.5 py-0.5 text-xs font-medium text-body hover:bg-neutral-secondary-medium hover:text-heading focus:outline-none focus:ring-2 focus:ring-neutral-tertiary" :aria-label="said || 'Copy the command'"><span x-text="said || 'Copy'">Copy</span></button>
     <span class="sr-only" role="status" aria-live="polite" x-text="said"></span>
   </span>
-</div><pre class="m-0 whitespace-pre-wrap break-words bg-neutral-primary p-4 font-mono text-xs leading-relaxed text-body" tabindex="0">head         d7fd9a36 (clean)
-judged at the working tree (HEAD d7fd9a361702, clean)
+</div><pre class="m-0 whitespace-pre-wrap break-words bg-neutral-primary p-4 font-mono text-xs leading-relaxed text-body" tabindex="0">head         67e9a2f0 (clean)
+judged at the working tree (HEAD 67e9a2f04a72, clean)
 ledger       .ai/repo/evidence/ledger.json — 14 execution(s), newest 2026-09-17T01:14:59Z
 
 subject      250 claim(s), whole
@@ -1039,8 +1039,8 @@ not_run            guaranteed   worktree-topology-derived
 </details>
 <div class="flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-default px-4 py-2 text-xs">
       <span class="text-body-subtle">every claim against the tracked ledger as committed at this commit, derived before this run&#39;s executions were recorded; the run&#39;s executions are counted beside it and decide no verdict</span>
-      <a href="https://github.com/korczis/prismatic-majordomus/actions/runs/42367964807/attempts/1" class="text-fg-brand hover:underline">the run that recorded it &rarr;</a>
-      <a href="https://github.com/korczis/prismatic-majordomus/commit/d7fd9a3617024a7390ac36c1888d6fcee63b600e" class="text-fg-brand hover:underline">commit d7fd9a361702 &rarr;</a>
+      <a href="https://github.com/korczis/prismatic-majordomus/actions/runs/42482963808/attempts/1" class="text-fg-brand hover:underline">the run that recorded it &rarr;</a>
+      <a href="https://github.com/korczis/prismatic-majordomus/commit/67e9a2f04a727bfa8ee335f4e7544ce2394ab180" class="text-fg-brand hover:underline">commit 67e9a2f04a72 &rarr;</a>
     </div>
   </figure><figure x-show="t === 1" id="ci-evidence-panel-1" role="tabpanel" aria-labelledby="ci-evidence-tab-1"
     class="mt-3 overflow-hidden rounded-base border border-default bg-neutral-primary-soft shadow-xs"><div class="flex flex-wrap items-start justify-between gap-x-3 gap-y-2 border-b border-default bg-neutral-primary-soft px-4 py-2.5" x-data="{ said: '' }">
@@ -1049,28 +1049,7 @@ not_run            guaranteed   worktree-topology-derived
 <button type="button" x-cloak x-on:click="Promise.resolve(said = '').then(() => navigator.clipboard.writeText($refs.src.innerText)).then(() => { said = 'Copied'; setTimeout(() => { if (said === 'Copied') said = '' }, 1600) }, () => { said = 'Copy failed — select the text' })" class="inline-flex items-center gap-1 rounded-base px-1.5 py-0.5 text-xs font-medium text-body hover:bg-neutral-secondary-medium hover:text-heading focus:outline-none focus:ring-2 focus:ring-neutral-tertiary" :aria-label="said || 'Copy the command'"><span x-text="said || 'Copy'">Copy</span></button>
     <span class="sr-only" role="status" aria-live="polite" x-text="said"></span>
   </span>
-</div><pre class="m-0 whitespace-pre-wrap break-words bg-neutral-primary p-4 font-mono text-xs leading-relaxed text-body" tabindex="0">rust-coverage: UNTRUSTED apps/majordomus-cli/src/command_graph/mod.rs:126:13-126:17 in majordomus_cli::command_graph::build: 1 of the 2 copies of this region&#39;s count saturated and the others counted 0; the profile was most likely written while a thread was still in it. A long-lived loop: stop or join the thread in the test before the process exits, then measure again
-rust-coverage: UNTRUSTED apps/majordomus-cli/src/command_graph/mod.rs:126:35-128:10 in majordomus_cli::command_graph::build: 1 of the 2 copies of this region&#39;s count saturated and the others counted 0; the profile was most likely written while a thread was still in it. A long-lived loop: stop or join the thread in the test before the process exits, then measure again
-rust-coverage: UNTRUSTED apps/majordomus-cli/src/command_graph/mod.rs:127:13-127:29 in majordomus_cli::command_graph::build: 1 of the 2 copies of this region&#39;s count saturated and the others counted 0; the profile was most likely written while a thread was still in it. A long-lived loop: stop or join the thread in the test before the process exits, then measure again
-rust-coverage: UNTRUSTED apps/majordomus-cli/src/command_graph/mod.rs:127:29-127:29 (a saturated line segment no region accounts for)
-rust-coverage: UNTRUSTED apps/majordomus-cli/src/command_graph/mod.rs:127:32-127:47 in majordomus_cli::command_graph::build: 1 of the 2 copies of this region&#39;s count saturated and the others counted 0; the profile was most likely written while a thread was still in it. A long-lived loop: stop or join the thread in the test before the process exits, then measure again
-rust-coverage: UNTRUSTED apps/majordomus-cli/src/command_graph/mod.rs:127:47-127:47 (a saturated line segment no region accounts for)
-rust-coverage: UNTRUSTED apps/majordomus-cli/src/command_graph/native.rs:64:9-64:14 in majordomus_cli::command_graph::native::contribute: 1 of the 2 copies of this region&#39;s count saturated and the others counted 0; the profile was most likely written while a thread was still in it. A long-lived loop: stop or join the thread in the test before the process exits, then measure again
-rust-coverage: UNTRUSTED apps/majordomus-cli/src/command_graph/native.rs:64:44-73:6 in majordomus_cli::command_graph::native::contribute: 1 of the 2 copies of this region&#39;s count saturated and the others counted 0; the profile was most likely written while a thread was still in it. A long-lived loop: stop or join the thread in the test before the process exits, then measure again
-rust-coverage: UNTRUSTED apps/majordomus-cli/src/command_graph/native.rs:65:9-65:20 in majordomus_cli::command_graph::native::contribute: 1 of the 2 copies of this region&#39;s count saturated and the others counted 0; the profile was most likely written while a thread was still in it. A long-lived loop: stop or join the thread in the test before the process exits, then measure again
-rust-coverage: UNTRUSTED apps/majordomus-cli/src/command_graph/native.rs:65:20-65:20 (a saturated line segment no region accounts for)
-rust-coverage: UNTRUSTED apps/majordomus-cli/src/command_graph/native.rs:65:21-65:25 in majordomus_cli::command_graph::native::contribute: 1 of the 2 copies of this region&#39;s count saturated and the others counted 0; the profile was most likely written while a thread was still in it. A long-lived loop: stop or join the thread in the test before the process exits, then measure again
-rust-coverage: UNTRUSTED apps/majordomus-cli/src/command_graph/native.rs:65:25-65:25 (a saturated line segment no region accounts for)
-</pre>
-<details class="border-t border-default bg-neutral-primary">
-  <summary class="cursor-pointer px-4 py-2 text-xs font-medium text-fg-brand hover:underline focus:outline-none focus:ring-2 focus:ring-neutral-tertiary">The remaining 19 lines of the output</summary>
-  <pre class="m-0 whitespace-pre-wrap break-words border-t border-default p-4 font-mono text-xs leading-relaxed text-body" tabindex="0">rust-coverage: UNTRUSTED apps/majordomus-cli/src/command_graph/native.rs:66:13-66:30 in majordomus_cli::command_graph::native::contribute: 1 of the 2 copies of this region&#39;s count saturated and the others counted 0; the profile was most likely written while a thread was still in it. A long-lived loop: stop or join the thread in the test before the process exits, then measure again
-rust-coverage: UNTRUSTED apps/majordomus-cli/src/command_graph/native.rs:66:30-66:30 (a saturated line segment no region accounts for)
-rust-coverage: UNTRUSTED apps/majordomus-cli/src/command_graph/native.rs:67:17-67:45 in majordomus_cli::command_graph::native::contribute: 1 of the 2 copies of this region&#39;s count saturated and the others counted 0; the profile was most likely written while a thread was still in it. A long-lived loop: stop or join the thread in the test before the process exits, then measure again
-rust-coverage: UNTRUSTED apps/majordomus-cli/src/command_graph/native.rs:67:45-67:45 (a saturated line segment no region accounts for)
-rust-coverage: UNTRUSTED apps/majordomus-cli/src/command_graph/native.rs:68:17-68:24 in majordomus_cli::command_graph::native::contribute: 1 of the 2 copies of this region&#39;s count saturated and the others counted 0; the profile was most likely written while a thread was still in it. A long-lived loop: stop or join the thread in the test before the process exits, then measure again
-rust-coverage: UNTRUSTED apps/majordomus-cli/src/command_graph/native.rs:68:24-68:24 (a saturated line segment no region accounts for)
-rust-coverage: UNTRUSTED apps/majordomus-cli/src/http/server.rs:275:17-275:18 in majordomus_cli::http::server::worker: 1 of the 2 copies of this region&#39;s count saturated and the others counted 0; the profile was most likely written while a thread was still in it. A long-lived loop: stop or join the thread in the test before the process exits, then measure again
+</div><pre class="m-0 whitespace-pre-wrap break-words bg-neutral-primary p-4 font-mono text-xs leading-relaxed text-body" tabindex="0">rust-coverage: UNTRUSTED apps/majordomus-cli/src/http/server.rs:275:17-275:18 in majordomus_cli::http::server::worker: 1 of the 2 copies of this region&#39;s count saturated and the others counted 0; the profile was most likely written while a thread was still in it. A long-lived loop: stop or join the thread in the test before the process exits, then measure again
 rust-coverage: UNTRUSTED apps/majordomus-cli/src/http/server.rs:275:23-275:37 in majordomus_cli::http::server::worker: 1 of the 2 copies of this region&#39;s count saturated and the others counted 0; the profile was most likely written while a thread was still in it. A long-lived loop: stop or join the thread in the test before the process exits, then measure again
 rust-coverage: UNTRUSTED apps/majordomus-cli/src/mesh/cooperation.rs:3356:25-3356:29 in &lt;majordomus_cli::mesh::cooperation::Cooperation&gt;::work: 1 of the 2 copies of this region&#39;s count saturated and the others counted 0; the profile was most likely written while a thread was still in it. A long-lived loop: stop or join the thread in the test before the process exits, then measure again
 rust-coverage: UNTRUSTED apps/majordomus-cli/src/mesh/cooperation.rs:3356:30-3356:35 in &lt;majordomus_cli::mesh::cooperation::Cooperation&gt;::work: 1 of the 2 copies of this region&#39;s count saturated and the others counted 0; the profile was most likely written while a thread was still in it. A long-lived loop: stop or join the thread in the test before the process exits, then measure again
@@ -1078,17 +1057,20 @@ rust-coverage: UNTRUSTED apps/majordomus-cli/src/mesh/cooperation.rs:3356:36-335
 rust-coverage: UNTRUSTED apps/majordomus-cli/src/mesh/cooperation.rs:3356:41-3356:50 in &lt;majordomus_cli::mesh::cooperation::Cooperation&gt;::work: 1 of the 2 copies of this region&#39;s count saturated and the others counted 0; the profile was most likely written while a thread was still in it. A long-lived loop: stop or join the thread in the test before the process exits, then measure again
 rust-coverage: UNTRUSTED apps/majordomus-cli/src/mesh/cooperation.rs:3357:25-3357:33 in &lt;majordomus_cli::mesh::cooperation::Cooperation&gt;::work: 1 of the 2 copies of this region&#39;s count saturated and the others counted 0; the profile was most likely written while a thread was still in it. A long-lived loop: stop or join the thread in the test before the process exits, then measure again
                                                             lines  functions   regions
-the crate, test code excluded                              93.24%     92.64%    92.36%   129207/138570 lines
-the crate, test code included (the old gate&#39;s subject)     95.65%     94.40%    95.74%   223361/233513 lines
+the crate, test code excluded                              93.23%     92.64%    92.36%   129194/138570 lines
+the crate, test code included (the old gate&#39;s subject)     95.65%     94.40%    95.73%   223348/233513 lines
   the same, as cargo-llvm-cov itself reports it            95.13%     94.45%    95.06%   cargo-llvm-cov&#39;s own summary
 the canonical session/continuity domain                    96.99%    100.00%    97.36%      515/531    lines
-  apps/majordomus-cli/src/capability/builtin/continuity.rs   96.99%    100.00%    97.36%      515/531    lines
+</pre>
+<details class="border-t border-default bg-neutral-primary">
+  <summary class="cursor-pointer px-4 py-2 text-xs font-medium text-fg-brand hover:underline focus:outline-none focus:ring-2 focus:ring-neutral-tertiary">The remaining 1 lines of the output</summary>
+  <pre class="m-0 whitespace-pre-wrap break-words border-t border-default p-4 font-mono text-xs leading-relaxed text-body" tabindex="0">  apps/majordomus-cli/src/capability/builtin/continuity.rs   96.99%    100.00%    97.36%      515/531    lines
 </pre>
 </details>
 <div class="flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-default px-4 py-2 text-xs">
       <span class="text-body-subtle">line, function and region coverage of the crate, test code excluded</span>
-      <a href="https://github.com/korczis/prismatic-majordomus/actions/runs/42367964807/attempts/1" class="text-fg-brand hover:underline">the run that recorded it &rarr;</a>
-      <a href="https://github.com/korczis/prismatic-majordomus/commit/d7fd9a3617024a7390ac36c1888d6fcee63b600e" class="text-fg-brand hover:underline">commit d7fd9a361702 &rarr;</a>
+      <a href="https://github.com/korczis/prismatic-majordomus/actions/runs/42482963808/attempts/1" class="text-fg-brand hover:underline">the run that recorded it &rarr;</a>
+      <a href="https://github.com/korczis/prismatic-majordomus/commit/67e9a2f04a727bfa8ee335f4e7544ce2394ab180" class="text-fg-brand hover:underline">commit 67e9a2f04a72 &rarr;</a>
     </div>
   </figure></div>
 
