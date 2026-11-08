@@ -206,10 +206,10 @@ addressee.
 | 01 discovery and owners | none | the mesh modules and `peers.rs` are the single owners (ADR 0067) | |
 | 02 typed envelope | none | `MeshEvent` is the envelope: origin-signed, sequenced, stamped, bounded; a deadline is I3608 | not planned: the owner decided on 2026-11-08 "Repo decision holds (Recommended)" (AskUserQuestion, session 60a880b1-999a-4666-90c8-925623cc29b4, 2026-11-08T00:43:36Z): `MeshEvent` stays the envelope and no second bus is built |
 | 03 local direct routing | I4553: a review request addressed to a session answers the route that wakes it | I4327 (who may answer) comes first | a listener or socket of Majordomus's own (ADR 0003) |
-| 04 durable delivery | none | the journal: synced appends, idempotent apply, replay by cursor; I3174, I3444, I3608 | per-message acknowledgement, retry and dead letters: only after a written assessment (owner, 2026-11-08) |
+| 04 durable delivery | none | the journal: synced appends, idempotent apply, replay by cursor; I3174, I3444, I3608 | carried since the owner's "nezuzuj" (2026-11-08, below): per-message acknowledgement, retry and dead letters are planned on the Mesh Fabric lead's branch, and the phase opens with its written assessment |
 | 05 runtime adapters | I4553: a `messaging` offer in `share/providers.yaml` | the provider matrix and capture adapters | |
-| 06 remote QUIC | none | | not planned: the owner decided on 2026-11-08 "Keep HTTP for now (Recommended)" (AskUserQuestion, session 60a880b1-999a-4666-90c8-925623cc29b4, 2026-11-08T00:43:36Z); revisit on evidence of cross-host latency or a security need. ADR 0067 point 4 and ADR 0032 keep the mesh on the crate's HTTP client |
-| 07 adaptive routing | none | link path choice is I3187 and I3772 | routing of messages, which nothing needs yet |
+| 06 remote QUIC | none | | carried since the owner's "hned" (2026-11-08, below), which superseded the earlier "Keep HTTP for now": planned on the Mesh Fabric lead's branch, with an ADR of its own, because ADR 0067 point 4 and ADR 0032 keep the mesh on the crate's HTTP client |
+| 07 adaptive routing | none | link path choice is I3187 and I3772 | carried since the owner's "nezuzuj" (2026-11-08, below): routing of messages is planned on the Mesh Fabric lead's branch, and the phase opens with its written assessment |
 | 08 surfaces and governance | none | delivered by the capability registry and `majordomus generate` (ADR 0004) | |
 | 09 hardening and delivery | none | after the slices; `tests/mesh_cooperation.rs` and the mesh lab are the base | |
 
@@ -233,8 +233,10 @@ Resolved since the packs were measured:
   idempotent apply. p11's intake (PR #2978) records "a second message envelope: not
   planned". Which decision holds?", and answered "Repo decision holds (Recommended)". The
   pack continues through I4553, I4327 and I3608; per-message acknowledgement and dead
-  letters get a written assessment first.
-- The Mesh Fabric pack's QUIC transport: the owner decided on 2026-11-08, asked "Phase 06 of
+  letters get a written assessment first. This answer still stands: the later "nezuzuj"
+  (below) superseded the narrowing of the pack, not the envelope.
+- The Mesh Fabric pack's QUIC transport, first answer (superseded the same day, below): the
+  owner decided on 2026-11-08, asked "Phase 06 of
   the pack wants an encrypted remote QUIC transport. The repository holds plain HTTP between
   nodes (ADR 0067, ADR 0032), and I3189 records the transport choice as yours. Nothing is
   planned until you decide. What should happen?", and answered "Keep HTTP for now
@@ -242,6 +244,16 @@ Resolved since the packs were measured:
   latency or security); the first milestone is local and runs over the provider's socket.
 - Both answers were given through AskUserQuestion in session
   60a880b1-999a-4666-90c8-925623cc29b4 at 2026-11-08T00:43:36Z.
+- Later on 2026-11-08 the owner answered three Mesh Fabric questions in one message, after a
+  report in session 8e226cf8-e383-4936-afd0-7cd6f4227ccd (the session that now leads the
+  pack). Asked "QUIC (fáze 06, I3189): dělat ho teď, nebo ho odložit, dokud nepoběží lokální
+  výměna?", answered "hned" (now): phase 06 is planned, superseding "Keep HTTP for now".
+  Asked "Zúžení packu: má transportem zůstat journal plus socket providera, jak píše
+  OWNER_PACKS.md?", answered "nezuzuj" (do not narrow): every phase is planned, phases 04
+  and 07 each opening with its written assessment, while `MeshEvent` stays the envelope and
+  no second bus is built. Asked "Vedení MMF: kdo ho vede?", answered "ty vybrt" (sic, you
+  choose): that session took the lead as the exclusive mesh claim `seat/mesh-fabric-lead`,
+  and its branch carries the transport's ADR and the QUIC slice.
 
 ## What was not planned, and why
 
@@ -262,8 +274,6 @@ against. These are recorded so that nobody plans them again by accident.
 | peer scheduling and provider-side enforcement of a profile | the tool starts no worker and invokes no model (ADR 0032, ADR 0044) | one refusal at the capability executor (I4506) |
 | every mesh command offered on a node's inspector | one cooperation action, under a resolved identity (I3139, I3192) | nothing beyond those |
 | a message bus with its own envelope, inbox and delivery states | the journal's signed event is the envelope, and the tool gains no new nouns (project.no-new-nouns); the owner confirmed on 2026-11-08 "Repo decision holds" | a review request that names its session and the provider's own route (I4553) |
-| an encrypted QUIC transport between machines | the mesh keeps the crate's HTTP client (ADR 0067, ADR 0032); the owner decided on 2026-11-08 "Keep HTTP for now" | nothing, until there is evidence of a cross-host latency or security need |
-
 ## Starting
 
 ```bash
