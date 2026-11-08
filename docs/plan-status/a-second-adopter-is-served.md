@@ -150,6 +150,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I4268` | shares docs/CI.md with I4460; they may not run concurrently |
 | WARN | `scope_conflict` | `I4268` | shares lib/evidence.sh with I4468; they may not run concurrently |
 | WARN | `scope_conflict` | `I4268` | shares docs/CI.md with I4524; they may not run concurrently |
+| WARN | `scope_conflict` | `I4268` | shares docs/CI.md with I4563; they may not run concurrently |
 | WARN | `scope_conflict` | `I4331` | shares docs/ADOPTION.md with I4417; they may not run concurrently |
 | WARN | `scope_conflict` | `I4333` | shares share/schemas/majordomus/policy/policy.v1.schema.json with I4336; they may not run concurrently |
 | WARN | `scope_conflict` | `I4333` | shares apps/majordomus-cli/src/worktree with I4346; they may not run concurrently |

@@ -1,0 +1,34 @@
+id: I4563
+milestone: development-runtime
+title: "The site-data fixture runs the executable the harness resolved, and names its absence"
+slug: the-site-data-fixture-names-its-executable
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Make case 10 resolve the executable the way every Rust case does (`rust_bin`) and run the fixture's generator with MAJORDOMUS_BIN and MAJORDOMUS_BIN_COMMIT set and every other MAJORDOMUS_* and MJ_* variable of the caller unset, so a run by hand and the pre-push run drive the same executable; and prove, with a stub executable behind the real launcher, what the fixture's generator answers for a valid executable, a missing one, a foreign generation, an unknown build commit and a caller's foreign variables."
+why: "Case 10 builds a one-commit fixture repository and runs its scripts/generate-site-data, which reads `plan delivery --at` through the fixture's bin/majordomus. The fixture has no build of its own, and no installed release can be of its generation because no release commit is in its history, so the read exits 12 unless the caller happens to export MAJORDOMUS_BIN: the pre-push and CI paths do, a person running the case does not, and the case then fails as if the generator were wrong (measured 2026-11-08 on master 67e9a2f04a7). The launcher also keeps a caller's MAJORDOMUS_SHARE, so a fixture run from another worktree's shell reads that worktree's share. #2959 and #2960 settled the same absence on the deploy path only (scripts/site-build, case 3742 parts 6 and 7). Pack prompt P02 (owner's 30-minute packs, 2026-11-08)."
+current_state: "On 67e9a2f04a7 `env -u MAJORDOMUS_BIN -u MAJORDOMUS_BIN_COMMIT bash test/run.sh 10_site_data` fails with exit 12 from the fixture's generator (`majordomus-cli: …/target/debug/majordomus is missing … the installed release … is not of this tree's generation: its commit e3dd08606fa … is not in this repository`), and passes with MAJORDOMUS_BIN and MAJORDOMUS_BIN_COMMIT naming a present executable. No case asserts what the fixture's generator says for a missing executable, a foreign generation, an unknown build commit or a caller's foreign variables."
+desired_state: "Case 10 resolves its executable with `rust_bin` (a missing one is the harness's environment failure, naming `just build`, never the generator's exit 12) and runs every generator call through `fixture_tool_env`, which hands the fixture that executable and its commit and unsets the caller's other MAJORDOMUS_* and MJ_* variables. Case 4572 drives generate-site-data's own reading function through the fixture's real launcher against a stub executable and asserts, by exit code and message, a valid executable (0), a missing one (12, the launcher's line), a foreign generation (12, its commit is not in this repository), an unknown build commit (12, set MAJORDOMUS_BIN_COMMIT) and a caller's foreign variables (scrubbed: the fixture's own share and no MJ_* reach the executable; unscrubbed: a foreign MAJORDOMUS_BIN is refused by name). docs/CI.md says what a fixture inherits, what it isolates and how to reproduce a provenance failure."
+scope:
+  - ".ai/repo/project/issues/I4563.yaml"
+  - "test/cases/10_site_data.sh"
+  - "test/cases/4572_the_site_data_fixture_names_its_executable.sh"
+  - "test/lib.sh"
+  - "docs/CI.md"
+non_scope:
+  - "Product code: scripts/generate-site-data keeps exit 12 for a read it could not make (mj_tool_read), and no fallback is added"
+  - "The deploy path (scripts/site-build, case 3742), settled by #2959 and #2960"
+  - "Other cases that build a fixture with fixture_repo"
+acceptance_criteria:
+  - "bash test/run.sh 4572_the_site_data_fixture_names_its_executable passes, with the five conditions each asserting an exit code and a message"
+  - "bash test/run.sh 10_site_data passes run by hand with MAJORDOMUS_BIN unset (the harness resolves the tree's executable) and with MAJORDOMUS_BIN and MAJORDOMUS_BIN_COMMIT exported as the pre-push path does"
+  - "with no executable of the tree and no release of its generation, case 10 fails naming `just build` before the fixture's generator runs"
+validation:
+  - "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_BIN -u MAJORDOMUS_BIN_COMMIT bash test/run.sh 10_site_data 4572_the_site_data_fixture_names_its_executable"
+  - "env -u MAJORDOMUS_SHARE MAJORDOMUS_BIN=<executable> MAJORDOMUS_BIN_COMMIT=<its commit> bash test/run.sh 10_site_data 4572_the_site_data_fixture_names_its_executable"
+evidence_required:
+  - "the_site_data_fixture_names_its_executable"
+depends_on: []
+serves: []
+created_at: 2026-11-08
+updated_at: 2026-11-08

@@ -285,6 +285,27 @@ builds it once per job and hands it to every case), and build it once through ca
 otherwise; the two whose assertions are cargo's own (the crate's HTTP and projection suites,
 the doc examples, the benchmark build) keep cargo.
 
+A case that builds a fixture repository and runs that fixture's own scripts (case 10 runs
+the fixture's `scripts/generate-site-data`) runs them through `fixture_tool_env "$RB" ...`
+(`test/lib.sh`), with `RB` resolved by `rust_bin` like every Rust case. The fixture inherits
+the copied `bin/`, `lib/`, `share/` and canonical inputs and exactly one executable,
+`MAJORDOMUS_BIN` with its commit in `MAJORDOMUS_BIN_COMMIT`: the compiled one, followed
+through an installer's shim, because the fixture's launcher refuses a launcher there. It isolates everything else
+the caller exported: every `MAJORDOMUS_*` and `MJ_*` variable is unset. That isolation is
+needed because the fixture is a one-commit repository with no build of its own, so no
+installed release can be of its generation, and every read through its `bin/majordomus`
+exits 12 unless an executable is handed to it. A run by hand and the pre-push run differ
+only in whether that variable was set. The launcher also keeps an inherited
+`MAJORDOMUS_SHARE`, and `MAJORDOMUS_HOOK` changes its words. A missing executable therefore
+fails the case at `rust_bin`, naming `just build`, before the fixture runs. Case 4572
+proves what the fixture's reader answers for each provenance, I4563. To reproduce a
+provenance failure, run the case with nothing exported
+(`env -u MAJORDOMUS_BIN -u MAJORDOMUS_BIN_COMMIT -u MAJORDOMUS_SHARE bash test/run.sh
+10_site_data`), then as the pre-push path does (`MAJORDOMUS_BIN=<executable>
+MAJORDOMUS_BIN_COMMIT=<its commit> bash test/run.sh 10_site_data`). The launcher's own
+lines, prefixed `majordomus-cli:`, say which provenance it refused: missing, not an
+executable, a commit not in this repository, or a build commit that is unknown.
+
 ## The browser probe
 
 `scripts/site-probe` measures one route per browser process: the three widths are three

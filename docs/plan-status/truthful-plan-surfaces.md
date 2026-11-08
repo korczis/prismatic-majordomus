@@ -289,6 +289,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I3762` | shares apps/majordomus-cli/src/capability/builtin/plan.rs with I4486; they may not run concurrently |
 | WARN | `scope_conflict` | `I3762` | shares test/lib.sh with I4488; they may not run concurrently |
 | WARN | `scope_conflict` | `I3762` | shares docs/PLAN_STATUS.md with I4512; they may not run concurrently |
+| WARN | `scope_conflict` | `I3762` | shares test/lib.sh with I4563; they may not run concurrently |
 | WARN | `scope_conflict` | `I3763` | shares docs/generated with I3810; they may not run concurrently |
 | WARN | `scope_conflict` | `I3763` | shares docs/generated with I3841; they may not run concurrently |
 | WARN | `scope_conflict` | `I3763` | shares docs/PLANNING.md with I4254; they may not run concurrently |

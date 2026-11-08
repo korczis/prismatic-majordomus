@@ -162,7 +162,7 @@ sha256_of_file() { mj_sha256_hex "$1"; }
 # The one skip is the one the Rust cases always had, 3, for a machine with no cargo at all:
 # there the explicit build cannot be run either, and the case says so in its skip line.
 #
-# Both sources of lib/rust_bin.sh below point shellcheck at test/lib/rust_bin.functions.sh
+# Every source of lib/rust_bin.sh below points shellcheck at test/lib/rust_bin.functions.sh
 # (I4381), one stub per function and one empty assignment per global of rust_bin.sh. Every case
 # sources this file, and shellcheck -x followed it into rust_bin.sh's 1942 lines once per case:
 # the structure job's shell-lint grew from 416 s to 1388 s at p90 with no change to the gate.
@@ -199,6 +199,42 @@ rust_bin() {
 # The line a Rust case runs first: the executable into RB, or the skip/failure exit.
 #   RB="$(rust_bin)" || rust_bin_exit $?
 rust_bin_exit() { [ "$1" = 3 ] && skip "no executable of this tree, no installed release of its generation and no cargo to build one"; exit 1; }
+
+# A command of a fixture (its own scripts/ and bin/, which fixture_repo copied) run against the
+# executable the harness resolved, and against nothing else of the caller's (I4563):
+#   fixture_tool_env "$RB" "$T/scripts/generate-site-data" --check
+# The fixture is a repository of one commit with no build of its own, so its bin/majordomus
+# finds no executable of the tree, and no installed release can be of its generation: no
+# release commit is in its history. Without MAJORDOMUS_BIN every read it makes exits 12, so a
+# case passed on the pre-push and CI paths, which export it, and failed run by hand, which
+# does not. The launcher also keeps a MAJORDOMUS_SHARE it inherits, so a shell entered in
+# another worktree answered from that worktree's share, and MAJORDOMUS_HOOK changes its words.
+# Every MAJORDOMUS_* and MJ_* variable the caller exported is therefore unset, and
+# MAJORDOMUS_BIN and MAJORDOMUS_BIN_COMMIT name the one executable, the compiled one behind an
+# installer's shim: its commit as the launcher reads it (mj_rust_built_commit), else this
+# checkout's HEAD, which the tree's own build is of.
+fixture_tool_env() {
+  local exe="$1" commit v
+  local -a drop=()
+  shift
+  # shellcheck source=test/lib/rust_bin.functions.sh # I4381: its names only, see rust_bin
+  . "$ROOT/lib/rust_bin.sh"
+  commit="$(mj_rust_built_commit "$exe")" || commit="$(git -C "$ROOT" rev-parse HEAD)"
+  # rust_bin answers with the installer's shim when the installed release is of this tree's
+  # generation, and the fixture's launcher refuses a launcher in MAJORDOMUS_BIN (it would exec
+  # itself): the shim execs a version's bin/majordomus, whose executable is its libexec/.
+  if mj_rust_is_launcher "$exe"; then
+    local target
+    target="$(sed -n 's/^exec "\(.*\)" "\$@"$/\1/p' "$exe" | head -n 1)"
+    if [ -n "$target" ] && [ -x "$(dirname "$target")/../libexec/majordomus-cli" ]; then
+      exe="$(cd "$(dirname "$target")/../libexec" && pwd)/majordomus-cli"
+    fi
+  fi
+  for v in $(compgen -e); do
+    case "$v" in MAJORDOMUS_*|MJ_*) drop+=(-u "$v") ;; esac
+  done
+  env ${drop[@]+"${drop[@]}"} MAJORDOMUS_BIN="$exe" MAJORDOMUS_BIN_COMMIT="$commit" "$@"
+}
 
 # The end of a case that cannot measure its subject here, and why.
 #

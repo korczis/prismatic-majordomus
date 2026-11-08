@@ -206,6 +206,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I2115` | shares test/cases with I4529; they may not run concurrently |
 | WARN | `scope_conflict` | `I2115` | shares test/cases with I4530; they may not run concurrently |
 | WARN | `scope_conflict` | `I2115` | shares test/cases with I4531; they may not run concurrently |
+| WARN | `scope_conflict` | `I2115` | shares test/lib.sh with I4563; they may not run concurrently |
 | WARN | `scope_conflict` | `I2350` | shares .ai/repo/ci/gates.yaml with I2374; they may not run concurrently |
 | WARN | `scope_conflict` | `I2350` | shares test/cases with I2411; they may not run concurrently |
 | WARN | `scope_conflict` | `I2350` | shares .ai/repo/ci/gates.yaml with I2662; they may not run concurrently |
@@ -357,6 +358,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I2350` | shares test/cases with I4529; they may not run concurrently |
 | WARN | `scope_conflict` | `I2350` | shares test/cases with I4530; they may not run concurrently |
 | WARN | `scope_conflict` | `I2350` | shares test/cases with I4531; they may not run concurrently |
+| WARN | `scope_conflict` | `I2350` | shares docs/CI.md with I4563; they may not run concurrently |
 | WARN | `scope_conflict` | `I3825` | shares test/cases with I3826; they may not run concurrently |
 | WARN | `scope_conflict` | `I3825` | shares test/cases with I3837; they may not run concurrently |
 | WARN | `scope_conflict` | `I3825` | shares test/cases with I3843; they may not run concurrently |
@@ -391,6 +393,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I3937` | shares .ai/repo/ci/gates.yaml with I4468; they may not run concurrently |
 | WARN | `scope_conflict` | `I3937` | shares .ai/repo/ci/gates.yaml with I4488; they may not run concurrently |
 | WARN | `scope_conflict` | `I3937` | shares .ai/repo/ci/gates.yaml with I4512; they may not run concurrently |
+| WARN | `scope_conflict` | `I3942` | shares test/cases/10_site_data.sh with I4563; they may not run concurrently |
 | WARN | `scope_conflict` | `I3945` | shares scripts/generate-site-data with I4512; they may not run concurrently |
 | WARN | `scope_conflict` | `I4154` | shares apps/majordomus-cli/src/http/follow.rs with I4481; they may not run concurrently |
 | WARN | `scope_conflict` | `I4226` | shares test/cases/1096_no_screen_waits_for_a_source.sh with I4493; they may not run concurrently |
@@ -399,4 +402,5 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I4347` | shares .github/workflows/validate.yml with I4357; they may not run concurrently |
 | WARN | `scope_conflict` | `I4347` | shares docs/CI.md with I4460; they may not run concurrently |
 | WARN | `scope_conflict` | `I4347` | shares docs/CI.md with I4524; they may not run concurrently |
+| WARN | `scope_conflict` | `I4347` | shares docs/CI.md with I4563; they may not run concurrently |
 | WARN | `scope_conflict` | `I4513` | shares scripts/pages with I4531; they may not run concurrently |

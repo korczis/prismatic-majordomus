@@ -1,6 +1,10 @@
 # The site data normaliser: canonical files in, stable JSON out, and --check detects drift.
 . "$ROOT/test/lib.sh"
 command -v jq >/dev/null || skip "jq absent"
+# The executable the fixture's generator reads through, resolved the way every Rust case resolves
+# it: a missing one is the harness's environment failure naming `just build`, never the
+# generator's exit 12 (I4563); every generator call below runs through fixture_tool_env.
+RB="$(rust_bin)" || rust_bin_exit $?
 fixture_repo "$T" AGENTS.md docs site/data/marketing.toml site/content-src test/cases
 git -C "$T" add -A >/dev/null; git -C "$T" commit -qm fixture
 
@@ -41,7 +45,7 @@ PATH="$cap:$PATH" jq -n --arg x "${big%a}" '1' >/dev/null \
   || { echo "    the argv-cap shim refused an argument at exactly the cap"; exit 1; }
 unset big; : > "$cap/near"
 path_before="$PATH"; PATH="$cap:$PATH"
-expect_exit 0 "$T/scripts/generate-site-data"
+expect_exit 0 fixture_tool_env "$RB" "$T/scripts/generate-site-data"
 PATH="$path_before"
 while IFS="$(printf '\t')" read -r n head; do
   echo "    NEAR  a jq argument of $n bytes is within a quarter of Linux's cap: $head..."
@@ -70,9 +74,9 @@ expect_grep '^source = "docs/CLI.md"' "$T/site/content/docs/cli-specification.md
 # reach is what project.ui-conformance refuses (WCAG 2.1.1)
 expect_grep '<div class="overflow-x-auto" tabindex="0">' "$T/site/content/docs/cli-specification.md"
 # --check passes when in sync, fails after a canonical edit
-expect_exit 0 "$T/scripts/generate-site-data" --check
+expect_exit 0 fixture_tool_env "$RB" "$T/scripts/generate-site-data" --check
 sed -i.bak 's/^effort: high$/effort: xhigh/' "$T/share/skeleton/profiles/debugging.yaml"; rm -f "$T/share/skeleton/profiles/debugging.yaml.bak"
-expect_exit 10 "$T/scripts/generate-site-data" --check
+expect_exit 10 fixture_tool_env "$RB" "$T/scripts/generate-site-data" --check
 expect_grep 'STALE site/data/generated/profiles.json'
 # a guaranteed claim without a test is refused
 git -C "$T" checkout -q -- share
@@ -80,7 +84,7 @@ python3 - "$T/docs/CLAIMS.yaml" <<'PY'
 import sys,re; p=sys.argv[1]; s=open(p).read()
 s=s.replace("    test: test/cases/01_init.sh\n    status: guaranteed","    test: '-'\n    status: guaranteed",1); open(p,'w').write(s)
 PY
-expect_exit 10 "$T/scripts/generate-site-data"
+expect_exit 10 fixture_tool_env "$RB" "$T/scripts/generate-site-data"
 expect_grep 'guaranteed claim .* has no test'
 # a claim whose status is not one the file declares under `statuses` is refused, by id and word
 git -C "$T" checkout -q -- docs
@@ -88,12 +92,12 @@ python3 - "$T/docs/CLAIMS.yaml" <<'PY'
 import sys; p=sys.argv[1]; s=open(p).read()
 s=s.replace("    test: test/cases/01_init.sh\n    status: guaranteed","    test: test/cases/01_init.sh\n    status: proven",1); open(p,'w').write(s)
 PY
-expect_exit 10 "$T/scripts/generate-site-data"
+expect_exit 10 fixture_tool_env "$RB" "$T/scripts/generate-site-data"
 expect_grep 'carry a status docs/CLAIMS.yaml does not declare under statuses: .*[(]proven[)]'
 
 # --- doctrines.json: the chain is resolved from the source, not copied from the rule objects
 git -C "$T" checkout -q -- docs share
-"$T/scripts/generate-site-data" >/dev/null
+fixture_tool_env "$RB" "$T/scripts/generate-site-data" >/dev/null
 D="$T/site/data/generated/doctrines.json"
 [ "$(jq '.doctrines | length' "$D")" = "$(grep -l '^  validator:' "$ROOT"/share/standard/majordomus/rules/*.md | wc -l | tr -d ' ')" ]
 [ "$(jq '.counts.declared' "$D")" = "$(jq '.doctrines | length' "$D")" ]
@@ -107,17 +111,17 @@ jq -e '.doctrines | all(.slug == (.id | ltrimstr("majordomus.")))' "$D" >/dev/nu
 jq -e '.doctrines | all(.class == "blocking" or .class == "advisory")' "$D" >/dev/null
 # a doctrine naming a validator nobody wrote does not reach the site
 sed 's/^  validator: scope$/  validator: not_implemented/' "$ROOT/share/standard/majordomus/rules/scope-integrity.v1.md" > "$T/share/standard/majordomus/rules/scope-integrity.v1.md"
-expect_exit 10 "$T/scripts/generate-site-data"
+expect_exit 10 fixture_tool_env "$RB" "$T/scripts/generate-site-data"
 expect_grep "names validator 'not_implemented'"
 # nor does one declared for a command that never dispatches
 git -C "$T" checkout -q -- share
 sed 's/^  enforced_by: \[doctor\]$/  enforced_by: [update]/' "$ROOT/share/standard/majordomus/rules/enforcement-wiring.v1.md" > "$T/share/standard/majordomus/rules/enforcement-wiring.v1.md"
-expect_exit 10 "$T/scripts/generate-site-data"
+expect_exit 10 fixture_tool_env "$RB" "$T/scripts/generate-site-data"
 expect_grep "declared for 'update', which does not dispatch"
 # nor a validator in lib/ that no doctrine declares
 git -C "$T" checkout -q -- share
 printf '\nmj_validate_unclaimed() { return 0; }\n' >> "$T/lib/check.sh"
-expect_exit 10 "$T/scripts/generate-site-data"
+expect_exit 10 fixture_tool_env "$RB" "$T/scripts/generate-site-data"
 expect_grep 'mj_validate_unclaimed, which no doctrine declares'
 
 # ---------------------------------------------------------------- nothing reader-relative
