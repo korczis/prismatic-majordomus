@@ -17007,6 +17007,38 @@
         "source": ".ai/repo/skills/pack-for-review/examples/second-opinion-from-another-model.md"
       },
       {
+        "id": "majordomus://document/.ai/repo/skills/project-picture/examples/picture-global.md",
+        "kind": "document",
+        "label": ".ai/repo/skills/project-picture/examples/picture-global.md",
+        "summary": "Picture across every project on a machine",
+        "route": "/cockpit/objects/document/ai-repo-skills-project-picture-examples-picture-global-md",
+        "source": ".ai/repo/skills/project-picture/examples/picture-global.md"
+      },
+      {
+        "id": "majordomus://document/.ai/repo/skills/project-picture/examples/picture-offline.md",
+        "kind": "document",
+        "label": ".ai/repo/skills/project-picture/examples/picture-offline.md",
+        "summary": "Picture with no network",
+        "route": "/cockpit/objects/document/ai-repo-skills-project-picture-examples-picture-offline-md",
+        "source": ".ai/repo/skills/project-picture/examples/picture-offline.md"
+      },
+      {
+        "id": "majordomus://document/.ai/repo/skills/project-picture/examples/picture-online.md",
+        "kind": "document",
+        "label": ".ai/repo/skills/project-picture/examples/picture-online.md",
+        "summary": "Picture of one supervised project, every source reachable",
+        "route": "/cockpit/objects/document/ai-repo-skills-project-picture-examples-picture-online-md",
+        "source": ".ai/repo/skills/project-picture/examples/picture-online.md"
+      },
+      {
+        "id": "majordomus://document/.ai/repo/skills/project-picture/examples/picture-unsupervised.md",
+        "kind": "document",
+        "label": ".ai/repo/skills/project-picture/examples/picture-unsupervised.md",
+        "summary": "Picture of a repository without a Majordomus layer",
+        "route": "/cockpit/objects/document/ai-repo-skills-project-picture-examples-picture-unsupervised-md",
+        "source": ".ai/repo/skills/project-picture/examples/picture-unsupervised.md"
+      },
+      {
         "id": "majordomus://document/.ai/repo/skills/rebaser/examples/a-link-behind-master.md",
         "kind": "document",
         "label": ".ai/repo/skills/rebaser/examples/a-link-behind-master.md",
@@ -104065,6 +104097,43 @@
         }
       },
       {
+        "id": "majordomus://skill/project-picture",
+        "kind": "skill",
+        "label": "project-picture",
+        "summary": "Project picture",
+        "route": "/cockpit/objects/skill/project-picture",
+        "source": ".ai/repo/skills/project-picture/SKILL.md",
+        "status": "draft",
+        "facts": {
+          "inputs": [
+            "PROJECT: a repository, a set of repositories, or a name to resolve (default: the repository of the working directory)",
+            "SCOPE: paths or repositories to narrow to (default: all of PROJECT)",
+            "MODE: auto | local | global | offline (default: auto, detected, never asked)",
+            "BUDGET: wall-clock seconds and tokens for the whole run (default: 600 s; per source a tenth of it)",
+            "SINCE: the time window for activity (default: 30 days; history before it is summarised)",
+            "DEPTH: quick | standard | deep (default: standard)"
+          ],
+          "outputs": [
+            "the picture in Markdown, sections as in Output",
+            "the same picture as JSON with the same structure",
+            "a coverage ledger with one row per source tier and adapter",
+            "proposed records (knowledge candidates, questions, a handover body), written only when asked"
+          ],
+          "related": [
+            "repo-review",
+            "report-verification-state",
+            "evolve"
+          ],
+          "tags": [
+            "orientation",
+            "evidence",
+            "knowledge",
+            "coverage",
+            "read-only"
+          ]
+        }
+      },
+      {
         "id": "majordomus://skill/rebaser",
         "kind": "skill",
         "label": "rebaser",
@@ -129312,6 +129381,26 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://document/.ai/repo/skills/project-picture/examples/picture-global.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://document/.ai/repo/skills/project-picture/examples/picture-offline.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://document/.ai/repo/skills/project-picture/examples/picture-online.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://document/.ai/repo/skills/project-picture/examples/picture-unsupervised.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://document/.ai/repo/skills/rebaser/examples/a-link-behind-master.md",
         "target": "kind:document",
         "kind": "is_a"
@@ -154232,6 +154321,26 @@
         "kind": "related_to"
       },
       {
+        "source": "majordomus://skill/project-picture",
+        "target": "kind:skill",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://skill/project-picture",
+        "target": "majordomus://skill/evolve",
+        "kind": "related_to"
+      },
+      {
+        "source": "majordomus://skill/project-picture",
+        "target": "majordomus://skill/repo-review",
+        "kind": "related_to"
+      },
+      {
+        "source": "majordomus://skill/project-picture",
+        "target": "majordomus://skill/report-verification-state",
+        "kind": "related_to"
+      },
+      {
         "source": "majordomus://skill/rebaser",
         "target": "kind:skill",
         "kind": "is_a"
@@ -161813,8 +161922,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4422,
-      "edges": 10037,
+      "nodes": 4427,
+      "edges": 10045,
       "acyclic": false,
       "truncated": false
     }

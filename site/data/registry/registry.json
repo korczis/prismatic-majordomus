@@ -6,23 +6,23 @@
     "version": "1.0.0"
   },
   "registry": {
-    "fingerprint": "1881529b31b9650bfde63de93f09c696b344269616bb23b1a87327f1398ca596",
+    "fingerprint": "fbfae9d957fcb1ad137e28f200413c4179167cc564687dfafd4d91d664eb6b81",
     "summary": {
-      "total": 3951,
+      "total": 3956,
       "builtin": 231,
-      "declarative": 3720,
+      "declarative": 3725,
       "by_kind": {
         "command": 41,
         "query": 190,
-        "resource": 3720
+        "resource": 3725
       },
       "by_stability": {
         "behaviorally_verified": 153,
         "experimental": 68,
-        "implemented": 3730
+        "implemented": 3735
       },
       "mcp_tools": 215,
-      "mcp_resources": 3777,
+      "mcp_resources": 3782,
       "http_routes": 219,
       "cli_commands": 128,
       "modules": 96,
@@ -96872,7 +96872,7 @@
         "title": "document",
         "description": "Declarative objects of kind 'document' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 357,
+        "capabilities": 361,
         "capability_ids": []
       },
       {
@@ -97750,7 +97750,7 @@
         "title": "skill",
         "description": "Declarative objects of kind 'skill' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 10,
+        "capabilities": 11,
         "capability_ids": []
       },
       {
@@ -97878,7 +97878,7 @@
     ]
   },
   "index": {
-    "fingerprint": "223e1102672dfa03e0722ff771632e2530c956cb517965948639af3f6034d2c0",
+    "fingerprint": "b4d1fc72dbcb70190eb6ab594d2f070cf8de1d08ed1119e905a6a10c9fbeaccc",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -97912,7 +97912,7 @@
       "deployment": 1,
       "derive-offload": 1,
       "distribution-model": 1,
-      "document": 357,
+      "document": 361,
       "domain": 6,
       "feature": 29,
       "gap": 5,
@@ -97930,7 +97930,7 @@
       "rule": 192,
       "scope": 1,
       "session": 95,
-      "skill": 10,
+      "skill": 11,
       "taxonomy": 10,
       "test": 697,
       "use-case": 49,
@@ -104780,6 +104780,46 @@
         "section": "skills",
         "source_class": "skill_example",
         "bytes": 408
+      },
+      {
+        "uri": "majordomus://document/.ai/repo/skills/project-picture/examples/picture-global.md",
+        "kind": "document",
+        "identity": ".ai/repo/skills/project-picture/examples/picture-global.md",
+        "title": "Picture across every project on a machine",
+        "path": ".ai/repo/skills/project-picture/examples/picture-global.md",
+        "section": "skills",
+        "source_class": "skill_example",
+        "bytes": 1034
+      },
+      {
+        "uri": "majordomus://document/.ai/repo/skills/project-picture/examples/picture-offline.md",
+        "kind": "document",
+        "identity": ".ai/repo/skills/project-picture/examples/picture-offline.md",
+        "title": "Picture with no network",
+        "path": ".ai/repo/skills/project-picture/examples/picture-offline.md",
+        "section": "skills",
+        "source_class": "skill_example",
+        "bytes": 1214
+      },
+      {
+        "uri": "majordomus://document/.ai/repo/skills/project-picture/examples/picture-online.md",
+        "kind": "document",
+        "identity": ".ai/repo/skills/project-picture/examples/picture-online.md",
+        "title": "Picture of one supervised project, every source reachable",
+        "path": ".ai/repo/skills/project-picture/examples/picture-online.md",
+        "section": "skills",
+        "source_class": "skill_example",
+        "bytes": 1842
+      },
+      {
+        "uri": "majordomus://document/.ai/repo/skills/project-picture/examples/picture-unsupervised.md",
+        "kind": "document",
+        "identity": ".ai/repo/skills/project-picture/examples/picture-unsupervised.md",
+        "title": "Picture of a repository without a Majordomus layer",
+        "path": ".ai/repo/skills/project-picture/examples/picture-unsupervised.md",
+        "section": "skills",
+        "source_class": "skill_example",
+        "bytes": 784
       },
       {
         "uri": "majordomus://document/.ai/repo/skills/rebaser/examples/a-link-behind-master.md",
@@ -132400,6 +132440,24 @@
         ]
       },
       {
+        "uri": "majordomus://skill/project-picture",
+        "kind": "skill",
+        "identity": "project-picture",
+        "title": "Project picture",
+        "description": "Build the best evidenced picture of a project from every source the worker can reach, local first, every source optional, with each claim tagged and sourced and every gap recorded.",
+        "path": ".ai/repo/skills/project-picture/SKILL.md",
+        "section": "skills",
+        "source_class": "skill",
+        "bytes": 12021,
+        "tags": [
+          "orientation",
+          "evidence",
+          "knowledge",
+          "coverage",
+          "read-only"
+        ]
+      },
+      {
         "uri": "majordomus://skill/rebaser",
         "kind": "skill",
         "identity": "rebaser",
@@ -138802,7 +138860,7 @@
       "front_matter": "optional",
       "schema": "majordomus.document/v1",
       "identity": [],
-      "objects": 357
+      "objects": 361
     },
     {
       "name": "domain",
@@ -138994,7 +139052,7 @@
       "identity": [
         "id"
       ],
-      "objects": 10
+      "objects": 11
     },
     {
       "name": "taxonomy",
