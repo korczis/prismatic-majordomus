@@ -75,8 +75,9 @@ use super::source::{Inventory, ItemKind};
 /// assert_eq!(r.operations.canonical, 0, "nothing was measured about operations");
 /// ```
 pub fn rust_only(crate_dir: &Path, target: &str) -> Result<QualityReport, Error> {
+    let checkout = Checkout::of(crate_dir);
     let inventory = Inventory::of_crate(crate_dir)?;
-    Ok(assemble(&inventory, target, None))
+    Ok(checkout.stamp(assemble(&inventory, target, None)))
 }
 
 /// Measure everything: the Rust surface and the transport parity of the operations.
@@ -92,12 +93,74 @@ pub fn inspect(
     tree: &CommandDoc,
     openapi: &serde_json::Value,
 ) -> Result<QualityReport, Error> {
+    let checkout = Checkout::of(crate_dir);
     let inventory = Inventory::of_crate(crate_dir)?;
-    Ok(assemble(
+    Ok(checkout.stamp(assemble(
         &inventory,
         target,
         Some((registry, tree, openapi)),
-    ))
+    )))
+}
+
+/// What the checkout holding the crate was when the measurement started (I4297): its
+/// commit, that commit's tree and whether the working tree differed from it. Read once,
+/// before the sources are parsed, through the same read-only git the evidence stamp uses;
+/// every field is `None` when git cannot answer, never an empty string.
+#[derive(Debug, Default)]
+struct Checkout {
+    commit: Option<String>,
+    tree: Option<String>,
+    dirty: Option<bool>,
+}
+
+impl Checkout {
+    fn of(crate_dir: &Path) -> Checkout {
+        let out = crate::git::read_only(crate_dir)
+            .args(["rev-parse", "--verify", "--end-of-options", "HEAD^{commit}"])
+            .output();
+        let commit = match out {
+            Ok(o) if o.status.success() => non_empty(&o.stdout),
+            _ => None,
+        };
+        let Some(commit) = commit else {
+            return Checkout::default();
+        };
+        let tree = crate::git::read_only(crate_dir)
+            .args(["rev-parse", "--verify", "--end-of-options"])
+            .arg(format!("{commit}^{{tree}}"))
+            .output()
+            .ok()
+            .filter(|o| o.status.success())
+            .and_then(|o| non_empty(&o.stdout));
+        let dirty = match crate::git::working_tree_excluding(
+            crate_dir,
+            &[crate::evidence::LEDGER_PATH],
+            &[],
+        )
+        .as_str()
+        {
+            "clean" => Some(false),
+            "dirty" => Some(true),
+            _ => None,
+        };
+        Checkout {
+            commit: Some(commit),
+            tree,
+            dirty,
+        }
+    }
+
+    fn stamp(self, mut report: QualityReport) -> QualityReport {
+        report.commit = self.commit;
+        report.tree = self.tree;
+        report.dirty = self.dirty;
+        report
+    }
+}
+
+fn non_empty(bytes: &[u8]) -> Option<String> {
+    let s = String::from_utf8_lossy(bytes).trim().to_string();
+    (!s.is_empty()).then_some(s)
 }
 
 fn assemble(
@@ -360,6 +423,83 @@ mod tests {
     }
 
     const HEADER: &str = "//! A fixture crate whose header is long enough to be a header: it says what the\n//! module owns, which is the one function below it and nothing else at all.\n//!\n//! ```\n//! assert_eq!(majordomus_cli::two(), 2);\n//! ```\n";
+
+    /// A git checkout holding a one-file crate under `crates/x`, committed.
+    fn committed_crate() -> (tempfile::TempDir, std::path::PathBuf) {
+        let dir = tempfile::tempdir().unwrap();
+        let git = |args: &[&str]| {
+            let out = std::process::Command::new("git")
+                .arg("-C")
+                .arg(dir.path())
+                .args(args)
+                .output()
+                .unwrap();
+            assert!(out.status.success(), "git {args:?}: {out:?}");
+            String::from_utf8(out.stdout).unwrap().trim().to_string()
+        };
+        git(&["init", "-q"]);
+        git(&["config", "user.email", "t@example.com"]);
+        git(&["config", "user.name", "t"]);
+        git(&["config", "commit.gpgsign", "false"]);
+        let krate = dir.path().join("crates/x");
+        std::fs::create_dir_all(krate.join("src")).unwrap();
+        std::fs::write(krate.join("src/lib.rs"), "//! Thin.\npub fn go() {}\n").unwrap();
+        git(&["add", "-A"]);
+        git(&["commit", "-qm", "init"]);
+        (dir, krate)
+    }
+
+    fn git_out(dir: &std::path::Path, args: &[&str]) -> String {
+        let out = std::process::Command::new("git")
+            .arg("-C")
+            .arg(dir)
+            .args(args)
+            .output()
+            .unwrap();
+        String::from_utf8(out.stdout).unwrap().trim().to_string()
+    }
+
+    #[test]
+    fn quality_report_records_its_commit_and_tree_in_a_clean_checkout() {
+        let (dir, krate) = committed_crate();
+        let r = rust_only(&krate, "crates/x").unwrap();
+        let head = git_out(dir.path(), &["rev-parse", "HEAD"]);
+        let tree = git_out(dir.path(), &["rev-parse", "HEAD^{tree}"]);
+        assert_eq!(head.len(), 40);
+        assert_eq!(r.commit.as_deref(), Some(head.as_str()));
+        assert_eq!(r.tree.as_deref(), Some(tree.as_str()));
+        assert_eq!(r.dirty, Some(false));
+    }
+
+    #[test]
+    fn quality_report_records_its_commit_dirty_after_an_uncommitted_edit() {
+        let (dir, krate) = committed_crate();
+        std::fs::write(krate.join("src/lib.rs"), "//! Edited.\npub fn go() {}\n").unwrap();
+        let r = rust_only(&krate, "crates/x").unwrap();
+        assert_eq!(
+            r.commit.as_deref(),
+            Some(git_out(dir.path(), &["rev-parse", "HEAD"]).as_str())
+        );
+        assert_eq!(r.dirty, Some(true));
+        let json = serde_json::to_value(&r).unwrap();
+        assert_eq!(json["dirty"], serde_json::json!(true));
+    }
+
+    #[test]
+    fn quality_report_records_its_commit_as_not_observed_outside_git() {
+        let dir = crate_of("//! Thin.\npub fn go() {}\n");
+        let r = rust_only(dir.path(), "outside").unwrap();
+        assert_eq!(r.commit, None);
+        assert_eq!(r.tree, None);
+        assert_eq!(r.dirty, None);
+        // not observed is null on the wire, never an empty string read as a value
+        let json = serde_json::to_value(&r).unwrap();
+        assert!(json["commit"].is_null(), "{json}");
+        assert!(json["tree"].is_null(), "{json}");
+        assert!(json["dirty"].is_null(), "{json}");
+        let back: QualityReport = serde_json::from_value(json).unwrap();
+        assert_eq!(back.commit, None);
+    }
 
     #[test]
     fn a_documented_exampled_and_tested_crate_has_no_findings() {

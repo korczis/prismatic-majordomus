@@ -46277,6 +46277,27 @@
           "type": "string"
         },
         {
+          "description": "The full commit the measured checkout was at, or `null` when the crate lies in no\ngit checkout (or one with no commit): not observed, never an empty string.",
+          "name": "commit",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The digest of that commit's tree (`HEAD^{tree}`), or `null` when not observed.",
+          "name": "tree",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "Whether the checkout differed from its commit when it was measured, the evidence\nledger ignored as the evidence stamp ignores it; `null` when git could not say.",
+          "name": "dirty",
+          "refs": [],
+          "required": false,
+          "type": "boolean | null"
+        },
+        {
           "description": "The exported item surface.",
           "name": "public_api",
           "refs": [
@@ -78532,7 +78553,7 @@
           "cache_detail": "max_entries=8, ttl_seconds=10",
           "cli": "quality report",
           "curl": "curl -s \"http://127.0.0.1:8741/api/v1/quality?summary_only=false&include_baselined=false\"",
-          "description": "The crate's exported surface measured against the repository's rules: how many items are documented and exampled, how many modules are documented, exampled and behaviourally tested, how the canonical operations stand against the command line, HTTP, OpenAPI and MCP, and one finding per violation carrying a stable code, the rule that requires it, its file and line, why it matters and what to do about it.",
+          "description": "The crate's exported surface measured against the repository's rules: how many items are documented and exampled, how many modules are documented, exampled and behaviourally tested, how the canonical operations stand against the command line, HTTP, OpenAPI and MCP, and one finding per violation carrying a stable code, the rule that requires it, its file and line, why it matters and what to do about it. The report names what it measured: the commit, the commit's tree and whether the checkout was dirty, read once as the measurement starts, each null when the crate lies in no git checkout.",
           "home": "quality",
           "id": "quality.report",
           "kind": "query",

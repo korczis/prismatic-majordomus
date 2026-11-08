@@ -487,6 +487,17 @@ pub struct QualityReport {
     pub schema: String,
     /// What was measured: the crate directory, repository-relative.
     pub target: String,
+    /// The full commit the measured checkout was at, or `null` when the crate lies in no
+    /// git checkout (or one with no commit): not observed, never an empty string.
+    #[serde(default)]
+    pub commit: Option<String>,
+    /// The digest of that commit's tree (`HEAD^{tree}`), or `null` when not observed.
+    #[serde(default)]
+    pub tree: Option<String>,
+    /// Whether the checkout differed from its commit when it was measured, the evidence
+    /// ledger ignored as the evidence stamp ignores it; `null` when git could not say.
+    #[serde(default)]
+    pub dirty: Option<bool>,
     /// The exported item surface.
     pub public_api: PublicApiQuality,
     /// The exported module surface.

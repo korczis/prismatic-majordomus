@@ -6,7 +6,7 @@
     "version": "1.0.0"
   },
   "registry": {
-    "fingerprint": "99df951f5533a1b2775a224eda81907e0c210ac22cdfa46ba0642d4fdeda5c3e",
+    "fingerprint": "6c6e0488884acbb93d631b0618302e9d22f73a8732fbb477b6753a3e5af22e42",
     "summary": {
       "total": 3951,
       "builtin": 231,
@@ -74704,7 +74704,7 @@
         "module": "quality",
         "kind": "query",
         "title": "Public API quality report",
-        "description": "The crate's exported surface measured against the repository's rules: how many items are documented and exampled, how many modules are documented, exampled and behaviourally tested, how the canonical operations stand against the command line, HTTP, OpenAPI and MCP, and one finding per violation carrying a stable code, the rule that requires it, its file and line, why it matters and what to do about it.",
+        "description": "The crate's exported surface measured against the repository's rules: how many items are documented and exampled, how many modules are documented, exampled and behaviourally tested, how the canonical operations stand against the command line, HTTP, OpenAPI and MCP, and one finding per violation carrying a stable code, the rule that requires it, its file and line, why it matters and what to do about it. The report names what it measured: the commit, the commit's tree and whether the checkout was dirty, read once as the measurement starts, each null when the crate lies in no git checkout.",
         "input": {
           "name": "QualityInput",
           "schema": {
@@ -74790,6 +74790,30 @@
                   "target": {
                     "type": "string",
                     "description": "What was measured: the crate directory, repository-relative."
+                  },
+                  "commit": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The full commit the measured checkout was at, or `null` when the crate lies in no\ngit checkout (or one with no commit): not observed, never an empty string.",
+                    "default": null
+                  },
+                  "tree": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The digest of that commit's tree (`HEAD^{tree}`), or `null` when not observed.",
+                    "default": null
+                  },
+                  "dirty": {
+                    "type": [
+                      "boolean",
+                      "null"
+                    ],
+                    "description": "Whether the checkout differed from its commit when it was measured, the evidence\nledger ignored as the evidence stamp ignores it; `null` when git could not say.",
+                    "default": null
                   },
                   "public_api": {
                     "$ref": "#/$defs/PublicApiQuality",
@@ -97878,7 +97902,7 @@
     ]
   },
   "index": {
-    "fingerprint": "8c343d8050dc0d470510985c455e609a7cc42df0510482af8657bbdc1e8cebb9",
+    "fingerprint": "bdea5245d273a615345359b4783b0101102781fadb3403041d92a946a310d54b",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -178043,7 +178067,7 @@
         "name": "majordomus_quality",
         "id": "quality.report",
         "title": "Public API quality report",
-        "description": "The crate's exported surface measured against the repository's rules: how many items are documented and exampled, how many modules are documented, exampled and behaviourally tested, how the canonical operations stand against the command line, HTTP, OpenAPI and MCP, and one finding per violation carrying a stable code, the rule that requires it, its file and line, why it matters and what to do about it.",
+        "description": "The crate's exported surface measured against the repository's rules: how many items are documented and exampled, how many modules are documented, exampled and behaviourally tested, how the canonical operations stand against the command line, HTTP, OpenAPI and MCP, and one finding per violation carrying a stable code, the rule that requires it, its file and line, why it matters and what to do about it. The report names what it measured: the commit, the commit's tree and whether the checkout was dirty, read once as the measurement starts, each null when the crate lies in no git checkout.",
         "kind": "query",
         "read_only": true,
         "effect": "read",

@@ -75174,7 +75174,7 @@
       "module": "quality",
       "kind": "query",
       "title": "Public API quality report",
-      "description": "The crate's exported surface measured against the repository's rules: how many items are documented and exampled, how many modules are documented, exampled and behaviourally tested, how the canonical operations stand against the command line, HTTP, OpenAPI and MCP, and one finding per violation carrying a stable code, the rule that requires it, its file and line, why it matters and what to do about it.",
+      "description": "The crate's exported surface measured against the repository's rules: how many items are documented and exampled, how many modules are documented, exampled and behaviourally tested, how the canonical operations stand against the command line, HTTP, OpenAPI and MCP, and one finding per violation carrying a stable code, the rule that requires it, its file and line, why it matters and what to do about it. The report names what it measured: the commit, the commit's tree and whether the checkout was dirty, read once as the measurement starts, each null when the crate lies in no git checkout.",
       "input": {
         "name": "QualityInput",
         "schema": {
@@ -75260,6 +75260,30 @@
                 "target": {
                   "type": "string",
                   "description": "What was measured: the crate directory, repository-relative."
+                },
+                "commit": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "The full commit the measured checkout was at, or `null` when the crate lies in no\ngit checkout (or one with no commit): not observed, never an empty string.",
+                  "default": null
+                },
+                "tree": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "The digest of that commit's tree (`HEAD^{tree}`), or `null` when not observed.",
+                  "default": null
+                },
+                "dirty": {
+                  "type": [
+                    "boolean",
+                    "null"
+                  ],
+                  "description": "Whether the checkout differed from its commit when it was measured, the evidence\nledger ignored as the evidence stamp ignores it; `null` when git could not say.",
+                  "default": null
                 },
                 "public_api": {
                   "$ref": "#/$defs/PublicApiQuality",
