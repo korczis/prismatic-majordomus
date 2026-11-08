@@ -163,8 +163,10 @@ pub enum IntentEvidenceState {
     /// The reference resolves and no run counts for it: none was recorded, the latest run
     /// declined to run (a skip), or the claim names no test a runner drives.
     NotRun,
-    /// The reference resolves, and this kind of evidence (`command`, `deployment`) is not
-    /// derivable from the ledger, so it never meets a criterion by itself.
+    /// The reference resolves, and nothing the ledger holds can settle it, so it never meets
+    /// a criterion by itself: a `deployment`, and a `command` criterion whose reference is
+    /// `majordomus intent explain <its own intent>` — a placeholder for a proof still planned,
+    /// because that command exits 0 whatever it finds.
     NotDerivable,
     /// The reference is empty or names nothing this repository holds.
     Unresolved,
@@ -234,10 +236,12 @@ impl IntentEvidenceState {
 pub enum IntentVerdictState {
     /// Every criterion has current evidence.
     Satisfied,
-    /// A criterion the ledger or the claim join can settle (`test`, `claim`) is not met.
+    /// A criterion the ledger or the claim join can settle (`test`, `claim`, `command`) is
+    /// not met.
     Unsatisfied,
-    /// Every unmet criterion is of a kind the ledger cannot yet settle (`command`,
-    /// `deployment`), or the intent declares no criterion: the evidence cannot answer.
+    /// Every unmet criterion is one the ledger cannot settle (a `deployment`, or a `command`
+    /// that is a placeholder and reads `not_derivable`), or the intent declares no criterion:
+    /// the evidence cannot answer.
     Unknown,
 }
 
@@ -298,9 +302,12 @@ pub struct IntentVerdict {
     pub reasons: Vec<IntentVerdictReason>,
 }
 
-/// Whether the ledger or the claim join can settle a criterion of this evidence kind.
-fn ledger_settles(evidence: &str) -> bool {
-    matches!(evidence, "test" | "claim")
+/// Whether the ledger or the claim join can settle an unmet criterion: one of a kind it judges
+/// (`test`, `claim`, `command`) whose evidence is not the placeholder that reads
+/// `not_derivable`.
+fn ledger_settles(reason: &IntentVerdictReason) -> bool {
+    matches!(reason.evidence.as_str(), "test" | "claim" | "command")
+        && reason.state != IntentEvidenceState::NotDerivable
 }
 
 /// The verdict of an intent from its criteria alone. Pure: no plan, no index, no ledger — the
@@ -315,7 +322,7 @@ fn ledger_settles(evidence: &str) -> bool {
 /// };
 /// let met = c("test", IntentEvidenceState::Current);
 /// assert_eq!(verdict(&[met.clone()]).state, IntentVerdictState::Satisfied);
-/// // a command the ledger cannot run leaves the evidence unable to answer
+/// // a placeholder command the ledger cannot settle leaves the evidence unable to answer
 /// let cmd = c("command", IntentEvidenceState::NotDerivable);
 /// assert_eq!(verdict(&[met.clone(), cmd.clone()]).state, IntentVerdictState::Unknown);
 /// // a test the ledger can settle, and has not, says no
@@ -338,7 +345,7 @@ pub fn verdict(criteria: &[IntentCriterion]) -> IntentVerdict {
         IntentVerdictState::Unknown
     } else if reasons.is_empty() {
         IntentVerdictState::Satisfied
-    } else if reasons.iter().any(|r| ledger_settles(&r.evidence)) {
+    } else if reasons.iter().any(ledger_settles) {
         IntentVerdictState::Unsatisfied
     } else {
         IntentVerdictState::Unknown
@@ -557,18 +564,40 @@ pub struct ClaimStanding {
     pub proof: ProofState,
 }
 
+/// What the ledger says about one command: the criterion's state, and the evidence module's
+/// verdict behind it — [`ProofState::NotRun`] when no recorded run is of exactly that command.
+///
+/// ```
+/// use majordomus_cli::evidence::ProofState;
+/// use majordomus_cli::intent::{CommandStanding, IntentEvidenceState};
+/// let none = CommandStanding { state: IntentEvidenceState::NotRun, proof: ProofState::NotRun };
+/// assert_ne!(none.state, IntentEvidenceState::Current);
+/// ```
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct CommandStanding {
+    /// What the command's recorded run means for a criterion.
+    pub state: IntentEvidenceState,
+    /// The evidence module's verdict on that run.
+    pub proof: ProofState,
+}
+
 /// The facts the derivation reads beyond the plan. The repository answers them from the
 /// ledger, the claim matrix and the tree; a test answers them from a table.
 ///
 /// ```
-/// use majordomus_cli::evidence::TestId;
-/// use majordomus_cli::intent::{ClaimStanding, EvidenceLookup, IntentEvidenceState, TestStanding};
+/// use majordomus_cli::evidence::{ProofState, TestId};
+/// use majordomus_cli::intent::{
+///     ClaimStanding, CommandStanding, EvidenceLookup, IntentEvidenceState, TestStanding,
+/// };
 /// struct NothingRecorded;
 /// impl EvidenceLookup for NothingRecorded {
 ///     fn test(&self, _: &TestId, _: &[String]) -> TestStanding {
 ///         TestStanding { present: true, state: IntentEvidenceState::NotRun, proof: None }
 ///     }
 ///     fn claim(&self, _: &str) -> Option<ClaimStanding> { None }
+///     fn command(&self, _: &str) -> CommandStanding {
+///         CommandStanding { state: IntentEvidenceState::NotRun, proof: ProofState::NotRun }
+///     }
 ///     fn deployment(&self, _: &str) -> bool { false }
 ///     fn object(&self, _: &str, _: &str) -> bool { false }
 ///     fn file(&self, _: &str) -> bool { false }
@@ -603,6 +632,20 @@ pub trait EvidenceLookup {
     /// # }
     /// ```
     fn claim(&self, id: &str) -> Option<ClaimStanding>;
+    /// What the ledger holds for one command, matched exactly: the latest recorded run whose
+    /// `command` is this text, byte for byte, judged at the working tree. A command declares
+    /// no inputs, so a pass is current only when nothing but the ledger has changed between
+    /// the revision it ran on and the presented one; a near-miss command is not its receipt
+    /// and reads `not_run`, a failed run `failing`, a pass at another revision `stale`.
+    ///
+    /// ```
+    /// use majordomus_cli::intent::{EvidenceLookup, IntentEvidenceState};
+    /// # fn demo(ev: &dyn EvidenceLookup) {
+    /// let standing = ev.command("a command nobody ever recorded");
+    /// assert_eq!(standing.state, IntentEvidenceState::NotRun);
+    /// # }
+    /// ```
+    fn command(&self, command: &str) -> CommandStanding;
     /// Whether a deployment object with this id exists. A `deployment` criterion resolves
     /// through this and is still never counted as met.
     ///
@@ -802,6 +845,39 @@ impl EvidenceLookup for RepositoryEvidence<'_> {
             state: IntentEvidenceState::judged(c.state, recorded),
             proof: c.state,
         })
+    }
+
+    fn command(&self, command: &str) -> CommandStanding {
+        // the receipt of exactly this command: never one of a command that merely resembles
+        // it, and the latest of them when several tests were recorded by the same command
+        let Some(e) = self
+            .ledger
+            .executions
+            .iter()
+            .filter(|e| e.command == command)
+            .max_by(|a, b| a.at.cmp(&b.at))
+        else {
+            return CommandStanding {
+                state: IntentEvidenceState::NotRun,
+                proof: ProofState::NotRun,
+            };
+        };
+        let moved = e.outcome.proves() && e.digest_matches(self.root()) == Some(false);
+        // a command names no inputs (the truth table's row 14), and the plan's records are not
+        // set aside as they are for a test: they may be exactly what the command reads
+        let comparison = self.comparison(&e.commit);
+        let judgement = freshness(
+            Recorded::Ran(e),
+            None,
+            &e.source,
+            moved,
+            Some(&comparison),
+            Presented::WorkingTree.tree(),
+        );
+        CommandStanding {
+            state: IntentEvidenceState::judged(judgement.state, TreeState::parse(&e.working_tree)),
+            proof: judgement.state,
+        }
     }
 
     fn deployment(&self, id: &str) -> bool {
@@ -1061,6 +1137,21 @@ pub fn stage(
     IntentStage::Planned
 }
 
+/// Whether a command criterion's reference is `majordomus intent explain <its own intent>`:
+/// a placeholder for a proof still planned, never a receipt, because `intent explain` exits 0
+/// whatever it finds. Such a criterion reads `not_derivable`, naming the command.
+///
+/// ```
+/// # use majordomus_cli::intent::placeholder_command;
+/// assert!(placeholder_command("x", "majordomus intent explain x"));
+/// assert!(!placeholder_command("x", "majordomus intent explain y"));
+/// assert!(!placeholder_command("x", "majordomus intent validate"));
+/// ```
+pub fn placeholder_command(intent: &str, reference: &str) -> bool {
+    let words: Vec<&str> = reference.split_whitespace().collect();
+    words.len() >= 4 && words[..3] == ["majordomus", "intent", "explain"] && words[3] == intent
+}
+
 fn criterion_of(
     intent: &str,
     c: &CriterionRecord,
@@ -1140,7 +1231,13 @@ fn criterion_of(
             // `command`: the schema admits nothing else
             _ => {
                 reproduce = Some(r.to_string());
-                IntentEvidenceState::NotDerivable
+                if placeholder_command(intent, r) {
+                    IntentEvidenceState::NotDerivable
+                } else {
+                    let standing = ev.command(r);
+                    proof = Some(standing.proof);
+                    standing.state
+                }
             }
         }
     };
@@ -1293,10 +1390,10 @@ impl Intents {
     /// and what a test calls with records it wrote.
     ///
     /// ```
-    /// use majordomus_cli::evidence::TestId;
+    /// use majordomus_cli::evidence::{ProofState, TestId};
     /// use majordomus_cli::intent::{
-    ///     ClaimStanding, EvidenceLookup, IntentEvidenceState, IntentRecord, Intents,
-    ///     TestStanding,
+    ///     ClaimStanding, CommandStanding, EvidenceLookup, IntentEvidenceState, IntentRecord,
+    ///     Intents, TestStanding,
     /// };
     /// use majordomus_cli::plan::Plan;
     /// struct NothingRecorded;
@@ -1305,6 +1402,9 @@ impl Intents {
     ///         TestStanding { present: true, state: IntentEvidenceState::NotRun, proof: None }
     ///     }
     ///     fn claim(&self, _: &str) -> Option<ClaimStanding> { None }
+    ///     fn command(&self, _: &str) -> CommandStanding {
+    ///         CommandStanding { state: IntentEvidenceState::NotRun, proof: ProofState::NotRun }
+    ///     }
     ///     fn deployment(&self, _: &str) -> bool { false }
     ///     fn object(&self, _: &str, _: &str) -> bool { false }
     ///     fn file(&self, _: &str) -> bool { false }
@@ -2404,6 +2504,7 @@ mod tests {
     struct Table {
         tests: BTreeMap<String, TestStanding>,
         claims: BTreeMap<String, ClaimStanding>,
+        commands: BTreeMap<String, CommandStanding>,
     }
 
     impl Table {
@@ -2411,7 +2512,19 @@ mod tests {
             Table {
                 tests: BTreeMap::new(),
                 claims: BTreeMap::new(),
+                commands: BTreeMap::new(),
             }
+        }
+        fn with_command(mut self, command: &str, state: IntentEvidenceState) -> Self {
+            let proof = match state {
+                IntentEvidenceState::Current => ProofState::Proven,
+                IntentEvidenceState::Stale => ProofState::Stale,
+                IntentEvidenceState::Failing => ProofState::Failing,
+                _ => ProofState::NotRun,
+            };
+            self.commands
+                .insert(command.into(), CommandStanding { state, proof });
+            self
         }
         fn with_test(mut self, id: &str, state: IntentEvidenceState) -> Self {
             self.tests.insert(
@@ -2450,6 +2563,15 @@ mod tests {
         }
         fn claim(&self, id: &str) -> Option<ClaimStanding> {
             self.claims.get(id).copied()
+        }
+        fn command(&self, command: &str) -> CommandStanding {
+            self.commands
+                .get(command)
+                .copied()
+                .unwrap_or(CommandStanding {
+                    state: IntentEvidenceState::NotRun,
+                    proof: ProofState::NotRun,
+                })
         }
         fn deployment(&self, id: &str) -> bool {
             id == "fly"
@@ -2656,7 +2778,7 @@ mod tests {
                 &["m"],
                 &[
                     CASE,
-                    ("ships", "command", "just verify"),
+                    ("ships", "command", "majordomus intent explain x"),
                     ("live", "deployment", "fly"),
                 ],
             )],
@@ -2806,24 +2928,81 @@ mod tests {
     }
 
     #[test]
-    fn a_command_or_deployment_never_meets_a_criterion() {
+    fn a_placeholder_command_or_a_deployment_never_meets_a_criterion() {
         let p = plan(vec![milestone("m", "DONE")], vec![]);
+        // even a current receipt of the placeholder is no receipt: intent explain exits 0
+        let ev = Table::new().with_command("majordomus intent explain x", IntentEvidenceState::Current);
         let i = Intents::derive(
             vec![record(
                 "x",
                 &["m"],
-                &[("a", "command", "just verify"), ("b", "deployment", "fly")],
+                &[
+                    ("a", "command", "majordomus intent explain x"),
+                    ("b", "deployment", "fly"),
+                ],
             )],
             &p,
-            &Table::new(),
+            &ev,
         );
         let v = &i.intents[0];
         assert!(v
             .satisfaction
             .iter()
             .all(|c| c.state == IntentEvidenceState::NotDerivable && !c.met));
+        assert_eq!(
+            v.satisfaction[0].reproduce.as_deref(),
+            Some("majordomus intent explain x"),
+            "the placeholder names the command it stands for"
+        );
+        assert_eq!(v.verdict.state, IntentVerdictState::Unknown);
         assert_eq!(v.stage, IntentStage::Verifying);
         assert_eq!(i.failures(), 0, "{:?}", i.findings);
+    }
+
+    #[test]
+    fn a_command_criterion_is_judged_by_the_standing_of_exactly_its_command() {
+        let p = plan(vec![milestone("m", "DONE")], vec![]);
+        for state in [
+            IntentEvidenceState::Current,
+            IntentEvidenceState::Stale,
+            IntentEvidenceState::Failing,
+            IntentEvidenceState::NotRun,
+        ] {
+            // a receipt of a near-miss command stands beside it and is never read for it
+            let ev = Table::new()
+                .with_command("just verify", state)
+                .with_command("just verify --all", IntentEvidenceState::Current);
+            let i = Intents::derive(
+                vec![record("x", &["m"], &[("k", "command", "just verify")])],
+                &p,
+                &ev,
+            );
+            let c = &i.intents[0].satisfaction[0];
+            assert_eq!(c.state, state);
+            assert_eq!(c.met, state == IntentEvidenceState::Current, "{state:?}");
+            assert_eq!(c.reproduce.as_deref(), Some("just verify"));
+            assert!(c.proof.is_some(), "a judged command carries the proof behind it");
+            let want = if state == IntentEvidenceState::Current {
+                IntentVerdictState::Satisfied
+            } else {
+                IntentVerdictState::Unsatisfied
+            };
+            assert_eq!(i.intents[0].verdict.state, want, "{state:?}");
+        }
+        // another intent's explain is a real command, not this intent's placeholder
+        let i = Intents::derive(
+            vec![record(
+                "x",
+                &["m"],
+                &[("k", "command", "majordomus intent explain y")],
+            )],
+            &p,
+            &Table::new(),
+        );
+        assert_eq!(
+            i.intents[0].satisfaction[0].state,
+            IntentEvidenceState::NotRun
+        );
     }
 
     #[test]

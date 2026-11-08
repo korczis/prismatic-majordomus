@@ -44467,7 +44467,7 @@
           {
             "type": "string",
             "const": "not_derivable",
-            "description": "The reference resolves, and this kind of evidence (`command`, `deployment`) is not\nderivable from the ledger, so it never meets a criterion by itself."
+            "description": "The reference resolves, and nothing the ledger holds can settle it, so it never meets\na criterion by itself: a `deployment`, and a `command` criterion whose reference is\n`majordomus intent explain <its own intent>` — a placeholder for a proof still planned,\nbecause that command exits 0 whatever it finds."
           },
           {
             "type": "string",
@@ -45474,12 +45474,12 @@
           {
             "type": "string",
             "const": "unsatisfied",
-            "description": "A criterion the ledger or the claim join can settle (`test`, `claim`) is not met."
+            "description": "A criterion the ledger or the claim join can settle (`test`, `claim`, `command`) is\nnot met."
           },
           {
             "type": "string",
             "const": "unknown",
-            "description": "Every unmet criterion is of a kind the ledger cannot yet settle (`command`,\n`deployment`), or the intent declares no criterion: the evidence cannot answer."
+            "description": "Every unmet criterion is one the ledger cannot settle (a `deployment`, or a `command`\nthat is a placeholder and reads `not_derivable`), or the intent declares no criterion:\nthe evidence cannot answer."
           }
         ],
         "description": "What the evidence alone says about an intent, as a word: derived from its criteria and\nnever from the plan, so it can read `satisfied` while a milestone is still open (ADR 0107).\n\n```\nuse majordomus_cli::intent::IntentVerdictState;\nlet word = serde_json::to_string(&IntentVerdictState::Unsatisfied).unwrap();\nassert_eq!(word, \"\\\"unsatisfied\\\"\");\nassert_eq!(IntentVerdictState::Satisfied.as_str(), \"satisfied\");\n```"
