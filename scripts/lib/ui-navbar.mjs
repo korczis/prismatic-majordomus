@@ -54,9 +54,20 @@ export function fragment(html, origin) {
   }
   // a comment is the build's, not the bar's: the mark's names the generator's version, and a
   // release would otherwise stale the copy without a pixel of the bar moving
+  // The badge names a role of the release model (I3449): on the site the stable release, on a
+  // page of the executable the executable's own version, so the UI's badge says it is the
+  // build's. The pre-release beside the site's badge is the site's to know; the executable is
+  // not told it, and its badge is removed rather than left naming a version nothing fills in.
+  const badge = /data-release="[^"]*" data-version-role="stable" title="[^"]*">v[^<]*</g;
+  if (/data-release="/.test(bar) && !new RegExp(badge.source).test(bar)) {
+    throw new Error('the bar\'s release badge does not carry data-version-role="stable" and its '
+      + 'title as site/templates/partials/navbar.html writes them; the slot cannot be cut');
+  }
   const body = bar
     .replace(/<!--[\s\S]*?-->\n?/g, '')
-    .replace(/data-release="[^"]*">v[^<]*</g, `data-release="${VERSION_SLOT}">v${VERSION_SLOT}<`)
+    .replace(badge, `data-release="${VERSION_SLOT}" data-version-role="build" `
+      + `title="The version of the executable serving this page">v${VERSION_SLOT}<`)
+    .replace(/<span [^>]*\bdata-prerelease="[^"]*"[^>]*>[^<]*<\/span>/g, '')
     .replace(/href="#(site-map-[^"]*)"/g, `href="${origin}/#$1"`)
     // the language switch of the not-found page leads to that page in each language; a UI page
     // has no copy in another language yet, so each language leads to the site's front page in
@@ -95,6 +106,8 @@ export function describeInPage(styles) {
   const nav = document.querySelector('nav[aria-label="Main"]');
   if (!nav) return null;
   for (const b of nav.querySelectorAll('[data-release]')) b.textContent = 'v0.0.0';
+  // the site's pre-release badge is the one element the UI's bar does not carry (fragment())
+  for (const p of nav.querySelectorAll('[data-prerelease]')) p.remove();
   const out = [];
   const walk = (el, path) => {
     if (el.hasAttribute('data-nav-snapshot-note')) return;

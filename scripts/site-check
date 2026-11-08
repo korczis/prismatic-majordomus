@@ -18,6 +18,11 @@
 #                                   navigation and hero link of its homepage resolves, and a link
 #                                   with a #fragment names an element its page carries (I3008).
 #                                   The scan a case runs on a fixture. Exit 0, 10 findings, 12 missing.
+#   scripts/site-check --versions PUBLIC_DIR BUILD_JSON SITE_DIR
+#                                   check 17c alone: every version a page of PUBLIC_DIR names is
+#                                   its role's in BUILD_JSON's release model, and no template or
+#                                   hand-written data file under SITE_DIR types one (I3449). The
+#                                   scan a case runs on a fixture. Exit 0, 10 findings, 12 missing.
 #   scripts/site-check --casefold PUBLIC_DIR|LISTING
 #   scripts/site-check --memory I18N_DIR
 #                                   check 13l alone, over a built public directory with every
@@ -416,6 +421,119 @@ fi
 # can reach it again, and the sentence falls back to English. scripts/site-translate rekey moves
 # it; this refuses a memory that was not moved, so no train has to remember the step (I3777).
 # The rule is rekeyValues in scripts/lib/site-i18n.mjs, the same one rekey applies.
+# The scan of check 17c, "every surface names its versions from one model" (I3449). The release
+# model is the one /build.json carries: the stable release the site offers (`release.version`),
+# the newest pre-release ahead of it (`release.prerelease.version`) and the source the build was
+# made from (`source_version`). Every element of every page under PUBLIC_DIR that names a version
+# says which of them it is, by `data-version-role`, and is judged against that role: `stable`
+# and a `data-release` with no role name the stable release, `prerelease` and a
+# `data-prerelease` with no role the pre-release, `source` (the footer, `data-source-version`)
+# the source, and `build` (the badge of a page an executable drew, which is what a /ui snapshot
+# is) the source too, because an executable of this build is one of this source. A page naming a
+# version the model does not hold in that role, or a role the model does not know, is refused
+# with the page and the string. On 2026-10-22 one page named three versions in three places;
+# each had read its own source.
+# The other half is the sources: a version typed into a template or into hand-written site data
+# is a reading of the day it was typed. Comments are not read ({# … #} and <!-- … -->, the
+# comment lines of a TOML file); generated data (site/data/generated, site/data/registry,
+# data/build.json) is the build's. The articles under site/content-src and the translation
+# memory are not read: they tell dated history ("0.28.0 on 17 October"), not which version a
+# reader has, and their version strings name past releases on purpose.
+versions_named() { # public-dir build-json site-dir -> findings via bad(), one ok() when clean
+  local out rc=0
+  out="$(python3 - "$1" "$2" "$3" <<'PY'
+import json, os, re, sys
+pub, build_json, site = sys.argv[1:4]
+findings = []
+try:
+    build = json.load(open(build_json))
+except (OSError, ValueError) as e:
+    print(f"F\t{build_json} cannot be read as the release model: {e}")
+    sys.exit(0)
+release = build.get("release") or {}
+model = {
+    "stable": release.get("version"),
+    "prerelease": (release.get("prerelease") or {}).get("version"),
+    "source": build.get("source_version"),
+}
+model["build"] = model["source"]
+attr = re.compile(r'([a-z-]+)="([^"]*)"')
+tag = re.compile(r'<[a-zA-Z][^>]*\bdata-(?:release|prerelease|source-version|version-role)="[^>]*>')
+value_of = {"stable": "data-release", "prerelease": "data-prerelease",
+            "source": "data-source-version", "build": "data-release"}
+pages = elements = 0
+for dirpath, _, files in os.walk(pub):
+    for name in sorted(files):
+        if not name.endswith(".html"):
+            continue
+        path = os.path.join(dirpath, name)
+        rel = "/" + os.path.relpath(path, pub)
+        try:
+            html = open(path, encoding="utf-8", errors="replace").read()
+        except OSError:
+            continue
+        pages += 1
+        for m in tag.finditer(html):
+            a = dict(attr.findall(m.group(0)))
+            role = a.get("data-version-role")
+            if role is None:
+                role = "stable" if "data-release" in a else "prerelease" if "data-prerelease" in a else "source"
+            if role not in value_of:
+                findings.append(f"{rel}: data-version-role=\"{role}\" is not a role of the release model (stable, prerelease, source, build)")
+                continue
+            shown = a.get(value_of[role])
+            if shown is None:
+                findings.append(f"{rel}: an element of role {role} carries no {value_of[role]}")
+                continue
+            elements += 1
+            want = model[role]
+            if want is None:
+                findings.append(f"{rel}: names {shown} as the {role} version and {build_json} holds no {role} version")
+            elif shown != want:
+                findings.append(f"{rel}: names {shown} as the {role} version and {build_json} holds {want}")
+literal = re.compile(r'(?<![\w.\-/@])v?\d+\.\d+\.\d+(?:-[0-9A-Za-z]+(?:\.[0-9A-Za-z]+)*)?(?![\w.])')
+def sources():
+    for sub, exts in (("templates", (".html",)), ("data", (".toml", ".json", ".yaml", ".yml"))):
+        top = os.path.join(site, sub)
+        for dirpath, dirs, files in os.walk(top):
+            rel_dir = os.path.relpath(dirpath, site)
+            if rel_dir in ("data/generated", "data/registry"):
+                dirs[:] = []
+                continue
+            for name in sorted(files):
+                if name.endswith(exts) and not (rel_dir == "data" and name == "build.json"):
+                    yield os.path.join(dirpath, name)
+files_read = 0
+for path in sources():
+    try:
+        text = open(path, encoding="utf-8", errors="replace").read()
+    except OSError:
+        continue
+    files_read += 1
+    blank = lambda m: re.sub(r"[^\n]", " ", m.group(0))
+    if path.endswith(".html"):
+        text = re.sub(r"\{#.*?#\}", blank, text, flags=re.S)
+        text = re.sub(r"<!--.*?-->", blank, text, flags=re.S)
+    elif path.endswith(".toml"):
+        text = re.sub(r"(?m)^\s*#.*$", blank, text)
+    # an icon's geometry is numbers in a row ("1.087.706" in a path), not a version
+    text = re.sub(r"<(?:path|svg|g|circle|rect|line|polyline|polygon|ellipse)\b[^>]*>", blank, text)
+    for n, line in enumerate(text.split("\n"), 1):
+        for m in literal.finditer(line):
+            findings.append(f"{os.path.relpath(path, os.path.dirname(site))}:{n}: the version {m.group(0)} is written by hand; read it from the release model (build.json's release, source.source_version)")
+for f in findings:
+    print(f"F\t{f}")
+print(f"N\t{pages}\t{elements}\t{files_read}")
+PY
+)" || rc=$?
+  [ "$rc" = 0 ] || { bad versions "the version scan could not run (python3 exited $rc)"; return; }
+  local found n
+  found="$(printf '%s\n' "$out" | awk -F'\t' '$1 == "F" { print $2 }')"
+  n="$(printf '%s\n' "$out" | awk -F'\t' '$1 == "N" { print $2 " pages, " $3 " versions named, " $4 " source files" }')"
+  if [ -z "$found" ]; then ok versions "every version on every surface is its role's in the release model, and none is written by hand ($n)"; return; fi
+  while IFS= read -r line; do bad versions "$line"; done <<< "$found"
+}
+
 memory_keyed() { # i18n-dir
   local out rc=0
   mj_runs node || { bad i18n "$(mj_runs_why node); the translation memory's keys cannot be checked"; return; }
@@ -452,6 +570,14 @@ if [ "${1:-}" = --memory ]; then
   [ -d "${2:-}" ] || { echo "site-check: --memory needs an i18n directory (site/i18n)" >&2; exit 12; }
   fails=0; ok() { printf 'OK   %-12s %s\n' "$1" "$2"; }; bad() { printf 'FAIL %-12s %s\n' "$1" "$2"; fails=$((fails + 1)); }
   memory_keyed "$2"
+  [ "$fails" = 0 ] && exit 0
+  exit 10
+fi
+if [ "${1:-}" = --versions ]; then
+  [ -d "${2:-}" ] && [ -f "${3:-}" ] && [ -d "${4:-}" ] \
+    || { echo "site-check: --versions needs a built public directory, its build.json and a site directory" >&2; exit 12; }
+  fails=0; ok() { printf 'OK   %-12s %s\n' "$1" "$2"; }; bad() { printf 'FAIL %-12s %s\n' "$1" "$2"; fails=$((fails + 1)); }
+  versions_named "$2" "$3" "$4"
   [ "$fails" = 0 ] && exit 0
   exit 10
 fi
@@ -1962,7 +2088,11 @@ dist_latest="$(jq -r '.latest.version // empty' "$DIST" 2>/dev/null || true)"
 static_latest="$(jq -r '.version // empty' "$SITE/static/releases/latest.json" 2>/dev/null || true)"
 [ "$static_latest" = "$dist_latest" ] \
   || { bad release "distribution.json names ${dist_latest:-no release} as the latest and site/static/releases/latest.json names ${static_latest:-none}; regenerate (scripts/derive)"; relbad=1; }
-[ "$relbad" = 0 ] && ok release "one release on every surface: the homepage, /build.json and /releases/latest.json offer ${offered:-none}${offered_pre:+, and the pages name the pre-release $offered_pre beside it} ($(jq -r '.release.source // "no release"' "$PUB/build.json" 2>/dev/null)), and the committed projections agree on ${dist_latest:-none}"
+# 17c. every surface names its versions from one model, each in its role, and no version is
+# written by hand (I3449; versions_named above). Every page of the build, the snapshots a
+# publication composes in included when they are there.
+versions_named "$PUB" "$PUB/build.json" "$SITE"
+[ "$relbad" = 0 ] && ok release "one release on every surface:the homepage, /build.json and /releases/latest.json offer ${offered:-none}${offered_pre:+, and the pages name the pre-release $offered_pre beside it} ($(jq -r '.release.source // "no release"' "$PUB/build.json" 2>/dev/null)), and the committed projections agree on ${dist_latest:-none}"
 
 
 # 18. a publication offers no surface it cannot answer for. Every route the projection

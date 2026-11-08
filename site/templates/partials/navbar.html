@@ -54,9 +54,16 @@
 
          And it is the release that was PUBLISHED, not only the one recorded on master: `offered`
          (base.html, derived by scripts/site-build) is the newer of the two, so the badge moves
-         when the release does rather than when its record's pull request lands. #}
+         when the release does rather than when its record's pull request lands.
+
+         Each badge says which version it is (I3449): `data-version-role` names its role in the
+         release model /build.json carries, and scripts/site-check refuses a badge whose version
+         is not that role's. The newest pre-release ahead of the stable one stands beside it on
+         every page, labelled, from md up; the UI's copy of this bar names the executable's own
+         version instead and drops the pre-release (scripts/lib/ui-navbar.mjs). #}
       {% if offered %}
-      <span class="inline rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading" data-release="{{ offered.version }}">v{{ offered.version }}</span>
+      <span class="inline rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading" data-release="{{ offered.version }}" data-version-role="stable" title="The stable release the installer gives you">v{{ offered.version }}</span>
+      {% if offered.prerelease %}<span class="hidden rounded border border-default px-1.5 py-0.5 font-mono text-xs text-body md:inline" data-prerelease="{{ offered.prerelease.version }}" data-version-role="prerelease" title="The newest pre-release, installed only when asked for by name">pre-release v{{ offered.prerelease.version }}</span>{% endif %}
       {% endif %}
     </a>
     <div class="flex items-center gap-1 sm:gap-2 md:order-2">
