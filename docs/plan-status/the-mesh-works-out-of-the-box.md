@@ -134,7 +134,6 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I2411` | shares test/cases with I4266; they may not run concurrently |
 | WARN | `scope_conflict` | `I2411` | shares test/cases with I4267; they may not run concurrently |
 | WARN | `scope_conflict` | `I2411` | shares test/cases with I4268; they may not run concurrently |
-| WARN | `scope_conflict` | `I2411` | shares test/cases with I4291; they may not run concurrently |
 | WARN | `scope_conflict` | `I2411` | shares test/cases with I4292; they may not run concurrently |
 | WARN | `scope_conflict` | `I2411` | shares apps/majordomus-cli/src/cli.rs with I4294; they may not run concurrently |
 | WARN | `scope_conflict` | `I2411` | shares docs/MESH.md with I4306; they may not run concurrently |
