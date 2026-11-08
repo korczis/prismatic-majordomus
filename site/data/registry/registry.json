@@ -6,23 +6,23 @@
     "version": "1.0.0"
   },
   "registry": {
-    "fingerprint": "fbfae9d957fcb1ad137e28f200413c4179167cc564687dfafd4d91d664eb6b81",
+    "fingerprint": "f35f529dd06acf46a550068bad759e880c7954654ef32b33eafa5785d9d5f709",
     "summary": {
-      "total": 3956,
+      "total": 3958,
       "builtin": 231,
-      "declarative": 3725,
+      "declarative": 3727,
       "by_kind": {
         "command": 41,
         "query": 190,
-        "resource": 3725
+        "resource": 3727
       },
       "by_stability": {
         "behaviorally_verified": 153,
         "experimental": 68,
-        "implemented": 3735
+        "implemented": 3737
       },
       "mcp_tools": 215,
-      "mcp_resources": 3782,
+      "mcp_resources": 3784,
       "http_routes": 219,
       "cli_commands": 128,
       "modules": 96,
@@ -97172,7 +97172,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 1223,
+        "capabilities": 1225,
         "capability_ids": []
       },
       {
@@ -97878,7 +97878,7 @@
     ]
   },
   "index": {
-    "fingerprint": "b4d1fc72dbcb70190eb6ab594d2f070cf8de1d08ed1119e905a6a10c9fbeaccc",
+    "fingerprint": "87012f3c7d6bf482890020313d90bb528367ec7e41fd0462c9d6fc87f271c508",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -97918,7 +97918,7 @@
       "gap": 5,
       "implementation": 54,
       "intent": 45,
-      "issue": 1223,
+      "issue": 1225,
       "knowledge": 186,
       "mesh-declaration": 1,
       "milestone": 117,
@@ -105515,7 +105515,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 132233
+        "bytes": 132599
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -122944,6 +122944,28 @@
         "bytes": 4732
       },
       {
+        "uri": "majordomus://issue/I4532",
+        "kind": "issue",
+        "identity": "I4532",
+        "title": "The hosted CI jobs of this repository are admitted to fourteen in flight, leaving six for OSCILLA",
+        "description": "Bound the GitHub-hosted jobs of this repository so that at most fourteen run at once across every run, leaving six of the account's twenty hosted runners to OSCILLA, as the owner decided: before any gate asks for a runner, a run's plan job counts the hosted jobs of this repository already in flight and yields, as the release-path yield does, when admitting its plan would pass fourteen; the bound is declared in the CI model, proved by a case, and never counts a job on a self-hosted runner.",
+        "path": ".ai/repo/project/issues/I4532.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 5853
+      },
+      {
+        "uri": "majordomus://issue/I4533",
+        "kind": "issue",
+        "identity": "I4533",
+        "title": "The published site stays under GitHub Pages' size limit",
+        "description": "Bound the tree scripts/pages publishes to gh-pages: a measured budget with margin under GitHub's 1 GB Pages limit (900 MB or lower) that scripts/pages check or scripts/site-check refuses with the three largest contributors named, and a decision on what leaves the tree or is compressed so the deploy fits; a case proves the bound.",
+        "path": ".ai/repo/project/issues/I4533.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3921
+      },
+      {
         "uri": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "identity": "a-brief-is-reconciled-not-transcribed",
@@ -138917,7 +138939,7 @@
       "identity": [
         "id"
       ],
-      "objects": 1223
+      "objects": 1225
     },
     {
       "name": "knowledge",
