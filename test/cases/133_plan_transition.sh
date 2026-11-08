@@ -111,7 +111,7 @@ L=.ai/local/state/ledger.jsonl
 [ "$(grep -c '"event":"plan_start"' "$L" 2>/dev/null || echo 0)" = 2 ] \
   || note "expected one plan_start per engine, got: $(grep -c '"event":"plan_start"' "$L" 2>/dev/null || echo 0)"
 # Every envelope key, in both lines, and no line missing one.
-for k in ts event head branch by issue; do
+for k in ts event head branch by pid cwd issue; do
   n="$(grep -c "\"$k\":" "$L" 2>/dev/null || echo 0)"
   [ "$n" = 2 ] || note "the ledger envelope is missing '$k' in one of the two lines"
 done
@@ -119,7 +119,7 @@ done
 # sequence, so the order is part of the contract and not a detail of whoever wrote last.
 for line in 1 2; do
   order="$(sed -n "${line}p" "$L" | jq -r 'keys_unsorted | join(",")')"
-  [ "$order" = "ts,event,head,branch,by,issue" ] \
+  [ "$order" = "ts,event,head,branch,by,pid,cwd,issue" ] \
     || note "ledger line $line composes its keys as [$order]"
 done
 

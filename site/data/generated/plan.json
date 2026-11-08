@@ -79116,8 +79116,12 @@
         "lib/common.sh",
         "lib/history.sh",
         "apps/majordomus-cli/src/ledger.rs",
+        "apps/majordomus-cli/src/intent_realization.rs",
         "share/events.yaml",
-        "test/cases/4568_a_ledger_line_names_its_writer.sh"
+        "test/cases/4570_a_ledger_line_names_its_writer.sh",
+        "test/cases/133_plan_transition.sh",
+        "test/cases/282_the_ledger_envelope_is_reserved.sh",
+        "test/run.sh"
       ],
       "non_scope": [
         "Which episode a line names (I4291, I4292, ADR 0164)",
@@ -79127,13 +79131,13 @@
       "objective": "Every line either ledger writer appends, mj_ledger_append in lib/common.sh and ledger::append in apps/majordomus-cli/src/ledger.rs, carries the writing process's pid, its working directory and, when one is attached, its mesh session id, as envelope keys both writers spell the same, so an unexpected write to a checkout can be traced to the process that made it.",
       "why": "On 2026-11-07 at 16:04:09Z something rewrote the policy stamps of AGENTS.md, CLAUDE.md and GEMINI.md in OSCILLA's primary checkout, left them uncommitted, and blocked OSCILLA's release publish until a peer restored them. Its ledger kept the event, `projections.updated` by majordomus/1.0.0-alpha.9 on main at 54423b1b with policy dd8cf37c46fe and targets 3, but no session field, because mj_open_session_id found no episode, and nothing else about the writer. Two sessions then spent an hour excluding suspects by timing: a reviewer's commit hook (it ran 1.0.0-alpha.9's doctor, and doctor does not write, as a disposable reproduction showed) and the 1.0.0 flip (17:11:44+0100, after the write). The writer is still unknown. I4291 and I4292 make a line name the caller's episode (ADR 0164); a process with no episode, such as a headless run, a test or a hook, still writes an anonymous line.",
       "current_state": "Measured at master d7fd9a36170: MJ_LEDGER_ENVELOPE_KEYS='ts event head branch by session' (lib/common.sh:1280); mj_ledger_append writes ts, event, head, branch, by and, when mj_open_session_id answers, session; ledger::append writes the same envelope. Neither writes a pid, a working directory or a mesh session. lib/update.sh:164 emits projections.updated through mj_ledger_append.",
-      "desired_state": "The envelope gains pid, cwd and mesh_session (the last only when the process is attached to a mesh session, from the variable the session start exports), declared once and written by both writers in the same order. Readers that print a line (lib/history.sh, majordomus history) show them. A payload that tries to carry one of them is refused as an envelope key, as today.",
+      "desired_state": "The envelope gains pid, cwd and mesh_session (the last only when the process names the mesh session it works for: MAJORDOMUS_OWNER_SESSION, else claude-code-$CLAUDE_CODE_SESSION_ID, the rule and validation `mesh who` reads an owner by; the session start exports no variable of its own), declared once and written by both writers in the same order. Readers that print a line (lib/history.sh, majordomus history) show them. A payload that tries to carry one of them is refused as an envelope key, as today.",
       "acceptance_criteria": [
-        "In a fixture repository, `majordomus update` run by the shell and a plan transition run by the executable each append a line that carries pid, cwd equal to the directory the process ran in, and no mesh_session; run with a mesh session exported, both lines carry it",
+        "In a fixture repository, a plan transition run by the shell and one run by the executable, each from a subdirectory, append a line that carries pid, cwd equal to the directory the process ran in, and no mesh_session; run with a mesh session exported, both lines carry it",
         "Both writers emit the envelope keys in one declared order, and a payload naming pid, cwd or mesh_session is refused"
       ],
       "validation": [
-        "bash test/run.sh 4568_a_ledger_line_names_its_writer",
+        "bash test/run.sh 4570_a_ledger_line_names_its_writer 133_plan_transition 282_the_ledger_envelope_is_reserved",
         "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib ledger::"
       ],
       "evidence_required": [
@@ -136815,6 +136819,12 @@
     {
       "level": "WARN",
       "code": "scope_conflict",
+      "subject": "I3930",
+      "message": "shares test/run.sh with I4561; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
       "subject": "I3931",
       "message": "shares .github/workflows/validate.yml with I3936; they may not run concurrently"
     },
@@ -138873,6 +138883,12 @@
     {
       "level": "WARN",
       "code": "scope_conflict",
+      "subject": "I4325",
+      "message": "shares apps/majordomus-cli/src/intent_realization.rs with I4561; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
       "subject": "I4327",
       "message": "shares apps/majordomus-cli/src/capability/builtin with I4329; they may not run concurrently"
     },
@@ -140289,6 +140305,12 @@
     {
       "level": "WARN",
       "code": "scope_conflict",
+      "subject": "I4488",
+      "message": "shares test/run.sh with I4561; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
       "subject": "I4493",
       "message": "shares apps/majordomus-cli/src/capability/readings.rs with I4496; they may not run concurrently"
     },
@@ -140327,7 +140349,7 @@
     {
       "level": "WARN",
       "code": "scope_conflict",
-      "count": 9250,
+      "count": 9253,
       "examples": [
         {
           "level": "WARN",

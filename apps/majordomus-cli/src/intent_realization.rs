@@ -1702,6 +1702,9 @@ mod tests {
             branch: "feature/I0001-x".into(),
             by: "majordomus/0".into(),
             session: session.map(str::to_string),
+            pid: None,
+            cwd: None,
+            mesh_session: None,
             payload: payload
                 .as_object()
                 .unwrap()

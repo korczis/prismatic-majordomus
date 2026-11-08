@@ -163,6 +163,9 @@ mj_history_render() {
         else if (e == "question.resolved")   detail = field(s, "question") " -> " field(s, "answer")
         else if (e == "projections.updated") detail = "targets=" field(s, "targets")
         else if (e == "ledger.rotated")      detail = "archived=" field(s, "archived") " kept=" field(s, "kept")
+        # the writer, when the line names one (I4561): its pid, and its mesh session
+        w = field(s, "pid"); if (w != "") detail = detail (detail == "" ? "" : " ") "pid=" w
+        w = field(s, "mesh_session"); if (w != "") detail = detail " mesh=" w
         printf "%s  %-19s %-22s %-8s %s\n", ts, e, (t == "" ? "-" : t), substr(head, 1, 7), detail
       }
       if (n == 0 && json != 1) print "no matching events"

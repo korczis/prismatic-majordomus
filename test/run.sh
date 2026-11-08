@@ -90,7 +90,9 @@ unset MAJORDOMUS_HTTP_HOST
 # lifecycle adapters' own column (lib/capture.sh), so a provider added there is dropped here
 # too. A case that needs a provider session sets one itself, as cases 111 and 3049 do.
 # shellcheck source=../lib/capture.sh
-for mj_provider_var in MAJORDOMUS_PROVIDER_SESSION MJ_SESSION_KEY \
+# MAJORDOMUS_OWNER_SESSION too: a ledger line names it as its writer's mesh session (I4561),
+# and a suite run by a launcher that set it would stamp every case's lines.
+for mj_provider_var in MAJORDOMUS_PROVIDER_SESSION MJ_SESSION_KEY MAJORDOMUS_OWNER_SESSION \
     $( (. "$ROOT/lib/capture.sh" && mj_lifecycle_session_vars) 2>/dev/null); do
   unset "$mj_provider_var"
 done

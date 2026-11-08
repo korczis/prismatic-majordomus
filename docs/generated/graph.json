@@ -80557,8 +80557,12 @@
             "lib/common.sh",
             "lib/history.sh",
             "apps/majordomus-cli/src/ledger.rs",
+            "apps/majordomus-cli/src/intent_realization.rs",
             "share/events.yaml",
-            "test/cases/4568_a_ledger_line_names_its_writer.sh"
+            "test/cases/4570_a_ledger_line_names_its_writer.sh",
+            "test/cases/133_plan_transition.sh",
+            "test/cases/282_the_ledger_envelope_is_reserved.sh",
+            "test/run.sh"
           ],
           "serves": [
             "a-session-record-says-what-it-served#checkpoints-name-their-episode"
@@ -80566,7 +80570,7 @@
           "slug": "a-ledger-event-names-its-writer",
           "updated_at": "2026-11-08",
           "validation": [
-            "bash test/run.sh 4568_a_ledger_line_names_its_writer",
+            "bash test/run.sh 4570_a_ledger_line_names_its_writer 133_plan_transition 282_the_ledger_envelope_is_reserved",
             "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib ledger::"
           ]
         }
@@ -107617,6 +107621,13 @@
         "label": "test/cases/4563_the_live_site_is_probed_in_a_real_browser.sh",
         "route": "/cockpit/objects/test/test-cases-4563-the-live-site-is-probed-in-a-real-browser-sh",
         "source": "test/cases/4563_the_live_site_is_probed_in_a_real_browser.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/4570_a_ledger_line_names_its_writer.sh",
+        "kind": "test",
+        "label": "test/cases/4570_a_ledger_line_names_its_writer.sh",
+        "route": "/cockpit/objects/test/test-cases-4570-a-ledger-line-names-its-writer-sh",
+        "source": "test/cases/4570_a_ledger_line_names_its_writer.sh"
       },
       {
         "id": "majordomus://test/test/cases/45_github_projection.sh",
@@ -156739,6 +156750,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/4570_a_ledger_line_names_its_writer.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/45_github_projection.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -161865,8 +161881,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4423,
-      "edges": 10039,
+      "nodes": 4424,
+      "edges": 10040,
       "acyclic": false,
       "truncated": false
     }

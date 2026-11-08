@@ -8,7 +8,7 @@ This page is the index. Each milestone's issues, and the findings about them, ar
 its own under [`plan-status/`](plan-status/), named by the milestone, so the plan grows by pages
 and no one page grows with it.
 
-Generated from canonical inputs `97171f4d1ed0`.
+Generated from canonical inputs `7930fac905c2`.
 
 ## Milestones
 
@@ -494,7 +494,7 @@ Generated from canonical inputs `97171f4d1ed0`.
 
 ## Findings
 
-9288 finding(s), each on the page of the milestone its subject is or belongs to:
+9291 finding(s), each on the page of the milestone its subject is or belongs to:
 
 | milestone | findings |
 |---|---|
@@ -523,10 +523,10 @@ Generated from canonical inputs `97171f4d1ed0`.
 | [`an-outcome-becomes-a-reviewed-plan`](plan-status/an-outcome-becomes-a-reviewed-plan.md) | 15 |
 | [`an-unmet-criterion-is-drafted-into-work`](plan-status/an-unmet-criterion-is-drafted-into-work.md) | 125 |
 | [`architecture-is-enforced`](plan-status/architecture-is-enforced.md) | 2 |
-| [`automation`](plan-status/automation.md) | 59 |
+| [`automation`](plan-status/automation.md) | 60 |
 | [`campaigns-are-read-as-provenance`](plan-status/campaigns-are-read-as-provenance.md) | 21 |
 | [`capability-graph`](plan-status/capability-graph.md) | 13 |
-| [`ci-critical-path`](plan-status/ci-critical-path.md) | 336 |
+| [`ci-critical-path`](plan-status/ci-critical-path.md) | 337 |
 | [`command-and-deployment-criteria-are-judged`](plan-status/command-and-deployment-criteria-are-judged.md) | 5 |
 | [`delivery-economics-are-measured-over-declared-windows`](plan-status/delivery-economics-are-measured-over-declared-windows.md) | 1 |
 | [`derived-data-integrity`](plan-status/derived-data-integrity.md) | 26 |
@@ -558,7 +558,7 @@ Generated from canonical inputs `97171f4d1ed0`.
 | [`runtime-trust`](plan-status/runtime-trust.md) | 28 |
 | [`safe-self-update`](plan-status/safe-self-update.md) | 476 |
 | [`surfaces-never-disagree`](plan-status/surfaces-never-disagree.md) | 331 |
-| [`test-evidence`](plan-status/test-evidence.md) | 25 |
+| [`test-evidence`](plan-status/test-evidence.md) | 26 |
 | [`the-corpus-is-registered-before-it-runs`](plan-status/the-corpus-is-registered-before-it-runs.md) | 5 |
 | [`the-mesh-works-out-of-the-box`](plan-status/the-mesh-works-out-of-the-box.md) | 206 |
 | [`the-plan-says-what-a-fix-unblocks`](plan-status/the-plan-says-what-a-fix-unblocks.md) | 25 |

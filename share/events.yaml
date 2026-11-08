@@ -18,7 +18,9 @@
 #   public       true when the event is part of the documented record a user reads back
 #
 # Every line also carries the envelope, which is computed and never authored:
-# ts, event, head, branch, by.
+# ts, event, head, branch, by, then session when an episode is open, then the writing
+# process's pid and cwd, then mesh_session when it names one (I4561): the order
+# MJ_LEDGER_ENVELOPE_KEYS in lib/common.sh declares and ledger::ENVELOPE repeats.
 version: 1
 
 events:

@@ -376,6 +376,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I3930` | shares .github/workflows/validate.yml with I4357; they may not run concurrently |
 | WARN | `scope_conflict` | `I3930` | shares .ai/repo/ci/suite-durations.tsv with I4468; they may not run concurrently |
 | WARN | `scope_conflict` | `I3930` | shares test/run.sh with I4488; they may not run concurrently |
+| WARN | `scope_conflict` | `I3930` | shares test/run.sh with I4561; they may not run concurrently |
 | WARN | `scope_conflict` | `I3931` | shares .github/workflows/validate.yml with I3936; they may not run concurrently |
 | WARN | `scope_conflict` | `I3931` | shares .github/workflows/validate.yml with I3973; they may not run concurrently |
 | WARN | `scope_conflict` | `I3931` | shares .github/workflows/validate.yml with I4347; they may not run concurrently |

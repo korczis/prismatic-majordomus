@@ -1277,7 +1277,32 @@ mj_event_requires() {
 # ending in a reserved name (`provider_session`, `session_path`, `ahead`) is not a
 # collision; mj_json_esc turns a quote inside a value into `\"`, so a reserved name appearing
 # inside a string is not one either.
-MJ_LEDGER_ENVELOPE_KEYS='ts event head branch by session'
+#
+# The last three name the process that wrote the line (I4561): its pid, the directory it ran
+# in and, when it says which, the mesh session it works for. On 2026-11-07 a line in another
+# repository's ledger recorded `projections.updated` with no session and nothing else about
+# its writer, and two sessions spent an hour excluding suspects by timing. A pid and a
+# directory are what the process reports, not an authentication; they are what makes an
+# unexpected write traceable at all.
+MJ_LEDGER_ENVELOPE_KEYS='ts event head branch by session pid cwd mesh_session'
+
+# The mesh session this process works for, or nothing: MAJORDOMUS_OWNER_SESSION when a
+# launcher stated it, else the Claude Code session the mesh knows as claude-code-<id>, the
+# order and spelling `mesh who` reads a process's owner in (apps/majordomus-cli/src/mesh/who.rs)
+# and the validation it applies (offload/owner.rs owner_value: trimmed, at most 128
+# characters of [A-Za-z0-9-_.:@/]). A value outside that is no session rather than a guess.
+mj_ledger_mesh_session() {
+  local v
+  if [ -n "${MAJORDOMUS_OWNER_SESSION:-}" ]; then v="$MAJORDOMUS_OWNER_SESSION"
+  elif [ -n "${CLAUDE_CODE_SESSION_ID:-}" ]; then v="$CLAUDE_CODE_SESSION_ID"
+    v="${v#"${v%%[![:space:]]*}"}"; v="${v%"${v##*[![:space:]]}"}"
+    [ -n "$v" ] && v="claude-code-$v"
+  else return 0; fi
+  v="${v#"${v%%[![:space:]]*}"}"; v="${v%"${v##*[![:space:]]}"}"
+  case "$v" in ''|*[!A-Za-z0-9._:@/-]*) return 0 ;; esac
+  [ "${#v}" -le 128 ] || return 0
+  printf '%s' "$v"
+}
 
 # mj_ledger_append event 'extra json fields without braces' [resolved-session]
 # A third argument, including empty, reuses attribution prepared before a record was written.
@@ -1287,7 +1312,7 @@ MJ_LEDGER_ENVELOPE_KEYS='ts event head branch by session'
 # overwrites the envelope it is being wrapped in, is a bug in Majordomus and not a fact
 # about the repository being supervised.
 mj_ledger_append() {
-  local ev="$1" extra="${2:-}" line sid k
+  local ev="$1" extra="${2:-}" line sid msid k
   mj_events_load
   mj_event_known "$ev" || mj_die "$MJ_EX_INTERNAL" \
     "unregistered event '$ev'; declare it in share/events.yaml or use one of: $(mj_event_ids | tr '\n' ' ')"
@@ -1305,6 +1330,11 @@ mj_ledger_append() {
   line="{\"ts\":\"$(mj_now)\",\"event\":\"$ev\",\"head\":\"$(mj_git_head)\",\"branch\":\"$(mj_json_esc "$(mj_git_branch)")\",\"by\":\"majordomus/$MJ_VERSION\""
   if [ "$#" -ge 3 ]; then sid="$3"; else sid="$(mj_open_session_id)"; fi
   [ -n "$sid" ] && line="$line,\"session\":\"$sid\""
+  # $$ is this invocation's pid even inside a subshell; pwd -P is the physical directory,
+  # the spelling std::env::current_dir answers in the other writer
+  line="$line,\"pid\":\"$$\",\"cwd\":\"$(mj_json_esc "$(pwd -P)")\""
+  msid="$(mj_ledger_mesh_session)"
+  [ -n "$msid" ] && line="$line,\"mesh_session\":\"$msid\""
   [ -n "$extra" ] && line="$line,$extra"
   # the local half is never tracked, so a second worktree of the same repository starts
   # without it; the first write creates it
