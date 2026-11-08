@@ -45,4 +45,17 @@ evidence_required:
   - "a_live_exchange_by_route"
 serves: []
 created_at: 2026-11-07
-updated_at: 2026-11-07
+updated_at: 2026-11-08T09:44:49Z
+evidence:
+  - covers: "a_live_exchange_by_route"
+    type: manual
+    command: "majordomus mesh state --full --format json | jq '.. | objects | select(.key? == \"641bdb94dae9f62268abf5ca73c11e15-21a7070542d541d9-a3463d8b67dff869/r-60970e4c34ea\")'"
+    result: "2026-11-08, I4553 binary b87ff1a851c on 127.0.0.1:9377: session claude-code-cc2bfcf4-5bc1-4329-8dd3-efdf9b9f267b requested review r-60970e4c34ea for_session claude-code-8e226cf8-e383-4936-afd0-7cd6f4227ccd at 09:43:33Z; the Written answer routed provider-socket uds:/tmp/cc-socks/63415.sock and the requester woke it once through that socket; it answered commented at 09:43:53Z, the answer routed provider-socket uds:/tmp/cc-socks/43897.sock, and it woke the requester once through that; neither read mesh state in a loop. Earlier r-c7289e76f7e7 for a session whose MCP was attached to another repository answered unavailable with its reason (criterion 1's second case)."
+    commit: b87ff1a851c7bc8344ed4bca0f75d43cf06ceba8
+    recorded_at: 2026-11-08T09:44:26Z
+  - covers: "review_route_unit_tests"
+    type: test
+    command: "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --lib mesh:: && cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --test reasoning_mesh"
+    result: "2026-11-08 on lundra, the staged tree committed as b87ff1a851c: 206 lib tests (mesh::cooperation, mesh::journal, peers) and reasoning_mesh's a_review_for_a_session_answers_the_route_that_wakes_it_and_back pass; doc tests and clippy -D warnings pass."
+    commit: b87ff1a851c7bc8344ed4bca0f75d43cf06ceba8
+    recorded_at: 2026-11-08T09:44:49Z
