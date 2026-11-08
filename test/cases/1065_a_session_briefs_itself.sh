@@ -10,7 +10,8 @@
 # written for a policy that lacks the key. And `majordomus brief` answers its one line,
 # its keep-awake text and its multi-line form with every section present, from a process
 # that says it composed the brief itself because no server serves the checkout. The mod's
-# own behaviour is the distribution's test: `claude plugin test share/mods/claude-code/majordomus-brief`.
+# own behaviour is the distribution's test: `claude plugin test share/mods/claude-code/majordomus-brief`,
+# which case 4250 runs where `claude` is installed.
 . "$ROOT/test/lib.sh"
 RB="$(rust_bin)" || rust_bin_exit $?
 MAJORDOMUS_SHARE="$ROOT/share"; export MAJORDOMUS_SHARE
@@ -42,6 +43,9 @@ done
 grep -qF 'Written by `majordomus capture install`' "$MOD/hooks/register.ts" \
   || fail 'the installed hooks module carries no marker, so the next install cannot own it'
 grep -qF '$.ui.status' "$MOD/hooks/register.ts" || fail 'the installed module shows no status line'
+# what is installed reports only a changed fact (I4250); case 4250 runs the rule's own test
+grep -qF 'fingerprint(b) !== fingerprint(told)' "$MOD/hooks/register.ts" \
+  || fail 'the installed module self-reports whether or not anything changed'
 expect_no_grep 'majordomus-brief' .claude/settings.json
 
 # ---------------------------------------------------------------- idempotent
@@ -67,6 +71,8 @@ LAST_OUT="$(brief --line)"
 expect_grep '\| peers 0/1b \| mesh off \|'
 LAST_OUT="$(brief --keep-awake)"
 expect_grep '^Keep yourself awake and reporting \(ADR 0136\): every 7 minutes'
+expect_grep 'only when a fact in it changed since your last report'
+expect_grep 'unless the majordomus-brief mod is loaded'
 expect_grep '^Now: '
 LAST_OUT="$(brief)"
 for section in session peers mesh integration derive; do
