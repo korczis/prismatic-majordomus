@@ -30,7 +30,8 @@
 //!
 //! Across linked runtimes two claims made before they sync are both admitted, and the fold
 //! then names one winner on every runtime (ADR 0067); the loser's claim reads `conflicted`
-//! on `mesh.state` and its holder must allocate again. Fencing is
+//! on `mesh.state` and its holder must allocate again, which answers a number past it, because
+//! the survey counts a conflicted reservation as spent. Fencing is
 //! `mesh-journal-converges`' work, not this capability's. The reservation lives while its
 //! session does; once the record carrying the number is pushed, every ref survey sees it and
 //! the claim may be released with `majordomus mesh release <key>`.
@@ -538,6 +539,81 @@ mod tests {
         assert!(
             e.to_string().contains("every case from 10 to 11 is held"),
             "{e}"
+        );
+    }
+
+    /// Across linked runtimes (criterion 3): two runtimes that have not synced each admit the
+    /// same number; once they sync, both folds name the same single winner and the loser's
+    /// claim reads `conflicted` naming it; the loser allocates again past the number on its
+    /// own runtime, and the winner's runtime refuses the number to anybody else.
+    #[test]
+    fn across_linked_runtimes_the_fold_names_one_winner_and_the_loser_allocates_again() {
+        use crate::mesh::state::ClaimState;
+        let net = std::sync::Arc::new(crate::mesh::testing::Net::default());
+        let here = crate::mesh::testing::runtime(&net, "here:1");
+        let there = crate::mesh::testing::runtime(&net, "there:1");
+        // before they sync, each runtime admits 50: neither has seen the other's claim
+        let (a, _, skipped_a) = reserve(&here, &session("a"), IdKind::Case, 50, 1).unwrap();
+        let (b, _, skipped_b) = reserve(&there, &session("b"), IdKind::Case, 50, 1).unwrap();
+        assert_eq!((a, b), (50, 50));
+        assert!(skipped_a.is_empty() && skipped_b.is_empty());
+
+        there.journal().beat_own();
+        let key = here.dial(&["there:1".into()]).expect("linked");
+        for _ in 0..2 {
+            here.journal().beat_own();
+            there.journal().beat_own();
+            here.sync_with(&key).expect("synced");
+        }
+        let (at_here, at_there) = (here.state(), there.state());
+        assert_eq!(
+            at_here.digest, at_there.digest,
+            "both runtimes fold one state"
+        );
+        let on_50: Vec<_> = at_here
+            .claims
+            .iter()
+            .filter(|c| c.scope == [IdKind::Case.key(50)])
+            .collect();
+        let held: Vec<_> = on_50
+            .iter()
+            .filter(|c| c.state == ClaimState::Held)
+            .collect();
+        let lost: Vec<_> = on_50
+            .iter()
+            .filter(|c| matches!(c.state, ClaimState::Conflicted(_)))
+            .collect();
+        assert_eq!(
+            (held.len(), lost.len()),
+            (1, 1),
+            "one winner, one named loser"
+        );
+        assert_eq!(lost[0].state, ClaimState::Conflicted(held[0].key.clone()));
+
+        // the loser allocates again on its own runtime: the survey's mesh source holds 50,
+        // so the candidate is 51, and 51 is admitted
+        let here_lost = lost[0].session.ends_with("/a");
+        let (loser, loser_session, winner) = if here_lost {
+            (&here, "a", &there)
+        } else {
+            (&there, "b", &here)
+        };
+        let repo = crate::synthetic::SyntheticRepository::small().unwrap();
+        let mesh = survey(repo.root(), IdKind::Case, loser)
+            .into_iter()
+            .find(|s| s.source == "mesh")
+            .unwrap();
+        assert_eq!(mesh.highest, Some(50), "{}", mesh.detail);
+        let (again, _, _) = reserve(loser, &session(loser_session), IdKind::Case, 51, 1).unwrap();
+        assert_eq!(again, 51);
+
+        // and nobody else is handed 50 on the winner's runtime: it is skipped, holder named
+        let (n, _, skipped) = reserve(winner, &session("c"), IdKind::Case, 50, 3).unwrap();
+        assert!(n > 50, "{n}");
+        assert!(skipped.iter().all(|s| s.number == 50), "{skipped:?}");
+        assert!(
+            skipped.iter().any(|s| s.holder == held[0].session),
+            "the winner is named: {skipped:?}"
         );
     }
 

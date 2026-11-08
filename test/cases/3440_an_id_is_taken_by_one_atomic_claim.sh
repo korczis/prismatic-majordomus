@@ -11,7 +11,8 @@
 #      ref), and the answer names the sources it surveyed;
 #   3. a second allocation of a kind is one past the first: the journal's reservation is spent;
 #   4. six allocations at once, from six sessions, answer six different numbers;
-#   5. a number already claimed on its key is spent for every later allocation;
+#   5. a number already claimed on its key is spent for every later allocation, and a case or
+#      an issue authored uncommitted in a sibling worktree is spent too;
 #   6. the MCP tool majordomus_plan_allocate answers from the same sources;
 #   7. nothing in the repository is written.
 . "$ROOT/test/lib.sh"
@@ -88,6 +89,20 @@ got="$(for n in 1 2 3 4 5 6; do jq -r '.value' "$S/par.$n"; done | LC_ALL=C sort
 alloc case --session d
 jq -e '.value == "61" and (.sources[] | select(.source == "mesh") | .highest == 60)' "$S/out" >/dev/null \
   || { echo "    a number claimed on its key was not spent:"; cat "$S/out"; exit 1; }
+
+# ---------------------------------------------------------------- 5b. a sibling worktree's file is spent
+# a case and an issue authored in a linked worktree and not committed anywhere are real claims
+git -C "$R" worktree add -q -b sibling "$T/sibling" >/dev/null 2>&1 \
+  || { echo "    could not add a sibling worktree"; exit 1; }
+mkdir -p "$T/sibling/test/cases" "$T/sibling/.ai/repo/project/issues"
+printf '' > "$T/sibling/test/cases/70_uncommitted.sh"
+printf 'id: I0020\n' > "$T/sibling/.ai/repo/project/issues/I0020.yaml"
+alloc case --session f
+jq -e '.value == "71" and (.sources[] | select(.source == "worktrees") | .highest == 70)' "$S/out" >/dev/null \
+  || { echo "    a case authored in a sibling worktree was handed out again:"; cat "$S/out"; exit 1; }
+alloc issue --session f
+jq -e '.value == "I0021" and (.sources[] | select(.source == "worktrees") | .highest == 20)' "$S/out" >/dev/null \
+  || { echo "    an issue authored in a sibling worktree was handed out again:"; cat "$S/out"; exit 1; }
 
 # ---------------------------------------------------------------- 6. the same capability over MCP
 # plan.allocate is the capability `mesh allocate` projects; a client calling its tool is answered
