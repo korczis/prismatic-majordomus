@@ -46,6 +46,16 @@
 //! cannot name is one nobody can audit afterwards. The trail is one file under the common
 //! git directory ([`super::events_path`]), so every worktree of the repository writes and
 //! reads the same one.
+//!
+//! # The state on origin
+//!
+//! A clone's trail is its own, so the record that gates every executor — its verified
+//! landings, the halt an unverified one leaves and a person's acknowledgement of it — is also
+//! appended to a ref on origin and read back by every clone ([`events`], [`halted_by`]), and
+//! the lease is also taken on origin, renewed before every act ([`IntegrationLease::holds`]):
+//! a takeover machine is admitted with the same record and stopped by the same halt, and a
+//! holder that slept past its expiry while another clone took over lands nothing (I3911,
+//! [`super::exclusive::OriginLease`]).
 
 use std::collections::BTreeMap;
 use std::fs;
@@ -348,6 +358,9 @@ pub struct IntegrationLease {
     /// The repository-wide claim taken with it, released after the lease
     /// ([`super::exclusive`]); `None` where only this clone is guarded.
     mesh: Option<super::exclusive::MeshClaim>,
+    /// The lease on origin taken with it, renewed before every write to the forge and
+    /// released after the clone's lease (I3911); `None` where the repository has no origin.
+    origin: Option<super::exclusive::OriginLease>,
 }
 
 /// Who holds the lease.
@@ -555,6 +568,18 @@ impl IntegrationLease {
             }
             // a path that names another file by now is opened again
             if names_file(&path, &file) {
+                // the lease on origin, which another clone's executor may hold (I3911); the
+                // record it gates on is read from there before this one acts
+                let origin = match super::exclusive::OriginLease::take(root, base) {
+                    Ok(origin) => origin,
+                    Err(e) => {
+                        let _ = fs::remove_file(&path);
+                        return Err(e);
+                    }
+                };
+                if origin.is_some() {
+                    let _ = super::exclusive::sync_trail(root);
+                }
                 let taken = IntegrationEvent {
                     detail: token.clone(),
                     ..IntegrationEvent::of(IntegrationAction::LeaseAcquired)
@@ -578,6 +603,7 @@ impl IntegrationLease {
                     root: root.to_path_buf(),
                     file,
                     mesh,
+                    origin,
                 });
             }
         }
@@ -604,7 +630,12 @@ impl IntegrationLease {
                 held.trim()
             ));
         }
-        write_record(&self.file, &token).map_err(|e| format!("{}: {e}", self.path.display()))
+        write_record(&self.file, &token).map_err(|e| format!("{}: {e}", self.path.display()))?;
+        drop(token);
+        // the lease on origin is pushed again only once half its ttl is gone (I3911)
+        self.origin
+            .as_ref()
+            .map_or(Ok(()), super::exclusive::OriginLease::renew_if_due)
     }
 
     /// The executor advanced its queue, as `phase` says (I3991): the record is rewritten with
@@ -635,6 +666,13 @@ impl IntegrationLease {
     /// the forge: its mesh claim still holds ([`super::exclusive::MeshClaim::holds`]). A lease
     /// that guards this clone alone is held for as long as its `flock` is.
     pub(crate) fn holds(&self, act: &str) -> Result<(), String> {
+        // renewed on origin immediately before every act: a holder another clone took the
+        // lease over from finds its renewal refused and acts on nothing (I3911)
+        if let Some(origin) = &self.origin {
+            origin
+                .renew()
+                .map_err(|e| format!("{e}; nothing is done ({act})"))?;
+        }
         self.mesh.as_ref().map_or(Ok(()), |claim| claim.holds(act))
     }
 
@@ -915,6 +953,20 @@ impl IntegrationAction {
     }
 }
 
+impl IntegrationAction {
+    /// Whether the event is part of the record every clone's executor is gated by, and so kept
+    /// on origin (I3911): a verified landing, one that could not be verified (the halt), and a
+    /// person's acknowledgement of it.
+    pub fn gates_the_executor(self) -> bool {
+        matches!(
+            self,
+            IntegrationAction::MergeSucceeded
+                | IntegrationAction::VerificationFailed
+                | IntegrationAction::FailureAcknowledged
+        )
+    }
+}
+
 impl std::fmt::Display for IntegrationAction {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.pad(self.as_str())
@@ -1131,6 +1183,20 @@ pub fn record(root: &Path, mut event: IntegrationEvent) -> Result<IntegrationEve
                 .and_then(|mut f| writeln!(f, "{line}"))
         })
         .map_err(at(&path))?;
+    if event.action.gates_the_executor() && super::exclusive::has_origin(root) {
+        // the record every clone's executor is gated by is kept on origin (I3911); the act
+        // is already taken, so a push that fails is said and the clone's trail still holds it
+        let published = serde_json::to_string(&event)
+            .map_err(|e| e.to_string())
+            .and_then(|line| super::exclusive::publish_trail_line(root, &line));
+        if let Err(e) = published {
+            eprintln!(
+                "majordomus: {} is on this clone's trail but not on origin's ({}): {e}",
+                event.action,
+                super::exclusive::TRAIL_REF
+            );
+        }
+    }
     Ok(event)
 }
 
@@ -1163,15 +1229,73 @@ fn injected_failure() -> Option<String> {
 
 /// Every recorded event of the repository, oldest first; nothing when the trail cannot be
 /// found.
+///
+/// The clone's own trail, and the record kept on origin ([`super::exclusive::TRAIL_REF`]) as
+/// this clone last fetched it, each event once: a clone that never ran an executor reads the
+/// verified landings and the halt another clone wrote (I3911). A clone that never fetched it
+/// fetches it once per process; the executor fetches it again as it takes its lease and before
+/// it reads the halt ([`halted_by`]).
 pub fn events(root: &Path) -> Vec<IntegrationEvent> {
     let Ok(path) = events_path(root) else {
         return Vec::new();
     };
-    fs::read_to_string(path)
+    let local: Vec<IntegrationEvent> = fs::read_to_string(path)
         .unwrap_or_default()
         .lines()
         .filter_map(|l| serde_json::from_str(l).ok())
-        .collect()
+        .collect();
+    let mirrored = super::exclusive::has_trail_mirror(root)
+        || (first_read(root) && super::exclusive::sync_trail(root).unwrap_or(false));
+    let origin: Vec<IntegrationEvent> = if mirrored {
+        super::exclusive::mirrored_trail_lines(root)
+            .iter()
+            .filter_map(|l| serde_json::from_str(l).ok())
+            .collect()
+    } else {
+        Vec::new()
+    };
+    with_origin(local, origin)
+}
+
+/// Whether this process reads the trail of `root` for the first time.
+fn first_read(root: &Path) -> bool {
+    static READ: std::sync::Mutex<Vec<PathBuf>> = std::sync::Mutex::new(Vec::new());
+    let mut read = lock(&READ);
+    let root = root.to_path_buf();
+    if read.contains(&root) {
+        return false;
+    }
+    read.push(root);
+    true
+}
+
+/// The record kept on origin, in its own order, with every event of the clone's trail it does
+/// not hold merged in by time; the clone's trail unchanged when origin holds nothing.
+fn with_origin(
+    local: Vec<IntegrationEvent>,
+    origin: Vec<IntegrationEvent>,
+) -> Vec<IntegrationEvent> {
+    if origin.is_empty() {
+        return local;
+    }
+    let line = |e: &IntegrationEvent| serde_json::to_string(e).unwrap_or_default();
+    let kept: std::collections::BTreeSet<String> = origin.iter().map(line).collect();
+    // both keep their own order — origin's is the order its commits were pushed in, whatever
+    // the clocks of the clones that wrote them said — and a clone's own event goes before
+    // origin's only when it is strictly older
+    let mut mine = local
+        .into_iter()
+        .filter(|e| !kept.contains(&line(e)))
+        .peekable();
+    let mut all = Vec::new();
+    for e in origin {
+        while let Some(older) = mine.next_if(|m| m.at < e.at) {
+            all.push(older);
+        }
+        all.push(e);
+    }
+    all.extend(mine);
+    all
 }
 
 pub(crate) fn event(
@@ -1786,7 +1910,10 @@ pub fn reconcile(
 
 /// The merge that stops every drain until a person acknowledges it (owner decision D7):
 /// the last `verification_failed` of the trail, unless a `failure_acknowledged` follows it.
+///
+/// The halt is read from origin as well (I3911): a halt another clone left stops this one.
 pub fn halted_by(root: &Path) -> Option<(Option<u64>, String)> {
+    let _ = super::exclusive::sync_trail(root);
     events(root)
         .into_iter()
         .rev()
@@ -3943,7 +4070,7 @@ mod trunk_red_tests {
     };
 
     /// A queue of `ready` pull requests, numbered as given, each `ready` in that rank order.
-    fn queue_of(ready: &[u64]) -> IntegrationQueue {
+    pub(super) fn queue_of(ready: &[u64]) -> IntegrationQueue {
         let pull_requests = ready
             .iter()
             .filter_map(|n| {
@@ -4030,5 +4157,211 @@ mod trunk_red_tests {
             check_runs_path("o/r", "abc", "a b/c"),
             "repos/o/r/commits/abc/check-runs?check_name=a%20b%2Fc&filter=latest"
         );
+    }
+}
+
+#[cfg(test)]
+mod state_on_origin_tests {
+    //! I3911: the executor's record, its halt and its lease are read from origin, so any clone
+    //! continues the executor and a holder that was taken over lands nothing.
+
+    use super::*;
+    use crate::integration::exclusive::OriginLease;
+
+    fn git(dir: &Path, args: &[&str]) {
+        let out = Command::new("git")
+            .arg("-C")
+            .arg(dir)
+            .args(args)
+            .output()
+            .expect("git runs");
+        assert!(
+            out.status.success(),
+            "git {args:?}: {}",
+            String::from_utf8_lossy(&out.stderr)
+        );
+    }
+
+    /// A bare origin and two clones of it, as two machines have them.
+    fn clones() -> (tempfile::TempDir, PathBuf, PathBuf) {
+        let tmp = tempfile::tempdir().unwrap();
+        let base = tmp.path().canonicalize().unwrap();
+        git(
+            &base,
+            &["init", "-q", "--bare", "-b", "master", "origin.git"],
+        );
+        git(&base, &["clone", "-q", "origin.git", "a"]);
+        git(&base, &["clone", "-q", "origin.git", "b"]);
+        (tmp, base.join("a"), base.join("b"))
+    }
+
+    fn of(action: IntegrationAction, pr: u64, detail: &str) -> IntegrationEvent {
+        IntegrationEvent {
+            pr: Some(pr),
+            detail: detail.into(),
+            ..IntegrationEvent::of(action)
+        }
+    }
+
+    /// Criterion 1: a clone with no local trail reads the verified count and the halt from
+    /// origin, and the acknowledgement it records there releases the clone that halted.
+    #[test]
+    fn state_on_origin_a_clone_with_no_local_trail_reads_the_record_and_the_halt() {
+        let (_tmp, a, b) = clones();
+        for pr in 1..=ROLLOUT_MERGES_BEFORE_CONTINUOUS as u64 {
+            record(&a, of(IntegrationAction::MergeSucceeded, pr, "landed")).unwrap();
+        }
+        record(&a, of(IntegrationAction::Idle, 0, "a clone's own word")).unwrap();
+        assert!(
+            !events_path(&b).unwrap().exists(),
+            "the second clone has no trail of its own"
+        );
+        let seen = events(&b);
+        assert_eq!(
+            verified_merges_since_failure(&seen),
+            ROLLOUT_MERGES_BEFORE_CONTINUOUS
+        );
+        assert_eq!(continuous_refused(&seen), None, "the takeover is admitted");
+        assert!(
+            seen.iter().all(|e| e.action != IntegrationAction::Idle),
+            "only the record that gates is on origin"
+        );
+        assert!(halted_by(&b).is_none());
+
+        record(
+            &a,
+            of(IntegrationAction::VerificationFailed, 9, "not on master"),
+        )
+        .unwrap();
+        let (pr, why) = halted_by(&b).expect("the halt left on one clone stops the other");
+        assert_eq!((pr, why.as_str()), (Some(9), "not on master"));
+        assert!(continuous_refused(&events(&b)).is_some());
+
+        acknowledge_failure(&b, "a person on b").unwrap();
+        assert!(
+            halted_by(&a).is_none(),
+            "an acknowledgement on one clone releases the other"
+        );
+        // each event once, though the writing clone holds it twice
+        let merged = events(&a)
+            .iter()
+            .filter(|e| e.action == IntegrationAction::MergeSucceeded)
+            .count();
+        assert_eq!(merged, ROLLOUT_MERGES_BEFORE_CONTINUOUS);
+    }
+
+    /// Origin's order is the order its events were pushed in, whatever the clocks of the clones
+    /// that wrote them said; a clone's own events are merged in by time.
+    #[test]
+    fn state_on_origin_keeps_its_order_across_skewed_clocks() {
+        let at = |action, at: &str| IntegrationEvent {
+            at: at.into(),
+            ..IntegrationEvent::of(action)
+        };
+        let origin = vec![
+            at(
+                IntegrationAction::VerificationFailed,
+                "2026-11-08T10:00:00Z",
+            ),
+            // acknowledged on a machine whose clock is behind
+            at(
+                IntegrationAction::FailureAcknowledged,
+                "2026-11-08T09:59:00Z",
+            ),
+        ];
+        let local = vec![
+            at(IntegrationAction::Observed, "2026-11-08T09:00:00Z"),
+            origin[0].clone(),
+            at(IntegrationAction::Idle, "2026-11-08T11:00:00Z"),
+        ];
+        let acts: Vec<IntegrationAction> = with_origin(local.clone(), origin)
+            .iter()
+            .map(|e| e.action)
+            .collect();
+        assert_eq!(
+            acts,
+            [
+                IntegrationAction::Observed,
+                IntegrationAction::VerificationFailed,
+                IntegrationAction::FailureAcknowledged,
+                IntegrationAction::Idle
+            ]
+        );
+        assert_eq!(with_origin(local.clone(), Vec::new()).len(), local.len());
+    }
+
+    /// The executor's integrator in this test: it observes one ready pull request, asks the
+    /// lease before every act, and remembers a merge it was asked for.
+    struct Holder<'a> {
+        lease: &'a IntegrationLease,
+        queue: IntegrationQueue,
+        merged: Vec<u64>,
+    }
+
+    impl Integrator for Holder<'_> {
+        fn observe(&mut self) -> Result<IntegrationQueue, String> {
+            Ok(self.queue.clone())
+        }
+        fn merge(&mut self, pr: u64, _: &str, _: &str) -> Result<(), String> {
+            self.merged.push(pr);
+            Ok(())
+        }
+        fn verify(&mut self, pr: u64, _: &EvaluatedAgainst, _: &str) -> Result<Landed, NotLanded> {
+            panic!("verified #{pr}")
+        }
+        fn refresh_branch(&mut self, a: &PullRequestAssessment, _: &str) -> Result<String, String> {
+            panic!("refreshed #{}", a.number)
+        }
+        fn close(&mut self, pr: u64, _: &str, _: &str) -> Result<(), String> {
+            panic!("closed #{pr}")
+        }
+        fn record_standing(&mut self, pr: u64, _: &str) -> RecordStanding {
+            panic!("asked after #{pr}'s record")
+        }
+        fn reopen(&mut self, pr: u64, _: &str, _: &str) -> Result<(), String> {
+            panic!("reopened #{pr}")
+        }
+        fn holds(&mut self, act: &str) -> Result<(), String> {
+            self.lease.holds(act)
+        }
+    }
+
+    /// Criterion 3: a holder whose lease on origin another clone took over after it expired
+    /// is refused at its renewal, immediately before it lands, and lands nothing.
+    #[test]
+    fn an_expired_lease_holder_is_refused_before_it_lands() {
+        let (_tmp, a, b) = clones();
+        let lease = IntegrationLease::acquire(&a, "master").expect("a takes the lease");
+        assert!(lease.origin.is_some(), "the lease is on origin too");
+        let now = now_secs();
+        // not before its expiry
+        let early = OriginLease::take_at(&b, "master", now + 60, 60)
+            .err()
+            .expect("an unexpired lease is not taken over");
+        assert!(early.contains("taken over only after"), "{early}");
+        // after it: a slept, and b took over
+        let _successor =
+            OriginLease::take_at(&b, "master", now + LEASE_STALE_AFTER.as_secs() + 1, 60)
+                .expect("an expired lease is taken over");
+
+        let mut holder = Holder {
+            lease: &lease,
+            queue: super::trunk_red_tests::queue_of(&[7]),
+            merged: Vec::new(),
+        };
+        let out = step(&a, &mut holder, false, false).expect("the step ends");
+        let DrainStepOutcome::LeaseLost { pr, reason } = out else {
+            panic!("the old holder was not refused: {out:?}")
+        };
+        assert_eq!(pr, 7);
+        assert!(reason.contains("lease was lost"), "{reason}");
+        assert!(holder.merged.is_empty(), "the old holder landed something");
+        let acts: Vec<IntegrationAction> = events(&a).iter().map(|e| e.action).collect();
+        assert!(acts.contains(&IntegrationAction::LeaseLost), "{acts:?}");
+        assert!(
+            !acts.contains(&IntegrationAction::MergeAttempted),
+            "{acts:?}"
+        );
+        assert!(lease.holds("merging #7").is_err(), "the lease stays lost");
     }
 }

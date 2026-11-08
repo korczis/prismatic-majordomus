@@ -7,6 +7,11 @@ and what moved. A dry run writes nothing to the audit trail, so for stage 1 this
 record. Stages 2 and 3 are recorded on the trail itself, as merges the continuous-mode gate
 counts.
 
+Since I3911 the merges that gate count, and a halt an unverified one leaves, are also kept on
+origin (`refs/majordomus/integration/trail`), so the record of a stage taken on one clone is
+the record every clone and machine is gated by: a takeover machine starts with the verified
+landings already made, not at 0, and stops at the same halt.
+
 ## Stage 1: dry run, 2026-10-06
 
 **Taken under:** rule `project.integration-follows-the-current-master` version 2, rule

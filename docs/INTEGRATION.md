@@ -958,6 +958,26 @@ json` stays the list of pull requests to close.
   close is the moment between that check and the forge's merge: an executor suspended and
   overtaken inside it still merges once. Fencing that write needs an epoch the forge side
   can be told was lost (I3174).
+- The executor's state is on origin, so any clone continues it (I3911). Where the
+  repository has an `origin`, the lease is also a commit on
+  `refs/majordomus/integration/lease/<base>` naming its holder, host, clone, pid and expiry
+  (30 minutes), moved only by non-forced pushes. Another clone's unexpired lease refuses the
+  executor (`prs drain` exits 12, naming the holder and the expiry); an expired or released
+  one is taken over, and a leftover of the same clone — whose `flock` this executor now
+  holds — is taken at once. Before every write to the forge the holder renews it by a
+  commit on top of the one it pushed last, and between steps once half its ttl is gone: a
+  holder that slept past its expiry and wakes after another clone took over finds its
+  renewal refused, records `lease_lost` and lands nothing. On release it pushes a record
+  that expired at 0. The record the executor is gated by — `merge_succeeded`,
+  `verification_failed` and `failure_acknowledged` — is also appended, one commit per event,
+  to `refs/majordomus/integration/trail` on origin and fetched into
+  `refs/majordomus/integration-origin/trail`; the trail every reader sees is the clone's own
+  with that record merged in, each event once. A clone with no trail of its own fetches it
+  on its first read, the executor again as it takes its lease and before it reads the halt,
+  so the `--continuous` gate counts the verified landings of every clone and a halt left on
+  one stops every other until a person acknowledges it anywhere. A push of that record that
+  fails is said on standard error; the clone's own trail still holds the event. The rest of
+  the trail stays per clone. The pre-push hook passes a push of `refs/majordomus/*` alone.
 - Every act is appended to the audit trail before it happens. The trail is one file per
   repository, `<git-common-dir>/majordomus/integration/events.jsonl`, beside the lease, so
   every worktree writes the same trail and `prs events`, `prs brief`, `prs status`, the

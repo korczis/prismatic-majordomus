@@ -232,3 +232,63 @@ fn an_observation_the_trail_cannot_record_is_refused() {
         "{out}"
     );
 }
+
+/// I3911, through the executable: the lease an executor took is on origin and released there,
+/// and a clone that never ran an executor is stopped by a halt another clone left on origin
+/// until a person acknowledges it — and that acknowledgement is on origin for every clone.
+#[test]
+fn state_on_origin_a_fresh_clone_is_stopped_by_the_halt_another_clone_left() {
+    let f = forge();
+    let (code, _, err) = prs(&f, &f.work, &["refresh"]);
+    assert_eq!(code, 0, "refresh: {err}");
+    let (code, out, err) = prs(&f, &f.work, &["cleanup", "--apply"]);
+    assert_eq!(code, 0, "cleanup: {out}{err}");
+    git(
+        &f.work,
+        &[
+            "fetch",
+            "-q",
+            "origin",
+            "refs/majordomus/integration/lease/master:refs/lease",
+        ],
+    );
+    let released = git(&f.work, &["log", "-1", "--format=%B", "refs/lease"]);
+    assert!(
+        released.contains(r#""expires_at":0"#),
+        "the executor's lease on origin was not released: {released}"
+    );
+
+    // another clone's executor left a halt on origin
+    let halt = r#"{"at":"2026-01-01T00:00:00Z","actor":"another clone","action":"verification_failed","pr":9,"master_before":null,"head_sha":null,"master_after":null,"reasons":[],"detail":"not on master"}"#;
+    let empty = git(&f.work, &["hash-object", "-t", "tree", "-w", "/dev/null"]);
+    let commit = git(&f.work, &["commit-tree", &empty, "-m", halt]);
+    git(
+        &f.work,
+        &[
+            "push",
+            "-q",
+            "origin",
+            &format!("{commit}:refs/majordomus/integration/trail"),
+        ],
+    );
+
+    let base = f.work.parent().unwrap();
+    git(base, &["clone", "-q", "origin.git", "fresh"]);
+    let fresh = base.join("fresh");
+    let (code, _, err) = prs(&f, &fresh, &["refresh"]);
+    assert_eq!(code, 0, "refresh: {err}");
+    let (code, out, err) = prs(&f, &fresh, &["drain", "--max", "1"]);
+    assert_eq!(code, 10, "the fresh clone was not stopped: {out}{err}");
+    assert!(out.contains("halted: #9"), "{out}");
+
+    let (code, out, err) = prs(
+        &f,
+        &fresh,
+        &["drain", "--max", "1", "--resume-after-failure"],
+    );
+    assert_eq!(code, 0, "resume: {out}{err}");
+    // the acknowledgement is on origin, so the clone that wrote nothing of it resumes too
+    let (code, out, err) = prs(&f, &f.work, &["drain", "--max", "1"]);
+    assert_eq!(code, 0, "the first clone is still halted: {out}{err}");
+    assert!(!out.contains("halted"), "{out}");
+}
