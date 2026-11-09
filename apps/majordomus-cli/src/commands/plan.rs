@@ -160,7 +160,10 @@ fn next_text(v: &Value) -> String {
         }
         None => out.push_str("no ready issue; run: majordomus plan blocked\n"),
     }
-    let passed = v["passed_over"].as_array().map(Vec::as_slice).unwrap_or_default();
+    let passed = v["passed_over"]
+        .as_array()
+        .map(Vec::as_slice)
+        .unwrap_or_default();
     if !passed.is_empty() {
         out.push_str(&format!(
             "\npassed over: {} READY issue(s) whose work the trunk already holds\n",

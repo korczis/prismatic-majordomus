@@ -1413,7 +1413,11 @@ mod tests {
             merge_subject(
                 "Merge fix/the-pages-name-the-pre-release f4e883a1fb1 into integration/train-32"
             ),
-            (None, Some("fix/the-pages-name-the-pre-release".to_string()), false)
+            (
+                None,
+                Some("fix/the-pages-name-the-pre-release".to_string()),
+                false
+            )
         );
         assert_eq!(
             merge_subject("Merge origin/master df412480833 into release/bump-1.0.1"),

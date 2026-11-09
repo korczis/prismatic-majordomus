@@ -1817,11 +1817,19 @@ mod tests {
         assert_eq!(after.passed_over.len(), 1);
         let passed = &after.passed_over[0];
         assert_eq!(
-            (passed.issue.as_str(), passed.status.as_str(), passed.stage.as_str()),
+            (
+                passed.issue.as_str(),
+                passed.status.as_str(),
+                passed.stage.as_str()
+            ),
             ("I0001", "READY", "merged")
         );
         assert_eq!(passed.commit, merge);
-        assert!(passed.remedy.contains("plan start I0001"), "{}", passed.remedy);
+        assert!(
+            passed.remedy.contains("plan start I0001"),
+            "{}",
+            passed.remedy
+        );
 
         let status = plan_status(&ctx, PlanMilestoneFilter::default()).unwrap();
         assert_eq!(
@@ -1835,7 +1843,12 @@ mod tests {
         let listed: Vec<(&str, Vec<&str>)> = roadmap
             .delivered
             .iter()
-            .map(|m| (m.milestone.as_str(), m.issues.iter().map(|i| i.issue.as_str()).collect()))
+            .map(|m| {
+                (
+                    m.milestone.as_str(),
+                    m.issues.iter().map(|i| i.issue.as_str()).collect(),
+                )
+            })
             .collect();
         assert_eq!(listed, [("m-first", vec!["I0001"])]);
 
