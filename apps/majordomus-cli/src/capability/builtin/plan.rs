@@ -341,6 +341,14 @@ pub struct TrunkDelivery {
 
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 /// One open milestone's issues whose work the trunk holds while their status is open.
+///
+/// ```
+/// use majordomus_cli::capability::builtin::plan::MilestoneDelivered;
+/// let m: MilestoneDelivered = serde_json::from_str(r#"{"milestone":"M1","issues":[
+///     {"issue":"I0001","status":"READY","stage":"released","commit":"abc",
+///      "remedy":"majordomus plan start I0001"}]}"#).unwrap();
+/// assert_eq!((m.milestone.as_str(), m.issues[0].stage.as_str()), ("M1", "released"));
+/// ```
 pub struct MilestoneDelivered {
     /// The milestone.
     pub milestone: String,

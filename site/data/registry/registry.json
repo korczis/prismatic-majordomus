@@ -6,7 +6,7 @@
     "version": "1.0.1"
   },
   "registry": {
-    "fingerprint": "fee9afbbaa34f07b7ab7bed483bfcb47bed39f250dc7143874a268a161f3a295",
+    "fingerprint": "2957e6e0e5869381a0d167bfc4c16659e55f8f6027fabec7b54aa90e6397eb29",
     "summary": {
       "total": 3959,
       "builtin": 231,
@@ -70291,7 +70291,7 @@
                   "milestone",
                   "issues"
                 ],
-                "description": "One open milestone's issues whose work the trunk holds while their status is open."
+                "description": "One open milestone's issues whose work the trunk holds while their status is open.\n\n```\nuse majordomus_cli::capability::builtin::plan::MilestoneDelivered;\nlet m: MilestoneDelivered = serde_json::from_str(r#\"{\"milestone\":\"M1\",\"issues\":[\n    {\"issue\":\"I0001\",\"status\":\"READY\",\"stage\":\"released\",\"commit\":\"abc\",\n     \"remedy\":\"majordomus plan start I0001\"}]}\"#).unwrap();\nassert_eq!((m.milestone.as_str(), m.issues[0].stage.as_str()), (\"M1\", \"released\"));\n```"
               },
               "DeliveredIssue": {
                 "type": "object",
@@ -98101,7 +98101,7 @@
     ]
   },
   "index": {
-    "fingerprint": "7446f8516e52acdf2581426c23b59a4ab72244353458917a9a55da490731ea67",
+    "fingerprint": "efcec51aec036ead0aa0f783a93b7db09033cedcde2aab67229fae712a7d57ed",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {

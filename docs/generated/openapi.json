@@ -49558,7 +49558,7 @@
           "milestone",
           "issues"
         ],
-        "description": "One open milestone's issues whose work the trunk holds while their status is open."
+        "description": "One open milestone's issues whose work the trunk holds while their status is open.\n\n```\nuse majordomus_cli::capability::builtin::plan::MilestoneDelivered;\nlet m: MilestoneDelivered = serde_json::from_str(r#\"{\"milestone\":\"M1\",\"issues\":[\n    {\"issue\":\"I0001\",\"status\":\"READY\",\"stage\":\"released\",\"commit\":\"abc\",\n     \"remedy\":\"majordomus plan start I0001\"}]}\"#).unwrap();\nassert_eq!((m.milestone.as_str(), m.issues[0].stage.as_str()), (\"M1\", \"released\"));\n```"
       },
       "MilestoneEdge": {
         "type": "object",
