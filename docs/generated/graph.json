@@ -80650,6 +80650,44 @@
         }
       },
       {
+        "id": "majordomus://issue/I4565",
+        "kind": "issue",
+        "label": "I4565",
+        "summary": "The kit licence judge starts its git through the busy retry, so a stand-in git written a moment ago is waited for, not failed",
+        "route": "/cockpit/objects/issue/i4565",
+        "source": ".ai/repo/project/issues/I4565.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "The design::licence tests pass, every git start going through retrying_busy",
+            "A git that cannot start for another reason is still answered at once as git could not start"
+          ],
+          "created_at": "2026-11-09",
+          "current_state": "Measured at origin/master df412480833 on 2026-11-09: git_out calls Command::output(), git_ok Command::status() and fingerprint_objects Command::spawn() on the configured git once each.",
+          "depends_on": [],
+          "desired_state": "All three start git through crate::process::retrying_busy, which asks again for up to five seconds while the program's file is busy and answers any other failure at once.",
+          "evidence_required": [
+            "rust"
+          ],
+          "milestone": "development-runtime",
+          "non_scope": [
+            "The stand-in git the tests write, which stays as it is",
+            "Other modules that start programs directly (I4486 makes one typed capability for that)"
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/design/licence.rs",
+            ".ai/repo/project/issues/I4565.yaml"
+          ],
+          "serves": [],
+          "slug": "the-kit-licence-judge-starts-git-through-the-busy-retry",
+          "validation": [
+            "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --lib -- design::licence process::"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "label": "a-brief-is-reconciled-not-transcribed",
@@ -149354,6 +149392,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I4565",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4565",
+        "target": "majordomus://milestone/development-runtime",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -162030,8 +162078,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4429,
-      "edges": 10049,
+      "nodes": 4430,
+      "edges": 10051,
       "acyclic": false,
       "truncated": false
     }
