@@ -6,23 +6,23 @@
     "version": "1.0.1"
   },
   "registry": {
-    "fingerprint": "52f0d67d8844131589adaf3b493e86b933a3acf793dfc3e5a333b443dbec2154",
+    "fingerprint": "5b54714a9bae13d6132860f76e568db4d977ead769a3ab942e3e2118739df688",
     "summary": {
-      "total": 3959,
+      "total": 3961,
       "builtin": 231,
-      "declarative": 3728,
+      "declarative": 3730,
       "by_kind": {
         "command": 41,
         "query": 190,
-        "resource": 3728
+        "resource": 3730
       },
       "by_stability": {
         "behaviorally_verified": 153,
         "experimental": 68,
-        "implemented": 3738
+        "implemented": 3740
       },
       "mcp_tools": 215,
-      "mcp_resources": 3785,
+      "mcp_resources": 3787,
       "http_routes": 219,
       "cli_commands": 128,
       "modules": 96,
@@ -97186,7 +97186,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 1226,
+        "capabilities": 1228,
         "capability_ids": []
       },
       {
@@ -97892,7 +97892,7 @@
     ]
   },
   "index": {
-    "fingerprint": "fb4f674ea95d767eb7192f506b5e074a8c0eaabd24bb75227266d75a3f1ea52b",
+    "fingerprint": "1f74c557bcc52a634d7839416986111050bf6f57f8dcd6d4b5bcf5735fa95fbc",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -97932,7 +97932,7 @@
       "gap": 5,
       "implementation": 54,
       "intent": 45,
-      "issue": 1226,
+      "issue": 1228,
       "knowledge": 186,
       "mesh-declaration": 1,
       "milestone": 117,
@@ -105529,7 +105529,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 132650
+        "bytes": 132982
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -122991,6 +122991,28 @@
         "bytes": 2044
       },
       {
+        "uri": "majordomus://issue/I4565",
+        "kind": "issue",
+        "identity": "I4565",
+        "title": "The kit licence judge starts its git through the busy retry, so a stand-in git written a moment ago is waited for, not failed",
+        "description": "Every start of git in design::licence (git_out, git_ok and the cat-file --batch child) goes through crate::process::retrying_busy, so a test's stand-in git that another test thread's forked child still holds open no longer fails the judge with ETXTBSY.",
+        "path": ".ai/repo/project/issues/I4565.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2260
+      },
+      {
+        "uri": "majordomus://issue/I4566",
+        "kind": "issue",
+        "identity": "I4566",
+        "title": "The across-machines tests take the lease as held once its holder record reads, not once its file exists",
+        "description": "Node::hold in tests/integration_across_machines.rs waits until the integration lease file holds a holder record that parses and names a pid, so the brief the test reads next never meets the lease between its creation and its first write.",
+        "path": ".ai/repo/project/issues/I4566.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1976
+      },
+      {
         "uri": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "identity": "a-brief-is-reconciled-not-transcribed",
@@ -138964,7 +138986,7 @@
       "identity": [
         "id"
       ],
-      "objects": 1226
+      "objects": 1228
     },
     {
       "name": "knowledge",

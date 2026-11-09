@@ -9,7 +9,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 
 | milestone | status | done of required | ready | blocked | active | verify | cancelled | outcome |
 |---|---|---|---|---|---|---|---|---|
-| [development-runtime](https://majordomus.dev/plan/development-runtime/) | ACTIVE | 70/111 | 25 | 16 | 0 | 0 | 1 | A development transition is decided in exactly one place — a `capability!` of kind `command` in the Rust registry — and every surface that offers it is a projection: the CLI, the MCP tool, the HTTP route, the OpenAPI operation and the Cockpit's generated runner form, none of them written by hand. The lifecycle stops being a second program with no surfaces, and the execution history a development surface would show exists somewhere durable. |
+| [development-runtime](https://majordomus.dev/plan/development-runtime/) | ACTIVE | 70/113 | 27 | 16 | 0 | 0 | 1 | A development transition is decided in exactly one place — a `capability!` of kind `command` in the Rust registry — and every surface that offers it is a projection: the CLI, the MCP tool, the HTTP route, the OpenAPI operation and the Cockpit's generated runner form, none of them written by hand. The lifecycle stops being a second program with no surfaces, and the execution history a development surface would show exists somewhere durable. |
 
 ## Issues
 
@@ -127,6 +127,8 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | [I4364](https://majordomus.dev/plan/i4364/) | CANCELLED | 0 | — | Duplicate of I4365: a promoted knowledge note cites only references a clean clone resolves |
 | [I4374](https://majordomus.dev/plan/i4374/) | READY | 0 | — | A commit that changes the plan's records reports intent validate before it leaves the machine |
 | [I4375](https://majordomus.dev/plan/i4375/) | READY | 0 | — | An offload's fetch into the host's checkout waits its turn instead of failing the derive |
+| [I4565](https://majordomus.dev/plan/i4565/) | READY | 0 | — | The kit licence judge starts its git through the busy retry, so a stand-in git written a moment ago is waited for, not failed |
+| [I4566](https://majordomus.dev/plan/i4566/) | READY | 0 | — | The across-machines tests take the lease as held once its holder record reads, not once its file exists |
 
 ## Findings
 
