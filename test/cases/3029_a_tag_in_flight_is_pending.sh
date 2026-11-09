@@ -31,6 +31,9 @@
 #      the forge cannot excuse the tag either, and a note names the remote
 #   9  a record branch proposing the record answers first: the forge is not asked at all
 . "$ROOT/test/lib.sh"
+# the gate honours MJ_ROOT, and a caller that exports it (majordomus finish runs its verify
+# command so) would have every gate below measure that tree instead of this fixture
+unset MJ_ROOT
 
 P="$T/published"; O="$T/origin.git"; FX="$T/fx"; LOG="$T/gh.log"
 mkdir -p "$P/scripts/ci" "$P/apps/majordomus-cli/src/release" "$P/share" "$P/.ai/repo/releases" "$FX" "$T/bin"
