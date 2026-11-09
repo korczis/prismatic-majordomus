@@ -4,7 +4,7 @@ description: "Carry a finished change from an open pull request to master and be
 ---
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: .ai/repo/skills/integrator/SKILL.md; regenerate with `majordomus generate`
-     Generator: majordomus-cli 1.0.0 -->
+     Generator: majordomus-cli 1.0.1 -->
 
 # Take finished work to a verified master
 
