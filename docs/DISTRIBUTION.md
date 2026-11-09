@@ -353,9 +353,21 @@ waiting for approval. In both the required `ci` check never reports and the prop
 merge. After `v0.15.0` and after `v0.16.0` it sat so, with an empty check rollup, until
 somebody closed and reopened it, and `smoke` failed by design for as long as that took.
 
-The pipeline cannot start that run, and does not claim to. What starts it is a person, in
-one of two ways: approving its waiting `validate` run, or closing and reopening the pull
-request. The integration executor does the second: `majordomus prs drain` closes and
+The waiting shape is the one the pipeline can start itself, and it tries (I2717). The
+`validate` run it dispatches on the record's branch (below) begins its plan job with
+`scripts/ci/record-run-approve`: it finds the `pull_request` run of `validate` at the
+record's branch and head that waits for approval and approves it, through the forge's own
+approval endpoint, with that run's token. What it starts is the pull request's own run,
+planned and judged as every pull request's run is; it writes no status and no check. Only that
+one run is approved, and a branch that is no `release/record-` branch is refused. On v1.0.1
+(2026-11-09, #2991) the waiting run 42668789214 was approved by a person through that same
+endpoint; whether the forge accepts the approval from `GITHUB_TOKEN` is first observed on the
+next record, and a refusal is a warning in the dispatch naming the two acts below, never its
+failure (`test/cases/4574_the_record_dispatch_approves_the_record_pull_request_run.sh`).
+
+When that approval is refused, and for the older shape, which no approval starts, what starts
+the run is a person, in one of two ways: approving its waiting `validate` run, or closing and
+reopening the pull request. The integration executor does the second: `majordomus prs drain` closes and
 reopens a `release/record-<tag>` pull request that the workflow's token opened and that has
 no check of its own, once per head, and the run its reopening starts is the one the merge
 waits for ([INTEGRATION.md](INTEGRATION.md), "The record pull request it reopens";
@@ -379,13 +391,19 @@ naming the remedy and does not fail the job, because the release is published ei
 holds both workflows to this, and the workflow and this section to calling the dispatch
 nothing more.
 
-Two remedies would remove the person's step, and neither is taken. A status or check the
+An approved run can still end red without any gate failing: attempt 2 of 42668789214 never
+created its `site` job, `needs` reported it `abandoned`, and `ci` was red for it alone while
+every job that ran passed. The verdict names that result and its remedy, re-running the
+failed jobs of the run, which started the job on attempt 3 ([CI.md](CI.md)).
+
+Two remedies beyond that approval would remove the person's step, and neither is taken. A status or check the
 dispatched run posted under the name `ci` would satisfy the required context without the
 pull request's own run having produced it, which is a forged verdict, not a remedy. Opening
 the pull request, or closing and reopening it, with a GitHub App or fine-grained token whose
 events start workflows would make its own run start at once; that needs a credential only the
-repository's owner can create and hold, and is the owner's decision. Until it is made, every
-release costs one person's act between publication and its record reaching master.
+repository's owner can create and hold, and is the owner's decision. Until it is made, a
+release whose record run the dispatch could not approve costs one person's act between
+publication and its record reaching master.
 
 #### The site serves a release before its record lands
 
