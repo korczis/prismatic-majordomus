@@ -170,7 +170,6 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I2115` | shares test/cases with I4334; they may not run concurrently |
 | WARN | `scope_conflict` | `I2115` | shares test/cases with I4336; they may not run concurrently |
 | WARN | `scope_conflict` | `I2115` | shares test/cases with I4337; they may not run concurrently |
-| WARN | `scope_conflict` | `I2115` | shares test/cases with I4341; they may not run concurrently |
 | WARN | `scope_conflict` | `I2115` | shares test/cases with I4346; they may not run concurrently |
 | WARN | `scope_conflict` | `I2115` | shares test/cases with I4347; they may not run concurrently |
 | WARN | `scope_conflict` | `I2115` | shares test/cases with I4349; they may not run concurrently |
@@ -323,7 +322,6 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I2350` | shares test/cases with I4334; they may not run concurrently |
 | WARN | `scope_conflict` | `I2350` | shares test/cases with I4336; they may not run concurrently |
 | WARN | `scope_conflict` | `I2350` | shares test/cases with I4337; they may not run concurrently |
-| WARN | `scope_conflict` | `I2350` | shares test/cases with I4341; they may not run concurrently |
 | WARN | `scope_conflict` | `I2350` | shares test/cases with I4346; they may not run concurrently |
 | WARN | `scope_conflict` | `I2350` | shares scripts/ci-plan with I4347; they may not run concurrently |
 | WARN | `scope_conflict` | `I2350` | shares .ai/repo/ci/gates.yaml with I4349; they may not run concurrently |
@@ -371,6 +369,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I3825` | shares test/cases with I3991; they may not run concurrently |
 | WARN | `scope_conflict` | `I3825` | shares test/cases with I3992; they may not run concurrently |
 | WARN | `scope_conflict` | `I3825` | shares test/cases with I4332; they may not run concurrently |
+| WARN | `scope_conflict` | `I3825` | shares test/cases with I4342; they may not run concurrently |
 | WARN | `scope_conflict` | `I3825` | shares test/cases with I4523; they may not run concurrently |
 | WARN | `scope_conflict` | `I3930` | shares .github/workflows/validate.yml with I3931; they may not run concurrently |
 | WARN | `scope_conflict` | `I3930` | shares .github/workflows/validate.yml with I3936; they may not run concurrently |
