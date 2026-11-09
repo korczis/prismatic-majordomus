@@ -31,8 +31,8 @@
 //!   so its commits' subjects are the edge that survives;
 //! - a merge commit carries its pull request's number and head branch in its subject
 //!   (`Merge pull request #N from owner/branch`) and the title as the first line of its body,
-//!   and a local merge (`Merge branch 'x'`, `Merge remote-tracking branch 'origin/x'`) its
-//!   branch.
+//!   and a local merge (`Merge branch 'x'`, `Merge remote-tracking branch 'origin/x'`) or a
+//!   train's merge of a branch at a pinned head (`Merge x <commit> into <train>`) its branch.
 //!
 //! When several merges name one issue, the newest one is its proof: the issue has travelled
 //! only as far as its last merged change, so a follow-up merged after the last release reads
@@ -442,6 +442,18 @@ fn merge_subject(subject: &str) -> (Option<u64>, Option<String>, bool) {
             return (None, Some(name.to_string()), false);
         }
     }
+    // `Merge <branch> <commit> into <branch>`: how a train or a repair lane merges one
+    // branch at the head it pinned (I3754: train 32 merged I4531's branch so, and the trunk's
+    // history read it as naming nothing)
+    if let Some(rest) = subject.strip_prefix("Merge ") {
+        if let [name, commit, "into", _] = rest.split_whitespace().collect::<Vec<_>>()[..] {
+            if commit.len() >= 7 && commit.bytes().all(|b| b.is_ascii_hexdigit()) {
+                // `origin/x`: the remote is not part of the branch's name
+                let name = name.strip_prefix("origin/").unwrap_or(name);
+                return (None, Some(name.to_string()), false);
+            }
+        }
+    }
     (None, None, false)
 }
 
@@ -605,7 +617,7 @@ fn git_ok(root: &Path, args: &[&str]) -> Option<String> {
 /// The ref the live answer reads the trunk from: the remote-tracking trunk unless the local
 /// one is ahead of it, because a primary checkout's local trunk can lag the forge by hundreds
 /// of merges and every merge it lacks would read as unmerged.
-fn trunk_ref(root: &Path, trunk: &str) -> Option<String> {
+pub(crate) fn trunk_ref(root: &Path, trunk: &str) -> Option<String> {
     let remote = format!("origin/{trunk}");
     let local_ok = git_ok(
         root,
@@ -973,12 +985,48 @@ pub(crate) fn infer(
     at: Option<&str>,
     only: Option<&str>,
 ) -> Result<IssueDeliveryReport, String> {
-    let ids: Vec<String> = plan.issues.iter().map(|i| i.id.clone()).collect();
+    infer_with(root, plan, trunk, at, only, None)
+}
+
+/// The delivery of `among` alone, at the commit `at` names: what `plan.next` and
+/// `plan.roadmap` ask (I3754), for the READY issues or the open ones only.
+///
+/// The answer for each issue of `among` is the one [`infer`] gives it, because what names an
+/// issue is decided for each issue alone. What it saves is the work done for the issues
+/// nobody asked about: the commits naming them are never read against their parents, which
+/// is most of what a whole-plan answer costs (a `git diff-tree` of over a thousand commits),
+/// so the answer for a few dozen issues costs one history read. The sources' counts are of
+/// the issues asked about.
+pub(crate) fn infer_among(
+    root: &Path,
+    plan: &Plan,
+    trunk: &Trunk,
+    at: &str,
+    among: &BTreeSet<String>,
+) -> Result<IssueDeliveryReport, String> {
+    infer_with(root, plan, trunk, Some(at), None, Some(among))
+}
+
+fn infer_with(
+    root: &Path,
+    plan: &Plan,
+    trunk: &Trunk,
+    at: Option<&str>,
+    only: Option<&str>,
+    among: Option<&BTreeSet<String>>,
+) -> Result<IssueDeliveryReport, String> {
+    let asked = |id: &str| among.is_none_or(|a| a.contains(id));
+    let ids: Vec<String> = plan
+        .issues
+        .iter()
+        .filter(|i| asked(&i.id))
+        .map(|i| i.id.clone())
+        .collect();
     let declared: BTreeSet<String> = ids.iter().cloned().collect();
     let slugs: BTreeMap<String, String> = plan
         .issues
         .iter()
-        .filter(|i| !i.slug.is_empty())
+        .filter(|i| !i.slug.is_empty() && asked(&i.id))
         .map(|i| (i.slug.clone(), i.id.clone()))
         .collect();
     let trunk_name = trunk.branch.as_deref().unwrap_or("master").to_string();
@@ -1131,7 +1179,12 @@ pub(crate) fn infer(
             .map(|r: Release| (r.tag, r.commit))
             .collect(),
     );
-    let first_release = first_releases(root, &releases);
+    // which release first contains a commit matters only for a commit that names an issue
+    let first_release = if merges.is_empty() {
+        BTreeMap::new()
+    } else {
+        first_releases(root, &releases)
+    };
     sources.push(source(
         "releases",
         Ok(format!(
@@ -1229,7 +1282,7 @@ pub(crate) fn infer(
     let issues: Vec<IssueDelivery> = plan
         .issues
         .iter()
-        .filter(|i| only.is_none_or(|id| i.id == id))
+        .filter(|i| only.is_none_or(|id| i.id == id) && asked(&i.id))
         .map(|i| assess(i, &evidence))
         .collect();
     let mut tallies: BTreeMap<String, usize> = DeliveryStage::ALL
@@ -1349,6 +1402,36 @@ mod tests {
         assert_eq!((c[0].pull_request, &c[0].branch), (None, &None));
         assert_eq!(parse_history(""), None);
         assert_eq!(parse_history("\x001\x00\x00x\x00\x1e"), None);
+    }
+
+    /// A train or a repair lane merges a branch at the head it pinned, and says so as
+    /// `Merge <branch> <commit> into <branch>`: the branch is the merged one, never the one
+    /// merged into, and a subject of that shape without a commit names no branch (I3754).
+    #[test]
+    fn a_train_merge_names_the_branch_it_merged_at_its_pinned_head() {
+        assert_eq!(
+            merge_subject(
+                "Merge fix/the-pages-name-the-pre-release f4e883a1fb1 into integration/train-32"
+            ),
+            (
+                None,
+                Some("fix/the-pages-name-the-pre-release".to_string()),
+                false
+            )
+        );
+        assert_eq!(
+            merge_subject("Merge origin/master df412480833 into release/bump-1.0.1"),
+            (None, Some("master".to_string()), false),
+            "the remote is not part of the name, and the target is never read"
+        );
+        for subject in [
+            "Merge fix/x nothex into train",
+            "Merge fix/x f4e8 into train",
+            "Merge fix/x f4e883a1fb1 onto train",
+            "Merge fix/x f4e883a1fb1 into",
+        ] {
+            assert_eq!(merge_subject(subject), (None, None, false), "{subject}");
+        }
     }
 
     #[test]

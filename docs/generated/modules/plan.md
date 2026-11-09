@@ -148,7 +148,7 @@ Output: `Plan`.
 
 ## `plan.next` — The one issue to take now
 
-The lowest-wave READY issue of the active milestone, highest priority first, then id. The active milestone can have nothing ready while another one does — one waiting on its own acceptance evidence, for instance — so the search widens to the whole plan rather than answering `none` and sending a worker away from work that is genuinely executable. This is what an agent asks before it starts.
+The lowest-wave READY issue of the active milestone, highest priority first, then the number of unfinished issues it unblocks, then id, whose work the trunk does not already hold. The active milestone can have nothing ready while another one does — one waiting on its own acceptance evidence, for instance — so the search widens to the whole plan rather than answering `none` and sending a worker away from work that is genuinely executable. Each candidate in that order is set against `plan.delivery` at the trunk head, read from the trunk's history and the release records only (no branch, forge or deployment, so the answer is a function of that commit): one the history shows merged, released or deployed is passed over and listed in `passed_over` with its stage, its proving commit and the remedy (record it with plan start, verify and done); a branch or an open pull request passes nothing over. `delivery` names the trunk ref and commit read, or says delivery was unread and the answer is the stamp ranking's. Cached per checkout state, so a merge that moves the trunk changes the answer without a restart. This is what an agent asks before it starts.
 
 | | |
 |---|---|
@@ -156,7 +156,8 @@ The lowest-wave READY issue of the active milestone, highest priority first, the
 | stability | behaviorally_verified |
 | MCP tool | `majordomus_plan_next` |
 | HTTP | `GET /api/v1/plan/next` |
-| cache | process, 16 entries, per generation |
+| CLI | `majordomus plan next` |
+| cache | process, 16 entries, per checkout state |
 | benchmark | required |
 | provenance | builtin majordomus_cli::capability::builtin::plan |
 | tags | plan, project, next |
@@ -191,7 +192,7 @@ Output: `PlanRecord`.
 
 ## `plan.roadmap` — The milestones in derived order
 
-The milestone graph laid out by rank, with `order` breaking ties inside a rank only, and the first unblocked unfinished milestone as `now` and the one after it as `next`. Nothing in the sequence is authored: a milestone whose prerequisites are not real cannot be nominated, which is what makes `each step is gated by the previous one being real` an invariant rather than a sentence.
+The milestone graph laid out by rank, with `order` breaking ties inside a rank only, and the first unblocked unfinished milestone as `now` and the one after it as `next`. Nothing in the sequence is authored: a milestone whose prerequisites are not real cannot be nominated, which is what makes `each step is gated by the previous one being real` an invariant rather than a sentence. Beside it, `delivered` lists under each open milestone the issues the trunk's history shows merged, released or deployed while their status is not DONE, each with its proving commit and the remedy, so the milestone named as now is read together with its drift; `delivery` names the trunk commit read (`plan.delivery` at the trunk head, history and release records only). Cached per checkout state.
 
 | | |
 |---|---|
@@ -199,7 +200,7 @@ The milestone graph laid out by rank, with `order` breaking ties inside a rank o
 | stability | behaviorally_verified |
 | MCP tool | `majordomus_plan_roadmap` |
 | HTTP | `GET /api/v1/plan/roadmap` |
-| cache | process, 4 entries, per generation |
+| cache | process, 4 entries, per checkout state |
 | benchmark | required |
 | provenance | builtin majordomus_cli::capability::builtin::plan |
 | tags | plan, project, roadmap |
@@ -210,7 +211,7 @@ Output: `PlanRoadmap`.
 
 ## `plan.status` — Where the plan stands
 
-Every milestone with its derived status and its issues counted by status, the milestone a worker is executing now, the next ready issue in full, and the plan's own totals. The counts are keyed by the declared vocabulary, which travels with the answer, so a status added to the engine appears here without anything being edited.
+Every milestone with its derived status and its issues counted by status, the milestone a worker is executing now, the next ready issue in full, and the plan's own totals. The next ready issue is `plan.next`'s, chosen by the same function: the stamp ranking, then delivery at the trunk head, passing over an issue the trunk's history shows merged, released or deployed. The counts are keyed by the declared vocabulary, which travels with the answer, so a status added to the engine appears here without anything being edited. Cached per checkout state, so a merge that moves the trunk changes the answer without a restart.
 
 | | |
 |---|---|
@@ -218,7 +219,7 @@ Every milestone with its derived status and its issues counted by status, the mi
 | stability | behaviorally_verified |
 | MCP tool | `majordomus_plan_status` |
 | HTTP | `GET /api/v1/plan/status` |
-| cache | process, 16 entries, per generation |
+| cache | process, 16 entries, per checkout state |
 | benchmark | required |
 | provenance | builtin majordomus_cli::capability::builtin::plan |
 | tags | plan, project, status |

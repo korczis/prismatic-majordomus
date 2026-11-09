@@ -29,7 +29,7 @@
 //!
 //! [ADR 0040]: https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/adrs/0040-development-semantics-are-capabilities-of-one-runtime.md
 
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
 use std::path::Path;
 
 use schemars::JsonSchema;
@@ -43,7 +43,9 @@ use crate::capability::model::{
     McpResource, Stability, WaiverReason,
 };
 use crate::capability::module::ModuleDescriptor;
-use crate::plan::delivery::{self, DeliveryReading, DeliverySource, IssueDeliveryReport};
+use crate::plan::delivery::{
+    self, DeliveryReading, DeliverySource, DeliveryStage, IssueDelivery, IssueDeliveryReport,
+};
 use crate::plan::drift::{self, DriftReport};
 use crate::plan::flight::{self, IssueClaim, PlanFlight};
 use crate::plan::{
@@ -250,15 +252,108 @@ pub struct PlanWaveView {
 
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 /// The one issue a worker should take now.
+///
+/// The field order is the shell's contract: `lib/plan.sh` reads the issue's id as the first
+/// `"id"` under `"issue"` in the pretty-printed document, without a JSON parser.
 pub struct PlanNextIssue {
     #[serde(skip_serializing_if = "Option::is_none")]
-    /// The issue, when the plan has one that is executable.
+    /// The issue, when the plan has one that is executable and whose work the trunk does
+    /// not already hold.
     pub issue: Option<PlanIssue>,
     /// The milestone the search started in.
     pub active_milestone: String,
     /// Why there is none, when there is none: what to run to see what is in the way.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub reason: Option<String>,
+    /// The READY issues ranked ahead of `issue` and passed over because the trunk's history
+    /// shows their work merged, released or deployed, in rank order, each with its proof and
+    /// the remedy. The status is a stamp and the merge a fact; the answer follows the fact
+    /// and never writes the stamp (ADR 0166).
+    #[serde(default)]
+    pub passed_over: Vec<DeliveredIssue>,
+    /// The trunk commit delivery was read at, or why it was not read: an unread trunk
+    /// leaves the stamp ranking's answer, and says so.
+    pub delivery: TrunkDelivery,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+/// An issue whose declared status is open while the trunk's history shows its work there.
+///
+/// ```
+/// use majordomus_cli::capability::builtin::plan::DeliveredIssue;
+/// let d: DeliveredIssue = serde_json::from_str(r#"{"issue":"I0001","status":"READY",
+///     "stage":"merged","commit":"abc","remedy":"majordomus plan start I0001"}"#).unwrap();
+/// assert_eq!(d.stage, "merged");
+/// ```
+pub struct DeliveredIssue {
+    /// The issue.
+    pub issue: String,
+    /// Its declared status, derived from its stamps.
+    pub status: String,
+    /// How far the history shows it delivered: `merged`, `released` or `deployed`.
+    pub stage: String,
+    /// The newest commit of the trunk that names it and delivered something.
+    pub commit: String,
+    /// What settles the contradiction: record the work through the lifecycle.
+    pub remedy: String,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+/// Whether an answer read delivery from the trunk.
+///
+/// ```
+/// use majordomus_cli::capability::builtin::plan::TrunkReadingState;
+/// assert_eq!(serde_json::to_value(TrunkReadingState::NotAsked).unwrap(), "not_asked");
+/// ```
+pub enum TrunkReadingState {
+    /// The trunk's history and the release records were read.
+    Read,
+    /// They could not be read; `detail` says why, and the answer is the stamps' alone.
+    Unread,
+    /// Nothing needed them: no issue was a candidate.
+    NotAsked,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+/// Where an answer read delivery: the trunk's history and the tree's release records at one
+/// commit, and nothing live (no branch, forge, deployment or clock), so the answer is a
+/// function of that commit and the records.
+///
+/// ```
+/// use majordomus_cli::capability::builtin::plan::{TrunkDelivery, TrunkReadingState};
+/// let t: TrunkDelivery = serde_json::from_str(
+///     r#"{"state":"unread","detail":"no trunk"}"#).unwrap();
+/// assert_eq!((t.state, t.commit), (TrunkReadingState::Unread, None));
+/// ```
+pub struct TrunkDelivery {
+    /// Read, unread, or not asked.
+    pub state: TrunkReadingState,
+    /// The ref read: the remote-tracking trunk, or the local one when it is ahead.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub trunk: Option<String>,
+    /// The commit that ref named when it was read.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub commit: Option<String>,
+    /// What was read, or why nothing was.
+    pub detail: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+/// One open milestone's issues whose work the trunk holds while their status is open.
+///
+/// ```
+/// use majordomus_cli::capability::builtin::plan::MilestoneDelivered;
+/// let m: MilestoneDelivered = serde_json::from_str(r#"{"milestone":"M1","issues":[
+///     {"issue":"I0001","status":"READY","stage":"released","commit":"abc",
+///      "remedy":"majordomus plan start I0001"}]}"#).unwrap();
+/// assert_eq!((m.milestone.as_str(), m.issues[0].stage.as_str()), ("M1", "released"));
+/// ```
+pub struct MilestoneDelivered {
+    /// The milestone.
+    pub milestone: String,
+    /// Its issues the history shows delivered while they are not DONE, in id order.
+    pub issues: Vec<DeliveredIssue>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
@@ -274,6 +369,13 @@ pub struct PlanRoadmap {
     #[serde(skip_serializing_if = "Option::is_none")]
     /// The one after it, blocked or not.
     pub next: Option<String>,
+    /// Under each open milestone that has any, in roadmap order, the issues the trunk's
+    /// history shows delivered while their status is open: the drift `now` is read
+    /// together with. It names no milestone as now or next of its own.
+    #[serde(default)]
+    pub delivered: Vec<MilestoneDelivered>,
+    /// The trunk commit that list was read at, or why it was not read.
+    pub delivery: TrunkDelivery,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
@@ -355,7 +457,7 @@ fn plan_status(
                 counts: m.counts.clone(),
             })
             .collect(),
-        next_ready: plan.next_ready(only).cloned(),
+        next_ready: choose_next(Path::new(&ctx.index.repository.root), &plan, only).0,
         project: plan.project.clone(),
         statuses: plan.statuses.clone(),
         counts,
@@ -419,9 +521,120 @@ fn plan_waves(
     })
 }
 
+// ---------------------------------------------------------------- the next issue, against delivery
+
+/// What reading delivery at the trunk gave: the report, and the reading's own account.
+fn trunk_delivery(
+    root: &Path,
+    plan: &Plan,
+    among: &BTreeSet<String>,
+) -> (Option<IssueDeliveryReport>, TrunkDelivery) {
+    let unread = |detail: String| {
+        (
+            None,
+            TrunkDelivery {
+                state: TrunkReadingState::Unread,
+                trunk: None,
+                commit: None,
+                detail,
+            },
+        )
+    };
+    if among.is_empty() {
+        return (
+            None,
+            TrunkDelivery {
+                state: TrunkReadingState::NotAsked,
+                trunk: None,
+                commit: None,
+                detail: "no issue was a candidate, so the trunk was not read".into(),
+            },
+        );
+    }
+    let identity = match crate::worktree::RepositoryIdentity::discover(root) {
+        Ok(identity) => identity,
+        Err(e) => return unread(format!("the repository's trunk cannot be found: {e}")),
+    };
+    let trunk = identity.trunk();
+    let name = trunk.branch.as_deref().unwrap_or("master");
+    let Some(rev) = delivery::trunk_ref(root, name) else {
+        return unread(format!(
+            "the trunk `{name}` does not resolve in this clone, so its history cannot be read"
+        ));
+    };
+    match delivery::infer_among(root, plan, trunk, &rev, among) {
+        Ok(report) => {
+            let reading = TrunkDelivery {
+                state: TrunkReadingState::Read,
+                commit: Some(report.observed.commit.clone()),
+                detail: format!(
+                    "the history of {rev} and the release records, for {} issue(s); no branch, \
+                     forge or deployment",
+                    among.len()
+                ),
+                trunk: Some(rev),
+            };
+            (Some(report), reading)
+        }
+        Err(e) => unread(e),
+    }
+}
+
+/// The issue as delivered, when the history shows its work on the trunk.
+fn delivered(d: &IssueDelivery) -> Option<DeliveredIssue> {
+    if d.stage < DeliveryStage::Merged {
+        return None;
+    }
+    let commit = d.merged.as_ref().map(|m| m.commit.clone())?;
+    let id = &d.issue;
+    Some(DeliveredIssue {
+        issue: id.clone(),
+        status: d.status.clone(),
+        stage: d.stage.as_str().to_string(),
+        commit,
+        remedy: format!(
+            "the trunk holds its work and its record does not say so: majordomus plan start \
+             {id}, then plan verify {id} and plan done {id} once its evidence is attached"
+        ),
+    })
+}
+
+/// The one choice of the next issue (I3754): the stamp ranking of [`Plan::ready_in_order`]
+/// first, then each candidate set against its delivery at the trunk head, read from the
+/// trunk's history and the release records only, and a candidate the history shows merged,
+/// released or deployed passed over. `plan.next`, `plan.status` and `plan.transition` all
+/// answer through here, and the shell's `plan next` asks `plan.next`, so no two of them can
+/// name different issues for one trunk commit.
+///
+/// A branch or an open pull request passes nothing over: either is work in flight, and the
+/// issue is still the one to finish. A trunk that cannot be read leaves the stamp ranking's
+/// answer, and the reading says it was unread.
+fn choose_next(
+    root: &Path,
+    plan: &Plan,
+    milestone: Option<&str>,
+) -> (Option<PlanIssue>, Vec<DeliveredIssue>, TrunkDelivery) {
+    let ranked = plan.ready_in_order(milestone);
+    let among: BTreeSet<String> = ranked.iter().map(|i| i.id.clone()).collect();
+    let (report, reading) = trunk_delivery(root, plan, &among);
+    let by_id: BTreeMap<&str, &IssueDelivery> = report
+        .as_ref()
+        .map(|r| r.issues.iter().map(|d| (d.issue.as_str(), d)).collect())
+        .unwrap_or_default();
+    let mut passed_over = Vec::new();
+    for issue in ranked {
+        match by_id.get(issue.id.as_str()).copied().and_then(delivered) {
+            Some(d) => passed_over.push(d),
+            None => return (Some(issue.clone()), passed_over, reading),
+        }
+    }
+    (None, passed_over, reading)
+}
+
 fn plan_next(ctx: &Context, input: PlanMilestoneFilter) -> Result<PlanNextIssue, CapabilityError> {
     let plan = plan_of(ctx)?;
-    let issue = plan.next_ready(input.milestone.as_deref()).cloned();
+    let root = Path::new(&ctx.index.repository.root);
+    let (issue, passed_over, delivery) = choose_next(root, &plan, input.milestone.as_deref());
     // "nothing is ready" and "there is nothing" are different answers: a repository whose
     // plan declares no issue was told that every one of its issues was waiting
     let declared = plan
@@ -430,7 +643,9 @@ fn plan_next(ctx: &Context, input: PlanMilestoneFilter) -> Result<PlanNextIssue,
         .any(|i| input.milestone.as_deref().is_none_or(|m| i.milestone == m));
     Ok(PlanNextIssue {
         reason: issue.is_none().then(|| {
-            if declared {
+            if !passed_over.is_empty() {
+                "every READY issue's work is already on the trunk; record each one passed over"
+            } else if declared {
                 "no issue is READY; every one of them waits on a dependency or on its milestone's gate"
             } else {
                 "the plan declares no issue to hand out"
@@ -441,6 +656,8 @@ fn plan_next(ctx: &Context, input: PlanMilestoneFilter) -> Result<PlanNextIssue,
             .milestone
             .unwrap_or_else(|| plan.project.active_milestone.clone()),
         issue,
+        passed_over,
+        delivery,
     })
 }
 
@@ -471,10 +688,45 @@ fn plan_roadmap(ctx: &Context, _: Empty) -> Result<PlanRoadmap, CapabilityError>
             .find(|m| !matches!(m.status.as_str(), "DONE" | "CANCELLED" | "SUPERSEDED"))
             .map(|m| m.id.clone())
     };
+    // the open issues of the open milestones, set against the trunk: the drift `now` is
+    // read with, named under its milestone and never deciding which one is now
+    let open_milestones: Vec<&str> = ordered
+        .iter()
+        .filter(|m| !matches!(m.status.as_str(), "DONE" | "CANCELLED" | "SUPERSEDED"))
+        .map(|m| m.id.as_str())
+        .collect();
+    let among: BTreeSet<String> = plan
+        .issues
+        .iter()
+        .filter(|i| open_milestones.contains(&i.milestone.as_str()))
+        .filter(|i| matches!(i.status.as_str(), "READY" | "BLOCKED" | "ACTIVE" | "VERIFY"))
+        .map(|i| i.id.clone())
+        .collect();
+    let (report, delivery) = trunk_delivery(Path::new(&ctx.index.repository.root), &plan, &among);
+    let mut by_milestone: BTreeMap<String, Vec<DeliveredIssue>> = BTreeMap::new();
+    for d in report.iter().flat_map(|r| &r.issues) {
+        if let Some(found) = delivered(d) {
+            by_milestone
+                .entry(d.milestone.clone())
+                .or_default()
+                .push(found);
+        }
+    }
+    let delivered_open = open_milestones
+        .iter()
+        .filter_map(|m| {
+            by_milestone.remove(*m).map(|issues| MilestoneDelivered {
+                milestone: (*m).to_string(),
+                issues,
+            })
+        })
+        .collect();
     Ok(PlanRoadmap {
         milestones: ordered,
         now,
         next,
+        delivered: delivered_open,
+        delivery,
     })
 }
 
@@ -554,7 +806,7 @@ pub fn module() -> ModuleDescriptor {
             capability! {
                 id: "plan.status",
                 title: "Where the plan stands",
-                description: "Every milestone with its derived status and its issues counted by status, the milestone a worker is executing now, the next ready issue in full, and the plan's own totals. The counts are keyed by the declared vocabulary, which travels with the answer, so a status added to the engine appears here without anything being edited.",
+                description: "Every milestone with its derived status and its issues counted by status, the milestone a worker is executing now, the next ready issue in full, and the plan's own totals. The next ready issue is `plan.next`'s, chosen by the same function: the stamp ranking, then delivery at the trunk head, passing over an issue the trunk's history shows merged, released or deployed. The counts are keyed by the declared vocabulary, which travels with the answer, so a status added to the engine appears here without anything being edited. Cached per checkout state, so a merge that moves the trunk changes the answer without a restart.",
                 input: PlanMilestoneFilter,
                 output: PlanStatusReport,
                 stability: Stability::BehaviorallyVerified,
@@ -564,7 +816,7 @@ pub fn module() -> ModuleDescriptor {
                     cli: None,
                 },
                 tags: ["plan", "project", "status"],
-                cache: CachePolicy::Generation { max_entries: 16 },
+                cache: CachePolicy::Checkout { max_entries: 16 },
                 handler: plan_status,
             },
             capability! {
@@ -602,23 +854,23 @@ pub fn module() -> ModuleDescriptor {
             capability! {
                 id: "plan.next",
                 title: "The one issue to take now",
-                description: "The lowest-wave READY issue of the active milestone, highest priority first, then id. The active milestone can have nothing ready while another one does — one waiting on its own acceptance evidence, for instance — so the search widens to the whole plan rather than answering `none` and sending a worker away from work that is genuinely executable. This is what an agent asks before it starts.",
+                description: "The lowest-wave READY issue of the active milestone, highest priority first, then the number of unfinished issues it unblocks, then id, whose work the trunk does not already hold. The active milestone can have nothing ready while another one does — one waiting on its own acceptance evidence, for instance — so the search widens to the whole plan rather than answering `none` and sending a worker away from work that is genuinely executable. Each candidate in that order is set against `plan.delivery` at the trunk head, read from the trunk's history and the release records only (no branch, forge or deployment, so the answer is a function of that commit): one the history shows merged, released or deployed is passed over and listed in `passed_over` with its stage, its proving commit and the remedy (record it with plan start, verify and done); a branch or an open pull request passes nothing over. `delivery` names the trunk ref and commit read, or says delivery was unread and the answer is the stamp ranking's. Cached per checkout state, so a merge that moves the trunk changes the answer without a restart. This is what an agent asks before it starts.",
                 input: PlanMilestoneFilter,
                 output: PlanNextIssue,
                 stability: Stability::BehaviorallyVerified,
                 exposure: Exposure {
                     mcp: mcp("majordomus_plan_next"),
                     http: get("/api/v1/plan/next"),
-                    cli: None,
+                    cli: Some(CliExposure { path: vec!["plan".into(), "next".into()] }),
                 },
                 tags: ["plan", "project", "next"],
-                cache: CachePolicy::Generation { max_entries: 16 },
+                cache: CachePolicy::Checkout { max_entries: 16 },
                 handler: plan_next,
             },
             capability! {
                 id: "plan.roadmap",
                 title: "The milestones in derived order",
-                description: "The milestone graph laid out by rank, with `order` breaking ties inside a rank only, and the first unblocked unfinished milestone as `now` and the one after it as `next`. Nothing in the sequence is authored: a milestone whose prerequisites are not real cannot be nominated, which is what makes `each step is gated by the previous one being real` an invariant rather than a sentence.",
+                description: "The milestone graph laid out by rank, with `order` breaking ties inside a rank only, and the first unblocked unfinished milestone as `now` and the one after it as `next`. Nothing in the sequence is authored: a milestone whose prerequisites are not real cannot be nominated, which is what makes `each step is gated by the previous one being real` an invariant rather than a sentence. Beside it, `delivered` lists under each open milestone the issues the trunk's history shows merged, released or deployed while their status is not DONE, each with its proving commit and the remedy, so the milestone named as now is read together with its drift; `delivery` names the trunk commit read (`plan.delivery` at the trunk head, history and release records only). Cached per checkout state.",
                 input: Empty,
                 output: PlanRoadmap,
                 stability: Stability::BehaviorallyVerified,
@@ -628,7 +880,7 @@ pub fn module() -> ModuleDescriptor {
                     cli: None,
                 },
                 tags: ["plan", "project", "roadmap"],
-                cache: CachePolicy::Generation { max_entries: 4 },
+                cache: CachePolicy::Checkout { max_entries: 4 },
                 handler: plan_roadmap,
             },
             capability! {
@@ -1256,7 +1508,7 @@ fn plan_transition(
             .issue(&input.issue)
             .map(|i| i.status.clone())
             .unwrap_or_default(),
-        next_ready: after.next_ready(None).map(|i| i.id.clone()),
+        next_ready: choose_next(root, &after, None).0.map(|i| i.id),
         issue: input.issue,
         transition: input.transition,
         from: before,
@@ -1348,14 +1600,25 @@ mod tests {
             );
             // a transition changes the plan between two calls; it is a write, and a write
             // makes the next reading of the repository a new generation, so an answer is
-            // kept, if at all, per generation and never across one
+            // kept, if at all, per generation and never across one. An answer that reads the
+            // trunk's history as well (I3754) is kept per checkout state, which is the
+            // generation and the refs together: a merge that moves the trunk is a new key.
             assert!(
                 matches!(
                     executable.capability.cache,
-                    CachePolicy::Disabled | CachePolicy::Generation { .. }
+                    CachePolicy::Disabled
+                        | CachePolicy::Generation { .. }
+                        | CachePolicy::Checkout { .. }
                 ),
                 "{id} may cache only per generation: a transition changes the plan between two calls"
             );
+            if matches!(*id, "plan.next" | "plan.status" | "plan.roadmap") {
+                assert!(
+                    matches!(executable.capability.cache, CachePolicy::Checkout { .. }),
+                    "{id} reads the trunk's history, so a generation alone would keep an answer \
+                     a merge has made false"
+                );
+            }
         }
         let resource = m.capabilities[0]
             .capability
@@ -1488,5 +1751,185 @@ mod tests {
                  milestone's gate"
             )
         );
+    }
+
+    fn git(dir: &Path, args: &[&str]) -> String {
+        let out = std::process::Command::new("git")
+            .arg("-C")
+            .arg(dir)
+            .args(["-c", "user.name=t", "-c", "user.email=t@example.invalid"])
+            .args(["-c", "commit.gpgsign=false"])
+            .args(args)
+            .env_remove("GIT_DIR")
+            .env_remove("GIT_WORK_TREE")
+            .output()
+            .expect("git");
+        assert!(
+            out.status.success(),
+            "git {args:?}: {}",
+            String::from_utf8_lossy(&out.stderr)
+        );
+        String::from_utf8_lossy(&out.stdout).trim().to_string()
+    }
+
+    /// A commit on the trunk that changes `path`, with `subject`; its id.
+    fn land(dir: &Path, path: &str, subject: &str) -> String {
+        let file = dir.join(path);
+        std::fs::create_dir_all(file.parent().unwrap()).unwrap();
+        std::fs::write(&file, subject).unwrap();
+        git(dir, &["add", "-A"]);
+        git(dir, &["commit", "-q", "-m", subject]);
+        git(dir, &["rev-parse", "HEAD"])
+    }
+
+    /// The planned fixture with its records committed on `master`: I0001 ranks first (it
+    /// unblocks I0002), I0003 second.
+    fn committed() -> crate::synthetic::SyntheticRepository {
+        let repo = crate::synthetic::SyntheticRepository::planned();
+        git(repo.root(), &["symbolic-ref", "HEAD", "refs/heads/master"]);
+        land(repo.root(), "README.md", "the plan");
+        repo
+    }
+
+    fn next_of(ctx: &Context) -> PlanNextIssue {
+        plan_next(ctx, PlanMilestoneFilter::default()).unwrap()
+    }
+
+    /// Evidence `plan_next_passes_over_delivered_work` (I3754): the highest-ranked READY
+    /// issue whose work a commit on the trunk names is passed over, with its stage and that
+    /// commit, and the next-ranked one is handed out — by `plan.next`, by `plan.status`, and
+    /// by the roadmap's list of delivered open work under the milestone it holds open.
+    #[test]
+    fn plan_next_passes_over_delivered_work() {
+        let repo = committed();
+        let ctx = repo.context().unwrap();
+        let before = next_of(&ctx);
+        assert_eq!(before.issue.as_ref().map(|i| i.id.as_str()), Some("I0001"));
+        assert!(before.passed_over.is_empty(), "{:?}", before.passed_over);
+        assert_eq!(before.delivery.state, TrunkReadingState::Read);
+        assert_eq!(before.delivery.trunk.as_deref(), Some("master"));
+
+        let merge = land(repo.root(), "lib/work.rs", "feat(lib): the work (I0001)");
+        let ctx = repo.context().unwrap();
+        let after = next_of(&ctx);
+        assert_eq!(after.issue.as_ref().map(|i| i.id.as_str()), Some("I0003"));
+        assert_eq!(after.delivery.commit.as_deref(), Some(merge.as_str()));
+        assert_eq!(after.passed_over.len(), 1);
+        let passed = &after.passed_over[0];
+        assert_eq!(
+            (
+                passed.issue.as_str(),
+                passed.status.as_str(),
+                passed.stage.as_str()
+            ),
+            ("I0001", "READY", "merged")
+        );
+        assert_eq!(passed.commit, merge);
+        assert!(
+            passed.remedy.contains("plan start I0001"),
+            "{}",
+            passed.remedy
+        );
+
+        let status = plan_status(&ctx, PlanMilestoneFilter::default()).unwrap();
+        assert_eq!(
+            status.next_ready.map(|i| i.id),
+            Some("I0003".to_string()),
+            "plan.status names the issue plan.next names"
+        );
+
+        let roadmap = plan_roadmap(&ctx, Empty {}).unwrap();
+        assert_eq!(roadmap.delivery.state, TrunkReadingState::Read);
+        let listed: Vec<(&str, Vec<&str>)> = roadmap
+            .delivered
+            .iter()
+            .map(|m| {
+                (
+                    m.milestone.as_str(),
+                    m.issues.iter().map(|i| i.issue.as_str()).collect(),
+                )
+            })
+            .collect();
+        assert_eq!(listed, [("m-first", vec!["I0001"])]);
+
+        // a release record whose commit contains the merge: released, and still passed over
+        let record = format!(
+            "schema: release/v1\nversion: \"0.1.0\"\ntag: v0.1.0\nchannel: stable\n\
+             commit: {merge}\npublished_at: \"2026-11-09T07:00:00Z\"\nartifacts:\n\
+             \x20 - target: linux-x86_64-gnu\n    name: m-v0.1.0.tar.gz\n\
+             \x20   url: https://example.invalid/m-v0.1.0.tar.gz\n\
+             \x20   sha256: \"{}\"\n    size: 1\n",
+            "0".repeat(64)
+        );
+        let releases = repo.root().join(".ai/repo/releases");
+        std::fs::create_dir_all(&releases).unwrap();
+        std::fs::write(releases.join("v0.1.0.yaml"), record).unwrap();
+        git(repo.root(), &["add", "-A"]);
+        git(repo.root(), &["commit", "-q", "-m", "release: v0.1.0"]);
+        let released = next_of(&repo.context().unwrap());
+        assert_eq!(released.issue.map(|i| i.id), Some("I0003".to_string()));
+        assert_eq!(
+            released
+                .passed_over
+                .iter()
+                .map(|p| (p.issue.as_str(), p.stage.as_str(), p.commit.as_str()))
+                .collect::<Vec<_>>(),
+            [("I0001", "released", merge.as_str())]
+        );
+    }
+
+    /// Evidence `plan_next_hands_out_branch_only_work` (I3754): a branch that names an
+    /// issue, unmerged, is work in flight and passes nothing over; and a planning commit that
+    /// names the first issue while changing only its record proves no delivery (I2749).
+    #[test]
+    fn plan_next_hands_out_branch_only_work() {
+        let repo = committed();
+        let root = repo.root();
+        git(root, &["checkout", "-q", "-b", "feature/I0001-the-work"]);
+        land(root, "lib/work.rs", "feat(lib): the work (I0001)");
+        git(root, &["checkout", "-q", "master"]);
+        let record = ".ai/repo/project/issues/I0001.yaml";
+        let text = std::fs::read_to_string(root.join(record)).unwrap();
+        std::fs::write(root.join(record), format!("{text}# planned\n")).unwrap();
+        git(root, &["add", "-A"]);
+        git(root, &["commit", "-q", "-m", "chore(plan): plan I0001"]);
+        let next = next_of(&repo.context().unwrap());
+        assert_eq!(next.issue.map(|i| i.id), Some("I0001".to_string()));
+        assert!(next.passed_over.is_empty(), "{:?}", next.passed_over);
+    }
+
+    /// A merge that lands after a first answer changes the next answer of the same context,
+    /// through the executor's cache: the answer is kept per checkout state, and a commit on
+    /// the trunk moves that state.
+    #[test]
+    fn a_merge_after_the_first_answer_changes_the_next_one() {
+        let repo = committed();
+        let ctx = repo.context().unwrap();
+        let first = ctx.execute("plan.next", serde_json::json!({})).unwrap();
+        assert_eq!(first["issue"]["id"], "I0001");
+        let again = ctx.execute("plan.next", serde_json::json!({})).unwrap();
+        assert_eq!(first, again, "an unchanged checkout answers the same");
+        land(repo.root(), "lib/work.rs", "feat(lib): the work (I0001)");
+        let moved = ctx.execute("plan.next", serde_json::json!({})).unwrap();
+        assert_eq!(moved["issue"]["id"], "I0003", "{moved:#}");
+        assert_eq!(moved["passed_over"][0]["issue"], "I0001");
+    }
+
+    /// With a history that cannot be read — a repository with no commit — the answer says
+    /// delivery was unread and hands out the stamp ranking's issue.
+    #[test]
+    fn an_unread_history_says_so_and_keeps_the_stamp_ranking() {
+        let repo = crate::synthetic::SyntheticRepository::planned();
+        let ctx = repo.context().unwrap();
+        let next = next_of(&ctx);
+        assert_eq!(next.delivery.state, TrunkReadingState::Unread);
+        assert!(!next.delivery.detail.is_empty());
+        let plan = plan_of(&ctx).unwrap();
+        assert_eq!(
+            next.issue.map(|i| i.id),
+            plan.next_ready(None).map(|i| i.id.clone()),
+            "the stamp ranking's pick"
+        );
+        assert!(next.passed_over.is_empty());
     }
 }

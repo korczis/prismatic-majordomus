@@ -188,10 +188,10 @@ Every externally callable operation is a benchmark target, derived from the regi
 | `plan.flight` | plan | query | — | covered | covered | covered | `where-the-work-is`, `one-milestone-inspected` |
 | `plan.issues` | plan | query | process, 16 entries, per generation | covered | covered | covered | `all`, `ready`, `one-milestone` |
 | `plan.model` | plan | query | — | covered | covered | covered | `default` |
-| `plan.next` | plan | query | process, 16 entries, per generation | covered | covered | covered | `whole-plan`, `one-milestone` |
+| `plan.next` | plan | query | process, 16 entries, per checkout state | covered | covered | covered | `whole-plan`, `one-milestone` |
 | `plan.record` | plan | query | — | covered | covered | covered | `issue`, `milestone` |
-| `plan.roadmap` | plan | query | process, 4 entries, per generation | covered | covered | covered | `default` |
-| `plan.status` | plan | query | process, 16 entries, per generation | covered | covered | covered | `whole-plan`, `one-milestone` |
+| `plan.roadmap` | plan | query | process, 4 entries, per checkout state | covered | covered | covered | `default` |
+| `plan.status` | plan | query | process, 16 entries, per checkout state | covered | covered | covered | `whole-plan`, `one-milestone` |
 | `plan.transition` | plan | command | — | covered | covered | covered | `refused-by-status` |
 | `plan.validate` | plan | query | — | covered | covered | covered | `default` |
 | `plan.waves` | plan | query | — | covered | covered | covered | `whole-plan`, `one-milestone` |

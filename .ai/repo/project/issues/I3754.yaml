@@ -1,6 +1,6 @@
 # campaign.md D2 names no milestone for N6; truthful-plan-surfaces (ACTIVE) owns plan.next and plan.roadmap's truth
 # sequence: depends on I2749, because without it a planning commit that names an issue would make plan.next pass over real work
-# case name: 3727_ stands for the case number allocated with the id
+# case name: 4573, allocated 2026-11-09 (3727 was taken by another case before this landed)
 id: "I3754"
 milestone: "truthful-plan-surfaces"
 title: "plan.next never names an issue whose delivery is merged or released, and plan.roadmap names that issue with its drift"
@@ -15,9 +15,14 @@ desired_state: "One function in the capability module picks the next issue: the 
 scope:
   - "apps/majordomus-cli/src/capability/builtin/plan.rs"
   - "apps/majordomus-cli/src/plan/delivery.rs"
+  - "apps/majordomus-cli/src/cli.rs"
+  - "apps/majordomus-cli/src/commands/plan.rs"
   - "lib/plan.sh"
   - "test/cases/99_plan_capabilities.sh"
-  - "test/cases/3727_plan_next_never_names_delivered_work.sh"
+  - "test/cases/43_plan_command.sh"
+  - "test/cases/46_cross_surface.sh"
+  - "test/cases/3441_the_choice_ranks_by_what_it_unblocks.sh"
+  - "test/cases/4573_plan_next_never_names_delivered_work.sh"
   - "docs/PLANNING.md"
   - "docs/generated"
   - "site/data/generated"
@@ -40,7 +45,7 @@ acceptance_criteria:
   - "With a history that cannot be read, the answer names delivery as unread and returns the stamp ranking"
   - "plan.roadmap lists, under the milestone it holds open, each issue the history shows delivered while it is not DONE"
 validation:
-  - "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 3727_plan_next_never_names_delivered_work 99_plan_capabilities"
+  - "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 4573_plan_next_never_names_delivered_work 99_plan_capabilities"
   - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib capability::builtin::plan"
   - "majordomus plan validate"
 evidence_required:
@@ -48,3 +53,6 @@ evidence_required:
   - "plan_next_hands_out_branch_only_work"
 depends_on:
   - "I2749"
+started_at: 2026-11-09T19:25:28Z
+started_event: sha256:9cebe7ed8d035cf7610a6b736f8f916140f908e32109ca374d94d1dc1f8a2004
+updated_at: 2026-11-09T19:25:28Z

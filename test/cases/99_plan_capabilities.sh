@@ -40,6 +40,15 @@ plan_tool() { # <repository> <tool> <arguments-json>
   tail -n 1 "$out" | jq '.result.structuredContent'
 }
 
+# The awk engine's own next ready issue: `mj_pj_next_ready` over the repository's records,
+# through lib/project.sh as scripts/generate-site-data reads it. The shell's `plan next` asks
+# the executable since I3754, so this is the one place the awk ranking still answers.
+awk_next() { # <repository>
+  ( cd "$1" && MJ_VERSION=case99 MJ_BIN_DIR="$ROOT/bin" MJ_LIB_DIR="$ROOT/lib" MJ_ROOT="$1" \
+      bash -c '. "$MJ_LIB_DIR/common.sh"; mj_resolve_layout; . "$MJ_LIB_DIR/project.sh"
+               mj_project_load >/dev/null 2>&1 || exit 0; mj_pj_next_ready' 2>/dev/null )
+}
+
 # The two engines, over one repository, on one derivation. Both sides are normalised to the
 # same document by jq and compared byte for byte, so a difference names the field.
 same() { # <label> <shell-file> <rust-file>
@@ -79,10 +88,18 @@ compare_repository() { # <repository> <label>
       | {id, released_in, title, status, rank, order, issues: .counts, depends_on, blocked_by, dependents, claims}' > "$S/rs.roadmap" || return 1
   same "$label: the roadmap" "$S/sh.roadmap" "$S/rs.roadmap" || return 1
 
-  # --- the one issue a worker should take now
-  ( cd "$repo" && "$MJ" plan next --json 2>/dev/null ) | jq -S -c '{id, title, milestone, wave}' > "$S/sh.next" || : > "$S/sh.next"
-  plan_tool "$repo" majordomus_plan_next '{}' \
-    | jq -S -c 'if .issue then {id: .issue.id, title: .issue.title, milestone: .issue.milestone, wave: .issue.wave} else empty end' > "$S/rs.next" || return 1
+  # --- the one issue a worker should take now. The stamp ranking is both engines' and is
+  #     compared here: the awk's head, read through the library the site generator reads,
+  #     against plan.next's, which is its answer or else the first issue it passed over
+  #     because the trunk already holds that issue's work (I3754). The shell's `plan next`
+  #     asks the executable, so it and the MCP tool are one answer, compared as one.
+  awk_next "$repo" | jq -R -S -c 'select(length > 0) | {id: .}' > "$S/sh.next"
+  plan_tool "$repo" majordomus_plan_next '{}' > "$S/rs.next.json" || return 1
+  jq -S -c '(.passed_over[0].issue // .issue.id) | select(. != null) | {id: .}' \
+    < "$S/rs.next.json" > "$S/rs.next"
+  same "$label: the stamp ranking's next ready issue" "$S/sh.next" "$S/rs.next" || return 1
+  ( cd "$repo" && "$MJ" plan next --json 2>/dev/null ) | jq -S -c '.issue.id // empty' > "$S/sh.next" || : > "$S/sh.next"
+  jq -S -c '.issue.id // empty' < "$S/rs.next.json" > "$S/rs.next"
   same "$label: the next ready issue" "$S/sh.next" "$S/rs.next" || return 1
 
   # --- the findings, code for code and message for message, in derivation order, and the

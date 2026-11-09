@@ -227,7 +227,7 @@ mj_plan_status() {
     # the vocabulary travels with the counts: a reader of this output never has to know
     # which statuses exist, and a status added to the engine appears here by existing
     printf '{"active_milestone":"%s","next_ready":"%s","statuses":[%s],"milestones":[' \
-      "$active" "$(mj_pj_next_ready "$active")" \
+      "$active" "$(mj_plan_next_id)" \
       "$(mj_pj_statuses issue | tr ' ' '\n' | awk '{ printf "%s\"%s\"", (NR > 1 ? "," : ""), $0 }')"
     local first=1
     mj_pj_milestone_ids | while read -r id; do
@@ -259,7 +259,7 @@ mj_plan_status() {
       "$(mj_pj_m_count "$id" DONE)" "$(mj_pj_m_count "$id" required)" "$(mj_pj_m_title "$id")"
   done
   printf '\nactive milestone: %s\n' "${active:-none}"
-  nxt="$(mj_pj_next_ready "$active")"
+  nxt="$(mj_plan_next_id)"
   if [ -n "$nxt" ]; then printf 'next ready issue: %s — %s\n' "$nxt" "$(mj_pj_i_title "$nxt")"
   else printf 'next ready issue: none — run: majordomus plan blocked\n'; fi
 }
@@ -333,19 +333,40 @@ mj_plan_waves() {
   fi
 }
 
+# ---------------------------------------------------------------- next
+# The next issue is the executable's `plan.next` (I3754), handed over the way delivery and
+# drift are: the stamp ranking `mj_pj_ready_ranked` derives, each candidate then set against
+# its delivery at the trunk head, an issue the trunk's history shows merged, released or
+# deployed passed over and listed. The awk ranking stays pure — statuses and waves are the
+# records' alone, and case 99 holds both engines to them — and nothing here ranks again:
+# `plan next`, `plan status` and the line a transition prints all ask the one function.
+
+# mj_plan_next_cli [milestone] [arguments...]: the executable's `plan next`, with the
+# repository this launcher was told to read, and its records read from the work tree as this
+# tool reads them: an issue written and not yet added to git is in `plan status`'s counts,
+# so it is a candidate for the next issue too.
+mj_plan_next_cli() {
+  local m="${1:-}"; [ $# -eq 0 ] || shift
+  local -a fwd=(--discovery filesystem)
+  [ -z "${MJ_REPO:-}" ] || fwd+=(--repo "$MJ_REPO")
+  [ -z "$m" ] || fwd+=(--milestone "$m")
+  "$MJ_BIN_DIR/majordomus-cli" plan next "${fwd[@]+"${fwd[@]}"}" "$@"
+}
+
+# mj_plan_next_id [milestone]: the id plan.next names, or nothing. Read without a JSON parser
+# from the document's own shape: the first "id" under the top-level "issue" (PlanNextIssue
+# declares that order and says so).
+mj_plan_next_id() {
+  mj_plan_next_cli "${1:-}" --format json 2>/dev/null | awk '
+    /^  "issue": \{/ { inside = 1; next }
+    inside && /^    "id": "/ { sub(/^    "id": "/, ""); sub(/".*$/, ""); print; exit }
+    /^  [^ ]/ { inside = 0 }'
+}
+
 mj_plan_next() {
-  local nxt; nxt="$(mj_pj_next_ready "${1:-$(mj_pj_active)}")"
-  [ -n "$nxt" ] || { printf 'no ready issue; run: majordomus plan blocked\n'; return 0; }
-  if [ "$MJ_JSON" = 1 ]; then
-    printf '{"id":"%s","title":"%s","milestone":"%s","wave":%s}\n' "$nxt" \
-      "$(mj_json_esc "$(mj_pj_i_title "$nxt")")" "$(mj_pj_col I "$nxt" 3)" "$(mj_pj_i_wave "$nxt")"
-    return 0
-  fi
-  printf '%s — %s\n' "$nxt" "$(mj_pj_i_title "$nxt")"
-  printf 'objective: %s\n' "$(mj_pj_get "$nxt" objective)"
-  printf 'scope:     %s\n' "$(mj_pj_i_scope "$nxt")"
-  printf 'profile:   %s\n' "$(mj_pj_get "$nxt" profile)"
-  printf '\nnext: majordomus plan start %s\n' "$nxt"
+  local -a fmt=()
+  [ "$MJ_JSON" != 1 ] || fmt=(--format json)
+  mj_plan_next_cli "${1:-}" "${fmt[@]+"${fmt[@]}"}"
 }
 
 # ---------------------------------------------------------------- show
@@ -510,7 +531,7 @@ mj_plan_transition() {
   esac
   mj_project_unload
   mj_project_load >/dev/null 2>&1 || true
-  local nxt; nxt="$(mj_pj_next_ready)"
+  local nxt; nxt="$(mj_plan_next_id)"
   printf 'next ready issue: %s\n' "${nxt:-none}"
 }
 

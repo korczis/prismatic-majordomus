@@ -21,7 +21,7 @@ $ARGUMENTS
 | `plan.flight` | Where the work is now | `majordomus_plan_flight` | — | reads |
 | `plan.issues` | The issues, filtered by what the graph derived | `majordomus_plan_issues` | — | reads |
 | `plan.model` | The whole derived plan | `majordomus_plan` | — | reads |
-| `plan.next` | The one issue to take now | `majordomus_plan_next` | — | reads |
+| `plan.next` | The one issue to take now | `majordomus_plan_next` | `majordomus plan next` | reads |
 | `plan.record` | One milestone or issue, with everything derived about it | `majordomus_plan_record` | — | reads |
 | `plan.roadmap` | The milestones in derived order | `majordomus_plan_roadmap` | — | reads |
 | `plan.status` | Where the plan stands | `majordomus_plan_status` | — | reads |

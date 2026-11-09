@@ -21,6 +21,10 @@ command -v jq >/dev/null 2>&1 || skip "jq not installed"
 RB="$(rust_bin)" || rust_bin_exit $?
 export MAJORDOMUS_SHARE="$ROOT/share" MAJORDOMUS_BIN="$RB"
 "$MJ" init >/dev/null
+# the decision is kept out of the tracked tree: a `git add -A` below would commit it beside
+# a record, and a commit naming an issue that changes a file outside the plan is delivery of
+# that issue, which plan next passes over (I3754)
+D="$T/.ai/local/d.json"
 git add -A >/dev/null 2>&1; git commit -qm base >/dev/null 2>&1 || true
 pj_init
 pj_milestone M000
@@ -37,10 +41,10 @@ rust_next() { "$RB" proceed plan --format json 2>/dev/null | jq -r '.selected.is
 # ---------------------------------------------------------------- 1. the one that unblocks more
 [ "$(shell_next)" = I0002 ] || { echo "    the shell engine does not hand out I0002 first: $(shell_next)"; exit 1; }
 [ "$(rust_next)" = I0002 ] || { echo "    proceed.plan does not select I0002: $(rust_next)"; exit 1; }
-"$RB" proceed plan --format json > "$T/d.json" 2>/dev/null || true
+"$RB" proceed plan --format json > "$D" 2>/dev/null || true
 jq -e '.selected.terms.unblocks == ["I0003", "I0004", "I0008"]
-  and (.reason | contains("it unblocks 3 issue(s)"))' "$T/d.json" >/dev/null \
-  || { echo "    the diamond is not counted once:"; cat "$T/d.json"; exit 1; }
+  and (.reason | contains("it unblocks 3 issue(s)"))' "$D" >/dev/null \
+  || { echo "    the diamond is not counted once:"; cat "$D"; exit 1; }
 
 # ---------------------------------------------------------------- 2. a dependency changes the order
 for id in I0005 I0006 I0007 I0009; do pj_issue "$id" M000 I0001; done
@@ -63,24 +67,24 @@ pair I0000 I00000 I00000
 pair I10000000000000000 I9999999999999999 I9999999999999999
 
 # ---------------------------------------------------------------- 4. a source that did not load
-plan_rc() { rc=0; "$RB" proceed plan --format json > "$T/d.json" 2>/dev/null || rc=$?; }
+plan_rc() { rc=0; "$RB" proceed plan --format json > "$D" 2>/dev/null || rc=$?; }
 # `majordomus init` ships an enabled mesh declaration (closed until a machine is enrolled), so
 # the repository is first made to declare none
 [ ! -e .ai/repo/mesh ] || { git rm -rq .ai/repo/mesh && git commit -qm "no mesh declared" >/dev/null; }
 plan_rc
 [ "$rc" = 0 ] && jq -e '.provisional == false and (.sources[] | select(.source == "mesh") | .state == "undeclared")
-  and (.sources[] | select(.source == "plan") | .state == "read")' "$T/d.json" >/dev/null   || { echo "    with no declaration and a whole plan the decision is not final ($rc):"; cat "$T/d.json"; exit 1; }
+  and (.sources[] | select(.source == "plan") | .state == "read")' "$D" >/dev/null   || { echo "    with no declaration and a whole plan the decision is not final ($rc):"; cat "$D"; exit 1; }
 mkdir -p .ai/repo/mesh
 printf 'schema: mesh/v1\nkind: mesh-declaration\nid: majordomus\nenabled: bananas\n' > .ai/repo/mesh/majordomus.yaml
 git add -A >/dev/null && git commit -qm "a declaration the schema refuses" >/dev/null
 plan_rc
-[ "$rc" = 11 ] && jq -e '.provisional and .next == [] and (.sources[] | select(.source == "mesh") | .state == "unread")' "$T/d.json" >/dev/null \
-  || { echo "    a refused declaration is read as no mesh ($rc):"; cat "$T/d.json"; exit 1; }
+[ "$rc" = 11 ] && jq -e '.provisional and .next == [] and (.sources[] | select(.source == "mesh") | .state == "unread")' "$D" >/dev/null \
+  || { echo "    a refused declaration is read as no mesh ($rc):"; cat "$D"; exit 1; }
 git rm -q .ai/repo/mesh/majordomus.yaml && git commit -qm "no declaration" >/dev/null
 printf 'id: I0042\nmilestone: M000\ntitle: 7\npriority: urgent\n' > .ai/repo/project/issues/I0042.yaml
 git add -A >/dev/null && git commit -qm "a record that does not load" >/dev/null
 plan_rc
 [ "$rc" = 11 ] && jq -e '.provisional and .next == [] and (.sources[] | select(.source == "plan") | .state == "partial"
-  and (.summary | contains("I0042")))' "$T/d.json" >/dev/null \
-  || { echo "    a plan with a record that did not load is read as whole ($rc):"; cat "$T/d.json"; exit 1; }
+  and (.summary | contains("I0042")))' "$D" >/dev/null \
+  || { echo "    a plan with a record that did not load is read as whole ($rc):"; cat "$D"; exit 1; }
 exit 0

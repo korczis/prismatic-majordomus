@@ -3229,6 +3229,11 @@
     },
     {
       "kind": "command",
+      "subject": "command:plan next",
+      "path": "/evidence/commands/plan-next/"
+    },
+    {
+      "kind": "command",
       "subject": "command:plan",
       "path": "/evidence/commands/plan/"
     },
@@ -6181,7 +6186,9 @@
       "id": "plan.next",
       "page": "/evidence/capabilities/plan-next/",
       "programs": [],
-      "members": [],
+      "members": [
+        "command:plan next"
+      ],
       "routes": [],
       "mechanisms": [],
       "findings": []
@@ -17363,6 +17370,12 @@
         },
         {
           "via": "behaviour",
+          "test": "suite:4573_plan_next_never_names_delivered_work",
+          "path": "test/cases/4573_plan_next_never_names_delivered_work.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "behaviour",
           "test": "suite:45_github_projection",
           "path": "test/cases/45_github_projection.sh",
           "category": "e2e"
@@ -17478,6 +17491,25 @@
       "kind": "command",
       "id": "plan drift",
       "page": "/evidence/commands/plan-drift/",
+      "programs": [
+        "native"
+      ],
+      "members": [],
+      "routes": [
+        {
+          "via": "example",
+          "test": "crate:cli_examples",
+          "path": "apps/majordomus-cli/tests/cli_examples.rs",
+          "category": "integration"
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
+    "command:plan next": {
+      "kind": "command",
+      "id": "plan next",
+      "page": "/evidence/commands/plan-next/",
       "programs": [
         "native"
       ],
