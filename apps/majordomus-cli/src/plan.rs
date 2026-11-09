@@ -2246,6 +2246,10 @@ pub fn check(
 /// second convention for locating one is how two readers come to disagree about which file
 /// is the record.
 ///
+/// `caller` is the provider session of whoever asked, when the asker knows it — a capability
+/// call over MCP passes its connection's episode — and the event names that caller's
+/// episode; `None` resolves the caller from the environment (I4291, ADR 0164).
+///
 /// ```no_run
 /// # use std::path::Path;
 /// # use majordomus_cli::index::Index;
@@ -2258,7 +2262,7 @@ pub fn check(
 /// let at = ledger::now();
 /// // The guard runs first, the record is rewritten, and only then is the event appended:
 /// // a ledger line never describes a change that did not reach the file.
-/// transition(root, record, index, &plan, "I0001", Transition::Start, &at, &vocabulary, git)
+/// transition(root, record, index, &plan, "I0001", Transition::Start, &at, &vocabulary, git, None)
 ///     .expect("a READY issue may start");
 /// # }
 /// ```
@@ -2273,6 +2277,7 @@ pub fn transition(
     now: &str,
     vocabulary: &crate::ledger::Vocabulary,
     git: &crate::git::GitState,
+    caller: Option<&str>,
 ) -> Result<(), TransitionError> {
     check(index, plan, id, transition, now)?;
     let text = std::fs::read_to_string(path).map_err(|e| TransitionError::Write {
@@ -2291,13 +2296,14 @@ pub fn transition(
         path: path.to_path_buf(),
         reason: e.to_string(),
     })?;
-    crate::ledger::append(
+    crate::ledger::append_by(
         root,
         vocabulary,
         git,
         now,
         transition.event(),
         &[("issue", id.to_string())],
+        caller,
     )
     .map_err(|e| TransitionError::Write {
         path: root.join(".ai/local/state/ledger.jsonl"),
@@ -2736,6 +2742,7 @@ mod seal_tests {
             AT,
             &vocabulary,
             &ix.repository.git,
+            None,
         )
         .expect("a READY issue starts");
         let written = std::fs::read_to_string(root.join(rel)).unwrap();

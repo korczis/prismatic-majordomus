@@ -114,13 +114,16 @@ pub fn publish(
     let root = root(ctx);
     continuity::locate_handover(&root, input.handover.as_deref())
         .map_err(CapabilityError::Refused)?;
-    continuity::publish(
+    // the record names the episode of the connection that published it (I4291)
+    let caller = crate::session::attribution::connection_key(&ctx.episodes, ctx.caller.as_ref());
+    continuity::publish_by(
         &writing(ctx, &root)?,
         &continuity::PublishRequest {
             handover: input.handover,
             issue: input.issue,
             milestone: input.milestone,
         },
+        caller.as_deref(),
     )
     .map_err(CapabilityError::Refused)
 }

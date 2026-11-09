@@ -62,6 +62,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I3083` | shares lib/capture.sh with I4468; they may not run concurrently |
 | WARN | `scope_conflict` | `I3083` | shares .ai/repo/adrs/0021-the-branch-to-worktree-topology-is-derived-from-git-identity-and-enfor.md with I4481; they may not run concurrently |
 | WARN | `scope_conflict` | `I3083` | shares .ai/repo/adrs/0021-the-branch-to-worktree-topology-is-derived-from-git-identity-and-enfor.md with I4500; they may not run concurrently |
+| WARN | `scope_conflict` | `I3083` | shares lib/capture.sh with I4551; they may not run concurrently |
 | WARN | `scope_conflict` | `I3087` | shares docs/EVIDENCE.md with I3116; they may not run concurrently |
 | WARN | `scope_conflict` | `I3087` | shares .ai/repo/project/issues/I3087.yaml with I3246; they may not run concurrently |
 | WARN | `scope_conflict` | `I3087` | shares docs/EVIDENCE.md with I3255; they may not run concurrently |
@@ -233,7 +234,6 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I3123` | shares .ai/repo/profiles with I4500; they may not run concurrently |
 | WARN | `scope_conflict` | `I3126` | shares apps/majordomus-cli/src/economics with I3298; they may not run concurrently |
 | WARN | `scope_conflict` | `I3126` | shares apps/majordomus-cli/src/economics with I3366; they may not run concurrently |
-| WARN | `scope_conflict` | `I3126` | shares apps/majordomus-cli/src/ledger.rs with I4291; they may not run concurrently |
 | WARN | `scope_conflict` | `I3861` | shares .ai/repo/adrs/0082-token-economics-are-measured-from-matched-runs-and-published-only-past-a-declared-rule.md with I4307; they may not run concurrently |
 | WARN | `scope_conflict` | `I3861` | shares .ai/repo/adrs/0082-token-economics-are-measured-from-matched-runs-and-published-only-past-a-declared-rule.md with I4315; they may not run concurrently |
 | WARN | `scope_conflict` | `I3861` | shares .ai/repo/adrs/0082-token-economics-are-measured-from-matched-runs-and-published-only-past-a-declared-rule.md with I4481; they may not run concurrently |

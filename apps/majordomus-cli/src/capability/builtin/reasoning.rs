@@ -336,11 +336,16 @@ fn reasoning_record(
         crate::git::GitState::Available(g) => g.head.clone(),
         _ => None,
     };
+    // the caller's own episode, from its connection when it has one, and the task only when
+    // no other open episode opened it (I4291)
+    let caller = crate::session::attribution::connection_key(&ctx.episodes, ctx.caller.as_ref());
+    let (task, session) = s.store.attribution(caller.as_deref());
     let record = ReasoningRecord {
         schema: RECORD_SCHEMA.into(),
         version: RECORD_VERSION,
         id: mint_id(body.kind(), &recorded_at),
-        task: s.store.current_task(),
+        task,
+        session,
         recorded_at,
         head,
         redacted,
