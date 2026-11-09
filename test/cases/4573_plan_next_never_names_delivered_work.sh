@@ -8,7 +8,7 @@
 # only), an issue the history shows merged, released or deployed passed over and listed.
 # This drives every door to that answer over one fixture:
 #
-#   I0001  READY, ranks first (I0003 waits on it); its branch, then its merge, then a release
+#   I0001  READY, ranks first (I0003 waits on it); its branch, then its merge
 #   I0002  READY, the next-ranked one
 #   I0003  BLOCKED on I0001
 #   I0004  READY, ranked after I0002
@@ -22,9 +22,7 @@ RB="$(rust_bin)" || rust_bin_exit $?
 MAJORDOMUS_SHARE="$ROOT/share"; export MAJORDOMUS_SHARE
 fail() { printf '    %s\n' "$*"; exit 1; }
 S="$(mktemp -d "${TMPDIR:-/tmp}/mj4573.XXXXXX")"
-MCP=""
-cleanup() { [ -z "$MCP" ] || kill "$MCP" 2>/dev/null || true; exec 3>&- 2>/dev/null || true; rm -rf "$S"; }
-trap cleanup EXIT
+trap 'rm -rf "$S"' EXIT
 
 # One MCP tool call over the real pipes, structured content on stdout (case 99's reader).
 plan_tool() { # <tool> <arguments-json>
@@ -56,28 +54,6 @@ jq -e --arg t "$TRUNK" --arg c "$(git rev-parse HEAD)" '
   and .delivery.state == "read" and .delivery.trunk == $t and .delivery.commit == $c' \
   "$S/n0.json" >/dev/null || fail "with nothing delivered the pick is not the stamps': $(cat "$S/n0.json")"
 
-# One server, asked before and after a merge: the same session must change its answer.
-mkfifo "$S/in"
-"$RB" mcp < "$S/in" > "$S/session" 2> "$S/session.err" &
-MCP=$!
-exec 3> "$S/in"
-send_next() { # <request id>
-  printf '{"jsonrpc":"2.0","id":%s,"method":"tools/call","params":{"name":"majordomus_plan_next","arguments":{}}}\n' "$1" >&3
-}
-await() { # <request id>: the response line, once the session has written it
-  local n=0
-  until grep -q "\"id\":$1[,}]" "$S/session"; do
-    n=$((n + 1)); [ "$n" -lt 600 ] || { sed 's/^/    | /' "$S/session.err"; fail "the session never answered request $1"; }
-    sleep 0.1
-  done
-  grep "\"id\":$1[,}]" "$S/session" | tail -n 1 | jq '.result.structuredContent'
-}
-printf '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-06-18","capabilities":{},"clientInfo":{"name":"case4573","version":"0"}}}\n' >&3
-printf '{"jsonrpc":"2.0","method":"notifications/initialized"}\n' >&3
-send_next 2
-first="$(await 2)" || exit 1
-[ "$(printf '%s' "$first" | jq -r '.issue.id')" = I0001 ] || fail "the session's first answer is not I0001: $first"
-
 # ---------------------------------------------------------------- a branch is work in flight
 # Evidence plan_next_hands_out_branch_only_work. Negative: a READY issue named only by a
 # branch, or by an open pull request in the forge observation, is still handed out.
@@ -102,9 +78,41 @@ git add -A >/dev/null && git commit -qm "chore(plan): plan I0001"
 # Evidence plan_next_passes_over_delivered_work: the highest-ranked READY issue named by a
 # merge on the trunk is passed over with stage merged and its merge commit, and the
 # next-ranked READY issue is handed out.
-git merge -q --no-ff feature/I0001-the-work -m "Merge pull request #5 from someone/feature/I0001-the-work" \
-  -m "feat: the work (I0001)"
+#
+# One server is asked before and after the merge, which lands between its two answers: the
+# writer of its stdin waits for the first answer, merges, then asks again, so the same
+# session must change its answer without a restart. The server runs in the foreground and
+# ends with its stdin, so nothing it started outlives the case.
+answered() { # <request id>: wait until the session has written its answer
+  local n=0
+  until grep -q "\"id\":$1[,}]" "$S/session" 2>/dev/null; do
+    n=$((n + 1)); [ "$n" -lt 600 ] || return 1
+    sleep 0.1
+  done
+}
+ask_next() { # <request id>
+  printf '{"jsonrpc":"2.0","id":%s,"method":"tools/call","params":{"name":"majordomus_plan_next","arguments":{}}}\n' "$1"
+}
+: > "$S/session"
+{
+  printf '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-06-18","capabilities":{},"clientInfo":{"name":"case4573","version":"0"}}}\n'
+  printf '{"jsonrpc":"2.0","method":"notifications/initialized"}\n'
+  ask_next 2
+  answered 2 || exit 0
+  git merge -q --no-ff feature/I0001-the-work -m "Merge pull request #5 from someone/feature/I0001-the-work" \
+    -m "feat: the work (I0001)" >&2
+  ask_next 3
+  answered 3 || exit 0
+} | "$RB" mcp > "$S/session" 2> "$S/session.err"
+answer() { grep "\"id\":$1[,}]" "$S/session" | tail -n 1 | jq '.result.structuredContent'; }
+grep -q '"id":2[,}]' "$S/session" || { sed 's/^/    | /' "$S/session.err"; fail "the session never answered its first question"; }
+[ "$(answer 2 | jq -r '.issue.id')" = I0001 ] || fail "the session's first answer is not I0001: $(answer 2)"
+grep -q '"id":3[,}]' "$S/session" || { sed 's/^/    | /' "$S/session.err"; fail "the session never answered after the merge"; }
+[ "$(answer 3 | jq -r '.issue.id')" = I0002 ] \
+  || fail "the running session still names what the merge delivered: $(answer 3)"
+
 MERGE="$(git rev-parse HEAD)"
+[ "$(git rev-list --parents -n 1 HEAD | wc -w | tr -d ' ')" = 3 ] || fail "the trunk's head is not the merge"
 next_json > "$S/n1.json"
 jq -e --arg m "$MERGE" '
   .issue.id == "I0002"
@@ -114,15 +122,6 @@ jq -e --arg m "$MERGE" '
   and (.passed_over[0].remedy | contains("plan start I0001"))
   and .delivery.commit == $m' "$S/n1.json" >/dev/null \
   || fail "the merged I0001 was not passed over for I0002: $(cat "$S/n1.json")"
-
-# the same session, asked again after the merge, without a restart
-send_next 3
-second="$(await 3)" || exit 1
-[ "$(printf '%s' "$second" | jq -r '.issue.id')" = I0002 ] \
-  || fail "the running session still names what the merge delivered: $second"
-exec 3>&-
-wait "$MCP" 2>/dev/null || true
-MCP=""
 
 # every door names the same issue for the same trunk commit
 [ "$("$RB" plan next --format json | jq -r '.issue.id')" = I0002 ] || fail "the executable's plan next disagrees"
@@ -143,29 +142,11 @@ jq -e --arg m "$MERGE" '
   and .delivery.state == "read"' "$S/roadmap.json" >/dev/null \
   || fail "plan.roadmap does not list I0001 under M1: $(jq '{delivered, delivery}' "$S/roadmap.json")"
 
-# ---------------------------------------------------------------- a release passes it over too
-mkdir -p .ai/repo/releases
-cat > .ai/repo/releases/v0.1.0.yaml <<Y
-schema: release/v1
-version: "0.1.0"
-tag: v0.1.0
-channel: stable
-commit: $MERGE
-published_at: "2026-11-09T07:00:00Z"
-artifacts:
-  - target: linux-x86_64-gnu
-    name: m-v0.1.0.tar.gz
-    url: https://example.invalid/m-v0.1.0.tar.gz
-    sha256: "0000000000000000000000000000000000000000000000000000000000000000"
-    size: 1
-Y
-git add -A >/dev/null && git commit -qm "release: v0.1.0"
-next_json | jq -e '.issue.id == "I0002" and .passed_over[0].stage == "released"' >/dev/null \
-  || fail "the released I0001 was not passed over as released: $(next_json)"
-
 # ---------------------------------------------------------------- a transition answers the same
 # The line `plan start` prints, and plan.transition's next_ready, are the same choice: after
-# I0002 is taken the stamps alone would name I0001; the trunk says I0004.
+# I0002 is taken the stamps alone would name I0001; the trunk says I0004. (A release of the
+# merge passes it over as `released`; the unit test plan_next_passes_over_delivered_work
+# holds that, so that this case writes no release record.)
 "$MJ" plan start I0002 > "$S/start" || fail "plan start I0002 failed: $(cat "$S/start")"
 grep -q '^next ready issue: I0004$' "$S/start" || fail "plan start names another next issue: $(cat "$S/start")"
 git add -A >/dev/null && git commit -qm "plan: I0002 active"

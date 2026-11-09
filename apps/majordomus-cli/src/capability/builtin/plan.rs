@@ -1838,6 +1838,31 @@ mod tests {
             .map(|m| (m.milestone.as_str(), m.issues.iter().map(|i| i.issue.as_str()).collect()))
             .collect();
         assert_eq!(listed, [("m-first", vec!["I0001"])]);
+
+        // a release record whose commit contains the merge: released, and still passed over
+        let record = format!(
+            "schema: release/v1\nversion: \"0.1.0\"\ntag: v0.1.0\nchannel: stable\n\
+             commit: {merge}\npublished_at: \"2026-11-09T07:00:00Z\"\nartifacts:\n\
+             \x20 - target: linux-x86_64-gnu\n    name: m-v0.1.0.tar.gz\n\
+             \x20   url: https://example.invalid/m-v0.1.0.tar.gz\n\
+             \x20   sha256: \"{}\"\n    size: 1\n",
+            "0".repeat(64)
+        );
+        let releases = repo.root().join(".ai/repo/releases");
+        std::fs::create_dir_all(&releases).unwrap();
+        std::fs::write(releases.join("v0.1.0.yaml"), record).unwrap();
+        git(repo.root(), &["add", "-A"]);
+        git(repo.root(), &["commit", "-q", "-m", "release: v0.1.0"]);
+        let released = next_of(&repo.context().unwrap());
+        assert_eq!(released.issue.map(|i| i.id), Some("I0003".to_string()));
+        assert_eq!(
+            released
+                .passed_over
+                .iter()
+                .map(|p| (p.issue.as_str(), p.stage.as_str(), p.commit.as_str()))
+                .collect::<Vec<_>>(),
+            [("I0001", "released", merge.as_str())]
+        );
     }
 
     /// Evidence `plan_next_hands_out_branch_only_work` (I3754): a branch that names an
