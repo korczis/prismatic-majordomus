@@ -229,6 +229,7 @@ Every command below is declared once, in [`apps/majordomus-cli/src/cli.rs`](../.
 | [`majordomus plan`](#majordomus-plan) | `/docs/cli/plan/` | How far each issue's work has travelled: none, branch, pr_open, merged, released or deployed, each with the object that proved it; the plan's records are read and moved by the shell tool's `plan` |
 | [`majordomus plan delivery`](#majordomus-plan-delivery) | `/docs/cli/plan/delivery/` | Every issue's furthest delivery stage, with the object that proved it and its declared status beside it |
 | [`majordomus plan drift`](#majordomus-plan-drift) | `/docs/cli/plan/drift/` | Every contradiction between an issue's declared status and its delivery — merged_not_recorded, active_without_work, done_without_trace — each with its proof; with --gate, judged against the window .ai/repo/ci/plan.yaml declares |
+| [`majordomus plan next`](#majordomus-plan-next) | `/docs/cli/plan/next/` | The one issue to take now: the first READY issue in the plan's order whose work the trunk's history does not already hold, with every issue passed over, its proof and the remedy |
 | [`majordomus economics`](#majordomus-economics) | `/docs/cli/economics/` | Token economics, measured: matched runs with and without Majordomus, every metric with its measurement class and sample size, the statement the evidence allows, and the check that refuses an unsupported savings claim |
 | [`majordomus economics summary`](#majordomus-economics-summary) | `/docs/cli/economics/summary/` | Every metric with its class, sample size and interval, the pairs, the segments, the state of the evidence, and the one statement the publication rule allows |
 | [`majordomus economics explain`](#majordomus-economics-explain) | `/docs/cli/economics/explain/` | One metric and everything it rests on: formula, class, pairs, runs, exclusions, and how to reproduce it |
@@ -6526,7 +6527,7 @@ Examples:
 
 How far each issue's work has travelled: none, branch, pr_open, merged, released or deployed, each with the object that proved it; the plan's records are read and moved by the shell tool's `plan`
 
-Subcommands: [`majordomus plan delivery`](#majordomus-plan-delivery), [`majordomus plan drift`](#majordomus-plan-drift).
+Subcommands: [`majordomus plan delivery`](#majordomus-plan-delivery), [`majordomus plan drift`](#majordomus-plan-drift), [`majordomus plan next`](#majordomus-plan-next).
 
 ```text
 majordomus plan [OPTIONS] <COMMAND>
@@ -6614,6 +6615,42 @@ Examples:
   ```
 
   Verified: exits 0; prints plan drift, window.
+
+<a id="majordomus-plan-next"></a>
+## `majordomus plan next`
+
+The one issue to take now: the first READY issue in the plan's order whose work the trunk's history does not already hold, with every issue passed over, its proof and the remedy
+
+```text
+majordomus plan next [OPTIONS]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--milestone` | `<ID>` | — | Start the search in this milestone; default the active one, widening to the whole plan |
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree; `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | Output shape (accepted by every subcommand) — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **The one issue to take now, set against the trunk** — The same answer `GET /api/v1/plan/next` and the MCP tool `majordomus_plan_next` return: the first READY issue in the plan's order whose work the trunk's history does not already hold, every READY issue ranked ahead of it that the history shows merged, released or deployed in `passed_over` with its proving commit and the remedy, and in `delivery` the trunk ref and commit read — or why they were not, in which case the answer is the stamps' ranking alone.
+
+  ```console
+  $ majordomus plan next --format json
+  ```
+
+  Verified: exits 0; prints one JSON document carrying /active_milestone, /passed_over, /delivery/state.
+
+- **As the shell tool prints it** — The issue, its objective, scope and profile and the command that starts it, then every issue passed over and the trunk commit read; with nothing to hand out, the command that shows what is in the way. The shell tool's `majordomus plan next` hands its question to this command, so the two cannot name different issues.
+
+  ```console
+  $ majordomus plan next
+  ```
+
+  Verified: exits 0; prints majordomus plan.
 
 <a id="majordomus-economics"></a>
 ## `majordomus economics`

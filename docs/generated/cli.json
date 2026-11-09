@@ -30048,6 +30048,144 @@
               }
             ],
             "subcommands": []
+          },
+          {
+            "path": [
+              "majordomus",
+              "plan",
+              "next"
+            ],
+            "route": "/docs/cli/plan/next/",
+            "executable": true,
+            "usage": "majordomus plan next [OPTIONS]",
+            "about": "The one issue to take now: the first READY issue in the plan's order whose work the trunk's history does not already hold, with every issue passed over, its proof and the remedy",
+            "args": [
+              {
+                "name": "milestone",
+                "long": "milestone",
+                "positional": false,
+                "help": "Start the search in this milestone; default the active one, widening to the whole plan",
+                "value_name": "ID",
+                "takes_value": true,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "repo",
+                "long": "repo",
+                "positional": false,
+                "help": "Start the search for the repository root here (default: the current directory)",
+                "value_name": "PATH",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "discovery",
+                "long": "discovery",
+                "positional": false,
+                "help": "How declarative files are enumerated",
+                "value_name": "DISCOVERY",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "vcs",
+                    "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
+                  },
+                  {
+                    "name": "filesystem",
+                    "help": "A walk of the work tree with the same glob semantics; untracked files included"
+                  }
+                ],
+                "defaults": [
+                  "vcs"
+                ]
+              },
+              {
+                "name": "strict",
+                "long": "strict",
+                "positional": false,
+                "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+                "value_name": "STRICT",
+                "takes_value": false,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": [
+                  "false"
+                ]
+              },
+              {
+                "name": "share",
+                "long": "share",
+                "positional": false,
+                "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+                "value_name": "DIR",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "format",
+                "long": "format",
+                "positional": false,
+                "help": "Output shape",
+                "value_name": "FORMAT",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "text",
+                    "help": "Lines for a person"
+                  },
+                  {
+                    "name": "json",
+                    "help": "One JSON document, deterministic"
+                  }
+                ],
+                "defaults": [
+                  "text"
+                ]
+              }
+            ],
+            "examples": [
+              {
+                "id": "plan-next-json",
+                "title": "The one issue to take now, set against the trunk",
+                "description": "The same answer `GET /api/v1/plan/next` and the MCP tool `majordomus_plan_next` return: the first READY issue in the plan's order whose work the trunk's history does not already hold, every READY issue ranked ahead of it that the history shows merged, released or deployed in `passed_over` with its proving commit and the remedy, and in `delivery` the trunk ref and commit read — or why they were not, in which case the answer is the stamps' ranking alone.",
+                "argv": [
+                  "plan",
+                  "next",
+                  "--format",
+                  "json"
+                ],
+                "command": "majordomus plan next --format json",
+                "setup": [],
+                "expectation": "exits 0; prints one JSON document carrying /active_milestone, /passed_over, /delivery/state"
+              },
+              {
+                "id": "plan-next-text",
+                "title": "As the shell tool prints it",
+                "description": "The issue, its objective, scope and profile and the command that starts it, then every issue passed over and the trunk commit read; with nothing to hand out, the command that shows what is in the way. The shell tool's `majordomus plan next` hands its question to this command, so the two cannot name different issues.",
+                "argv": [
+                  "plan",
+                  "next"
+                ],
+                "command": "majordomus plan next",
+                "setup": [],
+                "expectation": "exits 0; prints majordomus plan"
+              }
+            ],
+            "subcommands": []
           }
         ]
       },

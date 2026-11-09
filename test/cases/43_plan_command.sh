@@ -61,7 +61,8 @@ expect_grep '"next_ready":"I0001"'
 expect_exit 0 "$MJ" --json plan list
 expect_grep '"id":"I0002","milestone":"M000","status":"BLOCKED"'
 expect_exit 0 "$MJ" --json plan next
-expect_grep '"id":"I0001"'
+# plan.next's own document since I3754: the shell hands `next` to the executable
+expect_grep '"id": "I0001"'
 
 # --- restricting to a milestone restricts every view that takes it
 pj_milestone M001 1

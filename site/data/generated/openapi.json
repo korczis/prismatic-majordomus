@@ -435,6 +435,7 @@
     "schema-DashboardSource": "docs/api/dashboard/",
     "schema-Declaration": "docs/api/repository/",
     "schema-Deduplicated": "docs/api/devcontext/",
+    "schema-DeliveredIssue": "docs/api/plan/",
     "schema-DeliveryBranch": "docs/api/plan/",
     "schema-DeliveryDeployment": "docs/api/plan/",
     "schema-DeliveryMerge": "docs/api/plan/",
@@ -843,6 +844,7 @@
     "schema-MigrationPlan": "docs/api/worktree/",
     "schema-MigrationStep": "docs/api/worktree/",
     "schema-MilestoneCounts": "docs/api/devtask/",
+    "schema-MilestoneDelivered": "docs/api/plan/",
     "schema-MilestoneEdge": "docs/api/devtask/",
     "schema-MilestoneGraph": "docs/api/devtask/",
     "schema-MilestoneNode": "docs/api/devtask/",
@@ -1301,7 +1303,9 @@
     "schema-TrendRatio": "docs/api/delivery/",
     "schema-TrendRun": "docs/api/delivery/",
     "schema-TrendsReport": "docs/api/delivery/",
+    "schema-TrunkDelivery": "docs/api/plan/",
     "schema-TrunkDistance": "docs/api/shared/",
+    "schema-TrunkReadingState": "docs/api/plan/",
     "schema-TrunkSource": "docs/api/worktree/",
     "schema-TrunkStanding": "docs/api/shared/",
     "schema-TrunkThresholds": "docs/api/shared/",
@@ -1409,7 +1413,7 @@
   "binding": "GET binds every top-level input property as a query parameter; POST binds the input as the JSON body",
   "counts": {
     "operations": 219,
-    "schemas": 1124,
+    "schemas": 1128,
     "tags": 62
   },
   "dialect": "https://spec.openapis.org/oas/3.1/dialect/base",
@@ -1945,6 +1949,7 @@
     "DashboardSource": "dashboard",
     "Declaration": "repository",
     "Deduplicated": "devcontext",
+    "DeliveredIssue": "plan",
     "DeliveryBranch": "plan",
     "DeliveryDeployment": "plan",
     "DeliveryMerge": "plan",
@@ -2353,6 +2358,7 @@
     "MigrationPlan": "worktree",
     "MigrationStep": "worktree",
     "MilestoneCounts": "devtask",
+    "MilestoneDelivered": "plan",
     "MilestoneEdge": "devtask",
     "MilestoneGraph": "devtask",
     "MilestoneNode": "devtask",
@@ -2811,7 +2817,9 @@
     "TrendRatio": "delivery",
     "TrendRun": "delivery",
     "TrendsReport": "delivery",
+    "TrunkDelivery": "plan",
     "TrunkDistance": "shared",
+    "TrunkReadingState": "plan",
     "TrunkSource": "worktree",
     "TrunkStanding": "shared",
     "TrunkThresholds": "shared",
@@ -14655,6 +14663,57 @@
       "used_by_schemas": [
         "CompiledContext",
         "Explanation"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "An issue whose declared status is open while the trunk's history shows its work there.\n\n```\nuse majordomus_cli::capability::builtin::plan::DeliveredIssue;\nlet d: DeliveredIssue = serde_json::from_str(r#\"{\"issue\":\"I0001\",\"status\":\"READY\",\n    \"stage\":\"merged\",\"commit\":\"abc\",\"remedy\":\"majordomus plan start I0001\"}\"#).unwrap();\nassert_eq!(d.stage, \"merged\");\n```",
+      "home": "plan",
+      "is_enum": false,
+      "name": "DeliveredIssue",
+      "properties": [
+        {
+          "description": "The issue.",
+          "name": "issue",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Its declared status, derived from its stamps.",
+          "name": "status",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "How far the history shows it delivered: `merged`, `released` or `deployed`.",
+          "name": "stage",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The newest commit of the trunk that names it and delivered something.",
+          "name": "commit",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "What settles the contradiction: record the work through the lifecycle.",
+          "name": "remedy",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "MilestoneDelivered",
+        "PlanNextIssue"
       ],
       "values": [],
       "variants": []
@@ -37512,6 +37571,37 @@
       "variants": []
     },
     {
+      "description": "One open milestone's issues whose work the trunk holds while their status is open.",
+      "home": "plan",
+      "is_enum": false,
+      "name": "MilestoneDelivered",
+      "properties": [
+        {
+          "description": "The milestone.",
+          "name": "milestone",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Its issues the history shows delivered while they are not DONE, in id order.",
+          "name": "issues",
+          "refs": [
+            "DeliveredIssue"
+          ],
+          "required": true,
+          "type": "array of DeliveredIssue"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "PlanRoadmap"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "One dependency edge of the milestone's graph, `from` before `to`.",
       "home": "devtask",
       "is_enum": false,
@@ -42645,13 +42735,13 @@
       "variants": []
     },
     {
-      "description": "The one issue a worker should take now.",
+      "description": "The one issue a worker should take now.\n\nThe field order is the shell's contract: `lib/plan.sh` reads the issue's id as the first\n`\"id\"` under `\"issue\"` in the pretty-printed document, without a JSON parser.",
       "home": "plan",
       "is_enum": false,
       "name": "PlanNextIssue",
       "properties": [
         {
-          "description": "The issue, when the plan has one that is executable.",
+          "description": "The issue, when the plan has one that is executable and whose work the trunk does\nnot already hold.",
           "name": "issue",
           "refs": [
             "PlanIssue"
@@ -42672,6 +42762,24 @@
           "refs": [],
           "required": false,
           "type": "string | null"
+        },
+        {
+          "description": "The READY issues ranked ahead of `issue` and passed over because the trunk's history\nshows their work merged, released or deployed, in rank order, each with its proof and\nthe remedy. The status is a stamp and the merge a fact; the answer follows the fact\nand never writes the stamp (ADR 0166).",
+          "name": "passed_over",
+          "refs": [
+            "DeliveredIssue"
+          ],
+          "required": false,
+          "type": "array of DeliveredIssue"
+        },
+        {
+          "description": "The trunk commit delivery was read at, or why it was not read: an unread trunk\nleaves the stamp ranking's answer, and says so.",
+          "name": "delivery",
+          "refs": [
+            "TrunkDelivery"
+          ],
+          "required": true,
+          "type": "TrunkDelivery"
         }
       ],
       "type": "object",
@@ -42795,6 +42903,24 @@
           "refs": [],
           "required": false,
           "type": "string | null"
+        },
+        {
+          "description": "Under each open milestone that has any, in roadmap order, the issues the trunk's\nhistory shows delivered while their status is open: the drift `now` is read\ntogether with. It names no milestone as now or next of its own.",
+          "name": "delivered",
+          "refs": [
+            "MilestoneDelivered"
+          ],
+          "required": false,
+          "type": "array of MilestoneDelivered"
+        },
+        {
+          "description": "The trunk commit that list was read at, or why it was not read.",
+          "name": "delivery",
+          "refs": [
+            "TrunkDelivery"
+          ],
+          "required": true,
+          "type": "TrunkDelivery"
         }
       ],
       "type": "object",
@@ -63722,6 +63848,52 @@
       "variants": []
     },
     {
+      "description": "Where an answer read delivery: the trunk's history and the tree's release records at one\ncommit, and nothing live (no branch, forge, deployment or clock), so the answer is a\nfunction of that commit and the records.\n\n```\nuse majordomus_cli::capability::builtin::plan::{TrunkDelivery, TrunkReadingState};\nlet t: TrunkDelivery = serde_json::from_str(\n    r#\"{\"state\":\"unread\",\"detail\":\"no trunk\"}\"#).unwrap();\nassert_eq!((t.state, t.commit), (TrunkReadingState::Unread, None));\n```",
+      "home": "plan",
+      "is_enum": false,
+      "name": "TrunkDelivery",
+      "properties": [
+        {
+          "description": "Read, unread, or not asked.",
+          "name": "state",
+          "refs": [
+            "TrunkReadingState"
+          ],
+          "required": true,
+          "type": "TrunkReadingState"
+        },
+        {
+          "description": "The ref read: the remote-tracking trunk, or the local one when it is ahead.",
+          "name": "trunk",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The commit that ref named when it was read.",
+          "name": "commit",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "What was read, or why nothing was.",
+          "name": "detail",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "PlanNextIssue",
+        "PlanRoadmap"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "A checkout's distance from the remote trunk, judged.\n\n```\nuse majordomus_cli::worktree::trunk::{Distance, TrunkDistance, TrunkStanding};\nlet d: TrunkDistance = serde_json::from_value(serde_json::json!({\n    \"standing\": \"stale\", \"local_trunk_standing\": \"stale\",\n    \"worktree\": \"/repo\", \"on_trunk\": true,\n    \"checkout\": {\"behind\": 779, \"ahead\": 0},\n    \"thresholds\": {\"warn_behind\": 50, \"fail_behind\": 300},\n    \"message\": \"779 commits behind origin/master\",\n})).unwrap();\nassert_eq!(d.standing, TrunkStanding::Stale);\nassert_eq!(d.checkout, Some(Distance { behind: 779, ahead: 0 }));\n// what is absent stays absent in the answer\nassert!(serde_json::to_value(&d).unwrap().get(\"remedy\").is_none());\n```",
       "home": "shared",
       "is_enum": false,
@@ -63838,6 +64010,33 @@
         "StatusReport"
       ],
       "values": [],
+      "variants": []
+    },
+    {
+      "description": "Whether an answer read delivery from the trunk.\n\n```\nuse majordomus_cli::capability::builtin::plan::TrunkReadingState;\nassert_eq!(serde_json::to_value(TrunkReadingState::NotAsked).unwrap(), \"not_asked\");\n```",
+      "home": "plan",
+      "is_enum": true,
+      "name": "TrunkReadingState",
+      "properties": [],
+      "type": "\"read\" | \"unread\" | \"not_asked\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "TrunkDelivery"
+      ],
+      "values": [
+        {
+          "description": "The trunk's history and the release records were read.",
+          "value": "read"
+        },
+        {
+          "description": "They could not be read; `detail` says why, and the answer is the stamps' alone.",
+          "value": "unread"
+        },
+        {
+          "description": "Nothing needed them: no issue was a candidate.",
+          "value": "not_asked"
+        }
+      ],
       "variants": []
     },
     {
@@ -77412,11 +77611,11 @@
           "benchmark_reason": "",
           "body_examples": [],
           "body_schema": "",
-          "cache": "generation",
+          "cache": "checkout",
           "cache_detail": "max_entries=16",
-          "cli": "",
+          "cli": "plan next",
           "curl": "curl -s \"http://127.0.0.1:8741/api/v1/plan/next?milestone=M000\"",
-          "description": "The lowest-wave READY issue of the active milestone, highest priority first, then id. The active milestone can have nothing ready while another one does — one waiting on its own acceptance evidence, for instance — so the search widens to the whole plan rather than answering `none` and sending a worker away from work that is genuinely executable. This is what an agent asks before it starts.",
+          "description": "The lowest-wave READY issue of the active milestone, highest priority first, then the number of unfinished issues it unblocks, then id, whose work the trunk does not already hold. The active milestone can have nothing ready while another one does — one waiting on its own acceptance evidence, for instance — so the search widens to the whole plan rather than answering `none` and sending a worker away from work that is genuinely executable. Each candidate in that order is set against `plan.delivery` at the trunk head, read from the trunk's history and the release records only (no branch, forge or deployment, so the answer is a function of that commit): one the history shows merged, released or deployed is passed over and listed in `passed_over` with its stage, its proving commit and the remedy (record it with plan start, verify and done); a branch or an open pull request passes nothing over. `delivery` names the trunk ref and commit read, or says delivery was unread and the answer is the stamp ranking's. Cached per checkout state, so a merge that moves the trunk changes the answer without a restart. This is what an agent asks before it starts.",
           "home": "plan",
           "id": "plan.next",
           "kind": "query",
@@ -77550,11 +77749,11 @@
           "benchmark_reason": "",
           "body_examples": [],
           "body_schema": "",
-          "cache": "generation",
+          "cache": "checkout",
           "cache_detail": "max_entries=4",
           "cli": "",
           "curl": "curl -s \"http://127.0.0.1:8741/api/v1/plan/roadmap\"",
-          "description": "The milestone graph laid out by rank, with `order` breaking ties inside a rank only, and the first unblocked unfinished milestone as `now` and the one after it as `next`. Nothing in the sequence is authored: a milestone whose prerequisites are not real cannot be nominated, which is what makes `each step is gated by the previous one being real` an invariant rather than a sentence.",
+          "description": "The milestone graph laid out by rank, with `order` breaking ties inside a rank only, and the first unblocked unfinished milestone as `now` and the one after it as `next`. Nothing in the sequence is authored: a milestone whose prerequisites are not real cannot be nominated, which is what makes `each step is gated by the previous one being real` an invariant rather than a sentence. Beside it, `delivered` lists under each open milestone the issues the trunk's history shows merged, released or deployed while their status is not DONE, each with its proving commit and the remedy, so the milestone named as now is read together with its drift; `delivery` names the trunk commit read (`plan.delivery` at the trunk head, history and release records only). Cached per checkout state.",
           "home": "plan",
           "id": "plan.roadmap",
           "kind": "query",
@@ -77604,11 +77803,11 @@
           "benchmark_reason": "",
           "body_examples": [],
           "body_schema": "",
-          "cache": "generation",
+          "cache": "checkout",
           "cache_detail": "max_entries=16",
           "cli": "",
           "curl": "curl -s \"http://127.0.0.1:8741/api/v1/plan/status?milestone=M000\"",
-          "description": "Every milestone with its derived status and its issues counted by status, the milestone a worker is executing now, the next ready issue in full, and the plan's own totals. The counts are keyed by the declared vocabulary, which travels with the answer, so a status added to the engine appears here without anything being edited.",
+          "description": "Every milestone with its derived status and its issues counted by status, the milestone a worker is executing now, the next ready issue in full, and the plan's own totals. The next ready issue is `plan.next`'s, chosen by the same function: the stamp ranking, then delivery at the trunk head, passing over an issue the trunk's history shows merged, released or deployed. The counts are keyed by the declared vocabulary, which travels with the answer, so a status added to the engine appears here without anything being edited. Cached per checkout state, so a merge that moves the trunk changes the answer without a restart.",
           "home": "plan",
           "id": "plan.status",
           "kind": "query",

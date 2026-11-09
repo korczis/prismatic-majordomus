@@ -3526,8 +3526,8 @@ pub struct PlanArgs {
 }
 
 #[derive(Debug, Subcommand)]
-/// The subcommands of `majordomus plan` this executable answers: the command line of
-/// `plan.delivery`.
+/// The subcommands of `majordomus plan` this executable answers: the command lines of
+/// `plan.delivery`, `plan.drift` and `plan.next`.
 ///
 /// ```
 /// use clap::Parser;
@@ -3546,6 +3546,11 @@ pub struct PlanArgs {
 /// assert!(matches!(
 ///     parse(&["majordomus", "plan", "delivery", "I0001"]),
 ///     PlanCommand::Delivery { issue: Some(ref i), at: None } if i == "I0001"
+/// ));
+/// assert!(matches!(parse(&["majordomus", "plan", "next"]), PlanCommand::Next { milestone: None }));
+/// assert!(matches!(
+///     parse(&["majordomus", "plan", "next", "--milestone", "M002"]),
+///     PlanCommand::Next { milestone: Some(ref m) } if m == "M002"
 /// ));
 /// ```
 pub enum PlanCommand {
@@ -3567,6 +3572,12 @@ pub enum PlanCommand {
         /// Judge as a gate: on a `head` merged work is pending, on the `trunk` past the window it is refused (exit 10 under blocking enforcement); a missing window exits 12
         #[arg(long, value_enum, value_name = "TREE")]
         gate: Option<DriftGateArg>,
+    },
+    /// The one issue to take now: the first READY issue in the plan's order whose work the trunk's history does not already hold, with every issue passed over, its proof and the remedy
+    Next {
+        /// Start the search in this milestone; default the active one, widening to the whole plan
+        #[arg(long, value_name = "ID")]
+        milestone: Option<String>,
     },
 }
 
@@ -6292,6 +6303,27 @@ pub const EXAMPLES: &[CommandExamples] = &[
                 argv: &["plan", "drift", "--at", "HEAD"],
                 setup: &[],
                 expect: Expect::StdoutContains(&["plan drift", "window"]),
+            },
+        ],
+    },
+    CommandExamples {
+        command: "plan next",
+        examples: &[
+            ExampleDoc {
+                id: "plan-next-json",
+                title: "The one issue to take now, set against the trunk",
+                description: "The same answer `GET /api/v1/plan/next` and the MCP tool `majordomus_plan_next` return: the first READY issue in the plan's order whose work the trunk's history does not already hold, every READY issue ranked ahead of it that the history shows merged, released or deployed in `passed_over` with its proving commit and the remedy, and in `delivery` the trunk ref and commit read — or why they were not, in which case the answer is the stamps' ranking alone.",
+                argv: &["plan", "next", "--format", "json"],
+                setup: &[],
+                expect: Expect::Json(&["/active_milestone", "/passed_over", "/delivery/state"]),
+            },
+            ExampleDoc {
+                id: "plan-next-text",
+                title: "As the shell tool prints it",
+                description: "The issue, its objective, scope and profile and the command that starts it, then every issue passed over and the trunk commit read; with nothing to hand out, the command that shows what is in the way. The shell tool's `majordomus plan next` hands its question to this command, so the two cannot name different issues.",
+                argv: &["plan", "next"],
+                setup: &[],
+                expect: Expect::StdoutContains(&["majordomus plan"]),
             },
         ],
     },

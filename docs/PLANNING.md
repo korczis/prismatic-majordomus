@@ -585,6 +585,43 @@ everywhere else:
 The same answer is `GET /api/v1/plan/drift` and the MCP tool `majordomus_plan_drift`.
 `test/cases/3101_merged_work_unrecorded_is_drift.sh` proves the classes, the window and the gate, with six code mutations failing it.
 
+### The next issue passes over delivered work
+
+Drift is a report; the one answer a worker asks before starting must not repeat it. On
+2026-10-20 `plan next` answered I0702, whose ADR had merged and been released in v0.28.0,
+because the ranking read the stamps alone (I3754). The next issue is now chosen by one
+function, `choose_next` in the `plan` capability module, and every answer that names it asks
+that function: `plan.next` (`majordomus plan next [--milestone <id>]`, MCP
+`majordomus_plan_next`, `GET /api/v1/plan/next`), `plan.status`'s `next_ready`,
+`plan.transition`'s `next_ready`, and the shell's `plan next`, `plan status` and the line a
+transition prints, which hand the question to the executable as `delivery` and `drift` are.
+
+1. The READY issues in the stamp ranking's order (`Plan::ready_in_order`, the order case 99
+   holds the awk engine to): wave, priority, what each unblocks, id.
+2. Each candidate's delivery at the trunk head — the remote-tracking trunk, or the local one
+   when it is ahead — read from that commit's history and the tree's release records only,
+   as `plan delivery --at` reads it: no branch, forge or deployment, so the answer is a
+   function of that commit.
+3. A candidate at `merged`, `released` or `deployed` is passed over and listed in
+   `passed_over` with its stage, its proving commit and the remedy (record it with `plan
+   start`, `verify` and `done`); the first candidate that is not is the answer. A branch or
+   an open pull request passes nothing over: that is work in flight, and the issue is still
+   the one to finish.
+
+`delivery` names the trunk ref and commit read. A history that cannot be read (no trunk in
+the clone, no commit) is reported `unread` with its reason, and the answer is the stamp
+ranking's. Only the READY issues are inferred, so the answer costs one history read, not the
+whole plan's. The answers are cached per checkout state (`CachePolicy::Checkout`), whose
+fingerprint covers the refs, so a merge that moves the trunk changes the next answer of a
+running server without a restart.
+
+`plan.roadmap` carries the same reading beside its sequence: `delivered` lists, under each
+open milestone that has any, the issues the trunk's history shows delivered while their
+status is READY, BLOCKED, ACTIVE or VERIFY, so the milestone named as `now` is read together
+with its drift. It names no milestone as now or next of its own. Nothing here writes a stamp:
+a merge is not acceptance (ADR 0166).
+`test/cases/4573_plan_next_never_names_delivered_work.sh` proves it end to end.
+
 ## Projections
 
 The canonical files are the only source. Everything else is generated from them by one

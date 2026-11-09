@@ -1,6 +1,7 @@
-//! `majordomus plan delivery` and `majordomus plan drift`: every issue's furthest delivery
-//! stage, and every contradiction between it and the declared status, through the registry's
-//! own `plan.delivery` and `plan.drift` capabilities.
+//! `majordomus plan delivery`, `majordomus plan drift` and `majordomus plan next`: every
+//! issue's furthest delivery stage, every contradiction between it and the declared status,
+//! and the one issue to take now, through the registry's own `plan.delivery`, `plan.drift`
+//! and `plan.next` capabilities.
 //!
 //! This file renders; it infers nothing. The stage, its proof and what was left unread are
 //! the capability's output, so the command line cannot call an issue merged that the HTTP
@@ -46,11 +47,20 @@ pub fn run(args: PlanArgs) -> Result<u8> {
             }
             execute(&app.context, &["plan", "drift"], input)?
         }
+        PlanCommand::Next { milestone } => {
+            let mut input = json!({});
+            if let Some(m) = milestone {
+                input["milestone"] = json!(m);
+            }
+            execute(&app.context, &["plan", "next"], input)?
+        }
     };
     let drift = matches!(args.command, PlanCommand::Drift { .. });
+    let next = matches!(args.command, PlanCommand::Next { .. });
     let body = match args.format {
         OutputFormat::Json => format!("{v:#}"),
         OutputFormat::Text if drift => drift_text(&v),
+        OutputFormat::Text if next => next_text(&v),
         OutputFormat::Text => delivery_text(&v),
     };
     writeln!(std::io::stdout().lock(), "{body}").map_err(Error::Transport)?;
@@ -125,6 +135,61 @@ fn proof(i: &Value) -> String {
         "branch" => s(i, "/branch/name").to_string(),
         _ => String::new(),
     }
+}
+
+/// `plan next` as the shell tool printed it before it asked this executable — the issue,
+/// its objective, scope and profile, and the command that starts it — then every issue
+/// passed over and the trunk commit read. The issue comes first, so a reader that takes the
+/// first id of the answer takes the one to work on.
+fn next_text(v: &Value) -> String {
+    let mut out = String::new();
+    match v.get("issue").filter(|i| i.is_object()) {
+        Some(i) => {
+            let id = s(i, "/id");
+            let scope: Vec<&str> = i["scope"]
+                .as_array()
+                .into_iter()
+                .flatten()
+                .filter_map(Value::as_str)
+                .collect();
+            out.push_str(&format!("{id} — {}\n", s(i, "/title")));
+            out.push_str(&format!("objective: {}\n", s(i, "/objective")));
+            out.push_str(&format!("scope:     {}\n", scope.join(",")));
+            out.push_str(&format!("profile:   {}\n", s(i, "/profile")));
+            out.push_str(&format!("\nnext: majordomus plan start {id}\n"));
+        }
+        None => out.push_str("no ready issue; run: majordomus plan blocked\n"),
+    }
+    let passed = v["passed_over"].as_array().map(Vec::as_slice).unwrap_or_default();
+    if !passed.is_empty() {
+        out.push_str(&format!(
+            "\npassed over: {} READY issue(s) whose work the trunk already holds\n",
+            passed.len()
+        ));
+        for p in passed {
+            out.push_str(&format!(
+                "  {:<7} {:<8} {} {}\n",
+                s(p, "/issue"),
+                s(p, "/stage"),
+                short(s(p, "/commit")),
+                s(p, "/remedy")
+            ));
+        }
+    }
+    let delivery = &v["delivery"];
+    match s(delivery, "/state") {
+        "read" => out.push_str(&format!(
+            "\ndelivery read at {} {}\n",
+            s(delivery, "/trunk"),
+            short(s(delivery, "/commit"))
+        )),
+        "unread" => out.push_str(&format!(
+            "\ndelivery unread: {}; this is the stamps' ranking alone\n",
+            s(delivery, "/detail")
+        )),
+        _ => {}
+    }
+    out.trim_end().to_string()
 }
 
 fn delivery_text(v: &Value) -> String {

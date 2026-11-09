@@ -65697,9 +65697,14 @@
           "scope": [
             "apps/majordomus-cli/src/capability/builtin/plan.rs",
             "apps/majordomus-cli/src/plan/delivery.rs",
+            "apps/majordomus-cli/src/cli.rs",
+            "apps/majordomus-cli/src/commands/plan.rs",
             "lib/plan.sh",
             "test/cases/99_plan_capabilities.sh",
-            "test/cases/3727_plan_next_never_names_delivered_work.sh",
+            "test/cases/43_plan_command.sh",
+            "test/cases/46_cross_surface.sh",
+            "test/cases/3441_the_choice_ranks_by_what_it_unblocks.sh",
+            "test/cases/4573_plan_next_never_names_delivered_work.sh",
             "docs/PLANNING.md",
             "docs/generated",
             "site/data/generated",
@@ -65708,8 +65713,11 @@
             ".ai/repo/project/issues/I3754.yaml"
           ],
           "slug": "plan-next-never-names-delivered-work",
+          "started_at": "2026-11-09T19:25:28Z",
+          "started_event": "sha256:9cebe7ed8d035cf7610a6b736f8f916140f908e32109ca374d94d1dc1f8a2004",
+          "updated_at": "2026-11-09T19:25:28Z",
           "validation": [
-            "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 3727_plan_next_never_names_delivered_work 99_plan_capabilities",
+            "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 4573_plan_next_never_names_delivered_work 99_plan_capabilities",
             "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib capability::builtin::plan",
             "majordomus plan validate"
           ]
@@ -107734,6 +107742,13 @@
         "source": "test/cases/4563_the_live_site_is_probed_in_a_real_browser.sh"
       },
       {
+        "id": "majordomus://test/test/cases/4573_plan_next_never_names_delivered_work.sh",
+        "kind": "test",
+        "label": "test/cases/4573_plan_next_never_names_delivered_work.sh",
+        "route": "/cockpit/objects/test/test-cases-4573-plan-next-never-names-delivered-work-sh",
+        "source": "test/cases/4573_plan_next_never_names_delivered_work.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/45_github_projection.sh",
         "kind": "test",
         "label": "test/cases/45_github_projection.sh",
@@ -114631,6 +114646,11 @@
       {
         "source": "capability:plan.model",
         "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:plan.next",
+        "target": "projection:cli",
         "kind": "projects"
       },
       {
@@ -156904,6 +156924,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/4573_plan_next_never_names_delivered_work.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/45_github_projection.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -162030,8 +162055,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4429,
-      "edges": 10049,
+      "nodes": 4430,
+      "edges": 10051,
       "acyclic": false,
       "truncated": false
     }

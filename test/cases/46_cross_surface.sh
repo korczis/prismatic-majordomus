@@ -125,6 +125,9 @@ PJ="$T/gen/plan.json"
   cli_real_edges="$("$MJ" --repo "$ROOT" plan graph | sed -n 's/^    \(.* --> .*\)$/\1/p' | LC_ALL=C sort)"
   same "generated site data and the CLI edge sets" "$site_edges" "$cli_real_edges"
   site_next="$(jq -r '.next_ready' "$PJ")"
-  cli_next="$("$MJ" --repo "$ROOT" --json plan next | sed -n 's/.*"id":"\([^"]*\)".*/\1/p')"
+  # the site data is generated at a commit and reads no trunk, so it names the stamp
+  # ranking's first issue; plan.next names that issue as its answer, or as the first one it
+  # passed over because the trunk already holds its work (I3754)
+  cli_next="$("$MJ" --repo "$ROOT" --json plan next | jq -r '.passed_over[0].issue // .issue.id // empty')"
   same "generated site data and the CLI next ready issue" "$site_next" "$cli_next"
 fi

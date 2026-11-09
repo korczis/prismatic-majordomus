@@ -9,7 +9,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 
 | milestone | status | done of required | ready | blocked | active | verify | cancelled | outcome |
 |---|---|---|---|---|---|---|---|---|
-| [truthful-plan-surfaces](https://majordomus.dev/plan/truthful-plan-surfaces/) | ACTIVE | 20/46 | 20 | 5 | 1 | 0 | 0 | Every plan surface draws every milestone in the graph's order, each issue with its declared status beside the delivery stage inferred from branches, pull requests, merges, tags and the published site; a merged but unrecorded issue turns the trunk red past a window; no milestone carries a typed version; every relationship is a drawn, clickable diagram; every code block is highlighted by one engine with one token-derived palette. |
+| [truthful-plan-surfaces](https://majordomus.dev/plan/truthful-plan-surfaces/) | ACTIVE | 20/46 | 19 | 5 | 2 | 0 | 0 | Every plan surface draws every milestone in the graph's order, each issue with its declared status beside the delivery stage inferred from branches, pull requests, merges, tags and the published site; a merged but unrecorded issue turns the trunk red past a window; no milestone carries a typed version; every relationship is a drawn, clickable diagram; every code block is highlighted by one engine with one token-derived palette. |
 
 ## Issues
 
@@ -46,7 +46,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | [I3449](https://majordomus.dev/plan/i3449/) | READY | 0 | — | Every surface names its versions from one derived release model, says which version each one is, and a gate refuses a version that disagrees or is written by hand |
 | [I3750](https://majordomus.dev/plan/i3750/) | READY | 0 | — | The milestone graph reads each edge in the direction it means, in its text and in its detail panel |
 | [I3751](https://majordomus.dev/plan/i3751/) | READY | 0 | — | The roadmap says only what the plan holds, with a bar and a date on every milestone |
-| [I3754](https://majordomus.dev/plan/i3754/) | READY | 3 | I2749 | plan.next never names an issue whose delivery is merged or released, and plan.roadmap names that issue with its drift |
+| [I3754](https://majordomus.dev/plan/i3754/) | ACTIVE | 3 | I2749 | plan.next never names an issue whose delivery is merged or released, and plan.roadmap names that issue with its drift |
 | [I3755](https://majordomus.dev/plan/i3755/) | BLOCKED | 2 | I3751, I3439 | /roadmap/ opens with now, next and a status summary, shows each milestone's priority, and keeps its issue groups collapsed |
 | [I3756](https://majordomus.dev/plan/i3756/) | READY | 0 | — | A published UI snapshot says once why it reads no mesh and no deployed commit, and shows no unread notice for either |
 | [I3757](https://majordomus.dev/plan/i3757/) | READY | 0 | — | A BLOCKED milestone names what holds it: the milestones it waits on, or the issues outside it that hold every open issue inside it |

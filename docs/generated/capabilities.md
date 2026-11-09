@@ -245,10 +245,10 @@ Every capability this executable ships, as the registry holds it. MCP tools and 
 | `plan.flight` | `plan` | query | experimental | `majordomus_plan_flight` | — | `GET /api/v1/plan/flight` | — | — | required |
 | `plan.issues` | `plan` | query | behaviorally_verified | `majordomus_plan_issues` | — | `GET /api/v1/plan/issues` | — | process, 16 entries, per generation | required |
 | `plan.model` | `plan` | query | behaviorally_verified | `majordomus_plan` | `majordomus://plan` | `GET /api/v1/plan` | — | — | required |
-| `plan.next` | `plan` | query | behaviorally_verified | `majordomus_plan_next` | — | `GET /api/v1/plan/next` | — | process, 16 entries, per generation | required |
+| `plan.next` | `plan` | query | behaviorally_verified | `majordomus_plan_next` | — | `GET /api/v1/plan/next` | `majordomus plan next` | process, 16 entries, per checkout state | required |
 | `plan.record` | `plan` | query | behaviorally_verified | `majordomus_plan_record` | — | `GET /api/v1/plan/record` | — | — | required |
-| `plan.roadmap` | `plan` | query | behaviorally_verified | `majordomus_plan_roadmap` | — | `GET /api/v1/plan/roadmap` | — | process, 4 entries, per generation | required |
-| `plan.status` | `plan` | query | behaviorally_verified | `majordomus_plan_status` | — | `GET /api/v1/plan/status` | — | process, 16 entries, per generation | required |
+| `plan.roadmap` | `plan` | query | behaviorally_verified | `majordomus_plan_roadmap` | — | `GET /api/v1/plan/roadmap` | — | process, 4 entries, per checkout state | required |
+| `plan.status` | `plan` | query | behaviorally_verified | `majordomus_plan_status` | — | `GET /api/v1/plan/status` | — | process, 16 entries, per checkout state | required |
 | `plan.transition` | `plan` | command | behaviorally_verified | `majordomus_plan_transition` | — | `POST /api/v1/plan/transition` | — | — | required when plan_holds_an_issue |
 | `plan.validate` | `plan` | query | behaviorally_verified | `majordomus_plan_validate` | — | `GET /api/v1/plan/validate` | — | — | required |
 | `plan.waves` | `plan` | query | behaviorally_verified | `majordomus_plan_waves` | — | `GET /api/v1/plan/waves` | — | — | required |
