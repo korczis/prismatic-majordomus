@@ -810,9 +810,35 @@ pub fn closed_to(config: &MeshConfig, public_key: &str) -> Option<String> {
         return None;
     }
     Some(format!(
-        "closed: this machine's key {public_key} is not in trust.allow of the {} declaration, so it neither announces nor dials; to join, list the key there (`majordomus mesh identity` prints it) and commit",
+        "{CLOSED_TO_KEY}{public_key} is not in trust.allow of the {} declaration, so it neither announces nor dials; to join, list the key there (`majordomus mesh identity` prints it) and commit",
         config.id
     ))
+}
+
+/// How every reason [`closed_to`] gives begins, up to the key it names.
+const CLOSED_TO_KEY: &str = "closed: this machine's key ";
+
+/// The key a runtime was closed to, read back from the reason [`closed_to`] gave it, or
+/// `None` when the reason is not that one. The reason is the only place a closed runtime
+/// keeps the key it judged — its status carries no identity, because nothing opened — and
+/// it is the key that matters: the one the server loaded, not the one a later reader
+/// would. `mesh doctor` holds it against the declaration in force now, which may list it
+/// although it did not when the server decided (I4572).
+///
+/// ```
+/// use majordomus_cli::mesh::config::MeshConfig;
+/// use majordomus_cli::mesh::manager::{closed_key, closed_to};
+///
+/// let config: MeshConfig = serde_json::from_value(serde_json::json!({
+///     "schema": "mesh/v1", "kind": "mesh", "id": "m", "enabled": true })).unwrap();
+/// let key = "ab".repeat(32);
+/// let reason = closed_to(&config, &key).unwrap();
+/// assert_eq!(closed_key(&reason), Some(key.as_str()));
+/// assert_eq!(closed_key("the node identity did not load"), None);
+/// ```
+pub fn closed_key(reason: &str) -> Option<&str> {
+    let key = reason.strip_prefix(CLOSED_TO_KEY)?.split(' ').next()?;
+    (!key.is_empty()).then_some(key)
 }
 
 #[cfg(test)]

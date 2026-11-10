@@ -175,6 +175,11 @@ a machine would announce itself on its network and dial every endpoint the repos
 while every peer refused it. `mesh doctor` fails its `trust` check with the key and the remedy,
 its `runtime` check reads `closed: …`, and the session's briefing says `Mesh: CLOSED — …`.
 Listing the key and restarting the server opens it. `tofu` never closes on this ground.
+A server that decided before the key was listed stays closed until it decides again, while
+the `trust` check, which reads the declaration in force, already passes: then the `runtime`
+check fails as `stale: …`, naming the key the declaration now trusts and the restart that
+opens the mesh, `majordomus serve stop && majordomus serve ensure` (I4572). The check reads the
+server's key out of the reason it closed with, so the verdict is about the key it loaded.
 
 ### Which copy of the declaration is obeyed
 
