@@ -1,7 +1,7 @@
 ---
 schema: skill/v1
 id: evolve
-version: 4
+version: 5
 title: Evolve the repository's know-how
 description: Turn what sessions observed into reviewed knowledge and into the rule, skill, document or test each lesson belongs in, then deliver the change and tell every peer what moved.
 status: active
@@ -198,6 +198,19 @@ the commit's pages gate then refused the stale derived data. A lesson about a ga
 by a case that breaks the thing and watches the gate refuse it. On a machine under its disk floor, `majordomus offload derive .` is the
 derive of record: it runs on a build host and stages what it derived, and a local build
 there takes the disk from every other worker of the machine.
+
+Nor does such a run need a local build of the executable when the installed release is of
+the tree's generation; a version string never shows that, because a version is not a build.
+Run the worktree's own `bin/majordomus`: when its crate is the release's, it says it is
+answering through the installed release, and every step of this skill goes through it
+unchanged. Set `MAJORDOMUS_BIN` by hand only in a checkout whose own executable is stale,
+and only after `git diff --quiet <the release's commit> -- apps/majordomus-cli
+rust-toolchain.toml lib bin share` holds; name the release's executable
+(`libexec/majordomus-cli` under the installed version), never a launcher, which
+`MAJORDOMUS_BIN` refuses to name, and set `MAJORDOMUS_BIN_COMMIT` to that commit. The
+derive of record under the floor stays `majordomus offload derive .`. On 2026-11-10 an
+evolve run under the floor did steps 1 to 4 this way, after the primary checkout's
+executable was found a generation behind and `worktree create` refused for it (step 1).
 
 Before step 5 the change goes to an adversarial review whose lenses differ from the
 author's: correctness of what the change claims, whether its tests fail when it is reverted,
