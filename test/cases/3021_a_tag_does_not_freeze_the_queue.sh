@@ -22,6 +22,9 @@
 #   5  the proposal withdrawn — nothing proposes the record any more — refused at once,
 #      naming the tag, which is the v0.7.0 state again
 . "$ROOT/test/lib.sh"
+# the gate honours MJ_ROOT, and a caller that exports it (majordomus finish runs its verify
+# command so) would have every gate below measure that tree instead of this fixture
+unset MJ_ROOT
 
 P="$T/published"; O="$T/origin.git"
 mkdir -p "$P/scripts/ci" "$P/apps/majordomus-cli/src/release" "$P/share" "$P/.ai/repo/releases"
