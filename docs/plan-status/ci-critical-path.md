@@ -213,6 +213,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I2115` | shares test/cases with I4533; they may not run concurrently |
 | WARN | `scope_conflict` | `I2115` | shares test/cases with I4569; they may not run concurrently |
 | WARN | `scope_conflict` | `I2115` | shares .ai/repo/ci/gates.yaml with I4570; they may not run concurrently |
+| WARN | `scope_conflict` | `I2115` | shares test/cases with I4573; they may not run concurrently |
 | WARN | `scope_conflict` | `I2350` | shares .ai/repo/ci/gates.yaml with I2374; they may not run concurrently |
 | WARN | `scope_conflict` | `I2350` | shares test/cases with I2411; they may not run concurrently |
 | WARN | `scope_conflict` | `I2350` | shares .ai/repo/ci/gates.yaml with I2662; they may not run concurrently |
@@ -367,6 +368,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I2350` | shares test/cases with I4533; they may not run concurrently |
 | WARN | `scope_conflict` | `I2350` | shares docs/CI.md with I4569; they may not run concurrently |
 | WARN | `scope_conflict` | `I2350` | shares .ai/repo/ci/gates.yaml with I4570; they may not run concurrently |
+| WARN | `scope_conflict` | `I2350` | shares test/cases with I4573; they may not run concurrently |
 | WARN | `scope_conflict` | `I3825` | shares test/cases with I3826; they may not run concurrently |
 | WARN | `scope_conflict` | `I3825` | shares test/cases with I3837; they may not run concurrently |
 | WARN | `scope_conflict` | `I3825` | shares test/cases with I3843; they may not run concurrently |
@@ -419,5 +421,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I4347` | shares docs/CI.md with I4569; they may not run concurrently |
 | WARN | `scope_conflict` | `I4513` | shares scripts/pages with I4531; they may not run concurrently |
 | WARN | `scope_conflict` | `I4513` | shares scripts/pages with I4533; they may not run concurrently |
+| WARN | `scope_conflict` | `I4513` | shares .githooks/pre-commit with I4573; they may not run concurrently |
 | WARN | `scope_conflict` | `I4532` | shares .ai/repo/ci/pages.yaml with I4533; they may not run concurrently |
 | WARN | `scope_conflict` | `I4532` | shares .ai/repo/ci/gates.yaml with I4570; they may not run concurrently |
+| WARN | `scope_conflict` | `I4570` | shares .githooks/pre-push with I4573; they may not run concurrently |

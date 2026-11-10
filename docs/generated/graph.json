@@ -80830,9 +80830,9 @@
           "scope": [
             ".ai/repo/project/issues/I4571.yaml",
             "apps/majordomus-cli/src/mesh/cooperation.rs",
+            "apps/majordomus-cli/src/mesh/manager.rs",
             "apps/majordomus-cli/src/live.rs",
             "apps/majordomus-cli/src/capability/builtin/mesh.rs",
-            "apps/majordomus-cli/src/mesh",
             "docs/MESH.md"
           ],
           "serves": [],
@@ -80874,6 +80874,45 @@
           "slug": "mesh-doctor-fails-a-stale-closed-runtime",
           "validation": [
             "bash test/run.sh <the new case>"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4573",
+        "kind": "issue",
+        "label": "I4573",
+        "summary": "A commit or push from a worktree with no active task is told so, in a supervised repository",
+        "route": "/cockpit/objects/issue/i4573",
+        "source": ".ai/repo/project/issues/I4573.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A case commits in a supervised fixture with no open task and reads the advisory finding; with a task open it does not appear; neither commit is refused"
+          ],
+          "created_at": "2026-11-10",
+          "current_state": "At origin/master 25f0f3827ce: the hooks run doctor and the before-push plan; neither reports the absence of an open task in the checkout.",
+          "depends_on": [],
+          "evidence_required": [
+            "test"
+          ],
+          "milestone": "a-bounded-task-is-carried-to-accepted-work",
+          "non_scope": [
+            "Refusing a commit outside a task; the finding stays advisory"
+          ],
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I4573.yaml",
+            ".githooks/pre-commit",
+            ".githooks/pre-push",
+            "lib/check.sh",
+            ".ai/repo/workflows/task-lifecycle.md",
+            "test/cases/4575_a_commit_outside_a_task_is_told_so.sh"
+          ],
+          "serves": [],
+          "slug": "a-commit-outside-a-task-is-told-so",
+          "validation": [
+            "bash test/run.sh 4575_a_commit_outside_a_task_is_told_so"
           ]
         }
       },
@@ -84491,6 +84530,166 @@
           "date": "2026-11-10",
           "epistemics": "observed",
           "route": "project",
+          "tags": [
+            "derived",
+            "observation"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://knowledge/s-20261110141959-348c-2548f7a798f5",
+        "kind": "knowledge",
+        "label": "s-20261110141959-348c-2548f7a798f5",
+        "summary": "an adopter filing records of its own identifier kinds found plan allocate hands out only I-numbers, and surveyed every ref, worktree and mesh claim by hand for the next free one",
+        "route": "/cockpit/objects/knowledge/s-20261110141959-348c-2548f7a798f5",
+        "source": ".ai/repo/knowledge/curated/s-20261110141959-348c-2548f7a798f5.md",
+        "status": "verified",
+        "facts": {
+          "about": "capability:plan.allocate",
+          "class": "lesson",
+          "date": "2026-11-10",
+          "epistemics": "observed",
+          "route": "platform",
+          "tags": [
+            "derived",
+            "observation"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://knowledge/s-20261110141959-348c-68d3c34e49d1",
+        "kind": "knowledge",
+        "label": "s-20261110141959-348c-68d3c34e49d1",
+        "summary": "after the shared server died and serve ensure started another, every mesh session and claim of the old server was gone; two sessions re-ran mesh session open and mesh claim by hand, and the landing seat lost its seat claim the same way (2026-11-10)",
+        "route": "/cockpit/objects/knowledge/s-20261110141959-348c-68d3c34e49d1",
+        "source": ".ai/repo/knowledge/curated/s-20261110141959-348c-68d3c34e49d1.md",
+        "status": "verified",
+        "facts": {
+          "about": "command:serve.ensure",
+          "class": "lesson",
+          "date": "2026-11-10",
+          "epistemics": "observed",
+          "route": "platform",
+          "tags": [
+            "derived",
+            "observation"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://knowledge/s-20261110141959-348c-68fcc27016c1",
+        "kind": "knowledge",
+        "label": "s-20261110141959-348c-68fcc27016c1",
+        "summary": "a new public function whose only exercise was its doctest failed coverage-differential (#2996, mesh/manager.rs closed_key): the differential counts unit and integration tests, not doctests, so a branch reached only by a doctest is uncovered",
+        "route": "/cockpit/objects/knowledge/s-20261110141959-348c-68fcc27016c1",
+        "source": ".ai/repo/knowledge/curated/s-20261110141959-348c-68fcc27016c1.md",
+        "status": "verified",
+        "facts": {
+          "about": "gate:coverage-differential",
+          "class": "lesson",
+          "date": "2026-11-10",
+          "epistemics": "observed",
+          "route": "enforcement",
+          "tags": [
+            "derived",
+            "observation"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://knowledge/s-20261110141959-348c-7b55575549f1",
+        "kind": "knowledge",
+        "label": "s-20261110141959-348c-7b55575549f1",
+        "summary": "six issue records scoped the bare directory test/cases on 2026-11-10; plan validate only warned, the derived plan-status pages named case files no branch had written, and core-check refused #2997 (validate 42778183555); the fix that refuses it, I4350, is still open",
+        "route": "/cockpit/objects/knowledge/s-20261110141959-348c-7b55575549f1",
+        "source": ".ai/repo/knowledge/curated/s-20261110141959-348c-7b55575549f1.md",
+        "status": "verified",
+        "facts": {
+          "about": "command:plan.validate",
+          "class": "lesson",
+          "date": "2026-11-10",
+          "epistemics": "observed",
+          "route": "platform",
+          "tags": [
+            "derived",
+            "observation"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://knowledge/s-20261110141959-348c-826b50744ee5",
+        "kind": "knowledge",
+        "label": "s-20261110141959-348c-826b50744ee5",
+        "summary": "on a machine at load about 50, the commit hook's doctor ran 151006 ms against its 20000 ms budget, and the committing client cut its call at 120 s",
+        "route": "/cockpit/objects/knowledge/s-20261110141959-348c-826b50744ee5",
+        "source": ".ai/repo/knowledge/curated/s-20261110141959-348c-826b50744ee5.md",
+        "status": "verified",
+        "facts": {
+          "about": ".githooks/pre-commit",
+          "class": "lesson",
+          "date": "2026-11-10",
+          "epistemics": "observed",
+          "route": "project",
+          "tags": [
+            "derived",
+            "observation"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://knowledge/s-20261110141959-348c-a5ca8aad4352",
+        "kind": "knowledge",
+        "label": "s-20261110141959-348c-a5ca8aad4352",
+        "summary": "a derive while the merge of master was staged observed delivery.json at the pre-merge head again on 2026-11-10: #2994's site check refused [merged 2] against [merged 1], and the I4571 branch the same; the integrator skill still said a derive after the merge commit only adds a second commit",
+        "route": "/cockpit/objects/knowledge/s-20261110141959-348c-a5ca8aad4352",
+        "source": ".ai/repo/knowledge/curated/s-20261110141959-348c-a5ca8aad4352.md",
+        "status": "verified",
+        "facts": {
+          "about": ".ai/repo/skills/integrator/SKILL.md",
+          "class": "lesson",
+          "date": "2026-11-10",
+          "epistemics": "observed",
+          "route": "project",
+          "tags": [
+            "derived",
+            "observation"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://knowledge/s-20261110141959-348c-c223627487a3",
+        "kind": "knowledge",
+        "label": "s-20261110141959-348c-c223627487a3",
+        "summary": "a worktree with commits and no open task committed and pushed with doctor reporting no failure and no word that no task was in progress, so the commits were bound to none",
+        "route": "/cockpit/objects/knowledge/s-20261110141959-348c-c223627487a3",
+        "source": ".ai/repo/knowledge/curated/s-20261110141959-348c-c223627487a3.md",
+        "status": "verified",
+        "facts": {
+          "about": ".githooks/pre-commit",
+          "class": "lesson",
+          "date": "2026-11-10",
+          "epistemics": "observed",
+          "route": "project",
+          "tags": [
+            "derived",
+            "observation"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://knowledge/s-20261110141959-348c-eac4f6bc53a0",
+        "kind": "knowledge",
+        "label": "s-20261110141959-348c-eac4f6bc53a0",
+        "summary": "four times in one day an adopter's task needed one more path in its scope (a split created a module, a merge touched a test), check refused, and the task closed partial so a new one could start with the wider scope; widening in place is I4260 and I2114, both unlanded",
+        "route": "/cockpit/objects/knowledge/s-20261110141959-348c-eac4f6bc53a0",
+        "source": ".ai/repo/knowledge/curated/s-20261110141959-348c-eac4f6bc53a0.md",
+        "status": "verified",
+        "facts": {
+          "about": "command:finish",
+          "class": "lesson",
+          "date": "2026-11-10",
+          "epistemics": "observed",
+          "route": "platform",
           "tags": [
             "derived",
             "observation"
@@ -149845,6 +150044,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I4573",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4573",
+        "target": "majordomus://milestone/a-bounded-task-is-carried-to-accepted-work",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -150771,6 +150980,46 @@
       },
       {
         "source": "majordomus://knowledge/s-20261110050845-b1a4-931c50128f1b",
+        "target": "kind:knowledge",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://knowledge/s-20261110141959-348c-2548f7a798f5",
+        "target": "kind:knowledge",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://knowledge/s-20261110141959-348c-68d3c34e49d1",
+        "target": "kind:knowledge",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://knowledge/s-20261110141959-348c-68fcc27016c1",
+        "target": "kind:knowledge",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://knowledge/s-20261110141959-348c-7b55575549f1",
+        "target": "kind:knowledge",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://knowledge/s-20261110141959-348c-826b50744ee5",
+        "target": "kind:knowledge",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://knowledge/s-20261110141959-348c-a5ca8aad4352",
+        "target": "kind:knowledge",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://knowledge/s-20261110141959-348c-c223627487a3",
+        "target": "kind:knowledge",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://knowledge/s-20261110141959-348c-eac4f6bc53a0",
         "target": "kind:knowledge",
         "kind": "is_a"
       },
@@ -162571,8 +162820,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4445,
-      "edges": 10071,
+      "nodes": 4454,
+      "edges": 10081,
       "acyclic": false,
       "truncated": false
     }
