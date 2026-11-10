@@ -88,3 +88,5 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I3322` | shares lib/capture.sh with I4468; they may not run concurrently |
 | WARN | `scope_conflict` | `I3322` | shares .ai/repo/policy.yaml with I4481; they may not run concurrently |
 | WARN | `scope_conflict` | `I3322` | shares .ai/repo/policy.yaml with I4512; they may not run concurrently |
+| WARN | `scope_conflict` | `I3322` | shares docs/MESH.md with I4571; they may not run concurrently |
+| WARN | `scope_conflict` | `I3322` | shares docs/MESH.md with I4572; they may not run concurrently |
