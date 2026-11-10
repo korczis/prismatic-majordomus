@@ -138,6 +138,13 @@ struct Active {
     started_at: String,
 }
 
+/// What opens a runtime the trust list closed, once the declaration in force trusts its key
+/// (I4571): the activation the server ran at start, run again over the generation of the
+/// repository that is current now. The server that activated the runtime registers it;
+/// nothing else can, because only the server knows what to activate with (its address, its
+/// hosting, its version).
+pub type Reopen = Arc<dyn Fn(&Arc<crate::capability::Context>) + Send + Sync>;
+
 /// The runtime: the registry (always there, so a surface can answer before activation)
 /// and the active machinery once a declaration switched it on.
 pub struct MeshRuntime {
@@ -154,6 +161,10 @@ pub struct MeshRuntime {
     /// declined with a reason. A runtime nobody decided on is the command line's, and its
     /// inactivity is an absence the doctor may not report as a verdict (ADR 0059).
     decided: AtomicBool,
+    /// How to open this runtime when the trust list closed it, once the declaration trusts
+    /// its key ([`Reopen`]); set by the server that activated it, cleared by
+    /// [`MeshRuntime::stop`].
+    reopen: Mutex<Option<Reopen>>,
 }
 
 impl Default for MeshRuntime {
@@ -175,7 +186,127 @@ impl MeshRuntime {
             cooperation: Mutex::new(None),
             cooperation_reason: Mutex::new(None),
             decided: AtomicBool::new(false),
+            reopen: Mutex::new(None),
         }
+    }
+
+    /// The key this runtime is closed to, when the trust list closed it ([`closed_to`]):
+    /// what a reload holds against the declaration in force (I4571). `None` while the mesh
+    /// is active, and for every other reason it is not.
+    ///
+    /// ```
+    /// use majordomus_cli::mesh::config::MeshConfig;
+    /// use majordomus_cli::mesh::identity::NodeIdentity;
+    /// use majordomus_cli::mesh::manager::MeshRuntime;
+    ///
+    /// let unlisted: MeshConfig = serde_json::from_value(serde_json::json!({
+    ///     "schema": "mesh/v1", "kind": "mesh", "id": "m", "enabled": true })).unwrap();
+    /// let identity = NodeIdentity::ephemeral().unwrap();
+    /// let key = identity.public.public_key.clone();
+    /// let mesh = MeshRuntime::new();
+    /// assert_eq!(mesh.closed_key(), None, "nothing decided yet");
+    /// mesh.activate(&unlisted, identity, vec![], vec![], "doc").unwrap();
+    /// assert_eq!(mesh.closed_key(), Some(key));
+    /// ```
+    pub fn closed_key(&self) -> Option<String> {
+        if self.state.lock().expect("mesh state").is_some() {
+            return None;
+        }
+        let reason = self.reason.lock().expect("mesh reason");
+        closed_key(&reason).map(str::to_string)
+    }
+
+    /// Register what opens this runtime once the declaration in force trusts the key it is
+    /// closed to ([`Reopen`]). The server calls it whenever it activates the mesh, so that a
+    /// runtime closed at start and one closed later by a withdrawn key open alike; a later
+    /// registration replaces an earlier one.
+    ///
+    /// ```
+    /// use std::sync::Arc;
+    /// use majordomus_cli::capability::Context;
+    /// use majordomus_cli::mesh::manager::MeshRuntime;
+    ///
+    /// let mesh = MeshRuntime::new();
+    /// mesh.reopen_with(Arc::new(|_: &Arc<Context>| {}));
+    /// assert!(mesh.reopens(), "registered");
+    /// mesh.stop();
+    /// assert!(!mesh.reopens(), "a stopped runtime is never opened again");
+    /// ```
+    pub fn reopen_with(&self, reopen: Reopen) {
+        *self.reopen.lock().expect("mesh reopen") = Some(reopen);
+    }
+
+    /// Whether a server registered how to open this runtime again ([`Reopen`]) and has not
+    /// stopped it: only such a runtime is closed and opened by the trust list while it runs.
+    ///
+    /// ```
+    /// use majordomus_cli::mesh::manager::MeshRuntime;
+    ///
+    /// // the command line's runtime, which no server activated, is never moved by trust
+    /// assert!(!MeshRuntime::new().reopens());
+    /// ```
+    pub fn reopens(&self) -> bool {
+        self.reopen.lock().expect("mesh reopen").is_some()
+    }
+
+    /// Close an active runtime because the declaration in force no longer trusts its own
+    /// key, with `why` ([`closed_to`]'s reason) as its reason: its providers stop, its
+    /// cooperation stops and ends its links, and what [`MeshRuntime::reopen_with`]
+    /// registered stays, so that listing the key again opens it (I4571). `false` when it
+    /// was not active.
+    ///
+    /// ```
+    /// use majordomus_cli::mesh::config::MeshConfig;
+    /// use majordomus_cli::mesh::identity::NodeIdentity;
+    /// use majordomus_cli::mesh::manager::{closed_to, MeshRuntime};
+    ///
+    /// let identity = NodeIdentity::ephemeral().unwrap();
+    /// let key = identity.public.public_key.clone();
+    /// let listed: MeshConfig = serde_json::from_value(serde_json::json!({
+    ///     "schema": "mesh/v1", "kind": "mesh", "id": "m", "enabled": true,
+    ///     "multicast": { "enabled": false }, "tailscale": { "enabled": false },
+    ///     "trust": { "allow": [key.clone()] } })).unwrap();
+    /// let mesh = MeshRuntime::new();
+    /// mesh.activate(&listed, identity, vec![], vec![], "doc").unwrap();
+    /// let mut withdrawn = listed.clone();
+    /// withdrawn.trust.allow.clear();
+    /// assert!(mesh.close(&closed_to(&withdrawn, &key).unwrap()));
+    /// assert!(!mesh.status().active);
+    /// assert_eq!(mesh.closed_key(), Some(key));
+    /// assert!(!mesh.close("again"), "closed already");
+    /// ```
+    pub fn close(&self, why: &str) -> bool {
+        // the state's lock is let go before cooperation's is taken: `stop` takes them in the
+        // other order, and two holders of both would wait on each other
+        let Some(active) = self.state.lock().expect("mesh state").take() else {
+            return false;
+        };
+        active.stop.store(true, Ordering::SeqCst);
+        if let Some(cooperation) = self.cooperation.lock().expect("mesh cooperation").as_ref() {
+            cooperation.stop();
+        }
+        *self.reason.lock().expect("mesh reason") = why.to_string();
+        *self
+            .cooperation_reason
+            .lock()
+            .expect("mesh cooperation reason") = Some(why.to_string());
+        true
+    }
+
+    /// What [`MeshRuntime::reopen_with`] registered, while this runtime is closed by the
+    /// trust list and has not been stopped.
+    ///
+    /// ```
+    /// use std::sync::Arc;
+    /// use majordomus_cli::mesh::manager::MeshRuntime;
+    ///
+    /// let mesh = MeshRuntime::new();
+    /// mesh.reopen_with(Arc::new(|_: &Arc<majordomus_cli::capability::Context>| {}));
+    /// assert!(mesh.reopener().is_none(), "not closed by the trust list: nothing to reopen");
+    /// ```
+    pub fn reopener(&self) -> Option<Reopen> {
+        self.closed_key()?;
+        self.reopen.lock().expect("mesh reopen").clone()
     }
 
     /// Whether a shared server activated or declined this runtime. `false` in every process
@@ -237,7 +368,9 @@ impl MeshRuntime {
     /// ```
     pub fn attach_cooperation(&self, cooperation: Arc<Cooperation>) {
         let mut slot = self.cooperation.lock().expect("mesh cooperation");
-        if slot.is_none() {
+        // a stopped one holds the slot for nobody: a runtime closed by the trust list and
+        // opened again attaches the cooperation it starts then (I4571)
+        if slot.as_ref().is_none_or(|held| held.stopped()) {
             *slot = Some(cooperation);
         }
     }
@@ -558,6 +691,8 @@ impl MeshRuntime {
     /// Stop the mesh. Every provider thread and the manager end at their next bounded
     /// wait; the registry keeps what it saw for whoever still asks.
     pub fn stop(&self) {
+        // a stopped runtime is never reopened: the server that registered it is going away
+        *self.reopen.lock().expect("mesh reopen") = None;
         if let Some(cooperation) = self.cooperation.lock().expect("mesh cooperation").as_ref() {
             cooperation.stop();
         }

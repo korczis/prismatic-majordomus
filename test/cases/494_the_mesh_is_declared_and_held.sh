@@ -111,6 +111,32 @@ expect_grep '^ok    runtime      closed: '
 "$RB" mesh status --repo "$T" --format json > "$T/closed.json" 2>/dev/null || true
 jq -e '.active == false' "$T/closed.json" >/dev/null \
   || { echo "    a closed mesh reports itself active:"; cat "$T/closed.json"; exit 1; }
+
+# --- the key enrolled on the trunk while that server runs: it opens its mesh when it reads the
+# commit, with no restart (I4571), and the doctor holds over it. Bounded: the server reads the
+# repository twice a second; 30 s is the bound, not the expectation.
+declare_mesh true "$key"
+opened=0
+for _ in $(seq 1 60); do
+  "$RB" mesh status --repo "$T" --format json > "$T/opened.json" 2>/dev/null || true
+  if jq -e '.active == true' "$T/opened.json" >/dev/null 2>&1; then opened=1; break; fi
+  sleep 0.5
+done
+[ "$opened" = 1 ] \
+  || { echo "    the server did not open its mesh when its key was listed:"; cat "$T/opened.json"; exit 1; }
+expect_exit 0 "$RB" mesh doctor --repo "$T"
+expect_grep '^ok    runtime      active as '
+# and the key withdrawn again: that server closes its mesh the same way, naming the key
+declare_mesh true
+closed=0
+for _ in $(seq 1 60); do
+  "$RB" mesh status --repo "$T" --format json > "$T/reclosed.json" 2>/dev/null || true
+  if jq -e --arg key "$key" '.active == false and ((.reason // "") | startswith("closed: this machine'"'"'s key " + $key))' \
+      "$T/reclosed.json" >/dev/null 2>&1; then closed=1; break; fi
+  sleep 0.5
+done
+[ "$closed" = 1 ] \
+  || { echo "    the server did not close its mesh when its key was withdrawn:"; cat "$T/reclosed.json"; exit 1; }
 "$RB" serve stop --repo "$T" >/dev/null 2>&1
 
 # --- enabled, the key listed, and the server activated it: the briefing says so, in the block

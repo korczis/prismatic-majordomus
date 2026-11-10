@@ -612,7 +612,8 @@ fn declared(declaration: &Option<Result<MeshConfig, MeshError>>) -> Declared {
 /// an enabled declaration, carrying the server's reason — a failure, except when the
 /// runtime is closed to a key the declaration does not list, which the `trust` check
 /// carries. Closed to a key the declaration in force *does* list, it fails again: the
-/// server decided before the key was listed and still obeys what it read then (I4572).
+/// server decided before the key was listed and has not read the change yet (I4572); it
+/// opens at the next generation it reads (I4571).
 /// The `runtime` verdict alone: what a server decided about the declaration, judged as
 /// `mesh doctor` judges it. Health reads this one check rather than running the doctor's
 /// probes, which open sockets.
@@ -670,7 +671,7 @@ fn closed_runtime_check(config: Option<&MeshConfig>, why: &str) -> DoctorCheck {
                 "stale: the declaration in force now trusts this machine's key {key}, and this server's mesh is still closed, as it decided before the key was trusted — {why}"
             ),
             "this checkout's server announces nothing, hears nobody and links to no peer, while the declaration it obeys lets it: every other check holds and `mesh verify` finds no cooperation",
-            "restart the server, so that it decides again on the declaration in force: `majordomus serve stop && majordomus serve ensure`",
+            "the server opens it when it next reads the repository (I4571); if it stays closed, restart it so that it decides again on the declaration in force: `majordomus serve stop && majordomus serve ensure`",
         ),
     }
 }
@@ -1187,7 +1188,7 @@ mod tests {
         assert!(runtime.impact.is_some());
         assert_eq!(
             runtime.remediation.as_deref(),
-            Some("restart the server, so that it decides again on the declaration in force: `majordomus serve stop && majordomus serve ensure`")
+            Some("the server opens it when it next reads the repository (I4571); if it stays closed, restart it so that it decides again on the declaration in force: `majordomus serve stop && majordomus serve ensure`")
         );
         // and health reads the same verdict through runtime_verdict
         let verdict = runtime_verdict(Some(Ok(listed)), Some(&status));
