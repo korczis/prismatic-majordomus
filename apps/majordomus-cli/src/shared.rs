@@ -954,6 +954,100 @@ mod tests {
         assert!(!stopped.mesh.status().active);
     }
 
+    /// The own-key trust of a server's runtime moves nothing where nothing may move it: no
+    /// declaration, a declaration that switched the mesh off, and an activation that ran again
+    /// and still did not open (I4571).
+    #[test]
+    fn own_trust_is_unchanged_without_a_declaration_when_disabled_and_when_reopening_does_not_open()
+    {
+        use crate::capability::builtin::mesh::{retrust_own_key, OwnTrust};
+        let fixture = SyntheticRepository::small().unwrap();
+        let load = || {
+            Arc::new(
+                App::load(&RepoArgs {
+                    repo: Some(fixture.root().to_path_buf()),
+                    discovery: DiscoveryMode::Filesystem,
+                    share: Some(
+                        std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../share"),
+                    ),
+                    ..Default::default()
+                })
+                .unwrap()
+                .context,
+            )
+        };
+        let opened = Arc::new(std::sync::atomic::AtomicUsize::new(0));
+        let counting = {
+            let opened = Arc::clone(&opened);
+            Arc::new(move |_: &Arc<Context>| {
+                opened.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
+            })
+        };
+
+        // no mesh declaration at all: a server's runtime is left as it is
+        let bare = load();
+        bare.mesh.reopen_with(counting.clone());
+        assert!(crate::capability::builtin::mesh::declaration(&bare).is_none());
+        assert_eq!(retrust_own_key(&bare), OwnTrust::Unchanged);
+
+        // the declaration, from here on: this runtime closed to the key `seed` names
+        let sources = fixture.root().join(".ai/repo/knowledge/sources.yaml");
+        let mut text = std::fs::read_to_string(&sources).unwrap();
+        text.push_str("  - id: mesh-declaration\n    kind: mesh-declaration\n    discovery: vcs\n    pathspec: ':(glob).ai/repo/mesh/*.yaml'\n    required: false\n");
+        std::fs::write(&sources, text).unwrap();
+        let dir = fixture.root().join(".ai/repo/mesh");
+        std::fs::create_dir_all(&dir).unwrap();
+        let identity =
+            || crate::mesh::NodeIdentity::from_seed_hex(&"09".repeat(32), "test").unwrap();
+        let key = identity().public.public_key;
+        let declare = |enabled: bool| {
+            std::fs::write(
+                dir.join("majordomus.yaml"),
+                format!("schema: mesh/v1\nkind: mesh-declaration\nid: majordomus\nenabled: {enabled}\nmulticast:\n  enabled: false\ntailscale:\n  enabled: false\ncooperation:\n  enabled: false\ntrust:\n  policy: deny_unknown\n  allow: [\"{key}\"]\n"),
+            )
+            .unwrap();
+        };
+        let unlisted: crate::mesh::MeshConfig = serde_json::from_value(serde_json::json!({
+            "schema": "mesh/v1", "kind": "mesh-declaration", "id": "majordomus", "enabled": true,
+            "multicast": { "enabled": false }, "tailscale": { "enabled": false },
+        }))
+        .unwrap();
+
+        // switched off since: nothing moves, although the key is listed
+        declare(false);
+        let off = load();
+        off.mesh
+            .activate(&unlisted, identity(), vec![], vec![], "test")
+            .unwrap();
+        off.mesh.reopen_with(counting.clone());
+        assert!(off.mesh.closed_key().is_some());
+        assert_eq!(retrust_own_key(&off), OwnTrust::Unchanged);
+
+        // listed and on, but the activation run again does not open: still unchanged
+        declare(true);
+        let stuck = load();
+        stuck
+            .mesh
+            .activate(&unlisted, identity(), vec![], vec![], "test")
+            .unwrap();
+        stuck.mesh.reopen_with(counting.clone());
+        assert_eq!(stuck.mesh.closed_key().as_deref(), Some(key.as_str()));
+        assert_eq!(retrust_own_key(&stuck), OwnTrust::Unchanged);
+        assert!(!stuck.mesh.status().active);
+
+        // declined for another reason than trust, and not active: nothing to close or open
+        let declined = load();
+        declined.mesh.decline("the node identity did not load");
+        declined.mesh.reopen_with(counting.clone());
+        assert!(declined.mesh.closed_key().is_none());
+        assert_eq!(retrust_own_key(&declined), OwnTrust::Unchanged);
+        assert_eq!(
+            opened.load(std::sync::atomic::Ordering::SeqCst),
+            1,
+            "the activation ran exactly once, for the listed key"
+        );
+    }
+
     /// A server bound to every interface advertises the addresses the machine holds when a
     /// beacon is cut, not the ones it held at start: the source it follows is read by
     /// `mesh.status`.

@@ -1262,6 +1262,55 @@ mod tests {
     }
 
     #[test]
+    fn closing_stops_the_cooperation_and_a_stopped_one_gives_up_its_attach_slot() {
+        use crate::mesh::config::CooperationConfig;
+        use crate::mesh::cooperation::{CheckoutFacts, CooperationSetup};
+        let built = |slot: &str| {
+            Cooperation::new(CooperationSetup {
+                identity: Arc::new(NodeIdentity::ephemeral().unwrap()),
+                runtime: slot.into(),
+                repository: crate::mesh::repository::of_root_commits(&["root".into()]),
+                endpoints: vec!["127.0.0.1:9".into()],
+                version: "test".into(),
+                config: CooperationConfig::default(),
+                trust: TrustConfig::default(),
+                journal_path: None,
+                registry: Arc::new(MeshRegistry::new()),
+                transport: Arc::new(crate::mesh::link::HttpTransport),
+                board: None,
+                checkout: CheckoutFacts::default(),
+            })
+            .unwrap()
+        };
+        let runtime = MeshRuntime::new();
+        let dir = tempfile::tempdir().unwrap();
+        let own = identity_in(&dir, "self.json");
+        runtime
+            .activate(&listed(&own), own, vec![], vec![], "0.5.0")
+            .unwrap();
+        let first = built("0000000000000001");
+        runtime.attach_cooperation(Arc::clone(&first));
+        // a running one keeps the slot
+        runtime.attach_cooperation(built("0000000000000002"));
+        assert_eq!(
+            runtime.cooperation().unwrap().runtime_key(),
+            first.runtime_key()
+        );
+        // closing stops it, and a second close finds nothing to close
+        assert!(runtime.close("closed: withdrawn in the test"));
+        assert!(first.stopped() && runtime.cooperation().is_none());
+        assert!(!runtime.close("closed: again"));
+        // the stopped one gives the slot to the cooperation of the next opening
+        let next = built("0000000000000003");
+        runtime.attach_cooperation(Arc::clone(&next));
+        assert_eq!(
+            runtime.cooperation().unwrap().runtime_key(),
+            next.runtime_key()
+        );
+        next.stop();
+    }
+
+    #[test]
     fn an_unlisted_machine_keeps_the_mesh_closed_and_starts_no_provider() {
         let runtime = MeshRuntime::new();
         let dir = tempfile::tempdir().unwrap();
