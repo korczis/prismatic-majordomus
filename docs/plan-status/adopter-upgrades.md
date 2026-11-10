@@ -208,12 +208,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I1980` | shares test/cases with I4531; they may not run concurrently |
 | WARN | `scope_conflict` | `I1980` | shares test/cases with I4532; they may not run concurrently |
 | WARN | `scope_conflict` | `I1980` | shares test/cases with I4533; they may not run concurrently |
-| WARN | `scope_conflict` | `I1980` | shares test/cases with I4567; they may not run concurrently |
-| WARN | `scope_conflict` | `I1980` | shares test/cases with I4568; they may not run concurrently |
 | WARN | `scope_conflict` | `I1980` | shares test/cases with I4569; they may not run concurrently |
-| WARN | `scope_conflict` | `I1980` | shares test/cases with I4570; they may not run concurrently |
-| WARN | `scope_conflict` | `I1980` | shares test/cases with I4571; they may not run concurrently |
-| WARN | `scope_conflict` | `I1980` | shares test/cases with I4572; they may not run concurrently |
 | WARN | `scope_conflict` | `I1988` | shares docs with I2654; they may not run concurrently |
 | WARN | `scope_conflict` | `I1988` | shares docs with I2700; they may not run concurrently |
 | WARN | `scope_conflict` | `I1988` | shares docs with I2704; they may not run concurrently |
@@ -408,11 +403,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I1990` | shares test/cases with I4532; they may not run concurrently |
 | WARN | `scope_conflict` | `I1990` | shares test/cases with I4533; they may not run concurrently |
 | WARN | `scope_conflict` | `I1990` | shares lib/finish.sh with I4567; they may not run concurrently |
-| WARN | `scope_conflict` | `I1990` | shares test/cases with I4568; they may not run concurrently |
 | WARN | `scope_conflict` | `I1990` | shares test/cases with I4569; they may not run concurrently |
-| WARN | `scope_conflict` | `I1990` | shares test/cases with I4570; they may not run concurrently |
-| WARN | `scope_conflict` | `I1990` | shares test/cases with I4571; they may not run concurrently |
-| WARN | `scope_conflict` | `I1990` | shares test/cases with I4572; they may not run concurrently |
 | WARN | `scope_conflict` | `I1999` | shares lib with I2059; they may not run concurrently |
 | WARN | `scope_conflict` | `I1999` | shares lib with I2114; they may not run concurrently |
 | WARN | `scope_conflict` | `I1999` | shares test/cases with I2115; they may not run concurrently |
@@ -642,7 +633,6 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I1999` | shares lib with I4567; they may not run concurrently |
 | WARN | `scope_conflict` | `I1999` | shares apps/majordomus-cli/src with I4568; they may not run concurrently |
 | WARN | `scope_conflict` | `I1999` | shares test/cases with I4569; they may not run concurrently |
-| WARN | `scope_conflict` | `I1999` | shares test/cases with I4570; they may not run concurrently |
 | WARN | `scope_conflict` | `I1999` | shares apps/majordomus-cli/src with I4571; they may not run concurrently |
 | WARN | `scope_conflict` | `I1999` | shares apps/majordomus-cli/src with I4572; they may not run concurrently |
 | WARN | `scope_conflict` | `I4336` | shares share/schemas/majordomus/policy with I4413; they may not run concurrently |
@@ -652,9 +642,3 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I4336` | shares lib/doctor.sh with I4418; they may not run concurrently |
 | WARN | `scope_conflict` | `I4336` | shares share/schemas/majordomus/policy with I4464; they may not run concurrently |
 | WARN | `scope_conflict` | `I4336` | shares lib/rules.sh with I4468; they may not run concurrently |
-| WARN | `scope_conflict` | `I4336` | shares test/cases/4224_a_licensed_source_never_reaches_a_public_tree.sh with I4567; they may not run concurrently |
-| WARN | `scope_conflict` | `I4336` | shares test/cases/4224_a_licensed_source_never_reaches_a_public_tree.sh with I4568; they may not run concurrently |
-| WARN | `scope_conflict` | `I4336` | shares test/cases/4224_a_licensed_source_never_reaches_a_public_tree.sh with I4569; they may not run concurrently |
-| WARN | `scope_conflict` | `I4336` | shares test/cases/4224_a_licensed_source_never_reaches_a_public_tree.sh with I4570; they may not run concurrently |
-| WARN | `scope_conflict` | `I4336` | shares test/cases/4224_a_licensed_source_never_reaches_a_public_tree.sh with I4571; they may not run concurrently |
-| WARN | `scope_conflict` | `I4336` | shares test/cases/4224_a_licensed_source_never_reaches_a_public_tree.sh with I4572; they may not run concurrently |

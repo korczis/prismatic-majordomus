@@ -90,12 +90,6 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I3163` | shares apps/majordomus-cli/src/capability/builtin/knowledge_base.rs with I4486; they may not run concurrently |
 | WARN | `scope_conflict` | `I3163` | shares .ai/repo/adrs/0183-evolution-is-scheduled-at-the-episode-boundary-and-carried-out-b.md with I4500; they may not run concurrently |
 | WARN | `scope_conflict` | `I3163` | shares .ai/repo/policy.yaml with I4512; they may not run concurrently |
-| WARN | `scope_conflict` | `I3163` | shares test/cases/710_briefing_names_the_candidates.sh with I4567; they may not run concurrently |
-| WARN | `scope_conflict` | `I3163` | shares test/cases/710_briefing_names_the_candidates.sh with I4568; they may not run concurrently |
-| WARN | `scope_conflict` | `I3163` | shares test/cases/710_briefing_names_the_candidates.sh with I4569; they may not run concurrently |
-| WARN | `scope_conflict` | `I3163` | shares test/cases/710_briefing_names_the_candidates.sh with I4570; they may not run concurrently |
-| WARN | `scope_conflict` | `I3163` | shares test/cases/710_briefing_names_the_candidates.sh with I4571; they may not run concurrently |
-| WARN | `scope_conflict` | `I3163` | shares test/cases/710_briefing_names_the_candidates.sh with I4572; they may not run concurrently |
 | WARN | `scope_conflict` | `I3166` | shares apps/majordomus-cli/src/devcontext with I3172; they may not run concurrently |
 | WARN | `scope_conflict` | `I3166` | shares .ai/repo/project/intents with I3226; they may not run concurrently |
 | WARN | `scope_conflict` | `I3166` | shares apps/majordomus-cli/src/devcontext with I3251; they may not run concurrently |
@@ -114,9 +108,3 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I4337` | shares .ai/repo/project/issues/I3974.yaml with I4357; they may not run concurrently |
 | WARN | `scope_conflict` | `I4337` | shares .ai/repo/project/issues/I4362.yaml with I4362; they may not run concurrently |
 | WARN | `scope_conflict` | `I4337` | shares docs/KNOWLEDGE.md with I4417; they may not run concurrently |
-| WARN | `scope_conflict` | `I4337` | shares test/cases/3004_evolve_is_a_procedure_of_existing_commands.sh with I4567; they may not run concurrently |
-| WARN | `scope_conflict` | `I4337` | shares test/cases/3004_evolve_is_a_procedure_of_existing_commands.sh with I4568; they may not run concurrently |
-| WARN | `scope_conflict` | `I4337` | shares test/cases/3004_evolve_is_a_procedure_of_existing_commands.sh with I4569; they may not run concurrently |
-| WARN | `scope_conflict` | `I4337` | shares test/cases/3004_evolve_is_a_procedure_of_existing_commands.sh with I4570; they may not run concurrently |
-| WARN | `scope_conflict` | `I4337` | shares test/cases/3004_evolve_is_a_procedure_of_existing_commands.sh with I4571; they may not run concurrently |
-| WARN | `scope_conflict` | `I4337` | shares test/cases/3004_evolve_is_a_procedure_of_existing_commands.sh with I4572; they may not run concurrently |

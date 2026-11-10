@@ -30,9 +30,3 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 |---|---|---|---|
 | WARN | `scope_conflict` | `I4530` | shares .github/workflows/pages.yml with I4532; they may not run concurrently |
 | WARN | `scope_conflict` | `I4530` | shares .github/workflows/pages.yml with I4533; they may not run concurrently |
-| WARN | `scope_conflict` | `I4530` | shares test/cases/4563_the_live_site_is_probed_in_a_real_browser.sh with I4567; they may not run concurrently |
-| WARN | `scope_conflict` | `I4530` | shares test/cases/4563_the_live_site_is_probed_in_a_real_browser.sh with I4568; they may not run concurrently |
-| WARN | `scope_conflict` | `I4530` | shares test/cases/4563_the_live_site_is_probed_in_a_real_browser.sh with I4569; they may not run concurrently |
-| WARN | `scope_conflict` | `I4530` | shares test/cases/4563_the_live_site_is_probed_in_a_real_browser.sh with I4570; they may not run concurrently |
-| WARN | `scope_conflict` | `I4530` | shares test/cases/4563_the_live_site_is_probed_in_a_real_browser.sh with I4571; they may not run concurrently |
-| WARN | `scope_conflict` | `I4530` | shares test/cases/4563_the_live_site_is_probed_in_a_real_browser.sh with I4572; they may not run concurrently |
