@@ -8,7 +8,7 @@ This page is the index. Each milestone's issues, and the findings about them, ar
 its own under [`plan-status/`](plan-status/), named by the milestone, so the plan grows by pages
 and no one page grows with it.
 
-Generated from canonical inputs `e98e6dc1a775`.
+Generated from canonical inputs `43d22c4e9899`.
 
 ## Milestones
 
@@ -501,81 +501,80 @@ Generated from canonical inputs `e98e6dc1a775`.
 
 ## Findings
 
-10329 finding(s), each on the page of the milestone its subject is or belongs to:
+9578 finding(s), each on the page of the milestone its subject is or belongs to:
 
 | milestone | findings |
 |---|---|
-| [`M002`](plan-status/M002.md) | 47 |
+| [`M002`](plan-status/M002.md) | 36 |
 | [`M003`](plan-status/M003.md) | 10 |
-| [`M004`](plan-status/M004.md) | 453 |
-| [`a-bounded-task-is-carried-to-accepted-work`](plan-status/a-bounded-task-is-carried-to-accepted-work.md) | 102 |
-| [`a-change-is-judged-in-minutes`](plan-status/a-change-is-judged-in-minutes.md) | 103 |
-| [`a-claim-stands-only-on-its-evidence`](plan-status/a-claim-stands-only-on-its-evidence.md) | 217 |
+| [`M004`](plan-status/M004.md) | 443 |
+| [`a-bounded-task-is-carried-to-accepted-work`](plan-status/a-bounded-task-is-carried-to-accepted-work.md) | 45 |
+| [`a-change-is-judged-in-minutes`](plan-status/a-change-is-judged-in-minutes.md) | 84 |
+| [`a-claim-stands-only-on-its-evidence`](plan-status/a-claim-stands-only-on-its-evidence.md) | 201 |
 | [`a-derive-does-only-the-work-its-inputs-changed`](plan-status/a-derive-does-only-the-work-its-inputs-changed.md) | 63 |
 | [`a-finding-is-tracked-to-its-issue`](plan-status/a-finding-is-tracked-to-its-issue.md) | 5 |
-| [`a-newcomer-reaches-a-first-verified-intent`](plan-status/a-newcomer-reaches-a-first-verified-intent.md) | 22 |
-| [`a-paste-is-decomposed-by-a-skill`](plan-status/a-paste-is-decomposed-by-a-skill.md) | 23 |
-| [`a-promoted-record-opens-its-message`](plan-status/a-promoted-record-opens-its-message.md) | 24 |
-| [`a-provider-carries-the-contract-natively`](plan-status/a-provider-carries-the-contract-natively.md) | 71 |
+| [`a-newcomer-reaches-a-first-verified-intent`](plan-status/a-newcomer-reaches-a-first-verified-intent.md) | 16 |
+| [`a-paste-is-decomposed-by-a-skill`](plan-status/a-paste-is-decomposed-by-a-skill.md) | 17 |
+| [`a-promoted-record-opens-its-message`](plan-status/a-promoted-record-opens-its-message.md) | 18 |
+| [`a-provider-carries-the-contract-natively`](plan-status/a-provider-carries-the-contract-natively.md) | 59 |
 | [`a-registered-corpus-judges-majordomus`](plan-status/a-registered-corpus-judges-majordomus.md) | 120 |
 | [`a-review-is-published-at-its-commit`](plan-status/a-review-is-published-at-its-commit.md) | 35 |
-| [`a-screen-is-fast-bounded-and-says-why`](plan-status/a-screen-is-fast-bounded-and-says-why.md) | 10 |
-| [`a-second-adopter-is-served`](plan-status/a-second-adopter-is-served.md) | 302 |
-| [`a-session-proceeds`](plan-status/a-session-proceeds.md) | 129 |
-| [`a-session-proceeds-through-the-mesh`](plan-status/a-session-proceeds-through-the-mesh.md) | 85 |
-| [`a-test-fails-when-the-code-is-wrong`](plan-status/a-test-fails-when-the-code-is-wrong.md) | 49 |
+| [`a-screen-is-fast-bounded-and-says-why`](plan-status/a-screen-is-fast-bounded-and-says-why.md) | 4 |
+| [`a-second-adopter-is-served`](plan-status/a-second-adopter-is-served.md) | 173 |
+| [`a-session-proceeds`](plan-status/a-session-proceeds.md) | 121 |
+| [`a-session-proceeds-through-the-mesh`](plan-status/a-session-proceeds-through-the-mesh.md) | 60 |
+| [`a-test-fails-when-the-code-is-wrong`](plan-status/a-test-fails-when-the-code-is-wrong.md) | 44 |
 | [`a-version-follows-the-work`](plan-status/a-version-follows-the-work.md) | 25 |
-| [`a-visitor-understands-and-checks-majordomus`](plan-status/a-visitor-understands-and-checks-majordomus.md) | 8 |
-| [`adopter-upgrades`](plan-status/adopter-upgrades.md) | 614 |
+| [`a-visitor-understands-and-checks-majordomus`](plan-status/a-visitor-understands-and-checks-majordomus.md) | 2 |
+| [`adopter-upgrades`](plan-status/adopter-upgrades.md) | 598 |
 | [`an-authorised-node-connects-from-anywhere`](plan-status/an-authorised-node-connects-from-anywhere.md) | 12 |
 | [`an-outcome-becomes-a-reviewed-plan`](plan-status/an-outcome-becomes-a-reviewed-plan.md) | 15 |
 | [`an-unmet-criterion-is-drafted-into-work`](plan-status/an-unmet-criterion-is-drafted-into-work.md) | 131 |
 | [`architecture-is-enforced`](plan-status/architecture-is-enforced.md) | 2 |
-| [`automation`](plan-status/automation.md) | 77 |
-| [`campaigns-are-read-as-provenance`](plan-status/campaigns-are-read-as-provenance.md) | 27 |
+| [`automation`](plan-status/automation.md) | 68 |
+| [`campaigns-are-read-as-provenance`](plan-status/campaigns-are-read-as-provenance.md) | 21 |
 | [`capability-graph`](plan-status/capability-graph.md) | 13 |
-| [`ci-critical-path`](plan-status/ci-critical-path.md) | 421 |
+| [`ci-critical-path`](plan-status/ci-critical-path.md) | 351 |
 | [`command-and-deployment-criteria-are-judged`](plan-status/command-and-deployment-criteria-are-judged.md) | 5 |
 | [`delivery-economics-are-measured-over-declared-windows`](plan-status/delivery-economics-are-measured-over-declared-windows.md) | 1 |
-| [`derived-data-integrity`](plan-status/derived-data-integrity.md) | 39 |
-| [`development-runtime`](plan-status/development-runtime.md) | 898 |
-| [`every-session-joins-the-mesh`](plan-status/every-session-joins-the-mesh.md) | 19 |
-| [`every-sessions-usage-is-observed`](plan-status/every-sessions-usage-is-observed.md) | 62 |
+| [`derived-data-integrity`](plan-status/derived-data-integrity.md) | 28 |
+| [`development-runtime`](plan-status/development-runtime.md) | 862 |
+| [`every-session-joins-the-mesh`](plan-status/every-session-joins-the-mesh.md) | 16 |
+| [`every-sessions-usage-is-observed`](plan-status/every-sessions-usage-is-observed.md) | 57 |
 | [`every-surface-follows-what-changed`](plan-status/every-surface-follows-what-changed.md) | 18 |
 | [`every-task-states-its-delivery-economics`](plan-status/every-task-states-its-delivery-economics.md) | 8 |
 | [`everything-is-followed-in-one-stream`](plan-status/everything-is-followed-in-one-stream.md) | 11 |
 | [`external-workspaces`](plan-status/external-workspaces.md) | 35 |
-| [`failure-is-visible`](plan-status/failure-is-visible.md) | 37 |
+| [`failure-is-visible`](plan-status/failure-is-visible.md) | 31 |
 | [`fly-deployment`](plan-status/fly-deployment.md) | 4 |
-| [`idd-reads-at-a-glance`](plan-status/idd-reads-at-a-glance.md) | 3278 |
+| [`idd-reads-at-a-glance`](plan-status/idd-reads-at-a-glance.md) | 3272 |
 | [`intent-lifecycle`](plan-status/intent-lifecycle.md) | 65 |
-| [`knowledge-acts-on-what-it-learns`](plan-status/knowledge-acts-on-what-it-learns.md) | 94 |
+| [`knowledge-acts-on-what-it-learns`](plan-status/knowledge-acts-on-what-it-learns.md) | 82 |
 | [`landing-survives-any-session`](plan-status/landing-survives-any-session.md) | 10 |
-| [`mcp-transports-are-reliable`](plan-status/mcp-transports-are-reliable.md) | 211 |
+| [`mcp-transports-are-reliable`](plan-status/mcp-transports-are-reliable.md) | 200 |
 | [`measurements-are-tracked-over-time`](plan-status/measurements-are-tracked-over-time.md) | 17 |
-| [`merging-and-referencing-are-enforced`](plan-status/merging-and-referencing-are-enforced.md) | 61 |
-| [`mesh-journal-converges`](plan-status/mesh-journal-converges.md) | 155 |
-| [`one-kit-on-every-surface`](plan-status/one-kit-on-every-surface.md) | 26 |
+| [`merging-and-referencing-are-enforced`](plan-status/merging-and-referencing-are-enforced.md) | 35 |
+| [`mesh-journal-converges`](plan-status/mesh-journal-converges.md) | 147 |
+| [`one-kit-on-every-surface`](plan-status/one-kit-on-every-surface.md) | 20 |
 | [`peer-blackboard`](plan-status/peer-blackboard.md) | 9 |
 | [`prismatic-lumen`](plan-status/prismatic-lumen.md) | 13 |
-| [`public-proof`](plan-status/public-proof.md) | 166 |
+| [`public-proof`](plan-status/public-proof.md) | 131 |
 | [`recovery-from-injected-faults-is-proven`](plan-status/recovery-from-injected-faults-is-proven.md) | 2 |
-| [`repository-automation-is-typed`](plan-status/repository-automation-is-typed.md) | 39 |
+| [`repository-automation-is-typed`](plan-status/repository-automation-is-typed.md) | 33 |
 | [`runtime-adapters`](plan-status/runtime-adapters.md) | 98 |
 | [`runtime-lifecycle`](plan-status/runtime-lifecycle.md) | 51 |
-| [`runtime-trust`](plan-status/runtime-trust.md) | 36 |
-| [`safe-self-update`](plan-status/safe-self-update.md) | 494 |
-| [`surfaces-never-disagree`](plan-status/surfaces-never-disagree.md) | 403 |
-| [`test-evidence`](plan-status/test-evidence.md) | 32 |
+| [`runtime-trust`](plan-status/runtime-trust.md) | 30 |
+| [`safe-self-update`](plan-status/safe-self-update.md) | 483 |
+| [`surfaces-never-disagree`](plan-status/surfaces-never-disagree.md) | 342 |
+| [`test-evidence`](plan-status/test-evidence.md) | 26 |
 | [`the-corpus-is-registered-before-it-runs`](plan-status/the-corpus-is-registered-before-it-runs.md) | 5 |
-| [`the-mesh-works-out-of-the-box`](plan-status/the-mesh-works-out-of-the-box.md) | 225 |
+| [`the-mesh-works-out-of-the-box`](plan-status/the-mesh-works-out-of-the-box.md) | 218 |
 | [`the-plan-says-what-a-fix-unblocks`](plan-status/the-plan-says-what-a-fix-unblocks.md) | 25 |
 | [`the-proof-scorecard-is-published`](plan-status/the-proof-scorecard-is-published.md) | 2 |
 | [`the-proof-tests-are-registered-before-they-run`](plan-status/the-proof-tests-are-registered-before-they-run.md) | 11 |
 | [`the-session-domain-is-written-once`](plan-status/the-session-domain-is-written-once.md) | 6 |
-| [`the-ui-runs-and-explains`](plan-status/the-ui-runs-and-explains.md) | 24 |
+| [`the-ui-runs-and-explains`](plan-status/the-ui-runs-and-explains.md) | 18 |
 | [`the-ui-works-on-a-phone`](plan-status/the-ui-works-on-a-phone.md) | 17 |
-| [`truthful-plan-surfaces`](plan-status/truthful-plan-surfaces.md) | 352 |
+| [`truthful-plan-surfaces`](plan-status/truthful-plan-surfaces.md) | 298 |
 | [`two-folder-integration`](plan-status/two-folder-integration.md) | 9 |
 | [`web-sign-in`](plan-status/web-sign-in.md) | 35 |
-| [`work-graph-github`](plan-status/work-graph-github.md) | 6 |

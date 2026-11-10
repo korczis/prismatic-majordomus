@@ -80680,8 +80680,7 @@
             ".ai/repo/project/issues/I4567.yaml",
             "lib/check.sh",
             "lib/finish.sh",
-            ".ai/repo/workflows/task-lifecycle.md",
-            "test/cases"
+            ".ai/repo/workflows/task-lifecycle.md"
           ],
           "serves": [],
           "slug": "finish-after-a-rebase",
@@ -80721,10 +80720,11 @@
             "scripts/ci/commit-policy",
             "apps/majordomus-cli/src/worktree/trace.rs",
             "apps/majordomus-cli/src/capability/builtin/trace.rs",
-            "docs/COMMIT.md",
-            "test/cases"
+            "docs/COMMIT.md"
           ],
-          "serves": [],
+          "serves": [
+            "merging-and-referencing-are-enforced#every-commit-names-its-issue"
+          ],
           "slug": "a-commit-names-its-task-and-session",
           "validation": [
             "bash test/run.sh <the new cases>"
@@ -80757,7 +80757,7 @@
             ".github/workflows/release-path.yml",
             ".ai/repo/ci/release-path.yaml",
             "docs/CI.md",
-            "test/cases"
+            "test/cases/3027_the_release_path_goes_first.sh"
           ],
           "serves": [],
           "slug": "a-yielded-run-resumes-when-the-path-clears",
@@ -80795,8 +80795,7 @@
             ".ai/repo/project/issues/I4570.yaml",
             ".ai/repo/ci/gates.yaml",
             "scripts/ci/run-plan",
-            ".githooks/pre-push",
-            "test/cases"
+            ".githooks/pre-push"
           ],
           "serves": [],
           "slug": "before-push-runs-fmt-and-version-surface",
@@ -80834,8 +80833,7 @@
             "apps/majordomus-cli/src/live.rs",
             "apps/majordomus-cli/src/capability/builtin/mesh.rs",
             "apps/majordomus-cli/src/mesh",
-            "docs/MESH.md",
-            "test/cases"
+            "docs/MESH.md"
           ],
           "serves": [],
           "slug": "a-closed-runtime-opens-when-its-key-is-trusted",
@@ -80870,8 +80868,7 @@
           "scope": [
             ".ai/repo/project/issues/I4572.yaml",
             "apps/majordomus-cli/src/mesh/doctor.rs",
-            "docs/MESH.md",
-            "test/cases"
+            "docs/MESH.md"
           ],
           "serves": [],
           "slug": "mesh-doctor-fails-a-stale-closed-runtime",
@@ -81807,12 +81804,12 @@
         "label": "s-20261015194158-7f51-f2e1b28d9060",
         "summary": "continuity resolve ran git merge-base --is-ancestor for every candidate handover and checkpoint and kept one: 23-31 s per cold read in the primary, which the session start brief waited on",
         "route": "/cockpit/objects/knowledge/s-20261015194158-7f51-f2e1b28d9060",
-        "source": ".ai/repo/knowledge/curated/s-20261015194158-7f51-f2e1b28d9060.md",
-        "status": "verified",
+        "source": ".ai/repo/knowledge/candidates/s-20261015194158-7f51-f2e1b28d9060.md",
+        "status": "candidate",
         "facts": {
           "about": "capability:continuity.state",
           "class": "lesson",
-          "date": "2026-11-07",
+          "date": "2026-10-19",
           "epistemics": "observed",
           "route": "platform",
           "tags": [

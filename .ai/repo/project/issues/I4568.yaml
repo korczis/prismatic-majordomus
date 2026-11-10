@@ -16,7 +16,6 @@ scope:
   - "apps/majordomus-cli/src/worktree/trace.rs"
   - "apps/majordomus-cli/src/capability/builtin/trace.rs"
   - "docs/COMMIT.md"
-  - "test/cases"
 non_scope:
   - "Rewriting the trailers of history already committed"
   - "Verifying a session's claim to be who it says (I0704)"
@@ -28,5 +27,6 @@ validation:
   - "bash test/run.sh <the new cases>"
 evidence_required:
   - test
-serves: []
+serves:
+  - "merging-and-referencing-are-enforced#every-commit-names-its-issue"
 created_at: 2026-11-10

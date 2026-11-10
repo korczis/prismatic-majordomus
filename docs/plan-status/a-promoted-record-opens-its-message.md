@@ -43,9 +43,3 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I3280` | shares apps/majordomus-cli/src/plan.rs with I4464; they may not run concurrently |
 | WARN | `scope_conflict` | `I3280` | shares share/allow/intent.txt with I4468; they may not run concurrently |
 | WARN | `scope_conflict` | `I3280` | shares apps/majordomus-cli/src/generate.rs with I4522; they may not run concurrently |
-| WARN | `scope_conflict` | `I3280` | shares test/cases/388_an_intent_is_realised_across_providers_and_held_to_reality.sh with I4567; they may not run concurrently |
-| WARN | `scope_conflict` | `I3280` | shares test/cases/388_an_intent_is_realised_across_providers_and_held_to_reality.sh with I4568; they may not run concurrently |
-| WARN | `scope_conflict` | `I3280` | shares test/cases/388_an_intent_is_realised_across_providers_and_held_to_reality.sh with I4569; they may not run concurrently |
-| WARN | `scope_conflict` | `I3280` | shares test/cases/388_an_intent_is_realised_across_providers_and_held_to_reality.sh with I4570; they may not run concurrently |
-| WARN | `scope_conflict` | `I3280` | shares test/cases/388_an_intent_is_realised_across_providers_and_held_to_reality.sh with I4571; they may not run concurrently |
-| WARN | `scope_conflict` | `I3280` | shares test/cases/388_an_intent_is_realised_across_providers_and_held_to_reality.sh with I4572; they may not run concurrently |
