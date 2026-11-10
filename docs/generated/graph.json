@@ -84557,6 +84557,26 @@
         }
       },
       {
+        "id": "majordomus://knowledge/s-20261110141959-348c-427bd2090965",
+        "kind": "knowledge",
+        "label": "s-20261110141959-348c-427bd2090965",
+        "summary": "after the shared server died and serve ensure started another, the MCP plan.allocate tool refused 'not_active: a number is reserved by the mesh of the server holding this checkout's lease' because the client stayed attached to a server that no longer held the lease; the CLI mesh allocate --session worked once the session was re-opened",
+        "route": "/cockpit/objects/knowledge/s-20261110141959-348c-427bd2090965",
+        "source": ".ai/repo/knowledge/curated/s-20261110141959-348c-427bd2090965.md",
+        "status": "verified",
+        "facts": {
+          "about": "capability:plan.allocate",
+          "class": "lesson",
+          "date": "2026-11-10",
+          "epistemics": "observed",
+          "route": "platform",
+          "tags": [
+            "derived",
+            "observation"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/s-20261110141959-348c-68d3c34e49d1",
         "kind": "knowledge",
         "label": "s-20261110141959-348c-68d3c34e49d1",
@@ -84646,6 +84666,26 @@
         "status": "verified",
         "facts": {
           "about": ".ai/repo/skills/integrator/SKILL.md",
+          "class": "lesson",
+          "date": "2026-11-10",
+          "epistemics": "observed",
+          "route": "project",
+          "tags": [
+            "derived",
+            "observation"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://knowledge/s-20261110141959-348c-a61a83ef1740",
+        "kind": "knowledge",
+        "label": "s-20261110141959-348c-a61a83ef1740",
+        "summary": "after an issue record was dropped between two derives, the second offload derive refused with exit 11 (the derive deleted tracked files; nothing was applied) for site/content/plan/<id>.md, a page the first derive had generated and staged and no commit held; the worktree had to unstage it before the derive would apply",
+        "route": "/cockpit/objects/knowledge/s-20261110141959-348c-a61a83ef1740",
+        "source": ".ai/repo/knowledge/curated/s-20261110141959-348c-a61a83ef1740.md",
+        "status": "verified",
+        "facts": {
+          "about": "apps/majordomus-cli/src/offload/run.rs",
           "class": "lesson",
           "date": "2026-11-10",
           "epistemics": "observed",
@@ -150989,6 +151029,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://knowledge/s-20261110141959-348c-427bd2090965",
+        "target": "kind:knowledge",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://knowledge/s-20261110141959-348c-68d3c34e49d1",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -151010,6 +151055,11 @@
       },
       {
         "source": "majordomus://knowledge/s-20261110141959-348c-a5ca8aad4352",
+        "target": "kind:knowledge",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://knowledge/s-20261110141959-348c-a61a83ef1740",
         "target": "kind:knowledge",
         "kind": "is_a"
       },
@@ -162820,8 +162870,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4454,
-      "edges": 10081,
+      "nodes": 4456,
+      "edges": 10083,
       "acyclic": false,
       "truncated": false
     }
