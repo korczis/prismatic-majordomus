@@ -80,6 +80,10 @@ note_for() {
   case "$1" in
     cancelled) printf '%s' 'the job reported no result: a timeout renders as cancelled, and so does a run superseded by a newer push' ;;
     absent)    printf '%s' 'the job never ran, so this gate has no verdict' ;;
+    # I2717: on 2026-11-09 the approved record run 42668789214 (attempt 2) never created its
+    # site job; `needs` said `abandoned`, nothing of the job ran, and re-running the failed
+    # jobs started it. Red, as every result but success is, with the act that recovers it.
+    abandoned) printf '%s' 'GitHub never created the job (abandoned): nothing of it ran; re-run the failed jobs of this run' ;;
     *)         printf '%s' 'a selected gate did not succeed' ;;
   esac
 }

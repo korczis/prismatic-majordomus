@@ -8,7 +8,7 @@ This page is the index. Each milestone's issues, and the findings about them, ar
 its own under [`plan-status/`](plan-status/), named by the milestone, so the plan grows by pages
 and no one page grows with it.
 
-Generated from canonical inputs `fbd1fd4588fa`.
+Generated from canonical inputs `6a7bf4b70caa`.
 
 ## Milestones
 
@@ -501,13 +501,13 @@ Generated from canonical inputs `fbd1fd4588fa`.
 
 ## Findings
 
-9578 finding(s), each on the page of the milestone its subject is or belongs to:
+9582 finding(s), each on the page of the milestone its subject is or belongs to:
 
 | milestone | findings |
 |---|---|
 | [`M002`](plan-status/M002.md) | 36 |
 | [`M003`](plan-status/M003.md) | 10 |
-| [`M004`](plan-status/M004.md) | 443 |
+| [`M004`](plan-status/M004.md) | 447 |
 | [`a-bounded-task-is-carried-to-accepted-work`](plan-status/a-bounded-task-is-carried-to-accepted-work.md) | 45 |
 | [`a-change-is-judged-in-minutes`](plan-status/a-change-is-judged-in-minutes.md) | 84 |
 | [`a-claim-stands-only-on-its-evidence`](plan-status/a-claim-stands-only-on-its-evidence.md) | 201 |
