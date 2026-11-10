@@ -972,7 +972,10 @@ const CLOSED_TO_KEY: &str = "closed: this machine's key ";
 /// assert_eq!(closed_key("the node identity did not load"), None);
 /// ```
 pub fn closed_key(reason: &str) -> Option<&str> {
-    let key = reason.strip_prefix(CLOSED_TO_KEY)?.split(' ').next()?;
+    let rest = reason.strip_prefix(CLOSED_TO_KEY)?;
+    // `split` always yields a first piece, so no `?` here: an early return that can never be
+    // taken is a region no test can cover (coverage-differential)
+    let key = rest.split(' ').next().unwrap_or(rest);
     (!key.is_empty()).then_some(key)
 }
 
