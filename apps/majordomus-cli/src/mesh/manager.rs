@@ -1238,6 +1238,30 @@ mod tests {
     }
 
     #[test]
+    fn the_key_a_runtime_was_closed_to_reads_back_from_its_reason_and_nothing_else_does() {
+        // what `mesh doctor` holds against the declaration in force (I4572)
+        let config: MeshConfig = serde_json::from_value(serde_json::json!({
+            "schema": "mesh/v1", "kind": "mesh", "id": "m", "enabled": true,
+        }))
+        .unwrap();
+        let key = "ab".repeat(32);
+        let reason = closed_to(&config, &key).expect("an unlisted key is closed to");
+        assert_eq!(closed_key(&reason), Some(key.as_str()), "round trip");
+        // the prefix with no key after it names no key
+        assert_eq!(closed_key(CLOSED_TO_KEY), None);
+        assert_eq!(
+            closed_key(&format!("{CLOSED_TO_KEY} is not in trust.allow")),
+            None
+        );
+        // a reason closed_to did not write names none either
+        assert_eq!(
+            closed_key("not active: the node identity did not load"),
+            None
+        );
+        assert_eq!(closed_key("closed: something else entirely"), None);
+    }
+
+    #[test]
     fn an_unlisted_machine_keeps_the_mesh_closed_and_starts_no_provider() {
         let runtime = MeshRuntime::new();
         let dir = tempfile::tempdir().unwrap();
