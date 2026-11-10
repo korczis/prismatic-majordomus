@@ -30,10 +30,4 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I4493` | shares apps/majordomus-cli/src/capability/readings.rs with I4496; they may not run concurrently |
 | WARN | `scope_conflict` | `I4493` | shares apps/majordomus-cli/src/ui/source.rs with I4499; they may not run concurrently |
 | WARN | `scope_conflict` | `I4494` | shares apps/majordomus-cli/src/ui/view.rs with I4495; they may not run concurrently |
-| WARN | `scope_conflict` | `I4495` | shares test/cases/1080_the_issues_are_browsed.sh with I4567; they may not run concurrently |
-| WARN | `scope_conflict` | `I4495` | shares test/cases/1080_the_issues_are_browsed.sh with I4568; they may not run concurrently |
-| WARN | `scope_conflict` | `I4495` | shares test/cases/1080_the_issues_are_browsed.sh with I4569; they may not run concurrently |
-| WARN | `scope_conflict` | `I4495` | shares test/cases/1080_the_issues_are_browsed.sh with I4570; they may not run concurrently |
-| WARN | `scope_conflict` | `I4495` | shares test/cases/1080_the_issues_are_browsed.sh with I4571; they may not run concurrently |
-| WARN | `scope_conflict` | `I4495` | shares test/cases/1080_the_issues_are_browsed.sh with I4572; they may not run concurrently |
 | WARN | `scope_conflict` | `I4496` | shares apps/majordomus-cli/tests/executor.rs with I4498; they may not run concurrently |

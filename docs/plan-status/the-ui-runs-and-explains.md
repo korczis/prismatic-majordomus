@@ -45,9 +45,3 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I4483` | shares apps/majordomus-cli/src/ui/mod.rs with I4485; they may not run concurrently |
 | WARN | `scope_conflict` | `I4483` | shares apps/majordomus-cli/src/ui/view.rs with I4494; they may not run concurrently |
 | WARN | `scope_conflict` | `I4483` | shares apps/majordomus-cli/src/ui/view.rs with I4495; they may not run concurrently |
-| WARN | `scope_conflict` | `I4483` | shares test/cases/1088_the_command_and_capability_screens_answer.sh with I4567; they may not run concurrently |
-| WARN | `scope_conflict` | `I4483` | shares test/cases/1088_the_command_and_capability_screens_answer.sh with I4568; they may not run concurrently |
-| WARN | `scope_conflict` | `I4483` | shares test/cases/1088_the_command_and_capability_screens_answer.sh with I4569; they may not run concurrently |
-| WARN | `scope_conflict` | `I4483` | shares test/cases/1088_the_command_and_capability_screens_answer.sh with I4570; they may not run concurrently |
-| WARN | `scope_conflict` | `I4483` | shares test/cases/1088_the_command_and_capability_screens_answer.sh with I4571; they may not run concurrently |
-| WARN | `scope_conflict` | `I4483` | shares test/cases/1088_the_command_and_capability_screens_answer.sh with I4572; they may not run concurrently |

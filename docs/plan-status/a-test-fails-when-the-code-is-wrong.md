@@ -67,8 +67,3 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I3309` | shares lib/finish.sh with I4468; they may not run concurrently |
 | WARN | `scope_conflict` | `I3309` | shares .ai/repo/profiles/README.md with I4500; they may not run concurrently |
 | WARN | `scope_conflict` | `I3309` | shares lib/finish.sh with I4567; they may not run concurrently |
-| WARN | `scope_conflict` | `I3309` | shares test/cases/16_profiles.sh with I4568; they may not run concurrently |
-| WARN | `scope_conflict` | `I3309` | shares test/cases/16_profiles.sh with I4569; they may not run concurrently |
-| WARN | `scope_conflict` | `I3309` | shares test/cases/16_profiles.sh with I4570; they may not run concurrently |
-| WARN | `scope_conflict` | `I3309` | shares test/cases/16_profiles.sh with I4571; they may not run concurrently |
-| WARN | `scope_conflict` | `I3309` | shares test/cases/16_profiles.sh with I4572; they may not run concurrently |
