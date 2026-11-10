@@ -187,6 +187,19 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 2
+      # I2717: the record's dispatch starts the record pull request's own run. That pull
+      # request is opened with GITHUB_TOKEN, and GitHub creates its pull_request run waiting
+      # for approval, which branch protection waits on while this dispatch's ci counts for
+      # nothing (docs/DISTRIBUTION.md, "Who starts the record's verdict"). This approves that
+      # run and only that run: validate, pull_request, this branch, this head. It writes no
+      # status and no check. A refusal or an unreadable forge is a warning naming the remedy,
+      # never this run's failure. Enforcer: scripts/ci/record-run-approve; case 4574.
+      - name: the record's own pull request run is approved
+        if: github.event_name == 'workflow_dispatch' && startsWith(github.ref_name, 'release/record-')
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BRANCH: ${{ github.ref_name }}
+        run: scripts/ci/record-run-approve --branch "$BRANCH" --sha "$GITHUB_SHA" || echo "::warning::the record's pull request run was not approved (exit $?); approve it on its page, or close and reopen the pull request"
       # I4347: a label that changes nothing starts no second verdict. `labeled` starts this
       # workflow for every label, and only ci:full and hold change what a run does; any other
       # label on a head that already carries a verdict gives the runners back here, before any
