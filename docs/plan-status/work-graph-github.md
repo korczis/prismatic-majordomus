@@ -34,4 +34,11 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 
 ## Findings
 
-None about this milestone or its issues.
+| level | code | subject | message |
+|---|---|---|---|
+| WARN | `scope_conflict` | `I4529` | shares test/cases/4562_an_issue_joins_a_closed_milestone_by_number.sh with I4567; they may not run concurrently |
+| WARN | `scope_conflict` | `I4529` | shares test/cases/4562_an_issue_joins_a_closed_milestone_by_number.sh with I4568; they may not run concurrently |
+| WARN | `scope_conflict` | `I4529` | shares test/cases/4562_an_issue_joins_a_closed_milestone_by_number.sh with I4569; they may not run concurrently |
+| WARN | `scope_conflict` | `I4529` | shares test/cases/4562_an_issue_joins_a_closed_milestone_by_number.sh with I4570; they may not run concurrently |
+| WARN | `scope_conflict` | `I4529` | shares test/cases/4562_an_issue_joins_a_closed_milestone_by_number.sh with I4571; they may not run concurrently |
+| WARN | `scope_conflict` | `I4529` | shares test/cases/4562_an_issue_joins_a_closed_milestone_by_number.sh with I4572; they may not run concurrently |

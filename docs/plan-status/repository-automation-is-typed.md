@@ -59,6 +59,12 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I3155` | shares apps/majordomus-cli/src/capability/builtin/shell.rs with I4486; they may not run concurrently |
 | WARN | `scope_conflict` | `I3155` | shares .ai/repo/automation with I4488; they may not run concurrently |
 | WARN | `scope_conflict` | `I3155` | shares .ai/repo/automation with I4512; they may not run concurrently |
+| WARN | `scope_conflict` | `I3155` | shares test/cases/365_new_shell_is_refused.sh with I4567; they may not run concurrently |
+| WARN | `scope_conflict` | `I3155` | shares test/cases/365_new_shell_is_refused.sh with I4568; they may not run concurrently |
+| WARN | `scope_conflict` | `I3155` | shares test/cases/365_new_shell_is_refused.sh with I4569; they may not run concurrently |
+| WARN | `scope_conflict` | `I3155` | shares test/cases/365_new_shell_is_refused.sh with I4570; they may not run concurrently |
+| WARN | `scope_conflict` | `I3155` | shares test/cases/365_new_shell_is_refused.sh with I4571; they may not run concurrently |
+| WARN | `scope_conflict` | `I3155` | shares test/cases/365_new_shell_is_refused.sh with I4572; they may not run concurrently |
 | WARN | `scope_conflict` | `I3156` | shares bin/majordomus with I4254; they may not run concurrently |
 | WARN | `scope_conflict` | `I3156` | shares bin/majordomus with I4260; they may not run concurrently |
 | WARN | `scope_conflict` | `I3156` | shares bin/majordomus with I4268; they may not run concurrently |

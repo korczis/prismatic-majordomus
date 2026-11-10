@@ -83,6 +83,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I1900` | shares .ai/repo/ci/gates.yaml with I4488; they may not run concurrently |
 | WARN | `scope_conflict` | `I1900` | shares .ai/repo/ci/gates.yaml with I4512; they may not run concurrently |
 | WARN | `scope_conflict` | `I1900` | shares .ai/repo/ci/gates.yaml with I4532; they may not run concurrently |
+| WARN | `scope_conflict` | `I1900` | shares .ai/repo/ci/gates.yaml with I4570; they may not run concurrently |
 | WARN | `scope_conflict` | `I3258` | shares apps/majordomus-cli/src/intent.rs with I3395; they may not run concurrently |
 | WARN | `scope_conflict` | `I3258` | shares apps/majordomus-cli/src/intent.rs with I4322; they may not run concurrently |
 | WARN | `scope_conflict` | `I3258` | shares apps/majordomus-cli/src/intent.rs with I4325; they may not run concurrently |

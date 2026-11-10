@@ -1,0 +1,32 @@
+id: I4568
+milestone: merging-and-referencing-are-enforced
+title: "A commit names the task and the mesh session that made it, and trace issue finds an issue's commits on branches and train tops, not only the trunk"
+slug: a-commit-names-its-task-and-session
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "The commit-msg hook adds `Majordomus-Task: <task id>` and `Mesh-Session: <session id>` trailers from the checkout's open task and the caller's mesh session when both are known, and `majordomus trace issue <id>` reads the commits that name the issue on every local and remote branch and train top as well as the trunk, answering for each commit the task and session its trailers name."
+why: "Reported from the OSCILLA mesh (coordinator oscilla-43, 2026-11-10). A review found a defect in OSCILLA's K229 (commit b431d86d, a clocked LFO retaining every voice), and nobody could tell which session built it: every commit carries the same author and the same Co-Authored-By trailer, the plan issue names only the coordinator, and `majordomus trace issue K229` answered zero commits because it reads the branches whose names carry the issue, and K229's commit sat on a train top whose name does not. The finding went to whichever session was idle instead of to its builder."
+current_state: "At origin/master dd377e11c35 (2026-11-10): commits carry an issue id (I3976) and an author, nothing names the task or the session; trace.issue and plan.delivery read branches that name the issue (I2740, I4485), not a train top that carries its commits; I4291 (#2983, open) attributes the executable's own records to the caller's episode, not commits."
+desired_state: "A commit made inside a task carries both trailers, written by the hook and never typed by hand; a commit outside a task carries neither and is not refused for it. trace issue lists each commit with its branch or train, task and session, and says when a commit's trailers are absent. The attribution is supplied by the session, not verified (the caveat I0704 publishes), and docs/COMMIT.md says so."
+scope:
+  - ".ai/repo/project/issues/I4568.yaml"
+  - ".githooks/commit-msg"
+  - "scripts/ci/commit-policy"
+  - "apps/majordomus-cli/src/worktree/trace.rs"
+  - "apps/majordomus-cli/src/capability/builtin/trace.rs"
+  - "docs/COMMIT.md"
+  - "test/cases"
+non_scope:
+  - "Rewriting the trailers of history already committed"
+  - "Verifying a session's claim to be who it says (I0704)"
+depends_on: []
+acceptance_criteria:
+  - "A case commits inside an open task under a mesh session and finds both trailers in the message; a commit outside a task has neither and passes the hook"
+  - "A case puts an issue's commit only on a train top and trace issue lists it with its branch, task and session"
+validation:
+  - "bash test/run.sh <the new cases>"
+evidence_required:
+  - test
+serves: []
+created_at: 2026-11-10

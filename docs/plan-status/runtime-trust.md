@@ -53,9 +53,17 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I3175` | shares docs/MESH.md with I4327; they may not run concurrently |
 | WARN | `scope_conflict` | `I3175` | shares apps/majordomus-cli/src/mesh/doctor.rs with I4343; they may not run concurrently |
 | WARN | `scope_conflict` | `I3175` | shares docs/MESH.md with I4466; they may not run concurrently |
+| WARN | `scope_conflict` | `I3175` | shares apps/majordomus-cli/src/mesh/registry.rs with I4571; they may not run concurrently |
+| WARN | `scope_conflict` | `I3175` | shares apps/majordomus-cli/src/mesh/doctor.rs with I4572; they may not run concurrently |
 | WARN | `scope_conflict` | `I4481` | shares apps/majordomus-cli/tests with I4483; they may not run concurrently |
 | WARN | `scope_conflict` | `I4481` | shares apps/majordomus-cli/tests with I4485; they may not run concurrently |
 | WARN | `scope_conflict` | `I4481` | shares apps/majordomus-cli/src/capability/builtin/capabilities.rs with I4486; they may not run concurrently |
 | WARN | `scope_conflict` | `I4481` | shares apps/majordomus-cli/tests with I4488; they may not run concurrently |
 | WARN | `scope_conflict` | `I4481` | shares .ai/repo/adrs with I4500; they may not run concurrently |
 | WARN | `scope_conflict` | `I4481` | shares .ai/repo/policy.yaml with I4512; they may not run concurrently |
+| WARN | `scope_conflict` | `I4481` | shares test/cases/4481_a_transport_refuses_an_effect_above_its_ceiling.sh with I4567; they may not run concurrently |
+| WARN | `scope_conflict` | `I4481` | shares test/cases/4481_a_transport_refuses_an_effect_above_its_ceiling.sh with I4568; they may not run concurrently |
+| WARN | `scope_conflict` | `I4481` | shares test/cases/4481_a_transport_refuses_an_effect_above_its_ceiling.sh with I4569; they may not run concurrently |
+| WARN | `scope_conflict` | `I4481` | shares test/cases/4481_a_transport_refuses_an_effect_above_its_ceiling.sh with I4570; they may not run concurrently |
+| WARN | `scope_conflict` | `I4481` | shares test/cases/4481_a_transport_refuses_an_effect_above_its_ceiling.sh with I4571; they may not run concurrently |
+| WARN | `scope_conflict` | `I4481` | shares test/cases/4481_a_transport_refuses_an_effect_above_its_ceiling.sh with I4572; they may not run concurrently |
