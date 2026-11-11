@@ -9,7 +9,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 
 | milestone | status | done of required | ready | blocked | active | verify | cancelled | outcome |
 |---|---|---|---|---|---|---|---|---|
-| [a-bounded-task-is-carried-to-accepted-work](https://majordomus.dev/plan/a-bounded-task-is-carried-to-accepted-work/) | PLANNED | 0/12 | 11 | 1 | 0 | 0 | 0 | Every row reads wired with its proof run: each break is closed in the owner it names by the smallest change that unblocks its user step, with a case that fails before the change, and the stranger fixture and the in-repo pass, run again, reach acceptance with no hand-written state and no step outside its budget. |
+| [a-bounded-task-is-carried-to-accepted-work](https://majordomus.dev/plan/a-bounded-task-is-carried-to-accepted-work/) | PLANNED | 0/13 | 12 | 1 | 0 | 0 | 0 | Every row reads wired with its proof run: each break is closed in the owner it names by the smallest change that unblocks its user step, with a case that fails before the change, and the stranger fixture and the in-repo pass, run again, reach acceptance with no hand-written state and no step outside its budget. |
 
 ## Issues
 
@@ -27,6 +27,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | [I4469](https://majordomus.dev/plan/i4469/) | BLOCKED | 1 | I3318 | A knowledge record may say where it holds, in an optional typed holds_for (subsystem, version, environment), and a task's context matches it against the task's scope |
 | [I4522](https://majordomus.dev/plan/i4522/) | READY | 0 | — | A repository's release records are judged against the repository's own distribution model, or on internal consistency alone when it declares none, never against the installed tool's |
 | [I4567](https://majordomus.dev/plan/i4567/) | READY | 0 | — | A task whose own commits were rebased has a supported finish, judged over its rebased commits |
+| [I4573](https://majordomus.dev/plan/i4573/) | READY | 0 | — | A commit or push from a worktree with no active task is told so, in a supervised repository |
 
 ## Findings
 
@@ -60,7 +61,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I4466` | shares apps/majordomus-cli/src/capability/builtin/mesh.rs with I4468; they may not run concurrently |
 | WARN | `scope_conflict` | `I4466` | shares apps/majordomus-cli/src/capability/builtin/mesh.rs with I4486; they may not run concurrently |
 | WARN | `scope_conflict` | `I4466` | shares .ai/repo/ci/mesh-event-fields.yaml with I4488; they may not run concurrently |
-| WARN | `scope_conflict` | `I4466` | shares apps/majordomus-cli/src/mesh/journal.rs with I4571; they may not run concurrently |
+| WARN | `scope_conflict` | `I4466` | shares apps/majordomus-cli/src/mesh/cooperation.rs with I4571; they may not run concurrently |
 | WARN | `scope_conflict` | `I4466` | shares docs/MESH.md with I4572; they may not run concurrently |
 | WARN | `scope_conflict` | `I4467` | shares lib/handover.sh with I4468; they may not run concurrently |
 | WARN | `scope_conflict` | `I4468` | shares apps/majordomus-cli/src/capability/builtin with I4481; they may not run concurrently |
@@ -77,3 +78,5 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I4468` | shares .ai/repo/ci with I4569; they may not run concurrently |
 | WARN | `scope_conflict` | `I4468` | shares scripts/ci with I4570; they may not run concurrently |
 | WARN | `scope_conflict` | `I4468` | shares apps/majordomus-cli/src/capability/builtin with I4571; they may not run concurrently |
+| WARN | `scope_conflict` | `I4468` | shares lib with I4573; they may not run concurrently |
+| WARN | `scope_conflict` | `I4567` | shares lib/check.sh with I4573; they may not run concurrently |
