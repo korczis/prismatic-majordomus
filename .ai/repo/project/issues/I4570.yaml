@@ -25,3 +25,17 @@ evidence_required:
   - test
 serves: []
 created_at: 2026-11-10
+started_at: 2026-11-11T15:24:04Z
+started_event: sha256:c5edfda1b74911a270eb40579d44a9383cf7976423ed1699c09a25996980e9f3
+updated_at: 2026-11-11T15:25:54Z
+verified_at: 2026-11-11T15:24:46Z
+verified_event: sha256:14186f00858952636dd36aade37dd503b509097dbae0520366c7698f2325fe2e
+completed_at: 2026-11-11T15:25:54Z
+completed_event: sha256:384708f36cfb5caeedc7744bd3d84636e240323486000c95f1ad08d7dcb01860
+evidence:
+  - covers: "test"
+    type: test
+    command: "bash test/run.sh 4570_a_push_owes_the_crates_formatter_and_version_gate"
+    result: "fails against master scripts/ci/run-plan (an unformatted crate change exited 0, not 1); passes with the fix: FAILED rust-fmt and its fix named, ok once formatted, FAILED version-surface naming majordomus release bump, neither run without a crate change"
+    commit: ead17d8ae2f463c12876cb6d464fa02c223a40d3
+    recorded_at: 2026-11-11T15:25:29Z

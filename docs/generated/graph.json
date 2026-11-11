@@ -80781,6 +80781,8 @@
           "acceptance_criteria": [
             "A case changes a crate file with a formatting diff and the before-push plan fails rust fmt; a case adds a public command without a bump and the before-push plan fails version-surface"
           ],
+          "completed_at": "2026-11-11T15:25:54Z",
+          "completed_event": "sha256:384708f36cfb5caeedc7744bd3d84636e240323486000c95f1ad08d7dcb01860",
           "created_at": "2026-11-10",
           "current_state": "At origin/master dd377e11c35 the before-push plan omits rust-check's formatter and version-surface for a crate change; both run in validate's rust job in seconds.",
           "depends_on": [],
@@ -80802,9 +80804,14 @@
           ],
           "serves": [],
           "slug": "before-push-runs-fmt-and-version-surface",
+          "started_at": "2026-11-11T15:24:04Z",
+          "started_event": "sha256:c5edfda1b74911a270eb40579d44a9383cf7976423ed1699c09a25996980e9f3",
+          "updated_at": "2026-11-11T15:25:54Z",
           "validation": [
             "bash test/run.sh <the new cases>"
-          ]
+          ],
+          "verified_at": "2026-11-11T15:24:46Z",
+          "verified_event": "sha256:14186f00858952636dd36aade37dd503b509097dbae0520366c7698f2325fe2e"
         }
       },
       {
@@ -108405,6 +108412,13 @@
         "label": "test/cases/4563_the_live_site_is_probed_in_a_real_browser.sh",
         "route": "/cockpit/objects/test/test-cases-4563-the-live-site-is-probed-in-a-real-browser-sh",
         "source": "test/cases/4563_the_live_site_is_probed_in_a_real_browser.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/4570_a_push_owes_the_crates_formatter_and_version_gate.sh",
+        "kind": "test",
+        "label": "test/cases/4570_a_push_owes_the_crates_formatter_and_version_gate.sh",
+        "route": "/cockpit/objects/test/test-cases-4570-a-push-owes-the-crates-formatter-and-version-gate-sh",
+        "source": "test/cases/4570_a_push_owes_the_crates_formatter_and_version_gate.sh"
       },
       {
         "id": "majordomus://test/test/cases/4574_the_record_dispatch_approves_the_record_pull_request_run.sh",
@@ -157754,6 +157768,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/4570_a_push_owes_the_crates_formatter_and_version_gate.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/4574_the_record_dispatch_approves_the_record_pull_request_run.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -162885,8 +162904,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4457,
-      "edges": 10084,
+      "nodes": 4458,
+      "edges": 10085,
       "acyclic": false,
       "truncated": false
     }
