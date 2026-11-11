@@ -80920,6 +80920,50 @@
         }
       },
       {
+        "id": "majordomus://issue/I4576",
+        "kind": "issue",
+        "label": "I4576",
+        "summary": "The integration lease's holder record is never empty or half written while its holder renews it, so no reader of it gets a lease without a holder",
+        "route": "/cockpit/objects/issue/i4576",
+        "source": ".ai/repo/project/issues/I4576.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Run 50 times on lundra under parallel load, progress_rewrites_the_record_and_the_lease_is_still_its_holders fails at least once before the change and passes every run after it",
+            "A unit test reads the record while a writer rewrites it in a tight loop and never meets a lease without a holder"
+          ],
+          "completed_at": "2026-11-11T20:47:48Z",
+          "completed_event": "sha256:d1d0247912fa5d828b5011ab88dee3dfc3d64c0551546fa783f212bef2c80251",
+          "created_at": "2026-11-11",
+          "current_state": "At origin/master d34f159439f write_record empties the file and then writes it, and read gives up after five 2 ms retries.",
+          "depends_on": [],
+          "evidence_required": [
+            "test"
+          ],
+          "milestone": "ci-critical-path",
+          "non_scope": [
+            "Node::hold's holder record, which I4566 made a retrying reader of"
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I4576.yaml",
+            "apps/majordomus-cli/src/integration/drain.rs",
+            "apps/majordomus-cli/src/integration/tests.rs"
+          ],
+          "serves": [],
+          "slug": "the-lease-reader-waits-for-a-whole-record",
+          "started_at": "2026-11-11T20:45:56Z",
+          "started_event": "sha256:8c40550371845601eb317d1ff344f7e014546568038e5d0bfd64b13b207ee5d4",
+          "updated_at": "2026-11-11T20:47:48Z",
+          "validation": [
+            "cargo test --lib -- integration::tests::progress_rewrites_the_record_and_the_lease_is_still_its_holders (50 runs)"
+          ],
+          "verified_at": "2026-11-11T20:46:40Z",
+          "verified_event": "sha256:237e32f06920c559ad801e80cb05b909210f71a68eebe18c6e57a895ed317cd5"
+        }
+      },
+      {
         "id": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "label": "a-brief-is-reconciled-not-transcribed",
@@ -150104,6 +150148,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I4576",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4576",
+        "target": "majordomus://milestone/ci-critical-path",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -162885,8 +162939,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4457,
-      "edges": 10084,
+      "nodes": 4458,
+      "edges": 10086,
       "acyclic": false,
       "truncated": false
     }

@@ -1,0 +1,41 @@
+id: I4576
+milestone: ci-critical-path
+title: "The integration lease's holder record is never empty or half written while its holder renews it, so no reader of it gets a lease without a holder"
+slug: the-lease-reader-waits-for-a-whole-record
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "IntegrationLease's write_record replaces the holder record without an empty or partial state a concurrent reader can see, and IntegrationLease::read retries a record that does not parse until a time bound rather than for five 2 ms attempts, so an observer reads its holder while a keep-alive or a progress rewrites it."
+why: "integration::tests::progress_rewrites_the_record_and_the_lease_is_still_its_holders reads the lease through holder() while keep_alive_every(20 ms) rewrites the record. write_record truncates the file (set_len(0)) before it writes the new record, so a reader can meet it empty. read() retried five times 2 ms apart, about 10 ms in all, and under load the writer was preempted between the truncation and the write for longer: read returned a state whose holder was None, and the test's unwrap panicked. It failed master validate 42964292450 rust (2) and #2983's coverage job on 2026-11-11. Every other caller of IntegrationLease::read meets the same window and reports a held lease as one without a holder."
+current_state: "At origin/master d34f159439f write_record empties the file and then writes it, and read gives up after five 2 ms retries."
+desired_state: "write_record writes the new record over the old one padded with spaces to the old length, then trims the trailing spaces, so every state a reader can meet is a whole record; read keeps retrying a record that does not parse for up to LEASE_READ_PATIENCE before it reports no holder. The test passes 50 runs out of 50 under load where it failed before."
+scope:
+  - ".ai/repo/project/issues/I4576.yaml"
+  - "apps/majordomus-cli/src/integration/drain.rs"
+  - "apps/majordomus-cli/src/integration/tests.rs"
+non_scope:
+  - "Node::hold's holder record, which I4566 made a retrying reader of"
+depends_on: []
+acceptance_criteria:
+  - "Run 50 times on lundra under parallel load, progress_rewrites_the_record_and_the_lease_is_still_its_holders fails at least once before the change and passes every run after it"
+  - "A unit test reads the record while a writer rewrites it in a tight loop and never meets a lease without a holder"
+validation:
+  - "cargo test --lib -- integration::tests::progress_rewrites_the_record_and_the_lease_is_still_its_holders (50 runs)"
+evidence_required:
+  - test
+serves: []
+created_at: 2026-11-11
+started_at: 2026-11-11T20:45:56Z
+started_event: sha256:8c40550371845601eb317d1ff344f7e014546568038e5d0bfd64b13b207ee5d4
+updated_at: 2026-11-11T20:47:48Z
+verified_at: 2026-11-11T20:46:40Z
+verified_event: sha256:237e32f06920c559ad801e80cb05b909210f71a68eebe18c6e57a895ed317cd5
+completed_at: 2026-11-11T20:47:48Z
+completed_event: sha256:d1d0247912fa5d828b5011ab88dee3dfc3d64c0551546fa783f212bef2c80251
+evidence:
+  - covers: "test"
+    type: test
+    command: "cargo test --lib -- --exact integration::tests::a_record_rewritten_under_a_reader_always_reads_a_holder / integration::tests::progress_rewrites_the_record_and_the_lease_is_still_its_holders, 50 runs each on lundra (8 in parallel, pinned beside 3 busy loops, inside integration:: 4 in parallel)"
+    result: "the new reader test failed 50 of 50 before the fix in both setups and passed 50 of 50 after; the flaky test did not fail in 200 runs before and passed 50 of 50 in each of three setups after; integration:: 406 of 406"
+    commit: 0b2a9cd0b795cf4d59b8c56756ac6a8798e14fa0
+    recorded_at: 2026-11-11T20:47:23Z

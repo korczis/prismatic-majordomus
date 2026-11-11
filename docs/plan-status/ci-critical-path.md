@@ -9,7 +9,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 
 | milestone | status | done of required | ready | blocked | active | verify | cancelled | outcome |
 |---|---|---|---|---|---|---|---|---|
-| [ci-critical-path](https://majordomus.dev/plan/ci-critical-path/) | ACTIVE | 18/50 | 18 | 11 | 3 | 0 | 0 | The change-to-verdict path runs p50 under 40 s and p95 under 60 s warm, and merge-to-verified-deploy p50 under 45 s and p95 under 60 s, measured on GitHub with warm, partial and cold reported apart, every skip of a gate explained by the repository's own impact model, and no required test removed, skipped or made advisory to reach the number. |
+| [ci-critical-path](https://majordomus.dev/plan/ci-critical-path/) | ACTIVE | 19/51 | 18 | 11 | 3 | 0 | 0 | The change-to-verdict path runs p50 under 40 s and p95 under 60 s warm, and merge-to-verified-deploy p50 under 45 s and p95 under 60 s, measured on GitHub with warm, partial and cold reported apart, every skip of a gate explained by the repository's own impact model, and no required test removed, skipped or made advisory to reach the number. |
 
 ## Issues
 
@@ -65,6 +65,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | [I4533](https://majordomus.dev/plan/i4533/) | READY | 0 | — | The published site stays under GitHub Pages' size limit |
 | [I4569](https://majordomus.dev/plan/i4569/) | READY | 0 | — | Pull-request runs that yielded to the release path run again when the release path's last run ends, not on the next scheduled tick |
 | [I4570](https://majordomus.dev/plan/i4570/) | READY | 0 | — | The before-push plan runs the formatter and the version-surface gate, the two seconds-long Rust gates a pull request was refused on after passing it |
+| [I4576](https://majordomus.dev/plan/i4576/) | DONE | 0 | — | The integration lease's holder record is never empty or half written while its holder renews it, so no reader of it gets a lease without a holder |
 
 ## Findings
 

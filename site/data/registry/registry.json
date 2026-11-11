@@ -6,23 +6,23 @@
     "version": "1.0.2"
   },
   "registry": {
-    "fingerprint": "462ef3865f9456c152cfa61a83f68d7fde7cad2862cc19b5bc0cefd2d29d79c8",
+    "fingerprint": "930c8b1dde1522e23919e144b6da7a79e0d061dc6384ce9d0d7fd2e5f3162cf7",
     "summary": {
-      "total": 3986,
+      "total": 3987,
       "builtin": 231,
-      "declarative": 3755,
+      "declarative": 3756,
       "by_kind": {
         "command": 41,
         "query": 190,
-        "resource": 3755
+        "resource": 3756
       },
       "by_stability": {
         "behaviorally_verified": 153,
         "experimental": 68,
-        "implemented": 3765
+        "implemented": 3766
       },
       "mcp_tools": 215,
-      "mcp_resources": 3812,
+      "mcp_resources": 3813,
       "http_routes": 219,
       "cli_commands": 128,
       "modules": 96,
@@ -97172,7 +97172,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 1232,
+        "capabilities": 1233,
         "capability_ids": []
       },
       {
@@ -97878,7 +97878,7 @@
     ]
   },
   "index": {
-    "fingerprint": "f71fdad44c3a8190dcb01a5c5182c4cbb51df6eaa656fc0fa35574bfd8e2caed",
+    "fingerprint": "63c2679dcb471f35a1dae835c26ec3babf3ed40265d06bc877f37d13ad8823dc",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -97918,7 +97918,7 @@
       "gap": 5,
       "implementation": 54,
       "intent": 45,
-      "issue": 1232,
+      "issue": 1233,
       "knowledge": 205,
       "mesh-declaration": 1,
       "milestone": 117,
@@ -105515,7 +105515,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 133827
+        "bytes": 133834
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -123043,6 +123043,17 @@
         "bytes": 2150
       },
       {
+        "uri": "majordomus://issue/I4576",
+        "kind": "issue",
+        "identity": "I4576",
+        "title": "The integration lease's holder record is never empty or half written while its holder renews it, so no reader of it gets a lease without a holder",
+        "description": "IntegrationLease's write_record replaces the holder record without an empty or partial state a concurrent reader can see, and IntegrationLease::read retries a record that does not parse until a time bound rather than for five 2 ms attempts, so an observer reads its holder while a keep-alive or a progress rewrites it.",
+        "path": ".ai/repo/project/issues/I4576.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3686
+      },
+      {
         "uri": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "identity": "a-brief-is-reconciled-not-transcribed",
@@ -139319,7 +139330,7 @@
       "identity": [
         "id"
       ],
-      "objects": 1232
+      "objects": 1233
     },
     {
       "name": "knowledge",
