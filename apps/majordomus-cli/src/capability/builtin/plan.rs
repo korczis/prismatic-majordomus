@@ -1232,6 +1232,8 @@ fn plan_transition(
         .map_err(|e| CapabilityError::Refused(e.to_string()))?;
 
     let at = crate::ledger::now();
+    // the event names the episode of the connection that asked (I4291)
+    let caller = crate::session::attribution::connection_key(&ctx.episodes, ctx.caller.as_ref());
     crate::plan::transition(
         root,
         &root.join(&rel),
@@ -1242,6 +1244,7 @@ fn plan_transition(
         &at,
         &vocabulary,
         &ctx.index.repository.git,
+        caller.as_deref(),
     )
     .map_err(|e| match e {
         TransitionError::NoSuchIssue(_) => CapabilityError::NotFound(e.to_string()),

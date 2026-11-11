@@ -65,8 +65,6 @@ use crate::metadata::yaml;
 const STATE_DIR: &str = ".ai/local/state";
 /// The record itself.
 const LEDGER: &str = "ledger.jsonl";
-/// The pointer to this checkout's open episode.
-const SESSION_POINTER: &str = "session-current.yaml";
 
 /// Why a line was not written.
 ///
@@ -268,6 +266,25 @@ pub fn append(
     event: &str,
     payload: &[Field<'_>],
 ) -> Result<String, LedgerError> {
+    append_by(root, vocabulary, git, now, event, payload, None)
+}
+
+/// [`append`], naming the episode of the caller whose provider session is `caller`.
+///
+/// A capability call knows its caller: the connection's episode was opened under the
+/// client's own session id, and that is the key passed here, so a plan transition made over
+/// MCP names the episode of the connection that made it rather than whichever episode of
+/// the checkout the environment or the pointer would name (I4291). `None` resolves the
+/// caller from the environment, as a command line does ([`crate::session::attribution`]).
+pub(crate) fn append_by(
+    root: &Path,
+    vocabulary: &Vocabulary,
+    git: &GitState,
+    now: &str,
+    event: &str,
+    payload: &[Field<'_>],
+    caller: Option<&str>,
+) -> Result<String, LedgerError> {
     let requires = vocabulary
         .requires(event)
         .ok_or_else(|| LedgerError::UnknownEvent {
@@ -303,7 +320,7 @@ pub fn append(
     push_pair(&mut line, "branch", &branch);
     line.push(',');
     push_pair(&mut line, "by", &format!("majordomus/{}", crate::VERSION));
-    if let Some(session) = open_session_id(root) {
+    if let Some(session) = crate::session::attribution::open_session_id(root, caller) {
         line.push(',');
         push_pair(&mut line, "session", &session);
     }
@@ -375,32 +392,6 @@ fn escape_json(out: &mut String, value: &str) {
         }
     }
     out.push('"');
-}
-
-/// This checkout's open episode, when it has one and it is this checkout's own.
-///
-/// The shell resolves the worker's own episode first, from `MJ_SESSION_KEY` or the
-/// provider's own session environment, and falls back to this pointer. Here the pointer is
-/// read directly and `MJ_SESSION_KEY` is honoured when it is set, which is what a capability
-/// running inside a provider's session is given. A record that names another worktree is
-/// another checkout's episode and is not this line's session — the same refusal
-/// `mj_open_session_id` makes.
-fn open_session_id(root: &Path) -> Option<String> {
-    let dir = root.join(STATE_DIR);
-    let file = match std::env::var("MJ_SESSION_KEY") {
-        Ok(k) if !k.is_empty() => dir.join(format!("session-{k}.yaml")),
-        _ => dir.join(SESSION_POINTER),
-    };
-    let text = fs::read_to_string(file).ok()?;
-    let map = yaml::parse_mapping(&text).ok()?;
-    if let Some(w) = map.get("worktree").and_then(yaml::scalar_string) {
-        if !w.is_empty() && Path::new(&w) != root {
-            return None;
-        }
-    }
-    map.get("session_id")
-        .and_then(yaml::scalar_string)
-        .filter(|s| !s.is_empty())
 }
 
 /// One line of the record, as a reader sees it.
@@ -627,6 +618,30 @@ mod tests {
             .map(|e| e.payload["issue"].as_str().unwrap())
             .collect();
         assert_eq!(ids, ["i-1", "i-2", "i-3"]);
+    }
+
+    /// I4291: an event written for a caller names the caller's own open episode.
+    #[test]
+    fn an_event_names_the_callers_open_episode() {
+        let dir = tempdir();
+        let open = dir.path().join(crate::session::store::OPEN_DIR);
+        std::fs::create_dir_all(&open).unwrap();
+        std::fs::write(
+            open.join("worker-a.yaml"),
+            format!("session_id: s-a\nworktree: {}\n", dir.path().display()),
+        )
+        .unwrap();
+        let line = append_by(
+            dir.path(),
+            &vocabulary(),
+            &git(),
+            "2026-09-11T12:00:00Z",
+            "plan_start",
+            &[("issue", "i-1".into())],
+            Some("worker-a"),
+        )
+        .unwrap();
+        assert!(line.contains(r#""session":"s-a""#), "{line}");
     }
 
     /// A line no reader can parse costs that line and is counted, never the file.

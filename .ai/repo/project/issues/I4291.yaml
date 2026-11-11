@@ -33,4 +33,21 @@ evidence_required:
   - suite
 risk: "Three Rust writers share the pointer read; fixing ledger.rs and not continuity or reasoning leaves a defect that looks fixed."
 created_at: 2026-10-28
-updated_at: 2026-10-28
+updated_at: 2026-11-08T18:14:40Z
+started_at: 2026-11-08T18:13:50Z
+started_event: sha256:5b2806ba89e9965f7ca508a960f27adc3a53d82ca9dc8a122035ca3cf129ecba
+verified_at: 2026-11-08T18:14:40Z
+verified_event: sha256:662f8e14986a5e44df377ba852c3c9ddca7bd0eb355ee1be00cc97267f566652
+evidence:
+  - covers: "rust_attribution_two_episodes"
+    type: test
+    command: "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --lib session::attribution"
+    result: "4 passed; continuity:: 99, reasoning:: 43, ledger 47 passed at fd18970fa24"
+    commit: fd18970fa2423b5584f0c9af31a8590c5475948a
+    recorded_at: 2026-11-08T18:13:09Z
+  - covers: "suite"
+    type: test
+    command: "bash test/run.sh 3049_a_second_workers_record_lands_on_the_first_workers_task"
+    result: "passes; fails first on the base executable (B's session on A's transition)"
+    commit: fd18970fa2423b5584f0c9af31a8590c5475948a
+    recorded_at: 2026-11-08T18:13:29Z
