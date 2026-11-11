@@ -181,6 +181,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I3116` | shares .ai/repo/ci/case-numbers-baseline.txt with I4488; they may not run concurrently |
 | WARN | `scope_conflict` | `I3116` | shares scripts/generate-site-data with I4512; they may not run concurrently |
 | WARN | `scope_conflict` | `I3116` | shares .ai/repo/ci/gates.yaml with I4532; they may not run concurrently |
+| WARN | `scope_conflict` | `I3116` | shares .ai/repo/ci/gates.yaml with I4570; they may not run concurrently |
 | WARN | `scope_conflict` | `I3117` | shares .ai/repo/project/intents with I3119; they may not run concurrently |
 | WARN | `scope_conflict` | `I3117` | shares .ai/repo/project/intents with I3229; they may not run concurrently |
 | WARN | `scope_conflict` | `I3117` | shares docs/CLAIMS.yaml with I3352; they may not run concurrently |
@@ -206,6 +207,8 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I3118` | shares docs/CLAIMS.yaml with I4400; they may not run concurrently |
 | WARN | `scope_conflict` | `I3118` | shares docs/MESH.md with I4466; they may not run concurrently |
 | WARN | `scope_conflict` | `I3118` | shares docs/CLAIMS.yaml with I4468; they may not run concurrently |
+| WARN | `scope_conflict` | `I3118` | shares docs/MESH.md with I4571; they may not run concurrently |
+| WARN | `scope_conflict` | `I3118` | shares docs/MESH.md with I4572; they may not run concurrently |
 | WARN | `scope_conflict` | `I3119` | shares apps/majordomus-cli/src/evidence with I3122; they may not run concurrently |
 | WARN | `scope_conflict` | `I3119` | shares apps/majordomus-cli/src/evidence with I3124; they may not run concurrently |
 | WARN | `scope_conflict` | `I3119` | shares .ai/repo/project/intents with I3229; they may not run concurrently |
@@ -231,6 +234,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I3123` | shares lib/finish.sh with I4416; they may not run concurrently |
 | WARN | `scope_conflict` | `I3123` | shares lib/finish.sh with I4468; they may not run concurrently |
 | WARN | `scope_conflict` | `I3123` | shares .ai/repo/profiles with I4500; they may not run concurrently |
+| WARN | `scope_conflict` | `I3123` | shares lib/finish.sh with I4567; they may not run concurrently |
 | WARN | `scope_conflict` | `I3126` | shares apps/majordomus-cli/src/economics with I3298; they may not run concurrently |
 | WARN | `scope_conflict` | `I3126` | shares apps/majordomus-cli/src/economics with I3366; they may not run concurrently |
 | WARN | `scope_conflict` | `I3861` | shares .ai/repo/adrs/0082-token-economics-are-measured-from-matched-runs-and-published-only-past-a-declared-rule.md with I4307; they may not run concurrently |

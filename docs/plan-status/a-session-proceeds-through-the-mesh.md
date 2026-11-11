@@ -56,6 +56,8 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I4002` | shares apps/majordomus-cli/src/capability/builtin with I4481; they may not run concurrently |
 | WARN | `scope_conflict` | `I4002` | shares apps/majordomus-cli/src/capability/builtin with I4486; they may not run concurrently |
 | WARN | `scope_conflict` | `I4002` | shares apps/majordomus-cli/src/capability/builtin with I4522; they may not run concurrently |
+| WARN | `scope_conflict` | `I4002` | shares apps/majordomus-cli/src/capability/builtin with I4568; they may not run concurrently |
+| WARN | `scope_conflict` | `I4002` | shares apps/majordomus-cli/src/capability/builtin with I4571; they may not run concurrently |
 | WARN | `scope_conflict` | `I4006` | shares apps/majordomus-cli/src/commands with I4007; they may not run concurrently |
 | WARN | `scope_conflict` | `I4006` | shares apps/majordomus-cli/src/capability/builtin with I4255; they may not run concurrently |
 | WARN | `scope_conflict` | `I4006` | shares apps/majordomus-cli/src/capability/builtin with I4294; they may not run concurrently |
@@ -78,8 +80,12 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I4006` | shares apps/majordomus-cli/src/capability/builtin with I4486; they may not run concurrently |
 | WARN | `scope_conflict` | `I4006` | shares .ai/repo/policy.yaml with I4512; they may not run concurrently |
 | WARN | `scope_conflict` | `I4006` | shares apps/majordomus-cli/src/capability/builtin with I4522; they may not run concurrently |
+| WARN | `scope_conflict` | `I4006` | shares apps/majordomus-cli/src/capability/builtin with I4568; they may not run concurrently |
+| WARN | `scope_conflict` | `I4006` | shares apps/majordomus-cli/src/capability/builtin with I4571; they may not run concurrently |
 | WARN | `scope_conflict` | `I4007` | shares docs/MCP.md with I4306; they may not run concurrently |
 | WARN | `scope_conflict` | `I4007` | shares docs/MCP.md with I4323; they may not run concurrently |
 | WARN | `scope_conflict` | `I4007` | shares apps/majordomus-cli/src/commands/serve.rs with I4418; they may not run concurrently |
 | WARN | `scope_conflict` | `I4008` | shares .githooks/pre-push with I4357; they may not run concurrently |
 | WARN | `scope_conflict` | `I4008` | shares scripts/ci/run-plan with I4468; they may not run concurrently |
+| WARN | `scope_conflict` | `I4008` | shares .githooks/pre-push with I4570; they may not run concurrently |
+| WARN | `scope_conflict` | `I4008` | shares .githooks/pre-push with I4573; they may not run concurrently |

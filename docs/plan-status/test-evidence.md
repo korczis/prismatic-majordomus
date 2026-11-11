@@ -9,7 +9,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 
 | milestone | status | done of required | ready | blocked | active | verify | cancelled | outcome |
 |---|---|---|---|---|---|---|---|---|
-| [test-evidence](https://majordomus.dev/plan/test-evidence/) | ACTIVE | 20/35 | 4 | 11 | 0 | 0 | 0 | Evidence is indexed by subject and judged at the presented revision, as ADR 0087 records. Every claim, rule, feature, command, capability, MCP tool and use case is a subject of one derived index, and every widget that states behaviour names one. Every surface reads its verdict from the tracked ledger alone, through one freshness function and one aggregation, at the revision it presents: the CLI and HTTP and MCP at the working tree or the checked-out commit, the site at the commit it was built from. A trunk run reaches the ledger through a reviewed recording pull request, and a supplementary record (a run record, coverage, a local row) can only weaken a verdict, naming itself when it does. Verified is rendered only for the one proven row of the freshness table, on every surface. |
+| [test-evidence](https://majordomus.dev/plan/test-evidence/) | ACTIVE | 20/35 | 5 | 10 | 0 | 0 | 0 | Evidence is indexed by subject and judged at the presented revision, as ADR 0087 records. Every claim, rule, feature, command, capability, MCP tool and use case is a subject of one derived index, and every widget that states behaviour names one. Every surface reads its verdict from the tracked ledger alone, through one freshness function and one aggregation, at the revision it presents: the CLI and HTTP and MCP at the working tree or the checked-out commit, the site at the commit it was built from. A trunk run reaches the ledger through a reviewed recording pull request, and a supplementary record (a run record, coverage, a local row) can only weaken a verdict, naming itself when it does. Verified is rendered only for the one proven row of the freshness table, on every surface. |
 
 ## Issues
 
@@ -49,7 +49,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | [I3013](https://majordomus.dev/plan/i3013/) | DONE | 0 | — | The evidence job runs only when a planned lane ran tests, so a records-only pull request is not red |
 | [I3668](https://majordomus.dev/plan/i3668/) | READY | 1 | I3013 | The evidence receipt names what the plan owed each producer, so an absence is not_required, missing, interrupted or refused, never guessed from the disk |
 | [I4325](https://majordomus.dev/plan/i4325/) | READY | 0 | — | node:test and Playwright are runners in code, so a claim proven by an adopter's JavaScript suite can be recorded, and an unproven intent names the runner set as its cause |
-| [I4342](https://majordomus.dev/plan/i4342/) | BLOCKED | 1 | I4341 | A release's record lands without a person within two hours of its tag |
+| [I4342](https://majordomus.dev/plan/i4342/) | READY | 1 | I4341 | A release's record lands without a person within two hours of its tag |
 
 ## Findings
 
@@ -80,3 +80,4 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I3668` | shares .github/workflows/validate.yml with I3932; they may not run concurrently |
 | WARN | `scope_conflict` | `I3668` | shares .github/workflows/validate.yml with I3970; they may not run concurrently |
 | WARN | `scope_conflict` | `I3668` | shares docs/generated with I4523; they may not run concurrently |
+| WARN | `scope_conflict` | `I4342` | shares apps/majordomus-cli/src/integration/drain.rs with I4523; they may not run concurrently |

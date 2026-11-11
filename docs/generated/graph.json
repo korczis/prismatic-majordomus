@@ -1,7 +1,7 @@
 {
   "schema": "majordomus/capability-graph/v1",
   "generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the capability registry and every object of the index; regenerate with `majordomus generate`",
-  "generator": "majordomus-cli 1.0.0",
+  "generator": "majordomus-cli 1.0.2",
   "graph": {
     "id": "composed",
     "title": "Everything, composed",
@@ -43723,6 +43723,9 @@
           "profile": "implementation",
           "scope": [
             ".github/workflows/validate.yml",
+            "scripts/ci/record-run-approve",
+            ".ai/repo/automation/inventory.jsonl",
+            "docs/DISTRIBUTION.md",
             "scripts/ci/evidence-collect",
             "scripts/ci/verdict",
             "docs/RELEASE.md",
@@ -43730,7 +43733,7 @@
             "test/cases"
           ],
           "slug": "a-record-pr-gets-a-passing-verdict",
-          "updated_at": "2026-10-14",
+          "updated_at": "2026-11-09",
           "validation": [
             "bin/majordomus plan validate"
           ]
@@ -75635,6 +75638,8 @@
             "Case 3029: with origin unreachable the finding stands and its note names the remote",
             "Case 3021 passes unchanged"
           ],
+          "completed_at": "2026-11-09T19:20:59Z",
+          "completed_event": "sha256:92e2b60e1e011b3dd55322827a9299f24e3db3319abd08793e52929ab13401f0",
           "created_at": "2026-10-29",
           "depends_on": [],
           "evidence_required": [
@@ -75654,11 +75659,15 @@
             "scripts/ci/release-check",
             "test/cases/3029_a_tag_in_flight_is_pending.sh",
             "test/cases/3021_a_tag_does_not_freeze_the_queue.sh",
-            "docs/RELEASE.md"
+            "test/cases/3224_a_published_alpha_owes_its_record.sh",
+            "docs/RELEASE.md",
+            "docs/DISTRIBUTION.md"
           ],
           "serves": [],
           "slug": "a-tag-is-excused-until-its-grace-ends",
-          "updated_at": "2026-10-29",
+          "started_at": "2026-11-09T19:05:25Z",
+          "started_event": "sha256:09042cbd35bcf7f051c53a3304bf01846cc7fb90e144a4fc32c56b6d9cfcd860",
+          "updated_at": "2026-11-09T19:20:59Z",
           "validation": [
             "bash test/run.sh 3029_a_tag_in_flight_is_pending 3021_a_tag_does_not_freeze_the_queue",
             "bin/majordomus plan validate"
@@ -80654,6 +80663,267 @@
         }
       },
       {
+        "id": "majordomus://issue/I4567",
+        "kind": "issue",
+        "label": "I4567",
+        "summary": "A task whose own commits were rebased has a supported finish, judged over its rebased commits",
+        "route": "/cockpit/objects/issue/i4567",
+        "source": ".ai/repo/project/issues/I4567.yaml",
+        "facts": {
+          "created_at": "2026-11-09",
+          "depends_on": [],
+          "evidence_required": [
+            "test"
+          ],
+          "milestone": "a-bounded-task-is-carried-to-accepted-work",
+          "non_scope": [
+            "Rewrites that are not rebases of the task's own commits (a reset that drops them, a force-push of another branch), which stay refused as diverged",
+            "OSCILLA's integrator policy, which now asks for merges rather than rebases"
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I4567.yaml",
+            "lib/check.sh",
+            "lib/finish.sh",
+            ".ai/repo/workflows/task-lifecycle.md"
+          ],
+          "serves": [],
+          "slug": "finish-after-a-rebase",
+          "validation": [
+            "bash test/run.sh <the new case>"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4568",
+        "kind": "issue",
+        "label": "I4568",
+        "summary": "A commit names the task and the mesh session that made it, and trace issue finds an issue's commits on branches and train tops, not only the trunk",
+        "route": "/cockpit/objects/issue/i4568",
+        "source": ".ai/repo/project/issues/I4568.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A case commits inside an open task under a mesh session and finds both trailers in the message; a commit outside a task has neither and passes the hook",
+            "A case puts an issue's commit only on a train top and trace issue lists it with its branch, task and session"
+          ],
+          "created_at": "2026-11-10",
+          "depends_on": [],
+          "evidence_required": [
+            "test"
+          ],
+          "milestone": "merging-and-referencing-are-enforced",
+          "non_scope": [
+            "Rewriting the trailers of history already committed",
+            "Verifying a session's claim to be who it says (I0704)"
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I4568.yaml",
+            ".githooks/commit-msg",
+            "scripts/ci/commit-policy",
+            "apps/majordomus-cli/src/worktree/trace.rs",
+            "apps/majordomus-cli/src/capability/builtin/trace.rs",
+            "docs/COMMIT.md"
+          ],
+          "serves": [
+            "merging-and-referencing-are-enforced#every-commit-names-its-issue"
+          ],
+          "slug": "a-commit-names-its-task-and-session",
+          "validation": [
+            "bash test/run.sh <the new cases>"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4569",
+        "kind": "issue",
+        "label": "I4569",
+        "summary": "Pull-request runs that yielded to the release path run again when the release path's last run ends, not on the next scheduled tick",
+        "route": "/cockpit/objects/issue/i4569",
+        "source": ".ai/repo/project/issues/I4569.yaml",
+        "facts": {
+          "created_at": "2026-11-10",
+          "depends_on": [],
+          "desired_state": "The end of any release-path run resumes the yielded runs at once; the schedule stays as a backstop; resume stays a no-op while the path is busy.",
+          "evidence_required": [
+            "test"
+          ],
+          "milestone": "ci-critical-path",
+          "non_scope": [
+            "Runs cancelled for another reason than the yield (a branch run's first red job cancels it; those carry no ci:yielded label and are not resumed)"
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I4569.yaml",
+            ".github/workflows/release-path.yml",
+            ".ai/repo/ci/release-path.yaml",
+            "docs/CI.md",
+            "test/cases/3027_the_release_path_goes_first.sh"
+          ],
+          "serves": [],
+          "slug": "a-yielded-run-resumes-when-the-path-clears",
+          "validation": [
+            "actionlint .github/workflows/release-path.yml",
+            "bash test/run.sh 3027_the_release_path_goes_first"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4570",
+        "kind": "issue",
+        "label": "I4570",
+        "summary": "The before-push plan runs the formatter and the version-surface gate, the two seconds-long Rust gates a pull request was refused on after passing it",
+        "route": "/cockpit/objects/issue/i4570",
+        "source": ".ai/repo/project/issues/I4570.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A case changes a crate file with a formatting diff and the before-push plan fails rust fmt; a case adds a public command without a bump and the before-push plan fails version-surface"
+          ],
+          "created_at": "2026-11-10",
+          "current_state": "At origin/master dd377e11c35 the before-push plan omits rust-check's formatter and version-surface for a crate change; both run in validate's rust job in seconds.",
+          "depends_on": [],
+          "evidence_required": [
+            "test"
+          ],
+          "milestone": "ci-critical-path",
+          "non_scope": [
+            "clippy and the crate's tests, which stay CI's"
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I4570.yaml",
+            ".ai/repo/ci/gates.yaml",
+            "scripts/ci/run-plan",
+            ".githooks/pre-push"
+          ],
+          "serves": [],
+          "slug": "before-push-runs-fmt-and-version-surface",
+          "validation": [
+            "bash test/run.sh <the new cases>"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4571",
+        "kind": "issue",
+        "label": "I4571",
+        "summary": "A server whose own key was not trusted opens its mesh when the trunk's trust.allow gains the key, without a restart",
+        "route": "/cockpit/objects/issue/i4571",
+        "source": ".ai/repo/project/issues/I4571.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A case starts a server whose key is not in trust.allow (closed), commits the enrol on the trunk, and reads the runtime open without a restart, then withdraws the key and reads it closed"
+          ],
+          "created_at": "2026-11-10",
+          "depends_on": [],
+          "evidence_required": [
+            "test"
+          ],
+          "milestone": "the-mesh-works-out-of-the-box",
+          "non_scope": [
+            "The listen address beyond loopback, which is I2411"
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I4571.yaml",
+            "apps/majordomus-cli/src/mesh/cooperation.rs",
+            "apps/majordomus-cli/src/mesh/manager.rs",
+            "apps/majordomus-cli/src/live.rs",
+            "apps/majordomus-cli/src/capability/builtin/mesh.rs",
+            "docs/MESH.md"
+          ],
+          "serves": [],
+          "slug": "a-closed-runtime-opens-when-its-key-is-trusted",
+          "validation": [
+            "bash test/run.sh <the new case>"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4572",
+        "kind": "issue",
+        "label": "I4572",
+        "summary": "mesh doctor fails a runtime that is closed while the declaration trusts this machine's key, and names the stale server as the cause",
+        "route": "/cockpit/objects/issue/i4572",
+        "source": ".ai/repo/project/issues/I4572.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A case runs mesh doctor against a server started before its key was trusted and reads the runtime check failed, the verdict failed and the remedy named"
+          ],
+          "created_at": "2026-11-10",
+          "depends_on": [],
+          "evidence_required": [
+            "test"
+          ],
+          "milestone": "the-mesh-works-out-of-the-box",
+          "non_scope": [
+            "Reopening the runtime itself, which is I4571"
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I4572.yaml",
+            "apps/majordomus-cli/src/mesh/doctor.rs",
+            "docs/MESH.md"
+          ],
+          "serves": [],
+          "slug": "mesh-doctor-fails-a-stale-closed-runtime",
+          "validation": [
+            "bash test/run.sh <the new case>"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4573",
+        "kind": "issue",
+        "label": "I4573",
+        "summary": "A commit or push from a worktree with no active task is told so, in a supervised repository",
+        "route": "/cockpit/objects/issue/i4573",
+        "source": ".ai/repo/project/issues/I4573.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A case commits in a supervised fixture with no open task and reads the advisory finding; with a task open it does not appear; neither commit is refused"
+          ],
+          "created_at": "2026-11-10",
+          "current_state": "At origin/master 25f0f3827ce: the hooks run doctor and the before-push plan; neither reports the absence of an open task in the checkout.",
+          "depends_on": [],
+          "evidence_required": [
+            "test"
+          ],
+          "milestone": "a-bounded-task-is-carried-to-accepted-work",
+          "non_scope": [
+            "Refusing a commit outside a task; the finding stays advisory"
+          ],
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I4573.yaml",
+            ".githooks/pre-commit",
+            ".githooks/pre-push",
+            "lib/check.sh",
+            ".ai/repo/workflows/task-lifecycle.md",
+            "test/cases/4575_a_commit_outside_a_task_is_told_so.sh"
+          ],
+          "serves": [],
+          "slug": "a-commit-outside-a-task-is-told-so",
+          "validation": [
+            "bash test/run.sh 4575_a_commit_outside_a_task_is_told_so"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "label": "a-brief-is-reconciled-not-transcribed",
@@ -81540,12 +81810,12 @@
         "label": "s-20261015194158-7f51-964a542b054a",
         "summary": "the session start event's mesh and brief commands each built the full index only to find the server they then asked; 2-3 s each before a new session's first answer",
         "route": "/cockpit/objects/knowledge/s-20261015194158-7f51-964a542b054a",
-        "source": ".ai/repo/knowledge/candidates/s-20261015194158-7f51-964a542b054a.md",
-        "status": "candidate",
+        "source": ".ai/repo/knowledge/curated/s-20261015194158-7f51-964a542b054a.md",
+        "status": "verified",
         "facts": {
           "about": "lib/capture.sh",
           "class": "lesson",
-          "date": "2026-10-19",
+          "date": "2026-11-10",
           "epistemics": "observed",
           "route": "project",
           "tags": [
@@ -81560,12 +81830,12 @@
         "label": "s-20261015194158-7f51-989532c39f1f",
         "summary": "the pre-commit derived-data gate reads the working tree, so a commit whose staged derived files are stale (status MM after a second derive) passed and shipped data for the record's previous version",
         "route": "/cockpit/objects/knowledge/s-20261015194158-7f51-989532c39f1f",
-        "source": ".ai/repo/knowledge/candidates/s-20261015194158-7f51-989532c39f1f.md",
-        "status": "candidate",
+        "source": ".ai/repo/knowledge/curated/s-20261015194158-7f51-989532c39f1f.md",
+        "status": "verified",
         "facts": {
           "about": "scripts/pages",
           "class": "lesson",
-          "date": "2026-10-19",
+          "date": "2026-11-10",
           "epistemics": "observed",
           "route": "project",
           "tags": [
@@ -82004,12 +82274,12 @@
         "label": "s-20261028115702-2cb6-4c0e4c94e262",
         "summary": "plan done refuses an issue whose own milestone waits on an open predecessor milestone even when every criterion holds on the trunk; recording its evidence ahead makes the later close a single plan done",
         "route": "/cockpit/objects/knowledge/s-20261028115702-2cb6-4c0e4c94e262",
-        "source": ".ai/repo/knowledge/candidates/s-20261028115702-2cb6-4c0e4c94e262.md",
-        "status": "candidate",
+        "source": ".ai/repo/knowledge/curated/s-20261028115702-2cb6-4c0e4c94e262.md",
+        "status": "verified",
         "facts": {
           "about": "docs/PLANNING.md",
           "class": "lesson",
-          "date": "2026-11-01",
+          "date": "2026-11-10",
           "epistemics": "observed",
           "route": "documentation",
           "tags": [
@@ -82142,12 +82412,12 @@
         "label": "s-20261028132518-6330-46cd06f7fef7",
         "summary": "task.finished records the head before the delivering commit and a verified tree that no commit carries: in a stranger fixture finish completed at head 8147f81 over tree a9d72bca while the fix landed as 44efcba8, so nothing links acceptance to the revision that delivers it",
         "route": "/cockpit/objects/knowledge/s-20261028132518-6330-46cd06f7fef7",
-        "source": ".ai/repo/knowledge/candidates/s-20261028132518-6330-46cd06f7fef7.md",
-        "status": "candidate",
+        "source": ".ai/repo/knowledge/curated/s-20261028132518-6330-46cd06f7fef7.md",
+        "status": "verified",
         "facts": {
           "about": "command:finish",
           "class": "lesson",
-          "date": "2026-10-30",
+          "date": "2026-11-10",
           "epistemics": "observed",
           "route": "platform",
           "tags": [
@@ -82162,12 +82432,12 @@
         "label": "s-20261028132518-6330-4f3a8564d066",
         "summary": "on master plan next took 118 s and plan start 346 s wall (18.8 s user), and plan next names a ready issue whose own current_state says it waits on two unlanded issues outside depends_on",
         "route": "/cockpit/objects/knowledge/s-20261028132518-6330-4f3a8564d066",
-        "source": ".ai/repo/knowledge/candidates/s-20261028132518-6330-4f3a8564d066.md",
-        "status": "candidate",
+        "source": ".ai/repo/knowledge/curated/s-20261028132518-6330-4f3a8564d066.md",
+        "status": "verified",
         "facts": {
           "about": "command:plan",
           "class": "lesson",
-          "date": "2026-10-30",
+          "date": "2026-11-10",
           "epistemics": "observed",
           "route": "platform",
           "tags": [
@@ -82202,12 +82472,12 @@
         "label": "s-20261028132518-6330-5fb0a1d76028",
         "summary": "init edits the adopter's README (adds an AI agents section) while its help says it installs nothing, and leaves both hooks to be hand-written before doctor passes",
         "route": "/cockpit/objects/knowledge/s-20261028132518-6330-5fb0a1d76028",
-        "source": ".ai/repo/knowledge/candidates/s-20261028132518-6330-5fb0a1d76028.md",
-        "status": "candidate",
+        "source": ".ai/repo/knowledge/curated/s-20261028132518-6330-5fb0a1d76028.md",
+        "status": "verified",
         "facts": {
           "about": "command:init",
           "class": "lesson",
-          "date": "2026-10-30",
+          "date": "2026-11-10",
           "epistemics": "observed",
           "route": "platform",
           "tags": [
@@ -82342,12 +82612,12 @@
         "label": "s-20261028213517-8175-66a08ca30ad6",
         "summary": "at the owner's 12h unattended order every other local session answered from-mode=prompting, so each would stall at its first permission prompt overnight; nothing in the lifecycle checks before an unattended run that workers are in a mode that can proceed alone",
         "route": "/cockpit/objects/knowledge/s-20261028213517-8175-66a08ca30ad6",
-        "source": ".ai/repo/knowledge/candidates/s-20261028213517-8175-66a08ca30ad6.md",
-        "status": "candidate",
+        "source": ".ai/repo/knowledge/curated/s-20261028213517-8175-66a08ca30ad6.md",
+        "status": "verified",
         "facts": {
           "about": ".ai/repo/workflows/task-lifecycle.md",
           "class": "lesson",
-          "date": "2026-10-28",
+          "date": "2026-11-10",
           "epistemics": "observed",
           "route": "project",
           "tags": [
@@ -83519,12 +83789,12 @@
         "label": "s-20261105133225-40b8-1d0f6ed7385e",
         "summary": "641b stood at 9 GiB free with 512 linked worktrees (112 GB): 73 merged and clean (18 GB), 205 merged and dirty (39 GB), 141 unmerged and clean (36 GB); removing the clean merged ones took a shell loop because majordomus worktree needs an executable the stale primary could not build",
         "route": "/cockpit/objects/knowledge/s-20261105133225-40b8-1d0f6ed7385e",
-        "source": ".ai/repo/knowledge/candidates/s-20261105133225-40b8-1d0f6ed7385e.md",
-        "status": "candidate",
+        "source": ".ai/repo/knowledge/curated/s-20261105133225-40b8-1d0f6ed7385e.md",
+        "status": "verified",
         "facts": {
           "about": "docs/WORKTREES.md",
           "class": "lesson",
-          "date": "2026-11-05",
+          "date": "2026-11-10",
           "epistemics": "observed",
           "route": "documentation",
           "tags": [
@@ -83539,12 +83809,12 @@
         "label": "s-20261105133225-40b8-2b447476aaa7",
         "summary": "a landing-seat continuation with no local executable worked from the build host: worktree add 1 min, cargo build 4 min 18 s on the warm shared build-dir, case 3958 3 s, scripts/derive 5 min 49 s, commit hook 3 min 24 s; every seat continuation repeats this",
         "route": "/cockpit/objects/knowledge/s-20261105133225-40b8-2b447476aaa7",
-        "source": ".ai/repo/knowledge/candidates/s-20261105133225-40b8-2b447476aaa7.md",
-        "status": "candidate",
+        "source": ".ai/repo/knowledge/curated/s-20261105133225-40b8-2b447476aaa7.md",
+        "status": "verified",
         "facts": {
           "about": "docs/INTEGRATION.md",
           "class": "lesson",
-          "date": "2026-11-05",
+          "date": "2026-11-10",
           "epistemics": "observed",
           "route": "documentation",
           "tags": [
@@ -83639,12 +83909,12 @@
         "label": "s-20261105133225-40b8-c40717f30a2d",
         "summary": "POST /api/v1/peers/announce over HTTP is refused (announce needs an MCP session) and bin/majordomus-mcp refuses to start on a stale executable, so a seat on a checkout under the disk floor reaches the mesh but never the board",
         "route": "/cockpit/objects/knowledge/s-20261105133225-40b8-c40717f30a2d",
-        "source": ".ai/repo/knowledge/candidates/s-20261105133225-40b8-c40717f30a2d.md",
-        "status": "candidate",
+        "source": ".ai/repo/knowledge/curated/s-20261105133225-40b8-c40717f30a2d.md",
+        "status": "verified",
         "facts": {
           "about": "docs/MCP.md",
           "class": "lesson",
-          "date": "2026-11-05",
+          "date": "2026-11-10",
           "epistemics": "observed",
           "route": "documentation",
           "tags": [
@@ -84087,6 +84357,386 @@
           "date": "2026-11-06",
           "epistemics": "observed",
           "route": "project",
+          "tags": [
+            "derived",
+            "observation"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://knowledge/s-20261110050845-b1a4-0e755802b88d",
+        "kind": "knowledge",
+        "label": "s-20261110050845-b1a4-0e755802b88d",
+        "summary": "a server started before its key was in trust.allow stayed closed after the enrol reached the trunk until serve stop and serve ensure, and mesh doctor in the same state printed ok for trust and ok for a closed runtime and passed its verdict: runtime_check passes a closed runtime assuming the trust check fails, without reading it",
+        "route": "/cockpit/objects/knowledge/s-20261110050845-b1a4-0e755802b88d",
+        "source": ".ai/repo/knowledge/curated/s-20261110050845-b1a4-0e755802b88d.md",
+        "status": "verified",
+        "facts": {
+          "about": "apps/majordomus-cli/src/mesh/doctor.rs",
+          "class": "lesson",
+          "date": "2026-11-10",
+          "epistemics": "observed",
+          "route": "project",
+          "tags": [
+            "derived",
+            "observation"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://knowledge/s-20261110050845-b1a4-11e027ccf3f6",
+        "kind": "knowledge",
+        "label": "s-20261110050845-b1a4-11e027ccf3f6",
+        "summary": "the v1.0.1 record pull request #2991's own validate run, created action_required, was started with gh api -X POST repos/<owner>/<repo>/actions/runs/<id>/approve under the owner's token (the API form of docs/DISTRIBUTION.md's approve-by-hand), and its ci then decided the merge; its first attempt failed only because GitHub never created the site job (verdict abandoned), and gh run rerun --failed created it; I2717 (pull request #2994) moves the approval into the record's dispatch",
+        "route": "/cockpit/objects/knowledge/s-20261110050845-b1a4-11e027ccf3f6",
+        "source": ".ai/repo/knowledge/curated/s-20261110050845-b1a4-11e027ccf3f6.md",
+        "status": "verified",
+        "facts": {
+          "about": "docs/DISTRIBUTION.md",
+          "class": "lesson",
+          "date": "2026-11-10",
+          "epistemics": "observed",
+          "route": "documentation",
+          "tags": [
+            "derived",
+            "observation"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://knowledge/s-20261110050845-b1a4-3136d586665c",
+        "kind": "knowledge",
+        "label": "s-20261110050845-b1a4-3136d586665c",
+        "summary": "pull-request validates that yielded to the release path are resumed only by release-path.yml's 15-minute schedule and by the last job of a validate run that is not a pull request's; GitHub ran that schedule 7 h apart (19:13Z and 02:16Z on 2026-11-09), and a pages deploy or a record verdict ending resumed nothing, so the yielded runs stayed cancelled until a tick came",
+        "route": "/cockpit/objects/knowledge/s-20261110050845-b1a4-3136d586665c",
+        "source": ".ai/repo/knowledge/curated/s-20261110050845-b1a4-3136d586665c.md",
+        "status": "verified",
+        "facts": {
+          "about": ".github/workflows/release-path.yml",
+          "class": "lesson",
+          "date": "2026-11-10",
+          "epistemics": "observed",
+          "route": "project",
+          "tags": [
+            "derived",
+            "observation"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://knowledge/s-20261110050845-b1a4-36a8158f8f65",
+        "kind": "knowledge",
+        "label": "s-20261110050845-b1a4-36a8158f8f65",
+        "summary": "v1.0.1's release run 42569641430 failed on attempt 1 when the macos-aarch64 build met a transient HTTP 504 from rustup's installer and fail-fast cancelled the other five builds; gh run rerun 42569641430 --failed ran them again and the release published (7 assets, 2026-11-09T17:44Z); the run still concludes failure because its live job found the homepage offering 1.0.0 before the record pull request #2991 landed",
+        "route": "/cockpit/objects/knowledge/s-20261110050845-b1a4-36a8158f8f65",
+        "source": ".ai/repo/knowledge/curated/s-20261110050845-b1a4-36a8158f8f65.md",
+        "status": "verified",
+        "facts": {
+          "about": ".github/workflows/release.yml",
+          "class": "lesson",
+          "date": "2026-11-10",
+          "epistemics": "observed",
+          "route": "project",
+          "tags": [
+            "derived",
+            "observation"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://knowledge/s-20261110050845-b1a4-4b6819547583",
+        "kind": "knowledge",
+        "label": "s-20261110050845-b1a4-4b6819547583",
+        "summary": "curated note s-20261103014800-e1b0-4fa824190a4e (run-plan --before-push runs only the structure and structure-b gates, so the rust job's gates are first met in CI) recurred on 2026-11-09: the before-push plan ran 45 gates and 233 cases and passed #2983 and #2995, which CI's rust job then refused on cargo fmt --check and, for #2995, version-surface; no issue named the rust job's gates in the before-push plan until I4570",
+        "route": "/cockpit/objects/knowledge/s-20261110050845-b1a4-4b6819547583",
+        "source": ".ai/repo/knowledge/curated/s-20261110050845-b1a4-4b6819547583.md",
+        "status": "verified",
+        "facts": {
+          "about": "scripts/ci/run-plan",
+          "class": "lesson",
+          "date": "2026-11-10",
+          "epistemics": "observed",
+          "route": "project",
+          "tags": [
+            "derived",
+            "observation"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://knowledge/s-20261110050845-b1a4-703e1953adbd",
+        "kind": "knowledge",
+        "label": "s-20261110050845-b1a4-703e1953adbd",
+        "summary": "after an integrator-ordered rebase of a task's own commits, finish refused every outcome: state-consistency failed with 'diverged from recorded head; history was rewritten or the task record is stale' (lib/check.sh line 158) and scope-integrity counted the new base's files as the task's; finish has no outcome for a rebase of the task's own commits (I4567)",
+        "route": "/cockpit/objects/knowledge/s-20261110050845-b1a4-703e1953adbd",
+        "source": ".ai/repo/knowledge/curated/s-20261110050845-b1a4-703e1953adbd.md",
+        "status": "verified",
+        "facts": {
+          "about": "lib/check.sh",
+          "class": "lesson",
+          "date": "2026-11-10",
+          "epistemics": "observed",
+          "route": "project",
+          "tags": [
+            "derived",
+            "observation"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://knowledge/s-20261110050845-b1a4-7253a7c95804",
+        "kind": "knowledge",
+        "label": "s-20261110050845-b1a4-7253a7c95804",
+        "summary": "an evolve on a machine under its disk floor could not use the primary's executable (stale: 1.0.0-alpha.10 against the tree's 1.0.1) and needed no build: the installed release 1.0.1, built from master's crate, served it with MAJORDOMUS_BIN naming its Mach-O executable under libexec/ (not the launcher under bin/, which lib/rust_bin.sh refuses as one) and MAJORDOMUS_BIN_COMMIT its RELEASE.json commit; that executable alone has no knowledge observe, promote or reject and no session command, so those run through the launcher with the two variables set",
+        "route": "/cockpit/objects/knowledge/s-20261110050845-b1a4-7253a7c95804",
+        "source": ".ai/repo/knowledge/curated/s-20261110050845-b1a4-7253a7c95804.md",
+        "status": "verified",
+        "facts": {
+          "about": ".ai/repo/skills/evolve/SKILL.md",
+          "class": "lesson",
+          "date": "2026-11-10",
+          "epistemics": "observed",
+          "route": "project",
+          "tags": [
+            "derived",
+            "observation"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://knowledge/s-20261110050845-b1a4-7638ad10207d",
+        "kind": "knowledge",
+        "label": "s-20261110050845-b1a4-7638ad10207d",
+        "summary": "majordomus worktree create <branch> run through a primary checkout whose executable was stale printed only the stale-executable warnings and created no worktree, and the caller, which did not check the exit status, went on as if it had; the worktree was then made by hand with git worktree add at the canonical <repo>-wt/<branch> path",
+        "route": "/cockpit/objects/knowledge/s-20261110050845-b1a4-7638ad10207d",
+        "source": ".ai/repo/knowledge/curated/s-20261110050845-b1a4-7638ad10207d.md",
+        "status": "verified",
+        "facts": {
+          "about": "command:worktree.create",
+          "class": "lesson",
+          "date": "2026-11-10",
+          "epistemics": "observed",
+          "route": "platform",
+          "tags": [
+            "derived",
+            "observation"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://knowledge/s-20261110050845-b1a4-931c50128f1b",
+        "kind": "knowledge",
+        "label": "s-20261110050845-b1a4-931c50128f1b",
+        "summary": "a commit names an issue and an author but no task and no session, so a review finding on another repository could not be routed to the session that built the commit; I4568 asks for both and for trace issue to find commits on branches and train tops",
+        "route": "/cockpit/objects/knowledge/s-20261110050845-b1a4-931c50128f1b",
+        "source": ".ai/repo/knowledge/curated/s-20261110050845-b1a4-931c50128f1b.md",
+        "status": "verified",
+        "facts": {
+          "about": ".githooks/commit-msg",
+          "class": "lesson",
+          "date": "2026-11-10",
+          "epistemics": "observed",
+          "route": "project",
+          "tags": [
+            "derived",
+            "observation"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://knowledge/s-20261110141959-348c-2548f7a798f5",
+        "kind": "knowledge",
+        "label": "s-20261110141959-348c-2548f7a798f5",
+        "summary": "an adopter filing records of its own identifier kinds found plan allocate hands out only I-numbers, and surveyed every ref, worktree and mesh claim by hand for the next free one",
+        "route": "/cockpit/objects/knowledge/s-20261110141959-348c-2548f7a798f5",
+        "source": ".ai/repo/knowledge/curated/s-20261110141959-348c-2548f7a798f5.md",
+        "status": "verified",
+        "facts": {
+          "about": "capability:plan.allocate",
+          "class": "lesson",
+          "date": "2026-11-10",
+          "epistemics": "observed",
+          "route": "platform",
+          "tags": [
+            "derived",
+            "observation"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://knowledge/s-20261110141959-348c-427bd2090965",
+        "kind": "knowledge",
+        "label": "s-20261110141959-348c-427bd2090965",
+        "summary": "after the shared server died and serve ensure started another, the MCP plan.allocate tool refused 'not_active: a number is reserved by the mesh of the server holding this checkout's lease' because the client stayed attached to a server that no longer held the lease; the CLI mesh allocate --session worked once the session was re-opened",
+        "route": "/cockpit/objects/knowledge/s-20261110141959-348c-427bd2090965",
+        "source": ".ai/repo/knowledge/curated/s-20261110141959-348c-427bd2090965.md",
+        "status": "verified",
+        "facts": {
+          "about": "capability:plan.allocate",
+          "class": "lesson",
+          "date": "2026-11-10",
+          "epistemics": "observed",
+          "route": "platform",
+          "tags": [
+            "derived",
+            "observation"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://knowledge/s-20261110141959-348c-68d3c34e49d1",
+        "kind": "knowledge",
+        "label": "s-20261110141959-348c-68d3c34e49d1",
+        "summary": "after the shared server died and serve ensure started another, every mesh session and claim of the old server was gone; two sessions re-ran mesh session open and mesh claim by hand, and the landing seat lost its seat claim the same way (2026-11-10)",
+        "route": "/cockpit/objects/knowledge/s-20261110141959-348c-68d3c34e49d1",
+        "source": ".ai/repo/knowledge/curated/s-20261110141959-348c-68d3c34e49d1.md",
+        "status": "verified",
+        "facts": {
+          "about": "command:serve.ensure",
+          "class": "lesson",
+          "date": "2026-11-10",
+          "epistemics": "observed",
+          "route": "platform",
+          "tags": [
+            "derived",
+            "observation"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://knowledge/s-20261110141959-348c-68fcc27016c1",
+        "kind": "knowledge",
+        "label": "s-20261110141959-348c-68fcc27016c1",
+        "summary": "a new public function whose only exercise was its doctest failed coverage-differential (#2996, mesh/manager.rs closed_key): the differential counts unit and integration tests, not doctests, so a branch reached only by a doctest is uncovered",
+        "route": "/cockpit/objects/knowledge/s-20261110141959-348c-68fcc27016c1",
+        "source": ".ai/repo/knowledge/curated/s-20261110141959-348c-68fcc27016c1.md",
+        "status": "verified",
+        "facts": {
+          "about": "gate:coverage-differential",
+          "class": "lesson",
+          "date": "2026-11-10",
+          "epistemics": "observed",
+          "route": "enforcement",
+          "tags": [
+            "derived",
+            "observation"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://knowledge/s-20261110141959-348c-7b55575549f1",
+        "kind": "knowledge",
+        "label": "s-20261110141959-348c-7b55575549f1",
+        "summary": "six issue records scoped the bare directory test/cases on 2026-11-10; plan validate only warned, the derived plan-status pages named case files no branch had written, and core-check refused #2997 (validate 42778183555); the fix that refuses it, I4350, is still open",
+        "route": "/cockpit/objects/knowledge/s-20261110141959-348c-7b55575549f1",
+        "source": ".ai/repo/knowledge/curated/s-20261110141959-348c-7b55575549f1.md",
+        "status": "verified",
+        "facts": {
+          "about": "command:plan.validate",
+          "class": "lesson",
+          "date": "2026-11-10",
+          "epistemics": "observed",
+          "route": "platform",
+          "tags": [
+            "derived",
+            "observation"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://knowledge/s-20261110141959-348c-826b50744ee5",
+        "kind": "knowledge",
+        "label": "s-20261110141959-348c-826b50744ee5",
+        "summary": "on a machine at load about 50, the commit hook's doctor ran 151006 ms against its 20000 ms budget, and the committing client cut its call at 120 s",
+        "route": "/cockpit/objects/knowledge/s-20261110141959-348c-826b50744ee5",
+        "source": ".ai/repo/knowledge/curated/s-20261110141959-348c-826b50744ee5.md",
+        "status": "verified",
+        "facts": {
+          "about": ".githooks/pre-commit",
+          "class": "lesson",
+          "date": "2026-11-10",
+          "epistemics": "observed",
+          "route": "project",
+          "tags": [
+            "derived",
+            "observation"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://knowledge/s-20261110141959-348c-a5ca8aad4352",
+        "kind": "knowledge",
+        "label": "s-20261110141959-348c-a5ca8aad4352",
+        "summary": "a derive while the merge of master was staged observed delivery.json at the pre-merge head again on 2026-11-10: #2994's site check refused [merged 2] against [merged 1], and the I4571 branch the same; the integrator skill still said a derive after the merge commit only adds a second commit",
+        "route": "/cockpit/objects/knowledge/s-20261110141959-348c-a5ca8aad4352",
+        "source": ".ai/repo/knowledge/curated/s-20261110141959-348c-a5ca8aad4352.md",
+        "status": "verified",
+        "facts": {
+          "about": ".ai/repo/skills/integrator/SKILL.md",
+          "class": "lesson",
+          "date": "2026-11-10",
+          "epistemics": "observed",
+          "route": "project",
+          "tags": [
+            "derived",
+            "observation"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://knowledge/s-20261110141959-348c-a61a83ef1740",
+        "kind": "knowledge",
+        "label": "s-20261110141959-348c-a61a83ef1740",
+        "summary": "after an issue record was dropped between two derives, the second offload derive refused with exit 11 (the derive deleted tracked files; nothing was applied) for site/content/plan/<id>.md, a page the first derive had generated and staged and no commit held; the worktree had to unstage it before the derive would apply",
+        "route": "/cockpit/objects/knowledge/s-20261110141959-348c-a61a83ef1740",
+        "source": ".ai/repo/knowledge/curated/s-20261110141959-348c-a61a83ef1740.md",
+        "status": "verified",
+        "facts": {
+          "about": "apps/majordomus-cli/src/offload/run.rs",
+          "class": "lesson",
+          "date": "2026-11-10",
+          "epistemics": "observed",
+          "route": "project",
+          "tags": [
+            "derived",
+            "observation"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://knowledge/s-20261110141959-348c-c223627487a3",
+        "kind": "knowledge",
+        "label": "s-20261110141959-348c-c223627487a3",
+        "summary": "a worktree with commits and no open task committed and pushed with doctor reporting no failure and no word that no task was in progress, so the commits were bound to none",
+        "route": "/cockpit/objects/knowledge/s-20261110141959-348c-c223627487a3",
+        "source": ".ai/repo/knowledge/curated/s-20261110141959-348c-c223627487a3.md",
+        "status": "verified",
+        "facts": {
+          "about": ".githooks/pre-commit",
+          "class": "lesson",
+          "date": "2026-11-10",
+          "epistemics": "observed",
+          "route": "project",
+          "tags": [
+            "derived",
+            "observation"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://knowledge/s-20261110141959-348c-eac4f6bc53a0",
+        "kind": "knowledge",
+        "label": "s-20261110141959-348c-eac4f6bc53a0",
+        "summary": "four times in one day an adopter's task needed one more path in its scope (a split created a module, a merge touched a test), check refused, and the task closed partial so a new one could start with the wider scope; widening in place is I4260 and I2114, both unlanded",
+        "route": "/cockpit/objects/knowledge/s-20261110141959-348c-eac4f6bc53a0",
+        "source": ".ai/repo/knowledge/curated/s-20261110141959-348c-eac4f6bc53a0.md",
+        "status": "verified",
+        "facts": {
+          "about": "command:finish",
+          "class": "lesson",
+          "date": "2026-11-10",
+          "epistemics": "observed",
+          "route": "platform",
           "tags": [
             "derived",
             "observation"
@@ -93785,6 +94435,29 @@
             "linux-aarch64-musl"
           ],
           "tag": "v1.0.0-alpha.9"
+        }
+      },
+      {
+        "id": "majordomus://release-record/v1.0.1",
+        "kind": "release-record",
+        "label": "v1.0.1",
+        "summary": "v1.0.1",
+        "route": "/cockpit/objects/release-record/v1-0-1",
+        "source": ".ai/repo/releases/v1.0.1.yaml",
+        "facts": {
+          "channel": "stable",
+          "commit": "426e98551fffde8613b77faedcd05de14f191317",
+          "notes_url": "https://github.com/korczis/prismatic-majordomus/releases/tag/v1.0.1",
+          "published_at": "2026-11-09T17:44:13Z",
+          "required_targets": [
+            "macos-aarch64",
+            "macos-x86_64",
+            "linux-x86_64-gnu",
+            "linux-x86_64-musl",
+            "linux-aarch64-gnu",
+            "linux-aarch64-musl"
+          ],
+          "tag": "v1.0.1"
         }
       },
       {
@@ -107736,6 +108409,13 @@
         "label": "test/cases/4563_the_live_site_is_probed_in_a_real_browser.sh",
         "route": "/cockpit/objects/test/test-cases-4563-the-live-site-is-probed-in-a-real-browser-sh",
         "source": "test/cases/4563_the_live_site_is_probed_in_a_real_browser.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/4574_the_record_dispatch_approves_the_record_pull_request_run.sh",
+        "kind": "test",
+        "label": "test/cases/4574_the_record_dispatch_approves_the_record_pull_request_run.sh",
+        "route": "/cockpit/objects/test/test-cases-4574-the-record-dispatch-approves-the-record-pull-request-run-sh",
+        "source": "test/cases/4574_the_record_dispatch_approves_the_record_pull_request_run.sh"
       },
       {
         "id": "majordomus://test/test/cases/45_github_projection.sh",
@@ -149358,6 +150038,76 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I4567",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4567",
+        "target": "majordomus://milestone/a-bounded-task-is-carried-to-accepted-work",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4568",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4568",
+        "target": "majordomus://milestone/merging-and-referencing-are-enforced",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4569",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4569",
+        "target": "majordomus://milestone/ci-critical-path",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4570",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4570",
+        "target": "majordomus://milestone/ci-critical-path",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4571",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4571",
+        "target": "majordomus://milestone/the-mesh-works-out-of-the-box",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4572",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4572",
+        "target": "majordomus://milestone/the-mesh-works-out-of-the-box",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4573",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4573",
+        "target": "majordomus://milestone/a-bounded-task-is-carried-to-accepted-work",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -150239,6 +150989,101 @@
       },
       {
         "source": "majordomus://knowledge/s-20261106212411-be2e-f77a16aa9837",
+        "target": "kind:knowledge",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://knowledge/s-20261110050845-b1a4-0e755802b88d",
+        "target": "kind:knowledge",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://knowledge/s-20261110050845-b1a4-11e027ccf3f6",
+        "target": "kind:knowledge",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://knowledge/s-20261110050845-b1a4-3136d586665c",
+        "target": "kind:knowledge",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://knowledge/s-20261110050845-b1a4-36a8158f8f65",
+        "target": "kind:knowledge",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://knowledge/s-20261110050845-b1a4-4b6819547583",
+        "target": "kind:knowledge",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://knowledge/s-20261110050845-b1a4-703e1953adbd",
+        "target": "kind:knowledge",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://knowledge/s-20261110050845-b1a4-7253a7c95804",
+        "target": "kind:knowledge",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://knowledge/s-20261110050845-b1a4-7638ad10207d",
+        "target": "kind:knowledge",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://knowledge/s-20261110050845-b1a4-931c50128f1b",
+        "target": "kind:knowledge",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://knowledge/s-20261110141959-348c-2548f7a798f5",
+        "target": "kind:knowledge",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://knowledge/s-20261110141959-348c-427bd2090965",
+        "target": "kind:knowledge",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://knowledge/s-20261110141959-348c-68d3c34e49d1",
+        "target": "kind:knowledge",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://knowledge/s-20261110141959-348c-68fcc27016c1",
+        "target": "kind:knowledge",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://knowledge/s-20261110141959-348c-7b55575549f1",
+        "target": "kind:knowledge",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://knowledge/s-20261110141959-348c-826b50744ee5",
+        "target": "kind:knowledge",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://knowledge/s-20261110141959-348c-a5ca8aad4352",
+        "target": "kind:knowledge",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://knowledge/s-20261110141959-348c-a61a83ef1740",
+        "target": "kind:knowledge",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://knowledge/s-20261110141959-348c-c223627487a3",
+        "target": "kind:knowledge",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://knowledge/s-20261110141959-348c-eac4f6bc53a0",
         "target": "kind:knowledge",
         "kind": "is_a"
       },
@@ -151534,6 +152379,11 @@
       },
       {
         "source": "majordomus://release-record/v1.0.0-alpha.9",
+        "target": "kind:release-record",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://release-record/v1.0.1",
         "target": "kind:release-record",
         "kind": "is_a"
       },
@@ -156908,6 +157758,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/4574_the_record_dispatch_approves_the_record_pull_request_run.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/45_github_projection.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -162034,8 +162889,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4429,
-      "edges": 10049,
+      "nodes": 4457,
+      "edges": 10084,
       "acyclic": false,
       "truncated": false
     }

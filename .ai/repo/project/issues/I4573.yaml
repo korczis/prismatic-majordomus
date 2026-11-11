@@ -1,0 +1,29 @@
+id: I4573
+milestone: a-bounded-task-is-carried-to-accepted-work
+title: "A commit or push from a worktree with no active task is told so, in a supervised repository"
+slug: a-commit-outside-a-task-is-told-so
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "The pre-commit and pre-push hooks report an advisory finding, `no active task in this worktree: these commits are bound to no task (majordomus start ...)`, when the repository is supervised (its .ai/manifest.yaml exists) and the checkout has no open task, so work is not committed and pushed unbound without anyone noticing."
+why: "Reported from an adopting repository's session (2026-11-10, majordomus 1.0.1). In a worktree that held commits but no task, a commit and a push went through with `doctor: 0 failure(s)` and no word that no task was in progress, so the commits were bound to none and nothing later could relate them to a task, its scope or its finish. I4568 (milestone merging-and-referencing-are-enforced) adds the task and session trailers inside a task and leaves a commit outside one unrefused; this issue makes that case visible."
+current_state: "At origin/master 25f0f3827ce: the hooks run doctor and the before-push plan; neither reports the absence of an open task in the checkout."
+desired_state: "In a supervised repository with no open task, both hooks print the advisory finding with the command that opens one; with an open task, or in a repository that is not supervised, they print nothing new; nothing is refused."
+scope:
+  - ".ai/repo/project/issues/I4573.yaml"
+  - ".githooks/pre-commit"
+  - ".githooks/pre-push"
+  - "lib/check.sh"
+  - ".ai/repo/workflows/task-lifecycle.md"
+  - "test/cases/4575_a_commit_outside_a_task_is_told_so.sh"
+non_scope:
+  - "Refusing a commit outside a task; the finding stays advisory"
+depends_on: []
+acceptance_criteria:
+  - "A case commits in a supervised fixture with no open task and reads the advisory finding; with a task open it does not appear; neither commit is refused"
+validation:
+  - "bash test/run.sh 4575_a_commit_outside_a_task_is_told_so"
+evidence_required:
+  - test
+serves: []
+created_at: 2026-11-10

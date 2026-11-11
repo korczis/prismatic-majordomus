@@ -1,11 +1,396 @@
 # GENERATED FILE — DO NOT EDIT DIRECTLY
 # Source: the layer's release records, the decisions dated in each release's window, and the commits in its range; regenerate with `majordomus generate`
-# Generator: majordomus-cli 1.0.0
+# Generator: majordomus-cli 1.0.2
 schema: majordomus/changelog/v1
 generated: "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the layer's release records, the decisions dated in each release's window, and the commits in its range; regenerate with `majordomus generate`"
-generator: majordomus-cli 1.0.0
-current: "1.0.0"
+generator: majordomus-cli 1.0.2
+current: "1.0.2"
 sections:
+  - version: "1.0.1"
+    tag: v1.0.1
+    date: "2026-11-09T17:44:13Z"
+    commit: 426e98551fffde8613b77faedcd05de14f191317
+    unreleased: false
+    notes_url: https://github.com/korczis/prismatic-majordomus/releases/tag/v1.0.1
+    compare_url: https://github.com/korczis/prismatic-majordomus/compare/v1.0.0...v1.0.1
+    tree_url: https://github.com/korczis/prismatic-majordomus/tree/v1.0.1
+    decisions: []
+    groups:
+      - kind: feat
+        heading: Added
+        rank: 0
+        changes:
+          - kind: feat
+            scope: skills
+            subject: project-picture builds an evidenced picture of a project from every reachable source
+            breaking: false
+            commit: 98590f25b
+            url: https://github.com/korczis/prismatic-majordomus/commit/98590f25b
+          - kind: feat
+            scope: site
+            subject: the live site is probed in a real browser after every deploy and release (I4530)
+            breaking: false
+            commit: c554ad638
+            url: https://github.com/korczis/prismatic-majordomus/commit/c554ad638
+            references:
+              - kind: issue
+                id: I4530
+                title: "The live site is probed in a real browser after every deploy and release, and the deploy is held to what it shows"
+                route: /plan/i4530/
+          - kind: feat
+            scope: site
+            subject: a published page reads delivery at the commit it was built from (I3769)
+            breaking: false
+            commit: c69372ff4
+            url: https://github.com/korczis/prismatic-majordomus/commit/c69372ff4
+            references:
+              - kind: issue
+                id: I3769
+                title: "A published page reads delivery at the commit it was built from, and names one commit"
+                route: /plan/i3769/
+      - kind: fix
+        heading: Fixed
+        rank: 1
+        changes:
+          - kind: fix
+            scope: ci
+            subject: "a plan-record pull request's case 47 gets the executable"
+            breaking: false
+            commit: bfb8fdfd4
+            url: https://github.com/korczis/prismatic-majordomus/commit/bfb8fdfd4
+          - kind: fix
+            scope: ci
+            subject: a cancelled run reports no false red and a superseded head yields
+            breaking: false
+            commit: "414057978"
+            url: https://github.com/korczis/prismatic-majordomus/commit/414057978
+          - kind: fix
+            scope: pages
+            subject: "the executable's download is a gating step (#2960)"
+            breaking: false
+            commit: 5945fd62a
+            url: https://github.com/korczis/prismatic-majordomus/commit/5945fd62a
+          - kind: fix
+            scope: ci
+            subject: a build with no delivery reading is not held to the build commit (I3769)
+            breaking: false
+            commit: a95800664
+            url: https://github.com/korczis/prismatic-majordomus/commit/a95800664
+            references:
+              - kind: issue
+                id: I3769
+                title: "A published page reads delivery at the commit it was built from, and names one commit"
+                route: /plan/i3769/
+          - kind: fix
+            scope: site
+            subject: a build without the executable reads the committed delivery projection
+            breaking: false
+            commit: 517211a54
+            url: https://github.com/korczis/prismatic-majordomus/commit/517211a54
+            references:
+              - kind: issue
+                id: I3769
+                title: "A published page reads delivery at the commit it was built from, and names one commit"
+                route: /plan/i3769/
+          - kind: fix
+            scope: plan
+            subject: I4530 serves the criterion the-published-page-is-probed
+            breaking: false
+            commit: 882f5df26
+            url: https://github.com/korczis/prismatic-majordomus/commit/882f5df26
+            references:
+              - kind: issue
+                id: I4530
+                title: "The live site is probed in a real browser after every deploy and release, and the deploy is held to what it shows"
+                route: /plan/i4530/
+          - kind: fix
+            scope: github-sync
+            subject: the creation joins a closed milestone by number; the move stays as it was (I4529)
+            breaking: false
+            commit: "22e476595"
+            url: https://github.com/korczis/prismatic-majordomus/commit/22e476595
+            references:
+              - kind: issue
+                id: I4529
+                title: "An issue joins a closed milestone by number, so a record under a finished milestone can be created"
+                route: /plan/i4529/
+          - kind: fix
+            scope: site
+            subject: the release probe fails its pipelines closed (I4530)
+            breaking: false
+            commit: e34bfa6ca
+            url: https://github.com/korczis/prismatic-majordomus/commit/e34bfa6ca
+            references:
+              - kind: issue
+                id: I4530
+                title: "The live site is probed in a real browser after every deploy and release, and the deploy is held to what it shows"
+                route: /plan/i4530/
+          - kind: fix
+            scope: ci
+            subject: the release probe sets pipefail beside set -e
+            breaking: false
+            commit: 7127f4c48
+            url: https://github.com/korczis/prismatic-majordomus/commit/7127f4c48
+            references:
+              - kind: issue
+                id: I4530
+                title: "The live site is probed in a real browser after every deploy and release, and the deploy is held to what it shows"
+                route: /plan/i4530/
+          - kind: fix
+            scope: site
+            subject: the release probe is a declared shell unit and its skills raise their versions (I4530)
+            breaking: false
+            commit: c8d9aaf6e
+            url: https://github.com/korczis/prismatic-majordomus/commit/c8d9aaf6e
+            references:
+              - kind: issue
+                id: I4530
+                title: "The live site is probed in a real browser after every deploy and release, and the deploy is held to what it shows"
+                route: /plan/i4530/
+          - kind: fix
+            scope: ci
+            subject: the release probe is declared in the shell inventory and its skills raise their versions
+            breaking: false
+            commit: c80f5c4f5
+            url: https://github.com/korczis/prismatic-majordomus/commit/c80f5c4f5
+            references:
+              - kind: issue
+                id: I4530
+                title: "The live site is probed in a real browser after every deploy and release, and the deploy is held to what it shows"
+                route: /plan/i4530/
+          - kind: fix
+            scope: site
+            subject: "the pages name the pre-release that was published, not only the one recorded"
+            breaking: false
+            commit: f4e883a1f
+            url: https://github.com/korczis/prismatic-majordomus/commit/f4e883a1f
+            references:
+              - kind: issue
+                id: I3449
+                title: "Every surface names its versions from one derived release model, says which version each one is, and a gate refuses a version that disagrees or is written by hand"
+                route: /plan/i3449/
+              - kind: issue
+                id: I4531
+                title: "The pages name the pre-release that was published, not only the one recorded"
+                route: /plan/i4531/
+          - kind: fix
+            scope: github-sync
+            subject: an issue joins a closed milestone by number (I4529)
+            breaking: false
+            commit: a582072da
+            url: https://github.com/korczis/prismatic-majordomus/commit/a582072da
+            references:
+              - kind: issue
+                id: I4529
+                title: "An issue joins a closed milestone by number, so a record under a finished milestone can be created"
+                route: /plan/i4529/
+          - kind: fix
+            scope: site
+            subject: the delivery panel says when it was verified
+            breaking: false
+            commit: 34c1bc338
+            url: https://github.com/korczis/prismatic-majordomus/commit/34c1bc338
+            references:
+              - kind: issue
+                id: I3769
+                title: "A published page reads delivery at the commit it was built from, and names one commit"
+                route: /plan/i3769/
+          - kind: fix
+            scope: site
+            subject: the delivery panel says when it was verified
+            breaking: false
+            commit: c2c814994
+            url: https://github.com/korczis/prismatic-majordomus/commit/c2c814994
+            references:
+              - kind: issue
+                id: I3769
+                title: "A published page reads delivery at the commit it was built from, and names one commit"
+                route: /plan/i3769/
+          - kind: fix
+            scope: ui
+            subject: "the Cockpit and UI stylesheets read Flowbite's own sources"
+            breaking: false
+            commit: 8870a23ae
+            url: https://github.com/korczis/prismatic-majordomus/commit/8870a23ae
+      - kind: docs
+        heading: Documentation
+        rank: 4
+        changes:
+          - kind: docs
+            scope: plan
+            subject: "the hosted CI cap and the Pages size limit are planned (I4532, I4533)"
+            breaking: false
+            commit: f1969b65d
+            url: https://github.com/korczis/prismatic-majordomus/commit/f1969b65d
+            references:
+              - kind: issue
+                id: I4532
+                title: "The hosted CI jobs of this repository are admitted to fourteen in flight, leaving six for OSCILLA"
+                route: /plan/i4532/
+              - kind: issue
+                id: I4533
+                title: "The published site stays under GitHub Pages' size limit"
+                route: /plan/i4533/
+          - kind: docs
+            scope: knowledge
+            subject: "evolve 2026-11-06, the release night's lessons and the outbox of 93 carried"
+            breaking: false
+            commit: a2fc231b4
+            url: https://github.com/korczis/prismatic-majordomus/commit/a2fc231b4
+            references:
+              - kind: issue
+                id: I4296
+                title: "A full-history checkout of validate fits its bound: structure fetches no blobs, and every one has twenty minutes"
+                route: /plan/i4296/
+      - kind: test
+        heading: Tests
+        rank: 5
+        changes:
+          - kind: test
+            scope: pages
+            subject: "case 400 finds the deploy job's build inside a run block (#2960)"
+            breaking: false
+            commit: cbab9285d
+            url: https://github.com/korczis/prismatic-majordomus/commit/cbab9285d
+          - kind: test
+            scope: site
+            subject: case 3742 names the source of the function it lifts for shellcheck
+            breaking: false
+            commit: c38abdaf7
+            url: https://github.com/korczis/prismatic-majordomus/commit/c38abdaf7
+            references:
+              - kind: issue
+                id: I3769
+                title: "A published page reads delivery at the commit it was built from, and names one commit"
+                route: /plan/i3769/
+          - kind: test
+            scope: ui
+            subject: "case 85 holds both stylesheet entries to Flowbite's plugin and sources"
+            breaking: false
+            commit: 8c1b854ed
+            url: https://github.com/korczis/prismatic-majordomus/commit/8c1b854ed
+      - kind: ci
+        heading: Pipeline
+        rank: 6
+        changes:
+          - kind: ci
+            scope: pages
+            subject: the deploy reads delivery with the executable its run built
+            breaking: false
+            commit: 4e26f2f91
+            url: https://github.com/korczis/prismatic-majordomus/commit/4e26f2f91
+            references:
+              - kind: issue
+                id: I3769
+                title: "A published page reads delivery at the commit it was built from, and names one commit"
+                route: /plan/i3769/
+          - kind: ci
+            scope: release
+            subject: "the publish job's bound fits its checkout, build and derive"
+            breaking: false
+            commit: ddef2b1f5
+            url: https://github.com/korczis/prismatic-majordomus/commit/ddef2b1f5
+          - kind: ci
+            scope: validate
+            subject: "the rust job sets up the site tools, so the release-record cases can build a site"
+            breaking: false
+            commit: c9e5e6674
+            url: https://github.com/korczis/prismatic-majordomus/commit/c9e5e6674
+      - kind: chore
+        heading: Housekeeping
+        rank: 7
+        changes:
+          - kind: chore
+            scope: release
+            subject: "1.0.1"
+            breaking: false
+            commit: 5d2ee3986
+            url: https://github.com/korczis/prismatic-majordomus/commit/5d2ee3986
+          - kind: chore
+            scope: derive
+            subject: delivery.json observes the committed top
+            breaking: false
+            commit: cd61dd699
+            url: https://github.com/korczis/prismatic-majordomus/commit/cd61dd699
+          - kind: chore
+            scope: release
+            subject: "the record of v1.0.0 names the tagged commit and GitHub's publish time"
+            breaking: false
+            commit: 0a4f34f0c
+            url: https://github.com/korczis/prismatic-majordomus/commit/0a4f34f0c
+          - kind: chore
+            scope: derive
+            subject: delivery.json observes the committed top
+            breaking: false
+            commit: f082b595f
+            url: https://github.com/korczis/prismatic-majordomus/commit/f082b595f
+          - kind: chore
+            scope: release
+            subject: record v1.0.0 and the metadata it publishes
+            breaking: false
+            commit: 9b558b4d2
+            url: https://github.com/korczis/prismatic-majordomus/commit/9b558b4d2
+          - kind: chore
+            scope: derive
+            subject: delivery.json observes the committed top
+            breaking: false
+            commit: e99509895
+            url: https://github.com/korczis/prismatic-majordomus/commit/e99509895
+          - kind: chore
+            scope: release
+            subject: record v1.0.0 and the metadata it publishes
+            breaking: false
+            commit: 119e8ab81
+            url: https://github.com/korczis/prismatic-majordomus/commit/119e8ab81
+          - kind: chore
+            scope: derive
+            subject: delivery.json observes the committed top
+            breaking: false
+            commit: f1a6facaf
+            url: https://github.com/korczis/prismatic-majordomus/commit/f1a6facaf
+          - kind: chore
+            scope: derive
+            subject: delivery.json observes the committed top
+            breaking: false
+            commit: c1eb7e408
+            url: https://github.com/korczis/prismatic-majordomus/commit/c1eb7e408
+          - kind: chore
+            scope: derive
+            subject: delivery.json observes the committed merge
+            breaking: false
+            commit: 8ddcaf9c4
+            url: https://github.com/korczis/prismatic-majordomus/commit/8ddcaf9c4
+          - kind: chore
+            scope: derive
+            subject: "delivery.json observes the committed merge 891473c56f6, not the pre-merge head"
+            breaking: false
+            commit: 9f76b04ce
+            url: https://github.com/korczis/prismatic-majordomus/commit/9f76b04ce
+          - kind: chore
+            scope: release
+            subject: record v1.0.0-alpha.10 and the metadata it publishes
+            breaking: false
+            commit: 745db2ea2
+            url: https://github.com/korczis/prismatic-majordomus/commit/745db2ea2
+    artifacts:
+      - target: macos-aarch64
+        name: majordomus-v1.0.1-aarch64-apple-darwin.tar.gz
+        sha256: 7870d8142189803b6d5d7aac22f14e347fa9012d7b8a38e40dcbe066b0337a60
+      - target: macos-x86_64
+        name: majordomus-v1.0.1-x86_64-apple-darwin.tar.gz
+        sha256: a72a1b0a03760dc4cb3590b128f850902d030ff305209e01f6c6b53fa0620727
+      - target: linux-x86_64-gnu
+        name: majordomus-v1.0.1-x86_64-unknown-linux-gnu.tar.gz
+        sha256: 524adfd3f2a3fdb3314f53f8c134e4050be5f9ebc31018b70fa9c7d5a940ae77
+      - target: linux-x86_64-musl
+        name: majordomus-v1.0.1-x86_64-unknown-linux-musl.tar.gz
+        sha256: db99cd93babb3dc8ac08b968e8fea6099f396aab6e1be9f2b70da79b8b219378
+      - target: linux-aarch64-gnu
+        name: majordomus-v1.0.1-aarch64-unknown-linux-gnu.tar.gz
+        sha256: 48b5e54c7bbce297a9eabbca2e2cf902aecc78a7cde1c3303b93e41a809534ef
+      - target: linux-aarch64-musl
+        name: majordomus-v1.0.1-aarch64-unknown-linux-musl.tar.gz
+        sha256: 916351ef0f012b5eb161c646b0aacf3f954baa94d589a010caa022ae13c849f9
   - version: "1.0.0"
     tag: v1.0.0
     date: "2026-11-06T22:44:12Z"
