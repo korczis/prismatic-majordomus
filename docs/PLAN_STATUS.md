@@ -8,7 +8,7 @@ This page is the index. Each milestone's issues, and the findings about them, ar
 its own under [`plan-status/`](plan-status/), named by the milestone, so the plan grows by pages
 and no one page grows with it.
 
-Generated from canonical inputs `9b81d7a5b348`.
+Generated from canonical inputs `d60ccb28f4d3`.
 
 ## Milestones
 
@@ -59,7 +59,7 @@ Generated from canonical inputs `9b81d7a5b348`.
 | [builds-reuse-the-mesh-cache](https://majordomus.dev/plan/builds-reuse-the-mesh-cache/) | BLOCKED | 0/8 | 0 | 8 | 0 | 0 | 0 | Majordomus derives a key for every dependency install and compilation from the repository and the machine, restores it from the local level and then a trusted node's store before the work, saves it after, and is invisible when the store is absent; every local build path of the repository goes through it, and a gate refuses a new bypass. | [`plan-status/builds-reuse-the-mesh-cache.md`](plan-status/builds-reuse-the-mesh-cache.md) |
 | [campaigns-are-read-as-provenance](https://majordomus.dev/plan/campaigns-are-read-as-provenance/) | PLANNED | 0/4 | 1 | 3 | 0 | 0 | 0 | campaign is a kind; records cite campaigns through provenance and campaigns list what cites them; one command adds a pack safely; an execution of a record that cites a campaign pins the revision it ran. | [`plan-status/campaigns-are-read-as-provenance.md`](plan-status/campaigns-are-read-as-provenance.md) |
 | [capability-graph](https://majordomus.dev/plan/capability-graph/) | ACTIVE | 12/34 | 7 | 15 | 0 | 0 | 0 | One typed, deterministic capability graph composes the registries that already own their facts — it does not replace them — and adds typed relations between them that are inferred where a stable convention exists and declared where it does not. Both the running server and the published site render from that one graph: the static projection is the snapshot, the runtime projection is the snapshot plus live state. Navigation, overview, detail, search, the relation view and the coverage matrix are all derived, a dangling relation fails generation rather than rendering as a missing section, and a capability that exists with no documentation, no test or no enforcement is visible as such rather than indistinguishable from one that has them. | [`plan-status/capability-graph.md`](plan-status/capability-graph.md) |
-| [ci-critical-path](https://majordomus.dev/plan/ci-critical-path/) | ACTIVE | 18/51 | 19 | 11 | 3 | 0 | 0 | The change-to-verdict path runs p50 under 40 s and p95 under 60 s warm, and merge-to-verified-deploy p50 under 45 s and p95 under 60 s, measured on GitHub with warm, partial and cold reported apart, every skip of a gate explained by the repository's own impact model, and no required test removed, skipped or made advisory to reach the number. | [`plan-status/ci-critical-path.md`](plan-status/ci-critical-path.md) |
+| [ci-critical-path](https://majordomus.dev/plan/ci-critical-path/) | ACTIVE | 19/51 | 18 | 11 | 3 | 0 | 0 | The change-to-verdict path runs p50 under 40 s and p95 under 60 s warm, and merge-to-verified-deploy p50 under 45 s and p95 under 60 s, measured on GitHub with warm, partial and cold reported apart, every skip of a gate explained by the repository's own impact model, and no required test removed, skipped or made advisory to reach the number. | [`plan-status/ci-critical-path.md`](plan-status/ci-critical-path.md) |
 | [command-and-deployment-criteria-are-judged](https://majordomus.dev/plan/command-and-deployment-criteria-are-judged/) | PLANNED | 0/3 | 1 | 2 | 0 | 0 | 0 | A deployment criterion is met when a recorded observation of that deployment served a build containing the newest commit that changed the criterion's serving scope, and reads stale, failing or not_run otherwise, never met on an unreachable, malformed, dirty or undecided answer. A command criterion is met when a recorded execution of exactly the argument vector the criterion names exited 0 at a revision the evidence module's one freshness function judges current, with the scope it serves as its inputs; a different command exiting 0 meets nothing. Both carry the same evaluation a test criterion carries. The negative cases are executable, the claim is guaranteed with its test, and intent-lifecycle can be satisfied. | [`plan-status/command-and-deployment-criteria-are-judged.md`](plan-status/command-and-deployment-criteria-are-judged.md) |
 | [cost-per-accepted-outcome](https://majordomus.dev/plan/cost-per-accepted-outcome/) | BLOCKED | 0/4 | 0 | 4 | 0 | 0 | 0 | The cost of an accepted outcome is computed from measured telemetry and the finish contract that accepted it, and is reported only where both exist. | [`plan-status/cost-per-accepted-outcome.md`](plan-status/cost-per-accepted-outcome.md) |
 | [delivery-economics-are-measured-over-declared-windows](https://majordomus.dev/plan/delivery-economics-are-measured-over-declared-windows/) | PLANNED | 0/3 | 1 | 2 | 0 | 0 | 0 | Corpus runs answer the economics.tasks shape; a delivery window registered in the proof plan before it opens is measured at its close into a committed T3 record that the scorecard reads. | [`plan-status/delivery-economics-are-measured-over-declared-windows.md`](plan-status/delivery-economics-are-measured-over-declared-windows.md) |
@@ -498,12 +498,11 @@ Generated from canonical inputs `9b81d7a5b348`.
 - `I4571` (the-mesh-works-out-of-the-box, wave 0) — A server whose own key was not trusted opens its mesh when the trunk's trust.allow gains the key, without a restart
 - `I4572` (the-mesh-works-out-of-the-box, wave 0) — mesh doctor fails a runtime that is closed while the declaration trusts this machine's key, and names the stale server as the cause
 - `I4573` (a-bounded-task-is-carried-to-accepted-work, wave 0) — A commit or push from a worktree with no active task is told so, in a supervised repository
-- `I4576` (ci-critical-path, wave 0) — The integration lease's holder record is never empty or half written while its holder renews it, so no reader of it gets a lease without a holder
 
 
 ## Findings
 
-9649 finding(s), each on the page of the milestone its subject is or belongs to:
+9628 finding(s), each on the page of the milestone its subject is or belongs to:
 
 | milestone | findings |
 |---|---|
@@ -519,7 +518,7 @@ Generated from canonical inputs `9b81d7a5b348`.
 | [`a-paste-is-decomposed-by-a-skill`](plan-status/a-paste-is-decomposed-by-a-skill.md) | 17 |
 | [`a-promoted-record-opens-its-message`](plan-status/a-promoted-record-opens-its-message.md) | 18 |
 | [`a-provider-carries-the-contract-natively`](plan-status/a-provider-carries-the-contract-natively.md) | 59 |
-| [`a-registered-corpus-judges-majordomus`](plan-status/a-registered-corpus-judges-majordomus.md) | 122 |
+| [`a-registered-corpus-judges-majordomus`](plan-status/a-registered-corpus-judges-majordomus.md) | 121 |
 | [`a-review-is-published-at-its-commit`](plan-status/a-review-is-published-at-its-commit.md) | 35 |
 | [`a-screen-is-fast-bounded-and-says-why`](plan-status/a-screen-is-fast-bounded-and-says-why.md) | 4 |
 | [`a-second-adopter-is-served`](plan-status/a-second-adopter-is-served.md) | 175 |
@@ -528,10 +527,10 @@ Generated from canonical inputs `9b81d7a5b348`.
 | [`a-test-fails-when-the-code-is-wrong`](plan-status/a-test-fails-when-the-code-is-wrong.md) | 44 |
 | [`a-version-follows-the-work`](plan-status/a-version-follows-the-work.md) | 25 |
 | [`a-visitor-understands-and-checks-majordomus`](plan-status/a-visitor-understands-and-checks-majordomus.md) | 2 |
-| [`adopter-upgrades`](plan-status/adopter-upgrades.md) | 602 |
+| [`adopter-upgrades`](plan-status/adopter-upgrades.md) | 601 |
 | [`an-authorised-node-connects-from-anywhere`](plan-status/an-authorised-node-connects-from-anywhere.md) | 12 |
 | [`an-outcome-becomes-a-reviewed-plan`](plan-status/an-outcome-becomes-a-reviewed-plan.md) | 15 |
-| [`an-unmet-criterion-is-drafted-into-work`](plan-status/an-unmet-criterion-is-drafted-into-work.md) | 133 |
+| [`an-unmet-criterion-is-drafted-into-work`](plan-status/an-unmet-criterion-is-drafted-into-work.md) | 132 |
 | [`architecture-is-enforced`](plan-status/architecture-is-enforced.md) | 2 |
 | [`automation`](plan-status/automation.md) | 68 |
 | [`campaigns-are-read-as-provenance`](plan-status/campaigns-are-read-as-provenance.md) | 21 |
@@ -549,10 +548,10 @@ Generated from canonical inputs `9b81d7a5b348`.
 | [`external-workspaces`](plan-status/external-workspaces.md) | 35 |
 | [`failure-is-visible`](plan-status/failure-is-visible.md) | 31 |
 | [`fly-deployment`](plan-status/fly-deployment.md) | 4 |
-| [`idd-reads-at-a-glance`](plan-status/idd-reads-at-a-glance.md) | 3304 |
+| [`idd-reads-at-a-glance`](plan-status/idd-reads-at-a-glance.md) | 3288 |
 | [`intent-lifecycle`](plan-status/intent-lifecycle.md) | 65 |
 | [`knowledge-acts-on-what-it-learns`](plan-status/knowledge-acts-on-what-it-learns.md) | 82 |
-| [`landing-survives-any-session`](plan-status/landing-survives-any-session.md) | 12 |
+| [`landing-survives-any-session`](plan-status/landing-survives-any-session.md) | 10 |
 | [`mcp-transports-are-reliable`](plan-status/mcp-transports-are-reliable.md) | 201 |
 | [`measurements-are-tracked-over-time`](plan-status/measurements-are-tracked-over-time.md) | 17 |
 | [`merging-and-referencing-are-enforced`](plan-status/merging-and-referencing-are-enforced.md) | 36 |

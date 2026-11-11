@@ -25,3 +25,17 @@ evidence_required:
   - test
 serves: []
 created_at: 2026-11-11
+started_at: 2026-11-11T20:45:56Z
+started_event: sha256:8c40550371845601eb317d1ff344f7e014546568038e5d0bfd64b13b207ee5d4
+updated_at: 2026-11-11T20:47:48Z
+verified_at: 2026-11-11T20:46:40Z
+verified_event: sha256:237e32f06920c559ad801e80cb05b909210f71a68eebe18c6e57a895ed317cd5
+completed_at: 2026-11-11T20:47:48Z
+completed_event: sha256:d1d0247912fa5d828b5011ab88dee3dfc3d64c0551546fa783f212bef2c80251
+evidence:
+  - covers: "test"
+    type: test
+    command: "cargo test --lib -- --exact integration::tests::a_record_rewritten_under_a_reader_always_reads_a_holder / integration::tests::progress_rewrites_the_record_and_the_lease_is_still_its_holders, 50 runs each on lundra (8 in parallel, pinned beside 3 busy loops, inside integration:: 4 in parallel)"
+    result: "the new reader test failed 50 of 50 before the fix in both setups and passed 50 of 50 after; the flaky test did not fail in 200 runs before and passed 50 of 50 in each of three setups after; integration:: 406 of 406"
+    commit: 0b2a9cd0b795cf4d59b8c56756ac6a8798e14fa0
+    recorded_at: 2026-11-11T20:47:23Z
