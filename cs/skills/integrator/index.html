@@ -177,7 +177,7 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
       <code class="font-mono text-heading">majordomus://skill/integrator</code>
       <span class="mj-badge mj-badge--active relative" data-status="active"><span aria-hidden="true">•</span>aktivní</span>
 
-      <span class="font-mono text-xs text-body-subtle">verze 6</span><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">integrace</span><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">přistání</span><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">ci</span><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">release</span><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">delivery</span><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">mesh</span>
+      <span class="font-mono text-xs text-body-subtle">verze 7</span><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">integrace</span><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">přistání</span><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">ci</span><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">release</span><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">delivery</span><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">mesh</span>
     </div>
     <div class="mb-8 grid gap-4 sm:grid-cols-2">
       <div class="rounded-base border border-default bg-neutral-primary-soft p-4">
@@ -256,8 +256,14 @@ holds no executable, and every hook of a merge commit asks for one of the tree's
 the commit hook refused, leaving <code>MERGE_HEAD</code> staged. Build first (<code>cargo build --locked --manifest-path apps/majordomus-cli/Cargo.toml</code> in the worktree), then for each member
 <code>git merge --no-ff --no-commit &lt;member&gt;</code>, <code>scripts/derive</code> while the merge is staged,
 <code>git add -A</code>, <code>git commit</code>: the pre-commit pages gate refuses a merge commit whose derived
-data is stale (candidate s-20261028115702-2cb6-c77d6b5c9317, met again the same day), and a
-derive after the commit only adds a second commit. Rebuild between members only when a
+data is stale (candidate s-20261028115702-2cb6-c77d6b5c9317, met again the same day). Then,
+once after the last member's merge commit, derive again and commit what it changes on its
+own. <code>site/data/generated/delivery.json</code> observes HEAD by design (I3836), and a staged merge
+has not moved it, so the derive before the commit observed the pre-merge head and missed
+what the merges brought in (curated note s-20261106212411-be2e-16bd427c8946); the site check
+then refuses a homepage that counts more merged issues than the committed projection. This
+holds for <code>majordomus offload derive .</code> as for <code>scripts/derive</code>, and on 2026-11-10 it cost
+two pull requests (#2994, #2998) a full validate each. Rebuild between members only when a
 member changes the crate.</li>
 <li><strong>A build host is not a judging host.</strong> The host that builds, derives and commits a top may
 not carry CI's tools: on 2026-11-05 lundra refused train 25b's top at pre-push with
@@ -404,9 +410,9 @@ its run or commit, and the blocker with its owner where it stopped.</p>
 
     <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Odkud to pochází</h2>
     <dl class="mt-3 grid gap-x-6 gap-y-2 text-sm sm:grid-cols-[max-content_1fr]">
-      <dt class="text-body-subtle">kanonický soubor</dt><dd class="min-w-0"><a class="break-all font-mono text-fg-brand hover:underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/blob/e0cb96020de9fba56c441fa4a975dfc95bbdb2ad/.ai/repo/skills/integrator/SKILL.md">.ai/repo/skills/integrator/SKILL.md</a></dd>
-      <dt class="text-body-subtle">hash obsahu</dt><dd class="min-w-0 break-all font-mono text-heading">f6dbe17ed52dfd0e12d1522afb3c3f75cc094d9888537f2142ac6b0ad656119b</dd>
-      <dt class="text-body-subtle">kontrakt</dt><dd class="min-w-0"><a class="break-all font-mono text-fg-brand hover:underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/blob/e0cb96020de9fba56c441fa4a975dfc95bbdb2ad/share/schemas/majordomus/skill/skill.v1.schema.json">share/schemas/majordomus/skill/skill.v1.schema.json</a></dd>
+      <dt class="text-body-subtle">kanonický soubor</dt><dd class="min-w-0"><a class="break-all font-mono text-fg-brand hover:underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/blob/3a90e425b03bf5c9ef4494a5bb3b220654ea524e/.ai/repo/skills/integrator/SKILL.md">.ai/repo/skills/integrator/SKILL.md</a></dd>
+      <dt class="text-body-subtle">hash obsahu</dt><dd class="min-w-0 break-all font-mono text-heading">51978699e1a3308de263a3de1b9e3e17a8578f931cebcb30da0e6617d12d37fb</dd>
+      <dt class="text-body-subtle">kontrakt</dt><dd class="min-w-0"><a class="break-all font-mono text-fg-brand hover:underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/blob/3a90e425b03bf5c9ef4494a5bb3b220654ea524e/share/schemas/majordomus/skill/skill.v1.schema.json">share/schemas/majordomus/skill/skill.v1.schema.json</a></dd>
       <dt class="text-body-subtle">dostupné také jako</dt><dd class="min-w-0 font-mono text-heading">Zdroj MCP <code>majordomus://skill/integrator</code> · <code>majordomus skills show integrator</code></dd>
     </dl>
     <p class="mt-3 text-sm text-body">Tato stránka je vygenerována z výše uvedeného souboru pomocí <code class="font-mono text-heading">scripts/generate-site-data</code>; úprava stránky nic nezmění, úprava souboru změní všechny povrchy.</p>
@@ -461,9 +467,9 @@ its run or commit, and the blocker with its owner where it stopped.</p>
       <div class="min-w-0">
         <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">Projekt</h2><ul class="space-y-2 text-sm font-medium text-body">
           <li><a href="https://github.com/korczis/prismatic-majordomus" class="hover:text-heading hover:underline">GitHub</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/e0cb96020de9fba56c441fa4a975dfc95bbdb2ad/LICENSE" class="hover:text-heading hover:underline">Licence MIT</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/e0cb96020de9fba56c441fa4a975dfc95bbdb2ad/SECURITY.md" class="hover:text-heading hover:underline">Bezpečnostní politika</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/e0cb96020de9fba56c441fa4a975dfc95bbdb2ad/CONTRIBUTING.md" class="hover:text-heading hover:underline">Průvodce pro přispěvatele</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/3a90e425b03bf5c9ef4494a5bb3b220654ea524e/LICENSE" class="hover:text-heading hover:underline">Licence MIT</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/3a90e425b03bf5c9ef4494a5bb3b220654ea524e/SECURITY.md" class="hover:text-heading hover:underline">Bezpečnostní politika</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/3a90e425b03bf5c9ef4494a5bb3b220654ea524e/CONTRIBUTING.md" class="hover:text-heading hover:underline">Průvodce pro přispěvatele</a></li>
         </ul>
       </div>
     </div>
@@ -471,7 +477,7 @@ its run or commit, and the blocker with its owner where it stopped.</p>
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/cs/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.1</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/e0cb96020de9fba56c441fa4a975dfc95bbdb2ad" class="font-mono underline">e0cb960</a> · inputs <span class="font-mono">6a7bf4b70caa</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/cs/architecture/" class="underline">how this site is derived</a> names them.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.1</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/3a90e425b03bf5c9ef4494a5bb3b220654ea524e" class="font-mono underline">3a90e42</a> · inputs <span class="font-mono">d97a2ef22d53</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/cs/architecture/" class="underline">how this site is derived</a> names them.</p>
     </div>
   </div>
 </footer>

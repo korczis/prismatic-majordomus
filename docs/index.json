@@ -2,17 +2,17 @@
  "schema": 1,
  "generated_by": "scripts/lib/docs-index.mjs",
  "build": {
-  "commit": "e0cb96020de9fba56c441fa4a975dfc95bbdb2ad",
+  "commit": "3a90e425b03bf5c9ef4494a5bb3b220654ea524e",
   "source_version": "1.0.1",
-  "registry_fingerprint": "5186ee231ac67a8efc5594ea5677e539c4bf50508fc2102f621b79c495ac7cde"
+  "registry_fingerprint": "6dec91f4fb43a91747f0566dec6c887ecfddf96efe0a07ae742aad4ecf1e9d34"
  },
  "counts": {
-  "pages": 6472,
-  "capabilities": 3975,
+  "pages": 6474,
+  "capabilities": 3986,
   "cli_commands": 128,
   "http_routes": 219,
   "mcp_tools": 215,
-  "mcp_resources": 3801,
+  "mcp_resources": 3812,
   "modules": 96
  },
  "kinds": [
@@ -158,7 +158,7 @@
    "route": "/plan/",
    "title": null,
    "reason": null,
-   "count": 1231
+   "count": 1232
   },
   {
    "kind": "knowledge",
@@ -166,7 +166,7 @@
    "route": null,
    "title": null,
    "reason": "Curated knowledge is written for the worker reading the layer, not for a visitor: it is the orientation a session starts from, and it changes with the work rather than with the product.",
-   "count": 195
+   "count": 205
   },
   {
    "kind": "mesh-declaration",
@@ -15867,6 +15867,12 @@
    "route": "/cs/plan/i4572/",
    "title": "I4572 — mesh doctor fails a runtime that is closed while the declaration trusts this machine's key, and names the stale server as the cause",
    "description": "mesh.doctor compares the trust it reads from the trunk's declaration with the trust the running server holds, and when the declaration lists this machine's key while the runtime answers closed for that key, the runtime check fails (and with it the verdict) with the remedy `majordomus serve stop && majordomus serve ensure`, until I4571 makes the restart unnecessary.",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/plan/i4573/",
+   "title": "I4573 — A commit or push from a worktree with no active task is told so, in a supervised repository",
+   "description": "The pre-commit and pre-push hooks report an advisory finding, `no active task in this worktree: these commits are bound to no task (majordomus start ...)`, when the repository is supervised (its .ai/manifest.yaml exists) and the checkout has no open task, so work is not committed and pushed unbound without anyone noticing.",
    "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
   },
   {
@@ -33162,6 +33168,12 @@
    "section": "The plan"
   },
   {
+   "route": "/plan/i4573/",
+   "title": "I4573 — A commit or push from a worktree with no active task is told so, in a supervised repository",
+   "description": "The pre-commit and pre-push hooks report an advisory finding, `no active task in this worktree: these commits are bound to no task (majordomus start ...)`, when the repository is supervised (its .ai/manifest.yaml exists) and the checkout has no open task, so work is not committed and pushed unbound without anyone noticing.",
+   "section": "The plan"
+  },
+  {
    "route": "/plan/idd-reads-at-a-glance/",
    "title": "idd-reads-at-a-glance — The intent workspace reads at a glance and leads everywhere it names",
    "description": "The workspace reads in the order a person asks (what the intent is, what is missing, what to do next, the work, the evidence), every id on it is a link, its numbers are the intent's, its texts render through the UI's one prose renderer, it offers one primary action, and audit rules keep bare ids and raw markdown off every /ui page from now on.",
@@ -37106,7 +37118,7 @@
   {
    "route": "/rustdoc/",
    "title": "majordomus-cli 1.0.1 — Rust API reference",
-   "description": "The rustdoc reference of majordomus-cli 1.0.1, built from commit e0cb96020de9fba56c441fa4a975dfc95bbdb2ad: the public items of the library and of the executable, and the source they were built from.",
+   "description": "The rustdoc reference of majordomus-cli 1.0.1, built from commit 3a90e425b03bf5c9ef4494a5bb3b220654ea524e: the public items of the library and of the executable, and the source they were built from.",
    "section": "majordomus-cli 1.0.1 — Rust API reference"
   },
   {
