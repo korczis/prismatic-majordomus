@@ -8916,6 +8916,29 @@ fn a_record_that_never_reads_as_a_holder_is_shown_without_one() {
 /// Progress rewrites the lease's record with a newer `progressed_at`, and the record is still
 /// the lease's after it: renewed, kept alive, and removed when the lease is given back — the
 /// keep-alive never writes back the record a progress replaced.
+/// I4576: a reader that meets the record while its holder rewrites it every millisecond, and
+/// while a progress changes its length, always reads a holder: the record is never empty and
+/// never a prefix of itself.
+#[test]
+fn a_record_rewritten_under_a_reader_always_reads_a_holder() {
+    let root = scratch();
+    let lease = drain::IntegrationLease::acquire(&root, "master").unwrap();
+    let _alive = lease.keep_alive_every(std::time::Duration::from_millis(1));
+    for n in 0..2000usize {
+        if n % 50 == 0 {
+            // a longer, then a shorter record: the padding and the cut are both met
+            lease.progressed(&"phase ".repeat(1 + (n / 50) % 7));
+        }
+        let state = drain::IntegrationLease::read(&root, "master")
+            .unwrap()
+            .expect("the lease file is there");
+        assert!(
+            state.holder.is_some(),
+            "read {n} met a lease without a holder"
+        );
+    }
+}
+
 #[test]
 fn progress_rewrites_the_record_and_the_lease_is_still_its_holders() {
     let root = scratch();
