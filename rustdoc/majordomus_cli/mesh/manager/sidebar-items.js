@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":["closed_to"],"struct":["MeshRuntime","MeshStatus","Refusals"]};
+window.SIDEBAR_ITEMS = {"fn":["closed_key","closed_to"],"struct":["MeshRuntime","MeshStatus","Refusals"],"type":["Reopen"]};
