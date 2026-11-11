@@ -4,7 +4,7 @@ description: "Decide, from the integration engine's own assessment, whether a br
 ---
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: .ai/repo/skills/rebaser/SKILL.md; regenerate with `majordomus generate`
-     Generator: majordomus-cli 1.0.1 -->
+     Generator: majordomus-cli 1.0.2 -->
 
 # Bring a branch current by the cheapest safe strategy
 
