@@ -41,3 +41,4 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I3774` | shares .githooks/pre-push with I4570; they may not run concurrently |
 | WARN | `scope_conflict` | `I3774` | shares apps/majordomus-cli/src/mesh/cooperation.rs with I4571; they may not run concurrently |
 | WARN | `scope_conflict` | `I3774` | shares docs/MESH.md with I4572; they may not run concurrently |
+| WARN | `scope_conflict` | `I3774` | shares .githooks/pre-push with I4573; they may not run concurrently |
