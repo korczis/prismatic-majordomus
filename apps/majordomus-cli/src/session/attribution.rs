@@ -62,7 +62,11 @@ pub fn caller_key(explicit: Option<&str>) -> Option<String> {
     explicit
         .filter(|k| !k.is_empty())
         .map(str::to_string)
-        .or_else(|| std::env::var("MJ_SESSION_KEY").ok().filter(|k| !k.is_empty()))
+        .or_else(|| {
+            std::env::var("MJ_SESSION_KEY")
+                .ok()
+                .filter(|k| !k.is_empty())
+        })
         .or_else(provider_session_env)
 }
 
@@ -152,12 +156,14 @@ pub fn open_session_id(root: &Path, explicit: Option<&str>) -> Option<String> {
 /// or ambiguous history supplies no identity (`mj_task_opening_session`).
 pub fn task_opening_session(root: &Path, id: &str) -> Option<String> {
     let read = Ledger::of(root).read();
+    // every event the ledger hands back is an object (it counts any other line as corrupt),
+    // so a field is read straight off it: an `as_object()?` here would be a return no line
+    // can take
     let mut opened = read.events.iter().filter_map(|line| {
-        let obj = line.as_object()?;
-        let event = obj.get("event")?.as_str()?;
-        let task = obj.get("task_id")?.as_str()?;
+        let event = line.get("event")?.as_str()?;
+        let task = line.get("task_id")?.as_str()?;
         (event == "task.started" && task == id).then(|| {
-            obj.get("session")
+            line.get("session")
                 .and_then(|s| s.as_str())
                 .unwrap_or_default()
                 .to_string()
@@ -202,13 +208,9 @@ pub struct Attribution {
 /// owner, and the caller continuing it carries it on.
 pub fn record_attribution(root: &Path, explicit: Option<&str>) -> Attribution {
     let session = open_session_id(root, explicit);
-    let task = active_task(root).filter(|id| {
-        match task_opening_session(root, id) {
-            Some(opened) => {
-                Some(&opened) == session.as_ref() || !session_is_open(root, &opened)
-            }
-            None => true,
-        }
+    let task = active_task(root).filter(|id| match task_opening_session(root, id) {
+        Some(opened) => Some(&opened) == session.as_ref() || !session_is_open(root, &opened),
+        None => true,
     });
     Attribution { session, task }
 }
@@ -295,7 +297,10 @@ mod tests {
             .filter_map(|row| row.split_whitespace().nth(12))
             .filter(|v| *v != "-")
             .collect();
-        assert_eq!(table, PROVIDER_SESSION_VARS, "the port and lib/capture.sh disagree");
+        assert_eq!(
+            table, PROVIDER_SESSION_VARS,
+            "the port and lib/capture.sh disagree"
+        );
     }
 
     /// I4291: two episodes in one checkout. Each caller names its own episode, the pointer
@@ -318,11 +323,18 @@ mod tests {
 
         let a = record_attribution(root, Some("worker-a"));
         assert_eq!(a.session.as_deref(), Some("s-a"));
-        assert_eq!(a.task.as_deref(), Some("t-1"), "A opened the task and relates it");
+        assert_eq!(
+            a.task.as_deref(),
+            Some("t-1"),
+            "A opened the task and relates it"
+        );
 
         let b = record_attribution(root, Some("worker-b"));
         assert_eq!(b.session.as_deref(), Some("s-b"));
-        assert_eq!(b.task, None, "B may not relate the task A, still open, opened");
+        assert_eq!(
+            b.task, None,
+            "B may not relate the task A, still open, opened"
+        );
 
         // a key that names no open episode names nothing, never the pointer's
         assert_eq!(open_session_id(root, Some("worker-gone")), None);
@@ -369,6 +381,76 @@ mod tests {
             "another checkout's episode does not make this one ambiguous"
         );
         clear_env();
+    }
+
+    /// What cannot be read names nobody: no open record at all, an open record that does not
+    /// parse, ledger lines that are not a task's opening, and a current task that is absent,
+    /// unparsable or another checkout's. A current task whose opening the ledger does not
+    /// hold has no live owner, and the caller carries it on.
+    #[test]
+    fn unreadable_or_foreign_records_name_nobody() {
+        let _env = ENV.lock().unwrap_or_else(|e| e.into_inner());
+        clear_env();
+        let dir = tempfile::tempdir().unwrap();
+        let root = dir.path();
+        // no open directory, then an empty one
+        assert_eq!(open_session_id(root, None), None);
+        assert!(!session_is_open(root, "s-a"));
+        std::fs::create_dir_all(root.join(OPEN_DIR)).unwrap();
+        assert_eq!(open_session_id(root, None), None, "nobody is open here");
+        // an open record that does not parse
+        std::fs::write(
+            root.join(OPEN_DIR).join("worker-x.yaml"),
+            "\tsession_id: s-x\n",
+        )
+        .unwrap();
+        assert_eq!(open_session_id(root, Some("worker-x")), None);
+        // ledger lines that are not a task's opening
+        let state = root.join(".ai/local/state");
+        std::fs::write(
+            state.join("ledger.jsonl"),
+            "{\"ts\":\"x\"}\n{\"event\":1}\n{\"event\":\"task.started\"}\n{\"event\":\"task.started\",\"task_id\":7}\n",
+        )
+        .unwrap();
+        assert_eq!(task_opening_session(root, "t-9"), None);
+        // no current task, one that does not parse, and one of another checkout
+        assert_eq!(record_attribution(root, None).task, None);
+        std::fs::write(state.join("current.yaml"), "\tid: t-9\n").unwrap();
+        assert_eq!(record_attribution(root, None).task, None);
+        std::fs::write(
+            state.join("current.yaml"),
+            "id: t-9\nworktree: /somewhere/else\n",
+        )
+        .unwrap();
+        assert_eq!(record_attribution(root, None).task, None);
+        // this checkout's task, opened by nobody the ledger names: carried on
+        std::fs::write(
+            state.join("current.yaml"),
+            format!("id: t-9\nworktree: {}\n", root.display()),
+        )
+        .unwrap();
+        assert_eq!(record_attribution(root, None).task.as_deref(), Some("t-9"));
+        clear_env();
+    }
+
+    /// A capability call's caller is the key of the episode its connection attached, and a
+    /// connection that attached none, or no connection, has none.
+    #[test]
+    fn a_connection_names_the_key_of_the_episode_it_attached() {
+        let peers = crate::peers::PeerBoard::new();
+        let board = crate::episodes::EpisodeBoard::new();
+        let peer = peers.attach(crate::peers::Transport::Http);
+        assert_eq!(connection_key(&board, None), None);
+        assert_eq!(
+            connection_key(&board, Some(&peer)),
+            None,
+            "no episode attached"
+        );
+        board.attach(&peer, "worker-a", "generic");
+        assert_eq!(
+            connection_key(&board, Some(&peer)).as_deref(),
+            Some("worker-a")
+        );
     }
 
     /// A task started twice, or by nobody, supplies no identity.

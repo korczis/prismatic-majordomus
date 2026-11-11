@@ -753,6 +753,49 @@ mod tests {
         }
     }
 
+    /// I4291: `reasoning.record` names the episode of the connection that called it, not the
+    /// checkout's pointer, and relates no task while none is open.
+    #[test]
+    fn a_record_names_the_episode_of_the_connection_that_wrote_it() {
+        use crate::reasoning::record::{AssessmentInput, ReasoningInput};
+        let fixture = crate::synthetic::SyntheticRepository::small().unwrap();
+        let root = fixture.root();
+        let app = crate::app::App::load(&crate::cli::RepoArgs {
+            repo: Some(root.to_path_buf()),
+            discovery: crate::cli::DiscoveryMode::Filesystem,
+            share: Some(std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../share")),
+            ..Default::default()
+        })
+        .unwrap();
+        // a board that runs no capture tool: the episode is attached in memory only
+        let mut ctx = (*app.context).clone();
+        ctx.episodes = std::sync::Arc::new(crate::episodes::EpisodeBoard::new());
+        let open = root.join(crate::session::store::OPEN_DIR);
+        std::fs::create_dir_all(&open).unwrap();
+        for (key, id) in [("worker-a", "s-a"), ("worker-b", "s-b")] {
+            std::fs::write(
+                open.join(format!("{key}.yaml")),
+                format!("session_id: {id}\nworktree: {}\n", root.display()),
+            )
+            .unwrap();
+        }
+        let peer = ctx.peers.attach(crate::peers::Transport::Http);
+        ctx.episodes.attach(&peer, "worker-a", "generic");
+        let caller = ctx.for_caller(peer);
+        let recorded = reasoning_record(
+            &caller,
+            ReasoningRecordInput {
+                record: ReasoningInput::Assessment(AssessmentInput {
+                    subject: "whose record this is".into(),
+                    ..Default::default()
+                }),
+            },
+        )
+        .unwrap();
+        assert_eq!(recorded.record.session.as_deref(), Some("s-a"));
+        assert_eq!(recorded.record.task, crate::reasoning::store::UNTASKED);
+    }
+
     #[test]
     fn only_the_record_writes() {
         use crate::capability::model::Effect;

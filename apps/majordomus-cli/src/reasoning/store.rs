@@ -1062,6 +1062,37 @@ pub fn redact(body: ReasoningBody) -> (ReasoningBody, Vec<String>) {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// I4291: a record is attributed to its writer's episode, and to the task only when no
+    /// other episode that is still open opened it.
+    #[test]
+    fn a_record_is_attributed_to_its_writers_episode_and_task() {
+        let dir = tempfile::tempdir().unwrap();
+        let state = dir.path().join(".ai/local/state");
+        std::fs::create_dir_all(state.join("sessions-open")).unwrap();
+        for (key, id) in [("worker-a", "s-a"), ("worker-b", "s-b")] {
+            std::fs::write(
+                state.join(format!("sessions-open/{key}.yaml")),
+                format!("session_id: {id}\n"),
+            )
+            .unwrap();
+        }
+        std::fs::write(
+            state.join("ledger.jsonl"),
+            "{\"event\":\"task.started\",\"task_id\":\"t-1\",\"session\":\"s-a\"}\n",
+        )
+        .unwrap();
+        std::fs::write(state.join("current.yaml"), "id: t-1\n").unwrap();
+        let store = Store::at(dir.path());
+        assert_eq!(
+            store.attribution(Some("worker-a")),
+            ("t-1".to_string(), Some("s-a".to_string()))
+        );
+        assert_eq!(
+            store.attribution(Some("worker-b")),
+            (UNTASKED.to_string(), Some("s-b".to_string()))
+        );
+    }
     use crate::reasoning::availability::{AdvisorStatus, ReasoningMode};
     use crate::reasoning::catalogue::AdvisorTransport;
 

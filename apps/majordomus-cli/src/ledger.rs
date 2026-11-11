@@ -620,6 +620,30 @@ mod tests {
         assert_eq!(ids, ["i-1", "i-2", "i-3"]);
     }
 
+    /// I4291: an event written for a caller names the caller's own open episode.
+    #[test]
+    fn an_event_names_the_callers_open_episode() {
+        let dir = tempdir();
+        let open = dir.path().join(crate::session::store::OPEN_DIR);
+        std::fs::create_dir_all(&open).unwrap();
+        std::fs::write(
+            open.join("worker-a.yaml"),
+            format!("session_id: s-a\nworktree: {}\n", dir.path().display()),
+        )
+        .unwrap();
+        let line = append_by(
+            dir.path(),
+            &vocabulary(),
+            &git(),
+            "2026-09-11T12:00:00Z",
+            "plan_start",
+            &[("issue", "i-1".into())],
+            Some("worker-a"),
+        )
+        .unwrap();
+        assert!(line.contains(r#""session":"s-a""#), "{line}");
+    }
+
     /// A line no reader can parse costs that line and is counted, never the file.
     #[test]
     fn an_unreadable_line_is_skipped_and_counted() {

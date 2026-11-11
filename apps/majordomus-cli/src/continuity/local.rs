@@ -650,7 +650,11 @@ mod tests {
         // the pointer names another worker's episode, opened last; it is never the caller's
         std::fs::write(state.join("session-current.yaml"), "session_id: s-b\n").unwrap();
         assert_eq!(open_episode(root, me).as_deref(), Some("s-1"));
-        assert_eq!(open_episode(root, Some("worker-b")), None, "B's key opened nothing");
+        assert_eq!(
+            open_episode(root, Some("worker-b")),
+            None,
+            "B's key opened nothing"
+        );
         // the same directory under another spelling is still this checkout
         write(&format!("{}/lib/..", root.display()), "s-2");
         std::fs::create_dir_all(root.join("lib")).unwrap();
