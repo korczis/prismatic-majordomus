@@ -381,13 +381,13 @@ fn write_record(file: &fs::File, token: &str) -> std::io::Result<()> {
     // state a reader can meet is a whole record with trailing whitespace, which `read` trims.
     // Emptying the file first, as this did, left a window in which a reader met no holder at
     // all, and a loaded machine held it open for longer than the reader's patience (I4576).
-    let old = file.metadata()?.len();
+    // One fallible expression and no early return: a file whose length cannot be read is
+    // treated as empty (nothing to pad), and the cut runs only after the write succeeded.
+    let old = file.metadata().map_or(0, |m| m.len());
     let mut bytes = token.as_bytes().to_vec();
-    if (bytes.len() as u64) < old {
-        bytes.resize(old as usize, b' ');
-    }
-    file.write_all_at(&bytes, 0)?;
-    file.set_len(token.len() as u64)
+    bytes.resize(bytes.len().max(old as usize), b' ');
+    file.write_all_at(&bytes, 0)
+        .and_then(|()| file.set_len(token.len() as u64))
 }
 
 /// A lease's record kept fresh by a thread, until this is dropped.
@@ -3253,6 +3253,41 @@ pub fn report_left_branches(root: &Path) -> Result<Option<LeftBranchReport>, Str
 pub fn recorded_left_branches(root: &Path) -> Option<LeftBranchReport> {
     let text = fs::read_to_string(super::state_path(root, LEFT_BRANCHES_FILE)).ok()?;
     serde_json::from_str(&text).ok()
+}
+
+#[cfg(test)]
+mod lease_record_tests {
+    //! The holder record is replaced in place without an empty or a partial state (I4576).
+
+    use super::*;
+
+    /// A shorter record written over a longer one is padded while it is written and cut to
+    /// itself after: the file ends exactly with the shorter record, and a longer one written
+    /// next replaces it whole.
+    #[test]
+    fn a_shorter_record_over_a_longer_one_ends_exactly_with_itself() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("lease");
+        let file = fs::OpenOptions::new()
+            .read(true)
+            .write(true)
+            .create(true)
+            .truncate(true)
+            .open(&path)
+            .unwrap();
+        let long = r#"{"holder":"a much longer record than the next"}"#;
+        let short = r#"{"holder":"short"}"#;
+        write_record(&file, long).unwrap();
+        assert_eq!(fs::read_to_string(&path).unwrap(), long);
+        write_record(&file, short).unwrap();
+        assert_eq!(
+            fs::read_to_string(&path).unwrap(),
+            short,
+            "no padding is left behind"
+        );
+        write_record(&file, long).unwrap();
+        assert_eq!(fs::read_to_string(&path).unwrap(), long);
+    }
 }
 
 #[cfg(test)]
