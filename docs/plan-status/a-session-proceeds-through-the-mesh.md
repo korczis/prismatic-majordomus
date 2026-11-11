@@ -89,5 +89,4 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I4007` | shares apps/majordomus-cli/src/commands/serve.rs with I4418; they may not run concurrently |
 | WARN | `scope_conflict` | `I4008` | shares .githooks/pre-push with I4357; they may not run concurrently |
 | WARN | `scope_conflict` | `I4008` | shares scripts/ci/run-plan with I4468; they may not run concurrently |
-| WARN | `scope_conflict` | `I4008` | shares .githooks/pre-push with I4570; they may not run concurrently |
 | WARN | `scope_conflict` | `I4008` | shares .githooks/pre-push with I4573; they may not run concurrently |
