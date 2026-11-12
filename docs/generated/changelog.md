@@ -7,6 +7,60 @@ Every entry below is derived: a section per release the layer records, its decis
 
 Current version: **1.0.2**
 
+## v1.0.2 — 2026-11-11
+
+### Fixed
+
+- **mesh**: closed_key has no early return that can never be taken (I4572) (`3b9256887`)
+- **mesh**: a running server opens or closes its mesh as the trunk trusts its key (I4571) (`2ef7275e7`)
+- **mesh**: the doctor fails a runtime still closed to a key the declaration trusts (I4572) (`8407657c9`)
+- **release**: a tag is excused until its grace ends (I4341) (`1992933d3`)
+
+### Documentation
+
+- **knowledge**: the offload derive and allocate after a restart are recorded (I4573) (`6fa235022`)
+- **knowledge**: evolve 2026-11-10 second run, integrator v7 and I4573 from the mesh (`60fc3aae7`)
+- **plan**: I4567-I4572 name their case files, not the whole test/cases directory (`cb86f6825`)
+- **plan**: I4568 serves every-commit-names-its-issue, the criterion of the milestone it moved to (`9b19ab445`)
+- **knowledge**: the continuity-resolve candidate is left to #2963, which promoted it first (I4567) (`b282d1976`)
+- **knowledge**: evolve 2026-11-10, candidates decided and I4567-I4572 filed from the mesh (`d8acd7aef`)
+
+### Tests
+
+- **mesh**: unit tests reach every branch of the own-key retrust and of close (I4571) (`38dd59a7b`)
+- **mesh**: a unit test covers how closed_key reads a closed runtime's key (I4572) (`29298a4ca`)
+- **release**: cases 3029 and 3021 measure their fixture under MJ_ROOT (I4341) (`5577682d3`)
+
+### Pipeline
+
+- **validate**: the record's dispatch approves the record pull request's own run (I2717) (`f857cc508`)
+
+### Housekeeping
+
+- **release**: 1.0.2 (`16e9b8257`)
+- **derive**: derive the merge of origin/master into the I4571 branch (I4571) (`4fb66e554`)
+- **derive**: derive the committed merge of master into the evolve branch (I4573) (`49c234ae0`)
+- **derive**: derive the merge of the I4572 closed_key fix into the I4571 branch (I4571) (`722be9160`)
+- **derive**: derive the closed_key fix on the I4572 branch (I4572) (`f892c3845`)
+- **derive**: derive the merge of the I4572 test head into the I4571 branch (I4571) (`794bb8e2f`)
+- **derive**: derive the closed_key unit test on the I4572 branch (I4572) (`77797a807`)
+- **derive**: derive the merge of the I4572 head into the I4571 branch (I4571) (`dadca79dd`)
+- **derive**: derive the committed merge of master into the I2717 branch (I2717) (`527e8c5d9`)
+- **derive**: derive the merge of origin/master into the I4572 branch (I4572) (`ef1157190`)
+- **derive**: derive the merge of origin/master into the I2717 branch (I2717) (`4002bd277`)
+- **derive**: derive the merge of origin/master into the I4341 branch (I4341) (`edce8d2e7`)
+- **release**: record v1.0.1 and the metadata it publishes (`62959ebc1`)
+
+### Published
+
+- `macos-aarch64` — majordomus-v1.0.2-aarch64-apple-darwin.tar.gz (`4d08be44a585`)
+- `macos-x86_64` — majordomus-v1.0.2-x86_64-apple-darwin.tar.gz (`e359a27dac15`)
+- `linux-x86_64-gnu` — majordomus-v1.0.2-x86_64-unknown-linux-gnu.tar.gz (`3db0ed5a03a2`)
+- `linux-x86_64-musl` — majordomus-v1.0.2-x86_64-unknown-linux-musl.tar.gz (`af88b731a712`)
+- `linux-aarch64-gnu` — majordomus-v1.0.2-aarch64-unknown-linux-gnu.tar.gz (`6fd4a33f5efd`)
+- `linux-aarch64-musl` — majordomus-v1.0.2-aarch64-unknown-linux-musl.tar.gz (`2d7248fc78e0`)
+
+
 ## v1.0.1 — 2026-11-09
 
 ### Added
