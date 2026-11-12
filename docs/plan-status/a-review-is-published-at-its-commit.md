@@ -63,6 +63,8 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I4306` | shares docs/CLI.md with I4467; they may not run concurrently |
 | WARN | `scope_conflict` | `I4306` | shares scripts/ci/design-check with I4468; they may not run concurrently |
 | WARN | `scope_conflict` | `I4306` | shares docs/PERFORMANCE.md with I4500; they may not run concurrently |
+| WARN | `scope_conflict` | `I4306` | shares docs/MESH.md with I4571; they may not run concurrently |
+| WARN | `scope_conflict` | `I4306` | shares docs/MESH.md with I4572; they may not run concurrently |
 | WARN | `scope_conflict` | `I4316` | shares scripts/ci/design-check with I4468; they may not run concurrently |
 | WARN | `scope_conflict` | `I4316` | shares .ai/repo/adrs/0036-the-design-system-is-a-typed-declaration-and-every-first-party-surface-consumes-its-projections.md with I4481; they may not run concurrently |
 | WARN | `scope_conflict` | `I4316` | shares .ai/repo/adrs/0036-the-design-system-is-a-typed-declaration-and-every-first-party-surface-consumes-its-projections.md with I4500; they may not run concurrently |

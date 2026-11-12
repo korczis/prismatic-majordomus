@@ -166,6 +166,14 @@ fn activate_mesh(ctx: &Arc<Context>, version: &str, url: &str, hosting: &MeshHos
         .unwrap_or_default();
     let node = identity.public.node_id.clone();
     let identity = Arc::new(identity);
+    // the trust list may close this runtime now or later, and listing the key again opens it
+    // at the next generation the server reads, with this same activation (I4571)
+    {
+        let (version, url, hosting) = (version.to_string(), url.to_string(), hosting.clone());
+        ctx.mesh.reopen_with(Arc::new(move |ctx: &Arc<Context>| {
+            activate_mesh(ctx, &version, &url, &hosting)
+        }));
+    }
     match ctx.mesh.activate_as(
         &config,
         Arc::clone(&identity),
@@ -834,6 +842,210 @@ mod tests {
         activate_mesh(&ctx, crate::VERSION, "http://127.0.0.1:1", &hosted);
         let reason = ctx.mesh.status().reason.unwrap_or_default();
         assert!(reason.contains(&format!("{var} is not set")), "{reason}");
+    }
+
+    /// A server whose own key the declaration does not list keeps its mesh closed, and opens
+    /// it with no restart once a generation of the repository it reads lists the key; a
+    /// generation that withdraws the key closes it again, and one that lists it once more
+    /// opens it: the own-key half of the reload I2134 began (I4571). A generation that does
+    /// not move the key, and a stopped runtime, change nothing.
+    #[test]
+    fn a_closed_mesh_opens_when_a_new_generation_trusts_its_key() {
+        let fixture = SyntheticRepository::small().unwrap();
+        let sources = fixture.root().join(".ai/repo/knowledge/sources.yaml");
+        let mut text = std::fs::read_to_string(&sources).unwrap();
+        text.push_str("  - id: mesh-declaration\n    kind: mesh-declaration\n    discovery: vcs\n    pathspec: ':(glob).ai/repo/mesh/*.yaml'\n    required: false\n");
+        std::fs::write(&sources, text).unwrap();
+        let dir = fixture.root().join(".ai/repo/mesh");
+        std::fs::create_dir_all(&dir).unwrap();
+        let declare = |allow: &str| {
+            std::fs::write(
+                dir.join("majordomus.yaml"),
+                format!("schema: mesh/v1\nkind: mesh-declaration\nid: majordomus\nenabled: true\nmulticast:\n  enabled: false\ntailscale:\n  enabled: false\ncooperation:\n  enabled: false\ntrust:\n  policy: deny_unknown\n  allow: [{allow}]\n"),
+            )
+            .unwrap();
+        };
+        let load = || {
+            App::load(&RepoArgs {
+                repo: Some(fixture.root().to_path_buf()),
+                discovery: DiscoveryMode::Filesystem,
+                share: Some(std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../share")),
+                ..Default::default()
+            })
+            .unwrap()
+            .context
+        };
+        let seed = "08".repeat(32);
+        let key = crate::mesh::NodeIdentity::from_seed_hex(&seed, "test")
+            .unwrap()
+            .public
+            .public_key;
+        // a variable no other test reads: the node key of this server, 32 bytes of hex
+        let var = "MAJORDOMUS_TEST_I4571_SHARED_NODE_SEED";
+        std::env::set_var(var, &seed);
+        let hosting = MeshHosting {
+            node_seed_env: Some(var.into()),
+            advertise: None,
+        };
+        use crate::capability::builtin::mesh::OwnTrust;
+        let own = crate::capability::builtin::mesh::retrust_own_key;
+
+        // started unlisted: closed, and nothing a reload of the same trust opens
+        declare("");
+        let first = Arc::new(load());
+        activate_mesh(&first, crate::VERSION, "http://127.0.0.1:1", &hosting);
+        assert!(!first.mesh.status().active);
+        assert_eq!(first.mesh.closed_key().as_deref(), Some(key.as_str()));
+        let same = Arc::new(load().continuing(&first));
+        assert_eq!(
+            own(&same),
+            OwnTrust::Unchanged,
+            "still unlisted: still closed"
+        );
+        assert!(!first.mesh.status().active);
+
+        // the key listed in the next generation: the same runtime opens, as the server's key
+        declare(&format!("\"{key}\""));
+        let next = Arc::new(load().continuing(&first));
+        assert_eq!(
+            own(&next),
+            OwnTrust::Opened,
+            "{:?}",
+            next.mesh.status().reason
+        );
+        let status = first.mesh.status();
+        assert!(
+            status.active,
+            "the runtime is the process's: {:?}",
+            status.reason
+        );
+        assert_eq!(status.identity.unwrap().public_key, key);
+        assert!(first.mesh.closed_key().is_none() && first.mesh.reopener().is_none());
+        assert_eq!(
+            own(&next),
+            OwnTrust::Unchanged,
+            "open already: nothing to do again"
+        );
+
+        // withdrawn in the next: closed, with the reason that names the key
+        declare("");
+        let withdrawn = Arc::new(load().continuing(&first));
+        assert_eq!(own(&withdrawn), OwnTrust::Closed);
+        let status = first.mesh.status();
+        assert!(!status.active);
+        assert!(status.reason.unwrap_or_default().starts_with("closed: "));
+        assert_eq!(first.mesh.closed_key().as_deref(), Some(key.as_str()));
+        // and listed once more: open again, through the same activation
+        declare(&format!("\"{key}\""));
+        let again = Arc::new(load().continuing(&first));
+        assert_eq!(own(&again), OwnTrust::Opened);
+        assert!(first.mesh.status().active);
+        first.mesh.stop();
+
+        // a runtime stopped while closed is never opened by a reload
+        declare("");
+        let stopped = Arc::new(load());
+        activate_mesh(&stopped, crate::VERSION, "http://127.0.0.1:1", &hosting);
+        assert!(stopped.mesh.closed_key().is_some());
+        stopped.mesh.stop();
+        declare(&format!("\"{key}\""));
+        let after = Arc::new(load().continuing(&stopped));
+        assert_eq!(own(&after), OwnTrust::Unchanged);
+        assert!(!stopped.mesh.status().active);
+    }
+
+    /// The own-key trust of a server's runtime moves nothing where nothing may move it: no
+    /// declaration, a declaration that switched the mesh off, and an activation that ran again
+    /// and still did not open (I4571).
+    #[test]
+    fn own_trust_is_unchanged_without_a_declaration_when_disabled_and_when_reopening_does_not_open()
+    {
+        use crate::capability::builtin::mesh::{retrust_own_key, OwnTrust};
+        let fixture = SyntheticRepository::small().unwrap();
+        let load = || {
+            Arc::new(
+                App::load(&RepoArgs {
+                    repo: Some(fixture.root().to_path_buf()),
+                    discovery: DiscoveryMode::Filesystem,
+                    share: Some(
+                        std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../share"),
+                    ),
+                    ..Default::default()
+                })
+                .unwrap()
+                .context,
+            )
+        };
+        let opened = Arc::new(std::sync::atomic::AtomicUsize::new(0));
+        let counting = {
+            let opened = Arc::clone(&opened);
+            Arc::new(move |_: &Arc<Context>| {
+                opened.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
+            })
+        };
+
+        // no mesh declaration at all: a server's runtime is left as it is
+        let bare = load();
+        bare.mesh.reopen_with(counting.clone());
+        assert!(crate::capability::builtin::mesh::declaration(&bare).is_none());
+        assert_eq!(retrust_own_key(&bare), OwnTrust::Unchanged);
+
+        // the declaration, from here on: this runtime closed to the key `seed` names
+        let sources = fixture.root().join(".ai/repo/knowledge/sources.yaml");
+        let mut text = std::fs::read_to_string(&sources).unwrap();
+        text.push_str("  - id: mesh-declaration\n    kind: mesh-declaration\n    discovery: vcs\n    pathspec: ':(glob).ai/repo/mesh/*.yaml'\n    required: false\n");
+        std::fs::write(&sources, text).unwrap();
+        let dir = fixture.root().join(".ai/repo/mesh");
+        std::fs::create_dir_all(&dir).unwrap();
+        let identity =
+            || crate::mesh::NodeIdentity::from_seed_hex(&"09".repeat(32), "test").unwrap();
+        let key = identity().public.public_key;
+        let declare = |enabled: bool| {
+            std::fs::write(
+                dir.join("majordomus.yaml"),
+                format!("schema: mesh/v1\nkind: mesh-declaration\nid: majordomus\nenabled: {enabled}\nmulticast:\n  enabled: false\ntailscale:\n  enabled: false\ncooperation:\n  enabled: false\ntrust:\n  policy: deny_unknown\n  allow: [\"{key}\"]\n"),
+            )
+            .unwrap();
+        };
+        let unlisted: crate::mesh::MeshConfig = serde_json::from_value(serde_json::json!({
+            "schema": "mesh/v1", "kind": "mesh-declaration", "id": "majordomus", "enabled": true,
+            "multicast": { "enabled": false }, "tailscale": { "enabled": false },
+        }))
+        .unwrap();
+
+        // switched off since: nothing moves, although the key is listed
+        declare(false);
+        let off = load();
+        off.mesh
+            .activate(&unlisted, identity(), vec![], vec![], "test")
+            .unwrap();
+        off.mesh.reopen_with(counting.clone());
+        assert!(off.mesh.closed_key().is_some());
+        assert_eq!(retrust_own_key(&off), OwnTrust::Unchanged);
+
+        // listed and on, but the activation run again does not open: still unchanged
+        declare(true);
+        let stuck = load();
+        stuck
+            .mesh
+            .activate(&unlisted, identity(), vec![], vec![], "test")
+            .unwrap();
+        stuck.mesh.reopen_with(counting.clone());
+        assert_eq!(stuck.mesh.closed_key().as_deref(), Some(key.as_str()));
+        assert_eq!(retrust_own_key(&stuck), OwnTrust::Unchanged);
+        assert!(!stuck.mesh.status().active);
+
+        // declined for another reason than trust, and not active: nothing to close or open
+        let declined = load();
+        declined.mesh.decline("the node identity did not load");
+        declined.mesh.reopen_with(counting.clone());
+        assert!(declined.mesh.closed_key().is_none());
+        assert_eq!(retrust_own_key(&declined), OwnTrust::Unchanged);
+        assert_eq!(
+            opened.load(std::sync::atomic::Ordering::SeqCst),
+            1,
+            "the activation ran exactly once, for the listed key"
+        );
     }
 
     /// A server bound to every interface advertises the addresses the machine holds when a

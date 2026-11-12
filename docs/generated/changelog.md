@@ -1,11 +1,80 @@
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: the layer's release records, the decisions dated in each release's window, and the commits in its range; regenerate with `majordomus generate`
-     Generator: majordomus-cli 1.0.1 -->
+     Generator: majordomus-cli 1.0.2 -->
 # Changelog
 
 Every entry below is derived: a section per release the layer records, its decisions the ADRs dated inside that release's window, its changes the conventional commits in its range, its artifacts the record's own evidence. Nothing here is written by hand, and `majordomus generate changelog --check` fails when it stops matching the tree.
 
-Current version: **1.0.1**
+Current version: **1.0.2**
+
+## v1.0.1 — 2026-11-09
+
+### Added
+
+- **skills**: project-picture builds an evidenced picture of a project from every reachable source (`98590f25b`)
+- **site**: the live site is probed in a real browser after every deploy and release (I4530) (`c554ad638`)
+- **site**: a published page reads delivery at the commit it was built from (I3769) (`c69372ff4`)
+
+### Fixed
+
+- **ci**: a plan-record pull request's case 47 gets the executable (`bfb8fdfd4`)
+- **ci**: a cancelled run reports no false red and a superseded head yields (`414057978`)
+- **pages**: the executable's download is a gating step (#2960) (`5945fd62a`)
+- **ci**: a build with no delivery reading is not held to the build commit (I3769) (`a95800664`)
+- **site**: a build without the executable reads the committed delivery projection (`517211a54`)
+- **plan**: I4530 serves the criterion the-published-page-is-probed (`882f5df26`)
+- **github-sync**: the creation joins a closed milestone by number; the move stays as it was (I4529) (`22e476595`)
+- **site**: the release probe fails its pipelines closed (I4530) (`e34bfa6ca`)
+- **ci**: the release probe sets pipefail beside set -e (`7127f4c48`)
+- **site**: the release probe is a declared shell unit and its skills raise their versions (I4530) (`c8d9aaf6e`)
+- **ci**: the release probe is declared in the shell inventory and its skills raise their versions (`c80f5c4f5`)
+- **site**: the pages name the pre-release that was published, not only the one recorded (`f4e883a1f`)
+- **github-sync**: an issue joins a closed milestone by number (I4529) (`a582072da`)
+- **site**: the delivery panel says when it was verified (`34c1bc338`)
+- **site**: the delivery panel says when it was verified (`c2c814994`)
+- **ui**: the Cockpit and UI stylesheets read Flowbite's own sources (`8870a23ae`)
+
+### Documentation
+
+- **plan**: the hosted CI cap and the Pages size limit are planned (I4532, I4533) (`f1969b65d`)
+- **knowledge**: evolve 2026-11-06, the release night's lessons and the outbox of 93 carried (`a2fc231b4`)
+
+### Tests
+
+- **pages**: case 400 finds the deploy job's build inside a run block (#2960) (`cbab9285d`)
+- **site**: case 3742 names the source of the function it lifts for shellcheck (`c38abdaf7`)
+- **ui**: case 85 holds both stylesheet entries to Flowbite's plugin and sources (`8c1b854ed`)
+
+### Pipeline
+
+- **pages**: the deploy reads delivery with the executable its run built (`4e26f2f91`)
+- **release**: the publish job's bound fits its checkout, build and derive (`ddef2b1f5`)
+- **validate**: the rust job sets up the site tools, so the release-record cases can build a site (`c9e5e6674`)
+
+### Housekeeping
+
+- **release**: 1.0.1 (`5d2ee3986`)
+- **derive**: delivery.json observes the committed top (`cd61dd699`)
+- **release**: the record of v1.0.0 names the tagged commit and GitHub's publish time (`0a4f34f0c`)
+- **derive**: delivery.json observes the committed top (`f082b595f`)
+- **release**: record v1.0.0 and the metadata it publishes (`9b558b4d2`)
+- **derive**: delivery.json observes the committed top (`e99509895`)
+- **release**: record v1.0.0 and the metadata it publishes (`119e8ab81`)
+- **derive**: delivery.json observes the committed top (`f1a6facaf`)
+- **derive**: delivery.json observes the committed top (`c1eb7e408`)
+- **derive**: delivery.json observes the committed merge (`8ddcaf9c4`)
+- **derive**: delivery.json observes the committed merge 891473c56f6, not the pre-merge head (`9f76b04ce`)
+- **release**: record v1.0.0-alpha.10 and the metadata it publishes (`745db2ea2`)
+
+### Published
+
+- `macos-aarch64` — majordomus-v1.0.1-aarch64-apple-darwin.tar.gz (`7870d8142189`)
+- `macos-x86_64` — majordomus-v1.0.1-x86_64-apple-darwin.tar.gz (`a72a1b0a0376`)
+- `linux-x86_64-gnu` — majordomus-v1.0.1-x86_64-unknown-linux-gnu.tar.gz (`524adfd3f2a3`)
+- `linux-x86_64-musl` — majordomus-v1.0.1-x86_64-unknown-linux-musl.tar.gz (`db99cd93babb`)
+- `linux-aarch64-gnu` — majordomus-v1.0.1-aarch64-unknown-linux-gnu.tar.gz (`48b5e54c7bbc`)
+- `linux-aarch64-musl` — majordomus-v1.0.1-aarch64-unknown-linux-musl.tar.gz (`916351ef0f01`)
+
 
 ## v1.0.0 — 2026-11-06
 

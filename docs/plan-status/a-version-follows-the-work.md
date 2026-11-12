@@ -34,6 +34,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I3071` | shares test/cases/3471_the_delivery_screen_shows_what_waits_for_a_release.sh with I3825; they may not run concurrently |
 | WARN | `scope_conflict` | `I3071` | shares test/cases/3471_the_delivery_screen_shows_what_waits_for_a_release.sh with I3837; they may not run concurrently |
 | WARN | `scope_conflict` | `I3071` | shares docs/RELEASE.md with I4332; they may not run concurrently |
+| WARN | `scope_conflict` | `I3071` | shares docs/RELEASE.md with I4342; they may not run concurrently |
 | WARN | `scope_conflict` | `I3072` | shares docs/RELEASE.md with I3076; they may not run concurrently |
 | WARN | `scope_conflict` | `I3072` | shares .ai/repo/project/intents/a-version-follows-every-session.yaml with I3117; they may not run concurrently |
 | WARN | `scope_conflict` | `I3072` | shares .ai/repo/project/intents/a-version-follows-every-session.yaml with I3119; they may not run concurrently |
@@ -44,6 +45,9 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I3072` | shares apps/majordomus-cli/src/mesh/cooperation.rs with I3993; they may not run concurrently |
 | WARN | `scope_conflict` | `I3072` | shares apps/majordomus-cli/src/mesh/journal.rs with I3994; they may not run concurrently |
 | WARN | `scope_conflict` | `I3072` | shares docs/RELEASE.md with I4332; they may not run concurrently |
+| WARN | `scope_conflict` | `I3072` | shares docs/RELEASE.md with I4342; they may not run concurrently |
 | WARN | `scope_conflict` | `I3076` | shares test/cases/3470_the_release_follows_the_work.sh with I3825; they may not run concurrently |
 | WARN | `scope_conflict` | `I3076` | shares test/cases/3470_the_release_follows_the_work.sh with I3837; they may not run concurrently |
 | WARN | `scope_conflict` | `I3076` | shares docs/RELEASE.md with I4332; they may not run concurrently |
+| WARN | `scope_conflict` | `I3076` | shares docs/RELEASE.md with I4342; they may not run concurrently |
+| WARN | `scope_conflict` | `I4332` | shares docs/RELEASE.md with I4342; they may not run concurrently |

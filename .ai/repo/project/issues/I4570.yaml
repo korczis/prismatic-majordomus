@@ -1,0 +1,27 @@
+id: I4570
+milestone: ci-critical-path
+title: "The before-push plan runs the formatter and the version-surface gate, the two seconds-long Rust gates a pull request was refused on after passing it"
+slug: before-push-runs-fmt-and-version-surface
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "scripts/ci/run-plan --before-push selects `cargo fmt --check` and the version-surface gate whenever the change touches the Rust crate, so a branch that passes the pre-push hook is not refused by CI's rust job for either."
+why: "On 2026-11-09 #2983 (I4291) and #2995 (I3754) each passed the full pre-push plan (45 gates and 233 cases, 'nothing CI would find here first') and were then refused by CI's rust (3) job: both on `cargo fmt --check` (rust-check, 'Diff in' in session/attribution.rs and in plan.rs, commands/plan.rs, plan/delivery.rs), and #2995 again on version-surface ('the contract requires a minor release and the version declares none', a new public command). The toolchain was the same 1.98.1 in both places, so the plan simply did not run them, short of what rule project.a-push-runs-what-ci-would-find-first asks of a push. A branch run's first red job cancels the whole run, so each cost a full validate of about two hours that read as cancelled."
+current_state: "At origin/master dd377e11c35 the before-push plan omits rust-check's formatter and version-surface for a crate change; both run in validate's rust job in seconds."
+desired_state: "A crate change's pre-push runs both beside `scripts/rust-check --doc`, which .githooks/pre-push already asks of every push that changes the crate, and a failure of either is reported with its fix (`cargo fmt`, `majordomus release bump`) and refuses a train top's push, as the hook's I3830 contract does for every other gate."
+scope:
+  - ".ai/repo/project/issues/I4570.yaml"
+  - ".ai/repo/ci/gates.yaml"
+  - "scripts/ci/run-plan"
+  - ".githooks/pre-push"
+non_scope:
+  - "clippy and the crate's tests, which stay CI's"
+depends_on: []
+acceptance_criteria:
+  - "A case changes a crate file with a formatting diff and the before-push plan fails rust fmt; a case adds a public command without a bump and the before-push plan fails version-surface"
+validation:
+  - "bash test/run.sh <the new cases>"
+evidence_required:
+  - test
+serves: []
+created_at: 2026-11-10

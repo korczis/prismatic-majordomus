@@ -1,0 +1,96 @@
+#!/usr/bin/env bash
+# record-run-approve — the record pull request's own validate run is started by the
+# record's dispatched validate, not by a person (I2717).
+#
+#   scripts/ci/record-run-approve --branch release/record-<tag> --sha SHA [--repo owner/name]
+#
+# The release proposes its record as a pull request opened with GITHUB_TOKEN. Since v0.27.0
+# (run 38865305333) GitHub creates that pull request's `pull_request` validate run waiting for
+# approval (`action_required`), with no job in it; branch protection reads only that run's
+# `ci`, and on 2026-11-09 v1.0.1's (#2991, run 42668789214) sat so until a person approved it
+# through the API. The dispatched validate the release asks for on the record's branch runs
+# this in its plan job: it finds the validate run of `pull_request` on that branch and head
+# that waits for approval, and approves it. What it starts is the pull request's own run,
+# planned and judged as every pull request's run is; nothing here writes a status or a check.
+#
+# It approves nothing else: only a run of .github/workflows/validate.yml, of event
+# pull_request, on --branch, at --sha, waiting for approval. A branch that is no
+# release/record- branch is refused before the forge is asked.
+#
+# The waiting run is created a few seconds after the dispatch, so the listing is read up to
+# MJ_RECORD_APPROVE_TRIES times (default 6), MJ_RECORD_APPROVE_WAIT seconds apart (default
+# 10): one minute at most. None found is not a failure: the run may have started on its own,
+# or be the older shape, a run that concluded with no job in it, which no approval starts and
+# which `majordomus prs drain` closes and reopens (docs/INTEGRATION.md).
+#
+# Forge access is `gh api` with GH_TOKEN (actions: write). On a runner each outcome is also an
+# annotation and a step-summary line. Output, one line on stdout:
+#
+#   approved <run id>     the waiting run was approved
+#   none                  no run waits for approval at this head
+#   refused <run id>      the forge refused the approval; stderr says what it answered
+#
+# Exit: 0 approved or none · 10 refused · 12 the runs could not be read · 2 usage.
+set -eu
+set -o pipefail
+
+BRANCH=""; SHA=""; SLUG="${GITHUB_REPOSITORY:-}"
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --branch) BRANCH="${2:-}"; shift 2 ;;
+    --sha) SHA="${2:-}"; shift 2 ;;
+    --repo) SLUG="${2:-}"; shift 2 ;;
+    -h|--help) sed -n '2,33p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+    *) echo "record-run-approve: unknown option $1" >&2; exit 2 ;;
+  esac
+done
+[ -n "$BRANCH" ] && [ -n "$SHA" ] && [ -n "$SLUG" ] \
+  || { echo "record-run-approve: --branch, --sha and --repo (or GITHUB_REPOSITORY) are required" >&2; exit 2; }
+case "$BRANCH" in
+  release/record-?*) ;;
+  *) echo "record-run-approve: $BRANCH is no release/record- branch; nothing else is approved" >&2; exit 2 ;;
+esac
+command -v jq >/dev/null 2>&1 || { echo "record-run-approve: jq is required" >&2; exit 2; }
+TRIES="${MJ_RECORD_APPROVE_TRIES:-6}"
+WAIT="${MJ_RECORD_APPROVE_WAIT:-10}"
+
+# On a runner, an annotation and a summary line beside the stdout line.
+tell() {
+  [ -n "${GITHUB_ACTIONS:-}" ] || return 0
+  printf '::%s::%s\n' "$1" "$2"
+  [ -z "${GITHUB_STEP_SUMMARY:-}" ] || printf '%s\n\n' "$2" >> "$GITHUB_STEP_SUMMARY"
+}
+
+waiting=""
+i=0
+while [ "$i" -lt "$TRIES" ]; do
+  i=$((i + 1))
+  runs="$(gh api "repos/$SLUG/actions/runs?event=pull_request&head_sha=$SHA&per_page=100" 2>&1)" || {
+    echo "record-run-approve: the runs at ${SHA:0:12} could not be read: $runs" >&2
+    tell warning "record-run-approve: the runs of $BRANCH could not be read, so its pull request's waiting run was not approved"
+    exit 12
+  }
+  waiting="$(printf '%s' "$runs" | jq -r --arg b "$BRANCH" --arg s "$SHA" '
+    [.workflow_runs[]?
+      | select(.event == "pull_request" and .head_sha == $s and .head_branch == $b
+               and ((.path // "") | startswith(".github/workflows/validate.yml"))
+               and (.status == "action_required" or .conclusion == "action_required"))
+      | .id] | first // empty')" || waiting=""
+  [ -z "$waiting" ] || break
+  [ "$i" -ge "$TRIES" ] || sleep "$WAIT"
+done
+
+if [ -z "$waiting" ]; then
+  echo none
+  tell notice "record-run-approve: no validate run of $BRANCH at ${SHA:0:12} waits for approval"
+  exit 0
+fi
+if answer="$(gh api -X POST "repos/$SLUG/actions/runs/$waiting/approve" 2>&1)"; then
+  echo "approved $waiting"
+  tell notice "record-run-approve: approved the pull request's own validate run $waiting of $BRANCH; its ci is the record's verdict"
+  exit 0
+fi
+echo "refused $waiting"
+echo "record-run-approve: the forge refused to approve run $waiting: $answer" >&2
+tell warning "record-run-approve: run $waiting of $BRANCH waits for approval and the forge refused this run's token; approve it on its page, or close and reopen the pull request"
+exit 10

@@ -1,0 +1,26 @@
+id: I4572
+milestone: the-mesh-works-out-of-the-box
+title: "mesh doctor fails a runtime that is closed while the declaration trusts this machine's key, and names the stale server as the cause"
+slug: mesh-doctor-fails-a-stale-closed-runtime
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "mesh.doctor compares the trust it reads from the trunk's declaration with the trust the running server holds, and when the declaration lists this machine's key while the runtime answers closed for that key, the runtime check fails (and with it the verdict) with the remedy `majordomus serve stop && majordomus serve ensure`, until I4571 makes the restart unnecessary."
+why: "Reported from an adopting repository's session (2026-11-10, majordomus 1.0.1). One `mesh doctor` run printed `ok trust: this machine's key is on the allowlist` and `ok runtime: closed: ... not in trust.allow`, then `verdict every check holds`. The two lines contradict each other, and the verdict passed a mesh that cooperated with nobody: the instrument read the server's stale state as healthy instead of the current state."
+current_state: "At origin/master dd377e11c35: runtime_check in apps/majordomus-cli/src/mesh/doctor.rs passes a closed runtime (the arm on a reason starting with closed:) on the assumption that the trust check carries the failure and the remedy; it does not read that check's result from the same run. Related: I3179 (one typed runtime state)."
+desired_state: "A closed runtime is ok only when the declaration also does not trust the key; any other closed runtime fails the verdict with the remedy named, and the trust and runtime lines of one run never contradict each other."
+scope:
+  - ".ai/repo/project/issues/I4572.yaml"
+  - "apps/majordomus-cli/src/mesh/doctor.rs"
+  - "docs/MESH.md"
+non_scope:
+  - "Reopening the runtime itself, which is I4571"
+depends_on: []
+acceptance_criteria:
+  - "A case runs mesh doctor against a server started before its key was trusted and reads the runtime check failed, the verdict failed and the remedy named"
+validation:
+  - "bash test/run.sh <the new case>"
+evidence_required:
+  - test
+serves: []
+created_at: 2026-11-10

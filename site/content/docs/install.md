@@ -10,7 +10,7 @@ source = "docs/INSTALL.md"
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: share/install/INSTALL.md.in (the prose) and share/distribution.yaml (every platform, name and URL);
      regenerate with `majordomus generate`
-     Generator: majordomus-cli 1.0.1 -->
+     Generator: majordomus-cli 1.0.2 -->
 
 ## Quick install
 
@@ -148,10 +148,10 @@ MAJORDOMUS_INSTALL_DIR="$HOME/bin" curl -fsSL https://majordomus.dev/install.sh 
 ## Pinning a version
 
 ```bash
-curl -fsSL https://majordomus.dev/install.sh | sh -s -- --version v1.0.0
+curl -fsSL https://majordomus.dev/install.sh | sh -s -- --version v1.0.1
 ```
 
-A pinned installation resolves `https://majordomus.dev/releases/v1.0.0.json`, which names the exact artifact and its
+A pinned installation resolves `https://majordomus.dev/releases/v1.0.1.json`, which names the exact artifact and its
 sha256 digest, and therefore installs the same bytes every time. An unpinned
 installation resolves `https://majordomus.dev/releases/latest.json`, which is the latest stable release and moves
 forward as releases are published. Use the pinned form in CI.
@@ -159,7 +159,7 @@ forward as releases are published. Use the pinned form in CI.
 ## Using it in CI
 
 ```bash
-curl -fsSL https://majordomus.dev/install.sh | sh -s -- --version v1.0.0
+curl -fsSL https://majordomus.dev/install.sh | sh -s -- --version v1.0.1
 export PATH="$HOME/.local/bin:$PATH"
 majordomus --version
 ```
@@ -195,7 +195,8 @@ the tool's, and no command of this project deletes them.
 
 | Release | Published | Channel | Artifacts | Metadata |
 |---|---|---|---|---|
-| `v1.0.0` (latest) | 2026-11-06 | stable | 6 | [`v1.0.0.json`](https://majordomus.dev/releases/v1.0.0.json) |
+| `v1.0.1` (latest) | 2026-11-09 | stable | 6 | [`v1.0.1.json`](https://majordomus.dev/releases/v1.0.1.json) |
+| `v1.0.0` | 2026-11-06 | stable | 6 | [`v1.0.0.json`](https://majordomus.dev/releases/v1.0.0.json) |
 | `v1.0.0-alpha.10` | 2026-11-06 | prerelease | 6 | [`v1.0.0-alpha.10.json`](https://majordomus.dev/releases/v1.0.0-alpha.10.json) |
 | `v1.0.0-alpha.9` | 2026-10-28 | prerelease | 6 | [`v1.0.0-alpha.9.json`](https://majordomus.dev/releases/v1.0.0-alpha.9.json) |
 | `v1.0.0-alpha.8` | 2026-10-25 | prerelease | 6 | [`v1.0.0-alpha.8.json`](https://majordomus.dev/releases/v1.0.0-alpha.8.json) |
