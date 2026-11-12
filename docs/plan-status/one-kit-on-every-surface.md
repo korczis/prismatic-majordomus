@@ -47,6 +47,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I4334` | shares .ai/repo/adrs/0230-flowbite-pro-is-adapted-onto-tailwind-4.md with I4481; they may not run concurrently |
 | WARN | `scope_conflict` | `I4334` | shares apps/majordomus-cli/src/capability/builtin/design.rs with I4486; they may not run concurrently |
 | WARN | `scope_conflict` | `I4334` | shares .ai/repo/adrs/0230-flowbite-pro-is-adapted-onto-tailwind-4.md with I4500; they may not run concurrently |
+| WARN | `scope_conflict` | `I4334` | shares apps/majordomus-cli/src/design/licence.rs with I4565; they may not run concurrently |
 | WARN | `scope_conflict` | `I4377` | shares site/charts.js with I4400; they may not run concurrently |
 | WARN | `scope_conflict` | `I4377` | shares share/ui/src/ui.css with I4483; they may not run concurrently |
 | WARN | `scope_conflict` | `I4377` | shares share/ui/ui.js with I4494; they may not run concurrently |

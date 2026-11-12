@@ -70,6 +70,7 @@ use sha2::{Digest, Sha256};
 use crate::metadata::yaml;
 use crate::order::{self, OrderKey, Ordered};
 use crate::policy::{is_safe_relative, POLICY_SECTION};
+use crate::process::retrying_busy;
 use crate::repository::Repository;
 
 /// The evidence format this module reads.
@@ -961,13 +962,15 @@ fn fingerprint_objects(
         return Ok(HashMap::new());
     }
     let tree = |e: std::io::Error| LicenceError::Tree(format!("git cat-file --batch: {e}"));
-    let mut child = git(root)
-        .args(["cat-file", "--batch"])
-        .stdin(Stdio::piped())
-        .stdout(Stdio::piped())
-        .stderr(Stdio::null())
-        .spawn()
-        .map_err(tree)?;
+    let mut child = retrying_busy(|| {
+        git(root)
+            .args(["cat-file", "--batch"])
+            .stdin(Stdio::piped())
+            .stdout(Stdio::piped())
+            .stderr(Stdio::null())
+            .spawn()
+    })
+    .map_err(tree)?;
     let mut stdin = child.stdin.take().expect("stdin is piped");
     let stdout = child.stdout.take().expect("stdout is piped");
     // written beside the reading, so neither pipe fills while the other waits
@@ -1029,7 +1032,9 @@ thread_local! {
     static GIT: std::cell::RefCell<std::ffi::OsString> = std::cell::RefCell::new("git".into());
 }
 
-/// A command for the tree's git, run at `root`.
+/// A command for the tree's git, run at `root`. Every start goes through `retrying_busy`:
+/// the git asked may be a stand-in written a moment ago, which Linux refuses to exec while
+/// a child another thread forked still holds it open (ETXTBSY, run 42516893636, I4565).
 fn git(root: &Path) -> Command {
     let mut cmd = Command::new(GIT.with(|g| g.borrow().clone()));
     cmd.arg("-C").arg(root);
@@ -1038,9 +1043,7 @@ fn git(root: &Path) -> Command {
 
 /// What git prints for `args` at `root`.
 fn git_out(root: &Path, args: &[&str]) -> Result<Vec<u8>, LicenceError> {
-    let out = git(root)
-        .args(args)
-        .output()
+    let out = retrying_busy(|| git(root).args(args).output())
         .map_err(|e| LicenceError::Tree(format!("git could not start: {e}")))?;
     if !out.status.success() {
         return Err(LicenceError::Tree(format!(
@@ -1054,12 +1057,14 @@ fn git_out(root: &Path, args: &[&str]) -> Result<Vec<u8>, LicenceError> {
 
 /// Whether git succeeds at `args`, saying nothing.
 fn git_ok(root: &Path, args: &[&str]) -> bool {
-    git(root)
-        .args(args)
-        .stdout(Stdio::null())
-        .stderr(Stdio::null())
-        .status()
-        .is_ok_and(|s| s.success())
+    retrying_busy(|| {
+        git(root)
+            .args(args)
+            .stdout(Stdio::null())
+            .stderr(Stdio::null())
+            .status()
+    })
+    .is_ok_and(|s| s.success())
 }
 
 /// The NUL-separated paths git prints for `args` at `root`.
