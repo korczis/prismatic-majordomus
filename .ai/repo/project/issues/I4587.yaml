@@ -1,0 +1,30 @@
+id: I4587
+milestone: every-session-joins-the-mesh
+title: "An owner decision is announced over the mesh to every session of the repository, and an owner's deploy goes through the lane that owns the trunk"
+slug: an-owner-decision-reaches-every-session
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "When an owner decision is recorded (a decided knowledge record, an ADR accepted, a decision of `majordomus decision add` that names the owner), the runtime publishes it as a mesh event that every session of the repository on every linked node receives and that `majordomus monitor` shows to each, with the record's id and the commit that carries it; and an owner's order to deploy is routed to the session holding the seat that owns the trunk (the landing or release seat), never executed by whichever session heard it."
+why: "Intake from the kompendium-epistemicke-anihilace-2e session (2026-11-11 about 20:05Z, the owner's /evolve, principle 29), item K7: owner decisions are to be announced over the mesh to every session of the repository, with their ADR ids, and an owner's deploy goes through the lane that owns main. On 2026-11-11 the owner's decision on the v1.0.2 tag reached the asking session only through a relay by another session, in report text; `majordomus decision add` appends to .ai/local/state/decisions.md, which no other session or machine reads, and the mesh replicates sessions, claims, handovers and reviews but carries no decision event."
+current_state: "At origin/master d34f159439f: decisions are local to a checkout until an evolve promotes them into a curated record; no mesh event kind is a decision; the seat model (ADR 0167) assigns landing and release, and nothing routes an owner's deploy order to the seat holder."
+desired_state: "Two sessions on two linked fixture runtimes: a decision recorded by one appears in the other's monitor stream with its record id within one sync round; a deploy order given to a session that does not hold the trunk's seat is handed to the holder, and the session says so."
+scope:
+  - ".ai/repo/project/issues/I4587.yaml"
+  - "apps/majordomus-cli/src/mesh/"
+  - "lib/decision.sh"
+  - "docs/MESH.md"
+  - "docs/MONITOR.md"
+  - "test/cases/4587_an_owner_decision_reaches_every_session.sh"
+non_scope:
+  - "Deciding for the owner; the event carries a decision already taken"
+depends_on: []
+acceptance_criteria:
+  - "A case with two linked fixture runtimes records a decision on one and reads it in the other's monitor stream with its id"
+  - "A case gives a deploy order to a session without the seat and reads the handover to the seat holder"
+validation:
+  - "bash test/run.sh 4587_an_owner_decision_reaches_every_session"
+evidence_required:
+  - test
+serves: []
+created_at: 2026-11-12

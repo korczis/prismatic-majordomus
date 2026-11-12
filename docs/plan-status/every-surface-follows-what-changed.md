@@ -32,6 +32,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I3218` | shares apps/majordomus-cli/src/monitor with I3810; they may not run concurrently |
 | WARN | `scope_conflict` | `I3218` | shares docs/MONITOR.md with I4306; they may not run concurrently |
 | WARN | `scope_conflict` | `I3218` | shares apps/majordomus-cli/src/monitor with I4466; they may not run concurrently |
+| WARN | `scope_conflict` | `I3218` | shares docs/MONITOR.md with I4587; they may not run concurrently |
 | WARN | `scope_conflict` | `I3219` | shares docs/MAJORDOMUS_UI.md with I3226; they may not run concurrently |
 | WARN | `scope_conflict` | `I3219` | shares share/ui/observatory.js with I3232; they may not run concurrently |
 | WARN | `scope_conflict` | `I3219` | shares docs/MAJORDOMUS_UI.md with I3318; they may not run concurrently |

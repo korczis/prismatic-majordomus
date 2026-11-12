@@ -1,0 +1,28 @@
+id: I4578
+milestone: a-second-adopter-is-served
+title: "A fixture path under a case's scratch variable is not a pack leak of the packing account's home"
+slug: a-fixture-home-path-is-not-a-pack-leak
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "pack plan's `pack.leak` scan (`names_machine`, apps/majordomus-cli/src/pack/mod.rs) does not report a line where the packing account's home directory appears only as the tail of a fixture path rooted at a scratch variable (`$S/`, `$T/`, `${S}/`), or the case that met it writes its fixture under a neutral user name; a literal absolute path naming this machine is still reported."
+why: "The release-bump pre-push of pull request #3007 on the Linux build host (2026-11-11), whose packing account's home is the very path the case's fixture spells under its scratch directory, reported `pack.leak` on test/cases/3956_a_node_is_provisioned_as_a_cache_provider.sh line 67, a `mkdir -p` of the account's .cargo directory inside a fake host tree under the case's scratch directory `$S/host`, which names no machine. The same tree packed on a host whose home is another path reports nothing, so the finding depends on who packs, not on what the tree holds."
+current_state: "At origin/master d34f159439f: `machine_paths_for` takes the checkout's path and the account's home (except a hosted runner's home) and `names_machine` reports the first line that contains either, wherever it stands in the line."
+desired_state: "Packing the same commit on any host gives the same findings for case 3956; a literal absolute path to the packing account's home outside a fixture prefix is still a finding."
+scope:
+  - ".ai/repo/project/issues/I4578.yaml"
+  - "apps/majordomus-cli/src/pack/mod.rs"
+  - "apps/majordomus-cli/src/pack/tests.rs"
+  - "test/cases/3956_a_node_is_provisioned_as_a_cache_provider.sh"
+  - "test/cases/4578_a_fixture_home_path_is_not_a_pack_leak.sh"
+non_scope:
+  - "Widening the hosted-runner exemption (is_runner_home)"
+depends_on: []
+acceptance_criteria:
+  - "A case packs a fixture tree whose file spells the packing account's home only after `$S/host` and reads no pack.leak, and a file holding the literal home path and reads one"
+validation:
+  - "bash test/run.sh 4578_a_fixture_home_path_is_not_a_pack_leak"
+evidence_required:
+  - test
+serves: []
+created_at: 2026-11-11

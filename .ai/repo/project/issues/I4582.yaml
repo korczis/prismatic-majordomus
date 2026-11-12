@@ -1,0 +1,29 @@
+id: I4582
+milestone: merging-and-referencing-are-enforced
+title: "When a gate lands on the trunk, every open pull request is judged by it on its merge with the trunk, and the lane that owns each one is told"
+slug: a-landed-gate-rejudges-open-pull-requests
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "After a landing that adds or tightens a gate (a rule's validator, a case, a check in .ai/repo/ci/gates.yaml), the integration engine runs that gate on `git merge-tree --write-tree` of the trunk and each open pull request's head, records the verdict beside the pull request's relation to master, and tells the lane that owns the pull request (its mesh session, else a comment) which gate its merge would now fail, while the forge still shows it clean and green."
+why: "Intake from the flight-agent-empty-legs-fc session (2026-11-11 about 20:00Z, the owner's order to port everything and keep it generic; evidence in that repository's pull requests 194-197 and 219-222), item F3: a gate that lands on the trunk does not re-judge the open pull requests, and GitHub shows each one CLEAN and green until it runs again. Near I2054 (a tag does not turn every other pull request red until its record lands, delivered), which keeps a landing from reddening open pull requests wrongly; this is the other half, a landing that should make one red is not seen until it reruns. The relation the engine decides (docs/INTEGRATION.md, merge-tree with the derived merge driver) says whether a merge conflicts, never whether it passes the gates the trunk now has."
+current_state: "At origin/master d34f159439f: `prs` decides each open pull request's relation to master by merge-tree and caches it by the commit pair; no gate is run on that merged tree, and nothing notifies a pull request's lane after an unrelated landing."
+desired_state: "A landing that adds a case failing on an open pull request's merged tree records that pull request as `would fail <gate>` in `prs status` and tells its lane within one refresh; a pull request whose merged tree passes reads as before."
+scope:
+  - ".ai/repo/project/issues/I4582.yaml"
+  - "apps/majordomus-cli/src/integration/"
+  - "docs/INTEGRATION.md"
+  - "test/cases/4582_a_landed_gate_rejudges_open_pull_requests.sh"
+non_scope:
+  - "Rerunning the full validate of every open pull request on each landing"
+  - "Merging master into the pull request; that is the repair lane's"
+depends_on: []
+acceptance_criteria:
+  - "A case lands a gate on a fixture trunk that one of two open fixture heads fails on its merged tree: `prs status` names that head `would fail <gate>` and its lane receives the notice; the other head is unchanged"
+validation:
+  - "bash test/run.sh 4582_a_landed_gate_rejudges_open_pull_requests"
+evidence_required:
+  - test
+serves:
+  - merging-and-referencing-are-enforced#merged-result-is-judged
+created_at: 2026-11-12
