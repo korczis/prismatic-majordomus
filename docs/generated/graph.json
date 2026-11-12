@@ -80659,6 +80659,42 @@
         }
       },
       {
+        "id": "majordomus://issue/I4566",
+        "kind": "issue",
+        "label": "I4566",
+        "summary": "The across-machines tests take the lease as held once its holder record reads, not once its file exists",
+        "route": "/cockpit/objects/issue/i4566",
+        "source": ".ai/repo/project/issues/I4566.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "The integration_across_machines tests pass, each hold() returning only once the holder record reads"
+          ],
+          "created_at": "2026-11-09",
+          "current_state": "Measured at origin/master df412480833 on 2026-11-09: hold() waits for the lock path to exist.",
+          "depends_on": [],
+          "desired_state": "hold() waits, within the same bound, for the lock file to read as a JSON holder record carrying a pid.",
+          "evidence_required": [
+            "rust"
+          ],
+          "milestone": "development-runtime",
+          "non_scope": [
+            "The lease's own read retry in integration/drain.rs, which stays as it is"
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/tests/integration_across_machines.rs",
+            ".ai/repo/project/issues/I4566.yaml"
+          ],
+          "serves": [],
+          "slug": "the-across-machines-test-waits-for-the-lease-holder",
+          "validation": [
+            "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --test integration_across_machines"
+          ]
+        }
+      },
+      {
         "id": "majordomus://issue/I4567",
         "kind": "issue",
         "label": "I4567",
@@ -150034,6 +150070,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I4566",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4566",
+        "target": "majordomus://milestone/development-runtime",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://issue/I4567",
         "target": "kind:issue",
         "kind": "is_a"
@@ -162885,8 +162931,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4457,
-      "edges": 10084,
+      "nodes": 4458,
+      "edges": 10086,
       "acyclic": false,
       "truncated": false
     }
