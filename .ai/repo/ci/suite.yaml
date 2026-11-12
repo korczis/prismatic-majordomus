@@ -229,9 +229,24 @@ case_bound_seconds: 5300
 # shard 3 alone taking 112 min against 70 the run before. Not growth. About a tenth above the
 # worst, 56085 x 1.1 = 61694, so 61700; 4662 x 1.1 = 5128, so 5130, still under the 5300 case
 # bound as case 417 requires.
+#
+# Re-measured on 2026-11-11, when the scheduled validate of the v1.0.2 release head d34f159439
+# went over the total with all four shards green and every case passing, and release-verdict
+# then refused the tag because that run's `ci` was the commit's newest:
+#
+#   run 43015422777   62299 s over 698 cases   slowest 3333 s (77_rust_evidence)   d34f159439 (schedule)
+#   run 42999762183   57933 s over 698 cases   slowest 3433 s (77_rust_evidence)   d34f159439 (push)
+#   run 42899934286   59741 s over 698 cases   slowest 3371 s (77_rust_evidence)   e0cb96020d
+#   run 42818128856   44333 s over 698 cases   slowest 2416 s (77_rust_evidence)   527e8c5d9e
+#
+# The same commit cost 57933 s and 62299 s in two runs, and the twelve complete runs of
+# 2026-11-09 to 11 spread from 44333 to 62299 s, 1.41 times as much, over the same 697-698
+# cases: runner load, not growth, though the suite has also grown from 567 cases to 698 since
+# the total was last derived. About a tenth above the worst, 62299 x 1.1 = 68529, so 68500.
+# The slowest case stands: 3433 is well under 5130.
 budget:
-  # every case, summed; run 39401797347 (56085 s) and the ones above
-  cases_seconds: 61700
+  # every case, summed; run 43015422777 (62299 s) and the ones above
+  cases_seconds: 68500
   # the single slowest case; one case that runs away is invisible in the total until it is
   # most of it, and it is also what decides whether the parallel phase can still be packed.
   # Re-derived from the uncensored 3168 s of run 37207794591: see above. Re-derived on
