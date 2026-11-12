@@ -6,23 +6,23 @@
     "version": "1.0.2"
   },
   "registry": {
-    "fingerprint": "6c7b18dae818aedaf848ac11d5576d248b743eb14ef772c3d124f944f106ca8f",
+    "fingerprint": "4dcf30fa83799f72b3df756b4d75e491972881cbcf926bab38da344b4a8eb3e5",
     "summary": {
-      "total": 3987,
+      "total": 3989,
       "builtin": 231,
-      "declarative": 3756,
+      "declarative": 3758,
       "by_kind": {
         "command": 41,
         "query": 190,
-        "resource": 3756
+        "resource": 3758
       },
       "by_stability": {
         "behaviorally_verified": 153,
         "experimental": 68,
-        "implemented": 3766
+        "implemented": 3768
       },
       "mcp_tools": 215,
-      "mcp_resources": 3813,
+      "mcp_resources": 3815,
       "http_routes": 219,
       "cli_commands": 128,
       "modules": 96,
@@ -97172,7 +97172,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 1232,
+        "capabilities": 1233,
         "capability_ids": []
       },
       {
@@ -97785,7 +97785,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 698,
+        "capabilities": 699,
         "capability_ids": []
       },
       {
@@ -97878,7 +97878,7 @@
     ]
   },
   "index": {
-    "fingerprint": "9468fb784384d6d645829b606896bffdc207c07d6cb0d14dd3e0a179818f5d5f",
+    "fingerprint": "1e1b6db1b1330e5f4b4cf7006fd9e7fa0b946ff1c5cd65859495dc3960a7824b",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -97918,7 +97918,7 @@
       "gap": 5,
       "implementation": 54,
       "intent": 45,
-      "issue": 1232,
+      "issue": 1233,
       "knowledge": 205,
       "mesh-declaration": 1,
       "milestone": 117,
@@ -97932,7 +97932,7 @@
       "session": 95,
       "skill": 11,
       "taxonomy": 10,
-      "test": 698,
+      "test": 699,
       "use-case": 49,
       "workspace": 1
     },
@@ -105515,7 +105515,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 133827
+        "bytes": 133939
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -108665,7 +108665,7 @@
         "identity": "lib/common.sh",
         "path": "lib/common.sh",
         "source_class": "library",
-        "bytes": 123975
+        "bytes": 124325
       },
       {
         "uri": "majordomus://implementation/lib/context.sh",
@@ -123043,6 +123043,17 @@
         "bytes": 2150
       },
       {
+        "uri": "majordomus://issue/I4591",
+        "kind": "issue",
+        "identity": "I4591",
+        "title": "mj_ms reads EPOCHREALTIME under any locale's decimal separator",
+        "description": "mj_ms (lib/common.sh) keeps every digit of EPOCHREALTIME and drops whatever separates them, so the millisecond clock is digits under any locale and every caller's arithmetic holds; a case pins it with an injected comma and, where one is installed, a real comma locale.",
+        "path": ".ai/repo/project/issues/I4591.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3190
+      },
+      {
         "uri": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "identity": "a-brief-is-reconciled-not-transcribed",
@@ -136807,6 +136818,14 @@
         "bytes": 8360
       },
       {
+        "uri": "majordomus://test/test/cases/4577_mj_ms_reads_any_decimal_separator.sh",
+        "kind": "test",
+        "identity": "test/cases/4577_mj_ms_reads_any_decimal_separator.sh",
+        "path": "test/cases/4577_mj_ms_reads_any_decimal_separator.sh",
+        "source_class": "case",
+        "bytes": 3463
+      },
+      {
         "uri": "majordomus://test/test/cases/45_github_projection.sh",
         "kind": "test",
         "identity": "test/cases/45_github_projection.sh",
@@ -139329,7 +139348,7 @@
       "identity": [
         "id"
       ],
-      "objects": 1232
+      "objects": 1233
     },
     {
       "name": "knowledge",
@@ -139491,7 +139510,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 698
+      "objects": 699
     },
     {
       "name": "use-case",

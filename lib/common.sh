@@ -675,12 +675,17 @@ mj_now() {
 # it (bash 5), otherwise whole seconds, and the report says which. Off, the cost of a phase
 # or a count is one test. There is no third clock: the one that used to stand between them
 # was perl, and nothing in this repository runs Perl.
+#
+# Bash writes EPOCHREALTIME with the locale's decimal separator (`1794507023,452598` under
+# cs_CZ.UTF-8), so mj_ms keeps every digit and drops whatever separates them: a comma left
+# in made every caller's $(( ... )) fail, doctor first (I4591). The seconds lead, so the
+# result never starts with a zero that arithmetic would read as octal.
 MJ_TIMING_FILE=""; MJ_TIMING_T0=""
 if [ -n "${EPOCHREALTIME:-}" ]; then MJ_TIMING_CLOCK=epochrealtime
 else MJ_TIMING_CLOCK=seconds; fi
 mj_ms() {
   case "$MJ_TIMING_CLOCK" in
-    epochrealtime) local t="${EPOCHREALTIME/./}"; printf '%s' "${t%???}" ;;
+    epochrealtime) local t="${EPOCHREALTIME//[!0-9]/}"; printf '%s' "${t%???}" ;;
     *) printf '%s000' "$(date +%s)" ;;
   esac
 }
