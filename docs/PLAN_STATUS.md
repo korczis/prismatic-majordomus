@@ -8,7 +8,7 @@ This page is the index. Each milestone's issues, and the findings about them, ar
 its own under [`plan-status/`](plan-status/), named by the milestone, so the plan grows by pages
 and no one page grows with it.
 
-Generated from canonical inputs `218f240e7314`.
+Generated from canonical inputs `55bde3892b05`.
 
 ## Milestones
 
@@ -512,7 +512,7 @@ Generated from canonical inputs `218f240e7314`.
 
 ## Findings
 
-10107 finding(s), each on the page of the milestone its subject is or belongs to:
+10103 finding(s), each on the page of the milestone its subject is or belongs to:
 
 | milestone | findings |
 |---|---|
@@ -520,7 +520,7 @@ Generated from canonical inputs `218f240e7314`.
 | [`M003`](plan-status/M003.md) | 10 |
 | [`M004`](plan-status/M004.md) | 469 |
 | [`a-bounded-task-is-carried-to-accepted-work`](plan-status/a-bounded-task-is-carried-to-accepted-work.md) | 58 |
-| [`a-change-is-judged-in-minutes`](plan-status/a-change-is-judged-in-minutes.md) | 86 |
+| [`a-change-is-judged-in-minutes`](plan-status/a-change-is-judged-in-minutes.md) | 85 |
 | [`a-claim-stands-only-on-its-evidence`](plan-status/a-claim-stands-only-on-its-evidence.md) | 208 |
 | [`a-derive-does-only-the-work-its-inputs-changed`](plan-status/a-derive-does-only-the-work-its-inputs-changed.md) | 65 |
 | [`a-finding-is-tracked-to-its-issue`](plan-status/a-finding-is-tracked-to-its-issue.md) | 5 |
@@ -549,7 +549,7 @@ Generated from canonical inputs `218f240e7314`.
 | [`command-and-deployment-criteria-are-judged`](plan-status/command-and-deployment-criteria-are-judged.md) | 6 |
 | [`delivery-economics-are-measured-over-declared-windows`](plan-status/delivery-economics-are-measured-over-declared-windows.md) | 1 |
 | [`derived-data-integrity`](plan-status/derived-data-integrity.md) | 33 |
-| [`development-runtime`](plan-status/development-runtime.md) | 915 |
+| [`development-runtime`](plan-status/development-runtime.md) | 913 |
 | [`every-session-joins-the-mesh`](plan-status/every-session-joins-the-mesh.md) | 19 |
 | [`every-sessions-usage-is-observed`](plan-status/every-sessions-usage-is-observed.md) | 58 |
 | [`every-surface-follows-what-changed`](plan-status/every-surface-follows-what-changed.md) | 19 |
@@ -561,7 +561,7 @@ Generated from canonical inputs `218f240e7314`.
 | [`idd-reads-at-a-glance`](plan-status/idd-reads-at-a-glance.md) | 3448 |
 | [`intent-lifecycle`](plan-status/intent-lifecycle.md) | 65 |
 | [`knowledge-acts-on-what-it-learns`](plan-status/knowledge-acts-on-what-it-learns.md) | 86 |
-| [`landing-survives-any-session`](plan-status/landing-survives-any-session.md) | 13 |
+| [`landing-survives-any-session`](plan-status/landing-survives-any-session.md) | 12 |
 | [`mcp-transports-are-reliable`](plan-status/mcp-transports-are-reliable.md) | 211 |
 | [`measurements-are-tracked-over-time`](plan-status/measurements-are-tracked-over-time.md) | 17 |
 | [`merging-and-referencing-are-enforced`](plan-status/merging-and-referencing-are-enforced.md) | 36 |

@@ -11,7 +11,7 @@ current_state: "At origin/master d34f159439f: `prs` decides each open pull reque
 desired_state: "A landing that adds a case failing on an open pull request's merged tree records that pull request as `would fail <gate>` in `prs status` and tells its lane within one refresh; a pull request whose merged tree passes reads as before."
 scope:
   - ".ai/repo/project/issues/I4582.yaml"
-  - "apps/majordomus-cli/src/integration/"
+  - "apps/majordomus-cli/src/integration/rejudge.rs"
   - "docs/INTEGRATION.md"
   - "test/cases/4582_a_landed_gate_rejudges_open_pull_requests.sh"
 non_scope:

@@ -120,5 +120,4 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I4349` | shares .ai/repo/ci/gates.yaml with I4532; they may not run concurrently |
 | WARN | `scope_conflict` | `I4349` | shares docs/CI.md with I4569; they may not run concurrently |
 | WARN | `scope_conflict` | `I4349` | shares .ai/repo/ci/gates.yaml with I4570; they may not run concurrently |
-| WARN | `scope_conflict` | `I4349` | shares apps/majordomus-cli/src/integration/checkout_budget.rs with I4582; they may not run concurrently |
 | WARN | `scope_conflict` | `I4524` | shares docs/CI.md with I4569; they may not run concurrently |

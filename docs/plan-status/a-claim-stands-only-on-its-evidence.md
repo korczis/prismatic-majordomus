@@ -133,7 +133,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I3113` | shares docs/CLAIMS.yaml with I4400; they may not run concurrently |
 | WARN | `scope_conflict` | `I3113` | shares scripts/ci/github-check with I4468; they may not run concurrently |
 | WARN | `scope_conflict` | `I3113` | shares .ai/repo/ci/github.yaml with I4488; they may not run concurrently |
-| WARN | `scope_conflict` | `I3113` | shares apps/majordomus-cli/src/integration/forge.rs with I4582; they may not run concurrently |
+| WARN | `scope_conflict` | `I3113` | shares docs/INTEGRATION.md with I4582; they may not run concurrently |
 | WARN | `scope_conflict` | `I3115` | shares scripts/generate-site-data with I3116; they may not run concurrently |
 | WARN | `scope_conflict` | `I3115` | shares lib/adr.sh with I3312; they may not run concurrently |
 | WARN | `scope_conflict` | `I3115` | shares scripts/generate-site-data with I3750; they may not run concurrently |

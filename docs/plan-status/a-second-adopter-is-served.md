@@ -174,7 +174,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I4333` | shares lib/common.sh with I4467; they may not run concurrently |
 | WARN | `scope_conflict` | `I4333` | shares lib/project.sh with I4468; they may not run concurrently |
 | WARN | `scope_conflict` | `I4333` | shares apps/majordomus-cli/src/worktree with I4568; they may not run concurrently |
-| WARN | `scope_conflict` | `I4333` | shares apps/majordomus-cli/src/integration/relation.rs with I4582; they may not run concurrently |
+| WARN | `scope_conflict` | `I4333` | shares docs/INTEGRATION.md with I4582; they may not run concurrently |
 | WARN | `scope_conflict` | `I4410` | shares lib/common.sh with I4411; they may not run concurrently |
 | WARN | `scope_conflict` | `I4410` | shares lib/common.sh with I4413; they may not run concurrently |
 | WARN | `scope_conflict` | `I4410` | shares lib/common.sh with I4415; they may not run concurrently |
