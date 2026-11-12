@@ -526,7 +526,7 @@ pub fn doctor_at(
     // The runtime: what the process's mesh runtime decided about the declaration, when
     // anything decided. Every check above says the machine could run a mesh; this one says
     // whether the server did.
-    checks.push(runtime_check(declared(&declaration), runtime));
+    checks.push(runtime_check(&declaration, runtime));
 
     MeshDoctorReport {
         ok: checks.iter().all(|c| c.ok),
@@ -608,31 +608,79 @@ fn declared(declaration: &Option<Result<MeshConfig, MeshError>>) -> Declared {
 /// The `runtime` verdict. `None` is a runtime nobody decided on — the command line's, a
 /// test's — whose inactivity is an absence and never a failure. A decided runtime is
 /// active (a degraded one names its failed providers, and fails only when no provider
-/// runs at all), off as declared, off because there is nothing to activate, or — the one
-/// failure — off under an enabled declaration, carrying the server's reason.
+/// runs at all), off as declared, off because there is nothing to activate, or off under
+/// an enabled declaration, carrying the server's reason — a failure, except when the
+/// runtime is closed to a key the declaration does not list, which the `trust` check
+/// carries. Closed to a key the declaration in force *does* list, it fails again: the
+/// server decided before the key was listed and has not read the change yet (I4572); it
+/// opens at the next generation it reads (I4571).
 /// The `runtime` verdict alone: what a server decided about the declaration, judged as
 /// `mesh doctor` judges it. Health reads this one check rather than running the doctor's
 /// probes, which open sockets.
 ///
 /// ```
 /// use majordomus_cli::mesh::doctor::runtime_verdict;
+/// use majordomus_cli::mesh::identity::NodeIdentity;
 /// use majordomus_cli::mesh::manager::MeshRuntime;
 /// use majordomus_cli::mesh::MeshConfig;
 /// let enabled: MeshConfig = serde_json::from_value(serde_json::json!({
 ///     "schema": "mesh/v1", "kind": "mesh-declaration", "id": "x", "enabled": true })).unwrap();
 /// let server = MeshRuntime::new();
 /// server.decline("the node identity did not load");
-/// assert!(!runtime_verdict(Some(Ok(enabled)), Some(&server.status())).ok);
+/// assert!(!runtime_verdict(Some(Ok(enabled.clone())), Some(&server.status())).ok);
 /// assert!(runtime_verdict(None, Some(&server.status())).ok, "no declaration, nothing owed");
+///
+/// // closed to an unlisted key: the trust check carries it, and this one holds
+/// let identity = NodeIdentity::ephemeral().unwrap();
+/// let key = identity.public.public_key.clone();
+/// let closed = MeshRuntime::new();
+/// closed.activate(&enabled, identity, vec![], vec![], "doc").unwrap();
+/// assert!(runtime_verdict(Some(Ok(enabled.clone())), Some(&closed.status())).ok);
+/// // the key listed since, the server still closed: stale, and the runtime check says so
+/// let mut listed = enabled;
+/// listed.trust.allow = vec![key];
+/// let stale = runtime_verdict(Some(Ok(listed)), Some(&closed.status()));
+/// assert!(!stale.ok && stale.remediation.unwrap().contains("majordomus serve stop"));
 /// ```
 pub fn runtime_verdict(
     declaration: Option<Result<MeshConfig, MeshError>>,
     runtime: Option<&MeshStatus>,
 ) -> DoctorCheck {
-    runtime_check(declared(&declaration), runtime)
+    runtime_check(&declaration, runtime)
 }
 
-fn runtime_check(declared: Declared, runtime: Option<&MeshStatus>) -> DoctorCheck {
+/// The `runtime` check of a runtime closed to `why`'s key, under an enabled declaration.
+/// Closed to a key the declaration in force does not open to, it holds: the `trust` check
+/// fails with the key and the remedy, once. Closed to a key it does open to — listed since
+/// the server decided, or a policy that no longer closes — it fails, because no other check
+/// can: `trust` reads the declaration in force and passes, and the server announces nothing
+/// although everything it obeys lets it (I4572).
+fn closed_runtime_check(config: Option<&MeshConfig>, why: &str) -> DoctorCheck {
+    let opened = config
+        .zip(super::manager::closed_key(why))
+        .and_then(|(config, key)| {
+            super::manager::closed_to(config, key)
+                .is_none()
+                .then_some(key)
+        });
+    match opened {
+        None => DoctorCheck::pass("runtime", why.to_string()),
+        Some(key) => DoctorCheck::fail(
+            "runtime",
+            format!(
+                "stale: the declaration in force now trusts this machine's key {key}, and this server's mesh is still closed, as it decided before the key was trusted — {why}"
+            ),
+            "this checkout's server announces nothing, hears nobody and links to no peer, while the declaration it obeys lets it: every other check holds and `mesh verify` finds no cooperation",
+            "the server opens it when it next reads the repository (I4571); if it stays closed, restart it so that it decides again on the declaration in force: `majordomus serve stop && majordomus serve ensure`",
+        ),
+    }
+}
+
+fn runtime_check(
+    declaration: &Option<Result<MeshConfig, MeshError>>,
+    runtime: Option<&MeshStatus>,
+) -> DoctorCheck {
+    let declared = declared(declaration);
     let Some(status) = runtime else {
         return DoctorCheck::pass(
             "runtime",
@@ -656,10 +704,12 @@ fn runtime_check(declared: Declared, runtime: Option<&MeshStatus>) -> DoctorChec
     let why = reason.strip_prefix("not active: ").unwrap_or(reason);
     if !status.active {
         return match declared {
-            // closed by the trust list: the trust check carries the failure and the remedy
-            Declared::Enabled if why.starts_with("closed: ") => {
-                DoctorCheck::pass("runtime", why.to_string())
-            }
+            // closed by the trust list: the trust check carries the failure and the remedy,
+            // unless the declaration in force has trusted the key since the server decided
+            Declared::Enabled if why.starts_with("closed: ") => closed_runtime_check(
+                declaration.as_ref().and_then(|d| d.as_ref().ok()),
+                why,
+            ),
             Declared::Enabled => DoctorCheck::fail(
                 "runtime",
                 format!("the declaration is enabled and this server's mesh is not active — {why}"),
@@ -1087,6 +1137,90 @@ mod tests {
                 .contains("failed: udp_multicast (address in use)"),
             "{}",
             runtime.detail
+        );
+    }
+
+    /// A server that decided on `config` under `identity`, its mesh closed when the
+    /// declaration does not list the key. Nothing opens a socket: a closed runtime starts
+    /// no provider.
+    fn closed_server(config: &MeshConfig, identity: NodeIdentity) -> MeshStatus {
+        let server = super::super::MeshRuntime::new();
+        server
+            .activate(config, identity, vec![], vec![], "test")
+            .unwrap();
+        let status = server.status();
+        assert!(!status.active, "an unlisted key keeps the mesh closed");
+        status
+    }
+
+    #[test]
+    fn a_runtime_closed_to_a_key_the_declaration_does_not_list_is_the_trust_checks_failure() {
+        let identity = NodeIdentity::ephemeral().unwrap();
+        let mut unlisted = config(true);
+        unlisted.trust.allow = vec!["cd".repeat(32)];
+        let status = closed_server(&unlisted, identity);
+        let report = doctor_at(Some(Ok(unlisted)), None, Some(&status));
+        let runtime = check(&report, "runtime");
+        assert!(runtime.ok, "the trust check carries it, once: {runtime:?}");
+        assert!(runtime.detail.starts_with("closed: "), "{}", runtime.detail);
+        assert!(runtime.remediation.is_none());
+    }
+
+    #[test]
+    fn a_runtime_closed_to_a_key_the_declaration_now_lists_fails_naming_the_stale_server() {
+        // I4572: the key was enrolled on the trunk after the server decided; the trust
+        // check reads the declaration in force and passes, so this check is the one left
+        let identity = NodeIdentity::ephemeral().unwrap();
+        let key = identity.public.public_key.clone();
+        let status = closed_server(&config(true), identity);
+        let mut listed = config(true);
+        listed.trust.allow = vec!["cd".repeat(32), key.clone()];
+        let report = doctor_at(Some(Ok(listed.clone())), None, Some(&status));
+        let runtime = check(&report, "runtime");
+        assert!(!runtime.ok && !report.ok, "{runtime:?}");
+        assert!(
+            runtime.detail.starts_with("stale: ")
+                && runtime.detail.contains(&key)
+                && runtime.detail.contains("still closed"),
+            "{}",
+            runtime.detail
+        );
+        assert!(runtime.impact.is_some());
+        assert_eq!(
+            runtime.remediation.as_deref(),
+            Some("the server opens it when it next reads the repository (I4571); if it stays closed, restart it so that it decides again on the declaration in force: `majordomus serve stop && majordomus serve ensure`")
+        );
+        // and health reads the same verdict through runtime_verdict
+        let verdict = runtime_verdict(Some(Ok(listed)), Some(&status));
+        assert!(!verdict.ok && verdict.detail == runtime.detail);
+        // a policy that no longer closes on this ground opens to every key alike
+        let mut tofu = config(true);
+        tofu.trust.policy = super::super::trust::TrustPolicy::Tofu;
+        assert!(!runtime_verdict(Some(Ok(tofu)), Some(&status)).ok);
+        // a declaration disabled since is off, as declared, whatever the server decided
+        assert!(runtime_verdict(Some(Ok(config(false))), Some(&status)).ok);
+    }
+
+    #[test]
+    fn an_active_runtime_under_a_listing_declaration_holds_as_before() {
+        let identity = NodeIdentity::ephemeral().unwrap();
+        let mut listed = config(true);
+        listed.multicast.enabled = false;
+        listed.tailscale.enabled = false;
+        listed.trust.allow = vec![identity.public.public_key.clone()];
+        let server = super::super::MeshRuntime::new();
+        server
+            .activate(&listed, identity, vec![], vec![], "test")
+            .unwrap();
+        let status = server.status();
+        server.stop();
+        assert!(status.active);
+        let verdict = runtime_verdict(Some(Ok(listed)), Some(&status));
+        assert!(verdict.ok, "{}", verdict.detail);
+        assert!(
+            verdict.detail.starts_with("active as "),
+            "{}",
+            verdict.detail
         );
     }
 

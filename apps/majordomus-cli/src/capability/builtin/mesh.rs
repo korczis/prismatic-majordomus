@@ -472,6 +472,57 @@ pub(crate) fn retrust(ctx: &Context) -> Vec<String> {
     cooperation.retrust(config.trust)
 }
 
+/// What a new generation of the repository did to this machine's own place in the mesh.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub(crate) enum OwnTrust {
+    /// Nothing: the trust list says what it said, or this runtime is not the server's.
+    Unchanged,
+    /// The declaration in force now trusts the key a closed runtime was closed to: it opened.
+    Opened,
+    /// The declaration in force no longer trusts this runtime's own key: it closed.
+    Closed,
+}
+
+/// Put the declaration's trust in force on this machine's own key (I4571), the half of
+/// [`retrust`] that is about this node rather than its peers. The server calls it with each
+/// new generation of the repository it reads, so a machine whose key is enrolled on the
+/// trunk joins the mesh, and one whose key is withdrawn leaves it, without a restart. A
+/// closed runtime opens through the server's own activation
+/// ([`crate::mesh::manager::Reopen`]); an open one closes with [`closed_to`]'s reason. Only a
+/// runtime a server activated and has not stopped moves, only under an enabled declaration
+/// that parses, and nothing is logged here.
+pub(crate) fn retrust_own_key(ctx: &std::sync::Arc<Context>) -> OwnTrust {
+    use crate::mesh::manager::closed_to;
+    if !ctx.mesh.reopens() {
+        return OwnTrust::Unchanged;
+    }
+    let Some(Ok(config)) = declaration(ctx) else {
+        return OwnTrust::Unchanged;
+    };
+    if !config.enabled {
+        return OwnTrust::Unchanged;
+    }
+    if let (Some(key), Some(reopen)) = (ctx.mesh.closed_key(), ctx.mesh.reopener()) {
+        if closed_to(&config, &key).is_some() {
+            return OwnTrust::Unchanged;
+        }
+        reopen(ctx);
+        return if ctx.mesh.status().active {
+            OwnTrust::Opened
+        } else {
+            OwnTrust::Unchanged
+        };
+    }
+    let status = ctx.mesh.status();
+    let Some(own) = status.identity.filter(|_| status.active) else {
+        return OwnTrust::Unchanged;
+    };
+    match closed_to(&config, &own.public_key) {
+        Some(why) if ctx.mesh.close(&why) => OwnTrust::Closed,
+        _ => OwnTrust::Unchanged,
+    }
+}
+
 /// The repository's mesh declaration in force: `None` when no object of the kind exists,
 /// the parse verdict when one does — the working tree's copy with every widening of the
 /// trunk's copy removed ([`crate::mesh::root`]). Every reader of the declaration asks this,

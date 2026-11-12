@@ -575,6 +575,7 @@ impl Live {
         watch.loads.fetch_add(1, Ordering::SeqCst);
         let built = crate::app::App::load(&watch.args);
         let mut state = write(&self.state);
+        let mut reloaded = None;
         match built {
             Ok(app) => {
                 *lock(&watch.failed) = None;
@@ -584,6 +585,7 @@ impl Live {
                 // the declaration may have changed with the repository: a key withdrawn from
                 // it loses its links now, not at the next restart (I2134)
                 warn_of_ended_links(&crate::capability::builtin::mesh::retrust(&state.ctx));
+                reloaded = Some(Arc::clone(&state.ctx));
                 state.stamp = taken;
                 tracing::info!(
                     generation = state.number,
@@ -609,10 +611,19 @@ impl Live {
                 );
             }
         }
-        View {
+        let view = View {
             generation: state.number,
             ctx: Arc::clone(&state.ctx),
+        };
+        drop(state);
+        // and this machine's own key added to it opens a mesh the trust list closed, or
+        // withdrawn from it closes one, now and not at the next restart (I4571). After the
+        // generation is published: an activation opens sockets and reloads the journal, and
+        // no request waits on that.
+        if let Some(ctx) = reloaded {
+            say_what_own_trust_did(crate::capability::builtin::mesh::retrust_own_key(&ctx));
         }
+        view
     }
 }
 
@@ -771,6 +782,22 @@ fn warn_of_ended_links(ended: &[String]) -> bool {
         peers = ?ended,
         "mesh links ended: their keys are no longer trusted by the declaration"
     );
+    true
+}
+
+/// Say what a reload did to this machine's own place in the mesh (I4571); `true` when it did
+/// anything. A reload that moved nothing says nothing.
+fn say_what_own_trust_did(own: crate::capability::builtin::mesh::OwnTrust) -> bool {
+    use crate::capability::builtin::mesh::OwnTrust;
+    match own {
+        OwnTrust::Unchanged => return false,
+        OwnTrust::Opened => tracing::info!(
+            "mesh active: the declaration in force now trusts this machine's key, so the mesh the trust list closed is open, with no restart"
+        ),
+        OwnTrust::Closed => tracing::warn!(
+            "mesh closed: the declaration in force no longer trusts this machine's key, so this server announces, dials and links no more, with no restart"
+        ),
+    }
     true
 }
 
@@ -1290,5 +1317,11 @@ mod tests {
     fn a_reload_names_the_links_it_ended_and_is_silent_when_it_ended_none() {
         assert!(!warn_of_ended_links(&[]));
         assert!(warn_of_ended_links(&["node-a".to_string()]));
+        // and a reload that opened or closed this machine's mesh says so; one that moved
+        // nothing is quiet
+        use crate::capability::builtin::mesh::OwnTrust;
+        assert!(!say_what_own_trust_did(OwnTrust::Unchanged));
+        assert!(say_what_own_trust_did(OwnTrust::Opened));
+        assert!(say_what_own_trust_did(OwnTrust::Closed));
     }
 }
