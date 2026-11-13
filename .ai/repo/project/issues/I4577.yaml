@@ -1,0 +1,29 @@
+id: I4577
+milestone: the-mesh-works-out-of-the-box
+title: "`offload probe` says, per build host, which toolchains it has and whether it can judge a train top"
+slug: a-probe-says-whether-a-host-can-judge-a-top
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "`majordomus offload probe` reports, beside each declared host's free space against its minimum and its load, the versions of cargo, rustc, zola and node it finds on that host's PATH (or that one is absent), and a verdict of whether the host can judge a train top: whether every gate the pre-push runs for a top has its tool there, naming each gate it could not run; the JSON answer carries the same fields."
+why: "On 2026-11-10 train 30 had no host that could judge its top, and finding that out took one ssh session per machine: this Mac was below its disk floor and held no executable of the tree; the Linux build host's zola 0.22.1 fails seven site cases (curated lesson s-20261103014800-e1b0-61f10931287e); a second Mac had 30 GiB free and no cargo on PATH. That host also lacks node, so ui-check, portable-core and cases 190, 3590, 3728 and 3731 fail there for the host, not for the change (release bump #3007 pre-push, 2026-11-11). Reported also from an adopting repository's session. `offload probe` measures free space and load only (HostReport in apps/majordomus-cli/src/offload/host.rs)."
+current_state: "At origin/master d34f159439f: HostReport carries id, address, min_free_gib, free_gib, load, standing (Eligible, Unreachable, UnderMinimum, UnknownSpace), reason and chosen; no toolchain is measured and nothing says whether a host can judge a top."
+desired_state: "One `offload probe` names, for every declared host, the free space against the floor, the toolchain versions, and `can judge a top: yes`, or `no` with the gates it cannot run; a host that cannot judge is still eligible for a derive when its space allows."
+scope:
+  - ".ai/repo/project/issues/I4577.yaml"
+  - "apps/majordomus-cli/src/offload/host.rs"
+  - "apps/majordomus-cli/src/commands/offload.rs"
+  - "docs/OFFLOAD.md"
+  - "test/cases/4577_a_probe_says_whether_a_host_can_judge_a_top.sh"
+non_scope:
+  - "Installing a missing toolchain on a host"
+  - "Choosing the derive host by toolchain; the choice stays by space and load"
+depends_on: []
+acceptance_criteria:
+  - "A case probes two fake hosts, one with every tool and one without node and with an old zola, and reads `can judge a top: yes` for the first and `no` naming ui-check and the site cases for the second, in text and in JSON"
+validation:
+  - "bash test/run.sh 4577_a_probe_says_whether_a_host_can_judge_a_top"
+evidence_required:
+  - test
+serves: []
+created_at: 2026-11-11

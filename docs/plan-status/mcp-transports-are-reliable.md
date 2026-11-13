@@ -191,6 +191,16 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I2148` | shares test/cases with I4533; they may not run concurrently |
 | WARN | `scope_conflict` | `I2148` | shares test/cases with I4569; they may not run concurrently |
 | WARN | `scope_conflict` | `I2148` | shares test/cases with I4573; they may not run concurrently |
+| WARN | `scope_conflict` | `I2148` | shares test/cases with I4577; they may not run concurrently |
+| WARN | `scope_conflict` | `I2148` | shares test/cases with I4578; they may not run concurrently |
+| WARN | `scope_conflict` | `I2148` | shares test/cases with I4581; they may not run concurrently |
+| WARN | `scope_conflict` | `I2148` | shares test/cases with I4582; they may not run concurrently |
+| WARN | `scope_conflict` | `I2148` | shares test/cases with I4583; they may not run concurrently |
+| WARN | `scope_conflict` | `I2148` | shares test/cases with I4584; they may not run concurrently |
+| WARN | `scope_conflict` | `I2148` | shares test/cases with I4585; they may not run concurrently |
+| WARN | `scope_conflict` | `I2148` | shares test/cases with I4586; they may not run concurrently |
+| WARN | `scope_conflict` | `I2148` | shares test/cases with I4587; they may not run concurrently |
+| WARN | `scope_conflict` | `I2148` | shares test/cases with I4588; they may not run concurrently |
 | WARN | `scope_conflict` | `I2148` | shares test/cases with I4591; they may not run concurrently |
 | WARN | `scope_conflict` | `I2840` | shares docs/MCP.md with I2901; they may not run concurrently |
 | WARN | `scope_conflict` | `I2840` | shares docs/MCP.md with I2902; they may not run concurrently |

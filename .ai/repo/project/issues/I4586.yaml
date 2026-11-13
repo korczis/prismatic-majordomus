@@ -1,0 +1,29 @@
+id: I4586
+milestone: derived-data-integrity
+title: "A deriver that meets a reference to an object that does not exist names the object and the record that cites it, and fails; it never crashes"
+slug: a-deriver-names-a-missing-object
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "Every stage of scripts/derive, and every Rust deriver it calls, treats a reference to an object that is not in the tree (an issue, a milestone, a session, a rule, a file) as a finding: it exits non-zero with `<record> cites <reference>, which does not exist` and the remedy, and never ends in a panic, an unbound-variable abort or a stack trace; a contract case breaks one reference per kind and reads that line from each stage that reads the kind."
+why: "Intake from the kompendium-epistemicke-anihilace-2e session (2026-11-11 about 20:05Z, the owner's /evolve, principle 29), item K5: derivers report a missing referenced object by name and fail, never crash. The derive cases on origin/master (among them 104_strict_derivation, 400_derivation_is_one_graph, 3055_a_derivation_needs_no_history) prove what a derive writes from a whole tree; none breaks a reference and reads what each stage says about it, so whether a stage names the object or crashes on it is not decided by any test."
+current_state: "At origin/master d34f159439f: no case of the derive breaks a reference per kind; doctor's reference-integrity check reports dangling references in records, not what a derive does on meeting one."
+desired_state: "The contract case passes: for each referenced kind, the stages that read it exit non-zero naming the record and the reference, with no panic or shell abort in their output; a whole tree derives as before."
+scope:
+  - ".ai/repo/project/issues/I4586.yaml"
+  - "scripts/derive"
+  - "apps/majordomus-cli/src/graph.rs"
+  - "apps/majordomus-cli/src/site.rs"
+  - "docs/HOW_IT_WORKS.md"
+  - "test/cases/4586_a_deriver_names_a_missing_object.sh"
+non_scope:
+  - "Repairing the dangling reference; the derive names it"
+depends_on: []
+acceptance_criteria:
+  - "A case breaks one reference of each kind in a fixture tree and reads, from each stage that reads it, a non-zero exit and the line naming the record and the reference, never `panicked at` or `unbound variable`"
+validation:
+  - "bash test/run.sh 4586_a_deriver_names_a_missing_object"
+evidence_required:
+  - test
+serves: []
+created_at: 2026-11-12

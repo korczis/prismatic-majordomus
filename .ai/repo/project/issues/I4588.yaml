@@ -1,0 +1,28 @@
+id: I4588
+milestone: derived-data-integrity
+title: "A gate snapshots the index when it starts and refuses its own verdict when the index changed while it ran"
+slug: a-gate-refuses-an-index-that-moved-under-it
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "A gate that judges the staged tree (the derive, the commit hook's checks, run-plan's gates) records `git write-tree` when it starts and again before it reports; when the two differ it refuses its verdict, naming both trees and the paths that changed, so a pass is never reported for a tree the gate did not read."
+why: "Intake from the kompendium-epistemicke-anihilace-2e session (2026-11-11 about 20:05Z, the owner's /evolve, principle 29), item K4: a gate snapshots the index at its start and refuses if it changed during the run. The derive already refuses the cases of a moving HEAD: case 3837 (I2863) refuses an uncommitted cherry-pick or revert, and I3963 derives a staged merge as the commit it will be; neither compares the index at the end of a run with the index at its start, so a concurrent `git add` by another worker in the same checkout, or a hook that stages, can be judged partly before and partly after the change."
+current_state: "At origin/master d34f159439f: scripts/derive takes `git write-tree` only for a merge in progress (line 251); the commit hook and run-plan take no snapshot of the index."
+desired_state: "A case stages a change while a gate runs and reads the refusal naming both trees; a run whose index did not move reports as before."
+scope:
+  - ".ai/repo/project/issues/I4588.yaml"
+  - "scripts/derive"
+  - "scripts/ci/run-plan"
+  - ".githooks/pre-commit"
+  - "test/cases/4588_a_gate_refuses_an_index_that_moved_under_it.sh"
+non_scope:
+  - "Locking the index for the duration of a gate"
+depends_on: []
+acceptance_criteria:
+  - "A case stages a file during a derive and during a run-plan gate and reads each refuse with both tree ids and the changed path; an unchanged index passes"
+validation:
+  - "bash test/run.sh 4588_a_gate_refuses_an_index_that_moved_under_it 3837_a_derive_does_not_run_mid_merge"
+evidence_required:
+  - test
+serves: []
+created_at: 2026-11-12

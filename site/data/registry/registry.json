@@ -6,23 +6,23 @@
     "version": "1.0.2"
   },
   "registry": {
-    "fingerprint": "4dcf30fa83799f72b3df756b4d75e491972881cbcf926bab38da344b4a8eb3e5",
+    "fingerprint": "7cabb17c7f6a8135a2df9fe6b69cd403468dd4b1bf8a86f2b5b5d4f869d3b2da",
     "summary": {
-      "total": 3989,
+      "total": 4016,
       "builtin": 231,
-      "declarative": 3758,
+      "declarative": 3785,
       "by_kind": {
         "command": 41,
         "query": 190,
-        "resource": 3758
+        "resource": 3785
       },
       "by_stability": {
         "behaviorally_verified": 153,
         "experimental": 68,
-        "implemented": 3768
+        "implemented": 3795
       },
       "mcp_tools": 215,
-      "mcp_resources": 3815,
+      "mcp_resources": 3842,
       "http_routes": 219,
       "cli_commands": 128,
       "modules": 96,
@@ -97172,7 +97172,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 1233,
+        "capabilities": 1245,
         "capability_ids": []
       },
       {
@@ -97180,7 +97180,7 @@
         "title": "knowledge",
         "description": "Declarative objects of kind 'knowledge' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 205,
+        "capabilities": 220,
         "capability_ids": []
       },
       {
@@ -97878,7 +97878,7 @@
     ]
   },
   "index": {
-    "fingerprint": "1e1b6db1b1330e5f4b4cf7006fd9e7fa0b946ff1c5cd65859495dc3960a7824b",
+    "fingerprint": "f1c5822ed6c082050ec2c7f6dd94616043c6a2d81b35efb72ed65a41a6909da8",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -97918,8 +97918,8 @@
       "gap": 5,
       "implementation": 54,
       "intent": 45,
-      "issue": 1233,
-      "knowledge": 205,
+      "issue": 1245,
+      "knowledge": 220,
       "mesh-declaration": 1,
       "milestone": 117,
       "moment": 38,
@@ -105515,7 +105515,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 133939
+        "bytes": 135858
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -117485,7 +117485,7 @@
         "path": ".ai/repo/project/issues/I3257.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2063
+        "bytes": 2712
       },
       {
         "uri": "majordomus://issue/I3258",
@@ -122402,7 +122402,7 @@
         "path": ".ai/repo/project/issues/I4462.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 3821
+        "bytes": 4296
       },
       {
         "uri": "majordomus://issue/I4463",
@@ -123041,6 +123041,138 @@
         "section": "project",
         "source_class": "issue",
         "bytes": 2150
+      },
+      {
+        "uri": "majordomus://issue/I4577",
+        "kind": "issue",
+        "identity": "I4577",
+        "title": "`offload probe` says, per build host, which toolchains it has and whether it can judge a train top",
+        "description": "`majordomus offload probe` reports, beside each declared host's free space against its minimum and its load, the versions of cargo, rustc, zola and node it finds on that host's PATH (or that one is absent), and a verdict of whether the host can judge a train top: whether every gate the pre-push runs for a top has its tool there, naming each gate it could not run; the JSON answer carries the same fields.",
+        "path": ".ai/repo/project/issues/I4577.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2694
+      },
+      {
+        "uri": "majordomus://issue/I4578",
+        "kind": "issue",
+        "identity": "I4578",
+        "title": "A fixture path under a case's scratch variable is not a pack leak of the packing account's home",
+        "description": "pack plan's `pack.leak` scan (`names_machine`, apps/majordomus-cli/src/pack/mod.rs) does not report a line where the packing account's home directory appears only as the tail of a fixture path rooted at a scratch variable (`$S/`, `$T/`, `${S}/`), or the case that met it writes its fixture under a neutral user name; a literal absolute path naming this machine is still reported.",
+        "path": ".ai/repo/project/issues/I4578.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2345
+      },
+      {
+        "uri": "majordomus://issue/I4579",
+        "kind": "issue",
+        "identity": "I4579",
+        "title": "An on-demand gate that times out on a scheduled run does not override the green verdict of the push run that a release reads",
+        "description": "The on-demand `macos` and `bench` jobs of .github/workflows/validate.yml (selected only on schedule, workflow_dispatch or the ci:full label) either fit the 698-case suite inside their bounds or report a timeout as their own verdict apart from the commit's, and scripts/ci/release-verdict decides a tag on the verdict of the gates a release requires, so a scheduled run that reaches only an on-demand timeout cannot turn a commit whose push run was green into one that may not be released.",
+        "path": ".ai/repo/project/issues/I4579.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3376
+      },
+      {
+        "uri": "majordomus://issue/I4580",
+        "kind": "issue",
+        "identity": "I4580",
+        "title": "An adopter declares its own numbered sequences, the mesh reserves their numbers in landing order, and a landing refuses a gap or a duplicate",
+        "description": "A repository declares, in its policy, the numbered sequences it keeps beside the plan's ids: a path pattern with the number's place and width (database migrations `NNNN_*.sql`, Alembic revisions, an API version constant), and whether the sequence must stay dense. `mesh allocate` and `plan.allocate` take such a sequence as a kind beside issue, case and adr, reserve the next number for a session, and the landing check refuses a pull request whose added member of a dense sequence duplicates a number on the trunk or leaves a gap below the trunk's highest, naming the sequence, the number and the member it meets.",
+        "path": ".ai/repo/project/issues/I4580.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3085
+      },
+      {
+        "uri": "majordomus://issue/I4581",
+        "kind": "issue",
+        "identity": "I4581",
+        "title": "A machine resource (a container name, a TCP port, a test database, a scratch directory) is claimed on the mesh like a path, start refuses one another session holds, and finish names one left unreleased",
+        "description": "`mesh claim` takes a typed resource key beside repository paths, `resource:<kind>/<name>@<node>` for the kinds container, port, database and directory, held exclusively on the node it names; `majordomus start` with a declared resource refuses one another live session holds, naming the holder, and `finish` reports every resource the task claimed and did not release.",
+        "path": ".ai/repo/project/issues/I4581.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2398
+      },
+      {
+        "uri": "majordomus://issue/I4582",
+        "kind": "issue",
+        "identity": "I4582",
+        "title": "When a gate lands on the trunk, every open pull request is judged by it on its merge with the trunk, and the lane that owns each one is told",
+        "description": "After a landing that adds or tightens a gate (a rule's validator, a case, a check in .ai/repo/ci/gates.yaml), the integration engine runs that gate on `git merge-tree --write-tree` of the trunk and each open pull request's head, records the verdict beside the pull request's relation to master, and tells the lane that owns the pull request (its mesh session, else a comment) which gate its merge would now fail, while the forge still shows it clean and green.",
+        "path": ".ai/repo/project/issues/I4582.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2893
+      },
+      {
+        "uri": "majordomus://issue/I4583",
+        "kind": "issue",
+        "identity": "I4583",
+        "title": "An outbound message that cites repository facts carries locators re-verified against the trunk when it is sent",
+        "description": "`majordomus evidence claim --verify <draft>` reads a draft message (a pull request body, an issue comment, a report to the owner or a peer) and resolves every repository locator it cites, a path with or without a line, a commit, an issue id, a case, a run id, against the trunk at the moment of sending: each resolves, moved (with where it now is) or missing, and the command exits non-zero on a missing one, so a message is sent only with locators that hold at the commit it names.",
+        "path": ".ai/repo/project/issues/I4583.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2492
+      },
+      {
+        "uri": "majordomus://issue/I4584",
+        "kind": "issue",
+        "identity": "I4584",
+        "title": "A long-lived shell wait loop on a shared machine is a finding doctor names with its size, and an agent brief forbids one",
+        "description": "`majordomus doctor` (and the machine check a heavy step runs under) lists every shell process of the account that has run a `while`/`until` loop with a sleep for longer than a stated bound (default 30 minutes), with its pid, age, resident size and the command it waits on, as a finding naming rule project.every-wait-is-bounded and the remedy (a bounded single wait or a completion notification); the delegation brief a session gives a subagent says the same in one line.",
+        "path": ".ai/repo/project/issues/I4584.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2463
+      },
+      {
+        "uri": "majordomus://issue/I4585",
+        "kind": "issue",
+        "identity": "I4585",
+        "title": "A claim sourced outside the repository records where it came from and whether that source is official, and an unofficial one reads unverified",
+        "description": "A knowledge record or an evidence entry that rests on a source outside the repository (a vendor's documentation, a published article, a forum answer, a model's answer) names it with a typed reference `source:<url>` and a standing, `official` (published by the party the claim is about) or `unofficial`, and `majordomus knowledge check` reports a record whose claim rests only on unofficial sources as unverified, never as verified or decided.",
+        "path": ".ai/repo/project/issues/I4585.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2675
+      },
+      {
+        "uri": "majordomus://issue/I4586",
+        "kind": "issue",
+        "identity": "I4586",
+        "title": "A deriver that meets a reference to an object that does not exist names the object and the record that cites it, and fails; it never crashes",
+        "description": "Every stage of scripts/derive, and every Rust deriver it calls, treats a reference to an object that is not in the tree (an issue, a milestone, a session, a rule, a file) as a finding: it exits non-zero with `<record> cites <reference>, which does not exist` and the remedy, and never ends in a panic, an unbound-variable abort or a stack trace; a contract case breaks one reference per kind and reads that line from each stage that reads the kind.",
+        "path": ".ai/repo/project/issues/I4586.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2413
+      },
+      {
+        "uri": "majordomus://issue/I4587",
+        "kind": "issue",
+        "identity": "I4587",
+        "title": "An owner decision is announced over the mesh to every session of the repository, and an owner's deploy goes through the lane that owns the trunk",
+        "description": "When an owner decision is recorded (a decided knowledge record, an ADR accepted, a decision of `majordomus decision add` that names the owner), the runtime publishes it as a mesh event that every session of the repository on every linked node receives and that `majordomus monitor` shows to each, with the record's id and the commit that carries it; and an owner's order to deploy is routed to the session holding the seat that owns the trunk (the landing or release seat), never executed by whichever session heard it.",
+        "path": ".ai/repo/project/issues/I4587.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2783
+      },
+      {
+        "uri": "majordomus://issue/I4588",
+        "kind": "issue",
+        "identity": "I4588",
+        "title": "A gate snapshots the index when it starts and refuses its own verdict when the index changed while it ran",
+        "description": "A gate that judges the staged tree (the derive, the commit hook's checks, run-plan's gates) records `git write-tree` when it starts and again before it reports; when the two differ it refuses its verdict, naming both trees and the paths that changed, so a pass is never reported for a tree the gate did not read.",
+        "path": ".ai/repo/project/issues/I4588.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2178
       },
       {
         "uri": "majordomus://issue/I4591",
@@ -126003,6 +126135,231 @@
         "section": "knowledge",
         "source_class": "curated",
         "bytes": 1573,
+        "tags": [
+          "derived",
+          "observation"
+        ]
+      },
+      {
+        "uri": "majordomus://knowledge/s-20261111110145-5143-148d54409152",
+        "kind": "knowledge",
+        "identity": "s-20261111110145-5143-148d54409152",
+        "title": "session close writes the episode's session record, which is meant to be committed, under .ai/repo/sessions/ as an untracked file of the checkout it runs in; in a linked worktree that was removed after its pull request, the record went with it and the episode's record was lost; commit the session record before a worktree is removed, and a removal should count untracked records under .ai/repo as unfinished work",
+        "description": "Observed as friction about command:session.close in episode s-20261111110145-5143.",
+        "path": ".ai/repo/knowledge/curated/s-20261111110145-5143-148d54409152.md",
+        "section": "knowledge",
+        "source_class": "curated",
+        "bytes": 1991,
+        "tags": [
+          "derived",
+          "observation"
+        ]
+      },
+      {
+        "uri": "majordomus://knowledge/s-20261111110145-5143-37d9f776d5b2",
+        "kind": "knowledge",
+        "identity": "s-20261111110145-5143-37d9f776d5b2",
+        "title": "majordomus plan evidence with no id stops at 'plan evidence needs an issue or milestone id' (lib/plan.sh mj_plan_evidence) without naming --covers, --type or the usage line, and plan evidence --help prints the whole plan usage rather than the subcommand's options (checked with 1.0.1 and 1.0.2: --help itself works); the refusal should end with the subcommand's usage. Neighbour of I4410 (plan evidence --commit); reported from OSCILLA's session as --help answering the id refusal, which master does not reproduce",
+        "description": "Observed as friction about lib/plan.sh in episode s-20261111110145-5143.",
+        "path": ".ai/repo/knowledge/curated/s-20261111110145-5143-37d9f776d5b2.md",
+        "section": "knowledge",
+        "source_class": "curated",
+        "bytes": 2210,
+        "tags": [
+          "derived",
+          "observation"
+        ]
+      },
+      {
+        "uri": "majordomus://knowledge/s-20261111110145-5143-7c9dfc378aaa",
+        "kind": "knowledge",
+        "identity": "s-20261111110145-5143-7c9dfc378aaa",
+        "title": "a ? after the infallible .split(' ').next() in mesh/manager.rs closed_key made an early-return region no input can reach, so coverage-differential failed #2996 (I4572) on a line no test could cover; the fix was to the code (unwrap_or(rest), commit 3b9256887bb), not a test: when the differential names a branch that cannot be taken, remove the branch. Beside curated s-20261110141959-348c-68fcc27016c1 (the doctest-only reach of the same function); met by the session that implemented I4572",
+        "description": "Observed as friction about gate:coverage-differential in episode s-20261111110145-5143.",
+        "path": ".ai/repo/knowledge/curated/s-20261111110145-5143-7c9dfc378aaa.md",
+        "section": "knowledge",
+        "source_class": "curated",
+        "bytes": 2384,
+        "tags": [
+          "derived",
+          "observation"
+        ]
+      },
+      {
+        "uri": "majordomus://knowledge/s-20261111110145-5143-92bdb1946d84",
+        "kind": "knowledge",
+        "identity": "s-20261111110145-5143-92bdb1946d84",
+        "title": "master's github-projection apply job failed its first attempt three times on the 5-minute actions/checkout timeout (runs 42687192829, 42899934135, 42942722456, 2026-11-09 to 11-11), and until a rerun applied the records every open pull request failed github-check as drifted before it; the workaround each time was rerunning master's failed job, as curated s-20261103014800-e1b0-22099d566ee5 says; the fix is I3241 (pull request #2974, a blobless checkout under 120 s)",
+        "description": "Observed as workaround about .github/workflows/github.yml in episode s-20261111110145-5143.",
+        "path": ".ai/repo/knowledge/curated/s-20261111110145-5143-92bdb1946d84.md",
+        "section": "knowledge",
+        "source_class": "curated",
+        "bytes": 2384,
+        "tags": [
+          "derived",
+          "observation"
+        ]
+      },
+      {
+        "uri": "majordomus://knowledge/s-20261111110145-5143-aeff0c8a5e63",
+        "kind": "knowledge",
+        "identity": "s-20261111110145-5143-aeff0c8a5e63",
+        "title": "the primary checkout's shared server died three times in about 20 hours (2026-11-10 to 11-11), and each death again dropped every mesh session and claim it held and left the MCP client attached to the dead server, so plan.allocate and mesh handover publish refused not_active until the session was reopened by hand; the same failure as curated s-20261110141959-348c-68d3c34e49d1 and s-20261110141959-348c-427bd2090965, now recurring; I3798 owns claims outliving a lease takeover",
+        "description": "Observed as repetition about command:serve.ensure in episode s-20261111110145-5143.",
+        "path": ".ai/repo/knowledge/curated/s-20261111110145-5143-aeff0c8a5e63.md",
+        "section": "knowledge",
+        "source_class": "curated",
+        "bytes": 2196,
+        "tags": [
+          "derived",
+          "observation"
+        ]
+      },
+      {
+        "uri": "majordomus://knowledge/s-20261111110145-5143-b43cfeca0cf7",
+        "kind": "knowledge",
+        "identity": "s-20261111110145-5143-b43cfeca0cf7",
+        "title": "a commit of a path outside the active task's scope passes pre-commit silently: the hook runs doctor, worktree guard, pages current and providers-check and never compares the staged paths with the task's scope, so only check, finish and the pre-push catch it, after more work has been stacked on it; neighbour of I4573 (the advisory for a commit with no task at all); reported from OSCILLA's session",
+        "description": "Observed as defect about .githooks/pre-commit in episode s-20261111110145-5143.",
+        "path": ".ai/repo/knowledge/curated/s-20261111110145-5143-b43cfeca0cf7.md",
+        "section": "knowledge",
+        "source_class": "curated",
+        "bytes": 2044,
+        "tags": [
+          "derived",
+          "observation"
+        ]
+      },
+      {
+        "uri": "majordomus://knowledge/s-20261111110145-5143-c7ab38649623",
+        "kind": "knowledge",
+        "identity": "s-20261111110145-5143-c7ab38649623",
+        "title": "announce reports overlaps with the claims of sessions that stopped days ago: an Overlap carries attached, intent, paths and checkout but no age of the other claim, so a fresh announcement reads the same warning for a live peer and a record left by a session gone since last week; reported from OSCILLA's session",
+        "description": "Observed as friction about capability:peers.announce in episode s-20261111110145-5143.",
+        "path": ".ai/repo/knowledge/curated/s-20261111110145-5143-c7ab38649623.md",
+        "section": "knowledge",
+        "source_class": "curated",
+        "bytes": 1549,
+        "tags": [
+          "derived",
+          "observation"
+        ]
+      },
+      {
+        "uri": "majordomus://knowledge/s-20261111110145-5143-c9ea1d3aa345",
+        "kind": "knowledge",
+        "identity": "s-20261111110145-5143-c9ea1d3aa345",
+        "title": "a git push over SSH from the Linux build host was cut by the remote ('Connection to github.com closed by remote host') while the report-only pre-push ran for about 8 minutes; the same push over HTTPS with gh as the credential helper (git -c credential.helper='!gh auth git-credential' push https://github.com/<owner>/<repo>.git) completed, because smart HTTP sends the pack in a new request after the hook ends and holds no connection idle while it runs, where SSH keeps one open the whole time",
+        "description": "Observed as workaround about .githooks/pre-push in episode s-20261111110145-5143.",
+        "path": ".ai/repo/knowledge/curated/s-20261111110145-5143-c9ea1d3aa345.md",
+        "section": "knowledge",
+        "source_class": "curated",
+        "bytes": 2001,
+        "tags": [
+          "derived",
+          "observation"
+        ]
+      },
+      {
+        "uri": "majordomus://knowledge/s-20261111110145-5143-dc3672b2b03c",
+        "kind": "knowledge",
+        "identity": "s-20261111110145-5143-dc3672b2b03c",
+        "title": "finish refused on its at-finish gate pages-live right after a landing although pages-check had said the owed publication was inside its deploy window (OWED_AFTER, 1800 s by default); the refusal named neither the window nor when it would clear, so the session could not tell a wait from a defect; reported from an adopting repository's session",
+        "description": "Observed as friction about command:finish in episode s-20261111110145-5143.",
+        "path": ".ai/repo/knowledge/curated/s-20261111110145-5143-dc3672b2b03c.md",
+        "section": "knowledge",
+        "source_class": "curated",
+        "bytes": 1787,
+        "tags": [
+          "derived",
+          "observation"
+        ]
+      },
+      {
+        "uri": "majordomus://knowledge/s-20261111110145-5143-e860a1b4a47f",
+        "kind": "knowledge",
+        "identity": "s-20261111110145-5143-e860a1b4a47f",
+        "title": "the report-only pre-push names NOT JUDGED only a gate whose launcher refuses with exit 12 for want of an executable of the tree (41937546652); a gate that fails because its tool is absent on the host (cargo on a machine without it, node for ui-check and portable-core on the Linux build host) is labelled failed like a gate the change broke, so a reader cannot tell the host from the change; it should say not judged here, and I4577 makes the probe name such hosts beforehand; reported from an adopting repository's session",
+        "description": "Observed as friction about .githooks/pre-push in episode s-20261111110145-5143.",
+        "path": ".ai/repo/knowledge/curated/s-20261111110145-5143-e860a1b4a47f.md",
+        "section": "knowledge",
+        "source_class": "curated",
+        "bytes": 2444,
+        "tags": [
+          "derived",
+          "observation"
+        ]
+      },
+      {
+        "uri": "majordomus://knowledge/s-20261112053142-0101-3310f2407cc3",
+        "kind": "knowledge",
+        "identity": "s-20261112053142-0101-3310f2407cc3",
+        "title": "on 2026-11-11 from about 14:36Z to past 16:20Z archive.ubuntu.com and security.ubuntu.com did not resolve from GitHub runners (nor from a workstation), and every validate that ran a package install went red: suite-shard on sudo apt-get install -y zsh (Temporary failure resolving security.ubuntu.com) and mesh-lab on its Dockerfile apt-get update (exit code 100), in runs 43015422777 attempt 2, 43040551135, 43041852612 and 43052532703; the branch first-red self-cancel (I2664) then made the failing jobs read as cancelled, so the outage looked like an outside canceller; what worked was to read the outage from the failing step, wait out the window and rerun only one's own runs after it; zsh and the mesh-lab base image come from the network on every run, and the verdict does not tell an infrastructure red from a gate red",
+        "description": "Observed as defect about .github/workflows/validate.yml in episode s-20261112053142-0101.",
+        "path": ".ai/repo/knowledge/curated/s-20261112053142-0101-3310f2407cc3.md",
+        "section": "knowledge",
+        "source_class": "curated",
+        "bytes": 3518,
+        "tags": [
+          "derived",
+          "observation"
+        ]
+      },
+      {
+        "uri": "majordomus://knowledge/s-20261112053142-0101-3d94b56e4126",
+        "kind": "knowledge",
+        "identity": "s-20261112053142-0101-3d94b56e4126",
+        "title": "on 2026-11-11 from about 14:36Z to past 16:20Z archive.ubuntu.com and security.ubuntu.com did not resolve from GitHub runners (nor from a workstation), and every validate that ran a package install went red: suite-shard on sudo apt-get install -y zsh (Temporary failure resolving security.ubuntu.com) and mesh-lab on its Dockerfile apt-get update (exit code 100), in runs 43015422777 attempt 2, 43040551135, 43041852612 and 43052532703; the branch first-red self-cancel (I2664) then made the failing jobs read as cancelled, so the outage looked like an outside canceller; what worked was to read the outage from the failing step, wait out the window and rerun only the session own runs after it; zsh and the mesh-lab base image come from the network on every run, and the verdict does not tell an infrastructure red from a gate red",
+        "description": "Observed as defect about .github/workflows/validate.yml in episode s-20261112053142-0101.",
+        "path": ".ai/repo/knowledge/candidates/s-20261112053142-0101-3d94b56e4126.md",
+        "section": "knowledge",
+        "source_class": "candidates",
+        "bytes": 2447,
+        "tags": [
+          "derived",
+          "observation"
+        ]
+      },
+      {
+        "uri": "majordomus://knowledge/s-20261112053142-0101-4e79a856d30d",
+        "kind": "knowledge",
+        "identity": "s-20261112053142-0101-4e79a856d30d",
+        "title": "release v1.0.2 was refused because the scheduled validate 43015422777 of the tagged commit d34f159439f went 1% over the case-time total (62299 s against cases_seconds 61700) with every case passing, while the push run 42999762183 of the same commit was green: release-verdict reads the newest ci check-run, so a later budget-only red on the same tree overrode a green verdict; pull request 3008 re-derives the total to 68500 from runner-load measurements; a budget-only red is the runner pool weather rather than a defect of the commit, and the suite.yaml doctrine raises a budget from the worst measured run without first asking whether the growth is runner load or a slower case",
+        "description": "Observed as friction about scripts/ci/suite-budget in episode s-20261112053142-0101.",
+        "path": ".ai/repo/knowledge/curated/s-20261112053142-0101-4e79a856d30d.md",
+        "section": "knowledge",
+        "source_class": "curated",
+        "bytes": 3091,
+        "tags": [
+          "derived",
+          "observation"
+        ]
+      },
+      {
+        "uri": "majordomus://knowledge/s-20261112053142-0101-ce785b764aac",
+        "kind": "knowledge",
+        "identity": "s-20261112053142-0101-ce785b764aac",
+        "title": "Owner decision 2026-11-11 (~20:05Z-20:29Z): the remote tag v1.0.2 is deleted so that the release can be finished from a green verdict; the owner deleted it themselves (git push origin :refs/tags/v1.0.2, output \\\"- [deleted] v1.0.2\\\"), the local tag kept at d34f159",
+        "description": "Recorded as a decision outside a task in episode s-20261112053142-0101.",
+        "path": ".ai/repo/knowledge/curated/s-20261112053142-0101-ce785b764aac.md",
+        "section": "knowledge",
+        "source_class": "curated",
+        "bytes": 2417,
+        "tags": [
+          "derived",
+          "decision"
+        ]
+      },
+      {
+        "uri": "majordomus://knowledge/s-20261112053142-0101-db0cff44b2ad",
+        "kind": "knowledge",
+        "identity": "s-20261112053142-0101-db0cff44b2ad",
+        "title": "on 2026-11-11 from about 14:36Z to past 16:20Z archive.ubuntu.com and security.ubuntu.com did not resolve from GitHub runners (nor from a workstation), and every validate that ran a package install went red: suite-shard on sudo apt-get install -y zsh (Temporary failure resolving security.ubuntu.com) and mesh-lab on its Dockerfile apt-get update (exit code 100), in runs 43015422777 attempt 2, 43040551135, 43041852612 and 43052532703; the branch first-red self-cancel (I2664) then made the failing jobs read as cancelled, so the outage looked like an outside canceller; the remedy was to read the failing step, wait out the window and rerun only one own runs after it; zsh and the mesh-lab base image are installed from the network on every run, and the verdict does not tell an infrastructure red from a gate red",
+        "description": "Observed as defect about .github/workflows/validate.yml in episode s-20261112053142-0101.",
+        "path": ".ai/repo/knowledge/candidates/s-20261112053142-0101-db0cff44b2ad.md",
+        "section": "knowledge",
+        "source_class": "candidates",
+        "bytes": 2453,
         "tags": [
           "derived",
           "observation"
@@ -139348,7 +139705,7 @@
       "identity": [
         "id"
       ],
-      "objects": 1233
+      "objects": 1245
     },
     {
       "name": "knowledge",
@@ -139358,7 +139715,7 @@
       "identity": [
         "id"
       ],
-      "objects": 205
+      "objects": 220
     },
     {
       "name": "mesh-declaration",
