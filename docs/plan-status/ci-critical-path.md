@@ -224,6 +224,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I2115` | shares test/cases with I4586; they may not run concurrently |
 | WARN | `scope_conflict` | `I2115` | shares test/cases with I4587; they may not run concurrently |
 | WARN | `scope_conflict` | `I2115` | shares test/cases with I4588; they may not run concurrently |
+| WARN | `scope_conflict` | `I2115` | shares test/cases with I4591; they may not run concurrently |
 | WARN | `scope_conflict` | `I2350` | shares .ai/repo/ci/gates.yaml with I2374; they may not run concurrently |
 | WARN | `scope_conflict` | `I2350` | shares test/cases with I2411; they may not run concurrently |
 | WARN | `scope_conflict` | `I2350` | shares .ai/repo/ci/gates.yaml with I2662; they may not run concurrently |
@@ -389,6 +390,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I2350` | shares test/cases with I4586; they may not run concurrently |
 | WARN | `scope_conflict` | `I2350` | shares test/cases with I4587; they may not run concurrently |
 | WARN | `scope_conflict` | `I2350` | shares test/cases with I4588; they may not run concurrently |
+| WARN | `scope_conflict` | `I2350` | shares test/cases with I4591; they may not run concurrently |
 | WARN | `scope_conflict` | `I3825` | shares test/cases with I3826; they may not run concurrently |
 | WARN | `scope_conflict` | `I3825` | shares test/cases with I3837; they may not run concurrently |
 | WARN | `scope_conflict` | `I3825` | shares test/cases with I3843; they may not run concurrently |
