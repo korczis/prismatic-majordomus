@@ -2,17 +2,17 @@
  "schema": 1,
  "generated_by": "scripts/lib/docs-index.mjs",
  "build": {
-  "commit": "67e7c6a083890dcac894c6ac5ec6f0dd85103aca",
+  "commit": "6f8e1041f54fe484e909af6c607ee61a4bbbfc9b",
   "source_version": "1.0.2",
-  "registry_fingerprint": "6c7b18dae818aedaf848ac11d5576d248b743eb14ef772c3d124f944f106ca8f"
+  "registry_fingerprint": "4dcf30fa83799f72b3df756b4d75e491972881cbcf926bab38da344b4a8eb3e5"
  },
  "counts": {
-  "pages": 6474,
-  "capabilities": 3987,
+  "pages": 6476,
+  "capabilities": 3989,
   "cli_commands": 128,
   "http_routes": 219,
   "mcp_tools": 215,
-  "mcp_resources": 3813,
+  "mcp_resources": 3815,
   "modules": 96
  },
  "kinds": [
@@ -158,7 +158,7 @@
    "route": "/plan/",
    "title": null,
    "reason": null,
-   "count": 1232
+   "count": 1233
   },
   {
    "kind": "knowledge",
@@ -270,7 +270,7 @@
    "route": null,
    "title": null,
    "reason": "A test object is a case file. What it proves is published — on /guarantees/ for the claim and on the rule's own page for the rule — and that is the direction a reader asks in.",
-   "count": 698
+   "count": 699
   },
   {
    "kind": "use-case",
@@ -15873,6 +15873,12 @@
    "route": "/cs/plan/i4573/",
    "title": "I4573 — A commit or push from a worktree with no active task is told so, in a supervised repository",
    "description": "The pre-commit and pre-push hooks report an advisory finding, `no active task in this worktree: these commits are bound to no task (majordomus start ...)`, when the repository is supervised (its .ai/manifest.yaml exists) and the checkout has no open task, so work is not committed and pushed unbound without anyone noticing.",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/plan/i4591/",
+   "title": "I4591 — mj_ms reads EPOCHREALTIME under any locale's decimal separator",
+   "description": "mj_ms (lib/common.sh) keeps every digit of EPOCHREALTIME and drops whatever separates them, so the millisecond clock is digits under any locale and every caller's arithmetic holds; a case pins it with an injected comma and, where one is installed, a real comma locale.",
    "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
   },
   {
@@ -33174,6 +33180,12 @@
    "section": "The plan"
   },
   {
+   "route": "/plan/i4591/",
+   "title": "I4591 — mj_ms reads EPOCHREALTIME under any locale's decimal separator",
+   "description": "mj_ms (lib/common.sh) keeps every digit of EPOCHREALTIME and drops whatever separates them, so the millisecond clock is digits under any locale and every caller's arithmetic holds; a case pins it with an injected comma and, where one is installed, a real comma locale.",
+   "section": "The plan"
+  },
+  {
    "route": "/plan/idd-reads-at-a-glance/",
    "title": "idd-reads-at-a-glance — The intent workspace reads at a glance and leads everywhere it names",
    "description": "The workspace reads in the order a person asks (what the intent is, what is missing, what to do next, the work, the evidence), every id on it is a link, its numbers are the intent's, its texts render through the UI's one prose renderer, it offers one primary action, and audit rules keep bare ids and raw markdown off every /ui page from now on.",
@@ -37118,7 +37130,7 @@
   {
    "route": "/rustdoc/",
    "title": "majordomus-cli 1.0.2 — Rust API reference",
-   "description": "The rustdoc reference of majordomus-cli 1.0.2, built from commit 67e7c6a083890dcac894c6ac5ec6f0dd85103aca: the public items of the library and of the executable, and the source they were built from.",
+   "description": "The rustdoc reference of majordomus-cli 1.0.2, built from commit 6f8e1041f54fe484e909af6c607ee61a4bbbfc9b: the public items of the library and of the executable, and the source they were built from.",
    "section": "majordomus-cli 1.0.2 — Rust API reference"
   },
   {
