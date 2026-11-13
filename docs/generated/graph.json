@@ -80920,6 +80920,47 @@
         }
       },
       {
+        "id": "majordomus://issue/I4591",
+        "kind": "issue",
+        "label": "I4591",
+        "summary": "mj_ms reads EPOCHREALTIME under any locale's decimal separator",
+        "route": "/cockpit/objects/issue/i4591",
+        "source": ".ai/repo/project/issues/I4591.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "With EPOCHREALTIME given a comma separator (1794507023,087598), mj_ms prints 1794507023087 and a doctor-shaped subtraction of two readings succeeds",
+            "With a dot separator the answer is the same",
+            "Under an installed locale whose real EPOCHREALTIME carries a comma, mj_ms prints digits",
+            "Negative: the case fails against lib/common.sh before this change (value too great for base, error token 087)"
+          ],
+          "created_at": "2026-11-12",
+          "depends_on": [],
+          "evidence_required": [
+            "mj_ms_reads_any_decimal_separator"
+          ],
+          "milestone": "adopter-upgrades",
+          "non_scope": [
+            "scripts/derive's own clock (now_ms), which already strips a non-digit separator",
+            "The callers of mj_ms, whose arithmetic is correct once mj_ms answers digits",
+            "The locale any command or CI runner runs under; the algoglyph workaround can be dropped after the next release"
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "lib/common.sh",
+            "test/cases/4577_mj_ms_reads_any_decimal_separator.sh",
+            ".ai/repo/project/issues/I4591.yaml"
+          ],
+          "serves": [],
+          "slug": "mj-ms-reads-any-decimal-separator",
+          "validation": [
+            "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 4577_mj_ms_reads_any_decimal_separator",
+            "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 886_the_timing_report_is_json"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "label": "a-brief-is-reconciled-not-transcribed",
@@ -108435,6 +108476,13 @@
         "label": "test/cases/4574_the_record_dispatch_approves_the_record_pull_request_run.sh",
         "route": "/cockpit/objects/test/test-cases-4574-the-record-dispatch-approves-the-record-pull-request-run-sh",
         "source": "test/cases/4574_the_record_dispatch_approves_the_record_pull_request_run.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/4577_mj_ms_reads_any_decimal_separator.sh",
+        "kind": "test",
+        "label": "test/cases/4577_mj_ms_reads_any_decimal_separator.sh",
+        "route": "/cockpit/objects/test/test-cases-4577-mj-ms-reads-any-decimal-separator-sh",
+        "source": "test/cases/4577_mj_ms_reads_any_decimal_separator.sh"
       },
       {
         "id": "majordomus://test/test/cases/45_github_projection.sh",
@@ -150127,6 +150175,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I4591",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4591",
+        "target": "majordomus://milestone/adopter-upgrades",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -157787,6 +157845,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/4577_mj_ms_reads_any_decimal_separator.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/45_github_projection.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -162913,8 +162976,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4458,
-      "edges": 10085,
+      "nodes": 4460,
+      "edges": 10088,
       "acyclic": false,
       "truncated": false
     }
