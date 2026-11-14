@@ -655,6 +655,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I1999` | shares test/cases with I4531; they may not run concurrently |
 | WARN | `scope_conflict` | `I1999` | shares test/cases with I4532; they may not run concurrently |
 | WARN | `scope_conflict` | `I1999` | shares test/cases with I4533; they may not run concurrently |
+| WARN | `scope_conflict` | `I1999` | shares apps/majordomus-cli/src with I4565; they may not run concurrently |
 | WARN | `scope_conflict` | `I1999` | shares lib with I4567; they may not run concurrently |
 | WARN | `scope_conflict` | `I1999` | shares apps/majordomus-cli/src with I4568; they may not run concurrently |
 | WARN | `scope_conflict` | `I1999` | shares test/cases with I4569; they may not run concurrently |
@@ -679,4 +680,5 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I4336` | shares lib/doctor.sh with I4418; they may not run concurrently |
 | WARN | `scope_conflict` | `I4336` | shares share/schemas/majordomus/policy with I4464; they may not run concurrently |
 | WARN | `scope_conflict` | `I4336` | shares lib/rules.sh with I4468; they may not run concurrently |
+| WARN | `scope_conflict` | `I4336` | shares apps/majordomus-cli/src/design/licence.rs with I4565; they may not run concurrently |
 | WARN | `scope_conflict` | `I4336` | shares lib/doctor.sh with I4584; they may not run concurrently |
