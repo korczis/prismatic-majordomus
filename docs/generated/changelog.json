@@ -5,6 +5,666 @@
   "current": "1.0.2",
   "sections": [
     {
+      "version": "1.0.2",
+      "tag": "v1.0.2",
+      "date": "2026-11-11T23:53:26Z",
+      "commit": "d34f159439fbe7e8715408aa5dc72f3e194fe457",
+      "unreleased": false,
+      "notes_url": "https://github.com/korczis/prismatic-majordomus/releases/tag/v1.0.2",
+      "compare_url": "https://github.com/korczis/prismatic-majordomus/compare/v1.0.1...v1.0.2",
+      "tree_url": "https://github.com/korczis/prismatic-majordomus/tree/v1.0.2",
+      "decisions": [],
+      "groups": [
+        {
+          "kind": "fix",
+          "heading": "Fixed",
+          "rank": 1,
+          "changes": [
+            {
+              "kind": "fix",
+              "scope": "mesh",
+              "subject": "closed_key has no early return that can never be taken (I4572)",
+              "breaking": false,
+              "commit": "3b9256887",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/3b9256887",
+              "references": [
+                {
+                  "kind": "issue",
+                  "id": "I4572",
+                  "title": "mesh doctor fails a runtime that is closed while the declaration trusts this machine's key, and names the stale server as the cause",
+                  "route": "/plan/i4572/"
+                }
+              ]
+            },
+            {
+              "kind": "fix",
+              "scope": "mesh",
+              "subject": "a running server opens or closes its mesh as the trunk trusts its key (I4571)",
+              "breaking": false,
+              "commit": "2ef7275e7",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/2ef7275e7",
+              "references": [
+                {
+                  "kind": "issue",
+                  "id": "I4571",
+                  "title": "A server whose own key was not trusted opens its mesh when the trunk's trust.allow gains the key, without a restart",
+                  "route": "/plan/i4571/"
+                },
+                {
+                  "kind": "issue",
+                  "id": "I2134",
+                  "title": "A key removed from the trust list loses its links without a restart, and a node key can be rotated",
+                  "route": "/plan/i2134/"
+                },
+                {
+                  "kind": "issue",
+                  "id": "I4572",
+                  "title": "mesh doctor fails a runtime that is closed while the declaration trusts this machine's key, and names the stale server as the cause",
+                  "route": "/plan/i4572/"
+                }
+              ]
+            },
+            {
+              "kind": "fix",
+              "scope": "mesh",
+              "subject": "the doctor fails a runtime still closed to a key the declaration trusts (I4572)",
+              "breaking": false,
+              "commit": "8407657c9",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/8407657c9",
+              "references": [
+                {
+                  "kind": "issue",
+                  "id": "I4572",
+                  "title": "mesh doctor fails a runtime that is closed while the declaration trusts this machine's key, and names the stale server as the cause",
+                  "route": "/plan/i4572/"
+                }
+              ]
+            },
+            {
+              "kind": "fix",
+              "scope": "release",
+              "subject": "a tag is excused until its grace ends (I4341)",
+              "breaking": false,
+              "commit": "1992933d3",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/1992933d3",
+              "references": [
+                {
+                  "kind": "issue",
+                  "id": "I4341",
+                  "title": "release-check excuses a tag without a record until its grace ends, whatever the job fetched and whenever the release run concluded",
+                  "route": "/plan/i4341/"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "kind": "docs",
+          "heading": "Documentation",
+          "rank": 4,
+          "changes": [
+            {
+              "kind": "docs",
+              "scope": "knowledge",
+              "subject": "the offload derive and allocate after a restart are recorded (I4573)",
+              "breaking": false,
+              "commit": "6fa235022",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/6fa235022",
+              "references": [
+                {
+                  "kind": "issue",
+                  "id": "I4573",
+                  "title": "A commit or push from a worktree with no active task is told so, in a supervised repository",
+                  "route": "/plan/i4573/"
+                }
+              ]
+            },
+            {
+              "kind": "docs",
+              "scope": "knowledge",
+              "subject": "evolve 2026-11-10 second run, integrator v7 and I4573 from the mesh",
+              "breaking": false,
+              "commit": "60fc3aae7",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/60fc3aae7",
+              "references": [
+                {
+                  "kind": "issue",
+                  "id": "I4573",
+                  "title": "A commit or push from a worktree with no active task is told so, in a supervised repository",
+                  "route": "/plan/i4573/"
+                },
+                {
+                  "kind": "issue",
+                  "id": "I3836",
+                  "title": "An offload derive observes the bundle's base commit, not its throwaway snapshot, so what it derives passes CI's check",
+                  "route": "/plan/i3836/"
+                },
+                {
+                  "kind": "issue",
+                  "id": "I4571",
+                  "title": "A server whose own key was not trusted opens its mesh when the trunk's trust.allow gains the key, without a restart",
+                  "route": "/plan/i4571/"
+                },
+                {
+                  "kind": "issue",
+                  "id": "I4350",
+                  "title": "plan validate refuses a scope that names a directory holding a file another issue plans, so its warnings never publish a path nobody has written",
+                  "route": "/plan/i4350/"
+                },
+                {
+                  "kind": "issue",
+                  "id": "I3798",
+                  "title": "A session's mesh claims outlive a lease takeover of the server it made them on",
+                  "route": "/plan/i3798/"
+                },
+                {
+                  "kind": "issue",
+                  "id": "I0828",
+                  "title": "doctor under a declared budget, and the hook inherits it",
+                  "route": "/plan/i0828/"
+                },
+                {
+                  "kind": "issue",
+                  "id": "I4260",
+                  "title": "A task's scope can be widened, with the widening recorded",
+                  "route": "/plan/i4260/"
+                },
+                {
+                  "kind": "issue",
+                  "id": "I2114",
+                  "title": "A task's scope admits what its derive writes",
+                  "route": "/plan/i2114/"
+                },
+                {
+                  "kind": "issue",
+                  "id": "I4357",
+                  "title": "Issue, ADR and case numbers are reserved atomically at origin and checked at landing",
+                  "route": "/plan/i4357/"
+                }
+              ]
+            },
+            {
+              "kind": "docs",
+              "scope": "plan",
+              "subject": "I4567-I4572 name their case files, not the whole test/cases directory",
+              "breaking": false,
+              "commit": "cb86f6825",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/cb86f6825",
+              "references": [
+                {
+                  "kind": "issue",
+                  "id": "I4567",
+                  "title": "A task whose own commits were rebased has a supported finish, judged over its rebased commits",
+                  "route": "/plan/i4567/"
+                },
+                {
+                  "kind": "issue",
+                  "id": "I4572",
+                  "title": "mesh doctor fails a runtime that is closed while the declaration trusts this machine's key, and names the stale server as the cause",
+                  "route": "/plan/i4572/"
+                }
+              ]
+            },
+            {
+              "kind": "docs",
+              "scope": "plan",
+              "subject": "I4568 serves every-commit-names-its-issue, the criterion of the milestone it moved to",
+              "breaking": false,
+              "commit": "9b19ab445",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/9b19ab445",
+              "references": [
+                {
+                  "kind": "issue",
+                  "id": "I4568",
+                  "title": "A commit names the task and the mesh session that made it, and trace issue finds an issue's commits on branches and train tops, not only the trunk",
+                  "route": "/plan/i4568/"
+                }
+              ]
+            },
+            {
+              "kind": "docs",
+              "scope": "knowledge",
+              "subject": "the continuity-resolve candidate is left to #2963, which promoted it first (I4567)",
+              "breaking": false,
+              "commit": "b282d1976",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/b282d1976",
+              "references": [
+                {
+                  "kind": "issue",
+                  "id": "I4567",
+                  "title": "A task whose own commits were rebased has a supported finish, judged over its rebased commits",
+                  "route": "/plan/i4567/"
+                }
+              ]
+            },
+            {
+              "kind": "docs",
+              "scope": "knowledge",
+              "subject": "evolve 2026-11-10, candidates decided and I4567-I4572 filed from the mesh",
+              "breaking": false,
+              "commit": "d8acd7aef",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/d8acd7aef",
+              "references": [
+                {
+                  "kind": "issue",
+                  "id": "I4567",
+                  "title": "A task whose own commits were rebased has a supported finish, judged over its rebased commits",
+                  "route": "/plan/i4567/"
+                },
+                {
+                  "kind": "issue",
+                  "id": "I4572",
+                  "title": "mesh doctor fails a runtime that is closed while the declaration trusts this machine's key, and names the stale server as the cause",
+                  "route": "/plan/i4572/"
+                },
+                {
+                  "kind": "issue",
+                  "id": "I4568",
+                  "title": "A commit names the task and the mesh session that made it, and trace issue finds an issue's commits on branches and train tops, not only the trunk",
+                  "route": "/plan/i4568/"
+                },
+                {
+                  "kind": "issue",
+                  "id": "I4569",
+                  "title": "Pull-request runs that yielded to the release path run again when the release path's last run ends, not on the next scheduled tick",
+                  "route": "/plan/i4569/"
+                },
+                {
+                  "kind": "issue",
+                  "id": "I4570",
+                  "title": "The before-push plan runs the formatter and the version-surface gate, the two seconds-long Rust gates a pull request was refused on after passing it",
+                  "route": "/plan/i4570/"
+                },
+                {
+                  "kind": "issue",
+                  "id": "I4571",
+                  "title": "A server whose own key was not trusted opens its mesh when the trunk's trust.allow gains the key, without a restart",
+                  "route": "/plan/i4571/"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "kind": "test",
+          "heading": "Tests",
+          "rank": 5,
+          "changes": [
+            {
+              "kind": "test",
+              "scope": "mesh",
+              "subject": "unit tests reach every branch of the own-key retrust and of close (I4571)",
+              "breaking": false,
+              "commit": "38dd59a7b",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/38dd59a7b",
+              "references": [
+                {
+                  "kind": "issue",
+                  "id": "I4571",
+                  "title": "A server whose own key was not trusted opens its mesh when the trunk's trust.allow gains the key, without a restart",
+                  "route": "/plan/i4571/"
+                }
+              ]
+            },
+            {
+              "kind": "test",
+              "scope": "mesh",
+              "subject": "a unit test covers how closed_key reads a closed runtime's key (I4572)",
+              "breaking": false,
+              "commit": "29298a4ca",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/29298a4ca",
+              "references": [
+                {
+                  "kind": "issue",
+                  "id": "I4572",
+                  "title": "mesh doctor fails a runtime that is closed while the declaration trusts this machine's key, and names the stale server as the cause",
+                  "route": "/plan/i4572/"
+                }
+              ]
+            },
+            {
+              "kind": "test",
+              "scope": "release",
+              "subject": "cases 3029 and 3021 measure their fixture under MJ_ROOT (I4341)",
+              "breaking": false,
+              "commit": "5577682d3",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/5577682d3",
+              "references": [
+                {
+                  "kind": "issue",
+                  "id": "I4341",
+                  "title": "release-check excuses a tag without a record until its grace ends, whatever the job fetched and whenever the release run concluded",
+                  "route": "/plan/i4341/"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "kind": "ci",
+          "heading": "Pipeline",
+          "rank": 6,
+          "changes": [
+            {
+              "kind": "ci",
+              "scope": "validate",
+              "subject": "the record's dispatch approves the record pull request's own run (I2717)",
+              "breaking": false,
+              "commit": "f857cc508",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/f857cc508",
+              "references": [
+                {
+                  "kind": "issue",
+                  "id": "I2717",
+                  "title": "A release record pull request gets a verdict that can pass",
+                  "route": "/plan/i2717/"
+                },
+                {
+                  "kind": "issue",
+                  "id": "I3668",
+                  "title": "The evidence receipt names what the plan owed each producer, so an absence is not_required, missing, interrupted or refused, never guessed from the disk",
+                  "route": "/plan/i3668/"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "kind": "chore",
+          "heading": "Housekeeping",
+          "rank": 7,
+          "changes": [
+            {
+              "kind": "chore",
+              "scope": "release",
+              "subject": "1.0.2",
+              "breaking": false,
+              "commit": "16e9b8257",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/16e9b8257",
+              "references": [
+                {
+                  "kind": "issue",
+                  "id": "I4341",
+                  "title": "release-check excuses a tag without a record until its grace ends, whatever the job fetched and whenever the release run concluded",
+                  "route": "/plan/i4341/"
+                },
+                {
+                  "kind": "issue",
+                  "id": "I4567",
+                  "title": "A task whose own commits were rebased has a supported finish, judged over its rebased commits",
+                  "route": "/plan/i4567/"
+                },
+                {
+                  "kind": "issue",
+                  "id": "I4572",
+                  "title": "mesh doctor fails a runtime that is closed while the declaration trusts this machine's key, and names the stale server as the cause",
+                  "route": "/plan/i4572/"
+                },
+                {
+                  "kind": "issue",
+                  "id": "I2717",
+                  "title": "A release record pull request gets a verdict that can pass",
+                  "route": "/plan/i2717/"
+                },
+                {
+                  "kind": "issue",
+                  "id": "I4573",
+                  "title": "A commit or push from a worktree with no active task is told so, in a supervised repository",
+                  "route": "/plan/i4573/"
+                },
+                {
+                  "kind": "issue",
+                  "id": "I4571",
+                  "title": "A server whose own key was not trusted opens its mesh when the trunk's trust.allow gains the key, without a restart",
+                  "route": "/plan/i4571/"
+                }
+              ]
+            },
+            {
+              "kind": "chore",
+              "scope": "derive",
+              "subject": "derive the merge of origin/master into the I4571 branch (I4571)",
+              "breaking": false,
+              "commit": "4fb66e554",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/4fb66e554",
+              "references": [
+                {
+                  "kind": "issue",
+                  "id": "I4571",
+                  "title": "A server whose own key was not trusted opens its mesh when the trunk's trust.allow gains the key, without a restart",
+                  "route": "/plan/i4571/"
+                }
+              ]
+            },
+            {
+              "kind": "chore",
+              "scope": "derive",
+              "subject": "derive the committed merge of master into the evolve branch (I4573)",
+              "breaking": false,
+              "commit": "49c234ae0",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/49c234ae0",
+              "references": [
+                {
+                  "kind": "issue",
+                  "id": "I4573",
+                  "title": "A commit or push from a worktree with no active task is told so, in a supervised repository",
+                  "route": "/plan/i4573/"
+                }
+              ]
+            },
+            {
+              "kind": "chore",
+              "scope": "derive",
+              "subject": "derive the merge of the I4572 closed_key fix into the I4571 branch (I4571)",
+              "breaking": false,
+              "commit": "722be9160",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/722be9160",
+              "references": [
+                {
+                  "kind": "issue",
+                  "id": "I4572",
+                  "title": "mesh doctor fails a runtime that is closed while the declaration trusts this machine's key, and names the stale server as the cause",
+                  "route": "/plan/i4572/"
+                },
+                {
+                  "kind": "issue",
+                  "id": "I4571",
+                  "title": "A server whose own key was not trusted opens its mesh when the trunk's trust.allow gains the key, without a restart",
+                  "route": "/plan/i4571/"
+                }
+              ]
+            },
+            {
+              "kind": "chore",
+              "scope": "derive",
+              "subject": "derive the closed_key fix on the I4572 branch (I4572)",
+              "breaking": false,
+              "commit": "f892c3845",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/f892c3845",
+              "references": [
+                {
+                  "kind": "issue",
+                  "id": "I4572",
+                  "title": "mesh doctor fails a runtime that is closed while the declaration trusts this machine's key, and names the stale server as the cause",
+                  "route": "/plan/i4572/"
+                }
+              ]
+            },
+            {
+              "kind": "chore",
+              "scope": "derive",
+              "subject": "derive the merge of the I4572 test head into the I4571 branch (I4571)",
+              "breaking": false,
+              "commit": "794bb8e2f",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/794bb8e2f",
+              "references": [
+                {
+                  "kind": "issue",
+                  "id": "I4572",
+                  "title": "mesh doctor fails a runtime that is closed while the declaration trusts this machine's key, and names the stale server as the cause",
+                  "route": "/plan/i4572/"
+                },
+                {
+                  "kind": "issue",
+                  "id": "I4571",
+                  "title": "A server whose own key was not trusted opens its mesh when the trunk's trust.allow gains the key, without a restart",
+                  "route": "/plan/i4571/"
+                }
+              ]
+            },
+            {
+              "kind": "chore",
+              "scope": "derive",
+              "subject": "derive the closed_key unit test on the I4572 branch (I4572)",
+              "breaking": false,
+              "commit": "77797a807",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/77797a807",
+              "references": [
+                {
+                  "kind": "issue",
+                  "id": "I4572",
+                  "title": "mesh doctor fails a runtime that is closed while the declaration trusts this machine's key, and names the stale server as the cause",
+                  "route": "/plan/i4572/"
+                }
+              ]
+            },
+            {
+              "kind": "chore",
+              "scope": "derive",
+              "subject": "derive the merge of the I4572 head into the I4571 branch (I4571)",
+              "breaking": false,
+              "commit": "dadca79dd",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/dadca79dd",
+              "references": [
+                {
+                  "kind": "issue",
+                  "id": "I4572",
+                  "title": "mesh doctor fails a runtime that is closed while the declaration trusts this machine's key, and names the stale server as the cause",
+                  "route": "/plan/i4572/"
+                },
+                {
+                  "kind": "issue",
+                  "id": "I4571",
+                  "title": "A server whose own key was not trusted opens its mesh when the trunk's trust.allow gains the key, without a restart",
+                  "route": "/plan/i4571/"
+                }
+              ]
+            },
+            {
+              "kind": "chore",
+              "scope": "derive",
+              "subject": "derive the committed merge of master into the I2717 branch (I2717)",
+              "breaking": false,
+              "commit": "527e8c5d9",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/527e8c5d9",
+              "references": [
+                {
+                  "kind": "issue",
+                  "id": "I2717",
+                  "title": "A release record pull request gets a verdict that can pass",
+                  "route": "/plan/i2717/"
+                }
+              ]
+            },
+            {
+              "kind": "chore",
+              "scope": "derive",
+              "subject": "derive the merge of origin/master into the I4572 branch (I4572)",
+              "breaking": false,
+              "commit": "ef1157190",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/ef1157190",
+              "references": [
+                {
+                  "kind": "issue",
+                  "id": "I4572",
+                  "title": "mesh doctor fails a runtime that is closed while the declaration trusts this machine's key, and names the stale server as the cause",
+                  "route": "/plan/i4572/"
+                }
+              ]
+            },
+            {
+              "kind": "chore",
+              "scope": "derive",
+              "subject": "derive the merge of origin/master into the I2717 branch (I2717)",
+              "breaking": false,
+              "commit": "4002bd277",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/4002bd277",
+              "references": [
+                {
+                  "kind": "issue",
+                  "id": "I2717",
+                  "title": "A release record pull request gets a verdict that can pass",
+                  "route": "/plan/i2717/"
+                },
+                {
+                  "kind": "issue",
+                  "id": "I4341",
+                  "title": "release-check excuses a tag without a record until its grace ends, whatever the job fetched and whenever the release run concluded",
+                  "route": "/plan/i4341/"
+                }
+              ]
+            },
+            {
+              "kind": "chore",
+              "scope": "derive",
+              "subject": "derive the merge of origin/master into the I4341 branch (I4341)",
+              "breaking": false,
+              "commit": "edce8d2e7",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/edce8d2e7",
+              "references": [
+                {
+                  "kind": "issue",
+                  "id": "I4341",
+                  "title": "release-check excuses a tag without a record until its grace ends, whatever the job fetched and whenever the release run concluded",
+                  "route": "/plan/i4341/"
+                }
+              ]
+            },
+            {
+              "kind": "chore",
+              "scope": "release",
+              "subject": "record v1.0.1 and the metadata it publishes",
+              "breaking": false,
+              "commit": "62959ebc1",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/62959ebc1"
+            }
+          ]
+        }
+      ],
+      "artifacts": [
+        {
+          "target": "macos-aarch64",
+          "name": "majordomus-v1.0.2-aarch64-apple-darwin.tar.gz",
+          "sha256": "4d08be44a5857c2b79a1dd7ed8745abed9a221882cda52822523ae25737c655b"
+        },
+        {
+          "target": "macos-x86_64",
+          "name": "majordomus-v1.0.2-x86_64-apple-darwin.tar.gz",
+          "sha256": "e359a27dac1585e8cfbdefe365d93d47b8c70b21178219379ab35c61c654a87f"
+        },
+        {
+          "target": "linux-x86_64-gnu",
+          "name": "majordomus-v1.0.2-x86_64-unknown-linux-gnu.tar.gz",
+          "sha256": "3db0ed5a03a22fd1e0794b575d9b3771ca916ba2ba3ea26e097db3d80f6f5a4c"
+        },
+        {
+          "target": "linux-x86_64-musl",
+          "name": "majordomus-v1.0.2-x86_64-unknown-linux-musl.tar.gz",
+          "sha256": "af88b731a712b0ce245d78651f4d271864423efc1fb4445ebee8673cc391e4ee"
+        },
+        {
+          "target": "linux-aarch64-gnu",
+          "name": "majordomus-v1.0.2-aarch64-unknown-linux-gnu.tar.gz",
+          "sha256": "6fd4a33f5efd8d198f7f24ebb285d6eb2588c0b6b578af6074e6b143c29bf06f"
+        },
+        {
+          "target": "linux-aarch64-musl",
+          "name": "majordomus-v1.0.2-aarch64-unknown-linux-musl.tar.gz",
+          "sha256": "2d7248fc78e0f84ac62cf30d15e5a20cc9eb9f32892b3490a18acf3d5c2c1529"
+        }
+      ]
+    },
+    {
       "version": "1.0.1",
       "tag": "v1.0.1",
       "date": "2026-11-09T17:44:13Z",
