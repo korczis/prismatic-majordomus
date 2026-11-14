@@ -2,17 +2,17 @@
  "schema": 1,
  "generated_by": "scripts/lib/docs-index.mjs",
  "build": {
-  "commit": "6f8e1041f54fe484e909af6c607ee61a4bbbfc9b",
+  "commit": "aca34e67c56158a29d2e62703f523ce7c9379759",
   "source_version": "1.0.2",
-  "registry_fingerprint": "4dcf30fa83799f72b3df756b4d75e491972881cbcf926bab38da344b4a8eb3e5"
+  "registry_fingerprint": "7cabb17c7f6a8135a2df9fe6b69cd403468dd4b1bf8a86f2b5b5d4f869d3b2da"
  },
  "counts": {
-  "pages": 6476,
-  "capabilities": 3989,
+  "pages": 6500,
+  "capabilities": 4016,
   "cli_commands": 128,
   "http_routes": 219,
   "mcp_tools": 215,
-  "mcp_resources": 3815,
+  "mcp_resources": 3842,
   "modules": 96
  },
  "kinds": [
@@ -158,7 +158,7 @@
    "route": "/plan/",
    "title": null,
    "reason": null,
-   "count": 1233
+   "count": 1245
   },
   {
    "kind": "knowledge",
@@ -166,7 +166,7 @@
    "route": null,
    "title": null,
    "reason": "Curated knowledge is written for the worker reading the layer, not for a visitor: it is the orientation a session starts from, and it changes with the work rather than with the product.",
-   "count": 205
+   "count": 220
   },
   {
    "kind": "mesh-declaration",
@@ -15873,6 +15873,78 @@
    "route": "/cs/plan/i4573/",
    "title": "I4573 — A commit or push from a worktree with no active task is told so, in a supervised repository",
    "description": "The pre-commit and pre-push hooks report an advisory finding, `no active task in this worktree: these commits are bound to no task (majordomus start ...)`, when the repository is supervised (its .ai/manifest.yaml exists) and the checkout has no open task, so work is not committed and pushed unbound without anyone noticing.",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/plan/i4577/",
+   "title": "I4577 — `offload probe` says, per build host, which toolchains it has and whether it can judge a train top",
+   "description": "`majordomus offload probe` reports, beside each declared host's free space against its minimum and its load, the versions of cargo, rustc, zola and node it finds on that host's PATH (or that one is absent), and a verdict of whether the host can judge a train top: whether every gate the pre-push runs for a top has its tool there, naming each gate it could not run; the JSON answer carries the same fields.",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/plan/i4578/",
+   "title": "I4578 — A fixture path under a case's scratch variable is not a pack leak of the packing account's home",
+   "description": "pack plan's `pack.leak` scan (`names_machine`, apps/majordomus-cli/src/pack/mod.rs) does not report a line where the packing account's home directory appears only as the tail of a fixture path rooted at a scratch variable (`$S/`, `$T/`, `${S}/`), or the case that met it writes its fixture under a neutral user name; a literal absolute path naming this machine is still reported.",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/plan/i4579/",
+   "title": "I4579 — An on-demand gate that times out on a scheduled run does not override the green verdict of the push run that a release reads",
+   "description": "The on-demand `macos` and `bench` jobs of .github/workflows/validate.yml (selected only on schedule, workflow_dispatch or the ci:full label) either fit the 698-case suite inside their bounds or report a timeout as their own verdict apart from the commit's, and scripts/ci/release-verdict decides a tag on the verdict of the gates a release requires, so a scheduled run that reaches only an on-demand timeout cannot turn a commit whose push run was green into one that may not be released.",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/plan/i4580/",
+   "title": "I4580 — An adopter declares its own numbered sequences, the mesh reserves their numbers in landing order, and a landing refuses a gap or a duplicate",
+   "description": "A repository declares, in its policy, the numbered sequences it keeps beside the plan's ids: a path pattern with the number's place and width (database migrations `NNNN_*.sql`, Alembic revisions, an API version constant), and whether the sequence must stay dense. `mesh allocate` and `plan.allocate` take such a sequence as a kind beside issue, case and adr, reserve the next number for a session, and the landing check refuses a pull request whose added member of a dense sequence duplicates a number on the trunk or leaves a gap below the trunk's highest, naming the sequence, the number and the member it meets.",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/plan/i4581/",
+   "title": "I4581 — A machine resource (a container name, a TCP port, a test database, a scratch directory) is claimed on the mesh like a path, start refuses one another session holds, and finish names one left unreleased",
+   "description": "`mesh claim` takes a typed resource key beside repository paths, `resource:<kind>/<name>@<node>` for the kinds container, port, database and directory, held exclusively on the node it names; `majordomus start` with a declared resource refuses one another live session holds, naming the holder, and `finish` reports every resource the task claimed and did not release.",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/plan/i4582/",
+   "title": "I4582 — When a gate lands on the trunk, every open pull request is judged by it on its merge with the trunk, and the lane that owns each one is told",
+   "description": "After a landing that adds or tightens a gate (a rule's validator, a case, a check in .ai/repo/ci/gates.yaml), the integration engine runs that gate on `git merge-tree --write-tree` of the trunk and each open pull request's head, records the verdict beside the pull request's relation to master, and tells the lane that owns the pull request (its mesh session, else a comment) which gate its merge would now fail, while the forge still shows it clean and green.",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/plan/i4583/",
+   "title": "I4583 — An outbound message that cites repository facts carries locators re-verified against the trunk when it is sent",
+   "description": "`majordomus evidence claim --verify <draft>` reads a draft message (a pull request body, an issue comment, a report to the owner or a peer) and resolves every repository locator it cites, a path with or without a line, a commit, an issue id, a case, a run id, against the trunk at the moment of sending: each resolves, moved (with where it now is) or missing, and the command exits non-zero on a missing one, so a message is sent only with locators that hold at the commit it names.",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/plan/i4584/",
+   "title": "I4584 — A long-lived shell wait loop on a shared machine is a finding doctor names with its size, and an agent brief forbids one",
+   "description": "`majordomus doctor` (and the machine check a heavy step runs under) lists every shell process of the account that has run a `while`/`until` loop with a sleep for longer than a stated bound (default 30 minutes), with its pid, age, resident size and the command it waits on, as a finding naming rule project.every-wait-is-bounded and the remedy (a bounded single wait or a completion notification); the delegation brief a session gives a subagent says the same in one line.",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/plan/i4585/",
+   "title": "I4585 — A claim sourced outside the repository records where it came from and whether that source is official, and an unofficial one reads unverified",
+   "description": "A knowledge record or an evidence entry that rests on a source outside the repository (a vendor's documentation, a published article, a forum answer, a model's answer) names it with a typed reference `source:<url>` and a standing, `official` (published by the party the claim is about) or `unofficial`, and `majordomus knowledge check` reports a record whose claim rests only on unofficial sources as unverified, never as verified or decided.",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/plan/i4586/",
+   "title": "I4586 — A deriver that meets a reference to an object that does not exist names the object and the record that cites it, and fails; it never crashes",
+   "description": "Every stage of scripts/derive, and every Rust deriver it calls, treats a reference to an object that is not in the tree (an issue, a milestone, a session, a rule, a file) as a finding: it exits non-zero with `<record> cites <reference>, which does not exist` and the remedy, and never ends in a panic, an unbound-variable abort or a stack trace; a contract case breaks one reference per kind and reads that line from each stage that reads the kind.",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/plan/i4587/",
+   "title": "I4587 — An owner decision is announced over the mesh to every session of the repository, and an owner's deploy goes through the lane that owns the trunk",
+   "description": "When an owner decision is recorded (a decided knowledge record, an ADR accepted, a decision of `majordomus decision add` that names the owner), the runtime publishes it as a mesh event that every session of the repository on every linked node receives and that `majordomus monitor` shows to each, with the record's id and the commit that carries it; and an owner's order to deploy is routed to the session holding the seat that owns the trunk (the landing or release seat), never executed by whichever session heard it.",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/plan/i4588/",
+   "title": "I4588 — A gate snapshots the index when it starts and refuses its own verdict when the index changed while it ran",
+   "description": "A gate that judges the staged tree (the derive, the commit hook's checks, run-plan's gates) records `git write-tree` when it starts and again before it reports; when the two differ it refuses its verdict, naming both trees and the paths that changed, so a pass is never reported for a tree the gate did not read.",
    "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
   },
   {
@@ -33180,6 +33252,78 @@
    "section": "The plan"
   },
   {
+   "route": "/plan/i4577/",
+   "title": "I4577 — `offload probe` says, per build host, which toolchains it has and whether it can judge a train top",
+   "description": "`majordomus offload probe` reports, beside each declared host's free space against its minimum and its load, the versions of cargo, rustc, zola and node it finds on that host's PATH (or that one is absent), and a verdict of whether the host can judge a train top: whether every gate the pre-push runs for a top has its tool there, naming each gate it could not run; the JSON answer carries the same fields.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i4578/",
+   "title": "I4578 — A fixture path under a case's scratch variable is not a pack leak of the packing account's home",
+   "description": "pack plan's `pack.leak` scan (`names_machine`, apps/majordomus-cli/src/pack/mod.rs) does not report a line where the packing account's home directory appears only as the tail of a fixture path rooted at a scratch variable (`$S/`, `$T/`, `${S}/`), or the case that met it writes its fixture under a neutral user name; a literal absolute path naming this machine is still reported.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i4579/",
+   "title": "I4579 — An on-demand gate that times out on a scheduled run does not override the green verdict of the push run that a release reads",
+   "description": "The on-demand `macos` and `bench` jobs of .github/workflows/validate.yml (selected only on schedule, workflow_dispatch or the ci:full label) either fit the 698-case suite inside their bounds or report a timeout as their own verdict apart from the commit's, and scripts/ci/release-verdict decides a tag on the verdict of the gates a release requires, so a scheduled run that reaches only an on-demand timeout cannot turn a commit whose push run was green into one that may not be released.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i4580/",
+   "title": "I4580 — An adopter declares its own numbered sequences, the mesh reserves their numbers in landing order, and a landing refuses a gap or a duplicate",
+   "description": "A repository declares, in its policy, the numbered sequences it keeps beside the plan's ids: a path pattern with the number's place and width (database migrations `NNNN_*.sql`, Alembic revisions, an API version constant), and whether the sequence must stay dense. `mesh allocate` and `plan.allocate` take such a sequence as a kind beside issue, case and adr, reserve the next number for a session, and the landing check refuses a pull request whose added member of a dense sequence duplicates a number on the trunk or leaves a gap below the trunk's highest, naming the sequence, the number and the member it meets.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i4581/",
+   "title": "I4581 — A machine resource (a container name, a TCP port, a test database, a scratch directory) is claimed on the mesh like a path, start refuses one another session holds, and finish names one left unreleased",
+   "description": "`mesh claim` takes a typed resource key beside repository paths, `resource:<kind>/<name>@<node>` for the kinds container, port, database and directory, held exclusively on the node it names; `majordomus start` with a declared resource refuses one another live session holds, naming the holder, and `finish` reports every resource the task claimed and did not release.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i4582/",
+   "title": "I4582 — When a gate lands on the trunk, every open pull request is judged by it on its merge with the trunk, and the lane that owns each one is told",
+   "description": "After a landing that adds or tightens a gate (a rule's validator, a case, a check in .ai/repo/ci/gates.yaml), the integration engine runs that gate on `git merge-tree --write-tree` of the trunk and each open pull request's head, records the verdict beside the pull request's relation to master, and tells the lane that owns the pull request (its mesh session, else a comment) which gate its merge would now fail, while the forge still shows it clean and green.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i4583/",
+   "title": "I4583 — An outbound message that cites repository facts carries locators re-verified against the trunk when it is sent",
+   "description": "`majordomus evidence claim --verify <draft>` reads a draft message (a pull request body, an issue comment, a report to the owner or a peer) and resolves every repository locator it cites, a path with or without a line, a commit, an issue id, a case, a run id, against the trunk at the moment of sending: each resolves, moved (with where it now is) or missing, and the command exits non-zero on a missing one, so a message is sent only with locators that hold at the commit it names.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i4584/",
+   "title": "I4584 — A long-lived shell wait loop on a shared machine is a finding doctor names with its size, and an agent brief forbids one",
+   "description": "`majordomus doctor` (and the machine check a heavy step runs under) lists every shell process of the account that has run a `while`/`until` loop with a sleep for longer than a stated bound (default 30 minutes), with its pid, age, resident size and the command it waits on, as a finding naming rule project.every-wait-is-bounded and the remedy (a bounded single wait or a completion notification); the delegation brief a session gives a subagent says the same in one line.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i4585/",
+   "title": "I4585 — A claim sourced outside the repository records where it came from and whether that source is official, and an unofficial one reads unverified",
+   "description": "A knowledge record or an evidence entry that rests on a source outside the repository (a vendor's documentation, a published article, a forum answer, a model's answer) names it with a typed reference `source:<url>` and a standing, `official` (published by the party the claim is about) or `unofficial`, and `majordomus knowledge check` reports a record whose claim rests only on unofficial sources as unverified, never as verified or decided.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i4586/",
+   "title": "I4586 — A deriver that meets a reference to an object that does not exist names the object and the record that cites it, and fails; it never crashes",
+   "description": "Every stage of scripts/derive, and every Rust deriver it calls, treats a reference to an object that is not in the tree (an issue, a milestone, a session, a rule, a file) as a finding: it exits non-zero with `<record> cites <reference>, which does not exist` and the remedy, and never ends in a panic, an unbound-variable abort or a stack trace; a contract case breaks one reference per kind and reads that line from each stage that reads the kind.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i4587/",
+   "title": "I4587 — An owner decision is announced over the mesh to every session of the repository, and an owner's deploy goes through the lane that owns the trunk",
+   "description": "When an owner decision is recorded (a decided knowledge record, an ADR accepted, a decision of `majordomus decision add` that names the owner), the runtime publishes it as a mesh event that every session of the repository on every linked node receives and that `majordomus monitor` shows to each, with the record's id and the commit that carries it; and an owner's order to deploy is routed to the session holding the seat that owns the trunk (the landing or release seat), never executed by whichever session heard it.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i4588/",
+   "title": "I4588 — A gate snapshots the index when it starts and refuses its own verdict when the index changed while it ran",
+   "description": "A gate that judges the staged tree (the derive, the commit hook's checks, run-plan's gates) records `git write-tree` when it starts and again before it reports; when the two differ it refuses its verdict, naming both trees and the paths that changed, so a pass is never reported for a tree the gate did not read.",
+   "section": "The plan"
+  },
+  {
    "route": "/plan/i4591/",
    "title": "I4591 — mj_ms reads EPOCHREALTIME under any locale's decimal separator",
    "description": "mj_ms (lib/common.sh) keeps every digit of EPOCHREALTIME and drops whatever separates them, so the millisecond clock is digits under any locale and every caller's arithmetic holds; a case pins it with an injected comma and, where one is installed, a real comma locale.",
@@ -37130,7 +37274,7 @@
   {
    "route": "/rustdoc/",
    "title": "majordomus-cli 1.0.2 — Rust API reference",
-   "description": "The rustdoc reference of majordomus-cli 1.0.2, built from commit 6f8e1041f54fe484e909af6c607ee61a4bbbfc9b: the public items of the library and of the executable, and the source they were built from.",
+   "description": "The rustdoc reference of majordomus-cli 1.0.2, built from commit aca34e67c56158a29d2e62703f523ce7c9379759: the public items of the library and of the executable, and the source they were built from.",
    "section": "majordomus-cli 1.0.2 — Rust API reference"
   },
   {

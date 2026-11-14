@@ -173,10 +173,10 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
 <div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
   <div class="min-w-0">
   <p class="flex flex-wrap items-center gap-3"><span class="mj-badge mj-badge--active relative" data-status="active"><span aria-hidden="true">•</span>AKTIVNÍ</span>
-<span class="text-sm text-body">4 z 5 úkolů hotovo</span></p>
+<span class="text-sm text-body">4 z 6 úkolů hotovo</span></p>
 
   <dl class="mt-8 grid grid-cols-2 gap-4 border-y border-default py-6 sm:grid-cols-5">
-    <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">připraveno</dt><dd class="mt-1 text-2xl font-semibold text-heading">1</dd></div>
+    <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">připraveno</dt><dd class="mt-1 text-2xl font-semibold text-heading">2</dd></div>
     <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">blokováno</dt><dd class="mt-1 text-2xl font-semibold text-heading">0</dd></div>
     <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">aktivní</dt><dd class="mt-1 text-2xl font-semibold text-heading">0</dd></div>
     <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">verify</dt><dd class="mt-1 text-2xl font-semibold text-heading">0</dd></div>
@@ -254,6 +254,14 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
           <td class="px-4 py-2 font-mono text-xs text-body">—</td>
           <td class="px-4 py-2 text-heading">Every completed step of a session is announced on the mesh by the step itself, and the board, the monitor and the UI show it</td>
         </tr>
+        <tr class="border-t border-default align-top">
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://majordomus.dev/cs/plan/i4587/" class="text-fg-brand hover:underline">I4587</a></td>
+          <td class="px-4 py-2"><span class="mj-badge mj-badge--ready relative" data-status="ready"><span aria-hidden="true">○</span>PŘIPRAVENO</span>
+</td>
+          <td class="px-4 py-2 font-mono text-xs text-body">0</td>
+          <td class="px-4 py-2 font-mono text-xs text-body">—</td>
+          <td class="px-4 py-2 text-heading">An owner decision is announced over the mesh to every session of the repository, and an owner&#39;s deploy goes through the lane that owns the trunk</td>
+        </tr>
       </tbody>
     </table>
   </div>
@@ -262,12 +270,13 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
   
 <figure class="not-format my-6 overflow-hidden rounded-base border border-default bg-neutral-primary-soft">
   <figcaption class="flex flex-wrap items-baseline justify-between gap-2 border-b border-default px-4 py-2"><span class="text-sm font-medium text-heading">graf závislostí every-session-joins-the-mesh</span><span class="font-mono text-xs text-body-subtle">z .ai/repo/project</span></figcaption>
-  <div class="overflow-x-auto p-4" tabindex="0"><pre class="mermaid m-0 bg-transparent font-mono text-xs text-heading" tabindex="0" id="diagram-every-session-joins-the-mesh" data-diagram="every-session-joins-the-mesh" data-nodes="I2288 I2289 I2734 I2735 I3774">flowchart LR
+  <div class="overflow-x-auto p-4" tabindex="0"><pre class="mermaid m-0 bg-transparent font-mono text-xs text-heading" tabindex="0" id="diagram-every-session-joins-the-mesh" data-diagram="every-session-joins-the-mesh" data-nodes="I2288 I2289 I2734 I2735 I3774 I4587">flowchart LR
     I2288[&quot;I2288&lt;br/&gt;A task is on the mesh while it works&quot;]:::done
     I2289[&quot;I2289&lt;br/&gt;A task built off the mesh is refused&quot;]:::done
     I2734[&quot;I2734&lt;br/&gt;A session joins the mesh at its start and leaves it at its end&quot;]:::done
     I2735[&quot;I2735&lt;br/&gt;An edit no claim covers is refused&quot;]:::done
     I3774[&quot;I3774&lt;br/&gt;Every completed step of a session is announced on the mesh by the step itself, and the board, the monitor and the UI show it&quot;]:::ready
+    I4587[&quot;I4587&lt;br/&gt;An owner decision is announced over the mesh to every session of the repository, and an owner&#39;s deploy goes through the lane that owns the trunk&quot;]:::ready
     I2288 --&gt; I2289
     I2734 --&gt; I2288
     classDef done stroke:#16a34a,fill:#dcfce7,color:#14532d,stroke-width:2px
@@ -277,11 +286,11 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
     classDef planned stroke:#0891b2,fill:#ecfeff,color:#164e63,stroke-width:2px
     classDef blocked stroke:#b45309,fill:#fffbeb,color:#78350f,stroke-width:2px
     classDef cancelled stroke:#6b7280,fill:#f9fafb,color:#374151,stroke-width:2px
-    classDef superseded stroke:#6b7280,fill:#f9fafb,color:#374151,stroke-width:2px</pre><div class="mj-diagram-bar" role="toolbar" aria-label="Diagram every-session-joins-the-mesh" aria-controls="diagram-every-session-joins-the-mesh" data-diagram-bar="diagram-every-session-joins-the-mesh" hidden><button type="button" class="mj-button mj-button--quiet" data-diagram-action="zoom-out" aria-label="Oddálit" title="Oddálit">−</button><button type="button" class="mj-button mj-button--quiet" data-diagram-action="zoom-in" aria-label="Přiblížit" title="Přiblížit">+</button><button type="button" class="mj-button mj-button--quiet" data-diagram-action="fit" aria-label="Přizpůsobit diagram rámu" title="Přizpůsobit diagram rámu">Přizpůsobit</button><button type="button" class="mj-button mj-button--quiet" data-diagram-action="expand" aria-label="Zobrazit na celou obrazovku" title="Zobrazit na celou obrazovku">Rozbalit</button><button type="button" class="mj-button mj-button--quiet" data-diagram-action="download" aria-label="Stáhnout SVG" title="Stáhnout SVG">SVG</button><button type="button" class="mj-button mj-button--quiet" data-diagram-action="link" aria-label="Odkaz: zkopírovat adresu tohoto diagramu" title="Odkaz: zkopírovat adresu tohoto diagramu">Odkaz</button><span class="mj-diagram-status" role="status"></span></div><details class="mj-diagram-links" data-diagram-links="diagram-every-session-joins-the-mesh"><summary>Odkazuje z tohoto diagramu (5)</summary><ul><li><a href="https://majordomus.dev/cs/plan/i2288/" data-node="I2288" data-kind="issue">I2288 Úloha je na meshi, dokud pracuje</a></li><li><a href="https://majordomus.dev/cs/plan/i2289/" data-node="I2289" data-kind="issue">I2289 Úloha postavená mimo mesh je odmítnuta</a></li><li><a href="https://majordomus.dev/cs/plan/i2734/" data-node="I2734" data-kind="issue">I2734 Relace se k meshi připojí na začátku a opustí ho na konci</a></li><li><a href="https://majordomus.dev/cs/plan/i2735/" data-node="I2735" data-kind="issue">I2735 Úprava, kterou nepokrývá žádné tvrzení, se odmítne</a></li><li><a href="https://majordomus.dev/cs/plan/i3774/" data-node="I3774" data-kind="issue">I3774 Every completed step of a session is announced on the mesh by the step itself, and the board, the monitor and the UI show it</a></li></ul></details></div>
+    classDef superseded stroke:#6b7280,fill:#f9fafb,color:#374151,stroke-width:2px</pre><div class="mj-diagram-bar" role="toolbar" aria-label="Diagram every-session-joins-the-mesh" aria-controls="diagram-every-session-joins-the-mesh" data-diagram-bar="diagram-every-session-joins-the-mesh" hidden><button type="button" class="mj-button mj-button--quiet" data-diagram-action="zoom-out" aria-label="Oddálit" title="Oddálit">−</button><button type="button" class="mj-button mj-button--quiet" data-diagram-action="zoom-in" aria-label="Přiblížit" title="Přiblížit">+</button><button type="button" class="mj-button mj-button--quiet" data-diagram-action="fit" aria-label="Přizpůsobit diagram rámu" title="Přizpůsobit diagram rámu">Přizpůsobit</button><button type="button" class="mj-button mj-button--quiet" data-diagram-action="expand" aria-label="Zobrazit na celou obrazovku" title="Zobrazit na celou obrazovku">Rozbalit</button><button type="button" class="mj-button mj-button--quiet" data-diagram-action="download" aria-label="Stáhnout SVG" title="Stáhnout SVG">SVG</button><button type="button" class="mj-button mj-button--quiet" data-diagram-action="link" aria-label="Odkaz: zkopírovat adresu tohoto diagramu" title="Odkaz: zkopírovat adresu tohoto diagramu">Odkaz</button><span class="mj-diagram-status" role="status"></span></div><details class="mj-diagram-links" data-diagram-links="diagram-every-session-joins-the-mesh"><summary>Odkazuje z tohoto diagramu (6)</summary><ul><li><a href="https://majordomus.dev/cs/plan/i2288/" data-node="I2288" data-kind="issue">I2288 Úloha je na meshi, dokud pracuje</a></li><li><a href="https://majordomus.dev/cs/plan/i2289/" data-node="I2289" data-kind="issue">I2289 Úloha postavená mimo mesh je odmítnuta</a></li><li><a href="https://majordomus.dev/cs/plan/i2734/" data-node="I2734" data-kind="issue">I2734 Relace se k meshi připojí na začátku a opustí ho na konci</a></li><li><a href="https://majordomus.dev/cs/plan/i2735/" data-node="I2735" data-kind="issue">I2735 Úprava, kterou nepokrývá žádné tvrzení, se odmítne</a></li><li><a href="https://majordomus.dev/cs/plan/i3774/" data-node="I3774" data-kind="issue">I3774 Every completed step of a session is announced on the mesh by the step itself, and the board, the monitor and the UI show it</a></li><li><a href="https://majordomus.dev/cs/plan/i4587/" data-node="I4587" data-kind="issue">I4587 An owner decision is announced over the mesh to every session of the repository, and an owner's deploy goes through the lane that owns the trunk</a></li></ul></details></div>
 </figure>
 
 
-  <p class="mt-8 text-sm text-body">Kanonický záznam: <a href="https://github.com/korczis/prismatic-majordomus/blob/6f8e1041f54fe484e909af6c607ee61a4bbbfc9b/.ai/repo/project/milestones/every-session-joins-the-mesh.yaml" class="break-all font-mono text-fg-brand underline inline-block py-1">.ai/repo/project/milestones/every-session-joins-the-mesh.yaml</a>. Přečtěte jej zpět pomocí <code class="font-mono text-heading">majordomus plan show every-session-joins-the-mesh</code>.</p>
+  <p class="mt-8 text-sm text-body">Kanonický záznam: <a href="https://github.com/korczis/prismatic-majordomus/blob/aca34e67c56158a29d2e62703f523ce7c9379759/.ai/repo/project/milestones/every-session-joins-the-mesh.yaml" class="break-all font-mono text-fg-brand underline inline-block py-1">.ai/repo/project/milestones/every-session-joins-the-mesh.yaml</a>. Přečtěte jej zpět pomocí <code class="font-mono text-heading">majordomus plan show every-session-joins-the-mesh</code>.</p>
 </div>
 
 </div>
@@ -331,9 +340,9 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
       <div class="min-w-0">
         <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">Projekt</h2><ul class="space-y-2 text-sm font-medium text-body">
           <li><a href="https://github.com/korczis/prismatic-majordomus" class="hover:text-heading hover:underline">GitHub</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/6f8e1041f54fe484e909af6c607ee61a4bbbfc9b/LICENSE" class="hover:text-heading hover:underline">Licence MIT</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/6f8e1041f54fe484e909af6c607ee61a4bbbfc9b/SECURITY.md" class="hover:text-heading hover:underline">Bezpečnostní politika</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/6f8e1041f54fe484e909af6c607ee61a4bbbfc9b/CONTRIBUTING.md" class="hover:text-heading hover:underline">Průvodce pro přispěvatele</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/aca34e67c56158a29d2e62703f523ce7c9379759/LICENSE" class="hover:text-heading hover:underline">Licence MIT</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/aca34e67c56158a29d2e62703f523ce7c9379759/SECURITY.md" class="hover:text-heading hover:underline">Bezpečnostní politika</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/aca34e67c56158a29d2e62703f523ce7c9379759/CONTRIBUTING.md" class="hover:text-heading hover:underline">Průvodce pro přispěvatele</a></li>
         </ul>
       </div>
     </div>
@@ -341,7 +350,7 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/cs/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.2</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/6f8e1041f54fe484e909af6c607ee61a4bbbfc9b" class="font-mono underline">6f8e104</a> · inputs <span class="font-mono">4d3071c5b94b</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/cs/architecture/" class="underline">how this site is derived</a> names them.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.2</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/aca34e67c56158a29d2e62703f523ce7c9379759" class="font-mono underline">aca34e6</a> · inputs <span class="font-mono">2a80f9f7f439</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/cs/architecture/" class="underline">how this site is derived</a> names them.</p>
     </div>
   </div>
 </footer>
