@@ -133,6 +133,12 @@ case_bound_seconds: 5300
 # budgets sit about a tenth above the worst of these, so a suite that grows by more than that
 # fails here — loudly, with the case named — while the bounds above hold the rest in reserve.
 # Raising a number here is a decision that cites a measurement, the way the bounds above do.
+# A measurement that shows the same cases costing more on the same tree is runner load; one
+# that shows a case or a stage growing while its neighbours hold is not, and that growth is
+# profiled first (the case or the stage timed against its own history, MJ_TIMING=1 where it
+# applies) before any number here is raised for it. On 2026-11-11 pull request 3008 re-derived
+# the total from runner-load runs without that question asked, while the suite had also
+# grown from 567 to 698 cases since the total was last derived.
 #
 # What decides a run is `slowest_case_seconds`, not `case_bound_seconds`. The suite job's step
 # "the suite finishes inside its bound" runs under `if: always()` and exits 10 on any case over
