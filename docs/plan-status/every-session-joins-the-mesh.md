@@ -9,7 +9,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 
 | milestone | status | done of required | ready | blocked | active | verify | cancelled | outcome |
 |---|---|---|---|---|---|---|---|---|
-| [every-session-joins-the-mesh](https://majordomus.dev/plan/every-session-joins-the-mesh/) | ACTIVE | 4/5 | 1 | 0 | 0 | 0 | 0 | Any LLM session that starts in a repository with an enabled mesh is on the mesh from its first turn, told who works where on every machine and what waits for it, and a task built outside the mesh is refused by the repository's gates. |
+| [every-session-joins-the-mesh](https://majordomus.dev/plan/every-session-joins-the-mesh/) | ACTIVE | 4/6 | 2 | 0 | 0 | 0 | 0 | Any LLM session that starts in a repository with an enabled mesh is on the mesh from its first turn, told who works where on every machine and what waits for it, and a task built outside the mesh is refused by the repository's gates. |
 
 ## Issues
 
@@ -20,6 +20,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | [I2734](https://majordomus.dev/plan/i2734/) | DONE | 0 | — | A session joins the mesh at its start and leaves it at its end |
 | [I2735](https://majordomus.dev/plan/i2735/) | DONE | 0 | — | An edit no claim covers is refused |
 | [I3774](https://majordomus.dev/plan/i3774/) | READY | 0 | — | Every completed step of a session is announced on the mesh by the step itself, and the board, the monitor and the UI show it |
+| [I4587](https://majordomus.dev/plan/i4587/) | READY | 0 | — | An owner decision is announced over the mesh to every session of the repository, and an owner's deploy goes through the lane that owns the trunk |
 
 ## Findings
 
@@ -42,3 +43,5 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I3774` | shares apps/majordomus-cli/src/mesh/cooperation.rs with I4571; they may not run concurrently |
 | WARN | `scope_conflict` | `I3774` | shares docs/MESH.md with I4572; they may not run concurrently |
 | WARN | `scope_conflict` | `I3774` | shares .githooks/pre-push with I4573; they may not run concurrently |
+| WARN | `scope_conflict` | `I3774` | shares apps/majordomus-cli/src/capability/builtin/mesh.rs with I4581; they may not run concurrently |
+| WARN | `scope_conflict` | `I3774` | shares docs/MESH.md with I4587; they may not run concurrently |
