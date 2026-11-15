@@ -711,8 +711,15 @@ mj_report_clone() {
   # only ancestors a remote reaches, so the walk never has to leave it. The commits a walk has
   # seen are the branch's, not its tip's: two branches at one commit are counted alike. One `rev-list` per
   # branch took minutes on a clone of six hundred branches, in every commit hook.
-  local unpushed
-  unpushed="$({
+  #
+  # A `backup/` branch is the other kind of local commit: the old head kept on purpose before a
+  # rewrite, on this disk and nowhere else, so that the rewrite can be undone. Counting it as
+  # unpushed work made the WARN permanent in every clone that keeps one (an adopter's commit
+  # hook named five of them on every commit, 2026-11-15), and a warning nobody may act on
+  # hides the one they should. It is counted by the same walk and named apart, as INFO;
+  # `refs/rescue/<name>` keeps such a head outside refs/heads, where neither line sees it.
+  local walk unpushed kept
+  walk="$({
     git -C "$MJ_ROOT" rev-list --parents --branches --not --remotes 2>/dev/null
     echo '--'
     git -C "$MJ_ROOT" for-each-ref --format='%(objectname) %(refname:short)' refs/heads 2>/dev/null
@@ -728,15 +735,23 @@ mj_report_clone() {
         m = split(parents[c], p, " ")
         for (j = 2; j <= m; j++) stack[++top] = p[j]
       }
-      printf " %s(%d)", $2, count
-    }')"
+      if (index($2, "backup/") == 1) kept = kept sprintf(" %s(%d)", $2, count)
+      else work = work sprintf(" %s(%d)", $2, count)
+    }
+    END { printf "%s\t%s", work, kept }')"
+  unpushed="${walk%%"$MJ_TAB"*}"; kept="${walk#*"$MJ_TAB"}"
   if [ -n "$unpushed" ]; then
     mj_warn clone "unpushed" \
       "commits on no remote:${unpushed} — work on one disk is invisible to every other session and cannot be integrated" \
       "git push -u origin <branch>"
+  elif [ -n "$kept" ]; then
+    mj_ok clone "unpushed" "every local commit outside backup/ is on a remote"
   else
     mj_ok clone "unpushed" "every local commit is on a remote"
   fi
+  [ -z "$kept" ] || mj_info clone "backup" \
+    "kept on this disk by design:${kept} — a backup/ branch is a safety ref, not unpushed work; delete it once the rewrite it guards is settled" \
+    "git for-each-ref refs/heads/backup"
 
   # Records a trunk episode staged and no branch has carried yet (ADR 0091, amendment of
   # 2026-10-15). Named, not judged: the outbox is the trunk's correct place for them, and a

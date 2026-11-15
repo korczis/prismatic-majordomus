@@ -10,7 +10,10 @@
 #      second branch at the same commit is counted alike;
 #   2. the answer is the one the per-branch count gave, branch for branch;
 #   3. the clone is asked once, not once per branch: a hundred and fifty more branches add no
-#      walk of the commits no remote holds.
+#      walk of the commits no remote holds;
+#   4. a `backup/` branch is a safety ref kept on this disk by design (the old head kept before
+#      a rewrite), so it is named apart, as INFO, and never in the WARN; a clone whose only
+#      local commits are on `backup/` branches is OK, and says what it left out.
 . "$ROOT/test/lib.sh"
 
 REAL_GIT="$(command -v git)"
@@ -31,6 +34,8 @@ echo s > s.txt && git add s.txt && git commit -qm s1
 git checkout -q -b merged ahead
 git merge -q --no-edit side
 git branch twin merged
+git checkout -q -b backup/keep "$base"
+echo k > k.txt && git add k.txt && git commit -qm k1
 git checkout -q master 2>/dev/null || git checkout -q -
 i=0
 while [ "$i" -lt 150 ]; do git branch "many-$i" "$base"; i=$((i + 1)); done
@@ -56,10 +61,11 @@ case "$line" in *" pushed("*|*" many-"*|*" master("*) echo "    a branch a remot
 echo "    a branch ahead, a side branch, the branch that merged it and its twin are named with their counts"
 
 # ---------------------------------------------------------------- 2. the per-branch answer
-expected=""
+expected=""; kept=""
 for b in $(git for-each-ref --format='%(refname:short)' refs/heads); do
   n="$(git rev-list --count "$b" --not --remotes)"
-  [ "$n" -gt 0 ] && expected="$expected $b($n)"
+  [ "$n" -gt 0 ] || continue
+  case "$b" in backup/*) kept="$kept $b($n)" ;; *) expected="$expected $b($n)" ;; esac
 done
 case "$line" in *"commits on no remote:$expected — "*) ;; *)
   echo "    the counts are not the per-branch counts:"
@@ -73,4 +79,25 @@ echo "    every count is the one a per-branch rev-list gives"
 walks="$(wc -l < "$T/walks.log" | tr -d ' ')"
 [ "$walks" = 1 ] || { echo "    doctor walked the commits no remote holds $walks times for $(git for-each-ref refs/heads | wc -l | tr -d ' ') branches"; exit 1; }
 echo "    one walk for $(git for-each-ref refs/heads | wc -l | tr -d ' ') branches"
-echo "    doctor counts the work no remote holds in one walk"
+
+# ---------------------------------------------------------------- 4. backup/ is named apart
+case "$line" in *"backup/"*) echo "    a backup/ safety branch is counted as unpushed work: $line"; exit 1 ;; esac
+info="$(grep -E '^INFO +clone +backup' doctor.txt || true)"
+case "$info" in *"kept on this disk by design:$kept — "*) ;; *)
+  echo "    the backup/ branch is not named apart as INFO with its count:"
+  echo "    | doctor:   $info"
+  echo "    | expected: kept on this disk by design:$kept"
+  exit 1 ;;
+esac
+echo "    a backup/ branch is named apart, as INFO with its count, and not in the WARN"
+
+# once every other branch reaches the remote, the backup/ branch alone does not warn
+git push -q origin ahead side merged twin
+"$MJ" doctor > doctor2.txt 2>&1 || true
+grep -qE '^WARN +clone +unpushed' doctor2.txt && { echo "    doctor warns with only backup/ commits local:"; grep -E 'clone' doctor2.txt | sed 's/^/    | /'; exit 1; }
+grep -qE '^OK +clone +unpushed — every local commit outside backup/ is on a remote' doctor2.txt \
+  || { echo "    the OK line does not say what it left out:"; grep -E 'clone' doctor2.txt | sed 's/^/    | /'; exit 1; }
+grep -qE '^INFO +clone +backup .*backup/keep\(1\)' doctor2.txt \
+  || { echo "    the backup/ branch is no longer named:"; grep -E 'clone' doctor2.txt | sed 's/^/    | /'; exit 1; }
+echo "    with only backup/ commits local, unpushed is OK and the backup/ branch is still named"
+echo "    doctor counts the work no remote holds in one walk, and names safety refs apart"
