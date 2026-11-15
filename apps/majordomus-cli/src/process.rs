@@ -56,11 +56,7 @@ pub(crate) fn write_program(path: &std::path::Path, body: &str) {
         .write_all(body.as_bytes())
         .expect("the program is handed to sh");
     let ended = writer.wait().expect("sh ends");
-    assert!(
-        ended.success(),
-        "{} was not written: {ended}",
-        path.display()
-    );
+    ended.success().then_some(()).expect("sh wrote the program");
 }
 
 #[cfg(test)]
