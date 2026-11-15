@@ -106,6 +106,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I4260` | shares lib/check.sh with I4567; they may not run concurrently |
 | WARN | `scope_conflict` | `I4260` | shares lib/check.sh with I4573; they may not run concurrently |
 | WARN | `scope_conflict` | `I4260` | shares lib/start.sh with I4581; they may not run concurrently |
+| WARN | `scope_conflict` | `I4260` | shares lib/check.sh with I4598; they may not run concurrently |
 | WARN | `scope_conflict` | `I4261` | shares docs/SCHEMAS.md with I4263; they may not run concurrently |
 | WARN | `scope_conflict` | `I4261` | shares lib/plan.sh with I4266; they may not run concurrently |
 | WARN | `scope_conflict` | `I4261` | shares docs/SCHEMAS.md with I4267; they may not run concurrently |
@@ -198,6 +199,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I4411` | shares lib/check.sh with I4567; they may not run concurrently |
 | WARN | `scope_conflict` | `I4411` | shares lib/check.sh with I4573; they may not run concurrently |
 | WARN | `scope_conflict` | `I4411` | shares lib/common.sh with I4591; they may not run concurrently |
+| WARN | `scope_conflict` | `I4411` | shares lib/check.sh with I4598; they may not run concurrently |
 | WARN | `scope_conflict` | `I4413` | shares lib/finish.sh with I4415; they may not run concurrently |
 | WARN | `scope_conflict` | `I4413` | shares lib/finish.sh with I4416; they may not run concurrently |
 | WARN | `scope_conflict` | `I4413` | shares share/allow/policy.txt with I4418; they may not run concurrently |
