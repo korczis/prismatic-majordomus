@@ -6,23 +6,23 @@
     "version": "1.0.2"
   },
   "registry": {
-    "fingerprint": "44e4eba9d33f919f0f33c2df8d58bbf631a7e430cf2f21406e993b4f5678337a",
+    "fingerprint": "c37fd7f19fa9cc16ecc906d4c3a5edf38eb54878816b55ce9720f0c4a57f8076",
     "summary": {
-      "total": 4020,
+      "total": 4022,
       "builtin": 231,
-      "declarative": 3789,
+      "declarative": 3791,
       "by_kind": {
         "command": 41,
         "query": 190,
-        "resource": 3789
+        "resource": 3791
       },
       "by_stability": {
         "behaviorally_verified": 153,
         "experimental": 68,
-        "implemented": 3799
+        "implemented": 3801
       },
       "mcp_tools": 215,
-      "mcp_resources": 3846,
+      "mcp_resources": 3848,
       "http_routes": 219,
       "cli_commands": 128,
       "modules": 96,
@@ -97172,7 +97172,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 1248,
+        "capabilities": 1249,
         "capability_ids": []
       },
       {
@@ -97785,7 +97785,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 700,
+        "capabilities": 701,
         "capability_ids": []
       },
       {
@@ -97878,7 +97878,7 @@
     ]
   },
   "index": {
-    "fingerprint": "786aa5ae07034cf209e5ce66fc01ccf3f717e32458bc9df0f78c836c9ce63263",
+    "fingerprint": "dc131b64e04201330781cf897933fa6d96b6a9a038daefc3e5555361e949718f",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -97918,7 +97918,7 @@
       "gap": 5,
       "implementation": 54,
       "intent": 45,
-      "issue": 1248,
+      "issue": 1249,
       "knowledge": 220,
       "mesh-declaration": 1,
       "milestone": 117,
@@ -97932,7 +97932,7 @@
       "session": 95,
       "skill": 11,
       "taxonomy": 10,
-      "test": 700,
+      "test": 701,
       "use-case": 49,
       "workspace": 1
     },
@@ -105515,7 +105515,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 136007
+        "bytes": 136150
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -123219,6 +123219,17 @@
         "bytes": 3190
       },
       {
+        "uri": "majordomus://issue/I4592",
+        "kind": "issue",
+        "identity": "I4592",
+        "title": "The github-projection apply job checks out the trunk's history blobless, bounded at 10 minutes",
+        "description": "The actions/checkout of the apply job in .github/workflows/github.yml keeps `fetch-depth: 0` and takes `filter: blob:none`, bounded at `timeout-minutes: 10` (below the job's 60), so the projection is applied after every landing without a rerun; a case holds the workflow to it.",
+        "path": ".ai/repo/project/issues/I4592.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 4357
+      },
+      {
         "uri": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "identity": "a-brief-is-reconciled-not-transcribed",
@@ -137224,6 +137235,14 @@
         "bytes": 3463
       },
       {
+        "uri": "majordomus://test/test/cases/4592_the_projection_apply_checkout_is_blobless_and_bounded.sh",
+        "kind": "test",
+        "identity": "test/cases/4592_the_projection_apply_checkout_is_blobless_and_bounded.sh",
+        "path": "test/cases/4592_the_projection_apply_checkout_is_blobless_and_bounded.sh",
+        "source_class": "case",
+        "bytes": 4299
+      },
+      {
         "uri": "majordomus://test/test/cases/45_github_projection.sh",
         "kind": "test",
         "identity": "test/cases/45_github_projection.sh",
@@ -139746,7 +139765,7 @@
       "identity": [
         "id"
       ],
-      "objects": 1248
+      "objects": 1249
     },
     {
       "name": "knowledge",
@@ -139908,7 +139927,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 700
+      "objects": 701
     },
     {
       "name": "use-case",
