@@ -81591,6 +81591,48 @@
         }
       },
       {
+        "id": "majordomus://issue/I4618",
+        "kind": "issue",
+        "label": "I4618",
+        "summary": "The executable resolver borrows a same-generation executable another worktree built, before it refuses",
+        "route": "/cockpit/objects/issue/i4618",
+        "source": ".ai/repo/project/issues/I4618.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A current executable of the same crate in another worktree is borrowed, and the worktree is named on stderr",
+            "An executable whose worktree has uncommitted crate changes is not borrowed, and the refusal names that reason",
+            "An executable older than its own sources is not borrowed, with its reason",
+            "An executable whose branch carries another crate is not borrowed, with its reason",
+            "With no executable in any other worktree, the refusal says so",
+            "Under CARGO_TARGET_DIR no worktree is asked, and the refusal says why",
+            "No step builds",
+            "Negative: the case fails against lib/rust_bin.sh before this change"
+          ],
+          "created_at": "2026-11-15",
+          "depends_on": [],
+          "evidence_required": [
+            "the_resolver_borrows_a_sibling_executable"
+          ],
+          "milestone": "adopter-upgrades",
+          "non_scope": [
+            "Building anything (ADR 0224)",
+            "The shared master-build cache and its freshness",
+            "Removing the race between this check and the exec, which the tree's own executable shares"
+          ],
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "lib/rust_bin.sh",
+            "test/lib/rust_bin.functions.sh",
+            "test/cases/4618_the_resolver_borrows_a_sibling_executable.sh",
+            ".ai/repo/project/issues/I4618.yaml"
+          ],
+          "serves": [],
+          "slug": "the-resolver-borrows-a-sibling-executable"
+        }
+      },
+      {
         "id": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "label": "a-brief-is-reconciled-not-transcribed",
@@ -109432,6 +109474,13 @@
         "label": "test/cases/45_github_projection.sh",
         "route": "/cockpit/objects/test/test-cases-45-github-projection-sh",
         "source": "test/cases/45_github_projection.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/4618_the_resolver_borrows_a_sibling_executable.sh",
+        "kind": "test",
+        "label": "test/cases/4618_the_resolver_borrows_a_sibling_executable.sh",
+        "route": "/cockpit/objects/test/test-cases-4618-the-resolver-borrows-a-sibling-executable-sh",
+        "source": "test/cases/4618_the_resolver_borrows_a_sibling_executable.sh"
       },
       {
         "id": "majordomus://test/test/cases/46_cross_surface.sh",
@@ -151292,6 +151341,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I4618",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4618",
+        "target": "majordomus://milestone/adopter-upgrades",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -159047,6 +159106,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/4618_the_resolver_borrows_a_sibling_executable.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/46_cross_surface.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -164168,8 +164232,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4493,
-      "edges": 10138,
+      "nodes": 4495,
+      "edges": 10141,
       "acyclic": false,
       "truncated": false
     }

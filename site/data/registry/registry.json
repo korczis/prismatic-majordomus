@@ -6,23 +6,23 @@
     "version": "1.0.2"
   },
   "registry": {
-    "fingerprint": "ad0aa86dc820beae9b35c3cf40be8528450ecd8c4dc283dd03c5b08ff4f9546e",
+    "fingerprint": "3d77ead81f150c050343103ecf12c9c826e107c4c2a459d193db1feb7e645ff3",
     "summary": {
-      "total": 4022,
+      "total": 4024,
       "builtin": 231,
-      "declarative": 3791,
+      "declarative": 3793,
       "by_kind": {
         "command": 41,
         "query": 190,
-        "resource": 3791
+        "resource": 3793
       },
       "by_stability": {
         "behaviorally_verified": 153,
         "experimental": 68,
-        "implemented": 3801
+        "implemented": 3803
       },
       "mcp_tools": 215,
-      "mcp_resources": 3848,
+      "mcp_resources": 3850,
       "http_routes": 219,
       "cli_commands": 128,
       "modules": 96,
@@ -97172,7 +97172,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 1249,
+        "capabilities": 1250,
         "capability_ids": []
       },
       {
@@ -97785,7 +97785,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 701,
+        "capabilities": 702,
         "capability_ids": []
       },
       {
@@ -97878,7 +97878,7 @@
     ]
   },
   "index": {
-    "fingerprint": "0d69aaa2abec9f1ddf233ecf6160545563747bd4d9f7e71ae524116d651a812d",
+    "fingerprint": "aca5a68e31cd797c2103cb25e7e063842a64ea65e0ba53eb438eb8f5ef2b187b",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -97918,7 +97918,7 @@
       "gap": 5,
       "implementation": 54,
       "intent": 45,
-      "issue": 1249,
+      "issue": 1250,
       "knowledge": 220,
       "mesh-declaration": 1,
       "milestone": 117,
@@ -97932,7 +97932,7 @@
       "session": 95,
       "skill": 11,
       "taxonomy": 10,
-      "test": 701,
+      "test": 702,
       "use-case": 49,
       "workspace": 1
     },
@@ -105515,7 +105515,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 136150
+        "bytes": 136301
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -108921,7 +108921,7 @@
         "identity": "lib/rust_bin.sh",
         "path": "lib/rust_bin.sh",
         "source_class": "library",
-        "bytes": 110429
+        "bytes": 114846
       },
       {
         "uri": "majordomus://implementation/lib/search.sh",
@@ -123230,6 +123230,17 @@
         "bytes": 4357
       },
       {
+        "uri": "majordomus://issue/I4618",
+        "kind": "issue",
+        "identity": "I4618",
+        "title": "The executable resolver borrows a same-generation executable another worktree built, before it refuses",
+        "description": "Before mj_rust_resolve refuses with exit 12, it asks the other worktrees of this checkout, and answers through an executable one of them already built when that executable is of this tree's generation. It says which worktree on stderr, builds nothing, and names every worktree it judged in the refusal when none fits.",
+        "path": ".ai/repo/project/issues/I4618.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 4061
+      },
+      {
         "uri": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "identity": "a-brief-is-reconciled-not-transcribed",
@@ -137251,6 +137262,14 @@
         "bytes": 15204
       },
       {
+        "uri": "majordomus://test/test/cases/4618_the_resolver_borrows_a_sibling_executable.sh",
+        "kind": "test",
+        "identity": "test/cases/4618_the_resolver_borrows_a_sibling_executable.sh",
+        "path": "test/cases/4618_the_resolver_borrows_a_sibling_executable.sh",
+        "source_class": "case",
+        "bytes": 5465
+      },
+      {
         "uri": "majordomus://test/test/cases/46_cross_surface.sh",
         "kind": "test",
         "identity": "test/cases/46_cross_surface.sh",
@@ -139765,7 +139784,7 @@
       "identity": [
         "id"
       ],
-      "objects": 1249
+      "objects": 1250
     },
     {
       "name": "knowledge",
@@ -139927,7 +139946,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 701
+      "objects": 702
     },
     {
       "name": "use-case",
