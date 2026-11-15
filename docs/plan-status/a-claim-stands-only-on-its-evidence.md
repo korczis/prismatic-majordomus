@@ -251,3 +251,4 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I3861` | shares .ai/repo/adrs/0082-token-economics-are-measured-from-matched-runs-and-published-only-past-a-declared-rule.md with I4315; they may not run concurrently |
 | WARN | `scope_conflict` | `I3861` | shares .ai/repo/adrs/0082-token-economics-are-measured-from-matched-runs-and-published-only-past-a-declared-rule.md with I4481; they may not run concurrently |
 | WARN | `scope_conflict` | `I3861` | shares .ai/repo/adrs/0082-token-economics-are-measured-from-matched-runs-and-published-only-past-a-declared-rule.md with I4500; they may not run concurrently |
+| WARN | `scope_conflict` | `I4583` | shares apps/majordomus-cli/src/capability/builtin/evidence.rs with I4600; they may not run concurrently |

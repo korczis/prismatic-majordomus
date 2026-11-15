@@ -178,6 +178,23 @@ fn record_text(out: &mut impl Write, v: &Value, run_record: Option<&Path>) -> Re
         v["recorded"], v["passed"]
     )
     .map_err(Error::Transport)?;
+    // how much of the suite the report covered (I4600): a report cut short is said, not
+    // recorded as if it were the whole run
+    if let (Some(n), Some(all)) = (
+        v["suite_coverage"]["in_report"].as_u64(),
+        v["suite_coverage"]["on_disk"].as_u64(),
+    ) {
+        if n >= all {
+            writeln!(out, "suite        all {all} case(s) of the suite are in this report")
+        } else {
+            writeln!(
+                out,
+                "suite        {n} of {all} case(s) of the suite are in this report; the other {} keep their earlier evidence",
+                all - n
+            )
+        }
+        .map_err(Error::Transport)?;
+    }
     writeln!(
         out,
         "against      {} ({})",

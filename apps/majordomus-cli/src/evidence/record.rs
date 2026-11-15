@@ -316,6 +316,66 @@ pub struct RecordOutcome {
     pub dropped: Vec<EvidenceDropped>,
     /// The recording as a typed run.
     pub run_record: EvidenceRunRecord,
+    /// How much of the suite a suite report covered, when one was given (I4600).
+    pub suite_coverage: Option<SuiteCoverage>,
+}
+
+/// How much of the suite a suite report covered: the cases it named that exist, against the
+/// cases the suite holds (`test/cases/*.sh`, where [`TestId::source`] puts a suite case).
+///
+/// A partial run is merged by design and keeps the evidence of what it did not run, so this
+/// refuses nothing. It is said so that a report cut short is visible: on 2026-11-15 a nested
+/// runner truncated an adopter's ten-case report to two rows, the recorder answered
+/// "recorded 2 execution(s)", and the other eight skills stayed stale with nothing saying why.
+///
+/// ```
+/// use majordomus_cli::evidence::SuiteCoverage;
+///
+/// let partial = SuiteCoverage { in_report: 2, on_disk: 10 };
+/// assert_eq!(partial.kept(), 8);
+/// assert!(!partial.whole());
+/// assert!(SuiteCoverage { in_report: 10, on_disk: 10 }.whole());
+/// ```
+#[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize, schemars::JsonSchema)]
+pub struct SuiteCoverage {
+    /// The suite cases this report named that exist in the repository.
+    pub in_report: usize,
+    /// The suite cases the repository holds.
+    pub on_disk: usize,
+}
+
+impl SuiteCoverage {
+    /// The cases this report did not run, whose earlier evidence stands as it was.
+    pub fn kept(&self) -> usize {
+        self.on_disk.saturating_sub(self.in_report)
+    }
+
+    /// Whether the report ran every case the suite holds.
+    pub fn whole(&self) -> bool {
+        self.in_report >= self.on_disk
+    }
+}
+
+/// The suite cases of `root`: every `*.sh` directly under the directory a suite case's
+/// source lives in, counted, not parsed.
+fn suite_cases_on_disk(root: &Path) -> usize {
+    let probe = TestId {
+        runner: Runner::Suite,
+        name: String::new(),
+    }
+    .source();
+    let dir = Path::new(&probe)
+        .parent()
+        .map(|d| root.join(d))
+        .unwrap_or_else(|| root.to_path_buf());
+    std::fs::read_dir(dir)
+        .map(|entries| {
+            entries
+                .filter_map(|e| e.ok())
+                .filter(|e| e.path().extension().is_some_and(|x| x == "sh") && e.path().is_file())
+                .count()
+        })
+        .unwrap_or(0)
 }
 
 /// The instant, RFC 3339, UTC, to whole seconds.
@@ -851,6 +911,7 @@ pub fn record(root: &Path, req: &RecordRequest) -> Result<RecordOutcome> {
     let mut results: Vec<(TestId, Outcome, u64)> = Vec::new();
     let mut unknown = Vec::new();
     let mut absent = Vec::new();
+    let mut suite_coverage = None;
 
     if let Some(p) = &req.suite {
         let bytes = read_report(P::Suite, p)?;
@@ -874,6 +935,16 @@ pub fn record(root: &Path, req: &RecordRequest) -> Result<RecordOutcome> {
                 "the report named no test this repository has",
             ));
         }
+        let mut named: Vec<&str> = results[before..]
+            .iter()
+            .map(|(id, _, _)| id.name.as_str())
+            .collect();
+        named.sort_unstable();
+        named.dedup();
+        suite_coverage = Some(SuiteCoverage {
+            in_report: named.len(),
+            on_disk: suite_cases_on_disk(root),
+        });
     } else {
         absent.push(absence(P::Suite, "no suite report was given"));
     }
@@ -1022,6 +1093,7 @@ pub fn record(root: &Path, req: &RecordRequest) -> Result<RecordOutcome> {
         unknown: run_record.unknown.clone(),
         dropped: run_record.dropped.clone(),
         run_record,
+        suite_coverage,
     })
 }
 

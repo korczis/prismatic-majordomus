@@ -6,23 +6,23 @@
     "version": "1.0.2"
   },
   "registry": {
-    "fingerprint": "ad0aa86dc820beae9b35c3cf40be8528450ecd8c4dc283dd03c5b08ff4f9546e",
+    "fingerprint": "eaefd3b0ccd9b2f7192fc6b63089b8cfb976b9d5d20712969fa6b65764c92ad1",
     "summary": {
-      "total": 4022,
+      "total": 4024,
       "builtin": 231,
-      "declarative": 3791,
+      "declarative": 3793,
       "by_kind": {
         "command": 41,
         "query": 190,
-        "resource": 3791
+        "resource": 3793
       },
       "by_stability": {
         "behaviorally_verified": 153,
         "experimental": 68,
-        "implemented": 3801
+        "implemented": 3803
       },
       "mcp_tools": 215,
-      "mcp_resources": 3848,
+      "mcp_resources": 3850,
       "http_routes": 219,
       "cli_commands": 128,
       "modules": 96,
@@ -28400,6 +28400,17 @@
               "run_record": {
                 "$ref": "#/$defs/EvidenceRunRecord",
                 "description": "The recording as a typed run."
+              },
+              "suite_coverage": {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/SuiteCoverage"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "How much of the suite a suite report covered: the cases it named against the cases\nthe suite holds (I4600). Absent when no suite report was given."
               }
             },
             "required": [
@@ -28411,7 +28422,7 @@
               "ledger",
               "run_record"
             ],
-            "description": "What a recording did: how much of the run reached the ledger, and under what provenance.\n\nThe recorder decides nothing, and this report says so. A result no runner in this\nrepository owns is named in `unknown` rather than written under a guessed identity, and\na failure is recorded like a pass — the ledger holds what happened, so `passed` is a\ncount and never a filter.\n\n```\nuse majordomus_cli::capability::builtin::evidence::RecordReport;\n\nlet report = RecordReport {\n    recorded: 3,\n    passed: 2,\n    commit: \"06fa258913a1b2c3d4e5f60718293a4b5c6d7e8f\".to_string(),\n    working_tree: \"clean\".to_string(),\n    unknown: vec![\"docs/CLAIMS.yaml\".to_string()],\n    dropped: vec![],\n    ledger: majordomus_cli::evidence::LEDGER_PATH.to_string(),\n    run_record: serde_json::from_value(serde_json::json!({\n        \"schema\": 1, \"id\": \"local:06fa258913a1:20260926T120000Z\", \"origin\": \"local\",\n        \"commit\": \"06fa258913a1b2c3d4e5f60718293a4b5c6d7e8f\", \"working_tree\": \"clean\",\n        \"recorded_at\": \"2026-09-26T12:00:00Z\", \"ledger\": \"repo\"\n    }))\n    .unwrap(),\n};\n// the failing test is one of the three recorded, not a fourth thing that was dropped\nassert_eq!(report.recorded - report.passed, 1);\nassert!(report.ledger.starts_with(\".ai/repo/\"));\n\nlet json = serde_json::to_value(&report).unwrap();\nassert_eq!(json[\"unknown\"].as_array().unwrap().len(), 1);\nassert_eq!(json[\"working_tree\"], \"clean\");\n// a suite-only recording listed nothing, and its document is what it always was\nassert!(json.get(\"dropped\").is_none());\n```",
+            "description": "What a recording did: how much of the run reached the ledger, and under what provenance.\n\nThe recorder decides nothing, and this report says so. A result no runner in this\nrepository owns is named in `unknown` rather than written under a guessed identity, and\na failure is recorded like a pass — the ledger holds what happened, so `passed` is a\ncount and never a filter.\n\n```\nuse majordomus_cli::capability::builtin::evidence::RecordReport;\n\nlet report = RecordReport {\n    recorded: 3,\n    passed: 2,\n    commit: \"06fa258913a1b2c3d4e5f60718293a4b5c6d7e8f\".to_string(),\n    working_tree: \"clean\".to_string(),\n    unknown: vec![\"docs/CLAIMS.yaml\".to_string()],\n    dropped: vec![],\n    ledger: majordomus_cli::evidence::LEDGER_PATH.to_string(),\n    run_record: serde_json::from_value(serde_json::json!({\n        \"schema\": 1, \"id\": \"local:06fa258913a1:20260926T120000Z\", \"origin\": \"local\",\n        \"commit\": \"06fa258913a1b2c3d4e5f60718293a4b5c6d7e8f\", \"working_tree\": \"clean\",\n        \"recorded_at\": \"2026-09-26T12:00:00Z\", \"ledger\": \"repo\"\n    }))\n    .unwrap(),\n    suite_coverage: None,\n};\n// the failing test is one of the three recorded, not a fourth thing that was dropped\nassert_eq!(report.recorded - report.passed, 1);\nassert!(report.ledger.starts_with(\".ai/repo/\"));\n\nlet json = serde_json::to_value(&report).unwrap();\nassert_eq!(json[\"unknown\"].as_array().unwrap().len(), 1);\nassert_eq!(json[\"working_tree\"], \"clean\");\n// a suite-only recording listed nothing, and its document is what it always was\nassert!(json.get(\"dropped\").is_none());\n```",
             "title": "RecordReport",
             "$defs": {
               "EvidenceDropped": {
@@ -29202,6 +29213,28 @@
                   }
                 ],
                 "description": "What a run said about one test.\n\n`NotRun` is deliberately absent: it is the absence of an execution, not an outcome one\nhad. Encoding it here would let a recorder write \"this did not run\" and have it counted\namong the things that did.\n\n```\nuse majordomus_cli::evidence::Outcome;\n\nassert!(Outcome::parse(\"ok\").proves());\nassert!(!Outcome::parse(\"timeout\").proves());\n// exactly one of the five is evidence of anything; the other four are reasons there\n// is none, kept apart because \"it declined\" and \"the harness broke\" are different bugs\nassert_eq!(Outcome::parse(\"skipped\"), Outcome::Skip);\nassert_eq!(Outcome::parse(\"nonsense\"), Outcome::Error);\n```\n# Example\n\n```\nuse majordomus_cli::evidence::Outcome;\nassert!(Outcome::parse(\"ok\").proves());\nassert_eq!(Outcome::parse(\"wat\"), Outcome::Error);\n```"
+              },
+              "SuiteCoverage": {
+                "type": "object",
+                "properties": {
+                  "in_report": {
+                    "type": "integer",
+                    "format": "uint",
+                    "minimum": 0,
+                    "description": "The suite cases this report named that exist in the repository."
+                  },
+                  "on_disk": {
+                    "type": "integer",
+                    "format": "uint",
+                    "minimum": 0,
+                    "description": "The suite cases the repository holds."
+                  }
+                },
+                "required": [
+                  "in_report",
+                  "on_disk"
+                ],
+                "description": "How much of the suite a suite report covered: the cases it named that exist, against the\ncases the suite holds (`test/cases/*.sh`, where `TestId::source` puts a suite case).\n\nA partial run is merged by design and keeps the evidence of what it did not run, so this\nrefuses nothing. It is said so that a report cut short is visible: on 2026-11-15 a nested\nrunner truncated an adopter's ten-case report to two rows, the recorder answered\n\"recorded 2 execution(s)\", and the other eight skills stayed stale with nothing saying why.\n\n```\nuse majordomus_cli::evidence::SuiteCoverage;\n\nlet partial = SuiteCoverage { in_report: 2, on_disk: 10 };\nassert_eq!(partial.kept(), 8);\nassert!(!partial.whole());\nassert!(SuiteCoverage { in_report: 10, on_disk: 10 }.whole());\n```"
               }
             }
           }
@@ -97172,7 +97205,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 1249,
+        "capabilities": 1250,
         "capability_ids": []
       },
       {
@@ -97785,7 +97818,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 701,
+        "capabilities": 702,
         "capability_ids": []
       },
       {
@@ -97878,7 +97911,7 @@
     ]
   },
   "index": {
-    "fingerprint": "0d69aaa2abec9f1ddf233ecf6160545563747bd4d9f7e71ae524116d651a812d",
+    "fingerprint": "82f24ac6716f950fcb3ab9bbf6bf7c9c0f406985cffe92fd8b961b1d0ed58e37",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -97918,7 +97951,7 @@
       "gap": 5,
       "implementation": 54,
       "intent": 45,
-      "issue": 1249,
+      "issue": 1250,
       "knowledge": 220,
       "mesh-declaration": 1,
       "milestone": 117,
@@ -97932,7 +97965,7 @@
       "session": 95,
       "skill": 11,
       "taxonomy": 10,
-      "test": 701,
+      "test": 702,
       "use-case": 49,
       "workspace": 1
     },
@@ -105515,7 +105548,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 136150
+        "bytes": 136259
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -123230,6 +123263,17 @@
         "bytes": 4357
       },
       {
+        "uri": "majordomus://issue/I4600",
+        "kind": "issue",
+        "identity": "I4600",
+        "title": "evidence record says how much of the suite its report covers",
+        "description": "When `evidence record` is given a suite report, it says how many of the suite's cases the report named against how many the suite holds, and that the rest keep their earlier evidence. It still records a partial run as before, because a merged partial run is by design.",
+        "path": ".ai/repo/project/issues/I4600.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3759
+      },
+      {
         "uri": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "identity": "a-brief-is-reconciled-not-transcribed",
@@ -137251,6 +137295,14 @@
         "bytes": 15204
       },
       {
+        "uri": "majordomus://test/test/cases/4600_evidence_record_names_its_suite_coverage.sh",
+        "kind": "test",
+        "identity": "test/cases/4600_evidence_record_names_its_suite_coverage.sh",
+        "path": "test/cases/4600_evidence_record_names_its_suite_coverage.sh",
+        "source_class": "case",
+        "bytes": 2978
+      },
+      {
         "uri": "majordomus://test/test/cases/46_cross_surface.sh",
         "kind": "test",
         "identity": "test/cases/46_cross_surface.sh",
@@ -139765,7 +139817,7 @@
       "identity": [
         "id"
       ],
-      "objects": 1249
+      "objects": 1250
     },
     {
       "name": "knowledge",
@@ -139927,7 +139979,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 701
+      "objects": 702
     },
     {
       "name": "use-case",
