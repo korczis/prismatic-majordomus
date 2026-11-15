@@ -2,17 +2,17 @@
  "schema": 1,
  "generated_by": "scripts/lib/docs-index.mjs",
  "build": {
-  "commit": "defd88e5896aaacb84e08d2f578ce9f6f9d6b08e",
+  "commit": "3fcaafac355b54bf7b8e42dfa34cd1d5a05fd7d5",
   "source_version": "1.0.2",
-  "registry_fingerprint": "8e01065e6220025dba08ce95a00565aefa20383d0d5e78c3ceee53a409f57992"
+  "registry_fingerprint": "ad0aa86dc820beae9b35c3cf40be8528450ecd8c4dc283dd03c5b08ff4f9546e"
  },
  "counts": {
-  "pages": 6506,
-  "capabilities": 4020,
+  "pages": 6508,
+  "capabilities": 4022,
   "cli_commands": 128,
   "http_routes": 219,
   "mcp_tools": 215,
-  "mcp_resources": 3846,
+  "mcp_resources": 3848,
   "modules": 96
  },
  "kinds": [
@@ -158,7 +158,7 @@
    "route": "/plan/",
    "title": null,
    "reason": null,
-   "count": 1248
+   "count": 1249
   },
   {
    "kind": "knowledge",
@@ -270,7 +270,7 @@
    "route": null,
    "title": null,
    "reason": "A test object is a case file. What it proves is published — on /guarantees/ for the claim and on the rule's own page for the rule — and that is the direction a reader asks in.",
-   "count": 700
+   "count": 701
   },
   {
    "kind": "use-case",
@@ -15969,6 +15969,12 @@
    "route": "/cs/plan/i4591/",
    "title": "I4591 — mj_ms reads EPOCHREALTIME under any locale's decimal separator",
    "description": "mj_ms (lib/common.sh) keeps every digit of EPOCHREALTIME and drops whatever separates them, so the millisecond clock is digits under any locale and every caller's arithmetic holds; a case pins it with an injected comma and, where one is installed, a real comma locale.",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/plan/i4592/",
+   "title": "I4592 — The github-projection apply job checks out the trunk's history blobless, bounded at 10 minutes",
+   "description": "The actions/checkout of the apply job in .github/workflows/github.yml keeps `fetch-depth: 0` and takes `filter: blob:none`, bounded at `timeout-minutes: 10` (below the job's 60), so the projection is applied after every landing without a rerun; a case holds the workflow to it.",
    "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
   },
   {
@@ -33366,6 +33372,12 @@
    "section": "The plan"
   },
   {
+   "route": "/plan/i4592/",
+   "title": "I4592 — The github-projection apply job checks out the trunk's history blobless, bounded at 10 minutes",
+   "description": "The actions/checkout of the apply job in .github/workflows/github.yml keeps `fetch-depth: 0` and takes `filter: blob:none`, bounded at `timeout-minutes: 10` (below the job's 60), so the projection is applied after every landing without a rerun; a case holds the workflow to it.",
+   "section": "The plan"
+  },
+  {
    "route": "/plan/idd-reads-at-a-glance/",
    "title": "idd-reads-at-a-glance — The intent workspace reads at a glance and leads everywhere it names",
    "description": "The workspace reads in the order a person asks (what the intent is, what is missing, what to do next, the work, the evidence), every id on it is a link, its numbers are the intent's, its texts render through the UI's one prose renderer, it offers one primary action, and audit rules keep bare ids and raw markdown off every /ui page from now on.",
@@ -37310,7 +37322,7 @@
   {
    "route": "/rustdoc/",
    "title": "majordomus-cli 1.0.2 — Rust API reference",
-   "description": "The rustdoc reference of majordomus-cli 1.0.2, built from commit defd88e5896aaacb84e08d2f578ce9f6f9d6b08e: the public items of the library and of the executable, and the source they were built from.",
+   "description": "The rustdoc reference of majordomus-cli 1.0.2, built from commit 3fcaafac355b54bf7b8e42dfa34cd1d5a05fd7d5: the public items of the library and of the executable, and the source they were built from.",
    "section": "majordomus-cli 1.0.2 — Rust API reference"
   },
   {
