@@ -6,23 +6,23 @@
     "version": "1.0.2"
   },
   "registry": {
-    "fingerprint": "ad0aa86dc820beae9b35c3cf40be8528450ecd8c4dc283dd03c5b08ff4f9546e",
+    "fingerprint": "c6f65ebaee003ef5853f594e1ee1ca69393ddd7fc23dc297391700f989c0b675",
     "summary": {
-      "total": 4022,
+      "total": 4025,
       "builtin": 231,
-      "declarative": 3791,
+      "declarative": 3794,
       "by_kind": {
         "command": 41,
         "query": 190,
-        "resource": 3791
+        "resource": 3794
       },
       "by_stability": {
         "behaviorally_verified": 153,
         "experimental": 68,
-        "implemented": 3801
+        "implemented": 3804
       },
       "mcp_tools": 215,
-      "mcp_resources": 3848,
+      "mcp_resources": 3851,
       "http_routes": 219,
       "cli_commands": 128,
       "modules": 96,
@@ -97172,7 +97172,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 1249,
+        "capabilities": 1252,
         "capability_ids": []
       },
       {
@@ -97878,7 +97878,7 @@
     ]
   },
   "index": {
-    "fingerprint": "0d69aaa2abec9f1ddf233ecf6160545563747bd4d9f7e71ae524116d651a812d",
+    "fingerprint": "0a2869e6c9a91b29d31126aaa32b8b3a5ccb4495b4acbe425bcc170432e18874",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -97918,7 +97918,7 @@
       "gap": 5,
       "implementation": 54,
       "intent": 45,
-      "issue": 1249,
+      "issue": 1252,
       "knowledge": 220,
       "mesh-declaration": 1,
       "milestone": 117,
@@ -105515,7 +105515,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 136150
+        "bytes": 136775
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -123230,6 +123230,39 @@
         "bytes": 4357
       },
       {
+        "uri": "majordomus://issue/I4600",
+        "kind": "issue",
+        "identity": "I4600",
+        "title": "A verdict that needs a CI secret says which store the run reads: a Dependabot run reads the Dependabot secrets, and the remedy names `--app dependabot`",
+        "description": "Where a verdict fails closed for want of a CI secret (the design licence's `MAJORDOMUS_KIT_EVIDENCE_<KIT>`, and any adopter gate the fleet pack documents the same way), the finding says which secret store the run reads and gives the command for it: on a Dependabot run (`GITHUB_ACTOR=dependabot[bot]`) the Dependabot store, `gh secret set <NAME> --app dependabot`; otherwise the Actions store.",
+        "path": ".ai/repo/project/issues/I4600.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2780
+      },
+      {
+        "uri": "majordomus://issue/I4601",
+        "kind": "issue",
+        "identity": "I4601",
+        "title": "The skills-unenforced remedy an adopter can follow: declare the CI model's gate that runs `skills verify`, not this tree's `scripts/ci-plan`",
+        "description": "When an active skill is unenforced because no CI gate selected by a change to its SKILL.md runs `skills verify`, the finding's remedy says what an adopter does: declare `.ai/repo/ci/gates.yaml` (or extend it) with a gate whose `runs` contains `majordomus skills verify`, selected by a class matching the skill's path, and run that command in a CI job. `scripts/ci-plan` is named only where it exists.",
+        "path": ".ai/repo/project/issues/I4601.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2304
+      },
+      {
+        "uri": "majordomus://issue/I4602",
+        "kind": "issue",
+        "identity": "I4602",
+        "title": "Never-reported gates are counted right and point at the command that reports them: `evidence --run-gates`, which also proves each `runs` executes as declared",
+        "description": "The check finding for required gates that never reported counts them correctly, reads cleanly, and gives `majordomus evidence --run-gates` as the remedy (the one command that runs each gate by its declared `runs` and records it), with `--gate <id> --exit <status>` for a verdict taken elsewhere.",
+        "path": ".ai/repo/project/issues/I4602.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2411
+      },
+      {
         "uri": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "identity": "a-brief-is-reconciled-not-transcribed",
@@ -139765,7 +139798,7 @@
       "identity": [
         "id"
       ],
-      "objects": 1249
+      "objects": 1252
     },
     {
       "name": "knowledge",

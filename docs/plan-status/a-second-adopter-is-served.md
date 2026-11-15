@@ -9,7 +9,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 
 | milestone | status | done of required | ready | blocked | active | verify | cancelled | outcome |
 |---|---|---|---|---|---|---|---|---|
-| [a-second-adopter-is-served](https://majordomus.dev/plan/a-second-adopter-is-served/) | ACTIVE | 9/35 | 24 | 2 | 0 | 0 | 0 | Each finding is fixed generically, with no test of whether the repository is this one: by a declaration, a derivation or a default that an adopter can state. Each fix carries a case that fails without it, its derived files regenerated and its page of the documentation corrected. |
+| [a-second-adopter-is-served](https://majordomus.dev/plan/a-second-adopter-is-served/) | ACTIVE | 9/38 | 27 | 2 | 0 | 0 | 0 | Each finding is fixed generically, with no test of whether the repository is this one: by a declaration, a derivation or a default that an adopter can state. Each fix carries a case that fails without it, its derived files regenerated and its page of the documentation corrected. |
 
 ## Issues
 
@@ -50,6 +50,9 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | [I4417](https://majordomus.dev/plan/i4417/) | READY | 0 | — | A knowledge class a repository script generates declares its generator and inputs, is reported stale when its inputs moved, and the issue, intent and rule ids its records carry are edges |
 | [I4418](https://majordomus.dev/plan/i4418/) | READY | 0 | — | serve ensure fast-forwards a clean trunk checkout that is strictly behind its remote trunk, or offers to, and majordomus init declares checkout.trunk_distance, so a shared server does not answer from an old tree unjudged |
 | [I4578](https://majordomus.dev/plan/i4578/) | READY | 0 | — | A fixture path under a case's scratch variable is not a pack leak of the packing account's home |
+| [I4600](https://majordomus.dev/plan/i4600/) | READY | 0 | — | A verdict that needs a CI secret says which store the run reads: a Dependabot run reads the Dependabot secrets, and the remedy names `--app dependabot` |
+| [I4601](https://majordomus.dev/plan/i4601/) | READY | 0 | — | The skills-unenforced remedy an adopter can follow: declare the CI model's gate that runs `skills verify`, not this tree's `scripts/ci-plan` |
+| [I4602](https://majordomus.dev/plan/i4602/) | READY | 0 | — | Never-reported gates are counted right and point at the command that reports them: `evidence --run-gates`, which also proves each `runs` executes as declared |
 
 ## Findings
 
@@ -82,6 +85,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I4255` | shares apps/majordomus-cli/src/capability/builtin/rules.rs with I4486; they may not run concurrently |
 | WARN | `scope_conflict` | `I4255` | shares lib/doctor.sh with I4584; they may not run concurrently |
 | WARN | `scope_conflict` | `I4256` | shares lib/skills.sh with I4468; they may not run concurrently |
+| WARN | `scope_conflict` | `I4256` | shares apps/majordomus-cli/src/skill/mod.rs with I4601; they may not run concurrently |
 | WARN | `scope_conflict` | `I4257` | shares lib/init.sh with I4262; they may not run concurrently |
 | WARN | `scope_conflict` | `I4257` | shares lib/init.sh with I4336; they may not run concurrently |
 | WARN | `scope_conflict` | `I4257` | shares lib/init.sh with I4468; they may not run concurrently |
