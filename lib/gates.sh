@@ -247,7 +247,7 @@ mj_validate_completion_gates() {
   # absent is a repository with no gates to be unknown about; present and unreadable is a
   # model whose gates exist and cannot be planned, which is unknown
   if [ ! -f "$MJ_ROOT/.ai/repo/ci/gates.yaml" ]; then
-    mj_doctrine_skip gate "$id" "this repository declares no CI model at .ai/repo/ci/gates.yaml; nothing can be planned"
+    mj_doctrine_skip gate "$id" "this repository declares no CI model at .ai/repo/ci/gates.yaml; nothing can be planned" "majordomus init --extend --ci"
     MJ_DOCTRINE_SKIPPED=1; return 0
   fi
   if ! mj_gate_model_load; then

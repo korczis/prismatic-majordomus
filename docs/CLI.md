@@ -83,6 +83,19 @@ exists without a manifest, naming the choice between moving it aside and `--exte
 (`15`) when project data still lives under `.majordomus/`, the pre-`.ai` layout, naming
 `majordomus migrate`.
 
+**`--ci`** also lays down the CI model, `.ai/repo/ci/gates.yaml`, with its directory
+contract `.ai/repo/ci/README.md`, from `share/skeleton/ai/repo/ci/`: one gate every
+supervised repository can run as it is (`skills-verify`, `majordomus skills verify` in a
+CI job named `supervision`, lane `feedback`), one class that selects every gate, the
+`tiers`, and a commented example of a hosted test job to adapt. Its header says what the
+model does not model: the runner a job runs on, and steps within a job — the unit is the
+gate, one command, and landing evidence is chosen by lane. Without `--ci` no model is
+seeded and init says how to get one (`ci: no CI model laid down; majordomus init --extend
+--ci ...`), because a declared model is what `check` and `finish` plan gates from: a
+selected gate whose verdict cannot be read refuses `finish --outcome completed`
+(`majordomus.completion-gates`). `init --extend --ci` adds it to an existing layer and
+never overwrites a model the repository wrote.
+
 **Does not** install git hooks. It prints the two lines a hook needs and the command
 `majordomus doctor` that will verify they were added.
 

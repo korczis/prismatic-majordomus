@@ -1,0 +1,66 @@
+# The CI model of this repository: which validation gates exist, which CI job runs each, and
+# which classes of changed paths select which gates. `majordomus check` and `finish` plan a
+# task's gates from this file and the task's changed paths; `majordomus evidence --gate <id>
+# --exit <status>` records a gate's verdict against the files that select it, and a change to
+# one of them makes that verdict stale. Laid down by `majordomus init --ci`; it is yours from
+# then on, and a newer Majordomus never rewrites it.
+#
+# Declaring a model changes what `finish --outcome completed` means: a selected gate known to
+# be failing, or whose verdict cannot be read, refuses it; a selected gate that has never
+# reported is named as a debt and refuses nothing.
+#
+# The unit is the gate: one command (`runs`) whose exit status is the verdict, run by one CI
+# job (`job`, the job's name in your workflow). Not modelled: which runner a job runs on
+# (hosted or self-hosted), and which steps of a job count. A job whose steps are separate
+# evidence declares one gate per step that counts, each with that step's command.
+#
+# Landing evidence is chosen by lane, not by step: every gate declares a `lane`, and `tiers`
+# names the lanes each moment runs. A pull request's verdict needs the `feedback` lane green;
+# the combined top a landing integrates adds `proof`; a release runs all three.
+#
+# Rules the planner applies:
+#   - a gate with `always: true` is selected by every plan;
+#   - a changed path selects the gates of every class whose pattern matches it (the union);
+#   - a class whose gates are the word `full` selects every gate;
+#   - a changed path that no class matches selects every gate, and the plan names it;
+#   - `implies` adds a gate whenever its parent is selected; `requires` names a gate a gate
+#     cannot run without; `on-demand: true` is planned only when a plan asks for it.
+# Patterns: `**` crosses directories, `*` does not; paths are repository-relative, as
+# `git diff --name-only` prints them.
+version: 1
+
+tiers:
+  local: [feedback]
+  pull-request: [feedback]
+  integration: [feedback, proof]
+  release: [feedback, proof, release]
+
+gates:
+  # The one gate every supervised repository can run as it is: the skills of .ai/repo/skills/
+  # carry the proof they declare. Run it in a CI job named `supervision` (after installing
+  # Majordomus there), then report its verdict with `majordomus evidence --gate skills-verify`.
+  - id: skills-verify
+    job: supervision
+    lane: feedback
+    always: true
+    runs: majordomus skills verify
+    summary: every active skill carries the proof it declares
+
+  # An example, to adapt and uncomment: the unit suite, run by the hosted job `test` (on
+  # GitHub Actions, `jobs.test` with `runs-on: ubuntu-latest`). Its lane makes it landing
+  # evidence: a pull request is not green until it passes. The class `source` below selects it.
+  # - id: unit-tests
+  #   job: test
+  #   lane: feedback
+  #   runs: npm test
+  #   summary: the unit suite passes
+
+classes:
+  # Every path selects every gate until the classes say otherwise. Narrow it by declaring the
+  # paths each gate reads, for example:
+  # - id: source
+  #   paths: [src/**, test/**, package.json]
+  #   gates: [unit-tests]
+  - id: everything
+    paths: ["**"]
+    gates: full
