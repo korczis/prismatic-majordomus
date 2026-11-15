@@ -1,0 +1,27 @@
+id: I4616
+milestone: a-second-adopter-is-served
+title: "An issue id the mesh allocator reserved for another session is refused locally: `plan validate` and the commit hook judge an id against the allocator, not only against git"
+slug: a-reserved-issue-id-is-refused-locally
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "`majordomus plan validate` and the commit hook read the mesh allocator's reservations for issue ids and refuse a new issue record whose id is reserved for another session, naming the holder and the reservation's time; with no reachable allocator they say the id is unverified instead of silently accepting it."
+why: "On 2026-11-15 a session numbered three new records (PR #3041) by hand: the maximum id across every git ref and every local worktree, plus one. git cannot see mesh reservations, and the allocator (prismatic-majordomus-44) had reserved two of those three ids for sonic-playground-28 about 18:40Z, whose built and tested work waited to push. `plan validate` reported 0 failures and every hook passed, so the collision surfaced only because the other session read the PR. A hand-picked id passes every local check today."
+current_state: "plan validate judges ids against the records in the tree; the commit hook runs plan validate; neither asks the allocator."
+desired_state: "A new record whose id the allocator has reserved for another session fails plan validate and the commit hook with the holder named; an id reserved for this session, or allocated and released, passes; an unreachable allocator yields an unverified finding, never a silent pass."
+scope:
+  - ".ai/repo/project/issues/I4616.yaml"
+  - "lib/plan.sh"
+  - "apps/majordomus-cli/src/plan"
+  - "test/cases/4616_a_reserved_issue_id_is_refused_locally.sh"
+depends_on: []
+acceptance_criteria:
+  - "A record whose id is reserved for another session fails plan validate, naming the holder"
+  - "The same id reserved for this session passes"
+  - "With no allocator reachable the finding says unverified"
+validation:
+  - "bash test/run.sh 4616_a_reserved_issue_id_is_refused_locally"
+evidence_required:
+  - "case_a_reserved_issue_id_is_refused_locally"
+created_at: 2026-11-15
+updated_at: 2026-11-15

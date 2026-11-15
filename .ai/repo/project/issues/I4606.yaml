@@ -1,4 +1,4 @@
-id: I4600
+id: I4606
 milestone: a-second-adopter-is-served
 title: "A verdict that needs a CI secret says which store the run reads: a Dependabot run reads the Dependabot secrets, and the remedy names `--app dependabot`"
 slug: a-secret-gated-verdict-names-the-store-its-run-reads
@@ -10,17 +10,17 @@ why: "An adopter (korczis.github.io, a public Zola site, 2026-11-15) had its NDA
 current_state: "The licence's not-judged reason says 'this machine holds no licence evidence (ui.evidence, or MAJORDOMUS_KIT_EVIDENCE_<KIT> in CI)' on every run, a Dependabot run included, and names no store or command."
 desired_state: "On a Dependabot run the reason names the Dependabot secret store and the `gh secret set MAJORDOMUS_KIT_EVIDENCE_<KIT> -R <repo> --app dependabot` remedy (the value itself never printed); on any other CI run it names the Actions store; locally it names ui.evidence as now. The fleet pack's adopter guidance says a secret a CI verdict needs is set in both stores."
 scope:
-  - ".ai/repo/project/issues/I4600.yaml"
+  - ".ai/repo/project/issues/I4606.yaml"
   - "apps/majordomus-cli/src/design/licence.rs"
   - "lib/fleet.sh"
-  - "test/cases/4600_a_secret_gated_verdict_names_its_store.sh"
+  - "test/cases/4606_a_secret_gated_verdict_names_its_store.sh"
 depends_on: []
 acceptance_criteria:
   - "A public kit tree without evidence, judged with GITHUB_ACTOR=dependabot[bot], reports not judged with the Dependabot store and the --app dependabot command"
   - "The same tree judged with another GITHUB_ACTOR in CI names the Actions store"
   - "No run prints a secret's value"
 validation:
-  - "bash test/run.sh 4600_a_secret_gated_verdict_names_its_store"
+  - "bash test/run.sh 4606_a_secret_gated_verdict_names_its_store"
 evidence_required:
   - "case_a_secret_gated_verdict_names_its_store"
 created_at: 2026-11-15

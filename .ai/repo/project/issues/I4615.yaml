@@ -1,4 +1,4 @@
-id: I4602
+id: I4615
 milestone: a-second-adopter-is-served
 title: "Never-reported gates are counted right and point at the command that reports them: `evidence --run-gates`, which also proves each `runs` executes as declared"
 slug: never-reported-gates-are-counted-and-run
@@ -10,17 +10,17 @@ why: "An adopter (korczis.github.io, 2026-11-15) saw '3 required gate(s) have ne
 current_state: "lib/gates.sh miscounts by one, joins the list and the dash without a space, and suggests the manual --gate form only."
 desired_state: "The count equals the names listed; the text reads '<n> required gate(s) have never reported: <a> <b> — never-reported is not green (…)'; the reproduce is `majordomus evidence --run-gates` (naming --gate for an outside verdict). A case asserts the count with one and with four unverified gates."
 scope:
-  - ".ai/repo/project/issues/I4602.yaml"
+  - ".ai/repo/project/issues/I4615.yaml"
   - "lib/gates.sh"
   - "apps/majordomus-cli/src/gates/mod.rs"
-  - "test/cases/4602_never_reported_gates_are_counted_and_run.sh"
+  - "test/cases/4615_never_reported_gates_are_counted_and_run.sh"
 depends_on: []
 acceptance_criteria:
   - "With four required gates unreported the finding says 4 and lists four names"
   - "With one unreported gate it says 1"
   - "The reproduce is majordomus evidence --run-gates"
 validation:
-  - "bash test/run.sh 4602_never_reported_gates_are_counted_and_run"
+  - "bash test/run.sh 4615_never_reported_gates_are_counted_and_run"
 evidence_required:
   - "case_never_reported_gates_are_counted_and_run"
 created_at: 2026-11-15
