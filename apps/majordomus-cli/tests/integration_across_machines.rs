@@ -191,6 +191,10 @@ impl Node {
     }
 
     /// A continuous drain left running: the executor holding the lease while it waits.
+    ///
+    /// The lease is taken when its holder record reads, not when its file exists: the drain
+    /// creates the file empty, locks it and only then writes who holds it, and a brief read
+    /// in between says "holder unreadable" (coverage run 42525378591, I4566).
     fn hold(&self, forge: &Forge) -> Child {
         let child = self
             .prs(forge, &["drain", "--continuous", "--interval", "30"])
@@ -200,9 +204,14 @@ impl Node {
             .expect("a continuous drain");
         let lock = self.lock();
         wait_until(
-            "the continuous drain takes the lease",
+            "the continuous drain takes the lease and names its holder",
             Duration::from_secs(60),
-            || lock.exists(),
+            || {
+                std::fs::read_to_string(&lock)
+                    .ok()
+                    .and_then(|text| serde_json::from_str::<Value>(text.trim()).ok())
+                    .is_some_and(|holder| holder.get("pid").is_some())
+            },
         );
         child
     }
