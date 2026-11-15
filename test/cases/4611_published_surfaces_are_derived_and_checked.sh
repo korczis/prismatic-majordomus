@@ -11,7 +11,8 @@
 #   - check exits 10 and names a stale region, a relative link to nothing and an anchor no
 #     heading defines; sync --check exits 11 while a region would change;
 #   - sync regenerates the region from the documents, leaves an example region inside a code
-#     fence alone, and then sync --check and (once the links are fixed) check exit 0;
+#     fence alone, lists a new document before it is staged (so sync and the pre-commit check
+#     agree), and then sync --check and (once the links are fixed) check exit 0;
 #   - site writes the overview, the document index, one page per document with its links
 #     rewritten to pages and anchors kept, the chart and search data, and a web-surface/v1
 #     declaration that majordomus_web_surfaces discovers;
@@ -94,11 +95,20 @@ expect_no_grep '^stale$' "$R/README.md"
 expect_grep '^example$' "$R/README.md"   # the fenced example is not a region
 expect_exit 0 surfaces sync --check
 
+# A new document nobody has staged yet is what the next commit can hold, so sync lists it and
+# the check that runs after `git add` agrees with it.
+printf '# Notes\n\nLoose notes, not yet added.\n' > "$R/docs/notes.md"
+expect_exit 11 surfaces sync --check
+expect_exit 0 surfaces sync
+expect_grep '^\| \[Notes\]\(docs/notes.md\) \| Loose notes, not yet added. \|$' "$R/README.md"
+( cd "$R" && git add docs/notes.md )
+expect_exit 0 surfaces sync --check
+
 # Fix the two links; the check then passes.
 sed -i.bak -e 's#, \[nothing\](docs/missing.md)##' -e 's#docs/guide.md\#nowhere#docs/guide.md\#set-up#' "$R/README.md"
 rm -f "$R/README.md.bak"
 expect_exit 0 surfaces check
-expect_grep "2 document\(s\), 0 finding\(s\)"
+expect_grep "3 document\(s\), 0 finding\(s\)"
 
 # The site.
 S="$T/site"
@@ -117,7 +127,7 @@ s = sys.argv[1]
 data = json.load(open(f"{s}/data/site.json"))
 index = json.load(open(f"{s}/data/search.json"))
 assert data["repository"] == "example/fixture", data["repository"]
-assert {d["p"] for d in index} == {"README.md", "docs/guide.md"}, index
+assert {d["p"] for d in index} == {"README.md", "docs/guide.md", "docs/notes.md"}, index
 assert sum(w[1] for w in data["activity"]) == 1, data["activity"]
 PY
 
