@@ -14925,7 +14925,7 @@
           "requires_task": "none",
           "stage": "setup",
           "summary": "Create the .ai/ layer in this repository, and refuse to overwrite an existing one.",
-          "syntax": "majordomus init [--extend] [--personal | --shared]",
+          "syntax": "majordomus init [--extend] [--ci] [--personal | --shared]",
           "visibility": "public",
           "writes": [
             ".ai/manifest.yaml",
@@ -81591,6 +81591,51 @@
         }
       },
       {
+        "id": "majordomus://issue/I4611",
+        "kind": "issue",
+        "label": "I4611",
+        "summary": "init --ci lays down a commented CI model both gate readers parse, and a repository without one is told how to get it",
+        "route": "/cockpit/objects/issue/i4611",
+        "source": ".ai/repo/project/issues/I4611.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "`init --ci` seeds .ai/repo/ci/gates.yaml and its README; `evidence --gate skills-verify --exit 0` records against it, so lib/gates.sh parsed it and knows the gate",
+            "When an executable is at hand, `run gates.completion` answers over the seeded model (GateModel::load accepts it)",
+            "`init` without --ci seeds no model, and check names `majordomus init --extend --ci`; `init --extend --ci` never overwrites a model the repository wrote",
+            "Negative: case 4611 fails on origin/master"
+          ],
+          "created_at": "2026-11-15",
+          "depends_on": [],
+          "evidence_required": [
+            "init_lays_down_a_ci_model_the_gate_readers_parse"
+          ],
+          "milestone": "a-second-adopter-is-served",
+          "non_scope": [
+            "Laying the model down by default: it changes the finish contract of every repository that has none",
+            "Modelling a job's runner or a range of steps within a job: the unit of the model is the gate, one command; the skeleton says so",
+            "The remedy of the skills-unenforced finding (I4601), which this model satisfies but does not change"
+          ],
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "share/skeleton/ai/repo/ci/gates.yaml",
+            "share/skeleton/ai/repo/ci/README.md",
+            "lib/init.sh",
+            "lib/gates.sh",
+            "share/commands.yaml",
+            "docs/CLI.md",
+            "test/cases/4611_init_lays_down_a_ci_model_the_gate_readers_parse.sh",
+            ".ai/repo/project/issues/I4611.yaml"
+          ],
+          "serves": [],
+          "slug": "init-lays-down-a-ci-model",
+          "validation": [
+            "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 4611_init_lays_down_a_ci_model_the_gate_readers_parse 131_completion_gates 578_an_unknown_gate_refuses_completed"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "label": "a-brief-is-reconciled-not-transcribed",
@@ -109432,6 +109477,13 @@
         "label": "test/cases/45_github_projection.sh",
         "route": "/cockpit/objects/test/test-cases-45-github-projection-sh",
         "source": "test/cases/45_github_projection.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/4611_init_lays_down_a_ci_model_the_gate_readers_parse.sh",
+        "kind": "test",
+        "label": "test/cases/4611_init_lays_down_a_ci_model_the_gate_readers_parse.sh",
+        "route": "/cockpit/objects/test/test-cases-4611-init-lays-down-a-ci-model-the-gate-readers-parse-sh",
+        "source": "test/cases/4611_init_lays_down_a_ci_model_the_gate_readers_parse.sh"
       },
       {
         "id": "majordomus://test/test/cases/46_cross_surface.sh",
@@ -151292,6 +151344,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I4611",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4611",
+        "target": "majordomus://milestone/a-second-adopter-is-served",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -159047,6 +159109,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/4611_init_lays_down_a_ci_model_the_gate_readers_parse.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/46_cross_surface.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -164168,8 +164235,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4493,
-      "edges": 10138,
+      "nodes": 4495,
+      "edges": 10141,
       "acyclic": false,
       "truncated": false
     }

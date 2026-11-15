@@ -15,18 +15,22 @@
 . "$MJ_LIB_DIR/rules.sh"
 
 mj_cmd_init() {
-  local extend=0 personal=0 shared=0 a
+  local extend=0 personal=0 shared=0 ci=0 a
   for a in "$@"; do case "$a" in
     --extend) extend=1 ;;
+    --ci) ci=1 ;;
     --personal) personal=1 ;;
     --shared) shared=1; extend=1 ;;
     --help|-h) cat <<H
-usage: majordomus init [--extend] [--personal | --shared]
+usage: majordomus init [--extend] [--ci] [--personal | --shared]
   creates .ai/ in this repository from the tool's skeleton: the protocol and manifest,
   the tracked context under .ai/repo/ (policy, profiles, prompts, the vendored rule
   baseline, knowledge declarations, workflows, skills, adrs) and the ignore boundary
   for .ai/local/, where this checkout's own state lives
   --extend   add what is missing to an existing .ai/ and overwrite nothing
+  --ci       also lay down the CI model, .ai/repo/ci/gates.yaml, with its contract: one gate
+             every supervised repository can run and a commented example to adapt. Offered,
+             not seeded by default: a declared model is what finish then plans gates from
   --personal a layer of your own in a repository other people share: nothing shared is
              changed. No line is added to .gitignore; .ai/ is covered in git's own
              exclude file (info/exclude of the git directory, which git never commits,
@@ -147,6 +151,14 @@ H
   # machine whose key is not in trust.allow opens no socket (`mesh::manager::closed_to`), so
   # shipping it enabled sends nothing anywhere; `majordomus mesh enrol` is the one step left.
   mj_init_tree "$skel/ai/repo/mesh" "$MJ_AI_REPO_DIR/mesh" '*'
+  # The CI model, when asked for (I4611). Not seeded by default: a declared model is what
+  # check and finish plan gates from, and an unreadable verdict over it refuses completed
+  # (majordomus.completion-gates), so a repository opts in. Each file is copied as every
+  # other skeleton file is, and one the repository already has is never overwritten.
+  if [ "$ci" = 1 ]; then
+    mj_init_file "$skel/ai/repo/ci/README.md" "$MJ_AI_REPO_DIR/ci/README.md"
+    mj_init_file "$skel/ai/repo/ci/gates.yaml" "$MJ_AI_REPO_DIR/ci/gates.yaml"
+  fi
   # the checkout-local half: the state directories the durable commands write into, and
   # the two hand-editable stores, seeded from the tool's templates. Never tracked.
   mkdir -p "$MJ_STATE_DIR/handovers" "$MJ_STATE_DIR/checkpoints" "$MJ_AI_LOCAL_DIR/prompts" \
@@ -168,6 +180,8 @@ H
     printf 'created%s\n' "$MJ_INIT_CREATED" | tr ' ' '\n' | sed '1!s/^/  /'
   else printf 'nothing to add; .ai/ already carries every file the skeleton seeds\n'; fi
   [ -z "$MJ_INIT_SCOPE_NOTE" ] || printf '%s\n' "$MJ_INIT_SCOPE_NOTE"
+  [ "$ci" = 1 ] || [ -e "$MJ_AI_REPO_DIR/ci/gates.yaml" ] \
+    || printf 'ci: no CI model laid down; majordomus init --extend --ci lays down %s/ci/gates.yaml to adapt\n' "$(mj_rel "$MJ_AI_REPO_DIR")"
   [ -z "${MJ_INIT_REGION_NOTE:-}" ] || printf 'projections: kept the project'"'"'s own %s; Majordomus writes a region in each (mode: region)\n' "$MJ_INIT_REGION_NOTE"
   if [ "$personal" = 1 ]; then
     # The claim is checked where it is made: an init that says "personal" and changed what

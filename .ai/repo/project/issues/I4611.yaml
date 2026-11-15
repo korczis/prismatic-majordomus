@@ -1,0 +1,36 @@
+id: I4611
+milestone: a-second-adopter-is-served
+title: "init --ci lays down a commented CI model both gate readers parse, and a repository without one is told how to get it"
+slug: init-lays-down-a-ci-model
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "Ship a skeleton `.ai/repo/ci/gates.yaml`, with its directory contract, that `lib/gates.sh` and `GateModel::load` both accept: one live gate an adopter's CI can run (`majordomus skills verify` in a job of its own), one escalating class, the tiers, and a commented example of a hosted test job whose one command is landing evidence through its lane, saying what the model does not model (the runner, and steps within a job). `majordomus init --ci` (and `init --extend --ci`) lays it down as init lays every other skeleton file, never overwriting; the finding a repository without a model gets names that command."
+why: "On 2026-11-15 an adopting repository's `check` said 'this repository declares no CI model at .ai/repo/ci/gates.yaml; nothing can be planned' (lib/gates.sh:250) and gave no way out: share/skeleton/ai/repo/ has no ci/ directory, so `init` lays nothing down, and the shape of the model had to be read out of apps/majordomus-cli/src/gates/model.rs and this repository's own 1,100-line gates.yaml. It is offered rather than laid down by default because a declared model changes what `finish` means: a gate verdict that cannot be read then refuses `completed` (case 578), and a gate nobody has run is a named debt, so a repository opts in to it."
+current_state: "On origin/master 3fcaafac355, lib/gates.sh reads the model at lines 39 (mj_gate_model_load: flattens it, requires version 1), 117 (mj_gate_run) and 250 (the validator skips when it is absent); apps/majordomus-cli/src/gates/model.rs refuses a model with no gates (GateModel::load). share/skeleton/ai/repo/ has no ci/, and lib/init.sh seeds none."
+desired_state: "share/skeleton/ai/repo/ci/{gates.yaml,README.md} exist; `init --ci` seeds them; `init` without it seeds neither and says how to; the absent-model finding names `majordomus init --extend --ci`. Case 4611 proves an initialised repository's model is parsed by lib/gates.sh (a gate is recorded against it) and, when an executable is at hand, answered by gates.completion; and fails on master."
+scope:
+  - "share/skeleton/ai/repo/ci/gates.yaml"
+  - "share/skeleton/ai/repo/ci/README.md"
+  - "lib/init.sh"
+  - "lib/gates.sh"
+  - "share/commands.yaml"
+  - "docs/CLI.md"
+  - "test/cases/4611_init_lays_down_a_ci_model_the_gate_readers_parse.sh"
+  - ".ai/repo/project/issues/I4611.yaml"
+non_scope:
+  - "Laying the model down by default: it changes the finish contract of every repository that has none"
+  - "Modelling a job's runner or a range of steps within a job: the unit of the model is the gate, one command; the skeleton says so"
+  - "The remedy of the skills-unenforced finding (I4601), which this model satisfies but does not change"
+depends_on: []
+serves: []
+acceptance_criteria:
+  - "`init --ci` seeds .ai/repo/ci/gates.yaml and its README; `evidence --gate skills-verify --exit 0` records against it, so lib/gates.sh parsed it and knows the gate"
+  - "When an executable is at hand, `run gates.completion` answers over the seeded model (GateModel::load accepts it)"
+  - "`init` without --ci seeds no model, and check names `majordomus init --extend --ci`; `init --extend --ci` never overwrites a model the repository wrote"
+  - "Negative: case 4611 fails on origin/master"
+validation:
+  - "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 4611_init_lays_down_a_ci_model_the_gate_readers_parse 131_completion_gates 578_an_unknown_gate_refuses_completed"
+evidence_required:
+  - "init_lays_down_a_ci_model_the_gate_readers_parse"
+created_at: 2026-11-15
