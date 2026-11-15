@@ -81549,6 +81549,46 @@
         }
       },
       {
+        "id": "majordomus://issue/I4593",
+        "kind": "issue",
+        "label": "I4593",
+        "summary": "Every start of a host command in offload goes through the busy retry, and the stand-ins a shell execs are written by a child, so a stand-in written a moment ago is waited for, not failed",
+        "route": "/cockpit/objects/issue/i4593",
+        "source": ".ai/repo/project/issues/I4593.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "The offload and process tests pass, every Remote start going through retrying_busy",
+            "A host program that cannot start for another reason (not there, removed by itself) is still answered at once",
+            "offload::remote::tests::a_host_still_open_for_writing_is_waited_for_on_every_start passes on Linux"
+          ],
+          "created_at": "2026-11-15",
+          "depends_on": [],
+          "evidence_required": [
+            "rust"
+          ],
+          "milestone": "development-runtime",
+          "non_scope": [
+            "The stand-ins started through Remote, which stay as they are and are waited for by the retry",
+            "Other modules that start programs directly (I4486 makes one typed capability for that)"
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/offload/remote.rs",
+            "apps/majordomus-cli/src/offload/stop.rs",
+            "apps/majordomus-cli/src/offload/run.rs",
+            "apps/majordomus-cli/src/process.rs",
+            ".ai/repo/project/issues/I4593.yaml"
+          ],
+          "serves": [],
+          "slug": "offload-stubs-start-through-the-busy-retry",
+          "validation": [
+            "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --lib -- offload:: process::"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "label": "a-brief-is-reconciled-not-transcribed",
@@ -151233,6 +151273,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I4593",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4593",
+        "target": "majordomus://milestone/development-runtime",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -164104,8 +164154,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4491,
-      "edges": 10135,
+      "nodes": 4492,
+      "edges": 10137,
       "acyclic": false,
       "truncated": false
     }

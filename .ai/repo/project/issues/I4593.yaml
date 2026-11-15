@@ -1,0 +1,31 @@
+id: I4593
+milestone: development-runtime
+title: "Every start of a host command in offload goes through the busy retry, and the stand-ins a shell execs are written by a child, so a stand-in written a moment ago is waited for, not failed"
+slug: offload-stubs-start-through-the-busy-retry
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Every start in offload::remote::Remote (run, run_held, run_to_file and spawn, which the holder uses) goes through crate::process::retrying_busy, so a test's stand-in for ssh that another test thread's forked child still holds open no longer fails the offload with ETXTBSY; and the stand-ins the offload tests hand to a shell to exec (a derive, a git on PATH) are written by crate::process::write_program, through a child, so this process never holds them open for writing."
+why: "PR #3033's validate, run 43704147423 attempt 2 (2026-11-15 ~11:25Z), failed rust (2) on offload::stop::tests::a_stop_the_host_refuses_or_cannot_finish_is_reported_as_the_host_said, which panicked at stop.rs:736 with \"lundra: Text file busy (os error 26)\"; the same tree passed on the next attempt. The test writes a stand-in host (std::fs::write, then set_permissions 0o755) and runs it at once through Remote::through. On Linux a child forked by another test thread while the script was open for writing holds it busy until that child execs. process.rs names that race and retrying_busy waits it out (I4245, I4373, I4565); Remote started its program directly in four places. The derive and git stand-ins of stop.rs and run.rs are exec'd by a shell, which no retry on this side can reach."
+current_state: "Measured at origin/master defd88e5896 on 2026-11-15: Remote::run and Remote::run_to_file call Command::output() and Remote::run_held and Remote::spawn call Command::spawn() once each; the stand-ins of offload's tests (stop.rs host and failing-ssh, queue.rs and remote.rs stand_in, stop.rs and run.rs derive, run.rs bin/git) are written with std::fs::write and set_permissions in this process."
+desired_state: "All four Remote starts go through crate::process::retrying_busy, which asks again for up to five seconds while the program's file is busy and answers any other failure at once; the four stand-ins a shell execs are written by crate::process::write_program; a Linux test holds a stand-in open for writing and proves each start waits for it."
+scope:
+  - "apps/majordomus-cli/src/offload/remote.rs"
+  - "apps/majordomus-cli/src/offload/stop.rs"
+  - "apps/majordomus-cli/src/offload/run.rs"
+  - "apps/majordomus-cli/src/process.rs"
+  - ".ai/repo/project/issues/I4593.yaml"
+non_scope:
+  - "The stand-ins started through Remote, which stay as they are and are waited for by the retry"
+  - "Other modules that start programs directly (I4486 makes one typed capability for that)"
+depends_on: []
+acceptance_criteria:
+  - "The offload and process tests pass, every Remote start going through retrying_busy"
+  - "A host program that cannot start for another reason (not there, removed by itself) is still answered at once"
+  - "offload::remote::tests::a_host_still_open_for_writing_is_waited_for_on_every_start passes on Linux"
+validation:
+  - "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --lib -- offload:: process::"
+evidence_required:
+  - rust
+serves: []
+created_at: 2026-11-15

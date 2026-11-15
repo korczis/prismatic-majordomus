@@ -5,7 +5,12 @@
 //! a branch name or a path cannot become code on the host. The scripts are short constants
 //! beside the decision they serve (`queue.rs`, `run.rs`); they observe and act, and every
 //! decision is made in Rust over what they report.
+//!
+//! Every start goes through `crate::process::retrying_busy`: the program may be a test's
+//! stand-in for ssh written a moment ago, which Linux refuses to exec while a child another
+//! test thread forked still holds it open for writing (ETXTBSY, run 43704147423, I4593).
 
+use crate::process::retrying_busy;
 use std::io::Write;
 use std::path::Path;
 use std::process::{Child, Command, Stdio};
@@ -137,7 +142,7 @@ impl Remote {
             Some(p) => c.stdin(Stdio::from(std::fs::File::open(p)?)),
             None => c.stdin(Stdio::null()),
         };
-        let out = c.output()?;
+        let out = retrying_busy(|| c.output())?;
         Ok(RemoteOutput {
             code: out.status.code(),
             stdout: String::from_utf8_lossy(&out.stdout).into_owned(),
@@ -150,12 +155,11 @@ impl Remote {
     /// process is gone — killed, disconnected, crashed — when the input reaches its end, and
     /// stops what it started (I3956).
     pub fn run_held(&self, script: &str, args: &[&str]) -> std::io::Result<RemoteOutput> {
-        let mut child = self
-            .command(script, args)
-            .stdin(Stdio::piped())
+        let mut c = self.command(script, args);
+        c.stdin(Stdio::piped())
             .stdout(Stdio::piped())
-            .stderr(Stdio::piped())
-            .spawn()?;
+            .stderr(Stdio::piped());
+        let mut child = retrying_busy(|| c.spawn())?;
         // taken out of the child so that waiting does not close it: it is closed after
         let held = child.stdin.take();
         let out = child.wait_with_output();
@@ -175,12 +179,11 @@ impl Remote {
         out: &Path,
     ) -> std::io::Result<RemoteOutput> {
         let file = std::fs::File::create(out)?;
-        let o = self
-            .command(script, args)
-            .stdin(Stdio::null())
+        let mut c = self.command(script, args);
+        c.stdin(Stdio::null())
             .stdout(Stdio::from(file))
-            .stderr(Stdio::piped())
-            .output()?;
+            .stderr(Stdio::piped());
+        let o = retrying_busy(|| c.output())?;
         Ok(RemoteOutput {
             code: o.status.code(),
             stdout: String::new(),
@@ -191,11 +194,11 @@ impl Remote {
     /// Start a script that runs for as long as its standard input stays open: the holder
     /// of a ticket. The caller reads what it prints and drops the child to end it.
     pub fn spawn(&self, script: &str, args: &[&str]) -> std::io::Result<Child> {
-        self.command(script, args)
-            .stdin(Stdio::piped())
+        let mut c = self.command(script, args);
+        c.stdin(Stdio::piped())
             .stdout(Stdio::piped())
-            .stderr(Stdio::piped())
-            .spawn()
+            .stderr(Stdio::piped());
+        retrying_busy(|| c.spawn())
     }
 }
 
@@ -419,6 +422,58 @@ mod tests {
         let tmp = tempfile::tempdir().unwrap();
         let gone = Remote::through(&tmp.path().join("no-such-ssh"));
         assert!(gone.run_held("true", &[]).is_err());
+    }
+
+    /// Every way of starting a host's command waits out a stand-in that is still open for
+    /// writing, the way a child another test thread forked holds a program it has just
+    /// written (ETXTBSY, run 43704147423, I4593): the run, the held run, the download and the
+    /// holder each start once the writer lets go. Linux alone refuses such an exec.
+    #[cfg(target_os = "linux")]
+    #[test]
+    fn a_host_still_open_for_writing_is_waited_for_on_every_start() {
+        let tmp = tempfile::tempdir().unwrap();
+        let ssh = stand_in(tmp.path(), r#"exec sh -c "$1""#);
+        let r = Remote::through(&ssh);
+        let download = tmp.path().join("down");
+        type Start<'a> = Box<dyn Fn() -> std::io::Result<String> + 'a>;
+        let starts: [(&str, Start<'_>); 4] = [
+            (
+                "run",
+                Box::new(|| r.run("printf ran", &[], None).map(|o| o.stdout)),
+            ),
+            (
+                "run_held",
+                Box::new(|| r.run_held("printf held", &[]).map(|o| o.stdout)),
+            ),
+            (
+                "run_to_file",
+                Box::new(|| {
+                    r.run_to_file("printf down", &[], &download)?;
+                    std::fs::read_to_string(&download)
+                }),
+            ),
+            (
+                "spawn",
+                Box::new(|| Holder::start(&r).map(|h| h.pid.to_string())),
+            ),
+        ];
+        for (name, start) in starts {
+            let held = std::fs::OpenOptions::new().write(true).open(&ssh).unwrap();
+            let busy = Command::new(&ssh).arg("true").output().unwrap_err();
+            assert_eq!(
+                busy.kind(),
+                std::io::ErrorKind::ExecutableFileBusy,
+                "{busy}"
+            );
+            let release = std::thread::spawn(move || {
+                std::thread::sleep(std::time::Duration::from_millis(300));
+                drop(held);
+            });
+            let out = start();
+            release.join().unwrap();
+            let out = out.unwrap_or_else(|e| panic!("{name} did not wait for the host: {e}"));
+            assert!(!out.is_empty(), "{name} answered nothing");
+        }
     }
 
     /// A holder whose standard input was never piped still ends with its owner.
