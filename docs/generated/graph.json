@@ -81594,14 +81594,14 @@
         "id": "majordomus://issue/I4596",
         "kind": "issue",
         "label": "I4596",
-        "summary": "The owner decides what a cancelled dependency means, so that cancelling an issue no longer strands its dependents in silence",
+        "summary": "A dependency on a cancelled issue stays unsatisfied, and plan validate names each dependent and suggests dropping it",
         "route": "/cockpit/objects/issue/i4596",
         "source": ".ai/repo/project/issues/I4596.yaml",
         "facts": {
           "created_at": "2026-11-15",
           "depends_on": [],
           "evidence_required": [
-            "owner_decision_on_cancelled_dependency_recorded",
+            "cancelled_dependency_is_warned_per_dependent",
             "cancelled_dependency_has_one_meaning_in_both_engines"
           ],
           "milestone": "truthful-plan-surfaces",

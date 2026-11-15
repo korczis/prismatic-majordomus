@@ -61,7 +61,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | [I3918](https://majordomus.dev/plan/i3918/) | DONE | 0 | — | README, CONTRIBUTING and the homepage say truthfully how big the tool is and what its registry counts are |
 | [I4294](https://majordomus.dev/plan/i4294/) | READY | 0 | — | The delivery board's documents are derived by one capability, and every open milestone has a lane |
 | [I4315](https://majordomus.dev/plan/i4315/) | READY | 0 | — | The deployed stage reads the release pointer where the Pages deployment published it, and a deploy whose pointer it cannot read is red |
-| [I4596](https://majordomus.dev/plan/i4596/) | READY | 0 | — | The owner decides what a cancelled dependency means, so that cancelling an issue no longer strands its dependents in silence |
+| [I4596](https://majordomus.dev/plan/i4596/) | READY | 0 | — | A dependency on a cancelled issue stays unsatisfied, and plan validate names each dependent and suggests dropping it |
 
 ## Findings
 

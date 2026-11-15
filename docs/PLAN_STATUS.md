@@ -8,7 +8,7 @@ This page is the index. Each milestone's issues, and the findings about them, ar
 its own under [`plan-status/`](plan-status/), named by the milestone, so the plan grows by pages
 and no one page grows with it.
 
-Generated from canonical inputs `5c73c020a59b`.
+Generated from canonical inputs `b67937b5aef2`.
 
 ## Milestones
 
@@ -511,7 +511,7 @@ Generated from canonical inputs `5c73c020a59b`.
 - `I4588` (derived-data-integrity, wave 0) — A gate snapshots the index when it starts and refuses its own verdict when the index changed while it ran
 - `I4591` (adopter-upgrades, wave 0) — mj_ms reads EPOCHREALTIME under any locale's decimal separator
 - `I4592` (ci-critical-path, wave 0) — The github-projection apply job checks out the trunk's history blobless, bounded at 10 minutes
-- `I4596` (truthful-plan-surfaces, wave 0) — The owner decides what a cancelled dependency means, so that cancelling an issue no longer strands its dependents in silence
+- `I4596` (truthful-plan-surfaces, wave 0) — A dependency on a cancelled issue stays unsatisfied, and plan validate names each dependent and suggests dropping it
 
 
 ## Findings

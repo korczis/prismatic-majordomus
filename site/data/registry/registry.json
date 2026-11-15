@@ -6,7 +6,7 @@
     "version": "1.0.2"
   },
   "registry": {
-    "fingerprint": "cbd6ec59ee655c30a1985f8ad3a6e4ccdbca0cf4e9e9356905e3e25f4be8e804",
+    "fingerprint": "08720c50868065b11d1d9d0ef869f77228be72c9224a5aee74acf22ceabc313a",
     "summary": {
       "total": 4023,
       "builtin": 231,
@@ -97878,7 +97878,7 @@
     ]
   },
   "index": {
-    "fingerprint": "fdf8b2223561fd2ec59098bfd3ffa17201ad62483b32016dc0b5c6d336c2eb3a",
+    "fingerprint": "21e9db3fe5e1586ca86789b7dce5274aadb5ca1913d05252e15bb84aff675c2d",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -105515,7 +105515,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 136329
+        "bytes": 136321
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -123233,12 +123233,12 @@
         "uri": "majordomus://issue/I4596",
         "kind": "issue",
         "identity": "I4596",
-        "title": "The owner decides what a cancelled dependency means, so that cancelling an issue no longer strands its dependents in silence",
-        "description": "Record the owner's decision on what an issue's dependency on a cancelled issue means, choosing one of three options, and then make both plan engines and plan validate hold that one choice: (a) a cancelled dependency counts as satisfied; (b) it stays unsatisfied, and plan validate warns, naming each open dependent of a cancelled issue and suggesting it drop the dependency; (c) cancelling an issue requires a recorded decision about each of its open dependents. Needs the owner's decision: this record presents the options and their acceptance criteria and pre-decides none of them.",
+        "title": "A dependency on a cancelled issue stays unsatisfied, and plan validate names each dependent and suggests dropping it",
+        "description": "Implement the owner's decision of 2026-11-15, option (b): a dependency on a cancelled issue stays unsatisfied, so its open dependent stays BLOCKED, and plan validate warns cancelled_dependency once for each such edge, naming the dependent and the cancelled issue and suggesting the dependency be dropped from depends_on. Both plan engines emit the same finding, and docs/PLANNING.md states the meaning. Statuses, blocked_by and waves do not change.",
         "path": ".ai/repo/project/issues/I4596.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 7923
+        "bytes": 7907
       },
       {
         "uri": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
