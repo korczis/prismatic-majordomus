@@ -9,7 +9,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 
 | milestone | status | done of required | ready | blocked | active | verify | cancelled | outcome |
 |---|---|---|---|---|---|---|---|---|
-| [merging-and-referencing-are-enforced](https://majordomus.dev/plan/merging-and-referencing-are-enforced/) | ACTIVE | 1/15 | 7 | 7 | 0 | 0 | 0 | Merging and referencing are projections, typed commands and gates: every pull request carries its metadata from the records, every reference resolves on master, every number is taken once. |
+| [merging-and-referencing-are-enforced](https://majordomus.dev/plan/merging-and-referencing-are-enforced/) | ACTIVE | 1/17 | 8 | 8 | 0 | 0 | 0 | Merging and referencing are projections, typed commands and gates: every pull request carries its metadata from the records, every reference resolves on master, every number is taken once. |
 
 ## Issues
 
@@ -30,6 +30,8 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | [I4362](https://majordomus.dev/plan/i4362/) | READY | 0 | — | adr next and case-numbers next answer within a declared bound in a linked worktree |
 | [I4370](https://majordomus.dev/plan/i4370/) | BLOCKED | 2 | I3970, I3979, I3920, I2901, I4366 | The pull-request and plan projection ships in the release as `majordomus forge`, reads an adopter's own models and facts, and writes only what they declare |
 | [I4568](https://majordomus.dev/plan/i4568/) | READY | 0 | — | A commit names the task and the mesh session that made it, and trace issue finds an issue's commits on branches and train tops, not only the trunk |
+| [I4580](https://majordomus.dev/plan/i4580/) | BLOCKED | 1 | I4357 | An adopter declares its own numbered sequences, the mesh reserves their numbers in landing order, and a landing refuses a gap or a duplicate |
+| [I4582](https://majordomus.dev/plan/i4582/) | READY | 0 | — | When a gate lands on the trunk, every open pull request is judged by it on its merge with the trunk, and the lane that owns each one is told |
 
 ## Findings
 
