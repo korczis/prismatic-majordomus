@@ -81650,9 +81650,7 @@
         "source": ".ai/repo/project/issues/I4598.yaml",
         "facts": {
           "created_at": "2026-11-15",
-          "depends_on": [
-            "I4486"
-          ],
+          "depends_on": [],
           "evidence_required": [
             "suite"
           ],
@@ -81661,7 +81659,7 @@
             "Reclaiming disk: the service only stops and resumes; what to delete stays the person's",
             "Builds entering the machine: I3825 and I4006",
             "Announcing a disk emergency on the mesh: I4355",
-            "The program runner itself: I4486",
+            "A bounded run of a program with a deadline: I4486, whose process-group handling this may share once it exists, but does not wait for",
             "Restarting a process that exited on its own with a failure: reported, never retried in a loop",
             "Remote hosts: the volume measured is the local one the service writes to"
           ],
@@ -151466,11 +151464,6 @@
       },
       {
         "source": "majordomus://issue/I4598",
-        "target": "majordomus://issue/I4486",
-        "kind": "depends_on"
-      },
-      {
-        "source": "majordomus://issue/I4598",
         "target": "majordomus://milestone/a-second-adopter-is-served",
         "kind": "belongs_to"
       },
@@ -164362,7 +164355,7 @@
     ],
     "metadata": {
       "nodes": 4496,
-      "edges": 10145,
+      "edges": 10144,
       "acyclic": false,
       "truncated": false
     }

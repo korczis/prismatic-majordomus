@@ -6,7 +6,7 @@
     "version": "1.0.2"
   },
   "registry": {
-    "fingerprint": "77734f9bbc28df6c2996129e3b3a30bc20e09bf52a6067c32cd1f1f3c00435c1",
+    "fingerprint": "91e40a28d6ab56bcc6eeb6877e5309684f9a5fa42a87826d36e915dcc002221e",
     "summary": {
       "total": 4025,
       "builtin": 231,
@@ -97878,7 +97878,7 @@
     ]
   },
   "index": {
-    "fingerprint": "817fab8df22dd4910d28758ccfb812361eeb44d3f16715db71e50008dfb1d031",
+    "fingerprint": "8c52271ddf644d7ff45315bc743cd163f20dc15cce106be40c674fbae673b458",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -105515,7 +105515,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 136682
+        "bytes": 136965
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -123245,22 +123245,22 @@
         "kind": "issue",
         "identity": "I4598",
         "title": "A long-running process a session leaves running is declared and guarded by the machine's disk floor: stopped through its own process group below the floor, resumed above a higher mark, each change an execution event the brief reads",
-        "description": "A repository declares the long-running local processes its sessions start: a name, an executable and argument list, a working directory, an environment file path, the signal that stops it cleanly, a grace before that signal escalates, a free-space floor below which it stops, a higher resume mark and the interval free space must stay above it before a resume. The checkout's server runs each one through the typed program runner of I4486, watches the free space of the volume it writes to with the measurement the build floor already uses, signals the process group it started (never a process found by name) when free space falls under the floor, and starts it again once free space has stayed above the resume mark for the declared interval. Every start, stop, exit and resume is an execution event, so `majordomus executions` and `majordomus brief` show it.",
+        "description": "A repository declares the long-running local processes its sessions start: a name, an executable and argument list, a working directory, an environment file path, the signal that stops it cleanly, a grace before that signal escalates, a free-space floor below which it stops, a higher resume mark and the interval free space must stay above it before a resume. The checkout's server runs each one as an executable and argument list (never a command string), watches the free space of the volume it writes to with the measurement the build floor already uses, signals the process group it started (never a process found by name) when free space falls under the floor, and starts it again once free space has stayed above the resume mark for the declared interval. Every start, stop, exit and resume is an execution event, so `majordomus executions` and `majordomus brief` show it.",
         "path": ".ai/repo/project/issues/I4598.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 6883
+        "bytes": 7510
       },
       {
         "uri": "majordomus://issue/I4599",
         "kind": "issue",
         "identity": "I4599",
         "title": "A step that waits says whose turn it is: when every unfinished issue waits on the person, proceed.step orders wait_on_person, names each pull request the person must act on, and steps again on the policy's person cadence",
-        "description": "proceed.step's wait carries the class of every wait it found: a dependency, another worker, a milestone gate, or the person. A wait is the person's when the unfinished issue depends on an issue whose open pull request (matched through the assessment's issue, model.rs:1179-1184) is recorded with a disposition that only a person's act releases: WaitingForReview (a person reviews), Conflicting (a person resolves) or Unsafe (a person disarms). When every wait is the person's, the order is `wait_on_person`. It lists each such pull request with its number and disposition, and its next_due_at follows the cadence the policy declares for the person. The report it announces says so in one line, so a loop that proceeds stops polling every five minutes for an act only the person can take.",
+        "description": "proceed.step's wait carries the class of every wait it found: a dependency, another worker, a milestone gate, or the person. Waits are classified over the milestone the decision is taken for (proceed.rs:262, the asked or the active milestone), not over the whole plan. An unfinished issue of that milestone waits on the person when it is ACTIVE and its own open pull request is recorded with a disposition that only a person's act releases: WaitingForReview (a person reviews), Conflicting (a person resolves) or Unsafe (a person disarms). The pull request is matched to the issue through the assessment's issue field (model.rs:1179-1184). It also waits on the person when it is BLOCKED and every dependency chain from it ends, transitively, at such an issue. When every unfinished issue of the milestone waits on the person, the order is `wait_on_person`. It lists each such pull request with its number and disposition, and its next_due_at follows the cadence the policy declares for the person. The report it announces says so in one line, so a loop that proceeds stops polling every five minutes for an act only the person can take.",
         "path": ".ai/repo/project/issues/I4599.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 6041
+        "bytes": 6882
       },
       {
         "uri": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
