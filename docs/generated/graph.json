@@ -81549,6 +81549,48 @@
         }
       },
       {
+        "id": "majordomus://issue/I4592",
+        "kind": "issue",
+        "label": "I4592",
+        "summary": "The github-projection apply job checks out the trunk's history blobless, bounded at 10 minutes",
+        "route": "/cockpit/objects/issue/i4592",
+        "source": ".ai/repo/project/issues/I4592.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "The apply job's actions/checkout has `fetch-depth: 0`, `filter: blob:none` and a `timeout-minutes` of at most 10, below the job's",
+            "Negative: case 4592 fails on origin/master's github.yml (filter None) and refuses the workflow with the filter removed, the bound at 11, the bound removed or a shallow checkout",
+            "Case 1097 still holds the workflow to .ai/repo/ci/github.yaml",
+            "The next github-projection runs on master pass their checkout without a rerun"
+          ],
+          "created_at": "2026-11-15",
+          "depends_on": [],
+          "evidence_required": [
+            "the_projection_apply_checkout_is_blobless_and_bounded"
+          ],
+          "milestone": "ci-critical-path",
+          "non_scope": [
+            "The checkouts of validate.yml and their gate model (I3241)",
+            "Extending scripts/ci/step-bound-check to github.yml; this issue's case holds the one step",
+            "A budget on checkout time and repository size (I4349) and the growth of the history (I4351)"
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            ".github/workflows/github.yml",
+            "test/cases/4592_the_projection_apply_checkout_is_blobless_and_bounded.sh",
+            ".ai/repo/project/issues/I4592.yaml"
+          ],
+          "serves": [],
+          "slug": "the-projection-checkout-is-blobless",
+          "validation": [
+            "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 4592_the_projection_apply_checkout_is_blobless_and_bounded 1097_the_projection_is_applied_at_landing",
+            "scripts/ci/step-bound-check .github/workflows/github.yml",
+            "actionlint .github/workflows/github.yml"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "label": "a-brief-is-reconciled-not-transcribed",
@@ -109376,6 +109418,13 @@
         "label": "test/cases/4577_mj_ms_reads_any_decimal_separator.sh",
         "route": "/cockpit/objects/test/test-cases-4577-mj-ms-reads-any-decimal-separator-sh",
         "source": "test/cases/4577_mj_ms_reads_any_decimal_separator.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/4592_the_projection_apply_checkout_is_blobless_and_bounded.sh",
+        "kind": "test",
+        "label": "test/cases/4592_the_projection_apply_checkout_is_blobless_and_bounded.sh",
+        "route": "/cockpit/objects/test/test-cases-4592-the-projection-apply-checkout-is-blobless-and-bounded-sh",
+        "source": "test/cases/4592_the_projection_apply_checkout_is_blobless_and_bounded.sh"
       },
       {
         "id": "majordomus://test/test/cases/45_github_projection.sh",
@@ -151233,6 +151282,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I4592",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4592",
+        "target": "majordomus://milestone/ci-critical-path",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -158978,6 +159037,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/4592_the_projection_apply_checkout_is_blobless_and_bounded.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/45_github_projection.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -164104,8 +164168,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4491,
-      "edges": 10135,
+      "nodes": 4493,
+      "edges": 10138,
       "acyclic": false,
       "truncated": false
     }
