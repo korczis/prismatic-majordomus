@@ -17671,6 +17671,14 @@
         "source": "docs/PRODUCT.md"
       },
       {
+        "id": "majordomus://document/docs/PUBLISHED_SURFACES.md",
+        "kind": "document",
+        "label": "docs/PUBLISHED_SURFACES.md",
+        "summary": "Published surfaces for any repository: site, wiki and Markdown regions",
+        "route": "/cockpit/objects/document/docs-published-surfaces-md",
+        "source": "docs/PUBLISHED_SURFACES.md"
+      },
+      {
         "id": "majordomus://document/docs/QUALITY.md",
         "kind": "document",
         "label": "docs/QUALITY.md",
@@ -81591,6 +81599,53 @@
         }
       },
       {
+        "id": "majordomus://issue/I4611",
+        "kind": "issue",
+        "label": "I4611",
+        "summary": "A supervised repository publishes a site, a wiki and Markdown regions derived from its own documents, and a check refuses drift",
+        "route": "/cockpit/objects/issue/i4611",
+        "source": ".ai/repo/project/issues/I4611.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "check exits 10 naming a stale region, a relative link to nothing and an anchor no heading defines; sync --check exits 11 while a region would change",
+            "sync regenerates a region from the documents and leaves an example region inside a code fence untouched; check and sync --check then exit 0",
+            "site writes the overview, the document index, a page per document with links rewritten to pages and anchors kept, data/site.json, data/search.json and a web-surface/v1 surface.json",
+            "wiki writes Home, _Sidebar and _Footer and rewrites a relative .md link to the wiki page",
+            "The producer names no repository; the command it prints is derived from where it is vendored",
+            "Negative: the case skips, saying what was not measured, only when markdown-it-py and PyYAML can neither be imported nor installed"
+          ],
+          "created_at": "2026-11-15",
+          "depends_on": [],
+          "evidence_required": [
+            "published_surfaces_are_derived_and_checked"
+          ],
+          "milestone": "a-second-adopter-is-served",
+          "non_scope": [
+            "A majordomus command or registry capability that runs the producer; it ships as files a repository vendors",
+            "A vendored rule with a doctor validator; the rule ships as a template the adopter's hook, gate and CI enforce",
+            "Moving this repository's own site off scripts/site-build"
+          ],
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "share/surfaces/**",
+            "test/cases/4611_published_surfaces_are_derived_and_checked.sh",
+            "docs/PUBLISHED_SURFACES.md",
+            "docs/SURFACES.md",
+            ".gitignore",
+            ".ai/repo/project/issues/I4611.yaml"
+          ],
+          "serves": [],
+          "slug": "published-surfaces-for-any-repository",
+          "updated_at": "2026-11-15",
+          "validation": [
+            "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 4611_published_surfaces_are_derived_and_checked",
+            "actionlint share/surfaces/workflow.yml"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "label": "a-brief-is-reconciled-not-transcribed",
@@ -109434,6 +109489,13 @@
         "source": "test/cases/45_github_projection.sh"
       },
       {
+        "id": "majordomus://test/test/cases/4611_published_surfaces_are_derived_and_checked.sh",
+        "kind": "test",
+        "label": "test/cases/4611_published_surfaces_are_derived_and_checked.sh",
+        "route": "/cockpit/objects/test/test-cases-4611-published-surfaces-are-derived-and-checked-sh",
+        "source": "test/cases/4611_published_surfaces_are_derived_and_checked.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/46_cross_surface.sh",
         "kind": "test",
         "label": "test/cases/46_cross_surface.sh",
@@ -131577,6 +131639,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://document/docs/PUBLISHED_SURFACES.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://document/docs/QUALITY.md",
         "target": "kind:document",
         "kind": "is_a"
@@ -151292,6 +151359,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I4611",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4611",
+        "target": "majordomus://milestone/a-second-adopter-is-served",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -159047,6 +159124,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/4611_published_surfaces_are_derived_and_checked.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/46_cross_surface.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -164168,8 +164250,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4493,
-      "edges": 10138,
+      "nodes": 4496,
+      "edges": 10142,
       "acyclic": false,
       "truncated": false
     }

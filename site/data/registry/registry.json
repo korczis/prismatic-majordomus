@@ -6,23 +6,23 @@
     "version": "1.0.2"
   },
   "registry": {
-    "fingerprint": "ad0aa86dc820beae9b35c3cf40be8528450ecd8c4dc283dd03c5b08ff4f9546e",
+    "fingerprint": "7079d15a5ad74f421c27e5652905185bdcee4a070bf826e576f06a05eaf5accd",
     "summary": {
-      "total": 4022,
+      "total": 4025,
       "builtin": 231,
-      "declarative": 3791,
+      "declarative": 3794,
       "by_kind": {
         "command": 41,
         "query": 190,
-        "resource": 3791
+        "resource": 3794
       },
       "by_stability": {
         "behaviorally_verified": 153,
         "experimental": 68,
-        "implemented": 3801
+        "implemented": 3804
       },
       "mcp_tools": 215,
-      "mcp_resources": 3848,
+      "mcp_resources": 3851,
       "http_routes": 219,
       "cli_commands": 128,
       "modules": 96,
@@ -96872,7 +96872,7 @@
         "title": "document",
         "description": "Declarative objects of kind 'document' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 361,
+        "capabilities": 362,
         "capability_ids": []
       },
       {
@@ -97172,7 +97172,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 1249,
+        "capabilities": 1250,
         "capability_ids": []
       },
       {
@@ -97785,7 +97785,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 701,
+        "capabilities": 702,
         "capability_ids": []
       },
       {
@@ -97878,7 +97878,7 @@
     ]
   },
   "index": {
-    "fingerprint": "0d69aaa2abec9f1ddf233ecf6160545563747bd4d9f7e71ae524116d651a812d",
+    "fingerprint": "30f1e17817fcf2df30d1db33c5e060f03467e042d28dc38b6bfdf7ce0720b0d3",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -97912,13 +97912,13 @@
       "deployment": 1,
       "derive-offload": 1,
       "distribution-model": 1,
-      "document": 361,
+      "document": 362,
       "domain": 6,
       "feature": 29,
       "gap": 5,
       "implementation": 54,
       "intent": 45,
-      "issue": 1249,
+      "issue": 1250,
       "knowledge": 220,
       "mesh-declaration": 1,
       "milestone": 117,
@@ -97932,7 +97932,7 @@
       "session": 95,
       "skill": 11,
       "taxonomy": 10,
-      "test": 701,
+      "test": 702,
       "use-case": 49,
       "workspace": 1
     },
@@ -105515,7 +105515,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 136150
+        "bytes": 136336
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -105545,6 +105545,15 @@
         "bytes": 20283
       },
       {
+        "uri": "majordomus://document/docs/PUBLISHED_SURFACES.md",
+        "kind": "document",
+        "identity": "docs/PUBLISHED_SURFACES.md",
+        "title": "Published surfaces for any repository: site, wiki and Markdown regions",
+        "path": "docs/PUBLISHED_SURFACES.md",
+        "source_class": "document",
+        "bytes": 3614
+      },
+      {
         "uri": "majordomus://document/docs/QUALITY.md",
         "kind": "document",
         "identity": "docs/QUALITY.md",
@@ -105560,7 +105569,7 @@
         "title": "Documentation index",
         "path": "docs/README.md",
         "source_class": "document",
-        "bytes": 27083
+        "bytes": 27348
       },
       {
         "uri": "majordomus://document/docs/REASONING.md",
@@ -105650,7 +105659,7 @@
         "title": "How Majordomus derives its surfaces — one typed reality, many projections",
         "path": "docs/SURFACES.md",
         "source_class": "document",
-        "bytes": 82736
+        "bytes": 82886
       },
       {
         "uri": "majordomus://document/docs/TWO_FOLDER_CONSOLIDATION.md",
@@ -123230,6 +123239,17 @@
         "bytes": 4357
       },
       {
+        "uri": "majordomus://issue/I4611",
+        "kind": "issue",
+        "identity": "I4611",
+        "title": "A supervised repository publishes a site, a wiki and Markdown regions derived from its own documents, and a check refuses drift",
+        "description": "Ship share/surfaces, a repository-agnostic producer that renders every tracked Markdown document and the .ai/ layer to a GitHub Pages site and the GitHub wiki, regenerates index tables inside the documents, declares each output as web-surface/v1 under target/web/<id>/, and refuses a stale region or a relative link or anchor to nothing; with a workflow template, a project-rule template, the adoption steps and a case.",
+        "path": ".ai/repo/project/issues/I4611.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3878
+      },
+      {
         "uri": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "identity": "a-brief-is-reconciled-not-transcribed",
@@ -137251,6 +137271,14 @@
         "bytes": 15204
       },
       {
+        "uri": "majordomus://test/test/cases/4611_published_surfaces_are_derived_and_checked.sh",
+        "kind": "test",
+        "identity": "test/cases/4611_published_surfaces_are_derived_and_checked.sh",
+        "path": "test/cases/4611_published_surfaces_are_derived_and_checked.sh",
+        "source_class": "case",
+        "bytes": 5380
+      },
+      {
         "uri": "majordomus://test/test/cases/46_cross_surface.sh",
         "kind": "test",
         "identity": "test/cases/46_cross_surface.sh",
@@ -139708,7 +139736,7 @@
       "front_matter": "optional",
       "schema": "majordomus.document/v1",
       "identity": [],
-      "objects": 361
+      "objects": 362
     },
     {
       "name": "domain",
@@ -139765,7 +139793,7 @@
       "identity": [
         "id"
       ],
-      "objects": 1249
+      "objects": 1250
     },
     {
       "name": "knowledge",
@@ -139927,7 +139955,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 701
+      "objects": 702
     },
     {
       "name": "use-case",

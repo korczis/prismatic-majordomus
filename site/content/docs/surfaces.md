@@ -21,7 +21,9 @@ Most of what follows is already described somewhere else, one subsystem at a tim
 [`DOCTRINE.md`](@/docs/doctrine.md) covers rules and proof,
 [`EVIDENCE.md`](@/docs/evidence.md) covers recorded executions,
 [`GITHUB_PAGES_ARCHITECTURE.md`](@/docs/github-pages-architecture.md) covers the website,
-[`MESH.md`](@/docs/mesh.md) covers discovery, and [`PLANNING.md`](@/docs/planning.md) covers the plan.
+[`MESH.md`](@/docs/mesh.md) covers discovery, [`PLANNING.md`](@/docs/planning.md) covers the plan, and
+[`PUBLISHED_SURFACES.md`](@/docs/published-surfaces.md) covers the site, wiki and Markdown regions a
+supervised repository publishes from its own documents.
 This document connects them, and it says plainly where the code does not do what the
 design wants yet.
 
