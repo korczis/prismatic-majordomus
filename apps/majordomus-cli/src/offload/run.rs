@@ -973,9 +973,10 @@ mod tests {
         // the derive: a grandchild that sleeps, its pid, its group and the owner written
         // down, then waits
         let derive = at("derive");
-        std::fs::write(
+        // written by a child, since the shell that execs it cannot wait out a busy file
+        crate::process::write_program(
             &derive,
-            format!(
+            &format!(
                 "#!/bin/sh\nsleep 300 &\necho $! > {gc}\n\
                  echo \"$$ $(ps -o pgid= -p $$ | tr -d ' ')\" > {group}\n\
                  printf '%s|%s|%s|%s\\n' \"$MAJORDOMUS_OWNER_SESSION\" \"$MAJORDOMUS_OWNER_PEER\" \"$MAJORDOMUS_OWNER_ISSUE\" \"$MAJORDOMUS_OWNER_RUN\" > {env}\n\
@@ -984,10 +985,7 @@ mod tests {
                 group = at("group").display(),
                 env = at("owner-env").display()
             ),
-        )
-        .unwrap();
-        use std::os::unix::fs::PermissionsExt;
-        std::fs::set_permissions(&derive, std::fs::Permissions::from_mode(0o755)).unwrap();
+        );
         let runs = at("runs");
         let owner = ["claude-code-s9", "p2", "I3956", "mac", "24025"].map(String::from);
         let (script, args) = derive_command(&DeriveArgs {
@@ -1120,19 +1118,17 @@ mod tests {
             // the derive: says where it was told to build, compiles something there, and
             // succeeds or fails as the case asks
             let derive = at(&format!("derive-{tag}"));
-            std::fs::write(
+            // written by a child, since the shell that execs it cannot wait out a busy file
+            crate::process::write_program(
                 &derive,
-                format!(
+                &format!(
                     "#!/bin/sh\nprintf '%s\\n%s\\n' \"$CARGO_BUILD_BUILD_DIR\" \"$CARGO_TARGET_DIR\" > {seen}\n\
                      printf '%s %s\\n' \"$MAJORDOMUS_OWNER_SESSION\" \"$MAJORDOMUS_OWNER_ISSUE\" > {seen}-owner\n\
                      mkdir -p \"$CARGO_BUILD_BUILD_DIR/debug/deps\" && : > \"$CARGO_BUILD_BUILD_DIR/debug/deps/x\"\n\
                      exit {outcome}\n",
                     seen = at(&format!("seen-{tag}")).display()
                 ),
-            )
-            .unwrap();
-            use std::os::unix::fs::PermissionsExt;
-            std::fs::set_permissions(&derive, std::fs::Permissions::from_mode(0o755)).unwrap();
+            );
             let shared = at("target");
             let (worktrees, spool, runs) = (at("wt"), at("spool"), at("runs"));
             let owner = ["claude-code-s1", "", "I3956", "mac", ""].map(String::from);
@@ -1199,7 +1195,6 @@ mod tests {
     /// its declared tries, with git's refusal on stderr for the caller to report (I4375).
     #[test]
     fn a_fetch_that_loses_a_ref_lock_race_is_asked_again_and_bounded() {
-        use std::os::unix::fs::PermissionsExt;
         for (refusals, tries, prepared) in [(2, 5, true), (9, 3, false)] {
             let root = tempfile::tempdir().expect("a temporary directory");
             let at = |p: &str| root.path().join(p);
@@ -1210,9 +1205,9 @@ mod tests {
             let count = at("fetches");
             // every git subcommand succeeds but fetch, which is refused until it has been
             // asked more than `refusals` times
-            std::fs::write(
-                bin.join("git"),
-                format!(
+            crate::process::write_program(
+                &bin.join("git"),
+                &format!(
                     "#!/bin/sh\n[ \"$1\" = fetch ] || exit 0\n\
                      n=$(( $(cat {count} 2>/dev/null || echo 0) + 1 )); echo $n > {count}\n\
                      [ $n -gt {refusals} ] && exit 0\n\
@@ -1220,10 +1215,7 @@ mod tests {
                      exit 1\n",
                     count = count.display()
                 ),
-            )
-            .unwrap();
-            std::fs::set_permissions(bin.join("git"), std::fs::Permissions::from_mode(0o755))
-                .unwrap();
+            );
             let path = format!(
                 "{}:{}",
                 bin.display(),

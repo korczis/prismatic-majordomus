@@ -6,23 +6,23 @@
     "version": "1.0.2"
   },
   "registry": {
-    "fingerprint": "ad0aa86dc820beae9b35c3cf40be8528450ecd8c4dc283dd03c5b08ff4f9546e",
+    "fingerprint": "d09c0d8cfcb359c181e70c7cbc6b999883c5fc1eb646dae8403dbe506990e945",
     "summary": {
-      "total": 4022,
+      "total": 4023,
       "builtin": 231,
-      "declarative": 3791,
+      "declarative": 3792,
       "by_kind": {
         "command": 41,
         "query": 190,
-        "resource": 3791
+        "resource": 3792
       },
       "by_stability": {
         "behaviorally_verified": 153,
         "experimental": 68,
-        "implemented": 3801
+        "implemented": 3802
       },
       "mcp_tools": 215,
-      "mcp_resources": 3848,
+      "mcp_resources": 3849,
       "http_routes": 219,
       "cli_commands": 128,
       "modules": 96,
@@ -97172,7 +97172,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 1249,
+        "capabilities": 1250,
         "capability_ids": []
       },
       {
@@ -97878,7 +97878,7 @@
     ]
   },
   "index": {
-    "fingerprint": "0d69aaa2abec9f1ddf233ecf6160545563747bd4d9f7e71ae524116d651a812d",
+    "fingerprint": "6890d9a51c8deac9b9db4d43f5450f5d7348fb3d9fecc1c3daf6547e7697acb3",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -97918,7 +97918,7 @@
       "gap": 5,
       "implementation": 54,
       "intent": 45,
-      "issue": 1249,
+      "issue": 1250,
       "knowledge": 220,
       "mesh-declaration": 1,
       "milestone": 117,
@@ -105515,7 +105515,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 136150
+        "bytes": 136388
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -123230,6 +123230,17 @@
         "bytes": 4357
       },
       {
+        "uri": "majordomus://issue/I4593",
+        "kind": "issue",
+        "identity": "I4593",
+        "title": "Every start of a host command in offload goes through the busy retry, and the stand-ins a shell execs are written by a child, so a stand-in written a moment ago is waited for, not failed",
+        "description": "Every start in offload::remote::Remote (run, run_held, run_to_file and spawn, which the holder uses) goes through crate::process::retrying_busy, so a test's stand-in for ssh that another test thread's forked child still holds open no longer fails the offload with ETXTBSY; and the stand-ins the offload tests hand to a shell to exec (a derive, a git on PATH) are written by crate::process::write_program, through a child, so this process never holds them open for writing.",
+        "path": ".ai/repo/project/issues/I4593.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3345
+      },
+      {
         "uri": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "identity": "a-brief-is-reconciled-not-transcribed",
@@ -139765,7 +139776,7 @@
       "identity": [
         "id"
       ],
-      "objects": 1249
+      "objects": 1250
     },
     {
       "name": "knowledge",

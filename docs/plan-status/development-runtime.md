@@ -9,7 +9,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 
 | milestone | status | done of required | ready | blocked | active | verify | cancelled | outcome |
 |---|---|---|---|---|---|---|---|---|
-| [development-runtime](https://majordomus.dev/plan/development-runtime/) | ACTIVE | 71/113 | 26 | 16 | 0 | 0 | 1 | A development transition is decided in exactly one place — a `capability!` of kind `command` in the Rust registry — and every surface that offers it is a projection: the CLI, the MCP tool, the HTTP route, the OpenAPI operation and the Cockpit's generated runner form, none of them written by hand. The lifecycle stops being a second program with no surfaces, and the execution history a development surface would show exists somewhere durable. |
+| [development-runtime](https://majordomus.dev/plan/development-runtime/) | ACTIVE | 71/114 | 27 | 16 | 0 | 0 | 1 | A development transition is decided in exactly one place — a `capability!` of kind `command` in the Rust registry — and every surface that offers it is a projection: the CLI, the MCP tool, the HTTP route, the OpenAPI operation and the Cockpit's generated runner form, none of them written by hand. The lifecycle stops being a second program with no surfaces, and the execution history a development surface would show exists somewhere durable. |
 
 ## Issues
 
@@ -129,6 +129,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | [I4375](https://majordomus.dev/plan/i4375/) | READY | 0 | — | An offload's fetch into the host's checkout waits its turn instead of failing the derive |
 | [I4565](https://majordomus.dev/plan/i4565/) | READY | 0 | — | The kit licence judge starts its git through the busy retry, so a stand-in git written a moment ago is waited for, not failed |
 | [I4566](https://majordomus.dev/plan/i4566/) | READY | 0 | — | The across-machines tests take the lease as held once its holder record reads, not once its file exists |
+| [I4593](https://majordomus.dev/plan/i4593/) | READY | 0 | — | Every start of a host command in offload goes through the busy retry, and the stand-ins a shell execs are written by a child, so a stand-in written a moment ago is waited for, not failed |
 
 ## Findings
 
@@ -1040,6 +1041,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I3836` | shares docs/WORKTREES.md with I4418; they may not run concurrently |
 | WARN | `scope_conflict` | `I3836` | shares scripts/generate-site-data with I4512; they may not run concurrently |
 | WARN | `scope_conflict` | `I3836` | shares apps/majordomus-cli/src/offload with I4577; they may not run concurrently |
+| WARN | `scope_conflict` | `I3836` | shares apps/majordomus-cli/src/offload with I4593; they may not run concurrently |
 | WARN | `scope_conflict` | `I4232` | shares scripts/rust-check with I4302; they may not run concurrently |
 | WARN | `scope_conflict` | `I4343` | shares apps/majordomus-cli/src/mesh/cache_provision.rs with I4346; they may not run concurrently |
 | WARN | `scope_conflict` | `I4343` | shares apps/majordomus-cli/src/mesh/journal.rs with I4466; they may not run concurrently |
@@ -1055,3 +1057,4 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I4374` | shares .githooks/pre-commit with I4513; they may not run concurrently |
 | WARN | `scope_conflict` | `I4374` | shares .githooks/pre-commit with I4573; they may not run concurrently |
 | WARN | `scope_conflict` | `I4374` | shares .githooks/pre-commit with I4588; they may not run concurrently |
+| WARN | `scope_conflict` | `I4375` | shares apps/majordomus-cli/src/offload/run.rs with I4593; they may not run concurrently |

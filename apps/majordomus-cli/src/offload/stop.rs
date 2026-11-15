@@ -597,16 +597,14 @@ mod tests {
             std::fs::create_dir_all(at(d)).unwrap();
         }
         let derive = at("derive");
-        std::fs::write(
+        // written by a child, since the shell that execs it cannot wait out a busy file
+        crate::process::write_program(
             &derive,
-            format!(
+            &format!(
                 "#!/bin/sh\nsleep 300 &\necho $! > {gc}\nwait\n",
                 gc = at("grandchild").display()
             ),
-        )
-        .unwrap();
-        use std::os::unix::fs::PermissionsExt;
-        std::fs::set_permissions(&derive, std::fs::Permissions::from_mode(0o755)).unwrap();
+        );
         let runs = at("runs");
         let run = super::super::run::derive_command(&super::super::run::DeriveArgs {
             lock: at("lock").to_str().unwrap(),

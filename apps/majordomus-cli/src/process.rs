@@ -32,10 +32,53 @@ pub(crate) fn retrying_busy<T>(mut start: impl FnMut() -> io::Result<T>) -> io::
     }
 }
 
+/// Write a program a test has started by something that cannot ask again — a shell that
+/// execs it, a `PATH` lookup — so that no process ever holds it open for writing: a child
+/// writes it and ends before this returns, and this process never opens it, so a child
+/// another test thread forks cannot inherit a writer (I4593). A program this process starts
+/// itself is started through `retrying_busy` instead.
+#[cfg(all(test, unix))]
+pub(crate) fn write_program(path: &std::path::Path, body: &str) {
+    use std::io::Write;
+    use std::process::{Command, Stdio};
+    let mut writer = Command::new("sh")
+        .arg("-c")
+        .arg(r#"cat > "$1" && chmod 755 "$1""#)
+        .arg("sh")
+        .arg(path)
+        .stdin(Stdio::piped())
+        .spawn()
+        .expect("sh writes the program");
+    writer
+        .stdin
+        .take()
+        .expect("stdin is piped")
+        .write_all(body.as_bytes())
+        .expect("the program is handed to sh");
+    let ended = writer.wait().expect("sh ends");
+    ended.success().then_some(()).expect("sh wrote the program");
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
     use std::process::Command;
+
+    /// A program written by `write_program` holds its body, is executable and runs at once.
+    #[cfg(unix)]
+    #[test]
+    fn a_written_program_holds_its_body_and_runs() {
+        use std::os::unix::fs::PermissionsExt;
+        let dir = tempfile::tempdir().unwrap();
+        let tool = dir.path().join("tool");
+        let body = "#!/bin/sh\necho \"ran $1\"\n";
+        write_program(&tool, body);
+        assert_eq!(std::fs::read_to_string(&tool).unwrap(), body);
+        let mode = std::fs::metadata(&tool).unwrap().permissions().mode();
+        assert_eq!(mode & 0o777, 0o755);
+        let out = Command::new(&tool).arg("here").output().unwrap();
+        assert_eq!(String::from_utf8_lossy(&out.stdout), "ran here\n");
+    }
 
     /// A program that cannot be started for another reason is answered at once, with that
     /// reason: only a busy file is waited for.
