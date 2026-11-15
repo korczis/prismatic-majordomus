@@ -1,0 +1,50 @@
+id: I4599
+milestone: a-second-adopter-is-served
+title: "A step that waits says whose turn it is: when every unfinished issue waits on the person, proceed.step orders wait_on_person, names each pull request the person must act on, and steps again on the policy's person cadence"
+slug: a-wait-on-the-person-names-the-levers
+priority: p2
+profile: implementation
+parallel_safe: true
+serves: []
+objective: "proceed.step's wait carries the class of every wait it found: a dependency, another worker, a milestone gate, or the person. A wait is the person's when the unfinished issue depends on an issue whose open pull request (matched through the assessment's issue, model.rs:1179-1184) is recorded with a disposition that only a person's act releases: WaitingForReview (a person reviews), Conflicting (a person resolves) or Unsafe (a person disarms). When every wait is the person's, the order is `wait_on_person`. It lists each such pull request with its number and disposition, and its next_due_at follows the cadence the policy declares for the person. The report it announces says so in one line, so a loop that proceeds stops polling every five minutes for an act only the person can take."
+why: "Observed on 2026-11-14/15 in a client adopter (a service repository, not named here by policy). A self-paced session loop ran for about 44 hours while every next step was the owner's: seven reviewed pull requests to merge, a deploy approval, and four product decisions. Each tick rebuilt the same picture by hand from git, the forge and the plan, and concluded that nothing could start until the owner acted. The tool already holds the deciding facts. The integration dispositions say which pull request waits on a person. But proceed.step words every wait alike ('each waits on a dependency, its milestone's gate or another worker') and steps again every 300 s."
+current_state: "Measured at origin/master 3fcaafac355. capability/builtin/proceed/step.rs:355 (waiting) answers OrderOutcome::Wait with the decision's reason, or for an intent the sentence at :377, which does not tell the person's waits from a worker's. CADENCE_SECONDS (:56) is 300 for every wait. integration/model.rs:377 (WaitingForReview), :384-385 (Conflicting, 'a person resolves them') and :390-391 (Unsafe, 'held until a person disarms it') already classify a pull request's wait on a person. The assessment carries the issue it serves (model.rs:1179-1184), and the summary lives under the checkout's integration state (integration/mod.rs:83). proceed.rs and step.rs read none of it."
+desired_state: "proceed.step's answer carries `waits`, each with class dependency, worker, gate or person and the record it waits on. When every wait is class person, the outcome is wait_on_person, `levers` lists each pull request with its number and disposition, and next_due_at is the next boundary of `proceed.person_cadence_seconds` after the moment of the step, using the same arithmetic the work cadence uses. When the policy declares no person cadence, the outcome and levers are the same, the work cadence applies, and the answer says the person cadence is undeclared. A declared value below CADENCE_SECONDS is refused. The announced report reads 'waits on the person: <n> pull request(s)' and names the first three. With any wait of another class, the order is Wait on the work cadence, as today."
+scope:
+  - ".ai/repo/project/issues/I4599.yaml"
+  - "apps/majordomus-cli/src/capability/builtin/proceed.rs"
+  - "apps/majordomus-cli/src/capability/builtin/proceed/step.rs"
+  - "apps/majordomus-cli/src/integration/mod.rs"
+  - "apps/majordomus-cli/src/integration/model.rs"
+  - "apps/majordomus-cli/src/policy.rs"
+  - "share/skeleton/policy.yaml"
+  - "share/schemas/majordomus/policy/policy.v1.schema.json"
+  - "share/allow/policy.txt"
+  - "docs/generated/registry.json"
+  - "docs/generated/registry.yaml"
+  - "test/cases/4599_a_wait_on_the_person_names_the_levers.sh"
+  - "site/content/plan/I4599.md"
+non_scope:
+  - "Notifying the person: the order says whose turn it is, a client chooses whether to notify"
+  - "Marking a session blocked on the mesh from client hooks: I3992"
+  - "Open questions (`majordomus question`): they are task-local state under .ai/local and block a task's finish, not an issue, so they are no lever here"
+  - "Merging, approving or answering on the person's behalf"
+  - "The ranking of READY issues: proceed.plan's, unchanged"
+depends_on: []
+acceptance_criteria:
+  - "Case 4599, in a fixture whose only unfinished issue depends on an issue whose open pull request is recorded WaitingForReview, with proceed.person_cadence_seconds 1800: `proceed step --format json` answers outcome wait_on_person, levers naming that pull request with disposition waiting_for_review, and next_due_at at the next 1800 s boundary"
+  - "Case 4599: the same with the pull request recorded conflicting, and again recorded unsafe, gives wait_on_person with that disposition"
+  - "Case 4599: with a second unfinished issue that waits on another worker's claim, the outcome is wait on the 300 s cadence, and waits lists one wait of class person and one of class worker"
+  - "Case 4599: with no person cadence declared, the outcome is wait_on_person on the 300 s cadence and the answer says the person cadence is undeclared"
+  - "Case 4599: a declared person_cadence_seconds below 300 is refused by doctor and the schema"
+  - "Case 4599: the announced report's intent line starts 'waits on the person'"
+  - "Before the change, case 4599 fails at its first assertion"
+validation:
+  - "bash test/run.sh 4599_a_wait_on_the_person_names_the_levers"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib -- capability::builtin::proceed integration::model policy"
+  - "bin/majordomus plan validate"
+evidence_required:
+  - suite
+risk: "A wait misclassified as the person's would slow a loop that could proceed. Only the three dispositions that name a person's act are class person, and any other wait keeps the work cadence."
+created_at: 2026-11-15
+updated_at: 2026-11-15

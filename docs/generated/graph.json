@@ -81591,6 +81591,164 @@
         }
       },
       {
+        "id": "majordomus://issue/I4597",
+        "kind": "issue",
+        "label": "I4597",
+        "summary": "A line every branch recomputes is the landing's to write: a conflict confined to a line master's policy declares recomputed is not an authored conflict, as the version line already is not",
+        "route": "/cockpit/objects/issue/i4597",
+        "source": ".ai/repo/project/issues/I4597.yaml",
+        "facts": {
+          "created_at": "2026-11-15",
+          "depends_on": [],
+          "evidence_required": [
+            "suite"
+          ],
+          "milestone": "a-second-adopter-is-served",
+          "non_scope": [
+            "Whole files the repository regenerates: already merge=derived (relation.rs:217)",
+            "allocate::version_only_conflict and the version allocation itself: unchanged, only composed with",
+            "Choosing a writer for an adopter: the writer is the repository's own, never inferred",
+            "Resolving prose conflicts in the same file: they stay a person's",
+            "Running a program from a typed specification in general: I4486"
+          ],
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I4597.yaml",
+            "apps/majordomus-cli/src/integration/relation.rs",
+            "apps/majordomus-cli/src/integration/classify.rs",
+            "apps/majordomus-cli/src/integration/model.rs",
+            "apps/majordomus-cli/src/integration/mod.rs",
+            "apps/majordomus-cli/src/integration/drain.rs",
+            "apps/majordomus-cli/src/policy.rs",
+            "share/skeleton/policy.yaml",
+            "share/schemas/majordomus/policy/policy.v1.schema.json",
+            "share/allow/policy.txt",
+            "docs/INTEGRATION.md",
+            "docs/generated/registry.json",
+            "docs/generated/registry.yaml",
+            "test/cases/4597_a_recomputed_line_is_the_landings_to_write.sh",
+            "site/content/plan/I4597.md"
+          ],
+          "serves": [],
+          "slug": "a-recomputed-line-is-the-landings-to-write",
+          "updated_at": "2026-11-15",
+          "validation": [
+            "bash test/run.sh 4597_a_recomputed_line_is_the_landings_to_write",
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib -- integration::relation integration::classify integration::drain policy",
+            "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4598",
+        "kind": "issue",
+        "label": "I4598",
+        "summary": "A long-running process a session leaves running is declared and guarded by the machine's disk floor: stopped through its own process group below the floor, resumed above a higher mark, each change an execution event the brief reads",
+        "route": "/cockpit/objects/issue/i4598",
+        "source": ".ai/repo/project/issues/I4598.yaml",
+        "facts": {
+          "created_at": "2026-11-15",
+          "depends_on": [
+            "I4486"
+          ],
+          "evidence_required": [
+            "suite"
+          ],
+          "milestone": "a-second-adopter-is-served",
+          "non_scope": [
+            "Reclaiming disk: the service only stops and resumes; what to delete stays the person's",
+            "Builds entering the machine: I3825 and I4006",
+            "Announcing a disk emergency on the mesh: I4355",
+            "The program runner itself: I4486",
+            "Restarting a process that exited on its own with a failure: reported, never retried in a loop",
+            "Remote hosts: the volume measured is the local one the service writes to"
+          ],
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I4598.yaml",
+            "apps/majordomus-cli/src/commands",
+            "apps/majordomus-cli/src/capability/builtin",
+            "apps/majordomus-cli/src/execution",
+            "apps/majordomus-cli/src/mesh/build_cache/ensure.rs",
+            "apps/majordomus-cli/src/policy.rs",
+            "apps/majordomus-cli/src/cli.rs",
+            "share/skeleton/policy.yaml",
+            "share/schemas/majordomus/policy/policy.v1.schema.json",
+            "share/allow/policy.txt",
+            "docs/generated/cli.md",
+            "docs/generated/cli.json",
+            "docs/generated/cli.yaml",
+            "docs/generated/registry.json",
+            "docs/generated/registry.yaml",
+            "test/cases/4598_a_long_running_process_is_guarded_by_the_disk_floor.sh",
+            "site/content/plan/I4598.md"
+          ],
+          "serves": [],
+          "slug": "a-long-running-process-is-guarded-by-the-disk-floor",
+          "updated_at": "2026-11-15",
+          "validation": [
+            "bash test/run.sh 4598_a_long_running_process_is_guarded_by_the_disk_floor",
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib -- policy mesh::build_cache execution service",
+            "bin/majordomus shell check",
+            "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4599",
+        "kind": "issue",
+        "label": "I4599",
+        "summary": "A step that waits says whose turn it is: when every unfinished issue waits on the person, proceed.step orders wait_on_person, names each pull request the person must act on, and steps again on the policy's person cadence",
+        "route": "/cockpit/objects/issue/i4599",
+        "source": ".ai/repo/project/issues/I4599.yaml",
+        "facts": {
+          "created_at": "2026-11-15",
+          "depends_on": [],
+          "evidence_required": [
+            "suite"
+          ],
+          "milestone": "a-second-adopter-is-served",
+          "non_scope": [
+            "Notifying the person: the order says whose turn it is, a client chooses whether to notify",
+            "Marking a session blocked on the mesh from client hooks: I3992",
+            "Open questions (`majordomus question`): they are task-local state under .ai/local and block a task's finish, not an issue, so they are no lever here",
+            "Merging, approving or answering on the person's behalf",
+            "The ranking of READY issues: proceed.plan's, unchanged"
+          ],
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "risk": "A wait misclassified as the person's would slow a loop that could proceed. Only the three dispositions that name a person's act are class person, and any other wait keeps the work cadence.",
+          "scope": [
+            ".ai/repo/project/issues/I4599.yaml",
+            "apps/majordomus-cli/src/capability/builtin/proceed.rs",
+            "apps/majordomus-cli/src/capability/builtin/proceed/step.rs",
+            "apps/majordomus-cli/src/integration/mod.rs",
+            "apps/majordomus-cli/src/integration/model.rs",
+            "apps/majordomus-cli/src/policy.rs",
+            "share/skeleton/policy.yaml",
+            "share/schemas/majordomus/policy/policy.v1.schema.json",
+            "share/allow/policy.txt",
+            "docs/generated/registry.json",
+            "docs/generated/registry.yaml",
+            "test/cases/4599_a_wait_on_the_person_names_the_levers.sh",
+            "site/content/plan/I4599.md"
+          ],
+          "serves": [],
+          "slug": "a-wait-on-the-person-names-the-levers",
+          "updated_at": "2026-11-15",
+          "validation": [
+            "bash test/run.sh 4599_a_wait_on_the_person_names_the_levers",
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib -- capability::builtin::proceed integration::model policy",
+            "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "label": "a-brief-is-reconciled-not-transcribed",
@@ -151292,6 +151450,41 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I4597",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4597",
+        "target": "majordomus://milestone/a-second-adopter-is-served",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4598",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4598",
+        "target": "majordomus://issue/I4486",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I4598",
+        "target": "majordomus://milestone/a-second-adopter-is-served",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4599",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4599",
+        "target": "majordomus://milestone/a-second-adopter-is-served",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -164168,8 +164361,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4493,
-      "edges": 10138,
+      "nodes": 4496,
+      "edges": 10145,
       "acyclic": false,
       "truncated": false
     }

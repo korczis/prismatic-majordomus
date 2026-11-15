@@ -71,3 +71,4 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I4357` | shares .github/workflows/validate.yml with I4532; they may not run concurrently |
 | WARN | `scope_conflict` | `I4357` | shares .githooks/pre-push with I4573; they may not run concurrently |
 | WARN | `scope_conflict` | `I4362` | shares lib/adr.sh with I4468; they may not run concurrently |
+| WARN | `scope_conflict` | `I4582` | shares docs/INTEGRATION.md with I4597; they may not run concurrently |
