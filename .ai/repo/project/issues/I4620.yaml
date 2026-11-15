@@ -1,4 +1,4 @@
-id: I4611
+id: I4620
 milestone: a-second-adopter-is-served
 title: "A supervised repository publishes a site, a wiki and Markdown regions derived from its own documents, and a check refuses drift"
 slug: published-surfaces-for-any-repository
@@ -8,14 +8,14 @@ parallel_safe: true
 objective: "Ship share/surfaces, a repository-agnostic producer that renders every tracked Markdown document and the .ai/ layer to a GitHub Pages site and the GitHub wiki, regenerates index tables inside the documents, declares each output as web-surface/v1 under target/web/<id>/, and refuses a stale region or a relative link or anchor to nothing; with a workflow template, a project-rule template, the adoption steps and a case."
 why: "An adopter met it on its first day: a supervised research repository (an anonymised adopter) kept a hand-written Zola landing page that restated its README until the two disagreed (it called a public repository private) and never deployed, and the owner asked for Pages, a wiki and Markdown kept in sync, enforced from .ai/ and generic. Nothing in Majordomus offered a downstream repository a site, a wiki or region sync: the site machinery under scripts/ and site/ is this repository's own, share/skeleton ships no .github/, and 'wiki' occurs nowhere in the tree. Zola cannot publish arbitrary Markdown unchanged (a GitHub Actions expression in a document, written with doubled braces, fails zola build as template syntax), so the producer renders Markdown itself."
 current_state: "Measured at origin/master 3fcaafac355: no share/surfaces; majordomus_web_surfaces discovers target/web/<id>/surface.json (apps/majordomus-cli/src/web/discover.rs) but no shipped producer writes one for a downstream repository; scripts/github-sync projects issues, not documents."
-desired_state: "share/surfaces carries the producer (Python 3.11+, markdown-it-py, PyYAML; Tailwind 4 + Flowbite 4, Mermaid 12 and ECharts 6 pinned in package-lock.json for the site's assets), workflow.yml, rule.template.md and a README with the motivation and the adoption steps; docs/PUBLISHED_SURFACES.md explains it beside docs/SURFACES.md; case 4611 holds its behaviour against a throwaway repository."
+desired_state: "share/surfaces carries the producer (Python 3.11+, markdown-it-py, PyYAML; Tailwind 4 + Flowbite 4, Mermaid 12 and ECharts 6 pinned in package-lock.json for the site's assets), workflow.yml, rule.template.md and a README with the motivation and the adoption steps; docs/PUBLISHED_SURFACES.md explains it beside docs/SURFACES.md; case 4620 holds its behaviour against a throwaway repository."
 scope:
   - "share/surfaces/**"
-  - "test/cases/4611_published_surfaces_are_derived_and_checked.sh"
+  - "test/cases/4620_published_surfaces_are_derived_and_checked.sh"
   - "docs/PUBLISHED_SURFACES.md"
   - "docs/SURFACES.md"
   - ".gitignore"
-  - ".ai/repo/project/issues/I4611.yaml"
+  - ".ai/repo/project/issues/I4620.yaml"
 non_scope:
   - "A majordomus command or registry capability that runs the producer; it ships as files a repository vendors"
   - "A vendored rule with a doctor validator; the rule ships as a template the adopter's hook, gate and CI enforce"
@@ -30,7 +30,7 @@ acceptance_criteria:
   - "The producer names no repository; the command it prints is derived from where it is vendored"
   - "Negative: the case skips, saying what was not measured, only when markdown-it-py and PyYAML can neither be imported nor installed"
 validation:
-  - "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 4611_published_surfaces_are_derived_and_checked"
+  - "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 4620_published_surfaces_are_derived_and_checked"
   - "actionlint share/surfaces/workflow.yml"
 evidence_required:
   - "published_surfaces_are_derived_and_checked"

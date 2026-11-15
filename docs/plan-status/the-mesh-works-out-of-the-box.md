@@ -210,7 +210,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I2411` | shares test/cases with I4588; they may not run concurrently |
 | WARN | `scope_conflict` | `I2411` | shares test/cases with I4591; they may not run concurrently |
 | WARN | `scope_conflict` | `I2411` | shares test/cases with I4592; they may not run concurrently |
-| WARN | `scope_conflict` | `I2411` | shares test/cases with I4611; they may not run concurrently |
+| WARN | `scope_conflict` | `I2411` | shares test/cases with I4620; they may not run concurrently |
 | WARN | `scope_conflict` | `I3770` | shares apps/majordomus-cli/src/capability/builtin/mesh.rs with I3771; they may not run concurrently |
 | WARN | `scope_conflict` | `I3770` | shares docs/MESH.md with I3772; they may not run concurrently |
 | WARN | `scope_conflict` | `I3770` | shares apps/majordomus-cli/src/capability/builtin/mesh.rs with I3774; they may not run concurrently |

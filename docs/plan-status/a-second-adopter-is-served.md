@@ -50,7 +50,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | [I4417](https://majordomus.dev/plan/i4417/) | READY | 0 | — | A knowledge class a repository script generates declares its generator and inputs, is reported stale when its inputs moved, and the issue, intent and rule ids its records carry are edges |
 | [I4418](https://majordomus.dev/plan/i4418/) | READY | 0 | — | serve ensure fast-forwards a clean trunk checkout that is strictly behind its remote trunk, or offers to, and majordomus init declares checkout.trunk_distance, so a shared server does not answer from an old tree unjudged |
 | [I4578](https://majordomus.dev/plan/i4578/) | READY | 0 | — | A fixture path under a case's scratch variable is not a pack leak of the packing account's home |
-| [I4611](https://majordomus.dev/plan/i4611/) | READY | 0 | — | A supervised repository publishes a site, a wiki and Markdown regions derived from its own documents, and a check refuses drift |
+| [I4620](https://majordomus.dev/plan/i4620/) | READY | 0 | — | A supervised repository publishes a site, a wiki and Markdown regions derived from its own documents, and a check refuses drift |
 
 ## Findings
 
@@ -82,7 +82,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I4255` | shares lib/rules.sh with I4468; they may not run concurrently |
 | WARN | `scope_conflict` | `I4255` | shares apps/majordomus-cli/src/capability/builtin/rules.rs with I4486; they may not run concurrently |
 | WARN | `scope_conflict` | `I4255` | shares lib/doctor.sh with I4584; they may not run concurrently |
-| WARN | `scope_conflict` | `I4255` | shares docs/SURFACES.md with I4611; they may not run concurrently |
+| WARN | `scope_conflict` | `I4255` | shares docs/SURFACES.md with I4620; they may not run concurrently |
 | WARN | `scope_conflict` | `I4256` | shares lib/skills.sh with I4468; they may not run concurrently |
 | WARN | `scope_conflict` | `I4257` | shares lib/init.sh with I4262; they may not run concurrently |
 | WARN | `scope_conflict` | `I4257` | shares lib/init.sh with I4336; they may not run concurrently |

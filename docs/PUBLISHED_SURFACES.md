@@ -49,7 +49,7 @@ The steps are in [`share/surfaces/README.md`](../share/surfaces/README.md), unde
 6. adopt [`share/surfaces/rule.template.md`](../share/surfaces/rule.template.md) as a
    project rule.
 
-Its behaviour is held by `test/cases/4611_published_surfaces_are_derived_and_checked.sh`.
+Its behaviour is held by `test/cases/4620_published_surfaces_are_derived_and_checked.sh`.
 That case runs against a throwaway repository: it covers the refusals, the regeneration,
 the fenced example left alone, and the site and wiki outputs with their declarations.
 

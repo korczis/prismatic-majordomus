@@ -81599,12 +81599,12 @@
         }
       },
       {
-        "id": "majordomus://issue/I4611",
+        "id": "majordomus://issue/I4620",
         "kind": "issue",
-        "label": "I4611",
+        "label": "I4620",
         "summary": "A supervised repository publishes a site, a wiki and Markdown regions derived from its own documents, and a check refuses drift",
-        "route": "/cockpit/objects/issue/i4611",
-        "source": ".ai/repo/project/issues/I4611.yaml",
+        "route": "/cockpit/objects/issue/i4620",
+        "source": ".ai/repo/project/issues/I4620.yaml",
         "facts": {
           "acceptance_criteria": [
             "check exits 10 naming a stale region, a relative link to nothing and an anchor no heading defines; sync --check exits 11 while a region would change",
@@ -81630,17 +81630,17 @@
           "profile": "implementation",
           "scope": [
             "share/surfaces/**",
-            "test/cases/4611_published_surfaces_are_derived_and_checked.sh",
+            "test/cases/4620_published_surfaces_are_derived_and_checked.sh",
             "docs/PUBLISHED_SURFACES.md",
             "docs/SURFACES.md",
             ".gitignore",
-            ".ai/repo/project/issues/I4611.yaml"
+            ".ai/repo/project/issues/I4620.yaml"
           ],
           "serves": [],
           "slug": "published-surfaces-for-any-repository",
           "updated_at": "2026-11-15",
           "validation": [
-            "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 4611_published_surfaces_are_derived_and_checked",
+            "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 4620_published_surfaces_are_derived_and_checked",
             "actionlint share/surfaces/workflow.yml"
           ]
         }
@@ -109489,11 +109489,11 @@
         "source": "test/cases/45_github_projection.sh"
       },
       {
-        "id": "majordomus://test/test/cases/4611_published_surfaces_are_derived_and_checked.sh",
+        "id": "majordomus://test/test/cases/4620_published_surfaces_are_derived_and_checked.sh",
         "kind": "test",
-        "label": "test/cases/4611_published_surfaces_are_derived_and_checked.sh",
-        "route": "/cockpit/objects/test/test-cases-4611-published-surfaces-are-derived-and-checked-sh",
-        "source": "test/cases/4611_published_surfaces_are_derived_and_checked.sh"
+        "label": "test/cases/4620_published_surfaces_are_derived_and_checked.sh",
+        "route": "/cockpit/objects/test/test-cases-4620-published-surfaces-are-derived-and-checked-sh",
+        "source": "test/cases/4620_published_surfaces_are_derived_and_checked.sh"
       },
       {
         "id": "majordomus://test/test/cases/46_cross_surface.sh",
@@ -151359,12 +151359,12 @@
         "kind": "belongs_to"
       },
       {
-        "source": "majordomus://issue/I4611",
+        "source": "majordomus://issue/I4620",
         "target": "kind:issue",
         "kind": "is_a"
       },
       {
-        "source": "majordomus://issue/I4611",
+        "source": "majordomus://issue/I4620",
         "target": "majordomus://milestone/a-second-adopter-is-served",
         "kind": "belongs_to"
       },
@@ -159124,7 +159124,7 @@
         "kind": "is_a"
       },
       {
-        "source": "majordomus://test/test/cases/4611_published_surfaces_are_derived_and_checked.sh",
+        "source": "majordomus://test/test/cases/4620_published_surfaces_are_derived_and_checked.sh",
         "target": "kind:test",
         "kind": "is_a"
       },

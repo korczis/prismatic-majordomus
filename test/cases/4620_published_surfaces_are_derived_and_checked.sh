@@ -1,7 +1,7 @@
 # majordomus-covers: none
 # The published-surfaces producer under share/surfaces derives a site, a wiki and Markdown
 # regions from a repository, and its check refuses a repository whose published copy would
-# disagree with it (I4611).
+# disagree with it (I4620).
 #
 # The subject is share/surfaces/surfaces, which `script:` cannot name (it resolves under
 # scripts/ only), hence `none`. Driven against a throwaway repository, never this checkout:
