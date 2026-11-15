@@ -1900,6 +1900,25 @@ evaluates scope and state without writing and exits `0` when no task is active o
 task is already finished, so a pre-push hook never blocks a repository with nothing to
 enforce.
 
+With no task active, or the task finished, `--check` also compares what the push
+publishes with what was verified: the tree of the pushed commit against the `verify.tree`
+of the last `task.finished` of the current branch in this checkout's ledger. The pushed
+commits are `--pushed "<commits>"` (space-separated, `""` for none), else
+`MAJORDOMUS_PUSHED` when it is set — a hook's way to say it without changing the line
+`doctor` verifies — else `HEAD`. A tree that differs is the finding `pushed-tree`, naming
+the commit, both tree ids, the task and its verify command, with the remedy: re-run the
+verification over this tree under a new task, or say why not where the push is reviewed
+(a merge of the trunk after the verification changes the tree legitimately). The level is
+the policy's `verification.pushed_tree_unverified`: `off`, `info`, `warning` (absent) or
+`error`, which refuses the push with `10`. A task finished on another branch, or one that
+recorded no tree, is not compared; nothing is verified again at push time.
+
+```text
+$ majordomus finish --check          # case 4610's run: a commit after the verification
+INFO finish      t-20261115205820-6a06 — already completed
+WARN pushed-tree t-20261115205820-6a06 — commit f7312a964c3e publishes tree 79829db9689457cbc40efc54c6dfe84af1d4947d, but main's last finished task verified tree 76fc358b92a9658b67248a3ade769f8e23269687 ("test -d .ai"): what is pushed is not what was verified. Re-run the verification over this tree (majordomus start, then finish --verify-command "test -d .ai"), or say why not where the push is reviewed (a merge of the trunk that CI judges, say)  [reproduce: git diff --stat 76fc358b92a9658b67248a3ade769f8e23269687 79829db9689457cbc40efc54c6dfe84af1d4947d]
+```
+
 Profile requirements are also evaluated for `completed`: `regression_test_required`
 passes when a touched path looks like a test (`test/`, `spec/`, `_test.`, `.spec.`);
 `decision_record_required` passes when `decisions.md` contains `Task: <id>`. The

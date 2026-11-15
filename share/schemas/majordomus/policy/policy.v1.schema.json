@@ -66,6 +66,15 @@
           "items": {
             "type": "string"
           }
+        },
+        "pushed_tree_unverified": {
+          "description": "A push whose tree is not the tree its branch's last finished task verified, as `finish --check` finds it once no task is active: off, info, warning (absent) or error, which refuses the push.",
+          "enum": [
+            "off",
+            "info",
+            "warning",
+            "error"
+          ]
         }
       }
     },

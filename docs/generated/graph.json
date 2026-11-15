@@ -14776,7 +14776,6 @@
             "15"
           ],
           "json": true,
-          "note": "--check evaluates without writing and exits 0 when no task is active, so a pre-push hook never blocks a repository with nothing to enforce.",
           "reads": [
             ".ai/repo/policy.yaml",
             ".ai/repo/profiles/",
@@ -81591,6 +81590,47 @@
         }
       },
       {
+        "id": "majordomus://issue/I4610",
+        "kind": "issue",
+        "label": "I4610",
+        "summary": "The pre-push finish --check names a pushed tree that its branch's last finished task did not verify, and says what to do",
+        "route": "/cockpit/objects/issue/i4610",
+        "source": ".ai/repo/project/issues/I4610.yaml",
+        "facts": {
+          "created_at": "2026-11-15",
+          "depends_on": [],
+          "evidence_required": [
+            "a_push_names_a_tree_its_branch_did_not_verify"
+          ],
+          "milestone": "a-second-adopter-is-served",
+          "non_scope": [
+            "Changing the hook line init prints for adopters: HEAD is what their push of the current branch publishes, and doctor verifies the line as it is",
+            "Comparing a push while a task is active: that task's own finish verifies its tree",
+            "Verifying anything at push time: the check reads the record, it never runs the verify command"
+          ],
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "lib/finish.sh",
+            ".githooks/pre-push",
+            "share/schemas/majordomus/policy/policy.v1.schema.json",
+            "share/allow/policy.txt",
+            "share/skeleton/policy.yaml",
+            "share/commands.yaml",
+            "docs/CLI.md",
+            "docs/SCHEMAS.md",
+            "test/cases/4610_a_push_names_a_tree_its_branch_did_not_verify.sh",
+            ".ai/repo/project/issues/I4610.yaml"
+          ],
+          "serves": [],
+          "slug": "a-push-names-a-tree-its-branch-did-not-verify",
+          "validation": [
+            "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 4610_a_push_names_a_tree_its_branch_did_not_verify 572_verification_records_the_tree_it_proved 06_finish"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "label": "a-brief-is-reconciled-not-transcribed",
@@ -109432,6 +109472,13 @@
         "label": "test/cases/45_github_projection.sh",
         "route": "/cockpit/objects/test/test-cases-45-github-projection-sh",
         "source": "test/cases/45_github_projection.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/4610_a_push_names_a_tree_its_branch_did_not_verify.sh",
+        "kind": "test",
+        "label": "test/cases/4610_a_push_names_a_tree_its_branch_did_not_verify.sh",
+        "route": "/cockpit/objects/test/test-cases-4610-a-push-names-a-tree-its-branch-did-not-verify-sh",
+        "source": "test/cases/4610_a_push_names_a_tree_its_branch_did_not_verify.sh"
       },
       {
         "id": "majordomus://test/test/cases/46_cross_surface.sh",
@@ -151292,6 +151339,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I4610",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4610",
+        "target": "majordomus://milestone/a-second-adopter-is-served",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -159047,6 +159104,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/4610_a_push_names_a_tree_its_branch_did_not_verify.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/46_cross_surface.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -164168,8 +164230,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4493,
-      "edges": 10138,
+      "nodes": 4495,
+      "edges": 10141,
       "acyclic": false,
       "truncated": false
     }
