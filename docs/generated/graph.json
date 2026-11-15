@@ -81591,6 +81591,43 @@
         }
       },
       {
+        "id": "majordomus://issue/I4596",
+        "kind": "issue",
+        "label": "I4596",
+        "summary": "The owner decides what a cancelled dependency means, so that cancelling an issue no longer strands its dependents in silence",
+        "route": "/cockpit/objects/issue/i4596",
+        "source": ".ai/repo/project/issues/I4596.yaml",
+        "facts": {
+          "created_at": "2026-11-15",
+          "depends_on": [],
+          "evidence_required": [
+            "owner_decision_on_cancelled_dependency_recorded",
+            "cancelled_dependency_has_one_meaning_in_both_engines"
+          ],
+          "milestone": "truthful-plan-surfaces",
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I4596.yaml",
+            "apps/majordomus-cli/src/plan.rs",
+            "lib/project.awk",
+            "test/cases/99_plan_capabilities.sh",
+            "test/cases/4596_a_cancelled_dependency_has_one_meaning.sh",
+            "docs/PLANNING.md",
+            "site/content/plan/I4596.md"
+          ],
+          "serves": [],
+          "slug": "the-owner-decides-what-a-cancelled-dependency-means",
+          "updated_at": "2026-11-15",
+          "validation": [
+            "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 4596_a_cancelled_dependency_has_one_meaning 99_plan_capabilities",
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib plan::tests",
+            "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "label": "a-brief-is-reconciled-not-transcribed",
@@ -151292,6 +151329,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I4596",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4596",
+        "target": "majordomus://milestone/truthful-plan-surfaces",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -164168,8 +164215,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4493,
-      "edges": 10138,
+      "nodes": 4494,
+      "edges": 10140,
       "acyclic": false,
       "truncated": false
     }
