@@ -86,6 +86,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I2842` | shares scripts/pages with I4531; they may not run concurrently |
 | WARN | `scope_conflict` | `I2842` | shares .github/workflows/pages.yml with I4532; they may not run concurrently |
 | WARN | `scope_conflict` | `I2842` | shares .github/workflows/pages.yml with I4533; they may not run concurrently |
+| WARN | `scope_conflict` | `I2842` | shares .github/workflows/pages.yml with I4569; they may not run concurrently |
 | WARN | `scope_conflict` | `I2842` | shares apps/majordomus-cli/src/capability/builtin/served.rs with I4598; they may not run concurrently |
 | WARN | `scope_conflict` | `I3318` | shares test/cases with I3395; they may not run concurrently |
 | WARN | `scope_conflict` | `I3318` | shares test/cases with I3400; they may not run concurrently |

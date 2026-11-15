@@ -80818,19 +80818,26 @@
         "facts": {
           "created_at": "2026-11-10",
           "depends_on": [],
-          "desired_state": "The end of any release-path run resumes the yielded runs at once; the schedule stays as a backstop; resume stays a no-op while the path is busy.",
           "evidence_required": [
             "test"
           ],
           "milestone": "ci-critical-path",
           "non_scope": [
-            "Runs cancelled for another reason than the yield (a branch run's first red job cancels it; those carry no ci:yielded label and are not resumed)"
+            "Runs cancelled for another reason than the yield (a branch run's first red job cancels it; those carry no ci:yielded label and are not resumed)",
+            "Which runs yield, and preemption on a tag push: I2710",
+            "A train's top going first, and resume never re-running a held member: I4353",
+            "Stopping stuck or superseded runs: I3903",
+            "A workflow_run trigger: it does not fire for runs started by GITHUB_TOKEN",
+            "release-path.yml beyond its header comment: its schedule stays as the backstop"
           ],
           "parallel_safe": true,
           "priority": "p1",
           "profile": "implementation",
           "scope": [
             ".ai/repo/project/issues/I4569.yaml",
+            ".github/workflows/pages.yml",
+            ".github/workflows/release.yml",
+            ".github/workflows/validate.yml",
             ".github/workflows/release-path.yml",
             ".ai/repo/ci/release-path.yaml",
             "docs/CI.md",
@@ -80838,9 +80845,11 @@
           ],
           "serves": [],
           "slug": "a-yielded-run-resumes-when-the-path-clears",
+          "updated_at": "2026-11-15",
           "validation": [
-            "actionlint .github/workflows/release-path.yml",
-            "bash test/run.sh 3027_the_release_path_goes_first"
+            "actionlint .github/workflows/pages.yml .github/workflows/release.yml .github/workflows/validate.yml .github/workflows/release-path.yml",
+            "bash test/run.sh 3027_the_release_path_goes_first",
+            "bin/majordomus plan validate"
           ]
         }
       },

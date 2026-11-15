@@ -8,7 +8,7 @@ This page is the index. Each milestone's issues, and the findings about them, ar
 its own under [`plan-status/`](plan-status/), named by the milestone, so the plan grows by pages
 and no one page grows with it.
 
-Generated from canonical inputs `fe4fb3b5072a`.
+Generated from canonical inputs `7cf14c848818`.
 
 ## Milestones
 
@@ -518,17 +518,17 @@ Generated from canonical inputs `fe4fb3b5072a`.
 
 ## Findings
 
-10443 finding(s), each on the page of the milestone its subject is or belongs to:
+10457 finding(s), each on the page of the milestone its subject is or belongs to:
 
 | milestone | findings |
 |---|---|
 | [`M002`](plan-status/M002.md) | 38 |
 | [`M003`](plan-status/M003.md) | 10 |
-| [`M004`](plan-status/M004.md) | 477 |
+| [`M004`](plan-status/M004.md) | 479 |
 | [`a-bounded-task-is-carried-to-accepted-work`](plan-status/a-bounded-task-is-carried-to-accepted-work.md) | 71 |
 | [`a-change-is-judged-in-minutes`](plan-status/a-change-is-judged-in-minutes.md) | 88 |
 | [`a-claim-stands-only-on-its-evidence`](plan-status/a-claim-stands-only-on-its-evidence.md) | 212 |
-| [`a-derive-does-only-the-work-its-inputs-changed`](plan-status/a-derive-does-only-the-work-its-inputs-changed.md) | 65 |
+| [`a-derive-does-only-the-work-its-inputs-changed`](plan-status/a-derive-does-only-the-work-its-inputs-changed.md) | 66 |
 | [`a-finding-is-tracked-to-its-issue`](plan-status/a-finding-is-tracked-to-its-issue.md) | 5 |
 | [`a-newcomer-reaches-a-first-verified-intent`](plan-status/a-newcomer-reaches-a-first-verified-intent.md) | 17 |
 | [`a-paste-is-decomposed-by-a-skill`](plan-status/a-paste-is-decomposed-by-a-skill.md) | 17 |
@@ -542,7 +542,7 @@ Generated from canonical inputs `fe4fb3b5072a`.
 | [`a-session-proceeds-through-the-mesh`](plan-status/a-session-proceeds-through-the-mesh.md) | 72 |
 | [`a-test-fails-when-the-code-is-wrong`](plan-status/a-test-fails-when-the-code-is-wrong.md) | 44 |
 | [`a-version-follows-the-work`](plan-status/a-version-follows-the-work.md) | 25 |
-| [`a-visitor-understands-and-checks-majordomus`](plan-status/a-visitor-understands-and-checks-majordomus.md) | 2 |
+| [`a-visitor-understands-and-checks-majordomus`](plan-status/a-visitor-understands-and-checks-majordomus.md) | 3 |
 | [`adopter-upgrades`](plan-status/adopter-upgrades.md) | 652 |
 | [`an-authorised-node-connects-from-anywhere`](plan-status/an-authorised-node-connects-from-anywhere.md) | 12 |
 | [`an-outcome-becomes-a-reviewed-plan`](plan-status/an-outcome-becomes-a-reviewed-plan.md) | 16 |
@@ -551,7 +551,7 @@ Generated from canonical inputs `fe4fb3b5072a`.
 | [`automation`](plan-status/automation.md) | 70 |
 | [`campaigns-are-read-as-provenance`](plan-status/campaigns-are-read-as-provenance.md) | 24 |
 | [`capability-graph`](plan-status/capability-graph.md) | 14 |
-| [`ci-critical-path`](plan-status/ci-critical-path.md) | 382 |
+| [`ci-critical-path`](plan-status/ci-critical-path.md) | 387 |
 | [`command-and-deployment-criteria-are-judged`](plan-status/command-and-deployment-criteria-are-judged.md) | 6 |
 | [`delivery-economics-are-measured-over-declared-windows`](plan-status/delivery-economics-are-measured-over-declared-windows.md) | 1 |
 | [`derived-data-integrity`](plan-status/derived-data-integrity.md) | 32 |
@@ -570,19 +570,19 @@ Generated from canonical inputs `fe4fb3b5072a`.
 | [`landing-survives-any-session`](plan-status/landing-survives-any-session.md) | 14 |
 | [`mcp-transports-are-reliable`](plan-status/mcp-transports-are-reliable.md) | 218 |
 | [`measurements-are-tracked-over-time`](plan-status/measurements-are-tracked-over-time.md) | 18 |
-| [`merging-and-referencing-are-enforced`](plan-status/merging-and-referencing-are-enforced.md) | 36 |
+| [`merging-and-referencing-are-enforced`](plan-status/merging-and-referencing-are-enforced.md) | 38 |
 | [`mesh-journal-converges`](plan-status/mesh-journal-converges.md) | 167 |
 | [`one-kit-on-every-surface`](plan-status/one-kit-on-every-surface.md) | 22 |
 | [`peer-blackboard`](plan-status/peer-blackboard.md) | 9 |
 | [`prismatic-lumen`](plan-status/prismatic-lumen.md) | 13 |
-| [`public-proof`](plan-status/public-proof.md) | 133 |
+| [`public-proof`](plan-status/public-proof.md) | 134 |
 | [`recovery-from-injected-faults-is-proven`](plan-status/recovery-from-injected-faults-is-proven.md) | 2 |
 | [`repository-automation-is-typed`](plan-status/repository-automation-is-typed.md) | 34 |
 | [`runtime-adapters`](plan-status/runtime-adapters.md) | 107 |
 | [`runtime-lifecycle`](plan-status/runtime-lifecycle.md) | 54 |
 | [`runtime-trust`](plan-status/runtime-trust.md) | 36 |
 | [`safe-self-update`](plan-status/safe-self-update.md) | 531 |
-| [`surfaces-never-disagree`](plan-status/surfaces-never-disagree.md) | 380 |
+| [`surfaces-never-disagree`](plan-status/surfaces-never-disagree.md) | 381 |
 | [`test-evidence`](plan-status/test-evidence.md) | 28 |
 | [`the-corpus-is-registered-before-it-runs`](plan-status/the-corpus-is-registered-before-it-runs.md) | 5 |
 | [`the-mesh-works-out-of-the-box`](plan-status/the-mesh-works-out-of-the-box.md) | 253 |
@@ -592,6 +592,6 @@ Generated from canonical inputs `fe4fb3b5072a`.
 | [`the-session-domain-is-written-once`](plan-status/the-session-domain-is-written-once.md) | 6 |
 | [`the-ui-runs-and-explains`](plan-status/the-ui-runs-and-explains.md) | 19 |
 | [`the-ui-works-on-a-phone`](plan-status/the-ui-works-on-a-phone.md) | 17 |
-| [`truthful-plan-surfaces`](plan-status/truthful-plan-surfaces.md) | 313 |
+| [`truthful-plan-surfaces`](plan-status/truthful-plan-surfaces.md) | 314 |
 | [`two-folder-integration`](plan-status/two-folder-integration.md) | 9 |
 | [`web-sign-in`](plan-status/web-sign-in.md) | 39 |

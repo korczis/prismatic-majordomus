@@ -6,7 +6,7 @@
     "version": "1.0.2"
   },
   "registry": {
-    "fingerprint": "91e40a28d6ab56bcc6eeb6877e5309684f9a5fa42a87826d36e915dcc002221e",
+    "fingerprint": "3e5d84940a60e138dc564be49d4ed75004535e211300cc049b91f8efdc9554be",
     "summary": {
       "total": 4025,
       "builtin": 231,
@@ -97878,7 +97878,7 @@
     ]
   },
   "index": {
-    "fingerprint": "8c52271ddf644d7ff45315bc743cd163f20dc15cce106be40c674fbae673b458",
+    "fingerprint": "cdbabeb42abef13104dd2aa131a8246f9cb5fff253da523439c02136a5dca636",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -123014,11 +123014,11 @@
         "kind": "issue",
         "identity": "I4569",
         "title": "Pull-request runs that yielded to the release path run again when the release path's last run ends, not on the next scheduled tick",
-        "description": "release-path.yml runs `scripts/ci/release-path resume` on the completion of every workflow of the release path (release, pages, the record branch's validate) through a workflow_run trigger, so a yielded pull-request validate starts again within minutes of the path clearing, with the 15-minute schedule kept as the backstop.",
+        "description": "Every run of the release path asks `scripts/ci/release-path resume --self \\\"$GITHUB_RUN_ID\\\"` when it ends, from a final aggregate job of its own. That job needs every other job, carries a job-level `if: always()`, and holds the permissions resume needs, as validate.yml's `ci` job already does for runs that are not a pull request's. pages.yml and release.yml gain such a job. validate.yml's resume also runs for the record pull request's own run. A yielded pull-request validate then starts again when the run that held the path ends, and the schedule stays as the backstop. A workflow_run trigger in release-path.yml is not the mechanism: release.yml dispatches the path's pages and record-validate runs with the job's GITHUB_TOKEN, and GitHub starts no workflow from events that token causes, so their completion would start nothing.",
         "path": ".ai/repo/project/issues/I4569.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2741
+        "bytes": 6855
       },
       {
         "uri": "majordomus://issue/I4570",
