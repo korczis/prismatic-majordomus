@@ -51,7 +51,7 @@ events:
     emitted_by: finish
     requires: [task_id, outcome, contract]
     public: true
-    note: Written when finish accepts. Every refusal before it is a task.refused line, so an accepted task and one refused four times before passing no longer look the same in the ledger.
+    note: Written when finish accepts; verify carries the verification run, with the log its output was kept in and never the output itself. Every refusal before it is a task.refused line, so an accepted task and one refused four times before passing no longer look the same in the ledger.
 
   - id: task.refused
     title: Finish refused
@@ -59,7 +59,7 @@ events:
     emitted_by: finish
     requires: [task_id, outcome, unmet, refused]
     public: true
-    note: "Written each time finish refuses: unmet is the number of contract lines that failed, refused lists the doctrines among them, and contract carries every doctrine's verdict as task.finished does. finish --check writes nothing, because a check asks and a finish claims. This is what makes the tool's own benefit countable: a refusal that was later satisfied is a false done that was caught, and until this event existed it left no trace (the finish-refusal-leaves-no-trace row of docs/HARDCODING_LEDGER.yaml)."
+    note: "Written each time finish refuses: unmet is the number of contract lines that failed, refused lists the doctrines among them, and contract carries every doctrine's verdict as task.finished does; when the verify command ran, verify carries the run as task.finished does (command, exit, seconds, and log, log_bytes and log_lines naming the kept output under state/verify/; tree only for a run that passed over a settled tree), so a refused verification says where its output is (I3123). finish --check writes nothing, because a check asks and a finish claims. This is what makes the tool's own benefit countable: a refusal that was later satisfied is a false done that was caught, and until this event existed it left no trace (the finish-refusal-leaves-no-trace row of docs/HARDCODING_LEDGER.yaml)."
 
   - id: decision.recorded
     title: Decision recorded

@@ -570,6 +570,16 @@
       "external": false
     },
     {
+      "id": ".ai/local/state/verify",
+      "kind": "artifact",
+      "label": "local/state/verify",
+      "command": null,
+      "summary": null,
+      "read_only": null,
+      "route": null,
+      "external": false
+    },
+    {
       "id": ".ai/repo/skills",
       "kind": "artifact",
       "label": "repo/skills",
@@ -2384,6 +2394,11 @@
     {
       "source": "lib/finish.sh",
       "target": ".ai/local/state/current.yaml",
+      "kind": "writes"
+    },
+    {
+      "source": "lib/finish.sh",
+      "target": ".ai/local/state/verify",
       "kind": "writes"
     },
     {

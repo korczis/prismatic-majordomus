@@ -1886,7 +1886,10 @@ Evaluate the finish contract. Refuse if unmet.
 **Reads:** policy, profile, `current.yaml`, git, ledger.
 **Writes:** on success, `current.yaml` outcome set to the given value, one
 `task.finished` ledger line carrying the evaluated checklist and the verification
-result, and a copy of `--note` under `state/completed/<id>.md` when given.
+result, and a copy of `--note` under `state/completed/<id>.md` when given. Every run of
+`--verify-command` also writes its output to `state/verify/<stamp>--<id>--<attempt>.log`;
+the newest 20 logs are kept. A refusal writes one `task.refused` line, which carries the same
+verification object when the command ran.
 
 **Arguments:** `--outcome completed|partial|blocked|no_match|failed` required.
 `--verify-command "<cmd>"` runs the project's own verification in the repository root
@@ -1894,7 +1897,11 @@ and records its exit code, duration, command, and the git tree id of the working
 ran over. The tree is read before and after the run: if it changed while the command was
 running — a second worker in the same checkout, a person saving a file, a command that
 rewrites tracked files — the run describes neither state and the line fails; run it again
-once the tree is settled. `--note <file>` supplies the
+once the tree is settled. The command's stdout and stderr go to its log. After the contract,
+a run that failed prints the log's last 20 lines under `verify output, last <n> of <m>
+line(s) of <log>:`, and any other run prints `verify output: <log>, <m> line(s)`. The
+contract lines stay as they were. The ledger records the log's path, size and line count
+(`log`, `log_bytes`, `log_lines`) and never the output itself. `--note <file>` supplies the
 completion note; otherwise the newest handover naming this task is used. `--check`
 evaluates scope and state without writing and exits `0` when no task is active or the
 task is already finished, so a pre-push hook never blocks a repository with nothing to
