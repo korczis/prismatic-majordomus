@@ -24,10 +24,10 @@ serves: []
 acceptance_criteria:
   - "Positive 1 of the proposer's fixtures (Zola/Tera template): a toggle button with data-drawer-target=\"sidebar\" and data-drawer-toggle=\"sidebar\", <aside id=\"sidebar\"> whose aria-label is the Tera expression calling the tr shortcode with key landmark.sidebar, and a <nav> whose aria-label is the same expression with key landmark.breadcrumb, holding an <ol>, raise no S5 finding for the sidebar or the breadcrumb"
   - "Positive 2 (rendered EN, the same toggle): <aside id=\"sidebar\" aria-label=\"Sidebar\"> and <nav class=\"mb-8 flex\" aria-label=\"Breadcrumb\"> holding an <ol> raise none"
-  - "Positive 3 (rendered CS, the same toggle): <aside id=\"sidebar\" aria-label=\"Postranní panel\"> and <nav class=\"mb-8 flex\" aria-label=\"Drobečková navigace\"> holding an <ol> raise none"
-  - "Negative sidebar 1: <aside id=\"sidebar\" aria-label=\"Postranní panel\"> with no data-drawer-target or data-drawer-toggle naming sidebar anywhere fails S5, naming the missing toggle"
+  - "Positive 3 (rendered CS, the same toggle): <aside id=\"sidebar\"> whose aria-label is the Czech sidebar label (\"side panel\") and <nav class=\"mb-8 flex\"> whose aria-label is the Czech breadcrumb label (\"breadcrumb navigation\"), holding an <ol>, raise none"
+  - "Negative sidebar 1: <aside id=\"sidebar\"> labelled with the Czech sidebar label, with no data-drawer-target or data-drawer-toggle naming sidebar anywhere, fails S5, naming the missing toggle"
   - "Negative sidebar 2: <button data-drawer-target=\"sidebar\" data-drawer-toggle=\"sidebar\"> with <aside id=\"sidebar\"> and no aria-label fails S5, naming the missing label"
-  - "Negative breadcrumb 1: <nav class=\"mb-8 flex\" aria-label=\"Drobečková navigace\"><a href=\"/\">Domů</a></nav>, a labelled nav with no <ol> and no Pro breadcrumb classes, fails S5"
+  - "Negative breadcrumb 1: <nav class=\"mb-8 flex\"> labelled with the Czech breadcrumb label and holding only a link home (<a href=\"/\">, its text the Czech word for home), a labelled nav with no <ol> and no Pro breadcrumb classes, fails S5"
   - "Negative breadcrumb 2: <nav aria-label=\" \"><ol><li><a href=\"/\">Home</a></li></ol></nav>, a whitespace label, fails S5"
   - "The seven fixtures are unit tests in kit.rs, and s5_every_part_of_the_shell_is_owed is rewritten to remove structure (the label, the toggle, the list) instead of replacing one English word with another; each fails against kit.rs and flowbite-pro.yaml at defd88e5896 where that version decides otherwise (positive 1 and 3 and negative breadcrumb 1)"
 validation:

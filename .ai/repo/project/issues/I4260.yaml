@@ -32,3 +32,9 @@ evidence:
     result: "check: FAIL scope package.json, outside claimed scope. A partial ECharts bundle needed esbuild in package.json and package-lock.json. The only exit was handover --close on task t-20261114161439-96ea, which had no commits, then a fresh start (t-20261114162648-a7df) with package.json and package-lock.json added. That task landed 35d7350 and 5f272e0. Same adopter, 2026-11-12: a generator (build-i18n) rewrote zola.toml outside a task's scope and finish was refused under scope-integrity, closed the same way. majordomus 1.0.1."
     url: "https://github.com/korczis/korczis.github.io/commit/5f272e072742db3c875b123ebf05fff0a1123092"
     recorded_at: 2026-11-14T18:24:21Z
+  - covers: third-adopter
+    type: manual
+    command: "git push  # korczis/oscilla pre-push: majordomus finish --check"
+    result: "From oscilla-ff (OSCILLA session cae276ab, 2026-11-15), a third adopter. finish --check refused the pre-push three times in one session where the work honestly reached past the task's scope: R050 (modulation.js), V503 (audio/clock.js and the synth sinks) and V508 (main.js). The only remedy each time was finish --outcome partial and a fresh start with the wider scope."
+    url: "https://github.com/korczis/oscilla/pull/562"
+    recorded_at: 2026-11-15T19:10:56Z

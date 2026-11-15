@@ -25000,6 +25000,15 @@
           "artifact": "",
           "commit": "0dff496d1c312ce4a8d37ac5d6667b522beb4905",
           "recorded_at": "2026-10-14T14:53:08Z"
+        },
+        {
+          "covers": "adopter-release-record-red-for-hours",
+          "type": "manual",
+          "command": "the release-record unit test on every open korczis/oscilla branch, after v3.38.0",
+          "result": "From oscilla-ff (OSCILLA session cae276ab, 2026-11-15). OSCILLA v3.38.0 was published at 10:56Z. From the six-hour mark every branch's release-record unit test went red ('recorded neither in this checkout nor on origin/main') while the record rode the frozen release train T23 (c4a41d76), so every open pull request was red on that one test for hours. A tag still turned other pull requests red until its record landed.",
+          "artifact": "",
+          "commit": "",
+          "recorded_at": "2026-11-15T19:10:56Z"
         }
       ],
       "risk": "Loosening the check by reading open pull requests makes a structure gate depend on the forge; proposing the record before the tag changes the release order every session follows.",
@@ -51333,7 +51342,17 @@
       "evidence_required": [
         "test_unobserved_is_not_drift"
       ],
-      "evidence": [],
+      "evidence": [
+        {
+          "covers": "third-adopter-drift-is-all-unread",
+          "type": "manual",
+          "command": "majordomus plan drift  # on korczis/oscilla main 474ce9c3",
+          "result": "From oscilla-ff (OSCILLA session cae276ab, 2026-11-15). plan drift printed 426 findings, every one done_without_trace with the source merged_titles unread. The real drift was 40 READY issues that feat/fix/test commit subjects on the trunk already name (C024, K225, K246 and others), found only by grepping git log origin/main --format=%s; 19 were stamped after an audit in PR 562. An unread source produced 426 findings and hid the 40 real ones.",
+          "artifact": "",
+          "commit": "",
+          "recorded_at": "2026-11-15T19:10:56Z"
+        }
+      ],
       "risk": "",
       "completion": "",
       "started_at": "",
@@ -52919,7 +52938,17 @@
       "evidence_required": [
         "bench_adoption_overhead"
       ],
-      "evidence": [],
+      "evidence": [
+        {
+          "covers": "adopter-plan-commands-measured-under-load",
+          "type": "manual",
+          "command": "majordomus plan start|verify|evidence|done <id>  # korczis/oscilla on the shared Mac, load about 40",
+          "result": "From oscilla-ff (OSCILLA session cae276ab, 2026-11-15). Measurement: plan start, verify, evidence and done took about 2 minutes per issue at a load of about 40 on the shared Mac; stamping 16 issues ran past a 10-minute tool timeout.",
+          "artifact": "",
+          "commit": "",
+          "recorded_at": "2026-11-15T19:10:56Z"
+        }
+      ],
       "risk": "",
       "completion": "",
       "started_at": "",
@@ -69908,6 +69937,15 @@
           "artifact": "",
           "commit": "",
           "recorded_at": "2026-11-14T18:24:21Z"
+        },
+        {
+          "covers": "third-adopter",
+          "type": "manual",
+          "command": "git push  # korczis/oscilla pre-push: majordomus finish --check",
+          "result": "From oscilla-ff (OSCILLA session cae276ab, 2026-11-15), a third adopter. finish --check refused the pre-push three times in one session where the work honestly reached past the task's scope: R050 (modulation.js), V503 (audio/clock.js and the synth sinks) and V508 (main.js). The only remedy each time was finish --outcome partial and a fresh start with the wider scope.",
+          "artifact": "",
+          "commit": "",
+          "recorded_at": "2026-11-15T19:10:56Z"
         }
       ],
       "risk": "",
@@ -74460,7 +74498,17 @@
         "rust",
         "an_adopter_merge_is_attributed_to_its_record"
       ],
-      "evidence": [],
+      "evidence": [
+        {
+          "covers": "third-adopter-drift-misses-commit-subjects",
+          "type": "manual",
+          "command": "majordomus plan drift  # on korczis/oscilla main 474ce9c3; compare git log origin/main --format=%s",
+          "result": "From oscilla-ff (OSCILLA session cae276ab, 2026-11-15). plan drift printed 426 findings, every one done_without_trace with the source merged_titles unread. The real drift was 40 READY issues that feat/fix/test commit subjects on the trunk already name (C024, K225, K246 and others), found only by grepping git log origin/main --format=%s; 19 were stamped after an audit in PR 562. The trunk's commit subjects named the records, and drift read none of them.",
+          "artifact": "",
+          "commit": "",
+          "recorded_at": "2026-11-15T19:10:56Z"
+        }
+      ],
       "risk": "",
       "completion": "",
       "started_at": "",
@@ -75442,7 +75490,17 @@
       "evidence_required": [
         "named_trunk_commit_case"
       ],
-      "evidence": [],
+      "evidence": [
+        {
+          "covers": "third-adopter-stamp-records-head",
+          "type": "manual",
+          "command": "majordomus plan evidence <id> ...  # majordomus 1.0.1 installed in korczis/oscilla, which has no --commit, on a branch carrying one local commit",
+          "result": "From oscilla-ff (OSCILLA session cae276ab, 2026-11-15). The installed 1.0.1 has no --commit, so plan evidence recorded HEAD. Stamping 16 issues on a branch carrying one local commit wrote that commit, a114e280, into all 16 records. OSCILLA's V272 D4 unit test caught it ('commit ... is not on main'), and the 16 stamps were hand-edited to the trunk commit 474ce9c3. Reproduce: korczis/oscilla PR 562, commits a114e280 then 8edf9737.",
+          "artifact": "",
+          "commit": "",
+          "recorded_at": "2026-11-15T19:10:56Z"
+        }
+      ],
       "risk": "",
       "completion": "",
       "started_at": "",
@@ -80398,10 +80456,10 @@
       "acceptance_criteria": [
         "Positive 1 of the proposer's fixtures (Zola/Tera template): a toggle button with data-drawer-target=\\\"sidebar\\\" and data-drawer-toggle=\\\"sidebar\\\", <aside id=\\\"sidebar\\\"> whose aria-label is the Tera expression calling the tr shortcode with key landmark.sidebar, and a <nav> whose aria-label is the same expression with key landmark.breadcrumb, holding an <ol>, raise no S5 finding for the sidebar or the breadcrumb",
         "Positive 2 (rendered EN, the same toggle): <aside id=\\\"sidebar\\\" aria-label=\\\"Sidebar\\\"> and <nav class=\\\"mb-8 flex\\\" aria-label=\\\"Breadcrumb\\\"> holding an <ol> raise none",
-        "Positive 3 (rendered CS, the same toggle): <aside id=\\\"sidebar\\\" aria-label=\\\"Postranní panel\\\"> and <nav class=\\\"mb-8 flex\\\" aria-label=\\\"Drobečková navigace\\\"> holding an <ol> raise none",
-        "Negative sidebar 1: <aside id=\\\"sidebar\\\" aria-label=\\\"Postranní panel\\\"> with no data-drawer-target or data-drawer-toggle naming sidebar anywhere fails S5, naming the missing toggle",
+        "Positive 3 (rendered CS, the same toggle): <aside id=\\\"sidebar\\\"> whose aria-label is the Czech sidebar label (\\\"side panel\\\") and <nav class=\\\"mb-8 flex\\\"> whose aria-label is the Czech breadcrumb label (\\\"breadcrumb navigation\\\"), holding an <ol>, raise none",
+        "Negative sidebar 1: <aside id=\\\"sidebar\\\"> labelled with the Czech sidebar label, with no data-drawer-target or data-drawer-toggle naming sidebar anywhere, fails S5, naming the missing toggle",
         "Negative sidebar 2: <button data-drawer-target=\\\"sidebar\\\" data-drawer-toggle=\\\"sidebar\\\"> with <aside id=\\\"sidebar\\\"> and no aria-label fails S5, naming the missing label",
-        "Negative breadcrumb 1: <nav class=\\\"mb-8 flex\\\" aria-label=\\\"Drobečková navigace\\\"><a href=\\\"/\\\">Domů</a></nav>, a labelled nav with no <ol> and no Pro breadcrumb classes, fails S5",
+        "Negative breadcrumb 1: <nav class=\\\"mb-8 flex\\\"> labelled with the Czech breadcrumb label and holding only a link home (<a href=\\\"/\\\">, its text the Czech word for home), a labelled nav with no <ol> and no Pro breadcrumb classes, fails S5",
         "Negative breadcrumb 2: <nav aria-label=\\\" \\\"><ol><li><a href=\\\"/\\\">Home</a></li></ol></nav>, a whitespace label, fails S5",
         "The seven fixtures are unit tests in kit.rs, and s5_every_part_of_the_shell_is_owed is rewritten to remove structure (the label, the toggle, the list) instead of replacing one English word with another; each fails against kit.rs and flowbite-pro.yaml at defd88e5896 where that version decides otherwise (positive 1 and 3 and negative breadcrumb 1)"
       ],
