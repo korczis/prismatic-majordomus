@@ -17,7 +17,7 @@ note
 # A verification that leaves the tree as it found it is recorded with that tree's id.
 expect_exit 0 "$MJ" finish --outcome completed --verify-command "test -d .ai"
 expect_grep 'OK +verification .*exit 0, [0-9]+s, tree [0-9a-f]{12}'
-expect_grep '"verify":\{"command":"test -d \.ai","exit":0,"seconds":[0-9]+,"tree":"[0-9a-f]{40}"\}' .ai/local/state/ledger.jsonl
+expect_grep '"verify":\{"command":"test -d \.ai","exit":0,"seconds":[0-9]+,"tree":"[0-9a-f]{40}"[,}]' .ai/local/state/ledger.jsonl
 tree1="$(sed -n 's/.*"tree":"\([0-9a-f]*\)".*/\1/p' .ai/local/state/ledger.jsonl | tail -n1)"
 [ "$tree1" = "$(idx="$(mktemp -u "${TMPDIR:-/tmp}/mj-t.XXXXXX")"; GIT_INDEX_FILE="$idx" git read-tree HEAD && GIT_INDEX_FILE="$idx" git add -A && GIT_INDEX_FILE="$idx" git write-tree; rm -f "$idx")" ] \
   || { printf '    the recorded tree is not the tree that is here: %s\n' "$tree1"; exit 1; }

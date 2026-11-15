@@ -13,6 +13,9 @@
 
 MJ_FINISH_OUTCOME=""; MJ_FINISH_VERIFY=""; MJ_FINISH_NOTE=""
 MJ_FINISH_VEXIT=""; MJ_FINISH_VSECS=""; MJ_FINISH_VTREE=""
+MJ_FINISH_VLOG=""; MJ_FINISH_VLOG_BYTES=""; MJ_FINISH_VLOG_LINES=""
+# How many verify logs state/verify/ keeps, and how many of a refused run's last lines are shown.
+MJ_FINISH_VLOGS_KEPT=20; MJ_FINISH_VLOG_TAIL=20
 export MJ_FINISH_OUTCOME
 
 mj_cmd_finish() {
@@ -29,6 +32,8 @@ usage: majordomus finish --outcome <completed|partial|blocked|no_match|failed> [
   evaluates every line of the finish contract, prints pass/fail for each, refuses (10) if any fails
   --verify-command  the project's own verification; its command, exit code, duration and the
                     tree it ran over are recorded, and a tree that changed under it is not a pass.
+                    Its output is kept in .ai/local/state/verify/ (the newest 20 runs); finish
+                    names the log, and a run that failed prints the log's last lines.
                     A command that cannot verify anything (true, :, exit 0, only echo) is refused
   --note            a completion note (required sections as a handover); otherwise the newest handover for this task is used
   --check           evaluate the current task against scope and state without writing; exit 0 when no task is active
@@ -84,6 +89,7 @@ H
   fi
   MJ_FINISH_OUTCOME="$outcome"; MJ_FINISH_VERIFY="$verify"; MJ_FINISH_NOTE="$note"
   MJ_FINISH_VEXIT=""; MJ_FINISH_VSECS=""; MJ_FINISH_VTREE=""
+  MJ_FINISH_VLOG=""; MJ_FINISH_VLOG_BYTES=""; MJ_FINISH_VLOG_LINES=""
   # A scope that `start` could not claim — no server answered then — is claimed now, before
   # the contract is judged (I2289): a server that came up since is all the task was missing.
   if ! grep -q '^mesh_claim: ' "$MJ_CUR" 2>/dev/null && mj_mesh_declared_enabled; then
@@ -115,6 +121,9 @@ H
     for d in $refused; do refused_json="$refused_json\"$d\","; done
     local fields="\"task_id\":\"$id\",\"outcome\":\"$outcome\",\"unmet\":$unmet"
     fields="$fields,\"refused\":[${refused_json%,}],\"contract\":$contract"
+    # A refusal whose verification ran carries the run, as task.finished does: which command,
+    # its exit, its seconds and where its output is (I3123).
+    [ -n "$MJ_FINISH_VEXIT" ] && fields="$fields,\"verify\":$(mj_finish_verify_json "$verify")"
     mj_ledger_append task.refused "$fields" "$sid"
     if [ "$MJ_JSON" != 1 ]; then
       printf 'finish: refused, %s unmet\n' "$unmet"
@@ -122,6 +131,7 @@ H
       # $refused is a space-separated list of doctrine ids, split here on purpose.
       # shellcheck disable=SC2086
       [ -n "$refused" ] && { printf 'blocking doctrines:\n'; printf '%s\n' $refused | sed 's/^/- /'; }
+      mj_finish_verify_report
     fi
     exit "$MJ_EX_CONTRACT"
   fi
@@ -136,7 +146,7 @@ H
   fi
   local now; now="$(mj_now)"
   sed -e "s/^outcome: .*/outcome: $outcome/" -e "s/^checkpoint_at: .*/checkpoint_at: $now/" "$MJ_CUR" > "$MJ_CUR.mj-tmp" && mv "$MJ_CUR.mj-tmp" "$MJ_CUR"
-  local vj=null; [ -n "$MJ_FINISH_VEXIT" ] && vj="{\"command\":\"$(mj_json_esc "$verify")\",\"exit\":$MJ_FINISH_VEXIT,\"seconds\":$MJ_FINISH_VSECS${MJ_FINISH_VTREE:+,\"tree\":\"$MJ_FINISH_VTREE\"}}"
+  local vj=null; [ -n "$MJ_FINISH_VEXIT" ] && vj="$(mj_finish_verify_json "$verify")"
   # This task's checkpoints, not every one in the store: a checkpoint another episode wrote
   # beside this task names no task (ADR 0164), and one of an earlier task names its own.
   local cps=0
@@ -145,7 +155,7 @@ H
   local fields="\"task_id\":\"$id\",\"outcome\":\"$outcome\",\"contract\":$contract"
   mj_ledger_append task.finished "$fields,\"verify\":$vj,\"checkpoints\":$cps" "$sid"
   mj_mesh_task_release "$id"
-  [ "$MJ_JSON" = 1 ] || printf 'finish: %s %s\n' "$id" "$outcome"
+  [ "$MJ_JSON" = 1 ] || { mj_finish_verify_report; printf 'finish: %s %s\n' "$id" "$outcome"; }
 }
 
 # the doctrine index whose policy_key is <key>, or failure
@@ -208,13 +218,30 @@ mj_validate_verification() {
   # about the tree it started on and nothing about the tree it left, so it is not a pass,
   # and the tree that a run did prove is recorded with it.
   local t0 t1 vexit before after; before="$(mj_worktree_tree_id)"; t0="$(date +%s)"
+  # What the command printed is kept (I3123). It went to /dev/null, so a refusal said
+  # `<cmd> — exit 1, 412s` and the worker refused had nothing to read; integrators wrapped the
+  # verify in `bash -c 'set -o pipefail; <cmd> 2>&1 | tee <log>'` to get it back. The log is
+  # under state/, which git ignores, so writing it does not move the tree judged here.
+  # A log is named <UTC stamp>--<task>--<attempt>.log: the stamp first, so that the name order
+  # is the age order; the attempt so that two runs in one second do not share a log.
+  local vdir="$MJ_STATE_DIR/verify" vout=/dev/null n=1
+  if mkdir -p "$vdir" 2>/dev/null; then
+    while [ -n "$(find "$vdir" -maxdepth 1 -name "*--$id--$n.log" 2>/dev/null)" ]; do n=$((n+1)); done
+    MJ_FINISH_VLOG="$vdir/$(date -u +%Y%m%dT%H%M%SZ)--$id--$n.log"; vout="$MJ_FINISH_VLOG"
+  fi
   # The verify command is the project's own verification, run as a worker would run it. The
   # outcome this finish claims is its own state: a `check` the command runs that saw it would
   # judge obligations and gates as a completed finish and refuse, so it is not exported there.
-  if ( cd "$MJ_ROOT" && unset MJ_FINISH_OUTCOME && sh -c "$MJ_FINISH_VERIFY" ) > /dev/null 2>&1; then vexit=0; else vexit=$?; fi
+  if ( cd "$MJ_ROOT" && unset MJ_FINISH_OUTCOME && sh -c "$MJ_FINISH_VERIFY" ) > "$vout" 2>&1; then vexit=0; else vexit=$?; fi
   t1="$(date +%s)"; after="$(mj_worktree_tree_id)"
   MJ_FINISH_VEXIT="$vexit"; MJ_FINISH_VSECS=$((t1-t0)); MJ_FINISH_VTREE="$after"
+  if [ -n "$MJ_FINISH_VLOG" ] && [ -f "$MJ_FINISH_VLOG" ]; then
+    MJ_FINISH_VLOG_BYTES="$(wc -c < "$MJ_FINISH_VLOG" | tr -d ' ')"
+    MJ_FINISH_VLOG_LINES="$(awk 'END { print NR }' "$MJ_FINISH_VLOG")"
+    mj_finish_verify_prune "$vdir" "$MJ_FINISH_VLOGS_KEPT"
+  else MJ_FINISH_VLOG=""; fi
   if [ "$vexit" != 0 ]; then
+    MJ_FINISH_VTREE=""   # a failed run proved no tree
     mj_doctrine_fail verification "$id" "$MJ_FINISH_VERIFY — exit $vexit, ${MJ_FINISH_VSECS}s" "$MJ_FINISH_VERIFY"; return 0; fi
   if [ -n "$before" ] && [ -n "$after" ] && [ "$before" != "$after" ]; then
     MJ_FINISH_VTREE=""
@@ -223,6 +250,48 @@ mj_validate_verification() {
       "git status --porcelain; $MJ_FINISH_VERIFY"; return 0; fi
   mj_doctrine_ok verification "$id" "$MJ_FINISH_VERIFY — exit 0, ${MJ_FINISH_VSECS}s${after:+, tree ${after:0:12}}"
   return 0
+}
+
+# The verify object of a ledger line: command, exit, seconds, the tree a passing run proved,
+# and where its output is. The output itself never enters the ledger — the ledger is the
+# record every reader replays, and a verify prints whatever the project prints — only the
+# log's repository-relative path, its size and its line count.
+mj_finish_verify_json() {
+  local j
+  j="{\"command\":\"$(mj_json_esc "$1")\",\"exit\":$MJ_FINISH_VEXIT"
+  j="$j,\"seconds\":$MJ_FINISH_VSECS"
+  [ -n "$MJ_FINISH_VTREE" ] && j="$j,\"tree\":\"$MJ_FINISH_VTREE\""
+  if [ -n "$MJ_FINISH_VLOG" ]; then
+    j="$j,\"log\":\"$(mj_json_esc "$(mj_rel "$MJ_FINISH_VLOG")")\""
+    j="$j,\"log_bytes\":${MJ_FINISH_VLOG_BYTES:-0},\"log_lines\":${MJ_FINISH_VLOG_LINES:-0}"
+  fi
+  printf '%s}' "$j"
+}
+
+# Where the verification's output is, said once after the contract: a run that failed shows
+# its last lines, so the worker refused reads why without opening anything, and any other run
+# names its log. The contract lines themselves are unchanged — they are what a recorded run
+# (README.md, the challenge) quotes — so the log is named on a line of its own.
+mj_finish_verify_report() {
+  [ -n "$MJ_FINISH_VLOG" ] && [ -f "$MJ_FINISH_VLOG" ] || return 0
+  local lines="${MJ_FINISH_VLOG_LINES:-0}" shown="$MJ_FINISH_VLOG_TAIL"
+  if [ "${MJ_FINISH_VEXIT:-0}" = 0 ] || [ "$lines" = 0 ]; then
+    printf 'verify output: %s, %s line(s)\n' "$(mj_rel "$MJ_FINISH_VLOG")" "$lines"; return 0
+  fi
+  [ "$lines" -lt "$shown" ] && shown="$lines"
+  printf 'verify output, last %s of %s line(s) of %s:\n' \
+    "$shown" "$lines" "$(mj_rel "$MJ_FINISH_VLOG")"
+  tail -n "$shown" "$MJ_FINISH_VLOG" | sed 's/^/  /'
+}
+
+# mj_finish_verify_prune <dir> <keep>: remove all but the newest <keep> logs. A log's name
+# begins with its UTC stamp, so the name order is the age order.
+mj_finish_verify_prune() {
+  local n
+  n="$(find "$1" -maxdepth 1 -type f -name '*.log' | wc -l | tr -d ' ')"
+  [ "$n" -gt "$2" ] || return 0
+  find "$1" -maxdepth 1 -type f -name '*.log' | LC_ALL=C sort | head -n "$((n - $2))" \
+    | while IFS= read -r f; do rm -f "$f"; done
 }
 
 mj_validate_note() {
