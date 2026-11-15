@@ -22,6 +22,10 @@ verification:
     - state_updated
     - no_open_blockers
     - note_present
+  # A push whose tree is not the tree the branch's last finished task verified, as the
+  # pre-push `finish --check` finds it: off, info, warning (absent) or error, which refuses.
+  # A merge of the trunk after the verification changes the tree legitimately.
+  pushed_tree_unverified: warning
 
 checkpoint:
   max_body_lines: 40                     # a checkpoint is a progress note, not a report

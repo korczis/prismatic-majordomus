@@ -85,6 +85,7 @@ verification:
     - state_updated
     - no_open_blockers
     - note_present
+  pushed_tree_unverified: warning        # finish --check: a pushed tree the branch's last finished task did not verify; off | info | warning | error (refuses)
 
 checkpoint:
   max_body_lines: 40                     # a body over this is refused, not truncated

@@ -16,30 +16,43 @@ MJ_FINISH_VEXIT=""; MJ_FINISH_VSECS=""; MJ_FINISH_VTREE=""
 export MJ_FINISH_OUTCOME
 
 mj_cmd_finish() {
-  local outcome="" verify="" check=0 note=""
+  local outcome="" verify="" check=0 note="" pushed="" pushed_given=0
   while [ $# -gt 0 ]; do case "$1" in
     --outcome) [ $# -ge 2 ] || mj_die "$MJ_EX_USAGE" "--outcome needs a value"; outcome="$2"; shift 2 ;;
     --outcome=*) outcome="${1#--outcome=}"; shift ;;
     --verify-command) [ $# -ge 2 ] || mj_die "$MJ_EX_USAGE" "--verify-command needs a command"; verify="$2"; shift 2 ;;
     --note) [ $# -ge 2 ] || mj_die "$MJ_EX_USAGE" "--note needs a file"; note="$2"; shift 2 ;;
     --check) check=1; shift ;;
+    --pushed) [ $# -ge 2 ] || mj_die "$MJ_EX_USAGE" "--pushed needs the commits a push publishes (\"\" for none)"; pushed="$2"; pushed_given=1; shift 2 ;;
+    --pushed=*) pushed="${1#--pushed=}"; pushed_given=1; shift ;;
     --help|-h) cat <<H
 usage: majordomus finish --outcome <completed|partial|blocked|no_match|failed> [--verify-command "<cmd>"] [--note <file>]
-       majordomus finish --check
+       majordomus finish --check [--pushed "<commits>"]
   evaluates every line of the finish contract, prints pass/fail for each, refuses (10) if any fails
   --verify-command  the project's own verification; its command, exit code, duration and the
                     tree it ran over are recorded, and a tree that changed under it is not a pass.
                     A command that cannot verify anything (true, :, exit 0, only echo) is refused
   --note            a completion note (required sections as a handover); otherwise the newest handover for this task is used
-  --check           evaluate the current task against scope and state without writing; exit 0 when no task is active
+  --check           evaluate the current task against scope and state without writing; exit 0 when no task is active.
+                    With no task active, or the task finished, the tree a push publishes is compared with
+                    the tree this branch's last finished task verified, at verification.pushed_tree_unverified
+  --pushed          with --check: the commits the push publishes for this branch, space-separated; "" is none.
+                    Absent, MAJORDOMUS_PUSHED when it is set (a hook's way to say it), else HEAD
 H
       return 0 ;;
     *) mj_die "$MJ_EX_USAGE" "finish: unknown option $1" ;;
   esac; done
+  [ "$pushed_given" = 0 ] || [ "$check" = 1 ] || mj_die "$MJ_EX_USAGE" "finish: --pushed is a question of --check"
+  # A hook says what it pushes without changing the line doctor verifies: MAJORDOMUS_PUSHED,
+  # set (even empty), is --pushed; the flag wins when both are given.
+  if [ "$pushed_given" = 0 ] && [ -n "${MAJORDOMUS_PUSHED+set}" ]; then
+    pushed="$MAJORDOMUS_PUSHED"; pushed_given=1
+  fi
   mj_require_installed
   mj_load_policy || mj_die "$MJ_EX_CONTRACT" "policy does not parse (run: majordomus doctor)"
   if ! mj_load_current; then
-    [ "$check" = 1 ] && { mj_info finish "-" "no active task; nothing to enforce"; return 0; }
+    [ "$check" = 1 ] && { mj_info finish "-" "no active task; nothing to enforce"
+      mj_finish_pushed_tree "$pushed_given" "$pushed"; return 0; }
     mj_die "$MJ_EX_MISSING" "no active task ($(mj_rel "$MJ_STATE_DIR")/current.yaml); run: majordomus start"
   fi
   local id profile; id="$(mj_cur id)"; profile="$(mj_cur profile)"
@@ -52,7 +65,8 @@ H
   mj_load_profile "$profile" || mj_die "$MJ_EX_MISSING" "task references profile '$profile' which has no file"
   case "$(mj_cur outcome)" in
     active) ;;
-    *) [ "$check" = 1 ] && { mj_info finish "$id" "already $(mj_cur outcome)"; return 0; }
+    *) [ "$check" = 1 ] && { mj_info finish "$id" "already $(mj_cur outcome)"
+         mj_finish_pushed_tree "$pushed_given" "$pushed"; return 0; }
        mj_die "$MJ_EX_REFUSED" "task $id is already $(mj_cur outcome); run majordomus start for new work" ;;
   esac
 
@@ -146,6 +160,52 @@ H
   mj_ledger_append task.finished "$fields,\"verify\":$vj,\"checkpoints\":$cps" "$sid"
   mj_mesh_task_release "$id"
   [ "$MJ_JSON" = 1 ] || printf 'finish: %s %s\n' "$id" "$outcome"
+}
+
+# mj_finish_pushed_tree <given> <commits>
+#
+# Is what a push publishes for this branch the tree this branch last verified (I4610)? A
+# finish records the tree its verification proved (`verify.tree`, case 572), and until this
+# was asked nothing read it back at the moment it matters: once the task was finished, the
+# pre-push `finish --check` returned at "already completed" or "no active task", and an
+# integrator who had verified one tree would have pushed a different HEAD without a word.
+#
+# The subject is each commit of <commits> when <given> is 1 (the hook says what it pushes,
+# and "" is nothing of this branch), otherwise HEAD. The record is the branch's last
+# task.finished line in this checkout's ledger: a task finished on another branch verified
+# another branch's tree, and one that recorded no tree (no verification ran, or a partial
+# outcome) proved nothing to compare with. A merge of the trunk after the verification
+# changes the tree legitimately, which is why the default level is warning and the remedy
+# names both ways out. verification.pushed_tree_unverified decides: off, info, warning
+# (absent) or error, which refuses the push (exit 10). Reads the record; never re-verifies.
+mj_finish_pushed_tree() {
+  local given="$1" commits="$2" level branch line task vtree vcmd c tree
+  # the skeleton declares the key; a policy older than it reads as the schema says absent is
+  case "$(mj_pol verification.pushed_tree_unverified)" in
+    off) return 0 ;; info) level=INFO ;; error) level=FAIL ;; *) level=WARN ;;
+  esac
+  branch="$(mj_git_branch)"; [ "$branch" = DETACHED ] && return 0
+  [ -f "$MJ_STATE_DIR/ledger.jsonl" ] || return 0
+  line="$(grep -F '"event":"task.finished"' "$MJ_STATE_DIR/ledger.jsonl" 2>/dev/null \
+    | grep -F "\"branch\":\"$(mj_json_esc "$branch")\"," | tail -n 1)"
+  [ -n "$line" ] || return 0
+  vtree="$(printf '%s' "$line" | sed -n 's/.*"tree":"\([0-9a-f]\{40,64\}\)".*/\1/p')"
+  [ -n "$vtree" ] || return 0
+  task="$(printf '%s' "$line" | sed -n 's/.*"task_id":"\([^"]*\)".*/\1/p')"
+  vcmd="$(printf '%s' "$line" | sed -n 's/.*"verify":{"command":"\(.*\)","exit":[0-9]*,.*/\1/p' \
+    | sed -e 's/\\"/"/g' -e 's/\\\\/\\/g')"
+  [ "$given" = 1 ] || commits=HEAD
+  # $commits is a space-separated list of commit names, split here on purpose
+  # shellcheck disable=SC2086
+  for c in $commits; do
+    tree="$(mj_git rev-parse -q --verify "$c^{tree}" 2>/dev/null)" || tree=""
+    [ -n "$tree" ] || continue
+    [ "$tree" = "$vtree" ] && continue
+    mj_finding "$level" pushed-tree "${task:--}" \
+      "commit $(mj_git rev-parse --short=12 "$c" 2>/dev/null || printf '%s' "$c") publishes tree $tree, but $branch's last finished task verified tree $vtree${vcmd:+ (\"$vcmd\")}: what is pushed is not what was verified. Re-run the verification over this tree (majordomus start, then finish --verify-command${vcmd:+ \"$vcmd\"}), or say why not where the push is reviewed (a merge of the trunk that CI judges, say)" \
+      "git diff --stat $vtree $tree"
+  done
+  [ "$MJ_FAILS" = 0 ] || exit "$MJ_EX_CONTRACT"
 }
 
 # the doctrine index whose policy_key is <key>, or failure

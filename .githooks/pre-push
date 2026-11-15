@@ -15,13 +15,18 @@
 # A remote ref under refs/heads/integration/train-* that receives a commit is a train top (a
 # top is named so, clause 2 of rule project.the-cooperation-model-is-the-owners-word v3): its
 # names are collected here, for the verdict on run-plan below.
-any=0 carries=0 heads="" tops=""
-while read -r _local_ref local_sha remote_ref _remote_sha; do
+# The commits the push publishes from this checkout's branch are collected as well, for the
+# finish contract: it compares their tree with the tree the branch's last finished task
+# verified (I4610), and a push of other refs alone publishes nothing that task verified.
+any=0 carries=0 heads="" tops="" mine=""
+branch_ref="$(git symbolic-ref -q HEAD 2>/dev/null)" || branch_ref=""
+while read -r local_ref local_sha remote_ref _remote_sha; do
   any=1
   case "$remote_ref" in refs/majordomus/*) continue ;; esac
   case "$local_sha" in
     *[!0]*)
       carries=1; heads="$heads $local_sha"
+      [ -n "$branch_ref" ] && [ "$local_ref" = "$branch_ref" ] && mine="$mine $local_sha"
       case "$remote_ref" in
         refs/heads/integration/train-*) tops="$tops ${remote_ref#refs/heads/}" ;;
       esac
@@ -47,8 +52,13 @@ report() {
   printf 'pre-push: %s failed (exit %s); reported, not refused: CI holds the verdict\n' \
     "$mj_what" "$mj_rc" >&2
 }
-# Refused: the task's scope and its contract are this machine's, and CI never sees them.
+# Refused: the task's scope and its contract are this machine's, and CI never sees them. A
+# tree the branch's last finished task did not verify is warned, or refused where the policy
+# says error (verification.pushed_tree_unverified); MAJORDOMUS_PUSHED says which commits
+# this push publishes from the branch, so the line doctor verifies stays as it is.
+MAJORDOMUS_PUSHED="${mine# }"; export MAJORDOMUS_PUSHED
 bin/majordomus finish --check || exit $?
+unset MAJORDOMUS_PUSHED
 # No two cases share a number. Each branch is clean alone and the pair exists only once both
 # are merged, so the trunk is where it was found (2026-10-12, two cases numbered 1096): the
 # check reads file names, takes under a second, and is asked of every push. Refused.
