@@ -6,23 +6,23 @@
     "version": "1.0.2"
   },
   "registry": {
-    "fingerprint": "e561ed0b5529abe5165396c8e68fa0ed068726979e3fc5f1e1ef12f858e913e8",
+    "fingerprint": "d09c0d8cfcb359c181e70c7cbc6b999883c5fc1eb646dae8403dbe506990e945",
     "summary": {
-      "total": 4021,
+      "total": 4023,
       "builtin": 231,
-      "declarative": 3790,
+      "declarative": 3792,
       "by_kind": {
         "command": 41,
         "query": 190,
-        "resource": 3790
+        "resource": 3792
       },
       "by_stability": {
         "behaviorally_verified": 153,
         "experimental": 68,
-        "implemented": 3800
+        "implemented": 3802
       },
       "mcp_tools": 215,
-      "mcp_resources": 3847,
+      "mcp_resources": 3849,
       "http_routes": 219,
       "cli_commands": 128,
       "modules": 96,
@@ -97172,7 +97172,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 1249,
+        "capabilities": 1250,
         "capability_ids": []
       },
       {
@@ -97785,7 +97785,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 700,
+        "capabilities": 701,
         "capability_ids": []
       },
       {
@@ -97878,7 +97878,7 @@
     ]
   },
   "index": {
-    "fingerprint": "66f4c2768d494f54a719650e13389be17e050d01694bfc0ead6ca0edb4cb3e78",
+    "fingerprint": "6890d9a51c8deac9b9db4d43f5450f5d7348fb3d9fecc1c3daf6547e7697acb3",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -97918,7 +97918,7 @@
       "gap": 5,
       "implementation": 54,
       "intent": 45,
-      "issue": 1249,
+      "issue": 1250,
       "knowledge": 220,
       "mesh-declaration": 1,
       "milestone": 117,
@@ -97932,7 +97932,7 @@
       "session": 95,
       "skill": 11,
       "taxonomy": 10,
-      "test": 700,
+      "test": 701,
       "use-case": 49,
       "workspace": 1
     },
@@ -105515,7 +105515,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 136245
+        "bytes": 136388
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -123219,6 +123219,17 @@
         "bytes": 3190
       },
       {
+        "uri": "majordomus://issue/I4592",
+        "kind": "issue",
+        "identity": "I4592",
+        "title": "The github-projection apply job checks out the trunk's history blobless, bounded at 10 minutes",
+        "description": "The actions/checkout of the apply job in .github/workflows/github.yml keeps `fetch-depth: 0` and takes `filter: blob:none`, bounded at `timeout-minutes: 10` (below the job's 60), so the projection is applied after every landing without a rerun; a case holds the workflow to it.",
+        "path": ".ai/repo/project/issues/I4592.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 4357
+      },
+      {
         "uri": "majordomus://issue/I4593",
         "kind": "issue",
         "identity": "I4593",
@@ -137235,6 +137246,14 @@
         "bytes": 3463
       },
       {
+        "uri": "majordomus://test/test/cases/4592_the_projection_apply_checkout_is_blobless_and_bounded.sh",
+        "kind": "test",
+        "identity": "test/cases/4592_the_projection_apply_checkout_is_blobless_and_bounded.sh",
+        "path": "test/cases/4592_the_projection_apply_checkout_is_blobless_and_bounded.sh",
+        "source_class": "case",
+        "bytes": 4299
+      },
+      {
         "uri": "majordomus://test/test/cases/45_github_projection.sh",
         "kind": "test",
         "identity": "test/cases/45_github_projection.sh",
@@ -139757,7 +139776,7 @@
       "identity": [
         "id"
       ],
-      "objects": 1249
+      "objects": 1250
     },
     {
       "name": "knowledge",
@@ -139919,7 +139938,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 700
+      "objects": 701
     },
     {
       "name": "use-case",
