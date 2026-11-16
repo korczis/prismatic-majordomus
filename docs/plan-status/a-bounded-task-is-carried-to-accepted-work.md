@@ -98,6 +98,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I4468` | shares lib with I4587; they may not run concurrently |
 | WARN | `scope_conflict` | `I4468` | shares scripts/ci with I4588; they may not run concurrently |
 | WARN | `scope_conflict` | `I4468` | shares lib with I4591; they may not run concurrently |
+| WARN | `scope_conflict` | `I4468` | shares lib with I4595; they may not run concurrently |
 | WARN | `scope_conflict` | `I4468` | shares share/schemas/majordomus/policy with I4597; they may not run concurrently |
 | WARN | `scope_conflict` | `I4468` | shares share/schemas/majordomus/policy with I4598; they may not run concurrently |
 | WARN | `scope_conflict` | `I4468` | shares share/schemas/majordomus/policy with I4599; they may not run concurrently |
