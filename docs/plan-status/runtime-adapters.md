@@ -92,7 +92,6 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I0201` | shares lib with I4266; they may not run concurrently |
 | WARN | `scope_conflict` | `I0201` | shares share with I4267; they may not run concurrently |
 | WARN | `scope_conflict` | `I0201` | shares lib with I4268; they may not run concurrently |
-| WARN | `scope_conflict` | `I0201` | shares share with I4292; they may not run concurrently |
 | WARN | `scope_conflict` | `I0201` | shares share with I4294; they may not run concurrently |
 | WARN | `scope_conflict` | `I0201` | shares share with I4306; they may not run concurrently |
 | WARN | `scope_conflict` | `I0201` | shares share with I4309; they may not run concurrently |

@@ -26,6 +26,16 @@ evidence_required:
   - suite
 risk: "None for the product: a test-only change that makes one scenario set what the others already set."
 created_at: 2026-11-01
-updated_at: 2026-11-01T08:20:49Z
+updated_at: 2026-11-07T14:24:39Z
 started_at: 2026-11-01T08:20:49Z
 started_event: sha256:f80a2305ea807a1a4aec5caf5e803be3cd3bd316743146e1df5bceb255d27c83
+completed_at: 2026-11-07T14:24:39Z
+completed_event: sha256:3413f07135f0c3080eeeee60fdead0480c78d3576169536054772c5c58b0babe
+evidence:
+  - covers: "suite"
+    type: test
+    command: "bash test/run.sh 3002_a_build_never_waits_in_silence"
+    result: "delivered by eed6aea5ae6: the disk-floor scenario sets MAJORDOMUS_PRIVATE_BUILD_ABOVE_MB; train 29 validate run 42259789353 at e3dd08606fa passed suite-shard (1)-(4), including (4)"
+    artifact: "https://github.com/korczis/prismatic-majordomus/actions/runs/42259789353"
+    commit: d7fd9a3617024a7390ac36c1888d6fcee63b600e
+    recorded_at: 2026-11-07T14:19:59Z
