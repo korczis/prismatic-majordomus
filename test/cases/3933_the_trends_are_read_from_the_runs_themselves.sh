@@ -32,7 +32,7 @@
 #      bound, and the reading is the same bytes; a refusal is the answer, asked once (I4380)
 . "$ROOT/test/lib.sh"
 
-command -v python3 >/dev/null 2>&1 || skip "no python3 to write the fixture artifact"
+mj_runs python3 || skip "$(mj_runs_why python3)"
 command -v unzip >/dev/null 2>&1 || skip "no unzip, which scripts/pages trends reads an artifact with"
 
 F="$T/forge"

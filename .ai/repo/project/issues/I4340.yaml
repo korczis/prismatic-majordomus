@@ -29,4 +29,15 @@ evidence_required:
   - ci
 risk: "An untagged directory that is not cargo's would now reach the unit eviction; the eviction refuses a directory with none of cargo's marks and removes only units it recognises by cargo's layout, each asked again under cargo's lock, so a foreign directory loses nothing."
 created_at: 2026-10-29
-updated_at: 2026-10-29
+updated_at: 2026-11-01T04:22:19Z
+started_at: 2026-11-01T04:21:31Z
+started_event: sha256:e82c3582590638b46a85f290c7a874f5e1c1ada83160f6474481d92500397ba4
+completed_at: 2026-11-01T04:22:19Z
+completed_event: sha256:49aac47aa25ab86c76a8a48be7f5a86957bbfbf69324bcc028b5ef71c3aad61b
+evidence:
+  - covers: "ci"
+    type: test
+    command: "bash test/run.sh 3959_the_shared_build_dir_stays_under_its_bound 3125_the_reaper_asks_cargo_for_the_build_dir && shellcheck -x scripts/reap-orphans"
+    result: "delivered by f565f56407d on master: cases 3959 and 3125 ok, 2 passed; shellcheck -x reports only info-level notes (SC1091 the sourced lib path, SC2329 an indirectly called function), no warning; at master aca6f182b41"
+    commit: aca6f182b4175a0da20878211103eff3801132f1
+    recorded_at: 2026-11-01T04:22:02Z

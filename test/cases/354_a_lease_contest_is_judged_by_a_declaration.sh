@@ -29,7 +29,7 @@ POLICY="$ROOT/.ai/repo/policy.yaml"
 [ -f "$SCHEMA" ] || { echo "    no policy schema at share/schemas/majordomus/policy/"; exit 1; }
 [ -f "$POLICY" ] || { echo "    no policy at .ai/repo/policy.yaml"; exit 1; }
 
-command -v python3 >/dev/null 2>&1 || skip "no python3 to read the policy schema"
+mj_runs python3 || skip "no python3 to read the policy schema"
 
 # --- 1. the schema owns the block, and every key it may carry
 python3 - "$SCHEMA" <<'PY' || exit 1

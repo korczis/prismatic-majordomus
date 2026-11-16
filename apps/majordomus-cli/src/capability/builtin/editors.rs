@@ -103,11 +103,21 @@ mod tests {
         let ids: Vec<&str> = answer.adapters.iter().map(|a| a.id.as_str()).collect();
         assert_eq!(ids, ["antigravity", "claude-code", "zed"]);
         // no skill of the layer and no justfile: what is projected is what the registry
-        // itself declares, the commands and the domains every repository has
-        assert!(answer
+        // itself declares, the commands and the domains every repository has; a command is
+        // written for Claude Code and, under .agents/skills/, for Antigravity and Zed
+        assert!(answer.artifacts.iter().all(|a| {
+            if a.path.starts_with(".agents/skills/") {
+                a.adapters == ["antigravity", "zed"] && a.document == "editors/command"
+            } else {
+                a.adapters == ["claude-code"]
+            }
+        }));
+        let shared = answer
             .artifacts
             .iter()
-            .all(|a| a.adapters == ["claude-code"]));
+            .find(|a| a.path == ".agents/skills/intent/SKILL.md")
+            .expect("the command skill under .agents");
+        assert_eq!(shared.sources, ["capability:intents.propose"]);
         let intent = answer
             .artifacts
             .iter()
@@ -125,8 +135,9 @@ mod tests {
             answer
                 .artifacts
                 .iter()
-                .all(|a| a.path.starts_with(".claude/skills/")),
-            "every derived file is a skill Claude Code reads"
+                .all(|a| a.path.starts_with(".claude/skills/")
+                    || a.path.starts_with(".agents/skills/")),
+            "every derived file is a skill Claude Code, Antigravity or Zed reads"
         );
     }
 }

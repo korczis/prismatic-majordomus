@@ -48,7 +48,7 @@
 #   8. the interaction specs: the template's button is claimed by the `chart` spec alone and a
 #      chart's frame by no scroll-region claim.
 . "$ROOT/test/lib.sh"
-command -v node >/dev/null 2>&1 || skip "no node"
+mj_runs node || skip "$(mj_runs_why node)"
 
 # ---------------------------------------------------------------- 7. the templates, without JS
 for t in trends economics plan-section; do

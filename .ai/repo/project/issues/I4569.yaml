@@ -1,0 +1,30 @@
+id: I4569
+milestone: ci-critical-path
+title: "Pull-request runs that yielded to the release path run again when the release path's last run ends, not on the next scheduled tick"
+slug: a-yielded-run-resumes-when-the-path-clears
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "release-path.yml runs `scripts/ci/release-path resume` on the completion of every workflow of the release path (release, pages, the record branch's validate) through a workflow_run trigger, so a yielded pull-request validate starts again within minutes of the path clearing, with the 15-minute schedule kept as the backstop."
+why: "On 2026-11-09 three pull requests (#2993, #2994, #2995) and train 29 (#2992) yielded to the release path: the v1.0.1 record's validate, then two master pages deploys. Each time the path cleared and nothing resumed them, so the landing seat ran `scripts/ci/release-path resume` by hand, twice. The schedule `7,22,37,52 * * * *` is the only resume trigger outside a master validate's last job, and GitHub ran it at 19:13Z and next at 02:16Z, seven hours apart (it throttles schedules; the 2026-11-01 CI measurement found 3-6 h gaps). A yield that is resumed by a cron GitHub skips for hours costs more runner time than it saved."
+current_state: "At origin/master dd377e11c35: release-path.yml triggers on a v* tag push (preempt), a schedule and workflow_dispatch (resume); validate.yml resumes at the end of every run that is not a pull_request event (master's and the record's dispatched reading, lines 2225-2231). The record pull request's own run, a pages deploy and the release run end without resuming."
+desired_state: "The end of any release-path run resumes the yielded runs at once; the schedule stays as a backstop; resume stays a no-op while the path is busy."
+scope:
+  - ".ai/repo/project/issues/I4569.yaml"
+  - ".github/workflows/release-path.yml"
+  - ".ai/repo/ci/release-path.yaml"
+  - "docs/CI.md"
+  - "test/cases/3027_the_release_path_goes_first.sh"
+non_scope:
+  - "Runs cancelled for another reason than the yield (a branch run's first red job cancels it; those carry no ci:yielded label and are not resumed)"
+depends_on: []
+acceptance_criteria:
+  - "release-path.yml declares workflow_run completion of the release and pages workflows and of a record branch's validate, filtered at the job (a pull-request validate of any other branch starts no job), and runs resume on it"
+  - "Case 3027 (test/cases/3027_the_release_path_goes_first.sh) is extended to refuse a release-path workflow without that filtered trigger"
+validation:
+  - "actionlint .github/workflows/release-path.yml"
+  - "bash test/run.sh 3027_the_release_path_goes_first"
+evidence_required:
+  - test
+serves: []
+created_at: 2026-11-10
