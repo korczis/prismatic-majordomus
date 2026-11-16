@@ -81705,6 +81705,42 @@
         }
       },
       {
+        "id": "majordomus://issue/I4602",
+        "kind": "issue",
+        "label": "I4602",
+        "summary": "A test that builds a repository under a hook never inherits the hook's repository",
+        "route": "/cockpit/objects/issue/i4602",
+        "source": ".ai/repo/project/issues/I4602.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A decision between (a) and (b), recorded on this issue before it is built",
+            "Built: an adopter fixture whose test runs `git init` in a temporary directory without the unset is reported by name, and the same fixture with the unset is not",
+            "Negative: the report fires on sonic-playground's cases 65 and 66 as they were before a6e76bf2"
+          ],
+          "created_at": "2026-11-15",
+          "depends_on": [],
+          "evidence_required": [
+            "test_repository_never_inherits_the_hooks_git"
+          ],
+          "milestone": "adopter-upgrades",
+          "non_scope": [
+            "Majordomus's own runner, which is guarded (3c415b1468c, case 1030)",
+            "Wrapping every hook in a cleared environment: a hook's own git commands need the repository git hands them"
+          ],
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I4602.yaml"
+          ],
+          "serves": [],
+          "slug": "a-test-repository-never-inherits-the-hooks-git",
+          "validation": [
+            "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "label": "a-brief-is-reconciled-not-transcribed",
@@ -151443,6 +151479,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I4602",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4602",
+        "target": "majordomus://milestone/adopter-upgrades",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -164324,8 +164370,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4497,
-      "edges": 10145,
+      "nodes": 4498,
+      "edges": 10147,
       "acyclic": false,
       "truncated": false
     }
