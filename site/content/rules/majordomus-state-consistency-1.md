@@ -1,7 +1,7 @@
 +++
 title = "State consistency"
 description = "State consistency"
-weight = 56
+weight = 58
 [extra]
 kind = "rule"
 slug = "majordomus-state-consistency-1"

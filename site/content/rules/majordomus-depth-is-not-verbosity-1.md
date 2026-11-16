@@ -1,7 +1,7 @@
 +++
 title = "Execution depth is not output verbosity"
 description = "Execution depth is not output verbosity"
-weight = 18
+weight = 20
 [extra]
 kind = "rule"
 slug = "majordomus-depth-is-not-verbosity-1"

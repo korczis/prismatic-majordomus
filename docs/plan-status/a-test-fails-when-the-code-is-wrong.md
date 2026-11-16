@@ -9,7 +9,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 
 | milestone | status | done of required | ready | blocked | active | verify | cancelled | outcome |
 |---|---|---|---|---|---|---|---|---|
-| [a-test-fails-when-the-code-is-wrong](https://majordomus.dev/plan/a-test-fails-when-the-code-is-wrong/) | PLANNED | 0/3 | 3 | 0 | 0 | 0 | 0 | Declared critical predicates carry a scheduled mutation run with published survivors, and the compatibility analyzer's algebraic invariants are property tests. |
+| [a-test-fails-when-the-code-is-wrong](https://majordomus.dev/plan/a-test-fails-when-the-code-is-wrong/) | PLANNED | 0/4 | 4 | 0 | 0 | 0 | 0 | Declared critical predicates carry a scheduled mutation run with published survivors, and the compatibility analyzer's algebraic invariants are property tests. |
 
 ## Issues
 
@@ -18,11 +18,13 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | [I3120](https://majordomus.dev/plan/i3120/) | READY | 0 | — | A scheduled mutation run over the declared critical predicates records its survivors as evidence |
 | [I3121](https://majordomus.dev/plan/i3121/) | READY | 0 | — | The release compatibility analyzer's invariants hold under property tests |
 | [I3309](https://majordomus.dev/plan/i3309/) | READY | 0 | — | A fix finishes completed only with a named regression case that fails on the task's base and passes on its head |
+| [I4620](https://majordomus.dev/plan/i4620/) | READY | 0 | — | Two testing lessons ship in the baseline: an equivalence proof keeps a failing mutation, and a slow test is made cheaper rather than given more time |
 
 ## Findings
 
 | level | code | subject | message |
 |---|---|---|---|
+| WARN | `no_evidence_required` | `I4620` | requires no evidence; nothing gates its completion |
 | WARN | `scope_conflict` | `I3120` | shares .ai/repo/ci/gates.yaml with I3160; they may not run concurrently |
 | WARN | `scope_conflict` | `I3120` | shares .ai/repo/project/intents with I3162; they may not run concurrently |
 | WARN | `scope_conflict` | `I3120` | shares docs/CLAIMS.yaml with I3163; they may not run concurrently |

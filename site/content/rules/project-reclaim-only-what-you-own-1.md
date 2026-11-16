@@ -1,7 +1,7 @@
 +++
 title = "A worker reclaims only what it owns"
 description = "A worker reclaims only what it owns"
-weight = 151
+weight = 153
 [extra]
 kind = "rule"
 slug = "project-reclaim-only-what-you-own-1"

@@ -1,7 +1,7 @@
 +++
 title = "Policy completeness"
 description = "Policy completeness"
-weight = 36
+weight = 38
 [extra]
 kind = "rule"
 slug = "majordomus-policy-completeness-1"

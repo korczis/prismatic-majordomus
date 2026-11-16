@@ -1,0 +1,35 @@
+id: I4620
+milestone: a-test-fails-when-the-code-is-wrong
+title: "Two testing lessons ship in the baseline: an equivalence proof keeps a failing mutation, and a slow test is made cheaper rather than given more time"
+slug: two-testing-lessons-are-baseline-rules
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "The standard rule package carries two advisory rules with no validator, normative for every adopter: majordomus.an-equivalence-proof-keeps-a-failing-mutation@1 (an \"identical to before\" test keeps a permanent control: a planted change fails it, and a vacuous copy of the test fails the control) and majordomus.a-slow-test-is-made-cheaper@1 (a test stays well inside its limit on the slowest runner that judges it and records its runtime; it is made cheaper only where a re-derived band holds and a mutation still fails, otherwise split; a raised timeout or a hand-loosened band is not a fix)."
+why: "The algoglyph integration session of 2026-11-15 met both failures. A test claimed every graph plate drew the same calls as before, loaded both engines through one mocked module cache, and passed for weeks with a planted change in the engine. Tests sized against fast hosted CI timed out at 120 s on a loaded self-hosted runner and blocked deploys. Neither lesson is specific to that repository, and the baseline is where Majordomus keeps doctrine every adopter vendors (share/standard/majordomus); the owner's fleet pack lives on the owner's machine, not in this repository, and a project rule would bind this repository alone."
+current_state: "On origin/master 95bf064c1ef the package (share/standard/majordomus/manifest.yaml) lists 61 rules. majordomus.verify-outcomes@1 says a recorded exit code is evidence, and no rule says that a test which cannot fail is not, or how a slow test is fixed."
+desired_state: "Both rules are in share/standard/majordomus/rules/, listed in the manifest by scripts/rules-package write, vendored here by majordomus rules vendor update, and published by the derive under site/content/rules/. Each says plainly that it has no validator and is normative text. Algoglyph is named only as the cited example."
+scope:
+  - "share/standard/majordomus/rules/an-equivalence-proof-keeps-a-failing-mutation.v1.md"
+  - "share/standard/majordomus/rules/a-slow-test-is-made-cheaper.v1.md"
+  - "share/standard/majordomus/manifest.yaml"
+  - ".ai/repo/rules/vendor/majordomus/manifest.yaml"
+  - ".ai/repo/rules/vendor/majordomus/rules/an-equivalence-proof-keeps-a-failing-mutation.v1.md"
+  - ".ai/repo/rules/vendor/majordomus/rules/a-slow-test-is-made-cheaper.v1.md"
+  - ".ai/repo/project/issues/I4620.yaml"
+non_scope:
+  - "A validator for either rule: both are advisory and normative only, as the principles are"
+  - "Changing this repository's own tests to comply; a project rule or gate that enforces a ceiling on case durations is follow-up work"
+  - "The owner's fleet pack, which lives outside the repository"
+depends_on: []
+serves:
+  - "a-claim-stands-only-on-its-evidence#critical-predicates-mutated"
+acceptance_criteria:
+  - "scripts/rules-package check passes with both rules listed"
+  - "majordomus rules vendor status reports the vendored copy current, and majordomus rules list shows both rules active"
+  - "doctor's rules findings report no failure"
+validation:
+  - "scripts/rules-package check"
+  - "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 3022_the_rule_package_is_stamped_and_adopter_neutral 899_a_bootstrap_names_only_rules_in_force 18_doctrine_wiring"
+evidence_required: []
+created_at: 2026-11-16

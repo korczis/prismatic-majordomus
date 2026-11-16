@@ -81667,6 +81667,50 @@
         }
       },
       {
+        "id": "majordomus://issue/I4620",
+        "kind": "issue",
+        "label": "I4620",
+        "summary": "Two testing lessons ship in the baseline: an equivalence proof keeps a failing mutation, and a slow test is made cheaper rather than given more time",
+        "route": "/cockpit/objects/issue/i4620",
+        "source": ".ai/repo/project/issues/I4620.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "scripts/rules-package check passes with both rules listed",
+            "majordomus rules vendor status reports the vendored copy current, and majordomus rules list shows both rules active",
+            "doctor's rules findings report no failure"
+          ],
+          "created_at": "2026-11-16",
+          "depends_on": [],
+          "evidence_required": [],
+          "milestone": "a-test-fails-when-the-code-is-wrong",
+          "non_scope": [
+            "A validator for either rule: both are advisory and normative only, as the principles are",
+            "Changing this repository's own tests to comply; a project rule or gate that enforces a ceiling on case durations is follow-up work",
+            "The owner's fleet pack, which lives outside the repository"
+          ],
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "share/standard/majordomus/rules/an-equivalence-proof-keeps-a-failing-mutation.v1.md",
+            "share/standard/majordomus/rules/a-slow-test-is-made-cheaper.v1.md",
+            "share/standard/majordomus/manifest.yaml",
+            ".ai/repo/rules/vendor/majordomus/manifest.yaml",
+            ".ai/repo/rules/vendor/majordomus/rules/an-equivalence-proof-keeps-a-failing-mutation.v1.md",
+            ".ai/repo/rules/vendor/majordomus/rules/a-slow-test-is-made-cheaper.v1.md",
+            ".ai/repo/project/issues/I4620.yaml"
+          ],
+          "serves": [
+            "a-claim-stands-only-on-its-evidence#critical-predicates-mutated"
+          ],
+          "slug": "two-testing-lessons-are-baseline-rules",
+          "validation": [
+            "scripts/rules-package check",
+            "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 3022_the_rule_package_is_stamped_and_adopter_neutral 899_a_bootstrap_names_only_rules_in_force 18_doctrine_wiring"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "label": "a-brief-is-reconciled-not-transcribed",
@@ -95525,6 +95569,26 @@
         }
       },
       {
+        "id": "majordomus://rule/majordomus.a-slow-test-is-made-cheaper@1",
+        "kind": "rule",
+        "label": "majordomus.a-slow-test-is-made-cheaper@1",
+        "summary": "A slow test is made cheaper, never given a longer timeout",
+        "route": "/cockpit/objects/rule/majordomus-a-slow-test-is-made-cheaper-1",
+        "source": ".ai/repo/rules/vendor/majordomus/rules/a-slow-test-is-made-cheaper.v1.md",
+        "status": "active",
+        "facts": {
+          "class": "advisory",
+          "depends_on": [
+            "majordomus.verify-outcomes@1",
+            "majordomus.an-equivalence-proof-keeps-a-failing-mutation@1"
+          ],
+          "tags": [
+            "testing",
+            "ci"
+          ]
+        }
+      },
+      {
         "id": "majordomus://rule/majordomus.adr-integrity@1",
         "kind": "rule",
         "label": "majordomus.adr-integrity@1",
@@ -95559,6 +95623,25 @@
           "tags": [
             "layout",
             "ai"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://rule/majordomus.an-equivalence-proof-keeps-a-failing-mutation@1",
+        "kind": "rule",
+        "label": "majordomus.an-equivalence-proof-keeps-a-failing-mutation@1",
+        "summary": "An equivalence proof keeps a recorded mutation that fails it",
+        "route": "/cockpit/objects/rule/majordomus-an-equivalence-proof-keeps-a-failing-mutation-1",
+        "source": ".ai/repo/rules/vendor/majordomus/rules/an-equivalence-proof-keeps-a-failing-mutation.v1.md",
+        "status": "active",
+        "facts": {
+          "class": "advisory",
+          "depends_on": [
+            "majordomus.verify-outcomes@1"
+          ],
+          "tags": [
+            "testing",
+            "evidence"
           ]
         }
       },
@@ -151388,6 +151471,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I4620",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4620",
+        "target": "majordomus://milestone/a-test-fails-when-the-code-is-wrong",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -153748,6 +153841,21 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://rule/majordomus.a-slow-test-is-made-cheaper@1",
+        "target": "kind:rule",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://rule/majordomus.a-slow-test-is-made-cheaper@1",
+        "target": "majordomus://rule/majordomus.an-equivalence-proof-keeps-a-failing-mutation@1",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/majordomus.a-slow-test-is-made-cheaper@1",
+        "target": "majordomus://rule/majordomus.verify-outcomes@1",
+        "kind": "depends_on"
+      },
+      {
         "source": "majordomus://rule/majordomus.adr-integrity@1",
         "target": "kind:rule",
         "kind": "is_a"
@@ -153765,6 +153873,16 @@
       {
         "source": "majordomus://rule/majordomus.ai-layout-integrity@1",
         "target": "majordomus://rule/majordomus.sessions-are-workers@1",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/majordomus.an-equivalence-proof-keeps-a-failing-mutation@1",
+        "target": "kind:rule",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://rule/majordomus.an-equivalence-proof-keeps-a-failing-mutation@1",
+        "target": "majordomus://rule/majordomus.verify-outcomes@1",
         "kind": "depends_on"
       },
       {
@@ -164264,8 +164382,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4495,
-      "edges": 10142,
+      "nodes": 4498,
+      "edges": 10149,
       "acyclic": false,
       "truncated": false
     }
