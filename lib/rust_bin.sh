@@ -229,6 +229,67 @@ mj_rust_same_generation() {
   [ -z "$MJ_RUST_GENERATION_WHY" ]
 }
 
+# mj_rust_sibling <repository-root>
+#
+# An executable another worktree of this checkout already built, of this tree's generation
+# (I4618). A worktree is asked only when it holds an executable at the path cargo gives it,
+# that executable is not older than its own sources (mj_rust_stale), its crate has no
+# uncommitted or untracked change (a worker editing it will rebuild it in place), and the
+# commit it checks out carries this tree's crate inputs byte for byte (mj_rust_same_generation,
+# with the generation taken from that worktree's HEAD). The first one is printed. Every worktree
+# that held an executable and was not taken is named with its reason in MJ_RUST_SIBLING_TRIED,
+# one per line, for the refusal; a caller that wants that list calls this in its own shell,
+# not in a command substitution, whose variables die with it.
+#
+# Nothing is built and nothing is copied (ADR 0224). Each call asks again, so a rebuild in that
+# worktree between two commands is judged by the next one; within one command the window
+# between this check and the exec stays, as it does for the tree's own executable. A shared
+# target directory (CARGO_TARGET_DIR) names one executable for every worktree, so there is
+# nothing to borrow and none is asked. The neighbours are I3180, a stale checkout starting a
+# background build (cancelled by ADR 0222), and I2059, a rebuild never replacing an executable
+# a live lease names: the served copies (`served/`) are not borrowed here, only the build output.
+mj_rust_sibling() {
+  mj_sb_root="$1"
+  MJ_RUST_SIBLING_TRIED=""
+  [ -z "${CARGO_TARGET_DIR:-}${CARGO_BUILD_TARGET_DIR:-}" ] || return 1
+  mj_sb_self="$(cd "$mj_sb_root" 2>/dev/null && pwd -P)"
+  mj_sb_list="$(git -C "$mj_sb_root" worktree list --porcelain 2>/dev/null | sed -n 's/^worktree //p')"
+  mj_sb_found=1
+  while IFS= read -r mj_sb_wt; do
+    [ -n "$mj_sb_wt" ] || continue
+    [ "$(cd "$mj_sb_wt" 2>/dev/null && pwd -P)" = "$mj_sb_self" ] && continue
+    mj_sb_exe="$mj_sb_wt/apps/majordomus-cli/target/${MAJORDOMUS_BUILD_PROFILE:-debug}/majordomus"
+    [ -x "$mj_sb_exe" ] || continue
+    mj_sb_why=""
+    # shellcheck disable=SC2086 # the inputs are one space-separated list of literal paths
+    if mj_rust_is_launcher "$mj_sb_exe"; then
+      mj_sb_why="a launcher, not an executable"
+    elif mj_rust_stale "$mj_sb_wt" "$mj_sb_exe"; then
+      mj_sb_why="older than its own sources"
+    elif ! git -C "$mj_sb_wt" diff --quiet HEAD -- $MJ_RUST_CRATE_INPUTS 2>/dev/null \
+        || [ -n "$(git -C "$mj_sb_wt" ls-files --others --exclude-standard -- $MJ_RUST_CRATE_INPUTS 2>/dev/null)" ]; then
+      mj_sb_why="its crate has changes not committed"
+    else
+      mj_sb_head="$(git -C "$mj_sb_wt" rev-parse HEAD 2>/dev/null)"
+      mj_sb_was_bin="${MAJORDOMUS_BIN-}"; mj_sb_was_commit="${MAJORDOMUS_BIN_COMMIT-}"
+      MAJORDOMUS_BIN="$mj_sb_exe"; MAJORDOMUS_BIN_COMMIT="$mj_sb_head"
+      mj_rust_same_generation "$mj_sb_root" "$mj_sb_exe" || mj_sb_why="$MJ_RUST_GENERATION_WHY"
+      MAJORDOMUS_BIN="$mj_sb_was_bin"; MAJORDOMUS_BIN_COMMIT="$mj_sb_was_commit"
+      [ -n "$mj_sb_was_bin" ] || unset MAJORDOMUS_BIN
+      [ -n "$mj_sb_was_commit" ] || unset MAJORDOMUS_BIN_COMMIT
+    fi
+    if [ -z "$mj_sb_why" ]; then
+      MJ_RUST_BUILT="$mj_sb_head"
+      printf '%s\n' "$mj_sb_exe"; mj_sb_found=0; break
+    fi
+    MJ_RUST_SIBLING_TRIED="${MJ_RUST_SIBLING_TRIED}${mj_sb_wt}: ${mj_sb_why}
+"
+  done <<EOF_WT
+$mj_sb_list
+EOF_WT
+  return "$mj_sb_found"
+}
+
 # mj_rust_resolve <tool-root> [<prefix>]
 #
 # The executable a command of this tree runs, never built (ADR 0224). Prints its path on
@@ -272,9 +333,24 @@ mj_rust_resolve() {
     fi
     mj_rv_release="the installed release $mj_rv_inst is not of this tree's generation: $MJ_RUST_GENERATION_WHY"
   fi
+  if mj_rv_sib="$(mj_rust_sibling "$mj_rv_root")"; then
+    mj_rv_sib_wt="${mj_rv_sib%/apps/majordomus-cli/target/*}"
+    printf '%s%s is %s; answering through %s, built in the worktree %s, whose checked-out crate this tree carries unchanged\n' \
+      "$mj_rv_p" "$mj_rv_bin" "$mj_rv_state" "$mj_rv_sib" "$mj_rv_sib_wt" >&2
+    printf '%s\n' "$mj_rv_sib"; return 0
+  fi
   {
     printf '%s%s is %s, and no ordinary command builds it (ADR 0224)\n' "$mj_rv_p" "$mj_rv_bin" "$mj_rv_state"
     [ -z "$mj_rv_release" ] || printf '%s  %s\n' "$mj_rv_p" "$mj_rv_release"
+    if [ -n "${CARGO_TARGET_DIR:-}${CARGO_BUILD_TARGET_DIR:-}" ]; then
+      printf '%s  no other worktree was asked: a shared target directory names one executable for all of them\n' "$mj_rv_p"
+    elif mj_rust_sibling "$mj_rv_root" >/dev/null || [ -n "$MJ_RUST_SIBLING_TRIED" ]; then
+      printf '%s\n' "$MJ_RUST_SIBLING_TRIED" | while IFS= read -r mj_rv_line; do
+        [ -n "$mj_rv_line" ] && printf '%s  not borrowed from %s\n' "$mj_rv_p" "$mj_rv_line"
+      done
+    else
+      printf '%s  no other worktree of this checkout holds an executable to borrow\n' "$mj_rv_p"
+    fi
     printf '%s  run: just build   (cargo build --locked --manifest-path %s/apps/majordomus-cli/Cargo.toml), or set MAJORDOMUS_BIN\n' \
       "$mj_rv_p" "$mj_rv_root"
   } >&2

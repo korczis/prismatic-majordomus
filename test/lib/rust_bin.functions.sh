@@ -28,6 +28,7 @@ mj_rust_installed() { :; }
 MJ_RUST_CRATE_INPUTS=
 mj_rust_built_commit() { :; }
 mj_rust_same_generation() { :; }
+mj_rust_sibling() { :; }
 mj_rust_resolve() { :; }
 mj_rust_share() { :; }
 mj_rust_target_named_by() { :; }

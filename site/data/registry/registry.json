@@ -6,23 +6,23 @@
     "version": "1.0.2"
   },
   "registry": {
-    "fingerprint": "b03f37f691aa33e6972fbb23aad12037adf7cdafa4b5c111b7bc3fb80f00c448",
+    "fingerprint": "5e67eaebfb83964ae7bea98730c037389389b0fdd8dc4787a9a83cd0ac8ecc40",
     "summary": {
-      "total": 4041,
+      "total": 4043,
       "builtin": 231,
-      "declarative": 3810,
+      "declarative": 3812,
       "by_kind": {
         "command": 41,
         "query": 190,
-        "resource": 3810
+        "resource": 3812
       },
       "by_stability": {
         "behaviorally_verified": 153,
         "experimental": 68,
-        "implemented": 3820
+        "implemented": 3822
       },
       "mcp_tools": 215,
-      "mcp_resources": 3867,
+      "mcp_resources": 3869,
       "http_routes": 219,
       "cli_commands": 128,
       "modules": 96,
@@ -97172,7 +97172,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 1263,
+        "capabilities": 1264,
         "capability_ids": []
       },
       {
@@ -97785,7 +97785,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 703,
+        "capabilities": 704,
         "capability_ids": []
       },
       {
@@ -97878,7 +97878,7 @@
     ]
   },
   "index": {
-    "fingerprint": "62425ab2a2234a99e24da901402e23d556a6383c744d1df56410cdfd5e04e3ae",
+    "fingerprint": "c889d1142d4f589a6f23e2ca62c3e77491581a83c4512e5689adcd9c1fe8eafd",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -97918,7 +97918,7 @@
       "gap": 5,
       "implementation": 54,
       "intent": 45,
-      "issue": 1263,
+      "issue": 1264,
       "knowledge": 220,
       "mesh-declaration": 1,
       "milestone": 117,
@@ -97932,7 +97932,7 @@
       "session": 95,
       "skill": 11,
       "taxonomy": 10,
-      "test": 703,
+      "test": 704,
       "use-case": 49,
       "workspace": 1
     },
@@ -105531,7 +105531,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 138627
+        "bytes": 138778
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -108955,7 +108955,7 @@
         "identity": "lib/rust_bin.sh",
         "path": "lib/rust_bin.sh",
         "source_class": "library",
-        "bytes": 110429
+        "bytes": 114846
       },
       {
         "uri": "majordomus://implementation/lib/search.sh",
@@ -123396,6 +123396,17 @@
         "bytes": 2213
       },
       {
+        "uri": "majordomus://issue/I4618",
+        "kind": "issue",
+        "identity": "I4618",
+        "title": "The executable resolver borrows a same-generation executable another worktree built, before it refuses",
+        "description": "Before mj_rust_resolve refuses with exit 12, it asks the other worktrees of this checkout, and answers through an executable one of them already built when that executable is of this tree's generation. It says which worktree on stderr, builds nothing, and names every worktree it judged in the refusal when none fits.",
+        "path": ".ai/repo/project/issues/I4618.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 4061
+      },
+      {
         "uri": "majordomus://issue/I4620",
         "kind": "issue",
         "identity": "I4620",
@@ -137447,6 +137458,14 @@
         "bytes": 15204
       },
       {
+        "uri": "majordomus://test/test/cases/4618_the_resolver_borrows_a_sibling_executable.sh",
+        "kind": "test",
+        "identity": "test/cases/4618_the_resolver_borrows_a_sibling_executable.sh",
+        "path": "test/cases/4618_the_resolver_borrows_a_sibling_executable.sh",
+        "source_class": "case",
+        "bytes": 5465
+      },
+      {
         "uri": "majordomus://test/test/cases/4620_published_surfaces_are_derived_and_checked.sh",
         "kind": "test",
         "identity": "test/cases/4620_published_surfaces_are_derived_and_checked.sh",
@@ -139969,7 +139988,7 @@
       "identity": [
         "id"
       ],
-      "objects": 1263
+      "objects": 1264
     },
     {
       "name": "knowledge",
@@ -140131,7 +140150,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 703
+      "objects": 704
     },
     {
       "name": "use-case",
