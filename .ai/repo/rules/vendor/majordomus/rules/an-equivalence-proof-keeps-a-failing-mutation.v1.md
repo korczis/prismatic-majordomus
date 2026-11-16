@@ -9,6 +9,9 @@ status: active
 class: advisory
 depends_on: [majordomus.verify-outcomes@1]
 tags: [testing, evidence]
+
+x-majordomus:
+  reviewed_because: whether a test claims equivalence, and whether its control has teeth, is read from what the test means and what both sides load, not from a shape a check could match; a reviewer decides it, and a repository may add a project rule with a validator for its own test layout
 ---
 
 # Rationale

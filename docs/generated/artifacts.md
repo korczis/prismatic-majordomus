@@ -333,7 +333,7 @@ Every file `majordomus generate` writes, with the document it projects, the enco
 | `docs/generated/economics.md` | `economics` | markdown | 15763 | `bb58e1ceb0de1152` |
 | `docs/generated/economics.yaml` | `economics` | yaml | 46587 | `f5aaf18e6a0efe90` |
 | `docs/generated/entities.json` | `entities` | json | 733808 | `cd0a372b754f3836` |
-| `docs/generated/graph.json` | `graph` | json | 6610736 | `229b5bbaa99aedf1` |
+| `docs/generated/graph.json` | `graph` | json | 6610922 | `bd40f72160318751` |
 | `docs/generated/graph.schema.json` | `graph-schema` | json | 7616 | `04634022cb111419` |
 | `docs/generated/modules/artifacts.md` | `modules/artifacts` | markdown | 1741 | `387fd91b92199232` |
 | `docs/generated/modules/blackboard.md` | `modules/blackboard` | markdown | 2531 | `b859cb7d9c9acbc1` |
@@ -465,7 +465,7 @@ Every file `majordomus generate` writes, with the document it projects, the enco
 | `site/data/registry/evidence-subjects.json` | `site-evidence-subjects` | json | 879839 | `b585197205d0b82f` |
 | `site/data/registry/product-graph.json` | `site-product-graph` | json | 112747 | `e9bf17c03cf4e017` |
 | `site/data/registry/product.json` | `site-product` | json | 786081 | `4ac9f108099e8e57` |
-| `site/data/registry/registry.json` | `site-registry` | json | 9050671 | `088488e6f86212cb` |
+| `site/data/registry/registry.json` | `site-registry` | json | 9050671 | `badc8e3c3801234c` |
 | `site/data/registry/why-graph.json` | `site-why-graph` | json | 180162 | `11d5802c80358f24` |
 | `site/data/registry/why.json` | `site-why` | json | 349923 | `72af2ec61ce206c4` |
 | `site/static/favicon.svg` | `design-mark` | text | 903 | `c6b07e82ce6f9148` |

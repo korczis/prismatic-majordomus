@@ -9,6 +9,9 @@ status: active
 class: advisory
 depends_on: [majordomus.verify-outcomes@1, majordomus.an-equivalence-proof-keeps-a-failing-mutation@1]
 tags: [testing, ci]
+
+x-majordomus:
+  reviewed_because: which runner is the slowest judge, whether a band was derived again for a smaller size and whether a raised timeout is justified are judgements about one repository's tests and runners; a reviewer decides them, and a repository may add a project rule with a validator, such as a ceiling on recorded case durations
 ---
 
 # Rationale

@@ -1,4 +1,4 @@
-id: I4620
+id: I4623
 milestone: a-test-fails-when-the-code-is-wrong
 title: "Two testing lessons ship in the baseline: an equivalence proof keeps a failing mutation, and a slow test is made cheaper rather than given more time"
 slug: two-testing-lessons-are-baseline-rules
@@ -16,7 +16,7 @@ scope:
   - ".ai/repo/rules/vendor/majordomus/manifest.yaml"
   - ".ai/repo/rules/vendor/majordomus/rules/an-equivalence-proof-keeps-a-failing-mutation.v1.md"
   - ".ai/repo/rules/vendor/majordomus/rules/a-slow-test-is-made-cheaper.v1.md"
-  - ".ai/repo/project/issues/I4620.yaml"
+  - ".ai/repo/project/issues/I4623.yaml"
 non_scope:
   - "A validator for either rule: both are advisory and normative only, as the principles are"
   - "Changing this repository's own tests to comply; a project rule or gate that enforces a ceiling on case durations is follow-up work"
@@ -26,10 +26,12 @@ serves:
   - "a-claim-stands-only-on-its-evidence#critical-predicates-mutated"
 acceptance_criteria:
   - "scripts/rules-package check passes with both rules listed"
+  - "scripts/ci/rule-proof-check passes: each rule says in x-majordomus.reviewed_because why a reviewer, not a validator, decides it"
   - "majordomus rules vendor status reports the vendored copy current, and majordomus rules list shows both rules active"
   - "doctor's rules findings report no failure"
 validation:
   - "scripts/rules-package check"
+  - "scripts/ci/rule-proof-check"
   - "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 3022_the_rule_package_is_stamped_and_adopter_neutral 899_a_bootstrap_names_only_rules_in_force 18_doctrine_wiring"
 evidence_required: []
 created_at: 2026-11-16
