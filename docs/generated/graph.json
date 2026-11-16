@@ -81591,6 +81591,259 @@
         }
       },
       {
+        "id": "majordomus://issue/I4594",
+        "kind": "issue",
+        "label": "I4594",
+        "summary": "design.kit S5 accepts a localised landmark when the Flowbite Pro structure is present",
+        "route": "/cockpit/objects/issue/i4594",
+        "source": ".ai/repo/project/issues/I4594.yaml",
+        "facts": {
+          "created_at": "2026-11-15",
+          "depends_on": [],
+          "evidence_required": [
+            "s5_localised_landmark_fixtures"
+          ],
+          "milestone": "one-kit-on-every-surface",
+          "non_scope": [
+            "The owner's flowbite-pro skill (its verify.mjs, about lines 700 and 811), which carries the same literal checks and lives outside this repository",
+            "Translating any label, or judging whether a label is in the page's language",
+            "The React shell (shell.react_sidebar and shell.react_breadcrumb), which already accepts any label",
+            "The other S5 parts: the fixed top navbar, the marketing navbar and footer, and the page, surface and border roles"
+          ],
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I4594.yaml",
+            "apps/majordomus-cli/src/design/kit.rs",
+            "share/design/kits/flowbite-pro.yaml",
+            "docs/DESIGN_SYSTEM.md"
+          ],
+          "serves": [],
+          "slug": "s5-accepts-a-localised-landmark",
+          "updated_at": "2026-11-15",
+          "validation": [
+            "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --lib design::kit::",
+            "bin/majordomus generate --check",
+            "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4595",
+        "kind": "issue",
+        "label": "I4595",
+        "summary": "doctor reports a checkout whose dependency install is behind its lockfile",
+        "route": "/cockpit/objects/issue/i4595",
+        "source": ".ai/repo/project/issues/I4595.yaml",
+        "facts": {
+          "created_at": "2026-11-15",
+          "depends_on": [],
+          "evidence_required": [
+            "doctor_names_an_install_behind_its_lockfile_case"
+          ],
+          "milestone": "a-second-adopter-is-served",
+          "non_scope": [
+            "Installing or restoring anything (I3952's `mesh build-cache ensure` restores by key)",
+            "Reclaiming node_modules or target/ of finished worktrees (I4324)",
+            "Package managers other than npm and mix (pnpm, yarn, cargo): a later list, once an adopter asks for it",
+            "The adopter's own verify step"
+          ],
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I4595.yaml",
+            "lib/doctor.sh",
+            "docs/WORKTREES.md"
+          ],
+          "serves": [],
+          "slug": "doctor-reports-an-install-behind-its-lockfile",
+          "updated_at": "2026-11-15",
+          "validation": [
+            "bin/majordomus doctor",
+            "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4602",
+        "kind": "issue",
+        "label": "I4602",
+        "summary": "A test that builds a repository under a hook never inherits the hook's repository",
+        "route": "/cockpit/objects/issue/i4602",
+        "source": ".ai/repo/project/issues/I4602.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A decision between (a) and (b), recorded on this issue before it is built",
+            "Built: an adopter fixture whose test runs `git init` in a temporary directory without the unset is reported by name, and the same fixture with the unset is not",
+            "Negative: the report fires on sonic-playground's cases 65 and 66 as they were before a6e76bf2"
+          ],
+          "created_at": "2026-11-15",
+          "depends_on": [],
+          "evidence_required": [
+            "test_repository_never_inherits_the_hooks_git"
+          ],
+          "milestone": "adopter-upgrades",
+          "non_scope": [
+            "Majordomus's own runner, which is guarded (3c415b1468c, case 1030)",
+            "Wrapping every hook in a cleared environment: a hook's own git commands need the repository git hands them"
+          ],
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I4602.yaml"
+          ],
+          "serves": [],
+          "slug": "a-test-repository-never-inherits-the-hooks-git",
+          "validation": [
+            "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4606",
+        "kind": "issue",
+        "label": "I4606",
+        "summary": "A verdict that needs a CI secret says which store the run reads: a Dependabot run reads the Dependabot secrets, and the remedy names `--app dependabot`",
+        "route": "/cockpit/objects/issue/i4606",
+        "source": ".ai/repo/project/issues/I4606.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A public kit tree without evidence, judged with GITHUB_ACTOR=dependabot[bot], reports not judged with the Dependabot store and the --app dependabot command",
+            "The same tree judged with another GITHUB_ACTOR in CI names the Actions store",
+            "No run prints a secret's value"
+          ],
+          "created_at": "2026-11-15",
+          "depends_on": [],
+          "evidence_required": [
+            "case_a_secret_gated_verdict_names_its_store"
+          ],
+          "milestone": "a-second-adopter-is-served",
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I4606.yaml",
+            "apps/majordomus-cli/src/design/licence.rs",
+            "lib/fleet.sh",
+            "test/cases/4606_a_secret_gated_verdict_names_its_store.sh"
+          ],
+          "slug": "a-secret-gated-verdict-names-the-store-its-run-reads",
+          "updated_at": "2026-11-15",
+          "validation": [
+            "bash test/run.sh 4606_a_secret_gated_verdict_names_its_store"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4612",
+        "kind": "issue",
+        "label": "I4612",
+        "summary": "The skills-unenforced remedy an adopter can follow: declare the CI model's gate that runs `skills verify`, not this tree's `scripts/ci-plan`",
+        "route": "/cockpit/objects/issue/i4612",
+        "source": ".ai/repo/project/issues/I4612.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "An adopter fixture without scripts/ci-plan and without gates.yaml gets a remedy naming .ai/repo/ci/gates.yaml and `majordomus skills verify`",
+            "This repository's own finding still reproduces with scripts/ci-plan"
+          ],
+          "created_at": "2026-11-15",
+          "current_state": "skill/mod.rs emits `reproduce: scripts/ci-plan` for every unenforced skill, in every repository.",
+          "depends_on": [],
+          "evidence_required": [
+            "test_the_skills_unenforced_remedy_fits_an_adopter"
+          ],
+          "milestone": "a-second-adopter-is-served",
+          "parallel_safe": true,
+          "priority": "p3",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I4612.yaml",
+            "apps/majordomus-cli/src/skill/mod.rs",
+            "apps/majordomus-cli/tests/skills.rs"
+          ],
+          "slug": "the-skills-unenforced-remedy-fits-an-adopter",
+          "updated_at": "2026-11-15",
+          "validation": [
+            "cargo test -p majordomus-cli --test skills"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4615",
+        "kind": "issue",
+        "label": "I4615",
+        "summary": "Never-reported gates are counted right and point at the command that reports them: `evidence --run-gates`, which also proves each `runs` executes as declared",
+        "route": "/cockpit/objects/issue/i4615",
+        "source": ".ai/repo/project/issues/I4615.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "With four required gates unreported the finding says 4 and lists four names",
+            "With one unreported gate it says 1",
+            "The reproduce is majordomus evidence --run-gates"
+          ],
+          "created_at": "2026-11-15",
+          "current_state": "lib/gates.sh miscounts by one, joins the list and the dash without a space, and suggests the manual --gate form only.",
+          "depends_on": [],
+          "evidence_required": [
+            "case_never_reported_gates_are_counted_and_run"
+          ],
+          "milestone": "a-second-adopter-is-served",
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I4615.yaml",
+            "lib/gates.sh",
+            "apps/majordomus-cli/src/gates/mod.rs",
+            "test/cases/4615_never_reported_gates_are_counted_and_run.sh"
+          ],
+          "slug": "never-reported-gates-are-counted-and-run",
+          "updated_at": "2026-11-15",
+          "validation": [
+            "bash test/run.sh 4615_never_reported_gates_are_counted_and_run"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4616",
+        "kind": "issue",
+        "label": "I4616",
+        "summary": "An issue id the mesh allocator reserved for another session is refused locally: `plan validate` and the commit hook judge an id against the allocator, not only against git",
+        "route": "/cockpit/objects/issue/i4616",
+        "source": ".ai/repo/project/issues/I4616.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A record whose id is reserved for another session fails plan validate, naming the holder",
+            "The same id reserved for this session passes",
+            "With no allocator reachable the finding says unverified"
+          ],
+          "created_at": "2026-11-15",
+          "current_state": "plan validate judges ids against the records in the tree; the commit hook runs plan validate; neither asks the allocator.",
+          "depends_on": [],
+          "evidence_required": [
+            "case_a_reserved_issue_id_is_refused_locally"
+          ],
+          "milestone": "a-second-adopter-is-served",
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I4616.yaml",
+            "lib/plan.sh",
+            "apps/majordomus-cli/src/plan",
+            "test/cases/4616_a_reserved_issue_id_is_refused_locally.sh"
+          ],
+          "slug": "a-reserved-issue-id-is-refused-locally",
+          "updated_at": "2026-11-15",
+          "validation": [
+            "bash test/run.sh 4616_a_reserved_issue_id_is_refused_locally"
+          ]
+        }
+      },
+      {
         "id": "majordomus://issue/I4618",
         "kind": "issue",
         "label": "I4618",
@@ -151341,6 +151594,76 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I4594",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4594",
+        "target": "majordomus://milestone/one-kit-on-every-surface",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4595",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4595",
+        "target": "majordomus://milestone/a-second-adopter-is-served",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4602",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4602",
+        "target": "majordomus://milestone/adopter-upgrades",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4606",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4606",
+        "target": "majordomus://milestone/a-second-adopter-is-served",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4612",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4612",
+        "target": "majordomus://milestone/a-second-adopter-is-served",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4615",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4615",
+        "target": "majordomus://milestone/a-second-adopter-is-served",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4616",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4616",
+        "target": "majordomus://milestone/a-second-adopter-is-served",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://issue/I4618",
         "target": "kind:issue",
         "kind": "is_a"
@@ -164232,8 +164555,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4495,
-      "edges": 10141,
+      "nodes": 4502,
+      "edges": 10155,
       "acyclic": false,
       "truncated": false
     }
