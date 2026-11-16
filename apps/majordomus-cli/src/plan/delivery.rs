@@ -247,8 +247,9 @@ pub(crate) struct DeliveryRelease {
 pub(crate) struct DeliveryDeployment {
     /// The version `latest.json` names.
     pub version: String,
-    /// Where that `latest.json` was read: `<commit>:site/static/releases/latest.json`, the
-    /// commit the observed Pages deployment published.
+    /// Where that `latest.json` was read: `<commit>:releases/latest.json` when the observed
+    /// Pages deployment published a gh-pages commit (the built site),
+    /// `<commit>:site/static/releases/latest.json` when it published a source commit.
     pub latest_json: String,
     /// When the publication was observed.
     pub observed_at: String,
@@ -752,12 +753,25 @@ fn latest_version(text: &str) -> Result<String, String> {
         .ok_or_else(|| "it names no version".to_string())
 }
 
-fn latest_path() -> String {
-    format!("{PUBLIC_DIR}/{LATEST}.json")
+/// Where a commit carries the release pointer, in the order they are tried (I4315).
+///
+/// The site serves everything under the static root at the root of the deployment, so the
+/// pointer authored at `site/static/releases/latest.json` is served, and pushed to gh-pages by
+/// `scripts/site-deploy`, as `releases/latest.json`. A Pages deployment of a gh-pages commit
+/// carries the built tree, a deployment of a source commit carries the source tree: the
+/// served path is tried first, then the source path.
+fn latest_paths() -> [String; 2] {
+    let source = format!("{PUBLIC_DIR}/{LATEST}.json");
+    let served = source
+        .strip_prefix(crate::distribution::PUBLIC_DIR)
+        .unwrap_or(&source)
+        .trim_start_matches('/')
+        .to_string();
+    [served, source]
 }
 
 /// The published version in live mode: the `latest.json` of the commit the newest
-/// successful Pages deployment published.
+/// successful Pages deployment published, at the path that commit carries it.
 pub(crate) fn published_live(root: &Path) -> Result<(String, String, String), String> {
     let observation = crate::deploy::observed::load(root)?.ok_or_else(|| {
         "no deployment of this repository has been observed from this checkout; \
@@ -776,10 +790,20 @@ pub(crate) fn published_live(root: &Path) -> Result<(String, String, String), St
                 observation.observed_at
             )
         })?;
-    let at = format!("{}:{}", deployed.sha, latest_path());
-    let text = git_ok(root, &["show", &at]).ok_or_else(|| {
-        format!("{at} cannot be read in this clone (the deployed commit is not fetched, or it publishes no release pointer)")
-    })?;
+    let paths = latest_paths();
+    let (at, text) = paths
+        .iter()
+        .map(|p| format!("{}:{p}", deployed.sha))
+        .find_map(|at| git_ok(root, &["show", &at]).map(|text| (at, text)))
+        .ok_or_else(|| {
+            format!(
+                "{sha}:{} and {sha}:{} cannot be read in this clone (the deployed commit is not \
+                 fetched, or it publishes no release pointer)",
+                paths[0],
+                paths[1],
+                sha = deployed.sha
+            )
+        })?;
     let version = latest_version(&text).map_err(|e| format!("{at}: {e}"))?;
     Ok((version, at, observation.observed_at))
 }
@@ -1659,6 +1683,18 @@ mod tests {
         let d = assess(&issue("I0001", ""), &e);
         assert_eq!(d.stage, DeliveryStage::Deployed);
         assert_eq!(d.deployed.unwrap().version, "0.2.0");
+    }
+
+    #[test]
+    fn the_pointer_is_read_where_the_site_serves_it_first() {
+        // a gh-pages commit carries the built site, a source commit the source tree (I4315)
+        assert_eq!(
+            latest_paths(),
+            [
+                "releases/latest.json".to_string(),
+                "site/static/releases/latest.json".to_string()
+            ]
+        );
     }
 
     #[test]

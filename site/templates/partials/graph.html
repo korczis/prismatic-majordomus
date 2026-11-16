@@ -17,25 +17,59 @@
 {%- set gsrc = graph_src or "" -%}
 <figure class="not-format my-8" data-graph="{{ graph_id }}-data" data-graph-base="{{ base }}"{% if gsrc %} data-graph-src="{{ get_url(path=gsrc) }}"{% endif %}{% if graph_rings %} data-graph-rings="{{ graph_rings }}"{% endif %}>
   <div class="overflow-hidden rounded-base border border-default bg-neutral-primary-soft">
-    <div class="flex flex-wrap items-center gap-x-4 gap-y-2 border-b border-default px-4 py-3">
+    {#- The toolbar of a Pro chart card: what the drawing is of on the left, then finding,
+        zooming and resetting, then one chip per edge kind. The controls that only act on the
+        drawing are written hidden and shown by graph.js once there is a drawing to act on:
+        without the script they would be buttons that do nothing. -#}
+    <div class="flex flex-wrap items-center gap-2 border-b border-default px-4 py-3">
       <span class="font-mono text-xs uppercase tracking-wide text-body-subtle">{{ graph.source }}</span>
-      <div class="ms-auto flex flex-wrap items-center gap-x-3 gap-y-2">
+      <div class="ms-auto flex flex-wrap items-center gap-2">
+        <div class="relative" data-graph-tool hidden>
+          <div class="pointer-events-none absolute inset-y-0 start-0 flex items-center ps-2.5">
+            <svg class="h-3.5 w-3.5 text-body-subtle" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round" stroke-width="2" d="m21 21-3.5-3.5M17 10a7 7 0 1 1-14 0 7 7 0 0 1 14 0Z"/></svg>
+          </div>
+          <input type="search" data-graph-search aria-label="Find a node" placeholder="Find a node" autocomplete="off" spellcheck="false"
+                 class="block w-40 rounded-base border border-default bg-neutral-primary-soft py-1 ps-8 pe-2 text-xs text-body placeholder:text-body-subtle focus:border-brand focus:ring-1 focus:ring-brand sm:w-48">
+        </div>
+        {#- the search's result, beside the field it answers -#}
+        <span class="text-xs tabular-nums text-body-subtle" data-graph-count aria-live="polite"></span>
+        <div class="inline-flex" role="group" aria-label="Zoom" data-graph-tool hidden>
+          <button type="button" data-graph-zoom="out" aria-label="Zoom out" title="Zoom out (-)" class="rounded-s-base border border-default bg-neutral-primary-soft px-2.5 py-1 text-xs font-medium text-body hover:bg-neutral-secondary-medium hover:text-heading focus:z-10 focus:outline-none focus:ring-2 focus:ring-brand">&minus;</button>
+          <button type="button" data-graph-zoom="in" aria-label="Zoom in" title="Zoom in (+)" class="-ms-px border border-default bg-neutral-primary-soft px-2.5 py-1 text-xs font-medium text-body hover:bg-neutral-secondary-medium hover:text-heading focus:z-10 focus:outline-none focus:ring-2 focus:ring-brand">+</button>
+          <button type="button" data-graph-fit title="Fit the whole graph (0)" class="-ms-px rounded-e-base border border-default bg-neutral-primary-soft px-2.5 py-1 text-xs font-medium text-body hover:bg-neutral-secondary-medium hover:text-heading focus:z-10 focus:outline-none focus:ring-2 focus:ring-brand">Fit</button>
+        </div>
+        <button type="button" data-graph-reset class="rounded-base border border-default px-2.5 py-1 text-xs font-medium text-body hover:bg-neutral-secondary-medium hover:text-heading focus:outline-none focus:ring-2 focus:ring-brand">Reset</button>
+      </div>
+      {#- One chip per edge kind: a sample of how that kind is drawn (a dash, a weight), its
+          name, how many edges it has, and a checkbox that takes it out of the picture.
+          Pointing at a chip or focusing it previews that kind alone (graph.js). Off is never
+          colour alone: the box is unticked, the name struck through, the chip faded
+          (figure.css). -#}
+      <div class="flex w-full flex-wrap items-center gap-1.5">
         {% for kind, meaning in graph.edge_kinds %}
-        <label class="inline-flex items-center gap-1.5 text-xs text-body" title="{{ meaning }}">
+        <label class="mj-graph-kind inline-flex cursor-pointer items-center gap-1.5 rounded-base border border-default bg-neutral-primary-soft px-2 py-0.5 text-xs text-body hover:bg-neutral-secondary-medium" title="{{ meaning }}">
           <input type="checkbox" checked data-graph-filter="{{ kind }}" class="h-3.5 w-3.5 rounded border-default text-brand focus:ring-2 focus:ring-brand">
-          <span class="font-mono">{{ kind }}</span>
+          <span class="mj-graph-edge" data-edge-kind="{{ kind }}" aria-hidden="true"></span>
+          <span class="mj-graph-kind-name font-mono">{{ kind }}</span>
+          <span class="mj-graph-kind-count">{{ [e for e in graph.edges if e.kind == kind] | length }}</span>
         </label>
         {% endfor %}
-        <button type="button" data-graph-reset class="rounded-base border border-default px-2 py-1 text-xs font-medium text-body hover:bg-neutral-secondary-medium hover:text-heading focus:outline-none focus:ring-2 focus:ring-neutral-tertiary">Reset</button>
       </div>
     </div>
     <div class="grid md:grid-cols-[minmax(0,1fr)_17rem]">
-      <div class="h-80 min-w-0 sm:h-96 lg:h-[34rem]" data-graph-canvas aria-hidden="true"></div>
+      <div class="relative min-w-0">
+        <div class="h-80 min-w-0 sm:h-96 lg:h-[34rem]" data-graph-canvas aria-hidden="true"></div>
+      </div>
       <div class="min-w-0 border-t border-default p-4 md:border-s md:border-t-0" data-graph-detail aria-live="polite"
            data-empty="&lt;p class=&quot;text-sm text-body-subtle&quot;&gt;Select a node to see what it is and what it touches.&lt;/p&gt;">
         <p class="text-sm text-body-subtle">Select a node to see what it is and what it touches.</p>
       </div>
     </div>
+    <p class="sr-only" id="{{ graph_id }}-keys" data-graph-keys>
+      Arrow keys move the selection to the nearest node that way; Shift with an arrow pans.
+      Plus and minus zoom, 0 fits the whole graph, Home and End go to the first and last node.
+      Enter opens the selected node's page and Escape clears. Ctrl or Cmd with the wheel, or a pinch, zooms.
+    </p>
     <p class="border-t border-default px-4 py-2 text-xs text-body-subtle" data-graph-note hidden>
       The interactive view could not load. The list below is the same graph.
     </p>

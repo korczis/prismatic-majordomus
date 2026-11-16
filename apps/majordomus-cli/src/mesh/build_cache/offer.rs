@@ -248,6 +248,26 @@ pub(crate) fn next_event(
     }
 }
 
+/// The withdrawal a runtime writes once more, given the reason it last `withdrawn` with and
+/// why it offers nothing `now`: a store killed while a probe is in flight accepts the probe
+/// and dies without a word, so the withdrawal it leaves says the probe could not say, and
+/// every probe after it is refused. Only that uncertain reason is refined, to the verdict that
+/// followed it, so the record converges on what the probe says and a wavering probe writes at
+/// most one more record per withdrawal.
+pub(crate) fn refined_withdrawal(
+    withdrawn: Option<&str>,
+    now: &Result<BuildCacheOffer, String>,
+) -> Option<EventBody> {
+    match (withdrawn, now) {
+        (Some(was), Err(reason)) if Health::Unknown.refusal() == Some(was) && reason != was => {
+            Some(EventBody::BuildCacheWithdrawn {
+                reason: reason.clone(),
+            })
+        }
+        _ => None,
+    }
+}
+
 /// What this node would offer now: the store its node file at `file` declares, probed within
 /// `budget`, as a record living `lifetime`; or why it offers nothing. The reasons are a fixed
 /// vocabulary, since a withdrawal carries one to every runtime of the mesh: never a path, an
@@ -357,7 +377,9 @@ mod tests {
     const NOT_READY: &str = "503 Service Unavailable";
 
     /// A loopback store answering its readiness route once with each status of `answers`, in
-    /// order, then gone. Returns the endpoint without a scheme, as a node file may write it.
+    /// order, then gone; an empty status accepts the probe and closes without a word, as a
+    /// store killed mid-request does. Returns the endpoint without a scheme, as a node file
+    /// may write it.
     ///
     /// A store that stops is modelled by its 503, not by its closed port: a port closed here
     /// is free for any other test of this process to bind, and a probe that reaches one of
@@ -374,7 +396,9 @@ mod tests {
                 };
                 let mut buf = [0u8; 256];
                 let _ = c.read(&mut buf);
-                let _ = c.write_all(format!("HTTP/1.0 {status}\r\n\r\n").as_bytes());
+                if !status.is_empty() {
+                    let _ = c.write_all(format!("HTTP/1.0 {status}\r\n\r\n").as_bytes());
+                }
             }
         });
         (addr.to_string(), served)
@@ -878,6 +902,59 @@ mod tests {
         body["offer"]["endpoint"] = "ftp://192.0.2.10:21".into();
         let bounds = reasons(body);
         assert!(bounds.contains("out of bounds"), "{bounds}");
+    }
+
+    #[test]
+    fn only_a_withdrawal_whose_probe_could_not_say_is_refined_and_only_to_a_new_reason() {
+        let unsure = Health::Unknown.refusal().unwrap();
+        let down = Health::Unhealthy.refusal().unwrap();
+        // nothing withdrawn, or an offer to make: not this rule's business
+        assert_eq!(refined_withdrawal(None, &Err(down.into())), None);
+        assert_eq!(refined_withdrawal(Some(unsure), &Ok(record())), None);
+        // the uncertain reason is refined to the verdict that follows it, and only then
+        assert_eq!(
+            refined_withdrawal(Some(unsure), &Err(down.into())),
+            Some(EventBody::BuildCacheWithdrawn {
+                reason: down.into()
+            })
+        );
+        assert_eq!(refined_withdrawal(Some(unsure), &Err(unsure.into())), None);
+        // a definite reason stays: a probe that wavers back writes nothing more
+        assert_eq!(refined_withdrawal(Some(down), &Err(unsure.into())), None);
+        assert_eq!(
+            refined_withdrawal(Some(down), &Err(NOT_SERVED.into())),
+            None
+        );
+    }
+
+    #[test]
+    fn a_store_killed_while_probed_is_withdrawn_and_then_said_unhealthy_once() {
+        use crate::mesh::testing::{runtime, Net};
+        let net = Arc::new(Net::default());
+        let a = runtime(&net, "a:1");
+        let dir = tempfile::tempdir().unwrap();
+        // the interleaving test/cases/3954 met by chance (I4225): the store is offered, dies
+        // while a probe is in flight, then refuses every probe after it
+        let (endpoint, served) = store(&[READY, "", NOT_READY, NOT_READY]);
+        a.serve_build_cache_from(Some(write_node_file(
+            dir.path(),
+            &endpoint,
+            "majordomus-build-cache",
+        )));
+        let reason = |e: &crate::mesh::journal::MeshEvent| {
+            e.body["reason"].as_str().unwrap_or_default().to_string()
+        };
+        let offered = a.refresh_build_cache_offer().expect("offered");
+        assert_eq!(offered.kind(), "build_cache_offered");
+        let unsure = a.refresh_build_cache_offer().expect("withdrawn");
+        assert_eq!(reason(&unsure), "its own probe could not say");
+        let refined = a
+            .refresh_build_cache_offer()
+            .expect("the withdrawal says what the next probe says");
+        assert_eq!(refined.kind(), "build_cache_withdrawn");
+        assert_eq!(reason(&refined), "its own probe says unhealthy");
+        assert!(a.refresh_build_cache_offer().is_none(), "said once");
+        served.join().unwrap();
     }
 
     #[test]

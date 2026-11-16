@@ -1,0 +1,40 @@
+id: I4301
+milestone: a-review-is-published-at-its-commit
+title: "Each finding's cited line is blamed to the commit that introduced it, and the commit is linked"
+slug: each-cited-line-is-blamed-to-its-commit
+priority: p1
+profile: implementation
+parallel_safe: false
+objective: "For every finding the site publishes with a path and line, find the commit that introduced that line at the measured commit with git blame, offline during the site's data step, and publish it beside the finding as a link through the forge-link component; a line git cannot blame (a file outside the history, a shallow clone) is reported as not observed and rendered as text."
+why: "dev-68 asked that every cited line be blamed to the commit that introduced it and linked, as the JOBL atlas does (jobl-mirror tools/atlas/build.mjs, rule project.review-findings-are-tracked), so a reader reaches the change and its pull request from the finding. No surface of this repository blames anything; the Cockpit prints a finding as path:line text (apps/majordomus-cli/src/cockpit/pages.rs:6108). The conclusion's validation plan requires a planted baselined finding to appear on /quality/ with its blame commit."
+current_state: "On 81ef931a3e1 neither scripts/generate-site-data nor any capability runs git blame, and a Violation carries path, line, rule, why and remediation (apps/majordomus-cli/src/quality/model.rs:327-346) and no commit."
+desired_state: "The site data step blames each published finding's line at the report's recorded commit with git blame --porcelain -L <n>,<n> and writes the introducing commit beside the finding; /quality/ links it with source_commit; blame of the whole set is measured and stays within a stated time budget, by batching per file; the CI clone that builds the site is deep enough to blame, or each unblamed line says why."
+scope:
+  - ".ai/repo/project/issues/I4301.yaml"
+  - "scripts/generate-site-data"
+  - "site/templates/quality.html"
+  - ".github/workflows/pages.yml"
+non_scope:
+  - "Blame on /ui or the Cockpit"
+  - "Storing blame in any tracked record: it is derived at build time"
+  - "Changing a Violation's fields in the crate: the blame is a fact of the history, not of the measurement"
+depends_on:
+  - "I4297"
+  - "I4298"
+  - "I4299"
+serves:
+  - "a-review-is-seen-at-its-commit#each-cited-line-is-blamed-to-its-commit"
+acceptance_criteria:
+  - "A finding planted on a line added by a known commit shows that commit, linked to commit/<sha>"
+  - "Every blame commit the page links is one link-check decides in the history"
+  - "Blaming the full report in the site build takes less than a stated budget, measured and recorded in the pull request"
+  - "A line in a shallow clone that cannot be blamed reads not observed, with the reason, never an empty link"
+validation:
+  - "scripts/site-build"
+  - "scripts/ci/link-check --sources"
+  - "bin/majordomus plan validate"
+evidence_required:
+  - "cited_lines_are_blamed"
+risk: "Medium. git blame across about 1850 baselined findings costs build time; the conclusion lists this risk. The Pages workflow may need a deeper fetch, which costs checkout time."
+created_at: 2026-10-28
+updated_at: 2026-10-28

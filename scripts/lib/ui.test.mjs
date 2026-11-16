@@ -1,6 +1,7 @@
-// The UI tooling's own tests: the discovery, the static scanner, the build's normalisations
-// and the contrast arithmetic. A built site is a fixture of files and a theme is a fixture of
-// CSS, so every claim here is made against one rather than against the repository's own.
+// The UI tooling's own tests: the discovery, the static scanner, the build's normalisations,
+// the contrast arithmetic and what the audit does with a load. A built site is a fixture of
+// files, a theme a fixture of CSS and a browser a fixture of scripted loads, so every claim
+// here is made against one rather than against the repository's own.
 // Run by `scripts/ui test`; the behaviour end to end is test/cases/85_ui_conformance.sh.
 import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -12,6 +13,7 @@ import { alignCells, escapes, nameTaskCheckboxes, normalise, normaliseRendered, 
 import { contrast, enforce, measure, raise, MINIMUM } from './ui-contrast.mjs';
 import { sample, siblingFamilies } from './ui-routes.mjs';
 import { compare, cut, fragment, GENERATED, VERSION_SLOT } from './ui-navbar.mjs';
+import { audit, auditPage } from './ui-audit.mjs';
 
 const tests = [];
 const test = (name, fn) => tests.push([name, fn]);
@@ -425,10 +427,154 @@ test('two bars are compared element by element: a class, a box past a pixel, a s
   assert.deepEqual(compare(null, [el()]), ['the site page has no <nav aria-label="Main">']);
 });
 
+// ------------------------------------------------------------------ the audit's navigation
+// A browser is a fixture too: a page whose goto answers from a script, and a browser that hands
+// such pages out, so what the audit does with a slow, refused or cold load is shown without a
+// server. Every goto of every page lands in one log, in the order the audit made it, and each
+// answers on a later turn of the event loop, as a navigation does, so the tabs of a pool
+// interleave rather than one draining the queue before the next has started.
+const ORIGIN = 'http://audit.test';
+const TIMEOUT = 'page.goto: Timeout 20000ms exceeded.\nCall log:\n  - navigating';
+const REFUSED = 'page.goto: net::ERR_CONNECTION_REFUSED at http://audit.test/b/\nCall log:';
+const answered = (status) => ({ status: () => status });
+const visited = (g) => g.url && g.options.timeout === 20000;
+
+function fakePage(answer, log = [], tab = 0) {
+  return {
+    removeAllListeners() {},
+    on() {},
+    async setViewportSize() {},
+    async goto(url, options) {
+      log.push({ tab, url, options });
+      const n = log.filter((g) => g.url === url && g.tab === tab).length;
+      await new Promise((resolve) => setImmediate(resolve));
+      return answer(url, options, n);
+    },
+    async close() { log.push({ tab, closed: true }); },
+  };
+}
+
+function fakeBrowser(answer) {
+  const log = [];
+  let tabs = 0;
+  const context = {
+    async newPage() { tabs += 1; return fakePage(answer, log, tabs - 1); },
+  };
+  const browser = { async newContext() { return context; }, async close() {} };
+  return { log, launch: async () => browser };
+}
+
+test('a goto that times out is loaded once more, and the second load is measured', async () => {
+  const log = [];
+  const page = fakePage((url, options, n) => {
+    if (n === 1) throw new Error(TIMEOUT);
+    return answered(404);
+  }, log);
+  const visit = await auditPage(page, ORIGIN, '/docs/', 320);
+  assert.equal(log.length, 2, 'the timed-out load is tried a second time');
+  assert.deepEqual(visit.findings.map((f) => f.rule), ['page.status'],
+    'a page that loads the second time is no page.unreachable');
+});
+
+test('a page that times out twice is unreachable, in as many attempts as loads', async () => {
+  const log = [];
+  const page = fakePage(() => { throw new Error(TIMEOUT); }, log);
+  const visit = await auditPage(page, ORIGIN, '/docs/', 320);
+  assert.equal(log.length, 2, 'two loads, and no third');
+  assert.equal(visit.status, 0);
+  // the count in the finding is the number of loads the log saw, not a number of its own
+  assert.deepEqual(visit.findings, [{
+    rule: 'page.unreachable',
+    detail: `the page did not load in ${log.length} attempt(s): ` +
+      'page.goto: Timeout 20000ms exceeded.',
+  }]);
+});
+
+test('a refused connection is never loaded twice and is no finding about the page', async () => {
+  const log = [];
+  const page = fakePage(() => { throw new Error(REFUSED); }, log);
+  await assert.rejects(auditPage(page, ORIGIN, '/b/', 320), /ERR_CONNECTION_REFUSED/,
+    'the refusal reaches the run, which is what stops it');
+  assert.equal(log.length, 1, 'a server that refused is not asked again');
+});
+
+test('a refused connection stops the run and says the server stopped answering', async () => {
+  const { log, launch } = fakeBrowser((url, options) => {
+    if (url === `${ORIGIN}/b/` && options.timeout === 20000) throw new Error(REFUSED);
+    return answered(404);
+  });
+  const pages = ['/a/', '/b/', '/c/'].map((route) => ({ route, widths: [320], tier: 'sweep' }));
+  const seen = [];
+  const onVisit = (visit) => seen.push(visit.route);
+  await assert.rejects(audit(ORIGIN, pages, { concurrency: 1, launch, onVisit }), {
+    message: `the server at ${ORIGIN} stopped answering during the run, at /b/ ` +
+      '(1 visit(s) measured); the audit cannot speak for the rest',
+  });
+  assert.deepEqual(seen, ['/a/'], 'no page is recorded unreachable for the server going away');
+  assert.deepEqual(log.filter(visited).map((g) => g.url), [`${ORIGIN}/a/`, `${ORIGIN}/b/`],
+    'the refusal is loaded once, and nothing after it');
+});
+
+test('a refusal in one tab of a pool stops every tab: none loads a page after it', async () => {
+  let refusedAt = -1;
+  const browser = fakeBrowser((url, options) => {
+    if (url === `${ORIGIN}/b/` && options.timeout === 20000) {
+      refusedAt = browser.log.length;
+      throw new Error(REFUSED);
+    }
+    return answered(404);
+  });
+  const routes = ['/a/', '/b/', '/c/', '/d/', '/e/', '/f/', '/g/'];
+  const pages = routes.map((route) => ({ route, widths: [320], tier: 'sweep' }));
+  const seen = [];
+  const onVisit = (visit) => seen.push(visit.route);
+  await assert.rejects(
+    audit(ORIGIN, pages, { concurrency: 2, launch: browser.launch, onVisit }),
+    /stopped answering during the run, at \/b\//,
+  );
+  const tabs = new Set(browser.log.filter(visited).map((g) => g.tab));
+  assert.equal(tabs.size, 2, 'the pool really was two tabs loading at once');
+  assert.ok(refusedAt > 0, 'the refusal was answered');
+  assert.deepEqual(browser.log.slice(refusedAt).filter(visited), [],
+    'once the server has refused, no tab of the pool starts another load');
+  assert.ok(seen.length < routes.length - 1, 'the rest of the plan is not measured');
+  assert.ok(!seen.includes('/b/'), 'the refused page is no visit of its own');
+});
+
+test('every surface of the plan is warmed through its first page before any visit', async () => {
+  const { log, launch } = fakeBrowser(() => answered(404));
+  // the segments are this plan's, and none of them is a mount the repository serves: whatever
+  // the audit warms, it read from the plan
+  const routes = [
+    '/', '/zeta/deep/', '/alpha/', '/zeta/', '/alpha/x/?q=1', '/omega?tab=1', '/omega/',
+  ];
+  const pages = routes.map((route) => ({ route, widths: [320, 1024], tier: 'sweep' }));
+  const visits = await audit(ORIGIN, pages, { concurrency: 2, launch });
+  assert.equal(visits.length, routes.length * 2, 'every visit is still made');
+  const warm = log.filter((g) => g.tab === 0);
+  assert.deepEqual(warm.map((g) => g.url ?? 'closed'),
+    [ORIGIN, `${ORIGIN}/zeta/deep/`, `${ORIGIN}/alpha/`, `${ORIGIN}/omega?tab=1`, 'closed'],
+    'the root, then the first planned route of each top-level segment, in plan order, once each');
+  const firstVisit = log.findIndex((g) => g.tab > 0);
+  assert.ok(firstVisit > log.findIndex((g) => g.tab === 0 && g.closed),
+    'the warm tab is done before a worker loads');
+});
+
+test('a plan with one surface warms it alone, and one with none the root alone', async () => {
+  const warmed = (log) => log.filter((g) => g.tab === 0 && g.url).map((g) => g.url);
+  const one = fakeBrowser(() => answered(404));
+  const report = [{ route: '/reports/a/', widths: [320] }];
+  await audit(ORIGIN, report, { concurrency: 1, launch: one.launch });
+  assert.deepEqual(warmed(one.log), [ORIGIN, `${ORIGIN}/reports/a/`]);
+  const none = fakeBrowser(() => answered(404));
+  await audit(ORIGIN, [{ route: '/', widths: [320] }], { concurrency: 1, launch: none.launch });
+  assert.deepEqual(warmed(none.log), [ORIGIN], 'no segment of the plan, no surface of its own');
+});
+
 let failed = 0;
 for (const [name, fn] of tests) {
   try {
-    fn();
+    await fn();
     console.log(`ok   ${name}`);
   } catch (error) {
     failed += 1;

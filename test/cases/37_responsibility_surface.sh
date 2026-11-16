@@ -61,7 +61,7 @@ done
 
 # 3. a README row with no entry in the canonical file is refused, in that direction
 cp "$ROOT/README.md" "$C/README.md"
-python3 - "$C/README.md" <<'PY' 2>/dev/null || skip "python3 absent"
+python3 - "$C/README.md" <<'PY' 2>/dev/null || skip "$(mj_runs_why python3)"
 import sys
 p = sys.argv[1]
 s = open(p).read()

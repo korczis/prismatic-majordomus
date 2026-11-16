@@ -25,4 +25,16 @@ validation:
 evidence_required:
   - "init_declares_mesh_case"
 created_at: 2026-10-10
-updated_at: 2026-10-10
+updated_at: 2026-10-25T22:11:36Z
+started_at: 2026-10-25T22:11:13Z
+started_event: sha256:bb6f7b29443f9f5fc47a80b202cad275f0b281513a0b97c1e87bcce1532c0751
+completed_at: 2026-10-25T22:11:36Z
+completed_event: sha256:aa0eb3975c5c9f1e200e85d6473e25c556ce5ecb1dcc4813e0d188e7cb4f37c5
+evidence:
+  - covers: init_declares_mesh_case
+    type: test
+    command: "MJ_TEST_JOBS=4 env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 01_init; cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --lib -- mesh::tailscale mesh::enrol mesh::manager::tests::an_unlisted_machine_keeps_the_mesh_closed_and_starts_no_provider mesh::cooperation::tests::isolation_version_trust_and_replay_are_typed_refusals"
+    result: "at master 2efeacea031: case 01_init ok (C1: init seeds .ai/repo/mesh/mesh.yaml enabled, deny_unknown and closed, test/cases/01_init.sh:21-24); master validate run 40196303175 suite-shard (4) job 121182964713: 01_init ok in 69 s. C2: mesh::enrol::tests::a_block_list_gains_one_item_after_its_last_and_keeps_its_comments asserts a second enrol is a no-op (enrol.rs:164), with the refusal tests for bad keys and other documents. C3: mesh::manager::tests::an_unlisted_machine_keeps_the_mesh_closed_and_starts_no_provider (I2261 holds). 19 lib tests passed 0 failed. Landed through train 4 (35f852d9ed7, which names I2412), which carried the branch of #947; #947 itself was closed as landed"
+    artifact: "https://github.com/korczis/prismatic-majordomus/actions/runs/40196303175"
+    commit: 2967755140dc7779d84ec8a05b622c88b12cd2f6
+    recorded_at: 2026-10-25T22:09:52Z

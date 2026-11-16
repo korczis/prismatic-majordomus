@@ -40,7 +40,16 @@ const PATIENCE: std::time::Duration = std::time::Duration::from_secs(600);
 /// Run `majordomus run`.
 pub fn run(args: RunArgs) -> Result<u8> {
     let app = App::load(&args.repo)?;
-    let ctx = &app.context;
+    run_in(&app.context, &app.repository, &args)
+}
+
+/// [`run`] against a repository already loaded: its context, which answers the capabilities,
+/// and the repository whose server, if one serves it, is told about the run.
+fn run_in(
+    ctx: &crate::capability::Context,
+    repository: &crate::repository::Repository,
+    args: &RunArgs,
+) -> Result<u8> {
     let input: Value = match &args.input {
         Some(text) => serde_json::from_str(text).map_err(|e| Error::Protocol {
             reason: format!("--input is not JSON: {e}"),
@@ -57,16 +66,17 @@ pub fn run(args: RunArgs) -> Result<u8> {
     let mut out = stdout.lock();
     let show = args.follow || (!args.quiet && args.format == OutputFormat::Text);
     // the server already serving this checkout, if any; never one started for this run
-    let server = crate::lease::serving(&app.repository);
+    let server = crate::lease::serving(repository);
 
     // subscribe before starting: an execution this fast would otherwise be over before
     // anything was listening
     let (subscriber, rx) = ctx.executions.store().subscribe(Filter::All);
+    let mut start = json!({ "capability": args.capability, "input": input });
+    if let Some(key) = &args.idempotency_key {
+        start["idempotency_key"] = json!(key);
+    }
     let started = ctx
-        .execute(
-            cli_capability(ctx, &["run"])?,
-            json!({ "capability": args.capability, "input": input }),
-        )
+        .execute(cli_capability(ctx, &["run"])?, start)
         .map_err(map)?;
     let id = started["id"].as_str().unwrap_or_default().to_string();
     // the id is the one this process just minted, so it parses whenever a server serves
@@ -416,6 +426,34 @@ fn describe(event: &crate::execution::ExecutionEvent) -> Option<String> {
         Cancelled => "---  cancelled".to_string(),
         Completed { .. } => "---  completed".to_string(),
         Failed { error } => format!("FAIL {}: {}", error.code, error.message),
+        Claimed { holder } => format!("---  held by {holder}"),
+        IssueClaim(claim) => format!(
+            "---  {} mesh claim {}{}{}",
+            claim.issue,
+            claim.standing.as_str(),
+            claim
+                .key
+                .as_ref()
+                .map(|k| format!(" {k}"))
+                .unwrap_or_default(),
+            claim
+                .detail
+                .as_ref()
+                .map(|d| format!(" — {d}"))
+                .unwrap_or_default()
+        ),
+        Verifying => "---  checking what it produced".to_string(),
+        Refused { error, policy } => format!(
+            "REFUSED {}: {}{}",
+            error.code,
+            error.message,
+            policy
+                .as_ref()
+                .map(|p| format!(" ({p})"))
+                .unwrap_or_default()
+        ),
+        UnknownOutcome { error } => format!("UNKNOWN {}: {}", error.code, error.message),
+        Authorizing => "---  waiting for a policy decision".to_string(),
         Queued { .. } => return None,
     })
 }
@@ -762,6 +800,7 @@ mod tests {
                 detail: None,
                 suggestion: None,
             }),
+            EventPayload::IssueClaim(crate::execution::IssueClaim::wanted("I4004")),
             EventPayload::Cancelling {
                 by: "client".into(),
             },
@@ -775,6 +814,28 @@ mod tests {
                     correlation_id: "x".into(),
                 },
             },
+            EventPayload::Authorizing,
+            EventPayload::Claimed {
+                holder: "worker-1".into(),
+            },
+            EventPayload::Verifying,
+            EventPayload::Refused {
+                error: ExecutionError {
+                    code: "refused".into(),
+                    message: "not here".into(),
+                    suggestion: None,
+                    correlation_id: "x".into(),
+                },
+                policy: Some("project.example".into()),
+            },
+            EventPayload::UnknownOutcome {
+                error: ExecutionError {
+                    code: "unavailable".into(),
+                    message: "it went silent".into(),
+                    suggestion: None,
+                    correlation_id: "x".into(),
+                },
+            },
         ];
         for payload in cases {
             let name = payload.type_name();
@@ -783,6 +844,17 @@ mod tests {
         }
         // the one event a terminal does not need: it is already looking at the queue
         assert!(describe(&event(EventPayload::Queued { ahead: 0 })).is_none());
+        // a held claim names its key, and a claim with a detail says it
+        let held = crate::execution::IssueClaim {
+            standing: crate::execution::ClaimStanding::Held,
+            key: Some("stream/c-1".into()),
+            detail: Some("the holder is named".into()),
+            ..crate::execution::IssueClaim::wanted("I4004")
+        };
+        assert_eq!(
+            describe(&event(EventPayload::IssueClaim(held))).unwrap(),
+            "---  I4004 mesh claim held stream/c-1 — the holder is named"
+        );
         // and the words a reader looks for are there
         assert!(describe(&event(EventPayload::Progress(ProgressView {
             current: 3,
@@ -1265,6 +1337,7 @@ mod tests {
             },
             capability: "executions.demonstrate".into(),
             input: Some(r#"{ "steps": 1, "delay_ms": 0 }"#.into()),
+            idempotency_key: None,
             follow: !quiet,
             quiet,
             format,
@@ -1284,6 +1357,49 @@ mod tests {
             run(run_args(&repo, false, OutputFormat::Json)).expect("ran"),
             0
         );
+    }
+
+    /// A registry that exposes no `majordomus run` is refused by name, before anything runs.
+    #[test]
+    fn a_run_without_the_run_capability_is_refused_by_name() {
+        let repo = runnable();
+        let bare = crate::capability::Context::new(
+            Arc::new(repo.index().expect("an index")),
+            Arc::new(
+                crate::capability::CapabilityRegistry::builder()
+                    .build()
+                    .expect("an empty registry"),
+            ),
+        );
+        let repository = crate::repository::Repository::open(repo.root()).expect("opens");
+        let err = run_in(
+            &bare,
+            &repository,
+            &run_args(&repo, true, OutputFormat::Json),
+        )
+        .unwrap_err();
+        assert!(
+            err.to_string()
+                .contains("no capability is exposed as `majordomus run`"),
+            "{err}"
+        );
+    }
+
+    /// A run started under an idempotency key sends it, and a key no capability admits is
+    /// refused before anything runs.
+    #[test]
+    fn a_run_sends_its_idempotency_key_and_a_bad_one_is_refused() {
+        let repo = runnable();
+        let keyed = RunArgs {
+            idempotency_key: Some("click-1".into()),
+            ..run_args(&repo, true, OutputFormat::Json)
+        };
+        assert_eq!(run(keyed).expect("ran"), 0);
+        let bad = RunArgs {
+            idempotency_key: Some("a b/c".into()),
+            ..run_args(&repo, true, OutputFormat::Json)
+        };
+        assert!(run(bad).is_err());
     }
 
     /// With a server serving the checkout, the run reports itself to it until the server

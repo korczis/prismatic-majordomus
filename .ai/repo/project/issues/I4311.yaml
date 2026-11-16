@@ -1,0 +1,45 @@
+id: I4311
+milestone: a-finding-is-tracked-to-its-issue
+title: "One Rust forge-URL helper builds every commit, pull request, file and line link on /ui and the Cockpit"
+slug: one-forge-url-helper-for-ui-and-cockpit
+priority: p2
+profile: implementation
+parallel_safe: false
+objective: "Make the forge-URL builder in apps/majordomus-cli/src/plan/flight.rs the one helper for commit, pull request, blob and line URLs pinned to a commit, replace the copies that format GitHub URLs by hand, and use it where /ui and the Cockpit print a commit or a path as text, so each becomes a link; make the Cockpit quality page name the commit its findings were measured at (the commit I4297 adds to the report), linked through the helper; extend case 1091 to decide the outbound forge links /ui emits."
+why: "Forge URLs are built in several places: forge_url (apps/majordomus-cli/src/plan/flight.rs:183), forge (apps/majordomus-cli/src/release/changelog.rs:37), pull_request_url (apps/majordomus-cli/src/integration/train.rs:392), hand-formatted pull request URLs (apps/majordomus-cli/src/ui/prs.rs:852 and :983), a commit URL (apps/majordomus-cli/src/ui/deployments.rs:86) and a release download base (apps/majordomus-cli/src/distribution/mod.rs:148). Meanwhile the Cockpit prints commits as mono text (apps/majordomus-cli/src/cockpit/pages.rs:7559) and /ui does too (apps/majordomus-cli/src/ui/claim.rs:76). Case 1091 (test/cases/1091_no_link_on_the_ui_is_dead.sh) decides /ui links but not outbound forge links. The Cockpit quality page prints findings as path:line text (apps/majordomus-cli/src/cockpit/pages.rs:6108) and does not say which commit they were measured at; that half was moved here from I4297 so the first published page does not wait on the exclusive claim #2520 holds on pages.rs. The site half is I4298; this is its Rust mirror, with the same forms."
+current_state: "On 81ef931a3e1 six modules format forge URLs independently and at least seven Cockpit and /ui sites print a commit as text."
+desired_state: "One helper with commit, pull, blob and line forms, each pinned to a commit and refusing a branch name; the copies call it; the listed Cockpit and /ui sites link through it; the Cockpit quality page names and links the report's commit; case 1091 decides each outbound forge link against the history or reports it."
+scope:
+  - ".ai/repo/project/issues/I4311.yaml"
+  - "apps/majordomus-cli/src/plan/flight.rs"
+  - "apps/majordomus-cli/src/release/changelog.rs"
+  - "apps/majordomus-cli/src/integration/train.rs"
+  - "apps/majordomus-cli/src/ui/prs.rs"
+  - "apps/majordomus-cli/src/ui/deployments.rs"
+  - "apps/majordomus-cli/src/ui/claim.rs"
+  - "apps/majordomus-cli/src/cockpit/pages.rs"
+  - "test/cases/1091_no_link_on_the_ui_is_dead.sh"
+non_scope:
+  - "Site templates (I4298)"
+  - "The release download base in apps/majordomus-cli/src/distribution/mod.rs, which names a release asset rather than a commit"
+  - "Highlighting on /ui (I3791)"
+depends_on:
+  - "I4297"
+  - "I4298"
+serves:
+  - "a-review-is-seen-at-its-commit#every-forge-link-is-pinned-and-proven"
+acceptance_criteria:
+  - "No module but the helper formats a github.com commit, pull or blob URL, checked by a grep in the helper's test"
+  - "The helper refuses a branch name where a commit is required"
+  - "Each listed Cockpit and /ui site renders a commit as a link to commit/<sha>"
+  - "The Cockpit quality page names the commit the findings were measured at, as a link to commit/<sha>"
+  - "Case 1091 fails on a planted outbound commit link the history does not hold"
+validation:
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib plan::flight::"
+  - "bash test/run.sh 1091_no_link_on_the_ui_is_dead"
+  - "bin/majordomus plan validate"
+evidence_required:
+  - "one_forge_url_helper"
+risk: "Medium. #2520 holds an exclusive claim on apps/majordomus-cli/src/cockpit/pages.rs, and stale #2405 and #2522 also edit it; the Cockpit half lands after #2520."
+created_at: 2026-10-28
+updated_at: 2026-10-28

@@ -1,0 +1,37 @@
+id: I4302
+milestone: a-review-is-published-at-its-commit
+title: "The crate declares a clippy lint table with a named subset of pedantic, nursery and restriction lints, and new debt is ratcheted"
+slug: the-crate-declares-its-clippy-lints
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "Add a [lints.clippy] table to apps/majordomus-cli/Cargo.toml and a clippy configuration at the repository root that turn on a named subset of lints, each with its group: too_many_lines (pedantic), cognitive_complexity (nursery), unwrap_used and expect_used outside tests (restriction) and todo (restriction, which catches the todo!() macro and not a TODO comment), so the three allow(clippy::too_many_lines) attributes already in the code start to mean something; accept today's findings in .ai/repo/clippy-baseline.txt, which scripts/rust-check reads, so the gate refuses only new debt. This issue is the one gate for function length; I4303 does not measure it."
+why: "scripts/rust-check:384 runs cargo clippy -D warnings with the default lint set only, and the crate has no [lints] table and no clippy configuration, so #[allow(clippy::too_many_lines)] at apps/majordomus-cli/src/plan.rs:716 and apps/majordomus-cli/src/devtask/graph.rs:425 silences a lint that never fires. The plan's satisfaction criterion asks that an over-long function and a new unwrap in product code each fail a named gate (plan section 4, A4). No new dependency is needed."
+current_state: "On 81ef931a3e1 apps/majordomus-cli/Cargo.toml has no [lints] section; scripts/rust-check runs clippy at line 384 with -D warnings and no lint list."
+desired_state: "The lint table names each lint, its group and its level; .ai/repo/clippy-baseline.txt holds today's findings and lets the gate pass on master; a planted over-long function and a planted unwrap in non-test code each fail scripts/rust-check, naming the lint; the baseline only shrinks."
+scope:
+  - ".ai/repo/project/issues/I4302.yaml"
+  - "apps/majordomus-cli/Cargo.toml"
+  - "clippy.toml"
+  - "scripts/rust-check"
+  - ".ai/repo/clippy-baseline.txt"
+non_scope:
+  - "Fixing the existing findings the baseline accepts"
+  - "Module length, module-wide dead-code allowances and TODO comments, which are quality.report codes (I4303)"
+  - "Lints outside the named subset"
+depends_on: []
+serves:
+  - "a-review-is-seen-at-its-commit#a-planted-smell-fails-a-named-gate"
+acceptance_criteria:
+  - "scripts/rust-check passes on master with the table and its baseline"
+  - "A planted function over the configured line limit fails, naming too_many_lines"
+  - "A planted unwrap in non-test product code fails, naming unwrap_used"
+  - "Removing one baselined finding without updating the baseline is reported as baseline drift, so the baseline cannot keep accepting fixed debt"
+validation:
+  - "scripts/rust-check"
+  - "bin/majordomus plan validate"
+evidence_required:
+  - "clippy_lint_table_refuses_new_debt"
+risk: "Medium. clippy has no native baseline; the ratchet must be built from clippy's JSON output in scripts/rust-check, and that script is already long."
+created_at: 2026-10-28
+updated_at: 2026-10-28

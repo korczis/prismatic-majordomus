@@ -85,6 +85,7 @@ fresh() {
 <div data-trust-key="commit"><dt>commit</dt><dd>abcdef1</dd></div>
 <div data-trust-key="use-cases"><dt>use cases</dt><dd>3</dd><dd>2 areas</dd></div>
 </dl>
+<dl data-hero-figures><div><dt><a href="/features/good/">good</a></dt><dd>1</dd></div></dl>
 <dl data-claims-proof><div><dt>guaranteed claims, declared</dt><dd data-declared="guaranteed">0</dd><dd data-supported="unmeasured">not yet measured</dd></div></dl>
 <div data-surfaces x-data="{}"><select data-surface-picker><option value="one.show" selected>one.show</option></select>
 <dl><div><dd><a data-surface-id="one.show" href="/r/">one.show</a></dd></div><div><dd data-surface="cli">majordomus one show</dd></div><div><dd><a data-surface="http" href="/docs/api/">GET /api/v1/one</a></dd></div><div><dd data-surface="mcp">majordomus_one</dd></div></dl></div></section>
@@ -115,7 +116,7 @@ expect_finding() { # <exit> <pattern> <what>
 # --- a clean tree passes, every check reporting
 fresh
 expect_finding 0 '^OK   narrative ' "a clean tree"
-for c in substance sentence scenarios nodes honesty map install runtime providers trust surfaces interfaces product evidence declared promises present weight indexing; do grep -q "^OK   $c " out.txt || { echo "    a clean tree did not report $c"; cat out.txt; exit 1; }; done
+for c in substance figures sentence scenarios nodes honesty map install runtime providers trust surfaces interfaces product evidence declared promises present weight indexing; do grep -q "^OK   $c " out.txt || { echo "    a clean tree did not report $c"; cat out.txt; exit 1; }; done
 
 # --- narrative, both directions and the order
 fresh; sed -i.bak 's#<section id="how">#<section id="extra"><a href="/x/">x</a></section><section id="how">#' "$F/site/public/index.html"

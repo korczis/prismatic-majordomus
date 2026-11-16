@@ -1,0 +1,46 @@
+id: I4299
+milestone: a-review-is-published-at-its-commit
+title: "The site publishes the public API conformance report of the build commit, baselined findings included, with its provenance and a JSON download"
+slug: the-site-publishes-public-api-conformance
+priority: p1
+profile: implementation
+parallel_safe: false
+objective: "Write the quality report of the build commit into the site's data, refuse it when its recorded commit is not the build commit or its tree was dirty, and publish a /quality/ page labelled public API conformance: every finding including the baselined ones (marked baselined), each with its stable id (its baseline key: code, path and symbol, without the line), its verification state (confirmed, because each code is measured by the analyser rather than suspected), its code, rule, line link at the build commit, reproduce command and baseline state; a provenance block naming the commit, tree, analyser and version, the baseline file's identity at that commit, the exclusions and the denominators; the report itself as a JSON download; and two ECharts bar figures (findings by code, findings by top-level module) drawn over their tables."
+why: "No finding is published anywhere: quality.report renders its findings only on the Cockpit (apps/majordomus-cli/src/cockpit/pages.rs:6108), the /ui observatory reads only its counts (apps/majordomus-cli/src/ui/observatory.rs:96), and the 1850 entries of .ai/repo/rust-quality-baseline.txt are invisible. codex (consultation d37ae1) found that a page titled as 'the quality report' would read as broader assurance than a ratcheted public-API check gives, and the conclusion rejected 'a /quality/ page that hides baselined findings'; include_baselined already exists on the capability's input (apps/majordomus-cli/src/capability/builtin/quality.rs:83). ECharts 6.0.0 is vendored and site/charts.js draws a <figure data-chart=bar> from the table on its page (ADR 0152), so no new chart mechanism is needed. The intent requires every finding to carry a stable id and a verification state; a Violation (apps/majordomus-cli/src/quality/model.rs:327-346) has neither, so this issue derives both in the site data from the baseline key and the fact of measurement, without changing the Violation's fields. This extends I2654's table contract and does not repeat it."
+current_state: "On 81ef931a3e1 scripts/generate-site-data writes no quality data, site/data/nav.toml has no quality entry, and no site template renders a finding."
+desired_state: "generate-site-data writes the report from bin/majordomus-cli quality report --format json --include-baselined, adds to each finding its stable id, its verification state and its reproduce command, and refuses a report whose commit differs from the build commit or whose tree was dirty; the page site/templates/quality.html, reached from site/content-src/quality.md, renders the label, the provenance block, the two figures over their tables, the findings table and the JSON link; site/data/nav.toml lists it under Evidence with bar = false; site-check fails a page that omits the label, the provenance block or the baselined findings."
+scope:
+  - ".ai/repo/project/issues/I4299.yaml"
+  - "scripts/generate-site-data"
+  - "site/data/nav.toml"
+  - "scripts/site-check"
+  - "site/templates/quality.html"
+  - "site/content-src/quality.md"
+non_scope:
+  - "The navbar and its partial: the entry has bar = false and appears in the footer's site map only (#2349)"
+  - "A treemap or any chart form beyond bar (I4304)"
+  - "Blame of each cited line (I4301)"
+  - "Dependency evidence (I4300), the due-diligence review (I4305) and redaction (I4314)"
+depends_on:
+  - "I4297"
+  - "I4298"
+  - "I4316"
+serves:
+  - "a-review-is-seen-at-its-commit#findings-are-published-at-their-commit"
+acceptance_criteria:
+  - "The built site has /quality/ labelled public API conformance, with the commit, tree, analyser, baseline identity, exclusions and denominators visible without JavaScript"
+  - "A finding planted into the baseline appears on /quality/ marked baselined, with its stable id, verification state confirmed, reproduce command and line link pinned to the build commit"
+  - "generate-site-data refuses a report whose recorded commit is not the build commit, naming both"
+  - "The JSON download is byte-identical to the report the page was rendered from"
+  - "Each figure is drawn over its table and the page reads the same with JavaScript off"
+  - "site-check fails a build of the page without the label or without the baselined findings"
+validation:
+  - "scripts/site-build"
+  - "scripts/site-check"
+  - "scripts/ci/link-check --sources"
+  - "bin/majordomus plan validate"
+evidence_required:
+  - "quality_page_is_published_at_its_commit"
+risk: "Medium. The site's data step runs the executable, so the quality report adds to site build time; the report must be measured once per build."
+created_at: 2026-10-28
+updated_at: 2026-10-28

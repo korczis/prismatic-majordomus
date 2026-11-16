@@ -1,5 +1,14 @@
 {#- The chart component (site/charts.js, ADR 0152). Apache ECharts is pinned via npm and vendored to
     static/js at build; no page loads it with a script tag: the component is deferred and fetches
     the build named here the first time a <figure data-chart> nears the viewport. Progressive:
-    without JS the figure is the table it always was. Included only by pages that carry a chart. -#}
+    without JS the figure is the table it always was. Included only by pages that carry a chart.
+
+    The templates are the two controls a chart adds (I4400), both in the header of the chart's card:
+    the legend, a row with one toggle button per series of a chart of two or more (its name, and
+    beside it the series' value), and the right end of a zoomable line chart's header, with the
+    window it shows and the button that gives the whole range back. They are markup the build
+    wrote, so scripts/ci/interaction-check counts them and the `chart` behaviour spec answers for
+    them; inert until charts.js copies them into a chart's card (the legend's button once per series). -#}
+<template data-chart-legend><div class="mj-chart-keys" role="group"><button type="button" class="mj-chart-key" data-chart-action="series" aria-pressed="true"><span class="mj-chart-key-mark" aria-hidden="true"></span><span class="mj-chart-key-name">series</span><span class="mj-chart-key-value" aria-hidden="true"></span></button></div></template>
+<template data-chart-tools><div class="mj-chart-tools"><span class="mj-chart-range"></span><button type="button" class="mj-button mj-button--quiet" data-chart-action="reset" aria-label="Reset zoom: show the whole range" title="Show the whole range">Reset zoom</button></div></template>
 <script defer src="{{ get_url(path="js/charts.js") }}" data-echarts-src="{{ get_url(path="js/echarts.min.js") }}"></script>

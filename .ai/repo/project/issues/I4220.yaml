@@ -29,4 +29,15 @@ evidence_required:
   - suite
 risk: "None beyond the trust already given evidence.json: both files are produced by scripts/pages from forge answers at publish time, never typed."
 created_at: 2026-10-24
-updated_at: 2026-10-24
+updated_at: 2026-10-25T18:49:56Z
+started_at: 2026-10-25T18:49:05Z
+started_event: sha256:7fe0141012ab0ced7e96cf991feeeabe269a5e02dd7cfeaaaf4ef4d3e7bec709
+completed_at: 2026-10-25T18:49:56Z
+completed_event: sha256:7c22819f39b4e32fc31467dc5991719771f32438ad6898fdb26a17bdd405190d
+evidence:
+  - covers: suite
+    type: test
+    command: "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 335_every_link_resolves"
+    result: "ok locally at 2efeacea031 (1 passed); ok on master's validate https://github.com/korczis/prismatic-majordomus/actions/runs/40196303175/job/121182964713"
+    commit: 2efeacea03158615db2b497117a8da35b264909b
+    recorded_at: 2026-10-25T18:48:39Z

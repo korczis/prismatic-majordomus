@@ -29,4 +29,27 @@ evidence_required:
   - "stale_link_recovers_test"
   - "rejection_storm_reported_test"
 created_at: 2026-10-17
-updated_at: 2026-10-17
+updated_at: 2026-10-26T12:40:51Z
+started_at: 2026-10-26T12:39:58Z
+started_event: sha256:fa99483ffa382887e8b61bd4f40058f709319e94300207f260f7f25d1335d1e6
+completed_at: 2026-10-26T12:40:51Z
+completed_event: sha256:8709d3d4d95c2e794edff5e1ef4233ffb5c23fc24b2bdaa5400e1fb14b8d5701
+evidence:
+  - covers: release_converges_test
+    type: test
+    command: "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --lib mesh::journal"
+    result: "46 passed, 0 failed on the iMac at origin/master 6259dac47af, 2026-10-26; mesh::journal::tests::a_node_full_of_a_dead_stream_frees_itself_and_a_release_then_arrives ok (the 2026-10-19 capacity deadlock reproduced: a sibling runtime's claim and release refused for capacity, the node compacts itself and the release then arrives) and a_restart_does_not_renew_an_untaken_handovers_offer ok"
+    commit: 6259dac47afb5b01008725c6040f366feb458578
+    recorded_at: 2026-10-26T12:40:21Z
+  - covers: stale_link_recovers_test
+    type: test
+    command: "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --test mesh_cooperation; cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --lib mesh::cooperation"
+    result: "8 passed and 31 passed, 0 failed on the iMac at origin/master 6259dac47af, 2026-10-26; a_killed_runtime_expires_and_its_restart_reconnects_as_the_same_runtime ok, and a_round_s_outcome_sets_the_pause_before_the_next ok (a first unknown_link answer drops the outbound link and the dialer says hello again with no pause)"
+    commit: 6259dac47afb5b01008725c6040f366feb458578
+    recorded_at: 2026-10-26T12:40:31Z
+  - covers: rejection_storm_reported_test
+    type: test
+    command: "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --lib mesh::cooperation"
+    result: "31 passed, 0 failed on the iMac at origin/master 6259dac47af, 2026-10-26; verify_names_a_storm_and_a_doubled_runtime, a_round_whose_every_event_is_refused_names_its_dominant_reason, a_round_that_let_anything_in_or_carried_nothing_is_no_storm and a_runtime_that_beats_as_two_instances_is_named_with_both ok: mesh verify's rejections check fails naming the dominant reason"
+    commit: 6259dac47afb5b01008725c6040f366feb458578
+    recorded_at: 2026-10-26T12:40:41Z

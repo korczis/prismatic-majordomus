@@ -8,10 +8,13 @@ parallel_safe: true
 depends_on: []
 objective: "Give the record pull request the release workflow opens a ci verdict it can earn, so that it lands on that verdict and not on a lander's local judgement."
 why: "2026-10-14: the record PR of v0.26.0 (#1147, opened by github-actions at 19:07Z) had no checks in its rollup: its pull_request validate 38620991504 ended action_required (a PR authored with GITHUB_TOKEN does not start workflows without approval), and the dispatched validate 38620987044 failed only in the `evidence` job, step gather, exit 12, \"evidence-collect: no report to record: the suite and the crate both left none\", because the record's light plan runs no suite or crate lane. v0.25.0's record runs 38576703346 and 38576698375 failed the same way; both records were landed on the lander's local judgement with --admin. A release path that cannot pass its own gate keeps the landing HOLD up for an hour and trains landers to override."
-current_state: "The record PR's verdict comes from a dispatched validate; its light plan selects no evidence-producing lane while the evidence job still demands a report; the pull_request run waits for a human approval."
-desired_state: "On a plan that selects no suite or crate lane the evidence job records an explicit planned-empty report (naming the plan) instead of refusing, and the record PR receives a check that GitHub counts for the branch (the dispatched run reports its verdict onto the PR head, or the PR is opened with a token that triggers workflows); the record lands on that green verdict."
+current_state: "Re-measured 2026-11-09 on v1.0.1 (#2991): the evidence half is delivered by I3668 (6019042120e, the receipt records not_required for a plan that owes no report; evidence passed in both runs). The pull_request validate 42668789214 was created action_required and approved by a person through the forge API; its attempt 2 then failed only ci, because GitHub never created the site job (needs: abandoned) while every job that ran passed, and re-running the failed jobs created it on attempt 3. The dispatched validate 42668785190 was green and, as branch protection reads no dispatch check suite, counted for nothing. feature/I2717-record-run-approved makes the dispatch approve the waiting run (scripts/ci/record-run-approve, case 4574) and the verdict name an abandoned job with its remedy; whether the forge accepts the approval from GITHUB_TOKEN is first observed on the next record."
+desired_state: "On a plan that selects no suite or crate lane the evidence job records an explicit planned-empty report (naming the plan) instead of refusing, and the record PR receives a check that GitHub counts for the branch (the dispatched run approves the pull request's own waiting run, or the PR is opened with a token that triggers workflows; a ci the dispatch posted onto the PR head would be a forged verdict, docs/DISTRIBUTION.md); the record lands on that green verdict."
 scope:
   - .github/workflows/validate.yml
+  - scripts/ci/record-run-approve
+  - .ai/repo/automation/inventory.jsonl
+  - docs/DISTRIBUTION.md
   - scripts/ci/evidence-collect
   - scripts/ci/verdict
   - docs/RELEASE.md
@@ -28,4 +31,4 @@ validation:
 evidence_required:
   - "record_pr_verdict_can_pass_case"
 created_at: 2026-10-14
-updated_at: 2026-10-14
+updated_at: 2026-11-09

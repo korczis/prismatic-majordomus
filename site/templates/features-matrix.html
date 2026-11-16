@@ -18,7 +18,7 @@
     to reach a 1px box nobody can see. A scroll container contains what it positions. -#}
 <div class="relative mt-8 min-w-0 overflow-x-auto rounded-base border border-default" tabindex="0">
   <table class="w-full min-w-[36rem] border-collapse text-sm">
-    <caption class="sr-only">Features against the interfaces they are exposed through, how many of the claims each names are declared guaranteed with a test, and how many a recorded run supports</caption>
+    <caption class="sr-only">Features against the interfaces they are exposed through, how many of the claims each names are declared guaranteed with a test, and how many the runs the committed ledger records support</caption>
     <thead class="bg-neutral-primary-soft">
       <tr>
         <th scope="col" class="border-b border-default px-4 py-3 text-start font-semibold text-heading">Feature</th>
@@ -28,9 +28,11 @@
         {#- Two columns, two axes, never one word for both. The model's matrix field is named
             `proven`, but what it counts is declared: guaranteed claims that name a test. A
             recorded run is the other axis, `majordomus evidence show`'s, and only it may be
-            called supported. -#}
+            called supported. What it counts is the committed ledger's verdict, which can trail
+            CI's newest run (the count the homepage and /evidence/ show), so every word of it
+            says it is the ledger's (I4317, scripts/ci/homepage-check `declared`). -#}
         <th scope="col" class="border-b border-default px-3 py-3 text-center font-mono text-xs font-medium uppercase tracking-wide text-body-subtle"><a href="#declared-with-test" class="hover:text-fg-brand hover:underline">declared + test</a></th>
-        <th scope="col" class="border-b border-default px-3 py-3 text-center font-mono text-xs font-medium uppercase tracking-wide text-body-subtle"><a href="#supported-by-a-run" class="hover:text-fg-brand hover:underline">supported by a run</a></th>
+        <th scope="col" class="border-b border-default px-3 py-3 text-center font-mono text-xs font-medium uppercase tracking-wide text-body-subtle"><a href="#supported-by-a-run" class="hover:text-fg-brand hover:underline">supported in the ledger</a></th>
       </tr>
     </thead>
     <tbody class="divide-y divide-default">
@@ -48,10 +50,10 @@
           {%- else %}<span class="text-body-subtle" aria-hidden="true">·</span><span class="sr-only">names no claim</span>{% endif -%}
         </td>
         {%- set feature = [x for x in model.features if x.id == r.id] %}
-        <td class="px-3 py-2.5 text-center font-mono text-xs text-heading" data-supported="{{ r.id }}">
+        <td class="px-3 py-2.5 text-center font-mono text-xs text-heading" {% if r.claims %} data-ledger-supported="{{ r.id }}"{% endif %}>
           {%- if not r.claims %}<span class="text-body-subtle" aria-hidden="true">·</span><span class="sr-only">names no claim</span>
-          {%- elif not ev.available or feature | length == 0 %}unknown<span class="sr-only"> whether a recorded run supports these claims</span>
-          {%- else %}{{ [c for c in feature[0].claims if c in ev.claims and ev.claims[c].supported] | length }}/{{ r.claims }}<span class="sr-only"> claims supported by a recorded run</span>{% endif -%}
+          {%- elif not ev.available or feature | length == 0 %}unknown<span class="sr-only"> whether the runs the committed ledger records support these claims</span>
+          {%- else %}{{ [c for c in feature[0].claims if c in ev.claims and ev.claims[c].supported] | length }}/{{ r.claims }}<span class="sr-only"> claims supported by the runs the committed ledger records</span>{% endif -%}
         </td>
       </tr>
       {%- endfor %}
@@ -62,8 +64,8 @@
 <dl class="mt-6 grid max-w-3xl gap-x-6 gap-y-3 text-sm sm:grid-cols-[auto_1fr]">
   <dt id="declared-with-test" class="font-mono text-xs uppercase tracking-wide text-heading">declared + test</dt>
   <dd class="text-body">Of the claims a feature names, how many <code>docs/CLAIMS.yaml</code> declares <code>guaranteed</code>, each naming the test that is to prove it. A declaration, not a verdict: nothing here says the test ran.</dd>
-  <dt id="supported-by-a-run" class="font-mono text-xs uppercase tracking-wide text-heading">supported by a run</dt>
-  <dd class="text-body">Of the same claims, how many a recorded run supports, as <code>majordomus evidence show</code> derives it from the ledger; <code>unknown</code> when no evidence reached this build. <a href="{{ get_url(path="/evidence/", trailing_slash=true) }}" class="text-fg-brand underline">How evidence is recorded</a>.</dd>
+  <dt id="supported-by-a-run" class="font-mono text-xs uppercase tracking-wide text-heading">supported in the ledger</dt>
+  <dd class="text-body">Of the same claims, how many the runs the committed ledger records support, as <code>majordomus evidence show</code> derives it; <code>unknown</code> when no evidence reached this build. It can trail CI's newest run, the one the homepage and the evidence page count. <a href="{{ get_url(path="/evidence/", trailing_slash=true) }}" class="text-fg-brand underline">How evidence is recorded</a>.</dd>
 </dl>
 
 {#- ------------------------------------------------------------------- the coverage -#}

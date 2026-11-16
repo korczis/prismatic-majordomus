@@ -2,7 +2,7 @@
 
 Keeps a Claude Code session in a Majordomus-supervised repository briefed on what surrounds it,
 without anyone asking (ADR 0136). The surface it reads is `majordomus brief`; see
-[`docs/BRIEF.md`](../../../../docs/BRIEF.md).
+[the session brief](https://majordomus.dev/docs/brief/).
 
 ## What it does
 

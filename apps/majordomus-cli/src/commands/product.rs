@@ -423,9 +423,10 @@ fn providers_text(v: &Value) -> String {
     // the wiring the policy declares, and the two being adjacent is deliberate: a provider
     // with `hooks` under EPISODE and nothing under HOOKS is a gap in this distribution, and
     // it used to be invisible because neither column existed. `majordomus capture status`
-    // is the reading that resolves it into one word per aspect.
+    // is the reading that resolves it into one word per aspect. BROWSER is the same kind of
+    // column (I3829): the declared bridge, not whether this machine has it, which is preflight's.
     let mut out = vec![format!(
-        "{:<width$}  {:<36}  EPISODE     PROMPTS  BOOTSTRAPS  CLIENT CONFIG  HOOKS  SCRATCH ROOTS",
+        "{:<width$}  {:<36}  EPISODE     PROMPTS  BROWSER  BOOTSTRAPS  CLIENT CONFIG  HOOKS  SCRATCH ROOTS",
         "PROVIDER",
         "TITLE",
         width = width
@@ -469,12 +470,21 @@ fn providers_text(v: &Value) -> String {
                 v
             }
         };
+        let browser = {
+            let v = s(&p["offers"], "browser");
+            if v.is_empty() {
+                "-".to_string()
+            } else {
+                v
+            }
+        };
         out.push(format!(
-            "{:<width$}  {:<36}  {:<10}  {:<7}  {:<10}  {:<13}  {:<5}  {}",
+            "{:<width$}  {:<36}  {:<10}  {:<7}  {:<7}  {:<10}  {:<13}  {:<5}  {}",
             s(p, "id"),
             s(p, "title"),
             episode,
             prompts,
+            browser,
             if boots.is_empty() {
                 "-".to_string()
             } else {
@@ -533,14 +543,15 @@ mod tests {
     use super::*;
     use serde_json::json;
 
-    /// EPISODE and PROMPTS print what the provider is declared to offer, and a provider that
-    /// declares nothing prints a dash in both, never an empty cell that shifts the columns.
+    /// EPISODE, PROMPTS and BROWSER print what the provider is declared to offer, and a
+    /// provider that declares nothing prints a dash in each, never an empty cell that shifts
+    /// the columns.
     #[test]
     fn the_offers_columns_print_the_declaration_or_a_dash() {
         let v = json!({ "providers": [
             {
-                "id": "offering", "title": "Declares both",
-                "offers": { "episode": "hooks", "prompts": "hook" },
+                "id": "offering", "title": "Declares all three",
+                "offers": { "episode": "hooks", "prompts": "hook", "browser": "bridge" },
                 "bootstraps": [{ "target": "CLAUDE.md" }], "client_config": ".mcp.json",
                 "hooks": ["start", "end"], "scratch_roots": ["/tmp/x"]
             },
@@ -548,14 +559,17 @@ mod tests {
         ]});
         let text = providers_text(&v);
         let lines: Vec<&str> = text.lines().collect();
+        let (header, columns) = (lines[0], "  PROMPTS  BROWSER  BOOTSTRAPS  ");
+        assert!(header.contains(columns), "{header}");
         assert_eq!(
             lines[1],
             format!(
-                "{:<8}  {:<36}  {:<10}  {:<7}  {:<10}  {:<13}  {:<5}  {}",
+                "{:<8}  {:<36}  {:<10}  {:<7}  {:<7}  {:<10}  {:<13}  {:<5}  {}",
                 "offering",
-                "Declares both",
+                "Declares all three",
                 "hooks",
                 "hook",
+                "bridge",
                 "CLAUDE.md",
                 ".mcp.json",
                 "start,end",
@@ -565,8 +579,8 @@ mod tests {
         assert_eq!(
             lines[2],
             format!(
-                "{:<8}  {:<36}  {:<10}  {:<7}  {:<10}  {:<13}  {:<5}  {}",
-                "silent", "Declares nothing", "-", "-", "-", "-", "-", "-"
+                "{:<8}  {:<36}  {:<10}  {:<7}  {:<7}  {:<10}  {:<13}  {:<5}  {}",
+                "silent", "Declares nothing", "-", "-", "-", "-", "-", "-", "-"
             )
         );
         assert_eq!(lines.last(), Some(&"2 provider(s)"));

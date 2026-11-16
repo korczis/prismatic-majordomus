@@ -5,7 +5,7 @@ slug: a-likely-link-is-fetched-ahead
 priority: p3
 profile: implementation
 objective: "First record from I3226's Server-Timing the document-fetch cost a prefetch would remove on a /ui navigation (documents are sent Cache-Control: no-cache, panels load as fragments) and the cockpit::csp directives a prefetch must satisfy; only if that cost is measured, prefetch on hover or focus the /ui links whose navigation carries it, skipping Save-Data and slow connections, with the prefetch list derived from the rendered links and the measurement, not kept. With no measured cost the issue closes as not needed and the criterion is withdrawn."
-why: "Owner, 2026-10-11: caching, preloading, URLs and a router. Prefetching a 50 s panel would harm, so it waits for I3226's measurement. Every system.http.ui.* screen is already under its 100 ms budget (I2489), so 'under its budget' alone separates nothing; ADR 0207 (proposed) keeps a mechanism without a measured problem open. Sources: chatgpt-majordomus:c223#2."
+why: "Owner, 2026-10-11: caching, preloading, URLs and a router. Prefetching a 50 s panel would harm, so it waits for I3226's measurement. Every system.http.ui.* screen is already under its 100 ms budget (I2489), so 'under its budget' alone separates nothing; ADR 0207 (proposed) keeps a mechanism without a measured problem open. Sources: chatgpt-majordomus:c223#2. The owner's pack asks for the same in campaigns/majordomus-ui-speed-pack/04-ROUTES-PRELOAD.md; PR #1058 planned it as I2564, which never landed, and the criteria of that record this one did not hold were folded in on 2026-10-30."
 current_state: "No prefetch in share/ui; panels already load as fragments after first paint."
 desired_state: "Either share/ui/ui.js prefetches only the links whose measured navigation cost a prefetch removes, proven by a browser case, or the issue is closed as not needed with the measurement recorded and the criterion withdrawn."
 scope:
@@ -30,10 +30,15 @@ acceptance_criteria:
   - "No prefetch is issued under Save-Data"
   - "Before any prefetch code, the issue records I3226's Server-Timing measurement of the navigation cost a prefetch removes (a /ui document under Cache-Control: no-cache, panels excluded) and the cockpit::csp directives it must satisfy; if none is measured the issue closes as not needed and the criterion a-cheap-link-is-fetched-ahead is withdrawn from the intent"
   - "The proof is a browser case under test/cases numbered by scripts/case-numbers next that observes hover, focus and Save-Data; the PR rewrites the criterion to `evidence: test` with that case's path"
+  - "At most two read-ahead requests are in flight, and one whose pointer leaves before it is sent is aborted"
+  - "Nothing is read ahead for a non-GET or off-/ui link or a link marked data-no-read-ahead"
+  - "share/ui/ui.js holds no /ui route string: the links read ahead are those the rendered page carries"
+  - "The measured cost includes an inspector's cold first reading, which Ui::warm_once never warms because it walks only SCREENS and PANELS"
+  - "A link in the viewport may be read ahead when the browser is idle, under the same bounds"
 validation:
   - "majordomus bench --check"
   - "scripts/ui audit"
 evidence_required:
   - "browser case under test/cases observing hover, focus and Save-Data"
 created_at: 2026-10-18
-updated_at: 2026-10-18
+updated_at: 2026-10-30

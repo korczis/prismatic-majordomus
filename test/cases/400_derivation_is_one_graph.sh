@@ -77,7 +77,16 @@ cat > "$G/scripts/rules-package" <<'SH'
 set -eu
 printf 'rules-package %s\n' "$1" >> "$STUB_LOG"
 SH
-chmod +x "$TOOL/majordomus" "$G/scripts/generate-site-data" "$G/scripts/gitattributes" "$G/scripts/rules-package"
+# the check's last stage: scripts/ci/derived-size-check, no derived file near its size limit
+# (I4512); derive-check runs it and derive does not
+mkdir -p "$G/scripts/ci"
+cat > "$G/scripts/ci/derived-size-check" <<'SH'
+#!/usr/bin/env bash
+set -eu
+printf 'derived-size-check\n' >> "$STUB_LOG"
+SH
+chmod +x "$TOOL/majordomus" "$G/scripts/generate-site-data" "$G/scripts/gitattributes" "$G/scripts/rules-package" \
+  "$G/scripts/ci/derived-size-check"
 STUB_LOG="$LOG"; export STUB_LOG
 ( cd "$G" && git init -q . && git config user.email t@example.com && git config user.name t \
   && git add -A && git commit -qm sources )
@@ -132,7 +141,8 @@ expect_grep 'run scripts/derive'
 want='generate --check
 site-data --check
 gitattributes --check
-rules-package check'
+rules-package check
+derived-size-check'
 [ "$(cat "$LOG")" = "$want" ] \
   || { printf '    scripts/derive-check did not run every check in the order derive runs the generators\n    want:\n%s\n    got:\n%s\n' "$want" "$(cat "$LOG")"; exit 1; }
 [ "$(tree_state)" = "$before" ] || { echo "    scripts/derive-check wrote to a stale tree"; exit 1; }
@@ -193,9 +203,17 @@ fp1="$(bash "$C/scripts/generate-site-data" --fingerprint)"
 [ -n "$fp0" ] && [ "$fp0" != "$fp1" ] \
   || { echo "    the site data's input fingerprint does not move with product.json; the Pages build would render a stale dataset"; exit 1; }
 expect_grep 'MJ_PAGES_QUIET=1 timed fingerprint cmd_current \|\| return 10' "$ROOT/scripts/pages"
-build_line="$(grep -n 'run: scripts/pages build' "$ROOT/.github/workflows/pages.yml" | head -1 | cut -d: -f1)"
-publish_line="$(grep -n 'scripts/site-deploy --skip-build' "$ROOT/.github/workflows/pages.yml" | head -1 | cut -d: -f1)"
-[ -n "$build_line" ] && [ -n "$publish_line" ] && [ "$build_line" -lt "$publish_line" ] \
+# the build is the step's command, alone (run: scripts/pages build) or the last line of a run: |
+# block that first hands it the run's executable (#2960); both inside the deploy job, so a build
+# in another job cannot stand in for the one that publishes
+W="$ROOT/.github/workflows/pages.yml"
+deploy_start="$(grep -n -E '^  deploy:$' "$W" | head -1 | cut -d: -f1 || true)"
+deploy_end="$(awk -v s="${deploy_start:-0}" 'NR > s && /^  [a-z][a-z0-9_-]*:$/ { print NR; exit }' "$W")"
+deploy_end="${deploy_end:-$(wc -l < "$W")}"
+in_deploy() { awk -v s="${deploy_start:-0}" -v e="$deploy_end" -F: '$1 > s && $1 < e { print $1; exit }'; }
+build_line="$(grep -n -E '^[[:space:]]*(run: )?scripts/pages build$' "$W" | in_deploy || true)"
+publish_line="$(grep -n 'scripts/site-deploy --skip-build' "$W" | in_deploy || true)"
+[ -n "$deploy_start" ] && [ -n "$build_line" ] && [ -n "$publish_line" ] && [ "$build_line" -lt "$publish_line" ] \
   || { echo "    the Pages deploy job does not build (and so fingerprint) before it publishes"; exit 1; }
 cp "$T/product.json.kept" "$PD"
 
@@ -234,7 +252,7 @@ done
 # repeated here so the claim's one named test asserts the whole claim.
 cur="$(git -C "$ROOT" rev-parse HEAD 2>/dev/null || true)"
 if [ -n "$cur" ]; then
-  for f in "$ROOT"/site/data/generated/*.json "$ROOT/docs/SITE_CLAIMS.md" "$ROOT/docs/PLAN_STATUS.md"; do
+  for f in "$ROOT"/site/data/generated/*.json "$ROOT/docs/SITE_CLAIMS.md" "$ROOT/docs/PLAN_STATUS.md" "$ROOT"/docs/plan-status/*.md; do
     [ -f "$f" ] || continue
     if grep -qF -- "${cur:0:7}" "$f"; then
       printf '    %s embeds the current commit; it will be stale the moment it is committed\n' "${f#"$ROOT"/}"

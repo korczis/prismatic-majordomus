@@ -33,4 +33,18 @@ validation:
 evidence_required:
   - "key_rotation_test"
 created_at: 2026-10-14
-updated_at: 2026-10-14
+updated_at: 2026-10-29T00:48:34Z
+started_at: 2026-10-29T00:46:17Z
+started_event: sha256:077aa384c9417be9c4253c64afd4e8cc8544b909f9db1a6f472080d45ea049b7
+verified_at: 2026-10-29T00:46:35Z
+verified_event: sha256:068b2255ec32b971373bf6dad5ae06c6999c7fc045f59c3698c4bf028d020fc6
+completed_at: 2026-10-29T00:48:34Z
+completed_event: sha256:c9a4c2b52f70bc33a771bce26ef1f142850f0f9f3514859674075ab9e2267a92
+evidence:
+  - covers: key_rotation_test
+    type: ci
+    command: "cargo test --lib mesh:: (validate rust (2))"
+    result: "ok in master validate rust (2), 4189 lib tests passed, 0 failed: mesh::identity a_rotation_is_signed_by_the_old_key_and_countersigned_by_the_new, a_rotation_to_the_same_key_is_refused_and_writes_nothing, a_rotation_that_cannot_write_keeps_the_old_key; mesh::trust a_successor_is_trusted_only_while_its_predecessor_is (peers follow the new key; the old key is not trusted once succeeded), a_key_change_under_one_node_id_is_rejected_with_successions_in_hand; mesh::cooperation a_withdrawn_key_loses_its_link_without_a_restart (AC2). Landed by #1225. validate 40676150754 ran at 81ef931a3e1; master 5370ee63d19 differs from it only in plan records (#2653), no code. The run is red only on 103_release_projection (alpha.9 release record, #2626) and pages, neither this issue's"
+    artifact: "https://github.com/korczis/prismatic-majordomus/actions/runs/40676150754/job/122781513657"
+    commit: 5370ee63d19b71b16e9431bb2edd86236338ca42
+    recorded_at: 2026-10-29T00:48:09Z

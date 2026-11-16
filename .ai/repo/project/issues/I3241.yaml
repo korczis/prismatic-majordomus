@@ -1,27 +1,41 @@
 id: I3241
 milestone: a-change-is-judged-in-minutes
-title: "Only a job that reads history fetches all of it"
+title: "Every checkout fetches only what its gates read, blobless by default, and no checkout takes more than 120 s"
 slug: only-history-gates-fetch-history
-priority: p3
+priority: p0
 profile: implementation
-objective: "Declare in gates.yaml which gates read history, and give fetch-depth 0 only to the jobs that run one of them."
-why: "c228#3: a full fetch costs 10-60 s per job on a repository of about 1 GB. It extends milestone ci-critical-path. Sources: chatgpt-majordomus:c228#3, chatgpt-majordomus:c025#3."
-current_state: "Measured on master 707a04c, 2026-10-18: nine validate.yml jobs check out with fetch-depth 0 (structure, suite-shard, rust, coverage, evidence, site, macos, install, pages); the plan job uses 2."
-desired_state: "fetch-depth follows the gate model, and a case refuses a full fetch no gate needs."
+objective: "The default checkout of validate.yml is HEAD's ancestry with `filter: blob:none`. Tags and other heads are fetched only by a job one of whose gates declares `history_reads` in gates.yaml: adr-collision (blobs on other heads), collision-check, the pages walk and version-matches-surface. scripts/ci/step-bound-check refuses a `fetch-depth: 0` checkout without `blob:none` unless its job declares a history_reads entry, and a fetch of `refs/heads/*` without a gate that reads other branches. 96_site_deploy works from a partial clone."
+why: "c228#3: a full fetch costs 10-60 s per job on a repository of about 1 GB. It extends milestone ci-critical-path. Sources: chatgpt-majordomus:c228#3, chatgpt-majordomus:c025#3. Raised from p3 to p0 on 2026-10-29 by the incident review of 2026-10-28 (incident 2, item N10): hosted validate checkouts timed out at 600 s six times across runs 40708407384 and 40733537887 (both attempts), because each of the seven `fetch-depth: 0` checkouts fetched 2.85 GiB (549 heads, every tag and every blob; registry.json alone is 1.76 GB packed) while many ran at once. #2633 (I4296) gives the structure job blob:none and a 20-minute bound, a mitigation for one job; this issue is the root fix for every job. It no longer waits for I3242: the 120 s ceiling is read from the run's own timings.tsv, not from I3242's baseline. The budget that keeps it true is I4349, and the growth that makes a full fetch expensive is I4351."
+current_state: "Measured at 81ef931a3e1, 2026-10-29: .github/workflows/validate.yml carries seven `fetch-depth: 0` checkouts (lines 319, 428, 681, 978, 1096, 1786 and 1923), none with `filter: blob:none`; .ai/repo/ci/gates.yaml declares no history_reads; scripts/ci/step-bound-check refuses only a full-history checkout without a bound smaller than its job's (case 3749)."
+desired_state: "fetch-depth and filter follow the gate model: a job fetches history only for a gate that declares it reads it, and blobs never by default; step-bound-check refuses a checkout the model does not justify; no checkout step of a validate run takes more than 120 s. Enforced by step-bound-check and case 3749 in the structure gate and in pre-commit."
 scope:
   - ".github/workflows/validate.yml"
   - ".ai/repo/ci/gates.yaml"
   - "scripts/ci-plan"
-depends_on:
-  - "I3242"
+  - "scripts/ci/step-bound-check"
+  - "test/cases/3749_a_full_history_checkout_is_bounded.sh"
+  - "test/cases/96_site_deploy.sh"
+  - ".ai/repo/project/issues/I3241.yaml"
+  - "docs/CI.md"
+non_scope:
+  - "A budget on checkout time and repository size (I4349)"
+  - "Shrinking the derived files that make the history large (I4351)"
+depends_on: []
 serves:
   - "a-change-is-judged-in-minutes#pr-verdict-within-five-minutes"
 acceptance_criteria:
-  - "Each fetch-depth 0 is justified by a declared history gate (case)"
-  - "No history-reading gate fails for want of history"
+  - "Case 3749: step-bound-check fails on a `fetch-depth: 0` checkout without `filter: blob:none` in a job whose gates declare no history_reads entry, and passes once the job declares one"
+  - "Case 3749: step-bound-check fails on a fetch of `refs/heads/*` in a job with no gate that reads other branches, and passes on a job that has one"
+  - "Case 96_site_deploy passes from a partial clone (`git clone --filter=blob:none`)"
+  - "No history-reading gate fails for want of history: adr-collision, collision-check, the pages walk and version-matches-surface pass in the validate run carrying the change"
+  - "A validate run carrying the change has no checkout step over 120 s, read from its timings.tsv"
 validation:
   - "scripts/ci-plan --check"
+  - "bash test/run.sh 3749_a_full_history_checkout_is_bounded 96_site_deploy"
+  - "actionlint .github/workflows/validate.yml"
+  - "bin/majordomus plan validate"
 evidence_required:
   - "fetch_depth_follows_gates_case"
+  - "no_checkout_over_120_s"
 created_at: 2026-10-18
-updated_at: 2026-10-18
+updated_at: 2026-10-29

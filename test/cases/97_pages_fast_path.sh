@@ -201,7 +201,7 @@ expect_grep 'current for this tree'
 #    checkout rewrote catalogue.json and terminal.json under every neighbour and run.sh refused
 #    the shard ("the checkout changed during the parallel phase", batch H, #711).
 PUB="$ROOT/site/public"
-if command -v zola >/dev/null 2>&1 && [ -d "$ROOT/node_modules/tailwindcss" ]; then
+if mj_zola_ready "$ROOT" && [ -d "$ROOT/node_modules/tailwindcss" ]; then
   a="$(mktemp -d "${TMPDIR:-/tmp}/mj-pages-a.XXXXXX")"; b="$(mktemp -d "${TMPDIR:-/tmp}/mj-pages-b.XXXXXX")"
   wt="$(mktemp -d "${TMPDIR:-/tmp}/mj-pages-wt.XXXXXX")/tree"
   drop_wt() { git -C "$ROOT" worktree remove --force "$wt" >/dev/null 2>&1; rm -rf "$(dirname "$wt")"; }

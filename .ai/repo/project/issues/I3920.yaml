@@ -28,4 +28,23 @@ evidence_required:
 depends_on: []
 serves: []
 created_at: 2026-10-22
-updated_at: 2026-10-22
+updated_at: 2026-10-26T12:28:58Z
+started_at: 2026-10-26T12:28:17Z
+started_event: sha256:5b744645e14b52e8347f033ba0858604cc5b806df65c49482bba3d86b998ab57
+completed_at: 2026-10-26T12:28:58Z
+completed_event: sha256:8b74b3892f659b2d45b2f8173a7b1438b32839c823e1e63776b84d667f60b32b
+evidence:
+  - covers: truncated_listing_is_unreadable
+    type: test
+    command: "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 894_github_sync_applies_only_the_trunk 3970_a_pull_request_carries_its_metadata 602_a_spliced_body_is_recognised_as_its_own 1038_a_head_is_judged_against_what_it_changes"
+    result: "4 passed, 0 failed at origin/master 6259dac47af with its 1.0.0-alpha.8 executable: case 3970 refuses a listing shorter than the repository's issue count (FX_COUNT=99) with exit 12 and no DRIFT line; case 894 refuses an unread issue listing with exit 12 and no write in --check and --apply; cases 602 and 1038 drive the adapter through gh issue list and gh api graphql"
+    artifact: "scripts/github-sync gh_list_remote (gh issue list + issues.totalCount)"
+    commit: 6259dac47afb5b01008725c6040f366feb458578
+    recorded_at: 2026-10-26T12:28:38Z
+  - covers: no_duplicate_on_apply
+    type: test
+    command: "scripts/github-sync --check (live, korczis/prismatic-majordomus) and bash test/run.sh 894_github_sync_applies_only_the_trunk 3970_a_pull_request_carries_its_metadata"
+    result: "live check at origin/master 6259dac47af on 2026-10-26: exit 0, 1138 milestones and issues OK insync, 0 drift findings, so no record that has an issue reads missing and an apply has nothing to create; case 894 shows a run that cannot read the remote writes nothing, and case 3970 that a second apply writes nothing"
+    artifact: "github-sync check: 0 drift finding(s)"
+    commit: 6259dac47afb5b01008725c6040f366feb458578
+    recorded_at: 2026-10-26T12:28:48Z

@@ -56,6 +56,9 @@
 # declared). A finding names the route, the width, the assertion and what was measured.
 set -eu
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"; SITE="$ROOT/site"; PUB="$SITE/public"; QUICK=0; SELF=0
+# shellcheck source=../lib/runnable.sh
+. "$(cd "$(dirname "$0")/.." && pwd)/lib/runnable.sh" 2>/dev/null || { mj_runs() { command -v "$1" >/dev/null 2>&1; }; mj_runs_why() { printf '%s is not available' "$1"; }; mj_zola_ready() { command -v zola >/dev/null 2>&1; }; mj_zola_why() { printf 'zola is not available'; }; mj_node_env() { :; }; }
+mj_node_env "$(cd "$(dirname "$0")/.." && pwd)" || true
 usage() { sed -n '2,30p' "$0" | sed 's/^# \{0,1\}//'; }
 # One shard of a route list: the lines whose position, counted from 1, is K modulo N. A stride
 # rather than N contiguous blocks, because the sorted list clusters its expensive pages (the
@@ -141,7 +144,7 @@ for c in "${CHROME_BIN:-}" google-chrome google-chrome-stable chromium chromium-
   [ -n "$c" ] && { command -v "$c" >/dev/null 2>&1 || [ -x "$c" ]; } && { CHROME="$c"; break; }
 done
 [ -n "$CHROME" ] || { echo "SKIP site-probe: no Chrome/Chromium found (set CHROME_BIN)"; exit 0; }
-command -v python3 >/dev/null || { echo "SKIP site-probe: python3 needed for the local server"; exit 0; }
+mj_runs python3 || { echo "SKIP site-probe: $(mj_runs_why python3)"; exit 0; }
 
 # One browser process, its window width, and the title of the page it dumped, or the
 # sentinel when it did not finish within SITE_PROBE_TIMEOUT seconds (a hung browser is a

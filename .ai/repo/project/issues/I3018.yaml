@@ -28,4 +28,18 @@ validation:
 evidence_required:
   - ui_idd_within_budget
 created_at: 2026-10-21
-updated_at: 2026-10-21
+updated_at: 2026-10-28T12:20:52Z
+started_at: 2026-10-28T12:19:31Z
+started_event: sha256:6affa37039483a7cfe8c2d6cc5a3a1e923a4846012df71d0b0bee7e3eada783f
+verified_at: 2026-10-28T12:19:57Z
+verified_event: sha256:c76af5621014bb2257162699b975854b1be4aeb1cb3e90cf350ec9b54749681a
+completed_at: 2026-10-28T12:20:52Z
+completed_event: sha256:f33cd01d836371647cc4f43effaaccbf35e63eb32d85cc9d98e13843f05f95f0
+evidence:
+  - covers: ui_idd_within_budget
+    type: ci
+    command: "bench system.http. --transport system --profile ci --no-write --check (ui-checks step 'every warm screen of the UI is within its budget')"
+    result: "attempt 1 of master validate https://github.com/korczis/prismatic-majordomus/actions/runs/40447094163 at 5c24edb4c3b, job ui-checks 122006729898: system.http.ui.idd warm p95 38.9 ms and system.http.live.ui.idd 14.6 ms against 100 ms, within budget; again in https://github.com/korczis/prismatic-majordomus/actions/runs/40573560939 (6c79dcf68cf, job 122655184005): 35.3 ms and 17.7 ms; idd.rs and intent.rs hold no view::list call on 81ef931a3e1 (8 and 2 view::items); landed via 9129c669709 (train 1)"
+    artifact: "https://github.com/korczis/prismatic-majordomus/actions/runs/40447094163/job/122006729898"
+    commit: 81ef931a3e156907f1784c64c509884f565c17f0
+    recorded_at: 2026-10-28T12:20:37Z

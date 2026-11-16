@@ -576,16 +576,20 @@ mod tests {
     fn run_child(exe: &Path, mode: &str) -> (bool, String, String) {
         fs::create_dir_all(exe.parent().unwrap()).unwrap();
         fs::copy(std::env::current_exe().unwrap(), exe).unwrap();
-        let out = std::process::Command::new(exe)
-            .args([
-                "--exact",
-                "served_executable::tests::serve_from_a_copy_child_entry",
-                "--nocapture",
-                "--test-threads=1",
-            ])
-            .env(CHILD_MODE, mode)
-            .output()
-            .unwrap();
+        // the copy was written a moment ago, and a child another test thread forked while it
+        // was open holds it busy until that child execs (ETXTBSY, run 40509763585, I4245)
+        let out = crate::process::retrying_busy(|| {
+            std::process::Command::new(exe)
+                .args([
+                    "--exact",
+                    "served_executable::tests::serve_from_a_copy_child_entry",
+                    "--nocapture",
+                    "--test-threads=1",
+                ])
+                .env(CHILD_MODE, mode)
+                .output()
+        })
+        .unwrap();
         (
             out.status.success(),
             String::from_utf8_lossy(&out.stderr).into_owned(),

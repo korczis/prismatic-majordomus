@@ -42,4 +42,25 @@ evidence_required:
   - "test_task_economics_per_task"
   - "test_task_economics_reads_every_checkout"
 created_at: 2026-10-19
-updated_at: 2026-10-19
+updated_at: 2026-10-28T17:08:05Z
+started_at: 2026-10-28T17:06:25Z
+started_event: sha256:73cc2c268903d923952b2e71b2dc8f8b13839f3dcd0a69faced30746de08cf68
+verified_at: 2026-10-28T17:07:01Z
+verified_event: sha256:fef5c72d306186d6a70b0cde690304515bf35e0ef0de6570ed1fd475101434aa
+completed_at: 2026-10-28T17:08:05Z
+completed_event: sha256:4b092384ec148e6e827f8f7d2d04971524d80e09da99c86913e0b63cc8518e49
+evidence:
+  - covers: test_task_economics_per_task
+    type: ci
+    command: "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test economics (CI validate, job rust (3))"
+    result: "test test_task_economics_per_task ... ok; economics target: 36 passed, 0 failed. https://github.com/korczis/prismatic-majordomus/actions/runs/40573560939 job 122655182619 (log lines 1610-1650). Window unit test economics::tasks::tests::a_window_reads_the_start_and_answers_no_task_without_one ok in job 122655219231 line 3320"
+    artifact: "6c79dcf68cf329f4c21c219720b811381c3433aa"
+    commit: 81ef931a3e156907f1784c64c509884f565c17f0
+    recorded_at: 2026-10-28T17:07:43Z
+  - covers: test_task_economics_reads_every_checkout
+    type: ci
+    command: "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test economics (CI validate, job rust (3))"
+    result: "test test_task_economics_reads_every_checkout ... ok; economics target: 36 passed, 0 failed. https://github.com/korczis/prismatic-majordomus/actions/runs/40573560939 job 122655182619 (log line 1639)"
+    artifact: "6c79dcf68cf329f4c21c219720b811381c3433aa"
+    commit: 81ef931a3e156907f1784c64c509884f565c17f0
+    recorded_at: 2026-10-28T17:07:53Z
