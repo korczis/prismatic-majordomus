@@ -9,7 +9,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 
 | milestone | status | done of required | ready | blocked | active | verify | cancelled | outcome |
 |---|---|---|---|---|---|---|---|---|
-| [a-release-is-proven-end-to-end](https://majordomus.dev/plan/a-release-is-proven-end-to-end/) | BLOCKED | 0/3 | 0 | 3 | 0 | 0 | 0 | release.readiness answers before a tag from the functions the workflow runs; site-deploy never goes back a commit; one case walks a fresh clone to published evidence; the first record commit after I2717 lands is observed with a green evidence job. |
+| [a-release-is-proven-end-to-end](https://majordomus.dev/plan/a-release-is-proven-end-to-end/) | BLOCKED | 0/4 | 0 | 4 | 0 | 0 | 0 | release.readiness answers before a tag from the functions the workflow runs; site-deploy never goes back a commit; one case walks a fresh clone to published evidence; the first record commit after I2717 lands is observed with a green evidence job. |
 
 ## Issues
 
@@ -18,6 +18,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | [I3201](https://majordomus.dev/plan/i3201/) | BLOCKED | 0 | — | A publication never replaces the site with a build of an older commit than the one gh-pages serves |
 | [I3208](https://majordomus.dev/plan/i3208/) | BLOCKED | 0 | — | Whether a commit may be released is one read that names each condition and the evidence that settles it |
 | [I3213](https://majordomus.dev/plan/i3213/) | BLOCKED | 5 | I2812, I2717 | One case walks a fresh clone from init to published evidence on the release candidate |
+| [I4579](https://majordomus.dev/plan/i4579/) | BLOCKED | 0 | — | An on-demand gate that times out on a scheduled run does not override the green verdict of the push run that a release reads |
 
 ## Findings
 
