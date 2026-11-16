@@ -1,11 +1,841 @@
 # GENERATED FILE — DO NOT EDIT DIRECTLY
 # Source: the layer's release records, the decisions dated in each release's window, and the commits in its range; regenerate with `majordomus generate`
-# Generator: majordomus-cli 1.0.0
+# Generator: majordomus-cli 1.0.2
 schema: majordomus/changelog/v1
 generated: "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the layer's release records, the decisions dated in each release's window, and the commits in its range; regenerate with `majordomus generate`"
-generator: majordomus-cli 1.0.0
-current: "1.0.0"
+generator: majordomus-cli 1.0.2
+current: "1.0.2"
 sections:
+  - version: "1.0.2"
+    tag: v1.0.2
+    date: "2026-11-11T23:53:26Z"
+    commit: d34f159439fbe7e8715408aa5dc72f3e194fe457
+    unreleased: false
+    notes_url: https://github.com/korczis/prismatic-majordomus/releases/tag/v1.0.2
+    compare_url: https://github.com/korczis/prismatic-majordomus/compare/v1.0.1...v1.0.2
+    tree_url: https://github.com/korczis/prismatic-majordomus/tree/v1.0.2
+    decisions: []
+    groups:
+      - kind: fix
+        heading: Fixed
+        rank: 1
+        changes:
+          - kind: fix
+            scope: mesh
+            subject: closed_key has no early return that can never be taken (I4572)
+            breaking: false
+            commit: 3b9256887
+            url: https://github.com/korczis/prismatic-majordomus/commit/3b9256887
+            references:
+              - kind: issue
+                id: I4572
+                title: "mesh doctor fails a runtime that is closed while the declaration trusts this machine's key, and names the stale server as the cause"
+                route: /plan/i4572/
+          - kind: fix
+            scope: mesh
+            subject: a running server opens or closes its mesh as the trunk trusts its key (I4571)
+            breaking: false
+            commit: 2ef7275e7
+            url: https://github.com/korczis/prismatic-majordomus/commit/2ef7275e7
+            references:
+              - kind: issue
+                id: I4571
+                title: "A server whose own key was not trusted opens its mesh when the trunk's trust.allow gains the key, without a restart"
+                route: /plan/i4571/
+              - kind: issue
+                id: I2134
+                title: "A key removed from the trust list loses its links without a restart, and a node key can be rotated"
+                route: /plan/i2134/
+              - kind: issue
+                id: I4572
+                title: "mesh doctor fails a runtime that is closed while the declaration trusts this machine's key, and names the stale server as the cause"
+                route: /plan/i4572/
+          - kind: fix
+            scope: mesh
+            subject: the doctor fails a runtime still closed to a key the declaration trusts (I4572)
+            breaking: false
+            commit: 8407657c9
+            url: https://github.com/korczis/prismatic-majordomus/commit/8407657c9
+            references:
+              - kind: issue
+                id: I4572
+                title: "mesh doctor fails a runtime that is closed while the declaration trusts this machine's key, and names the stale server as the cause"
+                route: /plan/i4572/
+          - kind: fix
+            scope: release
+            subject: a tag is excused until its grace ends (I4341)
+            breaking: false
+            commit: 1992933d3
+            url: https://github.com/korczis/prismatic-majordomus/commit/1992933d3
+            references:
+              - kind: issue
+                id: I4341
+                title: "release-check excuses a tag without a record until its grace ends, whatever the job fetched and whenever the release run concluded"
+                route: /plan/i4341/
+      - kind: docs
+        heading: Documentation
+        rank: 4
+        changes:
+          - kind: docs
+            scope: knowledge
+            subject: the offload derive and allocate after a restart are recorded (I4573)
+            breaking: false
+            commit: 6fa235022
+            url: https://github.com/korczis/prismatic-majordomus/commit/6fa235022
+            references:
+              - kind: issue
+                id: I4573
+                title: "A commit or push from a worktree with no active task is told so, in a supervised repository"
+                route: /plan/i4573/
+          - kind: docs
+            scope: knowledge
+            subject: "evolve 2026-11-10 second run, integrator v7 and I4573 from the mesh"
+            breaking: false
+            commit: 60fc3aae7
+            url: https://github.com/korczis/prismatic-majordomus/commit/60fc3aae7
+            references:
+              - kind: issue
+                id: I4573
+                title: "A commit or push from a worktree with no active task is told so, in a supervised repository"
+                route: /plan/i4573/
+              - kind: issue
+                id: I3836
+                title: "An offload derive observes the bundle's base commit, not its throwaway snapshot, so what it derives passes CI's check"
+                route: /plan/i3836/
+              - kind: issue
+                id: I4571
+                title: "A server whose own key was not trusted opens its mesh when the trunk's trust.allow gains the key, without a restart"
+                route: /plan/i4571/
+              - kind: issue
+                id: I4350
+                title: "plan validate refuses a scope that names a directory holding a file another issue plans, so its warnings never publish a path nobody has written"
+                route: /plan/i4350/
+              - kind: issue
+                id: I3798
+                title: "A session's mesh claims outlive a lease takeover of the server it made them on"
+                route: /plan/i3798/
+              - kind: issue
+                id: I0828
+                title: "doctor under a declared budget, and the hook inherits it"
+                route: /plan/i0828/
+              - kind: issue
+                id: I4260
+                title: "A task's scope can be widened, with the widening recorded"
+                route: /plan/i4260/
+              - kind: issue
+                id: I2114
+                title: "A task's scope admits what its derive writes"
+                route: /plan/i2114/
+              - kind: issue
+                id: I4357
+                title: "Issue, ADR and case numbers are reserved atomically at origin and checked at landing"
+                route: /plan/i4357/
+          - kind: docs
+            scope: plan
+            subject: "I4567-I4572 name their case files, not the whole test/cases directory"
+            breaking: false
+            commit: cb86f6825
+            url: https://github.com/korczis/prismatic-majordomus/commit/cb86f6825
+            references:
+              - kind: issue
+                id: I4567
+                title: "A task whose own commits were rebased has a supported finish, judged over its rebased commits"
+                route: /plan/i4567/
+              - kind: issue
+                id: I4572
+                title: "mesh doctor fails a runtime that is closed while the declaration trusts this machine's key, and names the stale server as the cause"
+                route: /plan/i4572/
+          - kind: docs
+            scope: plan
+            subject: "I4568 serves every-commit-names-its-issue, the criterion of the milestone it moved to"
+            breaking: false
+            commit: 9b19ab445
+            url: https://github.com/korczis/prismatic-majordomus/commit/9b19ab445
+            references:
+              - kind: issue
+                id: I4568
+                title: "A commit names the task and the mesh session that made it, and trace issue finds an issue's commits on branches and train tops, not only the trunk"
+                route: /plan/i4568/
+          - kind: docs
+            scope: knowledge
+            subject: "the continuity-resolve candidate is left to #2963, which promoted it first (I4567)"
+            breaking: false
+            commit: b282d1976
+            url: https://github.com/korczis/prismatic-majordomus/commit/b282d1976
+            references:
+              - kind: issue
+                id: I4567
+                title: "A task whose own commits were rebased has a supported finish, judged over its rebased commits"
+                route: /plan/i4567/
+          - kind: docs
+            scope: knowledge
+            subject: "evolve 2026-11-10, candidates decided and I4567-I4572 filed from the mesh"
+            breaking: false
+            commit: d8acd7aef
+            url: https://github.com/korczis/prismatic-majordomus/commit/d8acd7aef
+            references:
+              - kind: issue
+                id: I4567
+                title: "A task whose own commits were rebased has a supported finish, judged over its rebased commits"
+                route: /plan/i4567/
+              - kind: issue
+                id: I4572
+                title: "mesh doctor fails a runtime that is closed while the declaration trusts this machine's key, and names the stale server as the cause"
+                route: /plan/i4572/
+              - kind: issue
+                id: I4568
+                title: "A commit names the task and the mesh session that made it, and trace issue finds an issue's commits on branches and train tops, not only the trunk"
+                route: /plan/i4568/
+              - kind: issue
+                id: I4569
+                title: "Pull-request runs that yielded to the release path run again when the release path's last run ends, not on the next scheduled tick"
+                route: /plan/i4569/
+              - kind: issue
+                id: I4570
+                title: "The before-push plan runs the formatter and the version-surface gate, the two seconds-long Rust gates a pull request was refused on after passing it"
+                route: /plan/i4570/
+              - kind: issue
+                id: I4571
+                title: "A server whose own key was not trusted opens its mesh when the trunk's trust.allow gains the key, without a restart"
+                route: /plan/i4571/
+      - kind: test
+        heading: Tests
+        rank: 5
+        changes:
+          - kind: test
+            scope: mesh
+            subject: unit tests reach every branch of the own-key retrust and of close (I4571)
+            breaking: false
+            commit: 38dd59a7b
+            url: https://github.com/korczis/prismatic-majordomus/commit/38dd59a7b
+            references:
+              - kind: issue
+                id: I4571
+                title: "A server whose own key was not trusted opens its mesh when the trunk's trust.allow gains the key, without a restart"
+                route: /plan/i4571/
+          - kind: test
+            scope: mesh
+            subject: "a unit test covers how closed_key reads a closed runtime's key (I4572)"
+            breaking: false
+            commit: 29298a4ca
+            url: https://github.com/korczis/prismatic-majordomus/commit/29298a4ca
+            references:
+              - kind: issue
+                id: I4572
+                title: "mesh doctor fails a runtime that is closed while the declaration trusts this machine's key, and names the stale server as the cause"
+                route: /plan/i4572/
+          - kind: test
+            scope: release
+            subject: cases 3029 and 3021 measure their fixture under MJ_ROOT (I4341)
+            breaking: false
+            commit: 5577682d3
+            url: https://github.com/korczis/prismatic-majordomus/commit/5577682d3
+            references:
+              - kind: issue
+                id: I4341
+                title: "release-check excuses a tag without a record until its grace ends, whatever the job fetched and whenever the release run concluded"
+                route: /plan/i4341/
+      - kind: ci
+        heading: Pipeline
+        rank: 6
+        changes:
+          - kind: ci
+            scope: validate
+            subject: "the record's dispatch approves the record pull request's own run (I2717)"
+            breaking: false
+            commit: f857cc508
+            url: https://github.com/korczis/prismatic-majordomus/commit/f857cc508
+            references:
+              - kind: issue
+                id: I2717
+                title: A release record pull request gets a verdict that can pass
+                route: /plan/i2717/
+              - kind: issue
+                id: I3668
+                title: "The evidence receipt names what the plan owed each producer, so an absence is not_required, missing, interrupted or refused, never guessed from the disk"
+                route: /plan/i3668/
+      - kind: chore
+        heading: Housekeeping
+        rank: 7
+        changes:
+          - kind: chore
+            scope: release
+            subject: "1.0.2"
+            breaking: false
+            commit: 16e9b8257
+            url: https://github.com/korczis/prismatic-majordomus/commit/16e9b8257
+            references:
+              - kind: issue
+                id: I4341
+                title: "release-check excuses a tag without a record until its grace ends, whatever the job fetched and whenever the release run concluded"
+                route: /plan/i4341/
+              - kind: issue
+                id: I4567
+                title: "A task whose own commits were rebased has a supported finish, judged over its rebased commits"
+                route: /plan/i4567/
+              - kind: issue
+                id: I4572
+                title: "mesh doctor fails a runtime that is closed while the declaration trusts this machine's key, and names the stale server as the cause"
+                route: /plan/i4572/
+              - kind: issue
+                id: I2717
+                title: A release record pull request gets a verdict that can pass
+                route: /plan/i2717/
+              - kind: issue
+                id: I4573
+                title: "A commit or push from a worktree with no active task is told so, in a supervised repository"
+                route: /plan/i4573/
+              - kind: issue
+                id: I4571
+                title: "A server whose own key was not trusted opens its mesh when the trunk's trust.allow gains the key, without a restart"
+                route: /plan/i4571/
+          - kind: chore
+            scope: derive
+            subject: derive the merge of origin/master into the I4571 branch (I4571)
+            breaking: false
+            commit: 4fb66e554
+            url: https://github.com/korczis/prismatic-majordomus/commit/4fb66e554
+            references:
+              - kind: issue
+                id: I4571
+                title: "A server whose own key was not trusted opens its mesh when the trunk's trust.allow gains the key, without a restart"
+                route: /plan/i4571/
+          - kind: chore
+            scope: derive
+            subject: derive the committed merge of master into the evolve branch (I4573)
+            breaking: false
+            commit: 49c234ae0
+            url: https://github.com/korczis/prismatic-majordomus/commit/49c234ae0
+            references:
+              - kind: issue
+                id: I4573
+                title: "A commit or push from a worktree with no active task is told so, in a supervised repository"
+                route: /plan/i4573/
+          - kind: chore
+            scope: derive
+            subject: derive the merge of the I4572 closed_key fix into the I4571 branch (I4571)
+            breaking: false
+            commit: 722be9160
+            url: https://github.com/korczis/prismatic-majordomus/commit/722be9160
+            references:
+              - kind: issue
+                id: I4572
+                title: "mesh doctor fails a runtime that is closed while the declaration trusts this machine's key, and names the stale server as the cause"
+                route: /plan/i4572/
+              - kind: issue
+                id: I4571
+                title: "A server whose own key was not trusted opens its mesh when the trunk's trust.allow gains the key, without a restart"
+                route: /plan/i4571/
+          - kind: chore
+            scope: derive
+            subject: derive the closed_key fix on the I4572 branch (I4572)
+            breaking: false
+            commit: f892c3845
+            url: https://github.com/korczis/prismatic-majordomus/commit/f892c3845
+            references:
+              - kind: issue
+                id: I4572
+                title: "mesh doctor fails a runtime that is closed while the declaration trusts this machine's key, and names the stale server as the cause"
+                route: /plan/i4572/
+          - kind: chore
+            scope: derive
+            subject: derive the merge of the I4572 test head into the I4571 branch (I4571)
+            breaking: false
+            commit: 794bb8e2f
+            url: https://github.com/korczis/prismatic-majordomus/commit/794bb8e2f
+            references:
+              - kind: issue
+                id: I4572
+                title: "mesh doctor fails a runtime that is closed while the declaration trusts this machine's key, and names the stale server as the cause"
+                route: /plan/i4572/
+              - kind: issue
+                id: I4571
+                title: "A server whose own key was not trusted opens its mesh when the trunk's trust.allow gains the key, without a restart"
+                route: /plan/i4571/
+          - kind: chore
+            scope: derive
+            subject: derive the closed_key unit test on the I4572 branch (I4572)
+            breaking: false
+            commit: 77797a807
+            url: https://github.com/korczis/prismatic-majordomus/commit/77797a807
+            references:
+              - kind: issue
+                id: I4572
+                title: "mesh doctor fails a runtime that is closed while the declaration trusts this machine's key, and names the stale server as the cause"
+                route: /plan/i4572/
+          - kind: chore
+            scope: derive
+            subject: derive the merge of the I4572 head into the I4571 branch (I4571)
+            breaking: false
+            commit: dadca79dd
+            url: https://github.com/korczis/prismatic-majordomus/commit/dadca79dd
+            references:
+              - kind: issue
+                id: I4572
+                title: "mesh doctor fails a runtime that is closed while the declaration trusts this machine's key, and names the stale server as the cause"
+                route: /plan/i4572/
+              - kind: issue
+                id: I4571
+                title: "A server whose own key was not trusted opens its mesh when the trunk's trust.allow gains the key, without a restart"
+                route: /plan/i4571/
+          - kind: chore
+            scope: derive
+            subject: derive the committed merge of master into the I2717 branch (I2717)
+            breaking: false
+            commit: 527e8c5d9
+            url: https://github.com/korczis/prismatic-majordomus/commit/527e8c5d9
+            references:
+              - kind: issue
+                id: I2717
+                title: A release record pull request gets a verdict that can pass
+                route: /plan/i2717/
+          - kind: chore
+            scope: derive
+            subject: derive the merge of origin/master into the I4572 branch (I4572)
+            breaking: false
+            commit: ef1157190
+            url: https://github.com/korczis/prismatic-majordomus/commit/ef1157190
+            references:
+              - kind: issue
+                id: I4572
+                title: "mesh doctor fails a runtime that is closed while the declaration trusts this machine's key, and names the stale server as the cause"
+                route: /plan/i4572/
+          - kind: chore
+            scope: derive
+            subject: derive the merge of origin/master into the I2717 branch (I2717)
+            breaking: false
+            commit: 4002bd277
+            url: https://github.com/korczis/prismatic-majordomus/commit/4002bd277
+            references:
+              - kind: issue
+                id: I2717
+                title: A release record pull request gets a verdict that can pass
+                route: /plan/i2717/
+              - kind: issue
+                id: I4341
+                title: "release-check excuses a tag without a record until its grace ends, whatever the job fetched and whenever the release run concluded"
+                route: /plan/i4341/
+          - kind: chore
+            scope: derive
+            subject: derive the merge of origin/master into the I4341 branch (I4341)
+            breaking: false
+            commit: edce8d2e7
+            url: https://github.com/korczis/prismatic-majordomus/commit/edce8d2e7
+            references:
+              - kind: issue
+                id: I4341
+                title: "release-check excuses a tag without a record until its grace ends, whatever the job fetched and whenever the release run concluded"
+                route: /plan/i4341/
+          - kind: chore
+            scope: release
+            subject: record v1.0.1 and the metadata it publishes
+            breaking: false
+            commit: 62959ebc1
+            url: https://github.com/korczis/prismatic-majordomus/commit/62959ebc1
+    artifacts:
+      - target: macos-aarch64
+        name: majordomus-v1.0.2-aarch64-apple-darwin.tar.gz
+        sha256: 4d08be44a5857c2b79a1dd7ed8745abed9a221882cda52822523ae25737c655b
+      - target: macos-x86_64
+        name: majordomus-v1.0.2-x86_64-apple-darwin.tar.gz
+        sha256: e359a27dac1585e8cfbdefe365d93d47b8c70b21178219379ab35c61c654a87f
+      - target: linux-x86_64-gnu
+        name: majordomus-v1.0.2-x86_64-unknown-linux-gnu.tar.gz
+        sha256: 3db0ed5a03a22fd1e0794b575d9b3771ca916ba2ba3ea26e097db3d80f6f5a4c
+      - target: linux-x86_64-musl
+        name: majordomus-v1.0.2-x86_64-unknown-linux-musl.tar.gz
+        sha256: af88b731a712b0ce245d78651f4d271864423efc1fb4445ebee8673cc391e4ee
+      - target: linux-aarch64-gnu
+        name: majordomus-v1.0.2-aarch64-unknown-linux-gnu.tar.gz
+        sha256: 6fd4a33f5efd8d198f7f24ebb285d6eb2588c0b6b578af6074e6b143c29bf06f
+      - target: linux-aarch64-musl
+        name: majordomus-v1.0.2-aarch64-unknown-linux-musl.tar.gz
+        sha256: 2d7248fc78e0f84ac62cf30d15e5a20cc9eb9f32892b3490a18acf3d5c2c1529
+  - version: "1.0.1"
+    tag: v1.0.1
+    date: "2026-11-09T17:44:13Z"
+    commit: 426e98551fffde8613b77faedcd05de14f191317
+    unreleased: false
+    notes_url: https://github.com/korczis/prismatic-majordomus/releases/tag/v1.0.1
+    compare_url: https://github.com/korczis/prismatic-majordomus/compare/v1.0.0...v1.0.1
+    tree_url: https://github.com/korczis/prismatic-majordomus/tree/v1.0.1
+    decisions: []
+    groups:
+      - kind: feat
+        heading: Added
+        rank: 0
+        changes:
+          - kind: feat
+            scope: skills
+            subject: project-picture builds an evidenced picture of a project from every reachable source
+            breaking: false
+            commit: 98590f25b
+            url: https://github.com/korczis/prismatic-majordomus/commit/98590f25b
+          - kind: feat
+            scope: site
+            subject: the live site is probed in a real browser after every deploy and release (I4530)
+            breaking: false
+            commit: c554ad638
+            url: https://github.com/korczis/prismatic-majordomus/commit/c554ad638
+            references:
+              - kind: issue
+                id: I4530
+                title: "The live site is probed in a real browser after every deploy and release, and the deploy is held to what it shows"
+                route: /plan/i4530/
+          - kind: feat
+            scope: site
+            subject: a published page reads delivery at the commit it was built from (I3769)
+            breaking: false
+            commit: c69372ff4
+            url: https://github.com/korczis/prismatic-majordomus/commit/c69372ff4
+            references:
+              - kind: issue
+                id: I3769
+                title: "A published page reads delivery at the commit it was built from, and names one commit"
+                route: /plan/i3769/
+      - kind: fix
+        heading: Fixed
+        rank: 1
+        changes:
+          - kind: fix
+            scope: ci
+            subject: "a plan-record pull request's case 47 gets the executable"
+            breaking: false
+            commit: bfb8fdfd4
+            url: https://github.com/korczis/prismatic-majordomus/commit/bfb8fdfd4
+          - kind: fix
+            scope: ci
+            subject: a cancelled run reports no false red and a superseded head yields
+            breaking: false
+            commit: "414057978"
+            url: https://github.com/korczis/prismatic-majordomus/commit/414057978
+          - kind: fix
+            scope: pages
+            subject: "the executable's download is a gating step (#2960)"
+            breaking: false
+            commit: 5945fd62a
+            url: https://github.com/korczis/prismatic-majordomus/commit/5945fd62a
+          - kind: fix
+            scope: ci
+            subject: a build with no delivery reading is not held to the build commit (I3769)
+            breaking: false
+            commit: a95800664
+            url: https://github.com/korczis/prismatic-majordomus/commit/a95800664
+            references:
+              - kind: issue
+                id: I3769
+                title: "A published page reads delivery at the commit it was built from, and names one commit"
+                route: /plan/i3769/
+          - kind: fix
+            scope: site
+            subject: a build without the executable reads the committed delivery projection
+            breaking: false
+            commit: 517211a54
+            url: https://github.com/korczis/prismatic-majordomus/commit/517211a54
+            references:
+              - kind: issue
+                id: I3769
+                title: "A published page reads delivery at the commit it was built from, and names one commit"
+                route: /plan/i3769/
+          - kind: fix
+            scope: plan
+            subject: I4530 serves the criterion the-published-page-is-probed
+            breaking: false
+            commit: 882f5df26
+            url: https://github.com/korczis/prismatic-majordomus/commit/882f5df26
+            references:
+              - kind: issue
+                id: I4530
+                title: "The live site is probed in a real browser after every deploy and release, and the deploy is held to what it shows"
+                route: /plan/i4530/
+          - kind: fix
+            scope: github-sync
+            subject: the creation joins a closed milestone by number; the move stays as it was (I4529)
+            breaking: false
+            commit: "22e476595"
+            url: https://github.com/korczis/prismatic-majordomus/commit/22e476595
+            references:
+              - kind: issue
+                id: I4529
+                title: "An issue joins a closed milestone by number, so a record under a finished milestone can be created"
+                route: /plan/i4529/
+          - kind: fix
+            scope: site
+            subject: the release probe fails its pipelines closed (I4530)
+            breaking: false
+            commit: e34bfa6ca
+            url: https://github.com/korczis/prismatic-majordomus/commit/e34bfa6ca
+            references:
+              - kind: issue
+                id: I4530
+                title: "The live site is probed in a real browser after every deploy and release, and the deploy is held to what it shows"
+                route: /plan/i4530/
+          - kind: fix
+            scope: ci
+            subject: the release probe sets pipefail beside set -e
+            breaking: false
+            commit: 7127f4c48
+            url: https://github.com/korczis/prismatic-majordomus/commit/7127f4c48
+            references:
+              - kind: issue
+                id: I4530
+                title: "The live site is probed in a real browser after every deploy and release, and the deploy is held to what it shows"
+                route: /plan/i4530/
+          - kind: fix
+            scope: site
+            subject: the release probe is a declared shell unit and its skills raise their versions (I4530)
+            breaking: false
+            commit: c8d9aaf6e
+            url: https://github.com/korczis/prismatic-majordomus/commit/c8d9aaf6e
+            references:
+              - kind: issue
+                id: I4530
+                title: "The live site is probed in a real browser after every deploy and release, and the deploy is held to what it shows"
+                route: /plan/i4530/
+          - kind: fix
+            scope: ci
+            subject: the release probe is declared in the shell inventory and its skills raise their versions
+            breaking: false
+            commit: c80f5c4f5
+            url: https://github.com/korczis/prismatic-majordomus/commit/c80f5c4f5
+            references:
+              - kind: issue
+                id: I4530
+                title: "The live site is probed in a real browser after every deploy and release, and the deploy is held to what it shows"
+                route: /plan/i4530/
+          - kind: fix
+            scope: site
+            subject: "the pages name the pre-release that was published, not only the one recorded"
+            breaking: false
+            commit: f4e883a1f
+            url: https://github.com/korczis/prismatic-majordomus/commit/f4e883a1f
+            references:
+              - kind: issue
+                id: I3449
+                title: "Every surface names its versions from one derived release model, says which version each one is, and a gate refuses a version that disagrees or is written by hand"
+                route: /plan/i3449/
+              - kind: issue
+                id: I4531
+                title: "The pages name the pre-release that was published, not only the one recorded"
+                route: /plan/i4531/
+          - kind: fix
+            scope: github-sync
+            subject: an issue joins a closed milestone by number (I4529)
+            breaking: false
+            commit: a582072da
+            url: https://github.com/korczis/prismatic-majordomus/commit/a582072da
+            references:
+              - kind: issue
+                id: I4529
+                title: "An issue joins a closed milestone by number, so a record under a finished milestone can be created"
+                route: /plan/i4529/
+          - kind: fix
+            scope: site
+            subject: the delivery panel says when it was verified
+            breaking: false
+            commit: 34c1bc338
+            url: https://github.com/korczis/prismatic-majordomus/commit/34c1bc338
+            references:
+              - kind: issue
+                id: I3769
+                title: "A published page reads delivery at the commit it was built from, and names one commit"
+                route: /plan/i3769/
+          - kind: fix
+            scope: site
+            subject: the delivery panel says when it was verified
+            breaking: false
+            commit: c2c814994
+            url: https://github.com/korczis/prismatic-majordomus/commit/c2c814994
+            references:
+              - kind: issue
+                id: I3769
+                title: "A published page reads delivery at the commit it was built from, and names one commit"
+                route: /plan/i3769/
+          - kind: fix
+            scope: ui
+            subject: "the Cockpit and UI stylesheets read Flowbite's own sources"
+            breaking: false
+            commit: 8870a23ae
+            url: https://github.com/korczis/prismatic-majordomus/commit/8870a23ae
+      - kind: docs
+        heading: Documentation
+        rank: 4
+        changes:
+          - kind: docs
+            scope: plan
+            subject: "the hosted CI cap and the Pages size limit are planned (I4532, I4533)"
+            breaking: false
+            commit: f1969b65d
+            url: https://github.com/korczis/prismatic-majordomus/commit/f1969b65d
+            references:
+              - kind: issue
+                id: I4532
+                title: "The hosted CI jobs of this repository are admitted to fourteen in flight, leaving six for OSCILLA"
+                route: /plan/i4532/
+              - kind: issue
+                id: I4533
+                title: "The published site stays under GitHub Pages' size limit"
+                route: /plan/i4533/
+          - kind: docs
+            scope: knowledge
+            subject: "evolve 2026-11-06, the release night's lessons and the outbox of 93 carried"
+            breaking: false
+            commit: a2fc231b4
+            url: https://github.com/korczis/prismatic-majordomus/commit/a2fc231b4
+            references:
+              - kind: issue
+                id: I4296
+                title: "A full-history checkout of validate fits its bound: structure fetches no blobs, and every one has twenty minutes"
+                route: /plan/i4296/
+      - kind: test
+        heading: Tests
+        rank: 5
+        changes:
+          - kind: test
+            scope: pages
+            subject: "case 400 finds the deploy job's build inside a run block (#2960)"
+            breaking: false
+            commit: cbab9285d
+            url: https://github.com/korczis/prismatic-majordomus/commit/cbab9285d
+          - kind: test
+            scope: site
+            subject: case 3742 names the source of the function it lifts for shellcheck
+            breaking: false
+            commit: c38abdaf7
+            url: https://github.com/korczis/prismatic-majordomus/commit/c38abdaf7
+            references:
+              - kind: issue
+                id: I3769
+                title: "A published page reads delivery at the commit it was built from, and names one commit"
+                route: /plan/i3769/
+          - kind: test
+            scope: ui
+            subject: "case 85 holds both stylesheet entries to Flowbite's plugin and sources"
+            breaking: false
+            commit: 8c1b854ed
+            url: https://github.com/korczis/prismatic-majordomus/commit/8c1b854ed
+      - kind: ci
+        heading: Pipeline
+        rank: 6
+        changes:
+          - kind: ci
+            scope: pages
+            subject: the deploy reads delivery with the executable its run built
+            breaking: false
+            commit: 4e26f2f91
+            url: https://github.com/korczis/prismatic-majordomus/commit/4e26f2f91
+            references:
+              - kind: issue
+                id: I3769
+                title: "A published page reads delivery at the commit it was built from, and names one commit"
+                route: /plan/i3769/
+          - kind: ci
+            scope: release
+            subject: "the publish job's bound fits its checkout, build and derive"
+            breaking: false
+            commit: ddef2b1f5
+            url: https://github.com/korczis/prismatic-majordomus/commit/ddef2b1f5
+          - kind: ci
+            scope: validate
+            subject: "the rust job sets up the site tools, so the release-record cases can build a site"
+            breaking: false
+            commit: c9e5e6674
+            url: https://github.com/korczis/prismatic-majordomus/commit/c9e5e6674
+      - kind: chore
+        heading: Housekeeping
+        rank: 7
+        changes:
+          - kind: chore
+            scope: release
+            subject: "1.0.1"
+            breaking: false
+            commit: 5d2ee3986
+            url: https://github.com/korczis/prismatic-majordomus/commit/5d2ee3986
+          - kind: chore
+            scope: derive
+            subject: delivery.json observes the committed top
+            breaking: false
+            commit: cd61dd699
+            url: https://github.com/korczis/prismatic-majordomus/commit/cd61dd699
+          - kind: chore
+            scope: release
+            subject: "the record of v1.0.0 names the tagged commit and GitHub's publish time"
+            breaking: false
+            commit: 0a4f34f0c
+            url: https://github.com/korczis/prismatic-majordomus/commit/0a4f34f0c
+          - kind: chore
+            scope: derive
+            subject: delivery.json observes the committed top
+            breaking: false
+            commit: f082b595f
+            url: https://github.com/korczis/prismatic-majordomus/commit/f082b595f
+          - kind: chore
+            scope: release
+            subject: record v1.0.0 and the metadata it publishes
+            breaking: false
+            commit: 9b558b4d2
+            url: https://github.com/korczis/prismatic-majordomus/commit/9b558b4d2
+          - kind: chore
+            scope: derive
+            subject: delivery.json observes the committed top
+            breaking: false
+            commit: e99509895
+            url: https://github.com/korczis/prismatic-majordomus/commit/e99509895
+          - kind: chore
+            scope: release
+            subject: record v1.0.0 and the metadata it publishes
+            breaking: false
+            commit: 119e8ab81
+            url: https://github.com/korczis/prismatic-majordomus/commit/119e8ab81
+          - kind: chore
+            scope: derive
+            subject: delivery.json observes the committed top
+            breaking: false
+            commit: f1a6facaf
+            url: https://github.com/korczis/prismatic-majordomus/commit/f1a6facaf
+          - kind: chore
+            scope: derive
+            subject: delivery.json observes the committed top
+            breaking: false
+            commit: c1eb7e408
+            url: https://github.com/korczis/prismatic-majordomus/commit/c1eb7e408
+          - kind: chore
+            scope: derive
+            subject: delivery.json observes the committed merge
+            breaking: false
+            commit: 8ddcaf9c4
+            url: https://github.com/korczis/prismatic-majordomus/commit/8ddcaf9c4
+          - kind: chore
+            scope: derive
+            subject: "delivery.json observes the committed merge 891473c56f6, not the pre-merge head"
+            breaking: false
+            commit: 9f76b04ce
+            url: https://github.com/korczis/prismatic-majordomus/commit/9f76b04ce
+          - kind: chore
+            scope: release
+            subject: record v1.0.0-alpha.10 and the metadata it publishes
+            breaking: false
+            commit: 745db2ea2
+            url: https://github.com/korczis/prismatic-majordomus/commit/745db2ea2
+    artifacts:
+      - target: macos-aarch64
+        name: majordomus-v1.0.1-aarch64-apple-darwin.tar.gz
+        sha256: 7870d8142189803b6d5d7aac22f14e347fa9012d7b8a38e40dcbe066b0337a60
+      - target: macos-x86_64
+        name: majordomus-v1.0.1-x86_64-apple-darwin.tar.gz
+        sha256: a72a1b0a03760dc4cb3590b128f850902d030ff305209e01f6c6b53fa0620727
+      - target: linux-x86_64-gnu
+        name: majordomus-v1.0.1-x86_64-unknown-linux-gnu.tar.gz
+        sha256: 524adfd3f2a3fdb3314f53f8c134e4050be5f9ebc31018b70fa9c7d5a940ae77
+      - target: linux-x86_64-musl
+        name: majordomus-v1.0.1-x86_64-unknown-linux-musl.tar.gz
+        sha256: db99cd93babb3dc8ac08b968e8fea6099f396aab6e1be9f2b70da79b8b219378
+      - target: linux-aarch64-gnu
+        name: majordomus-v1.0.1-aarch64-unknown-linux-gnu.tar.gz
+        sha256: 48b5e54c7bbce297a9eabbca2e2cf902aecc78a7cde1c3303b93e41a809534ef
+      - target: linux-aarch64-musl
+        name: majordomus-v1.0.1-aarch64-unknown-linux-musl.tar.gz
+        sha256: 916351ef0f012b5eb161c646b0aacf3f954baa94d589a010caa022ae13c849f9
   - version: "1.0.0"
     tag: v1.0.0
     date: "2026-11-06T22:44:12Z"
