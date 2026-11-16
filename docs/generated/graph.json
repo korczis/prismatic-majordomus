@@ -81667,6 +81667,44 @@
         }
       },
       {
+        "id": "majordomus://issue/I4598",
+        "kind": "issue",
+        "label": "I4598",
+        "summary": "A refusal for a path outside the scope names the remedies that exist",
+        "route": "/cockpit/objects/issue/i4598",
+        "source": ".ai/repo/project/issues/I4598.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A task with a path outside its scope fails check with the FAIL line as before, plus one INFO scope line naming merge=derived in .gitattributes and finish --outcome partial with a new start",
+            "Once .gitattributes marks that path merge=derived, it is no longer refused",
+            "A check whose every path is in scope prints no remedy",
+            "finish --outcome partial warns about the path and prints no remedy",
+            "Negative: the case fails against lib/check.sh before this change"
+          ],
+          "created_at": "2026-11-15",
+          "depends_on": [],
+          "evidence_required": [
+            "the_scope_refusal_names_its_remedies"
+          ],
+          "milestone": "adopter-upgrades",
+          "non_scope": [
+            "Admitting derived paths, which I2114 delivered",
+            "Widening a running task's scope, which is I4260; its command is not settled (#2598 scope widen, #2612 start --widen), and once one lands this line names it instead of partial plus start",
+            "Declaring an adopter's derived files; each repository writes its own .gitattributes (sonic-playground 11032e71)"
+          ],
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "lib/check.sh",
+            "test/cases/4598_the_scope_refusal_names_its_remedies.sh",
+            ".ai/repo/project/issues/I4598.yaml"
+          ],
+          "serves": [],
+          "slug": "the-scope-refusal-names-its-remedies"
+        }
+      },
+      {
         "id": "majordomus://issue/I4600",
         "kind": "issue",
         "label": "I4600",
@@ -109724,6 +109762,13 @@
         "label": "test/cases/4592_the_projection_apply_checkout_is_blobless_and_bounded.sh",
         "route": "/cockpit/objects/test/test-cases-4592-the-projection-apply-checkout-is-blobless-and-bounded-sh",
         "source": "test/cases/4592_the_projection_apply_checkout_is_blobless_and_bounded.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/4598_the_scope_refusal_names_its_remedies.sh",
+        "kind": "test",
+        "label": "test/cases/4598_the_scope_refusal_names_its_remedies.sh",
+        "route": "/cockpit/objects/test/test-cases-4598-the-scope-refusal-names-its-remedies-sh",
+        "source": "test/cases/4598_the_scope_refusal_names_its_remedies.sh"
       },
       {
         "id": "majordomus://test/test/cases/45_github_projection.sh",
@@ -151618,6 +151663,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I4598",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4598",
+        "target": "majordomus://milestone/adopter-upgrades",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://issue/I4600",
         "target": "kind:issue",
         "kind": "is_a"
@@ -159428,6 +159483,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/4598_the_scope_refusal_names_its_remedies.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/45_github_projection.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -164559,8 +164619,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4502,
-      "edges": 10155,
+      "nodes": 4504,
+      "edges": 10158,
       "acyclic": false,
       "truncated": false
     }
