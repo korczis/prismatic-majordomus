@@ -82,6 +82,7 @@ mj_cmd_doctor() {
   mj_report_environment
   mj_report_reasoning
   mj_report_layout
+  mj_fleet_report_licence
   mj_report_budget doctor "$t_start"
   mj_finish_doctor
 }
@@ -950,7 +951,8 @@ mj_validate_policy_defaults() {
   for k in $(grep -rhE 'mj_pol(_req)? +[a-z_][a-z0-9_]*(\.[a-z_][a-z0-9_]*)*' "$MJ_LIB_DIR" | grep -v '^[[:space:]]*#' \
              | grep -oE 'mj_pol(_req)? +[a-z_][a-z0-9_]*(\.[a-z_][a-z0-9_]*)*' | sed -E 's/mj_pol(_req)? +//' | LC_ALL=C sort -u); do
     n=$((n + 1))
-    if [ -z "$(mj_yget "$flat" "$k")" ] && ! grep -qE "^${k}\." "$flat"; then
+    # declared is a line for the key, an empty value included (`ui.kit: ""` declares no kit)
+    if ! grep -qE "^$(printf '%s' "$k" | sed 's/\./\\./g')(=|\.)" "$flat"; then
       mj_doctrine_fail policy "$k" "read by lib/ but absent from share/skeleton/policy.yaml" "grep -rn 'mj_pol_req $k' lib/"; bad=1
     fi
   done
@@ -1231,6 +1233,8 @@ mj_validate_rule_package() {
   if [ -f "$MJ_STD_RULES_DIR/manifest.yaml" ] && ! diff -rq "$vend" "$MJ_STD_RULES_DIR" >/dev/null 2>&1; then
     mj_info rules "distribution" "ships a different package ($(mj_rules_manifest_rev "$MJ_STD_RULES_DIR")); the vendored one stays authoritative until updated" "majordomus rules vendor diff"
   fi
+  # the fleet pack beside the baseline: its stamp, and its lag behind the pack on this machine
+  mj_fleet_report
   mj_rules_load || { mj_doctrine_fail rules "effective set" "$MJ_RULES_ERROR" "majordomus rules list"; return 0; }
   # A verdict states what it is a verdict about. "122 rule(s) resolve in one deterministic
   # order" is true and is read as covering the whole set, while the doctrine check below

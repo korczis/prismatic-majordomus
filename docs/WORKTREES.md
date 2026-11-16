@@ -196,6 +196,20 @@ a path — and nothing is matched by prefix or similarity. There is no `worktree
 process cannot change its parent shell's directory, so `path` prints one and the shell does
 the rest.
 
+`worktree ensure` is the command-line projection of the one typed capability that writes
+the topology, `worktree.create` (I4002): MCP `majordomus_worktree_create`, HTTP
+`POST /api/v1/worktrees/create`, input `{branch, base?}`. It is the service's `ensure` and
+nothing else, so an executor that needs an isolated worktree asks the same question a person
+types: the path is derived, the canonical worktree already holding the branch is the answer
+(`existed: true`, nothing created), a branch checked out elsewhere or a canonical path
+occupied by something else is refused with the service's reason and nothing changed, and
+`git worktree add` runs under the worktree lock with a deadline (`WORKTREE_ADD_TIMEOUT`,
+600 s) past which it is killed and refused with `git worktree prune` as the remedy. The
+answer carries the branch, the path, the `head` read back from the worktree, and where a new
+branch started. It declares the repository-mutation effect, so every surface asks before it
+runs; migrating, repairing and removing stay command-line operations. `worktree create`
+keeps its own contract and refuses a worktree that is already there.
+
 `worktree create --issue I0042` names the branch `feature/I0042-<slug>` from the issue's
 own record, and the topology reads the issue back from any branch that carries an issue id
 as a path component (`feature/I0042-live-page` → `I0042`). Nothing is inferred from

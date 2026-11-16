@@ -17,6 +17,9 @@
     history proves, merged and released, each with the object that proves it. Absent until that
     projection is generated; the stage is drawn only when it is there. -#}
 {%- set delivery = load_data(path="data/generated/delivery.json", required=false) -%}
+{#- the delivery the build read at its own commit (I3769), when the build carries one; a plain
+    `zola serve` has none and reads the committed projection, observed one commit earlier -#}
+{%- if build and build.delivery %}{% set delivery = build.delivery %}{% endif -%}
 {%- set graph = load_data(path="data/generated/roadmap-graph.json") -%}
 {%- set graph_id = "roadmap" -%}
 {%- set graph_rings = "" -%}

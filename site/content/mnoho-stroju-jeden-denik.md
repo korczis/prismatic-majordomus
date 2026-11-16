@@ -5,7 +5,7 @@ template = "page.html"
 [extra]
 lang = "cs"
 translated_from = "many-machines-one-journal/"
-source_digest = "1b199fc725a783a1a9a6d70735ed621ebfc5e0fe7ed4832113c3ff70d80121f1"
+source_digest = "560a4c75475d925f32cefd98071a0575cb255bce5ffb9b571cfd8879b743a42e"
 related = ["kresla-ne-jmena/", "zabrano-driv-nez-se-stavi/", "session-skonci-prace-ne/", "pochybnost-rozhodne-experiment/"]
 [extra.translations]
 en = "many-machines-one-journal/"
@@ -41,7 +41,7 @@ Důvěra je předpoklad spojení, ne spojení. Volající strana pošle podepsan
 
 Všechno kooperativní je událost jednoho deníku: session otevřená nebo zavřená, claim získaný nebo uvolněný, handover publikovaný nebo převzatý, review vyžádané, zodpovězené nebo stažené. Každá událost nese svůj stream, pořadové číslo a Lamportovo razítko a je podepsaná klíčem svého původce, takže prostředník (relay) může událost zadržet, ale nemůže ji podvrhnout ani změnit. Doručuje se alespoň jednou (at-least-once) a duplikát nic nezmění. Uvnitř streamu se události uplatňují podle pořadových čísel, napříč streamy podle Lamportova razítka, streamu a pořadového čísla, a property test drží, že pořadí příchodu stav nikdy nezmění. Kolo synchronizace porovná značky (marks) a přenese jen to, co druhé straně chybí. Každý runtime se stejnými událostmi a stejnými verdikty o živosti spočítá stejný stav a stejný otisk.
 
-Mezi stroji putují sessions, claimy, handovery a review a manuál nezaručuje replikaci ničeho jiného; session sdílí metadata, třeba svůj záměr, větev a head, nikdy tělo kontextu. Board plní deník při každém heartbeatu: připojená MCP session se stane mesh session `board-<peer>` a každé oznámení poradním (advisory) claimem. Žádné rozhraní si nedrží vlastní peery, spojení ani claimy. Jinak by podle pravidla [project.mesh-cooperation-is-authenticated](@/rules/project-mesh-cooperation-is-authenticated-1.md) Cockpit nakonec ukazoval zelenou tečku u runtimu, o kterém CLI ví, že je pryč.
+Mezi stroji putují sessions, claimy, handovery a review a manuál nezaručuje replikaci ničeho jiného; session sdílí metadata, třeba svůj záměr, větev a head, nikdy tělo kontextu. Board plní deník při každém heartbeatu: připojená MCP session se stane mesh session `board-<peer>` a každé oznámení poradním (advisory) claimem. Žádné rozhraní si nedrží vlastní peery, spojení ani claimy. Jinak by podle pravidla [project.mesh-cooperation-is-authenticated](@/rules/project-mesh-cooperation-is-authenticated-2.md) Cockpit nakonec ukazoval zelenou tečku u runtimu, o kterém CLI ví, že je pryč.
 
 ## Claim žije z tepu
 

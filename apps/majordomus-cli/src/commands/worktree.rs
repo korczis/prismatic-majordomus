@@ -862,8 +862,12 @@ fn branch_line(report: &crate::worktree::CreateReport) -> String {
 /// this repository keeps. The id is the provable link the topology reads back.
 fn issue_branch(repo: &crate::cli::RepoArgs, id: &str) -> Result<String> {
     let app = crate::app::App::load(repo)?;
-    let object = app
-        .index()
+    branch_of_issue(app.index(), id)
+}
+
+/// The same branch, read from an index already loaded.
+pub(crate) fn branch_of_issue(index: &crate::index::Index, id: &str) -> Result<String> {
+    let object = index
         .objects
         .iter()
         .find(|o| o.kind == "issue" && o.identity == id)
@@ -1296,6 +1300,28 @@ mod tests {
             }
         }
         panic!("the rendering never finished");
+    }
+
+    #[test]
+    fn an_issues_branch_is_its_id_and_slug_and_an_unknown_issue_is_refused() {
+        let repo = crate::synthetic::SyntheticRepository::planned();
+        let args = crate::cli::RepoArgs {
+            repo: Some(repo.root().to_path_buf()),
+            discovery: crate::cli::DiscoveryMode::Filesystem,
+            share: Some(crate::synthetic::crate_share()),
+            ..Default::default()
+        };
+        assert_eq!(
+            issue_branch(&args, "I0001").unwrap(),
+            "feature/I0001-work-I0001"
+        );
+        match issue_branch(&args, "I9999") {
+            Err(Error::Refused { code, reason }) => {
+                assert_eq!(code, crate::worktree::EXIT_MISSING);
+                assert!(reason.contains("no issue 'I9999'"), "{reason}");
+            }
+            other => panic!("{other:?}"),
+        }
     }
 
     fn repo_args(at: &Path) -> crate::cli::RepoArgs {

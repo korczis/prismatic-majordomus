@@ -583,6 +583,10 @@ mj_uc_run_one() { # index, evidence-file, keep(0|1)
   # repository never opened, and keep-what-an-episode-learned failed on every workstation
   # session while CI, which has no provider variable, passed (seen on 2026-10-23, I0703).
   unset MJ_SESSION_KEY MAJORDOMUS_PROVIDER_SESSION
+  # Nor may it see the owner's fleet pack: a scenario run on a machine that holds one printed
+  # "fleet: pack v1 does not apply here", and the committed catalogue then differed from a
+  # runner's, which holds none (seen on 2026-10-30, I4521).
+  MAJORDOMUS_FLEET=off; export MAJORDOMUS_FLEET
   if [ -n "${MJ_LIB_DIR:-}" ] && [ -f "$MJ_LIB_DIR/capture.sh" ]; then
     # shellcheck source=capture.sh
     [ -n "${MJ_LIB_capture:-}" ] || . "$MJ_LIB_DIR/capture.sh"

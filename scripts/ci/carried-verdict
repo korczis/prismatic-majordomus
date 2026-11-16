@@ -1,0 +1,168 @@
+#!/usr/bin/env bash
+# carried-verdict — a label that changes nothing starts no second verdict (I4347).
+#
+# validate.yml starts on `labeled` because two labels change what a pull request's run does:
+# ci:full widens its plan and hold makes it yield to its train. Every other label — train,
+# priority:*, type:*, records — starts a full run of a head that already has one: on
+# 2026-10-28 six of eight trains were opened with `--label train` and ran their head twice,
+# the second run pending in the validate-<pr> group behind the first; in the seven days to
+# 2026-11-01, 128 of 436 pull-request validate runs were a further run of a head that had
+# already been run.
+#
+# Such a run is redundant only when the head already carries a verdict. It then gives its
+# runners back before any gate job asks for one, and its `ci` job writes the verdict the
+# earlier run wrote: the same head, the same workflow, the same plan inputs. It never writes
+# a verdict of its own, and it never skips `ci`: GitHub counts a skipped required check as
+# passing, so a skip after a red run would read green.
+#
+#   scripts/ci/carried-verdict decide  --action A --label L --sha S --self ID
+#       one line: `carry <run> <success|failure>` when this run is redundant and the run it
+#       carries from, or `run <why>` when it must run its plan
+#   scripts/ci/carried-verdict yield   --action A --label L --sha S --self ID
+#       the plan job's step: carry, and the run cancels itself and says from where its
+#       verdict comes; run, and it proceeds
+#   scripts/ci/carried-verdict verdict --action A --label L --sha S --self ID
+#       the ci job's step: carry, and it writes carried=true to GITHUB_OUTPUT and exits with
+#       the carried verdict (0 success, 1 failure); run, carried=false and exit 0, and the
+#       ci job decides from its own gates as before
+#
+# A verdict is a completed validate run of the same head, other than this one, whose `plan`
+# job succeeded and whose `ci` job concluded success or failure. A run that yielded — to the
+# release path, to its train, or by this script — cancelled its plan job, so it is not one,
+# and a run that ended at its first red (I2664) is one: its plan succeeded and its ci failed.
+# The newest of at most MAX_RUNS such runs is the one carried.
+#
+# Never redundant, by construction: any action but `labeled`; a label the plan reads
+# (PLAN_LABELS); a head with no verdict yet. A reading that cannot be made decides `run`: the
+# full plan is slower, never wrong.
+#
+# Forge access is `gh api` with GH_TOKEN, against --repo or GITHUB_REPOSITORY.
+# MJ_CARRIED_VERDICT_CANCEL_WAIT overrides the bound yield waits for its own cancel (default
+# 60 s, the release path's; test cases set 0).
+#
+# Exit: 0 done (or carried success) · 1 carried failure (verdict only) · 2 usage.
+set -eu
+set -o pipefail
+
+# The labels validate.yml reads: ci:full in the plan step, hold in the held member's step.
+# test/cases/26_ci_wiring.sh keeps this list equal to what the workflow reads.
+PLAN_LABELS="ci:full hold"
+# The verdict workflow's file, and how many completed runs of one head are examined.
+WORKFLOW="validate.yml"
+MAX_RUNS=20
+
+usage() { sed -n '2,45p' "$0" | sed 's/^# \{0,1\}//'; }
+[ $# -gt 0 ] || { usage >&2; exit 2; }
+CMD="$1"; shift
+case "$CMD" in decide|yield|verdict) ;; -h|--help) usage; exit 0 ;;
+  *) echo "carried-verdict: unknown command '$CMD' (decide, yield, verdict)" >&2; exit 2 ;;
+esac
+
+ACTION=""; LABEL=""; SHA=""; SELF=""; SLUG="${GITHUB_REPOSITORY:-}"
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --action) ACTION="${2?--action needs a value}"; shift 2 ;;
+    --label) LABEL="${2?--label needs a value}"; shift 2 ;;
+    --sha) SHA="${2?--sha needs a value}"; shift 2 ;;
+    --self) SELF="${2:?--self needs a run id}"; shift 2 ;;
+    --repo) SLUG="${2:?--repo needs owner/name}"; shift 2 ;;
+    *) echo "carried-verdict: unknown option $1" >&2; exit 2 ;;
+  esac
+done
+[ -n "$SELF" ] || { echo "carried-verdict: $CMD needs --self" >&2; exit 2; }
+
+CANCEL_WAIT="${MJ_CARRIED_VERDICT_CANCEL_WAIT:-60}"
+case "$CANCEL_WAIT" in ''|*[!0-9]*) echo "carried-verdict: MJ_CARRIED_VERDICT_CANCEL_WAIT is not a number: $CANCEL_WAIT" >&2; exit 2 ;; esac
+
+say()     { printf '%s\n' "$*"; }
+notice()  { if [ -n "${GITHUB_ACTIONS:-}" ]; then printf '::notice title=carried verdict::%s\n' "$*"; else say "$*"; fi; }
+warn()    { if [ -n "${GITHUB_ACTIONS:-}" ]; then printf '::warning title=carried verdict::%s\n' "$*"; else say "warn  $*"; fi; }
+summary() { [ -z "${GITHUB_STEP_SUMMARY:-}" ] || printf '%s\n' "$*" >> "$GITHUB_STEP_SUMMARY"; }
+output()  { [ -z "${GITHUB_OUTPUT:-}" ] || printf '%s\n' "$*" >> "$GITHUB_OUTPUT"; }
+
+# Every forge call goes through here, so the behavioural case stubs one command.
+api() { gh api "$@"; }
+
+# decide: sets DECISION to "carry <run> <conclusion>" or "run <why>".
+DECISION=""
+decide() {
+  local l runs ids id jobs plan ci
+  if [ "$ACTION" != labeled ]; then DECISION="run a ${ACTION:-run with no action} event plans its change"; return; fi
+  [ -n "$LABEL" ] || { DECISION="run a labeled event that names no label is not known to change nothing"; return; }
+  for l in $PLAN_LABELS; do
+    [ "$LABEL" != "$l" ] || { DECISION="run the label $LABEL changes what this run does"; return; }
+  done
+  [ -n "$SHA" ] || { DECISION="run no head was named, so no earlier verdict can be found"; return; }
+  [ -n "$SLUG" ] || { DECISION="run no repository (--repo or GITHUB_REPOSITORY), so no earlier verdict can be read"; return; }
+  command -v gh >/dev/null 2>&1 || { DECISION="run gh is not installed, so no earlier verdict can be read"; return; }
+  if ! runs="$(api "repos/$SLUG/actions/workflows/$WORKFLOW/runs?event=pull_request&head_sha=$SHA&status=completed&per_page=$MAX_RUNS" 2>&1)"; then
+    DECISION="run the earlier runs of ${SHA:0:12} could not be read: $(printf '%s' "$runs" | head -n 1)"; return
+  fi
+  if ! ids="$(jq -r --arg self "$SELF" '(.workflow_runs // []) | sort_by(.created_at) | reverse
+          | .[] | select((.id | tostring) != $self) | .id' <<<"$runs" 2>/dev/null)"; then
+    DECISION="run the earlier runs of ${SHA:0:12} were not JSON"; return
+  fi
+  for id in $ids; do
+    if ! jobs="$(api "repos/$SLUG/actions/runs/$id/jobs?filter=latest&per_page=100" 2>&1)"; then
+      DECISION="run the jobs of run $id could not be read: $(printf '%s' "$jobs" | head -n 1)"; return
+    fi
+    plan="$(jq -r '[(.jobs // [])[] | select(.name == "plan") | .conclusion // ""] | first // ""' <<<"$jobs" 2>/dev/null || true)"
+    ci="$(jq -r '[(.jobs // [])[] | select(.name == "ci") | .conclusion // ""] | first // ""' <<<"$jobs" 2>/dev/null || true)"
+    if [ "$plan" = success ]; then
+      case "$ci" in success|failure) DECISION="carry $id $ci"; return ;; esac
+    fi
+  done
+  DECISION="run head ${SHA:0:12} carries no verdict yet"
+}
+
+decide
+# "carry <run> <conclusion>" or "run <why>": the kind, then the run and conclusion or the reason
+read -r KIND REST <<<"$DECISION"
+read -r _ FROM VERDICT <<<"$DECISION"
+case "$CMD" in
+decide)
+  say "$DECISION"
+  exit 0 ;;
+
+yield)
+  if [ "$KIND" != carry ]; then
+    say "carried-verdict: this run plans: $REST"
+    exit 0
+  fi
+  from="$FROM"; verdict="$VERDICT"
+  notice "validate run $SELF was started by the label $LABEL, which changes nothing it runs; head ${SHA:0:12} keeps the $verdict verdict of run $from, and this run gives its runners back"
+  summary "## Verdict carried"
+  summary ""
+  summary "The label \`$LABEL\` changes nothing this run would do. Head \`$SHA\` already carries the **$verdict** verdict of validate run $from; this run requests no gate job, and its \`ci\` job writes that verdict again (I4347, scripts/ci/carried-verdict)."
+  out="$(api -X POST "repos/$SLUG/actions/runs/$SELF/cancel" 2>&1)" || {
+    warn "run $SELF could not cancel itself ($(printf '%s' "$out" | head -n 1)); it runs its plan"
+    exit 0; }
+  # The cancellation ends this step from outside. Bounded: if it has not landed by then, the
+  # run plans rather than hanging, and says so.
+  waited=0
+  while [ "$waited" -lt "$CANCEL_WAIT" ]; do sleep 5; waited=$((waited + 5)); done
+  warn "run $SELF asked to be cancelled ${CANCEL_WAIT}s ago and is still running; it runs its plan"
+  exit 0 ;;
+
+verdict)
+  if [ "$KIND" != carry ]; then
+    output "carried=false"
+    say "carried-verdict: this run's own gates decide: $REST"
+    exit 0
+  fi
+  from="$FROM"; verdict="$VERDICT"
+  output "carried=true"
+  summary "## Verdict carried"
+  summary ""
+  summary "Head \`$SHA\`: **$verdict**, the verdict of validate run $from. This run was started by the label \`$LABEL\`, which changes nothing it runs, and ran no gate of its own (I4347)."
+  if [ "$verdict" = success ]; then
+    notice "head ${SHA:0:12} keeps the success verdict of validate run $from"
+    exit 0
+  fi
+  if [ -n "${GITHUB_ACTIONS:-}" ]; then
+    printf '::error title=carried verdict::head %s keeps the failure verdict of validate run %s\n' "${SHA:0:12}" "$from"
+  else
+    say "error head ${SHA:0:12} keeps the failure verdict of validate run $from"
+  fi
+  exit 1 ;;
+esac
