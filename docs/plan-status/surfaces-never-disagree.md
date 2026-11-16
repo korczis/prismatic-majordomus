@@ -419,4 +419,5 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I4400` | shares site with I4531; they may not run concurrently |
 | WARN | `scope_conflict` | `I4400` | shares site with I4532; they may not run concurrently |
 | WARN | `scope_conflict` | `I4400` | shares site with I4533; they may not run concurrently |
+| WARN | `scope_conflict` | `I4400` | shares share/design with I4594; they may not run concurrently |
 | WARN | `scope_conflict` | `I4531` | shares scripts/pages with I4533; they may not run concurrently |

@@ -1023,6 +1023,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I3316` | shares apps/majordomus-cli/src/worktree/uncommitted.rs with I4333; they may not run concurrently |
 | WARN | `scope_conflict` | `I3316` | shares docs/WORKTREES.md with I4346; they may not run concurrently |
 | WARN | `scope_conflict` | `I3316` | shares docs/WORKTREES.md with I4418; they may not run concurrently |
+| WARN | `scope_conflict` | `I3316` | shares docs/WORKTREES.md with I4595; they may not run concurrently |
 | WARN | `scope_conflict` | `I3317` | shares docs/generated/openapi.json with I3395; they may not run concurrently |
 | WARN | `scope_conflict` | `I3317` | shares docs/generated/openapi.json with I3443; they may not run concurrently |
 | WARN | `scope_conflict` | `I3317` | shares apps/majordomus-cli/src/capability/builtin/executions.rs with I3607; they may not run concurrently |
@@ -1052,6 +1053,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I3836` | shares docs/WORKTREES.md with I4418; they may not run concurrently |
 | WARN | `scope_conflict` | `I3836` | shares scripts/generate-site-data with I4512; they may not run concurrently |
 | WARN | `scope_conflict` | `I3836` | shares apps/majordomus-cli/src/offload with I4577; they may not run concurrently |
+| WARN | `scope_conflict` | `I3836` | shares docs/WORKTREES.md with I4595; they may not run concurrently |
 | WARN | `scope_conflict` | `I4232` | shares scripts/rust-check with I4302; they may not run concurrently |
 | WARN | `scope_conflict` | `I4343` | shares apps/majordomus-cli/src/mesh/cache_provision.rs with I4346; they may not run concurrently |
 | WARN | `scope_conflict` | `I4343` | shares apps/majordomus-cli/src/mesh/journal.rs with I4466; they may not run concurrently |
@@ -1064,6 +1066,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I4346` | shares docs/WORKTREES.md with I4418; they may not run concurrently |
 | WARN | `scope_conflict` | `I4346` | shares apps/majordomus-cli/src/capability/builtin/worktree.rs with I4468; they may not run concurrently |
 | WARN | `scope_conflict` | `I4346` | shares apps/majordomus-cli/src/capability/builtin/worktree.rs with I4486; they may not run concurrently |
+| WARN | `scope_conflict` | `I4346` | shares docs/WORKTREES.md with I4595; they may not run concurrently |
 | WARN | `scope_conflict` | `I4374` | shares .githooks/pre-commit with I4513; they may not run concurrently |
 | WARN | `scope_conflict` | `I4374` | shares .githooks/pre-commit with I4573; they may not run concurrently |
 | WARN | `scope_conflict` | `I4374` | shares .githooks/pre-commit with I4588; they may not run concurrently |

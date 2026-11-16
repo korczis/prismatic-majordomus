@@ -41,3 +41,10 @@ evidence_required:
   - "named_trunk_commit_case"
 created_at: 2026-10-29
 updated_at: 2026-10-29
+evidence:
+  - covers: third-adopter-stamp-records-head
+    type: manual
+    command: "majordomus plan evidence <id> ...  # majordomus 1.0.1 installed in korczis/oscilla, which has no --commit, on a branch carrying one local commit"
+    result: "From oscilla-ff (OSCILLA session cae276ab, 2026-11-15). The installed 1.0.1 has no --commit, so plan evidence recorded HEAD. Stamping 16 issues on a branch carrying one local commit wrote that commit, a114e280, into all 16 records. OSCILLA's V272 D4 unit test caught it ('commit ... is not on main'), and the 16 stamps were hand-edited to the trunk commit 474ce9c3. Reproduce: korczis/oscilla PR 562, commits a114e280 then 8edf9737."
+    url: "https://github.com/korczis/oscilla/pull/562"
+    recorded_at: 2026-11-15T19:10:56Z
