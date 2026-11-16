@@ -185,7 +185,12 @@ pub struct InstanceList {
 /// The registries to read: the input's, else the environment's, with where each was named.
 fn registries(input: &InstancesInput, env: Option<String>) -> Vec<(PathBuf, RegistrySource)> {
     if !input.registries.is_empty() {
-        return input.registries.iter().filter(|p| !p.is_empty()).map(|p| (PathBuf::from(p), RegistrySource::Input)).collect();
+        return input
+            .registries
+            .iter()
+            .filter(|p| !p.is_empty())
+            .map(|p| (PathBuf::from(p), RegistrySource::Input))
+            .collect();
     }
     env.unwrap_or_default()
         .split(':')
@@ -205,19 +210,43 @@ fn read_record(registry: &Path, file: &str, bytes: &[u8]) -> Result<Instance, St
         return Err("not a JSON object".into());
     };
     if let Some(field) = SECRET_FIELDS.iter().find(|f| obj.contains_key(**f)) {
-        return Err(format!("carries a token ({field}): a registry record names its token file, never the token"));
+        return Err(format!(
+            "carries a token ({field}): a registry record names its token file, never the token"
+        ));
     }
     let name = text(&v, "name").ok_or("no name")?;
-    let owner_pid = v.get("owner_pid").and_then(Value::as_u64).ok_or("no owner_pid")?;
-    const KNOWN: [&str; 10] = ["schema", "name", "kind", "role", "owner_pid", "registered", "endpoint", "token_file", "url", "producer"];
-    let extra: BTreeMap<String, Value> = obj.iter().filter(|(k, _)| !KNOWN.contains(&k.as_str())).map(|(k, v)| (k.clone(), v.clone())).collect();
+    let owner_pid = v
+        .get("owner_pid")
+        .and_then(Value::as_u64)
+        .ok_or("no owner_pid")?;
+    const KNOWN: [&str; 10] = [
+        "schema",
+        "name",
+        "kind",
+        "role",
+        "owner_pid",
+        "registered",
+        "endpoint",
+        "token_file",
+        "url",
+        "producer",
+    ];
+    let extra: BTreeMap<String, Value> = obj
+        .iter()
+        .filter(|(k, _)| !KNOWN.contains(&k.as_str()))
+        .map(|(k, v)| (k.clone(), v.clone()))
+        .collect();
     let alive = u32::try_from(owner_pid).is_ok_and(crate::lease::alive);
     Ok(Instance {
         registry: registry.display().to_string(),
         file: file.to_string(),
         name,
         kind: text(&v, "kind").unwrap_or_else(|| "unknown".into()),
-        state: if alive { InstanceState::Live } else { InstanceState::Stale },
+        state: if alive {
+            InstanceState::Live
+        } else {
+            InstanceState::Stale
+        },
         owner_pid,
         schema: text(&v, "schema"),
         role: text(&v, "role"),
@@ -233,7 +262,9 @@ fn read_record(registry: &Path, file: &str, bytes: &[u8]) -> Result<Instance, St
 }
 
 /// Read every registry: views, instances and refusals. Writes and deletes nothing.
-fn read_registries(named: &[(PathBuf, RegistrySource)]) -> (Vec<RegistryView>, Vec<Instance>, Vec<Refused>) {
+fn read_registries(
+    named: &[(PathBuf, RegistrySource)],
+) -> (Vec<RegistryView>, Vec<Instance>, Vec<Refused>) {
     let (mut views, mut instances, mut refused) = (Vec::new(), Vec::new(), Vec::new());
     for (dir, source) in named {
         // File-name order through a BTreeMap: the directory's own order is the filesystem's.
@@ -247,11 +278,23 @@ fn read_registries(named: &[(PathBuf, RegistrySource)]) -> (Vec<RegistryView>, V
                 }
             }
         }
-        views.push(RegistryView { path: dir.display().to_string(), source: *source, exists, files: files.len() });
+        views.push(RegistryView {
+            path: dir.display().to_string(),
+            source: *source,
+            exists,
+            files: files.len(),
+        });
         for (file, path) in files {
-            match std::fs::read(&path).map_err(|e| format!("unreadable: {e}")).and_then(|b| read_record(dir, &file, &b)) {
+            match std::fs::read(&path)
+                .map_err(|e| format!("unreadable: {e}"))
+                .and_then(|b| read_record(dir, &file, &b))
+            {
                 Ok(i) => instances.push(i),
-                Err(reason) => refused.push(Refused { registry: dir.display().to_string(), file, reason }),
+                Err(reason) => refused.push(Refused {
+                    registry: dir.display().to_string(),
+                    file,
+                    reason,
+                }),
             }
         }
     }
@@ -260,14 +303,20 @@ fn read_registries(named: &[(PathBuf, RegistrySource)]) -> (Vec<RegistryView>, V
 
 /// The socket address of a loopback `http://host:port/...` endpoint, and its path.
 fn loopback(endpoint: &str) -> Result<(SocketAddr, String, String), String> {
-    let rest = endpoint.strip_prefix("http://").ok_or("not an http:// endpoint")?;
+    let rest = endpoint
+        .strip_prefix("http://")
+        .ok_or("not an http:// endpoint")?;
     let (authority, path) = match rest.find('/') {
         Some(i) => (&rest[..i], rest[i..].to_string()),
         None => (rest, "/".to_string()),
     };
     let (host, port) = authority.rsplit_once(':').ok_or("no port")?;
     let host = host.trim_start_matches('[').trim_end_matches(']');
-    let ip: IpAddr = if host == "localhost" { IpAddr::from([127, 0, 0, 1]) } else { host.parse().map_err(|_| "not an IP literal or localhost")? };
+    let ip: IpAddr = if host == "localhost" {
+        IpAddr::from([127, 0, 0, 1])
+    } else {
+        host.parse().map_err(|_| "not an IP literal or localhost")?
+    };
     if !ip.is_loopback() {
         return Err("not a loopback endpoint: a probe never sends a token off this machine".into());
     }
@@ -277,19 +326,25 @@ fn loopback(endpoint: &str) -> Result<(SocketAddr, String, String), String> {
 
 /// An MCP `ping` to a loopback endpoint with a bearer token: true when it answers a result.
 fn ping(addr: SocketAddr, authority: &str, path: &str, token: &str) -> Result<bool, String> {
-    let mut stream = TcpStream::connect_timeout(&addr, PROBE_BUDGET).map_err(|e| format!("no answer: {}", e.kind()))?;
+    let mut stream = TcpStream::connect_timeout(&addr, PROBE_BUDGET)
+        .map_err(|e| format!("no answer: {}", e.kind()))?;
     let _ = stream.set_read_timeout(Some(PROBE_BUDGET));
     let body = r#"{"jsonrpc":"2.0","id":1,"method":"ping","params":{}}"#;
     let request = format!(
         "POST {path} HTTP/1.0\r\nHost: {authority}\r\nContent-Type: application/json\r\nAccept: application/json, text/event-stream\r\nAuthorization: Bearer {token}\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{body}",
         body.len()
     );
-    stream.write_all(request.as_bytes()).map_err(|e| format!("could not send: {}", e.kind()))?;
+    stream
+        .write_all(request.as_bytes())
+        .map_err(|e| format!("could not send: {}", e.kind()))?;
     let mut answer = String::new();
     let _ = stream.take(PROBE_READ_LIMIT).read_to_string(&mut answer);
     let status = answer.split_whitespace().nth(1).unwrap_or("");
     if !status.starts_with('2') {
-        return Err(format!("answered HTTP {}", if status.is_empty() { "nothing" } else { status }));
+        return Err(format!(
+            "answered HTTP {}",
+            if status.is_empty() { "nothing" } else { status }
+        ));
     }
     Ok(answer.contains("\"result\""))
 }
@@ -300,12 +355,18 @@ fn probe(i: &mut Instance) {
         let endpoint = i.endpoint.as_deref().ok_or("no endpoint")?;
         let token_file = i.token_file.as_deref().ok_or("no token file")?;
         let (addr, authority, path) = loopback(endpoint)?;
-        let cfg: Value = serde_json::from_slice(&std::fs::read(token_file).map_err(|e| format!("token file unreadable: {}", e.kind()))?)
-            .map_err(|_| "token file is not JSON")?;
+        let cfg: Value = serde_json::from_slice(
+            &std::fs::read(token_file)
+                .map_err(|e| format!("token file unreadable: {}", e.kind()))?,
+        )
+        .map_err(|_| "token file is not JSON")?;
         if cfg.get("endpoint").and_then(Value::as_str) != Some(endpoint) {
             return Err("the token file names another endpoint: not probed".into());
         }
-        let token = cfg.get("agent_token").and_then(Value::as_str).ok_or("token file has no agent_token")?;
+        let token = cfg
+            .get("agent_token")
+            .and_then(Value::as_str)
+            .ok_or("token file has no agent_token")?;
         ping(addr, &authority, &path, token)
     })();
     match outcome {
@@ -313,7 +374,10 @@ fn probe(i: &mut Instance) {
         Err(e) => {
             // A loopback endpoint that was probed and did not answer is unreachable; one that
             // was not probed at all says why and claims nothing.
-            if e.starts_with("no answer") || e.starts_with("answered") || e.starts_with("could not send") {
+            if e.starts_with("no answer")
+                || e.starts_with("answered")
+                || e.starts_with("could not send")
+            {
                 i.reachable = Some(false);
             }
             i.probe_error = Some(e);
@@ -327,11 +391,20 @@ fn list(input: &InstancesInput, env: Option<String>) -> InstanceList {
     let named = registries(input, env);
     let (registries, mut instances, refused) = read_registries(&named);
     if input.probe {
-        for i in instances.iter_mut().filter(|i| i.state == InstanceState::Live) {
+        for i in instances
+            .iter_mut()
+            .filter(|i| i.state == InstanceState::Live)
+        {
             probe(i);
         }
     }
-    InstanceList { schema: LIST_SCHEMA.into(), registries, instances, refused, probed: input.probe }
+    InstanceList {
+        schema: LIST_SCHEMA.into(),
+        registries,
+        instances,
+        refused,
+        probed: input.probe,
+    }
 }
 
 fn instances_list(_ctx: &Context, input: InstancesInput) -> Result<InstanceList, CapabilityError> {
@@ -391,41 +464,101 @@ mod tests {
         let exposure = &m.capabilities[0].capability.exposure;
         let mcp = exposure.mcp.as_ref().expect("an MCP exposure");
         assert_eq!(mcp.tool.as_deref(), Some("majordomus_instances"));
-        assert_eq!(mcp.resource.as_ref().map(|r| r.uri.as_str()), Some(INSTANCES_URI));
-        assert_eq!(exposure.http.as_ref().map(|h| h.path.as_str()), Some("/api/v1/instances"));
+        assert_eq!(
+            mcp.resource.as_ref().map(|r| r.uri.as_str()),
+            Some(INSTANCES_URI)
+        );
+        assert_eq!(
+            exposure.http.as_ref().map(|h| h.path.as_str()),
+            Some("/api/v1/instances")
+        );
     }
 
     #[test]
     fn live_stale_and_refused_records_are_told_apart_and_nothing_is_deleted() {
         let t = tempfile::tempdir().unwrap();
         let me = std::process::id();
-        record(t.path(), "a.json", &format!(r#"{{"schema":"mcp-instance/v1","name":"a","kind":"server","owner_pid":{me},"registered":1,"endpoint":"http://127.0.0.1:9/mcp","game_port":3979}}"#));
-        record(t.path(), "b.json", &format!(r#"{{"name":"b","kind":"gui","owner_pid":{}}}"#, gone_pid()));
+        record(
+            t.path(),
+            "a.json",
+            &format!(
+                r#"{{"schema":"mcp-instance/v1","name":"a","kind":"server","owner_pid":{me},"registered":1,"endpoint":"http://127.0.0.1:9/mcp","game_port":3979}}"#
+            ),
+        );
+        record(
+            t.path(),
+            "b.json",
+            &format!(r#"{{"name":"b","kind":"gui","owner_pid":{}}}"#, gone_pid()),
+        );
         record(t.path(), "c.json", r#"{"name": "#);
-        record(t.path(), "d.json", &format!(r#"{{"name":"d","owner_pid":{me},"agent_token":"SECRET-d"}}"#));
+        record(
+            t.path(),
+            "d.json",
+            &format!(r#"{{"name":"d","owner_pid":{me},"agent_token":"SECRET-d"}}"#),
+        );
         record(t.path(), ".e.tmp.json", "half a record");
-        let input = InstancesInput { registries: vec![t.path().display().to_string()], probe: false };
+        let input = InstancesInput {
+            registries: vec![t.path().display().to_string()],
+            probe: false,
+        };
         let out = list(&input, None);
-        let names: Vec<(&str, InstanceState)> = out.instances.iter().map(|i| (i.name.as_str(), i.state)).collect();
-        assert_eq!(names, [("a", InstanceState::Live), ("b", InstanceState::Stale)]);
+        let names: Vec<(&str, InstanceState)> = out
+            .instances
+            .iter()
+            .map(|i| (i.name.as_str(), i.state))
+            .collect();
+        assert_eq!(
+            names,
+            [("a", InstanceState::Live), ("b", InstanceState::Stale)]
+        );
         let refused: Vec<&str> = out.refused.iter().map(|r| r.file.as_str()).collect();
         assert_eq!(refused, ["c.json", "d.json"]);
         assert!(out.refused[1].reason.starts_with("carries a token"));
-        assert_eq!(out.instances[0].extra.as_ref().and_then(|e| e.get("game_port")), Some(&serde_json::json!(3979)));
+        assert_eq!(
+            out.instances[0]
+                .extra
+                .as_ref()
+                .and_then(|e| e.get("game_port")),
+            Some(&serde_json::json!(3979))
+        );
         let text = serde_json::to_string(&out).unwrap();
-        assert!(!text.contains("SECRET-d"), "a refused record's token is echoed: {text}");
-        assert!(t.path().join("b.json").exists(), "a stale record was deleted");
-        assert_eq!(out.registries[0].files, 4, "a dot-file is a write in progress, not a record");
+        assert!(
+            !text.contains("SECRET-d"),
+            "a refused record's token is echoed: {text}"
+        );
+        assert!(
+            t.path().join("b.json").exists(),
+            "a stale record was deleted"
+        );
+        assert_eq!(
+            out.registries[0].files, 4,
+            "a dot-file is a write in progress, not a record"
+        );
     }
 
     #[test]
     fn the_input_names_the_registries_before_the_environment_does() {
-        let input = InstancesInput { registries: vec!["/x".into()], probe: false };
+        let input = InstancesInput {
+            registries: vec!["/x".into()],
+            probe: false,
+        };
         let r = registries(&input, Some("/a::/b".into()));
         assert_eq!(r, [(PathBuf::from("/x"), RegistrySource::Input)]);
         let r = registries(&InstancesInput::default(), Some("/a::/b".into()));
-        assert_eq!(r, [(PathBuf::from("/a"), RegistrySource::Environment), (PathBuf::from("/b"), RegistrySource::Environment)]);
-        let out = list(&InstancesInput { registries: vec!["/no/such/registry".into()], probe: false }, None);
+        assert_eq!(
+            r,
+            [
+                (PathBuf::from("/a"), RegistrySource::Environment),
+                (PathBuf::from("/b"), RegistrySource::Environment)
+            ]
+        );
+        let out = list(
+            &InstancesInput {
+                registries: vec!["/no/such/registry".into()],
+                probe: false,
+            },
+            None,
+        );
         assert!(!out.registries[0].exists && out.instances.is_empty() && out.refused.is_empty());
     }
 
@@ -434,8 +567,13 @@ mod tests {
         assert!(loopback("http://127.0.0.1:8731/mcp").is_ok());
         assert!(loopback("http://[::1]:8731/mcp").is_ok());
         assert!(loopback("http://localhost:8731/mcp").is_ok());
-        assert!(loopback("http://192.0.2.1:8731/mcp").unwrap_err().starts_with("not a loopback endpoint"));
-        assert!(loopback("http://example.com:80/mcp").is_err(), "a name is never resolved");
+        assert!(loopback("http://192.0.2.1:8731/mcp")
+            .unwrap_err()
+            .starts_with("not a loopback endpoint"));
+        assert!(
+            loopback("http://example.com:80/mcp").is_err(),
+            "a name is never resolved"
+        );
         assert!(loopback("https://127.0.0.1:1/mcp").is_err());
     }
 
@@ -448,18 +586,50 @@ mod tests {
             let mut buf = [0u8; 4096];
             let n = s.read(&mut buf).unwrap();
             let req = String::from_utf8_lossy(&buf[..n]).to_string();
-            let ok = req.contains("Authorization: Bearer TOKEN-4621") && req.contains("\"method\":\"ping\"");
-            let body = if ok { r#"{"jsonrpc":"2.0","id":1,"result":{}}"# } else { r#"{"jsonrpc":"2.0","id":1,"error":{}}"# };
-            let _ = write!(s, "HTTP/1.1 200 OK\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{body}", body.len());
+            let ok = req.contains("Authorization: Bearer TOKEN-4621")
+                && req.contains("\"method\":\"ping\"");
+            let body = if ok {
+                r#"{"jsonrpc":"2.0","id":1,"result":{}}"#
+            } else {
+                r#"{"jsonrpc":"2.0","id":1,"error":{}}"#
+            };
+            let _ = write!(
+                s,
+                "HTTP/1.1 200 OK\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{body}",
+                body.len()
+            );
         });
         let t = tempfile::tempdir().unwrap();
         let endpoint = format!("http://127.0.0.1:{port}/mcp");
         let token = t.path().join("token.json");
-        std::fs::write(&token, format!(r#"{{"agent_token":"TOKEN-4621","endpoint":"{endpoint}"}}"#)).unwrap();
-        record(t.path(), "live.json", &format!(r#"{{"name":"live","owner_pid":{},"endpoint":"{endpoint}","token_file":"{}"}}"#, std::process::id(), token.display()));
-        let out = list(&InstancesInput { registries: vec![t.path().display().to_string()], probe: true }, None);
+        std::fs::write(
+            &token,
+            format!(r#"{{"agent_token":"TOKEN-4621","endpoint":"{endpoint}"}}"#),
+        )
+        .unwrap();
+        record(
+            t.path(),
+            "live.json",
+            &format!(
+                r#"{{"name":"live","owner_pid":{},"endpoint":"{endpoint}","token_file":"{}"}}"#,
+                std::process::id(),
+                token.display()
+            ),
+        );
+        let out = list(
+            &InstancesInput {
+                registries: vec![t.path().display().to_string()],
+                probe: true,
+            },
+            None,
+        );
         server.join().unwrap();
-        assert_eq!(out.instances[0].reachable, Some(true), "{:?}", out.instances[0].probe_error);
+        assert_eq!(
+            out.instances[0].reachable,
+            Some(true),
+            "{:?}",
+            out.instances[0].probe_error
+        );
         assert!(!serde_json::to_string(&out).unwrap().contains("TOKEN-4621"));
     }
 
@@ -467,10 +637,31 @@ mod tests {
     fn a_token_file_naming_another_endpoint_is_not_used() {
         let t = tempfile::tempdir().unwrap();
         let token = t.path().join("token.json");
-        std::fs::write(&token, r#"{"agent_token":"T","endpoint":"http://127.0.0.1:1/other"}"#).unwrap();
-        record(t.path(), "x.json", &format!(r#"{{"name":"x","owner_pid":{},"endpoint":"http://127.0.0.1:1/mcp","token_file":"{}"}}"#, std::process::id(), token.display()));
-        let out = list(&InstancesInput { registries: vec![t.path().display().to_string()], probe: true }, None);
+        std::fs::write(
+            &token,
+            r#"{"agent_token":"T","endpoint":"http://127.0.0.1:1/other"}"#,
+        )
+        .unwrap();
+        record(
+            t.path(),
+            "x.json",
+            &format!(
+                r#"{{"name":"x","owner_pid":{},"endpoint":"http://127.0.0.1:1/mcp","token_file":"{}"}}"#,
+                std::process::id(),
+                token.display()
+            ),
+        );
+        let out = list(
+            &InstancesInput {
+                registries: vec![t.path().display().to_string()],
+                probe: true,
+            },
+            None,
+        );
         assert_eq!(out.instances[0].reachable, None);
-        assert_eq!(out.instances[0].probe_error.as_deref(), Some("the token file names another endpoint: not probed"));
+        assert_eq!(
+            out.instances[0].probe_error.as_deref(),
+            Some("the token file names another endpoint: not probed")
+        );
     }
 }

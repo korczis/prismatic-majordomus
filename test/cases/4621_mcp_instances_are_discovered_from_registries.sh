@@ -1,4 +1,5 @@
 # majordomus-covers: capability:instances.list
+# claims: mcp-instances-from-registries
 # Live MCP instances that announce themselves in an instance registry: one owner-only JSON
 # record per instance (mcp-instance/v1), written and removed by the instance. Majordomus lists
 # them from every registry the configuration names, says which owners are gone, refuses a
@@ -68,6 +69,16 @@ same "a remote endpoint is not probed" "$(jq -r '.instances[] | select(.name == 
 # nothing listens on 127.0.0.1:9 (discard): probed, and unreachable
 same "a loopback endpoint is probed" "$(jq -r '.instances[] | select(.name == "live") | .reachable' probe.json)" "false"
 expect_no_grep "$SECRET" probe.json
+# ---------------------------------------------------------------- the same answer over MCP
+# One MCP session against this repository: the tool answers the typed list, token-free.
+FRAME="$( { printf '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-06-18","capabilities":{},"clientInfo":{"name":"case4621","version":"0"}}}\n'
+    printf '{"jsonrpc":"2.0","method":"notifications/initialized"}\n'
+    printf '{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"majordomus_instances","arguments":{"registries":["%s"]}}}\n' "$REG"
+  } | "$RB" mcp --standalone --repo . 2>mcp-err.txt | sed -n 2p)"
+printf '%s\n' "$FRAME" > mcp.json
+same "majordomus_instances answers the live instances over MCP" "$(jq -r '[.result.structuredContent.instances[] | select(.state == "live") | .name] | sort | join(",")' mcp.json)" "live,remote"
+expect_no_grep "$SECRET" mcp.json
+
 # majordomus-negative: capability:instances.list
 # a registries entry that is not a string is refused by the input contract, not guessed
 if "$RB" run instances.list --repo . --input '{"registries": [1]}' --quiet --format json >bad.json 2>&1; then
