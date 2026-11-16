@@ -228,6 +228,14 @@
       "capabilities": 3
     },
     {
+      "id": "instances",
+      "title": "MCP instances from instance registries",
+      "description": "Third-party MCP servers on this machine that announce themselves by writing a record (mcp-instance/v1) to a shared registry directory: listed with whether their owner is alive, refused when a record is malformed or carries a token, never deleted, and probed with an MCP ping only on request and only on loopback.",
+      "stability": "behaviorally_verified",
+      "source": "builtin",
+      "capabilities": 1
+    },
+    {
       "id": "integration",
       "title": "Pull-request integration",
       "description": "Every open pull request classified against the current master — ready, needs refresh, waiting for checks, review or a dependency, draft, needs repair, conflicting, blocked, unsafe (auto-merge armed), redundant (its work is on master already), superseded (by a declared successor that landed, named in superseded_by), possibly redundant, other base or unknown — each with the master and head it was decided against, its reasons, its evidence, its risk and its overlaps, ranked deterministically; and the audit trail of the executor that merges the next provably safe one, one at a time. The relation to master is decided by git with this repository's own merge drivers, because the forge cannot run the derived-file driver. Read from the last recorded forge observation; the one exception is the dry-run proof, which observes the forge itself because the observation is part of what it proves moves nothing.",
@@ -39231,6 +39239,317 @@
         "concurrency": "unrestricted"
       },
       "source_path": "apps/majordomus-cli/src/capability/builtin/health.rs"
+    },
+    {
+      "id": "instances.list",
+      "module": "instances",
+      "kind": "query",
+      "title": "MCP instances from instance registries",
+      "description": "Every record of every registry directory named by the input's registries or MAJORDOMUS_INSTANCE_REGISTRIES (colon-separated): name, kind, owner pid and whether it is alive (live or stale; a stale record is left in place), endpoint, the path of its token file, and the record's other fields. A malformed file, or a record that carries agent_token or token, is refused with the reason and nothing of it is echoed. With probe, each live instance's loopback endpoint is sent an MCP ping with the token read from its token file in memory; a non-loopback endpoint or one that differs from the token file's is not probed. Writes nothing.",
+      "input": {
+        "name": "InstancesInput",
+        "schema": {
+          "type": "object",
+          "properties": {
+            "registries": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "The registry directories to read; when empty, the colon-separated MAJORDOMUS_INSTANCE_REGISTRIES.",
+              "default": []
+            },
+            "probe": {
+              "type": "boolean",
+              "description": "Ping each instance's loopback MCP endpoint with the token from its token file (read in memory, never echoed).",
+              "default": false
+            }
+          },
+          "description": "What to ask of `instances.list`.",
+          "title": "InstancesInput"
+        }
+      },
+      "output": {
+        "name": "InstanceList",
+        "schema": {
+          "type": "object",
+          "properties": {
+            "schema": {
+              "type": "string",
+              "description": "The answer's schema."
+            },
+            "registries": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/RegistryView"
+              },
+              "description": "The registries read, in the order named."
+            },
+            "instances": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/Instance"
+              },
+              "description": "The instances, registry by registry, file name order within each."
+            },
+            "refused": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/Refused"
+              },
+              "description": "The files that are not listed, with the reason."
+            },
+            "probed": {
+              "type": "boolean",
+              "description": "Whether the instances were probed."
+            }
+          },
+          "required": [
+            "schema",
+            "registries",
+            "instances",
+            "refused",
+            "probed"
+          ],
+          "description": "Every instance of every registry the configuration names.",
+          "title": "InstanceList",
+          "$defs": {
+            "RegistryView": {
+              "type": "object",
+              "properties": {
+                "path": {
+                  "type": "string",
+                  "description": "The directory."
+                },
+                "source": {
+                  "$ref": "#/$defs/RegistrySource",
+                  "description": "Where it was named."
+                },
+                "exists": {
+                  "type": "boolean",
+                  "description": "Whether it exists; an absent registry is a fact, not an error."
+                },
+                "files": {
+                  "type": "integer",
+                  "format": "uint",
+                  "minimum": 0,
+                  "description": "How many JSON files it holds."
+                }
+              },
+              "required": [
+                "path",
+                "source",
+                "exists",
+                "files"
+              ],
+              "description": "One registry directory as read."
+            },
+            "RegistrySource": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "const": "input",
+                  "description": "The capability's input."
+                },
+                {
+                  "type": "string",
+                  "const": "environment",
+                  "description": "MAJORDOMUS_INSTANCE_REGISTRIES."
+                }
+              ],
+              "description": "Where a registry directory was named."
+            },
+            "Instance": {
+              "type": "object",
+              "properties": {
+                "registry": {
+                  "type": "string",
+                  "description": "The registry it was read from."
+                },
+                "file": {
+                  "type": "string",
+                  "description": "The record's file name."
+                },
+                "name": {
+                  "type": "string",
+                  "description": "The instance's name, unique in its registry."
+                },
+                "kind": {
+                  "type": "string",
+                  "description": "What kind of process it is, as the record says (for example server, gui, panel)."
+                },
+                "state": {
+                  "$ref": "#/$defs/InstanceState",
+                  "description": "Live or stale."
+                },
+                "owner_pid": {
+                  "type": "integer",
+                  "format": "uint64",
+                  "minimum": 0,
+                  "description": "The process that owns the record."
+                },
+                "schema": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "The record's schema, when it names one."
+                },
+                "role": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "One line saying what it is."
+                },
+                "registered": {
+                  "type": [
+                    "number",
+                    "null"
+                  ],
+                  "format": "double",
+                  "description": "When it registered, Unix seconds."
+                },
+                "endpoint": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "Its MCP endpoint."
+                },
+                "token_file": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "The path of its token file (the file's contents are never read except by a probe, never returned)."
+                },
+                "url": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "A base URL, for a record that is not an MCP endpoint (a control panel)."
+                },
+                "producer": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "What wrote the record."
+                },
+                "extra": {
+                  "type": [
+                    "object",
+                    "null"
+                  ],
+                  "additionalProperties": true,
+                  "description": "Every other field of the record, as written (never one of the secret fields, which refuse the record)."
+                },
+                "reachable": {
+                  "type": [
+                    "boolean",
+                    "null"
+                  ],
+                  "description": "With probe: whether the endpoint answered an MCP ping."
+                },
+                "probe_error": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "With probe: why it was not probed, or what the probe met."
+                }
+              },
+              "required": [
+                "registry",
+                "file",
+                "name",
+                "kind",
+                "state",
+                "owner_pid"
+              ],
+              "description": "One instance, as its record says and as this machine sees it now."
+            },
+            "InstanceState": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "const": "live",
+                  "description": "Its owner process exists."
+                },
+                {
+                  "type": "string",
+                  "const": "stale",
+                  "description": "Its owner process is gone; the record is left where it is, its owner's to remove."
+                }
+              ],
+              "description": "Whether a record's owner is still running."
+            },
+            "Refused": {
+              "type": "object",
+              "properties": {
+                "registry": {
+                  "type": "string",
+                  "description": "The registry."
+                },
+                "file": {
+                  "type": "string",
+                  "description": "The file name."
+                },
+                "reason": {
+                  "type": "string",
+                  "description": "Why it is not listed."
+                }
+              },
+              "required": [
+                "registry",
+                "file",
+                "reason"
+              ],
+              "description": "A file of a registry that is not listed, and why."
+            }
+          }
+        }
+      },
+      "provenance": {
+        "source": "builtin",
+        "module": "majordomus_cli::capability::builtin::instances"
+      },
+      "exposure": {
+        "mcp": {
+          "tool": "majordomus_instances",
+          "resource": {
+            "uri": "majordomus://instances",
+            "name": "instances"
+          }
+        },
+        "http": {
+          "method": "GET",
+          "path": "/api/v1/instances"
+        }
+      },
+      "availability": "runtime",
+      "visibility": "public",
+      "stability": "behaviorally_verified",
+      "tags": [
+        "instances",
+        "discovery",
+        "mcp",
+        "introspection"
+      ],
+      "benchmark": {
+        "policy": "required"
+      },
+      "cache": {
+        "policy": "disabled"
+      },
+      "execution": {
+        "effect": "read",
+        "cancellable": false,
+        "concurrency": "unrestricted"
+      },
+      "source_path": "apps/majordomus-cli/src/capability/builtin/instances.rs"
     },
     {
       "id": "integration.cleanup",

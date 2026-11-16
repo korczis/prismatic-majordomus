@@ -2265,6 +2265,15 @@
       "note": "the case builds a fixture site, runs the pass and scripts/ci/link-check over it, and plants an undeclared node, another diagram's node, an absent diagram and a duplicate declared name; the viewer's behaviour in a browser is the diagram spec of scripts/interaction-probe, which this claim does not cover."
     },
     {
+      "id": "claim:mcp-instances-from-registries",
+      "kind": "claim",
+      "label": "instances.list lists every MCP instance that announces itself in an instance registry (one owner-only mcp-instance/v1 record per instance, in the directories MAJORDOMUS_INSTANCE_REGISTRIES or the input names) with whether its owner is alive, refuses a malformed record or one that carries a token without echoing it, deletes nothing, and probes only on request, only a loopback endpoint, with the token read from the record's token file in memory and never returned",
+      "status": "guaranteed",
+      "route": "/guarantees/mcp-instances-from-registries/",
+      "external": false,
+      "note": "the case writes a temporary registry with a live record (the case shell's pid), a stale one, a malformed file and one carrying agent_token, then a non-loopback record and a probe; the Rust tests add a probe against a local listener that checks the bearer token arrives and is not returned. The records belong to the instances: Majordomus never writes or removes them."
+    },
+    {
       "id": "impl:.github/workflows/pages.yml",
       "kind": "implementation",
       "label": ".github/workflows/pages.yml",
@@ -2289,6 +2298,13 @@
       "id": "impl:apps/majordomus-cli/src/capability/builtin/evidence.rs",
       "kind": "implementation",
       "label": "apps/majordomus-cli/src/capability/builtin/evidence.rs",
+      "route": null,
+      "external": false
+    },
+    {
+      "id": "impl:apps/majordomus-cli/src/capability/builtin/instances.rs",
+      "kind": "implementation",
+      "label": "apps/majordomus-cli/src/capability/builtin/instances.rs",
       "route": null,
       "external": false
     },
@@ -4127,6 +4143,13 @@
       "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/45_github_projection.sh"
     },
     {
+      "id": "test:test/cases/4621_mcp_instances_are_discovered_from_registries.sh",
+      "kind": "test",
+      "label": "test/cases/4621_mcp_instances_are_discovered_from_registries.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/4621_mcp_instances_are_discovered_from_registries.sh"
+    },
+    {
       "id": "test:test/cases/486_rustdoc_composition.sh",
       "kind": "test",
       "label": "test/cases/486_rustdoc_composition.sh",
@@ -5869,6 +5892,11 @@
       "kind": "specified_by"
     },
     {
+      "source": "claim:mcp-instances-from-registries",
+      "target": "source:docs/MESH.md",
+      "kind": "specified_by"
+    },
+    {
       "source": "claim:distribution-canonical-model",
       "target": "impl:apps/majordomus-cli/src/distribution/mod.rs",
       "kind": "implemented_by"
@@ -7059,6 +7087,11 @@
       "kind": "implemented_by"
     },
     {
+      "source": "claim:mcp-instances-from-registries",
+      "target": "impl:apps/majordomus-cli/src/capability/builtin/instances.rs",
+      "kind": "implemented_by"
+    },
+    {
       "source": "claim:distribution-canonical-model",
       "target": "test:test/cases/84_distribution_model.sh",
       "kind": "proved_by"
@@ -8246,6 +8279,11 @@
     {
       "source": "claim:a-diagram-is-named-linked-and-addressable",
       "target": "test:test/cases/3006_diagrams_are_interactive_and_linkable.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:mcp-instances-from-registries",
+      "target": "test:test/cases/4621_mcp_instances_are_discovered_from_registries.sh",
       "kind": "proved_by"
     }
   ]

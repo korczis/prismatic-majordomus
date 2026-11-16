@@ -489,6 +489,11 @@
     },
     {
       "kind": "capability",
+      "subject": "capability:instances.list",
+      "path": "/evidence/capabilities/instances-list/"
+    },
+    {
+      "kind": "capability",
       "subject": "capability:integration.cleanup",
       "path": "/evidence/capabilities/integration-cleanup/"
     },
@@ -1836,6 +1841,11 @@
       "kind": "claim",
       "subject": "claim:mcp-degraded-not-silent",
       "path": "/evidence/claims/mcp-degraded-not-silent/"
+    },
+    {
+      "kind": "claim",
+      "subject": "claim:mcp-instances-from-registries",
+      "path": "/evidence/claims/mcp-instances-from-registries/"
     },
     {
       "kind": "claim",
@@ -5189,6 +5199,31 @@
       "programs": [],
       "members": [],
       "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "capability:instances.list": {
+      "kind": "capability",
+      "id": "instances.list",
+      "page": "/evidence/capabilities/instances-list/",
+      "programs": [],
+      "members": [
+        "claim:mcp-instances-from-registries"
+      ],
+      "routes": [
+        {
+          "via": "behaviour",
+          "test": "suite:4621_mcp_instances_are_discovered_from_registries",
+          "path": "test/cases/4621_mcp_instances_are_discovered_from_registries.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "negative",
+          "test": "suite:4621_mcp_instances_are_discovered_from_registries",
+          "path": "test/cases/4621_mcp_instances_are_discovered_from_registries.sh",
+          "category": "e2e"
+        }
+      ],
       "mechanisms": [],
       "findings": []
     },
@@ -9810,6 +9845,29 @@
             "docs/MCP.md",
             "apps/majordomus-cli/src/index.rs",
             "test/cases/72_rust_mcp.sh"
+          ]
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
+    "claim:mcp-instances-from-registries": {
+      "kind": "claim",
+      "id": "mcp-instances-from-registries",
+      "status": "guaranteed",
+      "page": "/evidence/claims/mcp-instances-from-registries/",
+      "programs": [],
+      "members": [],
+      "routes": [
+        {
+          "via": "claim",
+          "test": "suite:4621_mcp_instances_are_discovered_from_registries",
+          "path": "test/cases/4621_mcp_instances_are_discovered_from_registries.sh",
+          "category": "e2e",
+          "inputs": [
+            "docs/MESH.md",
+            "apps/majordomus-cli/src/capability/builtin/instances.rs",
+            "test/cases/4621_mcp_instances_are_discovered_from_registries.sh"
           ]
         }
       ],
@@ -21892,6 +21950,18 @@
       "programs": [],
       "members": [
         "capability:distribution.status"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "mcp:majordomus_instances": {
+      "kind": "mcp",
+      "id": "majordomus_instances",
+      "alias_of": "capability:instances.list",
+      "programs": [],
+      "members": [
+        "capability:instances.list"
       ],
       "routes": [],
       "mechanisms": [],

@@ -1564,6 +1564,33 @@
       "tool": "majordomus_health"
     },
     {
+      "api_anchor": "/docs/api/instances/#op-instances-list",
+      "claims": [
+        {
+          "id": "mcp-instances-from-registries",
+          "implementation": "apps/majordomus-cli/src/capability/builtin/instances.rs",
+          "route": "/guarantees/mcp-instances-from-registries/",
+          "status": "guaranteed",
+          "test": "test/cases/4621_mcp_instances_are_discovered_from_registries.sh"
+        }
+      ],
+      "cli": null,
+      "id": "instances.list",
+      "kind": "query",
+      "module": "instances",
+      "module_route": "/registry/modules/instances/",
+      "resource": "majordomus://instances",
+      "route": "/registry/capabilities/instances-list/",
+      "slug": "instances-list",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/instances.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/instances.rs",
+      "tests": [
+        "test/cases/4621_mcp_instances_are_discovered_from_registries.sh"
+      ],
+      "title": "MCP instances from instance registries",
+      "tool": "majordomus_instances"
+    },
+    {
       "api_anchor": "/docs/api/integration/#op-integration-cleanup",
       "claims": [],
       "cli": null,
@@ -4734,9 +4761,9 @@
     ]
   },
   "counts": {
-    "capabilities": 231,
-    "claims": 93,
-    "modules": 62
+    "capabilities": 232,
+    "claims": 94,
+    "modules": 63
   },
   "generator": "majordomus-cli 1.0.2",
   "modules": [
@@ -5500,6 +5527,30 @@
       "source_path": "apps/majordomus-cli/src/capability/builtin/health.rs",
       "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/health.rs",
       "title": "Health"
+    },
+    {
+      "capabilities": [
+        {
+          "id": "instances.list",
+          "route": "/registry/capabilities/instances-list/",
+          "slug": "instances-list"
+        }
+      ],
+      "claims": [
+        {
+          "id": "mcp-instances-from-registries",
+          "implementation": "apps/majordomus-cli/src/capability/builtin/instances.rs",
+          "route": "/guarantees/mcp-instances-from-registries/",
+          "status": "guaranteed",
+          "test": "test/cases/4621_mcp_instances_are_discovered_from_registries.sh"
+        }
+      ],
+      "id": "instances",
+      "route": "/registry/modules/instances/",
+      "slug": "instances",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/instances.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/instances.rs",
+      "title": "MCP instances from instance registries"
     },
     {
       "capabilities": [

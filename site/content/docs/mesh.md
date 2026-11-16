@@ -148,6 +148,30 @@ URL instead; `mesh.status` lists what a node advertises as `advertised`. The Gig
 deployment's generated Procfile passes both `--advertise` and `--node-seed-env` from the
 deployment object (ADR 0219, ADR 0220).
 
+### MCP instances on this machine are not mesh nodes
+
+Some software on a machine runs its own MCP server and wants to be found without a launcher
+that knows about discovery: a research cluster of game instances, each with its own endpoint,
+for example. Such an instance writes one owner-only JSON record of itself (schema
+`mcp-instance/v1`: name, kind, owner pid, endpoint, the path of its 0600 token file, never the
+token) to a shared registry directory when its server starts, and removes it when it stops.
+
+`instances.list` (MCP tool `majordomus_instances`, resource `majordomus://instances`,
+`GET /api/v1/instances`, `majordomus run instances.list --input '{"probe": true}'`) reads every
+registry named by `MAJORDOMUS_INSTANCE_REGISTRIES` (colon-separated) or by the input's
+`registries`:
+
+- each record with `live` or `stale` (its owner process is gone); a stale record stays where it
+  is, because the instances own their records and Majordomus writes nothing;
+- `refused`: a file that is not a record, or a record that carries `agent_token` or `token`,
+  with the reason and nothing of its content;
+- with `probe`, each live instance's endpoint is sent an MCP `ping` with the token read from its
+  token file in memory: only a loopback endpoint, and only when the token file names the same
+  endpoint, so a record can never send a token off the machine; the token is in no answer.
+
+These instances are not nodes: they sign nothing, are not admitted by the trust policy and
+take no part in claims or handovers. They are a list of where local MCP servers say they are.
+
 ## Trust
 
 Trust is decided by the declared policy, and the default is that no one is trusted:

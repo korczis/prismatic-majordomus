@@ -2261,3 +2261,12 @@ claims:
     status: guaranteed
     responsibility: none      # a property of the site build, not a supervised responsibility
     note: the case builds a fixture site, runs the pass and scripts/ci/link-check over it, and plants an undeclared node, another diagram's node, an absent diagram and a duplicate declared name; the viewer's behaviour in a browser is the diagram spec of scripts/interaction-probe, which this claim does not cover.
+
+  - id: mcp-instances-from-registries
+    claim: instances.list lists every MCP instance that announces itself in an instance registry (one owner-only mcp-instance/v1 record per instance, in the directories MAJORDOMUS_INSTANCE_REGISTRIES or the input names) with whether its owner is alive, refuses a malformed record or one that carries a token without echoing it, deletes nothing, and probes only on request, only a loopback endpoint, with the token read from the record's token file in memory and never returned
+    source: docs/MESH.md
+    implementation: apps/majordomus-cli/src/capability/builtin/instances.rs
+    test: test/cases/4621_mcp_instances_are_discovered_from_registries.sh
+    status: guaranteed
+    responsibility: none      # served by apps/majordomus-cli, not a supervised responsibility
+    note: the case writes a temporary registry with a live record (the case shell's pid), a stale one, a malformed file and one carrying agent_token, then a non-loopback record and a probe; the Rust tests add a probe against a local listener that checks the bearer token arrives and is not returned. The records belong to the instances: Majordomus never writes or removes them.

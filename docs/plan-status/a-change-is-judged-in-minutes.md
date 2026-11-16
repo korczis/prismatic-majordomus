@@ -106,6 +106,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I3841` | shares site/content with I4531; they may not run concurrently |
 | WARN | `scope_conflict` | `I3841` | shares site/content with I4532; they may not run concurrently |
 | WARN | `scope_conflict` | `I3841` | shares scripts/site-check with I4533; they may not run concurrently |
+| WARN | `scope_conflict` | `I3841` | shares docs/generated with I4621; they may not run concurrently |
 | WARN | `scope_conflict` | `I4349` | shares .ai/repo/ci/gates.yaml with I4357; they may not run concurrently |
 | WARN | `scope_conflict` | `I4349` | shares .ai/repo/policy.yaml with I4418; they may not run concurrently |
 | WARN | `scope_conflict` | `I4349` | shares docs/CI.md with I4460; they may not run concurrently |
