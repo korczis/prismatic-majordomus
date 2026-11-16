@@ -81631,6 +81631,47 @@
         }
       },
       {
+        "id": "majordomus://issue/I4619",
+        "kind": "issue",
+        "label": "I4619",
+        "summary": "The pre-push hook init prints for adopters passes the commits the push publishes, so finish --check compares what is pushed rather than HEAD",
+        "route": "/cockpit/objects/issue/i4619",
+        "source": ".ai/repo/project/issues/I4619.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "The block init prints, installed as .git/hooks/pre-push, passes silently a push of the verified commit from the current branch while HEAD is a later unverified commit",
+            "The same hook warns for a pushed commit from the current branch whose tree was not verified, and refuses it with exit 10 under `verification.pushed_tree_unverified: error`",
+            "A deletion (all-zero local sha), a push of another branch and a refs/majordomus/* push are not compared",
+            "The block ends with the exact line `<majordomus> finish --check || exit $?`, and doctor reports finish-on-push wired",
+            "Negative: case 4619 fails when the hook is the one line init printed before"
+          ],
+          "created_at": "2026-11-16",
+          "depends_on": [
+            "I4610"
+          ],
+          "evidence_required": [
+            "the_adopter_pre_push_passes_the_pushed_commits"
+          ],
+          "milestone": "a-second-adopter-is-served",
+          "non_scope": [
+            "Installing a hook: init still prints the lines and installs nothing",
+            "Changing what finish --check compares or how MAJORDOMUS_PUSHED is read: I4610 owns that",
+            "A hook that reads git's stdin twice: the printed lines consume it, and a hook that also reads it elsewhere is told to read it once and share it"
+          ],
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "lib/init.sh",
+            "docs/CLI.md",
+            "test/cases/4619_the_adopter_pre_push_passes_the_pushed_commits.sh",
+            ".ai/repo/project/issues/I4619.yaml"
+          ],
+          "serves": [],
+          "slug": "the-adopter-pre-push-passes-the-pushed-commits"
+        }
+      },
+      {
         "id": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "label": "a-brief-is-reconciled-not-transcribed",
@@ -109479,6 +109520,13 @@
         "label": "test/cases/4610_a_push_names_a_tree_its_branch_did_not_verify.sh",
         "route": "/cockpit/objects/test/test-cases-4610-a-push-names-a-tree-its-branch-did-not-verify-sh",
         "source": "test/cases/4610_a_push_names_a_tree_its_branch_did_not_verify.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/4619_the_adopter_pre_push_passes_the_pushed_commits.sh",
+        "kind": "test",
+        "label": "test/cases/4619_the_adopter_pre_push_passes_the_pushed_commits.sh",
+        "route": "/cockpit/objects/test/test-cases-4619-the-adopter-pre-push-passes-the-pushed-commits-sh",
+        "source": "test/cases/4619_the_adopter_pre_push_passes_the_pushed_commits.sh"
       },
       {
         "id": "majordomus://test/test/cases/46_cross_surface.sh",
@@ -151349,6 +151397,21 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I4619",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4619",
+        "target": "majordomus://issue/I4610",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I4619",
+        "target": "majordomus://milestone/a-second-adopter-is-served",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -159109,6 +159172,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/4619_the_adopter_pre_push_passes_the_pushed_commits.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/46_cross_surface.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -164230,8 +164298,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4495,
-      "edges": 10141,
+      "nodes": 4497,
+      "edges": 10145,
       "acyclic": false,
       "truncated": false
     }

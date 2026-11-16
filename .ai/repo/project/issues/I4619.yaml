@@ -1,0 +1,33 @@
+id: I4619
+milestone: a-second-adopter-is-served
+title: "The pre-push hook init prints for adopters passes the commits the push publishes, so finish --check compares what is pushed rather than HEAD"
+slug: the-adopter-pre-push-passes-the-pushed-commits
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "The pre-push lines `majordomus init` prints read git's pre-push stdin (`<local ref> <local sha> <remote ref> <remote sha>`), collect the local shas pushed from the current branch, skip deletions (an all-zero local sha) and refs/majordomus/*, export them as MAJORDOMUS_PUSHED, and end with the unchanged `majordomus finish --check || exit $?` that doctor verifies."
+why: "I4610 taught `finish --check` to compare a pushed tree with the tree the branch's last finished task verified, and the repository's own .githooks/pre-push exports MAJORDOMUS_PUSHED from git's stdin. The line init prints for adopters stayed `majordomus finish --check || exit $?`, so an adopter's hook compares HEAD. HEAD is not what a push publishes when the pushed ref is named (`git push origin <commit>:<branch>`, a push from a script while another commit is checked out): a verified commit pushed from behind an unverified HEAD is warned or refused, and an unverified commit pushed while HEAD is the verified one passes silently. The algoglyph integration session of 2026-11-15 found the gap."
+current_state: "On feature/I4610-pre-push-compares-the-verified-tree 51421089a43, lib/init.sh:217-220 (mj_init_hook_advice) prints `pre-push:   <majordomus> finish --check || exit $?`, and lib/init.sh:225 offers the same one line for a drop-in under a tracked hooks directory. Nothing an adopter is told to install sets MAJORDOMUS_PUSHED."
+desired_state: "init prints the pre-push hook as a block of lines that compute MAJORDOMUS_PUSHED from git's stdin the way .githooks/pre-push does and end with the unchanged `finish --check || exit $?` line; the drop-in advice for a tracked hooks directory prints the same block. Case 4619 installs the printed block as a hook and drives it with git's stdin: fails on the one-line hook, passes here."
+scope:
+  - "lib/init.sh"
+  - "docs/CLI.md"
+  - "test/cases/4619_the_adopter_pre_push_passes_the_pushed_commits.sh"
+  - ".ai/repo/project/issues/I4619.yaml"
+non_scope:
+  - "Installing a hook: init still prints the lines and installs nothing"
+  - "Changing what finish --check compares or how MAJORDOMUS_PUSHED is read: I4610 owns that"
+  - "A hook that reads git's stdin twice: the printed lines consume it, and a hook that also reads it elsewhere is told to read it once and share it"
+depends_on: [I4610]
+serves: []
+acceptance_criteria:
+  - "The block init prints, installed as .git/hooks/pre-push, passes silently a push of the verified commit from the current branch while HEAD is a later unverified commit"
+  - "The same hook warns for a pushed commit from the current branch whose tree was not verified, and refuses it with exit 10 under `verification.pushed_tree_unverified: error`"
+  - "A deletion (all-zero local sha), a push of another branch and a refs/majordomus/* push are not compared"
+  - "The block ends with the exact line `<majordomus> finish --check || exit $?`, and doctor reports finish-on-push wired"
+  - "Negative: case 4619 fails when the hook is the one line init printed before"
+validation:
+  - "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 4619_the_adopter_pre_push_passes_the_pushed_commits 4610_a_push_names_a_tree_its_branch_did_not_verify 4265_the_adopter_hook_runs_doctor_in_commit_context 2979_a_personal_layer_changes_nothing_shared"
+evidence_required:
+  - "the_adopter_pre_push_passes_the_pushed_commits"
+created_at: 2026-11-16

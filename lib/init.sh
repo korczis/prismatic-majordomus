@@ -199,6 +199,33 @@ OUT
   mj_init_hook_advice "$personal" "$rel"
 }
 
+# mj_init_pre_push_lines <majordomus>
+#
+# The pre-push hook an adopter installs, one line per output line. `finish --check` compares
+# the tree a push publishes from this branch with the tree the branch's last finished task
+# verified (I4610), and HEAD is not always what a push publishes: `git push origin
+# <commit>:<branch>`, or a push from a script while another commit is checked out, sends a
+# commit HEAD is not. Git names what it sends on the hook's stdin, one `<local ref> <local
+# sha> <remote ref> <remote sha>` per ref, so the lines collect the local shas pushed from
+# the branch HEAD names, skip a deletion (an all-zero local sha) and the tool's own
+# refs/majordomus/*, and pass them as MAJORDOMUS_PUSHED, exactly as this repository's
+# .githooks/pre-push does (I4619). The last line is the one doctor verifies and case 3948
+# matches, unchanged; set and empty, MAJORDOMUS_PUSHED compares nothing.
+mj_init_pre_push_lines() {
+  cat <<LINES
+# git names the refs this push sends on stdin; a hook that reads it elsewhere too reads it once
+mj_b="\$(git symbolic-ref -q HEAD)" || mj_b=""; mj_p=""
+while read -r mj_lr mj_ls mj_rr _; do
+  case "\$mj_rr" in refs/majordomus/*) continue ;; esac
+  case "\$mj_ls" in
+    *[!0]*) [ -z "\$mj_b" ] || [ "\$mj_lr" != "\$mj_b" ] || mj_p="\$mj_p \$mj_ls" ;;
+  esac
+done
+MAJORDOMUS_PUSHED="\${mj_p# }"; export MAJORDOMUS_PUSHED
+$1 finish --check || exit \$?
+LINES
+}
+
 # Where the two hook lines go. Git says where its hooks are, and in a personal layer that
 # answer decides whose they are: under the git directory they are this clone's and the lines
 # go straight in; under a directory the project tracks (core.hooksPath pointing into the work
@@ -214,10 +241,11 @@ mj_init_hook_advice() {
      && [ -n "$(mj_git ls-files -- "$hookrel" 2>/dev/null | head -n 1)" ]; then tracked=1; fi
   if [ "$tracked" = 0 ]; then
     cat <<OUT
-hooks are not installed by init; add these two lines yourself, doctor verifies them:
+hooks are not installed by init; add these yourself, doctor verifies them:
   pre-commit: MAJORDOMUS_DOCTOR_CONTEXT=commit $rel doctor || exit \$?
-  pre-push:   $rel finish --check || exit \$?
+  pre-push:   these lines, which pass finish --check the commits the push publishes from this branch:
 OUT
+    mj_init_pre_push_lines "$rel" | sed 's/^/    /'
     return 0
   fi
   printf "hooks are not installed by init, and this repository's hooks are the project's (%s/ is tracked):\n" "$hookrel"
@@ -226,7 +254,11 @@ OUT
     if [ -d "$MJ_ROOT/$hookrel/$h.d" ]; then
       dropin="$hookrel/$h.d/majordomus-personal"
       mj_personal_cover "$dropin" || mj_die "$MJ_EX_INTERNAL" "cannot write $(mj_personal_exclude_file)"
-      printf '  %s: an executable file of your own, %s (covered already), holding: %s\n' "$h" "$dropin" "$line"
+      case "$h" in
+        pre-commit) printf '  %s: an executable file of your own, %s (covered already), holding: %s\n' "$h" "$dropin" "$line" ;;
+        *) printf '  %s: an executable file of your own, %s (covered already), holding these lines:\n' "$h" "$dropin"
+           mj_init_pre_push_lines "$rel" | sed 's/^/    /' ;;
+      esac
     else
       printf "  %s: %s/%s is tracked and runs no %s.d/, so there is no place of your own for: %s\n" "$h" "$hookrel" "$h" "$h" "$line"
     fi

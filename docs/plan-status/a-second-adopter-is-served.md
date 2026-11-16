@@ -9,7 +9,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 
 | milestone | status | done of required | ready | blocked | active | verify | cancelled | outcome |
 |---|---|---|---|---|---|---|---|---|
-| [a-second-adopter-is-served](https://majordomus.dev/plan/a-second-adopter-is-served/) | ACTIVE | 9/36 | 25 | 2 | 0 | 0 | 0 | Each finding is fixed generically, with no test of whether the repository is this one: by a declaration, a derivation or a default that an adopter can state. Each fix carries a case that fails without it, its derived files regenerated and its page of the documentation corrected. |
+| [a-second-adopter-is-served](https://majordomus.dev/plan/a-second-adopter-is-served/) | ACTIVE | 9/37 | 25 | 3 | 0 | 0 | 0 | Each finding is fixed generically, with no test of whether the repository is this one: by a declaration, a derivation or a default that an adopter can state. Each fix carries a case that fails without it, its derived files regenerated and its page of the documentation corrected. |
 
 ## Issues
 
@@ -51,6 +51,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | [I4418](https://majordomus.dev/plan/i4418/) | READY | 0 | — | serve ensure fast-forwards a clean trunk checkout that is strictly behind its remote trunk, or offers to, and majordomus init declares checkout.trunk_distance, so a shared server does not answer from an old tree unjudged |
 | [I4578](https://majordomus.dev/plan/i4578/) | READY | 0 | — | A fixture path under a case's scratch variable is not a pack leak of the packing account's home |
 | [I4610](https://majordomus.dev/plan/i4610/) | READY | 0 | — | The pre-push finish --check names a pushed tree that its branch's last finished task did not verify, and says what to do |
+| [I4619](https://majordomus.dev/plan/i4619/) | BLOCKED | 1 | I4610 | The pre-push hook init prints for adopters passes the commits the push publishes, so finish --check compares what is pushed rather than HEAD |
 
 ## Findings
 

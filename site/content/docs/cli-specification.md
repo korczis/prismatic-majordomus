@@ -96,8 +96,11 @@ exists without a manifest, naming the choice between moving it aside and `--exte
 (`15`) when project data still lives under `.majordomus/`, the pre-`.ai` layout, naming
 `majordomus migrate`.
 
-**Does not** install git hooks. It prints the two lines a hook needs and the command
-`majordomus doctor` that will verify they were added.
+**Does not** install git hooks. It prints what each hook needs and the command
+`majordomus doctor` that will verify they were added: one line for `pre-commit`, and for
+`pre-push` a block that reads git's stdin, passes the commits the push publishes from this
+branch as `MAJORDOMUS_PUSHED` and ends with the `finish --check || exit $?` line doctor
+verifies (I4619; see Hook integration).
 
 ```
 $ majordomus init
@@ -1905,7 +1908,7 @@ publishes with what was verified: the tree of the pushed commit against the `ver
 of the last `task.finished` of the current branch in this checkout's ledger. The pushed
 commits are `--pushed "<commits>"` (space-separated, `""` for none), else
 `MAJORDOMUS_PUSHED` when it is set — a hook's way to say it without changing the line
-`doctor` verifies — else `HEAD`. A tree that differs is the finding `pushed-tree`, naming
+`doctor` verifies, and what the pre-push block `init` prints sets — else `HEAD`. A tree that differs is the finding `pushed-tree`, naming
 the commit, both tree ids, the task and its verify command, with the remedy: re-run the
 verification over this tree under a new task, or say why not where the push is reviewed
 (a merge of the trunk after the verification changes the tree legitimately). The level is
@@ -2426,10 +2429,27 @@ without an installation: it never reads `.ai/`.
 majordomus doctor || exit $?
 
 # .git/hooks/pre-push
+# git names the refs this push sends on stdin; a hook that reads it elsewhere too reads it once
+mj_b="$(git symbolic-ref -q HEAD)" || mj_b=""; mj_p=""
+while read -r mj_lr mj_ls mj_rr _; do
+  case "$mj_rr" in refs/majordomus/*) continue ;; esac
+  case "$mj_ls" in
+    *[!0]*) [ -z "$mj_b" ] || [ "$mj_lr" != "$mj_b" ] || mj_p="$mj_p $mj_ls" ;;
+  esac
+done
+MAJORDOMUS_PUSHED="${mj_p# }"; export MAJORDOMUS_PUSHED
 majordomus finish --check || exit $?
 ```
 
-Either line may live in a subhook of a dispatching hook instead — `doctor` looks in
+The pre-push block passes `finish --check` the commits the push publishes from the branch
+HEAD names (I4619): git writes one `<local ref> <local sha> <remote ref> <remote sha>` per
+ref on the hook's stdin, a deletion carries an all-zero local sha and is skipped, and so is
+the tool's own `refs/majordomus/*`. HEAD alone is not what `git push origin
+<commit>:<branch>` publishes, and the hook would then judge the wrong tree. The last line is
+the one `doctor` verifies, unchanged; the one-line hook still works and compares HEAD.
+Case 4619 installs the block `init` prints and drives it with git's stdin.
+
+Either hook may live in a subhook of a dispatching hook instead — `doctor` looks in
 `<hook>.d/` as well and names the file it found. A repository that predates Majordomus
 needs no bootstrap flag: `finish --check` passes while no task is active, so the hooks
 are inert until the first `start`.
