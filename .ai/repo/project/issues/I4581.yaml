@@ -1,0 +1,29 @@
+id: I4581
+milestone: the-mesh-works-out-of-the-box
+title: "A machine resource (a container name, a TCP port, a test database, a scratch directory) is claimed on the mesh like a path, start refuses one another session holds, and finish names one left unreleased"
+slug: a-machine-resource-is-claimed-like-a-path
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "`mesh claim` takes a typed resource key beside repository paths, `resource:<kind>/<name>@<node>` for the kinds container, port, database and directory, held exclusively on the node it names; `majordomus start` with a declared resource refuses one another live session holds, naming the holder, and `finish` reports every resource the task claimed and did not release."
+why: "Intake from the flight-agent-empty-legs-fc session (2026-11-11 about 20:00Z, the owner's order to port everything and keep it generic; evidence in that repository's pull requests 194-197 and 219-222), item F2: concurrent sessions on one machine meet on things that are not repository paths, a container name, a listening port, a test database, a scratch directory, and the mesh coordinates only paths and identifier keys (`id:<kind>/<n>`), so nothing tells one session that another already uses the resource."
+current_state: "At origin/master d34f159439f: `mesh claim <SCOPE>...` takes repository-relative paths; plan.allocate claims `id:<kind>/<number>` keys; start and finish read path scopes only."
+desired_state: "Two sessions claiming `resource:port/5432@<node>` get one success and one refusal naming the holder; a task that claimed a resource and finishes without releasing it reads a finding naming it; a claim on another node does not refuse."
+scope:
+  - ".ai/repo/project/issues/I4581.yaml"
+  - "apps/majordomus-cli/src/mesh/manager.rs"
+  - "apps/majordomus-cli/src/capability/builtin/mesh.rs"
+  - "lib/start.sh"
+  - "docs/MESH.md"
+  - "test/cases/4581_a_machine_resource_is_claimed_like_a_path.sh"
+non_scope:
+  - "Allocating a free port or creating the database; the claim records who uses it"
+depends_on: []
+acceptance_criteria:
+  - "A case: two sessions claim one port on one node, one is refused naming the other; on two nodes both succeed; a finish with the claim still held names it"
+validation:
+  - "bash test/run.sh 4581_a_machine_resource_is_claimed_like_a_path"
+evidence_required:
+  - test
+serves: []
+created_at: 2026-11-12

@@ -1,0 +1,25 @@
+id: I4612
+milestone: a-second-adopter-is-served
+title: "The skills-unenforced remedy an adopter can follow: declare the CI model's gate that runs `skills verify`, not this tree's `scripts/ci-plan`"
+slug: the-skills-unenforced-remedy-fits-an-adopter
+priority: p3
+profile: implementation
+parallel_safe: true
+objective: "When an active skill is unenforced because no CI gate selected by a change to its SKILL.md runs `skills verify`, the finding's remedy says what an adopter does: declare `.ai/repo/ci/gates.yaml` (or extend it) with a gate whose `runs` contains `majordomus skills verify`, selected by a class matching the skill's path, and run that command in a CI job. `scripts/ci-plan` is named only where it exists."
+why: "An adopter (korczis.github.io, 2026-11-15) carried the fleet pack's skill `fleet-flowbite-pro` and doctor warned it unenforced with reproduce `scripts/ci-plan`, a script that exists only in Majordomus's own tree. The adopter had no CI model at all; the way out (a gates.yaml whose one class `**` escalates to the full plan, plus a `majordomus skills verify` step in the supervision job) had to be reverse-engineered from apps/majordomus-cli/src/skill/mod.rs and tests/skills.rs. Same class as I4256: a remedy that names this tool's own files is no remedy for an adopter."
+current_state: "skill/mod.rs emits `reproduce: scripts/ci-plan` for every unenforced skill, in every repository."
+desired_state: "In a repository without scripts/ci-plan the remedy is the gates.yaml declaration and the CI step; with no gates.yaml at all it says the model is missing and gives a minimal one (one escalating class, one gate running `majordomus skills verify`); scripts/ci-plan stays the reproduce where it is tracked."
+scope:
+  - ".ai/repo/project/issues/I4612.yaml"
+  - "apps/majordomus-cli/src/skill/mod.rs"
+  - "apps/majordomus-cli/tests/skills.rs"
+depends_on: []
+acceptance_criteria:
+  - "An adopter fixture without scripts/ci-plan and without gates.yaml gets a remedy naming .ai/repo/ci/gates.yaml and `majordomus skills verify`"
+  - "This repository's own finding still reproduces with scripts/ci-plan"
+validation:
+  - "cargo test -p majordomus-cli --test skills"
+evidence_required:
+  - "test_the_skills_unenforced_remedy_fits_an_adopter"
+created_at: 2026-11-15
+updated_at: 2026-11-15

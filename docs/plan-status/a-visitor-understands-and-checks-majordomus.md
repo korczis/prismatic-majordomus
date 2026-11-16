@@ -26,4 +26,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 
 ## Findings
 
-None about this milestone or its issues.
+| level | code | subject | message |
+|---|---|---|---|
+| WARN | `scope_conflict` | `I4530` | shares .github/workflows/pages.yml with I4532; they may not run concurrently |
+| WARN | `scope_conflict` | `I4530` | shares .github/workflows/pages.yml with I4533; they may not run concurrently |

@@ -1,7 +1,7 @@
 +++
 title = "Bring a branch current by the cheapest safe strategy"
 description = "Decide, from the integration engine's own assessment, whether a branch needs nothing, master merged in, a repair by its owner, a fresh branch from master or to wait, and carry out only that, with every rewrite preceded by a rescue ref and every push a fast-forward."
-weight = 8
+weight = 9
 [extra]
 id = "rebaser"
 status = "active"
