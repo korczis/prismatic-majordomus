@@ -48,6 +48,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I3973` | shares .ai/repo/ci/gates.yaml with I4512; they may not run concurrently |
 | WARN | `scope_conflict` | `I3973` | shares .github/workflows/validate.yml with I4532; they may not run concurrently |
 | WARN | `scope_conflict` | `I3973` | shares .github/workflows/validate.yml with I4569; they may not run concurrently |
+| WARN | `scope_conflict` | `I3973` | shares apps/majordomus-cli/src/commit/verdict.rs with I4605; they may not run concurrently |
 | WARN | `scope_conflict` | `I3974` | shares lib/adr.sh with I4264; they may not run concurrently |
 | WARN | `scope_conflict` | `I3974` | shares .ai/repo/project/issues/I3974.yaml with I4337; they may not run concurrently |
 | WARN | `scope_conflict` | `I3974` | shares lib/adr.sh with I4357; they may not run concurrently |
@@ -78,5 +79,6 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I4357` | shares .githooks/pre-commit with I4588; they may not run concurrently |
 | WARN | `scope_conflict` | `I4357` | shares lib/plan.sh with I4616; they may not run concurrently |
 | WARN | `scope_conflict` | `I4362` | shares lib/adr.sh with I4468; they may not run concurrently |
+| WARN | `scope_conflict` | `I4568` | shares scripts/ci/commit-policy with I4605; they may not run concurrently |
 | WARN | `scope_conflict` | `I4568` | shares apps/majordomus-cli/src/capability/builtin/trace.rs with I4622; they may not run concurrently |
 | WARN | `scope_conflict` | `I4582` | shares docs/INTEGRATION.md with I4597; they may not run concurrently |

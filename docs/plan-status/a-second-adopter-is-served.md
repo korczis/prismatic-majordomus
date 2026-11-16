@@ -9,7 +9,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 
 | milestone | status | done of required | ready | blocked | active | verify | cancelled | outcome |
 |---|---|---|---|---|---|---|---|---|
-| [a-second-adopter-is-served](https://majordomus.dev/plan/a-second-adopter-is-served/) | ACTIVE | 9/45 | 34 | 2 | 0 | 0 | 0 | Each finding is fixed generically, with no test of whether the repository is this one: by a declaration, a derivation or a default that an adopter can state. Each fix carries a case that fails without it, its derived files regenerated and its page of the documentation corrected. |
+| [a-second-adopter-is-served](https://majordomus.dev/plan/a-second-adopter-is-served/) | ACTIVE | 9/46 | 35 | 2 | 0 | 0 | 0 | Each finding is fixed generically, with no test of whether the repository is this one: by a declaration, a derivation or a default that an adopter can state. Each fix carries a case that fails without it, its derived files regenerated and its page of the documentation corrected. |
 
 ## Issues
 
@@ -54,6 +54,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | [I4597](https://majordomus.dev/plan/i4597/) | READY | 0 | — | A line every branch recomputes is the landing's to write: a conflict confined to a line master's policy declares recomputed is not an authored conflict, as the version line already is not |
 | [I4599](https://majordomus.dev/plan/i4599/) | READY | 0 | — | A step that waits says whose turn it is: when every unfinished issue waits on the person, proceed.step orders wait_on_person, names each pull request the person must act on, and steps again on the policy's person cadence |
 | [I4604](https://majordomus.dev/plan/i4604/) | READY | 0 | — | A declared .ai extension in a gitignored subtree is discovered, checked and reported |
+| [I4605](https://majordomus.dev/plan/i4605/) | READY | 0 | — | commit validate refuses a C0 or C1 control character, other than a newline or a tab, anywhere in a commit message, and names its position (commit.control_character) |
 | [I4606](https://majordomus.dev/plan/i4606/) | READY | 0 | — | A verdict that needs a CI secret says which store the run reads: a Dependabot run reads the Dependabot secrets, and the remedy names `--app dependabot` |
 | [I4612](https://majordomus.dev/plan/i4612/) | READY | 0 | — | The skills-unenforced remedy an adopter can follow: declare the CI model's gate that runs `skills verify`, not this tree's `scripts/ci-plan` |
 | [I4615](https://majordomus.dev/plan/i4615/) | READY | 0 | — | Never-reported gates are counted right and point at the command that reports them: `evidence --run-gates`, which also proves each `runs` executes as declared |
@@ -147,6 +148,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I4262` | shares docs/COMMIT.md with I4568; they may not run concurrently |
 | WARN | `scope_conflict` | `I4262` | shares share/skeleton/policy.yaml with I4597; they may not run concurrently |
 | WARN | `scope_conflict` | `I4262` | shares share/skeleton/policy.yaml with I4599; they may not run concurrently |
+| WARN | `scope_conflict` | `I4262` | shares apps/majordomus-cli/src/commit with I4605; they may not run concurrently |
 | WARN | `scope_conflict` | `I4262` | shares share/skeleton/policy.yaml with I4622; they may not run concurrently |
 | WARN | `scope_conflict` | `I4263` | shares docs/SCHEMAS.md with I4267; they may not run concurrently |
 | WARN | `scope_conflict` | `I4263` | shares docs/SCHEMAS.md with I4306; they may not run concurrently |
@@ -286,6 +288,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I4418` | shares lib/doctor.sh with I4595; they may not run concurrently |
 | WARN | `scope_conflict` | `I4418` | shares apps/majordomus-cli/src/policy.rs with I4597; they may not run concurrently |
 | WARN | `scope_conflict` | `I4418` | shares apps/majordomus-cli/src/policy.rs with I4599; they may not run concurrently |
+| WARN | `scope_conflict` | `I4418` | shares .ai/repo/policy.yaml with I4605; they may not run concurrently |
 | WARN | `scope_conflict` | `I4418` | shares apps/majordomus-cli/src/commands/serve.rs with I4622; they may not run concurrently |
 | WARN | `scope_conflict` | `I4597` | shares apps/majordomus-cli/src/integration/model.rs with I4599; they may not run concurrently |
 | WARN | `scope_conflict` | `I4597` | shares apps/majordomus-cli/src/policy.rs with I4622; they may not run concurrently |
