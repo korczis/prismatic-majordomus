@@ -41,6 +41,10 @@ MJ_RECLAIM_BELOW_MB_DEFAULT=
 MJ_RECLAIM_EVERY_S=
 mj_rust_reclaim() { :; }
 mj_free_mb() { :; }
+MJ_MAX_BUILDERS_DEFAULT=
+mj_rust_on_ci() { :; }
+mj_rust_builders() { :; }
+mj_rust_builders_check() { :; }
 mj_rust_space_check() { :; }
 MJ_INCREMENTAL_IDLE_MIN_DEFAULT=
 mj_cargo_empty_dir_vars() { :; }
