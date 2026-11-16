@@ -1,0 +1,37 @@
+id: I4533
+milestone: ci-critical-path
+title: "The published site stays under GitHub Pages' size limit"
+slug: the-published-site-stays-under-the-pages-size-limit
+priority: p1
+profile: implementation
+parallel_safe: true
+serves: []
+objective: "Bound the tree scripts/pages publishes to gh-pages: a measured budget with margin under GitHub's 1 GB Pages limit (900 MB or lower) that scripts/pages check or scripts/site-check refuses with the three largest contributors named, and a decision on what leaves the tree or is compressed so the deploy fits; a case proves the bound."
+why: "GitHub documents a soft limit of 1 GB for a Pages site. On 2026-11-06/07 the gh-pages tree measured 1013.7 MB at 8b2f61d0c97 (built in 1329 s), 1013.5 MB at dcf6a8c2bec and 1018.0 MB at 54699d0638d. GitHub's own Pages builds of the last two ended 'Page build failed.' twice (23:50Z and 00:21Z) with no reason exposed, and built on the third request (447 s). The tree holds 14,930 files: about 10,000 routes, of which the /cs copy is half (the I3447-era lesson: a language copy doubles every walk), the UI snapshot (2,052 pages; ui/snapshot.json alone 4.2 MB) and the Cockpit snapshot (1,501 pages). Nothing measures the tree before it is pushed, so the first signal of the limit is a deploy that fails in GitHub's half, which .ai/repo/ci/pages.yaml deliberately does not budget."
+current_state: "Measured at 5ca0bec8c42: scripts/pages check runs every static check over site/public and scripts/site-check validates the built site, and neither measures its size; .ai/repo/ci/pages.yaml budgets seconds (budget.warm, budget.cold, budget.bound) and names deploy.output site/public and deploy.branch gh-pages, with no byte budget; the ui-snapshot job of pages.yml writes the UI snapshot with --limit 4000 and the Cockpit snapshot with --limit 1500 into the published tree whole."
+desired_state: "The publication model declares a size budget for the published tree with margin under GitHub's limit (900 MB or lower); scripts/pages check or scripts/site-check measures the built tree against it and refuses one over it, naming the budget, the measured size and the three largest contributors by directory; and a recorded decision says what leaves the tree or is compressed — the snapshots' per-page HTML, the language copy's generated data — so the next gh-pages tree measures under the budget. A case proves the refusal on a fixture tree over the budget and the pass on one under it."
+scope:
+  - ".ai/repo/project/issues/I4533.yaml"
+  - ".ai/repo/ci/pages.yaml"
+  - "scripts/pages"
+  - "scripts/site-check"
+  - ".github/workflows/pages.yml"
+  - "test/cases/4533_the_published_site_stays_under_the_pages_size_limit.sh"
+  - "site/content/plan/I4533.md"
+non_scope:
+  - "Moving the site off GitHub Pages"
+  - "GitHub's own 'pages build and deployment', which the publication model measures and never budgets"
+depends_on: []
+acceptance_criteria:
+  - "scripts/pages check or scripts/site-check refuses a built tree over the declared budget (exit 10), naming the budget, the measured size and the three largest contributors; a tree under it passes"
+  - "The budget is declared in .ai/repo/ci/pages.yaml with the measurements that set it (1013.7, 1013.5 and 1018.0 MB; two failed Pages builds on 2026-11-06/07)"
+  - "The decision on what leaves the tree or is compressed is recorded, and the next gh-pages tree measures under the budget with margin"
+  - "A case proves the refusal and the pass on fixture trees"
+validation:
+  - "bash test/run.sh 4533_the_published_site_stays_under_the_pages_size_limit"
+  - "scripts/pages check"
+evidence_required:
+  - suite
+risk: "A compressed or removed snapshot page changes what scripts/pages verify-ui and the snapshot marker check of the deploy read; whatever leaves the tree must leave the verifier's expectation in the same change, or the deploy refuses itself."
+created_at: 2026-11-07
+updated_at: 2026-11-07

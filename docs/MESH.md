@@ -155,7 +155,16 @@ clone of a public repository and a new machine nobody has enrolled yet. Without 
 a machine would announce itself on its network and dial every endpoint the repository commits,
 while every peer refused it. `mesh doctor` fails its `trust` check with the key and the remedy,
 its `runtime` check reads `closed: …`, and the session's briefing says `Mesh: CLOSED — …`.
-Listing the key and restarting the server opens it. `tofu` never closes on this ground.
+Listing the key and committing it on the trunk opens it with no restart: the server reads the
+change with its next generation of the repository, holds the key it closed with against the
+declaration in force, and runs its own activation again, cooperation included, when that now
+opens. Withdrawing the key closes a running mesh the same way: its providers and cooperation
+stop and its reason names the key (I4571). `tofu` never closes on this ground.
+Until it has read the change, the `trust` check, which reads the declaration in force, already
+passes: then the `runtime` check fails as `stale: …`, naming the key the declaration now trusts,
+and says that a server which stays closed is restarted with `majordomus serve stop &&
+majordomus serve ensure` (I4572). The check reads the
+server's key out of the reason it closed with, so the verdict is about the key it loaded.
 
 ### Which copy of the declaration is obeyed
 
