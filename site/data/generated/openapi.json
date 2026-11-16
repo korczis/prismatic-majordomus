@@ -82,6 +82,7 @@
     "op-health-live": "docs/api/health/",
     "op-health-ready": "docs/api/health/",
     "op-health-report": "docs/api/health/",
+    "op-instances-list": "docs/api/instances/",
     "op-integration-cleanup": "docs/api/integration/",
     "op-integration-events": "docs/api/integration/",
     "op-integration-explain": "docs/api/integration/",
@@ -695,7 +696,10 @@
     "schema-InspectReport": "docs/api/worktree/",
     "schema-InstallCheck": "docs/api/distribution/",
     "schema-InstallabilityReport": "docs/api/distribution/",
+    "schema-Instance": "docs/api/instances/",
     "schema-InstanceId": "docs/api/mesh/",
+    "schema-InstanceList": "docs/api/instances/",
+    "schema-InstanceState": "docs/api/instances/",
     "schema-Integration": "docs/api/trace/",
     "schema-IntegrationAction": "docs/api/integration/",
     "schema-IntegrationCleanup": "docs/api/integration/",
@@ -1042,9 +1046,12 @@
     "schema-Refusal": "docs/api/deploy/",
     "schema-RefusalCode": "docs/api/mesh/",
     "schema-Refusals": "docs/api/mesh/",
+    "schema-Refused": "docs/api/instances/",
     "schema-RefusedView": "docs/api/mesh/",
     "schema-RegisterAnswer": "docs/api/mesh/",
     "schema-RegisterInput": "docs/api/mesh/",
+    "schema-RegistrySource": "docs/api/instances/",
+    "schema-RegistryView": "docs/api/instances/",
     "schema-Relation": "docs/api/continuity/",
     "schema-RelationDirection": "docs/api/entity/",
     "schema-RelationToMaster": "docs/api/integration/",
@@ -1371,6 +1378,7 @@
     "tag-graph": "docs/api/graph/",
     "tag-guard": "docs/api/guard/",
     "tag-health": "docs/api/health/",
+    "tag-instances": "docs/api/instances/",
     "tag-integration": "docs/api/integration/",
     "tag-intent_realization": "docs/api/intent-realization/",
     "tag-intents": "docs/api/intents/",
@@ -1408,9 +1416,9 @@
   },
   "binding": "GET binds every top-level input property as a query parameter; POST binds the input as the JSON body",
   "counts": {
-    "operations": 219,
-    "schemas": 1124,
-    "tags": 62
+    "operations": 220,
+    "schemas": 1130,
+    "tags": 63
   },
   "dialect": "https://spec.openapis.org/oas/3.1/dialect/base",
   "errors": [
@@ -1588,6 +1596,7 @@
     "health.live": "health",
     "health.ready": "health",
     "health.report": "health",
+    "instances.list": "instances",
     "integration.cleanup": "integration",
     "integration.events": "integration",
     "integration.explain": "integration",
@@ -2205,7 +2214,10 @@
     "InspectReport": "worktree",
     "InstallCheck": "distribution",
     "InstallabilityReport": "distribution",
+    "Instance": "instances",
     "InstanceId": "mesh",
+    "InstanceList": "instances",
+    "InstanceState": "instances",
     "Integration": "trace",
     "IntegrationAction": "integration",
     "IntegrationCleanup": "integration",
@@ -2552,9 +2564,12 @@
     "Refusal": "deploy",
     "RefusalCode": "mesh",
     "Refusals": "mesh",
+    "Refused": "instances",
     "RefusedView": "mesh",
     "RegisterAnswer": "mesh",
     "RegisterInput": "mesh",
+    "RegistrySource": "instances",
+    "RegistryView": "instances",
     "Relation": "continuity",
     "RelationDirection": "entity",
     "RelationToMaster": "integration",
@@ -22303,6 +22318,7 @@
         "graph.list",
         "guard.edit",
         "health.report",
+        "instances.list",
         "intents.list",
         "intents.binding",
         "intents.coverage",
@@ -29569,6 +29585,135 @@
       "variants": []
     },
     {
+      "description": "One instance, as its record says and as this machine sees it now.",
+      "home": "instances",
+      "is_enum": false,
+      "name": "Instance",
+      "properties": [
+        {
+          "description": "The registry it was read from.",
+          "name": "registry",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The record's file name.",
+          "name": "file",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The instance's name, unique in its registry.",
+          "name": "name",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "What kind of process it is, as the record says (for example server, gui, panel).",
+          "name": "kind",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Live or stale.",
+          "name": "state",
+          "refs": [
+            "InstanceState"
+          ],
+          "required": true,
+          "type": "InstanceState"
+        },
+        {
+          "description": "The process that owns the record.",
+          "name": "owner_pid",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        },
+        {
+          "description": "The record's schema, when it names one.",
+          "name": "schema",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "One line saying what it is.",
+          "name": "role",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "When it registered, Unix seconds.",
+          "name": "registered",
+          "refs": [],
+          "required": false,
+          "type": "number | null"
+        },
+        {
+          "description": "Its MCP endpoint.",
+          "name": "endpoint",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The path of its token file (the file's contents are never read except by a probe, never returned).",
+          "name": "token_file",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "A base URL, for a record that is not an MCP endpoint (a control panel).",
+          "name": "url",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "What wrote the record.",
+          "name": "producer",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "Every other field of the record, as written (never one of the secret fields, which refuse the record).",
+          "name": "extra",
+          "refs": [],
+          "required": false,
+          "type": "object | null"
+        },
+        {
+          "description": "With probe: whether the endpoint answered an MCP ping.",
+          "name": "reachable",
+          "refs": [],
+          "required": false,
+          "type": "boolean | null"
+        },
+        {
+          "description": "With probe: why it was not probed, or what the probe met.",
+          "name": "probe_error",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "InstanceList"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "One run of a node: 16 hex characters of OS entropy, new at every process start. A\nrestart keeps the node id and changes this, which is how a reader tells \"the same\nnode came back\" from \"the same process is still there\".",
       "home": "mesh",
       "is_enum": false,
@@ -29582,6 +29727,85 @@
         "PublicIdentity"
       ],
       "values": [],
+      "variants": []
+    },
+    {
+      "description": "Every instance of every registry the configuration names.",
+      "home": "instances",
+      "is_enum": false,
+      "name": "InstanceList",
+      "properties": [
+        {
+          "description": "The answer's schema.",
+          "name": "schema",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The registries read, in the order named.",
+          "name": "registries",
+          "refs": [
+            "RegistryView"
+          ],
+          "required": true,
+          "type": "array of RegistryView"
+        },
+        {
+          "description": "The instances, registry by registry, file name order within each.",
+          "name": "instances",
+          "refs": [
+            "Instance"
+          ],
+          "required": true,
+          "type": "array of Instance"
+        },
+        {
+          "description": "The files that are not listed, with the reason.",
+          "name": "refused",
+          "refs": [
+            "Refused"
+          ],
+          "required": true,
+          "type": "array of Refused"
+        },
+        {
+          "description": "Whether the instances were probed.",
+          "name": "probed",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "instances.list"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "Whether a record's owner is still running.",
+      "home": "instances",
+      "is_enum": true,
+      "name": "InstanceState",
+      "properties": [],
+      "type": "\"live\" | \"stale\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "Instance"
+      ],
+      "values": [
+        {
+          "description": "Its owner process exists.",
+          "value": "live"
+        },
+        {
+          "description": "Its owner process is gone; the record is left where it is, its owner's to remove.",
+          "value": "stale"
+        }
+      ],
       "variants": []
     },
     {
@@ -49391,6 +49615,42 @@
       "variants": []
     },
     {
+      "description": "A file of a registry that is not listed, and why.",
+      "home": "instances",
+      "is_enum": false,
+      "name": "Refused",
+      "properties": [
+        {
+          "description": "The registry.",
+          "name": "registry",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The file name.",
+          "name": "file",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Why it is not listed.",
+          "name": "reason",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "InstanceList"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "A candidate that was refused, with the rule that refused it. A refusal is kept and\nshown rather than logged and dropped, because the commonest mesh failure is a link that\nnever forms: a person who declared a seed and sees no peer needs the decision that was\nmade about it — the wrong repository, a key nobody allowed, a clock too far out — and\nthe direction says which side made it.\n\n```\n#### use std::collections::BTreeMap;\n#### use std::sync::{Arc, Mutex, Weak};\n#### use majordomus_cli::mesh::config::{CooperationConfig, TrustConfig};\n#### use majordomus_cli::mesh::cooperation::*;\n#### use majordomus_cli::mesh::identity::NodeIdentity;\n#### use majordomus_cli::mesh::link::{LinkReply, LinkTransport, RefusalCode, Signed, HELLO_PATH};\n#### use majordomus_cli::mesh::registry::MeshRegistry;\n#### use majordomus_cli::mesh::repository::{of_root_commits, runtime_id};\n#### use majordomus_cli::mesh::trust::TrustPolicy;\n#### #[derive(Default)] struct Net(Mutex<BTreeMap<String, Weak<Cooperation>>>);\n#### impl LinkTransport for Net {\n####   fn post(&self, e: &str, p: &str, m: &Signed) -> Result<LinkReply, String> {\n####     let peer = (self.0.lock().unwrap().get(e).and_then(Weak::upgrade))\n####         .ok_or_else(|| format!(\"{e}: nobody there\"))?;\n####     Ok(if p == HELLO_PATH { peer.accept_hello(m) } else { peer.accept_sync(m) }) } }\n#### let net = Arc::new(Net::default());\n#### let runtime = |endpoint: &str, policy: TrustPolicy| {\n####   let c = Cooperation::new(CooperationSetup {\n####     identity: Arc::new(NodeIdentity::ephemeral().unwrap()), runtime: runtime_id(endpoint),\n####     repository: of_root_commits(&[\"root\".into()]), endpoints: vec![endpoint.into()],\n####     version: \"doc\".into(), config: CooperationConfig::default(),\n####     trust: TrustConfig { policy, allow: vec![] }, journal_path: None,\n####     registry: Arc::new(MeshRegistry::new()),\n####     transport: Arc::clone(&net) as Arc<dyn LinkTransport>, board: None,\n####     checkout: CheckoutFacts::default() }).unwrap();\n####   net.0.lock().unwrap().insert(endpoint.into(), Arc::downgrade(&c)); c };\n#### let a = runtime(\"a:1\", TrustPolicy::Tofu);\n#### let strict = runtime(\"s:1\", TrustPolicy::DenyUnknown);\na.dial(&[\"s:1\".into()]).expect_err(\"reachable, and not trusted\");\n\nlet refused: &RefusedView = &strict.status().refused[0];\nassert_eq!(refused.refusal.code, RefusalCode::Untrusted);\nassert_eq!(refused.direction, \"inbound\", \"this runtime refused the hello\");\nassert_eq!(refused.runtime.as_deref(), Some(a.runtime_key()));\n```",
       "home": "mesh",
       "is_enum": false,
@@ -49501,6 +49761,74 @@
         "mesh.register"
       ],
       "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "Where a registry directory was named.",
+      "home": "instances",
+      "is_enum": true,
+      "name": "RegistrySource",
+      "properties": [],
+      "type": "\"input\" | \"environment\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "RegistryView"
+      ],
+      "values": [
+        {
+          "description": "The capability's input.",
+          "value": "input"
+        },
+        {
+          "description": "MAJORDOMUS_INSTANCE_REGISTRIES.",
+          "value": "environment"
+        }
+      ],
+      "variants": []
+    },
+    {
+      "description": "One registry directory as read.",
+      "home": "instances",
+      "is_enum": false,
+      "name": "RegistryView",
+      "properties": [
+        {
+          "description": "The directory.",
+          "name": "path",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Where it was named.",
+          "name": "source",
+          "refs": [
+            "RegistrySource"
+          ],
+          "required": true,
+          "type": "RegistrySource"
+        },
+        {
+          "description": "Whether it exists; an absent registry is a fact, not an error.",
+          "name": "exists",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "How many JSON files it holds.",
+          "name": "files",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "InstanceList"
+      ],
       "values": [],
       "variants": []
     },
@@ -71996,6 +72324,95 @@
         }
       ],
       "slug": "health"
+    },
+    {
+      "description": "Third-party MCP servers on this machine that announce themselves by writing a record (mcp-instance/v1) to a shared registry directory: listed with whether their owner is alive, refused when a record is malformed or carries a token, never deleted, and probed with an MCP ping only on request and only on loopback.",
+      "name": "instances",
+      "operations": [
+        {
+          "benchmark": "required",
+          "benchmark_reason": "",
+          "body_examples": [],
+          "body_schema": "",
+          "cache": "disabled",
+          "cache_detail": "",
+          "cli": "",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/instances?registries=%5B%5D&probe=false\"",
+          "description": "Every record of every registry directory named by the input's registries or MAJORDOMUS_INSTANCE_REGISTRIES (colon-separated): name, kind, owner pid and whether it is alive (live or stale; a stale record is left in place), endpoint, the path of its token file, and the record's other fields. A malformed file, or a record that carries agent_token or token, is refused with the reason and nothing of it is echoed. With probe, each live instance's loopback endpoint is sent an MCP ping with the token read from its token file in memory; a non-loopback endpoint or one that differs from the token file's is not probed. Writes nothing.",
+          "home": "instances",
+          "id": "instances.list",
+          "kind": "query",
+          "mcp_resource": {
+            "name": "instances",
+            "uri": "majordomus://instances"
+          },
+          "mcp_tool": "majordomus_instances",
+          "method": "GET",
+          "parameters": [
+            {
+              "description": "The registry directories to read; when empty, the colon-separated MAJORDOMUS_INSTANCE_REGISTRIES.",
+              "examples": [
+                {
+                  "case": "configured",
+                  "value": "[]"
+                }
+              ],
+              "name": "registries",
+              "required": false,
+              "type": "array of string"
+            },
+            {
+              "description": "Ping each instance's loopback MCP endpoint with the token from its token file (read in memory, never echoed).",
+              "examples": [
+                {
+                  "case": "configured",
+                  "value": "false"
+                }
+              ],
+              "name": "probe",
+              "required": false,
+              "type": "boolean"
+            }
+          ],
+          "path": "/api/v1/instances",
+          "primary": true,
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::instances",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "MCP instances from instance registries: the result.",
+              "schema": "InstanceList",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "InstanceList",
+          "stability": "behaviorally_verified",
+          "summary": "MCP instances from instance registries"
+        }
+      ],
+      "slug": "instances"
     },
     {
       "description": "Every open pull request classified against the current master — ready, needs refresh, waiting for checks, review or a dependency, draft, needs repair, conflicting, blocked, unsafe (auto-merge armed), redundant (its work is on master already), superseded (by a declared successor that landed, named in superseded_by), possibly redundant, other base or unknown — each with the master and head it was decided against, its reasons, its evidence, its risk and its overlaps, ranked deterministically; and the audit trail of the executor that merges the next provably safe one, one at a time. The relation to master is decided by git with this repository's own merge drivers, because the forge cannot run the derived-file driver. Read from the last recorded forge observation; the one exception is the dry-run proof, which observes the forge itself because the observation is part of what it proves moves nothing.",

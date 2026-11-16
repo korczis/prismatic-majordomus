@@ -61,6 +61,7 @@ pub mod gates;
 pub(crate) mod graph;
 pub(crate) mod guard;
 pub mod health;
+pub(crate) mod instances;
 pub(crate) mod integration;
 pub mod intent_realization;
 pub mod intents;
@@ -244,7 +245,8 @@ pub fn modules() -> Vec<ModuleDescriptor> {
         convergence,
         trace,
         product,
-        observatory
+        observatory,
+        instances
     ]
 }
 

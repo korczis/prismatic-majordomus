@@ -871,6 +871,15 @@
         "status": "query"
       },
       {
+        "id": "capability:instances.list",
+        "kind": "capability",
+        "label": "instances.list",
+        "summary": "MCP instances from instance registries",
+        "route": "/cockpit/capabilities/instances.list",
+        "source": "apps/majordomus-cli/src/capability/builtin/instances.rs",
+        "status": "query"
+      },
+      {
         "id": "capability:integration.cleanup",
         "kind": "capability",
         "label": "integration.cleanup",
@@ -2580,6 +2589,14 @@
         "label": "health.rs",
         "summary": "named by the layer; not an object of this index",
         "source": "apps/majordomus-cli/src/capability/builtin/health.rs",
+        "external": true
+      },
+      {
+        "id": "file:apps/majordomus-cli/src/capability/builtin/instances.rs",
+        "kind": "file",
+        "label": "instances.rs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-cli/src/capability/builtin/instances.rs",
         "external": true
       },
       {
@@ -12417,6 +12434,21 @@
         }
       },
       {
+        "id": "majordomus://claim/mcp-instances-from-registries",
+        "kind": "claim",
+        "label": "mcp-instances-from-registries",
+        "summary": "instances.list lists every MCP instance that announces itself in an instance registry (one owner-only mcp-instance/v1 record per instance, in the directories MAJORDOMUS_INSTANCE_REGISTRIES or the input names) with whether its owner is alive, refuses a malformed record or one that carries a token without echoing it, deletes nothing, and probes only on request, only a loopback endpoint, with the token read from the record's token file in memory and never returned",
+        "route": "/cockpit/objects/claim/mcp-instances-from-registries",
+        "source": "docs/CLAIMS.yaml",
+        "status": "guaranteed",
+        "facts": {
+          "implementation": "apps/majordomus-cli/src/capability/builtin/instances.rs",
+          "responsibility": "none",
+          "source": "docs/MESH.md",
+          "test": "test/cases/4621_mcp_instances_are_discovered_from_registries.sh"
+        }
+      },
+      {
         "id": "majordomus://claim/mcp-lease-lost",
         "kind": "claim",
         "label": "mcp-lease-lost",
@@ -18837,6 +18869,14 @@
         "summary": "A file of the layer the MCP server cannot read is excluded with a diagnostic naming its path and the index says it is degraded, never silently smaller",
         "route": "/cockpit/objects/document/docs-claims-mcp-degraded-not-silent-md",
         "source": "docs/claims/mcp-degraded-not-silent.md"
+      },
+      {
+        "id": "majordomus://document/docs/claims/mcp-instances-from-registries.md",
+        "kind": "document",
+        "label": "docs/claims/mcp-instances-from-registries.md",
+        "summary": "Majordomus lists the live MCP instances that announce themselves in instance registries",
+        "route": "/cockpit/objects/document/docs-claims-mcp-instances-from-registries-md",
+        "source": "docs/claims/mcp-instances-from-registries.md"
       },
       {
         "id": "majordomus://document/docs/claims/mcp-lease-lost.md",
@@ -81667,6 +81707,48 @@
         }
       },
       {
+        "id": "majordomus://issue/I4621",
+        "kind": "issue",
+        "label": "I4621",
+        "summary": "Majordomus lists the live MCP instances that announce themselves in instance registries, and probes them on request",
+        "route": "/cockpit/objects/issue/i4621",
+        "source": ".ai/repo/project/issues/I4621.yaml",
+        "facts": {
+          "created_at": "2026-11-16",
+          "current_state": "Measured at origin/master 95bf064c1ef: no capability, route or MCP tool names an instance registry; 'instances' occurs in no capability id.",
+          "depends_on": [],
+          "evidence_required": [
+            "mcp_instances_are_discovered_from_registries"
+          ],
+          "milestone": "a-second-adopter-is-served",
+          "non_scope": [
+            "Writing or deleting registry records: the instances own them",
+            "A policy key for the registries: the policy schema's flow is not worth one environment variable yet",
+            "Probing a non-loopback endpoint: a record must not be able to send a token off the machine"
+          ],
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/capability/builtin/instances.rs",
+            "apps/majordomus-cli/src/capability/builtin/mod.rs",
+            "test/cases/4621_mcp_instances_are_discovered_from_registries.sh",
+            "docs/MESH.md",
+            "docs/CLAIMS.yaml",
+            ".ai/repo/project/issues/I4621.yaml",
+            "docs/generated/**",
+            "site/data/**"
+          ],
+          "serves": [],
+          "slug": "mcp-instances-from-registries",
+          "updated_at": "2026-11-16",
+          "validation": [
+            "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 4621_mcp_instances_are_discovered_from_registries",
+            "cargo test -p majordomus-cli instances"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "label": "a-brief-is-reconciled-not-transcribed",
@@ -109510,6 +109592,13 @@
         "source": "test/cases/45_github_projection.sh"
       },
       {
+        "id": "majordomus://test/test/cases/4621_mcp_instances_are_discovered_from_registries.sh",
+        "kind": "test",
+        "label": "test/cases/4621_mcp_instances_are_discovered_from_registries.sh",
+        "route": "/cockpit/objects/test/test-cases-4621-mcp-instances-are-discovered-from-registries-sh",
+        "source": "test/cases/4621_mcp_instances_are_discovered_from_registries.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/46_cross_surface.sh",
         "kind": "test",
         "label": "test/cases/46_cross_surface.sh",
@@ -113293,6 +113382,11 @@
         "label": "health"
       },
       {
+        "id": "module:instances",
+        "kind": "module",
+        "label": "instances"
+      },
+      {
         "id": "module:integration",
         "kind": "module",
         "label": "integration"
@@ -115069,6 +115163,21 @@
       },
       {
         "source": "capability:health.report",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:instances.list",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:instances.list",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:instances.list",
         "target": "projection:mcp",
         "kind": "projects"
       },
@@ -127978,6 +128087,26 @@
         "kind": "tested_by"
       },
       {
+        "source": "majordomus://claim/mcp-instances-from-registries",
+        "target": "file:apps/majordomus-cli/src/capability/builtin/instances.rs",
+        "kind": "implemented_by"
+      },
+      {
+        "source": "majordomus://claim/mcp-instances-from-registries",
+        "target": "kind:claim",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://claim/mcp-instances-from-registries",
+        "target": "majordomus://document/docs/MESH.md",
+        "kind": "defined_in"
+      },
+      {
+        "source": "majordomus://claim/mcp-instances-from-registries",
+        "target": "majordomus://test/test/cases/4621_mcp_instances_are_discovered_from_registries.sh",
+        "kind": "tested_by"
+      },
+      {
         "source": "majordomus://claim/mcp-lease-lost",
         "target": "file:apps/majordomus-cli/src/lease.rs",
         "kind": "implemented_by"
@@ -132379,6 +132508,11 @@
       },
       {
         "source": "majordomus://document/docs/claims/mcp-degraded-not-silent.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://document/docs/claims/mcp-instances-from-registries.md",
         "target": "kind:document",
         "kind": "is_a"
       },
@@ -151388,6 +151522,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I4621",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4621",
+        "target": "majordomus://milestone/a-second-adopter-is-served",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -159143,6 +159287,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/4621_mcp_instances_are_discovered_from_registries.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/46_cross_surface.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -163553,6 +163702,11 @@
         "kind": "composes"
       },
       {
+        "source": "module:instances",
+        "target": "capability:instances.list",
+        "kind": "composes"
+      },
+      {
         "source": "module:integration",
         "target": "capability:integration.cleanup",
         "kind": "composes"
@@ -164264,8 +164418,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4495,
-      "edges": 10142,
+      "nodes": 4502,
+      "edges": 10154,
       "acyclic": false,
       "truncated": false
     }

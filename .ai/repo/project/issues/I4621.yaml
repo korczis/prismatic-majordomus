@@ -1,0 +1,38 @@
+id: I4621
+milestone: a-second-adopter-is-served
+title: "Majordomus lists the live MCP instances that announce themselves in instance registries, and probes them on request"
+slug: mcp-instances-from-registries
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "Add a read-only capability, instances.list, that reads every instance registry directory the configuration names (MAJORDOMUS_INSTANCE_REGISTRIES, colon-separated, or the input's registries), reports each mcp-instance/v1 record with whether its owner process is alive, refuses a malformed record and one that carries a token, never deletes a stale record it does not own, and on request (probe) pings each loopback MCP endpoint with the bearer token read from the record's token file, in memory only, never echoed."
+why: "An adopter met it while running a research cluster of MCP-driven instances (an anonymised supervised repository): every instance writes one owner-only JSON record of itself to a shared directory (endpoint, kind, owner pid, the path of its 0600 token file, never the token), its own control panel lists them, and Majordomus, which the owner runs beside every repository, could not see a single one. The mesh is for signed Majordomus nodes and web surfaces are static mounts; neither describes a live third-party MCP server, so discovery stopped at the adopter's own scripts."
+current_state: "Measured at origin/master 95bf064c1ef: no capability, route or MCP tool names an instance registry; 'instances' occurs in no capability id."
+desired_state: "instances.list is a builtin capability (module instances): MCP tool majordomus_instances and resource majordomus://instances, GET /api/v1/instances, `majordomus run instances.list --input '{\"probe\":true}'`; case 4621 holds its behaviour with a temporary registry; docs/MESH.md says what it is and what it is not."
+scope:
+  - "apps/majordomus-cli/src/capability/builtin/instances.rs"
+  - "apps/majordomus-cli/src/capability/builtin/mod.rs"
+  - "test/cases/4621_mcp_instances_are_discovered_from_registries.sh"
+  - "docs/MESH.md"
+  - "docs/CLAIMS.yaml"
+  - ".ai/repo/project/issues/I4621.yaml"
+  - "docs/generated/**"
+  - "site/data/**"
+non_scope:
+  - "Writing or deleting registry records: the instances own them"
+  - "A policy key for the registries: the policy schema's flow is not worth one environment variable yet"
+  - "Probing a non-loopback endpoint: a record must not be able to send a token off the machine"
+depends_on: []
+serves: []
+acceptance_criteria:
+  - "A record whose owner_pid is alive is listed as live and one whose owner is gone as stale; the stale file is left in place"
+  - "A malformed file and a record carrying agent_token or token are listed under refused with the reason, and the token's value appears nowhere in the answer"
+  - "With probe, a loopback endpoint answering an MCP ping with the record's token is reachable, and the token is in no field of the answer; a non-loopback endpoint or an endpoint that differs from the token file's is not probed, with the reason"
+  - "The registries come from MAJORDOMUS_INSTANCE_REGISTRIES unless the input names them; an absent directory is reported, not an error"
+validation:
+  - "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 4621_mcp_instances_are_discovered_from_registries"
+  - "cargo test -p majordomus-cli instances"
+evidence_required:
+  - "mcp_instances_are_discovered_from_registries"
+created_at: 2026-11-16
+updated_at: 2026-11-16

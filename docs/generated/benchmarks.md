@@ -9,11 +9,11 @@ Every externally callable operation is a benchmark target, derived from the regi
 
 | scope | required | covered | missing | waived |
 |---|---|---|---|---|
-| direct | 231 | 186 | 0 | 45 |
-| http | 219 | 184 | 0 | 35 |
-| mcp | 215 | 181 | 0 | 34 |
+| direct | 232 | 187 | 0 | 45 |
+| http | 220 | 185 | 0 | 35 |
+| mcp | 216 | 182 | 0 | 34 |
 | system | 14 | 14 | 0 | 0 |
-| total | 679 | 565 | 0 | 114 |
+| total | 682 | 568 | 0 | 114 |
 
 ## Capabilities
 
@@ -108,6 +108,7 @@ Every externally callable operation is a benchmark target, derived from the regi
 | `health.live` | health | query | — | covered | — | covered | `default` |
 | `health.ready` | health | query | — | covered | — | covered | `default` |
 | `health.report` | health | query | process, 4 entries, 5s | covered | covered | covered | `default` |
+| `instances.list` | instances | query | — | covered | covered | covered | `configured` |
 | `integration.cleanup` | integration | query | — | covered | covered | covered | `default` |
 | `integration.events` | integration | query | — | covered | covered | covered | `default` |
 | `integration.explain` | integration | query | — | covered | covered | covered | `a-number` |

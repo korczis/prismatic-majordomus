@@ -92,6 +92,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I3163` | shares .ai/repo/adrs/0183-evolution-is-scheduled-at-the-episode-boundary-and-carried-out-b.md with I4500; they may not run concurrently |
 | WARN | `scope_conflict` | `I3163` | shares .ai/repo/policy.yaml with I4512; they may not run concurrently |
 | WARN | `scope_conflict` | `I3163` | shares lib/knowledge.sh with I4585; they may not run concurrently |
+| WARN | `scope_conflict` | `I3163` | shares docs/CLAIMS.yaml with I4621; they may not run concurrently |
 | WARN | `scope_conflict` | `I3166` | shares apps/majordomus-cli/src/devcontext with I3172; they may not run concurrently |
 | WARN | `scope_conflict` | `I3166` | shares .ai/repo/project/intents with I3226; they may not run concurrently |
 | WARN | `scope_conflict` | `I3166` | shares apps/majordomus-cli/src/devcontext with I3251; they may not run concurrently |

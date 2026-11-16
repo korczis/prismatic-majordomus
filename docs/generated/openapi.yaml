@@ -77,6 +77,8 @@ tags:
     description: "Whether a write to a file of this checkout is covered by a claim: the active task's scope, or a live mesh claim of the writing session. The judgement a provider's pre-tool hook asks before every edit (majordomus guard hook), switched by session.edits_require_claim."
   - name: health
     description: "Whether what this process serves is healthy, decided by the engines that already decide it: the index's diagnostics, the registry builder, the benchmark projection's coverage, the comparison `generate --check` makes and the lease reading `server.status` answers from. No check here has an opinion of its own."
+  - name: instances
+    description: "Third-party MCP servers on this machine that announce themselves by writing a record (mcp-instance/v1) to a shared registry directory: listed with whether their owner is alive, refused when a record is malformed or carries a token, never deleted, and probed with an MCP ping only on request and only on loopback."
   - name: integration
     description: "Every open pull request classified against the current master — ready, needs refresh, waiting for checks, review or a dependency, draft, needs repair, conflicting, blocked, unsafe (auto-merge armed), redundant (its work is on master already), superseded (by a declared successor that landed, named in superseded_by), possibly redundant, other base or unknown — each with the master and head it was decided against, its reasons, its evidence, its risk and its overlaps, ranked deterministically; and the audit trail of the executor that merges the next provably safe one, one at a time. The relation to master is decided by git with this repository's own merge drivers, because the forge cannot run the derived-file driver. Read from the last recorded forge observation; the one exception is the dry-run proof, which observes the forge itself because the observation is part of what it proves moves nothing."
   - name: intent_realization
@@ -5605,6 +5607,83 @@ paths:
         resource:
           uri: majordomus://health
           name: health
+  "/api/v1/instances":
+    get:
+      operationId: instances.list
+      summary: MCP instances from instance registries
+      description: "Every record of every registry directory named by the input's registries or MAJORDOMUS_INSTANCE_REGISTRIES (colon-separated): name, kind, owner pid and whether it is alive (live or stale; a stale record is left in place), endpoint, the path of its token file, and the record's other fields. A malformed file, or a record that carries agent_token or token, is refused with the reason and nothing of it is echoed. With probe, each live instance's loopback endpoint is sent an MCP ping with the token read from its token file in memory; a non-loopback endpoint or one that differs from the token file's is not probed. Writes nothing."
+      tags:
+        - instances
+      parameters:
+        - name: registries
+          in: query
+          required: false
+          schema:
+            type: array
+            items:
+              type: string
+            default: []
+          description: "The registry directories to read; when empty, the colon-separated MAJORDOMUS_INSTANCE_REGISTRIES."
+          examples:
+            configured:
+              value: []
+        - name: probe
+          in: query
+          required: false
+          schema:
+            type: boolean
+            default: false
+          description: "Ping each instance's loopback MCP endpoint with the token from its token file (read in memory, never echoed)."
+          examples:
+            configured:
+              value: false
+      responses:
+        "200":
+          description: "MCP instances from instance registries: the result."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/InstanceList"
+        "400":
+          description: "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "404":
+          description: "`not_found`: The input names something the repository does not hold."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "500":
+          description: "`internal`: The capability failed for a reason of its own; the message names it."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        default:
+          description: "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+      x-majordomus-id: instances.list
+      x-majordomus-kind: query
+      x-majordomus-stability: behaviorally_verified
+      x-majordomus-provenance:
+        source: builtin
+        module: majordomus_cli::capability::builtin::instances
+      x-majordomus-benchmark:
+        policy: required
+      x-majordomus-cache:
+        policy: disabled
+      x-majordomus-effect: read
+      x-majordomus-mcp:
+        tool: majordomus_instances
+        resource:
+          uri: majordomus://instances
+          name: instances
   "/api/v1/intents":
     get:
       operationId: intents.list
@@ -29413,9 +29492,132 @@ components:
         - latest_url
         - checks
       description: "Whether the advertised one-line installation works right now, and if not, what is missing.\n\nThis answers the operator's actual question — *can a machine that has never seen this\nproject install it with the published command?* — from local state alone. It performs no\nnetwork access: a repository can be offline and this still answers, because everything it\nneeds is the distribution model and the release records the repository itself carries.\nWhat it cannot see it reports as `unknown` rather than guessing; the public half of the\nquestion is answered by the release workflow's smoke phase, which installs from the\npublished URL on every native runner and is the only thing that proves the public path."
+    Instance:
+      type: object
+      properties:
+        registry:
+          type: string
+          description: The registry it was read from.
+        file:
+          type: string
+          description: "The record's file name."
+        name:
+          type: string
+          description: "The instance's name, unique in its registry."
+        kind:
+          type: string
+          description: "What kind of process it is, as the record says (for example server, gui, panel)."
+        state:
+          "$ref": "#/components/schemas/InstanceState"
+          description: Live or stale.
+        owner_pid:
+          type: integer
+          format: uint64
+          minimum: 0
+          description: The process that owns the record.
+        schema:
+          type:
+            - string
+            - "null"
+          description: "The record's schema, when it names one."
+        role:
+          type:
+            - string
+            - "null"
+          description: One line saying what it is.
+        registered:
+          type:
+            - number
+            - "null"
+          format: double
+          description: "When it registered, Unix seconds."
+        endpoint:
+          type:
+            - string
+            - "null"
+          description: Its MCP endpoint.
+        token_file:
+          type:
+            - string
+            - "null"
+          description: "The path of its token file (the file's contents are never read except by a probe, never returned)."
+        url:
+          type:
+            - string
+            - "null"
+          description: "A base URL, for a record that is not an MCP endpoint (a control panel)."
+        producer:
+          type:
+            - string
+            - "null"
+          description: What wrote the record.
+        extra:
+          type:
+            - object
+            - "null"
+          additionalProperties: true
+          description: "Every other field of the record, as written (never one of the secret fields, which refuse the record)."
+        reachable:
+          type:
+            - boolean
+            - "null"
+          description: "With probe: whether the endpoint answered an MCP ping."
+        probe_error:
+          type:
+            - string
+            - "null"
+          description: "With probe: why it was not probed, or what the probe met."
+      required:
+        - registry
+        - file
+        - name
+        - kind
+        - state
+        - owner_pid
+      description: "One instance, as its record says and as this machine sees it now."
     InstanceId:
       type: string
       description: "One run of a node: 16 hex characters of OS entropy, new at every process start. A\nrestart keeps the node id and changes this, which is how a reader tells \"the same\nnode came back\" from \"the same process is still there\"."
+    InstanceList:
+      type: object
+      properties:
+        schema:
+          type: string
+          description: "The answer's schema."
+        registries:
+          type: array
+          items:
+            "$ref": "#/components/schemas/RegistryView"
+          description: "The registries read, in the order named."
+        instances:
+          type: array
+          items:
+            "$ref": "#/components/schemas/Instance"
+          description: "The instances, registry by registry, file name order within each."
+        refused:
+          type: array
+          items:
+            "$ref": "#/components/schemas/Refused"
+          description: "The files that are not listed, with the reason."
+        probed:
+          type: boolean
+          description: Whether the instances were probed.
+      required:
+        - schema
+        - registries
+        - instances
+        - refused
+        - probed
+      description: Every instance of every registry the configuration names.
+    InstanceState:
+      oneOf:
+        - type: string
+          const: live
+          description: Its owner process exists.
+        - type: string
+          const: stale
+          description: "Its owner process is gone; the record is left where it is, its owner's to remove."
+      description: "Whether a record's owner is still running."
     Integration:
       oneOf:
         - type: string
@@ -40510,6 +40712,23 @@ components:
         - signature
         - self_heard
       description: "Refused datagrams, by reason. The diagnosis of a hostile or misconfigured network:\na mesh that hears garbage says so, with numbers, instead of being quietly empty."
+    Refused:
+      type: object
+      properties:
+        registry:
+          type: string
+          description: The registry.
+        file:
+          type: string
+          description: The file name.
+        reason:
+          type: string
+          description: Why it is not listed.
+      required:
+        - registry
+        - file
+        - reason
+      description: "A file of a registry that is not listed, and why."
     RefusedView:
       type: object
       properties:
@@ -40565,6 +40784,38 @@ components:
       required:
         - envelope
       description: "The input of `mesh.register`: one signed envelope, exactly as the wire carries it."
+    RegistrySource:
+      oneOf:
+        - type: string
+          const: input
+          description: "The capability's input."
+        - type: string
+          const: environment
+          description: MAJORDOMUS_INSTANCE_REGISTRIES.
+      description: Where a registry directory was named.
+    RegistryView:
+      type: object
+      properties:
+        path:
+          type: string
+          description: The directory.
+        source:
+          "$ref": "#/components/schemas/RegistrySource"
+          description: Where it was named.
+        exists:
+          type: boolean
+          description: "Whether it exists; an absent registry is a fact, not an error."
+        files:
+          type: integer
+          format: uint
+          minimum: 0
+          description: How many JSON files it holds.
+      required:
+        - path
+        - source
+        - exists
+        - files
+      description: One registry directory as read.
     Relation:
       oneOf:
         - type: string

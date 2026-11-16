@@ -55,6 +55,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I3120` | shares .github/workflows with I4533; they may not run concurrently |
 | WARN | `scope_conflict` | `I3120` | shares .github/workflows with I4569; they may not run concurrently |
 | WARN | `scope_conflict` | `I3120` | shares .github/workflows with I4592; they may not run concurrently |
+| WARN | `scope_conflict` | `I3120` | shares docs/CLAIMS.yaml with I4621; they may not run concurrently |
 | WARN | `scope_conflict` | `I3309` | shares test/cases/16_profiles.sh with I3318; they may not run concurrently |
 | WARN | `scope_conflict` | `I3309` | shares test/cases/16_profiles.sh with I3448; they may not run concurrently |
 | WARN | `scope_conflict` | `I3309` | shares test/cases/16_profiles.sh with I3607; they may not run concurrently |
