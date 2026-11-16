@@ -1,0 +1,54 @@
+# DECIDED 2026-11-15: the owner chose option (b). The decision record is the entry
+# "I4596: a dependency on a cancelled issue stays unsatisfied, and plan validate warns per
+# dependent and suggests dropping the dependency (option b)" of 2026-11-15 in the primary
+# checkout's decision ledger (majordomus decision show I4596); it holds the question and the
+# owner's answer verbatim. (a) and (c) were rejected and are listed under non_scope.
+# Related: I3763 (READY, same milestone) plans superseded_by and a cancelled_dependency warning
+# and already excludes (a) in its non_scope; (b) is consistent with it. This record leaves I3763 as it is.
+# case number 4596 stands for the case allocated with the id
+id: I4596
+milestone: truthful-plan-surfaces
+title: "A dependency on a cancelled issue stays unsatisfied, and plan validate names each dependent and suggests dropping it"
+slug: the-owner-decides-what-a-cancelled-dependency-means
+priority: p1
+profile: implementation
+parallel_safe: false
+serves: []
+objective: "Implement the owner's decision of 2026-11-15, option (b): a dependency on a cancelled issue stays unsatisfied, so its open dependent stays BLOCKED, and plan validate warns cancelled_dependency once for each such edge, naming the dependent and the cancelled issue and suggesting the dependency be dropped from depends_on. Both plan engines emit the same finding, and docs/PLANNING.md states the meaning. Statuses, blocked_by and waves do not change."
+why: "In Majordomus 1.0.1 an issue marked cancelled: true counts as an unsatisfied dependency, so every issue that lists it in depends_on is BLOCKED for ever: plan ready and plan next never offer it, and plan validate reports nothing about it. A downstream repository hit exactly this: two issues were cancelled by a decision record, and its launch issue, which depended on both, stayed BLOCKED and was never offered by plan next until someone noticed and removed the two ids from its depends_on by hand. Nothing in the tool pointed at the cause; the dependent looked like ordinary waiting work. This repository carries the same defect in its own plan: at 3fcaafac355 five open issues are BLOCKED on cancelled issues, four of them on nothing else (I0916 on I0914; I0925 on I0915; I0926 on I0913 and I0924; I2975 on I2974; and I0932, whose blocked_by holds the cancelled I0929 and I0931 beside six open issues), and plan validate reports 0 failures and no finding that names a cancelled dependency. The owner was offered three remedies, (a) satisfied, (b) unsatisfied with a warning, (c) a decision per dependent, and on 2026-11-15 chose (b): the block stays, and validate makes it visible and says how to clear it."
+current_state: "Measured at origin/master 3fcaafac355 with majordomus 1.0.1. apps/majordomus-cli/src/plan.rs:794 makes an issue done only when it is not cancelled (done[n] = !r.cancelled && ...); plan.rs:949-956 builds blocked_by from every declared dependency whose done is false, so a cancelled dependency is always listed; plan.rs:957-966 derives CANCELLED for the cancelled issue itself and BLOCKED for any dependent whose blocked_by is non-empty (:965-966). lib/project.awk:118 is the same done rule, :179 the same blocked_by filter (!done[d]) and :185 the same BLOCKED branch; test/cases/99_plan_capabilities.sh holds the two engines to byte equality. By contrast plan.rs:582 (Plan::unblocks) and lib/project.sh:293 (unblocked) skip a CANCELLED dependent as finished. docs/PLANNING.md:54 documents BLOCKED as 'a dependency is not DONE'. Neither engine emits any finding about a dependency on a cancelled issue (the findings of plan.rs:805-971 and lib/project.awk:121-186 are self_dependency, unknown_dependency, duplicate_dependency, no_milestone, unknown_milestone, no_acceptance, no_validation, no_evidence_required, stamp_without_event, evidence_missing, cycle and premature_execution). Cancellation is authored by writing cancelled: true into the record; no plan command performs it."
+desired_state: "Both engines keep today's statuses, blocked_by and waves for a dependent of a cancelled issue, and each emits WARN cancelled_dependency for every edge from an open issue (neither DONE nor CANCELLED) to a cancelled one, naming both ids and suggesting the dependency be dropped from depends_on; the finding is a warning, so plan validate still exits 0. Case 99 compares the two engines' statuses, blocked_by and findings over a fixture holding such an edge, and docs/PLANNING.md says that a cancelled dependency stays unsatisfied and is reported by that warning. On this repository's own plan the warning names the five dependents listed in why."
+scope:
+  - ".ai/repo/project/issues/I4596.yaml"
+  - "apps/majordomus-cli/src/plan.rs"
+  - "lib/project.awk"
+  - "test/cases/99_plan_capabilities.sh"
+  - "test/cases/4596_a_cancelled_dependency_has_one_meaning.sh"
+  - "docs/PLANNING.md"
+  - "site/content/plan/I4596.md"
+non_scope:
+  - "Rejected (a), counting a cancelled dependency as satisfied: it would make work READY whose premise may have been cancelled along with its dependency (decision of 2026-11-15)"
+  - "Rejected (c), requiring a decision about each dependent when an issue is cancelled: it makes cancellation heavier and fails validate in every repository that already has such an edge (decision of 2026-11-15)"
+  - "Rewriting the depends_on of existing dependents of cancelled issues (I0916, I0925, I0926, I0932, I2975 here, or any adopter's): the warning suggests it, and each record's owner makes that change"
+  - "The superseded_by replacement chain of I3763, which this record neither implements nor changes; I3763 stays as it is"
+  - "Cancelled or superseded milestones, whose gate already has its own rule"
+depends_on: []
+acceptance_criteria:
+  - "The decision is cited: the record names the owner's decision of 2026-11-15 for option (b) (majordomus decision show I4596), and nothing here implements (a) or (c)"
+  - "An open issue whose only unfinished dependency is cancelled stays BLOCKED in both engines, and its blocked_by still names the cancelled id; plan ready and plan next do not offer it"
+  - "plan validate warns cancelled_dependency once per edge from an open issue to a cancelled one, naming the dependent and the cancelled issue and suggesting the dependency be dropped from depends_on; plan validate still exits 0"
+  - "Negative: no cancelled_dependency warning for a dependent that is itself DONE or CANCELLED, or for a dependency that is not cancelled"
+  - "Once the dependency is dropped from depends_on, the warning is gone and the dependent is READY (when nothing else blocks it)"
+  - "Case 4596 proves the warning, its negatives and the drop on a fixture plan; case 99 shows both engines agree on statuses, blocked_by and findings"
+  - "docs/PLANNING.md says that a dependency on a cancelled issue stays unsatisfied and is reported by cancelled_dependency, in the status table and in the list of findings"
+  - "On this repository's plan, plan validate names I0916, I0925, I0926, I0932 and I2975 (or whichever of them are still open and still depend on a cancelled issue)"
+validation:
+  - "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 4596_a_cancelled_dependency_has_one_meaning 99_plan_capabilities"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib plan::tests"
+  - "bin/majordomus plan validate"
+evidence_required:
+  - "cancelled_dependency_is_warned_per_dependent"
+  - "cancelled_dependency_has_one_meaning_in_both_engines"
+risk: "Low to medium. (b) changes no status, so no surface that reads plan.json moves. It adds one warning per edge to every adopter's plan validate (five in this repository), and an adopter that treats warnings as failures will see them at once. The warning must be worded as a suggestion, since the dependent's owner may want to keep waiting on purpose."
+created_at: 2026-11-15
+updated_at: 2026-11-15
