@@ -1,4 +1,4 @@
-id: I4598
+id: I4622
 milestone: a-second-adopter-is-served
 title: "A long-running process a session leaves running is declared and guarded by the machine's disk floor: stopped through its own process group below the floor, resumed above a higher mark, each change an execution event the brief reads"
 slug: a-long-running-process-is-guarded-by-the-disk-floor
@@ -11,7 +11,7 @@ why: "Observed on 2026-11-14/15 in a client adopter (a service repository, not n
 current_state: "Measured at origin/master 3fcaafac355. The free-space floor exists only for builds. lib/rust_bin.sh:461 and :551 refuse a build below MAJORDOMUS_MIN_FREE_MB (default 5120 MiB), and mesh/build_cache/ensure.rs:54 and :308 (statvfs_free) read the same floor in Rust. I3825 extends the build refusal, I4006 (machine.slot, not built) counts heavy work entering the machine, and I4355 watches free space to announce an emergency on the mesh with a publish/withdraw hysteresis. None of them stops or resumes work that is already running. Executions (execution/mod.rs:1-7) watch a capability call of the registry, not an adopter's program. I4486 (open) plans a typed runner for a bounded run: a mandatory deadline, a kill of the process group at the deadline or on cancel, a refusal of any environment that sets a redacted name, and exposure on the command line only. A service has no deadline, stops on a signal with a grace, reads an environment file that usually carries secrets, and is run by the server, so it shares only the process-group handling with that runner. Nothing declares, supervises or resumes a process a session left running."
 desired_state: "A policy entry under `machine.services` (name, argv, cwd, env_file, stop_signal, grace_seconds, floor_mib, resume_mib above floor_mib, resume_after_seconds; each typed) lets `majordomus service start <name>` run the process under the checkout's server, in a process group of its own. The environment file is read by path and its values are never echoed into events or logs. Below floor_mib the server signals the process group it recorded, escalates after grace_seconds, and records the exit. Once free space has stayed above resume_mib for resume_after_seconds, it starts the process again. Each transition is an execution event with the free MiB read. `majordomus service status`, `majordomus executions` and `majordomus brief` say each service's state (running, stopped by the floor at <n> MiB, resumed, exited <code>) and when it changed. A service never starts below resume_mib. A server restart re-adopts a running service by its recorded pid and start time, never a second copy."
 scope:
-  - ".ai/repo/project/issues/I4598.yaml"
+  - ".ai/repo/project/issues/I4622.yaml"
   - "apps/majordomus-cli/src/commands"
   - "apps/majordomus-cli/src/capability/builtin"
   - "apps/majordomus-cli/src/execution"
@@ -26,8 +26,8 @@ scope:
   - "docs/generated/cli.yaml"
   - "docs/generated/registry.json"
   - "docs/generated/registry.yaml"
-  - "test/cases/4598_a_long_running_process_is_guarded_by_the_disk_floor.sh"
-  - "site/content/plan/I4598.md"
+  - "test/cases/4622_a_long_running_process_is_guarded_by_the_disk_floor.sh"
+  - "site/content/plan/I4622.md"
 non_scope:
   - "Reclaiming disk: the service only stops and resumes; what to delete stays the person's"
   - "Builds entering the machine: I3825 and I4006"
@@ -37,16 +37,16 @@ non_scope:
   - "Remote hosts: the volume measured is the local one the service writes to"
 depends_on: []
 acceptance_criteria:
-  - "Case 4598, with a fixture service (a script that appends a line every second and exits 0 on SIGINT) and a free-space reading injected through a test seam: below floor_mib the service receives SIGINT and exits, `service status --format json` reports stopped with reason floor and the free MiB read, and `executions events` of the service's execution lists a stop event carrying the same figure. The environment file's values appear in neither"
-  - "Case 4598: a service that ignores SIGINT is killed after grace_seconds, and its exit is recorded as signalled"
-  - "Case 4598: between floor_mib and resume_mib the service stays stopped. After free space stays above resume_mib for resume_after_seconds it is started again, status reports resumed with both times, and `brief` names the service and its state"
-  - "Case 4598: `service start` below resume_mib refuses with exit 15 and names the free MiB and the mark"
-  - "Case 4598: a decoy process with the same command line, started outside the server, is never signalled"
-  - "Case 4598: after the server is restarted while the service runs, status reports the same pid and the server does not start a second copy"
-  - "Case 4598: a policy whose resume_mib is not above floor_mib, or whose grace_seconds or resume_after_seconds is missing, is refused by doctor and the schema"
-  - "Before the change, case 4598 fails at its first assertion"
+  - "Case 4622, with a fixture service (a script that appends a line every second and exits 0 on SIGINT) and a free-space reading injected through a test seam: below floor_mib the service receives SIGINT and exits, `service status --format json` reports stopped with reason floor and the free MiB read, and `executions events` of the service's execution lists a stop event carrying the same figure. The environment file's values appear in neither"
+  - "Case 4622: a service that ignores SIGINT is killed after grace_seconds, and its exit is recorded as signalled"
+  - "Case 4622: between floor_mib and resume_mib the service stays stopped. After free space stays above resume_mib for resume_after_seconds it is started again, status reports resumed with both times, and `brief` names the service and its state"
+  - "Case 4622: `service start` below resume_mib refuses with exit 15 and names the free MiB and the mark"
+  - "Case 4622: a decoy process with the same command line, started outside the server, is never signalled"
+  - "Case 4622: after the server is restarted while the service runs, status reports the same pid and the server does not start a second copy"
+  - "Case 4622: a policy whose resume_mib is not above floor_mib, or whose grace_seconds or resume_after_seconds is missing, is refused by doctor and the schema"
+  - "Before the change, case 4622 fails at its first assertion"
 validation:
-  - "bash test/run.sh 4598_a_long_running_process_is_guarded_by_the_disk_floor"
+  - "bash test/run.sh 4622_a_long_running_process_is_guarded_by_the_disk_floor"
   - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib -- policy mesh::build_cache execution service"
   - "bin/majordomus shell check"
   - "bin/majordomus plan validate"
@@ -54,4 +54,4 @@ evidence_required:
   - suite
 risk: "Supervising an adopter's process gives the server a kill path. It signals only the process group it started and recorded, and re-adopting a process checks its pid and start time before treating it as its own."
 created_at: 2026-11-15
-updated_at: 2026-11-15
+updated_at: 2026-11-16

@@ -76435,13 +76435,14 @@
             ".ai/repo/project/issues/I3974.yaml",
             ".ai/repo/rules/project/work-is-claimed-before-it-is-built.v1.md",
             "lib/plan.sh",
-            "docs/CLI.md"
+            "docs/CLI.md",
+            ".githooks/pre-commit"
           ],
           "serves": [
             "merging-and-referencing-are-enforced#one-allocator"
           ],
           "slug": "numbers-are-reserved-atomically-at-origin",
-          "updated_at": "2026-10-29",
+          "updated_at": "2026-11-16",
           "validation": [
             "bash test/run.sh 4357_a_number_is_reserved_at_origin 560_a_case_number_names_one_case 566_the_collision_guard_has_a_caller",
             "actionlint .github/workflows/validate.yml",
@@ -81727,61 +81728,6 @@
         }
       },
       {
-        "id": "majordomus://issue/I4598",
-        "kind": "issue",
-        "label": "I4598",
-        "summary": "A long-running process a session leaves running is declared and guarded by the machine's disk floor: stopped through its own process group below the floor, resumed above a higher mark, each change an execution event the brief reads",
-        "route": "/cockpit/objects/issue/i4598",
-        "source": ".ai/repo/project/issues/I4598.yaml",
-        "facts": {
-          "created_at": "2026-11-15",
-          "depends_on": [],
-          "evidence_required": [
-            "suite"
-          ],
-          "milestone": "a-second-adopter-is-served",
-          "non_scope": [
-            "Reclaiming disk: the service only stops and resumes; what to delete stays the person's",
-            "Builds entering the machine: I3825 and I4006",
-            "Announcing a disk emergency on the mesh: I4355",
-            "A bounded run of a program with a deadline: I4486, whose process-group handling this may share once it exists, but does not wait for",
-            "Restarting a process that exited on its own with a failure: reported, never retried in a loop",
-            "Remote hosts: the volume measured is the local one the service writes to"
-          ],
-          "parallel_safe": true,
-          "priority": "p2",
-          "profile": "implementation",
-          "scope": [
-            ".ai/repo/project/issues/I4598.yaml",
-            "apps/majordomus-cli/src/commands",
-            "apps/majordomus-cli/src/capability/builtin",
-            "apps/majordomus-cli/src/execution",
-            "apps/majordomus-cli/src/mesh/build_cache/ensure.rs",
-            "apps/majordomus-cli/src/policy.rs",
-            "apps/majordomus-cli/src/cli.rs",
-            "share/skeleton/policy.yaml",
-            "share/schemas/majordomus/policy/policy.v1.schema.json",
-            "share/allow/policy.txt",
-            "docs/generated/cli.md",
-            "docs/generated/cli.json",
-            "docs/generated/cli.yaml",
-            "docs/generated/registry.json",
-            "docs/generated/registry.yaml",
-            "test/cases/4598_a_long_running_process_is_guarded_by_the_disk_floor.sh",
-            "site/content/plan/I4598.md"
-          ],
-          "serves": [],
-          "slug": "a-long-running-process-is-guarded-by-the-disk-floor",
-          "updated_at": "2026-11-15",
-          "validation": [
-            "bash test/run.sh 4598_a_long_running_process_is_guarded_by_the_disk_floor",
-            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib -- policy mesh::build_cache execution service",
-            "bin/majordomus shell check",
-            "bin/majordomus plan validate"
-          ]
-        }
-      },
-      {
         "id": "majordomus://issue/I4599",
         "kind": "issue",
         "label": "I4599",
@@ -81827,6 +81773,61 @@
           "validation": [
             "bash test/run.sh 4599_a_wait_on_the_person_names_the_levers",
             "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib -- capability::builtin::proceed integration::model policy",
+            "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4622",
+        "kind": "issue",
+        "label": "I4622",
+        "summary": "A long-running process a session leaves running is declared and guarded by the machine's disk floor: stopped through its own process group below the floor, resumed above a higher mark, each change an execution event the brief reads",
+        "route": "/cockpit/objects/issue/i4622",
+        "source": ".ai/repo/project/issues/I4622.yaml",
+        "facts": {
+          "created_at": "2026-11-15",
+          "depends_on": [],
+          "evidence_required": [
+            "suite"
+          ],
+          "milestone": "a-second-adopter-is-served",
+          "non_scope": [
+            "Reclaiming disk: the service only stops and resumes; what to delete stays the person's",
+            "Builds entering the machine: I3825 and I4006",
+            "Announcing a disk emergency on the mesh: I4355",
+            "A bounded run of a program with a deadline: I4486, whose process-group handling this may share once it exists, but does not wait for",
+            "Restarting a process that exited on its own with a failure: reported, never retried in a loop",
+            "Remote hosts: the volume measured is the local one the service writes to"
+          ],
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I4622.yaml",
+            "apps/majordomus-cli/src/commands",
+            "apps/majordomus-cli/src/capability/builtin",
+            "apps/majordomus-cli/src/execution",
+            "apps/majordomus-cli/src/mesh/build_cache/ensure.rs",
+            "apps/majordomus-cli/src/policy.rs",
+            "apps/majordomus-cli/src/cli.rs",
+            "share/skeleton/policy.yaml",
+            "share/schemas/majordomus/policy/policy.v1.schema.json",
+            "share/allow/policy.txt",
+            "docs/generated/cli.md",
+            "docs/generated/cli.json",
+            "docs/generated/cli.yaml",
+            "docs/generated/registry.json",
+            "docs/generated/registry.yaml",
+            "test/cases/4622_a_long_running_process_is_guarded_by_the_disk_floor.sh",
+            "site/content/plan/I4622.md"
+          ],
+          "serves": [],
+          "slug": "a-long-running-process-is-guarded-by-the-disk-floor",
+          "updated_at": "2026-11-16",
+          "validation": [
+            "bash test/run.sh 4622_a_long_running_process_is_guarded_by_the_disk_floor",
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib -- policy mesh::build_cache execution service",
+            "bin/majordomus shell check",
             "bin/majordomus plan validate"
           ]
         }
@@ -151563,22 +151564,22 @@
         "kind": "belongs_to"
       },
       {
-        "source": "majordomus://issue/I4598",
+        "source": "majordomus://issue/I4599",
         "target": "kind:issue",
         "kind": "is_a"
       },
       {
-        "source": "majordomus://issue/I4598",
+        "source": "majordomus://issue/I4599",
         "target": "majordomus://milestone/a-second-adopter-is-served",
         "kind": "belongs_to"
       },
       {
-        "source": "majordomus://issue/I4599",
+        "source": "majordomus://issue/I4622",
         "target": "kind:issue",
         "kind": "is_a"
       },
       {
-        "source": "majordomus://issue/I4599",
+        "source": "majordomus://issue/I4622",
         "target": "majordomus://milestone/a-second-adopter-is-served",
         "kind": "belongs_to"
       },

@@ -6,7 +6,7 @@
     "version": "1.0.2"
   },
   "registry": {
-    "fingerprint": "ac592d44b1f20dba7001d85e12bc72b8b3ffe1fd775360a3f951d86c4021cdd5",
+    "fingerprint": "748d3379c8f12f7d14a76ac0313f3bcfb4433fb542eb2d1056555cefb6a0bb71",
     "summary": {
       "total": 4027,
       "builtin": 231,
@@ -97878,7 +97878,7 @@
     ]
   },
   "index": {
-    "fingerprint": "c0c4f903b958beb323e9c8f797e9844eef443d57037f5c4e0587b565a776f445",
+    "fingerprint": "349896ce6dec95b3bd612b51a5e2482b404844fe7af6ee5d3fc9cf73f1263b17",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -122039,7 +122039,7 @@
         "path": ".ai/repo/project/issues/I4357.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 6173
+        "bytes": 7611
       },
       {
         "uri": "majordomus://issue/I4358",
@@ -123263,17 +123263,6 @@
         "bytes": 7005
       },
       {
-        "uri": "majordomus://issue/I4598",
-        "kind": "issue",
-        "identity": "I4598",
-        "title": "A long-running process a session leaves running is declared and guarded by the machine's disk floor: stopped through its own process group below the floor, resumed above a higher mark, each change an execution event the brief reads",
-        "description": "A repository declares the long-running local processes its sessions start: a name, an executable and argument list, a working directory, an environment file path, the signal that stops it cleanly, a grace before that signal escalates, a free-space floor below which it stops, a higher resume mark and the interval free space must stay above it before a resume. The checkout's server runs each one as an executable and argument list (never a command string), watches the free space of the volume it writes to with the measurement the build floor already uses, signals the process group it started (never a process found by name) when free space falls under the floor, and starts it again once free space has stayed above the resume mark for the declared interval. Every start, stop, exit and resume is an execution event, so `majordomus executions` and `majordomus brief` show it.",
-        "path": ".ai/repo/project/issues/I4598.yaml",
-        "section": "project",
-        "source_class": "issue",
-        "bytes": 7510
-      },
-      {
         "uri": "majordomus://issue/I4599",
         "kind": "issue",
         "identity": "I4599",
@@ -123283,6 +123272,17 @@
         "section": "project",
         "source_class": "issue",
         "bytes": 6882
+      },
+      {
+        "uri": "majordomus://issue/I4622",
+        "kind": "issue",
+        "identity": "I4622",
+        "title": "A long-running process a session leaves running is declared and guarded by the machine's disk floor: stopped through its own process group below the floor, resumed above a higher mark, each change an execution event the brief reads",
+        "description": "A repository declares the long-running local processes its sessions start: a name, an executable and argument list, a working directory, an environment file path, the signal that stops it cleanly, a grace before that signal escalates, a free-space floor below which it stops, a higher resume mark and the interval free space must stay above it before a resume. The checkout's server runs each one as an executable and argument list (never a command string), watches the free space of the volume it writes to with the measurement the build floor already uses, signals the process group it started (never a process found by name) when free space falls under the floor, and starts it again once free space has stayed above the resume mark for the declared interval. Every start, stop, exit and resume is an execution event, so `majordomus executions` and `majordomus brief` show it.",
+        "path": ".ai/repo/project/issues/I4622.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 7510
       },
       {
         "uri": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
