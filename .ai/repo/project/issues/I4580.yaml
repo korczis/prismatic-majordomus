@@ -1,0 +1,32 @@
+id: I4580
+milestone: merging-and-referencing-are-enforced
+title: "An adopter declares its own numbered sequences, the mesh reserves their numbers in landing order, and a landing refuses a gap or a duplicate"
+slug: an-adopter-declares-its-numbered-sequences
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "A repository declares, in its policy, the numbered sequences it keeps beside the plan's ids: a path pattern with the number's place and width (database migrations `NNNN_*.sql`, Alembic revisions, an API version constant), and whether the sequence must stay dense. `mesh allocate` and `plan.allocate` take such a sequence as a kind beside issue, case and adr, reserve the next number for a session, and the landing check refuses a pull request whose added member of a dense sequence duplicates a number on the trunk or leaves a gap below the trunk's highest, naming the sequence, the number and the member it meets."
+why: "Intake from the flight-agent-empty-legs-fc session (2026-11-11 about 20:00Z, the owner's order to port everything and keep it generic; evidence in that repository's pull requests 194-197 and 219-222), item F1: the adopter's numbered sequences (migrations `NNNN_*.sql`, an API VERSION, Alembic revisions) are taken by hand on parallel branches, and their order is the order they apply in, so a number has to be reserved in landing order and a landing has to refuse a gap or a duplicate. I4357 reserves issue, ADR and case numbers at origin, and I3974 surveys the same three; `IdKind` (apps/majordomus-cli/src/capability/builtin/allocate.rs) knows only those three, and an adopter's own sequences, whose order is the order they apply in, have no declaration and no check."
+current_state: "At origin/master d34f159439f: mesh allocate and plan.allocate take issue, case or adr; no policy key declares another numbered sequence; no landing check reads one."
+desired_state: "An adopter fixture declaring `migrations/NNNN_*.sql` as a dense sequence gets two different numbers from two concurrent allocations, and a pull request adding a duplicate or a gapped migration is refused by the landing check with the sequence named; a repository that declares no sequence sees no change."
+scope:
+  - ".ai/repo/project/issues/I4580.yaml"
+  - "apps/majordomus-cli/src/capability/builtin/allocate.rs"
+  - "share/skeleton/policy.yaml"
+  - "lib/plan.sh"
+  - "docs/PLANNING.md"
+  - "test/cases/4580_an_adopter_numbered_sequence_is_reserved_and_checked.sh"
+non_scope:
+  - "Renumbering members of a sequence that already collided"
+  - "The plan's own ids, which I4357 reserves"
+depends_on:
+  - "I4357"
+acceptance_criteria:
+  - "A case declares a dense migrations sequence in an adopter fixture: two concurrent allocations give two numbers; a branch adding a duplicate number, and one leaving a gap, are each refused naming the sequence and the number"
+validation:
+  - "bash test/run.sh 4580_an_adopter_numbered_sequence_is_reserved_and_checked"
+evidence_required:
+  - test
+serves:
+  - merging-and-referencing-are-enforced#one-allocator
+created_at: 2026-11-12
