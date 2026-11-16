@@ -6,23 +6,23 @@
     "version": "1.0.2"
   },
   "registry": {
-    "fingerprint": "f11a8c319d2b414e9807aabfd059ed8fae760cf7228157a3fb2c2d5421025834",
+    "fingerprint": "b03f37f691aa33e6972fbb23aad12037adf7cdafa4b5c111b7bc3fb80f00c448",
     "summary": {
-      "total": 4038,
+      "total": 4041,
       "builtin": 231,
-      "declarative": 3807,
+      "declarative": 3810,
       "by_kind": {
         "command": 41,
         "query": 190,
-        "resource": 3807
+        "resource": 3810
       },
       "by_stability": {
         "behaviorally_verified": 153,
         "experimental": 68,
-        "implemented": 3817
+        "implemented": 3820
       },
       "mcp_tools": 215,
-      "mcp_resources": 3864,
+      "mcp_resources": 3867,
       "http_routes": 219,
       "cli_commands": 128,
       "modules": 96,
@@ -96872,7 +96872,7 @@
         "title": "document",
         "description": "Declarative objects of kind 'document' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 362,
+        "capabilities": 363,
         "capability_ids": []
       },
       {
@@ -97172,7 +97172,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 1262,
+        "capabilities": 1263,
         "capability_ids": []
       },
       {
@@ -97785,7 +97785,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 702,
+        "capabilities": 703,
         "capability_ids": []
       },
       {
@@ -97878,7 +97878,7 @@
     ]
   },
   "index": {
-    "fingerprint": "a10964f6313c75c0375331216a986a8be45f7d6227d244dcd39969b25c378654",
+    "fingerprint": "62425ab2a2234a99e24da901402e23d556a6383c744d1df56410cdfd5e04e3ae",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -97912,13 +97912,13 @@
       "deployment": 1,
       "derive-offload": 1,
       "distribution-model": 1,
-      "document": 362,
+      "document": 363,
       "domain": 6,
       "feature": 29,
       "gap": 5,
       "implementation": 54,
       "intent": 45,
-      "issue": 1262,
+      "issue": 1263,
       "knowledge": 220,
       "mesh-declaration": 1,
       "milestone": 117,
@@ -97932,7 +97932,7 @@
       "session": 95,
       "skill": 11,
       "taxonomy": 10,
-      "test": 702,
+      "test": 703,
       "use-case": 49,
       "workspace": 1
     },
@@ -105531,7 +105531,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 138441
+        "bytes": 138627
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -105570,6 +105570,15 @@
         "bytes": 20993
       },
       {
+        "uri": "majordomus://document/docs/PUBLISHED_SURFACES.md",
+        "kind": "document",
+        "identity": "docs/PUBLISHED_SURFACES.md",
+        "title": "Published surfaces for any repository: site, wiki and Markdown regions",
+        "path": "docs/PUBLISHED_SURFACES.md",
+        "source_class": "document",
+        "bytes": 3614
+      },
+      {
         "uri": "majordomus://document/docs/QUALITY.md",
         "kind": "document",
         "identity": "docs/QUALITY.md",
@@ -105585,7 +105594,7 @@
         "title": "Documentation index",
         "path": "docs/README.md",
         "source_class": "document",
-        "bytes": 27613
+        "bytes": 27878
       },
       {
         "uri": "majordomus://document/docs/REASONING.md",
@@ -105675,7 +105684,7 @@
         "title": "How Majordomus derives its surfaces — one typed reality, many projections",
         "path": "docs/SURFACES.md",
         "source_class": "document",
-        "bytes": 82736
+        "bytes": 82886
       },
       {
         "uri": "majordomus://document/docs/TWO_FOLDER_CONSOLIDATION.md",
@@ -123387,6 +123396,17 @@
         "bytes": 2213
       },
       {
+        "uri": "majordomus://issue/I4620",
+        "kind": "issue",
+        "identity": "I4620",
+        "title": "A supervised repository publishes a site, a wiki and Markdown regions derived from its own documents, and a check refuses drift",
+        "description": "Ship share/surfaces, a repository-agnostic producer that renders every tracked Markdown document and the .ai/ layer to a GitHub Pages site and the GitHub wiki, regenerates index tables inside the documents, declares each output as web-surface/v1 under target/web/<id>/, and refuses a stale region or a relative link or anchor to nothing; with a workflow template, a project-rule template, the adoption steps and a case.",
+        "path": ".ai/repo/project/issues/I4620.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3959
+      },
+      {
         "uri": "majordomus://issue/I4622",
         "kind": "issue",
         "identity": "I4622",
@@ -137427,6 +137447,14 @@
         "bytes": 15204
       },
       {
+        "uri": "majordomus://test/test/cases/4620_published_surfaces_are_derived_and_checked.sh",
+        "kind": "test",
+        "identity": "test/cases/4620_published_surfaces_are_derived_and_checked.sh",
+        "path": "test/cases/4620_published_surfaces_are_derived_and_checked.sh",
+        "source_class": "case",
+        "bytes": 5939
+      },
+      {
         "uri": "majordomus://test/test/cases/46_cross_surface.sh",
         "kind": "test",
         "identity": "test/cases/46_cross_surface.sh",
@@ -139884,7 +139912,7 @@
       "front_matter": "optional",
       "schema": "majordomus.document/v1",
       "identity": [],
-      "objects": 362
+      "objects": 363
     },
     {
       "name": "domain",
@@ -139941,7 +139969,7 @@
       "identity": [
         "id"
       ],
-      "objects": 1262
+      "objects": 1263
     },
     {
       "name": "knowledge",
@@ -140103,7 +140131,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 702
+      "objects": 703
     },
     {
       "name": "use-case",

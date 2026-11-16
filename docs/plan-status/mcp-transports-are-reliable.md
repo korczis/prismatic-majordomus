@@ -210,6 +210,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I2148` | shares test/cases with I4606; they may not run concurrently |
 | WARN | `scope_conflict` | `I2148` | shares test/cases with I4615; they may not run concurrently |
 | WARN | `scope_conflict` | `I2148` | shares test/cases with I4616; they may not run concurrently |
+| WARN | `scope_conflict` | `I2148` | shares test/cases with I4620; they may not run concurrently |
 | WARN | `scope_conflict` | `I2148` | shares apps/majordomus-cli/src/capability/builtin/mcp.rs with I4622; they may not run concurrently |
 | WARN | `scope_conflict` | `I2840` | shares docs/MCP.md with I2901; they may not run concurrently |
 | WARN | `scope_conflict` | `I2840` | shares docs/MCP.md with I2902; they may not run concurrently |

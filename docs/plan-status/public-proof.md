@@ -143,6 +143,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I2374` | shares .github/workflows/pages.yml with I4569; they may not run concurrently |
 | WARN | `scope_conflict` | `I2374` | shares docs/generated with I4597; they may not run concurrently |
 | WARN | `scope_conflict` | `I2374` | shares docs/generated with I4599; they may not run concurrently |
+| WARN | `scope_conflict` | `I2374` | shares .gitignore with I4620; they may not run concurrently |
 | WARN | `scope_conflict` | `I2374` | shares docs/generated with I4622; they may not run concurrently |
 | WARN | `scope_conflict` | `I3753` | shares site/i18n/cs/memory with I3757; they may not run concurrently |
 | WARN | `scope_conflict` | `I3753` | shares site/i18n/cs/memory with I3810; they may not run concurrently |

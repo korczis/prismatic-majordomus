@@ -112,3 +112,8 @@ share/cockpit/vendor/p5.min.js
 # that builds and conflicts on its next merge.
 __pycache__/
 *.pyc
+
+# share/surfaces: what the producer creates beside itself on first use; a lock belongs to the
+# repository that vendors it, never to the distribution (it would state versions by hand)
+/share/surfaces/.venv/
+/share/surfaces/package-lock.json
