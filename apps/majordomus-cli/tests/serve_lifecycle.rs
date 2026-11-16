@@ -65,6 +65,89 @@ fn get(url: &str, target: &str) -> Option<(u16, String)> {
     Some((status, body.to_string()))
 }
 
+/// What answers at `url` as the server `pid`, or `None` when nothing does: nothing answers
+/// there, or something else does (another test's server given the freed port, or not a server
+/// of ours at all). Asked of the server itself, at /api/v1/server (I3099).
+fn still_answers_as(url: &str, pid: u64) -> Option<String> {
+    let (_, body) = get(url, "/api/v1/server")?;
+    let answered = serde_json::from_str::<Value>(&body)
+        .ok()
+        .and_then(|s| s["this_process"]["pid"].as_u64());
+    (answered == Some(pid)).then(|| format!("pid {pid} still answers at {url}"))
+}
+
+/// A one-shot HTTP server on a free port that answers `answers` requests with `body`; its
+/// address, as a URL.
+fn answering(body: &'static str, answers: usize) -> String {
+    let listener = TcpListener::bind("127.0.0.1:0").expect("a free port");
+    let url = format!("http://{}", listener.local_addr().unwrap());
+    std::thread::spawn(move || {
+        for mut stream in listener.incoming().take(answers).flatten() {
+            let mut buf = [0u8; 1024];
+            let _ = stream.read(&mut buf);
+            let _ = write!(
+                stream,
+                "HTTP/1.1 200 OK\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{body}",
+                body.len()
+            );
+        }
+    });
+    url
+}
+
+#[test]
+fn a_stopped_servers_address_answered_by_another_server_is_closed_for_it() {
+    // 2026-10-21, master run 39565286918: the stopped server was gone and its freed port
+    // answered as another test's server; the old check read that as the stopped one (I3099)
+    let other = answering(r#"{"this_process":{"pid":4242}}"#, 1);
+    assert_eq!(
+        still_answers_as(&other, 77),
+        None,
+        "another pid at the address is not it"
+    );
+    let same = answering(r#"{"this_process":{"pid":77}}"#, 1);
+    assert_eq!(
+        still_answers_as(&same, 77),
+        Some(format!("pid 77 still answers at {same}")),
+        "the same pid still answering is named"
+    );
+    let not_ours = answering("not json", 1);
+    assert_eq!(
+        still_answers_as(&not_ours, 77),
+        None,
+        "something that is not our server"
+    );
+    let listener = TcpListener::bind("127.0.0.1:0").unwrap();
+    let closed = format!("http://{}", listener.local_addr().unwrap());
+    drop(listener);
+    assert_eq!(still_answers_as(&closed, 77), None, "nothing answers");
+}
+
+/// Whether `pid` is a live process, asked of the system rather than of any port.
+fn process_alive(pid: u64) -> bool {
+    Command::new("kill")
+        .args(["-0", &pid.to_string()])
+        .stderr(std::process::Stdio::null())
+        .status()
+        .map(|s| s.success())
+        .unwrap_or(false)
+}
+
+/// [`wait_until`], with a failure that says what was last seen rather than only that the
+/// bound ran out: `ok` returns `Err(what it saw)` while the condition does not hold.
+fn wait_until_or(what: &str, timeout: Duration, mut ok: impl FnMut() -> Result<(), String>) {
+    let deadline = Instant::now() + timeout;
+    let mut last = String::from("nothing was observed");
+    while Instant::now() < deadline {
+        match ok() {
+            Ok(()) => return,
+            Err(seen) => last = seen,
+        }
+        std::thread::sleep(Duration::from_millis(100));
+    }
+    panic!("{what} did not happen within {timeout:?}: {last}");
+}
+
 fn wait_until(what: &str, timeout: Duration, mut ok: impl FnMut() -> bool) {
     let deadline = Instant::now() + timeout;
     while Instant::now() < deadline {
@@ -120,14 +203,28 @@ fn ensure_starts_one_server_finds_it_the_next_time_and_stop_ends_it() {
     assert!(out.starts_with("standing   ready"), "{out}");
     assert!(out.contains("<- this checkout"), "{out}");
 
-    // stop: the lease goes and the port closes
+    // stop: the lease goes, the process is gone, and the server no longer answers
     let (code, out, err) = mj(&f.root(), &["serve", "stop"]);
     assert_eq!(code, 0, "{out}{err}");
     assert!(out.starts_with("stopped "), "{out}");
     assert_eq!(LeaseFile::read(&lease_path(&f)), LeaseFile::Absent);
-    wait_until("the port closes", Duration::from_secs(5), || {
-        get(&url, "/").is_none()
-    });
+    // "stopped" is printed only once the process has exited, so that is asserted outright
+    assert!(
+        !process_alive(pid),
+        "serve stop said {out:?} while pid {pid} is still running"
+    );
+    // What the address answers next is not proof either way: the tests of this binary run at
+    // once, and another one's server may be given the freed port within the second. On
+    // 2026-10-21 (master run 39565286918, a loaded runner) "the port closes" failed after 5s
+    // with the stopped process provably gone (I3099). So the server is asked who it is.
+    wait_until_or(
+        "the stopped server's address stops answering as it",
+        Duration::from_secs(5),
+        || match still_answers_as(&url, pid) {
+            Some(seen) => Err(seen),
+            None => Ok(()),
+        },
+    );
     let (code, out, _) = mj(&f.root(), &["serve", "stop"]);
     assert_eq!(code, 0);
     assert!(out.contains("nothing to stop"), "{out}");

@@ -1,0 +1,26 @@
+id: I4257
+milestone: a-second-adopter-is-served
+title: "init projects into an existing CLAUDE.md or AGENTS.md as a region"
+slug: init-keeps-a-hand-written-provider-file
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "For each projection target that already exists and carries no stamp, init writes mode region and says so."
+why: "An adopter's field report (a private Python client repository adopted from the v1.0.0-alpha.8 release on 2026-10-27, with the plan model, project rules, knowledge, skills, Claude Code capture and a GitHub projection all in use) found: the skeleton policy projects CLAUDE.md in mode file although the repository already had a hand-written CLAUDE.md; the adopter had to know to switch to mode region before the first update."
+current_state: "init writes the same projection modes whatever the repository holds."
+desired_state: "For each projection target that already exists and carries no stamp, init writes mode region and says so."
+scope:
+  - ".ai/repo/project/issues/I4257.yaml"
+  - "lib/init.sh"
+  - "share/skeleton/ai/repo/policy.yaml"
+  - "test/cases/4257_init_keeps_a_hand_written_provider_file.sh"
+depends_on: []
+acceptance_criteria:
+  - "init in a repository with a CLAUDE.md writes mode region for it"
+  - "update then appends the region and leaves the rest byte for byte"
+validation:
+  - "bash test/run.sh 4257_init_keeps_a_hand_written_provider_file"
+evidence_required:
+  - "case_init_keeps_a_hand_written_provider_file"
+created_at: 2026-10-27
+updated_at: 2026-10-27

@@ -460,6 +460,9 @@ mj_git_label() {
   cur_head="$(mj_git_head)"; cur_branch="$(mj_git_branch)"
   if [ "$rec_branch" != "$cur_branch" ]; then printf 'different_context'; return; fi
   if [ "$rec_head" = "$cur_head" ]; then printf 'exact'; return; fi
+  # NONE is a task started before the first commit (mj_git_head): an empty history is an
+  # ancestor of every commit on its branch, and merge-base cannot be asked about a non-revision.
+  if [ "$rec_head" = NONE ]; then printf 'advanced'; return; fi
   if mj_git merge-base --is-ancestor "$rec_head" "$cur_head" 2>/dev/null; then printf 'advanced'; return; fi
   printf 'diverged'
 }
@@ -492,7 +495,7 @@ mj_git_label() {
 # four images as twenty out-of-scope "paths").
 mj_git_touched() {
   local base="$1" trunk all foreign own keep
-  { mj_git_dirty_paths
+  { mj_git_dirty_paths | mj_start_dirty_drop
     if [ -n "$base" ] && [ "$base" != "NONE" ]; then
       trunk="$(mj_git_trunk_ref)"
       foreign=""
@@ -516,6 +519,69 @@ mj_git_touched() {
       fi
     fi
   } | LC_ALL=C sort -u | sed '/^$/d'
+}
+
+# What was already changed when the task started is not what the task changed.
+#
+# `start` records the head and one word about the working tree, `dirty` or `clean`, and
+# every later question about what the task touched began from `git status`: everything
+# changed now. A repository whose own hooks regenerate tracked files (an index, a report,
+# a tree listing) is dirty before any task begins, and so is one where somebody's work in
+# progress is sitting in the tree. Measured on 2026-10-13 in a repository of that kind:
+# a task scoped to three paths was refused at `finish --check` for seven files it had never
+# opened, all of them changed before `start` and byte-identical since. The only ways out
+# were to discard somebody else's changes or to claim them, and neither is true.
+#
+# So `start` writes down what was dirty and what each such file held, and a path is left out
+# of the task's touched set while it still holds exactly that. Content, not the name: a file
+# that was dirty at the start and that the task then edited has changed since, and is the
+# task's. A file the task commits is the task's whatever it held, because the commit is
+# counted on its own. A directory git reports whole (untracked, not walked) is not recorded:
+# what it contains cannot be named by one line, so it stays counted, as before.
+#
+# The record is this checkout's, beside current.yaml, and carries the task it belongs to on
+# its first line. A record of another task answers nothing, so a state directory written by
+# an older tool, or a task started by one, behaves exactly as it did.
+mj_start_dirty_file() { printf '%s/start-dirty.tsv' "$MJ_STATE_DIR"; }
+# What one path holds now, as one word: a blob id for a file, the link's target hashed for
+# a symbolic link, `absent` for a path that is not there. Empty for anything else.
+mj_path_identity() {
+  local f="$MJ_ROOT/$1"
+  if [ -L "$f" ]; then printf 'link:%s' "$(readlink "$f" | git hash-object --stdin 2>/dev/null)"
+  elif [ -f "$f" ]; then git hash-object -- "$f" 2>/dev/null
+  elif [ ! -e "$f" ]; then printf 'absent'
+  fi
+}
+# mj_start_dirty_record <task id>: what is dirty now, with what each path holds.
+mj_start_dirty_record() {
+  local out p id
+  out="$(mj_start_dirty_file)"
+  { printf 'task\t%s\n' "$1"
+    mj_git_dirty_paths | while IFS= read -r p; do
+      [ -n "$p" ] || continue
+      id="$(mj_path_identity "$p")"
+      [ -n "$id" ] || continue
+      printf '%s\t%s\n' "$id" "$p"
+    done
+  } > "$out.mj-tmp" && mv "$out.mj-tmp" "$out"
+}
+# The recorded paths that still hold what they held when the active task started.
+mj_start_dirty_unchanged() {
+  local rec id p
+  rec="$(mj_start_dirty_file)"
+  [ -f "$rec" ] || return 0
+  [ "$(sed -n '1s/^task	//p' "$rec")" = "$(mj_cur id 2>/dev/null)" ] || return 0
+  sed 1d "$rec" | while IFS="$(printf '\t')" read -r id p; do
+    [ -n "$p" ] || continue
+    [ "$(mj_path_identity "$p")" = "$id" ] && printf '%s\n' "$p"
+  done
+  return 0
+}
+# Paths on standard input, without the ones above.
+mj_start_dirty_drop() {
+  local same
+  same="$(mj_start_dirty_unchanged)"
+  if [ -z "$same" ]; then cat; else grep -vxF -f <(printf '%s\n' "$same") || true; fi
 }
 
 # The paths the working tree and the index change, one per line, as git stores them.
@@ -609,12 +675,17 @@ mj_now() {
 # it (bash 5), otherwise whole seconds, and the report says which. Off, the cost of a phase
 # or a count is one test. There is no third clock: the one that used to stand between them
 # was perl, and nothing in this repository runs Perl.
+#
+# Bash writes EPOCHREALTIME with the locale's decimal separator (`1794507023,452598` under
+# cs_CZ.UTF-8), so mj_ms keeps every digit and drops whatever separates them: a comma left
+# in made every caller's $(( ... )) fail, doctor first (I4591). The seconds lead, so the
+# result never starts with a zero that arithmetic would read as octal.
 MJ_TIMING_FILE=""; MJ_TIMING_T0=""
 if [ -n "${EPOCHREALTIME:-}" ]; then MJ_TIMING_CLOCK=epochrealtime
 else MJ_TIMING_CLOCK=seconds; fi
 mj_ms() {
   case "$MJ_TIMING_CLOCK" in
-    epochrealtime) local t="${EPOCHREALTIME/./}"; printf '%s' "${t%???}" ;;
+    epochrealtime) local t="${EPOCHREALTIME//[!0-9]/}"; printf '%s' "${t%???}" ;;
     *) printf '%s000' "$(date +%s)" ;;
   esac
 }
@@ -858,7 +929,132 @@ MJ_FLATTEN_AWK='
   }'
 mj_yaml_flatten() {
   mj_count yaml_flatten
+  if [ -n "$MJ_FLAT_CACHE_DIR" ] && [ -f "$1" ] && [ -r "$1" ]; then
+    mj_yaml_flatten_cached "$1"; return
+  fi
   awk -v outdir="" -v front=0 "$MJ_FLATTEN_AWK" "$1"
+}
+
+# ---------------------------------------------------------------- the flatten cache
+# A flatten is one awk process, and a command parses the same unchanged files again and
+# again: doctor alone flattens several hundred, and the hook, watch and context each start
+# over. The cache under .ai/local/cache/flat/ keeps each file's flat lines, so a second
+# command on an unchanged file starts no process to read it (I0821).
+#
+# It is keyed by content, never by path or time: an entry holds the exact bytes of the file
+# it was parsed from, and it is served only when the file asked about is those bytes,
+# compared in full. The entry's name is only where to look — the content's length and a few
+# of its characters, computed with builtins — because a SHA-256 of the file costs one
+# process, which is what the flatten costs, and a cache that forks to learn whether it may
+# skip a fork saves nothing (measured: hash 2.8 ms, flatten 3.1 ms on a 35-line file). Two
+# files that land in one slot evict each other; neither is ever served the other's lines.
+# The directory above the entries is the flattener's own identity, the hash of
+# MJ_FLATTEN_AWK, so a changed parser never reads what an older one wrote.
+#
+# An entry is one file: a header line `mjflat 1 <source length> <flat length>`, the
+# source, the flat lines. Anything else — truncated, edited, unreadable, a header that
+# does not add up, a source that differs — is a miss, and the miss rewrites it. A miss
+# parses with the same awk, prints what it printed, and keeps it only when the parse
+# succeeded and the file did not change while it ran; the entry is written beside the
+# others and renamed into place, so a reader sees an old entry or a new one, never half of
+# one. After every new entry the directory holds at most `cache.flatten_max_entries`
+# (policy), the oldest written removed first. A policy without the key, or with 0, has
+# no cache. There is never a default: a reader's own number is a second source of truth.
+#
+# Set by mj_flat_cache_init, which mj_load_policy calls: an empty directory is no cache.
+MJ_FLAT_CACHE_DIR=""; MJ_FLAT_CACHE_CAP=0; MJ_FLAT_CACHE_KEY=""
+mj_flat_cache_init() {
+  local line cap="" dir
+  MJ_FLAT_CACHE_DIR=""; MJ_FLAT_CACHE_CAP=0
+  [ -n "${MJ_AI_LOCAL_DIR:-}" ] && [ -d "$MJ_AI_LOCAL_DIR" ] && [ -w "$MJ_AI_LOCAL_DIR" ] || return 0
+  [ -n "${MJ_POL_FLAT:-}" ] && [ -r "$MJ_POL_FLAT" ] || return 0
+  while IFS= read -r line; do
+    case "$line" in cache.flatten_max_entries=*) cap="${line#*=}"; break ;; esac
+  done < "$MJ_POL_FLAT"
+  case "$cap" in '' | *[!0-9]*) return 0 ;; esac
+  [ "$cap" -gt 0 ] || return 0
+  if [ -z "$MJ_FLAT_CACHE_KEY" ]; then
+    MJ_FLAT_CACHE_KEY="$(printf '%s' "$MJ_FLATTEN_AWK" | mj_sha256_hex 2>/dev/null)" || MJ_FLAT_CACHE_KEY=""
+    case "$MJ_FLAT_CACHE_KEY" in
+      [0-9a-f][0-9a-f][0-9a-f][0-9a-f]*) MJ_FLAT_CACHE_KEY="${MJ_FLAT_CACHE_KEY:0:16}" ;;
+      *) MJ_FLAT_CACHE_KEY=""; return 0 ;;
+    esac
+  fi
+  dir="$MJ_AI_LOCAL_DIR/cache/flat/$MJ_FLAT_CACHE_KEY"
+  [ -d "$dir" ] || mkdir -p "$dir" 2>/dev/null || return 0
+  MJ_FLAT_CACHE_DIR="$dir"; MJ_FLAT_CACHE_CAP="$cap"
+}
+# The slot an entry for this content is looked up in, into the variable named by $1: the
+# content's length and sixteen of its characters, evenly spaced, as numbers. Builtins only.
+mj_flat_cache_slot() {
+  # names of its own: printf -v into the caller's variable must not land on a local here
+  local _fs_n="${#2}" _fs_i _fs_p _fs_v _fs_s
+  _fs_s="$_fs_n"
+  if [ "$_fs_n" -gt 0 ]; then
+    for _fs_i in 0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15; do
+      _fs_p=$(( (_fs_n - 1) * _fs_i / 15 ))
+      printf -v _fs_v '%d' "'${2:_fs_p:1}" 2>/dev/null || _fs_v=0
+      _fs_s="$_fs_s-${_fs_v#-}"
+    done
+  fi
+  printf -v "$1" '%s' "$_fs_s"
+}
+mj_yaml_flatten_cached() {
+  local f="$1" nl='
+' src="" rs=unopened again e head rest flat slot entry tmp st fl new
+  # read -d '' stops at a NUL byte and returns 0 there: a file with one is not text a shell
+  # variable can hold. A file that would not open leaves rs as it was. Either is parsed as
+  # it always was, error and all. Stderr is closed before the file is opened, or bash's own
+  # complaint about the redirection would print where the parser's never did.
+  { IFS= read -r -d '' src && rs=0 || rs=$?; } 2>/dev/null < "$f" || :
+  case "$rs" in 0 | unopened) awk -v outdir="" -v front=0 "$MJ_FLATTEN_AWK" "$f"; return ;; esac
+  mj_flat_cache_slot slot "$src"
+  entry="$MJ_FLAT_CACHE_DIR/$slot"
+  if [ -f "$entry" ]; then
+    e=""; IFS= read -r -d '' e 2>/dev/null < "$entry" || :
+    head="${e%%"$nl"*}"; rest="${e#*"$nl"}"; fl="${head##* }"
+    case "$head" in "mjflat 1 ${#src} "*[0-9]) case "$fl" in *[!0-9]*) fl="" ;; esac ;; *) fl="" ;; esac
+    if [ -n "$fl" ] && [ "${#e}" -eq $(( ${#head} + 1 + ${#src} + fl )) ] \
+      && [ "${rest:0:${#src}}" = "$src" ]; then
+      mj_count flatten_cache_hit
+      printf '%s' "${rest:${#src}}"
+      return 0
+    fi
+  fi
+  tmp="$MJ_FLAT_CACHE_DIR/.w.${BASHPID:-$$}.$RANDOM"
+  # st=$? on the next line would never run under set -e when the parse fails, and the lines
+  # it printed before failing would stay in the temporary file
+  st=0; awk -v outdir="" -v front=0 "$MJ_FLATTEN_AWK" "$f" > "$tmp" || st=$?
+  flat=""; IFS= read -r -d '' flat 2>/dev/null < "$tmp" || :
+  printf '%s' "$flat"
+  again=""; IFS= read -r -d '' again 2>/dev/null < "$f" || :
+  if [ "$st" -eq 0 ] && [ "$again" = "$src" ] \
+    && printf 'mjflat 1 %s %s\n%s%s' "${#src}" "${#flat}" "$src" "$flat" > "$tmp" 2>/dev/null; then
+    new=0; [ -e "$entry" ] || new=1
+    if mv -f "$tmp" "$entry" 2>/dev/null; then
+      [ "$new" = 0 ] || mj_flat_cache_trim
+    else
+      rm -f "$tmp"
+    fi
+  else
+    rm -f "$tmp"
+  fi
+  return "$st"
+}
+# Past the cap the oldest written go first, until the directory holds the cap again. The
+# count is a glob, so a write from a subshell or another process is counted too. A `.w.*`
+# file an hour old is a writer that died between its write and its rename.
+mj_flat_cache_trim() {
+  local entries old=() name n=0
+  entries=("$MJ_FLAT_CACHE_DIR"/[!.]*)
+  [ "${#entries[@]}" -gt "$MJ_FLAT_CACHE_CAP" ] || return 0
+  while IFS= read -r name; do
+    n=$(( n + 1 ))
+    [ "$n" -le "$MJ_FLAT_CACHE_CAP" ] || old+=("$MJ_FLAT_CACHE_DIR/$name")
+  done < <(ls -t "$MJ_FLAT_CACHE_DIR")
+  [ "${#old[@]}" -eq 0 ] || rm -f -- "${old[@]}"
+  find "$MJ_FLAT_CACHE_DIR" -maxdepth 1 -name '.w.*' -mmin +60 -exec rm -f {} + 2>/dev/null
+  return 0
 }
 # --numbered names the outputs 1, 2, 3 ... in argument order, for callers whose files
 # may share a basename; the caller keeps the number-to-path map.
@@ -1088,7 +1284,8 @@ mj_event_requires() {
 # inside a string is not one either.
 MJ_LEDGER_ENVELOPE_KEYS='ts event head branch by session'
 
-# mj_ledger_append event 'extra json fields without braces'
+# mj_ledger_append event 'extra json fields without braces' [resolved-session]
+# A third argument, including empty, reuses attribution prepared before a record was written.
 # The event must be one share/events.yaml declares, must carry the payload keys that entry
 # requires, and must not carry a key from the envelope. All three are internal errors rather
 # than findings: a command that writes an event the vocabulary does not define, or that
@@ -1111,7 +1308,7 @@ mj_ledger_append() {
     esac
   done
   line="{\"ts\":\"$(mj_now)\",\"event\":\"$ev\",\"head\":\"$(mj_git_head)\",\"branch\":\"$(mj_json_esc "$(mj_git_branch)")\",\"by\":\"majordomus/$MJ_VERSION\""
-  sid="$(mj_open_session_id)"
+  if [ "$#" -ge 3 ]; then sid="$3"; else sid="$(mj_open_session_id)"; fi
   [ -n "$sid" ] && line="$line,\"session\":\"$sid\""
   [ -n "$extra" ] && line="$line,$extra"
   # the local half is never tracked, so a second worktree of the same repository starts
@@ -1213,12 +1410,75 @@ mj_session_here_file() {
 # for real. A line with no session belongs to no episode, which is the honest answer for
 # work done outside one: sessions are optional, and nothing is attributed by proximity.
 mj_open_session_id() {
-  local f w
-  f="$(mj_session_here_file)"
+  local f w k candidate="" n=0
+  k="${MJ_SESSION_KEY:-}"
+  [ -n "$k" ] || k="$(mj_provider_session_env)"
+  if [ -n "$k" ]; then
+    # An explicit identity names its own episode or none, never the checkout's pointer.
+    f="$(mj_session_key_file "$k")"
+  else
+    # Preserve the unambiguous single-episode case. The pointer is still useful for
+    # status, but the last of several open episodes is not a writer's identity.
+    for f in "$(mj_session_open_dir)"/*.yaml; do
+      [ -f "$f" ] || continue
+      w="$(sed -n 's/^worktree: //p' "$f" | head -n 1)"
+      [ -n "$w" ] && [ "$w" != "$MJ_ROOT" ] && continue
+      candidate="$f"; n=$((n+1))
+    done
+    [ "$n" = 1 ] || return 0
+    f="$candidate"
+  fi
   [ -f "$f" ] || return 0
   w="$(sed -n 's/^worktree: //p' "$f" | head -n 1)"
   [ -n "$w" ] && [ "$w" != "$MJ_ROOT" ] && return 0
   sed -n 's/^session_id: //p' "$f" | head -n 1
+}
+
+# The one task.started event is the evidence of who opened a task. Missing or ambiguous
+# history supplies no identity.
+mj_task_opening_session() {
+  [ -f "$MJ_STATE_DIR/ledger.jsonl" ] || return 0
+  awk -v id="$1" "$MJ_LEDGER_FIELD_AWK"'
+    mjfield($0, "event") == "task.started" && mjfield($0, "task_id") == id {
+      n++; session = mjfield($0, "session")
+    }
+    END { if (n == 1 && session != "") print session }
+  ' "$MJ_STATE_DIR/ledger.jsonl"
+}
+
+# Whether an episode is still open in this checkout: its open record names that session.
+mj_session_is_open() {
+  local f w
+  for f in "$(mj_session_open_dir)"/*.yaml; do
+    [ -f "$f" ] || continue
+    w="$(sed -n 's/^worktree: //p' "$f" | head -n 1)"
+    [ -n "$w" ] && [ "$w" != "$MJ_ROOT" ] && continue
+    [ "$(sed -n 's/^session_id: //p' "$f" | head -n 1)" = "$1" ] && return 0
+  done
+  return 1
+}
+
+# Prepare the envelope and optional task relation once, before a durable record is
+# published. The same values reach its event, front matter and derived body (ADR 0164).
+# The active task is the caller's unless another episode that is still open opened it:
+# that is the one case a record could be filed under somebody else's work. A task whose
+# opener has closed, or whose opening names no episode, has no live owner, and the caller
+# continuing it (a second sitting, a handover across providers) carries it on.
+MJ_RECORD_SESSION=""; MJ_RECORD_TASK=""; MJ_RECORD_PROFILE=""; MJ_RECORD_OWNER=""
+mj_record_attribution() {
+  MJ_RECORD_SESSION="$(mj_open_session_id)"
+  MJ_RECORD_TASK=""; MJ_RECORD_PROFILE=""; MJ_RECORD_OWNER=""
+  mj_load_current || return 0
+  local id w opened
+  w="$(mj_cur worktree)"
+  [ -n "$w" ] && [ "$w" != "$MJ_ROOT" ] && return 0
+  id="$(mj_cur id)"; [ -n "$id" ] || return 0
+  opened="$(mj_task_opening_session "$id")"
+  if [ -n "$opened" ] && [ "$opened" != "$MJ_RECORD_SESSION" ] && mj_session_is_open "$opened"; then
+    return 0
+  fi
+  MJ_RECORD_TASK="$id"
+  MJ_RECORD_PROFILE="$(mj_cur profile)"; MJ_RECORD_OWNER="$(mj_cur owner)"
 }
 
 # ---------------------------------------------------------------- current task
@@ -1249,6 +1509,7 @@ mj_cur() { [ -n "${MJ_CUR_FLAT:-}" ] || return 0; mj_yget "$MJ_CUR_FLAT" "$1"; }
 mj_load_policy() {
   MJ_POL_FLAT="$(mktemp "${TMPDIR:-/tmp}/mj.pol.XXXXXX")"
   mj_yaml_flatten "$MJ_POLICY_FILE" > "$MJ_POL_FLAT" || return 1
+  mj_flat_cache_init
 }
 mj_pol() { [ -n "${MJ_POL_FLAT:-}" ] || return 0; mj_yget "$MJ_POL_FLAT" "$1"; }
 # A policy value the code depends on. There is no default here on purpose: a fallback
@@ -1954,9 +2215,28 @@ mj_mesh_task_release() { # <task id>
 mj_mesh_declared_enabled() {
   local f
   for f in $(mj_git ls-files -- '.ai/repo/mesh/*.yaml' '.ai/repo/mesh/*.yml' 2>/dev/null); do
-    grep -qE '^enabled:[[:space:]]*true[[:space:]]*$' "$MJ_ROOT/$f" 2>/dev/null && return 0
+    mj_mesh_declaration_open "$MJ_ROOT/$f" && return 0
   done
   return 1
+}
+
+# Whether one declaration opens a mesh for some machine: `enabled: true`, and either
+# `trust.policy: tofu` or at least one key in `trust.allow`. A declaration closed to everyone
+# (deny_unknown, the default, with nobody listed: the seed `init` writes since I2412) runs no
+# mesh on any machine, so nothing can be claimed on it — the same rule as
+# mesh::manager::closed_to and guard::mesh_declared_enabled.
+mj_mesh_declaration_open() { # <file>
+  awk '
+    /^enabled:[[:space:]]*true[[:space:]]*$/ { enabled = 1 }
+    /^trust:[[:space:]]*$/ { trust = 1; allow = 0; next }
+    trust && /^[^[:space:]#]/ { trust = 0; allow = 0 }
+    trust && /^[[:space:]]+policy:[[:space:]]*tofu[[:space:]]*$/ { open = 1 }
+    trust && /^[[:space:]]+allow:[[:space:]]*\[[[:space:]]*[^][:space:]]/ { open = 1 }
+    trust && /^[[:space:]]+allow:[[:space:]]*$/ { allow = 1; next }
+    trust && allow && /^[[:space:]]+-[[:space:]]*[^[:space:]]/ { open = 1 }
+    trust && allow && /^[[:space:]]+[A-Za-z_]+:/ { allow = 0 }
+    END { exit !(enabled && open) }
+  ' "$1" 2>/dev/null
 }
 
 # A task works on the mesh (I2289, project.a-task-works-on-the-mesh). On a repository that

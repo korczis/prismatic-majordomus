@@ -1,0 +1,24 @@
+id: I3121
+milestone: a-test-fails-when-the-code-is-wrong
+title: "The release compatibility analyzer's invariants hold under property tests"
+slug: compat-invariants-are-properties
+priority: p2
+profile: implementation
+objective: "Add proptest properties to apps/majordomus-cli/src/release/compat.rs: diff(a,a) is empty; reordering a surface gives no change; adding a distinct atom is at least minor; removing one is at least major from 1.0; normalisation is idempotent."
+why: "Proposed on 2026-09-11 (c111#6) when the owner ordered that Elm-like versioning be enforced. The version a landing allocates (ADR 0134) rests on this analyzer, and on master 707a04c (grep -c '#\\[test\\]' apps/majordomus-cli/src/release/compat.rs, 2026-10-18) it has 33 example tests and no property. Sources: chatgpt-majordomus:c111#6, chatgpt-majordomus:c079#6."
+current_state: "compat.rs: 33 #[test]s on master 707a04c (same grep). proptest is a dev-dependency used in other modules (mesh, deploy, served, integration, economics). surface.rs:699 tests normalisation idempotence on one example."
+desired_state: "Five named properties in the lib suite."
+scope:
+  - "apps/majordomus-cli/src/release/compat.rs"
+non_scope:
+  - "Changing the bump policy"
+serves:
+  - "a-claim-stands-only-on-its-evidence#critical-predicates-mutated"
+acceptance_criteria:
+  - "Each of the five properties runs at the default case count and passes"
+validation:
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib release::compat"
+evidence_required:
+  - "compat_properties"
+created_at: 2026-10-18
+updated_at: 2026-10-18

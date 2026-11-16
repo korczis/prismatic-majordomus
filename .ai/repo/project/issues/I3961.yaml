@@ -1,0 +1,35 @@
+id: I3961
+milestone: mcp-transports-are-reliable
+title: "peers.list answers a summary by default: checkouts that hold no board are counted, not listed"
+slug: the-board-answers-a-summary
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Give peers.list a view input (summary by default, full on request), the same words as mesh.peers: the summary lists this checkout, every checkout with a worker or a standing server and every board that could not be read, counts the serverless ones by standing in omitted, and reports every covered checkout in covered; brief and the cockpit read covered."
+why: "On 2026-10-22 this repository registered 625 checkouts, 601 of them absent with nobody attached, and the default majordomus_peers answer was 168 kB (151 kB of it boards): past what an MCP client shows, so the read every worker is told to make before it starts went through a saved file. The same defect in mesh.state and mesh.peers was fixed the same way by 1eb8d5fa89b. Observed in session 54f32bb3 (native-acceleration pack, P07)."
+current_state: "peers.list lists one BoardView per registered checkout whatever its standing; brief and the cockpit count checkouts as boards.len()."
+desired_state: "The default answer lists only checkouts that hold a board or could not be read, counts the rest, and is a fraction of the size; view full answers what it answered before; complete, the unread boards and the peers are unchanged."
+scope:
+  - "apps/majordomus-cli/src/capability/builtin/peers.rs"
+  - "apps/majordomus-cli/src/capability/builtin/brief.rs"
+  - "apps/majordomus-cli/src/cockpit/pages.rs"
+  - "test/cases/250_the_board_is_repository_wide.sh"
+  - "test/cases/343_the_cockpit_shows_who_else_is_here.sh"
+non_scope:
+  - "Removing worktrees, which are their owners'"
+  - "The cost of enumerating and probing every checkout, which is unchanged"
+depends_on: []
+acceptance_criteria:
+  - "Under the default summary every covered checkout is listed or counted, never neither, and covered equals the two together"
+  - "A board that could not be read is listed whatever its standing; this checkout is always listed"
+  - "view full lists every covered checkout and counts none away"
+  - "brief and the cockpit report every covered checkout, and the cockpit says how many it does not list"
+validation:
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib -- peers:: brief::tests cockpit::pages::tests::the_peers_page"
+  - "bash test/run.sh 250_the_board_is_repository_wide 343_the_cockpit_shows_who_else_is_here"
+  - "bin/majordomus plan validate"
+evidence_required:
+  - "the_summary_counts_only_checkouts_that_hold_no_board"
+  - "the_board_is_repository_wide"
+created_at: 2026-10-22
+updated_at: 2026-10-22

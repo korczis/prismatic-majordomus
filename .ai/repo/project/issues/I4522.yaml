@@ -1,0 +1,53 @@
+id: I4522
+milestone: a-bounded-task-is-carried-to-accepted-work
+title: "A repository's release records are judged against the repository's own distribution model, or on internal consistency alone when it declares none, never against the installed tool's"
+slug: release-records-are-judged-by-their-own-model
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Release records under .ai/repo/releases are judged against the distribution model of the repository that carries them: the distribution-model object its own knowledge sources index (Model::from_index, apps/majordomus-cli/src/distribution/mod.rs:370), which in this repository is share/distribution.yaml through the `distribution` class of .ai/repo/knowledge/sources.yaml:246-250. The installed tool's model, Model::load(&app.share) and Model::locate(&share), stays what describes this build, its installer and its archive names, and stops being what a repository's records are measured against. Releases::findings and Release::findings (apps/majordomus-cli/src/distribution/release.rs:348 and :134) take the repository's model as an Option: with a model, every finding they make today is made against it; with none, the model-bound findings (a target the model does not declare or does not publish, a name the naming function does not derive, a URL outside the model's download prefix; release.rs:174-199) are not made, and the record is judged on internal consistency alone: a semantic version, no pre-release on the stable channel, tag equal to `v` and the version (release.rs:106), every required target carried by an artifact, no target twice, no tag twice, a URL ending in its own tag and name, a 64-hex digest and a non-zero size. The judgement is chosen in one function every caller asks (the generator, distribution validate, distribution metadata, the distribution status capability), so the generator and the command line cannot judge one record two ways. A finding names which model it was judged against, or that it was judged on internal consistency because the repository declares none."
+why: "Reported to the landing seat on 2026-10-30 by OSCILLA's oscilla-b0. In an adopter, `majordomus generate --check` reaches distribution_artifacts (apps/majordomus-cli/src/generate.rs:937-952), which loads the model from the installed share (:940) and the records from the adopter (:941) and refuses the tree on the first finding (:942-951); the composed index carries the same installed model (apps/majordomus-cli/src/app.rs:167, Model::locate(&share)). OSCILLA declares no distribution model of its own, and every one of its 19 release records at origin/main 27ce813e names the target `web` in required_targets and artifacts, so each one fails at release.rs:174-178 with `artifact for `web`, which the model does not declare`. The obligation `generated` is discharged by `majordomus generate --check` (share/obligations.yaml:64-71), so its evidence cannot be recorded and `finish --outcome completed` refuses obligation-closure (OSCILLA task t-20261030120335-ec44). The records did not change; an upgrade of the tool did. A record is evidence of what a repository published, judged by the model of the repository that published it: Release::findings already says it is checked against `the model it claims to have been built from` (release.rs:131-133) and already judges a record without required_targets on internal consistency alone rather than against a model it never saw (release.rs:156-157). Mission section 9 asks that evidence be judged against the inputs it describes; here it is judged against another project's."
+current_state: "At origin/master 51b38035a71: App::compose sets index.distribution = Model::locate(&share) (app.rs:167), the model of the tool's data directory, absent only when that directory carries no distribution.yaml (mod.rs:360-365). distribution_artifacts takes Model::load(&app.share) (generate.rs:940) and refuses on releases.findings(&model) (generate.rs:942); distribution validate (apps/majordomus-cli/src/commands/distribution.rs:192-195) and distribution metadata (commands/distribution.rs:291 and :304) do the same; the distribution status capability judges Releases::from_index against ctx.index.distribution (apps/majordomus-cli/src/capability/builtin/distribution.rs:234-241, :369, :385). Release::findings (release.rs:134-217) refuses an artifact whose target the model does not declare (:174-178) or publish (:181-185), a name the naming function does not derive (:187-192) and a URL outside the model's download prefix (:147, :194-198); Releases::findings (release.rs:348-359) adds duplicate tags. Model::from_index (mod.rs:370) exists and reads the repository's indexed distribution-model object, but no release judgement asks it. An installed copy run in this repository is unaffected only because the share it carries is this repository's share/distribution.yaml. No case runs generate --check over an adopter's release records."
+desired_state: "An unchanged release record in an adopter is judged the same before and after an upgrade of the tool: against the adopter's own distribution model when its sources index one, on internal consistency when they do not, and a record that contradicts the adopter's own model is still refused with the finding it gets today. This repository's records are judged against share/distribution.yaml exactly as today. Enforced by case 4522 and by cases 84, 139 and 1024 unchanged."
+scope:
+  - ".ai/repo/project/issues/I4522.yaml"
+  - "apps/majordomus-cli/src/distribution/release.rs"
+  - "apps/majordomus-cli/src/distribution/mod.rs"
+  - "apps/majordomus-cli/src/distribution/tests.rs"
+  - "apps/majordomus-cli/src/app.rs"
+  - "apps/majordomus-cli/src/generate.rs"
+  - "apps/majordomus-cli/src/commands/distribution.rs"
+  - "apps/majordomus-cli/src/capability/builtin/distribution.rs"
+  - "docs/RELEASE.md"
+  - "docs/DISTRIBUTION.md"
+  - "test/cases/4522_release_records_are_judged_by_their_own_model.sh"
+non_scope:
+  - "Changing OSCILLA's records, its sources or anything else in that repository: its 19 records stay as they are and pass because the judgement changes"
+  - "How this repository's records are judged: share/distribution.yaml is both the installed share and the repository's indexed model here, and every finding release.rs makes today for a record of this repository is still made"
+  - "What the distribution target projects into a repository (the matrix, the installer, the site dataset, INSTALL.md) and which model it renders them from: only how release records are judged changes here"
+  - "What this build is and what the installer serves (`distribution build`, `distribution artifact`, the installability checks over the tool's own targets): those stay the installed tool's model"
+  - "scripts/release-record and the completeness check it makes when a release is written: it sees the model of its own day and is unchanged"
+  - "Inventing a location for an adopter's model: the repository declares one through a distribution-model class in its own knowledge sources, as this repository does, or declares none"
+depends_on: []
+serves: []
+acceptance_criteria:
+  - "Case 4522, in a fixture adopter repository run by this tree's executable with this tree's share (whose model declares no target `web`): the fixture's knowledge sources declare a distribution-model class over its own model, which publishes a target `web` under its own project and naming, and one release record names an artifact for `web` consistent with that model; `majordomus generate --check` exits 0 and prints no `which the model does not declare`, `majordomus distribution validate` reports valid, and a task that requires `generated`, with its evidence recorded from `majordomus generate --check`, finishes with `finish --outcome completed` exit 0 and no obligation-closure refusal"
+  - "Case 4522: the same fixture with no distribution-model class in its sources and a record shaped as OSCILLA's (required_targets [web], one `web` artifact whose name and URL no naming function derives): `generate --check` exits 0 and `distribution validate` reports the record judged on internal consistency because the repository declares no model"
+  - "Case 4522: with no model of its own, a record that is not internally consistent is still refused by generate --check and distribution validate, one assertion per finding: a required target with no artifact, two artifacts for one target, a URL that does not end in its own tag and name, a digest that is not 64 hexadecimal characters, a zero size, two records claiming one tag"
+  - "Case 4522: with its own model, a record that contradicts it is still refused with today's words: an artifact for a target the adopter's model does not declare (`which the model does not declare`), one it does not publish, a name its naming function does not derive, a URL outside its download prefix; the finding names the adopter's model as the one judged against"
+  - "Case 4522: in this repository, `majordomus generate --check` and `majordomus distribution validate` give the same result as before the change, and a copy of one of its records with an artifact for a target share/distribution.yaml does not declare is refused with `which the model does not declare`"
+  - "Unit tests in apps/majordomus-cli/src/distribution/tests.rs drive Releases::findings with a model and with none over the same records, and the generator, distribution validate, distribution metadata and the status capability reach the judgement through one function"
+  - "Cases 84, 139 and 1024 pass unchanged"
+  - "Before the change, case 4522 fails at its first assertion"
+validation:
+  - "MJ_TEST_JOBS=4 bash test/run.sh 4522_release_records_are_judged_by_their_own_model 84_distribution_model 139_release_record_schema 1024_an_installed_release_serves_a_foreign_repository"
+  - "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --lib distribution"
+  - "bin/majordomus generate --check"
+  - "bin/majordomus shell check"
+  - "bin/majordomus doctor"
+  - "bin/majordomus plan validate"
+evidence_required:
+  - "adopter_release_record_case"
+risk: "Judging on internal consistency drops the naming and prefix checks for every repository that declares no model, so a mistyped artifact name in such a repository is no longer caught by the tool; the finding has to say that the record was judged on consistency alone, so a reader knows the absence of a refusal is not a proof against a model. A repository that indexes a distribution-model object it did not mean as its release model starts being judged against it."
+created_at: 2026-10-30
+updated_at: 2026-10-30

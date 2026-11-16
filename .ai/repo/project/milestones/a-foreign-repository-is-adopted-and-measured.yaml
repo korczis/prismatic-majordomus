@@ -1,0 +1,46 @@
+id: a-foreign-repository-is-adopted-and-measured
+title: "A repository not built around Majordomus is adopted from the published installer to an accepted finish, and its overhead and friction are recorded without exposing what its basis does not permit"
+slug: a-foreign-repository-is-adopted-and-measured
+order: 202
+priority: p0
+problem: "The owner's report of 2026-10-19 (T1) asks that at least one repository not created or structured around Majordomus be connected. scripts/ci/install-check:17-27 ends when the installed launcher serves a freshly initialised empty repository, and test/cases/1024_an_installed_release_serves_a_foreign_repository.sh:10 uses a local fixture only. I3127 adds the refuse-then-accept stage on a fixture and is BLOCKED, because its milestone a-stranger-adopts-it-unaided depends on a-second-adopter-is-served, which site/data/generated/plan.json derives as ACTIVE. Two of the owner's repositories that predate Majordomus have been adopted, and neither adoption has a record on master; the findings of one live only on the unmerged PR #1089, and the 0.29.0 findings of the other only on a local branch that no remote holds. No record gives a selection basis, a publication basis, elapsed time per step or measured overhead."
+outcome: "A declared protocol says which repository may be adopted, what is recorded and what may be published. At least one admitted foreign repository has a committed T1 trial record from the published installer to an accepted finish, with step times, overhead against declared budgets, footprint classes and every friction tied to an observed event and cited by an issue. The record is published whatever its outcome."
+current_state: "git ls-files .ai/repo/workflows lists README.md, continuity.md, plan.md, task-lifecycle.md and use-cases.md; none covers adoption. docs/ADOPTION.md:5-16 gives the day-one commands and :165-169 removal, untimed. lib/finish.sh:108 writes task.refused; lib/check.sh:51-58 writes no ledger line for a refused check, which share/events.yaml:62 records as deliberate. I3299 (READY, p3) measures overhead on this repository's fixtures against .ai/repo/benchmarks/baseline.json (lib/bench.sh:17,39), with no target-repository input. Case 3113 holds the footprint inventory against docs/TWO_FOLDER_CONSOLIDATION.md."
+desired_state: ".ai/repo/workflows/foreign-repository-adoption.md declares the protocol; the T1 protocol and candidates are registered; at least one admitted record reached an accepted finish, with its overhead record; zero uncovered events and zero uncited friction ids."
+scope:
+  - ".ai/repo/workflows"
+  - ".ai/repo/workflows/README.md"
+  - "docs/ADOPTION.md"
+  - ".ai/repo/benchmarks"
+  - "scripts/ci/install-check"
+  - "test/cases/1024_an_installed_release_serves_a_foreign_repository.sh"
+  - "apps/majordomus-cli/src/bench/runner.rs"
+  - "apps/majordomus-cli/src/commands/bench.rs"
+  - "apps/majordomus-cli/tests/bench.rs"
+  - "apps/majordomus-cli/tests/economics.rs"
+  - "docs/generated/economics.json"
+  - "docs/generated/economics.md"
+  - "docs/generated/economics.yaml"
+  - "site/data/generated/economics.json"
+non_scope:
+  - "The A/B comparison (T2) and delivery economics (T3)"
+  - "Outside persons' first runs (a-stranger-adopts-it-unaided, I3129)"
+  - "Pushing anything to the adopted repository's remote"
+  - "Fixing the frictions found; each becomes its own issue"
+  - "Re-planning the findings PR #1089 carries"
+  - "Choosing the repository on the owner's behalf; consent is the owner's act"
+acceptance_criteria:
+  - "At least one admitted repository's T1 record has reached_accepted_finish true, and no record of a failed adoption is missing from the scorecard's T1 row"
+  - "No record of a repository without a publication basis carries a name, raw commit id, path or free text"
+  - "No fix or check decides by the identity of the repository it runs in"
+validation:
+  - "majordomus plan validate"
+evidence_required: []
+risks:
+  - "I3361 waits on I3127, which is BLOCKED; the live adoption I3363 does not depend on it"
+  - "Whether the owner's own pre-Majordomus repositories count as foreign is the owner's decision"
+  - "A third-party repository needs a licence that permits a local clone and published measurements"
+  - "Real-agent runs depend on account limits; a run that stops partway is recorded as failed, never retried silently"
+  - "A peer may claim scripts/ci/install-check or case 1024; I3361 reads the board at start"
+created_at: 2026-10-19
+updated_at: 2026-10-19

@@ -7,7 +7,7 @@ profile: implementation
 parallel_safe: true
 objective: "Stop an entry point from rebuilding the executable in place under a running shared server, and make the server that follows a superseded one bind the address the old one was serving, or say that it did not."
 why: "bin/majordomus-cli rebuilds apps/majordomus-cli/target/debug/majordomus whenever the sources moved. In the primary checkout that file is the one the shared server was started from, and since #747 a replaced executable supersedes the lease. On 2026-10-08 a server the owner had ordered onto every interface (0.0.0.0:57547, started 2026-10-07T18:49Z) lost its lease at 08:06:32Z: .ai/local/state/mcp/server.log records 'superseded lease: the server was started from ... target/debug/majordomus and that file has been replaced since', after a diagnostic build in the primary. The integrator reported the same after every `prs refresh`, `plan` and `drain` run from the primary following a fast-forward. The successor was started by a launcher whose environment did not carry MAJORDOMUS_HTTP_HOST, so it bound loopback on another port; new sessions were answered 409 lease_lost by the old server and nobody was told the address had changed. #747 made the consequence visible. It did not remove the cause."
-current_state: "A build in a checkout with a ready server replaces the file its lease names. The lease is superseded, the next launcher starts a successor on the default address, and the address the old server was serving is not carried over or mentioned."
+current_state: "Since 2026-10-15 a build no longer supersedes a ready server: `mcp` and `serve` started from a cargo build output run from a copy of it (`<profile dir>/served/`, apps/majordomus-cli/src/served_executable.rs), the lease names the copy, and a rebuild leaves the server ready on its address (test/cases/3061, the first acceptance criterion). Still open: a server superseded for another reason (an older release) is followed by a successor on the default address, and the address the old server was serving is not carried over or mentioned (the second and third criteria)."
 desired_state: "Building in a checkout leaves its ready server ready on the same address until something restarts it on purpose: the build writes beside the leased executable and a restart swaps it, or the server runs from a copy. When a server is superseded, its successor serves the address the old one published, or the supersession is reported with both addresses on every surface that reports a server's standing."
 scope:
   - "bin/majordomus-cli"
@@ -27,4 +27,4 @@ evidence_required:
   - "rebuild_keeps_server_ready_case"
   - "successor_address_case"
 created_at: 2026-10-08
-updated_at: 2026-10-08
+updated_at: 2026-10-15

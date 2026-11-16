@@ -1,7 +1,7 @@
 +++
 title = "Work lands often and small, and what is published is master and only master"
 description = "Work lands often and small, and what is published is master and only master"
-weight = 122
+weight = 124
 [extra]
 kind = "rule"
 slug = "project-land-and-publish-1"
@@ -87,6 +87,13 @@ rather than argued:
    between the merge and the public catches it.
 8. **A merge that changes the public contract carries its version.** Landing without the
    bump is why the published site named a version three releases behind the code.
+9. **What landed is released, and how long it has waited is measured.** The owner's order of
+   2026-10-19 is a new measured version (ADR 0051) after every session and milestone.
+   `release.currency` (I3070) answers how many landed commits the trunk holds past the last
+   release, since when, and at which version. The brief, doctor and `/ui/delivery` read that
+   one answer. Current is the trunk released. Owed is work the release seat still has to
+   release. Overdue is work that has waited longer than six hours. A tag counts as soon as it
+   is pushed, before its record lands, so releasing is never reported as owed.
 
 ## Failure behaviour
 
@@ -131,6 +138,13 @@ refusal from the gate and watching it fail.
 The live half is not simulated: a case standing up an HTTP server would be testing its own
 fixture, and one reaching the real site would fail whenever the network did. `--offline` is
 the seam, and the case asserts the seam announces itself rather than skipping silently.
+
+`test/cases/3470_the_release_follows_the_work.sh` holds clause 9. It builds a clone of a bare
+origin with a recorded release and a fix landed after it, and expects:
+- `release.currency` says owed and, with the clock past the threshold, overdue;
+- doctor warns;
+- the brief has a release line;
+- a tag pushed past the record makes the trunk current.
 
 `test/cases/97_pages_fast_path.sh` holds the publication path itself, including its
 concurrency: the `pages-` group serialises the runs and nothing cancels the deploy in flight

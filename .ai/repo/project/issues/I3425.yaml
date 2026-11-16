@@ -1,0 +1,33 @@
+id: I3425
+milestone: an-inference-names-its-source-and-budget
+title: "A standing conclusion is reused only while the files it cites are unchanged since it was recorded"
+slug: reuse-holds-while-its-evidence-holds
+priority: p2
+profile: implementation
+objective: "Before reusing a prior conclusion on the same subject, compare each file evidence reference it cites, at the conclusion's recorded head, with the current tree, and check an optional declared age window. When a cited file has changed or the window has passed, plan review again and name the evidence that moved."
+why: "The owner's 2026-10-19 Cognitive Fabric pack allows identical reasoning to be cached only within safe scopes and explicit validity windows (campaigns/prismatic-way-cognitive-fabric-prompt-pack/prompts/04_REASONING_MESH.md)."
+current_state: "prior_on_subject (apps/majordomus-cli/src/reasoning/store.rs:446-497) matches subjects after folding whitespace and case. The policy reuses the conclusion unless the caller declares new_evidence (policy.rs:408-419). The envelope keeps head (record.rs:925) and evidence references (record.rs:123-130), and neither is used for validity."
+desired_state: "The reuse outcome carries the head it validated against. A changed cited file yields a consult or local-review plan with reason evidence_changed, naming the file. An unchanged tree behaves as today."
+scope:
+  - "apps/majordomus-cli/src/reasoning/policy.rs"
+  - "apps/majordomus-cli/src/reasoning/store.rs"
+  - "apps/majordomus-cli/src/capability/builtin/reasoning.rs"
+  - "docs/REASONING.md"
+non_scope:
+  - "Hashing non-file evidence"
+  - "Expiring records from the store"
+depends_on:
+  - "I3423"
+serves:
+  - "a-change-reconciles-what-it-affects#reuse-holds-while-its-evidence-holds"
+acceptance_criteria:
+  - "With the cited files unchanged, the plan reuses as today"
+  - "With a cited file changed since the conclusion's head, the plan does not reuse and names the file"
+  - "A conclusion older than a declared window is not reused, and the plan says so"
+validation:
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib reasoning"
+  - "bash test/run.sh 734_reasoning_survives_the_session"
+evidence_required:
+  - "a_conclusion_whose_evidence_moved_is_not_reused"
+created_at: 2026-10-19
+updated_at: 2026-10-19

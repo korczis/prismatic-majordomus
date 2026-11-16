@@ -11,14 +11,14 @@ tags:
   - mesh
   - release
 related:
-  - file:.ai/repo/rules/project/the-cooperation-model-is-the-owners-word.v1.md
+  - file:.ai/repo/rules/project/the-cooperation-model-is-the-owners-word.v2.md
   - file:.ai/repo/adrs/0101-pull-requests-are-integrated-one-at-a-time-against-the-current-master.md
   - file:.ai/repo/adrs/0129-a-train-of-pull-requests-lands-in-one-run-of-the-required-check.md
   - file:.ai/repo/adrs/0155-an-expedited-landing-is-the-owners-word.md
   - file:.ai/repo/rules/project/integration-follows-the-current-master.v3.md
   - file:.ai/repo/rules/project/an-expedited-landing-is-the-owners-word.v1.md
   - file:.ai/repo/rules/project/work-is-claimed-before-it-is-built.v1.md
-  - file:.ai/repo/rules/project/mesh-cooperation-is-authenticated.v1.md
+  - file:.ai/repo/rules/project/mesh-cooperation-is-authenticated.v2.md
   - file:docs/INTEGRATION.md
   - file:docs/MESH.md
   - file:docs/RELEASE.md
@@ -146,3 +146,31 @@ detected and brought current.
   the claim is already the fact, so the UI reads the claim.
 - **Force-push stale branches.** It is fast for the session that does it and destroys work
   another session pushed in the meantime; a merge of master costs one commit.
+
+## Amendment, 2026-10-20: a worker lands its own green head
+
+At about 23:13 UTC on 2026-10-20 the owner relaxed the model: "hlavne prosim tebe reflektuj
+zmekceni pravidel, vse updatuj, vsem dej vedet" ("above all, reflect the relaxation of the
+rules, update everything, let everyone know"), choosing every relaxation offered (build and disk
+limits, landing and merge, the sessions' permissions, coordination formalities). The seats read
+it as: a worker lands its own green pull request through the guarded lander's queue, pinned
+exactly as a top is pinned; at most five builders on one machine and none below 35 GiB free;
+cleanup that loses nothing is done without asking and announced; ids, paths and seats are still
+claimed first. Rule `project.the-cooperation-model-is-the-owners-word` version 2 records it
+(I3824); the landing seat keeps combined tops for heads that must ship together. What may reach
+master is unchanged: a head whose `ci` succeeded and which contains the current master.
+
+## Amendment, 2026-11-01: a member's fix may travel inside a top
+
+At 02:45 UTC on 2026-11-01 the landing seat asked the owner whether clause 2 should allow a
+member's fix inside a combined top, after train 13c (#2786, compose commit `af91101cfdd`) had
+folded eight review patches for its members into its compose commit. The owner chose to allow
+it on condition that the fix is attributed. Rule `project.the-cooperation-model-is-the-owners-word`
+version 3 records exactly that: a member's fix may travel inside a train top as its own commit
+that names the member, and it is carried to the member's branch afterwards. Decision 2's "a red
+member dropped and fixed on its own branch" and the Consequences' "dropped and fixed on its own
+branch" now read with that second remedy beside them. 13c's patches predate the decision and are
+not in its form; carrying them to their members' branches is owed. How a top's branch is named,
+the label its pull request carries and how it lists its fixes are practice in
+`docs/INTEGRATION.md`, not part of the decision. What may reach master is unchanged: a head
+whose `ci` succeeded and which contains the current master.

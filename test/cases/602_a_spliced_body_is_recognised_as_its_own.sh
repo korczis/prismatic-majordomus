@@ -43,6 +43,8 @@ esac
 case "$*" in
   *"--paginate repos/"*"/milestones"*) cat "$MJ_STUB_MS"; exit 0 ;;
   *"--paginate repos/"*"/issues"*)     cat "$MJ_STUB_IS"; exit 0 ;;
+  *"issue list"*)                      cat "$MJ_STUB_IS"; exit 0 ;;
+  *"api graphql"*)                     wc -l < "$MJ_STUB_IS" | tr -d ' '; exit 0 ;;
 esac
 if [ "$1 $2" = "issue edit" ]; then
   while [ $# -gt 0 ]; do

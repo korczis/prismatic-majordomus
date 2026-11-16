@@ -152,6 +152,11 @@ pub const LOCAL: &[LocalCommand] = &[
         note: "starts the HTTP server for this checkout as a process of its own when none answers, and waits until it is ready.",
     },
     LocalCommand {
+        command: "ui",
+        reason: LocalReason::ProcessLifecycle,
+        note: "ensures this checkout's server as `serve ensure` does and opens a browser on the invoking user's desktop, which no capability served by that server could do.",
+    },
+    LocalCommand {
         command: "serve stop",
         reason: LocalReason::ProcessLifecycle,
         note: "ends the server this checkout's lease names by signalling the process, which nothing served by that process could do to itself.",
@@ -268,11 +273,6 @@ pub const LOCAL: &[LocalCommand] = &[
         note: "creates a branch and a linked worktree on disk at the path the topology derives for it.",
     },
     LocalCommand {
-        command: "worktree ensure",
-        reason: LocalReason::WritesRepository,
-        note: "creates the canonical worktree of a branch when it is absent, which is the same write made idempotent.",
-    },
-    LocalCommand {
         command: "worktree repair",
         reason: LocalReason::WritesRepository,
         note: "rewrites the git administrative files of a worktree whose links no longer resolve.",
@@ -292,6 +292,11 @@ pub const LOCAL: &[LocalCommand] = &[
         command: "offload probe",
         reason: LocalReason::SessionLocal,
         note: "measures the declared hosts over the invoking user's ssh keys and network, which a networked caller does not share.",
+    },
+    LocalCommand {
+        command: "offload stop",
+        reason: LocalReason::SessionLocal,
+        note: "signals a run's process group on a declared host over the invoking user's ssh keys, and only for the session whose own provider environment its run record names, which a networked caller does not carry.",
     },
     LocalCommand {
         command: "worktree root",
@@ -391,9 +396,19 @@ pub const LOCAL: &[LocalCommand] = &[
         note: "runs mesh.claim on this checkout's running server, whose journal replicates it; exits 10 with the conflicting claims when it is refused.",
     },
     LocalCommand {
+        command: "mesh allocate",
+        reason: LocalReason::RendersCapability("plan.allocate"),
+        note: "runs plan.allocate on this checkout's running server, whose mesh admits the reservation under one lock; exits 10 when no server runs the mesh.",
+    },
+    LocalCommand {
         command: "mesh release",
         reason: LocalReason::RendersCapability("mesh.release"),
         note: "runs mesh.release on this checkout's running server, the only process that holds the claim.",
+    },
+    LocalCommand {
+        command: "mesh beat",
+        reason: LocalReason::RendersCapability("mesh.beat"),
+        note: "runs mesh.beat on this checkout's running server, whose journal carries the session's beat to every linked runtime.",
     },
     LocalCommand {
         command: "mesh session open",

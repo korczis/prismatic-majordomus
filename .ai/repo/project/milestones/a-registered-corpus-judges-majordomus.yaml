@@ -1,0 +1,47 @@
+id: a-registered-corpus-judges-majordomus
+title: "The registered corpus judges the same agent with and without Majordomus, by an exact task-level test on accepted results, and the verdict is published with its losses"
+slug: a-registered-corpus-judges-majordomus
+order: 204
+priority: p1
+problem: "Whether Majordomus delivers more accepted work than the same agent without it has never been measured. Under methodology version 1 a pair with a failed side is invalid (methodology.yaml:44), so acceptance cannot be compared in pairs; stats.rs:260 offers only a clustered interval of a median; no live run has ever been committed. I3133, which declares the acceptance pairing, is BLOCKED through I0401, whose milestone cost-per-accepted-outcome depends on execution-telemetry (BLOCKED), so T2 cannot finish inside the owner's 30-day window as the plan stands."
+outcome: "The blocking chain is cut or re-scoped by recorded decisions; the calculator decides the primary outcome by an exact task-level test and reports secondary outcomes without a verdict word; the corpus is run in both arms and the verdict, losses included, is published on the T2 row."
+current_state: "site/data/generated/plan.json derives I3133 BLOCKED (depends_on I0401), I0401 BLOCKED (milestone cost-per-accepted-outcome depends on execution-telemetry), execution-telemetry BLOCKED. git ls-files .ai/repo/benchmarks/economics/runs lists only runs/context (9 records). EconomicsSession.duration_ms (model.rs:687) is recorded and read by no metric. claims.rs:41-44 VOCABULARY holds no acceptance or wall-time word."
+desired_state: "economics summary reports the registered suite's primary verdict, its secondary differences with intervals, attempted, valid and missing pairs; runs/corpus holds every attempted run; the T2 row reads a computed status."
+scope:
+  - "apps/majordomus-cli/src/economics/stats.rs"
+  - "apps/majordomus-cli/src/economics/mod.rs"
+  - "apps/majordomus-cli/src/economics/model.rs"
+  - "apps/majordomus-cli/src/economics/report.rs"
+  - "apps/majordomus-cli/src/economics/claims.rs"
+  - "apps/majordomus-cli/tests/economics.rs"
+  - "share/schemas/generated/economics-summary.schema.json"
+  - "site/templates/economics.html"
+  - ".ai/repo/benchmarks/economics/runs"
+  - ".ai/repo/project/issues"
+  - ".ai/repo/project/issues/I0401.yaml"
+  - ".ai/repo/project/milestones/delivery-flow-is-measured.yaml"
+  - "docs/generated/economics.json"
+  - "docs/generated/economics.md"
+  - "docs/generated/economics.yaml"
+  - "site/data/generated/economics.json"
+  - "docs/ECONOMICS.md"
+  - "site/content/docs/economics.md"
+non_scope:
+  - "The definition of accepted (I0401) and the acceptance pairing (I3133)"
+  - "Arms per mechanism (I3298)"
+  - "Human interventions and CI reruns on real work (T3)"
+  - "Re-running or excluding a recorded run to change a verdict"
+acceptance_criteria:
+  - "Each blocked dependency of the program is either cut by a recorded owner decision or recorded as refused with the criteria it leaves outside the window"
+  - "The primary verdict is computed by the registered exact test and is inconclusive when underpowered"
+  - "Every declared pair is attempted and every missing or invalid pair is published with its reason"
+validation:
+  - "majordomus plan validate"
+evidence_required: []
+risks:
+  - "The owner may refuse to cut I3133's dependency; then T2 waits on execution-telemetry"
+  - "Live runs spend provider usage and are account-bound; a weekly limit can leave pairs missing, which is published as missing"
+  - "With 20 tasks the acceptance difference may well be inconclusive; that is a valid published result"
+  - "I3133 and I3298 scope the whole economics directory; the landing seat orders them against I3366 and I3371"
+created_at: 2026-10-19
+updated_at: 2026-10-19

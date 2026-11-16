@@ -1,0 +1,35 @@
+id: I3205
+milestone: delivery-flow-is-measured
+title: "A pull request's change is split into canonical, derived and incidental paths, and the drain shows each"
+slug: a-change-is-split-by-what-it-is
+priority: p2
+profile: implementation
+objective: "Classify every path a pull request changes as a canonical input, a derived projection (what .gitattributes merge=derived and the generators declare) or incidental, carry the counts on the queue's assessment, and report change amplification: how many derived files one canonical change rewrote."
+why: "On 2026-10-10 large pull requests (#807 with 706 files, #292 with 499) were unreviewable and mergeable=false dominated (c207#6); the same day another review asked how many files of a pull request are canonical versus generated, and how many open pull requests rewrite the same outputs (c216#6). It supports delivery-is-measured-per-phase and serves no criterion of the intent. Sources: chatgpt-majordomus:c207#6, chatgpt-majordomus:c216#6."
+current_state: "The integration model knows a pull request's changed paths and the derived merge driver knows derived files (.gitattributes, test/cases/57_derived_merge_driver.sh); nothing classifies a pull request's paths or measures amplification."
+desired_state: "integration.queue and integration.explain carry canonical, derived and incidental counts per pull request, derived from the declarations already in the tree; the drain screen shows them; a pull request whose only canonical change is a record is told apart from a code change."
+scope:
+  - "apps/majordomus-cli/src/integration/model.rs"
+  - "apps/majordomus-cli/src/integration/classify.rs"
+  - "docs/INTEGRATION.md"
+  - "apps/majordomus-cli/src/ui/prs.rs"
+  - "apps/majordomus-cli/src/integration/tests.rs"
+  - "apps/majordomus-cli/src/capability/builtin/integration.rs"
+  - "site/content/docs/integration.md"
+  - "docs/generated/openapi.json"
+non_scope:
+  - "Changing what is derived"
+  - "Ranking by the counts (a later decision)"
+serves:
+  - "finished-work-reaches-a-verified-release#delivery-is-measured-per-phase"
+acceptance_criteria:
+  - "The derived set is read from the tree's own declarations; no path list is written in the code"
+  - "A fixture pull request that changes one canonical file and its projections reports 1 canonical and N derived"
+  - "The counts are the same on CLI JSON, HTTP and MCP"
+validation:
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib integration::"
+  - "majordomus plan validate"
+evidence_required:
+  - "test_change_split_by_kind"
+created_at: 2026-10-18
+updated_at: 2026-10-18

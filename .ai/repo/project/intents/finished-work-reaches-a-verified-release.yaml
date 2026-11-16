@@ -1,0 +1,48 @@
+id: finished-work-reaches-a-verified-release
+title: "Finished work reaches a verified release at the pace it is finished"
+statement: "Work does not end when it is written or merged. A finished change flows to master, to a release whose version the public contract decided, and to every surface that publishes it, at the pace work is finished; the flow is measured, its backlog is loud before it is large, a red trunk holds it, and nothing calls a change delivered before its publication is observed."
+invariants:
+  - "The version is measured from the public contract by one engine and written by one writer (ADR 0051, ADR 0134)"
+  - "No check is bypassed for speed; an expedited landing is the owner's word (ADR 0155)"
+  - "Merges into master have one writer at a time (ADR 0101, ADR 0167)"
+  - "A pull request is never closed to improve a count; unfinished work is preserved and its reason recorded"
+  - "Merged, released and published are different states, and none is claimed before it is observed"
+  - "The site offers the version of the latest published release record (test/cases/1087_the_site_offers_the_release_it_published.sh, I2303); this intent adds no work for it"
+non_goals:
+  - "A second merge bot, release engine or deploy system"
+  - "Refusing new work by default (an open question to the owner)"
+  - "Publishing forecasts, scores or unmeasured percentages"
+  - "Turning the ci verdict red on a contract change without its version: .ai/repo/ci/version.yaml raises a bump pull request instead, and policy.yaml has release.allocation: off"
+  - "Running the continuous drain as a detached execution (a decision for the session-proceeds runtime work, in flight on a branch)"
+  - "A delivery or throughput figure before the owner accepts ADR 0198's definition"
+milestones:
+  - "delivery-flow-is-measured"
+  - "a-release-is-proven-end-to-end"
+  - "finished-work-reaches-a-verified-release"
+satisfaction:
+  - id: a-red-trunk-holds-the-landing
+    criterion: "While the trunk's verdict is red only its named carrier may land, and the trunk's protection requires the CI model's verdict (planned proof: red_trunk_holds_the_landing_claim_test (I2709) and case_protection_drift_is_a_finding (I3200))"
+    evidence: command
+    ref: "majordomus intent explain finished-work-reaches-a-verified-release"
+  - id: the-backlog-is-loud
+    criterion: "Past the declared backlog bound every session brief says so, and duplicate candidates are named (planned proof: case_the_backlog_bound_is_read_at_start (I3204) and test_duplicates_by_issue (I3212))"
+    evidence: command
+    ref: "majordomus intent explain finished-work-reaches-a-verified-release"
+  - id: delivery-is-measured-per-phase
+    criterion: "The time from a pull request's opening to its observed publication is measured per phase with p50, p95 and sample size (planned proof: test_integration_timings_queue (I3202), test_delivery_lead_time_phases (I3203) and test_delivery_phase_budgets (I3206))"
+    evidence: command
+    ref: "majordomus intent explain finished-work-reaches-a-verified-release"
+  - id: the-site-never-goes-back
+    criterion: "A publication never replaces the site with an older commit or an older release (planned proof: case_the_site_never_goes_back_a_commit (I3201))"
+    evidence: command
+    ref: "majordomus intent explain finished-work-reaches-a-verified-release"
+  - id: a-release-is-tagged-on-a-proven-commit
+    criterion: "Whether a commit may be released is one read naming each condition, and the release path reads the same functions (planned proof: case_release_readiness_is_one_read (I3208) and case_a_fresh_clone_reaches_published_evidence (I3213))"
+    evidence: command
+    ref: "majordomus intent explain finished-work-reaches-a-verified-release"
+  - id: finished-work-names-its-landing
+    criterion: "A finished task names the pull request that carries it and its disposition (planned proof: case_finish_names_its_pull_request (I3207))"
+    evidence: command
+    ref: "majordomus intent explain finished-work-reaches-a-verified-release"
+created_at: 2026-10-18
+updated_at: 2026-10-18

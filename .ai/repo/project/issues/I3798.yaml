@@ -1,0 +1,35 @@
+id: I3798
+milestone: mesh-journal-converges
+title: "A session's mesh claims outlive a lease takeover of the server it made them on"
+slug: a-session-s-claims-outlive-a-restart
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Keep a session's claims live across a lease takeover of the shared server: a claim stays held while any instance of the same node and runtime beats and its session re-opens on that runtime within the busy grace plus one expiry, keeping its original acquisition order; it expires at that bound when the session never comes back, and an instance of another runtime never keeps it alive. Implemented by f8, who holds mesh-journal-converges and found the cause (claim c-f1818acaf75b; its first key c-b50ea7240ad4 was itself dropped by a takeover, the bug demonstrated a fifth time)."
+why: "On 2026-10-20 the shared server of the primary checkout restarted at about 20:34Z, and 9c had to tell every worker to re-claim (d3's milestone:M004 among them); it was then taken over four more times (22:10, 22:25, 22:27 and 22:36Z, each a 'superseded lease' in the server log), after a rebuilt target/debug/majordomus or a newer release won the lease. The old server hands its MCP sessions on (I2127) and stops; its mesh stream <node>-<runtime>-<instance> stops beating, and the fold expires every claim on it, although the mesh session id and the runtime id are the same on the successor and only the instance changed. Every exclusive milestone claim of the sessions it served lapsed while they went on working (session d3 re-claimed its four twice by hand; 9c had to tell every worker), and an exclusive claim that silently lapses is the lock it exists to be until the next worker takes the same milestone."
+current_state: "A claim belongs to the stream of the runtime instance that accepted it; when that stream expires, its claims expire with it. A lease takeover changes the instance and keeps the node, the runtime and the session ids, so every claim it carried is dropped while its session is attached to the successor. Compaction then removes the dead instance's stream entirely: claims c-b50ea7240ad4, c-bc52b94b7b8f and c-fc1d262e7914 were absent from the state on 2026-10-21, not merely expired."
+desired_state: "The fold keeps a claim held while an instance of its node and runtime beats and its session re-opens on that runtime within busy grace + one expiry; the claim keeps its acquisition order, so a later claim from another runtime still conflicts with it; it expires at the bound when its session never re-attaches; no new event kind is introduced; it is independent of I3174's fencing epochs. A session re-opens on the successor without its client doing anything: the server that takes the lease reads its predecessor instances' active sessions and re-opens, on its own stream, each one whose client process (I3810) still exists on this machine; a session that only holds claims and says nothing is therefore carried, and one whose client has ended is not."
+scope:
+  - "apps/majordomus-cli/src/mesh/state.rs"
+  - "apps/majordomus-cli/src/mesh/journal.rs"
+  - "apps/majordomus-cli/src/mesh/cooperation.rs"
+  - "apps/majordomus-cli/tests/mesh_cooperation.rs"
+  - "docs/MESH.md"
+non_scope:
+  - "Fencing an exclusive claim against a returning holder, which is I3174"
+  - "The bridge's replay of board announcements after a re-attach, which is I3609"
+depends_on: [I3810]
+acceptance_criteria:
+  - "A claim survives a lease takeover once its session re-attaches to the successor, and a later claim from another runtime conflicts with it"
+  - "A claim expires at busy grace + one expiry when its session never re-attaches"
+  - "An instance of a different runtime does not keep the claim alive"
+  - "Compaction keeps a dead instance's stream while a claim on it is carried by a live instance of the same runtime, and drops it once that claim ends"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --lib mesh::state"
+  - "cargo test --lib mesh::journal"
+  - "cargo test --test mesh_cooperation"
+evidence_required:
+  - "claims_outlive_a_lease_takeover_test"
+created_at: 2026-10-20
+updated_at: 2026-10-21

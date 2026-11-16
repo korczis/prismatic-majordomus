@@ -1,0 +1,37 @@
+id: I3841
+milestone: a-change-is-judged-in-minutes
+title: "The plan's graph is drawn by milestone, so /plan/dag/ answers the site probe within its budget however large the backlog grows"
+slug: the-plan-graph-is-drawn-by-milestone
+priority: p1
+profile: implementation
+objective: "Bound what /plan/dag/ and /plan/ draw by the number of milestones rather than the number of issues: scripts/generate-site-data adds to plan.json a milestone graph (milestone_edges, one entry per pair of milestones an issue dependency crosses, counted, and milestone_mermaid, one node per milestone with its done count and status), both pages draw it, /plan/dag/ lists the milestone edges as its text equivalent and points to the waves on /plan/, and every milestone node links to the milestone's own page, which already draws its issues; a case holds /plan/dag/ to an element ceiling and its graph to one node per milestone."
+why: "On 2026-10-21 master's validate 39645593645 (97391192dbb, the 1.0.0-alpha.4 head) went red in site-probe-shard (5): /plan/dag/ did not answer within 90 s. Measured that day (6a2e) on majordomus.dev with headless Chrome at 1536 px: 26,881 elements, 1,202,261 bytes, 44,748 px tall, a mermaid graph of every issue (824 nodes, 779 edges, 82,663 characters of source), an edge table of 779 rows that looks every issue up twice per row, and the waves listing all 801 issues again (the same lists /plan/ carries). Every one of those grows with the backlog; the graph's layout grows faster than linearly in it. This is the remainder I3838 named (the plan graph about 12,700 of the 21,589 elements /plan/ had left). The milestone graph is 100 nodes, 111 counted edges and 18,600 characters at the same tree, and each milestone's page already draws its own issues (at most 11,008 characters). Id I3841 and case 3860 from 9c (board id-I3841-6a2e); a3 asked for it for train 4."
+current_state: "/plan/dag/ and /plan/ draw plan.mermaid, the graph of every issue; /plan/dag/ also prints every issue edge and every wave in full."
+desired_state: "/plan/dag/ and /plan/ draw plan.json's milestone_mermaid, one node per milestone with counted arrows; /plan/dag/ prints the milestone edges with the issue pairs behind each and links to the waves on /plan/; scripts/site-check holds every edge of plan.json to the page that owns it (a milestone edge to the graph /plan/dag/ draws, an edge inside a milestone to that milestone's graph, an edge that crosses milestones to the list on /plan/dag/); every issue edge stays in plan.json's edges and in majordomus plan graph, and each milestone's page draws its issues; a case fails when /plan/dag/ passes its element ceiling or its graph stops being one node per milestone."
+scope:
+  - "site/templates/dag.html"
+  - "site/templates/plan-section.html"
+  - "scripts/generate-site-data"
+  - "scripts/site-check"
+  - "test/cases/3860_the_plan_graph_is_drawn_by_milestone.sh"
+  - "site/content"
+  - "site/data/generated"
+  - "docs/generated"
+non_scope:
+  - "Raising the site probe's 90 s budget or excluding /plan/dag/ from it"
+  - "The milestone pages' own graphs, which draw one milestone's issues"
+  - "How majordomus plan graph draws the whole graph at a terminal"
+serves:
+  - "a-change-is-judged-in-minutes#pr-verdict-within-five-minutes"
+depends_on: []
+acceptance_criteria:
+  - "plan.json carries milestone_edges and milestone_mermaid; the graph has one node per milestone and one counted arrow per pair of milestones an issue dependency crosses, and the counts add up to the cross-milestone issue edges"
+  - "/plan/dag/ and /plan/ draw the milestone graph and not the graph of every issue; every milestone node links to the milestone's page"
+  - "A case fails when /plan/dag/ in the built site passes its element ceiling, and passes at the tree it lands with"
+  - "The site probe visits /plan/dag/ within its budget"
+validation:
+  - "bash test/run.sh 3860_the_plan_graph_is_drawn_by_milestone"
+evidence_required:
+  - "case_the_plan_graph_is_drawn_by_milestone"
+created_at: 2026-10-21
+updated_at: 2026-10-21

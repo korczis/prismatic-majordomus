@@ -11,8 +11,8 @@
 # The fixture reproduces exactly that: a `cargo` on PATH that sets its own CARGO_HOME, as the
 # shim does, and a shell whose CARGO_HOME names another directory, laid out as a decoy that
 # the old reaper reclaimed. Then the refusals (project.destructive-sweeps-fail-closed): no
-# answer from cargo, an answer without a build directory, and a directory without cargo's
-# CACHEDIR.TAG each reclaim nothing and say why; and a session's private
+# answer from cargo and an answer without a build directory each reclaim nothing and say why,
+# a directory without cargo's CACHEDIR.TAG is never removed whole (only its stale units, I4340); and a session's private
 # CARGO_BUILD_BUILD_DIR does not redirect the sweep onto that session's directory.
 . "$ROOT/test/lib.sh"
 
@@ -106,12 +106,13 @@ expect_grep 'cargo-home/build-shared/majordomus +[0-9.]+(MB|GB) +reclaimed'
 [ -f "$PRIVATE_DIR/debug/blob" ] || { echo "    --reclaim removed a session's private build directory"; exit 1; }
 
 # ---------------------------------------------------------------- what cannot be proven is kept
-# no CACHEDIR.TAG: another of cargo's marks is not enough for a removal of the whole directory
+# no CACHEDIR.TAG: another of cargo's marks is not enough for a removal of the whole directory,
+# only for an eviction of its stale units under cargo's lock (I4340; case 3959 proves those go)
 rm -rf "$REAL_DIR"; fill "$REAL_DIR" untagged
 rc=0; LAST_OUT="$(run real --targets --reclaim)" || rc=$?
 [ "$rc" = 0 ] || { echo "    --reclaim exited $rc on an untagged directory"; printf '%s\n' "$LAST_OUT"; exit 1; }
-expect_grep 'carries no CACHEDIR.TAG of cargo.s: not provably the build directory cargo named'
-expect_grep 'skipped 1 for want of a readable input'
+expect_grep 'carries no CACHEDIR.TAG of cargo.s, so it is not removed whole: evicting stale units'
+expect_no_grep 'cargo-home/build-shared/majordomus +[0-9.]+(MB|GB) +reclaimed'
 [ -f "$REAL_DIR/debug/blob" ] || { echo "    an untagged directory was removed"; exit 1; }
 
 rm -rf "$REAL_DIR"; fill "$REAL_DIR"

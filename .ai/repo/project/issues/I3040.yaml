@@ -1,0 +1,30 @@
+id: I3040
+milestone: "a-session-proceeds"
+title: "An id is taken by one atomic claim"
+slug: an-id-is-taken-by-one-atomic-claim
+priority: p0
+profile: implementation
+parallel_safe: false
+objective: "Add plan.allocate (a command that writes only the mesh journal; MCP majordomus_plan_allocate, POST /api/v1/plan/allocate, `majordomus mesh allocate <issue|case|adr> --session S [--at-least N]`): survey this tree, the sibling worktrees, every ref (git log --all --diff-filter=A) and every reservation the mesh journal remembers, take one past the highest (or --at-least), and reserve it with one exclusive mesh claim on the identifier's own key `id:<kind>/<n>`, moving to the next number on a claim_conflict and naming its holder."
+why: "On 2026-10-17 I2795, case 3178 and case 3221 were each taken twice in one day and renumbered three times, each found only by a 10-15 minute pre-push; the seats then agreed per-seat id blocks as a stopgap and named `plan allocate` (owned by 30, who has left) as its replacement, first after the alpha. scripts/case-numbers next (master, from feat/a-case-number-is-allocated 4645a3ca72a) says of itself that its answer is 'a best reading, not a reservation'; fix/adr-number-allocation (7c247e6199a, lib/adr.sh) and wip/case-number-allocator (9b729014e36) are earlier unlanded attempts whose survey logic this folds in. The mesh's exclusive claim already refuses a second holder on one runtime; across runtimes the fold names the winner until mesh-journal-converges adds fencing."
+current_state: "A number is surveyed (scripts/case-numbers next, majordomus adr next) and then announced in prose on the board; nothing reserves it, and the seats hold hand-assigned blocks."
+desired_state: "majordomus mesh allocate answers a number only its caller holds, reserved by an exclusive mesh claim on the id key; six allocations at once answer six numbers; a number on any ref or reserved in the journal is never handed out again."
+serves:
+  - a-session-proceeds#an-id-is-reserved-once
+scope:
+  - "apps/majordomus-cli/src/capability/builtin"
+  - "apps/majordomus-cli/src/cli.rs"
+  - "apps/majordomus-cli/src/commands/mesh.rs"
+  - "test/cases/3440_an_id_is_taken_by_one_atomic_claim.sh"
+depends_on: []
+acceptance_criteria:
+  - "Allocations of one kind at once on one runtime answer different numbers, and a number another session holds is skipped with its holder named"
+  - "A number on any ref, in any sibling worktree or reserved in the mesh journal is never handed out again"
+  - "Across linked runtimes two claims made before they sync are both admitted and the fold names one winner; the loser allocates again (fencing is mesh-journal-converges')"
+validation:
+  - "majordomus plan validate"
+  - "bash test/run.sh 3440_an_id_is_taken_by_one_atomic_claim"
+evidence_required:
+  - "case_an_id_is_taken_by_one_atomic_claim"
+created_at: 2026-10-18
+updated_at: 2026-10-18

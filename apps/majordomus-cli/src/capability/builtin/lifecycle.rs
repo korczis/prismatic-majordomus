@@ -803,6 +803,15 @@ pub struct ProviderLifecycle {
     /// question for `majordomus capture status`, which is the command that owns it.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub wired: Vec<String>,
+    /// The official seams through which the provider reports what a session consumed, as
+    /// share/providers.yaml declares them (`otel`, `app-server`, `stream-json`, or `none`
+    /// alone; I3287). Empty when the declaration says nothing, which is not the same answer
+    /// as `none`.
+    #[serde(default)]
+    pub usage: Vec<crate::share::UsageSource>,
+    /// Where `usage` was verified.
+    #[serde(default, skip_serializing_if = "String::is_empty")]
+    pub usage_evidence: String,
     /// What the two together mean.
     pub note: String,
 }
@@ -1424,6 +1433,8 @@ fn providers(ctx: &Context, _: Empty) -> Result<ProviderLifecycles, CapabilityEr
                 prompt_capture: d.prompt_capture,
                 client_config: d.client_config.clone().unwrap_or_default(),
                 wired: w,
+                usage: d.offers.usage.clone(),
+                usage_evidence: d.offers.usage_evidence.clone(),
                 note,
             }
         })
@@ -1594,7 +1605,7 @@ pub fn module() -> ModuleDescriptor {
             capability! {
                 id: "lifecycle.providers",
                 title: "What each provider's adapter declares",
-                description: "Per provider: the lifecycle events its adapter declares in the provider's own vocabulary, whether it can archive prompts, and which of this repository's enforcement entries name its hook. Declared in share/providers.yaml and in the policy; never inferred from whether a shim happens to be on disk.",
+                description: "Per provider: the lifecycle events its adapter declares in the provider's own vocabulary, whether it can archive prompts, the official seams through which it reports what a session consumed (usage, with the citation), and which of this repository's enforcement entries name its hook. Declared in share/providers.yaml and in the policy; never inferred from whether a shim happens to be on disk.",
                 input: Empty,
                 output: ProviderLifecycles,
                 stability: Stability::BehaviorallyVerified,

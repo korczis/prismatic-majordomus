@@ -1,5 +1,5 @@
 +++
-title = "What each provider can do about the session lifecycle and prompt capture is one declaration with a citation per cell, every surface projects it, and no provider the declaration names goes unreported"
+title = "What each provider can do about the session lifecycle, prompt capture, driving a browser beside this server and reporting what a session consumed is one declaration with a citation per cell, every surface projects it, and no provider the declaration names goes unreported"
 description = "A tool that says what somebody else's product can do is making a claim about a third party. This repository was making two of them wrong at once."
 weight = 178
 [extra]

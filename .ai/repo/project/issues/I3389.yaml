@@ -1,0 +1,39 @@
+id: I3389
+milestone: the-mesh-is-measured-against-one-agent
+title: "The mesh suite is run in both arms and its guarded verdict is published with its losses"
+slug: the-mesh-suite-is-run-and-published
+priority: p1
+profile: implementation
+objective: "Dry-run, rehearse one pair, then run every declared job of suite mesh in the registered order, commit the run records under .ai/repo/benchmarks/economics/runs/mesh, regenerate the reports and publish the T4 verdict with its guard, stating that it is a one-host result."
+why: "T4 of the owner's report of 2026-10-19 asks for the speed-up to be shown; the result is published whether favourable or not."
+current_state: "No mesh run exists."
+desired_state: "runs/mesh holds every attempted run; T4 reads a computed status."
+scope:
+  - ".ai/repo/benchmarks/economics/runs"
+  - "docs/generated/economics.json"
+  - "docs/generated/economics.md"
+  - "docs/generated/economics.yaml"
+  - "site/data/generated/economics.json"
+non_scope:
+  - "Editing the registration during the runs"
+  - "Excluding a run"
+depends_on:
+  - "I3388"
+  - "I3354"
+serves:
+  - "the-product-proves-it-pays#the-mesh-verdict-is-published"
+acceptance_criteria:
+  - "Every declared pair is attempted, and each missing or invalid pair is named"
+  - "The guard's bound is published beside the verdict"
+  - "The published result states it is a one-host result"
+  - "majordomus economics check and majordomus generate --check pass"
+validation:
+  - "majordomus economics summary"
+  - "majordomus economics proof"
+  - "majordomus economics check"
+  - "majordomus generate --check"
+evidence_required:
+  - "mesh_run_records"
+  - "mesh_verdict_published"
+created_at: 2026-10-19
+updated_at: 2026-10-19

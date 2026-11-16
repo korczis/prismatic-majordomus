@@ -121,7 +121,7 @@ mod tests {
         std::fs::create_dir_all(repo.root().join(".ai/repo/mesh")).unwrap();
         std::fs::write(
             repo.root().join(".ai/repo/mesh/mesh.yaml"),
-            "enabled: true\n",
+            "enabled: true\ntrust:\n  policy: tofu\n",
         )
         .unwrap();
         (repo, ctx)

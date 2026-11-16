@@ -244,6 +244,76 @@ pub struct Readiness {
     /// diagnostics, and a client decides whether that is enough.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub reasons: Vec<String>,
+    /// The mesh, as this process decided it: present only in a process that holds a lease,
+    /// because only a shared server runs a mesh. It never makes `ready` false — a server
+    /// whose mesh is not running still answers every request — but it is what
+    /// `server.status` refines `ready` into `mesh_attaching`, `operational` or `degraded`
+    /// with (I3179).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub mesh: Option<MeshReadiness>,
+}
+
+/// The mesh in a readiness report: whether the repository declares it enabled, whether this
+/// server has decided it yet, and the verdict `mesh doctor`'s runtime check gives.
+///
+/// ```
+/// use majordomus_cli::capability::builtin::health::MeshReadiness;
+/// let m = MeshReadiness { enabled: true, attaching: true, ok: true, detail: "deciding".into() };
+/// assert_eq!(serde_json::to_value(&m).unwrap()["attaching"], true);
+/// ```
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+pub struct MeshReadiness {
+    /// Whether the repository declares its mesh enabled.
+    pub enabled: bool,
+    /// Whether the declaration is enabled and this server has not decided the mesh yet.
+    pub attaching: bool,
+    /// Whether the mesh stands as declared: off when it is not declared, running when it is.
+    pub ok: bool,
+    /// The verdict's words.
+    pub detail: String,
+}
+
+/// The mesh of this process, for its readiness report: `None` in a process that holds no
+/// lease, which runs no mesh to report.
+fn mesh_readiness(ctx: &Context) -> Option<MeshReadiness> {
+    crate::lease::held()?;
+    let declaration = super::mesh::declaration(ctx);
+    Some(mesh_readiness_of(
+        declaration,
+        ctx.mesh.decided().then(|| ctx.mesh.status()).as_ref(),
+    ))
+}
+
+/// The decision [`mesh_readiness`] makes, over the declaration and the runtime's status
+/// (`None` while the server has not decided the mesh).
+fn mesh_readiness_of(
+    declaration: Option<Result<crate::mesh::MeshConfig, crate::mesh::MeshError>>,
+    decided: Option<&crate::mesh::manager::MeshStatus>,
+) -> MeshReadiness {
+    let enabled = matches!(&declaration, Some(Ok(c)) if c.enabled);
+    match decided {
+        None if enabled => MeshReadiness {
+            enabled,
+            attaching: true,
+            ok: true,
+            detail: "the mesh is declared enabled and this server has not decided it yet".into(),
+        },
+        None => MeshReadiness {
+            enabled,
+            attaching: false,
+            ok: true,
+            detail: "the mesh is not declared enabled: nothing to attach".into(),
+        },
+        Some(status) => {
+            let verdict = crate::mesh::doctor::runtime_verdict(declaration, Some(status));
+            MeshReadiness {
+                enabled,
+                attaching: false,
+                ok: verdict.ok,
+                detail: verdict.detail,
+            }
+        }
+    }
 }
 
 /// Liveness. No filesystem, no index traversal, no network: two fields this process can
@@ -261,6 +331,12 @@ fn liveness(_: &Context, _: Empty) -> Result<Liveness, CapabilityError> {
 /// resident: the registry it built, the index it built, and how that index read. Nothing
 /// here contacts a provider, a database or another service, and nothing here walks a tree.
 fn readiness(ctx: &Context, _: Empty) -> Result<Readiness, CapabilityError> {
+    Ok(readiness_report(ctx))
+}
+
+/// The readiness report of this process: what `health.ready` answers, for a reader in this
+/// process that must not ask itself over the wire (`server.status` about its own server).
+pub(crate) fn readiness_report(ctx: &Context) -> Readiness {
     let capabilities = ctx.registry.summary().total;
     let objects = ctx.index.objects.len();
     let stale = crate::lease::serving_replaced_code();
@@ -278,7 +354,7 @@ fn readiness(ctx: &Context, _: Empty) -> Result<Readiness, CapabilityError> {
             ctx.index.diagnostics.len()
         ));
     }
-    Ok(Readiness {
+    Readiness {
         ready: capabilities > 0 && stale.is_none() && !lost,
         reasons,
         version: crate::VERSION.into(),
@@ -291,7 +367,8 @@ fn readiness(ctx: &Context, _: Empty) -> Result<Readiness, CapabilityError> {
             State::Ok => HealthStatus::Ok,
         },
         stale,
-    })
+        mesh: mesh_readiness(ctx),
+    }
 }
 
 /// Record one dimension, and say on the execution's stream that it was decided.
@@ -309,6 +386,36 @@ fn record(checks: &mut Vec<HealthCheck>, p: &crate::execution::Progress, check: 
     );
     checks.push(check);
     p.progress(checks.len() as u64, None, "dimension(s) decided");
+}
+
+/// The server dimension's status for a checkout whose server stands at `standing`, in a
+/// process that still holds its lease. Decided for every state, the runtime's included,
+/// although `standing_at` says only the lease's five words today: a surface that is handed
+/// a runtime state judges it here, and is not left to guess.
+fn server_status_of(standing: ServerStanding) -> HealthStatus {
+    match standing {
+        // A checkout nobody serves is not an unhealthy one: nothing is running and nothing
+        // claims to be. A lease still binding resolves itself within the bind grace, and is
+        // reported as stale by this same engine when it does not. Neither is a fault of what
+        // this process serves.
+        ServerStanding::Absent | ServerStanding::Starting | ServerStanding::Ready => {
+            HealthStatus::Ok
+        }
+        // the runtime's refinements are never what `standing_at` decides; each is judged as
+        // the lease's word it refines would be, and a gone or not whole runtime is
+        // somebody's to clear like a stale lease
+        ServerStanding::Building
+        | ServerStanding::MeshAttaching
+        | ServerStanding::Operational
+        | ServerStanding::Stopping
+        | ServerStanding::Stopped => HealthStatus::Ok,
+        ServerStanding::Degraded | ServerStanding::Failed => HealthStatus::Warn,
+        // A server answering from code this tree no longer has says yesterday's truth in
+        // today's words, and a lease naming one that answers for nobody sends the next reader
+        // at a dead address. Both are somebody's to clear; neither stops this process from
+        // serving, so neither is a failure.
+        ServerStanding::Outdated | ServerStanding::Stale => HealthStatus::Warn,
+    }
 }
 
 /// The attached-clients dimension, from the board this process holds (`None` when it holds
@@ -454,25 +561,12 @@ fn health(ctx: &Context, _: Empty) -> Result<Health, CapabilityError> {
     );
 
     // --- git
-    let (git_status, git_detail) = match &index.repository.git {
-        GitState::Available(info) => {
-            let head = info.head.as_deref().unwrap_or("(unborn)");
-            (
-                if info.working_tree == "clean" {
-                    HealthStatus::Ok
-                } else {
-                    HealthStatus::Warn
-                },
-                format!(
-                    "{} at {}, working tree {}",
-                    info.branch.as_deref().unwrap_or("(detached)"),
-                    &head[..12.min(head.len())],
-                    info.working_tree
-                ),
-            )
-        }
-        GitState::Unavailable { reason } => (HealthStatus::Unknown, reason.clone()),
-    };
+    let (git_status, git_detail, git_decided_by) = git_verdict(
+        &index.repository.git,
+        &index.repository.discovery,
+        crate::COMMIT,
+        crate::DIRTY,
+    );
     record(
         &mut checks,
         &ctx.progress,
@@ -481,7 +575,7 @@ fn health(ctx: &Context, _: Empty) -> Result<Health, CapabilityError> {
             title: "Version control".into(),
             status: git_status,
             detail: git_detail,
-            decided_by: "git, as the index asked it when it was built".into(),
+            decided_by: git_decided_by.into(),
             evidence: vec!["git status".into()],
             findings: Vec::new(),
         },
@@ -662,21 +756,7 @@ fn health(ctx: &Context, _: Empty) -> Result<Health, CapabilityError> {
             status: if orphaned {
                 HealthStatus::Warn
             } else {
-                match standing {
-                    // A checkout nobody serves is not an unhealthy one: nothing is running
-                    // and nothing claims to be. A lease still binding resolves itself
-                    // within the bind grace, and is reported as stale by this same engine
-                    // when it does not. Neither is a fault of what this process serves.
-                    ServerStanding::Absent | ServerStanding::Starting | ServerStanding::Ready => {
-                        HealthStatus::Ok
-                    }
-                    // A server answering from code this tree no longer has says yesterday's
-                    // truth in today's words, and a lease naming one that answers for
-                    // nobody sends the next reader at a dead address. Both are somebody's
-                    // to clear; neither stops this process from serving, so neither is a
-                    // failure.
-                    ServerStanding::Outdated | ServerStanding::Stale => HealthStatus::Warn,
-                }
+                server_status_of(standing)
             },
             detail: if orphaned {
                 format!("{detail}; and this process is not it")
@@ -870,10 +950,183 @@ fn continuity_health(
     }
 }
 
+/// The `git` check: the checkout git describes, or — for a deployed build with no checkout
+/// to ask — the commit the executable was built from.
+///
+/// A hosted deployment receives a tree assembled from the deployment object, never a clone,
+/// so `git` there has nothing to answer and the check read `unknown` for a process whose
+/// commit is known exactly: the build identity names it, and `/api/v1/live` already serves
+/// it. Only a process that reads its layer from the filesystem (the deployed command lines
+/// pass `--discovery filesystem`) and was built from a named commit falls back to that
+/// identity; a version-control checkout git cannot read stays `unknown`, because there the
+/// build commit says nothing about the tree being served. A dirty build is a warning, as a
+/// dirty working tree is.
+///
+/// ```
+/// use majordomus_cli::capability::builtin::health::git_verdict;
+/// use majordomus_cli::capability::builtin::health::HealthStatus;
+/// use majordomus_cli::git::GitState;
+///
+/// let none = GitState::Unavailable { reason: "git: not a git repository".into() };
+/// let (s, d, by) = git_verdict(&none, "filesystem", "0123456789abcdef0123", Some(false));
+/// assert_eq!(s, HealthStatus::Ok);
+/// assert!(d.contains("0123456789ab") && by.contains("build identity"), "{d} / {by}");
+///
+/// // a checkout git cannot read is still not known, whatever the executable was built from
+/// let (s, _, _) = git_verdict(&none, "vcs", "0123456789abcdef0123", Some(false));
+/// assert_eq!(s, HealthStatus::Unknown);
+/// ```
+pub fn git_verdict(
+    git: &GitState,
+    discovery: &str,
+    commit: &str,
+    dirty: Option<bool>,
+) -> (HealthStatus, String, &'static str) {
+    match git {
+        GitState::Available(info) => {
+            let head = info.head.as_deref().unwrap_or("(unborn)");
+            (
+                if info.working_tree == "clean" {
+                    HealthStatus::Ok
+                } else {
+                    HealthStatus::Warn
+                },
+                format!(
+                    "{} at {}, working tree {}",
+                    info.branch.as_deref().unwrap_or("(detached)"),
+                    &head[..12.min(head.len())],
+                    info.working_tree
+                ),
+                "git, as the index asked it when it was built",
+            )
+        }
+        GitState::Unavailable { .. }
+            if discovery == "filesystem" && !commit.is_empty() && commit != "unknown" =>
+        {
+            let state = match dirty {
+                Some(false) => "clean",
+                Some(true) => "dirty",
+                None => "of unknown cleanliness",
+            };
+            (
+                if dirty == Some(false) {
+                    HealthStatus::Ok
+                } else {
+                    HealthStatus::Warn
+                },
+                format!(
+                    "no checkout here (a deployed tree): built from commit {}, {state}",
+                    &commit[..12.min(commit.len())]
+                ),
+                "the build identity this executable carries, since there is no checkout to ask",
+            )
+        }
+        GitState::Unavailable { reason } => (
+            HealthStatus::Unknown,
+            reason.clone(),
+            "git, as the index asked it when it was built",
+        ),
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
     use crate::synthetic::{Shape, SyntheticRepository};
+
+    /// The mesh in a readiness report, for each way it can stand: not declared, declared
+    /// and not decided yet (attaching), decided and running or declined (I3179).
+    #[test]
+    fn the_mesh_in_a_readiness_report_says_attaching_running_or_not() {
+        use crate::mesh::manager::MeshRuntime;
+        use crate::mesh::MeshConfig;
+        let declared = |enabled: bool| -> Option<Result<MeshConfig, crate::mesh::MeshError>> {
+            Some(Ok(serde_json::from_value(serde_json::json!({
+                "schema": "mesh/v1", "kind": "mesh-declaration", "id": "x", "enabled": enabled,
+            }))
+            .unwrap()))
+        };
+        let none = mesh_readiness_of(None, None);
+        assert!(!none.enabled && !none.attaching && none.ok, "{none:?}");
+        let off = mesh_readiness_of(declared(false), None);
+        assert!(!off.enabled && !off.attaching && off.ok, "{off:?}");
+        let attaching = mesh_readiness_of(declared(true), None);
+        assert!(
+            attaching.enabled && attaching.attaching && attaching.ok,
+            "{attaching:?}"
+        );
+        let server = MeshRuntime::new();
+        server.decline("the node identity did not load");
+        let declined = mesh_readiness_of(declared(true), Some(&server.status()));
+        assert!(
+            declined.enabled && !declined.attaching && !declined.ok,
+            "{declined:?}"
+        );
+        assert!(declined.detail.ends_with("the node identity did not load"));
+        let not_declared = mesh_readiness_of(None, Some(&server.status()));
+        assert!(
+            !not_declared.attaching && not_declared.ok,
+            "{not_declared:?}"
+        );
+    }
+
+    /// Every one of the twelve states has a server status: a runtime state is judged as the
+    /// lease's word it refines, except that a runtime gone or not whole warns like a stale
+    /// lease does (I3179).
+    #[test]
+    fn every_server_state_has_a_health_status() {
+        use ServerStanding as S;
+        let ok = [
+            S::Absent,
+            S::Starting,
+            S::Ready,
+            S::Building,
+            S::MeshAttaching,
+            S::Operational,
+            S::Stopping,
+            S::Stopped,
+        ];
+        let warn = [S::Outdated, S::Stale, S::Degraded, S::Failed];
+        for s in ok {
+            assert_eq!(server_status_of(s), HealthStatus::Ok, "{s:?}");
+        }
+        for s in warn {
+            assert_eq!(server_status_of(s), HealthStatus::Warn, "{s:?}");
+        }
+        assert_eq!(ok.len() + warn.len(), 12, "every state is judged");
+    }
+
+    /// A deployed tree has no checkout: its commit comes from the build identity, a dirty or
+    /// unknown build is a warning, and only a filesystem-discovered layer falls back at all.
+    #[test]
+    fn a_deployed_build_names_its_commit_and_a_checkout_does_not_borrow_it() {
+        let none = GitState::Unavailable {
+            reason: "git: not a git repository".into(),
+        };
+        let sha = "2034d4a3f0b2f00ee0260f291330788448556b3b";
+        let (s, d, by) = git_verdict(&none, "filesystem", sha, Some(false));
+        assert_eq!(s, HealthStatus::Ok);
+        assert!(d.contains("2034d4a3f0b2") && d.contains("clean"), "{d}");
+        assert!(by.contains("build identity"), "{by}");
+        assert_eq!(
+            git_verdict(&none, "filesystem", sha, Some(true)).0,
+            HealthStatus::Warn
+        );
+        assert_eq!(
+            git_verdict(&none, "filesystem", sha, None).0,
+            HealthStatus::Warn
+        );
+        // no named commit, or a version-control layer: still not known
+        let (s, d, _) = git_verdict(&none, "filesystem", "unknown", Some(false));
+        assert_eq!(
+            (s, d.as_str()),
+            (HealthStatus::Unknown, "git: not a git repository")
+        );
+        assert_eq!(
+            git_verdict(&none, "vcs", sha, Some(false)).0,
+            HealthStatus::Unknown
+        );
+    }
 
     /// No board is no evidence: a process that holds no lease cannot say who is attached,
     /// and says so rather than reporting an empty board as a healthy one.

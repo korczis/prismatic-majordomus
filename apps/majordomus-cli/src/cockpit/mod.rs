@@ -85,54 +85,45 @@ pub struct Cockpit {
     assets: Assets,
 }
 
+/// The plain routes the dispatcher answers that no area of the navigation names: pages a
+/// reader reaches from another page, which the sidebar does not carry.
+const PAGES_WITHOUT_AN_AREA: &[&str] = &[
+    "/cockpit/object",
+    "/cockpit/graphs/topology",
+    "/cockpit/monitor",
+    "/cockpit/search",
+    "/cockpit/activity",
+];
+
 /// Every route the dispatcher answers without an identifier in the path, and the area each
 /// one belongs to — `""` for a page that belongs to none, which the sidebar does not carry.
 ///
-/// Written beside the `match` that answers them rather than derived from it, because a
-/// `match` over string literals is not data a program can read back at run time. What keeps
-/// the two honest is that both are compared, in each direction:
-/// `every_page_renders_complete_html_with_the_shell_and_the_security_headers` drives this
-/// list over a socket, so a route the dispatcher lost is a failure;
+/// Derived from the navigation (I1009): every area of `nav::areas` is a route under its
+/// own id, so the sidebar and this list cannot name different Cockpits, and only the pages
+/// no area names are written down, in `PAGES_WITHOUT_AN_AREA`. The `match` that answers
+/// them is not data a program can read back at run time, so what keeps the two honest is
+/// that both are compared, in each direction:
+/// `every_page_renders_complete_html_with_the_shell_and_the_security_headers` drives these
+/// routes over a socket, so a route the dispatcher lost is a failure;
 /// `every_plain_arm_of_the_dispatcher_is_a_static_route` reads the `match` from this file's
-/// source, so an arm added there and not here is a failure; and
-/// `every_area_has_a_route_and_every_route_its_area` compares it against the navigation, so
-/// a page nothing links to is a failure too. Integration, Reasoning and Economics were the
-/// second kind: each arm and area landed after this list was written, and nothing compared
-/// the list with the `match` it describes. `/cockpit/quality` was exactly that page: the
-/// dispatcher answered it, the navigation did not name it, and no test and no browser sweep
-/// could reach it, for as long as the two lists were kept by hand and never compared.
-pub const STATIC_ROUTES: &[(&str, &str)] = &[
-    (PREFIX, "overview"),
-    ("/cockpit/capabilities", "capabilities"),
-    ("/cockpit/commands", "commands"),
-    ("/cockpit/objects", "objects"),
-    ("/cockpit/object", ""),
-    ("/cockpit/executions", "executions"),
-    ("/cockpit/graphs", "graphs"),
-    ("/cockpit/graphs/topology", ""),
-    ("/cockpit/continuity", "continuity"),
-    ("/cockpit/intents", "intents"),
-    ("/cockpit/plan", "plan"),
-    ("/cockpit/worktrees", "worktrees"),
-    ("/cockpit/peers", "peers"),
-    ("/cockpit/integration", "integration"),
-    ("/cockpit/trains", "trains"),
-    ("/cockpit/mesh", "mesh"),
-    ("/cockpit/monitor", ""),
-    ("/cockpit/models", "models"),
-    ("/cockpit/reasoning", "reasoning"),
-    ("/cockpit/economics", "economics"),
-    ("/cockpit/directories", "directories"),
-    ("/cockpit/health", "health"),
-    ("/cockpit/quality", "quality"),
-    ("/cockpit/artifacts", "artifacts"),
-    ("/cockpit/release", "release"),
-    ("/cockpit/design", "design"),
-    ("/cockpit/api", "api"),
-    ("/cockpit/mcp", "mcp"),
-    ("/cockpit/search", ""),
-    ("/cockpit/activity", ""),
-];
+/// source, so an arm added there and not here is a failure. Integration, Reasoning and
+/// Economics were that kind: each arm and area landed after a hand-kept list of these routes
+/// was written, and nothing compared the list with the `match` it describes.
+/// `/cockpit/quality` was exactly that page: the dispatcher answered it, the navigation did
+/// not name it, and no test and no browser sweep could reach it.
+///
+/// ```
+/// let routes = majordomus_cli::cockpit::static_routes();
+/// assert!(routes.contains(&("/cockpit/capabilities", "capabilities")));
+/// assert!(routes.contains(&("/cockpit/monitor", "")));
+/// ```
+pub fn static_routes() -> Vec<(&'static str, &'static str)> {
+    nav::areas()
+        .iter()
+        .map(|area| (area.href, area.id))
+        .chain(PAGES_WITHOUT_AN_AREA.iter().map(|path| (*path, "")))
+        .collect()
+}
 
 impl Cockpit {
     /// A Cockpit over a view of the repository, serving its assets from `share_dir/cockpit`.
@@ -451,34 +442,32 @@ mod tests {
 
     /// A page the dispatcher answers and the navigation does not name is a page a reader
     /// cannot reach, a crawl cannot find and therefore no test covers. The reverse — an area
-    /// the sidebar offers and no route answers — is a link to nothing. Both are failures.
+    /// the sidebar offers and no route answers — is a link to nothing. The routes are derived
+    /// from the areas (I1009), so what is left to go wrong is one address twice: a page
+    /// written down as area-less that an area also names, or two areas at one address.
     #[test]
     fn every_area_has_a_route_and_every_route_its_area() {
-        let areas = nav::areas();
-        let missing_route: Vec<&str> = areas
+        let routes = static_routes();
+        for area in nav::areas() {
+            assert!(
+                routes.contains(&(area.href, area.id)),
+                "the navigation offers {} and no route answers it",
+                area.href
+            );
+        }
+        let mut seen = std::collections::BTreeSet::new();
+        let twice: Vec<&str> = routes
             .iter()
-            .filter(|a| !STATIC_ROUTES.iter().any(|(path, _)| *path == a.href))
-            .map(|a| a.href)
-            .collect();
-        assert!(
-            missing_route.is_empty(),
-            "the navigation offers areas no route answers: {missing_route:?}"
-        );
-
-        let unnavigable: Vec<&str> = STATIC_ROUTES
-            .iter()
-            .filter(|(_, area)| !area.is_empty())
-            .filter(|(_, area)| !areas.iter().any(|a| a.id == *area))
             .map(|(path, _)| *path)
+            .filter(|path| !seen.insert(*path))
             .collect();
         assert!(
-            unnavigable.is_empty(),
-            "the dispatcher answers routes the navigation does not name, so nothing links to \
-             them and no crawl reaches them: {unnavigable:?}"
+            twice.is_empty(),
+            "one address is two routes, an area's and an area-less page's: {twice:?}"
         );
     }
 
-    /// `STATIC_ROUTES` is a claim about the `match` in `Cockpit::route`, and a claim checked
+    /// `static_routes()` is a claim about the `match` in `Cockpit::route`, and a claim checked
     /// only from its own side drifts: three arms were added to the dispatcher after the list
     /// was written, and every test that read the list went on passing. This reads the arms
     /// from the source the dispatcher is compiled from and compares both directions.
@@ -510,20 +499,20 @@ mod tests {
         let unlisted: Vec<&str> = arms
             .iter()
             .copied()
-            .filter(|arm| !STATIC_ROUTES.iter().any(|(path, _)| path == arm))
+            .filter(|arm| !static_routes().iter().any(|(path, _)| path == arm))
             .collect();
         assert!(
             unlisted.is_empty(),
-            "the dispatcher answers plain routes STATIC_ROUTES does not list: {unlisted:?}"
+            "the dispatcher answers plain routes static_routes() does not list: {unlisted:?}"
         );
-        let unanswered: Vec<&str> = STATIC_ROUTES
+        let unanswered: Vec<&str> = static_routes()
             .iter()
             .map(|(path, _)| *path)
             .filter(|path| !arms.contains(path))
             .collect();
         assert!(
             unanswered.is_empty(),
-            "STATIC_ROUTES lists routes the dispatcher has no arm for: {unanswered:?}"
+            "static_routes() lists routes the dispatcher has no arm for: {unanswered:?}"
         );
     }
 
@@ -548,7 +537,7 @@ mod tests {
             .map(|route| route.split('?').next().unwrap_or(route))
             .collect();
 
-        let undocumented: Vec<&str> = STATIC_ROUTES
+        let undocumented: Vec<&str> = static_routes()
             .iter()
             .map(|(path, _)| *path)
             .filter(|path| !documented.contains(path))
@@ -562,7 +551,7 @@ mod tests {
             .iter()
             .copied()
             .filter(|route| route.starts_with("/cockpit") && !route.starts_with("/cockpit/assets"))
-            .filter(|route| !STATIC_ROUTES.iter().any(|(path, _)| path == route))
+            .filter(|route| !static_routes().iter().any(|(path, _)| path == route))
             .collect();
         assert!(
             unrouted.is_empty(),

@@ -9,6 +9,11 @@
 // writes `stream.heartbeat` on every quiet interval, so a channel silent for a few of them
 // is retired and reconnected from its cursor instead of showing "live" forever.
 //
+// A channel that follows the blackboard (`follow=blackboard`, ADR 0176) has no sequence:
+// its cursor is the opaque string of the last `blackboard.signals` frame, good only for the
+// server process whose epoch `stream.ready` named. A reconnection sends both, and a cursor
+// the server cannot serve is answered with `stream.resync`, which is handed to the page.
+//
 // It speaks the protocol the server describes at /api/v1/executions/protocol, and every
 // URL it uses is given to it by the server-rendered markup — there is no path written
 // down here.
@@ -18,6 +23,20 @@ const FIRST_DELAY_MS = 500;
 
 /** The longest wait between attempts; a browser tab left open must not become a heater. */
 const MAX_DELAY_MS = 30_000;
+
+/** How many attempts in a row may fail before the channel stops trying and reads offline:
+ * about two minutes of backoff, after which the page says to reload (I1017). */
+export const MAX_ATTEMPTS = 8;
+
+/**
+ * The wait before attempt `attempt` (0 is the first retry): exponential, capped at
+ * MAX_DELAY_MS, with jitter in its upper half so that many tabs do not knock together.
+ * `random` is a number in [0, 1).
+ */
+export function backoff(attempt, random = Math.random()) {
+  const base = Math.min(FIRST_DELAY_MS * 2 ** attempt, MAX_DELAY_MS);
+  return base / 2 + random * (base / 2);
+}
 
 /** How many heartbeat intervals of silence make a channel dead rather than quiet. */
 const SILENT_HEARTBEATS = 2.5;
@@ -49,6 +68,12 @@ export function follow(path, handlers) {
   const single = followsOne(path);
   let cursor = cursorOf(path);
   const last = new Map();
+  // a blackboard channel resumes by the opaque cursor and the epoch that issued it; no cursor
+  // (`null`) is a fresh start from now, and an empty one is the start of the stream: a page
+  // rendered when nothing had happened yet resumes from there, so nothing since is missed
+  const board = followsBoard(path);
+  let tail = board ? cursorParam(path) : null;
+  let epoch = board ? paramOf(path, 'epoch') : '';
   // the replay began after the cursor's history was already dropped: the first event it
   // writes starts the picture, and is not a gap
   let rebase = false;
@@ -69,6 +94,14 @@ export function follow(path, handlers) {
     // a reconnection asks for what it missed rather than for everything again
     if (cursor > 0 && single) {
       target.searchParams.set('after', String(cursor));
+    }
+    if (board) {
+      target.searchParams.delete('after');
+      target.searchParams.delete('epoch');
+      if (tail !== null && epoch) {
+        target.searchParams.set('after', tail);
+        target.searchParams.set('epoch', epoch);
+      }
     }
     return target.toString();
   };
@@ -136,7 +169,6 @@ export function follow(path, handlers) {
     arm();
     ws.addEventListener('open', () => {
       if (socket !== ws) return;
-      attempt = 0;
       announce(LIVE);
       arm();
     });
@@ -161,12 +193,36 @@ export function follow(path, handlers) {
         return;
       }
       if (frame.type === 'stream.ready') {
+        // the backoff starts over only once the server has spoken the protocol: one that
+        // accepts every connection and drops it at once would otherwise be asked again
+        // every half second, forever
+        attempt = 0;
         const data = frame.data || {};
         if (Number(data.heartbeat_seconds) > 0) heartbeat = Number(data.heartbeat_seconds);
         rebase = data.truncated === true;
+        // A cursor is good only with the epoch that issued it, so the two change together.
+        // A server of another epoch says resync, but the connection may drop before that
+        // frame arrives: the cursor is dropped here, on the new epoch, and the page is told,
+        // so that no later connection offers it with an epoch that never issued it.
+        if (board && typeof data.epoch === 'string' && data.epoch !== epoch) {
+          const stale = tail !== null;
+          tail = null;
+          epoch = data.epoch;
+          if (stale && handlers.resync) handlers.resync('the epoch changed before its resync arrived');
+        }
         arm();
         if (handlers.ready) handlers.ready(data);
         return;
+      }
+      if (frame.type === 'stream.resync') {
+        // the server could not serve the cursor and starts again from what it holds now:
+        // the page's picture before this frame may miss something
+        tail = null;
+        if (handlers.resync) handlers.resync((frame.data && frame.data.reason) || 'resync');
+        return;
+      }
+      if (board && frame.data && typeof frame.data.cursor === 'string') {
+        tail = frame.data.cursor;
       }
       if (typeof frame.sequence === 'number' && !admit(ws, frame)) return;
       if (handlers.message) handlers.message(frame);
@@ -187,10 +243,14 @@ export function follow(path, handlers) {
       announce(OFFLINE);
       return;
     }
+    // a bounded loop: past the last attempt the page shows what it last knew and says so
+    if (attempt >= MAX_ATTEMPTS) {
+      closed = true;
+      announce(OFFLINE);
+      return;
+    }
     announce(RECONNECTING);
-    // exponential, capped, with jitter so that many tabs do not knock together
-    const base = Math.min(FIRST_DELAY_MS * 2 ** attempt, MAX_DELAY_MS);
-    const wait = base / 2 + Math.random() * (base / 2);
+    const wait = backoff(attempt);
     attempt += 1;
     setTimeout(() => {
       if (handlers.resync) handlers.resync('reconnect');
@@ -218,6 +278,26 @@ function followsOne(path) {
     return new URL(path, window.location.href).searchParams.getAll('execution').length === 1;
   } catch (e) {
     return false;
+  }
+}
+
+function followsBoard(path) {
+  return paramOf(path, 'follow') === 'blackboard';
+}
+
+function cursorParam(path) {
+  try {
+    return new URL(path, window.location.href).searchParams.get('after');
+  } catch (e) {
+    return null;
+  }
+}
+
+function paramOf(path, name) {
+  try {
+    return new URL(path, window.location.href).searchParams.get(name) || '';
+  } catch (e) {
+    return '';
   }
 }
 

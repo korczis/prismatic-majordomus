@@ -1,0 +1,33 @@
+id: I3311
+milestone: the-session-domain-is-written-once
+title: "Generated sequences of episode events never move an episode in a way its transition table forbids"
+slug: episode-lifecycle-holds-under-generated-sequences
+priority: p2
+profile: implementation
+objective: "Add proptest harnesses over session::state and session::store: random sequences of open, checkpoint, handover, close, duplicate close, reconnect and recovery keep every invariant of EpisodeState::may_move_to, a closed episode is never active again without an explicit resume, and a record round-trips through its serialisation."
+why: "apps/majordomus-cli/src/session/state.rs:102 holds the whole transition table in one place (EpisodeState::may_move_to; Episode::may_move_to in episode.rs delegates to it) and the cutover proposed in ADR 0047 (status proposed; I3141-I3144) is about to route every shell writer through it. The crate already runs proptest for the mesh journal, protocol and state (src/mesh/*.rs, tests/properties.rs), but nothing under src/session or tests/session_domain.rs is property-tested, so the cutover is guarded only by example cases. The 2026-09-06 lifecycle brief asked for state-machine tests of exactly these invariants. Sources: chatgpt-majordomus:c049#4."
+current_state: "At 707a04c no proptest names session, episode or lifecycle (grep -rln proptest apps/majordomus-cli/src apps/majordomus-cli/tests lists mesh, served, quality, integration, deploy, economics and tests/properties.rs only). Case 220_exactly_once_close and tests/session_domain.rs hold exactly-once close by example over the incident's shapes; no generated sequence is tried."
+desired_state: "The session domain's invariants are stated once as properties and hold for any generated sequence, before and after the cutover."
+scope:
+  - "apps/majordomus-cli/tests/properties.rs"
+  - "apps/majordomus-cli/tests/session_domain.rs"
+non_scope:
+  - "Changing the transition table"
+  - "Mesh journal properties, which exist"
+  - "Editing apps/majordomus-cli/src/session: the harness drives the domain's public API (session::{EpisodeState, Machine, SessionStore}); a violation it finds is reported against I3141-I3144, which own those files, not fixed here"
+depends_on:
+  - "I3142"
+serves:
+  - "a-session-record-says-what-it-served#no-shell-session-semantics"
+acceptance_criteria:
+  - "A property generates event sequences and asserts every applied move is one may_move_to allows"
+  - "Duplicate close and duplicate open are idempotent under any interleaving the harness generates"
+  - "A closed episode never reads active unless a resume event was generated"
+  - "A record serialised and parsed back is equal, for any generated record"
+validation:
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test properties"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test session_domain"
+evidence_required:
+  - "test_episode_lifecycle_properties"
+created_at: 2026-10-18
+updated_at: 2026-10-18

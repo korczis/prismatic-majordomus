@@ -50,10 +50,14 @@ H
   mj_mesh_task_repair_claim
   if [ -n "$only" ]; then mj_doctrine_one "$only" check; else mj_run_task_checks; fi
   if [ "$checkpoint" = 1 ]; then
-    local now; now="$(mj_now)"
-    sed "s/^checkpoint_at: .*/checkpoint_at: $now/" "$MJ_CUR" > "$MJ_CUR.mj-tmp" && mv "$MJ_CUR.mj-tmp" "$MJ_CUR"
-    mj_ledger_append task.checkpoint "\"task_id\":\"$id\""
-    mj_info checkpoint "$id" "recorded at $now"
+    local now fields=""; now="$(mj_now)"
+    mj_record_attribution
+    if [ -n "$MJ_RECORD_TASK" ]; then
+      sed "s/^checkpoint_at: .*/checkpoint_at: $now/" "$MJ_CUR" > "$MJ_CUR.mj-tmp" && mv "$MJ_CUR.mj-tmp" "$MJ_CUR"
+      fields="\"task_id\":\"$MJ_RECORD_TASK\""
+    fi
+    mj_ledger_append task.checkpoint "$fields" "$MJ_RECORD_SESSION"
+    mj_info checkpoint "${MJ_RECORD_TASK:-(no task)}" "recorded at $now"
   fi
   [ "$MJ_JSON" = 1 ] || printf 'check: %s finding(s), %s failing\n' "$MJ_FINDINGS" "$MJ_FAILS"
   [ "$MJ_FAILS" = 0 ] && exit "$MJ_EX_OK" || exit "$MJ_EX_CONTRACT"
@@ -232,6 +236,18 @@ mj_validate_scope() {
     fi
   done < "$touched"
   rm -f "$touched" "$derived"
+  # said, not only applied: a reader who sees a dirty tree and a passing scope is owed why
+  local predating; predating="$(mj_start_dirty_unchanged | grep -c . || true)"
+  if [ "${predating:-0}" -gt 0 ]; then
+    mj_info scope "$id" "$predating path(s) were already changed when the task started and hold what they held then: not counted as this task's" "cat $(mj_rel "$(mj_start_dirty_file)"); git status --porcelain"
+  fi
+  # A refusal names the ways out that exist (I4598). Without them the one route anybody found
+  # was partial plus a new start, taken three times in a day by an adopter for files its gates
+  # regenerate (static/css, static/data), while the derived admission above was one
+  # .gitattributes line away and nothing said so.
+  if [ "$n_out" -gt 0 ] && [ "$soft" = 0 ]; then
+    mj_info scope "$id" "a path outside the scope: if a generator writes it from a file in scope, mark it merge=derived in .gitattributes and it is admitted beside that change; if the work grew, finish --outcome partial and start again with the wider scope; in-place widening is planned (I4260)" "git check-attr merge -- <path>; majordomus finish --outcome partial"
+  fi
   if [ "$n_out" = 0 ] && [ "$n_derived" -gt 0 ]; then
     mj_doctrine_ok scope "$id" "$n_in touched file(s) within scope, and $n_derived derived from them (merge=derived)" "git check-attr merge -- <path>"
   elif [ "$n_out" = 0 ]; then mj_doctrine_ok scope "$id" "$n_in touched file(s), all within scope"
@@ -252,6 +268,8 @@ mj_scope_derived_paths() {
     | tr '\0' '\n' | awk 'NR % 3 == 1 { p = $0 } NR % 3 == 0 && $0 == "derived" { print p }'
 }
 
+# The newest checkpoint is no older than the profile's checkpoint_interval.
+# majordomus-limit: checkpoint_max_age_seconds
 mj_validate_checkpoint() {
   mj_task_gate checkpoint || return 0
   # Freshness is a statement about work in progress. A finished task has no next checkpoint

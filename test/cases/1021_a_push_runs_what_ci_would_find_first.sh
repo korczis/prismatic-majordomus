@@ -6,103 +6,66 @@
 # --before-push`, which the pre-push hook calls, runs a budget of the plan's structure gates,
 # chosen from the seconds CI recorded, and the suite's fast cases. This case drives its
 # choice over a plan and durations it writes. It proves four things: a cheap gate runs and
-# its failure refuses the push; a gate that reaches the network, one with no recorded
-# duration, one over the per-gate limit and one past the budget are each left out with a line
-# that says why; a missing durations file or an uncomputable plan refuses the push; and a case
+# its failure exits 1, naming it (the hook reports that exit, case 3948); a gate that reaches
+# the network, one with no recorded duration, one over the per-gate limit and one past the
+# budget are each left out with a line that says why; a missing durations file or an
+# uncomputable plan exits 12, which refuses the push; and a case
 # that reads stdin no longer hangs the runner. A fifth, since 2026-10-10: nothing it runs
 # inherits the repository git hands a hook, so a fixture cannot write into the one being pushed.
-# A sixth, since 2026-10-15: a gate that builds the crate (`builds: true`) is left to CI, and
-# the model refuses a gate that calls cargo without saying so. CI recorded skills-proof at 5 s
-# and economics-claims at 6 s with the build cached; on a workstation each compiled the crate
-# first, and the hook took 641, 1178 and 1693 s against its bound of 180.
-# A seventh, since 2026-10-15: what runs is what fits the bound on this machine. Without the
-# building gates the hook still took 305-455 s, because CI's seconds priced the cheap gates
-# at ~120 s and the fast cases at a fraction of what they cost here. Each candidate is now
-# priced at what it took here last, the cheapest taken until the bound is spent; the case
-# fails when the step's measured time passes its bound, when a gate or case left to CI is not
-# named, or when the last line's count disagrees with the names.
+# A sixth, since 2026-10-22: the push is planned from its commits, so an untracked file in the
+# working tree (git's .merge_file_* temporaries) cannot force the full plan.
 . "$ROOT/test/lib.sh"
 
 R="$ROOT/scripts/ci/run-plan"
 fail() { printf '    %s\n' "$*"; exit 1; }
 
 # ---------------------------------------------------------------- the choice
-gate() { printf '{"id":"%s","job":"structure","runs":"%s","selected":true,"network":%s,"builds":%s,"reason":"t"}' "$1" "$2" "$3" "${4:-false}"; }
+gate() { printf '{"id":"%s","job":"structure","runs":"%s","selected":true,"network":%s,"reason":"t"}' "$1" "$2" "$3"; }
 plan_with() {
   printf '{"schema":1,"mode":"test","reason":"a fixture","selected":[],"gates":[%s]}' "$(IFS=,; echo "$*")" > "$T/plan.json"
 }
-# Every gate and case left to CI is named, and the last line counts them: a gate on a line of
-# its own, a case on a line of its own or among the names of a line that counts them.
-named_and_counted() {
-  local g c many
-  g="$(grep -cE '^  left out [^ ]+:' <<<"$LAST_OUT" || true)"
-  c="$(grep -cE '^  left out case [^ ]+:' <<<"$LAST_OUT" || true)"
-  many="$(awk '/^  left out [0-9]+ case\(s\) / { n = $3; sub(/^[^:]*:/, ""); if (NF != n) { print "x"; exit } s += n } END { print s + 0 }' <<<"$LAST_OUT")"
-  [ "$many" != x ] || fail "a line that counts the cases left to CI does not name as many: $(grep -E '^  left out [0-9]+ case' <<<"$LAST_OUT" | cut -c1-200)"
-  grep -qE "left to CI: $g gate\(s\) and $(( c + many )) case\(s\), each named above" <<<"$LAST_OUT" \
-    || fail "the step left $g gate(s) and $(( c + many )) case(s) to CI by name, and its last line counts otherwise: $(tail -n 1 <<<"$LAST_OUT")"
-}
-# What this machine measured is the fixture's, never the machine's own file.
-export MJ_PUSH_LOCAL="$T/local.tsv"
-printf 'cheap-ok\t2\ncheap-fails\t3\nnetworked\t1\ncompiles\t1\ntoo-slow\t400\nbudget-a\t10\nbudget-b\t12\ncold\t3\n' > "$T/durations.tsv"
-printf '00_yaml_flatten\t1\n' > "$T/cases.tsv"
-printf 'gate\tcheap-ok\t0\ngate\tcheap-fails\t0\ngate\tbudget-a\t1\ngate\tbudget-b\t50\ncase\t00_yaml_flatten\t500\n' > "$MJ_PUSH_LOCAL"
-export MJ_PUSH_DURATIONS="$T/durations.tsv" MJ_PUSH_CASES="$T/cases.tsv" MJ_PUSH_BOUND=30 MJ_PUSH_RESERVE=0
+printf 'cheap-ok\t2\ncheap-fails\t3\nnetworked\t1\ntoo-slow\t400\nbudget-a\t10\nbudget-b\t12\n' > "$T/durations.tsv"
+: > "$T/cases.tsv"
+export MJ_PUSH_DURATIONS="$T/durations.tsv" MJ_PUSH_CASES="$T/cases.tsv" MJ_PUSH_GATE_BUDGET=20
 plan_with "$(gate cheap-ok true false)" "$(gate cheap-fails 'echo the reason it failed; false' false)" \
-  "$(gate networked true true)" "$(gate compiles 'touch compiled' false true)" "$(gate unrecorded true false)" \
-  "$(gate too-slow true false)" "$(gate budget-a true false)" "$(gate budget-b true false)" "$(gate cold true false)"
+  "$(gate networked true true)" "$(gate unrecorded true false)" "$(gate too-slow true false)" \
+  "$(gate budget-a true false)" "$(gate budget-b true false)"
 expect_exit 1 "$R" --before-push --plan "$T/plan.json"
 expect_grep '  ok     cheap-ok'
 expect_grep '  FAILED cheap-fails .*: echo the reason it failed; false'
 expect_grep '\| the reason it failed'
 expect_grep 'left out networked: it reaches the network'
-expect_grep 'left out compiles: it builds the crate'
-[ ! -e "$ROOT/compiled" ] || { rm -f "$ROOT/compiled"; fail 'a gate that builds the crate ran before the push'; }
 expect_grep 'left out unrecorded: no recorded duration'
 expect_grep 'left out too-slow: CI recorded 400s, over the 15s a push spends on one gate'
-# priced at what it took here, not at CI's 12 s
-expect_grep 'left out budget-b: about 50s here \(measured here\), past what is left of the 30s bound'
-expect_grep '  ok     budget-a \([0-9]+s; priced 1s\)'
-# never measured here: CI's 3 s times this machine's ratio for the gates it did measure, 51/27
-expect_grep '  ok     cold \([0-9]+s; priced 6s\)'
-expect_grep 'left out case 00_yaml_flatten: about 500s here \(measured here\)'
-expect_grep 'left out [0-9]+ case\(s\) with no recorded duration in .*: .*1021_a_push_runs_what_ci_would_find_first'
-expect_grep 'failed: cheap-fails. CI would refuse this push for the same reason'
-expect_grep 'against a bound of 30s'
-named_and_counted
-# what each gate took here is kept for the next push
-grep -qE '^gate	cold	[0-9]+$' "$MJ_PUSH_LOCAL" || fail "the step did not record what the gate cold took here: $(cat "$MJ_PUSH_LOCAL")"
+expect_grep 'left out budget-b: 12s more would pass the 20s budget for gates'
+expect_grep '  ok     budget-a'
+expect_grep 'failed: cheap-fails\. CI would refuse this push for the same reason\.$'
+expect_grep 'against a bound of 180s'
 # without the failing gate, the push goes on
 plan_with "$(gate cheap-ok true false)" "$(gate networked true true)"
 expect_exit 0 "$R" --before-push --plan "$T/plan.json"
 expect_grep 'nothing CI would find here first'
-named_and_counted
-# over the bound is a report, never a refusal: a busy machine must not fail a push. Priced at
-# 0 s from an earlier run, the gate takes 4 against a bound of 3.
-printf 'gate\tcheap-ok\t0\n' >> "$MJ_PUSH_LOCAL"
-plan_with "$(gate cheap-ok 'sleep 4' false)"
-MJ_PUSH_BOUND=3 expect_exit 0 "$R" --before-push --plan "$T/plan.json"
+# over the bound is a report, never a refusal: a busy machine must not fail a push
+MJ_PUSH_BOUND=-1 expect_exit 0 "$R" --before-push --plan "$T/plan.json"
 expect_grep 'over it by [0-9]+s; slowest: cheap-ok [0-9]+s; .*the push is not refused for that'
 expect_grep 'nothing CI would find here first'
 
-# ---------------------------------------------------------------- the bound is spent, not passed
-# Six one-second gates CI recorded at 1 s, never measured here, against a bound of 6 s less a
-# reserve of 2: priced at twice CI's seconds, at most two fit. The step's own time stays within
-# its bound, every gate it does not run is named, and what each one that ran took is recorded,
-# so the next push prices them at this machine's seconds.
-: > "$MJ_PUSH_LOCAL"; : > "$T/durations.tsv"; : > "$T/cases.tsv"
-plans=(); for i in 1 2 3 4 5 6; do printf 's%s\t1\n' "$i" >> "$T/durations.tsv"; plans+=("$(gate "s$i" 'sleep 1' false)"); done
-plan_with "${plans[@]}"
-MJ_PUSH_BOUND=6 MJ_PUSH_RESERVE=2 expect_exit 0 "$R" --before-push --plan "$T/plan.json"
-took="$(sed -nE 's/.* case\(s\) in ([0-9]+)s, against a bound of 6s.*/\1/p' <<<"$LAST_OUT")"
-[ -n "$took" ] && [ "$took" -le 6 ] || fail "the step took ${took:-an unreported time} against its bound of 6 s: $LAST_OUT"
-ran="$(grep -cE '^  ok     s[0-9]' <<<"$LAST_OUT" || true)"
-[ "$ran" -ge 1 ] && [ "$ran" -le 2 ] || fail "priced at 2 s each, $ran of six gates ran within 4 s: $LAST_OUT"
-expect_grep 'left out s6: about 2s here \(never measured here: 1s in CI x 2.00\), past what is left of the 6s bound'
-named_and_counted
-for g in $(sed -nE 's/^  ok     (s[0-9]) .*/\1/p' <<<"$LAST_OUT"); do
-  grep -qE "^gate	$g	[0-9]+$" "$MJ_PUSH_LOCAL" || fail "what $g took here was not recorded: $(cat "$MJ_PUSH_LOCAL")"
-done
+# ---------------------------------------------------------------- a case that serves off loopback
+# Cases 1086 and 3861 serve on every interface and call this machine at its LAN address; on
+# 2026-11-03 a Mac's firewall in stealth mode dropped that call, both timed out at 30s and the
+# push of train P was refused for the host, not for the change. Such a case is left out of
+# the push like every server case, and CI runs it. A copy of run-plan, beside a case of its
+# own, chooses from that case alone.
+mkdir -p offlan/scripts/ci offlan/lib offlan/test/cases
+cp "$ROOT/scripts/ci/run-plan" offlan/scripts/ci/
+cp "$ROOT/lib/common.sh" "$ROOT/lib/sha256.sh" "$ROOT/lib/rust_bin.sh" offlan/lib/
+printf '( exec "$S/majordomus" serve --host 0.0.0.0 --port 0 --idle 0 ) &\n' \
+  > offlan/test/cases/zz_serves_off_loopback.sh
+printf 'zz_serves_off_loopback\t1\n' > "$T/offlan-cases.tsv"
+plan_with "$(gate cheap-ok true false)"
+MJ_PUSH_CASES="$T/offlan-cases.tsv" expect_exit 0 offlan/scripts/ci/run-plan --before-push --plan "$T/plan.json"
+expect_grep 'left out case zz_serves_off_loopback: it serves off loopback, which a host firewall may drop; CI runs it'
+expect_grep 'gate\(s\) and 0 case\(s\) in'
 
 # ---------------------------------------------------------------- a hook's repository stays its own
 # Git exports GIT_DIR to a pre-push hook run from a linked worktree. `outer` stands for the
@@ -138,45 +101,51 @@ outer_after="$(git -C outer for-each-ref --format='%(refname) %(objectname)'; gi
 # ---------------------------------------------------------------- fail closed
 MJ_PUSH_DURATIONS="$T/no-such-file" expect_exit 12 "$R" --before-push --plan "$T/plan.json"
 expect_grep 'is missing, so nothing can be budgeted and the push is refused'
-unset MJ_PUSH_DURATIONS MJ_PUSH_CASES MJ_PUSH_BOUND MJ_PUSH_RESERVE
+unset MJ_PUSH_DURATIONS MJ_PUSH_CASES MJ_PUSH_GATE_BUDGET
 expect_exit 12 "$R" --before-push --base no-such-ref-anywhere
 expect_grep 'the plan could not be computed .* so the push is refused'
 
+# ---------------------------------------------------------------- planned from the commits
+# A push sends commits, so its plan is computed from them, never from the working tree. On
+# 2026-10-22 git's `.merge_file_XXXXXX` temporaries, left at the primary checkout's root by an
+# interrupted merge, were "a changed path in no class of the model" and pushed a push that
+# only deleted remote refs into the full plan. A copy of run-plan and ci-plan, with this
+# repository's model, runs in a small repository whose one commit changes a classified path
+# and whose working tree holds such a temporary, untracked and not ignored.
+mkdir -p planned/scripts/ci planned/lib planned/bin planned/.ai/repo/ci planned/docs
+cp "$ROOT/scripts/ci/run-plan" planned/scripts/ci/ && cp "$ROOT/scripts/ci-plan" planned/scripts/
+cp "$ROOT/lib/common.sh" "$ROOT/lib/sha256.sh" "$ROOT/lib/rust_bin.sh" planned/lib/ && cp "$ROOT/.ai/repo/ci/gates.yaml" planned/.ai/repo/ci/
+printf 'base\n' > planned/docs/README.md
+git -C planned init -q -b master && git -C planned add -A \
+  && git -C planned -c user.email=case@example.invalid -c user.name=case commit -qm base \
+  && git -C planned checkout -qb work && printf 'changed\n' >> planned/docs/README.md \
+  && git -C planned -c user.email=case@example.invalid -c user.name=case commit -qam change \
+  || fail 'could not build the planned fixture repository'
+printf 'a merge driver input\n' > planned/.merge_file_AbC123
+: > "$T/empty.tsv"
+# the control: the working tree's plan sees the temporary, which is what forced the full plan
+planned/scripts/ci-plan < /dev/null > "$T/worktree-plan.json" 2>/dev/null \
+  || fail 'ci-plan could not plan the fixture working tree'
+jq -e '.mode == "full" and (.reason | test("in no class of the model: .*\\.merge_file_AbC123"))' "$T/worktree-plan.json" > /dev/null \
+  || fail "the fixture does not reproduce the full plan: $(jq -c '{mode, reason}' "$T/worktree-plan.json")"
+# the push: planned from the commit, the temporary is not a change
+MJ_PUSH_DURATIONS="$T/empty.tsv" MJ_PUSH_CASES="$T/empty.tsv" expect_exit 0 planned/scripts/ci/run-plan --before-push
+expect_grep '^run-plan --before-push: '
+expect_no_grep 'merge_file_AbC123'
+expect_no_grep '^run-plan --before-push: full'
+# a caller that names its own head keeps it: a head that names no commit is refused, not replaced
+MJ_PUSH_DURATIONS="$T/empty.tsv" MJ_PUSH_CASES="$T/empty.tsv" expect_exit 12 planned/scripts/ci/run-plan --before-push --head no-such-head
+expect_grep 'the plan could not be computed .* so the push is refused'
+
 # ---------------------------------------------------------------- the model and the wiring
-grep -qx 'scripts/ci/run-plan --before-push || exit \$?' "$ROOT/.githooks/pre-push" \
+# exit 1 is reported and anything else refuses; case 3948 drives the hook through both
+grep -qx 'scripts/ci/run-plan --before-push' "$ROOT/.githooks/pre-push" \
   || fail 'the pre-push hook does not call run-plan --before-push'
 grep -q 'name: structure-gates-on-push' "$ROOT/.ai/repo/policy.yaml" \
   || fail 'the policy does not declare the pre-push enforcement, so doctor cannot hold it'
 jq -e '.gates[] | select(.id == "github-projection") | .network == true' \
   <(cd "$ROOT" && scripts/ci-plan < /dev/null 2>/dev/null) >/dev/null \
   || fail 'the plan does not carry the network flag the model declares'
-
-# ---------------------------------------------------------------- a gate that builds is CI's
-# Every gate whose command calls cargo declares `builds: true`, the plan carries it, and the
-# model refuses one that does not say so: a new cargo gate cannot reach a push undeclared.
-calls_cargo='(^|[;&|(]|[[:space:]])cargo[[:space:]]'
-(cd "$ROOT" && scripts/ci-plan --full < /dev/null 2>/dev/null) > "$T/full.json" || fail 'the full plan could not be computed'
-undeclared="$(jq -r --arg re "$calls_cargo" '.gates[] | select((.runs | test($re)) and (.builds != true)) | .id' "$T/full.json")"
-[ -z "$undeclared" ] || fail "gates that call cargo without builds: true in the plan: $undeclared"
-built="$(jq -r --arg re "$calls_cargo" '[.gates[] | select(.job == "structure" and .selected and (.runs | test($re))) | .id] | join(" ")' "$T/full.json")"
-for g in skills-proof economics-claims; do
-  case " $built " in *" $g "*) ;; *) fail "the full plan no longer selects $g as a structure gate that builds, so this case proves nothing of it" ;; esac
-done
-# the real model through the step: every structure gate that builds is left out by name and
-# nothing runs (no gate is under a per-gate limit of -1 s, and no case is listed), so this
-# costs a plan and not a build
-printf '' > "$T/no-cases.tsv"
-MJ_PUSH_CASES="$T/no-cases.tsv" MJ_PUSH_GATE_SECONDS=-1 expect_exit 0 "$R" --before-push --full
-for g in $built; do expect_grep "left out $g: it builds the crate"; done
-expect_grep 'run-plan --before-push: 0 gate\(s\) and 0 case\(s\)'
-named_and_counted
-# the model refuses a cargo gate that does not declare it, and a builds that is not true
-awk '/^  - id: skills-proof$/{s=1} s && /^    builds: true$/{s=0; next} {print}' "$ROOT/.ai/repo/ci/gates.yaml" > undeclared.yaml
-expect_exit 10 "$ROOT/scripts/ci-plan" --model undeclared.yaml --check
-expect_grep 'gate skills-proof calls cargo and does not declare builds: true'
-awk '/^  - id: skills-proof$/{s=1} s && /^    builds: true$/{print "    builds: false"; s=0; next} {print}' "$ROOT/.ai/repo/ci/gates.yaml" > false.yaml
-expect_exit 10 "$ROOT/scripts/ci-plan" --model false.yaml --check
-expect_grep 'gate skills-proof: builds is true or absent, not false'
 
 # ---------------------------------------------------------------- a case that reads stdin
 # The runner, copied beside a case of its own that reads stdin, under a pipe that stays open

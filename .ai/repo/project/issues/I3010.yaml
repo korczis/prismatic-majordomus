@@ -22,6 +22,21 @@ acceptance_criteria:
 validation:
   - "majordomus plan validate"
   - "scripts/derive-check"
-evidence_required: []
+evidence_required:
+  - mesh_manual_truth
 created_at: 2026-10-19
-updated_at: 2026-10-19
+updated_at: 2026-10-20T15:36:41Z
+started_at: 2026-10-19T10:07:35Z
+started_event: sha256:de4a3ba7740320a0b3651742b60e00cb3b00b4e8d32066492a35f4c5d31ab819
+verified_at: 2026-10-19T10:08:31Z
+verified_event: sha256:b7fe6c0d1a2bfff1f8ae10e586dc8ccc750e716fff9374d7c2b0fd165a79e253
+completed_at: 2026-10-19T10:09:03Z
+completed_event: sha256:cf7b9bb6758d8b1fc84a8447caa3c37fb84c581a2e770e384d461426fbf2b116
+evidence:
+  - covers: mesh_manual_truth
+    type: ci
+    command: "gh run view --job 117890217025 --log"
+    result: "doc-command-check OK (333 documented commands) in structure of validate run 39192952944 on dd4c0a87cba, whose docs/MESH.md says the edit guard is not wired, names capture install's four events, the hand wiring and I3010"
+    artifact: "https://github.com/korczis/prismatic-majordomus/actions/runs/39192952944"
+    commit: eb72106294c22a8ac4714cf37d0d135eb917160c
+    recorded_at: 2026-10-20T15:36:41Z

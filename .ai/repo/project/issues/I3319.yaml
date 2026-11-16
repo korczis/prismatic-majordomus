@@ -1,0 +1,34 @@
+id: I3319
+milestone: truthful-plan-surfaces
+title: "No record names a repository a design was studied in"
+slug: no-record-names-a-studied-source
+priority: p1
+profile: implementation
+objective: "Remove from adr-0017 and its site projection the names of the two repositories its design was studied in, keeping the decision's content, and make a check refuse, in any tracked file, every token of a declared forbidden list: the name of the studied repository that no tracked file needs. The owner's own adopter repository, the other one adr-0017 names, is not on the list, because tracked files name it as the adopter (the independence check, cases 569 and 3017, the import pack, I3129 and the curated note an-adopters-work-never-waits-for-majordomus), not as the source of a design; adr-0017 is the only file that names it as a design source, and that is what this issue removes."
+why: "The owner's order of 2026-09-06 (chatgpt-majordomus:c001#6) is that no public or internal artifact names the source repository, directory or project a design was taken from. On 2026-10-18 the promotion's privacy scan found that name in adr-0017 on master. Sources: chatgpt-majordomus:c001#6."
+current_state: "On master at 4a4573690f8, adr-0017 names both studied repositories in its context and its rejected alternatives. One of them is named by no other tracked file than adr-0017's site projection (`git grep -l -I <name> HEAD` lists 2 files); the other, the owner's adopter repository, is named by 22 tracked files (same command), and only adr-0017 and its projection name it as a design source. Nothing checks for either."
+desired_state: "adr-0017 says that two comparable implementations were studied without naming either. A check over the tracked tree refuses every token of the forbidden list with the file and line and never the token. The check holds only a digest of each forbidden token, so it does not name what it forbids, and the list's header says why the owner's adopter repository is not on it."
+scope:
+  - ".ai/repo/adrs/0017-an-episode-that-opens-is-handed-what-the-last-one-left.md"
+  - "site/content/adrs/adr-0017.md"
+  - "scripts/ci/no-machine-paths"
+  - "apps/majordomus-cli/src/quality"
+  - ".ai/repo/ci/gates.yaml"
+non_scope:
+  - "Rewriting history"
+  - "Changing what adr-0017 decided"
+  - "Forbidding the name of the owner's adopter repository, which the independence check and the adoption records need"
+acceptance_criteria:
+  - "adr-0017 and its site projection carry the decision without naming either studied repository"
+  - "A check fails on a tracked file that names a forbidden token, reporting the file and line and never the token, and passes on master afterwards"
+  - "The check and its list hold a digest of each forbidden token, never the token itself"
+  - "The list's header states why the owner's adopter repository is not on it, and no tracked file other than adr-0017 named it as a design source"
+  - "The staged batch that planned this issue, I3129 and an-adopters-work-never-waits-for-majordomus among it, passes the check"
+validation:
+  - "bash test/run.sh 3047_a_leak_finding_names_where_it_is"
+  - "bash test/run.sh 569_independent_of_prismatic"
+  - "majordomus plan validate"
+evidence_required:
+  - "studied_source_check"
+created_at: 2026-10-18
+updated_at: 2026-10-18

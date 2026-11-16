@@ -1,0 +1,34 @@
+id: I3073
+milestone: peer-blackboard
+title: "The home page and the docs explain the peer blackboard: live on a runtime, a labelled snapshot on the published site"
+slug: the-home-page-explains-the-blackboard
+priority: p1
+profile: implementation
+parallel_safe: false
+serves:
+  - the-peer-blackboard-is-one-reality#explained
+objective: "Give the published home page one section on the peer blackboard, drawn with the site's own components. It says what the blackboard shows: who works on what, which claims meet, which reviews and handovers wait, and whether every source was read. It says that a running Majordomus server follows it live at /ui/peers, with its signals at /cockpit/monitor, and that the published site is files read at one commit and follows no server. It lists the work the blackboard waits for, each issue rendered from the plan with the status its record declares. Those issues are the ones docs/BLACKBOARD.md lists under Not yet, declared once more in site/data/homepage.toml, and the section links the page the docs dataset routes that document to. docs/BLACKBOARD.md and docs/PRODUCT.md say the same."
+why: "The blackboard is explained only in docs/BLACKBOARD.md and on /ui/peers of a running server, so a visitor of the published site cannot learn that it exists, where it is followed live, or that the site does not carry it. A sentence typed beside the plan saying what is not built would be a second account of the repository, which the homepage's present-tense gate refuses (ADR 0166), so the list is the plan's, rendered."
+current_state: "No section of the home page names the blackboard. docs/BLACKBOARD.md lists I2998, I2984 and I2999 under Not yet, and nothing holds the home page to that list."
+desired_state: "The built home page carries a blackboard section in site/data/homepage.toml's order. It names /ui/peers and /cockpit/monitor as what a running server follows live, says the published site follows no server, lists the issues docs/BLACKBOARD.md names under Not yet with the status their records declare, and links the published documentation page. Case 3387 holds the home page and the document to each other and finds nothing on the static page that claims to be live."
+scope:
+  - "site/templates/index.html"
+  - "site/data/homepage.toml"
+  - "site/data/marketing.toml"
+  - "docs/BLACKBOARD.md"
+  - "docs/PRODUCT.md"
+  - ".ai/repo/project/intents/the-peer-blackboard-is-one-reality.yaml"
+  - "test/cases/3387_the_home_page_explains_the_blackboard.sh"
+depends_on:
+  - "I2983"
+acceptance_criteria:
+  - "The built home page renders a section declared in site/data/homepage.toml's order that names /ui/peers and /cockpit/monitor as followed live on a running server, and links the blackboard's documentation page, which the build holds"
+  - "The section lists, in the document's order, exactly the issues docs/BLACKBOARD.md names under Not yet, each linked to its plan page with the status its record declares, none of them done"
+  - "The home page carries no live marker and no socket client, and no sentence of the section outside its running-server card calls anything live"
+validation:
+  - "majordomus plan validate"
+  - "bash test/run.sh 3387_the_home_page_explains_the_blackboard"
+evidence_required:
+  - "case_home_page_explains_the_blackboard"
+created_at: 2026-10-19
+updated_at: 2026-10-19

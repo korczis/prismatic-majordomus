@@ -1,21 +1,26 @@
 #!/usr/bin/env bash
-# majordomus-mcp — start the Rust executable's MCP server for the repository you are in,
-# building it first when it is missing or older than its sources. This is the command an
-# MCP client configuration names (.mcp.json for Claude Code, .gemini/settings.json for
-# Gemini CLI, .codex/config.toml for Codex): the client spawns it, speaks MCP on its stdin
-# and stdout, and gets the repository's one shared server (Swagger UI and MCP over HTTP on
-# the loopback interface beside this stdio session) or a bridge to the one already running.
+# majordomus-mcp — start the Rust executable's MCP server for the repository you are in. This
+# is the command an MCP client configuration names (.mcp.json for Claude Code,
+# .gemini/settings.json for Gemini CLI, .codex/config.toml for Codex): the client spawns it,
+# speaks MCP on its stdin and stdout, and gets the repository's one shared server (Swagger UI
+# and MCP over HTTP on the loopback interface beside this stdio session) or a bridge to the one
+# already running.
 #
-# It is `bin/majordomus-cli mcp`: the locating and building live in that launcher, once,
-# and every argument here is passed through to `majordomus mcp` (--standalone,
-# --http-port, --inspect, --repo, ...). stdout belongs to the protocol: nothing here writes
-# to it.
+# It is `bin/majordomus-cli mcp`: the locating lives in that launcher, once, and every argument
+# here is passed through to `majordomus mcp` (--standalone, --http-port, --inspect, --repo,
+# ...). stdout belongs to the protocol: nothing here writes to it.
 #
-#   MAJORDOMUS_BIN            use this executable and never build
+# It never builds (ADR 0224). A missing or stale executable is served by the installed release
+# only when that release is of this tree's generation, and said on stderr; otherwise it is exit
+# 12 naming `just build`, which the client reports as a failed server — a session that is told
+# it has no server can be fixed, one served by a release of another crate answers for a tree it
+# was not built from.
+# majordomus-on-stale-executable: fallback, else refuse
+#
+#   MAJORDOMUS_BIN            use this executable
 #   MAJORDOMUS_BUILD_PROFILE  debug (default) or release
-#   MAJORDOMUS_NO_BUILD=1     refuse to build; exit 12 when the executable is missing
 #
-# Exit codes are the executable's; 12 when it is missing and cannot be built.
+# Exit codes are the executable's; 12 when there is none to run.
 set -eu
 here="$(cd "$(dirname "$0")" && pwd)"
 exec "$here/majordomus-cli" mcp "$@"

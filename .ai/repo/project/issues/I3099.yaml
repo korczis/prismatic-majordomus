@@ -1,0 +1,41 @@
+id: I3099
+milestone: development-runtime
+title: "The serve-lifecycle test tells a stopped server from another server answering its freed port"
+slug: a-stopped-server-is-told-from-its-port
+priority: p1
+profile: debugging
+parallel_safe: true
+objective: "Make tests/serve_lifecycle.rs ensure_starts_one_server_finds_it_the_next_time_and_stop_ends_it assert what `serve stop` promises (the process has exited once it says stopped) and treat its old address as closed when nothing answers there or a server with another pid does, with a failure that names what still answered."
+why: "On 2026-10-21 master validate 39565286918 (905159df7cc, the 1.0.0-alpha.2 candidate) failed rust (3) at serve_lifecycle.rs:76 with \"the port closes did not happen within 5s\"; the same tree passed rust (3) twice in PR run 39542849828. `serve stop` prints stopped only after exited_by has seen the process end, so the server was gone; what kept answering was the freed port, which the tests of the same binary, run at once, can be given within the second."
+current_state: "The test waits up to 5 s for any answer at the stopped server's address to stop, so another test's server on the reused port reads as the stopped one still running."
+desired_state: "The test asserts the process is gone, asks whoever answers the address for its pid, passes when nobody or another pid answers, and on failure names the pid that still answers."
+scope:
+  - "apps/majordomus-cli/tests/serve_lifecycle.rs"
+  - ".ai/repo/project/issues/I3099.yaml"
+non_scope:
+  - "Changing serve stop itself"
+depends_on: []
+acceptance_criteria:
+  - "After serve stop prints stopped, the test asserts the pid is no longer running"
+  - "A server of another pid answering the freed address does not fail the test"
+  - "A failure names the pid still answering at the address"
+validation:
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test serve_lifecycle"
+evidence_required:
+  - "serve_lifecycle_passes"
+created_at: 2026-10-21
+updated_at: 2026-10-23T16:42:56Z
+started_at: 2026-10-21T09:32:52Z
+started_event: sha256:c696b8bdb7a205ccab6f3631535b649fa5ac9e182f6cc217d6f9740637700c60
+verified_at: 2026-10-21T10:20:28Z
+verified_event: sha256:255859a6b502d553c0428ea73ef9e870d8ced1910890f45c1f38b381a1c091ba
+completed_at: 2026-10-23T16:42:56Z
+completed_event: sha256:7223eed455e548fbc33dcabdb191940953e0782d9c53b30db49c17920d09c071
+evidence:
+  - covers: serve_lifecycle_passes
+    type: ci
+    command: "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test serve_lifecycle"
+    result: "ok, the rust job passed in master validate 39784979979 (success at 2034d4a3f0b, which holds the I3099 test, landed in a57482183bf)"
+    artifact: "https://github.com/korczis/prismatic-majordomus/actions/runs/39784979979"
+    commit: 376493cd4c9ad35892552208e74a8e527f17a73e
+    recorded_at: 2026-10-23T16:36:08Z

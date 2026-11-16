@@ -582,6 +582,12 @@ pub fn elect(repo: &Repository) -> Result<Role> {
                 file.write_all(text.as_bytes())
                     .map_err(|e| Error::io(&path, e))?;
                 hold(&path, &lease.token);
+                record_runtime(
+                    &path,
+                    &lease.token,
+                    crate::capability::builtin::server::ServerStanding::Starting,
+                    "this process took the lease and is loading the layer",
+                );
                 return Ok(Role::Server(lease));
             }
             Err(e) if e.kind() == std::io::ErrorKind::AlreadyExists => {
@@ -732,18 +738,49 @@ fn stale_reason(me: &ExecutableIdentity) -> Option<String> {
 /// to a debug build — makes no claim either way and is left alone, so two legitimate
 /// binaries never fight over the lease.
 fn superseded(doc: &LeaseDocument) -> Option<String> {
+    executable_identity().and_then(|me| superseded_by(doc, &me, crate::VERSION))
+}
+
+/// The judgement [`superseded`] makes, over the identity and version it is handed.
+///
+/// A file replaced at the lease's path says the server runs code no longer on disk, not that
+/// this process runs newer code: a build of an older tree written to the same path is a
+/// replacement too. So a server whose lease records a newer version than `my_version` is
+/// never taken over on that ground (I3097): this process is the older one, and attaching to
+/// the newer server is the verdict [`version_verdict`] already gives everywhere else.
+fn superseded_by(
+    doc: &LeaseDocument,
+    mine: &ExecutableIdentity,
+    my_version: &str,
+) -> Option<String> {
     let recorded = doc.executable.as_ref()?;
-    let mine = executable_identity()?;
     if recorded.path != mine.path {
+        // a server started from the build output this process runs a copy of (I2059)
+        let origin = crate::served_executable::copied_from(&mine.path)?;
+        let same = origin == recorded.path
+            || matches!(
+                (fs::canonicalize(&origin), fs::canonicalize(&recorded.path)),
+                (Ok(a), Ok(b)) if a == b
+            );
+        if !same || recorded.replaced().is_none() {
+            return None;
+        }
+    } else if recorded.mtime == mine.mtime && recorded.size == mine.size {
         return None;
     }
-    if recorded.mtime == mine.mtime && recorded.size == mine.size {
+    if version_verdict(doc.version.as_deref(), my_version) == VersionVerdict::ServerNewer {
+        tracing::warn!(
+            server = doc.version.as_deref().unwrap_or_default(),
+            mine = my_version,
+            "the server's executable was replaced, but the server runs a newer version than this \
+             executable; attaching to it rather than taking it over"
+        );
         return None;
     }
     Some(format!(
         "superseded lease: the server was started from {} and that file has been replaced since \
          (it is serving code that is no longer on disk)",
-        mine.path.display()
+        recorded.path.display()
     ))
 }
 
@@ -1055,6 +1092,52 @@ fn remove_if_held(path: &Path, token: &str) -> bool {
     holds(path, token) && fs::remove_file(path).is_ok()
 }
 
+/// Record a transition of this process's own runtime beside the lease at `path`, while the
+/// lease is still the one `token` names: the serving process is the one writer of its own
+/// `starting`, `ready` and `stopping` (I3179), and a process whose lease was taken over
+/// speaks for nobody. Written only when the state changes. Whether it wrote.
+fn record_runtime(
+    path: &Path,
+    token: &str,
+    state: crate::capability::builtin::server::ServerStanding,
+    reason: &str,
+) -> bool {
+    use crate::capability::builtin::server::{
+        record_transition, runtime_file_beside, RuntimeWriter,
+    };
+    if !holds(path, token) {
+        return false;
+    }
+    let Some(file) = runtime_file_beside(path) else {
+        return false;
+    };
+    record_transition(
+        &file,
+        state,
+        reason,
+        RuntimeWriter::Server,
+        Some(std::process::id()),
+    )
+    .inspect_err(|e| {
+        tracing::warn!(path = %file.display(), "could not record the runtime's transition: {e}");
+    })
+    .unwrap_or(false)
+}
+
+/// Record a transition of this process's own runtime, when it holds a lease: what the
+/// serving loop records when it is asked to stop, before it stops. Whether it wrote — `false`
+/// in a process that holds no lease, or one whose lease was taken over.
+///
+/// ```
+/// use majordomus_cli::capability::builtin::server::ServerStanding;
+/// // a process that holds no lease records nothing
+/// assert!(!majordomus_cli::lease::record_own(ServerStanding::Stopping, "asked to stop"));
+/// ```
+pub fn record_own(state: crate::capability::builtin::server::ServerStanding, reason: &str) -> bool {
+    let holding = HOLDING.lock().ok().and_then(|h| h.clone());
+    holding.is_some_and(|(path, token)| record_runtime(&path, &token, state, reason))
+}
+
 /// A temporary file of one writer's own beside the lease: named for the token, so that two
 /// writers never write into, or rename, each other's half-written file.
 fn tmp_path(path: &Path, token: &str) -> PathBuf {
@@ -1118,6 +1201,12 @@ pub(crate) fn release_held() {
 /// test can show it without touching what a concurrent test's election recorded.
 fn release_record(record: Option<(PathBuf, String)>) {
     if let Some((path, token)) = record {
+        record_runtime(
+            &path,
+            &token,
+            crate::capability::builtin::server::ServerStanding::Stopping,
+            "asked to stop by a signal; the lease is released",
+        );
         remove_if_held(&path, &token);
         if let Ok(mut slot) = published().lock() {
             if slot.as_ref().is_some_and(|d| d.token == token) {
@@ -1302,7 +1391,10 @@ enum Answer {
 /// Ask a published URL the probe's three questions within `timeout`, telling a server that
 /// said no apart from one that said nothing in time.
 fn ask(url: &str, root: &Path, timeout: Duration) -> Answer {
-    match bridge::request(url, "GET", "/", &[], None, timeout) {
+    // marked as a probe, so that asking whether a server is there does not keep it there
+    // (I4007): a server's idle timer counts a client reading its home page, not this
+    let probe = [(crate::idle::PROBE_HEADER, "1")];
+    match bridge::request(url, "GET", "/", &probe, None, timeout) {
         Ok(reply) if reply.status == 200 => {
             let v: Value = serde_json::from_str(&reply.body).unwrap_or(Value::Null);
             // the identity and not the path: the index names the repository it serves
@@ -1527,6 +1619,12 @@ impl Lease {
         if let Ok(mut slot) = published().lock() {
             *slot = Some(document);
         }
+        record_runtime(
+            &self.path,
+            &self.token,
+            crate::capability::builtin::server::ServerStanding::Ready,
+            &format!("published {url}"),
+        );
         Ok(())
     }
 
@@ -1571,6 +1669,12 @@ impl Lease {
             *binding = false;
         }
         if !self.released {
+            record_runtime(
+                &self.path,
+                &self.token,
+                crate::capability::builtin::server::ServerStanding::Stopping,
+                "the lease is released",
+            );
             remove_if_held(&self.path, &self.token);
         }
         self.released = true;
@@ -1751,6 +1855,123 @@ mod tests {
         );
     }
 
+    /// A lease whose server was started from `exe` as it was then, at `version`.
+    fn lease_from(exe: &ExecutableIdentity, version: &str) -> LeaseDocument {
+        LeaseDocument {
+            schema: SCHEMA.into(),
+            pid: 1,
+            token: "t".into(),
+            root: "/r".into(),
+            url: Some("http://127.0.0.1:1".into()),
+            started_at: "2026-10-20T22:25:31Z".into(),
+            executable: Some(exe.clone()),
+            version: Some(version.into()),
+        }
+    }
+
+    #[test]
+    fn older_replacement_attaches() {
+        // 2026-10-20 22:27:58Z: a 1.0.0-alpha.1 server lost its lease to 0.30.2, because a
+        // build of an older tree had rewritten the file the server was started from
+        let dir = tempfile::tempdir().unwrap();
+        let exe = dir.path().join("majordomus");
+        fs::write(&exe, b"the newer code the server loaded").unwrap();
+        let lease = lease_from(&identity_of(&exe), "1.0.0-alpha.1");
+        fs::write(&exe, b"an older tree's build, written over the same path").unwrap();
+        // under a subscriber, so the warning that names both versions is written, not skipped
+        let subscriber = tracing_subscriber::fmt()
+            .with_max_level(tracing::Level::WARN)
+            .with_writer(std::io::sink)
+            .finish();
+        crate::logging::with_scoped(subscriber, || {
+            assert_eq!(superseded_by(&lease, &identity_of(&exe), "0.30.2"), None);
+        });
+    }
+
+    /// The holder of a lease whose runtime record cannot be written says it did not write,
+    /// and leaves the lease alone; a token that no longer holds the lease writes nothing
+    /// (I3179).
+    #[test]
+    fn a_runtime_record_the_holder_cannot_write_is_not_claimed() {
+        use crate::capability::builtin::server::{read_transition, ServerStanding};
+        let dir = tempfile::tempdir().unwrap();
+        let path = lease_file(dir.path(), ".ai/local");
+        fs::create_dir_all(path.parent().unwrap()).unwrap();
+        let exe = dir.path().join("majordomus");
+        fs::write(&exe, b"the code the server loaded").unwrap();
+        let held = lease_from(&identity_of(&exe), crate::VERSION);
+        fs::write(&path, serde_json::to_string(&held).unwrap()).unwrap();
+        // a file where the runtime record's directory would be
+        let runtime = dir.path().join(".ai/local/state/runtime");
+        fs::write(&runtime, "not a directory").unwrap();
+        // under a subscriber, so the warning that names the record is written, not skipped
+        let subscriber = tracing_subscriber::fmt()
+            .with_max_level(tracing::Level::WARN)
+            .with_writer(std::io::sink)
+            .finish();
+        crate::logging::with_scoped(subscriber, || {
+            assert!(!record_runtime(
+                &path,
+                &held.token,
+                ServerStanding::Starting,
+                "took the lease"
+            ));
+        });
+        assert!(holds(&path, &held.token), "the lease is left alone");
+        assert!(read_transition(&runtime.join("state.json")).is_none());
+        // once the record can be written, the holder writes it and another token does not
+        fs::remove_file(&runtime).unwrap();
+        assert!(!record_runtime(
+            &path,
+            "another",
+            ServerStanding::Starting,
+            "not ours"
+        ));
+        assert!(record_runtime(
+            &path,
+            &held.token,
+            ServerStanding::Starting,
+            "took the lease"
+        ));
+        assert_eq!(
+            read_transition(&runtime.join("state.json")).map(|t| t.state),
+            Some(ServerStanding::Starting)
+        );
+    }
+
+    #[test]
+    fn a_lease_of_this_process_as_it_runs_is_not_superseded() {
+        // the judgement over the executable this process was started from: unchanged, it
+        // takes nothing over; a lease naming another path makes no claim either way
+        let me = executable_identity().expect("a test binary knows where it is");
+        assert_eq!(superseded(&lease_from(&me, crate::VERSION)), None);
+        let dir = tempfile::tempdir().unwrap();
+        let other = dir.path().join("majordomus");
+        fs::write(&other, b"another build at another path").unwrap();
+        assert_eq!(
+            superseded(&lease_from(&identity_of(&other), crate::VERSION)),
+            None
+        );
+    }
+
+    #[test]
+    fn newer_replacement_takes_over() {
+        let dir = tempfile::tempdir().unwrap();
+        let exe = dir.path().join("majordomus");
+        fs::write(&exe, b"the code the server loaded").unwrap();
+        let pinned = identity_of(&exe);
+        fs::write(&exe, b"a rebuild of the same or a newer tree").unwrap();
+        let mine = identity_of(&exe);
+        for (served, version) in [
+            ("1.0.0-alpha.1", "1.0.0-alpha.1"),
+            ("0.30.2", "1.0.0-alpha.1"),
+        ] {
+            let reason = superseded_by(&lease_from(&pinned, served), &mine, version)
+                .unwrap_or_else(|| panic!("{version} replacing a {served} server takes it over"));
+            assert!(reason.contains("has been replaced since"), "{reason}");
+        }
+    }
+
     #[test]
     fn this_process_is_not_serving_replaced_code() {
         assert!(started_as().is_some(), "a test binary knows where it is");
@@ -1899,7 +2120,7 @@ mod tests {
             .with_max_level(tracing::Level::WARN)
             .with_writer(std::io::sink)
             .finish();
-        tracing::subscriber::with_default(subscriber, || {
+        crate::logging::with_scoped(subscriber, || {
             assert!(
                 !remove_if_held(&path, "owner"),
                 "no removal without the lock"
@@ -2101,7 +2322,7 @@ mod tests {
             .with_writer(std::io::sink)
             .finish();
         let mut ran = false;
-        tracing::subscriber::with_default(subscriber, || {
+        crate::logging::with_scoped(subscriber, || {
             take_over_with(&path, &seen, Duration::ZERO, || ran = true).unwrap();
         });
         assert!(!ran, "nothing past the lock ran");
@@ -2541,6 +2762,81 @@ mod tests {
             LeaseFile::read(&dir.path().join("server.json")),
             LeaseFile::Absent,
             "the lease was released on the way out"
+        );
+    }
+
+    /// A profile directory holding the build output `majordomus` (recorded in a lease as it
+    /// was) and a served copy of it, which is what a launcher runs (I2059).
+    fn copy_of_a_build(dir: &Path) -> (ExecutableIdentity, ExecutableIdentity) {
+        let build = dir.join("majordomus");
+        fs::write(&build, b"the code the server loaded").unwrap();
+        let recorded = identity_of(&build);
+        let served = dir.join("served");
+        fs::create_dir(&served).unwrap();
+        let copy = served.join("majordomus-1-2");
+        fs::write(&copy, b"the code the server loaded").unwrap();
+        (recorded, identity_of(&copy))
+    }
+
+    #[test]
+    fn a_rebuild_of_the_output_a_served_copy_runs_supersedes_the_lease() {
+        let dir = tempfile::tempdir().unwrap();
+        let (recorded, mine) = copy_of_a_build(dir.path());
+        fs::write(&recorded.path, b"a rebuild of the same tree, longer").unwrap();
+        let reason = superseded_by(&lease_from(&recorded, "1.0.0"), &mine, "1.0.0")
+            .expect("the output the copy came from was replaced");
+        assert!(reason.contains("has been replaced since"), "{reason}");
+    }
+
+    #[test]
+    fn an_unreplaced_build_output_is_not_superseded_by_its_served_copy() {
+        let dir = tempfile::tempdir().unwrap();
+        let (recorded, mine) = copy_of_a_build(dir.path());
+        assert_eq!(
+            superseded_by(&lease_from(&recorded, "1.0.0"), &mine, "1.0.0"),
+            None
+        );
+    }
+
+    #[test]
+    fn a_lease_naming_another_build_is_not_superseded_by_a_served_copy() {
+        let dir = tempfile::tempdir().unwrap();
+        let (_, mine) = copy_of_a_build(dir.path());
+        let other = dir.path().join("other");
+        fs::write(&other, b"another build").unwrap();
+        let recorded = identity_of(&other);
+        fs::write(&other, b"another build, rewritten longer").unwrap();
+        assert_eq!(
+            superseded_by(&lease_from(&recorded, "1.0.0"), &mine, "1.0.0"),
+            None
+        );
+    }
+
+    #[test]
+    fn a_lease_path_spelled_another_way_is_the_same_origin_as_the_copy() {
+        let dir = tempfile::tempdir().unwrap();
+        let (mut recorded, mine) = copy_of_a_build(dir.path());
+        fs::write(&recorded.path, b"a rebuild of the same tree, longer").unwrap();
+        // the same file under a different spelling of its path
+        recorded.path = dir.path().join("served").join("..").join("majordomus");
+        let reason = superseded_by(&lease_from(&recorded, "1.0.0"), &mine, "1.0.0")
+            .expect("canonical paths agree, and the output was replaced");
+        assert!(reason.contains("has been replaced since"), "{reason}");
+    }
+
+    #[test]
+    fn a_path_that_is_no_served_copy_is_not_superseded_by_a_lease_for_another_path() {
+        let dir = tempfile::tempdir().unwrap();
+        let (recorded, _) = copy_of_a_build(dir.path());
+        let elsewhere = dir.path().join("elsewhere");
+        fs::write(&elsewhere, b"a build run in place").unwrap();
+        assert_eq!(
+            superseded_by(
+                &lease_from(&recorded, "1.0.0"),
+                &identity_of(&elsewhere),
+                "1.0.0"
+            ),
+            None
         );
     }
 }

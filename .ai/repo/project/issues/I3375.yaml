@@ -1,0 +1,35 @@
+id: I3375
+milestone: the-corpus-is-registered-before-it-runs
+title: "A registered suite pins its treatment to one released version, so landings on master during the runs leave them current"
+slug: the-treatment-is-a-pinned-release
+priority: p1
+profile: implementation
+objective: "Let a registration name a released Majordomus version. The runner installs that release into the treatment workspace through the published installer with the version pinned, records the release and its archive digest in each run, and takes freshness for a registered suite from the methodology, the suite file, the tasks, the fixture and that archive digest instead of bin/majordomus, lib and share. A run under another release is stale for that registration."
+why: "T2 of the owner's report of 2026-10-19 needs every declared pair to complete with current runs. The critique found the pilot's freshness inputs include bin, lib and share, which the mesh changes many times a day, so a corpus spanning days would never complete; pinning the treatment to a tagged release keeps the treatment fixed and lets later changes, such as I3378's permission hook, enter only through a new registration."
+current_state: "suites/pilot.yaml freshness_inputs list bin/majordomus, lib and share; methodology.yaml:43 lists majordomus revision among the comparability keys; case 3223 proves the release smoke installs a pinned version."
+desired_state: "A registered suite runs a pinned release; a commit to lib on master leaves its runs current."
+scope:
+  - "apps/majordomus-cli/src/economics/runner.rs"
+  - "apps/majordomus-cli/src/economics/model.rs"
+  - "apps/majordomus-cli/tests/economics.rs"
+  - "docs/ECONOMICS.md"
+  - "site/content/docs/economics.md"
+non_scope:
+  - "Changing the pilot suite"
+  - "Building a release"
+depends_on:
+  - "I3374"
+serves:
+  - "the-product-proves-it-pays#the-corpus-is-registered-before-any-run"
+acceptance_criteria:
+  - "A replaying-harness test installs a named release archive into the treatment workspace and records its version and digest"
+  - "Editing a file under lib leaves a registered suite's runs current, and changing the registered release makes them stale"
+  - "An unregistered suite's freshness is unchanged"
+validation:
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test economics"
+  - "bash test/run.sh 430_economics"
+  - "majordomus generate --check"
+evidence_required:
+  - "test_treatment_release_is_pinned"
+created_at: 2026-10-19
+updated_at: 2026-10-19

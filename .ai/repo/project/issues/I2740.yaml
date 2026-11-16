@@ -32,11 +32,13 @@ evidence_required:
   - "delivery_stage_case"
   - "mutations_fail_the_case"
 created_at: 2026-10-16
-updated_at: 2026-10-16T13:32:49Z
+updated_at: 2026-10-20T22:11:19Z
 started_at: 2026-10-16T09:56:45Z
 started_event: sha256:ccff17b4f443c1326ed94192c2b84e32c3bf57cfb052b2b1650d417b1731a5c2
 verified_at: 2026-10-16T13:32:49Z
 verified_event: sha256:38d3cda74594483b46d7cfc344f41bce5935a6c47ac60f45983027b7ec5e3be4
+completed_at: 2026-10-20T22:11:19Z
+completed_event: sha256:a4b1df341cd839605bbe44114f297ae5415b9f0f8ccbd28e6a56558a2807749e
 evidence:
   - covers: delivery_stage_case
     type: test
@@ -50,3 +52,10 @@ evidence:
     result: "1 passed; 4 code mutations of src/plan/delivery.rs applied one at a time each failed it where named (slug half of branch_names, merge title dropped, unread forge not named, open pulls empty)"
     commit: b80c183508fdd3a4b6e3455ee22620394deaee38
     recorded_at: 2026-10-16T13:32:41Z
+  - covers: delivery_stage_case
+    type: ci
+    command: "validate run 39438896504 at master 9a5a9b77520: suite-shard (2) job 118683338077 runs 3100_an_issue_delivery_is_inferred; rust (1) job 118683336143 runs cargo test incl. tests/plan_delivery.rs"
+    result: "success (the run's only red job is pages, which runs no test)"
+    artifact: "https://github.com/korczis/prismatic-majordomus/actions/runs/39438896504"
+    commit: 573df967bb5bc30cf23e542b8d0dff03d3bf5ee0
+    recorded_at: 2026-10-20T22:10:50Z

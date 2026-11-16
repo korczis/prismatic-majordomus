@@ -1,0 +1,33 @@
+id: I3903
+milestone: the-runtime-supervises-itself
+title: "A stuck or superseded CI run is found and stopped by a declared bound, by a typed capability on a schedule"
+slug: a-stuck-run-is-stopped-by-its-bound
+priority: p0
+profile: implementation
+parallel_safe: true
+objective: "A typed forge capability beside apps/majordomus-cli/src/integration/forge.rs lists the repository's in-flight GitHub Actions runs. It cancels three kinds: a run queued longer than its declared bound, a run in progress past its workflow's bound, and a pull-request run whose head is no longer its branch's head. Each cancellation is recorded with its reason in the integration audit trail. It runs on a schedule, the way queue.yml runs `majordomus prs`, and absorbs the cancel logic scripts/ci/release-path carries in shell."
+why: "On 2026-10-22 the Actions queue was saturated. Master's validate and pages waited behind runs of heads that had already moved, and a person found and cancelled them by hand. Nothing in the repository cancels a stuck or superseded run: validate's concurrency group never cancels in progress, a failed run cancels only itself (I2664), and Rust has no run cancellation at all. The owner, in Czech: stuck builds must be watched, timed out and killed automatically, because they burn compute minutes and delivery time, and this must be in Majordomus's DNA."
+current_state: "Stuck and superseded runs hold runners until GitHub's six-hour limit or a person cancels them."
+desired_state: "Every in-flight run is judged against a declared bound on a schedule, and the ones past it, or superseded, are cancelled with a recorded reason. Master, release, tag and deploy runs are never cancelled for being superseded."
+scope:
+  - "apps/majordomus-cli/src/integration"
+  - "apps/majordomus-cli/src/capability/builtin"
+  - ".ai/repo/ci"
+  - ".github/workflows"
+  - "scripts/ci/release-path"
+  - "docs/CI.md"
+non_scope:
+  - "Hung Pages builds: I3902."
+depends_on: ["I3902"]
+acceptance_criteria:
+  - "A queued or in-progress run past its declared bound is cancelled once, with its reason recorded"
+  - "A pull-request run whose head moved is cancelled; a run of master, a release, a tag or a deploy never is for that reason"
+  - "A dry run decides without acting, and the decision is the same"
+validation:
+  - "cargo test --lib integration"
+evidence_required:
+  - "supervise_unit_tests"
+serves:
+  - "nothing-in-the-mesh-waits-on-something-dead#states-are-classified"
+created_at: 2026-10-22
+updated_at: 2026-10-22

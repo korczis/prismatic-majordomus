@@ -19,7 +19,8 @@ FIX="$T/fixture"; mkdir -p "$FIX/releases"
 start_http "$FIX" || skip "no python3 or node to serve a fixture release"
 trap 'stop_http' EXIT INT TERM HUP
 
-VERSION="$("$ROOT/scripts/release-version")"
+# the fixture serves the stable base of a pre-release tree (scripts/release-fixture)
+REAL_VERSION="$("$ROOT/scripts/release-version")"; VERSION="${REAL_VERSION%%-*}"
 MAJORDOMUS_DIST_BIN="$MJB" "$ROOT/scripts/release-fixture" --out "$FIX" --base-url "$HTTP_BASE" > "$T/fixture.log" 2>&1 \
   || { rc=$?; echo "    the fixture release could not be built (exit $rc, base=$HTTP_BASE, bin=$MJB)"; grep -v '^2026' "$T/fixture.log" | tail -20 | sed 's/^/      /'; exit 1; }
 expect_file "$FIX/releases/latest.json"
@@ -34,10 +35,21 @@ install_run() {
 
 # --- the artifact this machine will download is what the model says it is ----------------
 host="$("$MJB" distribution --repo "$ROOT" build --format json 2>/dev/null | sed -n 's/.*"target": "\([^"]*\)".*/\1/p' | head -n 1)"
-name="$("$MJB" distribution --repo "$ROOT" artifact --target "$host" --tag "v$VERSION" --format text 2>/dev/null | sed -n 1p)"
+# A pre-release tree's fixture restates its stable base, so the archive the model is held to is
+# this tree's own release, packed as it would be published.
+verify_dir="$FIX"
+if [ "$REAL_VERSION" != "$VERSION" ]; then
+  verify_dir="$T/own-release"; mkdir -p "$verify_dir"
+  MAJORDOMUS_BIN="$MJB" "$ROOT/scripts/release-package" \
+    --target "$host" --tag "v$REAL_VERSION" --out "$verify_dir" --no-build >/dev/null \
+    || { echo "    this tree's own release could not be packed"; exit 1; }
+fi
+own="$("$MJB" distribution --repo "$ROOT" artifact --target "$host" --tag "v$REAL_VERSION" --format text 2>/dev/null | sed -n 1p)"
 MAJORDOMUS_DIST_BIN="$MJB" "$ROOT/scripts/release-verify" \
-  --archive "$FIX/$name" --target "$host" --tag "v$VERSION" --native >/dev/null \
+  --archive "$verify_dir/$own" --target "$host" --tag "v$REAL_VERSION" --native >/dev/null \
   || { echo "    the fixture artifact is not what the model says it is"; exit 1; }
+# the archive the fixture serves, which the steps below tamper with
+name="$("$MJB" distribution --repo "$ROOT" artifact --target "$host" --tag "v$VERSION" --format text 2>/dev/null | sed -n 1p)"
 
 # --- dry run changes nothing --------------------------------------------------------------
 out="$(install_run --dry-run)"
@@ -54,7 +66,7 @@ expect_file "$HOMEDIR/.local/share/majordomus/versions/$VERSION/libexec/majordom
 expect_file "$HOMEDIR/.local/share/majordomus/versions/$VERSION/LICENSE"
 [ "$(file_mode "$BIN/majordomus")" = 755 ] || { echo "    the launcher is mode $(file_mode "$BIN/majordomus"), not 755"; exit 1; }
 [ "$("$BIN/majordomus" version)" = "majordomus $VERSION" ] || { echo "    the installed tool reports the wrong version"; exit 1; }
-[ "$("$HOMEDIR/.local/share/majordomus/versions/$VERSION/libexec/majordomus-cli" --version)" = "majordomus $VERSION" ] \
+[ "$("$HOMEDIR/.local/share/majordomus/versions/$VERSION/libexec/majordomus-cli" --version)" = "majordomus $REAL_VERSION" ] \
   || { echo "    the installed executable reports the wrong version"; exit 1; }
 # the PATH hint is given, because this HOME's bin directory is on nobody's PATH
 printf '%s\n' "$out" | grep -q 'is not on your PATH' || { echo "    no PATH hint was given"; exit 1; }

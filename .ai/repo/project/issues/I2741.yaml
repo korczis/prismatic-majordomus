@@ -32,7 +32,13 @@ evidence_required:
   - "drift_case"
   - "mutations_fail_the_case"
 created_at: 2026-10-16
-updated_at: 2026-10-16T16:07:33Z
+updated_at: 2026-10-20T22:15:11Z
+started_at: 2026-10-20T22:13:26Z
+started_event: sha256:e67f3b4dba08a09d58697d6a5ffedb9389f048ab84d33e2f41beb361217cd3e8
+verified_at: 2026-10-20T22:14:08Z
+verified_event: sha256:df6862b9e2f3e8a55f94f7a2d4247ae7787580cbe8713ab5641a28032693e2ca
+completed_at: 2026-10-20T22:15:11Z
+completed_event: sha256:9a108867d8b94b28c55b81ef2d5f29d8835b072e6d8bec607e91049da32e425b
 evidence:
   - covers: drift_case
     type: test
@@ -46,3 +52,10 @@ evidence:
     result: "6 of 6 killed: never-merged, ignore-open-pr, no-forge-titles, trunk-never-refuses, done-refuses, no-window-judged"
     commit: ee02079b1bc9224657b2c46563ff9aa68befba69
     recorded_at: 2026-10-16T16:07:33Z
+  - covers: drift_case
+    type: ci
+    command: "validate run 39438896504 at master 9a5a9b77520: suite-shard (1) jobs 118683336189 and 118758852434 run 3101_merged_work_unrecorded_is_drift; rust (3) jobs 118683336401 and 118758853049 run cargo test incl. tests/plan_drift.rs"
+    result: "success (the run's only red job is pages, which runs no test)"
+    artifact: "https://github.com/korczis/prismatic-majordomus/actions/runs/39438896504"
+    commit: 573df967bb5bc30cf23e542b8d0dff03d3bf5ee0
+    recorded_at: 2026-10-20T22:14:51Z

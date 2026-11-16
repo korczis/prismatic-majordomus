@@ -1,0 +1,41 @@
+id: landing-survives-any-session
+title: "Landing green work survives any session, any restart and any machine"
+statement: "Landing green work on master never waits on a person or on one session staying alive. On 2026-10-22 a restart of one machine ended every session there, and with them the landing seat, the release seat and the loop that landed green trains; nothing took over, the queue sat unread for hours, and the owner had to fast-forward master by hand. The owner asked for it to be as robust as possible and as autonomous as possible, for every instance on the mesh, solved systemically: one typed executor lands every green head, its state lives on origin, a seat a dead holder left is taken over, the executor survives a restart, the owner's standing approvals are declared once, and trains are composed by a command."
+invariants:
+  - "Nothing lands that the forge has not judged green on its exact head, and the head must contain the current master (ADR 0101)"
+  - "A landing is a non-forced fast-forward of master to the judged head (owner decision of 2026-10-22, I3910): a master that moved refuses it at the forge, so two executors cannot both land, and master always holds exactly the tree its checks judged"
+  - "No check is bypassed, no landing is forced, and no admin merge is made to reach autonomy"
+  - "Granting a permission stays the owner's act; the repository declares and reports, it never writes a machine's settings by itself"
+non_goals:
+  - "A second executor beside crate::integration"
+  - "Landing a pull request whose required check is not success on its head"
+  - "Strong consistency of the mesh; the forge arbitrates, the mesh announces"
+milestones:
+  - "landing-survives-any-session"
+satisfaction:
+  - id: one-executor
+    criterion: "Every landing on master, a combined top included, is a fast-forward made by majordomus prs drain; none is made by hand, by --admin or by a loop that lives in one session (planned proof: case a_green_train_is_fast_forwarded_and_verified of I3910)"
+    evidence: command
+    ref: "majordomus intent explain landing-survives-any-session"
+  - id: state-on-origin
+    criterion: "The executor reads its audit trail, its halt and its lease from origin, so a clone that takes over starts with the same verified count and the same halt, and a holder whose lease expired is refused before it lands (planned proof: case an_expired_lease_holder_is_refused_before_it_lands of I3911)"
+    evidence: command
+    ref: "majordomus intent explain landing-survives-any-session"
+  - id: vacant-seat-is-taken
+    criterion: "A seat whose holder stopped beating is reported vacant within one expiry and offered to live sessions by capability, and the session that accepts it resumes from the newest handover for that seat (planned proof: case a_vacant_seat_is_reported_and_offered of I3912)"
+    evidence: command
+    ref: "majordomus intent explain landing-survives-any-session"
+  - id: survives-a-restart
+    criterion: "The executor runs as a user service outside every agent session; an exit that is not a halt or a refusal is restarted, and a halt or refusal is not (planned proof: case a_halted_executor_is_not_restarted of I3913)"
+    evidence: command
+    ref: "majordomus intent explain landing-survives-any-session"
+  - id: approvals-are-declared
+    criterion: "A standing approval of the owner is one dated, owner-attributed record in the repository, every machine says whether its settings carry it, and only the owner, interactively, writes it (planned proof: case a_missing_approval_is_reported_per_machine of I3914)"
+    evidence: command
+    ref: "majordomus intent explain landing-survives-any-session"
+  - id: trains-are-composed
+    criterion: "A combined top is composed by a typed command from members declared in a tracked train manifest, and two machines compose the same pre-derive tree from it (planned proof: case a_train_manifest_composes_one_tree of I3915)"
+    evidence: command
+    ref: "majordomus intent explain landing-survives-any-session"
+created_at: 2026-10-22
+updated_at: 2026-10-22

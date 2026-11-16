@@ -1,0 +1,46 @@
+id: I2530
+milestone: a-derivation-computed-once-is-reused
+title: "The derivation store is bounded and measured: its size and hit rate are read by a capability, and only an explicit command removes entries"
+slug: the-derivation-store-is-bounded-and-measured
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "Make the store a quantity the repository measures and reclaims like its other accumulating directories: report its size, entries, hits, misses and time saved or spent, and remove entries by age and quota only through one explicit mutating command that spares entries in use."
+why: "campaigns/majordomus-incremental-derive-prompt-pack/05_05_CAS_STORE.md asks for eviction bounded by quota and age that never destroys an entry in use and for gc as a separate authorised action, and 06_06_CLI_EXPLAIN.md asks for derive stats and derive cache gc. ADR 0055 makes disk a measured quantity reclaimed by predicate and bounded before a build, and a gate in .ai/repo/ci/gates.yaml requires that every self-accumulating quantity keeps its measuring command. A store shared by every worktree accumulates by construction."
+current_state: "The store of I2529 grows without limit and nothing reports it. The environment capabilities measure disk and the reclaimable build directories (apps/majordomus-cli/src/environment)."
+desired_state: "derive.stats answers, from records the runs leave, entries and bytes in the store, hits, misses with reasons, bytes restored and the duration of each node's last run; majordomus derive stats prints it. majordomus derive store gc is declared with a mutating effect, removes entries older than a declared age or beyond a declared quota, oldest first, skips an entry a live run holds, and with --dry-run names what it would remove. The limits are declared in the repository's policy or environment declaration, not in code. The environment's disk report counts the store."
+scope:
+  - "apps/majordomus-cli/src/derivation/store.rs"
+  - "apps/majordomus-cli/src/derivation/stats.rs"
+  - "apps/majordomus-cli/src/capability/builtin/derive.rs"
+  - "apps/majordomus-cli/src/commands/derive.rs"
+  - "apps/majordomus-cli/src/cli.rs"
+  - "apps/majordomus-cli/src/environment"
+  - "apps/majordomus-cli/tests/derivation_store.rs"
+  - ".ai/repo/policy.yaml"
+  - "docs/DERIVE.md"
+  - "docs/ENVIRONMENT.md"
+  - ".ai/repo/project/issues/I2530.yaml"
+non_scope:
+  - "Eviction as a side effect of a derive or of any read"
+  - "Removing anything outside the store directory"
+  - "A background process that prunes"
+depends_on:
+  - "I2529"
+acceptance_criteria:
+  - "derive stats reports the store's entry count and bytes equal to what is on disk in a fixture"
+  - "derive store gc --dry-run removes nothing and names the entries a real run would remove"
+  - "gc removes entries beyond the declared age or quota, oldest first, and leaves an entry held by a running derive"
+  - "A derive that starts while gc runs either restores a whole entry or regenerates, and never restores a partial one"
+  - "The command is refused for a caller that may not mutate, by the same effect check as every other mutating capability"
+  - "The environment's disk report includes the store's bytes"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib derivation::stats"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test derivation_store --test environment"
+  - "majordomus generate --check"
+evidence_required:
+  - "store_size_reported_and_reclaimed"
+  - "gc_spares_entries_in_use"
+created_at: 2026-10-13
+updated_at: 2026-10-13

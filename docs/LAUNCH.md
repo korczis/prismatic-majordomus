@@ -18,9 +18,10 @@ the build refuses to publish it if the run stops holding.
 
 ## One sentence
 
-AI coding agents do the work; Majordomus is a local control layer that keeps the rules, the
-task's scope, the handover and the definition of done in the repository, and refuses to call
-work finished until the repository's own checks pass.
+Your AI agents say the work is done. Majordomus makes them prove it.
+
+That sentence is declared once, as the homepage's headline (`site/data/marketing.toml` `[hero]`);
+`scripts/ci/homepage-check` refuses this kit when it says it in other words.
 
 ## About fifty words
 
@@ -41,7 +42,7 @@ task claims the paths it may touch; `check` and `finish` fail on anything outsid
 `start` reports when another worker already claims the same paths. A handover is a structured
 record the next session gets back from `context`. `finish` evaluates a contract line by line
 and records an outcome only when every line passes, including the repository's own
-verification. It runs locally, in portable shell, and never calls a model.
+verification. It runs locally, as one command-line tool, and never calls a model.
 
 ## Three proof points
 

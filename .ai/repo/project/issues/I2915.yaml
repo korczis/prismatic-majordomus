@@ -23,6 +23,21 @@ acceptance_criteria:
 validation:
   - "majordomus plan validate"
   - "bash test/cases/3220_the_idd_loop_is_walked_in_a_browser.sh"
-evidence_required: []
+evidence_required:
+  - plain_labels_test
 created_at: 2026-10-18
-updated_at: 2026-10-18
+updated_at: 2026-10-20T15:35:42Z
+started_at: 2026-10-19T10:02:58Z
+started_event: sha256:9636876fbcb464805122b0ca8343ff9af48c13baf6c236c18e457c5b45f20ce3
+verified_at: 2026-10-19T10:03:10Z
+verified_event: sha256:c1f83b83e6360004a272eeab72a226ac6151fa27288078bf0d1552e9dc135922
+completed_at: 2026-10-19T10:03:21Z
+completed_event: sha256:f48b2f18305445097a8843c4e55bdbd15612e44903534eb2c58bd2e27eaf049f
+evidence:
+  - covers: plain_labels_test
+    type: ci
+    command: "gh run view --job 117890228077 --log"
+    result: "ui::idd::tests::the_intent_is_the_heading_and_every_panel_asks_a_plain_question ok, in rust (2) of validate run 39192952944 on dd4c0a87cba, carrying d65aee8a7f0"
+    artifact: "https://github.com/korczis/prismatic-majordomus/actions/runs/39192952944"
+    commit: eb72106294c22a8ac4714cf37d0d135eb917160c
+    recorded_at: 2026-10-20T15:35:42Z

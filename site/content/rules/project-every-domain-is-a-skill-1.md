@@ -1,7 +1,7 @@
 +++
 title = "Every domain of the registry is a skill, derived and shown wherever skills are"
 description = "Every domain of the registry is a skill, derived and shown wherever skills are"
-weight = 108
+weight = 110
 [extra]
 kind = "rule"
 slug = "project-every-domain-is-a-skill-1"

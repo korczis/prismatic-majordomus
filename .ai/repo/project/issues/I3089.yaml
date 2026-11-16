@@ -1,0 +1,36 @@
+id: I3089
+milestone: a-claim-stands-only-on-its-evidence
+title: "Five statements about the shell migration disagree with the code, the plan or the proof they name"
+slug: the-automation-records-say-what-was-built
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "Bring five statements into agreement with what the repository does, each at its canonical source. (1) ADR 0069 says cancellation and a deadline are checked on every operation of a script; the engine is built with no_time and checks only the execution's cancel flag (apps/majordomus-cli/src/script/mod.rs), and the knowledge record rhai-limits-are-not-a-clock leaves the deadline to the executor. (2) ADR 0069 says SECURITY.md states the sandbox as a declared exception to project.no-network-no-eval; SECURITY.md names neither Rhai nor scripted capabilities. (3) Milestone automation's current_state says no interpreter is embedded, nothing refuses a new shell file and Perl is reachable through shasum, while I1800, I1803 and I1802, which delivered each of those, are DONE; I1800 and I1803 carry the same pre-delivery text in their own current_state. (4) Rule project.portable-shell names test/cases/08_no_forbidden_constructs.sh as its test, yet case 08 scans only for eval and network clients, none of the constructs the rule states (associative arrays, mapfile, GNU-only flags); its review line quotes a shellcheck command in validate.yml, while CI runs scripts/ci/shell-lint. (5) .ai/repo/automation/README.md says the inventory holds one line per unit, while several units hold more than one, among them .github/workflows/validate.yml and .just/build.just."
+why: "On 2026-10-21 a fact-check of the article on automation as a capability (I3088) against its sources found these five places, each verified at master 905159df7cc. The article follows the code; a reader who follows its links reads a deadline the engine does not keep, a security declaration that is not there, a milestone that describes the day before its own deliveries, and a rule whose named proof proves something else."
+current_state: "Each of the five statements is in the tree at master 905159df7cc, as the objective quotes."
+desired_state: "Each statement says what the code, the plan and the proof say. A rule names as its test only a case that exercises what the rule states, or says that review alone holds it."
+scope:
+  - ".ai/repo/project/issues/I3089.yaml"
+  - ".ai/repo/adrs/0069-a-capability-may-be-scripted.md"
+  - "SECURITY.md"
+  - ".ai/repo/project/milestones/automation.yaml"
+  - ".ai/repo/project/issues/I1800.yaml"
+  - ".ai/repo/project/issues/I1803.yaml"
+  - ".ai/repo/rules/project/portable-shell.v1.md"
+  - ".ai/repo/automation/README.md"
+non_scope:
+  - "Building the scripted capability kind (I1801) or any migration of the automation milestone"
+depends_on: []
+acceptance_criteria:
+  - "No statement of the five disagrees with the code, the plan or the case it names"
+  - "Rule project.portable-shell names as its test only cases that exercise what it states, or says that review alone holds it"
+validation:
+  - "majordomus plan validate"
+  - "majordomus adr check"
+  - "scripts/ci/rule-proof-check"
+evidence_required: []
+serves:
+  - "a-claim-stands-only-on-its-evidence#public-text-true"
+  - "a-claim-stands-only-on-its-evidence#blocking-rule-shows-refusal"
+created_at: 2026-10-21
+updated_at: 2026-10-21

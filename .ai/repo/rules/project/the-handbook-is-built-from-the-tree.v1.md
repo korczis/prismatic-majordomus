@@ -7,7 +7,7 @@ description: Every edition of the handbook is built by handbook/build.py from th
 statement: The handbook is built from this repository's own tree and from nothing else. Each chapter of an edition declares the documents, features, modules, commands, decisions, rules and claims it rests on; the build resolves every declaration against the repository's generated graph and refuses a declaration the graph no longer carries, a chapter that cites nothing, a caption that asks for a figure the derived data does not have, and derived data whose shape changed under the page. No figure, list or graph of an edition is written by hand, and the built page is never committed.
 status: active
 class: blocking
-depends_on: [project.english-only@3]
+depends_on: [project.english-only@4]
 tags: [handbook, derivation, documentation]
 
 x-majordomus:

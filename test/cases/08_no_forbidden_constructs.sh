@@ -48,13 +48,21 @@ chk 'rm[[:space:]]+-rf[[:space:]]+/[^t]'                    'recursive delete of
 #     moment before, and believed only when the path is gone;
 #   - the idle private build directory sweep (mj_rust_reclaim_private; case 3197): one
 #     removal of a directory the same function has just renamed out of cargo's reach, after
-#     its age, lock and process predicates were asked twice.
+#     its age, lock and process predicates were asked twice;
+#   - the bound's eviction (mj_rust_evict_in_profile; case 3959): run inside cargo's lock on
+#     the profile, three removals of a unit the plan named — a coverage run's target directory
+#     after it was renamed out of cargo's reach, an incremental session asked again of that
+#     path alone and believed only when gone, and a generation's fingerprint or build-script
+#     directory, by its unit hash, physically inside the profile.
 rmrf="$(grep -nE 'rm -rf' $files | grep -vE 'mktemp|\$tmp\b|\$TMP\b|"\$tmp"|"\$T"|\$MJ_CTX_TMP\b|\$MJ_PJ\b|\$MJ_ARCHIVE_TMPD\b|\$MJ_TMP_ROOT\b|"\$stale"' | grep -vE '^[^:]+:[0-9]+:\s*#' || true)"
 while IFS= read -r line; do
   [ -n "$line" ] || continue
   case "$line" in
     "$ROOT/lib/rust_bin.sh:"*'      if rm -rf "$mj_pi_s" 2>/dev/null && [ ! -e "$mj_pi_s" ]; then') ;;  # the declared sweep
     "$ROOT/lib/rust_bin.sh:"*'      rm -rf "$mj_rp_gone" 2>/dev/null || true   # renamed out of cargo'"'"'s reach a line above') ;;  # the second
+    "$ROOT/lib/rust_bin.sh:"*'            rm -rf "$mj_ep_gone" 2>/dev/null || true   # moved out of cargo'"'"'s reach a line above') ;;  # the bound
+    "$ROOT/lib/rust_bin.sh:"*'        elif ! { rm -rf "$mj_ep_l" 2>/dev/null && [ ! -e "$mj_ep_l" ]; }; then') ;;  # the bound
+    "$ROOT/lib/rust_bin.sh:"*'            rm -rf "$mj_ep_x" 2>/dev/null || true   # its fingerprint or build-script output') ;;  # the bound
     *) printf '%s\n    rm -rf of a path the scan cannot see came from mktemp\n' "$line"; exit 1 ;;
   esac
 done <<EOF
@@ -72,6 +80,19 @@ awk '/^mj_rust_reclaim_private\(\) \{/ { f = 1 } f && /^}/ { f = 0 }
      f && index($0, "mv \"$mj_rp_d\" \"$mj_rp_gone\"") { moved = 1 }
      f && moved && index($0, "rm -rf \"$mj_rp_gone\"") { found = 1 } END { exit !found }' "$sweep" \
   || { printf '    the private build directory removal is not inside mj_rust_reclaim_private, after its rename\n'; exit 1; }
+# the bound's three removals are inside mj_rust_evict_in_profile, which only mj_rust_locked runs
+awk '/^mj_rust_evict_in_profile\(\) \{/ { f = 1 } f && /^}/ { f = 0 }
+     f && index($0, "mv \"$mj_ep_l\" \"$mj_ep_gone\"") { moved = 1 }
+     f && moved && index($0, "rm -rf \"$mj_ep_gone\"") { a = 1 }
+     f && index($0, "rm -rf \"$mj_ep_l\"") { b = 1 }
+     f && index($0, "rm -rf \"$mj_ep_x\"") { c = 1 } END { exit !(a && b && c) }' "$sweep" \
+  || { printf '    the bound'"'"'s removals are not inside mj_rust_evict_in_profile, the coverage one after its rename\n'; exit 1; }
+for v in mj_ep_gone mj_ep_l mj_ep_x; do
+  [ "$(grep -cF "rm -rf \"\$$v\"" "$sweep")" = 1 ] \
+    || { printf '    the bound'"'"'s removal of $%s is not one removal in lib/rust_bin.sh\n' "$v"; exit 1; }
+done
+grep -qE 'mj_rust_locked "\$mj_bb_p" mj_rust_evict_in_profile ' "$sweep" \
+  || { printf '    the bound'"'"'s eviction is no longer run under cargo'"'"'s lock (mj_rust_locked)\n'; exit 1; }
 grep -qF "\"\$mj_pi_find\" \"\$mj_pi_s\" -maxdepth 0 -type d -name 's-*' ! -name '*-working'" "$sweep" \
   || { printf '    the declared sweep no longer asks the predicate again before it removes\n'; exit 1; }
 if grep -nE '(^|[;{[:space:]])(local )?mj_pi_s=' "$sweep"; then

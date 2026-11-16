@@ -7,6 +7,12 @@
 #   "majordomus-cli acquires no dependency from this work — not an async runtime, not an
 #    HTTP client, not TLS, not a CDP client — and a gate proves it."
 #
+# ADR 0220 moved one line of that boundary, and only one: the mesh client reaches an
+# `https://` rendezvous or seed over TLS (the owner's "TLS first", 2026-10-21; ADR 0032's
+# amendment of that date). The TLS stack it allows is rustls over the ring provider, with
+# webpki-roots compiled in — no OpenSSL, no native-tls, no aws-lc, no async TLS adaptor — and
+# the HTTP framing stays the crate's own few lines. Everything else here stands as written.
+#
 # and, in its consequences:
 #
 #   "A gate must assert that majordomus-cli's dependency list did not grow, or the boundary
@@ -94,6 +100,8 @@ libc                  unlink of the lease file inside the signal handler
 syn                   the quality subsystem reads this crate's source as a syntax tree
 proc-macro2           span locations, so a quality finding can name a line
 ed25519-dalek         mesh identity: signatures only, no encryption, no TLS, no key exchange
+rustls                the mesh client's TLS to an https:// hub or seed (ADR 0220); ring provider only
+webpki-roots          the Mozilla roots that TLS verifies against, compiled in: no system store needed
 getrandom             OS entropy for the node's signing key and instance ids
 regex                 applies the leak patterns as the grep gates do; already linked via jsonschema
 tiktoken-rs           the tokenizer economics counts with: o200k_base, embedded, no network
@@ -101,12 +109,17 @@ rhai                  the sandboxed engine a scripted capability runs in (ADR 00
 tempfile              tests and benches that need a scratch tree
 criterion             the benchmark harness
 proptest              the property-based harnesses
+majordomus-core       the portable core (ADR 0170), a path dependency taking only serde_json and sha2
+rcgen                 the TLS tests mint a certificate authority in memory; a dev-dependency only
 "
 
 # ------------------------------------------------------------------ the forbidden set
 #
 # ADR 0032's four categories, as the crates that are those things. Matched against the
-# lockfile, so a transitive arrival is caught as surely as a declared one.
+# lockfile, so a transitive arrival is caught as surely as a declared one. The TLS category no
+# longer names rustls, its webpki and its roots (ADR 0220); it names every other TLS stack, the
+# async adaptors over rustls, and aws-lc — the provider rustls takes by default, which needs
+# cmake and a C toolchain the musl release builds do not carry.
 #
 # Order is load-bearing: `tokio-rustls` is a TLS stack and `tokio-tungstenite` a WebSocket
 # client, and both would read as "an async runtime" if the `tokio-*` glob were tested first.
@@ -114,7 +127,7 @@ proptest              the property-based harnesses
 # is what shellcheck's SC2221/SC2222 are for.
 forbidden_category() { # crate name -> category, or empty
   case "$1" in
-    tokio-rustls|hyper-tls|rustls|rustls-*|native-tls|openssl|openssl-sys|webpki|webpki-roots) printf 'a TLS stack' ;;
+    tokio-rustls|hyper-tls|hyper-rustls|native-tls|openssl|openssl-sys|aws-lc-rs|aws-lc-sys|aws-lc-fips-sys|boring|boring-sys) printf 'a TLS stack' ;;
     tokio-tungstenite|tungstenite|chromiumoxide|chromiumoxide-*|headless_chrome|fantoccini|thirtyfour|websocket|ws) printf 'a browser/CDP client' ;;
     reqwest|hyper|hyper-*|ureq|curl|curl-sys|isahc|surf|minreq|attohttpc|http-client) printf 'an HTTP client' ;;
     tokio|tokio-*|async-std|async-io|async-executor|async-global-executor|smol|mio) printf 'an async runtime' ;;
@@ -178,7 +191,7 @@ locked="$(awk -F'"' '/^name = "/ { print $2 }' "$LOCK" | LC_ALL=C sort -u | grep
 declared_n="$(printf '%s\n' "$declared" | grep -c '[^[:space:]]' || true)"
 
 if [ -z "$grew" ] && [ -z "$crossed" ]; then
-  echo "crate-boundary: the crate declares $declared_n dependency(ies), all argued for, and links no async runtime, HTTP client, TLS stack or CDP client ($locked package(s) in the lock)"
+  echo "crate-boundary: the crate declares $declared_n dependency(ies), all argued for, and links no async runtime, HTTP client, CDP client or TLS stack but rustls over ring ($locked package(s) in the lock)"
   exit 0
 fi
 

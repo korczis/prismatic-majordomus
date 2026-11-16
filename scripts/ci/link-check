@@ -95,6 +95,21 @@ if os.path.isfile(ev):
         if str(run.get('id', '')).isdigit(): RUNS.add(str(run['id']))
     except ValueError:
         pass
+# The runs /trends/ draws (I4220): `scripts/pages trends` read each of them from the forge at
+# publish time (site/data/trends.json, I3933), so they exist for the same reason the evidence's
+# run does. Only a series of the shape `scripts/pages trends` writes (schema trends/v1) is that
+# reading (I4207): a file of any other shape names runs nobody read, and decides nothing. A run
+# that neither file names is still undecidable offline.
+tr = os.path.join(ROOT, 'site', 'data', 'trends.json')
+if os.path.isfile(tr):
+    import json
+    try:
+        series = json.load(open(tr, encoding='utf-8')) or {}
+        if isinstance(series, dict) and series.get('schema') == 'trends/v1':
+            for r in series.get('runs') or []:
+                if isinstance(r, dict) and str(r.get('run_id', '')).isdigit(): RUNS.add(str(r['run_id']))
+    except ValueError:
+        pass
 
 def git(*args):
     return subprocess.run(['git', '-C', ROOT, *args], capture_output=True, text=True)

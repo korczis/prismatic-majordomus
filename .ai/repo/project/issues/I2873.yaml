@@ -1,0 +1,31 @@
+id: I2873
+milestone: two-folder-integration
+title: "The manifest schema is generated from typed sections"
+slug: the-manifest-schema-is-generated
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Manifest.sections becomes a typed struct, one documented optional path per section the layer knows, and share/schemas/majordomus/manifest/manifest.v1.schema.json is generated from the manifest's Rust types by majordomus generate (as the graph schema is), so the section list, its descriptions and the closed shape live in one place and the hand-written schema goes away."
+why: "Split out of I2870 on 2026-10-21. The hand-written manifest schema closes `sections` with a fixed list of names and descriptions, while the Rust type reads them as an open map: generating the schema from today's types would quietly accept any section name on every App::load, a validation regression. Typing the sections first keeps the closed shape and makes the schema a projection (ADR 0004)."
+current_state: "manifest.v1.schema.json is hand-written; Manifest.sections is a BTreeMap<String, String>; the two describe the section list twice."
+desired_state: "The sections are typed once; the schema is generated from them and generate --check holds it."
+scope:
+  - apps/majordomus-cli/src/repository.rs
+  - apps/majordomus-cli/src/generate.rs
+  - share/schemas/majordomus/manifest
+  - .ai/repo/project/issues/I2873.yaml
+non_scope:
+  - "New sections or layout fields (I2870, I1980)"
+depends_on:
+  - I2870
+  - I1980
+acceptance_criteria:
+  - "Manifest.sections is a typed struct and every reader of a section reads its field"
+  - "manifest.v1.schema.json is generated from the Rust types, keeps the closed section list and its descriptions, and generate --check holds it"
+validation:
+  - "cargo test --workspace --all-features"
+  - "majordomus generate --check"
+evidence_required:
+  - manifest_schema_generated
+created_at: 2026-10-21
+updated_at: 2026-10-21

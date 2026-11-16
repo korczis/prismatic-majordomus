@@ -1,0 +1,30 @@
+id: I3231
+milestone: every-surface-follows-what-changed
+title: "The Observatory shows its own stream health: lag, dropped frames, resyncs and frame rate"
+slug: the-observatory-shows-its-own-health
+priority: p3
+profile: implementation
+objective: "Add a diagnostics overlay to the Observatory (toggled like its legend) that derives from the stream it follows: frames received, last frame age, resyncs, gaps detected, and the measured frame rate of the renderer."
+why: "Proposed on 2026-10-14 as a self-observing visualisation; useful for a kiosk left running. Proposed in ADR 0216 (Every live surface follows one channel with named follow streams, and nothing polls where a stream exists) (proposed; it carries no authority until the owner accepts it). Sources: chatgpt-majordomus:c260#8."
+current_state: "share/ui/observatory.js has an 'i' legend toggle and status words; no counters of its own stream."
+desired_state: "The overlay's numbers are counted by the script from frames it received; nothing is typed."
+scope:
+  - "share/ui/observatory.js"
+  - "docs/MAJORDOMUS_UI.md"
+non_scope:
+  - "Server-side telemetry"
+depends_on:
+  - "I3219"
+serves:
+  - "every-surface-follows-what-changed#stream-health-is-counted"
+acceptance_criteria:
+  - "A forced resync increments the overlay's resync count"
+  - "The overlay on the published replay is claimed by an interaction spec, and on /ui/observatory it is driven by cockpit-probe"
+validation:
+  - "bash test/run.sh 3011_the_observatory_draws_nothing_it_did_not_read"
+  - "bash test/run.sh 3042_the_observatory_asks_again_when_it_is_seen"
+  - "scripts/ci/interaction-check"
+evidence_required:
+  - "interaction_spec_observatory_health"
+created_at: 2026-10-18
+updated_at: 2026-10-18

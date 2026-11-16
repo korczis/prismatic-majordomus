@@ -30,6 +30,9 @@ fail() { printf '    %s\n' "$*"; exit 1; }
 
 VER="$("$RB" --version | awk '{print $NF}')"
 [ -n "$VER" ] || fail "the executable names no version"
+# the latest release is never a pre-release (#1313): a pre-release executable leaves the latest
+# at the highest stable release, the records' 0.1.0, while its own tag still counts as tagged
+case "$VER" in *-*) LATEST=0.1.0; LSRC=records ;; *) LATEST="$VER"; LSRC=tags ;; esac
 
 "$MJ" init >/dev/null
 pj_init
@@ -97,7 +100,7 @@ jq -e . f.json >/dev/null 2>&1 || { head -c 400 f.json; fail "plan.flight answer
   || fail "M2's issue in flight is not I0002 by its open pull request: $(jq -c '.milestones[0]' f.json)"
 # MUTATION, RUN: take the first read source rather than the highest version (latest_of keeps
 # its first candidate) -> 0.1.0 from records.
-[ "$(jq -r '.release | "\(.latest) \(.source) \(.executable_tagged)"' f.json)" = "$VER tags true" ] \
+[ "$(jq -r '.release | "\(.latest) \(.source) \(.executable_tagged)"' f.json)" = "$LATEST $LSRC true" ] \
   || fail "the latest release is not the executable's tagged version: $(jq -c '.release' f.json)"
 [ "$(jq -r '.release.readings[] | select(.source == "records") | .version' f.json)" = 0.1.0 ] \
   || fail "the records' own answer is not reported beside it"
@@ -117,8 +120,8 @@ printf '%s' "$page" | grep -qF 'href="https://github.com/example/fixture/pull/9"
 # MUTATION, RUN: show the declared status in the Inferred column (`value(i, "status")` in
 # issue_table) -> no pr_open stage on the screen.
 printf '%s' "$page" | grep -qF '<span class="mj-tag">pr_open</span>' || fail "I0002's inferred stage is not shown"
-printf '%s' "$page" | grep -qF "Latest release $VER (from tags)" || fail "the screen shows an older release than its own executable"
-printf '%s' "$page" | grep -qF "href=\"https://github.com/example/fixture/releases/tag/v$VER\"" \
+printf '%s' "$page" | grep -qF "Latest release $LATEST (from $LSRC)" || fail "the screen shows an older release than its own executable"
+printf '%s' "$page" | grep -qF "href=\"https://github.com/example/fixture/releases/tag/v$LATEST\"" \
   || fail "the latest release is not linked to its tag"
 printf '%s' "$page" | grep -qF '<code class="mj-mono">mesh</code>' || fail "the unread mesh is not said on the screen"
 

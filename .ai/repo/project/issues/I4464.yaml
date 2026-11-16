@@ -1,0 +1,46 @@
+id: I4464
+milestone: a-bounded-task-is-carried-to-accepted-work
+title: "plan next says when the ready issue needs a build the machine cannot start, and proposes a ready issue that needs none first, never hiding either"
+slug: ready-work-names-the-build-it-needs
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "The plan derivation stays a walk of the records (apps/majordomus-cli/src/plan.rs says it opens no file and starts no process); the machine's capacity is read where the answer is projected, once per call: by plan next, by the `next ready issue` line of plan start (lib/plan.sh:263, :514) and by the Rust plan.next capability. An issue needs a build when its scope names a path that matches a build input the repository declares: a new optional policy key, build.inputs (a list of globs; absent: no issue is known to need a build, and every answer is as today), admitted through the policy schema and its generated allow-list. The floor is the one the build itself enforces, MAJORDOMUS_MIN_FREE_MB with its default (lib/rust_bin.sh:461-470, :551), so the plan and the build cannot disagree about it. When the free space of the checkout's volume is below that floor, plan next takes the first ready issue in today's ranking that needs no build, and prints, for each better-ranked issue it passed over, `<id> needs a build: <free> free, below the <floor> floor`; when every ready issue needs a build it still names the first, with the same line, and never answers none. plan ready lists every READY issue as today and marks those that need a build. At or above the floor nothing changes."
+why: "Observed in session f3's in-repo pass on master 51b38035a71 on 2026-10-30, step 5. The disk had 26 GiB free, below the 35 GiB floor the owner's cooperation rule sets for builders (project.the-cooperation-model-is-the-owners-word), so the worker took I4292, which needs no Rust build. `plan start I4292` then printed `next ready issue: I4291`, the Rust half, which that machine could not build. The ranking knows wave, priority and id and nothing of capacity, so a worker reads a proposal it cannot carry out and must judge by hand; mission section 6 asks that work is divided by independent scopes and the capacity actually available, and section 10 that overhead is not added to hot paths, which is why the capacity is read once per projection and never in the derivation."
+current_state: "At master 51b38035a71: ready_ranked (apps/majordomus-cli/src/plan.rs:573-579) and mj_pj_ready_ranked (lib/project.sh:268-274) order READY issues by wave, priority and id only; nothing in either reads free space or a build need. The build refuses below MAJORDOMUS_MIN_FREE_MB (default 5120 MiB, lib/rust_bin.sh:461-470), read at lib/rust_bin.sh:551. The policy has a build_cache section (.ai/repo/policy.yaml:402-403) and no key naming which paths need a build. I3825 makes a build refuse beside five others or below the floor; I4006 gives heavy work a machine-wide slot; neither touches the plan's answer."
+desired_state: "A worker asking what to take next is never handed, without a word, work this machine cannot build: the answer names the build need and the free space, prefers buildless ready work below the floor, and leaves the ranking alone everywhere else. Both engines answer the same. Enforced by case 4464."
+scope:
+  - ".ai/repo/project/issues/I4464.yaml"
+  - "lib/plan.sh"
+  - "lib/project.sh"
+  - "apps/majordomus-cli/src/plan.rs"
+  - "apps/majordomus-cli/src/capability/builtin/plan.rs"
+  - "share/schemas/majordomus/policy/policy.v1.schema.json"
+  - "share/allow/policy.txt"
+  - "docs/CLI.md"
+  - "test/cases/4464_ready_work_names_the_build_it_needs.sh"
+non_scope:
+  - "Refusing or queueing a build below the floor or beside five builders: I3825"
+  - "A machine-wide slot for heavy work: I4006"
+  - "Reading the load average, the CPU count or another machine's capacity"
+  - "Changing the order of READY issues at or above the floor, or removing any issue from plan ready"
+depends_on: []
+serves: []
+acceptance_criteria:
+  - "Case 4464, in a fixture plan with two READY issues of one wave, R (p1, scope under a declared build input) and S (p2, no build input), and build.inputs declared: with MAJORDOMUS_MIN_FREE_MB set above the volume's free space, `majordomus plan next` names S and prints `R needs a build` with the free space and the floor"
+  - "Case 4464: with MAJORDOMUS_MIN_FREE_MB=0, plan next names R exactly as today and prints no build line"
+  - "Case 4464: with S removed, below the floor plan next still names R, with the build line, and never `none`"
+  - "Case 4464: without build.inputs in the policy, plan next names R below the floor, as today"
+  - "Case 4464: `majordomus plan ready` lists both R and S in every state above, with R marked as needing a build"
+  - "Case 4464: the Rust plan.next answer, through the executable, names the same issue and the same build line as the shell"
+  - "Before the change, case 4464 fails at its first assertion"
+validation:
+  - "MJ_TEST_JOBS=4 bash test/run.sh 4464_ready_work_names_the_build_it_needs 133_plan_transition"
+  - "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --lib plan::"
+  - "bin/majordomus shell check"
+  - "bin/majordomus doctor"
+  - "bin/majordomus plan validate"
+evidence_required:
+  - "build_need_case"
+created_at: 2026-10-30
+updated_at: 2026-10-30

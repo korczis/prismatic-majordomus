@@ -41,14 +41,13 @@ fail() { printf 'entity-check: %s\n' "$1" >&2; FAIL=1; }
 
 command -v jq >/dev/null || { echo "entity-check: jq is required" >&2; exit 12; }
 
-# The executable answers for the index; it is built the way every other gate builds it.
-MJ="${MAJORDOMUS_BIN:-}"
-if [ -z "$MJ" ]; then
-  MJ="$ROOT/apps/majordomus-cli/target/debug/majordomus"
-  # shellcheck source=../../lib/rust_bin.sh
-  [ -x "$MJ" ] || (. "$ROOT/lib/rust_bin.sh" && cd "$ROOT/apps/majordomus-cli" && mj_cargo_bounded "$ROOT" build --quiet)
-fi
-[ -x "$MJ" ] || { echo "entity-check: no executable at $MJ; run: cargo build --manifest-path apps/majordomus-cli/Cargo.toml" >&2; exit 12; }
+# The executable answers for the index. A gate never builds it (ADR 0224): it is the one every
+# gate resolves — MAJORDOMUS_BIN, the tree's own when current, or the installed release of the
+# tree's generation — and with none, exit 12 naming `just build`.
+# majordomus-on-stale-executable: fallback, else refuse
+# shellcheck source=../../lib/rust_bin.sh
+. "$ROOT/lib/rust_bin.sh"
+MJ="$(mj_rust_resolve "$ROOT" 'entity-check: ')" || exit 12
 
 KINDS="$(mktemp)"; PUB="$(mktemp)"
 trap 'rm -f "$KINDS" "$PUB"' EXIT

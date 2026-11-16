@@ -1,0 +1,36 @@
+id: I3394
+milestone: recovery-from-injected-faults-is-proven
+title: "The mesh lab's work-fault evidence from CI is committed as T5 trials and the T5 verdict is published with every failed trial"
+slug: the-t5-verdict-is-published
+priority: p1
+profile: implementation
+objective: "Convert the work-fault scenarios of a mesh-lab CI run into T5 trial records naming the run id, commit them beside I3393's, regenerate the economics projections and let the T5 row compute its status."
+why: "T5 of the owner's report of 2026-10-19; the lab's evidence lives in target/ and is gone with the runner, so the counted trials must be committed records."
+current_state: "target/mesh-lab/evidence.json is written per run and not tracked."
+desired_state: "T5 reads passed, failed or inconclusive with every trial listed."
+scope:
+  - ".ai/repo/benchmarks"
+  - "docs/generated/economics.json"
+  - "docs/generated/economics.md"
+  - "docs/generated/economics.yaml"
+  - "site/data/generated/economics.json"
+non_scope:
+  - "Re-running a failed trial to replace it"
+depends_on:
+  - "I3392"
+  - "I3393"
+  - "I3354"
+serves:
+  - "the-product-proves-it-pays#recovery-is-proven-for-each-injected-fault"
+acceptance_criteria:
+  - "Each converted record names the CI run id and scenario"
+  - "Every failed trial is listed on the T5 row"
+  - "majordomus generate --check passes"
+validation:
+  - "majordomus economics proof"
+  - "majordomus generate --check"
+  - "bash test/run.sh 414_mesh_lab_evidence"
+evidence_required:
+  - "t5_verdict_published"
+created_at: 2026-10-19
+updated_at: 2026-10-19

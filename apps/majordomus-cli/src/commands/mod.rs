@@ -30,6 +30,8 @@
 //! ```
 
 pub(crate) mod bench;
+pub(crate) mod blackboard;
+pub(crate) mod board;
 pub(crate) mod brief;
 pub(crate) mod capabilities;
 pub(crate) mod command_graph;
@@ -39,6 +41,9 @@ pub(crate) mod continuity;
 pub(crate) mod convergence;
 pub(crate) mod dashboard;
 pub(crate) mod delivery;
+pub(crate) mod deploy;
+pub(crate) mod design;
+pub(crate) mod design_licence;
 pub(crate) mod devcontext;
 pub(crate) mod devtask;
 pub(crate) mod distribution;
@@ -51,6 +56,7 @@ pub(crate) mod generate;
 pub(crate) mod guard;
 pub(crate) mod intent;
 pub(crate) mod knowledge;
+mod layout;
 pub(crate) mod mcp;
 pub(crate) mod mesh;
 pub(crate) mod models;
@@ -58,6 +64,7 @@ pub(crate) mod monitor;
 pub(crate) mod offload;
 pub(crate) mod pack;
 pub(crate) mod plan;
+pub(crate) mod proceed;
 pub(crate) mod product;
 pub(crate) mod prs;
 pub(crate) mod quality;
@@ -69,6 +76,7 @@ pub(crate) mod serve;
 pub(crate) mod served;
 pub(crate) mod shell;
 pub(crate) mod skills;
+pub(crate) mod ui;
 pub(crate) mod web;
 pub(crate) mod why;
 pub(crate) mod worktree;
@@ -81,6 +89,7 @@ pub fn run(cli: Cli) -> Result<u8> {
     match cli.command {
         Command::Mcp(args) => mcp::run(args),
         Command::Serve(args) => serve::run(args),
+        Command::Ui(args) => ui::run(args),
         Command::Capabilities(args) => capabilities::run(args),
         Command::Generate(args) => generate::run(args),
         Command::Bench(args) => bench::run(args),
@@ -110,6 +119,7 @@ pub fn run(cli: Cli) -> Result<u8> {
         Command::Reasoning(args) => reasoning::run(args),
         Command::Evidence(args) => evidence::run(args),
         Command::Served(args) => served::run(args),
+        Command::Deploy(args) => deploy::run(args),
         Command::Rules(args) => rules::run(args),
         Command::Intent(args) => intent::run(args),
         Command::Delivery(args) => delivery::run(args),
@@ -117,9 +127,14 @@ pub fn run(cli: Cli) -> Result<u8> {
         Command::Economics(args) => economics::run(args),
         Command::Entity(args) => entity::run(args),
         Command::Shell(args) => shell::run(args),
+        Command::Layout(args) => layout::run(args),
+        Command::Design(args) => design::run(args),
         Command::Pack(args) => pack::run(args),
         Command::Dashboard(args) => dashboard::run(args),
         Command::Brief(args) => brief::run(args),
+        Command::Proceed(args) => proceed::run(args),
+        Command::Blackboard(args) => blackboard::run(args),
+        Command::Board(args) => board::run(args),
         Command::Skills(args) => skills::run(args),
         Command::Knowledge(args) => knowledge::run(args),
         Command::Continuity(args) => continuity::run(args),
@@ -193,6 +208,15 @@ mod tests {
             (&["majordomus", "brief", "--line"], |c| {
                 matches!(c, Command::Brief(_))
             }),
+            (&["majordomus", "proceed", "plan"], |c| {
+                matches!(c, Command::Proceed(_))
+            }),
+            (&["majordomus", "blackboard", "--this-checkout"], |c| {
+                matches!(c, Command::Blackboard(_))
+            }),
+            (&["majordomus", "board", "snapshot"], |c| {
+                matches!(c, Command::Board(_))
+            }),
             (
                 &["majordomus", "devcontext", "compile", "--issue", "I1"],
                 |c| matches!(c, Command::Devcontext(_)),
@@ -206,6 +230,9 @@ mod tests {
             ),
             (&["majordomus", "continuity", "status"], |c| {
                 matches!(c, Command::Continuity(_))
+            }),
+            (&["majordomus", "design", "kit", "--check"], |c| {
+                matches!(c, Command::Design(_))
             }),
             (
                 &["majordomus", "continuity", "resume", "--record", "a1b2"],

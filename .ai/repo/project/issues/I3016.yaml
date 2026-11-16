@@ -1,0 +1,28 @@
+id: I3016
+milestone: two-folder-integration
+title: "A capability reads the repository from its context, never by opening it again"
+slug: a-capability-reads-the-repository-from-its-context
+priority: p0
+profile: implementation
+parallel_safe: true
+objective: "The capability Context carries the Arc<Repository> the process discovered, and the capabilities that call Repository::open on a root they already hold (environment, commit, brief, intents, knowledge_base, release, server, continuity, intent_binding, guard, integration::allocate) read it from the context instead, so a capability call reads no manifest."
+why: "The third slice of I1105. The 2026-10-20 survey found twelve Repository::open calls inside capabilities, each re-reading the manifest on every request the server answers."
+current_state: "Context holds the index, whose repository root is a String; capabilities re-open the repository from it."
+desired_state: "Context.repository is the discovered model; Repository::open is not called by a capability."
+scope:
+  - apps/majordomus-cli/src/capability
+  - apps/majordomus-cli/src/integration/allocate.rs
+  - apps/majordomus-cli/src/repository.rs
+non_scope:
+  - "The 117 lines that rebuild paths from index.repository.root (I1106, the registries as views of the model)"
+depends_on:
+  - I3014
+acceptance_criteria:
+  - "No capability calls Repository::open; the context carries the repository"
+  - "A served capability call bumps repository_discoveries by nothing, asserted in tests/hot_path.rs"
+validation:
+  - "cargo test --workspace --all-features"
+evidence_required:
+  - capabilities_read_the_context
+created_at: 2026-10-21
+updated_at: 2026-10-21

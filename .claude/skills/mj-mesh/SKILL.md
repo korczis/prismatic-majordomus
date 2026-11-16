@@ -1,11 +1,11 @@
 ---
 name: mj-mesh
-description: "Majordomus mesh: Claim a scope across the mesh; Cooperation, at a glance; The mesh self-check; The cooperation journal; The host firewall, as the mesh needs it; Consume a handover from the mesh; Publish a handover to the mesh; This machine's node identity; The discovered nodes; One runtime; Who…"
+description: "Majordomus mesh: Say a session is making progress; The sccache client configuration for the store this node selected; What every dependency install and build directory is cached under; Claim a scope across the mesh; Cooperation, at a glance; The mesh self-check; Enrol this machine in the mesh; The…"
 argument-hint: "[request]"
 ---
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: module:mesh; regenerate with `majordomus generate`
-     Generator: majordomus-cli 0.30.2 -->
+     Generator: majordomus-cli 1.0.2 -->
 
 # Majordomus `mesh`
 
@@ -15,9 +15,13 @@ $ARGUMENTS
 
 | Capability | What it is | MCP tool | Command line | Effect |
 |---|---|---|---|---|
+| `mesh.beat` | Say a session is making progress | `majordomus_mesh_beat` | — | changes |
+| `mesh.build_cache.env` | The sccache client configuration for the store this node selected | `majordomus_mesh_build_cache_env` | `majordomus mesh build-cache env` | reads |
+| `mesh.build_cache.key` | What every dependency install and build directory is cached under | `majordomus_mesh_build_cache_key` | `majordomus mesh build-cache key` | reads |
 | `mesh.claim` | Claim a scope across the mesh | `majordomus_mesh_claim` | — | changes |
 | `mesh.cooperation` | Cooperation, at a glance | `majordomus_mesh_cooperation` | — | reads |
 | `mesh.doctor` | The mesh self-check | `majordomus_mesh_doctor` | `majordomus mesh doctor` | reads |
+| `mesh.enrol` | Enrol this machine in the mesh | `majordomus_mesh_enrol` | `majordomus mesh enrol` | changes |
 | `mesh.events` | The cooperation journal | `majordomus_mesh_events` | — | reads |
 | `mesh.firewall` | The host firewall, as the mesh needs it | `majordomus_mesh_firewall` | `majordomus mesh firewall` | reads |
 | `mesh.handover.consume` | Consume a handover from the mesh | `majordomus_mesh_handover_consume` | — | changes |
@@ -36,6 +40,7 @@ $ARGUMENTS
 | `mesh.state` | The state every linked runtime converges on | `majordomus_mesh_state` | — | reads |
 | `mesh.status` | The mesh, at a glance | `majordomus_mesh` | — | reads |
 | `mesh.verify` | Prove cooperation now | `majordomus_mesh_verify` | — | changes |
+| `mesh.who` | Who runs this | `majordomus_mesh_who` | `majordomus mesh who` | reads |
 
 A capability that *changes* something runs only when the person asked for that change: call it once, and if it is refused or its outcome is not known, report that as it is and do not try again by another way. One that *reads* may be called whenever the request needs it.
 

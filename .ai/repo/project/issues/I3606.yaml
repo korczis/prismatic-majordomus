@@ -1,0 +1,33 @@
+id: I3606
+milestone: runtime-lifecycle
+title: "Two live instances of one runtime slot keep their links, and the mesh names them instead of flapping"
+slug: two-instances-of-one-runtime-do-not-flap
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Stop two live server processes that share one runtime slot from evicting each other's link at every peer. A peer holds one inbound link per runtime key, so a hello from the other instance replaces the first instance's link, whose next sync is refused unknown_link and says hello again, every heartbeat, for as long as both run. Keep one inbound link per live instance of a runtime, count an alternation between two live instances as neither a restart nor a reconnect, and report the second instance on mesh peers and mesh doctor, naming both processes' endpoints."
+why: "Measured live on 2026-10-20 on node 641bdb94: every local link of runtime b10f19aa2cd888a6 showed about 21,670 handshakes and 21,670 reconnects since 2026-10-19 12:09Z, about one per 5 s heartbeat, with 0 restarts. Two server processes of the primary checkout carry that runtime slot (instances 7eab159b6b89c7c5 and 8241af227eccef89, serving on 55765 and 8741; a dial of 127.0.0.1:8741 is refused self_link: that is this runtime). Every round re-signs a hello and a welcome per link, the reconnect counter no longer tells a dropping link from this, and each peer's view of the runtime alternates between two instances."
+current_state: "mesh/cooperation.rs keys PeerLink and table.inbound_links by runtime key. On a hello, a different card.instance counts a restart and clears the outbound link, and the old inbound link is dropped. On a welcome after the first, the dialer counts a reconnect. A sync on a dropped link is refused unknown_link and the dialer says hello at once (after_round). I3175 detects one node key on two hosts, not two processes of one runtime on one host."
+desired_state: "A peer keeps one inbound link per (runtime, instance) while both instances beat within the expiry. Neither instance re-handshakes on a steady link. mesh peers lists the runtime once, with its instances and their endpoints, and mesh doctor fails a check that names both, because one checkout should run one server (runtime-lifecycle). The reconnect counter counts only links that dropped."
+scope:
+  - "apps/majordomus-cli/src/mesh/cooperation.rs"
+  - "apps/majordomus-cli/src/mesh/doctor.rs"
+  - "apps/majordomus-cli/tests/mesh_cooperation.rs"
+  - "docs/MESH.md"
+non_scope:
+  - "Stopping either process: which server survives is the lifecycle's and the owner's decision"
+  - "Two hosts presenting one node key, which is I3175"
+depends_on: []
+acceptance_criteria:
+  - "Two instances of one runtime that both dial one peer each keep their link for ten heartbeats: zero unknown_link refusals, zero reconnects and zero restarts on either side"
+  - "A real restart (an instance that stops and a new one that starts) is still counted as one restart"
+  - "mesh peers names a runtime with two live instances once, listing both instances and their endpoints"
+  - "mesh doctor fails a check naming the runtime and both instances while both beat, and passes once one stops"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --lib mesh::cooperation"
+  - "cargo test --test mesh_cooperation"
+evidence_required:
+  - "two_instances_keep_their_links_test"
+created_at: 2026-10-20
+updated_at: 2026-10-20

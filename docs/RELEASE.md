@@ -573,10 +573,72 @@ assertion is a mutation rather than a description: a variant of the workflow wit
 appended is refused, naming the tag.
 
 Since 2026-10-16 that decision has an owner and a cadence: the release seat of
-[rule `project.the-cooperation-model-is-the-owners-word`](../.ai/repo/rules/project/the-cooperation-model-is-the-owners-word.v1.md)
+[rule `project.the-cooperation-model-is-the-owners-word`](../.ai/repo/rules/project/the-cooperation-model-is-the-owners-word.v2.md)
 (ADR 0167) cuts a release whenever master holds landed work past the last tag, not once per
 milestone, and verifies what the site serves after it. The rule says which mesh claim makes a
 session that seat; the tag still waits for `scripts/ci/release-verdict`.
+
+### How long landed work has waited
+
+The seat's cadence was a rule and not a measurement. Master could hold a day of landed work
+past the last tag while every check, the brief, doctor and the delivery screen stayed green.
+On 2026-10-19 the owner ordered a new measured version after every session and milestone,
+enforced. `release.currency` (I3070) is the measurement, and every surface that shows it
+reads that one answer:
+
+| Surface | How it is asked |
+|---|---|
+| Command line | `majordomus run release.currency` (`--input '{"next":false}'` leaves the version out) |
+| HTTP | `GET /api/v1/release/currency` |
+| MCP | the tool `majordomus_release_currency` |
+| Brief | the `release` line and section, read without the version |
+| Doctor | `clone release`: OK current, WARN owed, WARN overdue, INFO unknown |
+| UI | `/ui/delivery`: the hero's "Since then" tile and the panel "Is the trunk released?", read without the version, which the hero reads from `release.version` |
+
+It reads git and the clock when it is asked, and never enters committed derived data. The
+answer is made of three readings:
+
+- **The last release** is the newer of the release the layer records and the newest `v*` tag
+  the trunk (`origin/<trunk>`) contains. A tag is pushed before its record lands, so a trunk
+  being released is never reported as owed.
+- **Landed work** is every commit of the trunk past that release except merges and release
+  commits (`chore(release)`): what the next release would ship.
+- **How long it has waited** is the age of the oldest landing that brought anything but release
+  commits. A landing is a first-parent commit of the trunk: a merge of a top or a branch, or a
+  commit made on the trunk. The wait runs from when the landing reached the trunk, not from
+  when it was made. A top is composed for hours and lands by a fast-forward push, so its
+  commits are older than its landing. `landed_at` says how the date was read:
+  - `reflog`: when this clone's remote-tracking trunk first held the landing, from that ref's
+    reflog. A landing is seen no earlier than it lands, so this wait is a lower bound.
+  - `commit`: the landing's commit time, where the reflog does not show it arrive (a clone
+    made after it landed, or a reflog that was expired). A commit lands no earlier than it is
+    made, so this wait is an upper bound, and the answer says "at most".
+
+  The forge's own record of the landing, its `mergedAt`, is not read (I3076). It was weighed
+  on 2026-10-21 and measured. `prs refresh` is the executor's hot path, and it never lists
+  merged pull requests (`tests/integration_merged_branches.rs`). Reading the newest hundred
+  of them took 1.11 s. This clone's reflog saw each of the last four landings 12 to 94 s
+  after the forge's `mergedAt`, against a threshold of six hours. The reflog of a
+  remote-tracking ref lives in the common git directory, so every worktree of a clone reads
+  the same one.
+
+  A fresh clone, such as a CI runner or a new host, holds no reflog of its remote-tracking
+  trunk, because `git clone` writes none for it. There the commit time is the only reading,
+  and the answer gives it as one: `landed_at: commit` and a wait of at most the commit's age,
+  never a zero. A forge record would not reach such a clone either, because no `prs refresh` ran
+  in it. `release.currency` itself never reaches the network (SECURITY.md).
+
+The stance:
+- **Current:** nothing has landed past the release.
+- **Owed:** something has.
+- **Overdue:** it has waited more than six hours, by its reflog. A commit-time bound past six
+  hours is owed and says so: a bound alone makes nothing overdue, so a top that has just
+  landed never reads overdue for the hours it took to compose.
+- **Unknown:** the answer says why: no remote trunk, or no release this clone can read.
+
+The version the contract requires is decided by the same selection `release version` makes
+(ADR 0051). It is decided only from a recorded release, and only in a checkout at the trunk;
+otherwise `next_unmeasured` says which of the two it is not.
 
 ## What proves it
 
@@ -588,9 +650,9 @@ session that seat; the tag still waits for `scripts/ci/release-verdict`.
 | `test/cases/103_release_projection.sh` | the whole surface against the real executable, in a disposable repository with a real history: which commits fall in which range, which decision belongs to which window, a record added with nothing else edited, a subject that follows no convention carried rather than dropped, a fixture whose repository is not a forge the tool knows producing no link rather than a guessed one, a commit naming one id the layer holds and one it does not, and every exit code above |
 | `test/cases/743_release_version_answers_with_the_contract.sh` | on a fixture whose commits say BREAKING and whose surface only grew, `release version`'s `next` is `release analyze`'s required version, decided by the contract, with the commits' major shown as evidence, and `release bump --dry-run` raises to that same 0.11.0; with no published baseline `next` is absent, `decided_by: undecided` with its reason, a bump with no target refuses with exit 12 and a named one is still written, the manifest raised to 0.11.0; a version stated by hand in `lib/` leaves the plan unsound, so `next` is absent, `decided_by: undecided` with the `version-stated-by-hand` message, and `release bump --dry-run` refuses with exit 12 and that same message; a version already raised to the requirement is not raised again; a manifest with no version line is not passed off as the contract's answer and a bump with no target refuses it; after a published release with only a `fix:` since and an unchanged surface, `next` is a patch above it and not the release itself, and `release bump --dry-run` raises to that same 0.11.1; and with a version declared above the minimum the commit inference still raises the last release |
 | `test/cases/484_the_version_is_authored_once.sh` | the shell tool states no version; it prints the authority because it reads its own projection, generated from the manifest and never from `MAJORDOMUS_SHARE`; a hand-edited projection is refused by `generate --check`; the writer writes the manifest's line and the lock's own entry and nothing else; a version written by hand in `lib/` is refused — each section first shown to fail against the tree before ADR 0085 |
-| `scripts/ci/release-check` | the manifest the writer names is the one the release script reads, the shell tool prints what it declares on every plan rather than only at publication, the lock records it, no hand-kept changelog has appeared, the tree is not behind the newest release the layer records, and every published tag has a record — or, for at most a day, a `release/record-<tag>` branch proposing one ([`DISTRIBUTION.md`](DISTRIBUTION.md#releasing) says why the tag comes first); before that branch exists, a tag whose release run is queued or running, or that has neither run nor GitHub release yet within the same day, is pending with its run named — asked of the forge with `gh`, and where the forge cannot be asked (no `gh`, no token, no GitHub repository known) the tag is not excused |
+| `scripts/ci/release-check` | the manifest the writer names is the one the release script reads, the shell tool prints what it declares on every plan rather than only at publication, the lock records it, no hand-kept changelog has appeared, the tree is not behind the newest release the layer records, and every published tag has a record — or, for at most a day, a `release/record-<tag>` branch proposing one ([`DISTRIBUTION.md`](DISTRIBUTION.md#releasing) says why the tag comes first); a branch this checkout did not fetch is asked of origin (`git ls-remote --heads`) and fetched as that one ref, and an origin that cannot be asked is named in a note; before that branch exists, a tag is pending within the same grace whatever its release run concluded — queued or running, concluded any way, or not listed yet, the grace counted from the GitHub release when one is published — with its run named, asked of the forge with `gh`, and where the forge cannot be asked (no `gh`, no token, no GitHub repository known) the tag is not excused |
 | `test/cases/3021_a_tag_does_not_freeze_the_queue.sh` | a head that changes no release file passes while a tag's record is proposed, naming the tag pending; the record's own branch passes as recorded; a record branch without the record, a proposal past its grace and no proposal at all are refused |
-| `test/cases/3029_a_tag_in_flight_is_pending.sh` | before the record branch exists, a tag whose release run is queued or running — or that has no run listed and no GitHub release yet, inside the grace — is pending with its run named; a concluded run, a published GitHub release, a forge that cannot be read and an unknown repository leave the finding standing, each with a note |
+| `test/cases/3029_a_tag_in_flight_is_pending.sh` | inside the grace, a tag without a record is pending in every ordering of the checkout's fetch, the record branch's push and the release run's conclusion (in progress, success, failure, cancelled), a record branch pushed after the fetch is asked of origin and fetched, and a GitHub release published inside the grace is pending; past the grace, a forge that cannot be read, an unknown repository and an unreachable origin leave the finding standing, each with a note |
 | gate `version-authored-once` | `bin/majordomus-cli release version`: the projection is current and no version is written by hand where the tool's files live |
 | `scripts/rust-check` (gate `rust-check`) | `generate --check`: the committed changelog and `share/version.txt` still describe the tree |
 | `scripts/release-version --check` | the shell tool prints the version the manifest declares — the question `generate --check` leaves open |

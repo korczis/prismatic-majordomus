@@ -1,0 +1,40 @@
+id: I3404
+milestone: a-paste-is-decomposed-by-a-skill
+title: "A decomposition of a synthetic brief in the skill's output shape is held valid by a test, its digest agrees with the refusal, and an unserved criterion in it is caught"
+slug: a-decomposed-brief-passes-the-plan-checks
+priority: p1
+profile: implementation
+objective: "Run decompose-a-brief once, in a disposable checkout, over a synthetic English Markdown brief with three headings, one requirement that an existing fixture criterion already carries, two new requirements and one opinion. Commit what it wrote inline in apps/majordomus-cli/tests/intent_plan.rs, labelled with the skill version that produced it: the campaign file in canonical byte form with its manifest line and README row, one intent with two criteria, one milestone and two issues. Mark the file with majordomus-skill: decompose-a-brief. The test writes them into a Fixture repository and asserts: intents.propose refuses the brief with a digest and byte length equal to the campaign file's; plan validate and intent validate report zero failures; scripts/ci/campaigns-check is clean; intent coverage shows both new criteria served; plan waves lists at least one first-wave issue; every new record names the campaign; the reused requirement adds no criterion; deleting the serving issue makes intent coverage report the criterion unserved."
+why: "The owner's 2026-10-19 order asks that a decomposition yield records the plan accepts. The owner's report of 2026-10-19 asks under T2 and T3 that a workflow's result be accepted, not merely produced, and that claims be backed by evidence. This test settles that the checks accept the skill's output contract and that the refusal's digest and the stored campaign agree in one canonical byte form; it does not claim that a live run of the skill produces valid records, which the criterion now says and an owner-consented live run settles. The test checks committed records, not a model, so it is deterministic in CI; the fixture is re-recorded when the skill's version changes."
+current_state: "apps/majordomus-cli/tests/intent_plan.rs has 4 tests over criteria nothing serves, work with no purpose, gaps and premature execution, and already uses common::{Fixture, Served}. No test writes a campaign or reads plan waves over records derived from a brief. scripts/ci/campaigns-check honours MJ_ROOT, hashes every file under campaigns/ but the manifest (README.md included), and prints the regeneration command (its REGEN line). The skill and the guard are I3400 and I3401."
+desired_state: "One test, named by the skill's marker, fails if the skill's output contract, the canonical byte form or the guard's digest drifts."
+scope:
+  - "apps/majordomus-cli/tests/intent_plan.rs"
+non_scope:
+  - "Calling a model or an advisor from a test"
+  - "A committed fixture directory: the records are inline in the test"
+  - "Segment identity and automatic classification (I3273)"
+  - "Running the skill over the three untracked pastes of the primary checkout"
+  - "A new test/cases file"
+depends_on:
+  - "I3400"
+  - "I3401"
+serves:
+  - "a-brief-is-reconciled-into-the-plan#a-decomposed-paste-passes-the-plan-checks"
+acceptance_criteria:
+  - "Precondition: majordomus intent preflight for this issue passes from a branch of master that holds I3400 and I3401"
+  - "The test passes, its comment names the session of the recorded run and the skill version, and the commit message names the same version"
+  - "The digest and byte length that intents.propose refuses equal the sha256 and size of the campaign file recorded in the fixture's campaigns/MANIFEST.sha256, and the campaign file ends in exactly one line feed"
+  - "plan validate and intent validate exit 0 with zero failures, campaigns-check exits 0 with the manifest regenerated after the README row was added, and plan waves lists at least one issue in the first wave"
+  - "intent coverage reports both new criteria served, and after the serving issue is deleted it reports that criterion unserved"
+  - "Every new intent, milestone and issue in the fixture contains campaign:<id>"
+  - "majordomus skills explain decompose-a-brief lists apps/majordomus-cli/tests/intent_plan.rs among its tests"
+validation:
+  - "cargo test -p majordomus-cli --test intent_plan"
+  - "majordomus skills verify"
+  - "majordomus plan validate"
+  - "majordomus intent validate"
+evidence_required:
+  - "test_a_decomposed_brief_passes_the_plan_checks"
+created_at: 2026-10-19
+updated_at: 2026-10-19

@@ -17,7 +17,7 @@
 fail=0
 note() { printf '    %s\n' "$1"; fail=1; }
 
-RULE="$ROOT/.ai/repo/rules/project/the-cooperation-model-is-the-owners-word.v1.md"
+RULE="$ROOT/.ai/repo/rules/project/the-cooperation-model-is-the-owners-word.v2.md"
 UI="$ROOT/apps/majordomus-cli/src/ui/mesh.rs"
 ADR_GLOB="$ROOT/.ai/repo/adrs/0167-"
 for f in "$RULE" "$UI"; do
@@ -54,7 +54,7 @@ grep -qE 'never force-pushed' "$RULE" || note "the rule no longer says a pushed 
 for doc in docs/INTEGRATION.md docs/MESH.md docs/RELEASE.md docs/MAJORDOMUS_UI.md; do
   f="$ROOT/$doc"
   [ -f "$f" ] || { note "$doc is missing"; continue; }
-  grep -qF 'rules/project/the-cooperation-model-is-the-owners-word.v1.md' "$f" \
+  grep -qF 'rules/project/the-cooperation-model-is-the-owners-word.v2.md' "$f" \
     || note "$doc does not link the rule"
   while IFS= read -r scope; do
     [ -n "$scope" ] || continue

@@ -1,0 +1,60 @@
+id: I4358
+milestone: ci-critical-path
+title: "A seat is taken by `start --seat` under its provider session, kept between that session's tasks and lost with it, and an unbound seat is named by the doctor"
+slug: a-seat-is-taken-by-start-and-given-back-by-finish
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "`majordomus start --seat release|landing|repair` takes, or keeps, the seat's exclusive claim under the mesh session that carries the task's provider_session digest, so I3072's derived join (a task is the seat's when release/seat is held by a mesh session whose provider_session equals the one start recorded) finds the seat's task with nothing declared; a start with no observable provider session is refused the seat. finish and abandon do not drop the claim at once: they shorten its expiry to a grace, and a `start --seat` of the same provider session inside the grace keeps it, so the seat never reads vacant between one session's tasks (I3072's reason) while a session that has stopped loses it within the grace. A mesh doctor check, unbound_exclusive_claims, fails on an exclusive claim whose provider session has no open task past the grace, naming the claim's runtime URL and the exact release command; the scope seat/release is refused as scope_not_a_seat; the hub's served version is checked against the newest tag. The cooperation rule says seats are taken this way, at v3."
+why: "Incident 9 of 2026-10-28: the exclusive release/seat claim c-56b837289bb0 stayed live for more than 14 hours on the launchd hub, held by a session that had stopped, and nothing named it; it is still held until the owner releases it on :8791. A seat is taken today by a bare mesh claim (majordomus_mesh_claim), so its lifetime is tied to the stream of the runtime that served it rather than to any task or session, and no finish ever gives it back. I3072 (open, p1) owns the join between a task and the release seat and decided that the join is derived from the provider session, never declared, and that a seat held by each release task would read vacant between tasks and invite a second session; this issue takes the seat through that join instead of a CLI session task-<id>, and keeps it across one session's tasks."
+current_state: "Measured at 81ef931a3e1: lib/start.sh and lib/finish.sh take and give back no seat; no task record names its provider session (I3072); apps/majordomus-cli/src/mesh/doctor.rs has no check of exclusive claims without a task; the cooperation rule is v2, and cases 3150 and 3824 hold its file name, `version: 2` and the 'Work moves through seats' paragraph of the provider templates and the generated bootstraps."
+desired_state: "A seat lives as long as the provider session that took it keeps working, plus a grace; the doctor fails while an exclusive claim outlives that grace without a task, naming how to release it; the hub serving a version older than the newest tag past its bound is a finding; the rule, the provider templates and the bootstraps say seats are taken with `start --seat`. Enforced by case 4358, the doctor check, case 3472 (I3072's join) and the cooperation rule at v3 with cases 3150 and 3824."
+scope:
+  - ".ai/repo/project/issues/I4358.yaml"
+  - "lib/start.sh"
+  - "lib/finish.sh"
+  - "lib/common.sh"
+  - "scripts/release-record"
+  - "apps/majordomus-cli/src/mesh/doctor.rs"
+  - "apps/majordomus-cli/src/mesh/cooperation.rs"
+  - "apps/majordomus-cli/src/ui/mesh.rs"
+  - "test/cases/4358_a_seat_is_taken_by_start_and_given_back_by_finish.sh"
+  - "test/cases/3150_the_cooperation_model_is_one_record.sh"
+  - "test/cases/3824_the_bootstrap_says_what_the_cooperation_rule_says.sh"
+  - ".ai/repo/providers/claude-code.tmpl"
+  - ".ai/repo/providers/agents.tmpl"
+  - ".ai/repo/providers/gemini.tmpl"
+  - "CLAUDE.md"
+  - "AGENTS.md"
+  - "GEMINI.md"
+  - "docs/MESH.md"
+  - "docs/RELEASE.md"
+  - ".ai/repo/rules/project/the-cooperation-model-is-the-owners-word.v2.md"
+  - ".ai/repo/rules/project/the-cooperation-model-is-the-owners-word.v3.md"
+non_scope:
+  - "Binding a claim to its holder's process (I4356)"
+  - "Recording and replicating the provider_session digest, and refusing the seat's finish while a release is overdue (I3072)"
+  - "A beat-only TTL, which would suspend a 4.5-hour release mid-cut"
+acceptance_criteria:
+  - "Case 4358: `start --seat release` with a provider session takes release/seat under the mesh session carrying that session's digest, and I3072's join names the task as the seat's; without an observable provider session it is refused, naming why"
+  - "Case 4358: finish shortens the seat claim's expiry to the grace; a `start --seat release` of the same provider session inside the grace keeps the claim, and none leaves it Expired after the grace; abandon does the same"
+  - "Case 4358: a `start --seat release` of another provider session while the claim is held is refused with claim_conflict, naming the holder"
+  - "Case 4358: the doctor fails on a fixture exclusive claim whose provider session has no open task past the grace, naming its runtime URL and the release command"
+  - "Case 4358: the scope seat/release is refused as scope_not_a_seat"
+  - "Cases 3150 and 3824 pass on v3: the rule file is the-cooperation-model-is-the-owners-word.v3.md with `version: 3`, and the 'Work moves through seats' paragraph in each provider template and in CLAUDE.md, AGENTS.md and GEMINI.md, regenerated by `majordomus update`, says a seat is taken with `start --seat`"
+  - "docs/RELEASE.md and docs/MESH.md name `start --seat release` as how the release seat is taken, and neither tells a session to take release/seat with a bare mesh claim"
+  - "The release-currency check fails while the hub serves a version older than the newest tag past its bound"
+validation:
+  - "bash test/run.sh 4358_a_seat_is_taken_by_start_and_given_back_by_finish 3150_the_cooperation_model_is_one_record 3824_the_bootstrap_says_what_the_cooperation_rule_says 3472_the_release_seat_finishes_only_when_released"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib mesh::doctor"
+  - "bin/majordomus plan validate"
+evidence_required:
+  - "test"
+  - "rust"
+depends_on:
+  - "I3072"
+  - "I4356"
+  - "I4355"
+serves: []
+created_at: 2026-10-29
+updated_at: 2026-10-29

@@ -71,7 +71,7 @@ H
       [ "$oc" = active ] && mj_info task "$(mj_cur id)" "that task is still active there; nothing here changes it" "majordomus --repo $(mj_cur worktree) check"
     else
       case "$oc" in
-        active) mj_die "$MJ_EX_REFUSED" "task $(mj_cur id) is active ('$(mj_cur task)'); run majordomus handover or majordomus finish first" ;;
+        active) mj_die "$MJ_EX_REFUSED" "task $(mj_cur id) is active ('$(mj_cur task)'); run majordomus finish (or majordomus handover --close) first" ;;
         *) mkdir -p "$MJ_STATE_DIR/archive"; mv "$MJ_CUR" "$MJ_STATE_DIR/archive/$(mj_cur id).yaml" ;;
       esac
     fi
@@ -155,6 +155,8 @@ H
     printf '# computed from git; never authored\nrepository_id: %s\nworktree: %s\nbranch: %s\nhead: %s\nworking_tree: %s\n' \
       "$(mj_git_repo_id)" "$MJ_ROOT" "$(mj_git_branch)" "$(mj_git_head)" "$(mj_git_dirty)"
   } > "$MJ_STATE_DIR/current.yaml.mj-tmp" && mv "$MJ_STATE_DIR/current.yaml.mj-tmp" "$MJ_STATE_DIR/current.yaml"
+  # what was already changed, and what it held: a task answers for what changes after this
+  mj_start_dirty_record "$id" || mj_warn scope "$id" "what the working tree held at the start could not be recorded; files already changed will be counted as this task's" "git status --porcelain"
   mj_ledger_append task.started "\"task_id\":\"$id\",\"profile\":\"$profile\",\"owner\":\"$(mj_json_esc "$owner")\",\"scope\":\"$(mj_json_esc "$(printf '%s' "$norm" | sed 's/^ //')")\",\"requires\":\"$(mj_json_esc "$(printf '%s' "$req_norm" | sed 's/^ //')")\"$(
     [ "$bind_asked" = 0 ] || printf ',"issue":"%s","intent":"%s","exemption":"%s","because":"%s","binding":"%s","plan_revision":"%s"' \
       "$(mj_json_esc "$issue")" "$(mj_json_esc "$intent")" "$(mj_json_esc "$exempt")" "$(mj_json_esc "$because")" "${bind_standing:-unknown}" "$plan_rev")"

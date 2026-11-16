@@ -16,9 +16,11 @@
 #
 # WHAT IT DECIDES, from share/providers.yaml and from the tool's own output:
 #
-#   declaration   every declared provider carries an offers block with both capabilities
-#   vocabulary    episode is hooks|connection|none and prompts is hook|none, and nothing else
-#   evidence      both citations are present and non-empty, for every value including `none`
+#   declaration   every declared provider carries an offers block with all four capabilities
+#   vocabulary    episode is hooks|connection|none, prompts is hook|none and browser is
+#                 bridge|none, and usage lists otel|app-server|stream-json, or none alone
+#   evidence      every citation is present and non-empty, for every value including `none`
+#   bridge        a provider declaring browser: bridge names its browser_host and browser_setup
 #   coverage      `majordomus capture status` reports every provider the declaration names,
 #                 for both aspects — the regression that started all of this
 #   honesty       a provider whose declared capability is not `none` is never reported
@@ -84,7 +86,7 @@ providers="$(sed -n 's/^providers\.\([^.]*\)\..*$/\1/p' "$TMP/flat" | awk '!seen
 decl() { sed -n "s/^providers\.$1\.$2=//p" "$TMP/flat" | head -n 1 || true; }
 
 for p in $providers; do
-  for aspect in episode prompts; do
+  for aspect in episode prompts browser; do
     value="$(decl "$p" "offers.$aspect")"
     evidence="$(decl "$p" "offers.${aspect}_evidence")"
     if [ -z "$value" ]; then
@@ -94,6 +96,7 @@ for p in $providers; do
     case "$aspect:$value" in
       episode:hooks|episode:connection|episode:none) ;;
       prompts:hook|prompts:none) ;;
+      browser:bridge|browser:none) ;;
       *) finding "$p" "$aspect" "offers.$aspect is '$value', which is outside the vocabulary" ;;
     esac
     # Non-empty, and not a placeholder standing in for one. A citation of two words is a
@@ -104,6 +107,38 @@ for p in $providers; do
       finding "$p" "$aspect" "offers.${aspect}_evidence is ${#evidence} characters ('$evidence'); a citation names a document or says what was searched and when"
     fi
   done
+  # A bridge is seen on a machine by its native messaging host, and a person installs it by
+  # a step only the vendor's client can take: a bridge declared without either is one that
+  # preflight could neither find nor tell anybody how to get.
+  if [ "$(decl "$p" offers.browser)" = bridge ]; then
+    for key in browser_host browser_setup; do
+      [ -n "$(decl "$p" "offers.$key")" ] \
+        || finding "$p" browser "declares offers.browser: bridge and no offers.$key, so preflight cannot see or name the bridge"
+    done
+  fi
+  # Usage is a list of the seams a provider offers (I3287): every item in the vocabulary,
+  # none repeated, `none` only alone, and the list cited like every other capability.
+  seams="$(sed -n "s/^providers\.$p\.offers\.usage\.[0-9][0-9]*=//p" "$TMP/flat" || true)"
+  usage_evidence="$(decl "$p" offers.usage_evidence)"
+  if [ -z "$seams" ]; then
+    finding "$p" usage "declares no offers.usage; how a provider reports what a session consumed is a claim about its product, and nobody wrote it down"
+  else
+    for seam in $seams; do
+      case "$seam" in
+        otel|app-server|stream-json|none) ;;
+        *) finding "$p" usage "offers.usage names '$seam', which is outside the vocabulary" ;;
+      esac
+    done
+    [ "$(printf '%s\n' $seams | sort | uniq -d)" = "" ] || finding "$p" usage "offers.usage names a seam twice"
+    if grep -qx none <<<"$(printf '%s\n' $seams)" && [ "$(printf '%s\n' $seams | wc -l | tr -d ' ')" != 1 ]; then
+      finding "$p" usage "offers.usage names none beside a seam; none is the answer only when nothing else is"
+    fi
+    if [ -z "$usage_evidence" ]; then
+      finding "$p" usage "offers.usage_evidence is empty; a capability with no citation cannot be re-verified and rots in whichever direction the world moves"
+    elif [ "${#usage_evidence}" -lt 24 ]; then
+      finding "$p" usage "offers.usage_evidence is ${#usage_evidence} characters ('$usage_evidence'); a citation names a document or says what was searched and when"
+    fi
+  fi
 done
 
 # COVERAGE AND HONESTY. The declaration is one half; what the tool says is the other, and

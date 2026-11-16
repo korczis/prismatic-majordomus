@@ -17,6 +17,10 @@ non_scope:
   - Discovery that reaches the network or builds anything
 depends_on:
   - I1101
+  - I3014
+  - I3015
+  - I3016
+  - I3017
 acceptance_criteria:
   - One typed value carries what a consumer needs to know about a repository, composed from the registries that already own their parts
   - Discovery happens once per process, and a second consumer pays nothing for it
@@ -30,4 +34,4 @@ evidence_required:
   - discovered_once
 risk: "A model that knows everything is discovered slowly, and the environment entry pays that cost on every directory change. Its cost is measured in the same issue that makes it mandatory, not later."
 created_at: 2026-09-06
-updated_at: 2026-09-06
+updated_at: 2026-10-21

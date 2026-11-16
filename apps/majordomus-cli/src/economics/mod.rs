@@ -43,9 +43,11 @@
 pub mod claims;
 pub mod context;
 pub mod model;
+pub mod proof;
 pub mod report;
 pub mod runner;
 pub mod stats;
+pub mod tasks;
 pub mod usage;
 
 use std::collections::{BTreeMap, BTreeSet};

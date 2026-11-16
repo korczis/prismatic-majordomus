@@ -128,11 +128,13 @@ jq -e '.complete == true' "$S/board_a.json" >/dev/null \
   || { echo "    a board that could not be read is not a proof of anything:"; cat "$S/board_a.json"; exit 1; }
 jq -e '.count == 2' "$S/board_a.json" >/dev/null \
   || { echo "    the board holds $(jq '.count' "$S/board_a.json") attached peers, not the two workers:"; cat "$S/board_a.json"; exit 1; }
-# three checkouts of one repository are covered, the serverless primary included
-jq -e '(.boards | length) == 3' "$S/board_a.json" >/dev/null \
-  || { echo "    the answer covers $(jq '.boards|length' "$S/board_a.json") checkouts, not three:"; cat "$S/board_a.json"; exit 1; }
-jq -e --arg t "$trunk" '.boards[] | select(.branch == $t) | .standing == "absent" and .attached == 0' "$S/board_a.json" >/dev/null \
-  || { echo "    the primary has no server and the answer does not say so:"; cat "$S/board_a.json"; exit 1; }
+# three checkouts of one repository are covered, the serverless primary included: the
+# default summary lists the two with a server and counts the primary, which holds no board
+# (I3961; step 7 reads the full view)
+jq -e '.covered == 3 and (.boards | length) == 2 and .omitted == {"absent": 1}' "$S/board_a.json" >/dev/null \
+  || { echo "    the summary does not cover three checkouts, two listed and one counted:"; cat "$S/board_a.json"; exit 1; }
+jq -e --arg t "$trunk" '[.boards[] | select(.branch == $t)] | length == 0' "$S/board_a.json" >/dev/null \
+  || { echo "    the serverless primary is listed by the summary rather than counted:"; cat "$S/board_a.json"; exit 1; }
 # each worker is on the board, stamped with the checkout it is attached to
 jq -e --arg w "$A" '.peers[] | select(.client.name == "worker-alpha")
   | .checkout.this_checkout == true and .checkout.worktree == $w and .checkout.branch == "feature/alpha"
@@ -144,8 +146,8 @@ jq -e --arg w "$B" '.peers[] | select(.client.name == "worker-beta")
     and .announcement.scope == ["apps/majordomus-cli/src/release"]' "$S/board_a.json" >/dev/null \
   || { echo "    ALPHA CANNOT SEE BETA: the board is still per-checkout"; cat "$S/board_a.json"; exit 1; }
 # the two checkout identities differ and each board names the address its lease holds
-jq -e '[.boards[].id] | unique | length == 3' "$S/board_a.json" >/dev/null \
-  || { echo "    three checkouts do not report three identities:"; cat "$S/board_a.json"; exit 1; }
+jq -e '[.boards[].id] | unique | length == 2' "$S/board_a.json" >/dev/null \
+  || { echo "    two listed checkouts do not report two identities:"; cat "$S/board_a.json"; exit 1; }
 jq -e --arg u "$url_b" '.boards[] | select(.branch == "feature/beta") | .url == $u and .attached == 1' "$S/board_a.json" >/dev/null \
   || { echo "    beta's board is not the server beta is actually running:"; cat "$S/board_a.json"; exit 1; }
 
@@ -247,12 +249,16 @@ i=0; while [ -f "$B/.ai/local/state/mcp/server.json" ]; do
   sleep 0.1
 done
 [ ! -f "$B/.ai/local/state/mcp/server.json" ] || { echo "    beta's lease outlived its last client"; exit 1; }
-req 6 tools/call '{"name":"majordomus_peers","arguments":{}}' >&3
+req 6 tools/call '{"name":"majordomus_peers","arguments":{"view":"full"}}' >&3
 await_lines "$S/out_a" 6 || exit 1
 sed -n 6p "$S/out_a" | jq '.result.structuredContent' > "$S/after.json"
-# "nobody is attached there" is a complete answer; only "I could not ask" is not
-jq -e '.complete == true and .count == 1 and (.boards | length) == 3' "$S/after.json" >/dev/null \
+# "nobody is attached there" is a complete answer; only "I could not ask" is not. The full
+# view lists every covered checkout, three identities, and counts none of them away
+jq -e '.complete == true and .count == 1 and .covered == 3 and (.boards | length) == 3
+  and (.omitted | not) and ([.boards[].id] | unique | length == 3)' "$S/after.json" >/dev/null \
   || { echo "    a checkout whose server stopped was dropped, or faked an incomplete answer:"; cat "$S/after.json"; exit 1; }
+jq -e --arg t "$trunk" '.boards[] | select(.branch == $t) | .standing == "absent" and .attached == 0' "$S/after.json" >/dev/null \
+  || { echo "    the primary has no server and the full view does not say so:"; cat "$S/after.json"; exit 1; }
 jq -e '.boards[] | select(.branch == "feature/beta")
   | .standing == "absent" and .attached == 0 and (.reason | not) and (.url | not)' "$S/after.json" >/dev/null \
   || { echo "    beta is not reported as the serverless checkout it now is:"; cat "$S/after.json"; exit 1; }

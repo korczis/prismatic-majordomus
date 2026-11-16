@@ -1,0 +1,93 @@
+intent: finished-work-reaches-a-verified-release
+reviewed_at: 707a04c7ce8
+reviewed_by: "claude-code subagent (read-only, fresh context, Plan type, same model family as the author) dispatched by session 82f2734c over the staged records of branch docs/the-chatgpt-project-is-promoted and the ChatGPT-conversation sources they were promoted from; resolved by a second fresh subagent acting as the plan author. Read only: nothing was run. Disposition: Accept with required changes. Amended 2026-10-18 by the fix pass over the plan: 6 of the 7 blocking findings are planned into I3200, I3201, I3202, I3203, I3208 and I3213, and the 7th is resolved by dropping I3211 from the plan; the 3 non-blocking findings are planned into I3212, I3204 and I3200."
+findings:
+  - id: red-trunk-carrier-is-unbound
+    class: missed_requirement
+    subject: "finished-work-reaches-a-verified-release#a-red-trunk-holds-the-landing"
+    finding: "Only I3200 serves this criterion, and I3200 handles protection drift only. Nothing in this intent does the first half, 'only its named carrier may land'. The criterion names 'I2709's case' as its proof, but on master .ai/repo/project/issues/I2709.yaml is READY (M004, depends on I2664), has no `serves`, and names the test `red_trunk_holds_the_landing_claim_test`. No such test or case exists in test/cases. As written, I3200 could land and turn the criterion's coverage green while the carrier rule is still unbuilt. Fix: add `serves: finished-work-reaches-a-verified-release#a-red-trunk-holds-the-landing` to I2709 (and name its real evidence id in the criterion), or split the criterion in two."
+    blocking: true
+    resolution:
+      state: planned
+      issue: I3200
+      because: "Verified on master: I2709 is READY, has no serves, and evidence_required is red_trunk_holds_the_landing_claim_test, which no test/cases file carries. The additive schema cannot add a serves edge to I2709, a master record outside this bundle. So I3200 now depends on I2709 and gains an AC that it covers the criterion only together with I2709's evidence. I3200 cannot reach DONE, and the criterion cannot turn green, before the carrier rule exists. The serves edge on I2709 is to be added when its record is next touched."
+  - id: record-evidence-failure-is-i2717
+    class: unnecessary_work
+    subject: "I3209"
+    finding: "I3209 says 'No issue or knowledge record names this failure' and that the observation is unverified. Both are wrong. `gh run view 39064457813` shows the pull_request run on 707a04c7ce8 failed in job `evidence`, step `gather`, with 'evidence-collect: no report to record: the suite and the crate both left none' and exit 12 (scripts/ci/evidence-collect:129). That is the exact failure I2717 records for the v0.25.0 and v0.26.0 record runs. I2717 is on master, READY, p0 (.ai/repo/project/issues/I2717.yaml), with desired_state 'a planned-empty report' and the same scope (validate.yml, evidence-collect). A debugging issue would repeat a diagnosis already done and race I2717 on the same files. Fix: drop I3209 and bind I2717 to serve a-release-is-tagged-on-a-proven-commit."
+    blocking: true
+    resolution:
+      state: planned
+      issue: I3213
+      because: "Confirmed: gh run view 39064457813 shows job evidence, step gather failed with exit 12 at scripts/ci/evidence-collect, the planned-empty report I2717 (master, READY, p0) already diagnoses and owns. I3209 is dropped from the plan (skip), so nothing races I2717 on validate.yml or evidence-collect. The one part I2717 does not carry, observing after it lands that the first release record commit has a green evidence job read by its failed steps, is an acceptance criterion of I3213, which now depends on I2717 and serves a-release-is-tagged-on-a-proven-commit. I2717 sits in M004, which no intent owns, so the serves edge the finding proposes for it is not added here."
+  - id: site-guard-reads-the-wrong-served-commit
+    class: regression_risk
+    subject: "I3201"
+    finding: "I3201 plans to read the served source commit from the gh-pages head commit's 'source: <sha>' line. The --release-metadata path (scripts/site-deploy:113-123, run from release.yml:298) commits onto gh-pages without rebuilding the site. That commit's message is 'source: <release job's HEAD> with the record of <tag>', where HEAD is the default branch as checked out when the publish job started (release.yml:178). So the head's 'source:' can name an older commit than the build actually served. Two outcomes are possible: (a) the guard accepts a deploy older than the real build, so the site goes back a commit; or (b) if the guard also applies in metadata mode, it refuses the release's metadata publication that I2303 requires to happen before the record lands. pages.yml:219 already reads the served commit from gh-pages:build.json. The predicate must read that same source, its behaviour in metadata mode must be stated, and a case must cover a metadata commit published between two builds."
+    blocking: true
+    resolution:
+      state: planned
+      issue: I3201
+      because: "Verified: scripts/site-deploy's metadata mode commits 'source: $(git -C $ROOT rev-parse HEAD) with the record of <tag>' without rebuilding the site, and pages.yml reads the served commit from origin/gh-pages:build.json. I3201 now reads build.json's commit, the same source pages.yml uses. It states that metadata mode is exempt from the commit guard, because metadata mode leaves build.json unchanged (I2303 / ADR 0131). A new case covers a metadata commit published between two builds."
+  - id: queue-time-has-no-source
+    class: unproven_assumption
+    subject: "I3202"
+    finding: "I3202 says queue time and cancelled or superseded run minutes come from 'the recorded observation', but the observation does not hold them. It reads statusCheckRollup `CheckRun{name status conclusion startedAt completedAt}` (forge.rs:785-802), only for the current heads of open pull requests (`gh pr list --state open`, forge.rs:1546-1553). There is no created or queued timestamp, no run of a superseded head, and no run of a merged pull request. The AC 'Re-reading the same observation creates no duplicate rows' assumes stored rows that do not exist, and keeping a window of runs is a store the milestone's non_scope forbids ('A second metrics store'). Before work starts, choose the source: the Actions runs/jobs API (created_at, run_started_at, paginated, as the milestone's risk notes) and where windows persist."
+    blocking: true
+    resolution:
+      state: planned
+      issue: I3202
+      because: "Decision: the source is the Actions workflow-runs and jobs API (created_at, run_started_at, updated_at, status, conclusion, run_attempt, head_sha), read by prs refresh with pagination over a declared window. It is written into the existing forge observation, which each refresh replaces, so there is no second store. A run is identified by run id plus attempt, which turns 'no duplicate rows' into a counting rule. A superseded run is one whose head_sha is no longer its branch's head."
+  - id: lead-time-duplicates-plan-delivery
+    class: unnecessary_work
+    subject: "I3203"
+    finding: "I3203 plans a new join in integration/metrics.rs (merged, released, published, served). I2740 (master, READY, p0, milestone truthful-plan-surfaces) already plans plan.delivery: per issue, none→branch→pr_open→merged→released→deployed, each stage with the object that proved it and when it was observed, served on CLI, HTTP and MCP and in site/data/generated/delivery.json. That would be two engines answering 'when was it released or deployed', and they would drift. I3203 should depend on I2740 and add only the per-phase timing over its stages. The opened and merged phases also have no recorded source for merged pull requests: the trail records only the drain's actions and keeps no opened time, the observation lists only open pull requests, and merges made outside the drain (record pull requests merged by a person, expedited landings) are absent. The sample would be silently biased. Separately, ADR 0198 (proposed) defines the delivery figure as verified outcomes per day, and no issue implements it. The in-flight I2946 on which I3203 'waits' measures throughput from prs and ci-timings, which ADR 0198 calls activity, not throughput."
+    blocking: true
+    resolution:
+      state: planned
+      issue: I3203
+      because: "Verified that I2740 on master plans plan.delivery with stages none through deployed, each with its proving object and observation time (ADR 0166). I3203 now depends on I2740 and adds only per-phase timing over those stages, with no join of its own. The opened and merged times of merged pull requests come from the forge's pull request record (createdAt, mergedAt) and the merge commit, not from the drain's trail. A merge without a readable opening is counted as unmeasured and reported with its count. ADR 0198 and I2946 are not on master, so neither is a dependency, and the throughput figure is non_scope."
+  - id: readiness-cannot-share-shell-implementation
+    class: insufficient_work
+    subject: "I3208"
+    finding: "The AC 'The read and the release workflow's plan and verdict phases share their implementation' cannot be met within I3208's scope. The plan phase is the shell script scripts/release-version --check, which runs bin/majordomus version. The verdict phase is scripts/ci/release-verdict, which calls `gh api .../check-runs` with the check name defaulting to `ci` via RELEASE_VERDICT_CHECK (line 23). Both are named in .ai/repo/ci/release.yaml. Sharing means either release.yml calls the new capability or the capability runs the scripts. .github/workflows/release.yml and .ai/repo/ci/release.yaml are in neither the issue's nor the milestone's scope. The 'install job' condition cannot be read before a tag, because it installs the built archives. 'The trunk's red state' needs I2709, which is not in depends_on. Started as written, this produces a parallel Rust reimplementation that can disagree with the workflow, which is exactly what the criterion forbids."
+    blocking: true
+    resolution:
+      state: planned
+      issue: I3208
+      because: "ADR 0069 says new automation is a typed capability, not shell. So release.yml's plan and verdict phases call `majordomus release readiness`, and scripts/release-version --check and scripts/ci/release-verdict become thin callers of it, which gives one implementation. release.yml, .ai/repo/ci/release.yaml and both scripts are added to scope. The install job is moved to the after-tag half and reported as not readable before a tag, never as a pre-tag condition. The trunk's red state is the ci verdict of the base head, read by the same function as the commit's verdict. I2709's carrier is not a readiness condition, so no dependency on it is needed. The work starts after the alpha top lands, as the milestone risk already says."
+  - id: drain-execution-contradicts-the-plane
+    class: unproven_assumption
+    subject: "I3211"
+    finding: "The execution plane rules out what I3211 asks for: apps/majordomus-cli/src/execution/mod.rs:37-40 says 'What it is not: a job system ... no execution that outlives the process that accepted it'. No `integration.drain` capability exists either: integration.rs:295-391 declares queue, explain, events, cleanup, timings, trains and prove_dry_run, and drain is a CLI command (integration/drain.rs:1722). Declaring one would put merge authority on HTTP and MCP, against I3211's own non_scope 'Widening the authority the drain has'. I3211 also serves finished-work-names-its-landing, which it does nothing to make true. It overlaps the in-flight /proceed work (ADR 0177, I2972-I2979) and ADR 0200 supervision. Move it to that intent or rescope it; do not start it here."
+    blocking: true
+    resolution:
+      state: rejected
+      because: "The finding holds and no work is planned under this intent: I3211 is dropped from the plan (skip). The execution plane says no execution outlives the process that accepted it (apps/majordomus-cli/src/execution/mod.rs), drain is a CLI command and not a capability, and I3211 made no criterion of this intent true (I3207 carries finished-work-names-its-landing). Whether a continuous drain may outlive its terminal is recorded as an open question for the owner and a non-goal of this intent; it belongs to the session-proceeds runtime work in flight on a branch. No integration.drain capability is declared and development-runtime gains no issue."
+  - id: orphan-and-misbound-criteria
+    class: missed_requirement
+    subject: "finished-work-reaches-a-verified-release"
+    finding: "The milestone's acceptance_criteria has eight entries; the intent has six criteria. The first two have no intent criterion and no issue: 'A change that moves the public contract without the version it requires turns the ci verdict red' and 'Every surface shows the version of the latest published release record...'. The first also contradicts the version model: .ai/repo/ci/version.yaml:39-44 proposes a bump pull request and never turns the verdict red, and policy.yaml has release.allocation: off. So the milestone can never be judged done. Some serves edges do not make their criterion true: I3205 (canonical/derived split) measures no time but serves delivery-is-measured-per-phase, and I3211 is covered above. The-backlog-is-loud requires duplicates to be named, but I3212 reports them only in integration.queue and explain, never in the brief the criterion names."
+    blocking: false
+    resolution:
+      state: planned
+      issue: I3212
+      because: "Applied in the plan. The criterion 'a change that moves the public contract without the version it requires turns the ci verdict red' is dropped: it contradicts .ai/repo/ci/version.yaml, whose owed job raises a bump pull request, and policy.yaml's release.allocation: off; it is now a non-goal. 'Every surface shows the version of the latest published release record' is dropped as a criterion and kept as an invariant proved by test/cases/1087_the_site_offers_the_release_it_published.sh and I2303; its site half is the-site-never-goes-back, carried by I3201. The milestone's acceptance criteria are derived from the intent's criteria, so both orphans leave it. I3205 no longer serves delivery-is-measured-per-phase and stays as supporting work. I3212 names duplicate candidates in the brief line (prs brief) and depends on I3204, which owns that line."
+  - id: surfaces-not-reached
+    class: surface_missing
+    subject: "I3204"
+    finding: "The session-start context does not go through brief.rs. lib/context.sh:740-756 (mj_context_integration) calls `prs brief` and writes no section at all for a checkout that never observed the forge. That contradicts I3204's AC 'says the backlog is unobserved, not zero' at the one place every session reads, and lib/context.sh is outside I3204's scope. Other gaps: /ui CI/CD & Releases (ui/delivery.rs, ui/timings.rs) already draws integration.timings, yet I3202 changes that reading's shape with no ui scope, a regression risk for the screen. I3208's readiness reaches no /ui, /cockpit or site page, although the audit it cites asked for CLI, UI and Pages. None of the delivery or lead-time readings reaches majordomus.dev."
+    blocking: false
+    resolution:
+      state: planned
+      issue: I3204
+      because: "lib/context.sh's mj_context_integration deliberately writes nothing for a checkout whose forge was never observed, so that a repository which does not integrate pull requests grows no section about it. I3204 takes lib/context.sh into scope and writes 'unobserved' only when policy declares the backlog bound. I3202 takes ui/timings.rs and ui/delivery.rs into scope so the CI/CD & Releases screen keeps drawing the new reading. I3208's readiness reaches /ui through the release screen. Publishing delivery readings to majordomus.dev stays non_scope until a measured window exists, per the intent's non-goal against unmeasured figures."
+  - id: proofs-only-in-fixtures
+    class: delivery_verification
+    subject: "I3200"
+    finding: "Every criterion's ref is the self-referential `majordomus intent explain finished-work-reaches-a-verified-release`. None names the case that settles it. I3200's live half can never be observed in CI: .ai/repo/ci/queue.yaml says the scheduled token is read-only and 'the branch protection cannot be read on the runner', so the finding is permanently unknown there and is proven only by fixture. I3200's AC 'The check name compared is read from .ai/repo/ci/gates.yaml' assumes a declaration that does not exist. gates.yaml declares no aggregate verdict check; the name `ci` lives in validate.yml's job id, release-verdict's default and classify.rs fixtures. The issue must add that declaration and make release-verdict read it, so there is still one source. No issue observes the published state (site, release) after its own change lands, which the intent's invariant 'none is claimed before it is observed' requires."
+    blocking: false
+    resolution:
+      state: planned
+      issue: I3200
+      because: "Verified: gates.yaml declares no aggregate verdict check, and release-verdict defaults RELEASE_VERDICT_CHECK to ci. I3200 adds that declaration to gates.yaml and makes release-verdict and the comparison read it, which leaves one source. The live half is recorded as evidence from a prs refresh with a token that can read the protection; on the runner it is stated as unknown by design (.ai/repo/ci/queue.yaml). After-landing observation is carried by I3213 for the record commit's evidence job once I2717 lands, and by I3201 for the served build.json. Each criterion now names, in its planned proof, the evidence ids of the issues that carry it; its ref stays 'majordomus intent explain finished-work-reaches-a-verified-release' until those tests exist."

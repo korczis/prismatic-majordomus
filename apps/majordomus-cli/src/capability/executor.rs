@@ -440,36 +440,6 @@ fn lock(m: &Mutex<Cache>) -> std::sync::MutexGuard<'_, Cache> {
 /// assert_ne!(canonical_json(&json!([1, 2])), canonical_json(&json!([2, 1])), "arrays are ordered");
 /// ```
 pub fn canonical_json(v: &Value) -> String {
-    fn write(v: &Value, out: &mut String) {
-        match v {
-            Value::Object(m) => {
-                let mut keys: Vec<&String> = m.keys().collect();
-                keys.sort();
-                out.push('{');
-                for (i, k) in keys.iter().enumerate() {
-                    if i > 0 {
-                        out.push(',');
-                    }
-                    out.push_str(&serde_json::to_string(k).unwrap_or_default());
-                    out.push(':');
-                    write(&m[*k], out);
-                }
-                out.push('}');
-            }
-            Value::Array(a) => {
-                out.push('[');
-                for (i, x) in a.iter().enumerate() {
-                    if i > 0 {
-                        out.push(',');
-                    }
-                    write(x, out);
-                }
-                out.push(']');
-            }
-            other => out.push_str(&other.to_string()),
-        }
-    }
-    let mut out = String::new();
-    write(v, &mut out);
-    out
+    // the portable core's bytes (ADR 0170), which are UTF-8 because serde_json writes UTF-8
+    String::from_utf8(majordomus_core::canonical_json(v)).unwrap_or_default()
 }

@@ -1,0 +1,48 @@
+id: I2531
+milestone: a-derivation-computed-once-is-reused
+title: "Two worktrees deriving the same key compute it once, and the machine lock covers the write into a tree, not the computation"
+slug: one-key-is-computed-once-across-worktrees
+priority: p2
+profile: implementation
+parallel_safe: false
+objective: "Let the worktrees of one machine share the store safely: one computation per key at a time, each worktree's files written only by its own run, and the machine-wide derive lock narrowed to what must not interleave, with the rule that states it amended in the same change."
+why: "campaigns/majordomus-incremental-derive-prompt-pack/08_08_PARALLEL_WORKTREES.md asks for an immutable shared store, mutable staging per worktree, single-flight per key and short critical sections, without weakening the guarantee that two conflicting derive writes cannot interleave, and for stress tests with two and three worktrees and a killed owner. lib/machine_lock.sh takes one lock per machine for the whole of scripts/derive, with a wait of up to 14400 seconds by default, because a derive costs minutes of a machine many sessions share (rule project.one-derive-at-a-time). With a store, most of a second worktree's derive is restore, and holding every other worktree behind a full-length lock is the remaining cost."
+current_state: "scripts/derive acquires the machine lock before the build and holds it through stage D. Case 1018 pins the lock's owner line and the reaping of orphans. scripts/reap-orphans reads the owner line to spare the worktree in use."
+desired_state: "A node that must be computed takes a lock on its key in the store; a second process wanting that key waits for it and then restores, and reclaims the lock when its holder is dead. Staging is in the store's temporary area and in the worktree's own tree, never in another worktree's. The machine lock is still what admits heavy computation one at a time, and is not held while a run only restores. Entries are separated by operating system and architecture where a node's output depends on them. Rule project.one-derive-at-a-time states the new boundary, and its case asserts it."
+scope:
+  - "apps/majordomus-cli/src/derivation/store.rs"
+  - "apps/majordomus-cli/src/derivation/run.rs"
+  - "apps/majordomus-cli/tests/derivation_concurrency.rs"
+  - "lib/machine_lock.sh"
+  - "scripts/derive"
+  - ".ai/repo/rules/project/one-derive-at-a-time.v1.md"
+  - "test/cases/1018_one_derive_at_a_time_and_no_orphans.sh"
+  - "docs/DERIVE.md"
+  - "docs/WORKTREES.md"
+  - ".ai/repo/project/issues/I2531.yaml"
+non_scope:
+  - "Running two producers of one worktree in parallel"
+  - "Changing how cargo shares its build directory (ADR 0139)"
+  - "Changing the owner line of the derive lock, which scripts/reap-orphans and case 1018 read"
+  - "The offload queue on another host (I2398)"
+depends_on:
+  - "I2529"
+acceptance_criteria:
+  - "Two worktrees at one commit deriving at once run each producer once in total, and both end with scripts/derive-check exit 0"
+  - "Three worktrees with distinct keys each end with their own tree's outputs, and no file of one tree was written by another's run"
+  - "A holder of a key lock that is killed is detected, and the waiting process computes the key itself within a declared bound"
+  - "A worktree whose index differs from another's at the same commit does not restore the other's entry"
+  - "A run that only restores does not wait for the machine lock while another worktree computes"
+  - "No test of the set leaves a process running after it ends"
+  - "The lock wait and the total duration for two worktrees are recorded with and without the store on one machine"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test derivation_concurrency"
+  - "MJ_TEST_JOBS=2 bash test/run.sh 1018_one_derive_at_a_time_and_no_orphans 1022_worktrees_share_build_intermediates"
+  - "majordomus shell check"
+evidence_required:
+  - "single_flight_across_worktrees"
+  - "killed_holder_is_reclaimed"
+  - "two_worktrees_measured"
+created_at: 2026-10-13
+updated_at: 2026-10-13

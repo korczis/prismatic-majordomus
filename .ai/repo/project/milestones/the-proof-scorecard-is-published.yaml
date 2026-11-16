@@ -1,0 +1,48 @@
+id: the-proof-scorecard-is-published
+title: "One derived scorecard publishes every proof test's computed status, losses included, on every surface, and no value claim stands without a passed test"
+slug: the-proof-scorecard-is-published
+order: 201
+priority: p1
+problem: "The owner's report of 2026-10-19 asks that the verdict of every test be public and evidence-backed, and that feature counts on the landing page not be the test. Nothing computes a status for a proof test, no surface lists them, and the gates do not hold a qualitative value claim: economics check refuses only a quantity beside an economics word (apps/majordomus-cli/src/economics/claims.rs:1-31), and the homepage promise list (site/data/homepage.toml:53-68) names no word of speed, cost, effort or recovery."
+outcome: "economics.proof computes six rows from committed records and is served by CLI, HTTP, MCP, /ui/evidence and the site economics page; a guaranteed claim and a homepage value word stand only while the settling test reads passed."
+current_state: "docs/generated/economics.json reports verdict.publishable false with 0 valid pairs of the 30 the rule asks for. apps/majordomus-cli/src/capability/builtin/economics.rs:141-202 declares economics.summary, explain, runs and check. ui/evidence.rs:17 reads only evidence.report. site/data/marketing.toml and site/data/manifesto.toml hold none of the value words I3350 declares (grep at the import's head). Other hand-written prose uses such words in other senses, for example site/content-src/proof-carrying-documentation.md:52 'the part that pays for itself', which is why the gate is limited to the claims matrix and the homepage copy. I2965 is READY in site/data/generated/plan.json while its proven and proves words are already present at site/data/homepage.toml:54-55."
+desired_state: "majordomus economics proof, /api/v1/economics/proof, majordomus_economics_proof, /ui/evidence and /economics/ show six rows with per-status totals summing to six; economics check and homepage-check refuse an unbacked value claim."
+scope:
+  - "site/data/homepage.toml"
+  - "apps/majordomus-cli/src/economics"
+  - "apps/majordomus-cli/src/economics/claims.rs"
+  - "apps/majordomus-cli/src/economics/report.rs"
+  - "apps/majordomus-cli/src/economics/model.rs"
+  - "apps/majordomus-cli/src/capability/builtin/economics.rs"
+  - "apps/majordomus-cli/src/commands/economics.rs"
+  - "apps/majordomus-cli/src/ui/evidence.rs"
+  - "apps/majordomus-cli/src/ui/mod.rs"
+  - "apps/majordomus-cli/tests/economics.rs"
+  - "share/schemas/generated/economics-summary.schema.json"
+  - "docs/generated/economics.json"
+  - "docs/generated/economics.md"
+  - "docs/generated/economics.yaml"
+  - "site/templates/economics.html"
+  - "site/content-src/economics.md"
+  - "test/cases/430_economics.sh"
+  - "test/cases/431_economics_claims_gated.sh"
+  - "docs/claims/economics-claims-gated.md"
+non_scope:
+  - "Running any experiment"
+  - "Typing a status, a verdict or a figure"
+  - "Scanning general prose for value words"
+  - "A homepage section; linking the scorecard from the homepage proof band is an owner question"
+acceptance_criteria:
+  - "Every scorecard surface returns the same six rows from one calculator, and a failed or inconclusive row has the shape of a passed one"
+  - "A test below its registered sample reads running with no verdict word"
+  - "economics check refuses a guaranteed claim settled by a test that has not passed; homepage-check refuses each declared value word while no claim permits it"
+  - "majordomus economics check passes on master's tree"
+validation:
+  - "majordomus plan validate"
+evidence_required: []
+risks:
+  - "Until the experiment milestones land, most rows read not_run; that is the honest state and the surfaces word it plainly"
+  - "claims.rs is also in I3297's scope and docs/CLAIMS.yaml in I3117's; whichever lands second merges onto the first"
+  - "A new capability regenerates many projections; the worker runs majordomus generate first and widens scope at start if it writes more"
+created_at: 2026-10-19
+updated_at: 2026-10-19

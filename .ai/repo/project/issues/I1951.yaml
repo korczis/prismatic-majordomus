@@ -52,4 +52,32 @@ evidence_required:
   - run_records_typed
 risk: "It needs the run reference of PR #577 (with I1949) and the tree state of I1948, and it is the second capability change of the chain, so it starts only after both have landed."
 created_at: 2026-09-26
-updated_at: 2026-09-26
+updated_at: 2026-10-21T16:45:24Z
+started_at: 2026-10-21T16:43:26Z
+started_event: sha256:439c65949097a9d42e9369789876accd90a2d9a7b7631856a59b4fa408ed8b65
+verified_at: 2026-10-21T16:44:10Z
+verified_event: sha256:2cd0ea80414e3c03d08fed014ac93113f97b29fcbf655013837a88735fd12f87
+completed_at: 2026-10-21T16:45:24Z
+completed_event: sha256:512d04f3cfb30f2eefdb1e669de43aab038e4e46138bb9f7fba35c44ef31ea63
+evidence:
+  - covers: provenance_measured_by_the_run
+    type: ci
+    command: "gh run view --job 119164002758 --log"
+    result: "ok 505_a_recording_carries_what_its_run_measured (a report measured at another commit is refused, one without a measurement is recorded with tree unknown), in suite-shard (3) of master's validate run 39565286918 on 905159df7cc; implemented by 0e0e9443ea7 (#667)"
+    artifact: "https://github.com/korczis/prismatic-majordomus/actions/runs/39565286918"
+    commit: 905159df7cc24f65c0455a16fc9ccbad37845571
+    recorded_at: 2026-10-21T16:44:48Z
+  - covers: crate_count_rule
+    type: ci
+    command: "gh run view --job 119164002758 --log"
+    result: "ok 506_a_crate_binary_that_ran_nothing_is_not_a_pass (coloured output: ran nothing or a filtered subset is a skip, a failed test a failure), in suite-shard (3) of validate run 39565286918 on 905159df7cc, with evidence::record::tests 41 ok in rust (2) job 119164002365; implemented by 62f9ec5564b"
+    artifact: "https://github.com/korczis/prismatic-majordomus/actions/runs/39565286918"
+    commit: 905159df7cc24f65c0455a16fc9ccbad37845571
+    recorded_at: 2026-10-21T16:44:59Z
+  - covers: run_records_typed
+    type: ci
+    command: "gh run view --job 119164002365 --log"
+    result: "evidence::run::tests 17 ok in rust (2) (incl. a_failing_clean_record_between_e_and_p_caps_proven_at_stale, the_newest_failing_record_is_the_one_named), case 357 ok in suite-shard (3) job 119164002758 and case 124 ok (the tracked ledger is the default) in suite-shard (1) job 119164053231, of validate run 39565286918 on 905159df7cc; implemented by 0e0e9443ea7 (#667)"
+    artifact: "https://github.com/korczis/prismatic-majordomus/actions/runs/39565286918"
+    commit: 905159df7cc24f65c0455a16fc9ccbad37845571
+    recorded_at: 2026-10-21T16:45:12Z

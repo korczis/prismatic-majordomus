@@ -145,7 +145,7 @@ chmod +x "$W/spy"
 
 # the commit hook: this repository's hook declares the context, and in it doctor names the
 # reading it leaves out — and never asks for it
-grep -q '^MAJORDOMUS_DOCTOR_CONTEXT=commit bin/majordomus doctor || exit \$?$' "$ROOT/.githooks/pre-commit" \
+grep -q '^report doctor env MAJORDOMUS_DOCTOR_CONTEXT=commit bin/majordomus doctor$' "$ROOT/.githooks/pre-commit" \
   || { echo "    .githooks/pre-commit does not run doctor in the commit context"; exit 1; }
 : > "$W/spy.log"
 MAJORDOMUS_DOCTOR_CONTEXT=commit MAJORDOMUS_BIN="$W/spy" "$MJ" doctor > "$W/hook.txt" 2>&1 || true

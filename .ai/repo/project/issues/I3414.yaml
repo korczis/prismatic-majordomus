@@ -1,0 +1,49 @@
+id: I3414
+milestone: knowledge-is-reconciled-before-it-is-reviewed
+title: "Every candidate group names the curated notes and the rule that already speak about its subject, read from entity.affected, so a possible duplicate or contradiction is in front of the reviewer with both sources"
+slug: a-candidate-names-what-already-says-it
+priority: p2
+profile: implementation
+objective: "Add a related list to each candidate group in the Rust knowledge_base.candidates reader and on /ui/knowledge. It is computed on read and never written into a candidate. It lists the curated notes that entity.affected (I3412) reaches from the group's subject path and, for a subject that is a rule, the rule's path. The shell reader is unchanged, and case 981's parity normalisation leaves related out. Step 2 of the evolve skill tells the reviewer to read related, and to reject with --by naming the curated note when a candidate duplicates it."
+why: "The owner's 2026-10-19 Cognitive Fabric pack asks for duplicates and contradictions to be detected against curated content and rules (campaigns/prismatic-way-cognitive-fabric-prompt-pack/prompts/03_KNOWLEDGE.md). verification/ACCEPTANCE.md asks that contradictory evidence stay a visible conflict keeping both sources. contracts/EVENT_CONTRACT.md asks for conflicts to stay visible rather than newest-wins."
+current_state: "knowledge_base.rs:733-768 and lib/knowledge.sh:1517-1530 group candidates/ only. The contradicts relation exists only in the vocabulary (lib/knowledge.sh:1029, knowledge.v1.schema.json:166). Curated notes cite file: and issue: references and carry no about field. .ai/repo/skills/evolve/SKILL.md step 2 asks for duplicates to be rejected, with no tool support."
+desired_state: "Each group carries the curated notes and the rule that name its subject, from the one reverse reader. Deciding remains a person's act."
+scope:
+  - "apps/majordomus-cli/src/capability/builtin/knowledge_base.rs"
+  - "apps/majordomus-cli/src/ui/knowledge.rs"
+  - "test/cases/981_an_observation_becomes_a_grouped_candidate.sh"
+  - ".ai/repo/skills/evolve/SKILL.md"
+  - "docs/KNOWLEDGE.md"
+  - "site/content/docs/knowledge.md"
+  - "docs/generated/openapi.json"
+  - "docs/generated/openapi.yaml"
+  - "docs/generated/registry.json"
+  - "docs/generated/registry.yaml"
+  - "site/data/generated/openapi.json"
+  - "site/data/registry/registry.json"
+non_scope:
+  - "A shell derivation of the same backlinks"
+  - "Writing a contradicts relation into a candidate"
+  - "Judging whether two statements contradict, by any means"
+  - "A new capability or store"
+depends_on:
+  - "I3413"
+  - "I3412"
+serves:
+  - "a-change-reconciles-what-it-affects#a-candidate-names-what-already-says-it"
+acceptance_criteria:
+  - "A group whose subject is a file a curated note cites lists that note's id under related, in the Rust reader and on /ui/knowledge"
+  - "A group about a rule lists the rule's path; an unknown rule lists nothing and is not an error"
+  - "The shell and Rust JSON stay byte-identical outside related under case 981's normalisation"
+  - "No candidate file changes bytes because of this issue (case 564 stays green)"
+  - "The evolve skill's step 2 names the related field and reject --by"
+validation:
+  - "bash test/run.sh 981_an_observation_becomes_a_grouped_candidate 564_knowledge_derivation_is_idempotent 3003_the_knowledge_screen_answers 3004_evolve_is_a_procedure_of_existing_commands"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib knowledge_base"
+  - "bin/majordomus-cli generate --check"
+  - "majordomus plan validate"
+evidence_required:
+  - "a_group_names_the_curated_notes_and_rule_of_its_subject"
+  - "case_a_candidate_names_what_already_says_it"
+created_at: 2026-10-19
+updated_at: 2026-10-19

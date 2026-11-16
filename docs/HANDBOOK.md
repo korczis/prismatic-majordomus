@@ -54,11 +54,49 @@ the chapter, or keep the name. The rule is
 and the decision is
 [ADR 0149](../.ai/repo/adrs/0149-a-handbook-edition-is-a-declared-locale-tree-built-from-the-tree-it-describes.md).
 
+## The outlook chapters
+
+The part "Výhled" carries the owner's strategic report in the repository: a forecast, a
+comparison with the market, the report measured against what the repository records, and what
+the token economics can and cannot claim. Each statement in it wears one of three tags:
+
+| Tag | What it is | Where it comes from |
+|---|---|---|
+| repository | a fact of this tree | `outlook-data.json`, derived by `handbook/derive_data.py` from the history, `site/data/generated/plan.json`, `.ai/repo/project/intents/`, the committed evidence ledger and `docs/generated/economics.json` |
+| model | an estimate of the report, not a measured figure | `handbook/cs/outlook-model.json`, written once and read by both the captions and the charts |
+| external | a claim of a public source | the source, linked beside the claim |
+
+A repository figure reaches a caption only as a placeholder the build fills, so a figure the
+data no longer has fails the build like any other. The economics chapter follows
+[ADR 0082](../.ai/repo/adrs/0082-token-economics-are-measured-from-matched-runs-and-published-only-past-a-declared-rule.md):
+the context reduction is counted, a total-token saving is unproven until matched runs pass the
+publication rule, and the usage real sessions observe is not recorded in the tree until the
+milestone `execution-telemetry` lands. When the verdict changes, the shape of
+`outlook-data.json` changes with it, and the chapter that states the verdict is rewritten in
+the same change.
+
+The outlook is published the way the handbook is: the page `python3 handbook/build.py` writes
+is published by hand as a Claude Artifact. Its browser test is `handbook/cs/tests/pw-outlook.js`.
+
+### What a published artifact cannot do
+
+Two limits of a Claude Artifact decide how one is kept current, and both were measured:
+
+- It belongs to the claude.ai account that published it. After a session switches account,
+  every session answers 404 for it and a publish to it is refused, until the owner shares it
+  with the new account or the page is published at a new address under that account
+  (2026-10-19, the outlook's first two addresses; 2026-10-28, every artifact of one account).
+- No unattended process can write its database. `claude -p` offers no artifact tools: on
+  2026-10-28 `claude -p ... --allowedTools ArtifactData ToolSearch` answered that ArtifactData
+  is not available. A service or a script therefore derives an artifact's content in the tree,
+  and an interactive session that finds it stale writes it; a design that needs a headless
+  writer is measured again only when a Claude Code release adds artifact tools to print mode.
+
 ## An edition and the language rule
 
 This repository's working artifacts are English. An edition is content addressed to a reader,
 like a translated page of the site, and
-[`project.english-only`](../.ai/repo/rules/project/english-only.v3.md) admits it under three
+[`project.english-only`](../.ai/repo/rules/project/english-only.v4.md) admits it under three
 conditions: it is `handbook/<language>/`; its `edition.toml` declares that language; and
 `scripts/ci/english-only-allow.txt` declares it as `edition <directory> <language> <why>`. The
 generator beside the editions is not inside one and stays English.

@@ -24,4 +24,4 @@ It is not installed for you: the installer touches nothing outside its prefix, s
 
 ## Why it exists
 
-On 2026-10-16 the owner asked why a session opened in this repository did not join the mesh through the hook and start working. The hook had run and the mesh was active; the session simply had no turn to act in. ADR 0156 names that state, a worker that behaves as the only one; ADR 0172 decided the wrapper. The case runs the file in bash and zsh against stubs of `claude` and `majordomus`.
+On 2026-10-16 the owner asked why a session opened in this repository did not join the mesh through the hook and start working. The hook had run and the mesh was active; the session simply had no turn to act in. ADR 0226 names that state, a worker that behaves as the only one; ADR 0172 decided the wrapper. The case runs the file in bash and zsh against stubs of `claude` and `majordomus`.

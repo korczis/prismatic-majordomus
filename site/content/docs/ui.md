@@ -1,7 +1,7 @@
 +++
 title = "UI conformance"
 description = "UI conformance: the page set and the width set discovered rather than listed, the responsive, semantic, component and WCAG invariants a browser checks over every page, what the build normalises in markup it did not write, and where the report is"
-weight = 70
+weight = 74
 [extra]
 source = "docs/UI.md"
 +++
@@ -139,7 +139,14 @@ Beyond the accessibility engine (axe-core, the WCAG 2.0 A/AA, 2.1 A/AA and 2.2 A
   the site.
 - **`page.status` / `page.unreachable` / `page.audit-failed`** — the page answered, and it
   answered in time. A page that does not is a finding about that page, never the end of the
-  run.
+  run — with one exception, a refused connection, which is the server's and not the page's
+  (see [below](#what-the-audit-refuses-to-attribute-to-a-page)). A load that times out is
+  made once more before it is `page.unreachable`, and the finding says in how many attempts:
+  the first load of a surface on a loaded runner can pay for building what every later load
+  reuses. For the same reason the audit warms the site before the first visit — the root,
+  then the first planned page of every top-level path segment of the plan, so a surface
+  served from a tree of its own (the documentation at its mount) is not first loaded by a
+  visit that is measured.
 
 ### A subtree that is not ours to fix
 
@@ -248,9 +255,10 @@ classified:
 
 - a **cancelled** request (`net::ERR_ABORTED`) is the browser saying it no longer needs the
   response — a lazily loaded asset in flight when the audit moves on — not a failed one;
-- a **refused connection** means the server the audit drives is gone, so the run stops and
-  says how many visits it actually measured, rather than recording every remaining page as
-  unreachable;
+- a **refused connection** means the server the audit drives is gone, so it is not loaded
+  again and the run stops — no tab of the pool starts another load, not only the refused
+  one — and says how many visits it actually measured, rather than recording every
+  remaining page as unreachable;
 - a **visit that exceeds its deadline** is reported as that page's finding, and the tab it
   was using is discarded, because a deadline stops waiting and not the work it abandoned.
 
@@ -346,4 +354,22 @@ Plain links are the link check's. Disabled elements are not controls, and a cont
 claims is listed as `UNCLAIMED`. Either it is an instance of a behaviour a spec already asserts, and that spec's
 `claims()` should include it, or it is new. A new behaviour needs a new spec: `claims(el)` is a pure function of
 the element's tag and attributes, and `exercise(ctx)` drives each claimed control and returns how many it drove.
+
+**A graph on a `majordomus ui` screen.** A graph binding there (`data-graph`, drawn by `share/ui/ui.js`) is one
+control with a keyboard map. No spec under `scripts/lib/interaction-specs/` claims it yet (`graph.mjs` drives
+the site's `figure[data-graph]`), and the UI's screens are outside the site's interaction check, so what follows
+is held by the script, not by a probe:
+- The drawn canvas is one tab stop (`role="application"`, `aria-roledescription="graph"`, the server's
+  `aria-label` kept, `aria-describedby` naming the keys). The arrows choose the nearest node that way, Enter
+  opens the chosen node's link (as a click does), `+`/`=` and `-`/`_` zoom, `0` fits, Shift+arrows pan, Home
+  and End reach the first and last node, and Escape clears. `/` and Ctrl/Cmd+K stay the bar's search.
+- A plain wheel scrolls the page; Ctrl/Cmd+wheel or a pinch zooms, between 0.2 and 3. The frame's own `−`,
+  `+` and Fit buttons (`.mj-ui-graph-tools`) do the same by pointer.
+- Pointing at a node lights it and its neighbours and shows a card (`.mj-graph-tip`, the shared card, never on
+  a touch screen) with its name and how many links it has; a chosen node outranks the pointer. Under
+  `prefers-reduced-motion` nothing animates.
+- The minute's refresh is silent: a graph drawn again keeps its nodes' positions, its zoom, its pan, its chosen
+  node and the keyboard, if it was in the drawing. A node it has not seen is placed beside the nodes it touches,
+  clear of the others, and what touches nothing already drawn is laid out below the rest. Nothing fades in or
+  animates again.
 {% endraw %}

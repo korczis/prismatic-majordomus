@@ -16,6 +16,27 @@
 <div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
   {% block body %}
   <article class="format break-words [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal max-w-3xl dark:format-invert lg:format-lg [&_pre]:overflow-x-auto [&_pre]:max-w-full [&_table]:block [&_table]:overflow-x-auto [&_table]:max-w-full [&_.zola-anchor]:text-inherit [&_.zola-anchor]:no-underline [&_.zola-anchor:hover]:underline" tabindex="0">{{ page.content | safe }}</article>
+  {#- The articles this one names as related, in [extra] related: routes, as [extra.translations]
+      writes them (I3074). Each is read with get_page from the content path its route names, so
+      its title, its description and its language are the page's own, and a route that names no
+      page stops the build. scripts/site-check (check 21) holds the list to a page in the
+      article's own language wherever its group has one, answered back, and to the same groups
+      in every language of a group. The heading is the site's chrome, English like the
+      breadcrumb, and says so on a page that is not. -#}
+  {%- if page.extra.related is defined and page.extra.related | length > 0 %}
+  {%- set here_lang = page.extra.lang | default(value=config.default_language) %}
+  <section id="related" class="mt-12 max-w-3xl scroll-mt-24" aria-labelledby="related-h" data-related>
+    <h2 id="related-h" class="text-xl font-semibold tracking-tight text-heading"{% if here_lang != "en" %} lang="en"{% endif %}>Related articles</h2>
+    <ul class="mt-4 grid gap-3 sm:grid-cols-2">
+      {%- for related_route in page.extra.related %}
+      {%- set related_path = related_route | trim_end(pat="/") ~ ".md" %}
+      {%- set r = get_page(path=related_path) %}
+      {%- set r_lang = r.extra.lang | default(value=config.default_language) %}
+      <li class="min-w-0"><a href="{{ get_url(path=related_route, trailing_slash=true) }}" hreflang="{{ r_lang }}" lang="{{ r_lang }}" class="flex h-full flex-col gap-1 rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium" data-related-route="{{ related_route }}"><span class="break-words text-sm font-medium text-heading">{{ r.title }}{% if r_lang != here_lang %} <span class="font-mono text-xs font-normal uppercase text-body-subtle" translate="no">{{ r_lang }}</span>{% endif %}</span>{% if r.description %}<span class="break-words text-sm text-body">{{ r.description }}</span>{% endif %}</a></li>
+      {%- endfor %}
+    </ul>
+  </section>
+  {%- endif %}
   {% endblock body %}
 </div>
 {% endblock content %}

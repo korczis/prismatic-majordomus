@@ -1,0 +1,32 @@
+id: a-visitor-understands-and-checks-majordomus
+title: "A first-time visitor of majordomus.dev understands what Majordomus does and can check every claim it makes"
+statement: "A manager or a programmer arriving at majordomus.dev reads on the first screen what Majordomus does for them, sees it refuse unfinished work in a recorded run, can switch to the scenario closest to their problem, and reaches from any problem, step or claim the feature, the evidence and the maturity behind it, while every figure stays derived and the declared story keeps its eight sections."
+invariants:
+  - "The homepage's sections, order and budget are the ones site/data/homepage.toml declares"
+  - "Every scenario shown is a recorded run; the commit shown is the build's, never written into committed derived data"
+  - "A node's maturity is its feature's declared status and its claims' evidence verdict from the product model, never page copy"
+non_goals:
+  - "A rewrite in a frontend framework"
+  - "A second product catalogue for the site"
+  - "Audience-specific copies of facts"
+milestones:
+  - "a-visitor-understands-and-checks-majordomus"
+satisfaction:
+  - id: scenarios-are-recorded
+    criterion: "The hero's left column links the challenge, as the default, and every use case whose recorded run holds a refusal (site/data/generated/terminal.json refusals), each naming the homepage problem it answers and reachable with scripts off (planned proof: scripts/ci/homepage-check with a refusal fixture in case 333 (to be extended by I3223))"
+    evidence: command
+    ref: "majordomus intent explain a-visitor-understands-and-checks-majordomus"
+  - id: every-node-leads-to-evidence
+    criterion: "Every problem and every step of the homepage links to its derived features and their evidence and wears the feature's declared status and its claims' evidence verdict (planned proof: scripts/ci/homepage-check with a node-without-feature fixture in case 333 (to be extended by I3224))"
+    evidence: command
+    ref: "majordomus intent explain a-visitor-understands-and-checks-majordomus"
+  - id: the-published-page-is-probed
+    criterion: "After every deploy, the published homepage is probed and every hero choice of majordomus.dev is found reachable (planned proof: scripts/pages verify --smoke (to be extended by I3324))"
+    evidence: command
+    ref: "majordomus intent explain a-visitor-understands-and-checks-majordomus"
+  - id: the-copy-says-only-what-is-proved
+    criterion: "The product sentence is declared once and every page, the README and the launch kit read it, and the copy refuses a word or a claim that no recorded run or comparison permits (planned proof: scripts/ci/homepage-check, extended by I3134, I3135 and I3136)"
+    evidence: command
+    ref: "majordomus intent explain a-visitor-understands-and-checks-majordomus"
+created_at: 2026-10-18
+updated_at: 2026-10-18

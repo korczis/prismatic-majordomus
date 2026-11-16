@@ -1,0 +1,104 @@
+---
+schema: adr/v1
+id: adr-0176
+kind: adr
+title: The peer blackboard is one projection of the board, the journal and the monitor, pushed over one socket
+status: proposed
+date: 2026-10-18
+tags:
+  - peers
+  - mesh
+  - monitor
+  - websocket
+  - ui
+provenance:
+  origin: authored
+related:
+  - file:.ai/repo/adrs/0044-cooperation-is-repository-wide-the-board-is-gathered-not-shared.md
+  - file:.ai/repo/adrs/0067-mesh-cooperation-is-authenticated-links-and-one-replicated-journal.md
+  - file:.ai/repo/adrs/0133-everything-is-followed-in-one-stream.md
+  - file:.ai/repo/adrs/0141-the-ui-is-published-as-a-snapshot-read-at-one-commit.md
+  - file:.ai/repo/adrs/0158-the-observatory-draws-only-what-was-observed.md
+  - file:.ai/repo/project/milestones/peer-blackboard.yaml
+  - file:apps/majordomus-cli/src/capability/builtin/blackboard.rs
+---
+
+# 176. The peer blackboard is one projection of the board, the journal and the monitor, pushed over one socket
+
+## Context
+
+Who works on what is recorded three times over, each record right about its own half:
+the board of every checkout (`peers.list`, gathered per ADR 0044) knows which clients are
+attached and what they announced; the mesh journal (ADR 0067) knows the sessions, claims,
+reviews and handovers of every linked machine, the board's own peers among them as
+`board-pN` sessions; the monitor (ADR 0133) folds what happened into signals with a cursor.
+No surface joins them. `/cockpit/peers` renders the board once; `/ui` has no peers screen;
+`/cockpit/monitor` polls the whole monitor every five seconds from every tab; and the only
+WebSocket, `/events`, is wired to the execution store. Nothing between the board, the
+journal and the socket says that anything changed.
+
+An unmerged draft (ADR 0162, on `docs/the-board-is-pushed-over-one-websocket`) proposed a
+board channel for the kiosk alone. It is superseded by this decision, which keeps its
+one-way transport and its "a projection, not a store" and widens the consumer to every
+surface.
+
+## Decision
+
+1. **One projection, `blackboard.snapshot`** (`majordomus blackboard`, `GET /api/v1/blackboard`,
+   `majordomus_blackboard`; the command line asks the server holding the checkout's lease,
+   because a board is that server's memory). One read capability composes the repository's
+   board, the live mesh state and the newest monitor page into a typed snapshot: the sources
+   read and the health of each, whether the answer is `complete`, every worker with its
+   claims (advisory or exclusive), conflicts (`potential` overlaps, `confirmed` conflicted
+   claims), open reviews, untaken handovers, typed relations and the monitor cursor a stream
+   resumes from. It writes nothing and keeps nothing. Every surface that shows peers renders
+   this answer and computes none of it again.
+2. **Identity is never a position.** A worker's key is its board's checkout and its peer id
+   (`board:<checkout>/<pN>`) or its mesh session key. A peer id is a position on one server's
+   board, handed out again by every server and after every restart, so a board peer and the
+   mesh session its own server projected for it are one worker only through the stream that
+   server names for its board (`peers.list` carries it per board; it includes the process
+   instance): a session of that stream with the same board session id, checkout and client,
+   and exactly one. Two such sessions make a `candidate` relation each and no join; a board
+   whose server names no stream joins nothing. A review's reviewer is a worker only when the
+   request names a whole session key. Nothing is joined by a name, a branch or an intent.
+3. **An unread source is an answer.** A board that could not be read and a mesh that is
+   declared and not running make `complete` false and are listed with their reason; the
+   projection never reports "nobody is here" for "I could not ask". A mesh the repository
+   does not declare, and a monitor source that has recorded nothing, are reported and leave
+   `complete` true: who is here is the boards' and the mesh's to say.
+4. **Pushed, not polled** (I2981). The board's mutations and the journal's appends and
+   ingests advance one change generation (`crate::change`). The blackboard rides the one
+   live channel that already exists: `GET /events?follow=blackboard` (with `after` and
+   `epoch` to resume), with the handshake, origin check, connection bound and heartbeat of
+   `/events`. It sends `stream.ready` with the server's epoch, the snapshot, then a new
+   snapshot whenever what it says changed and the monitor's signals after the connection's
+   cursor. A cursor of another process, or one the monitor cannot page through, is answered
+   with `stream.resync` and a fresh snapshot. A source that cannot push (a beat that stopped,
+   the executor's trail, GitHub) is read on a bounded refresh, and every frame says whether
+   a change pushed it or a refresh found it. One read per generation is shared by every
+   connection; a slow client skips snapshots rather than queueing them. A caller beyond
+   loopback follows it exactly when it may read `blackboard.snapshot` (ADR 0126). A
+   connection names what it is written (`frames`: the snapshot, the signals or both), the
+   monitor sources of its signals, and its reader (`for`), whose signals are marked by the
+   monitor's own rule; the snapshot stays reader-neutral, so one read serves every tab
+   (I2982).
+5. **A page says what feeds it.** A published page (`data-snapshot`) opens no socket and
+   says `snapshot` with its revision; a page whose socket cannot open polls and says
+   `poll`; only a page fed by the socket says `live`.
+
+## Consequences
+
+- A surface added later is a renderer of the blackboard's frames, with no business logic.
+- The monitor's cost (it rereads the journal) is paid once per change, not once per tab.
+- A peer message kind is not added by this decision: reviews and handovers are what peers
+  send each other through the journal today, and a new kind waits for evidence that they
+  do not suffice.
+- A provider with no supported, authenticated event source is not shown present; a GitHub
+  event is a GitHub signal, never a provider's presence.
+
+## Not decided here
+
+- A live connection from the public site to a runtime. The published site shows the
+  snapshot; an authenticated live endpoint needs the remote-caller model of ADR 0126 and a
+  deployment that serves it, and is a decision of its own.

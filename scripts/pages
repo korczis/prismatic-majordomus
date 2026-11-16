@@ -21,23 +21,31 @@
 #                                         10 when the controlled path is over budget.
 #                                         --advisory reports a breach as a ::warning and
 #                                         exits 0: for the caller that measures a deployment
-#                                         which has already happened.
+#                                         which has already happened. A row that spent more
+#                                         than budget.bound.near_percent of its step's bound
+#                                         in the workflow is named NEAR, and never changes
+#                                         the exit status.
 #   scripts/pages built [--branch B] [--commit SHA] [--wait N] [--porcelain]
 #                                         GitHub's own "pages build and deployment" of that commit:
 #                                         0 built, 10 errored, 12 not determinable (no gh, no token,
 #                                         or GitHub has not built it yet)
 #   scripts/pages rebuild [--branch B] [--commit SHA]
 #                                         ask GitHub to build that commit of the branch again,
-#                                         only when its build errored and nothing is building:
-#                                         0 requested or none needed, 12 the state unreadable,
-#                                         a build in flight, or the request refused
-#   scripts/pages evidence [--commit SHA] [--from DIR] [--out FILE] [--ledger-out FILE]
+#                                         when its build errored and nothing is building, or
+#                                         when the build in flight is hung (older than
+#                                         deploy.build_hung_after): 0 requested or none needed,
+#                                         13 a build in flight that is not hung yet, 12 the
+#                                         state unreadable or the request refused
+#   scripts/pages evidence [--commit SHA] [--from DIR]... [--out FILE] [--ledger-out FILE]
 #   scripts/pages published-evidence --bin EXE [--baseline FILE]
 #                                         refuse to publish a UI whose evidence report holds more
 #                                         `not run` claims than the declared baseline (I2786):
 #                                         0 within it, 10 over it, 12 when it cannot be read
 #                                         site/data/evidence.json: the CI evidence of that commit
 #                                         or its nearest ancestor (the `evidence` artifact, or DIR),
+#                                         the nearest run that reported from every runner; a run
+#                                         with an absent report (one cancelled midway) stands in
+#                                         only when no complete one is among the nearest (I2845),
 #                                         current, stale with the distance, or unavailable with
 #                                         the reason; 0 in all three, 12 when it cannot write
 #   scripts/pages checkout [--verify]     the fetch-depth deploy.checkout implies; --verify
@@ -48,8 +56,9 @@
 #                                         --timeout 0 is a single probe. 0 it serves it,
 #                                         10 it serves something else, 12 it never answered.
 #                                         --smoke then fetches every deploy.smoke route of the
-#                                         model and exits 10 naming each one whose marker is
-#                                         missing or which does not answer
+#                                         model and every hero choice the published homepage
+#                                         offers (data-hero-scenarios), and exits 10 naming each
+#                                         one whose marker is missing or which does not answer
 #   scripts/pages publication --commit SHA --published OUTCOME --served OUTCOME [--url URL]
 #                       [--timings FILE]
 #                                         state a deployment that has already happened: the summary
@@ -100,10 +109,22 @@
 #                                         one version. A disagreement younger than the window
 #                                         (deploy.release_window) after GitHub's release is a
 #                                         publication in flight; older, or a site offering what
-#                                         GitHub has not published, is refused. --wait polls
+#                                         GitHub has not published, is refused. The pre-release
+#                                         the homepage names beside it is held to GitHub's
+#                                         newest pre-release the same way (I4531). --wait polls
 #                                         until they agree; --expect TAG also requires GitHub's
 #                                         newest release to be TAG. 0 one release, or in flight;
 #                                         10 they disagree; 12 a reading could not be taken
+#   scripts/pages trends [--out FILE] [--runs N]
+#                                         site/data/trends.json: the last N (60, at most 100)
+#                                         completed validate runs of master, oldest first, each
+#                                         with its jobs' queued and run seconds and the coverage
+#                                         totals its own coverage-summary artifact holds, or
+#                                         coverage null once the forge no longer keeps it,
+#                                         and each job's median seconds over the runs it ran in.
+#                                         Read from the forge alone, deterministic for the same
+#                                         answers; 0 written, 12 the forge could not be read
+#                                         (and nothing is left at FILE)
 #
 # The model is .ai/repo/ci/pages.yaml. Nothing here carries a path list, a budget or a gate
 # name of its own. Exit 0 ok, 2 usage, 10 a refusal or a budget exceeded, 12 something missing.
@@ -134,6 +155,20 @@ IDENTITY="$(m deploy.identity)"
 # MJ_PAGES_TIMINGS names the file; without it the rows go nowhere and nothing is measured.
 row() { [ -n "${MJ_PAGES_TIMINGS:-}" ] && printf 'pages\t%s\t%s\n' "$1" "$2" >> "$MJ_PAGES_TIMINGS"; return 0; }
 now() { date +%s; }
+# an ISO 8601 UTC time (2026-10-22T20:28:52Z) in seconds since the epoch, with GNU or BSD date;
+# empty when it cannot be read
+iso_epoch() {
+  # only an ISO 8601 time is a time: GNU date reads "" as midnight today and much else as some
+  # date, so an absent start time became an age of hours and a build in flight read as hung
+  case "$1" in [0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]T[0-9][0-9]:[0-9][0-9]:[0-9][0-9]*) ;; *) return 0 ;; esac
+  date -u -d "$1" +%s 2>/dev/null || date -u -j -f '%Y-%m-%dT%H:%M:%SZ' "$1" +%s 2>/dev/null || true
+}
+# seconds since an ISO 8601 UTC time; empty when the time cannot be read, so that an unread time
+# is never taken for an old one
+build_age() {
+  local t; t="$(iso_epoch "$1")"
+  [ -z "$t" ] || printf '%s' $(( $(now) - t ))
+}
 # milliseconds, from the tool's own clock: a phase that takes under a second is still a phase,
 # and a benchmark that can only see whole seconds cannot tell 40 ms from 900
 now_ms() { MJ_TIMING=1 mj_ms; }
@@ -416,6 +451,29 @@ mj_pages_platform() {
   printf -- '-%s' "$(uname -m)"
 }
 
+# ---------------------------------------------------------------- a row's step bound
+# The `timeout-minutes` of what runs a row in the workflow, in minutes: the step named after
+# the row, or else the job named after it (the rustdoc row is a job of its own). Nothing when
+# neither exists, so a row without a bound of its own is never called near one. The workflow
+# is read rather than the bound being written here a second time; scripts/ci/step-bound-check
+# holds that bound to the row's budget, and this says when a run is closing in on it.
+PAGES_WORKFLOW="${MJ_PAGES_WORKFLOW:-$ROOT/.github/workflows/pages.yml}"
+step_bound_of() {   # <row>
+  [ -f "$PAGES_WORKFLOW" ] || return 0
+  awk -v r="$1" '
+    function close_step() { if (instep && nm == r && sto != "") stepmin = sto; instep = 0; nm = ""; sto = "" }
+    /^jobs:[ \t]*$/ { injobs = 1; next }
+    /^[^ \t#]/ { close_step(); injobs = 0 }
+    !injobs { next }
+    /^  [a-zA-Z0-9_-]+:[ \t]*$/ { close_step(); job = $1; sub(/:$/, "", job); next }
+    job == r && /^    timeout-minutes: [0-9]+[ \t]*$/ { jobmin = $2 }
+    /^      - / { close_step(); instep = 1 }
+    instep && /^(      - |        )name: / { nm = $0; sub(/^ *(- )?name: /, "", nm); sub(/[ \t]+$/, "", nm); gsub(/^["\047]|["\047]$/, "", nm) }
+    instep && /^        timeout-minutes: [0-9]+[ \t]*$/ { sto = $2 }
+    END { close_step(); if (stepmin != "") print stepmin; else if (jobmin != "") print jobmin }
+  ' "$PAGES_WORKFLOW"
+}
+
 # ---------------------------------------------------------------- the run's verdict
 # The timing rows of one deployment against the budgets, as the fragment the workflow appends
 # to its job summary. Controlled latency is what can fail; external latency is reported beside
@@ -465,6 +523,24 @@ cmd_report() {
     :
   done)"
   blame="${blame%; }"
+  # which rows are closing in on the bound that would kill them. A budget breach is a warning
+  # and the run stays green; a step that reaches its `timeout-minutes` is killed and the publish
+  # behind it is skipped. On 2026-10-20 `check` took 169 s against a bound of 180 for days
+  # before the Czech copy pushed it over (run 39392245576), and nothing said so. NEAR is that
+  # warning, a run early: never an exit status.
+  local near="" near_pct mins
+  near_pct="$(m budget.bound.near_percent || true)"
+  case "$near_pct" in ''|*[!0-9]*) near_pct="" ;; esac
+  if [ -n "$near_pct" ]; then
+    near="$(awk -F'\t' '{ print $2 "\t" $3 }' "$timings" | while IFS="$(printf '\t')" read -r step secs; do
+      case "$secs" in ''|*[!0-9]*) continue ;; esac
+      mins="$(step_bound_of "$step")"
+      case "$mins" in ''|*[!0-9]*) continue ;; esac
+      [ $(( secs * 100 )) -gt $(( mins * 60 * near_pct )) ] && printf '%s %ss/%ss; ' "$step" "$secs" "$(( mins * 60 ))"
+      :
+    done)"
+    near="${near%; }"
+  fi
   out="${GITHUB_STEP_SUMMARY:-/dev/stdout}"
   {
     printf '### Pages fast path\n\n'
@@ -480,6 +556,7 @@ cmd_report() {
     [ -n "$e2e" ] && printf ', push to public %s s / %s s' "$e2e" "$(m budget.end_to_end)"
     printf '\n'
     [ -n "$blame" ] && printf '\nOver its own budget: %s\n' "$blame"
+    [ -n "$near" ] && printf '\nNEAR its step bound (more than %s%% of the timeout-minutes that would kill it): %s\n' "$near_pct" "$near"
     if [ "$rc" != 0 ] && [ "$advisory" = 1 ]; then
       printf '\nThis is the latency of the publication path, not whether the site published:\nthe run states that separately, and a breach here is a warning rather than this\nrun'"'"'s verdict. `scripts/pages report` without `--advisory` still exits 10.\n'
     fi
@@ -490,14 +567,18 @@ cmd_report() {
   # One line for a reader that is not a person, always, and on the log rather than in the job
   # summary: the Markdown above is invisible to `gh run view --log`, which is where the four
   # red runs of 2026-09-12 were read from.
-  printf 'pages-slo verdict=%s controlled=%s budget=%s over=%s\n' \
-    "$verdict" "$controlled" "$budget" "${blame:-none}"
+  printf 'pages-slo verdict=%s controlled=%s budget=%s over=%s near=%s\n' \
+    "$verdict" "$controlled" "$budget" "${blame:-none}" "${near:-none}"
   if [ -n "${GITHUB_OUTPUT:-}" ]; then
     { printf 'verdict=%s\n' "$verdict"
       printf 'controlled=%s\n' "$controlled"
       printf 'budget=%s\n' "$budget"
       printf 'over=%s\n' "$blame"
+      printf 'near=%s\n' "$near"
     } >> "$GITHUB_OUTPUT"
+  fi
+  if [ -n "$near" ]; then
+    printf '::warning title=Pages step near its bound::%s. A step that reaches its timeout-minutes is killed and the publish behind it is skipped: re-derive the row in .ai/repo/ci/pages.yaml from this run and raise the bound with it.\n' "$near"
   fi
   if [ "$rc" != 0 ] && [ "$advisory" = 1 ]; then
     printf '::warning title=Pages controlled path over budget::controlled path %s s against a budget of %s s (%s). This is the latency of the publication path, not whether the site published — see the publication state annotation for that.\n' \
@@ -583,8 +664,29 @@ cmd_verify() {
         i=$((i + 1))
       done
       [ "$asked" -gt 0 ] || { echo "pages verify: --smoke, and ${MODEL#"$ROOT"/} declares no deploy.smoke route; nothing was asked" >&2; return 10; }
+      # The hero's choices (I3324): the published homepage says which recorded scenarios it
+      # offers, inside data-hero-scenarios, so they are read from it and each is asked, with no
+      # route list kept here. A homepage that offers none, or a choice whose page does not
+      # answer, is a miss, named.
+      local home choices href target n_choices=0
+      home="$(curl -fsSL --max-time "${MJ_PAGES_PROBE_SECONDS:-10}" -H 'Cache-Control: no-cache' "${url%/}/?t=$(now)" 2>/dev/null || true)"
+      choices="$(printf '%s' "$home" | tr '\n' ' ' | sed -n 's/.*<div data-hero-scenarios[^>]*>\(.*\)/\1/p' \
+        | sed 's#</div>.*##' | grep -o 'href="[^"]*" data-scenario="[^"]*"' | sed 's/^href="\([^"]*\)".*/\1/' || true)"
+      if [ -z "$choices" ]; then
+        printf 'pages verify: smoke %s offers no hero choice (no data-hero-scenarios link)\n' "${url%/}/" >&2
+        missing=$((missing + 1))
+      fi
+      while read -r href; do
+        [ -n "$href" ] || continue
+        case "$href" in http://*|https://*) target="$href" ;; *) target="${url%/}$href" ;; esac
+        n_choices=$((n_choices + 1))
+        curl -fsS -o /dev/null --max-time "${MJ_PAGES_PROBE_SECONDS:-10}" -H 'Cache-Control: no-cache' "$target" 2>/dev/null || {
+          printf 'pages verify: smoke hero choice %s did not answer\n' "$target" >&2; missing=$((missing + 1)); }
+      done <<EOF_CHOICES
+$choices
+EOF_CHOICES
       [ "$missing" = 0 ] || return 10
-      [ "$quiet" = 1 ] || printf 'pages verify: smoke %s route check(s) answered with their markers\n' "$asked"
+      [ "$quiet" = 1 ] || printf 'pages verify: smoke %s route check(s) answered with their markers, and %s hero choice(s)\n' "$asked" "$n_choices"
       return 0
     fi
     [ $(( $(now) - t0 )) -lt "$timeout" ] || {
@@ -778,12 +880,21 @@ cmd_built() {
 # that recorded a failure; `unknown`, with every reason, when the run cannot confirm the
 # report; and no evidence at all is published as unavailable, with the reason. ADR 68, as
 # ADR 0087 amends it; the reasons withhold `current` and never change the report.
+#
+# Beside the report, `claims` counts the guaranteed claims the run's own executions support
+# (I3916): the verdict scripts/ci/evidence-collect derived once the run's rows were recorded
+# (`run-report.json`), counted the way the site's product model counts a report (site.rs
+# `claim_evidence`: a guarantee is supported when the verdict is complete and no finding names
+# it). The homepage's proof figure and the evidence page both read this count, with the commit
+# the run was recorded at and how far behind the published one that is; a run that carries no
+# such verdict, and unavailable evidence, are `measured: false` with the reason, never a 0.
 cmd_evidence() {
-  local commit="" from="" out="$ROOT/site/data/evidence.json" ledger_out="" slug="" tmp="" aid="" sha="" best=""
-  local m ecommit behind changed repo_url cov_json cov_txt report_txt state reasons
+  local commit="" from="" out="$ROOT/site/data/evidence.json" ledger_out="" slug="" tmp="" aid="" sha="" n=0
+  local m ecommit behind changed repo_url cov_json cov_txt report_txt run_report state reasons d skipped=""
+  local -a froms=()
   while [ $# -gt 0 ]; do case "$1" in
     --commit) commit="$2"; shift 2 ;;
-    --from) from="$2"; shift 2 ;;
+    --from) froms+=("$2"); shift 2 ;;
     --out) out="$2"; shift 2 ;;
     --ledger-out) ledger_out="$2"; shift 2 ;;
     *) echo "pages evidence: unknown option $1" >&2; exit 2 ;;
@@ -792,11 +903,19 @@ cmd_evidence() {
   commit="$(git -C "$ROOT" rev-parse --verify --quiet "$commit^{commit}")" || { echo "pages evidence: that is not a commit of this repository" >&2; exit 2; }
   evidence_unavailable() {
     jq -n --arg published "$commit" --arg reason "$1" \
-      '{schema: 1, available: false, published_commit: $published, reason: $reason}' > "$out" \
+      '{schema: 1, available: false, published_commit: $published, reason: $reason,
+        claims: {measured: false, declared: null, supported: null, reason: $reason}}' > "$out" \
       || { echo "pages evidence: could not write $out" >&2; exit 12; }
     echo "pages evidence: unavailable: $1"
   }
-  if [ -z "$from" ]; then
+  # A run cancelled midway uploads its evidence all the same, without the report of a runner it
+  # never reached (`absent`): its ledger holds no execution of that runner's tests, and every
+  # claim they prove would publish as `not run`. On 2026-10-20 the cancelled master validate of
+  # 82ac259d0ae left such a run nearest, and two deploys refused 215 claims (39438897759,
+  # 39451372815). The nearest complete run is the evidence; an incomplete one stands in only
+  # when none of the nearest is complete, and is then reported for what it lacks (I2845).
+  complete_run() { jq -e '.schema == 1 and (.commit | type == "string") and ((.absent // []) | length == 0)' "$1/manifest.json" >/dev/null 2>&1; }
+  if [ "${#froms[@]}" -eq 0 ]; then
     command -v gh >/dev/null 2>&1 || { evidence_unavailable "gh is not installed, so no CI evidence was fetched"; return 0; }
     slug="${GITHUB_REPOSITORY:-}"
     [ -n "$slug" ] || slug="$(git -C "$ROOT" remote get-url origin 2>/dev/null | sed -n 's|.*[:/]\([^/][^/]*/[^/][^/]*\)$|\1|p' | sed 's|\.git$||')"
@@ -812,12 +931,29 @@ cmd_evidence() {
       git -C "$ROOT" merge-base --is-ancestor "$sha" "$commit" 2>/dev/null || continue
       printf '%s\t%s\n' "$(git -C "$ROOT" rev-list --count "$sha")" "$aid"
     done < "$tmp/list" | LC_ALL=C sort -t "$(printf '\t')" -k1,1nr > "$tmp/candidates"
-    best="$(head -1 "$tmp/candidates" | cut -f2)"
-    [ -n "$best" ] || { evidence_unavailable "no evidence artifact of master's validation is recorded against this commit or a retained ancestor"; return 0; }
-    gh api "repos/$slug/actions/artifacts/$best/zip" > "$tmp/evidence.zip" 2>/dev/null \
-      && mkdir -p "$tmp/evidence" && unzip -qo "$tmp/evidence.zip" -d "$tmp/evidence" >/dev/null 2>&1 \
-      || { evidence_unavailable "the evidence artifact $best could not be downloaded"; return 0; }
-    from="$tmp/evidence"
+    [ -s "$tmp/candidates" ] || { evidence_unavailable "no evidence artifact of master's validation is recorded against this commit or a retained ancestor"; return 0; }
+    # The five nearest at most, nearest first, stopping at the first complete run.
+    while IFS=$'\t' read -r _ aid; do
+      n=$((n + 1)); d="$tmp/evidence-$n"
+      if gh api "repos/$slug/actions/artifacts/$aid/zip" > "$d.zip" 2>/dev/null \
+        && mkdir -p "$d" && unzip -qo "$d.zip" -d "$d" >/dev/null 2>&1; then
+        froms+=("$d")
+        complete_run "$d" && break
+      elif [ "$n" -eq 1 ]; then
+        evidence_unavailable "the evidence artifact $aid could not be downloaded"; return 0
+      fi
+    done < <(head -5 "$tmp/candidates")
+  fi
+  from=""
+  for d in "${froms[@]}"; do
+    if complete_run "$d"; then from="$d"; break; fi
+    [ -f "$d/manifest.json" ] && skipped="${skipped:+$skipped; }$(jq -r '"the run of \(.commit[0:12]) has no report from \((.absent // []) | join(", "))"' "$d/manifest.json" 2>/dev/null)"
+  done
+  if [ -z "$from" ]; then
+    from="${froms[0]}"
+    [ -z "$skipped" ] || echo "pages evidence: no complete run among the ${#froms[@]} nearest; the nearest stands in: $skipped"
+  elif [ -n "$skipped" ]; then
+    echo "pages evidence: passed over nearer incomplete evidence ($skipped), reading the nearest complete run"
   fi
   m="$from/manifest.json"
   jq -e '.schema == 1 and (.commit | type == "string")' "$m" >/dev/null 2>&1 \
@@ -844,9 +980,30 @@ cmd_evidence() {
   report_txt="$from/report.txt"; [ -f "$report_txt" ] || report_txt=/dev/null
   cov_txt="$from/coverage.txt"; [ -f "$cov_txt" ] || cov_txt=/dev/null
   cov_json="$from/coverage.json"; [ -f "$cov_json" ] || cov_json=/dev/null
+  # the run's own verdict, when the collector kept one this build reads; an artifact gathered
+  # before it did, or one whose verdict is not a report, counts nothing
+  run_report="$from/run-report.json"
+  jq -e '(.claims | type == "array") and (.subject | type == "object")' "$run_report" >/dev/null 2>&1 || run_report=/dev/null
   jq -n --arg published "$commit" --argjson behind "$behind" --argjson changed "$changed" --arg repo "$repo_url" \
-    --slurpfile m "$m" --slurpfile cov "$cov_json" --rawfile report "$report_txt" --rawfile coverage "$cov_txt" '
+    --slurpfile m "$m" --slurpfile cov "$cov_json" --rawfile report "$report_txt" --rawfile coverage "$cov_txt" \
+    --slurpfile rr "$run_report" '
     $m[0] as $man
+    # the guaranteed claims the executions of the run support, counted as site.rs claim_evidence
+    # counts a report: measured only when the verdict read the whole matrix and a ledger
+    | (if ($rr | length) == 0 then
+         {measured: false, declared: null, supported: null,
+          reason: "The run carries no verdict over its own executions, so no count of the guaranteed claims it supports was recorded."}
+       else $rr[0] as $r
+         | [$r.findings[]? | .claim | select(type == "string")] as $against
+         | [$r.claims[] | select(.status == "guaranteed")] as $g
+         | (($r.subject.complete == true) and ($r.ledger.present == true)) as $measured
+         | {measured: $measured,
+            declared: ($g | length),
+            supported: (if $measured then [$g[] | .id as $id | select(any($against[]; . == $id) | not)] | length else null end),
+            reason: (if $measured then null
+                     elif $r.subject.complete != true then "The verdict of the run did not read the whole claims matrix."
+                     else "The verdict of the run found no ledger." end)}
+       end) as $claims
     # What the run cannot confirm about the report it carries. Each reason only withholds
     # `current`; none of them changes the report. A manifest written before the run measured
     # its trees has no such key, and reads as not measured. A report the collector failed to
@@ -888,6 +1045,7 @@ cmd_evidence() {
         run: $man.run,
         absent: $man.absent,
         totals: $man.totals,
+        claims: $claims,
         coverage: (if ($cov | length) == 0 then null else ($cov[0] | {crate, domain: (.domain | {lines, functions, regions})}) end),
         panels: [
           $man.panels[] | . as $p
@@ -901,6 +1059,8 @@ cmd_evidence() {
       }' > "$out" || { echo "pages evidence: could not write $out" >&2; exit 12; }
   state="$(jq -r .state "$out")"
   reasons="$(jq -r '.unconfirmed | join(" ")' "$out")"
+  jq -r 'if .claims.measured then "pages evidence: the run of \(.commit[0:12]) supports \(.claims.supported) of \(.claims.declared) guaranteed claim(s)"
+         else "pages evidence: the guaranteed claims the run supports are not measured: \(.claims.reason)" end' "$out"
   if [ "$state" = current ]; then
     echo "pages evidence: current: the run of ${commit:0:12} confirms the report it carries"
   elif [ "$behind" != 0 ]; then
@@ -1392,16 +1552,25 @@ ui_pages() {
 #   one slow build becomes two failed ones. The predicate is therefore "the build of this
 #   commit errored AND nothing is building", never "the build errored".
 #
+#   Except when the build in flight is hung (I3902). On 2026-10-22 GitHub's build of
+#   0ae8870522 was still `building` after 47 minutes while the site served the previous
+#   commit, and this predicate refused every request for as long as it stayed so: a build
+#   that never ends is not "a slow build" that preempting would make worse, it is the reason
+#   nothing is published. A build in flight older than deploy.build_hung_after is replaced,
+#   and the line says so; a younger one is still waited on, with its own exit (13), so a
+#   caller can tell "not yet" from "could not ask".
+#
 #   The state is not stable under one reading: `building` at 01:03 had become `errored` by the
 #   next look, and the repository-level status disagreed with the per-build list at the same
 #   moment. So this reads through `pages built --porcelain` — the one place this repository
 #   reads that state — twice: once about the commit in question, once about the newest build,
 #   which is how "nothing is building" is asked. It does not add a third reader.
 #
-# Exit: 0 a build was requested, or none was needed; 12 the state could not be read, or a build
-# is in flight and asking would preempt it. Never 0 for a request that was not made.
+# Exit: 0 a build was requested, or none was needed; 13 a build is in flight and not hung yet,
+# so asking would preempt a build that may still finish; 12 the state could not be read, or the
+# request was refused. Never 0 for a request that was not made.
 cmd_rebuild() {
-  local branch="gh-pages" commit="" slug row status newest nstatus
+  local branch="gh-pages" commit="" slug row status newest nstatus since hung age reason=""
   while [ $# -gt 0 ]; do case "$1" in
     --branch) branch="$2"; shift 2 ;;
     --commit) commit="$2"; shift 2 ;;
@@ -1414,30 +1583,44 @@ cmd_rebuild() {
     echo "pages rebuild: the build state could not be read; not asking blindly (no gh, no token, or no pages:read)" >&2
     return 12; }
   [ -z "$commit" ] && commit="$(printf '%s' "$row" | cut -f2)"
+  hung="$(m deploy.build_hung_after)"
+  case "$hung" in ''|*[!0-9]*) echo "pages rebuild: no numeric deploy.build_hung_after in ${MODEL#"$ROOT"/}" >&2; return 12 ;; esac
 
   case "$status" in
     built)
       printf 'pages rebuild: the build of %s succeeded; nothing to ask for\n' "${commit:0:12}"
       return 0 ;;
     building|queued)
-      printf 'pages rebuild: a build of %s is %s; a request would preempt it\n' "${commit:0:12}" "$status" >&2
-      return 12 ;;
+      since="$(printf '%s' "$row" | cut -f4)"
+      age="$(build_age "$since")"
+      [ -n "$age" ] && [ "$age" -ge "$hung" ] || {
+        printf 'pages rebuild: a build of %s is %s since %s; a request would preempt it (hung only after %s s)\n' "${commit:0:12}" "$status" "${since:-an unread time}" "$hung" >&2
+        return 13; }
+      reason="the build of ${commit:0:12} has been $status since $since, ${age} s, past deploy.build_hung_after (${hung} s): it is hung" ;;
   esac
 
-  # errored, and nothing of this commit is in flight — but a build of something else may be
+  # errored or hung, and nothing else of this branch is still in flight and young
   newest="$(cmd_built --branch "$branch" --porcelain 2>/dev/null)" || true
   nstatus="$(printf '%s' "$newest" | cut -f1)"
   case "$nstatus" in
     building|queued)
-      printf 'pages rebuild: GitHub is %s another commit; a request would preempt it\n' "$nstatus" >&2
-      return 12 ;;
+      since="$(printf '%s' "$newest" | cut -f4)"
+      age="$(build_age "$since")"
+      [ -n "$age" ] && [ "$age" -ge "$hung" ] || {
+        printf 'pages rebuild: GitHub is %s another commit since %s; a request would preempt it (hung only after %s s)\n' "$nstatus" "${since:-an unread time}" "$hung" >&2
+        return 13; }
+      [ -n "$reason" ] || reason="GitHub has been $nstatus another commit since $since, ${age} s, past deploy.build_hung_after (${hung} s): it is hung" ;;
   esac
 
   slug="${GITHUB_REPOSITORY:-}"
   [ -n "$slug" ] || slug="$(git -C "$ROOT" remote get-url origin 2>/dev/null | sed -n 's|.*[:/]\([^/][^/]*/[^/][^/]*\)$|\1|p' | sed 's|\.git$||')"
   [ -n "$slug" ] || { echo "pages rebuild: no repository slug (no GITHUB_REPOSITORY, no origin)" >&2; return 12; }
 
-  printf 'pages rebuild: the build of %s errored; asking GitHub to build it again\n' "${commit:0:12}"
+  if [ -n "$reason" ]; then
+    printf 'pages rebuild: %s; asking GitHub to build %s again, which replaces it\n' "$reason" "${commit:0:12}"
+  else
+    printf 'pages rebuild: the build of %s errored; asking GitHub to build it again\n' "${commit:0:12}"
+  fi
   gh api -X POST "repos/$slug/pages/builds" >/dev/null 2>&1 || {
     echo "pages rebuild: the request was refused (no token, or no pages:write)" >&2; return 12; }
 
@@ -1468,9 +1651,89 @@ release_reading() {   # <url> -> body on stdout, or nothing
     *) curl -fsSL --max-time 30 -H 'Cache-Control: no-cache' "$u?t=$(now)" 2>/dev/null || true ;;
   esac
 }
+# release_newer <a> <b>: is version a newer than version b? Numeric fields first, then a
+# pre-release's own dot-separated identifiers, numbers as numbers, as scripts/site-build orders
+# them; a version without identifiers is the newest of its base (1.0.0 after 1.0.0-rc.1).
+release_newer() {
+  jq -en --arg a "$1" --arg b "$2" '
+    def base: split("-")[0] | split("+")[0] | split(".") | map(tonumber? // 0);
+    def pre: (split("+")[0] | split("-")[1:] | join("-") | split("."))
+             | if . == [] then [[2]] else map(if test("^[0-9]+$") then [0, tonumber] else [1, .] end) end;
+    [($a | base), ($a | pre)] > [($b | base), ($b | pre)]' >/dev/null 2>&1
+}
+# release_base_ahead <a> <b>: is a ahead of b by its base version alone? 1.0.0-alpha.1 is ahead
+# of 0.30.2; 0.30.0-rc.1 is not, being an rc of a version already released.
+release_base_ahead() {
+  jq -en --arg a "$1" --arg b "$2" '
+    def base: split("-")[0] | split("+")[0] | split(".") | map(tonumber? // 0);
+    ($a | base) > ($b | base)' >/dev/null 2>&1
+}
+# The pre-release beside the stable release, judged over the readings cmd_release_live took
+# (its locals reach the function it calls). The pages name GitHub's newest pre-release when it
+# is ahead of GitHub's newest release by its base version, and none otherwise, as
+# scripts/site-build derives it; a pre-release GitHub has not published is never weather; one
+# behind GitHub's is in flight inside the window and a failed publication beyond it. On
+# 2026-11-06 v1.0.0-alpha.10 was published at 17:09Z and the homepage named alpha.9 all
+# evening, because every deploy of master rebuilt the hero from the records alone and nothing
+# here read the pre-release (I4531). A GitHub that answered for its newest release and not for
+# its list of releases (a stub that knows one endpoint, in the cases of every gate that asks
+# pages-check) leaves the pre-release unjudged, said so; a GitHub that answers for neither is
+# the stable reading's NOT DETERMINED.
+release_live_prerelease() {
+  local pre_age
+  if [ -z "$gh_pre_line" ]; then
+    printf 'pages release-live: note — GitHub'"'"'s newest pre-release could not be read, so the pre-release beside %s was not judged\n' "$gh_tag"
+    return 0
+  fi
+  if [ -n "$home_pre" ] && { [ -z "$gh_pre_v" ] || release_newer "$home_pre" "$gh_pre_v"; }; then
+    printf 'pages release-live: FAIL the site names the pre-release %s, which GitHub has not published (its newest pre-release is %s)\n' \
+      "$home_pre" "${gh_pre_tag:-none}" >&2
+    return 10
+  fi
+  if [ "$home_pre" = "$want_pre" ]; then
+    if [ -n "$want_pre" ]; then
+      printf 'pages release-live: ok — the homepage names the pre-release %s GitHub published beside it\n' "$gh_pre_tag"
+    else
+      printf 'pages release-live: ok — GitHub has no pre-release ahead of %s, and the homepage names none\n' "$gh_tag"
+    fi
+    return 0
+  fi
+  if [ -n "$want_pre" ]; then
+    pre_age="$(jq -rn --arg at "$gh_pre_at" '($at | fromdateiso8601? // empty) as $t | if $t then (now - $t | floor) else empty end' 2>/dev/null || true)"
+    if [ -z "$pre_age" ]; then
+      printf 'pages release-live: NOT DETERMINED — GitHub'"'"'s pre-release %s carries no readable published_at, so the window cannot be judged\n' "$gh_pre_tag" >&2
+      return 12
+    fi
+    if [ "$pre_age" -lt "$window" ]; then
+      printf 'pages release-live: ok — in flight: GitHub published the pre-release %s %ss ago, inside the %ss window; the homepage names %s until the publication reaches it\n' \
+        "$gh_pre_tag" "$pre_age" "$window" "${home_pre:-no pre-release}"
+      return 0
+    fi
+    printf 'pages release-live: FAIL GitHub published the pre-release %s %ss ago, beyond the %ss window, and the homepage names %s\n' \
+      "$gh_pre_tag" "$pre_age" "$window" "${home_pre:-no pre-release}" >&2
+    printf '  the publish job writes releases/%s.json (scripts/site-deploy --release-metadata); the pages follow\n  the next build of master, which reads it (scripts/site-build); dispatch the pages workflow\n' "$gh_pre_tag" >&2
+    return 10
+  fi
+  # the homepage names a pre-release GitHub did publish and the stable release has since
+  # overtaken: the stable release's own window applies
+  pre_age="$(jq -rn --arg at "$gh_at" '($at | fromdateiso8601? // empty) as $t | if $t then (now - $t | floor) else empty end' 2>/dev/null || true)"
+  if [ -z "$pre_age" ]; then
+    printf 'pages release-live: NOT DETERMINED — GitHub'"'"'s release %s carries no readable published_at, so the window cannot be judged\n' "$gh_tag" >&2
+    return 12
+  fi
+  if [ "$pre_age" -lt "$window" ]; then
+    printf 'pages release-live: ok — in flight: GitHub published %s %ss ago, inside the %ss window; the homepage still names the pre-release %s it overtook\n' \
+      "$gh_tag" "$pre_age" "$window" "$home_pre"
+    return 0
+  fi
+  printf 'pages release-live: FAIL the homepage names the pre-release %s, which %s, published %ss ago and beyond the %ss window, has overtaken\n' \
+    "$home_pre" "$gh_tag" "$pre_age" "$window" >&2
+  return 10
+}
 cmd_release_live() {
-  local url="" window="" wait=0 expect="" repo="" t0 home build latest gh_line
+  local url="" window="" wait=0 expect="" repo="" t0 home build latest gh_line gh_pre_line
   local home_v build_v latest_v gh_tag gh_v gh_at age missing newer_than_gh v
+  local home_pre build_pre gh_pre_tag gh_pre_v gh_pre_at want_pre
   while [ $# -gt 0 ]; do case "$1" in
     --url) url="${2:?--url needs a value}"; shift 2 ;;
     --window) window="${2:?--window needs seconds}"; shift 2 ;;
@@ -1505,13 +1768,31 @@ cmd_release_live() {
       | grep -oE '>[0-9]+\.[0-9]+\.[0-9]+<' | head -n 1 | tr -d '<>' || true)"
     build_v="$(printf '%s' "$build" | jq -r '.release.version // empty' 2>/dev/null || true)"
     latest_v="$(printf '%s' "$latest" | jq -r '.version // empty' 2>/dev/null || true)"
-    gh_line=""
+    # The pre-release beside it (I3449, I4531): the homepage names it under data-prerelease,
+    # build.json under release.prerelease, and GitHub's newest pre-release is the one published.
+    home_pre="$(printf '%s' "$home" | sed -n 's/.*data-prerelease="\([^"]*\)".*/\1/p' | head -n 1)"
+    build_pre="$(printf '%s' "$build" | jq -r '.release.prerelease.version // empty' 2>/dev/null || true)"
+    gh_line=""; gh_pre_line=""
     if command -v gh >/dev/null 2>&1 && [ -n "$repo" ]; then
       gh_line="$(gh api "repos/$repo/releases/latest" --jq '[.tag_name, .published_at] | @tsv' 2>/dev/null || true)"
+      # the newest pre-release that is not a draft, or `none`: an empty answer is a GitHub that
+      # could not be read, not a GitHub without one
+      gh_pre_line="$(gh api "repos/$repo/releases?per_page=30" \
+        --jq '([.[] | select(.prerelease == true and .draft == false)] | first) as $p
+              | if $p == null then "none" else [$p.tag_name, $p.published_at] | @tsv end' 2>/dev/null || true)"
     fi
     gh_tag="$(printf '%s' "$gh_line" | cut -f1)"; gh_v="${gh_tag#v}"
     gh_at="$(printf '%s' "$gh_line" | cut -f2)"
-    if [ -n "$home_v" ] && [ "$home_v" = "$build_v" ] && [ "$home_v" = "$latest_v" ] && [ "$home_v" = "$gh_v" ]; then
+    gh_pre_tag="$(printf '%s' "$gh_pre_line" | cut -f1)"; gh_pre_at="$(printf '%s' "$gh_pre_line" | cut -f2)"
+    [ "$gh_pre_tag" != none ] || { gh_pre_tag=""; gh_pre_at=""; }
+    gh_pre_v="${gh_pre_tag#v}"
+    # what the pages should name beside the stable release: GitHub's newest pre-release when it
+    # is ahead of GitHub's newest release by its base version, nothing otherwise (as
+    # scripts/site-build derives it)
+    want_pre=""
+    if [ -n "$gh_pre_v" ] && [ -n "$gh_v" ] && release_base_ahead "$gh_pre_v" "$gh_v"; then want_pre="$gh_pre_v"; fi
+    if [ -n "$home_v" ] && [ "$home_v" = "$build_v" ] && [ "$home_v" = "$latest_v" ] && [ "$home_v" = "$gh_v" ] \
+       && [ "$home_pre" = "$build_pre" ] && [ "$home_pre" = "$want_pre" ]; then
       break
     fi
     [ $(( $(now) - t0 )) -lt "$wait" ] || break
@@ -1522,6 +1803,10 @@ cmd_release_live() {
   printf '  /%s offers      %s\n' "$IDENTITY" "${build_v:-(no release in it)}"
   printf '  /releases/latest.json   %s\n' "${latest_v:-(unreadable)}"
   printf '  GitHub newest release   %s%s\n' "${gh_tag:-(unreadable: no gh, no token, or no release)}" "${gh_at:+ published $gh_at}"
+  printf '  homepage pre-release    %s\n' "${home_pre:-(none)}"
+  printf '  /%s pre-release %s\n' "$IDENTITY" "${build_pre:-(none)}"
+  if [ -z "$gh_pre_line" ]; then printf '  GitHub pre-release      (unreadable: no gh, no token, or no answer)\n'
+  else printf '  GitHub pre-release      %s%s\n' "${gh_pre_tag:-(none)}" "${gh_pre_at:+ published $gh_pre_at}"; fi
   missing=""
   [ -n "$home_v" ] || missing="$missing the homepage's offer,"
   [ -n "$latest_v" ] || missing="$missing /releases/latest.json,"
@@ -1538,8 +1823,14 @@ cmd_release_live() {
     printf 'pages release-live: FAIL the homepage offers %s and /%s %s; the pages and the build that made them disagree\n' "$home_v" "$IDENTITY" "${build_v:-nothing}" >&2
     return 10
   fi
+  if [ -n "$build_v" ] && [ "$home_pre" != "$build_pre" ]; then
+    printf 'pages release-live: FAIL the homepage names the pre-release %s and /%s %s; the pages and the build that made them disagree\n' \
+      "${home_pre:-none}" "$IDENTITY" "${build_pre:-none}" >&2
+    return 10
+  fi
   if [ "$home_v" = "$latest_v" ] && [ "$home_v" = "$gh_v" ]; then
     printf 'pages release-live: ok — the homepage, /releases/latest.json and GitHub name one release, %s\n' "$gh_tag"
+    release_live_prerelease || return $?
     return 0
   fi
   # A surface ahead of GitHub offers what was not published: never weather.
@@ -1562,6 +1853,7 @@ cmd_release_live() {
   if [ "$age" -lt "$window" ]; then
     printf 'pages release-live: ok — in flight: GitHub published %s %ss ago, inside the %ss window; the homepage offers %s and latest.json names %s until the publication reaches them\n' \
       "$gh_tag" "$age" "$window" "$home_v" "$latest_v"
+    release_live_prerelease || return $?
     return 0
   fi
   printf 'pages release-live: FAIL GitHub published %s %ss ago, beyond the %ss window, and the homepage offers %s while /releases/latest.json names %s\n' \
@@ -1674,6 +1966,161 @@ cmd_publication() {
   return 0
 }
 
+# ---------------------------------------------------------------- trends
+# Coverage and CI cost over time (I3933). Both were measured on every run and kept nowhere past
+# an artifact's retention, so a job that grew a minute a week, or a crate whose coverage drifted
+# down inside its floor, was seen only by a person reading runs. This reads the series from the
+# runs themselves, every time: the forge's record of master's completed validate runs, each
+# run's jobs, and each run's own `coverage-summary` artifact, which is scripts/rust-coverage's
+# --summary-json of that run's one measurement (docs/COVERAGE.md). Nothing is recounted here: a
+# run's totals are the crate's covered/total pairs exactly as rust-coverage wrote them.
+#
+# Stateless by design. Nothing is appended to a file a later run reads, no ref is read (derived
+# data must not read refs), and the output depends on the forge's answers alone, so two runs
+# against the same answers write the same bytes. A run whose artifact the forge no longer keeps
+# contributes its CI cost and `coverage: null`, never a zero: a missing measurement is not a
+# measurement of nothing.
+#
+# Where it lands, and why it is not committed: site/data/trends.json is an input of one
+# deployment, like data/evidence.json and data/build.json, and is gitignored with them. It is a
+# reading of the forge, not a projection of the tree, so no branch could regenerate it and
+# `generate-site-data --check` could never hold it current; and site/data/generated/ belongs to
+# that generator, which replaces the directory whole and refuses a file it did not write
+# (ORPHAN), so the series stays beside it rather than inside it. pages.yml runs this before the
+# build; a build without the file renders the page saying no series reached it.
+#
+# Exit 0 written, 2 usage, 12 the forge could not be read; on 12 nothing is left at --out, so
+# an older reading is never published as this one.
+cmd_trends() {
+  local out="$ROOT/site/data/trends.json" runs=60 slug="" tmp="" id aid n=0 kept=0 gone=0
+  while [ $# -gt 0 ]; do case "$1" in
+    --out) out="$2"; shift 2 ;;
+    --runs) runs="$2"; shift 2 ;;
+    *) echo "pages trends: unknown option $1" >&2; exit 2 ;;
+  esac; done
+  case "$runs" in ''|*[!0-9]*) echo "pages trends: --runs takes a whole number" >&2; exit 2 ;; esac
+  # one page of the forge's listing; a longer series would be paginated for little reader value
+  [ "$runs" -ge 1 ] && [ "$runs" -le 100 ] || { echo "pages trends: --runs takes 1 to 100" >&2; exit 2; }
+  # how many runs are read at once, and how long one call to the forge may take (below)
+  local parallel="${MJ_TRENDS_PARALLEL:-8}" call="${MJ_TRENDS_CALL_SECONDS:-30}" d why ids=""
+  case "$parallel" in ''|0|*[!0-9]*) echo "pages trends: MJ_TRENDS_PARALLEL takes a whole number of at least 1" >&2; exit 2 ;; esac
+  case "$call" in ''|0|*[!0-9]*) echo "pages trends: MJ_TRENDS_CALL_SECONDS takes a whole number of at least 1" >&2; exit 2 ;; esac
+  rm -f "$out"
+  command -v gh >/dev/null 2>&1 || { echo "pages trends: gh is not installed, so the runs were not read" >&2; return 12; }
+  command -v unzip >/dev/null 2>&1 || { echo "pages trends: unzip is required to read a run's artifact" >&2; return 12; }
+  slug="${GITHUB_REPOSITORY:-}"
+  [ -n "$slug" ] || slug="$(git -C "$ROOT" remote get-url origin 2>/dev/null | sed -n 's|.*[:/]\([^/][^/]*/[^/][^/]*\)$|\1|p' | sed 's|\.git$||')"
+  [ -n "$slug" ] || { echo "pages trends: no repository slug (no GITHUB_REPOSITORY, no origin)" >&2; return 12; }
+  tmp="$(mktemp -d "${TMPDIR:-/tmp}/mj-trends.XXXXXX")"
+  trends_fail() { echo "pages trends: $1" >&2; rm -rf "$tmp"; return 12; }
+  # Every call to the forge is bounded (MJ_TRENDS_CALL_SECONDS, 30), the listing first: a gh
+  # that never answers is a forge that could not be read (exit 12, no file), within seconds,
+  # and not a reading that waits out pages.yml's own bound on the step (I4380). A call the
+  # forge answers with a 5xx or a rate limit is asked once more, a second later, inside what
+  # is left of that same bound; a refusal, a call stopped at its bound and anything else is
+  # the answer. The answer is held until the call is done, so a retried --paginate is never
+  # read twice.
+  trends_gh_once() {
+    if command -v timeout >/dev/null 2>&1; then timeout --kill-after=5 "$1" gh "${@:2}"; else gh "${@:2}"; fi
+  }
+  trends_gh() {
+    local t0="$SECONDS" o e rc=0 left
+    o="$(mktemp "$tmp/gh.XXXXXX")"; e="$(mktemp "$tmp/gh.XXXXXX")"
+    trends_gh_once "$call" "$@" > "$o" 2> "$e" || rc=$?
+    left=$(( call - (SECONDS - t0) - 1 ))
+    if [ "$rc" != 0 ] && [ "$rc" != 124 ] && [ "$rc" != 137 ] && [ "$left" -ge 1 ] \
+      && grep -Eqi 'HTTP 5[0-9][0-9]|HTTP 429|rate limit' "$e"; then
+      sleep 1; rc=0; trends_gh_once "$left" "$@" > "$o" 2> "$e" || rc=$?
+    fi
+    cat "$o"; cat "$e" >&2; rm -f "$o" "$e"
+    return "$rc"
+  }
+  trends_gh api "repos/$slug/actions/workflows/validate.yml/runs?branch=master&status=completed&per_page=$runs" \
+    < /dev/null > "$tmp/runs.json" 2>/dev/null || { trends_fail "the validate runs of $slug could not be listed"; return 12; }
+  # oldest first, the run id breaking a tie, so the order is the forge's facts and not its paging
+  jq -ce '.workflow_runs | arrays | sort_by(.run_started_at // .created_at, .id) | .[]' "$tmp/runs.json" > "$tmp/runs.jsonl" \
+    || { trends_fail "the forge's answer for the validate runs is not a run listing"; return 12; }
+  # Each run's three reads are independent of every other run's, so they are made eight runs
+  # at a time (MJ_TRENDS_PARALLEL), and each call is bounded (MJ_TRENDS_CALL_SECONDS, 30): one
+  # call at a time over sixty runs took more than the four minutes pages.yml allows the step,
+  # and a call that never returns would have waited out any bound (I4380). The series is then
+  # put together in the listing's order, so how the reads interleaved changes no byte of it.
+  # One run's reads into $tmp/r/<id>/: its jobs, its coverage (null when the forge no longer
+  # keeps the artifact) and `kept` or `gone`, or `failed` with what could not be read.
+  trends_read_run() {
+    local id="$1" d="$tmp/r/$1" aid
+    trends_gh api --paginate "repos/$slug/actions/runs/$id/jobs?per_page=100" --jq '.jobs[]' < /dev/null > "$d/jobs.jsonl" 2>/dev/null \
+      || { echo "the jobs of run $id could not be read" > "$d/failed"; return 0; }
+    aid="$(trends_gh api "repos/$slug/actions/runs/$id/artifacts?name=coverage-summary" \
+      --jq '[.artifacts[] | select(.expired | not)] | first | .id // empty' < /dev/null 2>/dev/null)" \
+      || { echo "the artifacts of run $id could not be listed" > "$d/failed"; return 0; }
+    echo null > "$d/coverage.json"
+    if [ -z "$aid" ]; then : > "$d/gone"; return 0; fi
+    mkdir -p "$d/a"
+    trends_gh api "repos/$slug/actions/artifacts/$aid/zip" < /dev/null > "$d/a.zip" 2>/dev/null \
+      && unzip -qo "$d/a.zip" -d "$d/a" >/dev/null 2>&1 \
+      || { echo "the coverage-summary artifact $aid of run $id is kept but could not be read" > "$d/failed"; return 0; }
+    # only rust-coverage's own summary is a measurement; anything else is not read as one
+    jq -ce 'select(.schema == 1 and .measurement == "scripts/rust-coverage")
+      | .crate | {lines: {covered: .lines.covered, total: .lines.total},
+                  functions: {covered: .functions.covered, total: .functions.total},
+                  regions: {covered: .regions.covered, total: .regions.total}}' \
+      "$d/a/coverage-summary.json" > "$d/coverage.json" 2>/dev/null \
+      || { echo "run $id's coverage-summary artifact holds no summary scripts/rust-coverage wrote" > "$d/failed"; return 0; }
+    : > "$d/kept"
+  }
+  mkdir -p "$tmp/r"
+  while IFS= read -r run; do
+    [ -n "$run" ] || continue
+    id="$(printf '%s' "$run" | jq -r .id)"
+    case "$id" in ''|*[!0-9]*) wait; trends_fail "the forge listed a run with no id"; return 12 ;; esac
+    mkdir -p "$tmp/r/$id"; printf '%s\n' "$run" > "$tmp/r/$id/run.json"
+    ids="$ids $id"; n=$((n + 1))
+    trends_read_run "$id" &
+    # a batch at a time: portable to every bash this runs under, which `wait -n` is not
+    [ $((n % parallel)) != 0 ] || wait
+  done < "$tmp/runs.jsonl"
+  wait
+  : > "$tmp/series.jsonl"
+  for id in $ids; do
+    d="$tmp/r/$id"
+    if [ -f "$d/failed" ]; then why="$(cat "$d/failed")"; trends_fail "$why"; return 12; fi
+    if [ -f "$d/kept" ]; then kept=$((kept + 1))
+    elif [ -f "$d/gone" ]; then gone=$((gone + 1))
+    else trends_fail "run $id was not read"; return 12; fi
+    jq -cn --slurpfile r "$d/run.json" --slurpfile jobs "$d/jobs.jsonl" --slurpfile cov "$d/coverage.json" '
+      def t: if type == "string" then sub("\\.[0-9]+Z$"; "Z") | fromdateiso8601 else null end;
+      def span(a; b): if (a | t) != null and (b | t) != null then [((b | t) - (a | t)), 0] | max else null end;
+      $r[0] as $run
+      | ($run.run_started_at // $run.created_at) as $start
+      | [ $jobs | sort_by(.name, .id) | .[]
+          | {name, queued_s: span(.created_at; .started_at), run_s: span(.started_at; .completed_at), conclusion} ] as $js
+      | ([ $jobs[] | .completed_at | t | select(. != null) ] | max) as $end
+      | {run_id: $run.id, head_sha: $run.head_sha, started_at: $start, conclusion: $run.conclusion,
+         wall_seconds: (if $end != null and ($start | t) != null then [($end - ($start | t)), 0] | max
+                        else span($start; $run.updated_at) end),
+         queued_seconds_total: ([ $js[] | .queued_s // 0 ] | add // 0),
+         jobs: $js,
+         coverage: $cov[0]}' >> "$tmp/series.jsonl" \
+      || { trends_fail "run $id could not be read into the series"; return 12; }
+  done
+  # Each job's median over the runs it ran in (a skipped job did not run), slowest first: the
+  # one figure of the series a template cannot compute, since the site's Tera has no way to
+  # gather a value across runs. The template formats; it computes nothing.
+  jq -s '
+    def median: sort | length as $n
+      | if $n == 0 then null elif $n % 2 == 1 then .[($n - 1) / 2] else (.[$n / 2 - 1] + .[$n / 2]) / 2 end;
+    {schema: "trends/v1", generated_from: map(.run_id), runs: .,
+     job_medians: ([.[].jobs[] | select(.conclusion != "skipped" and .run_s != null)]
+       | group_by(.name)
+       | map({name: .[0].name, runs: length, median_run_s: (map(.run_s) | median),
+              median_queued_s: (map(.queued_s // 0) | median)})
+       | sort_by(-.median_run_s, .name))}' "$tmp/series.jsonl" > "$out.mj-tmp" \
+    && mv "$out.mj-tmp" "$out" || { rm -f "$out.mj-tmp"; trends_fail "could not write $out"; return 12; }
+  rm -rf "$tmp"
+  echo "pages trends: $n run(s) of master's validation, $kept with the coverage their run measured, $gone whose coverage the forge no longer keeps (coverage null)"
+}
+
 case "${1:-}" in
   evidence)    shift; cmd_evidence "$@" ;;
   published-evidence) shift; cmd_published_evidence "$@" ;;
@@ -1696,6 +2143,7 @@ case "${1:-}" in
   snapshots)   shift; cmd_snapshots "$@" ;;
   verify-ui)   shift; cmd_verify_ui "$@" ;;
   release-live) shift; cmd_release_live "$@" ;;
+  trends)      shift; cmd_trends "$@" ;;
   # the whole header, up to the line that ends it, rather than a line range that stops
   # short the day a command is added to it
   -h|--help|"") awk 'NR > 1 && /^set -eu$/ { exit } NR > 1' "$0" | sed 's/^# \{0,1\}//' ;;

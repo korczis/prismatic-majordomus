@@ -28,6 +28,54 @@ fn hook(dir: &std::path::Path, payload: &str) -> i32 {
     status.code().expect("an exit code")
 }
 
+/// A shell command that starts a build on a host the checkout declares for the offload is
+/// refused with 2 before the edit guard is asked, the rule and the way on stderr (I3956); a
+/// read on that host is let through.
+#[test]
+fn a_raw_ssh_build_on_a_declared_host_is_refused_with_the_way() {
+    let f = common::Fixture::new();
+    f.write(
+        ".ai/repo/offload/derive.yaml",
+        "schema: derive-offload/v1\nkind: derive-offload\nid: derive\n\
+         hosts:\n  - id: lundra\n    address: korczis@100.65.22.118\n",
+    );
+    let run = |command: &str| {
+        let payload = serde_json::json!({
+            "tool_name": "Bash",
+            "tool_input": { "command": command },
+            "cwd": f.root(),
+        })
+        .to_string();
+        let mut child = common::majordomus()
+            .args(["guard", "hook", "--provider", "claude-code"])
+            .current_dir(f.root())
+            .stdin(Stdio::piped())
+            .stdout(Stdio::null())
+            .stderr(Stdio::piped())
+            .spawn()
+            .expect("the executable starts");
+        child
+            .stdin
+            .take()
+            .expect("a stdin")
+            .write_all(payload.as_bytes())
+            .expect("the payload is written");
+        let out = child.wait_with_output().expect("the hook ends");
+        (
+            out.status.code().expect("an exit code"),
+            String::from_utf8_lossy(&out.stderr).into_owned(),
+        )
+    };
+    let (code, err) = run("ssh lundra 'cd ~/dev/x; cargo test --doc'");
+    assert_eq!(code, 2, "{err}");
+    assert!(
+        err.contains("majordomus offload derive --host lundra"),
+        "{err}"
+    );
+    let (code, err) = run("ssh lundra df -h");
+    assert_eq!(code, 0, "{err}");
+}
+
 #[test]
 fn the_guard_lets_the_tool_run_when_the_payload_names_no_file_of_a_repository() {
     let dir = tempfile::tempdir().unwrap();
@@ -37,7 +85,8 @@ fn the_guard_lets_the_tool_run_when_the_payload_names_no_file_of_a_repository() 
     assert_eq!(hook(dir.path(), edit), 0, "no manifest is above the file");
 }
 
-/// The repository declares its mesh enabled, but the declaration is outside every source
+/// The repository declares its mesh enabled and open (trust on first use; one closed to every
+/// machine is no mesh, I2412), but the declaration is outside every source
 /// class the fixture indexes, so its server runs without the mesh: the guard asks that
 /// server, hears that the mesh does not run, and lets the edit through, saying why.
 #[test]
@@ -48,7 +97,10 @@ fn beside_a_server_that_does_not_run_the_mesh_the_guard_asks_it_and_enforces_not
         common::POLICY
     );
     f.write(".ai/repo/policy.yaml", &policy);
-    f.write(".ai/repo/mesh/mesh.yaml", "enabled: true\n");
+    f.write(
+        ".ai/repo/mesh/mesh.yaml",
+        "enabled: true\ntrust:\n  policy: tofu\n",
+    );
     let _served = common::Served::start(&f.root(), &[]);
 
     let edit = r#"{"session_id":"s1","tool_input":{"file_path":"docs/new.md"}}"#;
@@ -89,7 +141,10 @@ fn over_mcp_the_guard_answers_from_the_servers_own_mesh() {
         common::POLICY
     );
     f.write(".ai/repo/policy.yaml", &policy);
-    f.write(".ai/repo/mesh/mesh.yaml", "enabled: true\n");
+    f.write(
+        ".ai/repo/mesh/mesh.yaml",
+        "enabled: true\ntrust:\n  policy: tofu\n",
+    );
     let served = common::Served::start(&f.root(), &[]);
 
     let initialize = json!({

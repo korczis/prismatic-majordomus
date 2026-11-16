@@ -1,0 +1,32 @@
+id: "I3441"
+milestone: "truthful-plan-surfaces"
+title: "The roadmap's tables show the order they are in, say none for nothing, and link every milestone"
+slug: "the-roadmap-tables-show-their-order-and-link"
+priority: "p2"
+profile: "implementation"
+parallel_safe: false
+objective: "/ui/roadmap's Milestones table shows the dependency step each row is ordered by and says how the order is made; its Dependencies table writes 'none' in an empty Blocked by cell and draws every milestone it names, in all three columns, as a link to that milestone."
+why: "On 2026-10-19 the owner asked that /roadmap be correct and connected. Review finding P5: /ui/roadmap sorts its table by a dependency rank the reader cannot see, an empty Blocked by cell shows '' instead of 'none', and milestone names in the Dependencies table are plain text instead of links. The work starts only after the exclusive mesh claim another session holds on apps/majordomus-cli/src/plan/flight.rs, apps/majordomus-cli/src/ui/roadmap.rs and apps/majordomus-cli/tests/ui_roadmap.rs is released or handed over."
+current_state: "plan.roadmap orders milestones by (rank, order, id) (apps/majordomus-cli/src/plan.rs:545-553); /ui/roadmap draws them under the columns Milestone, State, Issues done (apps/majordomus-cli/src/ui/roadmap.rs:96-103) with the caption 'Every milestone, in the plan's order' (roadmap.rs:231-235), so at master 9904000d2df runtime-adapters (order 20, rank 1) appears after the-mesh-works-out-of-the-box (order 340, rank 0) with nothing on the page explaining why. The Dependencies table (roadmap.rs:105-143, the fallback of the graph at roadmap.rs:145-189) joins depends_on and blocked_by into plain strings (roadmap.rs:113-123), so a milestone whose prerequisites are done has an empty Blocked by cell (roadmap.rs:132-137), and the milestone id (roadmap.rs:127) and every id it waits on are text, not links, while the Milestones table above links each row (apps/majordomus-cli/src/ui/dashboard.rs:179-187)."
+desired_state: "The Milestones table carries a Step column (the derived rank, in words a reader can follow: how many milestones it waits on in a chain) and its caption says rows are ordered by step, then by declared order; the Dependencies table writes 'none' where nothing blocks, and every milestone id in it is a link to super::milestone::href. Crate tests pin the column, the caption, the 'none' and the links."
+scope:
+  - "apps/majordomus-cli/src/ui/roadmap.rs"
+  - "apps/majordomus-cli/tests/ui_roadmap.rs"
+non_scope:
+  - "Changing the order plan.roadmap derives."
+  - "The milestone meter: I3440."
+  - "The dependency graph's own drawing (the graph with the table as its fallback)."
+depends_on: []
+acceptance_criteria:
+  - "Each Milestones row shows its step, and two rows of different steps appear in step order whatever their declared order; the caption names the ordering rule"
+  - "A Dependencies row whose prerequisites are all done reads 'none' under Blocked by; a row with an unfinished prerequisite names it and does not read 'none'"
+  - "Every milestone id in the Dependencies table is an anchor to that milestone's inspector; no id there is bare text"
+validation:
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib ui::roadmap"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test ui_roadmap"
+  - "bash test/run.sh 1076_the_roadmap_opens_a_milestone 3104_the_ui_roadmap_reads_delivery"
+  - "scripts/ui audit --only /ui/roadmap"
+evidence_required:
+  - "roadmap_tables_show_order_and_link"
+created_at: 2026-10-19
+updated_at: 2026-10-19

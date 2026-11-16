@@ -1,0 +1,47 @@
+id: I4235
+milestone: development-runtime
+title: "An evidence token is matched whole, so an issue that requires one with spaces can be done"
+slug: an-evidence-token-is-matched-whole
+priority: p0
+profile: implementation
+parallel_safe: true
+objective: "`plan done` reads the evidence an issue requires one token per line and matches each whole, and `plan evidence` writes the token it records quoted, as it already writes the command and the result."
+why: "On 2026-10-26, recording I3663 DONE with the evidence it requires (\"anthropic api adapter: request normalisation, credential, usage\") was refused with \"has no evidence for\": lib/plan.sh read the required tokens with `for need in $(mj_pj_list ...)`, which word-splits a token holding spaces, so each word was asked for and none was ever recorded. Thirteen issue records declare such a token and could not be done. The same evidence was written as `covers: anthropic api adapter: request ...`, which a \": \" inside it makes no plain YAML scalar. Found by 39 in the issues-to-zero sweep; I4235 given by 641b."
+current_state: "Measured at origin/master 6259dac47af on 2026-10-26: lib/plan.sh:504 loops `for need in $(mj_pj_list \"$id\" evidence_required)`, and mj_plan_evidence prints `  - covers: %s` unquoted."
+desired_state: "The done transition loops `while IFS= read -r need` over the required tokens, and mj_plan_evidence prints `  - covers: \"%s\"` with any double quote escaped."
+scope:
+  - "lib/plan.sh"
+  - "test/cases/4235_an_evidence_token_is_matched_whole.sh"
+  - ".ai/repo/project/issues/I4235.yaml"
+  - ".ai/repo/project/issues/I3663.yaml"
+  - ".ai/repo/project/issues/I3995.yaml"
+non_scope:
+  - "plan.transition in the executable (#2414, I1504, moves the done transition there)"
+  - "Rewording any issue's evidence_required"
+depends_on: []
+acceptance_criteria:
+  - "An issue whose required token holds spaces, a colon and commas reaches DONE once that token is recorded"
+  - "The recorded token is written quoted, and plan validate passes over the record"
+  - "Without the line-wise read the case fails at done; without the quoting it fails at the written record"
+validation:
+  - "MJ_TEST_JOBS=1 bash test/run.sh 4235_an_evidence_token_is_matched_whole 43_plan_command"
+  - "bin/majordomus plan validate"
+evidence_required:
+  - suite
+serves: []
+created_at: 2026-10-26
+updated_at: 2026-10-26T11:20:52Z
+started_at: 2026-10-26T11:20:08Z
+started_event: sha256:9790f54663415ad1ede6fa760d85bc8981d2ceb50e31b8cdbf93fb8ff4e713cb
+verified_at: 2026-10-26T11:20:35Z
+verified_event: sha256:c898f7093f955e8d90910adb480b84ba9deec46bd51251aebd9421d532a75e86
+completed_at: 2026-10-26T11:20:52Z
+completed_event: sha256:82ab413b8812efe94c3dfeb8a3e062cbae13ab3fb788dea1ed5063705434f79e
+evidence:
+  - covers: "suite"
+    type: test
+    command: "MJ_TEST_JOBS=2 bash test/run.sh 4235_an_evidence_token_is_matched_whole 43_plan_command 41_project_status 581_no_plan_stamp_without_its_event"
+    result: "4 passed on master 6259dac47af plus this fix; case 4235 on master alone fails at the written record (covers unquoted), and with only the quoting applied fails at done (has no evidence for: an adapter: request normalisation, credential, usage)"
+    artifact: "lib/plan.sh"
+    commit: 6259dac47afb5b01008725c6040f366feb458578
+    recorded_at: 2026-10-26T11:20:27Z

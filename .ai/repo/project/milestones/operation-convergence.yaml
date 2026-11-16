@@ -1,0 +1,27 @@
+id: operation-convergence
+title: "After the alpha, the time from an intent to its verified satisfaction is measured from the records"
+slug: operation-convergence
+order: 192
+priority: p2
+problem: "The method's value is asserted, not measured: nothing derives how long an intent takes from its proposal to a verified verdict, or what governance and rework it cost, and the alpha's conditions are recorded only as invariants of the intent. Sources: chatgpt-majordomus:c147#7, chatgpt-majordomus:c198#15, chatgpt-majordomus:c221#4, chatgpt-majordomus:c270#8, chatgpt-majordomus:c275#25, chatgpt-majordomus:c286#21."
+outcome: "Intent-to-verified-done, interventions, replans, governance time and rework are derived per intent from git history and the evidence ledger, and the with/without comparison is read from matched benchmark runs behind ADR 0082's rule."
+current_state: "cost-per-accepted-outcome (I0401-I0404) measures tasks, not intents, and reads BLOCKED behind execution-telemetry. The alpha's conditions (green tag commit, pre-release isolation, clean install, refusal at finish, the IDD case, compute labelled experimental) are invariants of operation-convergence carried by work outside this milestone (I2829, I2812 and cases 1024 and 3220, on branches or in the 0.30.0 top), and this milestone does not judge them."
+desired_state: "I3276 lands and the criterion the-method-is-measured-after-the-alpha is rebound to its test and reads current from it."
+scope:
+  - "apps/majordomus-cli/src/economics"
+  - "apps/majordomus-cli/tests/economics.rs"
+  - "docs/ECONOMICS.md"
+non_scope:
+  - "Verifying the alpha conditions on the tag commit; the release seat owns that verdict"
+  - "Running the matched benchmark itself (I3133)"
+acceptance_criteria:
+  - "Time from intent to verified satisfaction, governance time, tokens and rework are derived for matched tasks with and without Majordomus, and published only past ADR 0082's rule"
+validation:
+  - "majordomus plan validate"
+evidence_required: []
+depends_on:
+  - "cost-per-accepted-outcome"
+risks:
+  - "The criterion stays a command placeholder until I3276 writes its test; until I3255 refuses a criterion's own explain as proof, one explain run could read it current"
+created_at: 2026-10-18
+updated_at: 2026-10-18

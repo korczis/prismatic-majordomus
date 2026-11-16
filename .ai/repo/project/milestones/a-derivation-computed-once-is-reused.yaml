@@ -1,0 +1,66 @@
+id: a-derivation-computed-once-is-reused
+title: "A derivation computed once is reused by every worktree and by CI, and the incremental path becomes the default on evidence"
+slug: a-derivation-computed-once-is-reused
+order: 511
+priority: p2
+problem: "A derivation is computed again wherever it is needed. Each linked worktree runs its own derive of a tree another worktree may already have derived, one at a time behind a machine-wide lock held for the whole run, and the CI site job regenerates the site data to compare it. Nothing keeps an output by the key of the inputs that produced it, so a node computed a minute ago in a sibling checkout is computed again. The owner's brief of 2026-10-12 asks for a persistent content-addressed store with verified restore and bounded eviction (campaigns/majordomus-incremental-derive-prompt-pack/05_05_CAS_STORE.md), safe reuse across worktrees (08_08_PARALLEL_WORKTREES.md), reuse in GitHub Actions under the same graph (09_09_CI_GITHUB_CACHE.md) and a guarded rollout to the default (12_12_ROLLOUT_PROVE.md)."
+outcome: "A node's outputs are kept under its key outside every work tree, restored only after their digests are verified, bounded in size and age, and shared by the worktrees of one machine and by CI runs. The machine lock covers the moment a worktree's files are written and no longer the computation. The incremental path is the default only after the differential case, the measurements and a rollback case exist, and scripts/derive --full remains."
+current_state: "Read on 2026-10-13, not re-read when revived on 2026-10-18. No store of derived outputs exists. lib/machine_lock.sh takes one lock per machine for the whole of scripts/derive (rule project.one-derive-at-a-time, case 1018). Worktrees share cargo's intermediate build directory and keep their own artifacts (.cargo/config.toml build-dir, ADR 0139, case 1022). majordomus offload derive queues a full derive on another host (docs/OFFLOAD.md, I2398). .github/workflows/validate.yml caches the Rust build and the npm install, and its site job runs scripts/generate-site-data --check in full. I1409 records that generated content is machine-dependent in places: an abbreviated commit id depends on the local object store and a shallow checkout writes a different changelog."
+desired_state: "A store resolved from git's common directory holds, per node key, a manifest and the output bytes. A hit is restored after every digest is checked and a damaged entry is a miss that says so. Two worktrees computing one key compute it once. The store reports its size and is reclaimed by an explicit command under the disk rule. The CI site job restores from a cache keyed by the graph and still compares the committed bytes. scripts/derive runs incrementally by default on the platforms where the evidence exists, and one command returns to the full path."
+scope:
+  - ".ai/repo/adrs"
+  - ".ai/repo/project"
+  - ".ai/repo/rules/project"
+  - ".ai/repo/ci"
+  - "apps/majordomus-cli/src/derivation"
+  - "apps/majordomus-cli/src/capability/builtin"
+  - "apps/majordomus-cli/src/commands"
+  - "apps/majordomus-cli/src/cli.rs"
+  - "apps/majordomus-cli/src/environment"
+  - "apps/majordomus-cli/tests"
+  - "lib/machine_lock.sh"
+  - "scripts/derive"
+  - "scripts/ci-plan"
+  - ".github/workflows/validate.yml"
+  - "test/cases"
+  - "docs"
+
+non_scope:
+  - "The graph, the keys and the incremental run themselves: milestone a-derive-does-only-the-work-its-inputs-changed."
+  - "A remote store service, or sharing entries between machines over the mesh. The offload host keeps a store of its own like any other machine."
+  - "Archiving cargo's target directory. The compiler cache is ADR 0139's and the CI Rust cache's."
+  - "Restoring an entry written by a pull request's run into a release or Pages publication."
+  - "Removing scripts/derive --full or scripts/derive-check."
+
+acceptance_criteria:
+  - "A restored node's tracked files are byte-identical to a full derive's, and a truncated manifest, a mismatched digest or an entry of an older schema is reported as a miss and regenerated"
+  - "The store refuses an output path outside the repository root, a path through a symbolic link and a restore over a file no node owns"
+  - "Two worktrees deriving the same key at once run the producer once, and a holder that is killed does not leave the other waiting past a bound"
+  - "The store's size is reported by a capability, and entries are removed only by an explicit command that spares entries in use"
+  - "The CI site job fails on a stale committed artifact whether or not the cache was restored, and a missing cache falls back to generation"
+  - "With the incremental path as default, scripts/derive --full produces the same bytes, and a case proves the return to the full path"
+  - "Every duration published about the change names its commit, machine, cache state and sample count"
+
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib derivation::store"
+  - "MJ_TEST_JOBS=2 bash test/run.sh 1018_one_derive_at_a_time_and_no_orphans 1022_worktrees_share_build_intermediates 56_derived_current_gate"
+  - "scripts/ci-plan --check"
+  - "scripts/derive-check"
+
+evidence_required:
+  - "store_restore_equals_full"
+  - "store_corruption_is_a_miss"
+  - "single_flight_across_worktrees"
+  - "store_size_reported_and_reclaimed"
+  - "ci_warm_and_cold_measured"
+  - "default_enabled_with_rollback_case"
+
+risks:
+  - "A store shared by every worktree is one more quantity that fills the disk, which ADR 0055 makes a measured quantity reclaimed by predicate. The bound and the reclaim land with the store, not after it."
+  - "Machine-dependent content (I1409) makes an entry computed on one machine wrong on another unless the key covers what differs; until it does, reuse stays inside one machine and one CI runner image."
+  - "Narrowing the derive lock changes rule project.one-derive-at-a-time; a mistake interleaves two writers in one tree."
+  - "A cache restored from an untrusted run is an injection path into a privileged job."
+
+created_at: 2026-10-13
+updated_at: 2026-10-18

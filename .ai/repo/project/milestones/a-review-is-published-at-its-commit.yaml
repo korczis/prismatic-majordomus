@@ -1,0 +1,52 @@
+id: a-review-is-published-at-its-commit
+title: "The quality report, its dependency evidence and the first due-diligence review are published at the commit they measured, every link pinned and proven"
+slug: a-review-is-published-at-its-commit
+order: 521
+priority: p1
+problem: "Nothing a review of the code finds reaches a reader with the commit it was measured at. quality.report (apps/majordomus-cli/src/capability/builtin/quality.rs:363) renders its findings only on the Cockpit, as plain path:line text (apps/majordomus-cli/src/cockpit/pages.rs:6108), while the /ui observatory reads its counts (apps/majordomus-cli/src/ui/observatory.rs:96); its report records no commit (apps/majordomus-cli/src/quality/model.rs:484-498); the 1850 findings accepted by .ai/repo/rust-quality-baseline.txt are invisible; no surface builds a #L<n> link; the site prints the merging pull request as a span (site/templates/roadmap.html:117) and the evidence commit as text (site/templates/issue.html:73). No gate judges the crate's dependencies for advisories or licences, clippy runs only its default lint set (scripts/rust-check:384), and the smells a reader would look for (long functions, module-wide dead-code allowances, TODOs in product code) have no code. Two surfaces of the repository can disagree about one fact without anything showing it: on 2026-10-28 the dev-53 session observed plan delivery proving 0 of 1036 issues deployed while the delivery report said 29 of 29 features were deployed, because published_live (apps/majordomus-cli/src/plan/delivery.rs:761) reads site/static/releases/latest.json at the deployed commit while the gh-pages branch carries releases/latest.json. A finding has no severity or verification state, nothing refuses a serious finding nobody owns, and nothing would stop a security finding being published in full."
+outcome: "A reader opens majordomus.dev, finds the public API conformance report and the dependency evidence of the deployed commit, and clicks from any finding to its line at that commit, to the commit that introduced the line and to its rule; the first due-diligence review sits beside them with a scorecard, a remediation roadmap and the facts on which two surfaces disagree."
+current_state: "On 81ef931a3e1: QualityReport carries schema, target, public_api, modules, operations and violations and no commit; the site's source-links component (site/templates/source-links.html) builds blob and tree URLs at the build commit and no line, commit or pull request URL, while six templates (index.html, trends.html, registry-benchmarks.html, plan-section.html, roadmap.html and partials/footer.html) write commit URLs inline; link-check decides commit links through mj_commit_in_history but has no pull request form; ECharts 6.0.0 is vendored as the common build and site/charts.js draws bar and line only; share/design/tokens.yaml holds categorical series tokens and no sequential or diverging ramp; 133 opening fences in 66 tracked authored Markdown files carry no language (counted outside .ai/repo/sessions, .ai/repo/adrs, .ai/repo/project, docs/generated and site/content); critique findings carry id, class, subject, finding, blocking and resolution and no severity or verification state; no cargo-deny or cargo-audit configuration exists and package.json pins cytoscape with a caret."
+desired_state: "The quality report names the commit and tree it measured; one forge-link component builds the commit, pull request, file and line links of the pages that print them as text today, pinned to a commit, a ratchet refuses a new inline commit URL while the existing ones are baselined and only shrink, and link-check proves each link or reports it; the site publishes the conformance report at that commit with its provenance and a JSON download, drawn as ECharts bars over its tables, each finding blamed to the commit that introduced its line; cargo-deny judges advisories, licences, bans and sources and its verdict is published; a clippy lint table and new quality codes refuse planted smells against a ratchet; a treemap shows hotspots in a sequential token ramp; every fence carries a language; a critique finding carries severity, a verification state and its measured commit, and a critical or high one without a plan issue is refused; a security finding is redacted to its title, severity and status on the site and in every published file; and the first due-diligence review is published with its scorecard, roadmap and surface disagreements."
+scope:
+  - "apps/majordomus-cli/src/quality/model.rs"
+  - "apps/majordomus-cli/src/quality/report.rs"
+  - "apps/majordomus-cli/src/capability/builtin/quality.rs"
+  - "apps/majordomus-cli/Cargo.toml"
+  - "site/templates/source-links.html"
+  - "site/charts.js"
+  - "scripts/ci/link-check"
+  - "scripts/generate-site-data"
+  - "scripts/site-check"
+  - "share/design/tokens.yaml"
+  - ".ai/repo/rust-quality-baseline.txt"
+  - "apps/majordomus-cli/src/intent_review.rs"
+  - "share/schemas/majordomus/critique/critique.v1.schema.json"
+  - ".ai/repo/rules/project/review-findings-are-tracked.v1.md"
+non_scope:
+  - "Chart.js or any second chart library (ADR 0135)"
+  - "The navbar and its partial (#2349 holds them); the new page enters site/data/nav.toml with bar = false"
+  - "The Cockpit, including its quality page's commit, and /ui links, which a-finding-is-tracked-to-its-issue owns through I4311"
+  - "Fixing the smells the first review records; each is its own issue"
+  - "Any network read by the site build"
+acceptance_criteria:
+  - "Criteria findings-are-published-at-their-commit, each-cited-line-is-blamed-to-its-commit, every-forge-link-is-pinned-and-proven, dependencies-are-judged, a-planted-smell-fails-a-named-gate, a-review-is-a-record-with-a-scorecard, an-untracked-serious-finding-is-refused, security-findings-are-redacted and hotspots-are-drawn-over-their-table of intent a-review-is-seen-at-its-commit carry their evidence"
+  - "A planted baselined finding appears on /quality/ marked baselined, with its line link and its blame commit"
+  - "link-check resolves every forge link the built site emits at the build commit, and reports the ones it cannot"
+  - "A critique finding with severity high and verification plausible validates only with the refuter's note (I4309)"
+  - "No security finding reaches a built page or published file with more than its title, severity and status (I4314), and the first review is published only after that redaction lands"
+  - "No new record kind and no second chart library is added"
+validation:
+  - "bin/majordomus plan validate"
+  - "bin/majordomus intent validate"
+  - "scripts/ci/link-check --sources"
+evidence_required:
+  - "suite"
+depends_on: []
+claims: []
+risks:
+  - "A reader may still read conformance as assurance; the label and the denominators must stay prominent on the page and in the JSON"
+  - "Blaming every cited line of a large baseline costs build time; I4301 measures it and bounds it before it lands"
+  - "The ECharts custom build for the treemap must stay inside the homepage byte budget, which loads charts lazily (I4304)"
+  - "#2520 holds an exclusive claim on apps/majordomus-cli/src/cockpit/pages.rs; nothing in this milestone edits it, and the Cockpit quality page's commit is I4311's in the second milestone"
+created_at: 2026-10-28
+updated_at: 2026-10-28

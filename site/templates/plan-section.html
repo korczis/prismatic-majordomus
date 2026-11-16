@@ -74,6 +74,29 @@
         </tbody>
       </table>
     </div>
+    {#- What the chart says, in words and numbers, derived from the same plan.json the chart is
+        drawn from, so neither can say something the other does not. Every number is a <data>
+        value: the site's languages carry it unchanged and translate the words around it. -#}
+    {%- set_global f_required = 0 -%}{%- set_global f_done = 0 -%}{%- set_global f_blocked = 0 -%}
+    {%- set_global f_moving = 0 -%}{%- set_global f_ready = 0 -%}{%- set_global f_finished = 0 -%}
+    {%- set_global f_largest = plan.milestones[0] -%}
+    {%- for ms in plan.milestones -%}
+      {%- set_global f_required = f_required + ms.counts.required -%}
+      {%- set_global f_done = f_done + ms.counts.by_status.DONE -%}
+      {%- set_global f_blocked = f_blocked + ms.counts.by_status.BLOCKED -%}
+      {%- set_global f_ready = f_ready + ms.counts.by_status.READY -%}
+      {%- set_global f_moving = f_moving + ms.counts.by_status.ACTIVE + ms.counts.by_status.VERIFY -%}
+      {%- if ms.status == "DONE" %}{% set_global f_finished = f_finished + 1 %}{% endif -%}
+      {%- if ms.counts.required > f_largest.counts.required %}{% set_global f_largest = ms %}{% endif -%}
+    {%- endfor -%}
+    {%- set f_share = 0 -%}{%- if f_required > 0 %}{% set f_share = (f_done * 100 / f_required) | round | int %}{% endif -%}
+    <dl class="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4" data-chart-facts="chart-milestones">
+      <div class="rounded-base border border-default bg-neutral-primary-soft p-3"><dt class="text-xs text-body-subtle">Required issues done</dt><dd class="mt-1 font-mono text-2xl font-semibold text-heading"><data value="{{ f_share }}">{{ f_share }} %</data></dd></div>
+      <div class="rounded-base border border-default bg-neutral-primary-soft p-3"><dt class="text-xs text-body-subtle">Milestones finished</dt><dd class="mt-1 font-mono text-2xl font-semibold text-heading"><data value="{{ f_finished }}">{{ f_finished }}</data><span class="text-sm text-body-subtle"> / <data value="{{ plan.milestones | length }}">{{ plan.milestones | length }}</data></span></dd></div>
+      <div class="rounded-base border border-default bg-neutral-primary-soft p-3"><dt class="text-xs text-body-subtle">In progress</dt><dd class="mt-1 font-mono text-2xl font-semibold text-heading"><data value="{{ f_moving }}">{{ f_moving }}</data></dd></div>
+      <div class="rounded-base border border-default bg-neutral-primary-soft p-3"><dt class="text-xs text-body-subtle">Blocked</dt><dd class="mt-1 font-mono text-2xl font-semibold text-heading"><data value="{{ f_blocked }}">{{ f_blocked }}</data></dd></div>
+    </dl>
+    <p class="mt-3 max-w-3xl text-sm leading-relaxed text-body" data-chart-prose="chart-milestones">Across <data value="{{ plan.milestones | length }}">{{ plan.milestones | length }}</data> milestones, <data value="{{ f_done }}">{{ f_done }}</data> of the <data value="{{ f_required }}">{{ f_required }}</data> required issues are done. <data value="{{ f_moving }}">{{ f_moving }}</data> are in progress, <data value="{{ f_ready }}">{{ f_ready }}</data> are ready to be taken and <data value="{{ f_blocked }}">{{ f_blocked }}</data> wait on another issue. The largest milestone is <a href="{{ get_url(path="/plan/" ~ (f_largest.id | lower) ~ "/", trailing_slash=true) }}" class="text-fg-brand underline"><code>{{ f_largest.id }}</code></a>, with <data value="{{ f_largest.counts.required }}">{{ f_largest.counts.required }}</data> required issues.</p>
   </figure>
 
   <h2 class="mt-12 text-2xl font-bold tracking-tight text-heading">Execution waves</h2>
@@ -92,17 +115,21 @@
   </div>
 
   <h2 class="mt-12 text-2xl font-bold tracking-tight text-heading">The graph</h2>
-  <p class="mt-2 max-w-3xl text-sm text-body">Generated from the same edges the command reads, by <code class="font-mono text-heading">majordomus plan graph</code>. No diagram on this site is drawn by hand.</p>
-  {{ <plan_graph mermaid={plan.mermaid} caption="Every issue, every dependency" name="plan" /> }}
+  <p class="mt-2 max-w-3xl text-sm text-body">Generated from the same edges the command reads, by <code class="font-mono text-heading">majordomus plan graph</code>. No diagram on this site is drawn by hand. A node is a milestone and an arrow counts the issues of one that wait on issues of another; each milestone's page draws its own issues.</p>
+  {{ <plan_graph mermaid={plan.milestone_mermaid} caption="Every milestone, and the dependencies between them" name="plan-milestones" /> }}
   <p class="mt-2 text-sm text-body"><a href="{{ get_url(path="/plan/dag/", trailing_slash=true) }}" class="text-fg-brand underline">The graph on its own page</a>, with the edge list.</p>
 
   {%- if plan.findings | length > 0 %}
   <h2 class="mt-12 text-2xl font-bold tracking-tight text-heading">Findings</h2>
   <p class="mt-2 max-w-3xl text-sm text-body">What validation says about the model as published. A failure would have stopped this build; anything below is a warning the model reports and does not block.</p>
+  {#- One row per (level, code), counted, with three examples: scope_conflict is reported once
+      per pair of issues sharing a path, so printed one row each the findings grew with the
+      square of the backlog and timed the UI audit out (I3838). Every finding is in the data. -#}
+  <p class="mt-2 max-w-3xl text-sm text-body"><data value="{{ plan.findings | length }}">{{ plan.findings | length }}</data> finding(s) of <data value="{{ plan.findings_by_code | length }}">{{ plan.findings_by_code | length }}</data> kind(s). Every one of them is in <a href="{{ <source_blob path="site/data/generated/plan.json" /> }}" class="font-mono text-fg-brand underline">site/data/generated/plan.json</a>, and <code class="font-mono text-heading">majordomus plan validate</code> prints them all.</p>
   <div class="mt-4 overflow-x-auto rounded-base border border-default" tabindex="0">
     <table class="w-full min-w-[32rem] text-left text-sm">
-      <thead class="bg-neutral-secondary-soft text-xs uppercase tracking-wide text-body-subtle"><tr><th scope="col" class="px-4 py-2">level</th><th scope="col" class="px-4 py-2">code</th><th scope="col" class="px-4 py-2">subject</th><th scope="col" class="px-4 py-2">message</th></tr></thead>
-      <tbody>{%- for f in plan.findings %}<tr class="border-t border-default"><td class="px-4 py-2 font-mono text-xs text-heading">{{ f.level }}</td><td class="px-4 py-2 font-mono text-xs text-body">{{ f.code }}</td><td class="px-4 py-2 font-mono text-xs text-body">{{ f.subject }}</td><td class="px-4 py-2 text-body">{{ f.message }}</td></tr>{%- endfor %}</tbody>
+      <thead class="bg-neutral-secondary-soft text-xs uppercase tracking-wide text-body-subtle"><tr><th scope="col" class="px-4 py-2">level</th><th scope="col" class="px-4 py-2">code</th><th scope="col" class="px-4 py-2">count</th><th scope="col" class="px-4 py-2">for example</th></tr></thead>
+      <tbody>{%- for g in plan.findings_by_code %}<tr class="border-t border-default"><td class="px-4 py-2 font-mono text-xs text-heading">{{ g.level }}</td><td class="px-4 py-2 font-mono text-xs text-body">{{ g.code }}</td><td class="px-4 py-2 font-mono text-xs text-body"><data value="{{ g.count }}">{{ g.count }}</data></td><td class="px-4 py-2 text-body"><ul class="space-y-1">{%- for f in g.examples %}<li class="break-words"><span class="font-mono text-xs text-heading">{{ f.subject }}</span> {{ f.message }}</li>{%- endfor %}</ul></td></tr>{%- endfor %}</tbody>
     </table>
   </div>
   {%- endif %}

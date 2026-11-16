@@ -1,0 +1,46 @@
+id: a-build-reuses-what-the-mesh-already-built
+title: "A build reuses what any node of its platform already built or fetched, and is exactly as correct when nothing can be reused"
+statement: "The owner, 2026-10-22, after lundra (the build and deploy host) reached zero free bytes: every machine of the mesh compiles the same Rust, fetches the same mix dependencies and installs the same npm packages, each from a cold cache of its own. A store offered by a trusted node (MinIO on lundra first) holds what each node built, keyed by a triplet of platform, toolchain and inputs, so a node of the same platform reuses it. It is part of Majordomus: derived from the repository and the machine, used when a trusted store is available, enforced on every build path, and invisible when absent."
+invariants:
+  - "A miss, a down store, a slow store, a refused credential or a corrupt entry costs time, never correctness (rule project.cache-is-invisible); the build then runs exactly as it did without the cache"
+  - "A cold, a warm and a bypassed run leave the same result, and MAJORDOMUS_BUILD_CACHE=off bypasses every level (rule project.cache-is-invisible)"
+  - "The key is derived from what the repository and the machine already say (lockfiles, toolchain executables, host triple, the environment that changes the output); nothing in a key is typed by hand"
+  - "A store is used only when a trusted node offers it in a signed, expiring record (ADR 0157 decision 2); presence on a port is never trust"
+  - "An archive is restored only after its content digest matches the one recorded when it was saved, and only inside its target directory"
+  - "No credential, private address or secret appears in git, .ai, an answer, a log line, a process environment, a page or a document (ADR 0157 decision 7)"
+  - "Every store and every local level is bounded by declared policy and measured by a command (rule project.accumulation-is-measured); a restore passes the same free-space floor as a build"
+non_goals:
+  - "Distributed compilation (sccache-dist, icecream)"
+  - "Mandatory mesh discovery on the derive critical path"
+  - "A hit across platforms: a triple shares only with itself, except where the cached thing is platform-independent source"
+  - "Writing a user's ~/.cargo/config.toml or shell profile"
+  - "Reaching the store from GitHub's runners, which already cache through actions/cache"
+milestones:
+  - "builds-reuse-the-mesh-cache"
+satisfaction:
+  - id: key-is-a-derived-triplet
+    criterion: "A cache key is a schema version, platform, toolchain and input digest derived from the host and the repository, and every input that changes what an install leaves (lockfile, toolchain, platform, declared environment) changes the key (case 3950 of I3950)"
+    evidence: test
+    ref: test/cases/3950_a_cache_key_is_a_derived_triplet.sh
+  - id: store-absent-is-only-a-miss
+    criterion: "With no store, a stopped store, a refused credential or a corrupt object, installs and builds succeed and leave what they leave without the cache, and cold, warm and bypassed runs leave the same files (planned proof: cases 3951 of I3951 and 3952 of I3952 against a stub S3 endpoint)"
+    evidence: command
+    ref: "majordomus intent explain a-build-reuses-what-the-mesh-already-built"
+  - id: a-second-node-reuses
+    criterion: "What one node saved for a triplet is restored by another node of that platform from one shared store instead of being done again (planned proof: case 3952 of I3952 with two nodes sharing one stub store)"
+    evidence: command
+    ref: "majordomus intent explain a-build-reuses-what-the-mesh-already-built"
+  - id: reuse-is-measured-on-real-nodes
+    criterion: "The time a real second node saves is measured on two real nodes of one platform and recorded with its commit and machines; it is never counted met without that measurement (planned proof: the claim of I3955 for the cargo build directory, and of I2676 for sccache and the dependency archives)"
+    evidence: command
+    ref: "majordomus intent explain a-build-reuses-what-the-mesh-already-built"
+  - id: every-build-path-goes-through-it
+    criterion: "Every local build path of this repository goes through the cache, and a new local path that installs or compiles around it is refused by a gate unless it declares why (planned proof: case 3953 of I3953 and scripts/ci/build-cache-check)"
+    evidence: command
+    ref: "majordomus intent explain a-build-reuses-what-the-mesh-already-built"
+  - id: nothing-secret-nothing-unbounded
+    criterion: "No answer, log, process environment or document carries a credential, and the local archive level stays under its declared bound (planned proof: cases 3951 and 3952)"
+    evidence: command
+    ref: "majordomus intent explain a-build-reuses-what-the-mesh-already-built"
+created_at: 2026-10-22
+updated_at: 2026-10-22

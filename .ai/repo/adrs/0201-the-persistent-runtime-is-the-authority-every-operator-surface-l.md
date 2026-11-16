@@ -1,0 +1,74 @@
+---
+schema: adr/v1
+id: adr-0201
+kind: adr
+title: "The persistent runtime is the authority; every operator surface, Lumen included, is a client of it"
+status: proposed
+date: 2026-10-18
+tags:
+  - mesh-runtime
+  - chatgpt-project
+related:
+  - file:.ai/repo/adrs/0012-the-cockpit-is-a-projection-not-an-application.md
+  - file:.ai/repo/adrs/0135-majordomus-ui-is-the-primary-surface.md
+  - file:.ai/repo/adrs/0126-a-caller-beyond-loopback-reads-and-changes-nothing-it-cannot-authenticate.md
+  - file:.ai/repo/adrs/0033-an-execution-is-a-watched-capability-call-not-a-second-registry.md
+  - rule:project.no-new-nouns
+  - rule:project.derived-once
+  - file:.ai/repo/project/issues/I3137.yaml
+  - file:.ai/repo/project/issues/I3138.yaml
+  - file:.ai/repo/project/issues/I3139.yaml
+  - file:.ai/repo/project/issues/I3191.yaml
+  - file:.ai/repo/project/issues/I3192.yaml
+  - file:.ai/repo/project/issues/I3181.yaml
+  - file:.ai/repo/project/milestones/the-mesh-is-operated-from-one-page.yaml
+  - file:.ai/repo/project/milestones/prismatic-lumen.yaml
+  - file:.ai/repo/project/intents/the-mesh-is-operated-from-any-device.yaml
+provenance:
+  origin: extracted
+  derived_from:
+    - issue:I3100
+    - file:.ai/repo/adrs/0012-the-cockpit-is-a-projection-not-an-application.md
+    - file:.ai/repo/adrs/0135-majordomus-ui-is-the-primary-surface.md
+    - file:.ai/repo/adrs/0126-a-caller-beyond-loopback-reads-and-changes-nothing-it-cannot-authenticate.md
+    - file:.ai/repo/adrs/0033-an-execution-is-a-watched-capability-call-not-a-second-registry.md
+    - file:.ai/repo/project/issues/I3137.yaml
+    - file:.ai/repo/project/issues/I3138.yaml
+    - file:.ai/repo/project/issues/I3139.yaml
+    - file:.ai/repo/project/issues/I3191.yaml
+    - file:.ai/repo/project/issues/I3192.yaml
+    - file:.ai/repo/project/issues/I3181.yaml
+    - file:.ai/repo/project/milestones/the-mesh-is-operated-from-one-page.yaml
+    - file:.ai/repo/project/milestones/prismatic-lumen.yaml
+    - file:.ai/repo/project/intents/the-mesh-is-operated-from-any-device.yaml
+---
+
+# 201. The persistent runtime is the authority; every operator surface, Lumen included, is a client of it
+
+## Context
+
+On 2026-10-18 the owner asked for a skill that auto-updates, joins the mesh, acts as the mesh's control pane and reports periodically, and named it prismatic-lumen. A session ends, a phone disconnects, a prompt is not a running service (10-11), and the critique rated the risk of false authority and a hidden second orchestrator highest.
+
+## Decision
+
+The Majordomus runtime executes and authorises (mesh, scheduler, supervision, events, state, governance). An operator surface interprets and controls: it reads canonical state with provenance, subscribes from a revision, and sends typed operations. It owns no scheduler, event bus, identity provider, capability inventory or source of truth; Majordomus never depends on it. A deterministic path (typed operation, no model) exists for every action; a natural-language path only proposes a typed operation, and a model's proposal is never its own authorisation.
+
+## Alternatives rejected
+
+- A separate Lumen backend with its own scheduler or inference
+- Skill text that holds periodic duties
+- An LLM on the critical path of health or restarts
+
+## Consequences
+
+the-mesh-is-operated-from-one-page builds on /ui and executions; reports need the runtime (I3193).
+
+## Sources
+
+Promoted on 2026-10-18 from the owner's ChatGPT project (workspace `chatgpt-majordomus`, issue I3100). The owner has not accepted it; it is proposed for the owner's decision.
+
+- `chatgpt-majordomus:c296#1`
+- `chatgpt-majordomus:c296#9`
+- `chatgpt-majordomus:c296#14`
+- `chatgpt-majordomus:c296#18`
+- `chatgpt-majordomus:c220#5`

@@ -1,0 +1,48 @@
+id: I4346
+milestone: development-runtime
+title: "Every sweep that deletes asks one liveness predicate, and it fails closed"
+slug: every-deleting-sweep-asks-one-liveness-predicate
+priority: p0
+profile: implementation
+parallel_safe: true
+objective: "scripts/reap-orphans --targets, `majordomus worktree cleanup` and the build host's disk-guard decide liveness through one typed capability, worktree.liveness (`majordomus worktree liveness <path>`, declared in the worktree module and implemented in apps/majordomus-cli/src/worktree/liveness.rs), which answers keep or reclaim with its reason. worktree cleanup calls it in process; reap-orphans and disk-guard call the executable, disk-guard through the path disk-guard.service hands it, and keep everything when that executable is absent. A tree or build directory is live if a mesh or board claim names it, an open majordomus task exists in it, the derive lock's owner names it, a queue pid file or a running runner job names it, another process's CARGO_*_DIR or MAJORDOMUS_BIN points into it, or its index, HEAD or reflog changed within the idle window; an unreadable claim source or stat counts as live. No new shell unit is added."
+why: "Incident 11 of 2026-10-28: at 21:43 reap-orphans deleted a live worktree's target, which held the only copy of the executable its hooks require under ADR 0224, and every hook then refused with exit 12. reap-orphans decides liveness from cwd and argv only, which a session working through absolute paths never shows, and each deleting sweep defines liveness its own way. I3832 (the worktree sweep) is not on master and would add a third definition; I4324 widens the risk; once I4352 lands, disk-guard sweeps the runner homes too, so a wrong answer there takes a running CI job's build directory. ADR 0069 makes new automation a typed or scripted capability, which is why the predicate is a capability and not a shell file beside disk-guard. It sits in development-runtime with I3959 (the shared build directory's bound) and I3836 (the delivery.json half of incident 11), not in the-runtime-supervises-itself, which derives as blocked behind failure-is-visible and runtime-lifecycle and would hold the lundra 24/7 chain (I4345 depends on this issue)."
+current_state: "Measured at 81ef931a3e1: scripts/reap-orphans, apps/majordomus-cli/assets/mesh-cache-provider/disk-guard and apps/majordomus-cli/src/worktree/service.rs each carry their own idea of what is in use; rule project.reclaim-only-what-you-own is v1 and advisory."
+desired_state: "One capability answers keep or reclaim with its reason for every deleting sweep; a declared mesh whose claims cannot be read removes nothing and exits non-zero; disk-guard without the executable removes no build directory; reclaim-only-what-you-own v2 is blocking and names the capability. Enforced by cases 611 and 276, blocking, a unit test of the predicate, and the rule."
+scope:
+  - ".ai/repo/project/issues/I4346.yaml"
+  - "apps/majordomus-cli/src/worktree/liveness.rs"
+  - "apps/majordomus-cli/src/worktree/mod.rs"
+  - "apps/majordomus-cli/src/worktree/service.rs"
+  - "apps/majordomus-cli/src/capability/builtin/worktree.rs"
+  - "apps/majordomus-cli/src/commands/worktree.rs"
+  - "apps/majordomus-cli/assets/mesh-cache-provider/disk-guard"
+  - "apps/majordomus-cli/assets/mesh-cache-provider/disk-guard.service"
+  - "apps/majordomus-cli/src/mesh/cache_provision.rs"
+  - "scripts/reap-orphans"
+  - "test/cases/611_the_reclaim_refuses_what_it_cannot_prove.sh"
+  - "test/cases/276_disk_is_bounded.sh"
+  - "docs/WORKTREES.md"
+  - ".ai/repo/rules/project/reclaim-only-what-you-own.v1.md"
+  - ".ai/repo/rules/project/reclaim-only-what-you-own.v2.md"
+non_scope:
+  - "Keeping an executable of a reclaimed worktree's generation (the review's N22, not filed in this block)"
+  - "Which homes disk-guard sweeps (I4352)"
+acceptance_criteria:
+  - "Unit test of worktree::liveness: fixtures for each signal (an open task, a claim, HEAD written 10 minutes ago, an offload pid file, a running runner job, a process whose CARGO_TARGET_DIR points inside) each yield keep with that reason, and a fixture with no signal yields reclaim"
+  - "Case 611: reap-orphans --targets keeps every target the capability answers keep for, with its reason; a declared mesh whose claims cannot be read removes nothing and exits non-zero; a target with no signal at all is reclaimed"
+  - "Case 276: a hard-tier directory idle for 30 minutes whose HEAD changed within the window is kept, and disk-guard run with no executable at the path its service names removes no build directory"
+  - "`majordomus shell check` passes and reports no new shell unit"
+  - "reclaim-only-what-you-own v2 is class blocking, its tests name cases 611 and 276, and `majordomus rule proves` resolves it"
+validation:
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib worktree::liveness"
+  - "bash test/run.sh 611_the_reclaim_refuses_what_it_cannot_prove 276_disk_is_bounded"
+  - "bin/majordomus shell check"
+  - "bin/majordomus plan validate"
+evidence_required:
+  - "test"
+  - "rust"
+depends_on: []
+serves: []
+created_at: 2026-10-29
+updated_at: 2026-10-29

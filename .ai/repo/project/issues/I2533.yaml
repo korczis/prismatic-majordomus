@@ -1,0 +1,52 @@
+id: I2533
+milestone: a-derivation-computed-once-is-reused
+title: "The incremental derive becomes the default after a shadow period proves it equal, and one flag returns to the full derive"
+slug: incremental-derive-is-the-default-on-evidence
+priority: p2
+profile: implementation
+parallel_safe: false
+objective: "Move scripts/derive to the incremental path by default in guarded steps: a shadow mode that runs both and compares, a recorded comparison on the real repository, the switch of the default, and a tested way back."
+why: "campaigns/majordomus-incremental-derive-prompt-pack/12_12_ROLLOUT_PROVE.md asks for a rollout in sequence, opt-in, then shadow differential, then default where supported, with a retained --full and a documented and tested rollback, and for before and after figures with sample count, commit, cache state and platform. The differential case of I2527 uses stand-in producers; whether the real 17 targets and the real site generator are declared completely is only shown by comparing the two paths on this repository's own tree."
+current_state: "After I2525 the incremental path exists behind scripts/derive --incremental and the default is the full sequence. No record compares the two on the real tree."
+desired_state: "scripts/derive --shadow runs the incremental path into a staging copy and the full path into the tree, and fails naming every file that differs. Shadow runs on the real repository are recorded as evidence for a set of real changes: no-op, one rule, one site page, one schema, one generator source, a fresh worktree, a cold and a warm store. When none differs, scripts/derive runs incrementally by default on the platforms recorded, scripts/derive --full runs the present sequence, the pre-commit and CI checks are unchanged, and docs/DERIVE.md states the rollback. The measurements sit beside the baseline of I2521."
+scope:
+  - "scripts/derive"
+  - "apps/majordomus-cli/src/derivation/run.rs"
+  - "apps/majordomus-cli/src/commands/derive.rs"
+  - "apps/majordomus-cli/src/offload"
+  - "test/cases/400_derivation_is_one_graph.sh"
+  - "test/cases"
+  - "docs/DERIVE.md"
+  - "docs/PERFORMANCE.md"
+  - "docs/OFFLOAD.md"
+  - "docs/CLAIMS.yaml"
+  - "justfile"
+  - ".ai/repo/project/issues/I2533.yaml"
+non_scope:
+  - "Removing the full derive, scripts/derive-check or the stage order as a fallback"
+  - "A release or a deployment; those follow the release procedure and the owner's acceptance"
+  - "Switching the default on a platform with no recorded shadow comparison"
+depends_on:
+  - "I2527"
+  - "I2529"
+  - "I2531"
+  - "I2532"
+acceptance_criteria:
+  - "scripts/derive --shadow exits non-zero and names the file when the two paths differ, shown by a fixture with an omitted edge"
+  - "Recorded shadow runs on the real tree show no differing file for each of the eight kinds of change, each with its commit"
+  - "With the default switched, scripts/derive --full leaves the same bytes as scripts/derive on an unchanged tree"
+  - "A case switches back to the full path and passes without the store directory present"
+  - "majordomus offload derive produces the same staged files as before the switch"
+  - "The before and after durations are published with commit, machine, store state and sample count, and no figure is published for a scenario that was not run"
+validation:
+  - "bin/majordomus plan validate"
+  - "MJ_TEST_JOBS=2 bash test/run.sh 400_derivation_is_one_graph 51_derived_artifacts_committed 1020_a_derive_sees_what_the_commit_will"
+  - "MJ_TEST_JOBS=2 bash test/run.sh <the case this issue adds>"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib offload"
+  - "scripts/derive-check"
+evidence_required:
+  - "shadow_runs_on_the_real_tree"
+  - "default_enabled_with_rollback_case"
+  - "before_and_after_measured"
+created_at: 2026-10-13
+updated_at: 2026-10-13

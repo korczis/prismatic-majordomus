@@ -17,6 +17,7 @@
 //! conflict, an unknown runtime, a failed verification, a failed doctor check) — the
 //! answer is printed either way.
 
+use std::io::Read;
 use std::time::Duration;
 
 use serde_json::{json, Value};
@@ -24,8 +25,9 @@ use serde_json::{json, Value};
 use crate::app::App;
 use crate::capability::CapabilityError;
 use crate::cli::{
-    MeshArgs, MeshCommand, MeshFirewallCommand, MeshHandoverCommand, MeshQueryArgs,
-    MeshReviewCommand, MeshSessionCommand, OutputFormat,
+    MeshArgs, MeshBuildCacheCommand, MeshBuildCacheEnsureArgs, MeshBuildCacheEnvArgs, MeshCommand,
+    MeshFirewallCommand, MeshHandoverCommand, MeshQueryArgs, MeshReviewCommand, MeshSessionCommand,
+    OutputFormat,
 };
 use crate::error::{Error, Result};
 
@@ -45,7 +47,31 @@ pub fn run(args: MeshArgs) -> Result<u8> {
         MeshCommand::Identity(q) => {
             in_process(q, &["mesh", "identity"], json!({}), render_identity, never)
         }
+        MeshCommand::Enrol(q) => {
+            in_process(q, &["mesh", "enrol"], json!({}), render_enrolment, never)
+        }
         MeshCommand::Doctor(q) => doctor(q),
+        // A key is a fact of this machine's toolchains and this checkout's lockfiles:
+        // answered in this process, like the identity.
+        MeshCommand::BuildCache(a) => match a.command {
+            MeshBuildCacheCommand::Key(k) => in_process(
+                k.query,
+                &["mesh", "build-cache", "key"],
+                json!({ "kind": k.kind }),
+                render_build_cache_key,
+                never,
+            ),
+            // it runs a command and writes outside the repository: this process, never a server
+            MeshBuildCacheCommand::Ensure(e) => build_cache_ensure(e),
+            MeshBuildCacheCommand::Env(e) => build_cache_env(e),
+            MeshBuildCacheCommand::Provision(x) => in_process(
+                x.query,
+                &["mesh", "build-cache", "provision"],
+                json!({ "apply": x.apply, "root": x.root }),
+                render_provision,
+                not_ok,
+            ),
+        },
         // The host firewall is a fact of this machine, like the identity: answered in
         // this process. `apply` runs a privileged host tool and is offered nowhere else.
         MeshCommand::Firewall(a) => match a.command {
@@ -64,6 +90,15 @@ pub fn run(args: MeshArgs) -> Result<u8> {
                 not_ok,
             ),
         },
+        // A process is a fact of the machine it runs on, the board is gathered from every
+        // checkout's server: answered in this process, like the identity.
+        MeshCommand::Who(a) => in_process(
+            a.query,
+            &["mesh", "who"],
+            json!({ "subject": a.subject }),
+            render_who,
+            |v| v["known"] != json!(true),
+        ),
         MeshCommand::Peers(v) => {
             let target = viewed("/api/v1/mesh/peers", &v);
             ask(&v.query, "GET", &target, None, render_peers, never)
@@ -79,20 +114,7 @@ pub fn run(args: MeshArgs) -> Result<u8> {
             ask(&v.query, "GET", &target, None, render_state, never)
         }
         MeshCommand::Events(a) => {
-            let mut target = "/api/v1/mesh/events".to_string();
-            let mut pairs = Vec::new();
-            if let Some(after) = a.after {
-                pairs.push(format!("after={after}"));
-            }
-            if let Some(limit) = a.limit {
-                pairs.push(format!("limit={limit}"));
-            }
-            if a.newest {
-                pairs.push("newest=true".to_string());
-            }
-            if !pairs.is_empty() {
-                target = format!("{target}?{}", pairs.join("&"));
-            }
+            let target = events_target(&a);
             ask(&a.query, "GET", &target, None, render_events, never)
         }
         MeshCommand::Verify(q) => ask(
@@ -118,6 +140,14 @@ pub fn run(args: MeshArgs) -> Result<u8> {
             render_written,
             never,
         ),
+        MeshCommand::Allocate(a) => ask(
+            &a.query,
+            "POST",
+            "/api/v1/plan/allocate",
+            Some(json!({ "kind": a.kind, "session": a.session, "at_least": a.at_least })),
+            render_allocation,
+            never,
+        ),
         MeshCommand::Release(a) => ask(
             &a.query,
             "POST",
@@ -126,25 +156,49 @@ pub fn run(args: MeshArgs) -> Result<u8> {
             render_written,
             never,
         ),
-        MeshCommand::Session(s) => match s.command {
-            MeshSessionCommand::Open(a) => ask(
+        MeshCommand::Beat(a) => match a.hook.as_deref() {
+            Some(provider) => Ok(hook_beat(provider, &a.query, &mut std::io::stdin())),
+            None => ask(
                 &a.query,
                 "POST",
-                "/api/v1/mesh/sessions",
-                Some(json!({
-                    "session": a.session,
-                    "client": a.client,
-                    "worker": a.worker,
-                    "intent": a.intent,
-                    "task": a.task,
-                    "issue": a.issue,
-                    "milestone": a.milestone,
-                    "branch": a.branch,
-                    "head": a.head,
-                })),
+                "/api/v1/mesh/beats",
+                Some(json!({ "session": a.session, "phase": a.phase, "pid": a.pid })),
                 render_written,
                 never,
             ),
+        },
+        MeshCommand::Session(s) => match s.command {
+            MeshSessionCommand::Open(a) => {
+                // read here, in the process the client started, and not by the server: the
+                // client is this executable's ancestor, and the server's is somebody else
+                let client = a.client_pid.as_deref().and_then(|pid| match pid {
+                    "auto" => crate::mesh::cooperation::client_process(),
+                    pid => pid.parse::<u32>().ok().and_then(|pid| {
+                        crate::mesh::cooperation::process_facts(pid).map(|p| (pid, p.started))
+                    }),
+                });
+                let (client_pid, client_started) = client.unzip();
+                ask(
+                    &a.query,
+                    "POST",
+                    "/api/v1/mesh/sessions",
+                    Some(json!({
+                        "session": a.session,
+                        "client": a.client,
+                        "worker": a.worker,
+                        "intent": a.intent,
+                        "task": a.task,
+                        "issue": a.issue,
+                        "milestone": a.milestone,
+                        "branch": a.branch,
+                        "head": a.head,
+                        "client_pid": client_pid,
+                        "client_started": client_started,
+                    })),
+                    render_written,
+                    never,
+                )
+            }
             MeshSessionCommand::Close(a) => ask(
                 &a.query,
                 "POST",
@@ -494,6 +548,48 @@ fn ask_at(
     Ok(if failed(&value) { EXIT_REFUSED } else { 0 })
 }
 
+/// `mesh beat --hook <provider>`: the beat the provider's hook event on `stdin` stands for
+/// (I3992), asked of the server the provider session joined. It prints nothing and answers
+/// 0 whatever happens — no payload, an event that is no beat, no server, a refusal, a
+/// timeout — because a hook that fails or writes to stdout (which `UserPromptSubmit` hands
+/// the model) is felt by the person, and a mark on the mesh is not worth that.
+///
+/// It runs on every tool call, so it builds no index and discovers nothing: the checkout is
+/// the one its caller names with `--repo` (the hook passes its checkout's root), and that
+/// checkout's own ready server is read from its lease ([`server_of`]) — the server the
+/// provider's start event opened the session on. Discovering the repository is for its
+/// owners alone (tests/discovery_has_its_owners.rs).
+///
+/// [`server_of`]: crate::integration::exclusive::server_of
+fn hook_beat(provider: &str, query: &MeshQueryArgs, stdin: &mut dyn Read) -> u8 {
+    let Some(body) = hook_body(provider, stdin) else {
+        return 0;
+    };
+    let root = query
+        .repo
+        .repo
+        .clone()
+        .or_else(|| std::env::current_dir().ok())
+        .unwrap_or_default();
+    // the path as the lease records it: a hook names its checkout through a symlinked
+    // directory as readily as not (macOS's /var is /private/var)
+    let root = std::fs::canonicalize(&root).unwrap_or(root);
+    if let Some(server) = crate::integration::exclusive::server_of(&root) {
+        use crate::integration::exclusive::Mesh;
+        let _ = server.ask("POST", "/api/v1/mesh/beats", Some(body));
+    }
+    0
+}
+
+/// The `mesh.beat` input the hook payload on `stdin` stands for, as the JSON body to post;
+/// `None` when it stands for none. The payload is one JSON object, read up to a bound.
+fn hook_body(provider: &str, stdin: &mut dyn Read) -> Option<Value> {
+    let mut payload = String::new();
+    stdin.take(1 << 20).read_to_string(&mut payload).ok()?;
+    let input = crate::capability::builtin::mesh::BeatInput::from_hook(provider, &payload)?;
+    serde_json::to_value(&input).ok()
+}
+
 /// Drop `null` members, so an omitted option is absent rather than null in the input.
 fn strip_nulls(value: Value) -> Value {
     match value {
@@ -602,6 +698,198 @@ fn render_nodes(v: &Value) -> String {
     out.trim_end().to_string()
 }
 
+/// `mesh build-cache ensure`: the capability answered in this process, whose exit code is the
+/// command's own, so that a caller replacing `npm ci` with it sees the same failure.
+fn build_cache_ensure(e: MeshBuildCacheEnsureArgs) -> Result<u8> {
+    let app = App::load(&e.query.repo)?;
+    let input = json!({ "kind": e.kind, "dir": e.dir, "command": e.command });
+    let value = app
+        .context
+        .execute("mesh.build_cache.ensure", input)
+        .map_err(map)?;
+    emit(&e.query, &value, render_build_cache_ensure);
+    Ok(ensure_exit(&value))
+}
+
+/// The command's exit code, clamped to what a process can return; 0 when nothing ran, 1 when
+/// it could not start or a signal ended it.
+fn ensure_exit(v: &Value) -> u8 {
+    if !v["command"].is_object() {
+        return 0;
+    }
+    match v["command"]["exit"].as_i64() {
+        Some(0) => 0,
+        Some(n) => u8::try_from(n.clamp(1, 255)).unwrap_or(1),
+        None => 1,
+    }
+}
+
+/// `mesh build-cache ensure`: where the content came from, and every note.
+fn render_build_cache_ensure(v: &Value) -> String {
+    let mut out = format!("kind       {} ({})\n", s(v, "kind"), s(v, "dir"));
+    out.push_str(&format!(
+        "key        {}\n",
+        v["key"].as_str().unwrap_or("none")
+    ));
+    out.push_str(&format!("target     {}\n", s(v, "target")));
+    out.push_str(&format!(
+        "source     {}\n",
+        s(v, "source").replace('_', " ")
+    ));
+    if v["command"].is_object() {
+        let argv: Vec<&str> = v["command"]["argv"]
+            .as_array()
+            .map(|a| a.iter().filter_map(Value::as_str).collect())
+            .unwrap_or_default();
+        let exit = v["command"]["exit"]
+            .as_i64()
+            .map(|n| n.to_string())
+            .unwrap_or_else(|| "none".into());
+        out.push_str(&format!("command    {} -> exit {exit}\n", argv.join(" ")));
+    }
+    let saved: Vec<&str> = v["saved"]
+        .as_array()
+        .map(|a| a.iter().filter_map(Value::as_str).collect())
+        .unwrap_or_default();
+    if !saved.is_empty() {
+        out.push_str(&format!("saved      {}\n", saved.join(", ")));
+    }
+    let gib = |n: &Value| n.as_u64().unwrap_or(0) as f64 / (1024.0 * 1024.0 * 1024.0);
+    out.push_str(&format!(
+        "local      {}  {:.2} of {:.0} GiB, {} pruned\n",
+        s(&v["local"], "dir"),
+        gib(&v["local"]["bytes"]),
+        gib(&v["local"]["bound_bytes"]),
+        v["local"]["pruned"].as_u64().unwrap_or(0)
+    ));
+    for note in v["notes"].as_array().into_iter().flatten() {
+        out.push_str(&format!("note       {}\n", note.as_str().unwrap_or("")));
+    }
+    out.trim_end().to_string()
+}
+
+/// `mesh build-cache env`: a fact of this machine (its sccache, its node file, its store), so
+/// it is answered without loading a repository: a compile in any directory asks it.
+fn build_cache_env(args: MeshBuildCacheEnvArgs) -> Result<u8> {
+    use crate::mesh::build_cache::env::{report, script, EnvOptions};
+    let answer = report(&EnvOptions {
+        sccache: args.sccache.unwrap_or_else(|| "sccache".to_string()),
+        node_file: args.node_file,
+        credentials: args.credentials,
+    });
+    match args.format {
+        OutputFormat::Json => println!(
+            "{}",
+            serde_json::to_string_pretty(&answer).unwrap_or_default()
+        ),
+        OutputFormat::Text => print!("{}", script(&answer)),
+    }
+    Ok(0)
+}
+
+/// `mesh build-cache key`: one line per cached thing, its key or why it has none.
+fn render_build_cache_key(v: &Value) -> String {
+    let mut out = format!("platform   {}\n", v["platform"].as_str().unwrap_or(""));
+    let kinds = v["kinds"].as_array().cloned().unwrap_or_default();
+    if kinds.is_empty() {
+        out.push_str("no lockfile is tracked: nothing here is cacheable\n");
+    }
+    for k in kinds {
+        let kind = k["kind"].as_str().unwrap_or("");
+        let dir = k["dir"].as_str().unwrap_or("");
+        match k["key"].as_str() {
+            Some(key) => out.push_str(&format!("{kind:<16} {dir:<12} {key}\n")),
+            None => out.push_str(&format!(
+                "{kind:<16} {dir:<12} no key: {}\n",
+                k["unavailable"].as_str().unwrap_or("unknown")
+            )),
+        }
+        out.push_str(&format!(
+            "{:<29} -> {}\n",
+            "",
+            k["location"].as_str().unwrap_or("")
+        ));
+    }
+    out
+}
+
+fn render_who(v: &Value) -> String {
+    let text = |v: &Value| v.as_str().unwrap_or("").to_string();
+    let mut out = format!(
+        "{} {} on {}: {}{}\n",
+        text(&v["kind"]),
+        text(&v["subject"]),
+        text(&v["host"]),
+        if v["known"] == json!(true) {
+            "known"
+        } else {
+            "unknown"
+        },
+        if v["leftover"] == json!(true) {
+            ", a leftover"
+        } else {
+            ""
+        }
+    );
+    for o in v["owners"].as_array().into_iter().flatten() {
+        out.push_str(&format!(
+            "owner      {}  peer {}  issue {}{}\n",
+            o["session"].as_str().unwrap_or("-"),
+            o["peer"].as_str().unwrap_or("-"),
+            o["issue"].as_str().unwrap_or("-"),
+            o["name"]
+                .as_str()
+                .map(|n| format!("  name {n}"))
+                .unwrap_or_default()
+        ));
+        if let Ok(a) = serde_json::from_value::<crate::peers::PeerAddress>(o["address"].clone()) {
+            out.push_str(&format!("address    {}\n", a.line()));
+        }
+        for b in o["basis"].as_array().into_iter().flatten() {
+            out.push_str(&format!("  because  {}\n", text(b)));
+        }
+    }
+    for p in v["chain"].as_array().into_iter().flatten() {
+        out.push_str(&format!(
+            "process    {} <- {}  group {}  {}\n",
+            p["pid"],
+            p["ppid"],
+            p["pgid"],
+            p["command"].as_str().unwrap_or("")
+        ));
+    }
+    for e in v["evidence"].as_array().into_iter().flatten() {
+        out.push_str(&format!(
+            "{} {:<12} {}\n",
+            if e["used"] == json!(true) {
+                "used    "
+            } else {
+                "consulted"
+            },
+            text(&e["source"]),
+            text(&e["detail"])
+        ));
+    }
+    for m in v["missing"].as_array().into_iter().flatten() {
+        out.push_str(&format!("missing    {}\n", text(m)));
+    }
+    out
+}
+
+fn render_enrolment(v: &Value) -> String {
+    format!(
+        "{}   {}\nkey        {}\nnext       {}",
+        if v["added"] == json!(true) {
+            "enrolled"
+        } else {
+            "listed  "
+        },
+        v["path"].as_str().unwrap_or_default(),
+        v["key"].as_str().unwrap_or_default(),
+        v["next"].as_str().unwrap_or_default()
+    )
+}
+
 fn render_identity(v: &Value) -> String {
     let mut out = String::new();
     out.push_str(&format!("present    {}\n", v["present"]));
@@ -629,10 +917,11 @@ fn render_checks(v: &Value, out: &mut String) {
     for c in v["checks"].as_array().into_iter().flatten() {
         out.push_str(&format!(
             "{}  {:<12} {}\n",
-            if c["ok"] == json!(true) {
-                "ok  "
-            } else {
-                "FAIL"
+            // a check that holds and still names a remedy is a warning
+            match (c["ok"] == json!(true), c["remediation"].is_string()) {
+                (true, false) => "ok  ",
+                (true, true) => "WARN",
+                (false, _) => "FAIL",
             },
             c["check"].as_str().unwrap_or("?"),
             c["detail"].as_str().unwrap_or(""),
@@ -710,6 +999,72 @@ fn render_firewall(v: &Value) -> String {
         }
     }
     out.push_str(&format!("verdict     {}", s(v, "verdict")));
+    out
+}
+
+fn render_provision(v: &Value) -> String {
+    let mut out = format!(
+        "mode        {}\nroot        {}\n",
+        s(v, "mode"),
+        s(v, "root")
+    );
+    for f in v["plan"]["files"].as_array().into_iter().flatten() {
+        out.push_str(&format!(
+            "{:<13} {} {} ({})\n",
+            s(f, "state"),
+            s(f, "mode"),
+            s(f, "path"),
+            s(f, "source")
+        ));
+    }
+    for e in v["plan"]["edits"].as_array().into_iter().flatten() {
+        out.push_str(&format!(
+            "{:<13} {}\n",
+            if e["owed"] == json!(true) {
+                "edit"
+            } else {
+                "current"
+            },
+            s(e, "path")
+        ));
+    }
+    for st in v["plan"]["steps"].as_array().into_iter().flatten() {
+        out.push_str(&format!("step ({})  {}\n", s(st, "when"), s(st, "line")));
+    }
+    out.push_str(&format!(
+        "plan        {} change(s) owed, {} not observable here\n",
+        v["plan"]["changes"], v["plan"]["unobservable"]
+    ));
+    if let Some(a) = v.get("apply").filter(|a| a.is_object()) {
+        if let Some(r) = a["refused"].as_str() {
+            out.push_str(&format!("refused     {r}\n"));
+        }
+        for p in a["written"].as_array().into_iter().flatten() {
+            out.push_str(&format!("written     {}\n", p.as_str().unwrap_or("")));
+        }
+        for r in a["ran"].as_array().into_iter().flatten() {
+            out.push_str(&format!(
+                "{}  {}\n",
+                if r["ok"] == json!(true) {
+                    "ok  "
+                } else {
+                    "FAIL"
+                },
+                s(r, "line")
+            ));
+        }
+        for k in a["skipped"].as_array().into_iter().flatten() {
+            out.push_str(&format!("skipped     {}\n", k.as_str().unwrap_or("")));
+        }
+    }
+    out.push_str(&format!(
+        "verdict     {}",
+        if v["ok"] == json!(true) {
+            "ok"
+        } else {
+            "not provisioned (see above)"
+        }
+    ));
     out
 }
 
@@ -794,6 +1149,19 @@ fn render_session(sess: &Value, indent: &str, out: &mut String) {
             .map(|i| format!(" ({i})"))
             .unwrap_or_default(),
     ));
+    // what it is doing or waiting on, and when it last showed progress (I3990, I3992)
+    let doing = match (sess["blocked"].as_str(), sess["phase"].as_str()) {
+        (Some(why), _) => Some(format!("blocked: {why} — waiting on a person")),
+        (None, Some(phase)) => Some(format!("phase {phase}")),
+        (None, None) => None,
+    };
+    let progress = sess["progress_ms"]
+        .as_u64()
+        .map(|ms| format!("progress {} s ago", ms / 1000));
+    let line: Vec<String> = [doing, progress].into_iter().flatten().collect();
+    if !line.is_empty() {
+        out.push_str(&format!("{indent}  {}\n", line.join("; ")));
+    }
     for c in sess["claims"].as_array().into_iter().flatten() {
         let scope: Vec<&str> = c["scope"]
             .as_array()
@@ -919,6 +1287,33 @@ fn viewed(path: &str, v: &crate::cli::MeshViewArgs) -> String {
         path.to_string()
     } else {
         format!("{path}?{}", pairs.join("&"))
+    }
+}
+
+/// The `mesh.events` route `mesh events` asks: each flag given becomes one query pair, and
+/// no flag is the bare route under the server's own default page.
+fn events_target(a: &crate::cli::MeshEventsArgs) -> String {
+    let mut pairs = Vec::new();
+    if let Some(after) = a.after {
+        pairs.push(format!("after={after}"));
+    }
+    if let Some(cursor) = &a.cursor {
+        pairs.push(format!("cursor={}", encode(cursor)));
+    }
+    if let Some(limit) = a.limit {
+        pairs.push(format!("limit={limit}"));
+    }
+    if a.newest {
+        pairs.push("newest=true".to_string());
+    }
+    if a.beats {
+        pairs.push("beats=true".to_string());
+    }
+    let target = "/api/v1/mesh/events";
+    if pairs.is_empty() {
+        target.to_string()
+    } else {
+        format!("{target}?{}", pairs.join("&"))
     }
 }
 
@@ -1073,6 +1468,9 @@ fn render_events(v: &Value) -> String {
         "events     {} (lamport {})",
         v["count"], v["lamport"]
     ));
+    if let Some(cursor) = v["cursor"].as_str() {
+        out.push_str(&format!("\nnext       --cursor {cursor}"));
+    }
     out
 }
 
@@ -1116,6 +1514,40 @@ fn render_verify(v: &Value) -> String {
             "a check or a round failed (see above)"
         }
     ));
+    out
+}
+
+/// A reservation as a person reads it: the identifier, its key and claim, what each source
+/// held, and what was skipped on the way.
+fn render_allocation(v: &Value) -> String {
+    if let Some(text) = inactive(v) {
+        return text;
+    }
+    let mut out = format!(
+        "reserved   {} {} ({})\nclaim      {}",
+        s(v, "kind"),
+        s(v, "value"),
+        s(v, "reservation"),
+        s(v, "claim")
+    );
+    for src in v["sources"].as_array().into_iter().flatten() {
+        let high = src["highest"]
+            .as_u64()
+            .map_or("none".to_string(), |h| h.to_string());
+        out.push_str(&format!(
+            "\nsource     {} {high}: {}",
+            s(src, "source"),
+            s(src, "detail")
+        ));
+    }
+    for k in v["skipped"].as_array().into_iter().flatten() {
+        out.push_str(&format!(
+            "\nskipped    {} held by {} ({})",
+            k["number"],
+            s(k, "holder"),
+            s(k, "claim")
+        ));
+    }
     out
 }
 
@@ -1168,6 +1600,41 @@ fn map(e: CapabilityError) -> Error {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// `mesh events` asks for what its flags say and nothing else: no flag is the bare
+    /// route, and `--beats` asks for the session beats the journal hides by default (I3990).
+    #[test]
+    fn the_events_flags_are_the_query_the_server_is_asked() {
+        use clap::Parser;
+        let target = |args: &[&str]| {
+            let cli = crate::cli::Cli::try_parse_from(
+                ["majordomus", "mesh", "events"].iter().chain(args),
+            )
+            .unwrap();
+            let crate::cli::Command::Mesh(mesh) = cli.command else {
+                panic!("expected `mesh`")
+            };
+            let MeshCommand::Events(events) = mesh.command else {
+                panic!("expected `events`")
+            };
+            events_target(&events)
+        };
+        assert_eq!(target(&[]), "/api/v1/mesh/events");
+        assert_eq!(
+            target(&["--beats"]),
+            "/api/v1/mesh/events?beats=true",
+            "beats are asked for by name"
+        );
+        assert_eq!(
+            target(&["--after", "42", "--limit", "10", "--newest", "--beats"]),
+            "/api/v1/mesh/events?after=42&limit=10&newest=true&beats=true"
+        );
+        assert_eq!(
+            target(&["--cursor", "00000000000000aa:7", "--beats"]),
+            "/api/v1/mesh/events?cursor=00000000000000aa%3A7&beats=true",
+            "a cursor resumes the walk, encoded, beside the beats"
+        );
+    }
 
     /// One entry of `server.status`'s `servers`, as `checkouts_of` writes it.
     fn server(worktree: &str, primary: bool, this: bool, standing: &str, port: u16) -> Value {
@@ -1340,6 +1807,21 @@ mod tests {
             doctor.to_string().contains("/api/v1/mesh/doctor"),
             "{doctor}"
         );
+    }
+
+    #[test]
+    fn an_enrolment_says_whether_it_changed_the_declaration_and_what_is_next() {
+        let added = render_enrolment(&json!({
+            "path": ".ai/repo/mesh/mesh.yaml", "key": "ab", "added": true, "next": "commit it",
+        }));
+        assert_eq!(
+            added,
+            "enrolled   .ai/repo/mesh/mesh.yaml\nkey        ab\nnext       commit it"
+        );
+        let listed = render_enrolment(&json!({
+            "path": "p", "key": "ab", "added": false, "next": "nothing",
+        }));
+        assert!(listed.starts_with("listed     p\n"), "{listed}");
     }
 
     /// A 32-hex node key, as `<node>-<runtime>` carries it.
@@ -1827,6 +2309,20 @@ mod tests {
         );
     }
 
+    /// A page of a walk by cursor ends with the cursor to pass back, written as the flag
+    /// that resumes the walk exactly after this page.
+    #[test]
+    fn a_cursor_page_ends_with_the_flag_that_resumes_the_walk() {
+        let text = render_events(&json!({
+            "active": true, "count": 0, "lamport": 3, "cursor": "00000000000000aa:7",
+            "events": [],
+        }));
+        assert!(
+            text.ends_with("events     0 (lamport 3)\nnext       --cursor 00000000000000aa:7"),
+            "{text}"
+        );
+    }
+
     #[test]
     fn an_event_of_a_kind_this_executable_does_not_know_is_shown_rather_than_dropped() {
         let text = render_events(&json!({
@@ -1925,6 +2421,27 @@ mod tests {
         assert!(
             text.contains("FAIL  cooperation  cooperation is disabled"),
             "{text}"
+        );
+    }
+
+    #[test]
+    fn a_reservation_names_its_key_its_sources_and_what_it_skipped() {
+        let text = render_allocation(&json!({
+            "kind": "case", "value": "42", "reservation": "id:case/42", "claim": "s/c9",
+            "sources": [
+                {"source": "tree", "highest": 41, "detail": "1 file(s)"},
+                {"source": "mesh", "highest": null, "detail": "0 reservation(s)"},
+            ],
+            "skipped": [{"number": 41, "holder": "s/b", "claim": "s/c1"}],
+        }));
+        assert_eq!(
+            text,
+            "reserved   case 42 (id:case/42)\nclaim      s/c9\nsource     tree 41: 1 file(s)\n\
+             source     mesh none: 0 reservation(s)\nskipped    41 held by s/b (s/c1)"
+        );
+        assert!(
+            render_allocation(&json!({"active": false, "reason": "no server"}))
+                .starts_with("cooperation inactive")
         );
     }
 
@@ -2106,6 +2623,27 @@ mod tests {
             bad.ends_with("verdict    a check failed (see above)"),
             "{bad}"
         );
+    }
+
+    /// I4352: a check that holds and still names a remedy (the build host owing provisioning)
+    /// is a warning row with its remedy, and the verdict stays that every check holds.
+    #[test]
+    fn a_check_that_holds_with_a_remedy_is_a_warning() {
+        let warned = render_doctor(&json!({
+            "ok": true,
+            "checks": [{ "check": "build_host", "ok": true,
+                         "detail": "lundra owes 3 provisioning change(s)",
+                         "remediation": "sudo majordomus mesh build-cache provision --apply" }],
+        }));
+        assert!(
+            warned.contains("WARN  build_host   lundra owes 3 provisioning change(s)"),
+            "{warned}"
+        );
+        assert!(
+            warned.contains("      remedy      sudo majordomus mesh build-cache provision --apply"),
+            "{warned}"
+        );
+        assert!(warned.ends_with("verdict    every check holds"), "{warned}");
     }
 
     #[test]
@@ -2368,6 +2906,398 @@ mod tests {
         assert!(
             refused.is_err(),
             "a port that is not a number was answered: {refused:?}"
+        );
+    }
+
+    /// I3992: the hook reads the payload into the beat it stands for, and nothing else.
+    #[test]
+    fn a_hook_payload_becomes_the_beat_it_stands_for() {
+        let mut stop = r#"{"session_id":"s1","hook_event_name":"Stop"}"#.as_bytes();
+        assert_eq!(
+            hook_body("claude-code", &mut stop),
+            Some(json!({ "session": "claude-code-s1", "phase": "blocked: awaiting input" }))
+        );
+        let mut tool = r#"{"session_id":"s1","hook_event_name":"PreToolUse"}"#.as_bytes();
+        assert_eq!(
+            hook_body("claude-code", &mut tool),
+            Some(json!({ "session": "claude-code-s1" })),
+            "real work: no phase, which clears the wait"
+        );
+        assert_eq!(hook_body("claude-code", &mut "".as_bytes()), None);
+        let mut other = r#"{"session_id":"s1","hook_event_name":"SessionStart"}"#.as_bytes();
+        assert_eq!(hook_body("claude-code", &mut other), None);
+    }
+
+    /// I3992: the hook answers 0 whatever happens — no beat, no repository, no server.
+    #[test]
+    fn a_hook_beat_answers_zero_whatever_happens() {
+        let dir = tempfile::tempdir().unwrap();
+        let query = |repo: Option<std::path::PathBuf>| MeshQueryArgs {
+            repo: crate::cli::RepoArgs {
+                repo,
+                discovery: crate::cli::DiscoveryMode::Vcs,
+                strict: false,
+                share: None,
+            },
+            format: OutputFormat::Text,
+        };
+        let stop = r#"{"session_id":"s1","hook_event_name":"Stop"}"#;
+        let here = query(Some(dir.path().to_path_buf()));
+        assert_eq!(hook_beat("claude-code", &here, &mut "".as_bytes()), 0);
+        assert_eq!(
+            hook_beat("claude-code", &here, &mut stop.as_bytes()),
+            0,
+            "no repository"
+        );
+        std::fs::create_dir_all(dir.path().join(".ai")).unwrap();
+        std::fs::write(dir.path().join(".ai/manifest.yaml"), "schema: x\n").unwrap();
+        assert_eq!(
+            hook_beat("claude-code", &here, &mut stop.as_bytes()),
+            0,
+            "no server"
+        );
+    }
+
+    /// I3992: a payload that is not text stands for no beat; nothing is asked of anyone.
+    #[test]
+    fn a_hook_payload_that_is_not_text_stands_for_no_beat() {
+        assert_eq!(hook_body("claude-code", &mut &[0xff, 0xfe, 0xfd][..]), None);
+    }
+
+    /// I3992: in a checkout whose lease names a ready server the beat is posted to that
+    /// server — after one probe that it answers for the checkout — and the hook still
+    /// answers 0.
+    #[test]
+    fn a_hook_beat_is_posted_to_the_server_the_checkouts_lease_names() {
+        use std::io::{BufRead, Read, Write};
+        let dir = tempfile::tempdir().unwrap();
+        let root = std::fs::canonicalize(dir.path()).unwrap();
+        let listener = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
+        let url = format!("http://{}", listener.local_addr().unwrap());
+        let index = json!({
+            "name": "majordomus",
+            "repository_id": crate::repository::identity(&root),
+        });
+        // answers the probe with the index, then the beat; hands back each request line
+        // and body it was asked
+        let server = std::thread::spawn(move || {
+            let mut asked = Vec::new();
+            for answer in [index.to_string(), "{}".to_string()] {
+                let (stream, _) = listener.accept().unwrap();
+                let mut reader = std::io::BufReader::new(stream);
+                let mut head = Vec::new();
+                let mut length = 0usize;
+                loop {
+                    let mut line = String::new();
+                    reader.read_line(&mut line).unwrap();
+                    if let Some(n) = line.to_ascii_lowercase().strip_prefix("content-length:") {
+                        length = n.trim().parse().unwrap();
+                    }
+                    if line.trim().is_empty() {
+                        break;
+                    }
+                    head.push(line.trim().to_string());
+                }
+                let mut body = vec![0u8; length];
+                reader.read_exact(&mut body).unwrap();
+                asked.push((head[0].clone(), String::from_utf8(body).unwrap()));
+                let mut stream = reader.into_inner();
+                write!(
+                    stream,
+                    "HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{answer}",
+                    answer.len()
+                )
+                .unwrap();
+            }
+            asked
+        });
+        let lease = crate::lease::lease_file(&root, ".ai/local");
+        std::fs::create_dir_all(lease.parent().unwrap()).unwrap();
+        let document = json!({
+            "schema": crate::lease::SCHEMA,
+            "pid": std::process::id(),
+            "token": "t",
+            "root": root,
+            "url": url,
+            "started_at": "2026-11-03T00:00:00Z",
+            "version": crate::VERSION,
+        });
+        std::fs::write(&lease, document.to_string()).unwrap();
+
+        let stop = r#"{"session_id":"s1","hook_event_name":"Stop"}"#;
+        let here = query(Some(root.clone()), OutputFormat::Text);
+        assert_eq!(hook_beat("claude-code", &here, &mut stop.as_bytes()), 0);
+        let asked = server.join().unwrap();
+        assert!(asked[0].0.starts_with("GET / "), "{asked:?}");
+        assert!(
+            asked[1].0.starts_with("POST /api/v1/mesh/beats "),
+            "{asked:?}"
+        );
+        assert_eq!(
+            serde_json::from_str::<Value>(&asked[1].1).unwrap(),
+            json!({ "session": "claude-code-s1", "phase": "blocked: awaiting input" })
+        );
+    }
+
+    /// I3992: the text board says what a session does, or that it waits on a person and
+    /// why, beside when it last showed progress.
+    #[test]
+    fn a_session_line_says_what_it_does_or_whom_it_waits_on() {
+        let line = |sess: Value| {
+            let mut out = String::new();
+            render_session(&sess, "", &mut out);
+            out
+        };
+        let info = json!({ "client": "claude-code", "session": "claude-code-s1" });
+        let blocked = line(json!({
+            "info": info, "state": "active", "phase": "blocked: awaiting input",
+            "blocked": "awaiting input", "progress_ms": 61_000,
+        }));
+        assert!(
+            blocked
+                .contains("  blocked: awaiting input — waiting on a person; progress 61 s ago\n"),
+            "{blocked}"
+        );
+        let working = line(json!({ "info": info, "state": "active", "phase": "waiting on CI" }));
+        assert!(working.contains("  phase waiting on CI\n"), "{working}");
+        let silent = line(json!({ "info": info, "state": "active", "progress_ms": 2_000 }));
+        assert!(silent.contains("  progress 2 s ago\n"), "{silent}");
+        let quiet = line(json!({ "info": info, "state": "active" }));
+        assert_eq!(
+            quiet.lines().count(),
+            1,
+            "nothing said, nothing shown: {quiet}"
+        );
+    }
+
+    #[test]
+    fn an_ensure_answer_reads_as_its_source_command_levels_and_notes() {
+        let v = json!({
+            "kind": "npm-modules", "dir": "site", "target": "site/node_modules",
+            "key": "v1/npm-modules/p/t/d", "source": "in_place",
+            "command": { "argv": ["npm", "ci"], "exit": 0 },
+            "saved": ["local", "store"],
+            "notes": ["local: no archive under this key"],
+            "local": { "dir": "~/.cache/majordomus/build-cache", "bytes": 1073741824_u64,
+                       "bound_bytes": 21474836480_u64, "pruned": 2 },
+        });
+        let text = render_build_cache_ensure(&v);
+        let lines: Vec<&str> = text.lines().collect();
+        assert_eq!(
+            lines,
+            [
+                "kind       npm-modules (site)",
+                "key        v1/npm-modules/p/t/d",
+                "target     site/node_modules",
+                "source     in place",
+                "command    npm ci -> exit 0",
+                "saved      local, store",
+                "local      ~/.cache/majordomus/build-cache  1.00 of 20 GiB, 2 pruned",
+                "note       local: no archive under this key",
+            ]
+        );
+        assert_eq!(ensure_exit(&v), 0);
+        let bare = json!({ "kind": "mix-deps", "dir": ".", "source": "uncached",
+                           "saved": [], "notes": [], "local": {} });
+        let text = render_build_cache_ensure(&bare);
+        assert!(text.contains("key        none"), "{text}");
+        assert!(
+            !text.contains("command") && !text.contains("saved"),
+            "{text}"
+        );
+        assert_eq!(ensure_exit(&bare), 0, "nothing ran: nothing failed");
+        assert_eq!(ensure_exit(&json!({ "command": { "exit": 3 } })), 3);
+        assert_eq!(ensure_exit(&json!({ "command": { "exit": 300 } })), 255);
+        assert_eq!(ensure_exit(&json!({ "command": { "argv": ["x"] } })), 1);
+        let signalled = render_build_cache_ensure(&json!({ "command": { "argv": ["x"] } }));
+        assert!(
+            signalled.contains("command    x -> exit none"),
+            "{signalled}"
+        );
+    }
+
+    /// The repository this crate is built in, as the command line would name it.
+    fn this_repository(format: OutputFormat) -> MeshQueryArgs {
+        MeshQueryArgs {
+            repo: crate::cli::RepoArgs {
+                repo: Some(std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../..")),
+                ..Default::default()
+            },
+            format,
+        }
+    }
+
+    #[test]
+    fn an_ensure_outside_a_repository_or_refused_by_the_capability_is_an_error() {
+        let elsewhere = tempfile::tempdir().unwrap();
+        let outside = build_cache_ensure(MeshBuildCacheEnsureArgs {
+            kind: crate::mesh::build_cache::key::Kind::NpmModules,
+            dir: None,
+            command: vec!["true".into()],
+            query: MeshQueryArgs {
+                repo: crate::cli::RepoArgs {
+                    repo: Some(elsewhere.path().to_path_buf()),
+                    ..Default::default()
+                },
+                format: OutputFormat::Text,
+            },
+        });
+        assert!(
+            outside.is_err(),
+            "no layer to load was answered: {outside:?}"
+        );
+        // npm needs its install command: the capability refuses before anything runs
+        let refused = build_cache_ensure(MeshBuildCacheEnsureArgs {
+            kind: crate::mesh::build_cache::key::Kind::NpmModules,
+            dir: None,
+            command: Vec::new(),
+            query: this_repository(OutputFormat::Text),
+        });
+        let why = refused.expect_err("an npm ensure without a command was answered");
+        assert!(
+            why.to_string()
+                .contains("npm-modules needs the install command after `--`"),
+            "{why}"
+        );
+    }
+
+    #[test]
+    fn the_env_answer_is_printed_as_json_and_asks_sccache_by_name_when_none_is_given() {
+        let d = tempfile::tempdir().unwrap();
+        // the node file is absent, so no store is asked whatever sccache is installed
+        let code = build_cache_env(MeshBuildCacheEnvArgs {
+            sccache: None,
+            node_file: Some(d.path().join("absent.json")),
+            credentials: None,
+            format: OutputFormat::Json,
+        })
+        .unwrap();
+        assert_eq!(code, 0, "the answer is a fact, never a failure");
+    }
+
+    #[test]
+    fn a_key_answer_lists_each_kind_with_its_key_or_why_it_has_none() {
+        let v = json!({
+            "platform": "aarch64-apple-darwin",
+            "kinds": [
+                { "kind": "npm-modules", "dir": "site", "key": "v1/npm/k",
+                  "location": "store/v1/npm/k" },
+                { "kind": "mix-deps", "dir": ".", "unavailable": "elixir is not installed",
+                  "location": "" },
+                { "kind": "cargo-build-dir" },
+            ],
+        });
+        let text = render_build_cache_key(&v);
+        let lines: Vec<&str> = text.lines().collect();
+        assert_eq!(
+            lines,
+            [
+                "platform   aarch64-apple-darwin",
+                "npm-modules      site         v1/npm/k",
+                "                              -> store/v1/npm/k",
+                "mix-deps         .            no key: elixir is not installed",
+                "                              -> ",
+                "cargo-build-dir               no key: unknown",
+                "                              -> ",
+            ]
+        );
+        let none = render_build_cache_key(&json!({ "platform": "p", "kinds": [] }));
+        assert!(none.contains("nothing here is cacheable"), "{none}");
+    }
+
+    /// A known leftover is printed with every owner (its name, address and basis), its
+    /// chain, and each source as used or consulted; an unknown answer says what is missing.
+    #[test]
+    fn a_who_answer_names_its_owners_chain_evidence_and_what_is_missing() {
+        let v = json!({
+            "subject": "lundra:30", "kind": "pid", "host": "lundra",
+            "known": true, "leftover": true,
+            "owners": [
+                { "session": "claude-code-s1", "peer": "p2", "issue": "I3956", "name": "mj-39",
+                  "address": { "provider": "claude-code", "host": "mac", "pid": 20,
+                               "session": "s1", "socket": "/tmp/cc-socks/20.sock" },
+                  "basis": ["run record 083ddafbbc (its tag) names its owner"] },
+                { "basis": [] },
+            ],
+            "chain": [
+                { "pid": 30, "ppid": 1, "pgid": 7, "command": "rustc --crate-name x" },
+                { "pid": 7, "ppid": 1, "pgid": 7 },
+            ],
+            "evidence": [
+                { "source": "process", "used": true, "detail": "pid 30" },
+                { "source": "board", "used": false, "detail": "not read: off" },
+            ],
+            "missing": ["peer: no board row"],
+        });
+        let text = render_who(&v);
+        let lines: Vec<&str> = text.lines().collect();
+        assert_eq!(
+            lines,
+            [
+                "pid lundra:30 on lundra: known, a leftover",
+                "owner      claude-code-s1  peer p2  issue I3956  name mj-39",
+                "address    claude-code pid 20 on mac, /tmp/cc-socks/20.sock",
+                "  because  run record 083ddafbbc (its tag) names its owner",
+                "owner      -  peer -  issue -",
+                "process    30 <- 1  group 7  rustc --crate-name x",
+                "process    7 <- 1  group 7  ",
+                "used     process      pid 30",
+                "consulted board        not read: off",
+                "missing    peer: no board row",
+            ]
+        );
+        let unknown = render_who(&json!({ "subject": "I1", "kind": "issue", "host": "mac" }));
+        assert_eq!(unknown, "issue I1 on mac: unknown\n");
+    }
+
+    #[test]
+    fn a_provision_answer_reads_its_edits_and_what_the_apply_did() {
+        let v = json!({
+            "mode": "apply", "root": "/srv/node", "ok": false,
+            "plan": {
+                "files": [{ "state": "owed", "mode": "0600", "path": "env", "source": "derived" }],
+                "edits": [{ "owed": true, "path": "a.conf" }, { "owed": false, "path": "b.conf" }],
+                "steps": [{ "when": "after", "line": "systemctl restart x" }],
+                "changes": 2, "unobservable": 1,
+            },
+            "apply": {
+                "refused": "the disk is below its floor",
+                "written": ["env"],
+                "ran": [{ "ok": true, "line": "true" }, { "ok": false, "line": "false" }],
+                "skipped": ["systemctl restart x"],
+            },
+        });
+        let text = render_provision(&v);
+        let lines: Vec<&str> = text.lines().collect();
+        assert_eq!(
+            lines,
+            [
+                "mode        apply",
+                "root        /srv/node",
+                "owed          0600 env (derived)",
+                "edit          a.conf",
+                "current       b.conf",
+                "step (after)  systemctl restart x",
+                "plan        2 change(s) owed, 1 not observable here",
+                "refused     the disk is below its floor",
+                "written     env",
+                "ok    true",
+                "FAIL  false",
+                "skipped     systemctl restart x",
+                "verdict     not provisioned (see above)",
+            ]
+        );
+        let planned = render_provision(&json!({ "mode": "plan", "root": "/r", "ok": true,
+            "plan": { "changes": 0, "unobservable": 0 }, "apply": null }));
+        assert!(planned.ends_with("verdict     ok"), "{planned}");
+        assert!(!planned.contains("refused"), "{planned}");
+        let applied = render_provision(&json!({ "mode": "apply", "root": "/r", "ok": true,
+            "plan": { "changes": 0, "unobservable": 0 },
+            "apply": { "refused": null, "written": ["env"], "ran": [], "skipped": [] } }));
+        assert!(applied.contains("written     env"), "{applied}");
+        assert!(
+            !applied.contains("refused"),
+            "an apply that was not refused says nothing of a refusal: {applied}"
         );
     }
 }

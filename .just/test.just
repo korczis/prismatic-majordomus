@@ -26,7 +26,7 @@ test-shell *only:
 # The Rust crate's own suites: unit, integration, doctests.
 [group('test')]
 test-rust *args:
-    RUSTFLAGS='' cargo test --manifest-path "{{manifest}}" --no-fail-fast {{args}}
+    RUSTFLAGS='' cargo test --manifest-path "{{manifest}}" --no-fail-fast {{args}} # build-cache: a person's test run in the shared target; the cache joins through RUSTC_WRAPPER
 
 # Every Rust gate CI runs, in CI's order: fmt, clippy -D warnings, tests, rustdoc, benches compile, validate, generate --check, coverage threshold.
 [group('test')]

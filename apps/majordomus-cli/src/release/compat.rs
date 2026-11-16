@@ -1074,7 +1074,7 @@ pub enum Severity {
 }
 
 /// Every version tag this repository carries, newest last.
-fn tags(root: &Path) -> Vec<String> {
+pub(crate) fn tags(root: &Path) -> Vec<String> {
     let out = std::process::Command::new("git")
         .current_dir(root)
         .args(["tag", "--list", "v[0-9]*"])

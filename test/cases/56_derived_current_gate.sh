@@ -70,6 +70,12 @@ case "$(field outcome)" in pass|partial) ;; *) echo "    a current tree was reco
 # in the executable and owed as follow-ups, after which this bound comes back down: compute
 # the benchmark projection once per `generate --check`, batch the changelog's ancestry
 # questions into one git call, and cache the rustdoc module routes.
+#
+# It failed again at 31 s on master's validate 40086406859 (563fe99, suite-shard 3), the one
+# failure of this case in the 60 failed validate runs from 2026-10-16 to 2026-10-24. The plan
+# had grown and its scope-conflict scan, which built four strings for every pair of scope
+# entries of every pair of runnable issues, was 3.9 of the 12.1 s `generate --check` spent on
+# its main thread; I4223 made it allocate nothing, and the bound stayed where it was.
 best=""
 for _ in 1 2; do
   t0=$(date +%s); (cd "$W" && scripts/pages current >/dev/null 2>&1); t1=$(date +%s)
@@ -128,8 +134,14 @@ case "$out" in
 esac
 
 # a source file the registry indexes, moved: the site fingerprint does not notice and the
-# registry half must
-printf '\n# a line that moves the registry and not the site data\n' >> "$W2/lib/context_docs.sh"
+# registry half must. Which file that is, is read from both sides rather than named: since
+# I2847 every lib/*.sh is a site input, and lib/context_docs.sh — the file this used to
+# move — moved the site half too. An implementation file the index carries and the site
+# generator does not read is the one this asks about.
+moved="$(cd "$W2" && git ls-files -- bin lib | grep -vxF -f <(scripts/generate-site-data --inputs) \
+  | while read -r f; do grep -qF "\"path\": \"$f\"" site/data/registry/registry.json && { echo "$f"; break; }; done)"
+[ -n "$moved" ] || { echo "    no indexed implementation file is outside the site inputs; this half cannot be asked"; exit 1; }
+printf '\n# a line that moves the registry and not the site data\n' >> "$W2/$moved"
 rc=0; out="$(cd "$W2" && MAJORDOMUS_BIN="$RB" scripts/pages current 2>&1)" || rc=$?
 [ "$rc" = 10 ] || { echo "    a moved source file did not make the gate exit 10 (got $rc)"; printf '    | %s\n' "$out"; exit 1; }
 case "$out" in

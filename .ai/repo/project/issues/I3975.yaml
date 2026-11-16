@@ -1,0 +1,44 @@
+id: I3975
+milestone: merging-and-referencing-are-enforced
+title: "GitHub issues are created only by github-sync: an agent's raw create is refused, an issue nobody projected is reported on GitHub, and an unmarked issue is never adopted"
+slug: issues-come-from-the-projection
+priority: p0
+profile: implementation
+parallel_safe: false
+objective: "Three guards around the one writer of GitHub issues. First, on the agent side: the provider hooks the repository projects (.claude/settings.json and .claude/hooks for Claude Code, and the matching hook of every provider template under .ai/repo/providers that supports one) refuse a shell command that creates a GitHub issue by hand (gh issue create, or gh api with a POST to an issues endpoint), naming scripts/github-sync as the way; a person in a terminal is not judged. Second, on GitHub, since a client hook covers only the clients that have one: a workflow on issues opened labels and reports, never closes or deletes, any issue that carries no record marker and was not opened by github-actions[bot], so an issue nobody projected is visible within one run whoever opened it. Third, github-sync stops adopting an unmarked issue by its title prefix (remote_issue_line, github-sync:374-380): the first step measures how many unmarked issues github-sync --check still adopts; if none, the title fallback is deleted, otherwise the cutoff is the last adopted issue number, recorded in the adapter, and an unmarked issue above it is reported as a stranger and never adopted. The short-listing refusal is the I3920 record's (train 4) and is not repeated here; this issue starts after train 4 lands and I3970 has changed github-sync."
+why: "On 2026-10-22 an --apply read a truncated listing (about 400 of 1384 issues) and created 487 duplicate issues (#1861 to #2347) before it was stopped. Nothing stops an agent from creating an issue with gh by hand, the only command hook is Claude Code's, and github-sync's legacy title match would adopt a hand-made issue titled like a record, letting it capture the record's slot."
+current_state: "Verified at 355a0cee79a: github-sync takes a per-clone lock in the git common directory (github-sync:281-300) and exits 12 when a listing call fails (github-sync:354-366); remote_issue_line adopts an unmarked issue by title prefix and the listing reads no creation time; the edit guard (apps/majordomus-cli/src/guard.rs) judges file edits only; the provider templates for Codex and Gemini carry no command hook; no workflow runs on issues opened."
+desired_state: "No agent command with a hook creates a GitHub issue, every issue nobody projected is labelled and reported on GitHub, and no unmarked issue is adopted, each proven by a case."
+scope:
+  - "scripts/github-sync"
+  - ".claude/settings.json"
+  - ".claude/hooks"
+  - ".ai/repo/providers"
+  - ".github/workflows"
+  - ".ai/repo/ci/github.yaml"
+  - "test/cases/894_github_sync_applies_only_the_trunk.sh"
+  - "test/cases/602_a_spliced_body_is_recognised_as_its_own.sh"
+  - ".ai/repo/rules/project/github-projection-gated.v1.md"
+  - ".ai/repo/project/issues/I3975.yaml"
+non_scope:
+  - "Blocking a person's own gh use"
+  - "Closing or deleting any issue a person opened"
+  - "The short-listing refusal, which is the I3920 record's on train 4"
+acceptance_criteria:
+  - "The provider hook, given a Bash tool call gh issue create --title x, refuses it naming scripts/github-sync; given gh issue list it passes (case a_raw_issue_create_is_refused)"
+  - "A scripted issues opened event for an unmarked issue opened by a person is labelled and reported, and one opened by github-actions[bot] with a marker is not; nothing is closed or deleted"
+  - "The number of unmarked issues github-sync --check adopts is measured and recorded; a scripted forge holding an unmarked issue titled like a record above the cutoff is reported as a stranger by --check and not adopted by --apply"
+  - "A second --apply in the same clone while the lock is held is refused naming the holder"
+validation:
+  - "bin/majordomus plan validate"
+  - "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 894_github_sync_applies_only_the_trunk"
+  - "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 602_a_spliced_body_is_recognised_as_its_own"
+evidence_required:
+  - "issues_come_from_the_projection"
+depends_on:
+  - "I3970"
+  - "I3979"
+serves:
+  - "merging-and-referencing-are-enforced#issues-come-from-the-projection"
+created_at: 2026-10-22
+updated_at: 2026-10-22

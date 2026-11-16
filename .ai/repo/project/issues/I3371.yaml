@@ -1,0 +1,52 @@
+id: I3371
+milestone: a-registered-corpus-judges-majordomus
+title: "Economics summary decides a registered suite's primary outcome by its registered test, reports secondary differences without a verdict word, and refuses typed figures about them"
+slug: the-registered-suite-is-analysed-in-pairs
+priority: p1
+profile: implementation
+objective: "For a registered suite compute per task and arm the accepted share, summed session wall time and reported spend (tokens, and the harness's projection labelled as such); decide the primary outcome with I3366's exact test at the registered level; report secondary outcomes as mean paired differences with task-clustered intervals and no verdict word; state the effective sample as tasks; report status running until the registered sample is complete; report per-stratum results as preliminary and human interventions and CI reruns as not observed. Render the section in the generated report and the site page after I3356's scorecard section, and extend the economics vocabulary so a typed acceptance, wall-time or intervention figure is refused."
+why: "T2 of the owner's report of 2026-10-19 asks for the comparison to be computed, not described. The critique asked for one verdict on the primary outcome only, the sample stated as tasks, and no interim verdict; it depends on I3356 because both edit the economics summary, its schema and the economics template."
+current_state: "apps/majordomus-cli/src/economics/mod.rs:1809 derives completion_rate per arm; grep -n duration_ms mod.rs returns nothing though model.rs:687 records it; claims.rs:41-44 VOCABULARY holds no acceptance or wall-time word."
+desired_state: "economics summary, its schema, docs/generated/economics.* and the site carry the registered-suite section; economics check refuses a typed figure about these outcomes."
+scope:
+  - "apps/majordomus-cli/src/economics/mod.rs"
+  - "apps/majordomus-cli/src/economics/model.rs"
+  - "apps/majordomus-cli/src/economics/report.rs"
+  - "apps/majordomus-cli/src/economics/claims.rs"
+  - "apps/majordomus-cli/tests/economics.rs"
+  - "share/schemas/generated/economics-summary.schema.json"
+  - "docs/generated/economics.json"
+  - "docs/generated/economics.md"
+  - "docs/generated/economics.yaml"
+  - "site/data/generated/economics.json"
+  - "site/templates/economics.html"
+  - "docs/ECONOMICS.md"
+  - "site/content/docs/economics.md"
+non_scope:
+  - "The acceptance definition and pairing (I3133)"
+  - "Live runs (I3372)"
+depends_on:
+  - "I3366"
+  - "I3367"
+  - "I3356"
+  - "I3133"
+serves:
+  - "the-product-proves-it-pays#the-paired-analysis-says-inconclusive-when-underpowered"
+acceptance_criteria:
+  - "Fixture runs where the treatment accepts more tasks give a favourable primary verdict only when the exact test rejects"
+  - "Fixture runs below the registered sample read running with no verdict word"
+  - "Secondary outcomes print a difference and interval and no verdict word"
+  - "Human interventions and CI reruns read not observed"
+  - "economics check refuses a hand-typed acceptance or wall-time figure in prose"
+  - "CLI, JSON, MCP and the generated report agree"
+validation:
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test economics"
+  - "bash test/run.sh 430_economics"
+  - "bash test/run.sh 431_economics_claims_gated"
+  - "majordomus economics check"
+  - "majordomus generate --check"
+evidence_required:
+  - "test_registered_suite_primary_verdict"
+  - "test_corpus_figures_refused_in_prose"
+created_at: 2026-10-19
+updated_at: 2026-10-19

@@ -289,7 +289,7 @@ fn newest<T>(items: Vec<T>, limit: Option<usize>, stamp: impl Fn(&T) -> u64) -> 
 ///         scope: vec![path.into()], intent: Some("work".into()), mode: ClaimMode::Exclusive,
 ///         issue: Some("#1".into()) }).unwrap();
 /// }
-/// j.append_own(EventBody::ClaimReleased { claim: "c1".into() }).unwrap();
+/// j.append_own(EventBody::ClaimReleased { claim: "c1".into(), reason: None }).unwrap();
 /// let state = fold(&j.events(), &|_| StreamLiveness::Own);
 /// use majordomus_cli::mesh::page::{narrow, ClaimFilter, Query};
 ///
@@ -449,8 +449,10 @@ impl SessionCounts {
     }
 }
 
-/// Claims by standing: held, conflicted, released and expired. Held and conflicted are
-/// live; the other two are history, counted rather than listed.
+/// Claims by standing: held, conflicted, suspended, released and expired. Held and
+/// conflicted are live; a suspended claim is an exclusive one whose holder stopped making
+/// progress (I3990), not ended and refusing nobody; the other two are history, counted
+/// rather than listed.
 ///
 /// ```
 /// use majordomus_cli::mesh::page::ClaimCounts;
@@ -469,6 +471,9 @@ pub struct ClaimCounts {
     pub released: usize,
     /// Ended without a release.
     pub expired: usize,
+    /// Exclusive, its holder silent past its progress ttl: refusing nobody until it beats.
+    #[serde(default)]
+    pub suspended: usize,
 }
 
 impl ClaimCounts {
@@ -478,6 +483,7 @@ impl ClaimCounts {
             ClaimState::Conflicted(_) => self.conflicted += 1,
             ClaimState::Released => self.released += 1,
             ClaimState::Expired(_) => self.expired += 1,
+            ClaimState::Suspended(_) => self.suspended += 1,
         }
     }
 }
@@ -500,7 +506,7 @@ impl ClaimCounts {
 ///         scope: vec![path.into()], intent: Some("work".into()), mode: ClaimMode::Exclusive,
 ///         issue: Some("#1".into()) }).unwrap();
 /// }
-/// j.append_own(EventBody::ClaimReleased { claim: "c1".into() }).unwrap();
+/// j.append_own(EventBody::ClaimReleased { claim: "c1".into(), reason: None }).unwrap();
 /// let state = fold(&j.events(), &|_| StreamLiveness::Own);
 /// use majordomus_cli::mesh::page::{summarize, ClaimBrief};
 ///
@@ -547,7 +553,7 @@ pub struct ClaimBrief {
 ///         scope: vec![path.into()], intent: Some("work".into()), mode: ClaimMode::Exclusive,
 ///         issue: Some("#1".into()) }).unwrap();
 /// }
-/// j.append_own(EventBody::ClaimReleased { claim: "c1".into() }).unwrap();
+/// j.append_own(EventBody::ClaimReleased { claim: "c1".into(), reason: None }).unwrap();
 /// let state = fold(&j.events(), &|_| StreamLiveness::Own);
 /// use majordomus_cli::mesh::page::{summarize, RuntimeSummary};
 ///
@@ -644,7 +650,7 @@ pub struct HandoverBrief {
 ///         scope: vec![path.into()], intent: Some("work".into()), mode: ClaimMode::Exclusive,
 ///         issue: Some("#1".into()) }).unwrap();
 /// }
-/// j.append_own(EventBody::ClaimReleased { claim: "c1".into() }).unwrap();
+/// j.append_own(EventBody::ClaimReleased { claim: "c1".into(), reason: None }).unwrap();
 /// let state = fold(&j.events(), &|_| StreamLiveness::Own);
 /// use majordomus_cli::mesh::page::{summarize, Summary};
 ///
@@ -704,7 +710,7 @@ fn rank(liveness: StreamLiveness) -> u8 {
 ///         scope: vec![path.into()], intent: Some("work".into()), mode: ClaimMode::Exclusive,
 ///         issue: Some("#1".into()) }).unwrap();
 /// }
-/// j.append_own(EventBody::ClaimReleased { claim: "c1".into() }).unwrap();
+/// j.append_own(EventBody::ClaimReleased { claim: "c1".into(), reason: None }).unwrap();
 /// let state = fold(&j.events(), &|_| StreamLiveness::Own);
 /// use majordomus_cli::mesh::page::summarize;
 ///
@@ -861,6 +867,7 @@ mod tests {
             if n < 38 {
                 j.append_own(EventBody::ClaimReleased {
                     claim: format!("c{n}"),
+                    reason: None,
                 })
                 .unwrap();
                 j.append_own(EventBody::SessionClosed {
@@ -931,6 +938,32 @@ mod tests {
             StreamLiveness::Own,
             Some(5),
         )]
+    }
+
+    /// A claim whose holder went silent past its progress ttl is counted as suspended — on
+    /// the whole mesh and on its runtime — and neither as held nor as ended: it refuses
+    /// nobody, but it has not gone away (I3990).
+    #[test]
+    fn a_silent_holders_exclusive_claim_is_counted_suspended() {
+        use crate::mesh::journal::SessionProgress;
+        let j = journal();
+        j.append_own(EventBody::SessionOpened {
+            info: SessionInfo::named("s1", "claude-code"),
+        })
+        .unwrap();
+        claim(&j, "c1", "s1", "land the train");
+        let silent = |_: &str| SessionProgress::Silent {
+            ttl_seconds: 8,
+            age: std::time::Duration::from_secs(9),
+        };
+        let state = crate::mesh::state::fold_with(&j.events(), &|_| StreamLiveness::Own, &silent);
+        let summary = summarize(&state, &streams(&state));
+        let suspended = ClaimCounts {
+            suspended: 1,
+            ..ClaimCounts::default()
+        };
+        assert_eq!(summary.claims, suspended);
+        assert_eq!(summary.runtimes[0].claims, suspended);
     }
 
     /// Claims with no session: an advisory one, an exclusive one it overlaps, and an
@@ -1427,6 +1460,7 @@ mod tests {
             claim(&j, &format!("c{n}"), &session, &"an intent ".repeat(40));
             j.append_own(EventBody::ClaimReleased {
                 claim: format!("c{n}"),
+                reason: None,
             })
             .unwrap();
             j.append_own(EventBody::SessionClosed { session }).unwrap();

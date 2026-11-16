@@ -1,0 +1,41 @@
+# Draft for the 2026-10-20 records sweep. The id, the case number (placeholder I3766 in case names) and the dates are
+# allocated from the granted id block when the coordinator records it; current_state was read
+# on origin/master 91c0b5d5658.
+# rehomed from a-visitor-understands-and-checks-majordomus: that milestone derives PLANNED, and the campaign covers ACTIVE milestones only (O1); public-proof is the ACTIVE milestone that owns the homepage's refusal story and install path
+id: "I3766"
+milestone: "public-proof"
+title: "The install section links each page once, and the recorded refusals are grouped by the use case they prove"
+slug: "the-install-section-links-each-page-once"
+priority: "p2"
+profile: "implementation"
+parallel_safe: false
+objective: "Remove the second link to the install reference from the homepage's install section, give the button after the copy button a label that says what /getting-started/ adds rather than repeating the install action, and render the list of other recorded refusals grouped by use case, each use case named once with its refusals under it; have homepage-check refuse a section that links the same page twice with the same text and a refusal list that names one use case twice."
+why: "The install section says the same link twice within a few lines, and the button after the copy button reads as a second way to do what the copy button just did. The disclosure of other recorded refusals repeats one use-case title three times, so twelve refusals read as noise instead of as the evidence they are. Found by the landing audit of 2026-10-20 (L-P2-7; campaign defect D28). index.html sits under a stale claim of I2745, which is completed; ask its holder to release it before claiming."
+current_state: "site/templates/components.html:50-81 is the install component; at :77 it renders 'Platforms, pinning a version, the security model' linking docs_href when one is passed, and site/templates/index.html:489 passes docs_href /docs/install/, then :495-500 renders the same text linking the same page again beside three other links. index.html:491-494 places a button labelled 'Install Majordomus' linking /getting-started/ right after the component's copy button. index.html:395-406 renders term.refusals in a details element, one row per refusal with its use_case_title; site/data/generated/terminal.json on origin/master carries 12 refusals, 'Catch an agent that says it is done when it is not' three times and two other use cases twice each, and is produced by scripts/generate-site-data:1255-1300."
+desired_state: "The install section links /docs/install/ once, from the component; the button after it names the next step /getting-started/ actually offers, with the label declared in site/data/marketing.toml [install]. The refusals disclosure groups term.refusals by use_case in the template, names each use case once as a link to its route, and lists that use case's commands and exit statuses under it; the summary still shows the number of refusals. terminal.json is unchanged. homepage-check gains a duplicate-link check over every section and a grouping check over the refusals list."
+scope:
+  - "site/templates/index.html"
+  - "site/templates/components.html"
+  - "site/data/marketing.toml"
+  - "scripts/ci/homepage-check"
+  - "test/cases/3739_the_install_section_links_each_page_once.sh"
+  - ".ai/repo/project/issues/I3766.yaml"
+non_scope:
+  - "The refusal corpus or the order of terminal.json (scripts/generate-site-data)"
+  - "The getting-started page and the install reference page"
+  - "The install command and the installer"
+  - "Czech translations of the changed labels; the translation memory is I3753's and is exported after this lands"
+acceptance_criteria:
+  - "The built homepage's install section carries exactly one link to /docs/install/"
+  - "The button after the copy button carries a label declared in marketing.toml that is not the install action"
+  - "The refusals disclosure names each use case once and lists every recorded refusal under its use case, and its summary count equals terminal.json counts.refusals"
+  - "homepage-check fails when a section carries two links to the same page with the same text, naming the section, the text and the page (negative case, planted in the case's fixture)"
+  - "homepage-check fails when the refusals list names one use case twice, naming the use case (negative case)"
+validation:
+  - "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 3739_the_install_section_links_each_page_once"
+  - "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 333_homepage_narrative"
+  - "scripts/site-build && scripts/site-check && scripts/ci/homepage-check && scripts/ci/link-check"
+evidence_required:
+  - "a_homepage_section_links_each_page_once"
+  - "recorded_refusals_are_grouped_by_use_case"
+depends_on: []

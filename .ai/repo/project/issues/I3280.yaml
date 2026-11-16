@@ -1,0 +1,45 @@
+id: I3280
+milestone: a-promoted-record-opens-its-message
+title: "An intent, a milestone and an issue carry provenance the way an ADR and a knowledge record do"
+slug: plan-records-carry-provenance
+priority: p1
+profile: implementation
+objective: "Give the intent, milestone and issue schemas an optional provenance header (origin, derived_from) like the ADR and knowledge schemas carry, with one reference grammar declared once and inlined by majordomus generate into each schema, each kind admitting its own declared subset, read by the plan model, so a promoted plan record can name where it came from."
+why: "The 2026-10-18 import promotes intents, milestones and issues, and their schemas (share/schemas/majordomus/{intent,milestone,issue}) have no field for a source: today the drill-back the owner asked for has nowhere to live on three of the five record kinds. Critique 2026-10-18: adr.v1 admits ^(decision|session|commit|issue|file|test):.+$ while knowledge.v1 adds task:, and their origin semantics differ, so 'one Provenance' means one grammar inlined at generate time with a per-kind admitted subset, not one merged definition. It does not wait on milestone external-workspaces: that milestone dependency was removed from a-promoted-record-opens-its-message, and only the issue-level dependencies of I3282 (on I1308) and I3283 (on I1309) remain. Proposed in ADR 0211 (A record promoted from a workspace cites the message it came from by a typed reference that validates in every checkout and resolves only where the store is held) (proposed; it carries no authority until the owner accepts it). Sources: chatgpt-majordomus:c267#2."
+current_state: "Verified on master 707a04c: adr.v1 admits derived_from ^(decision|session|commit|issue|file|test):.+$; knowledge.v1 adds task: and resolves decision, session and task references against the ledger; the two origin semantics differ; the plan schemas define no provenance; no schema under share/schemas uses a cross-file $ref."
+desired_state: "One reference grammar declared once and inlined into all five schemas at generate time, each kind admitting its declared subset, validated by plan validate and knowledge check alike."
+scope:
+  - "apps/majordomus-cli/src/plan.rs"
+  - "apps/majordomus-cli/src/generate.rs"
+  - "share/schemas/majordomus/adr/adr.v1.schema.json"
+  - "share/schemas/majordomus/knowledge/knowledge.v1.schema.json"
+  - "share/schemas/majordomus/intent/intent.v1.schema.json"
+  - "share/schemas/majordomus/milestone/milestone.v1.schema.json"
+  - "share/schemas/majordomus/issue/issue.v1.schema.json"
+  - "share/allow/intent.txt"
+  - "share/allow/issue.txt"
+  - "share/allow/milestone.txt"
+  - "apps/majordomus-cli/src/commands/plan.rs"
+  - "test/cases/388_an_intent_is_realised_across_providers_and_held_to_reality.sh"
+non_scope:
+  - "New reference types (I3281)"
+  - "Removing task: from knowledge provenance"
+  - "A runtime cross-file $ref resolver in the schema validator"
+serves:
+  - "what-a-workspace-decides-reaches-the-repository-with-its-source#a-reference-validates-everywhere"
+acceptance_criteria:
+  - "An issue with provenance.derived_from: [file:README.md] validates; one with an unknown key is refused"
+  - "plan show renders the provenance"
+  - "The reference grammar is declared once and `majordomus generate` inlines it into the adr, knowledge, intent, milestone and issue schemas; no schema uses a cross-file $ref and the jsonschema build is unchanged"
+  - "Each kind admits its own declared subset: intent, milestone and issue admit only tracked-resolvable types (commit, issue, file, test); adr keeps decision|session|commit|issue|file|test; knowledge keeps task:"
+  - "A plan record citing task:, session: or decision: is refused with the reason that ledger-local references fail in every other checkout"
+  - "The adr `origin` and knowledge `origin` semantics are kept per kind and covered by one test each"
+  - "One observed run in which a person's request becomes an intent whose criterion a task carries to finish is recorded against the intent row of milestone a-bounded-task-is-carried-to-accepted-work; case 388 is its proof"
+validation:
+  - "majordomus plan validate"
+  - "majordomus generate --check"
+  - "bin/majordomus knowledge check"
+evidence_required:
+  - "case_a_plan_record_carries_provenance"
+created_at: 2026-10-18
+updated_at: 2026-10-30

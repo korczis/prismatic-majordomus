@@ -148,6 +148,36 @@ expect_grep '1 identity added here, measured against'
 LAST_OUT="$("$MJ" doctor 2>&1 || true)"
 expect_no_grep 'identity 0003 is also claimed'
 
+# ---------------------------------------------------------------- a renumbered claim claims nothing
+# A ref claims an identity while its tip carries the document, not while its history once
+# added it (I2761). On 2026-10-16 #1293 renamed its ADR 0168 to 0169 and #947 was still
+# refused 0168, because that branch contained the commit that once added it. So `other`
+# renumbers its 0003 away, in a worktree of its own, and this branch may then take 0003.
+owt="$T/other-wt"
+git worktree add -q "$owt" other
+git -C "$owt" mv "${other_file}" .ai/repo/adrs/0009-a-decision-on-another-branch.md
+sed -i.bak 's/^id: adr-0003$/id: adr-0009/' "$owt/.ai/repo/adrs/0009-a-decision-on-another-branch.md"
+rm -f "$owt/.ai/repo/adrs/0009-a-decision-on-another-branch.md.bak"
+git -C "$owt" commit -qam "renumbered away"
+git worktree remove --force "$owt"
+mine=".ai/repo/adrs/$free-a-decision-of-my-own.md"
+mv "$mine" .ai/repo/adrs/0003-a-decision-of-my-own.md
+sed -i.bak "s/^id: adr-$free$/id: adr-0003/" .ai/repo/adrs/0003-a-decision-of-my-own.md
+rm -f .ai/repo/adrs/0003-a-decision-of-my-own.md.bak
+expect_exit 0 "$MJ" adr check
+expect_no_grep 'identity 0003 is also claimed'
+# and the document the renumbered branch now carries is still a claim at its new number
+mv .ai/repo/adrs/0003-a-decision-of-my-own.md .ai/repo/adrs/0009-a-decision-of-my-own.md
+sed -i.bak 's/^id: adr-0003$/id: adr-0009/' .ai/repo/adrs/0009-a-decision-of-my-own.md
+rm -f .ai/repo/adrs/0009-a-decision-of-my-own.md.bak
+expect_exit 10 "$MJ" adr check
+expect_grep 'identity 0009 is also claimed by .*0009-a-decision-on-another-branch.md, on: .*other'
+# back to the number the allocator gave, and `other` back to carrying 0003, for what follows
+mv .ai/repo/adrs/0009-a-decision-of-my-own.md "$mine"
+sed -i.bak "s/^id: adr-0009$/id: adr-$free/" "$mine" && rm -f "$mine.bak"
+git branch -q -f other other~1
+expect_exit 0 "$MJ" adr check
+
 # ---------------------------------------------------------------- could not look
 # A survey that could not reach the other refs has not cleared this branch of anything, and
 # says so rather than exiting clean with nothing said (project.empty-is-not-failure).

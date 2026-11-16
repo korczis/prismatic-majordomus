@@ -1,0 +1,35 @@
+id: I2982
+milestone: peer-blackboard
+title: "The monitor page is pushed over the live channel, and says when it polls"
+slug: the-monitor-is-pushed
+priority: p1
+profile: implementation
+parallel_safe: false
+serves:
+  - the-peer-blackboard-is-one-reality#the-client-follows
+objective: "Let the one socket client follow the blackboard channel and move /cockpit/monitor onto it. /events?follow=blackboard takes for (the reader whose signals are marked), sources (the monitor sources, mesh and executor by default) and frames (snapshot, signals or both); a shared read is keyed by what it reads. socket.js keeps the opaque cursor of the last blackboard.signals frame and the epoch of stream.ready, resumes with both, and hands a stream.resync to the page. The monitor page renders the channel with its own cursor and epoch, adds pushed signals on top, and polls /api/v1/monitor only when the channel could not be opened, saying so."
+why: "/cockpit/monitor asks the whole monitor every five seconds per tab, and says it is live while it polls."
+current_state: "socket.js follows executions only, with a numeric sequence cursor; monitor.js polls /api/v1/monitor every five seconds while visible."
+desired_state: "A review request reaches an open monitor page as a row without a poll; a page whose channel is refused polls and labels itself as polling."
+scope:
+  - "apps/majordomus-cli/src/http/follow.rs"
+  - "apps/majordomus-cli/src/cockpit/monitor.rs"
+  - "share/cockpit/socket.js"
+  - "share/cockpit/monitor.js"
+  - ".ai/repo/adrs/0176-the-blackboard-is-one-projection-pushed-over-one-socket.md"
+  - ".ai/repo/project/intents/the-peer-blackboard-is-one-reality.yaml"
+  - "docs/BLACKBOARD.md"
+  - "test/cases/3382_the_monitor_is_pushed.sh"
+depends_on:
+  - "I2981"
+acceptance_criteria:
+  - "A follower given for= receives signals marked for_you for that reader, and one given frames=signals receives no snapshot"
+  - "socket.js resumes a blackboard channel with the last cursor and epoch, and reports stream.resync to the page"
+  - "The monitor page adds a pushed signal without polling, and polls with a label only when the channel is refused"
+validation:
+  - "majordomus plan validate"
+  - "bash test/run.sh 3382_the_monitor_is_pushed"
+evidence_required:
+  - "case_monitor_pushed"
+created_at: 2026-10-18
+updated_at: 2026-10-18

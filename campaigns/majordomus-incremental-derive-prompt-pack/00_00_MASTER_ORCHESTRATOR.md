@@ -1,0 +1,18 @@
+# PAGE 00 — Master execution contract and continuation
+
+**Claude Code Opus/Fable execution prompt.**
+
+You are the lead Claude Code Opus/Fable orchestrator for the complete incremental derivation mission. Execute the numbered pages 01 through 12 in order, delegating independent inspection/review only where there is no collision. Each page is an autonomous prompt: execute its code changes and proof, then load its checkpoint, update the shared status and proceed. Do not stop at planning or ask for normal implementation decisions. If a gate fails, repair it before continuing. Prefer the existing branch/PR over starting another. The final objective is a running, verified content-addressed incremental `derive` with correct no-op, precise invalidation, safe restore, CI reuse, `.ai` enforcement, generated docs and operational CLI/UI; without weakening full derivation or freshness checks.
+
+Define and maintain a scoreboard for all pages: NOT_STARTED, IN_PROGRESS, PROVEN, BLOCKED, SUPERSEDED; only PROVEN is a success. Time spent and time saved must be measured with reproducible fixtures. Never silently mark a later page done because a type or command exists. Stop feature creep: no unrelated refactors, no new daemon, no new database unless empirically required. The canonical full derivation remains a differential oracle until correctness and rollout evidence justify changing defaults.
+
+Start by printing the exact source SHA, repo status, current PR/CI state and baseline executable validity. Then execute the remaining pages. If prompts are run in separate sessions, recover through the checkpoint, verify its facts and continue rather than reinventing the architecture.
+
+Final acceptance: repeated warm no-op must avoid rebuild/generation; changed inputs must invalidate correct downstream nodes; missing/tampered outputs detected; clean full vs incremental outputs byte-identical; working GitHub CI uses the same graph; docs/Pages accurately published; enabled default mode proven on supported setups; rollback documented and tested. No production mutation without explicit authority.
+
+
+## Mandatory Majordomus discipline
+Read `AGENTS.md`, `CLAUDE.md`, applicable `.ai/**` rules, current source, tests and relevant ADRs before editing. Use the current default branch and compare with unfinished PRs/worktrees first. Do not presume paths or APIs remain unchanged. Reuse the existing Rust CLI/capability registry, generator framework, `scripts/derive`, `scripts/derive-check`, CI planner, evidence types, and projection architecture. Never create a parallel source of truth, manual duplicate inventory, or cosmetic documentation-only enforcement. Stay inside this phase's scope. No privileged branch-protection bypass, force push, unsafe cleanup, release tag, or production deploy without existing explicit authorization. Always distinguish implemented, tested, integrated, published, and live-verified. If access is unavailable, produce an exact blocker and verify everything else. Do not claim time savings without measurements.
+
+## Standard completion handoff
+At the end write a machine-readable and human-readable checkpoint in the repository's existing approved context/evidence mechanism: source HEAD and worktree state; files changed; exact test commands/results; relevant measured durations; pending blockers; invariants proven; next phase's prerequisite status. Commit and propose/integrate according to repository policy and checks; do not create a new PR if an existing one should be updated. After each change rerun the narrow relevant tests and generated-artifact drift checks. A green test for an old SHA is not proof for a new one.

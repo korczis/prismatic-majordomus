@@ -20,6 +20,9 @@ origin() {
   on "$1" git init -q -b main .
   on "$1" git config user.email "$1@example.com"; on "$1" git config user.name "$1"
   on "$1" "$MJ" init >/dev/null; on "$1" "$MJ" update >/dev/null
+  # a repository with no mesh (ADR 0221: delete the declaration init seeds), so no trust list
+  # judges the other machine's records; case 821 and 827 hold the list
+  rm -f "$S/$1/repo/.ai/repo/mesh/mesh.yaml"
   mkdir -p "$S/$1/repo/lib"; echo a > "$S/$1/repo/lib/a"
   on "$1" git add -A; on "$1" git commit -qm base
   on "$1" git remote add origin "$S/shared.git"

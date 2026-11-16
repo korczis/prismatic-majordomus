@@ -28,4 +28,16 @@ evidence_required:
   - preflight_reads_the_one_verdict
 risk: "It starts only once PR #578 and PR #597, carrying I1948's slice, are both on master. The case name is this slice's to confirm when it is written."
 created_at: 2026-09-26
-updated_at: 2026-09-26
+updated_at: 2026-10-26T00:41:02Z
+started_at: 2026-10-26T00:40:12Z
+started_event: sha256:c00517c1f03019808f6017d04f26604049d591eed366dce27b606056d7a8c5b8
+completed_at: 2026-10-26T00:41:02Z
+completed_event: sha256:ffe4edc070f75eb42fb1eafa7f76cca99f6019852f5e70fdf6464d6a67b741ce
+evidence:
+  - covers: preflight_reads_the_one_verdict
+    type: test
+    command: "bash test/run.sh 529_the_preflight_reads_the_one_verdict; cargo test --test preflight (CI)"
+    result: "case 529 passed 2026-10-26 on master 2efeacea031 (verified, skip as not run, failed, foreign-commit pass as stale); master validate run 40196303175 green with tests/preflight.rs 19 passed; the Cockpit overview's preflight_card reads environment.preflight, the value the CLI and entry banner print. Landed in train 3b (a57482183bf, 2026-10-22)"
+    artifact: "https://github.com/korczis/prismatic-majordomus/actions/runs/40196303175"
+    commit: 2efeacea03158615db2b497117a8da35b264909b
+    recorded_at: 2026-10-26T00:40:49Z

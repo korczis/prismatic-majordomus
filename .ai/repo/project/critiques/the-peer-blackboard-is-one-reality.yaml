@@ -1,0 +1,129 @@
+intent: the-peer-blackboard-is-one-reality
+reviewed_at: 707a04c7ce
+reviewed_by: "claude-code subagent (Plan, read-only, fresh context, same model as the author) dispatched by session 5a with the owner's request summarised, the plan records, the later issues kept out of the tree and the draft code, and none of the author's reasoning; independent of the authoring context, not of the model's blind spots. Read only: nothing was run. Disposition: decomposition and ADR sound, I2980 not ready; 6 of 14 findings blocking. All six were answered in I2980's code and records before its task started."
+findings:
+  - id: board-session-join-ignores-the-server-instance
+    class: unproven_assumption
+    subject: I2980
+    finding: "board-pN is a position handed out again by every server process; a join by node, checkout, board session and client alone can verify a superseded or restarted instance's session to a different person."
+    blocking: true
+    resolution:
+      state: planned
+      issue: I2980
+      because: "peers.list now carries, per board, the mesh stream of the server whose memory holds it (BoardView.stream, its own PeerList.stream for a sibling's answer), and the join requires a session of exactly that stream; a board whose server names no stream joins nothing. Unit test a_peer_is_joined_only_through_its_servers_stream covers another instance, another machine and another checkout."
+  - id: a-joined-worker-loses-its-mesh-claims
+    class: insufficient_work
+    subject: I2980
+    finding: "A joined worker's claims came from its announcements only, so an exclusive mesh.claim taken through its MCP session, and the confirmed conflicts it makes, never appeared."
+    blocking: true
+    resolution:
+      state: planned
+      issue: I2980
+      because: "A joined worker keeps its session's live claims beside its announcements; the advisory claims its server projected from an announcement (same normalised scope) are not counted twice. Unit test a_joined_peer_keeps_its_exclusive_mesh_claims."
+  - id: records-and-code-name-different-capabilities
+    class: delivery_verification
+    subject: I2980
+    finding: "The records named peers.blackboard and /api/v1/peers/blackboard while the code declared blackboard.snapshot and /api/v1/blackboard; the registry ties a builtin to its module's namespace."
+    blocking: true
+    resolution:
+      state: planned
+      issue: I2980
+      because: "One set everywhere: module blackboard, capability blackboard.snapshot, majordomus blackboard, GET /api/v1/blackboard, majordomus_blackboard, and the stream at /api/v1/blackboard/stream; the intent, milestone, I2980 and ADR 0176 say so."
+  - id: the-cli-must-ask-the-leaseholder
+    class: missed_requirement
+    subject: the-peer-blackboard-is-one-reality#one-projection
+    finding: "A command-line process has an empty board and no mesh, so answering in-process differs from HTTP and MCP."
+    blocking: true
+    resolution:
+      state: planned
+      issue: I2980
+      because: "commands/blackboard.rs asks the server holding the lease and runs in-process only when none answers, which its sources then say; case 3380 compares the command line, HTTP and MCP answers on a running server with an announced peer."
+  - id: complete-is-false-on-most-machines
+    class: unproven_assumption
+    subject: I2980
+    finding: "An empty executor trail, a missing gh and a mesh off by declaration all read Absent, so complete would stay false on most clones."
+    blocking: true
+    resolution:
+      state: planned
+      issue: I2980
+      because: "complete is the boards' and the mesh's: an unread board or a declared mesh that is not running makes it false; a mesh the repository does not declare or declares off is skipped with its reason; the monitor's sources are reported and do not decide it. Unit test only_what_could_not_be_asked_makes_the_answer_incomplete."
+  - id: review-relations-verified-by-a-bare-position
+    class: unproven_assumption
+    subject: I2980
+    finding: "A reviewer named by a bare session id such as board-p3 matched any board's p3 and was marked verified."
+    blocking: true
+    resolution:
+      state: planned
+      issue: I2980
+      because: "A reviewer resolves to a worker only by a whole session key; anything else stays the word the record holds, so the relation is verified as a record and invents no addressee. Unit test a_reviewer_is_a_worker_only_by_a_whole_session_key."
+  - id: the-snapshot-depends-on-who-asks
+    class: regression_risk
+    subject: the-peer-blackboard-is-one-reality
+    finding: "for_you differs per reader, so one snapshot per change cannot be shared by every subscriber as ADR 0176 says."
+    blocking: false
+    resolution:
+      state: planned
+      issue: I2981
+      because: "The live channel reads the blackboard reader-neutral (no for), so one read per generation and width is shared by every follower; marking what is for whom is the reader's, in the client."
+  - id: cost-of-one-snapshot
+    class: unproven_assumption
+    subject: the-peer-blackboard-is-one-reality
+    finding: "One snapshot clones the whole journal for the monitor and folds it again for state(), does the repository-wide gather and could ask GitHub."
+    blocking: false
+    resolution:
+      state: planned
+      issue: I2981
+      because: "One read per generation is shared by every connection under a single-flight lock, a burst of changes settles 150 ms and is read once, and GitHub stays off the channel (sources mesh,executor). Measured per announce in case 3381."
+  - id: the-monitor-never-refuses-a-well-formed-cursor
+    class: unproven_assumption
+    subject: the-peer-blackboard-is-one-reality
+    finding: "A well-formed cursor naming a dropped stream, a rotated trail or another server's journal is accepted silently, so a resynchronisation never fires."
+    blocking: false
+    resolution:
+      state: planned
+      issue: I2981
+      because: "stream.ready carries the server epoch (its mesh stream, which names the process instance); a resumed follower sends after and epoch back, and a cursor of another process, or one more than ten pages behind, is answered with stream.resync and a fresh snapshot (case 3381)."
+  - id: the-published-snapshot-would-leak-before-the-public-form
+    class: regression_risk
+    subject: the-peer-blackboard-is-one-reality
+    finding: "Once /ui/peers exists, an in-process UI snapshot would publish worktree paths and intents before the public-safe form exists."
+    blocking: false
+    resolution:
+      state: planned
+      issue: I2983
+      because: "The UI's snapshot withholds /ui/peers (Subject::withheld), so no publication holds a page of it and the navigation's link leads to the live page; the public-safe form is I2984. The snapshot's unit test asserts the screen is left out and its link leads to the live page."
+  - id: the-blackboard-is-readable-beyond-loopback
+    class: regression_risk
+    subject: the-peer-blackboard-is-one-reality
+    finding: "The blackboard gathers paths, intents, review subjects and handover branches behind one GET; a socket upgrade is not a capability route and must ask the remote-caller policy itself."
+    blocking: false
+    resolution:
+      state: planned
+      issue: I2981
+      because: "The upgrade asks the remote-caller policy of blackboard.snapshot itself (CapabilityError::remote when it does not admit), and the origin check of /events refuses a page of another origin (case 3381)."
+  - id: generated-surfaces-and-version-are-out-of-scope
+    class: surface_missing
+    subject: I2980
+    finding: "A new capability changes the generated registry, OpenAPI, CLI docs, module pages and skills, and is a minor release."
+    blocking: false
+    resolution:
+      state: planned
+      issue: I2980
+      because: "The projections are regenerated by majordomus generate and scripts/derive and admitted as derived; every schema component is prefixed Blackboard; the version bump is the release seat's on the top that lands it."
+  - id: no-addressee-for-handovers
+    class: missed_requirement
+    subject: the-peer-blackboard-is-one-reality
+    finding: "A handover names no recipient, so 'for whom' cannot be answered from the record."
+    blocking: false
+    resolution:
+      state: planned
+      issue: I2980
+      because: "BlackboardHandover says the journal names no recipient and that whoever takes a handover is its addressee; nothing is inferred from its body."
+  - id: other-peer-surfaces-are-not-migrated
+    class: surface_missing
+    subject: the-peer-blackboard-is-one-reality
+    finding: "The brief, the dashboard card, the MCP instructions and the Cockpit overview still read peers.list."
+    blocking: false
+    resolution:
+      state: open
+      because: "Each moves to the blackboard with the screen issue or is exempted there with its reason; the Observatory scene is deferred behind the screens."

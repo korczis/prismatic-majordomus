@@ -1,0 +1,39 @@
+id: I2761
+milestone: development-runtime
+title: "A branch that renumbered its decision away claims nothing at the old number"
+slug: a-renumbered-adr-claims-nothing
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Count a ref as claiming an ADR identity only while its tip carries the document, so that renumbering one of two colliding decisions clears the collision for the other branch."
+why: "On 2026-10-16 two sessions took ADR 0168 within minutes: #947 (the d8 mesh segment) and #1293 (I1101). The landing seat decided that #947 keeps 0168, and #1293 renamed its decision to 0169 and pushed. #947's commit was still refused by the pre-commit hook with `identity 0168 is also claimed by .ai/repo/adrs/0168-what-an-adoption-leaves-behind-is-measured-not-remembered.md, on: docs/adoption-footprint-forensics`. mj_adr_collisions asks which refs contain the commit that once added the path, and #1293's branch still contains that commit in its history. No branch carried the document any more, and the only way past was --no-verify, which this repository forbids."
+current_state: "mj_adr_collisions reports a collision for every path that any ref's history ever added, for as long as any ref contains that add-commit, whether or not the document still exists at the ref's tip."
+desired_state: "A ref claims an identity while `git cat-file -e <ref>:<path>` holds. A path that no current tip carries is no collision, whereas one in an unreferenced commit is still reported as before. The allocator (`adr next`) is unchanged: a withdrawn identity stays spent there."
+scope:
+  - "lib/adr.sh"
+  - "test/cases/271_adr_allocation.sh"
+  - ".ai/repo/project/issues/I2761.yaml"
+depends_on: []
+acceptance_criteria:
+  - "adr check passes on a branch taking an identity whose other claimant renumbered its document away and pushed"
+  - "the renumbered document still collides at its new number, naming the branch"
+  - "case 271 fails against master without the change"
+validation:
+  - "bash test/run.sh 271_adr_allocation"
+  - "bin/majordomus plan validate"
+evidence_required:
+  - "renumbered_claim_case"
+created_at: 2026-10-16
+updated_at: 2026-10-25T20:40:43Z
+started_at: 2026-10-25T20:39:19Z
+started_event: sha256:bd62cb6479568f4171a07896cfbd2a2c81423ec513eba8505a997620c43f486e
+completed_at: 2026-10-25T20:40:43Z
+completed_event: sha256:ad06231459fa960dd7bd652d64c38c41ee70a0fc20886a3c219b3fdcba4a76e7
+evidence:
+  - covers: renumbered_claim_case
+    type: test
+    command: "MJ_TEST_JOBS=4 env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 271_adr_allocation"
+    result: "at master 2efeacea031: case 271 ok in 98 s (C1, C2). C3: with ace03790372's lib/adr.sh hunk reversed (git apply -R), case 271 fails: adr check exits 10, identity 0003 is also claimed by the renumbered branch's document; restored, lib/adr.sh is identical to master. Master's validate run 40196303175: case 271 ok, suite-shard (2) job 121182964674. Landed through #1301"
+    artifact: "https://github.com/korczis/prismatic-majordomus/actions/runs/40196303175"
+    commit: 2efeacea03158615db2b497117a8da35b264909b
+    recorded_at: 2026-10-25T20:37:44Z

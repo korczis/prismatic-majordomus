@@ -1,0 +1,44 @@
+id: I2847
+milestone: a-derive-does-only-the-work-its-inputs-changed
+title: "every file the site generator reads by a literal path is one of its declared inputs"
+slug: every-file-the-site-generator-reads-is-an-input
+priority: p1
+profile: implementation
+parallel_safe: false
+objective: "scripts/generate-site-data declares among its inputs every file it reads by a literal \"$ROOT/...\" path: the programs it sources or runs (lib/*.sh, lib/*.awk, scripts/lib/*.jq, scripts/lib/*.awk, scripts/pages, itself), the hand-written pages under site/content-src, the workflow skeletons it counts, the Pages model, distribution.json and AGENTS.md. docs/generated/artifacts.json is read too but is not an input: derive's stage C rewrites it after this script runs, so hashing it would move the fingerprint on every derive; the rows the script reads are stage A's and depend only on declared inputs (I2864, cancelled). Case 3246 refuses a literal read that the list does not cover."
+why: "Found on 2026-10-21 while measuring the derive for I2521. The input fingerprint that `scripts/pages current` compares was computed from a list that missed all of the files named above. Editing a hand-written page, a .jq projection or the Pages model left site/data/generated reading as current while it was stale. Only a full derive-check would catch it, and I2880 (skip stage B when the fingerprint matches) would have published the stale data. Agreed with a3, d3 (I0832) and 9c (I2880): 3e owns the INPUTS block, and I2880 waits for this."
+current_state: "The INPUTS list held 2093 entries and omitted the generator's own programs and several files it reads by literal path. Nothing checked the list against what the script reads."
+desired_state: "The INPUTS list covers every literal \"$ROOT/...\" read of the script. Case 3246 reads the script and refuses any such read, of a file or of every tracked file under a directory, that the list does not cover, unless it is an output the script writes or docs/generated/artifacts.json, which stage C rewrites after it (I2864). Dropping a covered glob from the list is refused with the file named."
+scope:
+  - "scripts/generate-site-data"
+  - "test/cases/3246_every_file_the_site_generator_reads_is_an_input.sh"
+  - ".ai/repo/project/issues/I2847.yaml"
+non_scope:
+  - "Paths the script builds from a variable (\"$ROOT/$path\", \"$ROOT/docs/$p\") and what the tool reads when the script calls it. Judging those needs a file-access trace, which is I2521's observed-reads measurement."
+  - "Any other change to scripts/generate-site-data: d3's I0832 owns its repeated work and I2880 its skip; neither touches INPUTS."
+depends_on: []
+acceptance_criteria:
+  - "Every literal \"$ROOT/...\" file read of scripts/generate-site-data is in its --inputs, or is one of its outputs"
+  - "Every tracked file under a directory the script names by a literal path is in --inputs, unless the directory is an output"
+  - "Removing scripts/lib/*.jq from the list makes case 3246 fail and name scripts/lib/cli-site.jq"
+validation:
+  - "bin/majordomus plan validate"
+  - "bash test/run.sh 3246_every_file_the_site_generator_reads_is_an_input 10_site_data 56_derived_current_gate"
+evidence_required:
+  - "every_literal_read_is_an_input_case"
+created_at: 2026-10-21
+updated_at: 2026-10-21T19:28:36Z
+started_at: 2026-10-21T19:25:39Z
+started_event: sha256:7aaed3de0865be2312535a556da1550698cd1a121650af4d3ff08c15431546f0
+verified_at: 2026-10-21T19:26:06Z
+verified_event: sha256:6cdad92443f0eb223a40c530a684143d76240d12fba1f7e52980be0e63373397
+completed_at: 2026-10-21T19:28:36Z
+completed_event: sha256:1b0b335593ca04dcab0399fd23e2fa5a6f2e885b78ecc5ee180ca058b43567e6
+evidence:
+  - covers: every_literal_read_is_an_input_case
+    type: ci
+    command: "validate run 39645593645 (attempt 2) at master 97391192dbb: suite-shard (1) job 119428809643 ran bash test/run.sh --no-skips; case 3246_every_file_the_site_generator_reads_is_an_input ok"
+    result: "success"
+    artifact: "https://github.com/korczis/prismatic-majordomus/actions/runs/39645593645"
+    commit: 97391192dbbc85ee34b1f35d9ddec55ba61832d3
+    recorded_at: 2026-10-21T19:28:27Z

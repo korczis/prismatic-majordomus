@@ -7,7 +7,8 @@
 //! file (the parent closed its end) starts the shutdown, which waits for attached peers to
 //! leave. When stdin is anything else (a terminal, `/dev/null` under nohup or a service
 //! manager, a file) nothing is watched and the process runs until it is stopped — or, with
-//! `--idle`, until no peer has been attached for that long. There is no daemon mode either
+//! `--idle`, until nothing has used it for that long (`crate::idle` says what counts as use,
+//! and why another server's traffic does not). There is no daemon mode either
 //! way: whoever started the process owns it.
 //!
 //! Stopped means stopped in order. `SIGTERM` (which `serve stop` sends), `SIGINT` and
@@ -57,17 +58,26 @@ use crate::shared::SharedServer;
 
 use super::executions::{ask_server, cli_capability, map};
 
-/// Run `majordomus serve`.
-pub fn run(args: ServeArgs) -> Result<u8> {
-    let start = match &args.repo.repo {
+/// The repository a command that elects this checkout's server works on: the one named by
+/// `--repo`, else the one around the working directory. Found here, before the layer loads,
+/// for `serve` and for `ui`, which converges on the same server (I3017's owners).
+pub(crate) fn discover(args: &RepoArgs) -> Result<Repository> {
+    let start = match &args.repo {
         Some(p) => p.clone(),
         None => std::env::current_dir().map_err(|e| Error::io(".", e))?,
     };
-    let repo = Repository::discover(&start)?;
+    Repository::discover(&start)
+}
+
+/// Run `majordomus serve`.
+pub fn run(args: ServeArgs) -> Result<u8> {
+    let repo = discover(&args.repo)?;
     let layer = layer_args(&args.repo)?;
     match &args.command {
         None => serve(&args, &repo),
-        Some(ServeCommand::Status { checkouts, format }) => status(&args, *checkouts, *format),
+        Some(ServeCommand::Status { checkouts, format }) => {
+            status(&args, &repo, *checkouts, *format)
+        }
         Some(ServeCommand::Ensure {
             port,
             idle,
@@ -112,7 +122,7 @@ fn serve(args: &ServeArgs, repo: &Repository) -> Result<u8> {
     // the lease is kept young while the layer loads, so that a peer waiting on it never
     // mistakes a slow start for an abandoned one
     lease.keep_alive();
-    let app = App::load(&args.repo)?;
+    let app = App::load_from(&args.repo, repo.clone())?;
     // The address: the local default, or the one a deployment object declares. The port is
     // never typed twice — the object states it once and the process and the image both
     // read that one.
@@ -148,6 +158,10 @@ fn serve(args: &ServeArgs, repo: &Repository) -> Result<u8> {
         declared.as_ref().map(|(file, _)| file.as_str()),
         lease,
         Some(app.share.dir()),
+        &crate::shared::MeshHosting {
+            node_seed_env: args.node_seed_env.clone(),
+            advertise: args.advertise.clone(),
+        },
     )?;
     // this loop answers a stop signal itself, so that the process ends by its own return
     shared.take_stop_requests();
@@ -179,10 +193,11 @@ fn serve(args: &ServeArgs, repo: &Repository) -> Result<u8> {
         let idle = Duration::from_secs(args.idle);
         tracing::info!(
             idle_seconds = args.idle,
-            "stdin is not a pipe; the server stops when no peer has been attached for {} second(s)",
+            "stdin is not a pipe; the server stops when nothing has used it for {} second(s): no peer attached, no execution queued or running, no live channel, no client request (mesh links, probes and sibling board reads are not use)",
             args.idle
         );
-        let mut idle_since = Instant::now();
+        // idle is decided from what the server holds, by `crate::idle` (I2131, I4007)
+        let mut timer = crate::idle::IdleTimer::new(idle, Instant::now());
         let mut counted = Instant::now();
         loop {
             std::thread::sleep(STOP_POLL);
@@ -196,16 +211,15 @@ fn serve(args: &ServeArgs, repo: &Repository) -> Result<u8> {
             if superseded_and_alone(&shared) {
                 break None;
             }
-            // in use: an MCP session attached, a request answered within the last second, or a
-            // live channel open — the Cockpit and the REST API count as much as a client (I2131)
-            if shared.peers_attached() > 0
-                || crate::http::server::used_within(Duration::from_secs(1))
-            {
-                idle_since = Instant::now();
-            } else if idle_since.elapsed() >= idle {
+            // in use: a peer attached, an execution not finished, a live channel open, or a
+            // client's request answered within the last second — the Cockpit and the REST API
+            // count as much as an MCP client; another server's traffic does not
+            let activity = shared.activity(Duration::from_secs(1));
+            if let Some(why) = timer.observe(&activity, Instant::now()) {
                 tracing::info!(
-                    "no peer for {} second(s); stopping",
-                    idle_since.elapsed().as_secs()
+                    idle_seconds = why.idle_for.as_secs(),
+                    bound_seconds = why.bound.as_secs(),
+                    "{why}; stopping"
                 );
                 break None;
             }
@@ -227,6 +241,9 @@ fn serve(args: &ServeArgs, repo: &Repository) -> Result<u8> {
             }
         }
     };
+    // the serving process records its own `stopping`, before it stops (I3179); a process
+    // whose lease was taken over records nothing, because it speaks for nobody
+    lease::record_own(ServerStanding::Stopping, &stopping_reason(asked));
     match asked {
         Some(signal) => {
             tracing::info!(
@@ -242,6 +259,40 @@ fn serve(args: &ServeArgs, repo: &Repository) -> Result<u8> {
         }
     }
     Ok(0)
+}
+
+/// Why the serving loop is stopping, in the words its runtime record carries.
+fn stopping_reason(asked: Option<i32>) -> String {
+    match asked {
+        Some(signal) => format!("asked to stop by signal {signal}; stopping in order"),
+        None => {
+            "its owner's end (stdin closed, idle, or superseded); waiting for the peers to leave"
+                .into()
+        }
+    }
+}
+
+/// The reader's half of the runtime record, as `serve ensure` keeps it: a lease found stale
+/// (or gone) for a process that no longer exists is recorded `stopped` or `failed` before a
+/// new server is started over it, because the process that is gone cannot record its own end
+/// (I3179). Returns the runtime state the reading found.
+fn record_if_gone(
+    root: &std::path::Path,
+    local_half: &str,
+    standing: ServerStanding,
+    file: &LeaseFile,
+) -> Option<ServerStanding> {
+    matches!(standing, ServerStanding::Stale | ServerStanding::Absent).then(|| {
+        crate::capability::builtin::server::runtime_at(
+            root,
+            local_half,
+            standing,
+            file,
+            None,
+            crate::capability::builtin::server::RuntimeWriter::ServeEnsure,
+        )
+        .state
+    })
 }
 
 /// A server whose lease another process took, once its last session has been handed on, has
@@ -265,8 +316,13 @@ const STOP_POLL: Duration = Duration::from_millis(100);
 /// The flag is the capability's input field and nothing else: it is serialised into the
 /// same JSON whether the question travels over the loopback socket or is executed here, so
 /// `--checkouts this` costs one lease read and one probe on either path.
-fn status(args: &ServeArgs, checkouts: Checkouts, format: OutputFormat) -> Result<u8> {
-    let app = App::load(&args.repo)?;
+fn status(
+    args: &ServeArgs,
+    repo: &Repository,
+    checkouts: Checkouts,
+    format: OutputFormat,
+) -> Result<u8> {
+    let app = App::load_from(&args.repo, repo.clone())?;
     let ctx = &app.context;
     let id = cli_capability(ctx, &["serve", "status"])?;
     let input = json!({ "checkouts": checkouts });
@@ -632,6 +688,7 @@ pub fn converge_with(
             |url| lease::probe_patiently(url, repo.root(), owner, patience),
             crate::VERSION,
         );
+        record_if_gone(repo.root(), &repo.local_path(), standing, &file);
         let doc = file.document().cloned();
         // A function of `started` rather than a closure over it: the loop assigns to
         // `started` in the arms below, and a closure that borrowed it would make that
@@ -646,7 +703,16 @@ pub fn converge_with(
         };
         match standing {
             ServerStanding::Ready => return Ok(settle(started, false)),
-            ServerStanding::Starting => {}
+            // the runtime's refinements are never what `standing_of` decides: waited on, like
+            // a server still binding, until the deadline
+            ServerStanding::Starting
+            | ServerStanding::Building
+            | ServerStanding::MeshAttaching
+            | ServerStanding::Operational
+            | ServerStanding::Degraded
+            | ServerStanding::Stopping
+            | ServerStanding::Stopped
+            | ServerStanding::Failed => {}
             ServerStanding::Absent | ServerStanding::Stale if !started => {
                 // A stale verdict reached after the whole of the busy grace is a judgement the
                 // started process need not make again: it is told which lease, so that its
@@ -722,7 +788,14 @@ fn ensure(
     layer: &[OsString],
 ) -> Result<u8> {
     let c = converge_with(repo, port, idle, wait, layer)?;
-    let reason = if c.ready() {
+    let reason = not_ready(&c, wait);
+    report(c.standing, c.document, reason, c.started, &c.log, format)
+}
+
+/// Why a convergence did not reach a ready server, in the words `serve ensure` prints:
+/// `None` when it did. `majordomus ui` says the same, because it is the same convergence.
+pub(crate) fn not_ready(c: &Convergence, wait: Duration) -> Option<String> {
+    if c.ready() {
         None
     } else if c.timed_out {
         Some(format!(
@@ -741,8 +814,7 @@ fn ensure(
         ))
     } else {
         c.reason.clone()
-    };
-    report(c.standing, c.document, reason, c.started, &c.log, format)
+    }
 }
 
 /// Print the report and decide the exit code: 0 for a ready server, 10 for anything else,
@@ -809,7 +881,7 @@ fn report(
 /// started that way served a stale checkout's 0.21.0 share, which has no `ui/`, and every
 /// screen of the UI lost its stylesheet and scripts. A relative share is made absolute
 /// here, because the started server's directory is not promised to be this one's.
-fn layer_args(repo: &RepoArgs) -> Result<Vec<OsString>> {
+pub(crate) fn layer_args(repo: &RepoArgs) -> Result<Vec<OsString>> {
     let mut out = Vec::new();
     if let Some(share) = &repo.share {
         let share = std::path::absolute(share).map_err(|e| Error::io(share, e))?;
@@ -1114,6 +1186,55 @@ mod tests {
 
     const YOUNG: Duration = Duration::ZERO;
 
+    /// `serve ensure` is a named reader of the runtime (I3179): a lease it finds stale for a
+    /// process that is gone is recorded `failed` as `serve_ensure`; a live standing is not
+    /// its to record, and an absent lease with no history records nothing.
+    #[test]
+    fn ensure_records_a_server_it_finds_gone() {
+        use crate::capability::builtin::server::{read_transition, runtime_file, RuntimeWriter};
+        let dir = tempfile::tempdir().unwrap();
+        let gone = LeaseFile::Document(LeaseDocument {
+            schema: lease::SCHEMA.into(),
+            pid: 9_999_999,
+            token: "t".into(),
+            root: dir.path().to_path_buf(),
+            url: Some("http://127.0.0.1:1".into()),
+            started_at: "2026-10-23T00:00:00Z".into(),
+            executable: None,
+            version: None,
+        });
+        assert_eq!(
+            record_if_gone(dir.path(), ".ai/local", ServerStanding::Ready, &gone),
+            None
+        );
+        assert_eq!(
+            record_if_gone(
+                dir.path(),
+                ".ai/local",
+                ServerStanding::Absent,
+                &LeaseFile::Absent
+            ),
+            Some(ServerStanding::Absent)
+        );
+        assert!(!runtime_file(dir.path(), ".ai/local").exists());
+        assert_eq!(
+            record_if_gone(dir.path(), ".ai/local", ServerStanding::Stale, &gone),
+            Some(ServerStanding::Failed)
+        );
+        let t = read_transition(&runtime_file(dir.path(), ".ai/local")).unwrap();
+        assert_eq!(
+            (t.state, t.by),
+            (ServerStanding::Failed, RuntimeWriter::ServeEnsure)
+        );
+    }
+
+    /// The serving loop says why it stops, in the words its `stopping` record carries.
+    #[test]
+    fn the_stopping_record_says_why() {
+        assert!(stopping_reason(Some(15)).contains("signal 15"));
+        assert!(stopping_reason(None).contains("owner's end"));
+    }
+
     fn argv(cmd: &Command) -> Vec<String> {
         cmd.get_args()
             .map(|a| a.to_string_lossy().into_owned())
@@ -1343,6 +1464,43 @@ mod tests {
         assert!(
             !lease::lease_path(&repo).exists(),
             "the lease of a server that never bound is released"
+        );
+    }
+
+    /// `serve` and `serve status` over a share that is not there: the layer does not load,
+    /// that is the answer, and the server elected on the way gives its lease back.
+    #[test]
+    fn a_layer_that_does_not_load_is_the_answer_of_serve_and_of_its_status() {
+        use clap::Parser;
+        let (_dir, root) = layer_only();
+        let missing = root.join("no-share-here");
+        let parsed = |tail: &[&str]| {
+            let mut argv = vec![
+                "majordomus",
+                "serve",
+                "--repo",
+                root.to_str().unwrap(),
+                "--share",
+                missing.to_str().unwrap(),
+            ];
+            argv.extend_from_slice(tail);
+            let cli = crate::cli::Cli::try_parse_from(argv).unwrap();
+            let crate::cli::Command::Serve(args) = cli.command else {
+                panic!("not the serve command")
+            };
+            args
+        };
+        for tail in [&[][..], &["status"][..]] {
+            let err = run(parsed(tail)).expect_err("a share that is not there loads no layer");
+            assert!(
+                matches!(err, Error::ShareNotFound { .. }),
+                "{tail:?}: {err:?}"
+            );
+        }
+        let repo = Repository::discover(&root).unwrap();
+        assert!(
+            !lease::lease_path(&repo).exists(),
+            "the lease of a server whose layer never loaded is released"
         );
     }
 

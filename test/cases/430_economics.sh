@@ -1,3 +1,4 @@
+# majordomus-exclusive: economics measure walks and prices the whole repository copy with every core it can take; beside the suite's heaviest cases on CI's four-core runner it missed its 600 s bound (430 at 604 s, 431 at 608 s; alone it takes about a minute) (I4199)
 # majordomus-covers: none
 # claims: context-selection-counted
 # majordomus-timeout: 600
@@ -17,7 +18,7 @@
 # serves.
 . "$ROOT/test/lib.sh"
 RB="$(rust_bin)" || rust_bin_exit $?
-command -v python3 >/dev/null || skip "no python3, which the fixture's tests need"
+mj_runs python3 || skip "no python3, which the fixture's tests need"
 
 R="$T/repo"
 fixture_repo "$R" .ai/repo/benchmarks/economics test/fixtures/economics >/dev/null

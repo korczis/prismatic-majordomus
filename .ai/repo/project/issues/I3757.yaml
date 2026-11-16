@@ -1,0 +1,48 @@
+# rehomed from the-plan-says-what-a-fix-unblocks: that milestone is PLANNED (O1); truthful-plan-surfaces is ACTIVE and already scopes plan.rs, lib/project.awk, lib/project.sh, apps/majordomus-cli/src/ui and site/templates
+# campaign.md sequences N9 after I3267; no depends_on is kept, because I3267 (plan.impact, what finishing an issue unblocks) sits in the PLANNED milestone and this record derives only why a milestone is blocked, from blocked_by, which needs no impact evaluator
+# case name: 3730_ stands for the case number allocated with the id
+id: "I3757"
+milestone: "truthful-plan-surfaces"
+title: "A BLOCKED milestone names what holds it: the milestones it waits on, or the issues outside it that hold every open issue inside it"
+slug: "a-blocked-milestone-names-what-holds-it"
+priority: "p1"
+profile: "implementation"
+parallel_safe: false
+objective: "For every milestone that is BLOCKED while its milestone dependencies are DONE (blocked_by empty), the plan derives waits_on: the issues that hold its open issues, found by following each BLOCKED issue's blocked_by until an issue that is not BLOCKED (READY elsewhere, ACTIVE, VERIFY or CANCELLED) or a milestone gate, each named once. Both engines derive it identically, plan validate fails a BLOCKED milestone that has neither blocked_by nor waits_on, and the /ui milestone inspector and /roadmap/ state it in one sentence with each holding issue as a link."
+why: "The roadmap audit of 2026-10-20 found 12 milestones BLOCKED with no milestone dependency, among them a-change-is-judged-in-minutes, the-product-shows-what-it-caught and finished-work-reaches-a-verified-release. Their cards show only a count, the /ui inspector for fly-deployment read Blocked 14 with Waits for none and Blocked by none, and the roadmap's own explanation of BLOCKED (its dependencies are not accepted) is false for them. A reader cannot tell which fix would release such a milestone."
+current_state: "Verified on origin/master 91c0b5d5658. apps/majordomus-cli/src/plan.rs:1015-1033 makes a milestone BLOCKED when none of its issues is READY (:1029-1030), and :1058-1084 fills blocked_by from the milestone graph only, so a milestone held by its issues has an empty reason; lib/project.awk:242 and :259-275 do the same, and :370-371 prints the M row with mblockedby as its only reason, whose columns lib/project.sh:152-155 documents. apps/majordomus-cli/src/ui/milestone.rs:323-330 renders Waits for and Blocked by from depends_on and blocked_by only, and site/templates/roadmap.html:58-64 writes a sentence only when blocked_by is non-empty. Example: .ai/repo/project/issues/I3233.yaml:18-19 and its siblings I3234 and I3235 all depend on I2521, a READY issue of another milestone, and no surface of a-change-is-judged-in-minutes says so."
+desired_state: "PlanMilestone gains waits_on (issue ids, sorted, each once), derived in plan.rs and lib/project.awk identically and carried as a new M column (documented in lib/project.sh) and as a JSON field by lib/plan_json.awk. It is empty for a milestone gated by the milestone graph, whose blocked_by already says why, and for any milestone that is not BLOCKED. A milestone:<id> entry met while following an issue is reported as that milestone id. plan validate fails blocked_without_reason in both engines, at the same point in derivation order. The /ui inspector shows a Held by fact with a chip per issue; /roadmap/ says that every open issue waits on the named issues outside the milestone, with the ids as links outside the translatable text, so the Czech copy is translated once and does not change with the ids."
+scope:
+  - "apps/majordomus-cli/src/plan.rs"
+  - "lib/project.awk"
+  - "lib/project.sh"
+  - "lib/plan_json.awk"
+  - "apps/majordomus-cli/src/ui/milestone.rs"
+  - "site/templates/roadmap.html"
+  - "site/i18n/cs/memory"
+  - "test/cases/99_plan_capabilities.sh"
+  - "test/cases/3730_a_blocked_milestone_names_what_holds_it.sh"
+  - "docs/PLANNING.md"
+  - "docs/generated"
+  - "site/data/generated"
+  - ".ai/repo/project/issues/I3757.yaml"
+non_scope:
+  - "What finishing an issue would unblock (plan.impact, I3267)"
+  - "When a milestone is BLOCKED; only the reason is added"
+  - "Classes for blocked issues beyond the existing blocked_by"
+  - "scripts/generate-site-data, which reads lib/plan_json.awk and needs no change"
+acceptance_criteria:
+  - "A milestone whose every open issue depends on a READY issue of another milestone is BLOCKED with waits_on naming that issue, in plan.rs and in lib/project.awk"
+  - "A chain (an issue inside waits on a BLOCKED issue outside, which waits on an ACTIVE issue) names the ACTIVE issue and not the intermediate one"
+  - "Negative: a milestone gated by an unfinished milestone keeps blocked_by and has an empty waits_on, and a milestone with one READY issue is not BLOCKED and has no waits_on"
+  - "Negative: a milestone whose issues block only each other in a cycle reaches no holding issue and fails plan validate with blocked_without_reason beside the cycle finding, in both engines"
+  - "case 99 compares waits_on field for field over this repository and its fixture"
+  - "The /ui inspector and /roadmap/ of a fixture show the holding issue as a link, and an empty waits_on prints no sentence"
+validation:
+  - "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 3730_a_blocked_milestone_names_what_holds_it 99_plan_capabilities"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib plan::tests"
+  - "majordomus plan validate"
+evidence_required:
+  - "blocked_milestone_names_its_holding_issue"
+  - "gated_milestone_has_no_waits_on"
+depends_on: []

@@ -1017,6 +1017,12 @@ mj_adr_check() {
   local out; out="$(mktemp "${TMPDIR:-/tmp}/mj.ack.XXXXXX")"
   local rc=0
   mj_adr_examine mj_adr_report_line > "$out" || rc=$?
+  # Discovery reads the version-control index, so a decision written and not yet added is
+  # not examined. Say so by name (I4264): "examined 0 decision(s) ... every identity unique"
+  # over nine untracked files read as a pass for decisions nobody had looked at.
+  local untracked
+  untracked="$(mj_git ls-files --others --exclude-standard -- "$(mj_rel "$MJ_ADRS_DIR")" 2>/dev/null \
+    | grep -E '/[0-9]{4}-[^/]+\.md$' || true)"
   if [ "$MJ_JSON" = 1 ]; then
     local first=1 line
     printf '{"schema":1,"examined":%s,"findings":[' "$MJ_ADR_N"
@@ -1028,6 +1034,10 @@ mj_adr_check() {
     printf '],"refs":{"surveyed":%s' "$([ -n "$MJ_ADR_REFS_SKIP" ] && printf false || printf true)"
     [ -n "$MJ_ADR_REFS_SKIP" ] && printf ',"reason":"%s"' "$(mj_json_esc "$MJ_ADR_REFS_SKIP")"
     printf ',"added_here":%s}' "$MJ_ADR_REFS_N"
+    printf ',"untracked":['
+    local u ufirst=1
+    for u in $untracked; do [ "$ufirst" = 1 ] || printf ','; ufirst=0; printf '"%s"' "$(mj_json_esc "$u")"; done
+    printf ']'
     printf ',"ok":%s}\n' "$([ "$rc" = 0 ] && printf true || printf false)"
   else
     if [ "$rc" = 0 ]; then
@@ -1040,6 +1050,11 @@ mj_adr_check() {
     # Always stated, clean or not: a survey that could not reach the other refs has not
     # cleared this branch of a collision, and a reader who cannot tell the two apart is
     # given a confident wrong answer (project.empty-is-not-failure).
+    if [ -n "$untracked" ]; then
+      printf '%s decision file(s) are not tracked and were NOT examined (git add them):\n' \
+        "$(printf '%s\n' "$untracked" | grep -c .)"
+      printf '  %s\n' $untracked
+    fi
     if [ -n "$MJ_ADR_REFS_SKIP" ]; then
       printf 'the other refs were NOT surveyed: %s\n' "$MJ_ADR_REFS_SKIP"
     else
@@ -1209,9 +1224,21 @@ mj_adr_collisions() {
       refs="$(awk -F"$MJ_TAB" -v w="$path" '$1 == w { print $2 }' "$seen" \
         | while IFS= read -r commit; do
             git -C "$MJ_ROOT" for-each-ref --contains "$commit" \
-              --format='%(refname:short)' refs/heads refs/remotes/origin refs/tags 2>/dev/null
-          done | LC_ALL=C sort -u | head -6 | tr '\n' ' ')"
-      [ -n "$refs" ] || refs="no current ref — an unreferenced commit still in this object store"
+              --format='%(refname)' refs/heads refs/remotes/origin refs/tags 2>/dev/null
+          done | LC_ALL=C sort -u)"
+      if [ -n "$refs" ]; then
+        # A ref claims the identity while its tip carries the document, not while its history
+        # once added it: a branch that renumbered its decision away claims nothing at the old
+        # number. On 2026-10-16 #1293 renamed 0168 to 0169, and #947's commit was still refused
+        # "also claimed by .../0168-..." because that branch contained the add-commit (I2761).
+        refs="$(printf '%s\n' "$refs" | while IFS= read -r ref; do
+            git -C "$MJ_ROOT" cat-file -e "$ref:$path" 2>/dev/null || continue
+            printf '%s\n' "${ref#refs/*/}"
+          done | head -6 | tr '\n' ' ')"
+        [ -n "$refs" ] || continue
+      else
+        refs="no current ref — an unreferenced commit still in this object store"
+      fi
       "$report" "$here" "identity $num is also claimed by $path, on: ${refs% }. One of the two has to be renumbered before either lands, or \`generate --strict\` will exclude both and name only the identity. \`majordomus adr next\` says which number is free."
       MJ_ADR_FINDINGS=$((MJ_ADR_FINDINGS + 1)); rc=1
     done
