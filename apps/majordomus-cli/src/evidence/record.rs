@@ -346,6 +346,13 @@ pub struct SuiteCoverage {
 
 impl SuiteCoverage {
     /// The cases this report did not run, whose earlier evidence stands as it was.
+    ///
+    /// ```
+    /// use majordomus_cli::evidence::SuiteCoverage;
+    ///
+    /// assert_eq!(SuiteCoverage { in_report: 3, on_disk: 5 }.kept(), 2);
+    /// assert_eq!(SuiteCoverage { in_report: 5, on_disk: 5 }.kept(), 0);
+    /// ```
     pub fn kept(&self) -> usize {
         self.on_disk.saturating_sub(self.in_report)
     }
@@ -935,12 +942,11 @@ pub fn record(root: &Path, req: &RecordRequest) -> Result<RecordOutcome> {
                 "the report named no test this repository has",
             ));
         }
-        let mut named: Vec<&str> = results[before..]
+        // Counted, never ordered: the distinct suite cases the report named.
+        let named: std::collections::HashSet<&str> = results[before..]
             .iter()
             .map(|(id, _, _)| id.name.as_str())
             .collect();
-        named.sort_unstable();
-        named.dedup();
         suite_coverage = Some(SuiteCoverage {
             in_report: named.len(),
             on_disk: suite_cases_on_disk(root),
