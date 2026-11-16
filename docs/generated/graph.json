@@ -81741,6 +81741,56 @@
         }
       },
       {
+        "id": "majordomus://issue/I4605",
+        "kind": "issue",
+        "label": "I4605",
+        "summary": "commit validate refuses a C0 or C1 control character, other than a newline or a tab, anywhere in a commit message, and names its position (commit.control_character)",
+        "route": "/cockpit/objects/issue/i4605",
+        "source": ".ai/repo/project/issues/I4605.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "commit validate refuses `fix(plan): x ESC[1mbold ESC[m (I4591)` with code commit.control_character, and the finding names line 1, the column of the escape and U+001B",
+            "The defect as seen: a control code before the type (`ESC[33mfix(plan): x (I4591)`) reports commit.control_character and not commit.not_conventional",
+            "A C1 code (U+009B) and a C0 code other than a line feed or a tab (U+0001) anywhere in the subject or the body are each refused. A body with tabs and blank lines is accepted",
+            "A git-generated subject (Merge ...) that carries a control code is refused; the same subject without one stays exempt as I3976 defines",
+            "policy.yaml's commit block sets control_character: error, and a level of warning or off changes the verdict as the other commit rules do",
+            "commit-policy over the repository reports the count baseline unchanged and refuses a new branch commit that carries a control code"
+          ],
+          "created_at": "2026-11-16",
+          "depends_on": [],
+          "evidence_required": [
+            "commit_validate_refuses_a_control_character"
+          ],
+          "milestone": "a-second-adopter-is-served",
+          "non_scope": [
+            "Rewriting published commits or the trunk history that carries a control code",
+            "Stripping or repairing a message: the hook refuses, it never changes what the author wrote",
+            "Characters outside C0, DEL and C1, such as other Unicode format characters",
+            "Readers of commit text (an adopter's fetchers and pages), which keep their own guards"
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/commit/verdict.rs",
+            "apps/majordomus-cli/src/commit/policy.rs",
+            ".ai/repo/policy.yaml",
+            "scripts/ci/commit-policy",
+            ".ai/repo/commit-policy-baseline.txt",
+            ".ai/repo/rules/project/conventional-commits.v2.md",
+            "test/cases/274_commit_policy.sh",
+            ".ai/repo/project/issues/I4605.yaml"
+          ],
+          "serves": [],
+          "slug": "commit-validate-refuses-a-control-character",
+          "validation": [
+            "bin/majordomus plan validate",
+            "env -u MAJORDOMUS_SHARE cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib -- commit::",
+            "env -u MAJORDOMUS_SHARE bash test/run.sh 274_commit_policy"
+          ]
+        }
+      },
+      {
         "id": "majordomus://issue/I4606",
         "kind": "issue",
         "label": "I4606",
@@ -151630,6 +151680,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I4605",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4605",
+        "target": "majordomus://milestone/a-second-adopter-is-served",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://issue/I4606",
         "target": "kind:issue",
         "kind": "is_a"
@@ -164551,8 +164611,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4502,
-      "edges": 10155,
+      "nodes": 4503,
+      "edges": 10157,
       "acyclic": false,
       "truncated": false
     }

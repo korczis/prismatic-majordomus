@@ -48,6 +48,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I3162` | shares .ai/repo/policy.yaml with I4481; they may not run concurrently |
 | WARN | `scope_conflict` | `I3162` | shares .ai/repo/policy.yaml with I4512; they may not run concurrently |
 | WARN | `scope_conflict` | `I3162` | shares lib/knowledge.sh with I4585; they may not run concurrently |
+| WARN | `scope_conflict` | `I3162` | shares .ai/repo/policy.yaml with I4605; they may not run concurrently |
 | WARN | `scope_conflict` | `I3163` | shares lib/knowledge.sh with I3166; they may not run concurrently |
 | WARN | `scope_conflict` | `I3163` | shares share/allow/policy.txt with I3167; they may not run concurrently |
 | WARN | `scope_conflict` | `I3163` | shares apps/majordomus-cli/src/capability/builtin/brief.rs with I3179; they may not run concurrently |
@@ -92,6 +93,7 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I3163` | shares .ai/repo/adrs/0183-evolution-is-scheduled-at-the-episode-boundary-and-carried-out-b.md with I4500; they may not run concurrently |
 | WARN | `scope_conflict` | `I3163` | shares .ai/repo/policy.yaml with I4512; they may not run concurrently |
 | WARN | `scope_conflict` | `I3163` | shares lib/knowledge.sh with I4585; they may not run concurrently |
+| WARN | `scope_conflict` | `I3163` | shares .ai/repo/policy.yaml with I4605; they may not run concurrently |
 | WARN | `scope_conflict` | `I3166` | shares apps/majordomus-cli/src/devcontext with I3172; they may not run concurrently |
 | WARN | `scope_conflict` | `I3166` | shares .ai/repo/project/intents with I3226; they may not run concurrently |
 | WARN | `scope_conflict` | `I3166` | shares apps/majordomus-cli/src/devcontext with I3251; they may not run concurrently |

@@ -6,23 +6,23 @@
     "version": "1.0.2"
   },
   "registry": {
-    "fingerprint": "3bddaa7b4810620914c667d8800be06700be6adb0a64431b75b0184819b1aed4",
+    "fingerprint": "848d3e55b6aa20cb5a98d28cbe7adb232676457948a43956e64edd5305415b74",
     "summary": {
-      "total": 4031,
+      "total": 4032,
       "builtin": 231,
-      "declarative": 3800,
+      "declarative": 3801,
       "by_kind": {
         "command": 41,
         "query": 190,
-        "resource": 3800
+        "resource": 3801
       },
       "by_stability": {
         "behaviorally_verified": 153,
         "experimental": 68,
-        "implemented": 3810
+        "implemented": 3811
       },
       "mcp_tools": 215,
-      "mcp_resources": 3857,
+      "mcp_resources": 3858,
       "http_routes": 219,
       "cli_commands": 128,
       "modules": 96,
@@ -97172,7 +97172,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 1257,
+        "capabilities": 1258,
         "capability_ids": []
       },
       {
@@ -97878,7 +97878,7 @@
     ]
   },
   "index": {
-    "fingerprint": "6cee9d07f555e11cead7315ebbb5800e32d0364fd08e584849c686faccc80084",
+    "fingerprint": "93ce90036774ceba42c491ead7b58ccd675b663e9d74c248e7cc4206cba27f94",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -97918,7 +97918,7 @@
       "gap": 5,
       "implementation": 54,
       "intent": 45,
-      "issue": 1257,
+      "issue": 1258,
       "knowledge": 220,
       "mesh-declaration": 1,
       "milestone": 117,
@@ -105515,7 +105515,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 137526
+        "bytes": 137749
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -123274,6 +123274,17 @@
         "bytes": 3393
       },
       {
+        "uri": "majordomus://issue/I4605",
+        "kind": "issue",
+        "identity": "I4605",
+        "title": "commit validate refuses a C0 or C1 control character, other than a newline or a tab, anywhere in a commit message, and names its position (commit.control_character)",
+        "description": "commit.validate gains the rule commit.control_character, with a policy level in .ai/repo/policy.yaml's commit block (control_character: error). Every character of the message is checked: C0 (U+0000 to U+001F) other than a line feed or a tab, DEL (U+007F) and C1 (U+0080 to U+009F). A message carrying one is refused. The finding names the line, the column and the code point (for example `line 1, column 1: U+001B ESCAPE`). The check runs before the conventional parse, so a control code in front of the type is reported as itself and not as a word that is not a type. It also covers git-generated subjects, because the exemption of I3976 is about naming an issue, not about what bytes a message may hold. The commit-msg hook and scripts/ci/commit-policy refuse through the same verdict. The history on trunk is judged against the existing count baseline, so commits that are already published are not rewritten.",
+        "path": ".ai/repo/project/issues/I4605.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 5589
+      },
+      {
         "uri": "majordomus://issue/I4606",
         "kind": "issue",
         "identity": "I4606",
@@ -139861,7 +139872,7 @@
       "identity": [
         "id"
       ],
-      "objects": 1257
+      "objects": 1258
     },
     {
       "name": "knowledge",

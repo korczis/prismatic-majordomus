@@ -117,4 +117,5 @@ and the semantics are in [`PLANNING.md`](../PLANNING.md).
 | WARN | `scope_conflict` | `I4349` | shares docs/CI.md with I4524; they may not run concurrently |
 | WARN | `scope_conflict` | `I4349` | shares .ai/repo/ci/gates.yaml with I4532; they may not run concurrently |
 | WARN | `scope_conflict` | `I4349` | shares docs/CI.md with I4569; they may not run concurrently |
+| WARN | `scope_conflict` | `I4349` | shares .ai/repo/policy.yaml with I4605; they may not run concurrently |
 | WARN | `scope_conflict` | `I4524` | shares docs/CI.md with I4569; they may not run concurrently |
