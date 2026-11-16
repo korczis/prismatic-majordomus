@@ -278,6 +278,59 @@ jq -e --slurpfile r "$W/again/record.json" '.totals.executions == 1 and .totals 
 expect_exit 12 env MAJORDOMUS_BIN="$MJB" "$T/scripts/ci/evidence-collect" --out "$W/empty" --suite "$W/absent.tsv"
 expect_grep "no report to record"
 
+# ---------------------------------------------------------------- 4b. what the plan owed (I3668)
+# Each producer given an obligation gets one state in receipt.json; an absence means what the
+# plan said it means, never what the disk happens to hold.
+owed() {         # owed <name> <want exit> <collector options...> — a gather given obligations
+  local name="$1" want="$2"; shift 2
+  fresh
+  local rc=0
+  actions env -u MJ_RUN_HEAD_SHA MAJORDOMUS_BIN="$MJB" "$T/scripts/ci/evidence-collect" --out "$W/$name" "$@" \
+    > "$W/$name.out" 2> "$W/$name.err" || rc=$?
+  [ "$rc" = "$want" ] || { echo "    the $name gather exited $rc, not $want"; cat "$W/$name.out" "$W/$name.err"; exit 1; }
+  [ -s "$W/$name/receipt.json" ] || { echo "    the $name gather wrote no receipt"; exit 1; }
+}
+state() { jq -r --arg p "$2" '.obligations[] | select(.producer == $p) | .state' "$W/$1/receipt.json"; }
+
+# a records-only plan: nothing owed, nothing to record, no executable needed, and exit 0
+fresh
+run_quiet "$W/records.err" actions env -u MAJORDOMUS_BIN -u MJ_RUN_HEAD_SHA "$T/scripts/ci/evidence-collect" --out "$W/records" \
+  --suite "$W/absent.tsv" --obligation suite=false:skipped --obligation crate=false:success \
+  --obligation coverage=false:skipped --planner "validate.yml plan, mode records" > "$W/records.out" \
+  || { echo "    a records-only plan's gather failed"; cat "$W/records.out" "$W/records.err"; exit 1; }
+jq -e '.planner == "validate.yml plan, mode records"
+  and ([.obligations[] | .state] == ["not_required", "not_required", "not_required"])
+  and (.obligations | all(.required == false and (.reason | test("selected no lane"))))' "$W/records/receipt.json" >/dev/null \
+  || { echo "    a records-only plan's receipt does not say each report was not required, and why"; cat "$W/records/receipt.json"; exit 1; }
+[ ! -e "$W/records/manifest.json" ] || { echo "    a gather that recorded nothing wrote a manifest a publication would read"; exit 1; }
+
+# the suite owed, its job concluded, and it left no report: missing, and the gather fails
+owed missing 12 --suite "$W/absent.tsv" --obligation suite=true:success --obligation crate=false:skipped
+[ "$(state missing suite)" = missing ] || { echo "    an owed suite with no report is not missing"; cat "$W/missing/receipt.json"; exit 1; }
+grep -q "suite: the plan required the suite report" "$W/missing.err" || { echo "    the failure does not name what was owed"; cat "$W/missing.err"; exit 1; }
+
+# the crate owed and its job cancelled: interrupted, never a pass, even with a report on disk
+owed interrupted 13 --crate-output "$W/cargo-test.txt" --crate-tree "$W/crate-clean.json" --obligation crate=true:cancelled
+[ "$(state interrupted crate)" = interrupted ] || { echo "    a cancelled owed job is not interrupted"; cat "$W/interrupted/receipt.json"; exit 1; }
+
+# the suite owed, but its report was measured on another commit: refused, and the gather fails
+tree "$W/suite-elsewhere.json" 0000000000000000000000000000000000000000 clean
+owed elsewhere 12 --suite "$W/suite.tsv" --suite-tree "$W/suite-elsewhere.json" --obligation suite=true:success
+[ "$(state elsewhere suite)" = refused ] || { echo "    an owed report of another commit is not refused"; cat "$W/elsewhere/receipt.json"; exit 1; }
+
+# the suite owed and recorded, the crate not owed, coverage owed and absent: gathered, exit 0;
+# coverage is receipted as missing and decides nothing
+owed full 0 --suite "$W/suite.tsv" --suite-tree "$W/suite-clean.json" \
+  --obligation suite=true:failure --obligation crate=false:skipped --obligation coverage=true:failure
+[ "$(state full suite)/$(state full crate)/$(state full coverage)" = recorded/not_required/missing ] \
+  || { echo "    a gathered run's receipt is wrong"; cat "$W/full/receipt.json"; exit 1; }
+[ -s "$W/full/manifest.json" ] || { echo "    a run that recorded the suite kept no manifest"; exit 1; }
+
+# a malformed obligation is a usage error, not an obligation dropped
+expect_exit 2 env MAJORDOMUS_BIN="$MJB" "$T/scripts/ci/evidence-collect" --out "$W/bad" --obligation suite=maybe:success
+expect_exit 2 env MAJORDOMUS_BIN="$MJB" "$T/scripts/ci/evidence-collect" --out "$W/bad" --obligation lint=true:success
+expect_exit 2 env MAJORDOMUS_BIN="$MJB" "$T/scripts/ci/evidence-collect" --out "$W/bad" --obligation suite=true
+
 # ---------------------------------------------------------------- 5. published with its distance
 # Asked of this repository's own history, read-only: the commit being published, and its parent.
 HERE="$(git -C "$ROOT" rev-parse HEAD)"

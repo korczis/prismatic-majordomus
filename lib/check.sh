@@ -236,6 +236,18 @@ mj_validate_scope() {
     fi
   done < "$touched"
   rm -f "$touched" "$derived"
+  # said, not only applied: a reader who sees a dirty tree and a passing scope is owed why
+  local predating; predating="$(mj_start_dirty_unchanged | grep -c . || true)"
+  if [ "${predating:-0}" -gt 0 ]; then
+    mj_info scope "$id" "$predating path(s) were already changed when the task started and hold what they held then: not counted as this task's" "cat $(mj_rel "$(mj_start_dirty_file)"); git status --porcelain"
+  fi
+  # A refusal names the ways out that exist (I4598). Without them the one route anybody found
+  # was partial plus a new start, taken three times in a day by an adopter for files its gates
+  # regenerate (static/css, static/data), while the derived admission above was one
+  # .gitattributes line away and nothing said so.
+  if [ "$n_out" -gt 0 ] && [ "$soft" = 0 ]; then
+    mj_info scope "$id" "a path outside the scope: if a generator writes it from a file in scope, mark it merge=derived in .gitattributes and it is admitted beside that change; if the work grew, finish --outcome partial and start again with the wider scope; in-place widening is planned (I4260)" "git check-attr merge -- <path>; majordomus finish --outcome partial"
+  fi
   if [ "$n_out" = 0 ] && [ "$n_derived" -gt 0 ]; then
     mj_doctrine_ok scope "$id" "$n_in touched file(s) within scope, and $n_derived derived from them (merge=derived)" "git check-attr merge -- <path>"
   elif [ "$n_out" = 0 ]; then mj_doctrine_ok scope "$id" "$n_in touched file(s), all within scope"

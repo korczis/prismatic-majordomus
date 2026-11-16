@@ -18,11 +18,22 @@ depends_on:
   - I0826
 acceptance_criteria:
   - compare of a run with itself reports zero deltas
-  - Case 85 proves the ranking on two fixture runs
+  - Case 3058 proves the ranking on two fixture runs
 validation:
-  - bash test/run.sh 85_bench_compare
+  - bash test/run.sh 3058_bench_compares_two_runs
 evidence_required:
   - regression_refused
 risk: "Percentile arithmetic is implemented once and unit-tested on small datasets."
 created_at: 2026-09-05
-updated_at: 2026-09-05
+updated_at: 2026-10-15T08:07:52Z
+started_at: 2026-10-15T08:07:43Z
+started_event: sha256:101de63890296e715261c859e691030f093d444e0e7c85346a5f7439f232abd2
+completed_at: 2026-10-15T08:07:52Z
+completed_event: sha256:0bf984ffd3f544acd4ed94cc76cb664912c590a82766f035416c392a9c7f4f4f
+evidence:
+  - covers: regression_refused
+    type: test
+    command: "MJ_TEST_JOBS=4 bash test/run.sh 3058_bench_compares_two_runs 82_bench_check 79_bench_command 80_bench_persistence 81_bench_baseline 98_cli_reference"
+    result: "tests: 6 passed; bench compare r1 r1 reports no regression and no improvement; r1 -> r2 ranks +30.0 doctor before +5.0 check, names -20.0 plan as the improvement and doctor 150 ms as the slowest; --json carries p95_delta_ms; it writes nothing; bench --check still refuses a regression over the policy (case 82)"
+    commit: c0e3585dc836201089d6b5dd49f5a79fe8bff798
+    recorded_at: 2026-10-15T08:07:49Z

@@ -143,6 +143,10 @@ pub struct CommandRef {
     pub cli: Option<String>,
     /// Whether running it changes anything, so that only a person may invoke it.
     pub changes_something: bool,
+    /// Whether the input may go without the typed text: the field is not required.
+    pub optional: bool,
+    /// What the agent does with the answer, as the declaration says it; reported when absent.
+    pub follow: Option<String>,
     /// The file that declares it, repository-relative.
     pub source: String,
     /// The content address of its descriptor.
@@ -400,6 +404,22 @@ pub fn environment(index: &Index, root: &Path) -> EditorEnvironment {
     env
 }
 
+/// An adapter that reads `.agents/skills/` lists every command written there beside the
+/// workflow skills, in path order, and never a workflow skill a command took the name of.
+fn list_commands(adapter: &mut EditorAdapter, commands: &[CommandRef]) {
+    let Some(skills) = adapter.capabilities.iter_mut().find(|c| c.id == "skills") else {
+        return;
+    };
+    let named: Vec<String> = commands
+        .iter()
+        .filter(|c| is_skill_name(&c.alias))
+        .map(|c| format!("{SKILLS_DIR}/{}/SKILL.md", c.alias))
+        .collect();
+    skills.artifacts.retain(|p| !named.contains(p));
+    skills.artifacts.extend(named);
+    crate::order::canonical_strings(&mut skills.artifacts);
+}
+
 /// The crate's sources, repository-relative: where a builtin capability's module lives.
 const CRATE_SRC: &str = "apps/majordomus-cli/src";
 
@@ -418,9 +438,12 @@ pub fn commands(registry: &crate::capability::CapabilityRegistry) -> Vec<Command
                 ),
                 crate::capability::Provenance::Declarative { path, .. } => path.clone(),
             };
+            let (_, required) = c.input.properties();
             Some(CommandRef {
                 alias: skill.alias.clone(),
                 argument: skill.argument.clone(),
+                optional: !required.contains(&skill.argument),
+                follow: skill.follow.clone(),
                 capability: c.id.to_string(),
                 title: c.title.clone(),
                 tool: c.exposure.mcp.as_ref().and_then(|m| m.tool.clone()),
@@ -661,18 +684,33 @@ pub fn plan(
     let mut diagnostics = env.diagnostics.clone();
     let mut artifacts: Vec<(Artifact, Vec<String>, Vec<String>)> = Vec::new();
 
-    // .agents/ sorts before .claude/, and what is written under .claude/ is keyed by path
+    // .agents/ sorts before .claude/, and what is written under each is keyed by path
 
+    // Antigravity and Zed read .agents/skills/: every workflow skill, and every command, so
+    // that /<alias> reaches a capability from them as it does from Claude Code. A command
+    // keeps its name there too (and is a finding below).
+    let mut for_agents: std::collections::BTreeMap<String, (Artifact, Vec<String>, Vec<String>)> =
+        std::collections::BTreeMap::new();
+    let shared = || vec![antigravity::ID.to_string(), zed::ID.to_string()];
     for skill in &env.skills {
+        if commands.iter().any(|c| c.alias == skill.id) {
+            continue;
+        }
         match skill_artifact(skill, version) {
-            Ok(a) => artifacts.push((
-                a,
-                vec!["antigravity".into(), "zed".into()],
-                vec![skill.path.clone()],
-            )),
+            Ok(a) => {
+                for_agents.insert(a.path.clone(), (a, shared(), vec![skill.path.clone()]));
+            }
             Err(d) => diagnostics.push(*d),
         }
     }
+    for c in commands.iter().filter(|c| is_skill_name(&c.alias)) {
+        let a = claude::command_artifact_in(SKILLS_DIR, c, version);
+        for_agents.insert(
+            a.path.clone(),
+            (a, shared(), vec![format!("capability:{}", c.capability)]),
+        );
+    }
+    artifacts.extend(for_agents.into_values());
     // Claude Code discovers skills under .claude/skills/ alone: every workflow skill is
     // written there too, beside the commands, so that /<id> reaches the layer's own
     // definition. A command that has the same name keeps it (and is a finding below).
@@ -748,11 +786,17 @@ pub fn plan(
             }
         })
         .collect();
-    let adapters = vec![
+    let mut adapters = vec![
         antigravity::adapter(&env),
         claude::adapter(&commands, &domains, &env.skills),
         zed::adapter(&env),
     ];
+    for a in adapters
+        .iter_mut()
+        .filter(|a| a.id == antigravity::ID || a.id == zed::ID)
+    {
+        list_commands(a, &commands);
+    }
     Plan {
         artifacts: artifacts.into_iter().map(|(a, _, _)| a).collect(),
         derivations,
@@ -1621,5 +1665,47 @@ mod tests {
         let recipes: Vec<&str> = found.iter().map(|t| t.recipe.as_str()).collect();
         assert_eq!(recipes, ["site::build", "top"]);
         assert!(d.is_empty());
+    }
+
+    #[test]
+    fn an_adapter_that_reads_no_skills_is_given_no_commands() {
+        let mut adapter = EditorAdapter {
+            id: "elsewhere".into(),
+            title: "Elsewhere".into(),
+            verified_against: "1".into(),
+            capabilities: Vec::new(),
+        };
+        let before = adapter.clone();
+        let repo = crate::synthetic::SyntheticRepository::small().unwrap();
+        list_commands(&mut adapter, &commands(&repo.context().unwrap().registry));
+        assert_eq!(adapter, before);
+    }
+
+    /// A workflow skill that takes a command's name is not projected under `.agents/skills/`:
+    /// the command is, and keeps the name.
+    #[test]
+    fn a_workflow_skill_that_takes_a_commands_name_yields_to_the_command() {
+        let repo = repository(false);
+        let root = repo.root().to_path_buf();
+        write(
+            &root,
+            ".ai/repo/skills/proceed/SKILL.md",
+            &skill_md("proceed", "A workflow named like a command.", "active"),
+        );
+        let ctx = repo.context().unwrap();
+        assert!(
+            commands(&ctx.registry).iter().any(|c| c.alias == "proceed"),
+            "the command exists"
+        );
+        let plan = plan(&repo.index().unwrap(), &ctx.registry, &root, "0.0.0");
+        let at = ".agents/skills/proceed/SKILL.md";
+        let projected: Vec<&Artifact> = plan.artifacts.iter().filter(|a| a.path == at).collect();
+        assert_eq!(projected.len(), 1, "one file at {at}");
+        assert!(
+            !projected[0]
+                .content
+                .contains("A workflow named like a command."),
+            "the command's projection, not the workflow skill's"
+        );
     }
 }

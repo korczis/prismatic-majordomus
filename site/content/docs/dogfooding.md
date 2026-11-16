@@ -1,7 +1,7 @@
 +++
 title = "Dogfooding"
 description = "the one rule: Majordomus cannot recommend a development discipline it does not use itself — and what following it costs"
-weight = 23
+weight = 24
 [extra]
 source = "docs/DOGFOODING.md"
 +++

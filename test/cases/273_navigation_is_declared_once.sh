@@ -20,7 +20,7 @@
 . "$ROOT/test/lib.sh"
 GATE="$ROOT/scripts/ci/nav-check"
 [ -x "$GATE" ] || { echo "    $GATE is not executable"; exit 1; }
-command -v python3 >/dev/null 2>&1 || skip "python3 absent"
+mj_runs python3 || skip "$(mj_runs_why python3)"
 python3 -c 'import tomllib' 2>/dev/null || skip "python3 has no tomllib"
 
 S="$(mktemp -d "${TMPDIR:-/tmp}/mj-273.XXXXXX")"

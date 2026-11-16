@@ -15,7 +15,7 @@
 #   3. the built /plan/dag/ stays under ELEMENT_CEILING elements and draws no issue node
 . "$ROOT/test/lib.sh"
 command -v jq >/dev/null || skip "jq absent"
-command -v python3 >/dev/null || skip "python3 absent"
+mj_runs python3 || skip "$(mj_runs_why python3)"
 
 # The ceiling, on the elements the HTML carries: one row and one link per milestone edge, the
 # graph's link list per milestone, the page's frame. 3,000 is twice what 100 milestones and 111
