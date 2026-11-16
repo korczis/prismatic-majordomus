@@ -1320,7 +1320,12 @@ def declare(out: Path, sid: str, mount: str, title: str, category: str, repo: Re
 def build_assets(out: Path) -> None:
     modules = HERE / "node_modules"
     if not (modules / ".bin/tailwindcss").exists():
-        subprocess.run(["npm", "ci", "--no-audit", "--no-fund"], cwd=HERE, check=True)
+        # A vendoring repository commits its own lock and gets exactly it; a copy without one
+        # (the shipped distribution states no third-party version beyond package.json's
+        # exact pins) installs those pins without writing a lock into the tool's directory.
+        locked = (HERE / "package-lock.json").exists()
+        install = ["npm", "ci"] if locked else ["npm", "install", "--no-package-lock"]
+        subprocess.run([*install, "--no-audit", "--no-fund"], cwd=HERE, check=True)
     (out / "js").mkdir(exist_ok=True)
     for src in ("flowbite/dist/flowbite.min.js", "mermaid/dist/mermaid.min.js", "echarts/dist/echarts.min.js"):
         shutil.copy(modules / src, out / "js" / posixpath.basename(src))

@@ -124,7 +124,9 @@ Majordomus ships the producer in `share/surfaces/`. It is copied whole into ever
 `~/.local/share/majordomus/versions/<version>/share/surfaces` with the default prefix.
 
 1. **Vendor it.** Copy `share/surfaces/` to `tools/surfaces/` in the repository. CI needs it
-   in the tree, because a runner has no Majordomus installed. The `.venv/` and
+   in the tree, because a runner has no Majordomus installed. Run `npm install` once in the copy
+   and commit the `package-lock.json` it writes: the workflow caches on it and the site build
+   then runs `npm ci` against it. The `.venv/` and
    `node_modules/` it creates beside itself belong in `.gitignore`, along with `/target/`.
    Messages and generated text name the command by its path from the repository root, so a
    vendored copy prints `tools/surfaces/surfaces sync`. `SURFACES_COMMAND` overrides the
@@ -182,5 +184,5 @@ The contract each repository adopts is `rule.template.md`.
 | `rule.template.md` | The project rule a repository adopts with the producer |
 | `surfaces.py` | The generator: discovery, rendering, regions, check |
 | `assets/input.css`, `assets/app.js` | The site's stylesheet source and client script |
-| `package.json`, `package-lock.json` | Pinned front-end dependencies |
+| `package.json` | The front-end dependencies, pinned exactly. The distribution ships no lock, because it states no third-party version by hand; a vendoring repository runs `npm install` once in its copy and commits the `package-lock.json` that `npm ci` and the workflow's cache then use |
 | `requirements.txt` | Pinned Python dependencies |
