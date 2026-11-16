@@ -6,23 +6,23 @@
     "version": "1.0.2"
   },
   "registry": {
-    "fingerprint": "a4e39dbc082e80caa698f19f660385daed06b2abc6438b1ba494069ade1fedfc",
+    "fingerprint": "4d94884f48e028a8e5ad91b3eb8e57ea8f2c9689047a6120309fbd3c48a13833",
     "summary": {
-      "total": 4024,
+      "total": 4027,
       "builtin": 231,
-      "declarative": 3793,
+      "declarative": 3796,
       "by_kind": {
         "command": 41,
         "query": 190,
-        "resource": 3793
+        "resource": 3796
       },
       "by_stability": {
         "behaviorally_verified": 153,
         "experimental": 68,
-        "implemented": 3803
+        "implemented": 3806
       },
       "mcp_tools": 215,
-      "mcp_resources": 3850,
+      "mcp_resources": 3853,
       "http_routes": 219,
       "cli_commands": 128,
       "modules": 96,
@@ -97172,7 +97172,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 1251,
+        "capabilities": 1252,
         "capability_ids": []
       },
       {
@@ -97641,7 +97641,7 @@
         "title": "rule",
         "description": "Declarative objects of kind 'rule' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 192,
+        "capabilities": 194,
         "capability_ids": []
       },
       {
@@ -97878,7 +97878,7 @@
     ]
   },
   "index": {
-    "fingerprint": "99ca363532c6a77fd0a2ab6f40ad3e3fbb5d3a85f458da5ca2a110ab2975c9c2",
+    "fingerprint": "7d3b475d141bd7834f7495ea090803f40f9724fc600b382c862f0e710e61544a",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -97918,7 +97918,7 @@
       "gap": 5,
       "implementation": 54,
       "intent": 45,
-      "issue": 1251,
+      "issue": 1252,
       "knowledge": 220,
       "mesh-declaration": 1,
       "milestone": 117,
@@ -97927,7 +97927,7 @@
       "profile": 4,
       "prompt": 5,
       "release-record": 42,
-      "rule": 192,
+      "rule": 194,
       "scope": 1,
       "session": 95,
       "skill": 11,
@@ -105515,7 +105515,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 136424
+        "bytes": 136640
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -123252,6 +123252,17 @@
         "bytes": 4290
       },
       {
+        "uri": "majordomus://issue/I4623",
+        "kind": "issue",
+        "identity": "I4623",
+        "title": "Two testing lessons ship in the baseline: an equivalence proof keeps a failing mutation, and a slow test is made cheaper rather than given more time",
+        "description": "The standard rule package carries two advisory rules with no validator, normative for every adopter: majordomus.an-equivalence-proof-keeps-a-failing-mutation@1 (an \\\"identical to before\\\" test keeps a permanent control: a planted change fails it, and a vacuous copy of the test fails the control) and majordomus.a-slow-test-is-made-cheaper@1 (a test stays well inside its limit on the slowest runner that judges it and records its runtime; it is made cheaper only where a re-derived band holds and a mutation still fails, otherwise split; a raised timeout or a hand-loosened band is not a fix).",
+        "path": ".ai/repo/project/issues/I4623.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3764
+      },
+      {
         "uri": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "identity": "a-brief-is-reconciled-not-transcribed",
@@ -129038,6 +129049,21 @@
         "bytes": 2421
       },
       {
+        "uri": "majordomus://rule/majordomus.a-slow-test-is-made-cheaper@1",
+        "kind": "rule",
+        "identity": "majordomus.a-slow-test-is-made-cheaper@1",
+        "title": "A slow test is made cheaper, never given a longer timeout",
+        "description": "A test stays well inside its limit on the slowest runner that judges it and records its runtime; a slow one is reduced where its statistics still hold, or split.",
+        "path": ".ai/repo/rules/vendor/majordomus/rules/a-slow-test-is-made-cheaper.v1.md",
+        "section": "rules",
+        "source_class": "rule",
+        "bytes": 4218,
+        "tags": [
+          "testing",
+          "ci"
+        ]
+      },
+      {
         "uri": "majordomus://rule/majordomus.adr-integrity@1",
         "kind": "rule",
         "identity": "majordomus.adr-integrity@1",
@@ -129065,6 +129091,21 @@
         "tags": [
           "layout",
           "ai"
+        ]
+      },
+      {
+        "uri": "majordomus://rule/majordomus.an-equivalence-proof-keeps-a-failing-mutation@1",
+        "kind": "rule",
+        "identity": "majordomus.an-equivalence-proof-keeps-a-failing-mutation@1",
+        "title": "An equivalence proof keeps a recorded mutation that fails it",
+        "description": "A test that claims new code behaves exactly as old code did carries a permanent control, a planted change that must fail it.",
+        "path": ".ai/repo/rules/vendor/majordomus/rules/an-equivalence-proof-keeps-a-failing-mutation.v1.md",
+        "section": "rules",
+        "source_class": "rule",
+        "bytes": 4207,
+        "tags": [
+          "testing",
+          "evidence"
         ]
       },
       {
@@ -139787,7 +139828,7 @@
       "identity": [
         "id"
       ],
-      "objects": 1251
+      "objects": 1252
     },
     {
       "name": "knowledge",
@@ -139884,7 +139925,7 @@
         "id",
         "version"
       ],
-      "objects": 192
+      "objects": 194
     },
     {
       "name": "scope",

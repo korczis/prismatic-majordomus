@@ -1,7 +1,7 @@
 +++
 title = "Knowledge observation"
 description = "Knowledge observation"
-weight = 28
+weight = 30
 [extra]
 kind = "rule"
 slug = "majordomus-knowledge-observed-1"

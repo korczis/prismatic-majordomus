@@ -1,7 +1,7 @@
 +++
 title = "A return code is not the diagnostic channel"
 description = "A return code is not the diagnostic channel"
-weight = 101
+weight = 103
 [extra]
 kind = "rule"
 slug = "project-diagnostics-decide-the-exit-1"
